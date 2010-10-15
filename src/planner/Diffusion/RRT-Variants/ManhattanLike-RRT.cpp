@@ -1,6 +1,6 @@
 #include "ManhattanLike-RRT.hpp"
 
-#include "planningAPI.hpp"
+#include "API/planningAPI.hpp"
 
 #include "P3d-pkg.h"
 #include "Bio-pkg.h"

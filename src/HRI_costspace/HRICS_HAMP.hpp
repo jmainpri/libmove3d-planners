@@ -10,7 +10,7 @@
 
 
 #include "Hri_planner-pkg.h"
-#include "planningAPI.hpp"
+#include "API/planningAPI.hpp"
 
 /**
   @ingroup HRICS

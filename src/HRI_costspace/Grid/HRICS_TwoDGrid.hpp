@@ -1,7 +1,7 @@
 #ifndef HRICS_TWODGRID_HPP
 #define HRICS_TWODGRID_HPP
 
-#include "planningAPI.hpp"
+#include "API/planningAPI.hpp"
 #include "API/Grids/gridsAPI.hpp"
 
 namespace HRICS

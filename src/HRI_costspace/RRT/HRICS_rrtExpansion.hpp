@@ -1,7 +1,7 @@
 #ifndef HRICS_RRTEXPANSION_H
 #define HRICS_RRTEXPANSION_H
 
-#include "planningAPI.hpp"
+#include "API/planningAPI.hpp"
 #include "Diffusion/Expansion/TransitionExpansion.hpp"
 #include "HRI_costspace/Grid/HRICS_Grid.hpp"
 

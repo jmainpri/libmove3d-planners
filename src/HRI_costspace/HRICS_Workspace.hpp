@@ -11,7 +11,7 @@
  */
 
 #if defined( CXX_PLANNER )
-#include "planningAPI.hpp"
+#include "API/planningAPI.hpp"
 #include "planner.hpp"
 #include "Diffusion/RRT.hpp"
 #endif

@@ -1,7 +1,7 @@
 #include "cost_space.hpp"
 #include <iostream>
 
-#include "planningAPI.hpp"
+#include "API/planningAPI.hpp"
 
 #include "Roadmap/compco.hpp"
 

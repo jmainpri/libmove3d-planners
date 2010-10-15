@@ -10,7 +10,7 @@
 //
 //
 #if defined( CXX_PLANNER )
-#include "planningAPI.hpp"
+#include "API/planningAPI.hpp"
 #include "cost_space.hpp"
 #endif
 

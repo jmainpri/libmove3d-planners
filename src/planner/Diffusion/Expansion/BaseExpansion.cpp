@@ -8,7 +8,7 @@
 
 #include "BaseExpansion.hpp"
 
-#include "planningAPI.hpp"
+#include "API/planningAPI.hpp"
 
 #include "Roadmap/compco.hpp"
 

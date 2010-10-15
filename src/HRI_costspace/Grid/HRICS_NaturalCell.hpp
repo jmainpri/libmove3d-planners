@@ -10,7 +10,7 @@
 #ifndef HRICS_NATURALCELL_H_
 #define HRICS_NATURALCELL_H_
 
-#include "planningAPI.hpp"
+#include "API/planningAPI.hpp"
 
 #include "Graphic-pkg.h"
 

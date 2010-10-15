@@ -1,7 +1,7 @@
 #ifndef P3D_HRICOST_HPP
 #define P3D_HRICOST_HPP
 
-#include "planningAPI.hpp"
+#include "API/planningAPI.hpp"
 
 /**
  * Structure pour la sauvegarde du coût

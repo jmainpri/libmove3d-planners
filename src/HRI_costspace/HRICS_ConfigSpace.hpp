@@ -1,8 +1,8 @@
 #ifndef HRICS_CSPACE_HPP
 #define HRICS_CSPACE_HPP
 
-#include "planningAPI.hpp"
-#include "planner.hpp"
+#include "API/planningAPI.hpp"
+#include "planner/planner.hpp"
 
 #include "HRICS_Workspace.hpp"
 
