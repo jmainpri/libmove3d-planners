@@ -1,0 +1,229 @@
+#ifndef LOCALPATH_HPP
+#define LOCALPATH_HPP
+
+#include "API/ConfigSpace/configuration.hpp"
+
+#include "Localpath-pkg.h"
+
+class Robot;
+
+/**
+ @ingroup CONFIG_SPACE
+ \brief Classe représentant un chemin local
+ @author Florian Pilardeau,B90,6349 <fpilarde@jolimont>
+ */
+class LocalPath 
+{
+public:
+	/**
+	 * constructors and destructors
+	 */
+
+	/**
+	 * Class Constructor
+	 * The type is linear by default
+	 * @param B la Configuration initiale du LocalPath
+	 * @param E la Configuration finale du LocalPath
+	 */
+	LocalPath(std::tr1::shared_ptr<Configuration> B, std::tr1::shared_ptr<
+			Configuration> E);
+	
+	/**
+	 * smaller local path (for the extend method)
+	 */
+	LocalPath(LocalPath& path, double& pathDelta , bool lastValidConfig = true);
+	
+
+	/**
+	 * Copy constructor
+	 * @param path a LocalPath
+	 */
+	LocalPath(const LocalPath& path);
+
+	/**
+	 * Constructor from a struct
+	 * @param p3d struct
+	 */
+	LocalPath(Robot* R,p3d_localpath* lpPtr);
+
+	/**
+	 * Destructor
+	 */
+	~LocalPath();
+
+	//Accessor
+	/**
+	 * obtient la structure p3d_localpath stockée
+	 * @return la structure p3d_localpath stockée
+	 */
+	p3d_localpath* getLocalpathStruct();
+
+	/**
+	 * obtient la configuration initiale
+	 * @return la configuration initiale
+	 */
+	std::tr1::shared_ptr<Configuration> getBegin();
+	/**
+	 * obtient la configuration finale
+	 * @return la configuration finale
+	 */
+	std::tr1::shared_ptr<Configuration> getEnd();
+
+	/**
+	 * obtient le Graph pour lequel le LocalPath est créé
+	 * @return le Graph pour lequel le LocalPath est créé
+	 */
+//	Graph* getGraph();
+	/**
+	 * obtient le Robot pour lequel le LocalPath est créé
+	 * @return le Robot pour lequel le LocalPath est créé
+	 */
+	Robot* getRobot();
+
+	/**
+	 * Returns the number of
+	 * Colision test done to test the local path
+	 */
+	int getNbColTest();
+
+	/**
+	 * teste si le LocalPath à été évalué
+	 * @return le LocalPath à été évalué
+	 */
+	bool getEvaluated();
+
+	/**
+	 * obtient le type de LocalPath
+	 * @return le type de LocalPath
+	 */
+	p3d_localpath_type getType();
+
+	/**
+	 * obtient la dernière Configuration valide le long du LocalPath
+	 * @param p in/out le paramètre correspondant à la dernière Configauration valide
+	 * @return la dernière Configuration valide le long du LocalPath
+	 */
+	std::tr1::shared_ptr<Configuration> getLastValidConfig(double& p);
+	
+	/**
+	 * Set the localpath as untested
+	 */
+	void setLocalpathAsNotTested() { _Evaluated = false; }
+	
+	/**
+	 * teste si le LocalPath est valide
+	 * @return le LocalPath est valide
+	 */
+	bool isValid();
+	
+	/**
+	 * test si le LocalPath est valide
+	 * @param R le Robot pour lequel le LocalPath est testé
+	 * @param ntest in/out le nombre de tests
+	 * @return ! le LocalPath n'est pas valide
+	 */
+	bool unvalidLocalpathTest(Robot* R, int* ntest);
+
+	/*test le localpath*/
+	bool classicTest();
+
+	/**
+	 * obtient la longueur du LocaPath
+	 * @return la longueur du LocalPath
+	 */
+	double length();
+
+	/**
+	 *
+	 */
+	double getParamMax();
+
+	/**
+	 * obtient une Configuration se trouvant à une distance donnée du début du LocalPath
+	 * @param R le Robot pour lequel le LocalPath est créé
+	 * @param dist la distance par rapport au début
+	 * @return la Configuration
+	 */
+	std::tr1::shared_ptr<Configuration> configAtDist(double dist);
+
+	/**
+	 * obtient une Configuration se trouvant sur le LocalPath à un paramètre donnée
+	 * @param R le Robot pour lequel le LocalPath est créé
+	 * @param param le paramètre
+	 * @return la Configuration
+	 */
+	std::tr1::shared_ptr<Configuration> configAtParam(double param);
+
+	/**
+	 * Stay within dist
+	 * From a parameter along the LocalPath and distance a vector of distance in WorkSapce
+	 * Stay within dist computes the maximum parameter that the robot can move
+	 * in free space
+	 */
+	double stayWithInDistance(double u, bool goForward, double* distance);
+	
+	/**
+	 * Cost resolution for 
+	 * integral and work along LocalPath
+	 */
+	double getResolution(double step = 0.0);
+	
+	/**
+	 * Get number of cost segments
+	 */
+	unsigned int getNumberOfCostSegments();
+	
+	/**
+	 * Returns the cost profile of the localPath
+	 */
+	std::vector< std::pair<double,double> > getCostProfile();
+	
+	/**
+	 * Return param at which integral of cost
+	 * is higher than the input (going from begin to end)
+	 */
+	double whenCostIntegralPasses(double thresh);
+
+	/**
+	 * Gets the LocalPath cost
+	 */
+	double cost();
+
+	/**
+	 * When reset the next cost querry will compute it
+	 */
+	void resetCostComputed() { _costEvaluated = false; }
+
+	/**
+	 * Prints the variables
+	 * inside the LocalPath
+	 */
+	void print();
+	
+protected:
+	Robot* _Robot;	
+	
+	std::tr1::shared_ptr<Configuration> _Begin;
+	std::tr1::shared_ptr<Configuration> _End;
+
+
+private:
+	p3d_localpath* _LocalPath;
+	bool _Valid;
+	bool _Evaluated;
+	double _lastValidParam;
+	std::tr1::shared_ptr<Configuration> _lastValidConfig;
+	bool _lastValidEvaluated;
+	int _NbColTest;
+
+	bool _costEvaluated;
+	double _Cost;
+
+	bool _ResolEvaluated;
+	double _Resolution;
+
+	p3d_localpath_type _Type; //type du local path(mahantan, linear ...)
+
+};
+
+#endif

@@ -1,0 +1,256 @@
+/*
+ *  compco.cpp
+ *  BioMove3D
+ *
+ *  Created by Jim Mainprice on 27/04/10.
+ *  Copyright 2010 LAAS/CNRS. All rights reserved.
+ *
+ */
+
+#include "API/Roadmap/compco.hpp"
+#include "API/Roadmap/graph.hpp"
+
+#include "env.hpp"
+
+#include "Planner-pkg.h"
+
+#include <iterator>
+
+using namespace std;
+using namespace tr1;
+
+ConnectedComponent::ConnectedComponent(Graph* G, p3d_compco* C) :
+m_Compco(C),
+m_Graph(G),
+m_Id(-1)
+{
+	cout << "Warning : constructor out of use ConnectedComponent::ConnectedComponent(Graph* G, p3d_compco* C)" << endl;
+	//throw string("Constructor out of use ConnectedComponent::ConnectedComponent(Graph* G, p3d_compco* C)");
+}
+
+
+ConnectedComponent::ConnectedComponent(Graph* G, Node* N) :
+m_Graph(G),
+m_Id(-1)
+{
+#ifdef P3D_PLANNER
+	p3d_create_compco(m_Graph->getGraphStruct(), N->getNodeStruct());
+#else
+	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+#endif
+	
+	m_Compco = m_Graph->getGraphStruct()->last_comp;
+	//cout << "new compco : " << m_Compco << endl;
+	addNode(N);
+	//cerr << "Add Compco for Node " << N->getNodeStruct() << endl;
+}
+
+ConnectedComponent::~ConnectedComponent()
+{
+	if ( ENV.getBool(Env::use_p3d_structures) ) 
+	{
+#ifdef P3D_PLANNER
+		p3d_remove_compco(m_Graph->getGraphStruct(),m_Compco);
+#else
+		printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+#endif
+	}
+	else 
+	{
+		//cout << "Delete compoc num : " <<  m_Compco->num << endl;
+		free( m_Compco );
+	}
+}
+
+p3d_compco* ConnectedComponent::getCompcoStruct()
+{
+	//cout << "ConnectedComponent is : " << m_Compco << endl;
+	return m_Compco;
+}
+
+unsigned int ConnectedComponent::getId()
+{
+//	if (ENV.getBool(Env::use_p3d_structures)) 
+//	{
+		return m_Compco->num;
+//	}
+}
+
+void ConnectedComponent::addNode(Node* N)
+{
+	m_Nodes.push_back(N);
+	N->setConnectedComponent(this);
+}
+
+unsigned int ConnectedComponent::getNumberOfNodes()
+{
+	if (ENV.getBool(Env::use_p3d_structures)) 
+	{
+		if (m_Compco->nnode != (int)m_Nodes.size()) 
+		{
+			cout << m_Compco->nnode << endl;
+			cout << m_Nodes.size() << endl;
+			throw string("Number of nodes differs from the C structure");
+		}
+	}
+	return m_Nodes.size();
+}
+
+
+const std::vector<Node*>& ConnectedComponent::getNodes() const
+{
+	/*cout << "--------------------------------------" << endl;
+	vector<Node*>::iterator it;
+	for (it = m_Nodes.begin(); it != m_Nodes.end(); ++it) 
+	{
+		cout << "Node num : " << (*it)->getId() << endl;
+	}*/
+	return m_Nodes;
+}
+
+void ConnectedComponent::addToReachableList(ConnectedComponent* Comp)
+{
+	// This function is a copy of
+	// p3d_add_compco_to_reachable_list
+	m_CanReach.push_back(Comp);
+}
+
+void ConnectedComponent::addToReachableListAndUpdatePredecessors(ConnectedComponent* CAdd)
+{
+	// This function is a copy of
+	// p3d_add_compco_to_reachable_list_and_update_predecessors
+	
+	m_CanReach.push_back(CAdd);
+	
+	vector<ConnectedComponent*> v = m_Graph->getConnectedComponents();
+	vector<ConnectedComponent*>::iterator CompCo;
+	
+	for (CompCo = v.begin(); CompCo!=v.end(); ++CompCo) 
+	{
+		if( (*CompCo)->isLinkedToCompco( this ) )
+		{
+			(*CompCo)->addToReachableList( CAdd );
+		}
+	}
+}
+
+bool ConnectedComponent::isLinkedToCompco(ConnectedComponent* Comp)
+{
+	// This function is a copy of
+	// p3d_compco_linked_to_compco
+	
+	if( find (m_CanReach.begin(), m_CanReach.end(), Comp ) == m_CanReach.end() )
+		return false;
+	else
+		return true;
+}
+
+void ConnectedComponent::mergeWith(ConnectedComponent* CompcoPt)
+{
+	// This function is a copy of
+	 //p3d_merge_comp which updates the 
+	// Graph and the connected components
+	
+	/*int nbOfCompInGraph = m_Graph->getGraphStruct()->ncomp;
+	if (m_Compco->num > nbOfCompInGraph || CompcoPt->m_Compco->num > nbOfCompInGraph) 
+	{
+		cout << m_Graph->getGraphStruct()->ncomp << endl;
+		cout << m_Graph->getConnectedComponents().size() << endl;
+		cout << m_Compco->num << endl;
+		cout << CompcoPt->m_Compco->num << endl;
+		throw string("The number of comp in the graph structure is wrong");
+	}*/
+	
+	//int nnode1,nnode2;
+	p3d_list_node *list_node;
+	p3d_list_compco * ListCompcoScan;
+	
+	//nnode1 = c1->nnode;
+	//nnode2 = c2->nnode;
+	
+	if( ENV.getBool(Env::use_p3d_structures) )
+	{
+		list_node = CompcoPt->getCompcoStruct()->dist_nodes;
+		while (list_node) 
+		{
+#ifdef P3D_PLANNER
+			p3d_add_node_compco(list_node->N, m_Compco, TRUE);
+#else
+			printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+#endif
+			list_node = list_node->next;
+		}
+	}
+	
+	/* The nodes of C2 are now in C1 */
+	for(unsigned int i=0;i<CompcoPt->m_Nodes.size();i++)
+	{
+		Node* tmpNode = CompcoPt->m_Nodes[i];
+		tmpNode->setConnectedComponent( this ); addNode( tmpNode );
+	}
+	
+	/* All the compcos that can reach C2 can now reach C1 */
+	if (m_Graph->getGraphStruct()->oriented) 
+	{
+		cout << "Oriented" << endl;
+		ListCompcoScan = CompcoPt->getCompcoStruct()->canreach;
+		while (ListCompcoScan != NULL) 
+		{
+			p3d_add_compco_to_reachable_list_and_update_predecessors(
+																															 m_Graph->getGraphStruct(), 
+																															 getCompcoStruct(), 
+																															 ListCompcoScan->comp);
+			
+			ListCompcoScan = ListCompcoScan->next;
+		}
+	}
+	
+	/* C2 is deleted from the graph */
+	m_Graph->removeCompco( CompcoPt );
+	
+	// Throw an exception if the p3d and C++ are not the same
+	getNumberOfNodes();
+	
+	if (m_Graph->getGraphStruct()->oriented)
+	{
+		m_Graph->mergeCheck();
+	}
+}
+
+Node* ConnectedComponent::nearestWeightNeighbour(shared_ptr<Configuration> q, 
+																								 bool weighted, 
+																								 int distConfigChoice)
+{
+	double CurrentDist, CurrentScore, DistOfBestNode;
+	double BestScore = numeric_limits<double>::max();
+	
+	vector<Node*>::iterator N = m_Nodes.begin();
+	
+	Node* BestNodePt = NULL;
+	
+	while ( N != m_Nodes.end() )
+	{
+		p3d_node* nodePt = (*N)->getNodeStruct();
+		/* We take into account only the nodes undiscarded */
+		if (!nodePt->IsDiscarded)
+		{
+			CurrentDist = q->dist(
+														*(*N)->getConfiguration(),
+														distConfigChoice);
+			
+			CurrentScore = CurrentDist
+			* (weighted ? p3d_GetNodeWeight(nodePt) : 1.0);
+			
+			if (CurrentScore < BestScore)
+			{
+				BestScore = CurrentScore;
+				BestNodePt = (*N);
+				DistOfBestNode = CurrentDist;
+			}
+		}
+		
+		++N;
+	}
+	
+	return BestNodePt;
+}

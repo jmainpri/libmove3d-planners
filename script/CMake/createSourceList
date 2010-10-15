@@ -1,0 +1,35 @@
+#!/bin/sh
+if [ $# -ne 1 ]
+then
+ echo "usage : '`basename $0` <folder deep>' to create a SourceList.cmake file in the current folder"
+ echo "'`basename $0` 1' for a directory of the firstLevel from the BioMove3D_ROOT"
+ echo "'`basename $0` 2' for a directory of the SecondLevel from the BioMove3D_ROOT"
+ echo "'`basename $0` 3' for a directory of the ThirdLevel from the BioMove3D_ROOT ..."
+ exit 1
+fi
+
+touch SourceList.cmake
+echo "#IF()" > SourceList.cmake
+if [ "$1" -ne "0" -a "$1" -ne "1" ]
+then
+  echo "SET(BM3D_MODULE_NAME_TMP$1 \${BM3D_MODULE_NAME})" >> SourceList.cmake
+  PARENT_MODULE_NAME="\${BM3D_MODULE_NAME}/"
+fi
+echo "SET(BM3D_MODULE_NAME ${PARENT_MODULE_NAME}`basename ${PWD}`)" >> SourceList.cmake
+echo "BM3D_SRC_SUBDIR_PROCESS(" >> SourceList.cmake
+echo "`ls -1 | grep c$`" >> SourceList.cmake
+echo "`ls -1 | grep cpp$`" >> SourceList.cmake
+echo "`ls -1 | grep C$`" >> SourceList.cmake
+echo "`ls -1 | grep cxx$`" >> SourceList.cmake
+echo ")" >> SourceList.cmake
+echo "include_directories (\${BM3D_MODULE_NAME})" >> SourceList.cmake
+echo "include_directories (\${BM3D_MODULE_NAME}/proto)" >> SourceList.cmake
+echo "include_directories (\${BM3D_MODULE_NAME}/include)" >> SourceList.cmake
+echo "#include(\${CMAKE_SOURCE_DIR}/\${BM3D_MODULE_NAME}/<SubDir>/SourceList.cmake)" >> SourceList.cmake
+if [ "$1" -ne "0" -a "$1" -ne "1" ]
+then
+ echo "#SET(BM3D_MODULE_NAME$1 \${BM3D_MODULE_NAME_TMP})" >> SourceList.cmake
+fi
+echo "#ENDIF()" >> SourceList.cmake
+
+exit 0

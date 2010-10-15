@@ -1,0 +1,66 @@
+/*
+ *  HRI_costspace.hoo
+ *  BioMove3D
+ *
+ *  Created by Jim Mainprice on 27/04/10.
+ *  Copyright 2010 LAAS/CNRS. All rights reserved.
+ *
+ */
+#if defined( CXX_PLANNER )
+#include "cost_space.hpp"
+#endif
+
+#if defined( WITH_OOMOVE3D )
+#include "planner/cost_space.hpp"
+#endif
+
+#include "API/ConfigSpace/configuration.hpp"
+
+// Main cost function
+extern double HRICS_getConfigCost(Configuration& Conf);
+
+// Human kinematics
+const int HRICS_HUMANj_BODY=      2;
+const int HRICS_HUMANj_NECK_PAN=  5;
+const int HRICS_HUMANj_NECK_TILT= 6;
+const int HRICS_HUMANj_RHAND=     29; /* or 30 or 31 */
+const int HRICS_HUMANj_LHAND=     26; /* or 27 or 28 */
+
+#include "HRICS_Distance.hpp"
+#include "HRICS_Visibility.hpp"
+#include "HRICS_Natural.hpp"
+#include "HRICS_Workspace.hpp"
+#include "HRICS_ConfigSpace.hpp"
+
+#ifdef HRI_PLANNER
+#include "HRICS_HAMP.hpp"
+extern HRICS::HriSpaceCost* hriSpace;
+#endif
+
+// Elementary cost maps
+const int HRICS_Distance = 0;
+const int HRICS_Visibility = 1;
+const int HRICS_Naturality = 2;
+const int HRICS_Reachability = 3;
+const int HRICS_Combine = 4;
+
+/**
+ * Active Elementary Cost Spaces 
+ * Object
+ */
+extern HRICS::Distance*		HRICS_activeDist;
+extern HRICS::Visibility*	HRICS_activeVisi;
+extern HRICS::Natural*		HRICS_activeNatu;
+extern HRICS::Natural*		HRICS_activeReac;
+
+/**
+ * Active Motion planner framework
+ */
+extern HRICS::HumanAwareMotionPlanner*	HRICS_MotionPL;
+
+/**
+ * Cells to be drawn
+ */ 
+extern API::ThreeDCell*		BiasedCell3D;
+extern API::TwoDCell*		BiasedCell2D;
+
