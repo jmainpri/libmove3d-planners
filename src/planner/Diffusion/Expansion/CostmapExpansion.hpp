@@ -10,7 +10,7 @@
 #ifndef COSTMAP_EXPANSION_HPP_
 #define COSTMAP_EXPANSION_HPP_
 
-#include "RRTExpansion.hpp"
+#include "planner/Expansion/RRTExpansion.hpp"
 
 /**
  @ingroup Diffusion

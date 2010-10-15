@@ -16,7 +16,7 @@
  * This class implements a RRT that stays under a given threshold of cost
  */
 
-#include "RRT.hpp"
+#include "planner/Diffusion/RRT.hpp"
 #include "Expansion/ThresholdExpansion.hpp"
 
 class StarRRT : public RRT

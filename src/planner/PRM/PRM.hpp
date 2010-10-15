@@ -1,7 +1,7 @@
 #ifndef PRM_HPP
 #define PRM_HPP
 
-#include "planner.hpp"
+#include "planner/planner.hpp"
 /**
  @ingroup NEW_CPP_MODULE
  @defgroup PRM Probabilistic-RM

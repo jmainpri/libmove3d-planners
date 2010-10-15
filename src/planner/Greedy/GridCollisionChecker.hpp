@@ -10,10 +10,10 @@
 #ifndef GRID_COLLISION_CHECKER_H_
 #define GRID_COLLISION_CHECKER_H_
 
-#include "planningAPI.hpp"
-#include "Grids/gridsAPI.hpp"
-#include "CellCollisionChecker.hpp"
-#include "PointsOnBodies.hpp"
+#include "API/planningAPI.hpp"
+#include "API/Grids/gridsAPI.hpp"
+#include "planner/Greedy/CellCollisionChecker.hpp"
+#include "planner/Greedy/PointsOnBodies.hpp"
 
 #ifndef _P3D_H
 typedef struct obj;

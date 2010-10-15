@@ -9,8 +9,8 @@
   * @ingroup USER_APPLI
   * This class can store cost statistics over sevral run and compute avreages
   */
-class StatCost {
-
+class StatCost 
+{
 private:
 	p3d_graph* Graph;
 	p3d_rob* Robot;

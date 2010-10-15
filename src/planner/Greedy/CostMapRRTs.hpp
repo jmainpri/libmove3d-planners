@@ -10,7 +10,7 @@
 #ifndef COSTMAP_PLANNER_HPP_
 #define COSTMAP_PLANNER_HPP_
 
-#include "TreePlanner.hpp"
+#include "planner/Diffusion/TreePlanner.hpp"
 
 #include "API/Trajectory/trajectory.hpp"
 

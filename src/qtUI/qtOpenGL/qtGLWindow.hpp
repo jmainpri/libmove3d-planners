@@ -6,7 +6,7 @@
 #define QT_GL_WINDOW_H
 
 #include "Graphic-pkg.h"
-#include "glwidget.hpp"
+#include "qtUI/qtOpenGL/glwidget.hpp"
 
 #ifdef CXX_PLANNER
 #include "qtLibrary.hpp"

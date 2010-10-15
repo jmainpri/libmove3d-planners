@@ -7,7 +7,7 @@
 #ifndef P3D_TREE_EXPANSION_HPP
 #define P3D_TREE_EXPANSION_HPP
 
-#include "RRTExpansion.hpp"
+#include "planner/Expansion/RRTExpansion.hpp"
 
 /**
   @ingroup Diffusion

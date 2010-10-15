@@ -9,7 +9,7 @@
 // Copyright: See COPYING file that comes with this distribution
 //
 //
-#include "planner.hpp"
+#include "planner/planner.hpp"
 
 #include "API/Roadmap/node.hpp"
 #include "API/Roadmap/graph.hpp"

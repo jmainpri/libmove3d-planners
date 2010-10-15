@@ -1,12 +1,12 @@
 #ifndef P3D_GREEDY_PROTO_HH
 #define P3D_GREEDY_PROTO_HH
 
-#include "planningAPI.hpp"
+#include "API/planningAPI.hpp"
 #include "API/Trajectory/costOptimization.hpp"
 #include "API/Trajectory/smoothing.hpp"
 
-#include "Diffusion/RRT.hpp"
-#include "Diffusion/RRT-Variants/Transition-RRT.hpp"
+#include "planner/Diffusion/RRT.hpp"
+#include "planner/Diffusion/RRT-Variants/Transition-RRT.hpp"
 
 /**
   * Planner based on trajectory optimization

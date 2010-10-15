@@ -8,7 +8,7 @@
 #ifndef TREEPLANNER_HPP_
 #define TREEPLANNER_HPP_
 
-#include "planner.hpp"
+#include "planner/planner.hpp"
 
 /**
   @ingroup NEW_CPP_MODULE

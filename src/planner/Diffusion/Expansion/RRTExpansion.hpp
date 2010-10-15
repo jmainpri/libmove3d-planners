@@ -1,7 +1,7 @@
 #ifndef RRTEXPANSION_HPP
 #define RRTEXPANSION_HPP
 
-#include "BaseExpansion.hpp"
+#include "planner/Expansion/BaseExpansion.hpp"
 
 /**
   @ingroup Diffusion

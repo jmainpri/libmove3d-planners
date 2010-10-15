@@ -8,7 +8,7 @@
 #ifndef MANHATTANLIKERRT_HPP_
 #define MANHATTANLIKERRT_HPP_
 
-#include "RRT.hpp"
+#include "planner/Diffusion/RRT.hpp"
 
 /**
 @ingroup Diffusion

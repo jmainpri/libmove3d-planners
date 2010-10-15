@@ -11,7 +11,7 @@
 */
 /*object global permettant d'acceder aux planner dans tous les fichiers de Move3d*/
 
-#include "planner.hpp"
+#include "planner/planner.hpp"
 
 Global std::vector<Planner*> plannerlist;
 

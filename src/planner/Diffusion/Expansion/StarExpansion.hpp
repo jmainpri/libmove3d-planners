@@ -10,7 +10,7 @@
 #ifndef STAR_EXPANSION_HPP_
 #define STAR_EXPANSION_HPP_
 
-#include "RRTExpansion.hpp"
+#include "planner/Expansion/RRTExpansion.hpp"
 
 /**
  @ingroup Diffusion

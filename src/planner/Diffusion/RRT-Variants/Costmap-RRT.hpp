@@ -16,8 +16,8 @@
  * This class implements a RRT that stays under a given threshold of cost
  */
 
-#include "RRT.hpp"
-#include "Expansion/CostmapExpansion.hpp"
+#include "planner/Diffusion/RRT.hpp"
+#include "planner/Expansion/CostmapExpansion.hpp"
 
 class CostmapRRT : public RRT
 {

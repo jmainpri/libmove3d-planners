@@ -8,8 +8,8 @@
 #ifndef EST_HPP_
 #define EST_HPP_
 
-#include "Expansion/ESTExpansion.hpp"
-#include "TreePlanner.hpp"
+#include "planner/Expansion/ESTExpansion.hpp"
+#include "planner/Diffusion/TreePlanner.hpp"
 
 /**
   @ingroup Diffusion

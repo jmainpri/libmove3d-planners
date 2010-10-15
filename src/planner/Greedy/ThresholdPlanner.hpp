@@ -10,8 +10,9 @@
 #ifndef THRESHOLD_PLANNER_H_
 #define THRESHOLD_PLANNER_H_
 
-#include "TreePlanner.hpp"
 #include "API/Trajectory/trajectory.hpp"
+
+#include "planner/Diffusion/TreePlanner.hpp"
 
 class ThresholdPlanner : public TreePlanner
 {

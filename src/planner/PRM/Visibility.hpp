@@ -1,7 +1,7 @@
 #ifndef VIS_PRM_HPP
 #define VIS_PRM_HPP
 
-#include "PRM.hpp"
+#include "planner/PRM/PRM.hpp"
 /**
   @ingroup PRM
 

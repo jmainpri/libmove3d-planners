@@ -10,7 +10,7 @@
 #ifndef CELL_COLLISION_CHECKER_H_
 #define CELL_COLLISION_CHECKER_H_
 
-#include "planningAPI.hpp"
+#include "API/planningAPI.hpp"
 #include "Grids/gridsAPI.hpp"
 
 class CellCollisionChecker : public API::ThreeDCell

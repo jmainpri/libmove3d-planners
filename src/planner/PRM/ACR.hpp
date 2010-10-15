@@ -1,7 +1,7 @@
 #ifndef ACR_HPP
 #define ACR_HPP
 
-#include "PRM.hpp"
+#include "planner/PRM/PRM.hpp"
 /**
   @ingroup PRM
 
