@@ -361,8 +361,8 @@ ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 ADD_LIBRARY(OOMove3D SHARED ${OOMove3D_src} ${OOMove3D_QT_MOC} ${OOMove3D_QT_UI_HEADERS} ${OOMove3D_inc})
 TARGET_LINK_LIBRARIES(OOMove3D ${LIBS} m)
 
-ADD_EXECUTABLE(move3d ${BioMove3D_SOURCE_DIR}/move3d/move3d.c ${OOMove3D_inc})
-TARGET_LINK_LIBRARIES(move3d OOMove3D ${LIBS} m)
+#ADD_EXECUTABLE(move3d ${BioMove3D_SOURCE_DIR}/move3d/move3d.c ${OOMove3D_inc})
+#TARGET_LINK_LIBRARIES(move3d OOMove3D ${LIBS} m)
 
 # ------------------------------------------------------------------------------
 # Intallation
