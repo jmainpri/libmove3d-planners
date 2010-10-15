@@ -51,10 +51,10 @@ else (HAVE_BioMove3D)
  endif (BioMove3D_FIND_REQUIRED)
 endif (HAVE_BioMove3D)
 
-mark_as_advanced (
- HAVE_BioMove3D
- BioMove3D_INCLUDE_DIR
- p3d_INCLUDE_DIR
- BioMove3D_LIBRARIES
- BioMove3D_SOURCE_DIR
- )
+#mark_as_advanced (
+# HAVE_BioMove3D
+# BioMove3D_INCLUDE_DIR
+# p3d_INCLUDE_DIR
+# BioMove3D_LIBRARIES
+# BioMove3D_SOURCE_DIR
+# )

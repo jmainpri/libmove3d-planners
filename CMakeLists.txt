@@ -86,7 +86,7 @@ message( STATUS "CMake Install Prefix = ${CMAKE_INSTALL_PREFIX}")
 #-------------------------------------------------------------------------------
 #-------------- Modules --------------------------------------------------------
 #-------------------------------------------------------------------------------
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeFindScripts")
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/script/CMake")
 
 #-------------- Qt Library -----------------------------------------------------
 IF(QT_LIBRARY)
