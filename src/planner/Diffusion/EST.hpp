@@ -8,7 +8,7 @@
 #ifndef EST_HPP_
 #define EST_HPP_
 
-#include "planner/Expansion/ESTExpansion.hpp"
+#include "planner/Diffusion/Expansion/ESTExpansion.hpp"
 #include "planner/Diffusion/TreePlanner.hpp"
 
 /**

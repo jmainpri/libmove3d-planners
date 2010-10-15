@@ -10,7 +10,7 @@
 #ifndef THRESHOLD_EXPANSION_HPP_
 #define THRESHOLD_EXPANSION_HPP_
 
-#include "planner/Expansion/RRTExpansion.hpp"
+#include "planner/Diffusion/Expansion/RRTExpansion.hpp"
 
 /**
  @ingroup Diffusion

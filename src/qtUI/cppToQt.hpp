@@ -8,7 +8,7 @@
 #ifndef CPPTOQT_HPP_
 #define CPPTOQT_HPP_
 
-#include "qt/UI/qtLibrary.hpp"
+#include "qtUI/qtLibrary.hpp"
 
 #ifdef ENERGY
 #include "bio/BioEnergy/include/Energy-pkg.h"

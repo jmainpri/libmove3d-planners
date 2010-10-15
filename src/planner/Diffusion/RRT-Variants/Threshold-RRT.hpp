@@ -17,7 +17,7 @@
  */
 
 #include "planner/Diffusion/RRT.hpp"
-#include "Expansion/ThresholdExpansion.hpp"
+#include "planner/Diffusion/Expansion/ThresholdExpansion.hpp"
 
 class ThresholdRRT : public RRT
 {

@@ -3,7 +3,7 @@
  *  BioMove3D
  *
  *  Created by Jim Mainprice on 31/07/10.
- *  Copyright 2010 __MyCompanyName__. All rights reserved.
+ *  Copyright 2010 LAAS/CNRS. All rights reserved.
  *
  */
 
@@ -17,7 +17,7 @@
  */
 
 #include "planner/Diffusion/RRT.hpp"
-#include "Expansion/ThresholdExpansion.hpp"
+#include "planner/Diffusion/Expansion/ThresholdExpansion.hpp"
 
 class StarRRT : public RRT
 {

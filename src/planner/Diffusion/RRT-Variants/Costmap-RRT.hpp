@@ -17,7 +17,7 @@
  */
 
 #include "planner/Diffusion/RRT.hpp"
-#include "planner/Expansion/CostmapExpansion.hpp"
+#include "planner/Diffusion/Expansion/CostmapExpansion.hpp"
 
 class CostmapRRT : public RRT
 {

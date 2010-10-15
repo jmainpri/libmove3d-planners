@@ -8,7 +8,7 @@
 #ifndef TRANSTIONEXPANSION_HPP_
 #define TRANSTIONEXPANSION_HPP_
 
-#include "planner/Expansion/RRTExpansion.hpp"
+#include "planner/Diffusion/Expansion/RRTExpansion.hpp"
 
 /**
   @ingroup Diffusion

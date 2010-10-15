@@ -1,7 +1,7 @@
 #ifndef RRT_HPP
 #define RRT_HPP
 
-#include "planner/Expansion/RRTExpansion.hpp"
+#include "planner/Diffusion/Expansion/RRTExpansion.hpp"
 #include "planner/Diffusion/TreePlanner.hpp"
 
 #include "API/Device/robot.hpp"
