@@ -6,8 +6,8 @@
  */
 
 #include "g3dQtConnection.hpp"
-#include "../qtWindow/qtOpenGL/glwidget.hpp"
-#include "../cppToQt.hpp"
+#include "qtWindow/qtOpenGL/glwidget.hpp"
+#include "cppToQt.hpp"
 
 #include "P3d-pkg.h"
 
