@@ -2,8 +2,8 @@
 #define HRIGRIDSTATE_HPP
 
 #include "API/planningAPI.hpp"
-#include "HRI_Costspace/Grid/HRICS_Grid.hpp"
-#include "HRI_Costspace/Grid/HRICS_Cell.hpp"
+#include "HRI_costspace/Grid/HRICS_Grid.hpp"
+#include "HRI_costspace/Grid/HRICS_Cell.hpp"
 
 /**
  @ingroup HRICS
