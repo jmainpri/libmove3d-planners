@@ -23,7 +23,7 @@
 #include "API/Trajectory/smoothing.hpp"
 //Warning contains boos function that conlicts with Qt
 //#include "API/Trajectory/RoboptimTrajectory.h"
-#include "API/Trajectory/CostOptimization.hpp"
+#include "API/Trajectory/costOptimization.hpp"
 #include "API/Grids/GridToGraph/gridtograph.hpp"
 #include "API/Search/GraphState.hpp"
 #include "API/Grids/ThreeDPoints.hpp"

@@ -10,15 +10,15 @@
 ## Check for the header files
 
 find_path (p3d_INCLUDE_DIR env.hpp
- PATHS /Users/jmainpri/workspace/BioMove3D/p3d  $ENV{ROBOTPKG_BASE}/include/BioMove3D/p3d/
+ PATHS /Users/jmainpri/workspace/BioMove3D-test/p3d  $ENV{ROBOTPKG_BASE}/include/BioMove3D/p3d/
  )
 
 find_path (BioMove3D_INCLUDE_DIR P3d-pkg.h
- PATHS /Users/jmainpri/workspace/BioMove3D/include $ENV{ROBOTPKG_BASE}/include/BioMove3D/include/
+ PATHS /Users/jmainpri/workspace/BioMove3D-test/include $ENV{ROBOTPKG_BASE}/include/BioMove3D/include/
  )
 
 find_library (BioMove3D_LIBRARIES BioMove3D
-  PATHS ${BioMove3D_LIB} /Users/jmainpri/workspace/BioMove3D/build_lib/Debug/lib/macintel $ENV{ROBOTPKG_BASE}/lib
+  PATHS ${BioMove3D_LIB} /Users/jmainpri/workspace/BioMove3D-test/build_lib/Debug/lib/macintel $ENV{ROBOTPKG_BASE}/lib
   )
 
 ## -----------------------------------------------------------------------------
