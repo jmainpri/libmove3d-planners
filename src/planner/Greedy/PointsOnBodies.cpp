@@ -55,6 +55,7 @@ void BodySurfaceSampler::computeObjectPointCloud(p3d_obj* obj)
 														   the_points[poly->the_faces[j].the_indexs_points[1] - 1], 
 														   the_points[poly->the_faces[j].the_indexs_points[2] - 1], m_step, &nbPoints);
 				
+#ifdef DPG
 				obj->pointCloud = MY_REALLOC(obj->pointCloud, p3d_vector3, obj->nbPointCloud, obj->nbPointCloud + nbPoints);
 				
 				for(unsigned int k = 0; k < nbPoints; k++)
@@ -64,6 +65,7 @@ void BodySurfaceSampler::computeObjectPointCloud(p3d_obj* obj)
 					obj->pointCloud[obj->nbPointCloud + k][2] = tmp[k][2];
 				}
 				obj->nbPointCloud += nbPoints;
+#endif
 				free(tmp);
 			}
 		}

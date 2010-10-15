@@ -135,7 +135,7 @@ void GridCollisionChecker::unvalidObjectCells(p3d_obj* obj)
 vector<CellCollisionChecker*> GridCollisionChecker::getCellListForObject(p3d_obj* obj, const Eigen::Transform3d& Trans)
 {
 	vector<CellCollisionChecker*> objectCells;
-	
+#ifdef DPG
 	for(unsigned int i = 0; i < obj->nbPointCloud; i++)
 	{
 		Eigen::Vector3d WSPoint;
@@ -163,11 +163,13 @@ vector<CellCollisionChecker*> GridCollisionChecker::getCellListForObject(p3d_obj
 			objectCells.push_back(cell);
 		}
 	}
+#endif
 	
 	for(unsigned int i = 0; i < objectCells.size(); i++)
 	{
 		objectCells[i]->setVisited(false);
 	}
+	
 	return objectCells;
 }
 
