@@ -12,7 +12,7 @@ using namespace Eigen;
 #include "Graphic-pkg.h"
 
 #ifdef LIGHT_PLANNER
-#include "../../lightPlanner/proto/lightPlannerApi.h"
+#include "LightPlanner-pkg.h"
 #endif
 
 //---------------------------------------------------------------------------

@@ -8,11 +8,11 @@
 #include "qtBase/SpinBoxSliderConnector_p.hpp"
 #endif
 
-#if defined( WITH_OOMOVE3D )
+#if defined( OOMOVE3D_CORE )
 #include "qtUI/qtBase/SpinBoxSliderConnector_p.hpp"
 #endif
 
-#if defined( CXX_PLANNER ) || defined( WITH_OOMOVE3D ) 
+#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
 #include "API/Device/joint.hpp"
 #include "API/ConfigSpace/configuration.hpp"
 #ifndef ROBOT_HPP
@@ -62,7 +62,7 @@ public:
 	QtShiva::SpinBoxSliderConnector* getConnector() {return mConnector;}
 	
 	
-#if defined( CXX_PLANNER ) || defined( WITH_OOMOVE3D ) 
+#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
 	Robot* getRobot() { return mRobot; }
 #endif
 	
@@ -70,7 +70,7 @@ public:
 	void dofValueChanged(double value);
 	
 private:
-#if defined( CXX_PLANNER ) || defined( WITH_OOMOVE3D ) 
+#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
 	Robot*  mRobot;
 #endif
 	
@@ -192,7 +192,7 @@ protected:
 private:
 	Ui::MoveRobot *m_ui;
 	
-#if defined( CXX_PLANNER ) || defined( WITH_OOMOVE3D ) 
+#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
 	/**
 	 * Creates a new gridLayout inside a tabWidget
 	 */

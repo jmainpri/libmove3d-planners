@@ -191,7 +191,13 @@ bool BaseExpansion::nextStep(LocalPath& path,
 		newPath = shared_ptr<LocalPath>(new LocalPath(path, pathDelta));
 		
 		if(pathDelta == 0.)
-		{ return(false); }
+		{ 
+			return false; 
+		}
+		else 
+		{
+			return true;
+		}
 	}
 	else
 	{

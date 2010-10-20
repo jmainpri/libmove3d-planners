@@ -65,7 +65,7 @@ void MoveRobot::initAllForms(GLWidget* ptrOpenGl)
 			connect(m_pageComboBox, SIGNAL(activated(int)), m_StackedLayout, SLOT(setCurrentIndex(int)));
 		}
 		
-#if defined( CXX_PLANNER ) || defined( WITH_OOMOVE3D ) 
+#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
 		Robot* ptrRob = envPt->getRobot(i);
 		
 		FormRobot* form = newGridLayoutForRobotStacked(ptrRob);
@@ -566,7 +566,7 @@ void DofSlider::dofValueChanged(double value)
 	//    robotPt = (p3d_rob*) p3d_get_desc_curid(P3D_ROBOT);
 	//    nb_dof = p3d_get_robot_ndof();
 	
-#if defined( CXX_PLANNER ) || defined( WITH_OOMOVE3D ) 
+#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
 	nb_dof =    mRobot->getRobotStruct()->nb_dof; //p3d_get_robot_ndof();
 	ir =        mRobot->getRobotStruct()->num; //p3d_get_desc_curnum(P3D_ROBOT);
 	robotPt =   mRobot->getRobotStruct(); //(p3d_rob*) p3d_get_desc_curid(P3D_ROBOT);

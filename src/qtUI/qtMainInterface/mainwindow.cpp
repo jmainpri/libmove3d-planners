@@ -1,10 +1,12 @@
 #include "mainwindow.hpp"
 #include "mainwindowGenerated.hpp"
 
-#include "cppToQt.hpp"
-#include "qtBase/SpinBoxSliderConnector_p.hpp"
-#include "qtOpenGL/glwidget.hpp"
-#include "qtOpenGL/qtMobileCamera.h"
+#include "qtUI/cppToQt.hpp"
+#include "qtUI/qtBase/SpinBoxSliderConnector_p.hpp"
+#include "qtUI/qtOpenGL/glwidget.hpp"
+#include "qtUI/qtOpenGL/qtMobileCamera.h"
+#include "qtUI/qtOpenGL/g3dQtConnection.hpp"
+
 #include "mainwindowTestFunctions.hpp"
 
 #include "P3d-pkg.h"
@@ -37,7 +39,7 @@
 #include "cost_space.hpp"
 #endif
 
-#if defined( WITH_OOMOVE3D ) 
+#if defined( OOMOVE3D_CORE ) 
 #include "utils/testModel.hpp"
 #include "utils/SaveContext.hpp"
 #include "planner/cost_space.hpp"

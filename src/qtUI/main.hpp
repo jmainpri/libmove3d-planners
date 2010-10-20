@@ -1,21 +1,12 @@
 #ifndef MAIN_HPP
 #define MAIN_HPP
 
-#if defined( QT_LIBRARY ) && defined( CXX_PLANNER ) 
-#include "qtLibrary.hpp"
-#endif
-
-#if defined( QT_LIBRARY ) && defined( WITH_OOMOVE3D )
+#if defined( QT_LIBRARY ) && defined( OOMOVE3D_CORE )
 #include "qtUI/qtLibrary.hpp"
 #endif
 
-#if defined( QT_GL ) && defined( CXX_PLANNER ) 
-#include "qtOpenGL/qtGLWindow.hpp"
-#endif
-
-#if defined( QT_GL ) && defined( WITH_OOMOVE3D )
+#if defined( QT_GL ) && defined( OOMOVE3D_CORE )
 #include "qtUI/qtOpenGL/qtGLWindow.hpp"
-#include "qtUI/qtOpenGL/Widget.hpp"
 #endif
 
 /**

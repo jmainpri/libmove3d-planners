@@ -191,7 +191,8 @@ bool TreePlanner::checkStopConditions()
 	if ((int)m_nbConscutiveFailures > ENV.getInt(Env::NbTry))
 	{
 		cout
-		<< "Failure: the maximum number of consecutive failures to expand a component is reached."
+		<< "Failure: the maximum number of consecutive failures (" << m_nbConscutiveFailures 
+		<< ") to expand a component is reached."
 		<< endl;
 		return (true);
 	}

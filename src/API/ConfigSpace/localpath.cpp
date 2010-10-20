@@ -9,15 +9,8 @@
 // Copyright: See COPYING file that comes with this distribution
 //
 //
-#if defined( CXX_PLANNER )
-#include "API/planningAPI.hpp"
-#include "cost_space.hpp"
-#endif
-
-#if defined( WITH_OOMOVE3D )
 #include "planner/cost_space.hpp"
 #include "API/planningAPI.hpp"
-#endif
 
 #include "P3d-pkg.h"
 #include "Localpath-pkg.h"
@@ -167,11 +160,14 @@ LocalPath::LocalPath(Robot* R, p3d_localpath* lpPtr) :
   }
 }
 
+
 LocalPath::~LocalPath()
 {
+	//configAtParam(0);
+	
   if (_LocalPath)
   {
-    _LocalPath->destroy(_Robot->getRobotStruct(), _LocalPath);
+    getLocalpathStruct()->destroy(_Robot->getRobotStruct(), getLocalpathStruct());
   }
 }
 
@@ -180,8 +176,23 @@ p3d_localpath* LocalPath::getLocalpathStruct()
 {
 	if (!_LocalPath)
 	{
-		_LocalPath = p3d_local_planner(_Robot->getRobotStruct(),
-				_Begin->getConfigStruct(), _End->getConfigStruct());
+		//cout << "local palnner is " << p3d_local_planner << endl;
+		
+		//printf("LP : destroy is : %p\n",_LocalPath->destroy);
+//		printf("LP : Local path is : %p\n",_LocalPath);
+		
+		_LocalPath = p3d_local_planner(
+																	 _Robot->getRobotStruct(),
+																	 _Begin->getConfigStruct(), 
+																	 _End->getConfigStruct());
+		
+//		printf("-----------------------------------\n");
+//		printf("LP : Local path is : %p\n",_LocalPath);
+//		printf("LP : destroy is : %p\n",_LocalPath->destroy);
+//		printf("LP : length_lp is : %f\n",_LocalPath->length_lp);
+//		
+//		
+//		configAtParam(0)->print();
 
 		if (_LocalPath)
 		{
@@ -238,6 +249,8 @@ shared_ptr<Configuration> LocalPath::getLastValidConfig(double& p)
 
 bool LocalPath::classicTest()
 {
+	//printf("Classic test\n");
+	
 	if (!_lastValidEvaluated)
 	{
 		if (_lastValidConfig == NULL)
@@ -256,6 +269,12 @@ bool LocalPath::classicTest()
 		
 		_Evaluated = true;
 		_lastValidEvaluated = true;
+		
+		if (getNbColTest()>0) 
+		{
+			printf("Nb Of Call test : %d\n",getNbColTest());
+			printf("Valid is : %d\n",_Valid);
+		}
 	}
 	return(_Valid);
 }
@@ -283,7 +302,13 @@ bool LocalPath::isValid()
 		}
 		_NbColTest++;
 		//cout << "_NbColTest = " << _NbColTest << endl;
+		
 		_Evaluated = true;
+		
+		if (getNbColTest()>0) 
+		{
+			printf("Nb Of Call test : %d\n",getNbColTest());
+		}
 	}
 	return _Valid;
 }

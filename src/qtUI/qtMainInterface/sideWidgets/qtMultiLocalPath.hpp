@@ -18,7 +18,7 @@
 
 #endif
 
-#if defined( WITH_OOMOVE3D )
+#if defined( OOMOVE3D_CORE )
 
 #include "qtUI/qtLibrary.hpp"
 #include "qtUI/qtMainInterface/mainwindow.hpp"

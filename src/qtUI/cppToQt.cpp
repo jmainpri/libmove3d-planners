@@ -125,7 +125,7 @@ void qt_runDiffusion()
 		cout << "ENV.getBool(Env::Env::treePlannerIsEST) = " << ENV.getBool(Env::treePlannerIsEST) << endl;
 		if (ENV.getBool(Env::treePlannerIsEST))
 		{
-#if defined( CXX_PLANNER ) || defined( WITH_OOMOVE3D )
+#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE )
 			res = p3d_run_est(XYZ_GRAPH, fct_stop, fct_draw);
 		}
 		else

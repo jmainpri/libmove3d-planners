@@ -10,7 +10,7 @@
 #include "cost_space.hpp"
 #endif
 
-#if defined( WITH_OOMOVE3D )
+#if defined( OOMOVE3D_CORE )
 #include "planner/cost_space.hpp"
 #endif
 

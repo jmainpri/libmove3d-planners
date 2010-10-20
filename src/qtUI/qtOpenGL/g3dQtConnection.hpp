@@ -16,6 +16,12 @@ class GLWidget;
 
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
+#include <QtCore/QWaitCondition>
+#include <QtCore/QMutex>
+
+extern QWaitCondition* waitDrawAllWin;
+extern QMutex* lockDrawAllWin;
+
 
 /**
   * @ingroup qtWindow
@@ -36,7 +42,7 @@ public:
 
 	void setIsNotTimeControlled(bool value);
 
-        void reinitGraphics();
+	void reinitGraphics();
 
 private slots:
 	void releaseLockIfWating();
@@ -45,7 +51,7 @@ signals:
 	void activate_qt_gl_window(void);
 	void add_current_image_vector(void);
 	void save_image_vector_to_disk(void);
-        void g3d_reinit_graphics_called(void);
+  void g3d_reinit_graphics_called(void);
 
 private:
 	GLWidget *_glWidget;
@@ -53,5 +59,7 @@ private:
 	bool _isWatingForTimer;
 	bool _isNotTimeControlled;
 };
+
+extern Move3D2OpenGl* pipe2openGl;
 
 #endif /* G3D_QT_CONNECTION_HPP_ */

@@ -9,7 +9,7 @@
  *  Copyright 2009 mainprice@gmail.com All rights reserved.
  *
  */
-#if defined( CXX_PLANNER ) ||  defined( WITH_OOMOVE3D )
+#if defined( CXX_PLANNER ) ||  defined( OOMOVE3D_CORE )
 #include "API/planningAPI.hpp"
 #endif
 

@@ -16,7 +16,7 @@
 
 #endif
 
-#if defined( WITH_OOMOVE3D )
+#if defined( OOMOVE3D_CORE )
 
 #include "qtUI/qtLibrary.hpp"
 #include "planner/plannerFunctions.hpp"

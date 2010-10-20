@@ -166,6 +166,13 @@ FIND_PACKAGE(Boost REQUIRED)
 INCLUDE_directories(/opt/local/include/)        
 SET(INCLUDE_DIRS ${INCLUDE_DIRS} /opt/local/include/ ${BOOST_INCLUDE_DIRS})
 
+#-------------- GBM ------------------------------------------------------------
+IF(MULTILOCALPATH)
+FIND_PACKAGE(GBM REQUIRED)
+INCLUDE_directories(${GBM_INCLUDE_DIR})
+  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GBM_INCLUDE_DIR})
+SET(LIBS ${LIBS} ${GBM_LIBRARIES})
+ENDIF(MULTILOCALPATH)
 
 #-------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -217,8 +224,10 @@ OOMove3D_flag(P3D_COLLISION_CHECKING "Compilation with module Collision Checking
 OOMove3D_flag(P3D_LOCALPATH "Compilation with module Localpath" ON)
 OOMove3D_flag(P3D_PLANNER "Compilation with module Planner" ON)
 OOMove3D_flag(LIGHT_PLANNER "Compilation with module Light Planner" ON)
+OOMove3D_flag(MULTILOCALPATH "Compilation with module Multilocalpath" ON)
+OOMove3D_flag(USE_GBM "Compilation with module Multilocalpath" ON)
 
-OOMove3D_flag(WITH_OOMOVE3D "Compiles the planning API and planners" ON)
+OOMove3D_flag(OOMOVE3D_CORE "Compiles the planning API and planners" ON)
 
 OOMove3D_flag(HRI_COSTSPACE "With the hri work" ON)
 

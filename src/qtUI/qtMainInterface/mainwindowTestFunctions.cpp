@@ -14,7 +14,7 @@
 #include <tr1/memory>
 #include <vector>
 
-#if defined( CXX_PLANNER ) || defined( WITH_OOMOVE3D ) 
+#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
 #include "testModel.hpp"
 #include "SaveContext.hpp"
 #include "API/Device/robot.hpp"

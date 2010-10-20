@@ -16,7 +16,6 @@ class Move3D2OpenGl;
 
 #ifndef WITH_XFORMS
 #include "Graphic-pkg.h"
-#include "qtOpenGL/Widget.hpp"
 #endif
 
 /**
@@ -36,6 +35,7 @@ public:
 	void resetImageVector();
 	void setThreadWorking(bool isWorking);
 	void newG3dWindow();
+	void initG3DFunctions();
 
 public slots:
 	void saveView();

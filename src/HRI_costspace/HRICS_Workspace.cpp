@@ -23,7 +23,7 @@
 #include "Planner-pkg.h"
 
 #ifdef LIGHT_PLANNER
-#include "lightPlannerApi.h"
+#include "LightPlanner-pkg.h"
 #endif
 
 #ifdef HRI_PLANNER

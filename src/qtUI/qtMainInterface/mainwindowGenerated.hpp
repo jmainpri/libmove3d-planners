@@ -52,7 +52,7 @@
 #include "qtMultiLocalPath.hpp"
 #endif
 
-#if defined( WITH_OOMOVE3D )
+#if defined( OOMOVE3D_CORE )
 
 #include "qtUI/qtOpenGL/glwidget.hpp"
 

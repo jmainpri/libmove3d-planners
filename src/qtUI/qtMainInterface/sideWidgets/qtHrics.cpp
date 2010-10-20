@@ -768,11 +768,11 @@ void HricsWidget::make3DHriGrid()
 	if( ENV.getBool(Env::HRIAutoLoadGrid) )
 	{
 		// Reads a traj from a file
-		string filename("/Users/jmainpri/workspace/BioMove3DDemos/CostHriFunction/JidoTrajectory/JidoK.traj");
-		qt_fileName = filename.c_str();
-		qt_readTraj();
+//		string filename("/Users/jmainpri/workspace/BioMove3DDemos/CostHriFunction/JidoTrajectory/JidoK.traj");
+//		qt_fileName = filename.c_str();
+//		qt_readTraj();
 		
-		QString fileName("./Cost3DGrids/Cost3DGrid.grid");
+		QString fileName(".statFiles/Cost3DGrids/Cost3DGrid.grid");
 		
 		// Reads the grid from XML and sets it ti the HRICS_MotionPL
 		qt_load_HRICS_Grid(fileName.toStdString());

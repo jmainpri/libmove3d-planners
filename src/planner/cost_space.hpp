@@ -72,6 +72,11 @@ private:
 	
 };
 
+namespace GlobalCostSpace 
+{
+	void initialize();
+};
+
 extern CostSpace* global_costSpace;
 
 double computeIntersectionWithGround(Configuration& conf);

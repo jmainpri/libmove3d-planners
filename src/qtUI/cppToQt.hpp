@@ -19,7 +19,7 @@
 #include "MultiRun.hpp"
 #endif
 
-#if defined( WITH_OOMOVE3D ) 
+#if defined( OOMOVE3D_CORE ) 
 #include "planner/plannerFunctions.hpp"
 #include "utils/MultiRun.hpp"
 #endif

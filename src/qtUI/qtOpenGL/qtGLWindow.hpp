@@ -12,7 +12,7 @@
 #include "qtLibrary.hpp"
 #endif
 
-#ifdef WITH_OOMOVE3D
+#ifdef OOMOVE3D_CORE
 #include "qtUI/qtLibrary.hpp"
 #endif
 

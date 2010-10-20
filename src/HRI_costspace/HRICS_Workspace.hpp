@@ -16,7 +16,7 @@
 #include "Diffusion/RRT.hpp"
 #endif
 
-#if defined( WITH_OOMOVE3D )
+#if defined( OOMOVE3D_CORE )
 #include "API/planningAPI.hpp"
 #include "planner/planner.hpp"
 #include "planner/Diffusion/RRT.hpp"

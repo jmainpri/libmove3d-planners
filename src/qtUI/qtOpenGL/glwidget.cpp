@@ -3,8 +3,12 @@
  */
 
 #include "glwidget.hpp"
-#include "qtMainInterface/mainwindow.hpp"
-#include "qtMainInterface/mainwindowGenerated.hpp"
+
+#include "qtUI/qtMainInterface/mainwindow.hpp"
+#include "qtUI/qtMainInterface/mainwindowGenerated.hpp"
+#include "qtUI/qtOpenGL/g3dQtConnection.hpp"
+
+#include "API/Graphic/drawModule.hpp"
 
 #include "P3d-pkg.h"
 #include "Move3d-pkg.h"
@@ -48,9 +52,7 @@ QGLWidget(parent)
 	_isThreadWorking = false;
 	_light = false;
 	
-	ext_get_win_mouse = (void (*) (int*,int*))(qt_get_win_mouse);
-	ext_g3d_draw_allwin_active = (void (*)())(qt_draw_allwin_active);
-	ext_calc_cam_param = (void (*) () )(qt_ui_calc_param);
+	initG3DFunctions();
 	
 	
 #ifndef WITH_XFORMS
@@ -129,6 +131,63 @@ void GLWidget::saveView()
 }
 
 // -------------------------------------------------------
+// Initialize G3D functions
+// -------------------------------------------------------
+
+// Mode for rotation translation 
+// control of the camera frame
+int mouse_mode = 0;
+
+// place on the screen
+int _i; int _j;
+
+void qt_get_win_mouse(int* i, int* j)
+{
+	*i = _i;
+	*j = _j;
+}
+
+void qt_draw_allwin_active()
+{
+	if(pipe2openGl)
+	{
+		pipe2openGl->update();
+	}
+}
+
+void qt_ui_calc_param(g3d_cam_param& p)
+{
+	p3d_vector4 Xc, Xw;
+	p3d_vector4 up;
+	
+	calc_cam_param(G3D_WIN, p.Xc, p.Xw);
+	
+	if (G3D_WIN)
+	{
+		p3d_matvec4Mult(*G3D_WIN->cam_frame, G3D_WIN->vs.up, up);
+	}
+	else
+	{
+		up[0] = 0;
+		up[1] = 0;
+		up[2] = 1;
+	}
+	
+	p.up[0] = up[0];
+	p.up[1] = up[1];
+	p.up[2] = up[2];
+}
+
+void GLWidget::initG3DFunctions()
+{
+	ext_get_win_mouse = (void (*) (int*,int*))(qt_get_win_mouse);
+	ext_g3d_draw_allwin_active = (void (*)())(qt_draw_allwin_active);
+	ext_calc_cam_param = (void (*) (g3d_cam_param&) )(qt_ui_calc_param);
+	
+	Graphic::initDrawFunctions();
+}
+
+// -------------------------------------------------------
 // Paint functions
 // -------------------------------------------------------
 void GLWidget::initializeGL()
@@ -197,9 +256,9 @@ void GLWidget::setThreadWorking(bool isWorking)
 }
 
 // Camera vectors
-p3d_vector4 JimXc;
-p3d_vector4 JimXw;
-p3d_vector4 Jimup;
+//p3d_vector4 JimXc;
+//p3d_vector4 JimXw;
+//p3d_vector4 Jimup;
 
 void GLWidget::paintGL()
 {
@@ -228,19 +287,20 @@ void GLWidget::paintGL()
 	p3d_vector4 up;
 	
 	//	computeNewVectors(Xc,Xw,up);
-	qt_calc_cam_param();
+	g3d_cam_param p;
+	qt_ui_calc_param(p);
 	
-	Xc[0] = JimXc[0];
-	Xc[1] = JimXc[1];
-	Xc[2] = JimXc[2];
+	Xc[0] = p.Xc[0];
+	Xc[1] = p.Xc[1];
+	Xc[2] = p.Xc[2];
 	
-	Xw[0] = JimXw[0];
-	Xw[1] = JimXw[1];
-	Xw[2] = JimXw[2];
+	Xw[0] = p.Xw[0];
+	Xw[1] = p.Xw[1];
+	Xw[2] = p.Xw[2];
 	
-	up[0] = Jimup[0];
-	up[1] = Jimup[1];
-	up[2] = Jimup[2];
+	up[0] = p.up[0];
+	up[1] = p.up[1];
+	up[2] = p.up[2];
 	
 	gluLookAt(Xc[0], Xc[1], Xc[2], Xw[0], Xw[1], Xw[2], up[0], up[1], up[2]);
 	
@@ -366,60 +426,6 @@ void GLWidget::computeNewVectors(p3d_vector4& Xc, p3d_vector4& Xw,
 // -------------------------------------------------------
 // Mouse board events
 // -------------------------------------------------------
-
-// Mode for rotation translation 
-// control of the camera frame
-int mouse_mode = 0;
-
-// place on the screen
-int _i; int _j;
-
-void qt_get_win_mouse(int* i, int* j)
-{
-	*i = _i;
-	*j = _j;
-}
-
-#ifdef WITH_OOMOVE3D
-void qt_draw_allwin_active()
-{
-	if(pipe2openGl)
-	{
-		pipe2openGl->update();
-	}
-}
-
-void qt_ui_calc_param()
-{
-	p3d_vector4 Xc, Xw;
-	p3d_vector4 up;
-	
-	calc_cam_param(G3D_WIN, Xc, Xw);
-	
-	JimXc[0] = Xc[0];
-	JimXc[1] = Xc[1];
-	JimXc[2] = Xc[2];
-	
-	JimXw[0] = Xw[0];
-	JimXw[1] = Xw[1];
-	JimXw[2] = Xw[2];
-	
-	if (G3D_WIN)
-	{
-		p3d_matvec4Mult(*G3D_WIN->cam_frame, G3D_WIN->vs.up, up);
-	}
-	else
-	{
-		up[0] = 0;
-		up[1] = 0;
-		up[2] = 1;
-	}
-	
-	Jimup[0] = up[0];
-	Jimup[1] = up[1];
-	Jimup[2] = up[2];
-}
-#endif
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {

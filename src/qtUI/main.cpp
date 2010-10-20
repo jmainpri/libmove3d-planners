@@ -5,7 +5,7 @@
 #include "main.hpp"
 #include "cppToQt.hpp"
 
-#if defined( WITH_OOMOVE3D ) || defined( CXX_PLANNER )
+#if defined( OOMOVE3D_CORE ) || defined( CXX_PLANNER )
 #include "API/scene.hpp"
 #include "API/project.hpp"
 #endif
@@ -15,6 +15,7 @@
 #include <QDesktopWidget>
 
 #ifdef QT_GL
+#include "qtUI/qtOpenGL/g3dQtConnection.hpp"
 QSemaphore* sem;
 GLWidget* openGlWidget;
 #endif
@@ -85,10 +86,12 @@ int Main_threads::run(int argc, char** argv)
     waitDrawAllWin = new QWaitCondition();
     lockDrawAllWin = new QMutex();
 #endif
+	
 
-#if defined( CXX_PLANNER ) || defined( WITH_OOMOVE3D )
-	global_Project = new Project(new Scene(XYZ_ENV));
-#endif
+// Done in mainMhp
+//#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE )
+//	global_Project = new Project(new Scene(XYZ_ENV));
+//#endif
 	
 #ifdef QT_UI_XML_FILES
 	MainWindow w;

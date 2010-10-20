@@ -20,7 +20,7 @@
 #include "Collision-pkg.h"
 #endif
 
-#if defined( CXX_PLANNER ) || defined( WITH_OOMOVE3D ) 
+#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
 #include "MultiRun.hpp"
 #include "SaveContext.hpp"
 #include "testModel.hpp"
@@ -33,7 +33,7 @@
 #endif
 
 #ifdef LIGHT_PLANNER
-#include "lightPlannerApi.h"
+#include "LightPlanner-pkg.h"
 #endif
 
 using namespace std;

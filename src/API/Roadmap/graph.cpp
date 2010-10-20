@@ -21,8 +21,9 @@
 #include "Planner-pkg.h"
 #include "Move3d-pkg.h"
 
+
 #ifdef LIGHT_PLANNER
-#include "lightPlanner/proto/lightPlannerApi.h"
+#include "LightPlanner-pkg.h"
 #endif
 
 #include <boost/config.hpp>

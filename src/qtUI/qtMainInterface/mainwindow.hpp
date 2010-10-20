@@ -17,7 +17,7 @@
 
 #endif
 
-#if defined( WITH_OOMOVE3D )
+#if defined( OOMOVE3D_CORE )
 
 #include "qtUI/qtMainInterface/kcdpropertieswindow.hpp"
 #include "qtUI/qtBase/qt_widgets.hpp"

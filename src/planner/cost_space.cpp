@@ -12,8 +12,30 @@
 
 #include <algorithm>
 
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+
+extern void* GroundCostObj;
+
 using namespace std;
 using namespace tr1;
+
+void GlobalCostSpace::initialize()
+{
+	// initialize the cost function object.
+	global_costSpace = new CostSpace();
+	
+	std::cout << "Initializing the dist to obst costmap cost function" << std::endl;
+	global_costSpace->addCost("costDistToObst",boost::bind(computeDistanceToObstacles, _1));
+	global_costSpace->setCost("costDistToObst");
+	
+	if(GroundCostObj)
+	{
+		std::cout << "Initializing the 2d costmap cost function" << std::endl;
+		global_costSpace->addCost("costMap2D",boost::bind(computeIntersectionWithGround, _1));
+		global_costSpace->setCost("costMap2D");
+	}
+}
 
 //using std::string;
 //------------------------------------------------------------------------------
