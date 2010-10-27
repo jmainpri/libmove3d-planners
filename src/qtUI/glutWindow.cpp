@@ -10,7 +10,7 @@
 #include "glutWindow.hpp"
 
 #include "Graphic-pkg.h"
-#include "Move3D-pkg.h"
+#include "Move3d-pkg.h"
 
 #include "qtUI/qtOpenGL/glwidget.hpp"
 
