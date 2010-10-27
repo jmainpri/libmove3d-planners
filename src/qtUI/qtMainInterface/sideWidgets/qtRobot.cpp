@@ -495,7 +495,7 @@ void Manipulationthread::run()
 	//         manipulation->setCameraImageSize(200, 200);
 	
 	std::vector <MANPIPULATION_TRAJECTORY_CONF_STR> confs;
-	std::vector <MANPIPULATION_TRAJECTORY_STR> segments;
+	std::vector <SM_TRAJ> smTrajs;
 	
 	cout << "Selected object is : " << ENV.getString(Env::ObjectToCarry).toStdString() << endl;
 	
@@ -511,7 +511,7 @@ void Manipulationthread::run()
 	manipulation->armPlanTask(ARM_PICK_GOTO,0,
 														manipulation->robotStart(), 
 														manipulation->robotGoto(), 
-														OBJECT_NAME, (char*)"", confs, segments);
+														OBJECT_NAME, (char*)"", confs, smTrajs);
 	
 	//	g3d_win *win= NULL;
 	//	win= g3d_get_cur_win();

@@ -135,10 +135,11 @@ ENDIF(APPLE)
 
 #-------------- Glut -----------------------------------------------------------
 
+IF(USE_GLUT)
 FIND_PACKAGE (GLUT REQUIRED glut)
 INCLUDE_directories (${GLUT_INCLUDE_DIR})
 SET (LIBS ${LIBS} ${GLUT_glut_LIBRARY})
-
+ENDIF()
 
 #-------------- Move3D ---------------------------------------------------------
 
@@ -261,7 +262,9 @@ OOMove3D_flag(P3D_PLANNER "Compilation with module Planner" ON)
 OOMove3D_flag(LIGHT_PLANNER "Compilation with module Light Planner" ON)
 OOMove3D_flag(GRASP_PLANNING "Compilation with module Manipulation Planner" ON)
 OOMove3D_flag(MULTILOCALPATH "Compilation with module Multilocalpath" ON)
+
 OOMove3D_flag(USE_GBM "Compilation with module Multilocalpath" ON)
+OOMove3D_flag(USE_GLUT "Compilation with a glut window" OFF)
 
 OOMove3D_flag(OOMOVE3D_CORE "Compiles the planning API and planners" ON)
 
