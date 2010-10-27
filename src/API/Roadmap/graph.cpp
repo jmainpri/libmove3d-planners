@@ -1819,6 +1819,9 @@ bool Graph::linkToAllNodes(Node* newN)
 	return p3d_all_link_node(newN->getNodeStruct(), m_Graph);
 }
 
+/**
+ *Check if two nodes are linked using the collision checking method
+ */
 bool Graph::areNodesLinked(Node* node1, Node* node2, double & dist)
 {	
 	// copy of the function p3d_APInode_linked
@@ -1833,8 +1836,11 @@ bool Graph::areNodesLinked(Node* node1, Node* node2, double & dist)
 	
 	
   if (LP->getParamMax() != 0.0 )
+	{
 		dist = LP->getParamMax();
-  else{
+	}
+  else
+	{
 		PrintInfo(("Warning: created an edge with \
 							 a 0 distance: no localpathPt->length \n"));
 		dist = 0;
@@ -1858,7 +1864,8 @@ bool Graph::areNodesLinked(Node* node1, Node* node2, double & dist)
 	
 	delete LP;
 	
-  if(m_Graph){
+  if(m_Graph)
+	{
     m_Graph->nb_local_call = m_Graph->nb_local_call + 1;
     m_Graph->nb_test_coll = m_Graph->nb_test_coll + ntest;
   }

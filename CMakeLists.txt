@@ -133,6 +133,13 @@ ELSE(APPLE)
   SET(LIBS ${LIBS} ${OPENGL_LIBRARIES})
 ENDIF(APPLE)
 
+#-------------- Glut -----------------------------------------------------------
+
+FIND_PACKAGE (GLUT REQUIRED glut)
+INCLUDE_directories (${GLUT_INCLUDE_DIR})
+SET (LIBS ${LIBS} ${GLUT_glut_LIBRARY})
+
+
 #-------------- Move3D ---------------------------------------------------------
 
 FIND_PACKAGE(OOMOVE3D-CORE REQUIRED)
@@ -173,6 +180,34 @@ INCLUDE_directories(${GBM_INCLUDE_DIR})
   SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GBM_INCLUDE_DIR})
 SET(LIBS ${LIBS} ${GBM_LIBRARIES})
 ENDIF(MULTILOCALPATH)
+
+#-------------- Grasp Planner --------------------------------------------------
+
+IF(GRASP_PLANNING)
+  #FIND_PACKAGE(GLPK REQUIRED)
+  #INCLUDE_directories(${GLPK_INCLUDE_DIR})
+  #SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GLPK_INCLUDE_DIR})
+  #SET(LIBS ${LIBS} ${GLPK_LIBRARIES})
+  #
+  #FIND_PACKAGE(QHULL REQUIRED)
+  #INCLUDE_directories(${QHULL_INCLUDE_DIR})
+  #SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${QHULL_INCLUDE_DIR})
+  #SET(LIBS ${LIBS} ${QHULL_LIBRARIES})
+  
+  FIND_PACKAGE(GLIBCONFIG REQUIRED)
+  INCLUDE_directories(${GLIBCONFIG_INCLUDE_DIR})
+  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GLIBCONFIG_INCLUDE_DIR})
+  
+  FIND_PACKAGE(GLIB REQUIRED)
+  INCLUDE_directories(${GLIB_INCLUDE_DIR})
+  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GLIB_INCLUDE_DIR})
+  SET(LIBS ${LIBS} ${GLIB_LIBRARIES})
+
+  FIND_PACKAGE(GTS REQUIRED)
+  INCLUDE_directories(${GTS_INCLUDE_DIR})
+  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GTS_INCLUDE_DIR})
+  SET(LIBS ${LIBS} ${GTS_LIBRARIES})
+ENDIF(GRASP_PLANNING)
 
 #-------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -224,12 +259,14 @@ OOMove3D_flag(P3D_COLLISION_CHECKING "Compilation with module Collision Checking
 OOMove3D_flag(P3D_LOCALPATH "Compilation with module Localpath" ON)
 OOMove3D_flag(P3D_PLANNER "Compilation with module Planner" ON)
 OOMove3D_flag(LIGHT_PLANNER "Compilation with module Light Planner" ON)
+OOMove3D_flag(GRASP_PLANNING "Compilation with module Manipulation Planner" ON)
 OOMove3D_flag(MULTILOCALPATH "Compilation with module Multilocalpath" ON)
 OOMove3D_flag(USE_GBM "Compilation with module Multilocalpath" ON)
 
 OOMove3D_flag(OOMOVE3D_CORE "Compiles the planning API and planners" ON)
 
 OOMove3D_flag(HRI_COSTSPACE "With the hri work" ON)
+OOMove3D_flag(HRI_GENERALIZED_IK "With the hri work done in BioMove3D" ON)
 
 OOMove3D_CheckCompilationFlags()
 
@@ -367,8 +404,8 @@ ELSEIF(${CMAKE_BUILD_TYPE} MATCHES "Release")
   ADD_DEFINITIONS(-O2 -Wall -Wno-unknown-pragmas)
 ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
-ADD_LIBRARY(ooMove3D-motionPlanner SHARED ${OOMove3D_src} ${OOMove3D_QT_MOC} ${OOMove3D_QT_UI_HEADERS} ${OOMove3D_inc})
-TARGET_LINK_LIBRARIES(ooMove3D-motionPlanner ${LIBS} m)
+ADD_LIBRARY(Move3D-motionPlanner SHARED ${OOMove3D_src} ${OOMove3D_QT_MOC} ${OOMove3D_QT_UI_HEADERS} ${OOMove3D_inc})
+TARGET_LINK_LIBRARIES(Move3D-motionPlanner ${LIBS} m)
 
 #ADD_EXECUTABLE(move3d ${BioMove3D_SOURCE_DIR}/move3d/move3d.c ${OOMove3D_inc})
 #TARGET_LINK_LIBRARIES(move3d OOMove3D ${LIBS} m)
@@ -380,9 +417,9 @@ IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   SET(CMAKE_INSTALL_PREFIX "${OOMove3D_BINARY_DIR}/install" CACHE PATH "OOMove3D install prefix" FORCE)
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
-INSTALL(TARGETS ooMove3D-motionPlanner
+INSTALL(TARGETS Move3D-motionPlanner
         RUNTIME DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE CONFIGURATIONS ${CMAKE_BUILD_TYPE}
         LIBRARY DESTINATION lib PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ CONFIGURATIONS ${CMAKE_BUILD_TYPE})
 	
-INSTALL(DIRECTORY ${OOMove3D_SOURCE_DIRECTORIES} DESTINATION include/ooMove3D-motionPlanner FILES_MATCHING REGEX "\\.[h|hpp]")
+INSTALL(DIRECTORY ${OOMove3D_SOURCE_DIRECTORIES} DESTINATION include/Move3D-motionPlanner FILES_MATCHING REGEX "\\.[h|hpp]")
  

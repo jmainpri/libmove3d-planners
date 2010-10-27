@@ -270,11 +270,11 @@ bool LocalPath::classicTest()
 		_Evaluated = true;
 		_lastValidEvaluated = true;
 		
-		if (getNbColTest()>0) 
-		{
-			printf("Nb Of Call test : %d\n",getNbColTest());
-			printf("Valid is : %d\n",_Valid);
-		}
+//		if (getNbColTest()>0) 
+//		{
+//			printf("Nb Of Call test : %d\n",getNbColTest());
+//			printf("Valid is : %d\n",_Valid);
+//		}
 	}
 	return(_Valid);
 }
@@ -305,10 +305,10 @@ bool LocalPath::isValid()
 		
 		_Evaluated = true;
 		
-		if (getNbColTest()>0) 
-		{
-			printf("Nb Of Call test : %d\n",getNbColTest());
-		}
+//		if (getNbColTest()>0) 
+//		{
+//			printf("Nb Of Call test : %d\n",getNbColTest());
+//		}
 	}
 	return _Valid;
 }

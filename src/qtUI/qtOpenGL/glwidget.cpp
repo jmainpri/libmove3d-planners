@@ -143,6 +143,7 @@ int _i; int _j;
 
 void qt_get_win_mouse(int* i, int* j)
 {
+	//cout << "qt_get_win_mouse" <<  endl;
 	*i = _i;
 	*j = _j;
 }
@@ -157,7 +158,7 @@ void qt_draw_allwin_active()
 
 void qt_ui_calc_param(g3d_cam_param& p)
 {
-	p3d_vector4 Xc, Xw;
+	//cout << "qt_ui_calc_param" <<  endl;
 	p3d_vector4 up;
 	
 	calc_cam_param(G3D_WIN, p.Xc, p.Xw);

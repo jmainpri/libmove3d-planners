@@ -106,7 +106,7 @@ bool TreePlanner::preConditions()
 	{
 		if( _Goal->getConfiguration()->isOutOfBounds() )
 		{
-			cout << "TreePlanner::preConditions => Goal in collision" << endl;
+			cout << "TreePlanner::preConditions => Goal in out of bounds" << endl;
 			return false;
 		}
 		

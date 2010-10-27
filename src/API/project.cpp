@@ -8,7 +8,7 @@
 //
 // Copyright: See COPYING file that comes with this distribution
 //
-//
+
 #include "project.hpp"
 #include "scene.hpp"
 
@@ -36,7 +36,6 @@ Project::Project(Scene* sc)
 	PlanParam::doubleParameter,
 	PlanParam::stringParameter,
 	PlanParam::vectorParameter>(PlanEnv);
-	
 }
 
 Project::~Project()

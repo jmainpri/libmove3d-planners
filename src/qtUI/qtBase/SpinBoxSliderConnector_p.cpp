@@ -19,7 +19,7 @@
 
 #include "SpinBoxSliderConnector_p.hpp"
 
-#include "planEnvironment.hpp"
+#include "planner/planEnvironment.hpp"
 
 #include <iostream>
 #include <limits>

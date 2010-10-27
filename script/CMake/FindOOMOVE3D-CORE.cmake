@@ -10,15 +10,15 @@
 ## Check for the header files
 
 find_path (p3d_INCLUDE_DIR env.hpp
- PATHS /Users/jmainpri/workspace/ooMove3d-core/p3d  $ENV{ROBOTPKG_BASE}/include/ooMove3D-core/p3d/ /usr/local/include/ooMove3D-core/p3d
+ PATHS /Users/jmainpri/workspace/BioMove3D/p3d  $ENV{ROBOTPKG_BASE}/include/Move3D-core/p3d/ /usr/local/include/Move3D-core/p3d
  )
 
 find_path (OOMOVE3D-CORE_INCLUDE_DIR P3d-pkg.h
- PATHS /Users/jmainpri/workspace/ooMove3d-core/include $ENV{ROBOTPKG_BASE}/include/ooMove3D-core/include/ /usr/local/include/ooMove3D-core/include
+ PATHS /Users/jmainpri/workspace/BioMove3D/include $ENV{ROBOTPKG_BASE}/include/Move3D-core/include/ /usr/local/include/Move3D-core/include
  )
 
-find_library (OOMOVE3D-CORE_LIBRARIES ooMove3D-core
-  PATHS ${OOMOVE3D-CORE_LIB} /Users/jmainpri/workspace/ooMove3d-core/build_lib/Debug/lib/macintel $ENV{ROBOTPKG_BASE}/lib /usr/local/lib
+find_library (OOMOVE3D-CORE_LIBRARIES Move3D-core
+  PATHS ${OOMOVE3D-CORE_LIB} /Users/jmainpri/workspace/BioMove3D/build_lib/Debug/lib/macintel $ENV{ROBOTPKG_BASE}/lib /usr/local/lib
   )
 message(blalbla)
 message(${p3d_INCLUDE_DIR})

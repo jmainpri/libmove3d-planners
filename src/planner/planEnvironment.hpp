@@ -11,10 +11,10 @@
 // Module planner
 //**********************************************************
 
-#include "ParametersEnv.hpp"
-
 #ifndef PLAN_ENVIRONMENT_HPP
 #define PLAN_ENVIRONMENT_HPP
+
+#include "ParametersEnv.hpp"
 
 bool Env_stopUser();
 

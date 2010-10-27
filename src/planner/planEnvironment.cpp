@@ -76,7 +76,7 @@ void initPlannerParameters()
 	// Double
 	// ------------------------------------------------------------------
 	// Post-processing phaze
-	myDoubleMap.insert( std::make_pair( PlanParam::optimTimeLimit,	new doubleContainer(10.0)));
+	myDoubleMap.insert( std::make_pair( PlanParam::optimTimeLimit,	new doubleContainer(1.0)));
 	myDoubleMap.insert( std::make_pair( PlanParam::MaxFactor,				new doubleContainer(4.0)));
 	myDoubleMap.insert( std::make_pair( PlanParam::MinStep,					new doubleContainer(1.0)));
 	myDoubleMap.insert( std::make_pair( PlanParam::costTraj,				new doubleContainer(1.0)));

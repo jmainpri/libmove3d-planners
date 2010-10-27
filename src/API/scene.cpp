@@ -14,6 +14,8 @@
 #include "P3d-pkg.h"
 #include "Planner-pkg.h"
 
+#include "planner/plannerFunctions.hpp"
+
 using namespace std;
 
 Scene::Scene(p3d_env* environnement)
@@ -37,6 +39,9 @@ Scene::Scene(p3d_env* environnement)
 	{
 		setActiveRobot(rob->getName());
 	}
+	
+	// Set the active rrt function
+	ext_p3d_run_rrt = p3d_run_rrt;
 }
 
 

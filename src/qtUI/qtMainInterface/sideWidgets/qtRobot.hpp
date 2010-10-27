@@ -49,8 +49,7 @@ public:
 	
 	MoveRobot* getMoveRobot();
 	
-	private slots:
-	
+private slots:
 	// Test Model -------------------------
 	void costTest();
 	void collisionsTest();
@@ -59,6 +58,9 @@ public:
 	void setAttMatrix();
 	
 	// Hri Planner ------------------------
+	// HRI GIK functions
+	void computeHriGik(bool leftArm);
+	
 #if defined (HRI_GENERALIZED_IK)
 	void computeHriGikLARM() { this->computeHriGik(true); }
 	void computeHriGikRARM() { this->computeHriGik(false); }
@@ -81,6 +83,10 @@ public:
 	
 	void printPQPColPair();
 	
+	// Manipulation -----------------------
+	void armPickGoto();
+	void armPickTakeToFree();
+	
 	/*void initVoxelCollisionChecker();
 	 void createVoxelCC();
 	 void deleteVoxelCC();
@@ -95,11 +101,22 @@ private:
 	std::vector<QString> mFreeFlyers;
 	
 	void initModel();
+	void initManipulation();
+};
+
+/**
+ * @ingroup qtWindow
+ * @brief Planner thread class 
+ */
+class Manipulationthread: public QThread
+{
+	Q_OBJECT
 	
-#if defined (HRI_GENERALIZED_IK)
-	void computeHriGik(bool leftArm);
-#endif
+public:
+	Manipulationthread(QObject* parent = 0);
 	
+protected:
+	void run();
 	
 };
 

@@ -46,6 +46,7 @@ m_ui(new Ui::RobotWidget)
 	m_ui->setupUi(this);
 	
 	initModel();
+	initManipulation();
 	//initVoxelCollisionChecker();
 }
 
@@ -117,8 +118,10 @@ void RobotWidget::initModel()
 	connect(m_ui->pushButtonGrabObject,SIGNAL(clicked()),					this,SLOT(GrabObject()));
 	connect(m_ui->pushButtonReleaseObject,SIGNAL(clicked()),			this,SLOT(ReleaseObject()));
 	
+#ifdef HRI_GENERALIZED_IK
 	connect(m_ui->pushButtonComputeLeftArmGIK,SIGNAL(clicked()),	this,SLOT(computeHriGikLARM()));
 	connect(m_ui->pushButtonComputeRightArmGIK,SIGNAL(clicked()),	this,SLOT(computeHriGikRARM()));
+#endif
 	
 	connect(m_ui->pushButtonPrintCurrentPos,SIGNAL(clicked()),		this,SLOT(printCurrentPos()));
 	
@@ -195,7 +198,6 @@ void RobotWidget::setAttMatrix()
 #endif
 }
 
-#if defined (HRI_GENERALIZED_IK)
 void RobotWidget::computeHriGik(bool leftArm)
 {	
 	int i=0;
@@ -208,6 +210,7 @@ void RobotWidget::computeHriGik(bool leftArm)
 		return;
 	}
 	
+#ifdef HRI_GENERALIZED_IK
 	// 1 - Select Goto point
 	p3d_vector3 Tcoord;
 	
@@ -251,11 +254,14 @@ void RobotWidget::computeHriGik(bool leftArm)
 		cout << "Warning: No Agent for GIK" << endl;
 	}
 	
+#else
+	cout << "HRI_GENERALIZED_IK not defined" << endl;
+#endif
+	
 	
 	//delete_config(robotPt,q);	
 	m_mainWindow->drawAllWinActive();
 }
-#endif
 
 void RobotWidget::currentObjectChange(int i)
 {
@@ -436,3 +442,93 @@ void RobotWidget::printPQPColPair()
  tests.nbOfVoxelCCPerSeconds();
  #endif
  }*/
+
+// ------------------------------------------------------------------------------
+// Arm manipulations
+// ------------------------------------------------------------------------------
+void RobotWidget::initManipulation()
+{
+	connect(m_ui->pushButtonArmPickGoto,SIGNAL(clicked()),				this,SLOT(armPickGoto()));
+	connect(m_ui->pushButtonArmPickTakeToFree,SIGNAL(clicked()),	this,SLOT(armPickTakeToFree()));
+}
+
+static ManipulationPlanner *manipulation= NULL;
+
+static void initManipulationGenom() 
+{
+  if (manipulation == NULL) 
+	{
+		p3d_rob * robotPt= p3d_get_robot_by_name("JIDOKUKA_ROBOT");//justin//JIDOKUKA_ROBOT
+		manipulation= new ManipulationPlanner(robotPt);
+		//         manipulation->setArmType(GP_LWR); // set the arm type
+  }
+  return;
+}
+
+/**
+ * @ingroup qtWindow
+ * @brief Planner thread class
+ */
+//-----------------------------------------------
+Manipulationthread::Manipulationthread(QObject* parent) :
+QThread(parent)
+{
+	
+}
+
+void Manipulationthread::run()
+{	
+	//         double x, y, theta;
+	if (manipulation== NULL) 
+	{
+		initManipulationGenom();
+	}
+	
+	//         manipulation->setObjectToManipulate((char*)OBJECT_NAME);
+	//         manipulation->setSupport((char*)SUPPORT_NAME);
+	//         manipulation->setCameraJnt((char*)CAMERA_JNT_NAME);
+	//         manipulation->setCameraFOV(CAMERA_FOV);
+	//         manipulation->setCameraImageSize(200, 200);
+	
+	std::vector <MANPIPULATION_TRAJECTORY_CONF_STR> confs;
+	std::vector <MANPIPULATION_TRAJECTORY_STR> segments;
+	
+	cout << "Selected object is : " << ENV.getString(Env::ObjectToCarry).toStdString() << endl;
+	
+	if ( ENV.getString(Env::ObjectToCarry).toStdString().compare("No Object") == 0) 
+	{
+		cout << "Warning : No object selected" << endl;
+		ENV.setBool(Env::isRunning,false);
+		return;
+	}
+	
+	const char* OBJECT_NAME = ENV.getString(Env::ObjectToCarry).toStdString().c_str();
+	
+	manipulation->armPlanTask(ARM_PICK_GOTO,0,
+														manipulation->robotStart(), 
+														manipulation->robotGoto(), 
+														OBJECT_NAME, (char*)"", confs, segments);
+	
+	//	g3d_win *win= NULL;
+	//	win= g3d_get_cur_win();
+	//	win->fct_draw2= &(genomDraw);
+	//	win->fct_key1= &(genomKey);
+	g3d_draw_allwin_active();
+	
+	ENV.setBool(Env::isRunning,false);
+	
+	cout << "Ends Manipulation Thread" << endl;
+}
+
+
+void RobotWidget::armPickGoto()
+{
+	Manipulationthread* manip = new Manipulationthread(this);
+	m_mainWindow->isPlanning();
+	manip->start();
+}
+
+void RobotWidget::armPickTakeToFree()
+{
+	
+}

@@ -20,6 +20,8 @@ QSemaphore* sem;
 GLWidget* openGlWidget;
 #endif
 
+#include "API/Graphic/drawModule.hpp"
+#include "glutWindow.hpp"
 
 extern int mainMhp(int argc, char** argv);
 
@@ -31,23 +33,23 @@ using namespace std;
  * @brief Main double thread class (X-Forms Thread)
  */
 Fl_thread::Fl_thread(QObject* parent) :
-        QThread(parent)
+QThread(parent)
 {
 }
 
 Fl_thread::Fl_thread(int argc, char** argv, QObject* parent) :
-        QThread(parent)
+QThread(parent)
 {
-    _argc = argc;
-    _argv = argv;
+	_argc = argc;
+	_argv = argv;
 }
 
 void Fl_thread::run()
 {
-    mainMhp(_argc, _argv);
-    cout << "Ends main_old" << endl;
-//    terminate();
-//    wait();
+	mainMhp(_argc, _argv);
+	cout << "Ends main_old" << endl;
+	//    terminate();
+	//    wait();
 }
 
 
@@ -58,44 +60,42 @@ void Fl_thread::run()
 Main_threads::Main_threads()
 {
 #ifdef QT_GL
-    sem = new QSemaphore(0);
+	sem = new QSemaphore(0);
 #endif
 }
 
 Main_threads::~Main_threads()
 {
-
+	
 }
 
 
 int Main_threads::run(int argc, char** argv)
 {
-    app = new QApplication(argc, argv);
-		app->setWindowIcon(QIcon::QIcon(QPixmap::QPixmap(molecule_xpm)));
-//    app->setStyle(new QCleanlooksStyle());
-//    app->setStyle(new QWindowsStyle());
-//    app->setStyle(new QMacStyle());
-
-    Fl_thread move3dthread(argc, argv);
-    connect(&move3dthread, SIGNAL(terminated()), this, SLOT(exit()));
-    move3dthread.start();
-
+	app = new QApplication(argc, argv);
+	app->setWindowIcon(QIcon::QIcon(QPixmap::QPixmap(molecule_xpm)));
+	//    app->setStyle(new QCleanlooksStyle());
+	//    app->setStyle(new QWindowsStyle());
+	//    app->setStyle(new QMacStyle());
+	
+	Fl_thread move3dthread(argc, argv);
+	connect(&move3dthread, SIGNAL(terminated()), this, SLOT(exit()));
+	move3dthread.start();
+	
 #ifdef QT_GL
-		cout << "Waiting end of parser to draw OpenGL and create Qt Forms ..."<< endl;
-    sem->acquire();
-    waitDrawAllWin = new QWaitCondition();
-    lockDrawAllWin = new QMutex();
+	cout << "Waiting end of parser to draw OpenGL and create Qt Forms ..."<< endl;
+	sem->acquire();
+	waitDrawAllWin = new QWaitCondition();
+	lockDrawAllWin = new QMutex();
 #endif
 	
-
-// Done in mainMhp
-//#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE )
-//	global_Project = new Project(new Scene(XYZ_ENV));
-//#endif
+	// Creates the wrapper to the project 
+	// Be carefull to initilize in the right thread
+	global_Project = new Project(new Scene(XYZ_ENV));
 	
 #ifdef QT_UI_XML_FILES
 	MainWindow w;
-//  w.showMaximized();
+	//  w.showMaximized();
 	
  	QRect g = QApplication::desktop()->screenGeometry();
  	cout << " x = " << g.x() << " y = " << g.y() << endl;
@@ -111,15 +111,15 @@ int Main_threads::run(int argc, char** argv)
 	w.show();
 	w.raise();
 #endif
-
-    return app->exec();
+	
+	return app->exec();
 }
 
 
 void Main_threads::exit()
 {
-    cout << "Ends all threads" << endl;
-    app->quit();
+	cout << "Ends all threads" << endl;
+	app->quit();
 }
 
 
@@ -128,22 +128,22 @@ void Main_threads::exit()
  * The qt Module implements the interface in a separate thread so that it is necessary to use
  * such things as semaphore, locks and pipes to have everything behaving nicely. The maine function is as follows
  * \code
-    app = new QApplication(argc, argv);
-
-    Fl_thread move3dthread(argc, argv);
-    connect(&move3dthread, SIGNAL(terminated()), this, SLOT(exit()));
-    move3dthread.start();
-
-    sem->acquire();
-    cout << "Waiting"<< endl;
-    waitDrawAllWin = new QWaitCondition();
-    lockDrawAllWin = new QMutex();
-
-    MainWindow w;
-    w.show();
-
-    return app->exec();
-    \endcode
+ app = new QApplication(argc, argv);
+ 
+ Fl_thread move3dthread(argc, argv);
+ connect(&move3dthread, SIGNAL(terminated()), this, SLOT(exit()));
+ move3dthread.start();
+ 
+ sem->acquire();
+ cout << "Waiting"<< endl;
+ waitDrawAllWin = new QWaitCondition();
+ lockDrawAllWin = new QMutex();
+ 
+ MainWindow w;
+ w.show();
+ 
+ return app->exec();
+ \endcode
  */
 
 int qt_fl_pipe[2];
@@ -154,21 +154,42 @@ int qt_fl_pipe[2];
  */
 int main(int argc, char *argv[])
 {
-    bool qt_flag = true;
-
-    if (qt_flag)
-    {
+	
+	enum DisplayMode 
+	{
+		MainMHP,
+		qtWindow,
+		Glut,
+	} mode;
+	
+	mode = qtWindow;
+	
+	switch (mode) 
+	{
+		case MainMHP:
+		{
+			return mainMhp(argc, argv);
+		}
+			
+		case qtWindow:
+		{
 #ifdef WITH_XFORMS
-        pipe(qt_fl_pipe);
-        fcntl(qt_fl_pipe[0], F_SETFL, O_NONBLOCK);
+			pipe(qt_fl_pipe);
+			fcntl(qt_fl_pipe[0], F_SETFL, O_NONBLOCK);
 #endif
-		
-        Main_threads main;
-        cout << "main.run(argc, argv)"  << endl;
-        return main.run(argc, argv);
-    }
-    else
-    {
-        return mainMhp(argc, argv);
-    }
+			
+			Main_threads main;
+			cout << "main.run(argc, argv)"  << endl;
+			return main.run(argc, argv);
+		}
+		case Glut:
+		{
+			GlutWindowDisplay win(argc,argv);
+			glutMainLoop ();
+		}
+			break;
+			
+		default:
+			break;
+	}
 }

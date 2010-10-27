@@ -214,9 +214,11 @@ void MotionPlanner::initOptim()
 	new QtShiva::SpinBoxSliderConnector(
 																			this, m_ui->doubleSpinBoxNbMultiSmooth, m_ui->horizontalSliderNbMultiSmooth , Env::nbMultiSmooth );
 	
+	//QtShiva::SpinBoxSliderConnector* connector1 = 
 	new QtShiva::SpinBoxSliderConnector(
 																			this, m_ui->doubleSpinBoxMinDeformStep, m_ui->horizontalSliderMinDeformStep , PlanParam::MinStep );
 	
+	//QtShiva::SpinBoxSliderConnector* connector2 = 
 	new QtShiva::SpinBoxSliderConnector(
 																			this, m_ui->doubleSpinBoxTimeLimit, m_ui->horizontalSliderTimeLimit , PlanParam::optimTimeLimit );
 	
@@ -228,8 +230,10 @@ void MotionPlanner::initOptim()
 	new QtShiva::SpinBoxSliderConnector(
 																			this, m_ui->doubleSpinBoxMaxDeformStep, m_ui->horizontalSliderMaxDeformStep , PlanParam::MaxFactor );
 	
-	//	connect(connector,SIGNAL(valueChanged(double)),PlanEnv->getObject(PlanParam::optimTimeLimit),SLOT(set(double)));
-	//	connect(PlanEnv->getObject(PlanParam::optimTimeLimit),SIGNAL(valueChanged(double)),this,SLOT(test(double)));
+	//connect(connector,SIGNAL(valueChanged(double)),PlanEnv->getObject(PlanParam::optimTimeLimit),SLOT(set(double)));
+	//connect(PlanEnv->getObject(PlanParam::optimTimeLimit),SIGNAL(valueChanged(double)),this,SLOT(test(double)));
+	//connect(connector1,SIGNAL(valueChanged(double)),this,SLOT(test(double)));
+	
 	//
 	//	PlanEnv->getObject(PlanParam::optimTimeLimit)->dumpObjectInfo();
 	//	PlanEnv->setDouble(PlanParam::optimTimeLimit,15.0);
@@ -239,7 +243,8 @@ void MotionPlanner::initOptim()
 
 void MotionPlanner::test(double value)
 {
-	cout << "Value of PlanParam::optimTimeLimit : " << value << endl;
+	//cout << "Value of PlanParam::optimTimeLimit : " << PlanEnv->getDouble(PlanParam::optimTimeLimit) << endl;
+	cout << "Value of PlanParam::optimTimeLimit : " << PlanEnv->getDouble(PlanParam::MinStep) << endl;
 }
 
 void MotionPlanner::cutTrajInSmallLP()
