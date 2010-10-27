@@ -22,6 +22,7 @@ GLWidget* openGlWidget;
 
 #include "API/Graphic/drawModule.hpp"
 #include "glutWindow.hpp"
+#include "glut.h"
 
 extern int mainMhp(int argc, char** argv);
 

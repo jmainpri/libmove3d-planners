@@ -452,6 +452,7 @@ void RobotWidget::initManipulation()
 	connect(m_ui->pushButtonArmPickTakeToFree,SIGNAL(clicked()),	this,SLOT(armPickTakeToFree()));
 }
 
+#ifdef MULTILOCALPATH
 static ManipulationPlanner *manipulation= NULL;
 
 static void initManipulationGenom() 
@@ -464,6 +465,7 @@ static void initManipulationGenom()
   }
   return;
 }
+#endif
 
 /**
  * @ingroup qtWindow
@@ -477,7 +479,9 @@ QThread(parent)
 }
 
 void Manipulationthread::run()
-{	
+{
+
+#ifdef MULTILOCALPATH	
 	//         double x, y, theta;
 	if (manipulation== NULL) 
 	{
@@ -518,6 +522,7 @@ void Manipulationthread::run()
 	ENV.setBool(Env::isRunning,false);
 	
 	cout << "Ends Manipulation Thread" << endl;
+#endif
 }
 
 

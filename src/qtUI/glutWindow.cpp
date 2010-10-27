@@ -8,6 +8,7 @@
  */
 
 #include "glutWindow.hpp"
+#include "glut.h"
 
 #include "Graphic-pkg.h"
 #include "Move3d-pkg.h"
