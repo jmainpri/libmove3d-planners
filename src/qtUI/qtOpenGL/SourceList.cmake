@@ -5,7 +5,6 @@ BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})
 
 IF(QT_LIBRARY)
     BM3D_SRC_SUBDIR_PROCESS(
-    g3dQtConnection.cpp 
     glwidget.cpp 
     qtGLWindow.cpp 
     qtopenglviewer.cpp
@@ -16,7 +15,6 @@ IF(QT_LIBRARY)
     qtopenglviewer.ui
     )
     BM3D_QT_GENERATE_MOC(
-    g3dQtConnection.hpp 
     glwidget.hpp 
     qtGLWindow.hpp 
     qtopenglviewer.hpp

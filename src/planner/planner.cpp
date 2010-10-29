@@ -20,10 +20,11 @@
 using namespace std;
 using namespace tr1;
 
+extern void draw_opengl();
 
 Planner::Planner() :
 		  _stop_func(fct_stop),
-		  _draw_func(fct_draw),
+		  _draw_func(draw_opengl),
 		  _Start(NULL),
 		  _Goal(NULL),
 		  _Robot(NULL),
@@ -34,7 +35,7 @@ Planner::Planner() :
 
 Planner::Planner(Robot* rob, Graph* graph) :
 		  _stop_func(fct_stop),
-		  _draw_func(fct_draw),
+		  _draw_func(draw_opengl),
 		  _Start(NULL),
 		  _Goal(NULL),
 		  _Robot(rob),
@@ -96,7 +97,6 @@ int Planner::init()
 	}
 	
 	_stop_func = fct_stop;
-	_draw_func = fct_draw;
 
 	return 0;
 }

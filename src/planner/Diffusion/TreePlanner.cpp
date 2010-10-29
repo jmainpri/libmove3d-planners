@@ -322,7 +322,7 @@ unsigned int TreePlanner::run()
 			{
 				if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawGraph))
 				{
-					(*_draw_func)();
+				  _draw_func();
 				}
 				
 				NbTotCreatedNodes += NbCurCreatedNodes;
@@ -358,7 +358,7 @@ unsigned int TreePlanner::run()
 	
 	if ( (!ENV.getBool(Env::drawDisabled)) && (ENV.getBool(Env::drawGraph) || ENV.getBool(Env::drawTraj)) )
 	{
-		(*_draw_func)();
+	  _draw_func();
 	}
 	
 	ENV.setInt(Env::nbQRand,m_nbExpansion);

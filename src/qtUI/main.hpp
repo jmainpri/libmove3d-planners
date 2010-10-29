@@ -9,27 +9,7 @@
 #include "qtUI/qtOpenGL/qtGLWindow.hpp"
 #endif
 
-/**
- * @ingroup qtWindow
- * @brief Main double thread class (X-Forms Thread)
- */
-class Fl_thread: public QThread
-{
-
-Q_OBJECT
-
-public:
-        int _argc;
-        char** _argv;
-
-        Fl_thread(QObject* parent = 0);
-        Fl_thread(int argc, char** argv, QObject* parent = 0);
-
-protected:
-        void run();
-
-};
-
+#include <QtCore/QString>
 
 /**
  * @ingroup qtWindow
@@ -51,12 +31,17 @@ public:
         Main_threads();
         ~Main_threads();
 
-public:
-        int run(int argc, char** argv);
-
+  int run(int argc, char** argv);
+				
+public slots:
+  void selectPlanner();
+  
+signals:
+  void selectedPlanner(QString);
+			       
 private slots :
-        void exit();
-
+  void exit();
+  
 };
 
 static char* molecule_xpm[] = {

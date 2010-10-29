@@ -6,7 +6,6 @@
 
 #include "qtUI/qtMainInterface/mainwindow.hpp"
 #include "qtUI/qtMainInterface/mainwindowGenerated.hpp"
-#include "qtUI/qtOpenGL/g3dQtConnection.hpp"
 
 #include "API/Graphic/drawModule.hpp"
 
@@ -22,6 +21,8 @@
 #include <fstream>
 
 using namespace std;
+
+extern void draw_opengl();
 
 extern void* GroundCostObj;
 
@@ -54,8 +55,6 @@ QGLWidget(parent)
 	
 	initG3DFunctions();
 	
-	
-#ifndef WITH_XFORMS
 	mG3DOld = new qtG3DWindow;
 	
 	g3d_set_win_floor_color(g3d_get_cur_states(), 1, 0.87, 0.49);
@@ -66,8 +65,6 @@ QGLWidget(parent)
 											XYZ_ENV->background_color[0], 
 											XYZ_ENV->background_color[1], 
 											XYZ_ENV->background_color[2]);
-#endif
-	
 	//	setFocusPolicy(Qt::StrongFocus);
 }
 
@@ -148,14 +145,6 @@ void qt_get_win_mouse(int* i, int* j)
 	*j = _j;
 }
 
-void qt_draw_allwin_active()
-{
-	if(pipe2openGl)
-	{
-		pipe2openGl->update();
-	}
-}
-
 void qt_ui_calc_param(g3d_cam_param& p)
 {
 	//cout << "qt_ui_calc_param" <<  endl;
@@ -182,7 +171,7 @@ void qt_ui_calc_param(g3d_cam_param& p)
 void GLWidget::initG3DFunctions()
 {
 	ext_get_win_mouse = (void (*) (int*,int*))(qt_get_win_mouse);
-	ext_g3d_draw_allwin_active = (void (*)())(qt_draw_allwin_active);
+	ext_g3d_draw_allwin_active = draw_opengl;
 	ext_calc_cam_param = (void (*) (g3d_cam_param&) )(qt_ui_calc_param);
 	
 	Graphic::initDrawFunctions();
@@ -263,24 +252,6 @@ void GLWidget::setThreadWorking(bool isWorking)
 
 void GLWidget::paintGL()
 {
-	if( ENV.getBool(Env::drawDisabled) )
-	{
-		//#ifdef WITH_XFORMS
-		if ((lockDrawAllWin != 0) && (waitDrawAllWin != 0))
-		{
-			lockDrawAllWin->lock();
-			lockDrawAllWin->unlock();
-		}
-		if (waitDrawAllWin != 0)
-		{
-			//                cout << "All awake" << endl;
-			waitDrawAllWin->wakeAll();
-		}
-		//#endif
-		return;
-	}
-	//        cout << "paintGL()" << endl;
-	
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glPushMatrix();
 	
@@ -307,35 +278,17 @@ void GLWidget::paintGL()
 	
 	G3D_WIN->vs.cameraPosition[0]= Xc[0];
 	G3D_WIN->vs.cameraPosition[1]= Xc[1];
-	G3D_WIN->vs.cameraPosition[2]= Xc[2];  
-	
-	//#ifdef WITH_XFORMS
-	if ((lockDrawAllWin != 0) && (waitDrawAllWin != 0))
-	{
-		lockDrawAllWin->lock();
-		lockDrawAllWin->unlock();
-	}
-	//#endif
-	if( !(ENV.getBool(Env::isRunning) && _isThreadWorking ))
-	{
-		//            cout << "Drawing and wait is " << waitDrawAllWin << endl;
-		//            cout << "Drawing : g3d_draw " << paintNum++ << endl;
-		g3d_draw();
-	}
-	//#ifdef WITH_XFORMS
-	if (waitDrawAllWin != 0)
-	{
-		//                cout << "All awake" << endl;
-		waitDrawAllWin->wakeAll();
-	}
-	//#endif
+	G3D_WIN->vs.cameraPosition[2]= Xc[2];
+
+	g3d_draw();
+
 	glPopMatrix();
 	
-	/*cout << "paintGL() : " << paintNum++ << endl;
-	 cout << "------------------------------------------------" << endl;
-	 cout << Xc[0] << " " << Xc[1] << " " << Xc[2] << endl;
-	 cout << Xw[0] << " " << Xw[1] << " " << Xw[2] << endl;
-	 cout << up[0] << " " << up[1] << " " << up[2] << endl;*/
+	//cout << "paintGL() : " << paintNum++ << endl;
+	//cout << "------------------------------------------------" << endl;
+	//cout << Xc[0] << " " << Xc[1] << " " << Xc[2] << endl;
+	//cout << Xw[0] << " " << Xw[1] << " " << Xw[2] << endl;
+	//cout << up[0] << " " << up[1] << " " << up[2] << endl;
 }
 
 void GLWidget::reinitGraphics()
@@ -363,16 +316,6 @@ void GLWidget::reinitGraphics()
   if (env)
   {
     env->INIT = 1;
-  }
-	
-  if ((lockDrawAllWin != 0) && (waitDrawAllWin != 0))
-  {
-    lockDrawAllWin->lock();
-    lockDrawAllWin->unlock();
-  }
-  if (waitDrawAllWin != 0)
-  {
-    waitDrawAllWin->wakeAll();
   }
 }
 
@@ -496,14 +439,10 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 		}
 	}
 	//	updateGL();
-#ifdef WITH_XFORMS
-	pipe2openGl->updatePipe();
-#else
 	if(!ENV.getBool(Env::isRunning))
 	{
 		updateGL();
 	}
-#endif
 }
 
 void GLWidget::mouseDoubleClickEvent (QMouseEvent *event)
@@ -554,7 +493,6 @@ void GLWidget::keyPressEvent(QKeyEvent *e)
 			// 		{
 			// 			qt_get_cur_g3d_win()->shadowContrast += 0.05;
 			// 		}
-			pipe2openGl->updatePipe();
 			cout << "+ pressed" << endl;
 			break;
 			
@@ -563,7 +501,6 @@ void GLWidget::keyPressEvent(QKeyEvent *e)
 			// 		{
 			// 			qt_get_cur_g3d_win()->shadowContrast -= 0.05;
 			// 		}
-			pipe2openGl->updatePipe();
 			cout << "- pressed" << endl;
 			break;
 			

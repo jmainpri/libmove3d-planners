@@ -5,7 +5,6 @@
 #include "qtUI/qtBase/SpinBoxSliderConnector_p.hpp"
 #include "qtUI/qtOpenGL/glwidget.hpp"
 #include "qtUI/qtOpenGL/qtMobileCamera.h"
-#include "qtUI/qtOpenGL/g3dQtConnection.hpp"
 
 #include "mainwindowTestFunctions.hpp"
 
@@ -45,9 +44,6 @@
 #include "planner/cost_space.hpp"
 #endif
 
-Move3D2OpenGl* pipe2openGl;
-
-
 using namespace std;
 using namespace tr1;
 
@@ -81,10 +77,8 @@ MainWindow::MainWindow(QWidget *parent)
 	// m_ui->OpenGL->setWinSize(G3D_WIN->size);
 	m_ui->OpenGL->setWinSize(600);
 	m_ui->OpenGL->setMainWindow(this);
-	pipe2openGl = new Move3D2OpenGl(m_ui->OpenGL);
 	
 	mKCDpropertiesWindow = new KCDpropertiesWindow();
-	cout << "pipe2openGl = new Move3D2OpenGl(m_ui->OpenGL)" << endl;
 	
 	m_testFunctions = new MainWindowTestFunctions(this);
 	
@@ -373,7 +367,7 @@ void MainWindow::initViewerButtons()
 																			this, m_ui->doubleSpinBoxTrajSpeed, m_ui->horizontalSliderTrajSpeed , Env::showTrajFPS );
 	
 	connect(m_ui->pushButtonRestoreView,SIGNAL(clicked(bool)),this,SLOT(restoreView()),Qt::DirectConnection);
-	connect(m_ui->pushButtonResetGraph,SIGNAL(clicked()),this,SLOT(ResetGraph()));
+	//	connect(m_ui->pushButtonResetGraph,SIGNAL(clicked()),this,SLOT(ResetGraph()));
 	
 	connect(m_ui->pushButtonAddTraj,SIGNAL(clicked()),this,SLOT(addTrajToDraw()));
 	connect(m_ui->pushButtonClearTraj,SIGNAL(clicked()),this,SLOT(clearTrajToDraw()));
@@ -590,10 +584,12 @@ void MainWindow::colorTrajChange(int color)
 
 void MainWindow::initRunButtons()
 {
-	connect(m_ui->pushButtonRun,SIGNAL(clicked(bool)),this,SLOT(run()),Qt::DirectConnection);
-	
-	connect(m_ui->pushButtonReset,SIGNAL(clicked(bool)),this,SLOT(reset()),Qt::DirectConnection);
-	connect(m_ui->pushButtonStop,SIGNAL(clicked(bool)),this,SLOT(stop()),Qt::DirectConnection);
+  connect(m_ui->pushButtonRun,SIGNAL(clicked(bool)),
+	  this, SIGNAL(runClicked()));
+  connect(m_ui->pushButtonStop,SIGNAL(clicked(bool)),
+	  this, SIGNAL(stopClicked()));
+  connect(m_ui->pushButtonReset,SIGNAL(clicked(bool)),
+	  this, SIGNAL(resetClicked()));
 	
 	m_ui->pushButtonRun->setDisabled(false);
 	m_ui->pushButtonStop->setDisabled(true);
@@ -610,100 +606,29 @@ void MainWindow::initRunButtons()
 	connect( ENV.getObject(Env::isRunning), SIGNAL(valueChanged(bool)), this, SLOT(planningFinished(void)) , Qt::QueuedConnection );
 }
 
-/**
- * @ingroup qtWindow
- * @brief Planner thread class
- */
-//-----------------------------------------------
-Plannerthread::Plannerthread(QObject* parent) :
-QThread(parent)
+//------------------------------------------------------------------------------
+void MainWindow::enableRunAndResetButtons()
 {
-	
+  m_ui->pushButtonRun->setDisabled(false);
+  m_ui->pushButtonStop->setDisabled(true);
+  m_ui->pushButtonReset->setDisabled(false);
 }
-
-void Plannerthread::run()
-{	
-	if(!ENV.getBool(Env::isPRMvsDiffusion))
-	{
-		qt_runDiffusion();
-	}
-	else
-	{
-		qt_runPRM();
-	}
-	
-	//	exec();
-	cout << "Ends Planner Thread" << endl;
-}
-
-//-----------------------------------------------
-
-void MainWindow::run()
+//------------------------------------------------------------------------------
+void MainWindow::enableStopButton()
 {
-	cout << "MainWindow::run" << endl;
-	this->isPlanning();
-#ifdef WITH_XFORMS
-	if(!ENV.getBool(Env::isPRMvsDiffusion))
-	{
-		std::string str = "RunDiffusion";
-		write(qt_fl_pipe[1],str.c_str(),str.length()+1);
-	}
-	else
-	{
-		std::string str = "RunPRM";
-		write(qt_fl_pipe[1],str.c_str(),str.length()+1);
-	}
-	ENV.setBool(Env::isRunning,true);
-#else
-	Plannerthread* ptrPlan = new Plannerthread;
-	cout << "Start Planning Thread" << endl;
-	ptrPlan->start();
-#endif
+  this->isPlanning();
+  m_ui->pushButtonRun->setDisabled(true);
+  m_ui->pushButtonStop->setDisabled(false);
+  m_ui->pushButtonReset->setDisabled(true);
 }
-
-void MainWindow::stop()
+//------------------------------------------------------------------------------
+void MainWindow::enableRunButton()
 {
-#ifdef P3D_PLANNER
-	p3d_SetStopValue(true);
-#endif
-	ENV.setBool( Env::isRunning, false );
-	PlanEnv->setBool( PlanParam::stopPlanner, true );
-	m_ui->pushButtonRun->setDisabled(false);
+  m_ui->pushButtonRun->setDisabled(false);
+  m_ui->pushButtonStop->setDisabled(true);
+  m_ui->pushButtonReset->setDisabled(true);
 }
-
-void MainWindow::reset()
-{
-#ifdef WITH_XFORMS
-	std::string str = "ResetGraph";
-	write(qt_fl_pipe[1],str.c_str(),str.length()+1);
-#else
-	cout <<  "1 - XYZ_GRAPH = " << XYZ_GRAPH << endl;
-	qt_resetGraph();
-#endif
-	m_ui->pushButtonRun->setDisabled(false);
-	m_ui->pushButtonStop->setDisabled(true);
-	m_ui->pushButtonReset->setDisabled(true);
-	
-#ifdef P3D_PLANNER
-	p3d_SetStopValue(false);
-#endif
-	PlanEnv->setBool( PlanParam::stopPlanner, false );
-	
-	cout <<  "2 - XYZ_GRAPH = " << XYZ_GRAPH << endl;
-	this->drawAllWinActive();
-}
-
-void MainWindow::ResetGraph()
-{
-#ifdef WITH_XFORMS
-	std::string str = "ResetGraph";
-	write(qt_fl_pipe[1],str.c_str(),str.length()+1);
-#else
-	qt_resetGraph();
-#endif
-	this->drawAllWinActive();
-}
-
+//------------------------------------------------------------------------------
 void MainWindow::isPlanning()
 {
 	m_ui->pushButtonRun->setDisabled(true);
@@ -754,18 +679,11 @@ void MainWindow::planningFinished()
 
 void MainWindow::drawAllWinActive()
 {
-#ifdef WITH_XFORMS
-	std::string str = "g3d_draw_allwin_active";
-	write(qt_fl_pipe[1],str.c_str(),str.length()+1);
-#else
-	if(!ENV.getBool(Env::isRunning))
-	{
-		m_ui->OpenGL->updateGL();
-	}
-#endif
+  if(!ENV.getBool(Env::isRunning))
+  {
+    m_ui->OpenGL->updateGL();
+  }
 }
-
-
 
 // Key events ---------------------------------------------------
 // --------------------------------------------------------------

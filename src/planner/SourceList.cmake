@@ -5,10 +5,12 @@ planner.cpp
 plannerFunctions.cpp 
 planEnvironment.cpp
 cost_space.cpp
+planner_handler.cpp
 )
 
 BM3D_QT_GENERATE_MOC(
 planEnvironment.hpp
+planner_handler.hpp
 )
 
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Diffusion/SourceList.cmake)

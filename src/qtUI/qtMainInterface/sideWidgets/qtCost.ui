@@ -23,7 +23,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <property name="documentMode">
       <bool>true</bool>
@@ -58,8 +58,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>466</width>
-            <height>910</height>
+            <width>464</width>
+            <height>797</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout">
@@ -489,7 +489,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="HricsWidget" name="tabHri" native="true"/>
+        <widget class="QWidget" name="tabHri" native="true"/>
        </item>
       </layout>
      </widget>
@@ -497,14 +497,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>HricsWidget</class>
-   <extends>QWidget</extends>
-   <header location="global">qtHrics.hpp</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -19,7 +19,6 @@ class Move3D2OpenGl;
 #endif
 
 void qt_get_win_mouse(int* i, int* j);
-void qt_draw_allwin_active();
 void qt_ui_calc_param(g3d_cam_param& p);
 
 /**

@@ -65,7 +65,6 @@ void qt_load_HRICS_Grid(std::string gridName);
     * @brief Function details the pipe between the XForm thread and the Qt Interface thread
     */
 void read_pipe(int fd, void* data);
-extern int qt_fl_pipe[2];
 extern const char *qt_fileName;
 
 #endif /* CPPTOQT_HPP_ */

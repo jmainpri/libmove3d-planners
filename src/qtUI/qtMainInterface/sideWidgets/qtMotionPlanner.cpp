@@ -550,7 +550,9 @@ void MotionPlanner::runAllGreedy()
 {
 	//	runAllRounds->setDisabled(true);
 	std::string str = "MultiGreedy";
+#ifdef WITH_XFORMS
 	write(qt_fl_pipe[1],str.c_str(),str.length()+1);
+#endif
 }
 
 void MotionPlanner::showHistoWindow()
