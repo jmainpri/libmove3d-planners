@@ -894,6 +894,12 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 	
 	for (int i = 0; !checkStopConditions(i); i++)
 	{
+		if ( this->getCourbe().size() == 1 ) 
+		{
+			cout << "Smooting has stoped, only one localpath in traj" << endl;
+			break;
+		}
+		
 		double CurCost = cost();
 		
 		try 

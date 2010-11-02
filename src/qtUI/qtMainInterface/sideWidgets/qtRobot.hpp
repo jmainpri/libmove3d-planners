@@ -86,6 +86,7 @@ private slots:
 	// Manipulation -----------------------
 	void armPickGoto();
 	void armPickTakeToFree();
+	void armPickGotoAndTakeToFree();
 	
 	/*void initVoxelCollisionChecker();
 	 void createVoxelCC();

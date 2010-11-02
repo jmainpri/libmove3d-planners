@@ -450,19 +450,40 @@ void RobotWidget::initManipulation()
 {
 	connect(m_ui->pushButtonArmPickGoto,SIGNAL(clicked()),				this,SLOT(armPickGoto()));
 	connect(m_ui->pushButtonArmPickTakeToFree,SIGNAL(clicked()),	this,SLOT(armPickTakeToFree()));
+	connect(m_ui->pushButtonArmPickGotoAndTakeToFree,SIGNAL(clicked()),	this,SLOT(armPickGotoAndTakeToFree()));
 }
 
 #ifdef MULTILOCALPATH
 static ManipulationPlanner *manipulation= NULL;
 
+typedef enum ManipulationType
+{
+	pickGoto,
+	takeToFree,
+	pickGotoAndTakeToFree,
+}
+ManipulationType;
+
+ManipulationType ManipPhase;
+
+shared_ptr<Configuration> qInit;
+shared_ptr<Configuration> qGoal;
+
 static void initManipulationGenom() 
 {
   if (manipulation == NULL) 
 	{
-		p3d_rob * robotPt= p3d_get_robot_by_name("JIDOKUKA_ROBOT");//justin//JIDOKUKA_ROBOT
+		Robot* r = global_Project->getActiveScene()->getRobotByName("JIDOKUKA_ROBOT");
+		
+		p3d_rob * robotPt= r->getRobotStruct();
+		
 		manipulation= new ManipulationPlanner(robotPt);
 		//         manipulation->setArmType(GP_LWR); // set the arm type
+		
+		qInit = shared_ptr<Configuration>(new Configuration(r,robotPt->ROBOT_POS));
+		qGoal = shared_ptr<Configuration>(new Configuration(r,robotPt->ROBOT_GOTO));
   }
+	
   return;
 }
 #endif
@@ -480,7 +501,6 @@ QThread(parent)
 
 void Manipulationthread::run()
 {
-
 #ifdef MULTILOCALPATH	
 	//         double x, y, theta;
 	if (manipulation== NULL) 
@@ -488,14 +508,9 @@ void Manipulationthread::run()
 		initManipulationGenom();
 	}
 	
-	//         manipulation->setObjectToManipulate((char*)OBJECT_NAME);
-	//         manipulation->setSupport((char*)SUPPORT_NAME);
-	//         manipulation->setCameraJnt((char*)CAMERA_JNT_NAME);
-	//         manipulation->setCameraFOV(CAMERA_FOV);
-	//         manipulation->setCameraImageSize(200, 200);
-	
 	std::vector <MANPIPULATION_TRAJECTORY_CONF_STR> confs;
 	std::vector <SM_TRAJ> smTrajs;
+	std::vector <p3d_traj*> trajs; 
 	
 	cout << "Selected object is : " << ENV.getString(Env::ObjectToCarry).toStdString() << endl;
 	
@@ -506,21 +521,161 @@ void Manipulationthread::run()
 		return;
 	}
 	
-	const char* OBJECT_NAME = ENV.getString(Env::ObjectToCarry).toStdString().c_str();
+	string str = ENV.getString(Env::ObjectToCarry).toStdString();
+	const char* OBJECT_NAME = str.c_str();
 	
-	manipulation->armPlanTask(ARM_PICK_GOTO,0,
-														manipulation->robotStart(), 
-														manipulation->robotGoto(), 
-														OBJECT_NAME, (char*)"", confs, smTrajs);
+	switch (ManipPhase) 
+	{
+		case pickGoto:
+		{
+			//         manipulation->setObjectToManipulate((char*)OBJECT_NAME);
+			//         manipulation->setSupport((char*)SUPPORT_NAME);
+			//         manipulation->setCameraJnt((char*)CAMERA_JNT_NAME);
+			//         manipulation->setCameraFOV(CAMERA_FOV);
+			//         manipulation->setCameraImageSize(200, 200);
+			
+			confs.clear();
+			smTrajs.clear();
+			trajs.clear();
+			
+			switch ( manipulation->robot()->lpl_type ) 
+			{
+				case P3D_LINEAR_PLANNER :
+				{
+					MANIPULATION_TASK_MESSAGE status = manipulation->armPlanTask(ARM_PICK_GOTO,0,
+																						qInit->getConfigStruct(), 
+																						qGoal->getConfigStruct(), 
+																						OBJECT_NAME, "", trajs);
+					if(status == MANIPULATION_TASK_OK )
+					{
+						manipulation->robot()->tcur = p3d_create_traj_by_copy(trajs[0]);
+						
+						for(unsigned int i = 1; i < trajs.size(); i++){
+							p3d_concat_traj(manipulation->robot()->tcur, trajs[i]);
+						}
+					}
+				}
+					break;
+					
+				case P3D_MULTILOCALPATH_PLANNER :
+					
+					manipulation->armPlanTask(ARM_PICK_GOTO,0,
+																		qInit->getConfigStruct(), 
+																		qGoal->getConfigStruct(), 
+																		OBJECT_NAME, "", confs, smTrajs);
+					break;
+					
+				case P3D_SOFT_MOTION_PLANNER:
+					cout << "Manipulation : localpath softmotion should not be called" << endl;
+					break;
+
+				default:
+					break;
+			}
+			
+			break;
+		}
+			
+		case takeToFree:
+		{
+			confs.clear();
+			smTrajs.clear();
+			trajs.clear();
+			
+			switch ( manipulation->robot()->lpl_type ) 
+			{
+				case P3D_LINEAR_PLANNER :
+				{
+					MANIPULATION_TASK_MESSAGE status = manipulation->armPlanTask(ARM_PICK_TAKE_TO_FREE,0,qInit->getConfigStruct(), 
+								 qGoal->getConfigStruct(), 
+								 OBJECT_NAME, (char*)"", trajs);
+					
+					if( status == MANIPULATION_TASK_OK)
+					{
+						manipulation->robot()->tcur = p3d_create_traj_by_copy(trajs[0]);
+						
+						for(unsigned int i = 1; i < trajs.size(); i++){
+							p3d_concat_traj(manipulation->robot()->tcur, trajs[i]);
+						}
+					}
+				}
+					break;
+					
+				case P3D_MULTILOCALPATH_PLANNER :
+					
+					manipulation->armPlanTask(ARM_PICK_TAKE_TO_FREE,0,
+																		qInit->getConfigStruct(), 
+																		qGoal->getConfigStruct(),  
+																		OBJECT_NAME, "", confs, smTrajs);
+					break;
+					
+				case P3D_SOFT_MOTION_PLANNER:
+					cout << "Manipulation : localpath softmotion should not be called" << endl;
+					break;
+
+				default:
+					break;
+			}
+			break;
+		}
+		case pickGotoAndTakeToFree :
+		{
+			confs.clear();
+			smTrajs.clear();
+			trajs.clear();
+			
+			switch ( manipulation->robot()->lpl_type ) 
+			{
+				case P3D_LINEAR_PLANNER :
+				{
+					MANIPULATION_TASK_MESSAGE status = manipulation->armPlanTask(ARM_PICK_GOTO_AND_TAKE_TO_FREE,0,
+								 qInit->getConfigStruct(), 
+								 qGoal->getConfigStruct(), 
+									OBJECT_NAME, (char*)"", trajs);
+					
+					if( status == MANIPULATION_TASK_OK)
+					{
+						manipulation->robot()->tcur = p3d_create_traj_by_copy(trajs[0]);
+						
+						for(unsigned int i = 1; i < trajs.size(); i++){
+							p3d_concat_traj(manipulation->robot()->tcur, trajs[i]);
+							}
+						}
+					}
+					break;
+					
+				case P3D_MULTILOCALPATH_PLANNER :
+					
+					manipulation->armPlanTask(ARM_PICK_GOTO_AND_TAKE_TO_FREE,0,
+																		qInit->getConfigStruct(), 
+																		qGoal->getConfigStruct(),  
+																		OBJECT_NAME, "", confs, smTrajs);
+					
+					//manipulation->robot()
+					
+					break;
+					
+				case P3D_SOFT_MOTION_PLANNER:
+					cout << "Manipulation : localpath softmotion should not be called" << endl;
+					break;
+					
+				default:
+					break;
+			}
+			break;
+		}
+		default:
+			cout << "Manipulation : request does not exist" << endl;
+			break;
+	}
+	
 	
 	//	g3d_win *win= NULL;
 	//	win= g3d_get_cur_win();
 	//	win->fct_draw2= &(genomDraw);
 	//	win->fct_key1= &(genomKey);
 	g3d_draw_allwin_active();
-	
 	ENV.setBool(Env::isRunning,false);
-	
 	cout << "Ends Manipulation Thread" << endl;
 #endif
 }
@@ -528,12 +683,42 @@ void Manipulationthread::run()
 
 void RobotWidget::armPickGoto()
 {
+	cout << "Manipulation : pick goto" << endl;
+	
+#ifdef MULTILOCALPATH	
+	ManipPhase = pickGoto;
 	Manipulationthread* manip = new Manipulationthread(this);
 	m_mainWindow->isPlanning();
 	manip->start();
+#else
+	cout << "Error : use MultiLocalPath" << endl;
+#endif
 }
 
 void RobotWidget::armPickTakeToFree()
 {
+	cout << "Manipulation : take to free" << endl;
 	
+#ifdef MULTILOCALPATH	
+	ManipPhase = takeToFree;
+	Manipulationthread* manip = new Manipulationthread(this);
+	m_mainWindow->isPlanning();
+	manip->start();
+#else
+	cout << "Error : use MultiLocalPath" << endl;
+#endif
+}
+
+void RobotWidget::armPickGotoAndTakeToFree()
+{
+	cout << "Manipulation : pick goto and take to free" << endl;
+	
+#ifdef MULTILOCALPATH	
+	ManipPhase = pickGotoAndTakeToFree;
+	Manipulationthread* manip = new Manipulationthread(this);
+	m_mainWindow->isPlanning();
+	manip->start();
+#else
+	cout << "Error : use MultiLocalPath" << endl;
+#endif
 }

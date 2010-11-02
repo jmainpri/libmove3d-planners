@@ -855,13 +855,14 @@ void HricsWidget::HRICSRRT()
 void HricsWidget::computeWorkspacePath()
 {
 	std::string str = "computeWorkspacePath";
-	write(qt_fl_pipe[1],str.c_str(),str.length()+1);
+	//write(qt_fl_pipe[1],str.c_str(),str.length()+1);
+	cout << "HricsWidget : widget not implemented" << endl;
 }
 
 void HricsWidget::computeHoleMotion()
 {
 	std::string str = "computeHoleManipulationPath";
-	write(qt_fl_pipe[1],str.c_str(),str.length()+1);
+	//write(qt_fl_pipe[1],str.c_str(),str.length()+1);
 }
 
 void HricsWidget::make2DGrid()

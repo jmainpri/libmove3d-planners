@@ -333,12 +333,9 @@ bool Configuration::isInCollision()
         _CollisionTested = true;
         _InCollision = p3d_col_test();
         //	return p3d_col_test_robot(_Robot->getRobotStruct(), JUST_BOOL);
-        return _InCollision;
     }
-    else
-    {
-        return _InCollision;
-    }
+
+		return _InCollision;
 }
 
 bool Configuration::isOutOfBounds()

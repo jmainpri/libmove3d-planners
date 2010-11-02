@@ -26,6 +26,11 @@
 #include "LightPlanner-pkg.h"
 #endif
 
+
+#undef None
+#undef Upper
+#undef Lower
+
 #include <boost/config.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/strong_components.hpp>

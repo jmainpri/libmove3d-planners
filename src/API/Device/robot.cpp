@@ -471,7 +471,7 @@ bool Robot::isInCollision()
 		}
 	}
 	
-	return true;
+	return ncol;
 	//cout << "Collision = " << ncol << endl;
 }
 

@@ -26,6 +26,7 @@ bool Env_stopUser()
 	return stop;
 }
 
+
 // A new container is created for each module
 // First declaire the maps of praramters
 // Then fill in the maps that associate the enum to the Qt container

@@ -67,6 +67,7 @@ CostWidget::~CostWidget()
 #ifdef HRI_COSTSPACE
 HricsWidget* CostWidget::getHriWidget()
 { 
+	cout << "Warning : not compiling well HRICS interface" << endl;
 	return m_ui->tabHri; 
 }
 #endif
