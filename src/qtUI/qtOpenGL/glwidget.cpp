@@ -280,7 +280,7 @@ void GLWidget::paintGL()
 	G3D_WIN->vs.cameraPosition[1]= Xc[1];
 	G3D_WIN->vs.cameraPosition[2]= Xc[2];
 
-	g3d_draw();
+	//g3d_draw();
 
 	glPopMatrix();
 	
@@ -388,18 +388,36 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
 	if (!_light)
 	{
+		// Viewing mode
 		_i = event->x();
 		_j = event->y();
 		
-		if ((event->buttons() & Qt::LeftButton)&&(mouse_mode==0))
+		//cout << "Mouse Button : " << event->buttons() << endl;
+		
+		if ((event->buttons() ==			( Qt::LeftButton | Qt::MidButton )) &&(mouse_mode==0) )
+		{
+			//cout << "Qt::LeftButton	& Qt::MidButton" << endl;
+			qt_canvas_viewing(0, 3);
+		}
+		else if ((event->buttons() == ( Qt::MidButton | Qt::RightButton )) &&(mouse_mode==0) )
+		{
+			//cout << "Qt::MidButton		& Qt::RightButton" << endl;
+			qt_canvas_viewing(0, 4);
+		}
+		else if ((event->buttons() == ( Qt::RightButton | Qt::LeftButton)) &&(mouse_mode==0) )
+		{
+			//cout << "Qt::RightButton & Qt::LeftButton" << endl;
+			qt_canvas_viewing(0, 5);
+		}
+		else if ((event->buttons() == Qt::LeftButton)&&(mouse_mode==0))
 		{
 			qt_canvas_viewing(0, 0);
 		}
-		else if ((event->buttons() & Qt::MidButton) || ((event->buttons() & Qt::LeftButton)&&(mouse_mode==1)) )
+		else if ((event->buttons() == Qt::MidButton) || ((event->buttons() & Qt::LeftButton)&&(mouse_mode==1)) )
 		{
 			qt_canvas_viewing(0, 1);
 		}
-		else if ((event->buttons() & Qt::RightButton) || ((event->buttons() & Qt::LeftButton)&&(mouse_mode==2)) )
+		else if ((event->buttons() == Qt::RightButton) || ((event->buttons() & Qt::LeftButton)&&(mouse_mode==2)) )
 		{
 			qt_canvas_viewing(0, 2);
 		}
@@ -407,6 +425,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 	}
 	else
 	{
+		// Light managment
 		int dx = event->x() - lastPos.x();
 		int dy = event->y() - lastPos.y();
 		
