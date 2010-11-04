@@ -38,6 +38,8 @@ QGLWidget(parent)
 	up[2] = 0;
 	up[3] = 0;
 	
+	size = 600;
+	
 	az = INIT_AZ;
 	el = INIT_EL;
 	double x1, x2, y1, y2, z1, z2;
@@ -49,6 +51,8 @@ QGLWidget(parent)
 	trolltechBlack = QColor::fromCmykF(1.0, 1.0, 1.0, 0.0);
 	trolltechWhite =  QColor::fromCmykF(0.0, 0.0, 0.0, 0.0);
 	trolltechGrey = trolltechWhite;
+	
+	m_mainWindow = false;
 	
 	_isThreadWorking = false;
 	_light = false;
@@ -170,6 +174,8 @@ void qt_ui_calc_param(g3d_cam_param& p)
 
 void GLWidget::initG3DFunctions()
 {
+	cout << "Init G3D Functions" << endl;
+	
 	ext_get_win_mouse = (void (*) (int*,int*))(qt_get_win_mouse);
 	ext_g3d_draw_allwin_active = draw_opengl;
 	ext_calc_cam_param = (void (*) (g3d_cam_param&) )(qt_ui_calc_param);
@@ -280,7 +286,8 @@ void GLWidget::paintGL()
 	G3D_WIN->vs.cameraPosition[1]= Xc[1];
 	G3D_WIN->vs.cameraPosition[2]= Xc[2];
 
-	//g3d_draw();
+	cout << "g3d_draw()" << endl;
+	g3d_draw();
 
 	glPopMatrix();
 	
@@ -386,6 +393,8 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
+	cout << "GLWidget::mouseMoveEvent" << endl;
+	
 	if (!_light)
 	{
 		// Viewing mode
@@ -466,6 +475,11 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 
 void GLWidget::mouseDoubleClickEvent (QMouseEvent *event)
 {
+	if( !m_mainWindow )
+	{
+		return;
+	}
+	
 	if(   ( event->buttons()			&& ( Qt::LeftButton )) &&
 				( event->modifiers()	&& ( Qt::ControlModifier )) )
 	{

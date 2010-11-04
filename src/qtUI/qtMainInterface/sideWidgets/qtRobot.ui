@@ -26,7 +26,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <property name="usesScrollButtons">
       <bool>true</bool>
@@ -51,9 +51,9 @@
           <property name="geometry">
            <rect>
             <x>0</x>
-            <y>-245</y>
-            <width>402</width>
-            <height>1178</height>
+            <y>0</y>
+            <width>418</width>
+            <height>1184</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout">
@@ -539,7 +539,7 @@
      </widget>
      <widget class="QWidget" name="ManipulationTab">
       <attribute name="title">
-       <string>Maipulation</string>
+       <string>Manipulation</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
@@ -552,8 +552,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>417</width>
-            <height>670</height>
+            <width>433</width>
+            <height>678</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -563,6 +563,13 @@
               <string>Manipulation Requests</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
+              <item>
+               <widget class="QPushButton" name="pushButtonArmFree">
+                <property name="text">
+                 <string>Arm Free</string>
+                </property>
+               </widget>
+              </item>
               <item>
                <widget class="QPushButton" name="pushButtonArmPickGoto">
                 <property name="text">

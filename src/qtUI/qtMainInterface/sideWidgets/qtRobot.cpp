@@ -448,6 +448,7 @@ void RobotWidget::printPQPColPair()
 // ------------------------------------------------------------------------------
 void RobotWidget::initManipulation()
 {
+	connect(m_ui->pushButtonArmFree,SIGNAL(clicked()),						this,SLOT(armFree()));
 	connect(m_ui->pushButtonArmPickGoto,SIGNAL(clicked()),				this,SLOT(armPickGoto()));
 	connect(m_ui->pushButtonArmPickTakeToFree,SIGNAL(clicked()),	this,SLOT(armPickTakeToFree()));
 	connect(m_ui->pushButtonArmPickGotoAndTakeToFree,SIGNAL(clicked()),	this,SLOT(armPickGotoAndTakeToFree()));
@@ -456,15 +457,19 @@ void RobotWidget::initManipulation()
 #ifdef MULTILOCALPATH
 static ManipulationPlanner *manipulation= NULL;
 
-typedef enum ManipulationType
+namespace Manip
 {
-	pickGoto,
-	takeToFree,
-	pickGotoAndTakeToFree,
-}
-ManipulationType;
+	typedef enum ManipulationType
+	{
+		armFree,
+		pickGoto,
+		takeToFree,
+		pickGotoAndTakeToFree,
+	} 
+	ManipulationType;
+};
 
-ManipulationType ManipPhase;
+Manip::ManipulationType ManipPhase;
 
 shared_ptr<Configuration> qInit;
 shared_ptr<Configuration> qGoal;
@@ -526,7 +531,52 @@ void Manipulationthread::run()
 	
 	switch (ManipPhase) 
 	{
-		case pickGoto:
+		case Manip::armFree:
+		{
+			confs.clear();
+			smTrajs.clear();
+			trajs.clear();
+			
+			switch ( manipulation->robot()->lpl_type ) 
+			{
+				case P3D_LINEAR_PLANNER :
+				{
+					MANIPULATION_TASK_MESSAGE status = manipulation->armPlanTask(ARM_FREE,0,
+																																			 qInit->getConfigStruct(), 
+																																			 qGoal->getConfigStruct(), 
+																																			 OBJECT_NAME, "", trajs);
+					if(status == MANIPULATION_TASK_OK )
+					{
+						manipulation->robot()->tcur = p3d_create_traj_by_copy(trajs[0]);
+						
+						for(unsigned int i = 1; i < trajs.size(); i++){
+							p3d_concat_traj(manipulation->robot()->tcur, trajs[i]);
+						}
+					}
+				}
+					break;
+					
+				case P3D_MULTILOCALPATH_PLANNER :
+					
+					manipulation->armPlanTask(ARM_PICK_GOTO,0,
+																		qInit->getConfigStruct(), 
+																		qGoal->getConfigStruct(), 
+																		OBJECT_NAME, "", confs, smTrajs);
+					break;
+					
+				case P3D_SOFT_MOTION_PLANNER:
+					cout << "Manipulation : localpath softmotion should not be called" << endl;
+					break;
+					
+				default:
+					break;
+			}
+			break;
+		}
+			
+		break;
+
+		case Manip::pickGoto:
 		{
 			//         manipulation->setObjectToManipulate((char*)OBJECT_NAME);
 			//         manipulation->setSupport((char*)SUPPORT_NAME);
@@ -576,7 +626,7 @@ void Manipulationthread::run()
 			break;
 		}
 			
-		case takeToFree:
+		case Manip::takeToFree:
 		{
 			confs.clear();
 			smTrajs.clear();
@@ -618,7 +668,8 @@ void Manipulationthread::run()
 			}
 			break;
 		}
-		case pickGotoAndTakeToFree :
+			
+		case Manip::pickGotoAndTakeToFree :
 		{
 			confs.clear();
 			smTrajs.clear();
@@ -680,13 +731,26 @@ void Manipulationthread::run()
 #endif
 }
 
+void RobotWidget::armFree()
+{
+	cout << "Manipulation : free" << endl;
+	
+#ifdef MULTILOCALPATH	
+	ManipPhase = Manip::armFree;
+	Manipulationthread* manip = new Manipulationthread(this);
+	m_mainWindow->isPlanning();
+	manip->start();
+#else
+	cout << "Error : use MultiLocalPath" << endl;
+#endif
+}
 
 void RobotWidget::armPickGoto()
 {
 	cout << "Manipulation : pick goto" << endl;
 	
 #ifdef MULTILOCALPATH	
-	ManipPhase = pickGoto;
+	ManipPhase = Manip::pickGoto;
 	Manipulationthread* manip = new Manipulationthread(this);
 	m_mainWindow->isPlanning();
 	manip->start();
@@ -700,7 +764,7 @@ void RobotWidget::armPickTakeToFree()
 	cout << "Manipulation : take to free" << endl;
 	
 #ifdef MULTILOCALPATH	
-	ManipPhase = takeToFree;
+	ManipPhase = Manip::takeToFree;
 	Manipulationthread* manip = new Manipulationthread(this);
 	m_mainWindow->isPlanning();
 	manip->start();
@@ -714,7 +778,7 @@ void RobotWidget::armPickGotoAndTakeToFree()
 	cout << "Manipulation : pick goto and take to free" << endl;
 	
 #ifdef MULTILOCALPATH	
-	ManipPhase = pickGotoAndTakeToFree;
+	ManipPhase = Manip::pickGotoAndTakeToFree;
 	Manipulationthread* manip = new Manipulationthread(this);
 	m_mainWindow->isPlanning();
 	manip->start();

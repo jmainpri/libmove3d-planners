@@ -21,6 +21,7 @@ using namespace std;
 
 extern void* GroundCostObj;
 extern int mainMhp(int argc, char** argv);
+extern void draw_opengl();
 
 //! reshape the OPenGL display
 //! changes the matrix when the window changes sizes
@@ -128,7 +129,7 @@ GlutWindowDisplay::GlutWindowDisplay(int argc, char *argv[])
 	
 	// Initializes Draw Functions
 	ext_get_win_mouse = (void (*) (int*,int*))(qt_get_win_mouse);
-	ext_g3d_draw_allwin_active = (void (*)())(qt_draw_allwin_active);
+	ext_g3d_draw_allwin_active = (void (*)())(draw_opengl);
 	ext_calc_cam_param = (void (*) (g3d_cam_param&) )(qt_ui_calc_param);
 	
 	Graphic::initDrawFunctions();

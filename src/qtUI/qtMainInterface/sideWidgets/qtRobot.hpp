@@ -84,6 +84,7 @@ private slots:
 	void printPQPColPair();
 	
 	// Manipulation -----------------------
+	void armFree();
 	void armPickGoto();
 	void armPickTakeToFree();
 	void armPickGotoAndTakeToFree();

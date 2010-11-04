@@ -100,10 +100,7 @@ int Main_threads::run(int argc, char** argv)
 		&w, SLOT(drawAllWinActive()));
 	//  w.showMaximized();
 
-#ifdef QT_GL
-	connect(&plannerHandler, SIGNAL(redraw()),
-		&w, SLOT(drawAllWinActiveHack()), Qt::BlockingQueuedConnection);
-#endif
+
 	
  	QRect g = QApplication::desktop()->screenGeometry();
  	cout << " x = " << g.x() << " y = " << g.y() << endl;
@@ -120,6 +117,9 @@ int Main_threads::run(int argc, char** argv)
 	w.raise();
 #endif
 	
+//	while (true) {
+//		app->processEvents();
+//	}
 	return app->exec();
 }
 
@@ -143,6 +143,56 @@ void Main_threads::exit()
 
 /**
  * @ingroup qtWindow
+ */
+Simple_threads::Simple_threads()
+{
+#ifdef QT_GL
+	sem = new QSemaphore(0);
+#endif
+}
+
+Simple_threads::~Simple_threads()
+{
+	
+}
+
+int Simple_threads::run(int argc, char** argv)
+{
+	app = new QApplication(argc, argv);
+	app->setWindowIcon(QIcon::QIcon(QPixmap::QPixmap(molecule_xpm)));
+	
+	mainMhp(argc, argv);
+	
+	// Creates the wrapper to the project 
+	// Be carefull to initialize in the right thread
+	global_Project = new Project(new Scene(XYZ_ENV));
+	
+	//----------------------------------------------------------------------
+	// OpenGl Widget
+	//----------------------------------------------------------------------
+	m_simpleOpenGlWidget = new GLWidget(NULL);
+	m_simpleOpenGlWidget->setObjectName(QString::fromUtf8("OpenGL"));
+	
+// 	QRect g = QApplication::desktop()->screenGeometry();
+// 	cout << " x = " << g.x() << " y = " << g.y() << endl;
+// 	cout << " width = " << g.width() << " height = " << g.height() << endl;
+ 	
+// 	QRect g_window = w.geometry();
+// 	g_window.setWidth( g.width() );
+// 	g_window.setHeight( 0.707*g.height() ); // sqrt(2) / 2
+// 	g_window.moveTo( 0, 0 );
+	
+	m_simpleOpenGlWidget->showMaximized();
+	m_simpleOpenGlWidget->raise();
+	
+	return app->exec();
+	
+//	while (true) {
+//		app->processEvents();
+//	}
+}
+/**
+ * @ingroup qtWindow
  * @brief Main function of Move3D
  */
 int main(int argc, char *argv[])
@@ -153,9 +203,10 @@ int main(int argc, char *argv[])
 		MainMHP,
 		qtWindow,
 		Glut,
+		simpleGlWidget,
 	} mode;
 	
-	mode = qtWindow;
+	mode = simpleGlWidget;
 	
 	switch (mode) 
 	{
@@ -170,6 +221,7 @@ int main(int argc, char *argv[])
 			//cout << "main.run(argc, argv)"  << endl;
 			return main.run(argc, argv);
 		}
+			
 		case Glut:
 		{
 #ifdef USE_GLUT
@@ -179,7 +231,12 @@ int main(int argc, char *argv[])
 			cout << "Error : Glut is not linked" << endl;
 #endif
 		}
-			break;
+			
+		case simpleGlWidget:
+		{
+			Simple_threads main;
+			return main.run(argc, argv);
+		}
 			
 		default:
 			break;

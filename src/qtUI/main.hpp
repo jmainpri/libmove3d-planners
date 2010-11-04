@@ -17,13 +17,9 @@
  */
 class Main_threads: public QObject
 {
-
 Q_OBJECT
 #ifdef QT_GL
         qtGLWindow* 	g3dWin;
-#endif
-#ifdef QT_OPENGL_SIDE
-        MainWidget* 	sideWin;
 #endif
         QApplication* 	app;
 
@@ -44,6 +40,33 @@ private slots :
   
 };
 
+/**
+ * @ingroup qtWindow
+ * @brief Simple OpenGl display with Qt
+ */
+class Simple_threads : public QObject
+{
+	Q_OBJECT
+
+	GLWidget* 	m_simpleOpenGlWidget;
+
+	QApplication* 	app;
+	
+public:
+	Simple_threads();
+	~Simple_threads();
+	
+  int run(int argc, char** argv);
+
+	
+	private slots :
+  void exit();
+};
+
+/**
+ * @ingroup qtWindow
+ * @brief Logo
+ */
 static char* molecule_xpm[] = {
 	(char*) "32 32 147 2",
 	(char*) "  	g #FFFFFF",
