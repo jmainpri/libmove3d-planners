@@ -269,7 +269,7 @@ OOMove3D_flag(USE_GLUT "Compilation with a glut window" OFF)
 OOMove3D_flag(OOMOVE3D_CORE "Compiles the planning API and planners" ON)
 
 OOMove3D_flag(HRI_COSTSPACE "With the hri work" ON)
-OOMove3D_flag(HRI_GENERALIZED_IK "With the hri work done in BioMove3D" ON)
+OOMove3D_flag(HRI_PLANNER "With the hri work done in BioMove3D" ON)
 
 OOMove3D_CheckCompilationFlags()
 
