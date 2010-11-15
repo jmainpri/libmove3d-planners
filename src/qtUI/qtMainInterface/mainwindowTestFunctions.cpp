@@ -41,7 +41,7 @@
 
 #ifdef HRI_PLANNER
 #include "P3d-pkg.h"
-#include "Hri_Planner-pkg.h"
+#include "Hri_planner-pkg.h"
 #endif
 
 using namespace std;
