@@ -20,7 +20,7 @@
 #include "Collision-pkg.h"
 #endif
 
-#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
+#if defined( CXX_PLANNER ) || defined( MOVE3D_CORE ) 
 #include "MultiRun.hpp"
 #include "SaveContext.hpp"
 #include "testModel.hpp"
@@ -28,7 +28,7 @@
 //#include "Greedy/GridCollisionChecker.h"
 #endif
 
-#ifdef HRI_GENERALIZED_IK
+#ifdef HRI_PLANNER
 #include "Hri_planner-pkg.h"
 #endif
 
@@ -118,7 +118,7 @@ void RobotWidget::initModel()
 	connect(m_ui->pushButtonGrabObject,SIGNAL(clicked()),					this,SLOT(GrabObject()));
 	connect(m_ui->pushButtonReleaseObject,SIGNAL(clicked()),			this,SLOT(ReleaseObject()));
 	
-#ifdef HRI_GENERALIZED_IK
+#ifdef HRI_PLANNER
 	connect(m_ui->pushButtonComputeLeftArmGIK,SIGNAL(clicked()),	this,SLOT(computeHriGikLARM()));
 	connect(m_ui->pushButtonComputeRightArmGIK,SIGNAL(clicked()),	this,SLOT(computeHriGikRARM()));
 #endif
@@ -210,7 +210,7 @@ void RobotWidget::computeHriGik(bool leftArm)
 		return;
 	}
 	
-#ifdef HRI_GENERALIZED_IK
+#ifdef HRI_PLANNER
 	// 1 - Select Goto point
 	p3d_vector3 Tcoord;
 	
@@ -255,7 +255,7 @@ void RobotWidget::computeHriGik(bool leftArm)
 	}
 	
 #else
-	cout << "HRI_GENERALIZED_IK not defined" << endl;
+	cout << "HRI_PLANNER not defined" << endl;
 #endif
 	
 	

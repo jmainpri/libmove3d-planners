@@ -32,7 +32,7 @@ namespace HRICS
 		void setCost(double Cost) { m_Cost = Cost; }
 		void setBlankCost();
 		
-#ifdef HRI_GENERALIZED_IK
+#ifdef HRI_PLANNER
 		void computeReachability(bool leftArm);
 #endif
 		void resetReachable();

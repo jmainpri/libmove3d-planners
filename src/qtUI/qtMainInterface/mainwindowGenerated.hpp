@@ -52,7 +52,7 @@
 #include "qtMultiLocalPath.hpp"
 #endif
 
-#if defined( OOMOVE3D_CORE )
+#if defined( MOVE3D_CORE )
 
 #include "qtUI/qtOpenGL/glwidget.hpp"
 
@@ -187,6 +187,7 @@ public:
     QRadioButton *radioButtonPRM;
     QCheckBox *checkBoxWithSmoothing;
     QCheckBox *checkBoxUseP3DStructures;
+	
     QGroupBox *groupBoxTrajectory;
     QVBoxLayout *verticalLayout_34;
     QHBoxLayout *horizontalLayoutShowTraj;
@@ -194,6 +195,7 @@ public:
     QPushButton *pushButtonShowTraj;
     QSpacerItem *horizontalSpacerShowTraj2;
     QHBoxLayout *horizontalLayoutTrajSpeed;
+	
     QLabel *label;
     QDoubleSpinBox *doubleSpinBoxTrajSpeed;
     QSlider *horizontalSliderTrajSpeed;
@@ -902,6 +904,9 @@ public:
 
         horizontalLayout_3->addWidget(groupBoxRunButtons);
 
+				//----------------------------------------------------------------------
+				// Button Trajectory
+				//----------------------------------------------------------------------
         groupBoxTrajectory = new QGroupBox(controlWidget);
         groupBoxTrajectory->setObjectName(QString::fromUtf8("groupBoxTrajectory"));
         verticalLayout_34 = new QVBoxLayout(groupBoxTrajectory);
@@ -917,13 +922,13 @@ public:
 
         pushButtonShowTraj = new QPushButton(groupBoxTrajectory);
         pushButtonShowTraj->setObjectName(QString::fromUtf8("pushButtonShowTraj"));
-
+			
         horizontalLayoutShowTraj->addWidget(pushButtonShowTraj);
-
         horizontalSpacerShowTraj2 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
         horizontalLayoutShowTraj->addItem(horizontalSpacerShowTraj2);
-
+			
+//				trajectoryComboBox = new QComboBox(groupBoxTrajectory);
+//				horizontalLayoutShowTraj->addWidget( trajectoryComboBox );
 
         verticalLayout_34->addLayout(horizontalLayoutShowTraj);
 

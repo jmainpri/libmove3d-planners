@@ -11,7 +11,7 @@
 #include "mainwindow.hpp"
 #endif
 
-#if defined( OOMOVE3D_CORE )
+#if defined( MOVE3D_CORE )
 #include "qtUI/qtMainInterface/mainwindow.hpp"
 #endif
 

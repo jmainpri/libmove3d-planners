@@ -21,7 +21,7 @@
 #include "cost_space.hpp"
 #endif
 
-#if defined( OOMOVE3D_CORE )
+#if defined( MOVE3D_CORE )
 #include "planner/cost_space.hpp"
 #endif
 

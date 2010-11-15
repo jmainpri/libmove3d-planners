@@ -19,7 +19,7 @@
 #include "MultiRun.hpp"
 #endif
 
-#if defined( OOMOVE3D_CORE ) 
+#if defined( MOVE3D_CORE ) 
 #include "planner/plannerFunctions.hpp"
 #include "utils/MultiRun.hpp"
 #endif
@@ -55,6 +55,9 @@ void qt_optimize();
 void qt_readScenario();
 void qt_saveScenario();
 void qt_readTraj();
+
+// UI functions
+void qt_add_traj(char* name,int id);
 
 #ifdef HRI_COSTSPACE
 void qt_load_HRICS_Grid(std::string gridName);

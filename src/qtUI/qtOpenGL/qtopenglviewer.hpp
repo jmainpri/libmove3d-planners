@@ -5,7 +5,7 @@
 #include "qtLibrary.hpp"
 #endif
 
-#ifdef OOMOVE3D_CORE
+#ifdef MOVE3D_CORE
 #include "qtUI/qtLibrary.hpp"
 #endif
 

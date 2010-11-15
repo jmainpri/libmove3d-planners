@@ -1,11 +1,11 @@
 #ifndef MAIN_HPP
 #define MAIN_HPP
 
-#if defined( QT_LIBRARY ) && defined( OOMOVE3D_CORE )
+#if defined( QT_LIBRARY ) && defined( MOVE3D_CORE )
 #include "qtUI/qtLibrary.hpp"
 #endif
 
-#if defined( QT_GL ) && defined( OOMOVE3D_CORE )
+#if defined( QT_GL ) && defined( MOVE3D_CORE )
 #include "qtUI/qtOpenGL/qtGLWindow.hpp"
 #endif
 

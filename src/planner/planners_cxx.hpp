@@ -15,7 +15,7 @@
 #include "Diffusion/RRT-Variants/Multi-TRRT.hpp"
 #endif
 
-#if defined( OOMOVE3D_CORE )
+#if defined( MOVE3D_CORE )
 #include "planner/planner.hpp"
 #include "planner/PRM/PRM.hpp"
 #include "planner/PRM/Visibility.hpp"

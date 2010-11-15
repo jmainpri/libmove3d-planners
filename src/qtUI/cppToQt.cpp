@@ -38,8 +38,11 @@
 #include "Move3d-pkg.h"
 
 #include "cppToQt.hpp"
-#include "API/project.hpp"
 
+#include "qtMainInterface/mainwindow.hpp"
+#include "qtFormRobot/moverobot.hpp"
+
+#include "API/project.hpp"
 #include "API/Trajectory/smoothing.hpp"
 #include "API/Trajectory/costOptimization.hpp"
 //#include "Greedy/GreedyCost.hpp"
@@ -125,7 +128,7 @@ void qt_runDiffusion()
 		cout << "ENV.getBool(Env::Env::treePlannerIsEST) = " << ENV.getBool(Env::treePlannerIsEST) << endl;
 		if (ENV.getBool(Env::treePlannerIsEST))
 		{
-#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE )
+#if defined( CXX_PLANNER ) || defined( MOVE3D_CORE )
 			res = p3d_run_est(XYZ_GRAPH, fct_stop, fct_draw);
 		}
 		else
@@ -163,7 +166,7 @@ void qt_runPRM()
 #endif
 		
 		int res;
-		int fail;
+//		int fail;
 		
 		ChronoOn();
 		
@@ -417,6 +420,22 @@ void qt_load_HRICS_Grid(std::string docname)
 	ENV.setBool(Env::drawGrid,true);
 }
 #endif
+
+// Add a trajectory to the interface
+void qt_add_traj(char* name,int id)
+{
+	std::ostringstream oss;
+	oss << name << " (" << id - 1 << " )";
+	
+	p3d_traj *trajPt = (p3d_traj*) p3d_get_desc_curid(P3D_TRAJ);
+	
+	cout << "trajPt = " << trajPt << endl;
+	
+	FormRobot* form = global_w->getMoveRobot()->getRobotFormByName( trajPt->rob->name );
+	
+	std::string str = oss.str();
+	form->addTraj(str,trajPt);
+}
 
 // -------------------------------------------------------------
 // ------------------   Pipe  ----------------------------------

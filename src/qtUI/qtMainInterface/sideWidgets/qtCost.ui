@@ -58,8 +58,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>464</width>
-            <height>797</height>
+            <width>351</width>
+            <height>910</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout">
@@ -489,7 +489,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QWidget" name="tabHri" native="true"/>
+        <widget class="HricsWidget" name="tabHri" native="true"/>
        </item>
       </layout>
      </widget>
@@ -497,6 +497,14 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>HricsWidget</class>
+   <extends>QWidget</extends>
+   <header>qtHrics.hpp</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -70,9 +70,7 @@ int Main_threads::run(int argc, char** argv)
 	PlannerHandler plannerHandler(argc, argv);
 	plannerHandler.moveToThread(&plannerThread);
 	plannerThread.start();
-	QMetaObject::invokeMethod(&plannerHandler,
-				  "init",
-				  Qt::BlockingQueuedConnection);
+	QMetaObject::invokeMethod(&plannerHandler,"init",Qt::BlockingQueuedConnection);
 	
 	// Creates the wrapper to the project 
 	// Be carefull to initialize in the right thread
@@ -206,7 +204,7 @@ int main(int argc, char *argv[])
 		simpleGlWidget,
 	} mode;
 	
-	mode = simpleGlWidget;
+	mode = qtWindow;
 	
 	switch (mode) 
 	{

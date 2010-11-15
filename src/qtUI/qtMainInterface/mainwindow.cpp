@@ -38,7 +38,7 @@
 #include "cost_space.hpp"
 #endif
 
-#if defined( OOMOVE3D_CORE ) 
+#if defined( MOVE3D_CORE ) 
 #include "utils/testModel.hpp"
 #include "utils/SaveContext.hpp"
 #include "planner/cost_space.hpp"
@@ -115,9 +115,16 @@ MainWindow::~MainWindow()
 	delete m_ui;
 }
 
+//! Return the OpenGl display
 GLWidget* MainWindow::getOpenGL()
 { 
 	return m_ui->OpenGL; 
+}
+
+//! Return the MoveRobot widget
+MoveRobot* MainWindow::getMoveRobot()
+{
+	return m_ui->tabRobot->getMoveRobot();
 }
 
 void MainWindow::initRobotsMenu()
@@ -397,6 +404,12 @@ void MainWindow::mobileCamera()
 // --------------------------------------------------------------
 
 GLWidget* ptrOpenGL;
+
+void MainWindow::setCurrentTraj(p3d_traj* traj)
+{
+	p3d_sel_desc_id(P3D_ROBOT,traj->rob);
+	traj->rob->tcur = traj;
+}
 
 static int default_drawtraj_fct_qt_pipe(p3d_rob* robot, p3d_localpath* curLp)
 {

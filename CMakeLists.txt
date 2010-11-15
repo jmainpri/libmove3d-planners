@@ -18,7 +18,7 @@
 
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6.4)
 
-PROJECT (OOMove3D)
+PROJECT (Move3DMPLIB)
 
 #Default mode is Debug ---------------------------------------------------------
 IF(NOT CMAKE_BUILD_TYPE)
@@ -35,17 +35,21 @@ ENDIF(APPLE)
 # Set the project version ------------------------------------------------------
 
 if( NOT PROJECT_VERSION)
+
 if( NOT PROJECT_MAJOR_VERSION)
-#message( STATUS "PROJECT_MAJOR_VERSION is not set")
-set( PROJECT_MAJOR_VERSION 2)
+set( PROJECT_MAJOR_VERSION 1)
 endif( NOT PROJECT_MAJOR_VERSION)
+
 if( NOT PROJECT_MINOR_VERSION)
-#message( STATUS "PROJECT_MINOR_VERSION is not set")
-set( PROJECT_MINOR_VERSION 1)
+set( PROJECT_MINOR_VERSION 0)
 endif( NOT PROJECT_MINOR_VERSION)
-#set( PROJECT_REVISION ${PROJECT_WC_REVISION})
-set( PROJECT_VERSION "${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}")
-set(SOFTMOTION_VERSION "${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}")
+
+if( NOT PROJECT_REVISION)
+set( PROJECT_REVISION 0)
+endif( NOT PROJECT_REVISION)
+
+set( PROJECT_VERSION "${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}.${PROJECT_REVISION}")
+
 endif( NOT PROJECT_VERSION)
 
 if( NOT DEFINED PROJECT_MAJOR_VERSION)
@@ -92,7 +96,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/script/CMake")
 IF(QT_LIBRARY)
   FIND_PACKAGE(Qt4 REQUIRED)
   INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR})
-  SET(OOMove3D_COMPILATION_INCLUDES ${OOMove3D_COMPILATION_INCLUDES} ${QT_INCLUDE_DIR})
+  SET(Move3DMPLIB_COMPILATION_INCLUDES ${Move3DMPLIB_COMPILATION_INCLUDES} ${QT_INCLUDE_DIR})
   IF(QT_GL)
     SET(QT_USE_QTOPENGL TRUE)
   ENDIF(QT_GL)
@@ -143,11 +147,11 @@ ENDIF()
 
 #-------------- Move3D ---------------------------------------------------------
 
-FIND_PACKAGE(OOMOVE3D-CORE REQUIRED)
-INCLUDE_directories(${OOMOVE3D-CORE_INCLUDE_DIR} ${p3d_INCLUDE_DIR})
-SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${OOMOVE3D-CORE_INCLUDE_DIR})
+FIND_PACKAGE(MOVE3D-CORE REQUIRED)
+INCLUDE_directories(${MOVE3D-CORE_INCLUDE_DIR} ${p3d_INCLUDE_DIR})
+SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${MOVE3D-CORE_INCLUDE_DIR})
 SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${p3d_INCLUDE_DIR})
-SET(LIBS ${LIBS} ${OOMOVE3D-CORE_LIBRARIES})
+SET(LIBS ${LIBS} ${MOVE3D-CORE_LIBRARIES})
 
 #-------------- Eigen ----------------------------------------------------------
 
@@ -185,15 +189,15 @@ ENDIF(MULTILOCALPATH)
 #-------------- Grasp Planner --------------------------------------------------
 
 IF(GRASP_PLANNING)
-  #FIND_PACKAGE(GLPK REQUIRED)
-  #INCLUDE_directories(${GLPK_INCLUDE_DIR})
-  #SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GLPK_INCLUDE_DIR})
-  #SET(LIBS ${LIBS} ${GLPK_LIBRARIES})
-  #
-  #FIND_PACKAGE(QHULL REQUIRED)
-  #INCLUDE_directories(${QHULL_INCLUDE_DIR})
-  #SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${QHULL_INCLUDE_DIR})
-  #SET(LIBS ${LIBS} ${QHULL_LIBRARIES})
+  FIND_PACKAGE(GLPK REQUIRED)
+  INCLUDE_directories(${GLPK_INCLUDE_DIR})
+  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GLPK_INCLUDE_DIR})
+  SET(LIBS ${LIBS} ${GLPK_LIBRARIES})
+  
+  FIND_PACKAGE(QHULL REQUIRED)
+  INCLUDE_directories(${QHULL_INCLUDE_DIR})
+  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${QHULL_INCLUDE_DIR})
+  SET(LIBS ${LIBS} ${QHULL_LIBRARIES})
   
   FIND_PACKAGE(GLIBCONFIG REQUIRED)
   INCLUDE_directories(${GLIBCONFIG_INCLUDE_DIR})
@@ -215,35 +219,35 @@ ENDIF(GRASP_PLANNING)
 # --- Scripts to search source files -------------------------------------------
 # ------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-SET(OOMove3D_CompilationFlags "")
-SET(OOMove3D_LinkedCompilationFlags "")
+SET(Move3DMPLIB_CompilationFlags "")
+SET(Move3DMPLIB_LinkedCompilationFlags "")
 
-MACRO(OOMove3D_flag flagName description status)
+MACRO(Move3DMPLIB_flag flagName description status)
   SET(flagName "${flagName}")
   SET(description "${description}")
   SET(status "${status}")
   OPTION(${flagName} ${description} ${status})
-  LIST(APPEND OOMove3D_CompilationFlags ${flagName})
+  LIST(APPEND Move3DMPLIB_CompilationFlags ${flagName})
   FOREACH(linkFlag ${ARGN})
-    LIST(APPEND OOMove3D_LinkedCompilationFlags "${flagName}:${linkFlag}")
+    LIST(APPEND Move3DMPLIB_LinkedCompilationFlags "${flagName}:${linkFlag}")
   ENDFOREACH(linkFlag)
 #  set_property(CACHE ANIMATION PROPERTY VALUE ON)
-ENDMACRO(OOMove3D_flag)
+ENDMACRO(Move3DMPLIB_flag)
 
-MACRO(OOMove3D_CheckCompilationFlags)
-  SET(OOMove3D_ActiveFlags "")
+MACRO(Move3DMPLIB_CheckCompilationFlags)
+  SET(Move3DMPLIB_ActiveFlags "")
   MESSAGE ("Active Flags :")
   FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/smpFlags "#Generated File Do not modify!!!\n" )
-  FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/smpFlags "OOMove3D_COMPILATION_FLAGS = ")
-  FOREACH(flag ${OOMove3D_CompilationFlags})
+  FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/smpFlags "Move3DMPLIB_COMPILATION_FLAGS = ")
+  FOREACH(flag ${Move3DMPLIB_CompilationFlags})
     IF(${flag})
-      FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/OOMove3DFlags "-D${flag} ")
+      FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/Move3DMPLIBFlags "-D${flag} ")
       MESSAGE("${flag}")
       ADD_DEFINITIONS("-D${flag}")
-      LIST(APPEND OOMove3D_ActiveFlags ${flag})
+      LIST(APPEND Move3DMPLIB_ActiveFlags ${flag})
     ENDIF()
   ENDFOREACH(flag)
-ENDMACRO(OOMove3D_CheckCompilationFlags)
+ENDMACRO(Move3DMPLIB_CheckCompilationFlags)
 
 #-------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -251,42 +255,42 @@ ENDMACRO(OOMove3D_CheckCompilationFlags)
 # ------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-OOMove3D_flag(QT_LIBRARY "Sets QtLibrary compiling mode" ON)
-OOMove3D_flag(QT_GL "Sets QtLibrary compiling mode" ON QT_LIBRARY)
-OOMove3D_flag(QT_UI_XML_FILES "Sets QtLibrary compiling mode" ON QT_LIBRARY)
+Move3DMPLIB_flag(QT_LIBRARY "Sets QtLibrary compiling mode" ON)
+Move3DMPLIB_flag(QT_GL "Sets QtLibrary compiling mode" ON QT_LIBRARY)
+Move3DMPLIB_flag(QT_UI_XML_FILES "Sets QtLibrary compiling mode" ON QT_LIBRARY)
 
-OOMove3D_flag(P3D_CONSTRAINTS "Compilation with module Constraints" ON)
-OOMove3D_flag(P3D_COLLISION_CHECKING "Compilation with module Collision Checking" ON)
-OOMove3D_flag(P3D_LOCALPATH "Compilation with module Localpath" ON)
-OOMove3D_flag(P3D_PLANNER "Compilation with module Planner" ON)
-OOMove3D_flag(LIGHT_PLANNER "Compilation with module Light Planner" ON)
-OOMove3D_flag(GRASP_PLANNING "Compilation with module Manipulation Planner" ON)
-OOMove3D_flag(MULTILOCALPATH "Compilation with module Multilocalpath" ON)
+Move3DMPLIB_flag(P3D_CONSTRAINTS "Compilation with module Constraints" ON)
+Move3DMPLIB_flag(P3D_COLLISION_CHECKING "Compilation with module Collision Checking" ON)
+Move3DMPLIB_flag(P3D_LOCALPATH "Compilation with module Localpath" ON)
+Move3DMPLIB_flag(P3D_PLANNER "Compilation with module Planner" ON)
+Move3DMPLIB_flag(LIGHT_PLANNER "Compilation with module Light Planner" ON)
+Move3DMPLIB_flag(GRASP_PLANNING "Compilation with module Manipulation Planner" ON)
+Move3DMPLIB_flag(MULTILOCALPATH "Compilation with module Multilocalpath" ON)
 
-OOMove3D_flag(USE_GBM "Compilation with module Multilocalpath" ON)
-OOMove3D_flag(USE_GLUT "Compilation with a glut window" OFF)
+Move3DMPLIB_flag(USE_GBM "Compilation with module Multilocalpath" ON)
+Move3DMPLIB_flag(USE_GLUT "Compilation with a glut window" OFF)
 
-OOMove3D_flag(OOMOVE3D_CORE "Compiles the planning API and planners" ON)
+Move3DMPLIB_flag(MOVE3D_CORE "Compiles the planning API and planners" ON)
 
-OOMove3D_flag(HRI_COSTSPACE "With the hri work" ON)
-OOMove3D_flag(HRI_PLANNER "With the hri work done in BioMove3D" ON)
+Move3DMPLIB_flag(HRI_COSTSPACE "With the hri work" ON)
+Move3DMPLIB_flag(HRI_PLANNER "With the hri work done in BioMove3D" ON)
 
-OOMove3D_CheckCompilationFlags()
+Move3DMPLIB_CheckCompilationFlags()
 
 
 #-------------------------------------------------------------------------------
 # SUBDIR PROCESS 
 #-------------------------------------------------------------------------------
-SET(OOMove3D_src "")
-SET(OOMove3D_inc "")
+SET(Move3DMPLIB_src "")
+SET(Move3DMPLIB_inc "")
 
 SET(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-SET(OOMove3D_SOURCE_DIRECTORIES src)
+SET(Move3DMPLIB_SOURCE_DIRECTORIES src)
 
 MACRO(BM3D_SRC_SUBDIR_PROCESS)
   FOREACH(srcfile ${ARGV})
-    LIST(APPEND OOMove3D_src "${BM3D_MODULE_NAME}/${srcfile}")
+    LIST(APPEND Move3DMPLIB_src "${BM3D_MODULE_NAME}/${srcfile}")
     SOURCE_GROUP(${BM3D_MODULE_NAME} FILES ${BM3D_MODULE_NAME}/${srcfile})
   ENDFOREACH(srcfile)
 ENDMACRO(BM3D_SRC_SUBDIR_PROCESS)
@@ -294,17 +298,17 @@ ENDMACRO(BM3D_SRC_SUBDIR_PROCESS)
 MACRO(BM3D_INC_DIR_PROCESS directory)
   include_directories (${directory})
   file (GLOB incfiles "${directory}/*.h")
-  LIST(APPEND OOMove3D_inc "${incfiles}")
+  LIST(APPEND Move3DMPLIB_inc "${incfiles}")
   SOURCE_GROUP(${BM3D_MODULE_NAME} FILES ${incfiles})
   file (GLOB incfiles "${directory}/*.hpp")
-  LIST(APPEND OOMove3D_inc "${incfiles}")
+  LIST(APPEND Move3DMPLIB_inc "${incfiles}")
   SOURCE_GROUP(${BM3D_MODULE_NAME} FILES ${incfiles})
 ENDMACRO(BM3D_INC_DIR_PROCESS)
 
 #-------------------------------------------------------------------------------
 # QT4 SUBDIR PROCESS (same but for preprocessing qt4 files)
 #-------------------------------------------------------------------------------
-SET(OOMove3D_QT_FILES_FOR_MOC "")
+SET(Move3DMPLIB_QT_FILES_FOR_MOC "")
 
 MACRO(BM3D_QT_GENERATE_MOC)
   FOREACH(file ${ARGV})
@@ -312,7 +316,7 @@ MACRO(BM3D_QT_GENERATE_MOC)
   ENDFOREACH(file ${ARGV})
 ENDMACRO(BM3D_QT_GENERATE_MOC)
 
-SET(OOMove3D_QT_UI_FILES "")
+SET(Move3DMPLIB_QT_UI_FILES "")
 
 MACRO(BM3D_QT_GENERATE_UI_HEADERS)
   FOREACH(file ${ARGV})
@@ -320,26 +324,26 @@ MACRO(BM3D_QT_GENERATE_UI_HEADERS)
   ENDFOREACH(file ${ARGV})
 ENDMACRO(BM3D_QT_GENERATE_UI_HEADERS)
 
-FOREACH(srcDir ${OOMove3D_SOURCE_DIRECTORIES})
-  INCLUDE(${OOMove3D_SOURCE_DIR}/${srcDir}/SourceList.cmake)
+FOREACH(srcDir ${Move3DMPLIB_SOURCE_DIRECTORIES})
+  INCLUDE(${Move3DMPLIB_SOURCE_DIR}/${srcDir}/SourceList.cmake)
 ENDFOREACH(srcDir)
 
 #-------------------------------------------------------------------------------
 # Directories to include 
 #-------------------------------------------------------------------------------
-BM3D_INC_DIR_PROCESS(${OOMove3D_SOURCE_DIR})
-BM3D_INC_DIR_PROCESS(${OOMove3D_SOURCE_DIR})
+BM3D_INC_DIR_PROCESS(${Move3DMPLIB_SOURCE_DIR})
+BM3D_INC_DIR_PROCESS(${Move3DMPLIB_SOURCE_DIR})
 
-#MESSAGE("OOMove3D_src : ${OOMove3D_src}") #Uncomment to print the included file by Cmake
-#MESSAGE("OOMove3D_inc : ${OOMove3D_inc}") #Uncomment to print the included file by Cmake
+#MESSAGE("Move3DMPLIB_src : ${Move3DMPLIB_src}") #Uncomment to print the included file by Cmake
+#MESSAGE("Move3DMPLIB_inc : ${Move3DMPLIB_inc}") #Uncomment to print the included file by Cmake
 
 IF(QT_LIBRARY)
   # necessary for the UI headers
   BM3D_INC_DIR_PROCESS(${CMAKE_CURRENT_BINARY_DIR})
   # generate the UI headers
-  QT4_WRAP_UI(OOMove3D_QT_UI_HEADERS ${BM3D_QT_UI_FILES})
+  QT4_WRAP_UI(Move3DMPLIB_QT_UI_HEADERS ${BM3D_QT_UI_FILES})
   # Qt4 files that need to be preprocessed
-  QT4_WRAP_CPP(OOMove3D_QT_MOC ${BM3D_QT_FILES_FOR_MOC})
+  QT4_WRAP_CPP(Move3DMPLIB_QT_MOC ${BM3D_QT_FILES_FOR_MOC})
 ENDIF(QT_LIBRARY)
 
 # -------------------------------------------------------------------------------
@@ -395,7 +399,7 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 SET(LIBRARY_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/lib/$ENV{HOSTTYPE}")
 
 # SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/bin/$ENV{HOSTTYPE}")
-# ADD_EXECUTABLE(move3d ${OOMove3D_src} ${OOMove3D_QT_MOC} ${OOMove3D_QT_UI_HEADERS} ${OOMove3D_inc})
+# ADD_EXECUTABLE(move3d ${Move3DMPLIB_src} ${Move3DMPLIB_QT_MOC} ${Move3DMPLIB_QT_UI_HEADERS} ${Move3DMPLIB_inc})
 # TARGET_LINK_LIBRARIES(move3d ${LIBS} m)
 
 #Default Flags
@@ -407,22 +411,22 @@ ELSEIF(${CMAKE_BUILD_TYPE} MATCHES "Release")
   ADD_DEFINITIONS(-O2 -Wall -Wno-unknown-pragmas)
 ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
-ADD_LIBRARY(Move3D-motionPlanner SHARED ${OOMove3D_src} ${OOMove3D_QT_MOC} ${OOMove3D_QT_UI_HEADERS} ${OOMove3D_inc})
+ADD_LIBRARY(Move3D-motionPlanner SHARED ${Move3DMPLIB_src} ${Move3DMPLIB_QT_MOC} ${Move3DMPLIB_QT_UI_HEADERS} ${Move3DMPLIB_inc})
 TARGET_LINK_LIBRARIES(Move3D-motionPlanner ${LIBS} m)
 
-#ADD_EXECUTABLE(move3d ${BioMove3D_SOURCE_DIR}/move3d/move3d.c ${OOMove3D_inc})
-#TARGET_LINK_LIBRARIES(move3d OOMove3D ${LIBS} m)
+#ADD_EXECUTABLE(move3d ${BioMove3D_SOURCE_DIR}/move3d/move3d.c ${Move3DMPLIB_inc})
+#TARGET_LINK_LIBRARIES(move3d Move3DMPLIB ${LIBS} m)
 
 # ------------------------------------------------------------------------------
 # Intallation
 # ------------------------------------------------------------------------------
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  SET(CMAKE_INSTALL_PREFIX "${OOMove3D_BINARY_DIR}/install" CACHE PATH "OOMove3D install prefix" FORCE)
+  SET(CMAKE_INSTALL_PREFIX "${Move3DMPLIB_BINARY_DIR}/install" CACHE PATH "Move3DMPLIB install prefix" FORCE)
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 INSTALL(TARGETS Move3D-motionPlanner
         RUNTIME DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE CONFIGURATIONS ${CMAKE_BUILD_TYPE}
         LIBRARY DESTINATION lib PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ CONFIGURATIONS ${CMAKE_BUILD_TYPE})
 	
-INSTALL(DIRECTORY ${OOMove3D_SOURCE_DIRECTORIES} DESTINATION include/Move3D-motionPlanner FILES_MATCHING REGEX "\\.[h|hpp]")
+INSTALL(DIRECTORY ${Move3DMPLIB_SOURCE_DIRECTORIES} DESTINATION include/Move3D-motionPlanner FILES_MATCHING REGEX "\\.[h|hpp]")
  

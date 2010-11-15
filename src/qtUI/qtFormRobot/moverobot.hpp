@@ -8,11 +8,11 @@
 #include "qtBase/SpinBoxSliderConnector_p.hpp"
 #endif
 
-#if defined( OOMOVE3D_CORE )
+#if defined( MOVE3D_CORE )
 #include "qtUI/qtBase/SpinBoxSliderConnector_p.hpp"
 #endif
 
-#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
+#if defined( CXX_PLANNER ) || defined( MOVE3D_CORE ) 
 #include "API/Device/joint.hpp"
 #include "API/ConfigSpace/configuration.hpp"
 #ifndef ROBOT_HPP
@@ -62,7 +62,7 @@ public:
 	QtShiva::SpinBoxSliderConnector* getConnector() {return mConnector;}
 	
 	
-#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
+#if defined( CXX_PLANNER ) || defined( MOVE3D_CORE ) 
 	Robot* getRobot() { return mRobot; }
 #endif
 	
@@ -70,7 +70,7 @@ public:
 	void dofValueChanged(double value);
 	
 private:
-#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
+#if defined( CXX_PLANNER ) || defined( MOVE3D_CORE ) 
 	Robot*  mRobot;
 #endif
 	
@@ -97,10 +97,11 @@ class FormRobot : public QObject {
 public:
 	FormRobot() {}
 	
-	FormRobot(Robot* R,QGridLayout* GL,QComboBox* CB,GLWidget* openGl) :
+	FormRobot(Robot* R,QGridLayout* GL,QComboBox* pos,QComboBox* traj,GLWidget* openGl) :
 	mRobot(R),
 	mGridLayout(GL),
-	mPositions(CB),
+	mPositions(pos),
+	mTrajectoriesNames(traj),
 	mOpenGl(openGl)
 	{}
 	
@@ -142,14 +143,30 @@ public:
 	 */
 	void saveCurrentConfigToPosition();
 	
+	/**
+	 * Add Traj
+	 */
+	void addTraj( std::string& name, p3d_traj* trajPt );
+	
+	/**
+	 * Function called to set the current trajectory
+	 */
+	void setCurrentTraj(int id);
+	
 private:
 	
 	int calc_real_dof(void);
 	
 	Robot*										mRobot;
+	
 	std::vector<DofSlider*>		mSliders;
 	QGridLayout*							mGridLayout;
+	
 	QComboBox*								mPositions;
+	
+	QComboBox*								mTrajectoriesNames;
+	std::vector<p3d_traj*>		mTrajectories;
+	
 	GLWidget*									mOpenGl;
 };
 
@@ -192,7 +209,7 @@ protected:
 private:
 	Ui::MoveRobot *m_ui;
 	
-#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
+#if defined( CXX_PLANNER ) || defined( MOVE3D_CORE ) 
 	/**
 	 * Creates a new gridLayout inside a tabWidget
 	 */

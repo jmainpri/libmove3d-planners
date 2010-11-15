@@ -357,7 +357,7 @@ void HricsWidget::cellToShowChanged()
 		global_DrawnSphere = ReachableCells[ith]->getWorkspacePoint();
 #endif
 		
-#ifdef HRI_GENERALIZED_IK
+#ifdef HRI_PLANNER
 		HRICS_activeNatu->computeIsReachable(ReachableCells[ith]->getWorkspacePoint(),
 																				 ReachableCells[ith]->isReachableWithLA());
 		
@@ -551,7 +551,7 @@ void HricsWidget::computeReachability()
 	HRICS_activeNatu->getGrid()->resetCellCost();
 	HRICS_activeNatu->getGrid()->resetReachability();
 	
-#ifdef HRI_GENERALIZED_IK
+#ifdef HRI_PLANNER
 	HRICS_activeNatu->getGrid()->computeReachability(ENV.getBool(Env::HRIleftArmVsRightArm));
 #else
 	cout << "HRI planner not defined" << endl;
@@ -902,15 +902,22 @@ void HricsWidget::enableHriSpace()
 	//        delete hriSpace;
 	//    }
 	//    hriSpace = new HriSpaceCost(XYZ_ROBOT,ENV.getInt(Env::akinJntId));
-	cout << "HRI Planner not compiled nor linked" << endl;
+	
+#ifdef HRI_PLANNER
+  GLOBAL_AGENTS = hri_create_agents();
+  hri_assign_source_agent("JIDOKUKA", GLOBAL_AGENTS);
+	cout << "GLOBAL_AGENTS created!!!" << endl;
+	
+	ENV.setBool(Env::drawDistance,true);
+#endif
 	
 #ifdef HRI_COSTSPACE
-	ENV.setBool(Env::isCostSpace,true);
-	ENV.setBool(Env::enableHri,true);
-	ENV.setBool(Env::HRIPlannerTS,true);
-	cout << "Env::enableHri is set to true, joint number is :"<< ENV.getInt(Env::akinJntId) << endl;
-	cout << "Robot is :" << XYZ_ROBOT->name << endl;
-	m_ui->HRITaskSpace->setDisabled(false);
+//	ENV.setBool(Env::isCostSpace,true);
+//	ENV.setBool(Env::enableHri,true);
+//	ENV.setBool(Env::HRIPlannerTS,true);
+//	cout << "Env::enableHri is set to true, joint number is :"<< ENV.getInt(Env::akinJntId) << endl;
+//	cout << "Robot is :" << XYZ_ROBOT->name << endl;
+//	m_ui->HRITaskSpace->setDisabled(false);
 #endif
 }
 

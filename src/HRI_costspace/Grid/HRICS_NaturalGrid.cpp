@@ -144,7 +144,7 @@ void NaturalGrid::computeAllCellCost()
 /*!
  * Compute Grid Accecibility
  */
-#ifdef HRI_GENERALIZED_IK
+#ifdef HRI_PLANNER
 void NaturalGrid::computeReachability(bool LeftArm)
 {
 	int nbCells = this->getNumberOfCells();

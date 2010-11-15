@@ -15,7 +15,7 @@
 #include "HRI_costspace/Grid/HRICS_NaturalGrid.hpp"
 #include "HRI_costspace/Grid/HRICS_NaturalCell.hpp"
 
-#ifdef HRI_GENERALIZED_IK
+#ifdef HRI_PLANNER
 #include "Hri_planner-pkg.h"
 #endif
 
@@ -132,7 +132,7 @@ namespace HRICS
 		
 		bool			m_IsHuman;
 		
-#ifdef HRI_GENERALIZED_IK
+#ifdef HRI_PLANNER
 		HRI_AGENTS*		m_Agents;
 #endif
 		

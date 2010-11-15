@@ -17,7 +17,7 @@
 
 #endif
 
-#if defined( OOMOVE3D_CORE )
+#if defined( MOVE3D_CORE )
 
 #include "qtUI/qtMainInterface/kcdpropertieswindow.hpp"
 #include "qtUI/qtBase/qt_widgets.hpp"
@@ -68,9 +68,10 @@ public:
 	LabeledSlider* createSlider(QString s, Env::intParameter p,int lower, int upper);
 	LabeledDoubleSlider* createDoubleSlider(QString s,Env::doubleParameter p, double lower, double upper);
 
-	
 	Ui::MainWindow* Ui() { return m_ui; }
+	
 	GLWidget*		getOpenGL();
+	MoveRobot*	getMoveRobot();
 	
 	public slots:
 	void drawAllWinActive();
@@ -90,6 +91,8 @@ public:
 	void setBoolEnableLight(bool value);
 	
 	void setJointToDraw(int joint);
+	
+	void setCurrentTraj(p3d_traj* traj);
 
 signals:
   void runClicked();
@@ -150,7 +153,12 @@ private:
 	void initRunButtons();
 	void initViewerButtons();
 	void initLightSource();
+	
+	p3d_traj* m_currentTraj;
 };
+
+// Global MainWindow Pointer 
+extern MainWindow* global_w;
 
 /**
  * @ingroup qtWindow

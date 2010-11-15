@@ -4,6 +4,7 @@
 
 #include "glwidget.hpp"
 
+#include "qtUI/cppToQt.hpp"
 #include "qtUI/qtMainInterface/mainwindow.hpp"
 #include "qtUI/qtMainInterface/mainwindowGenerated.hpp"
 
@@ -172,6 +173,7 @@ void qt_ui_calc_param(g3d_cam_param& p)
 	p.up[2] = up[2];
 }
 
+
 void GLWidget::initG3DFunctions()
 {
 	cout << "Init G3D Functions" << endl;
@@ -179,6 +181,7 @@ void GLWidget::initG3DFunctions()
 	ext_get_win_mouse = (void (*) (int*,int*))(qt_get_win_mouse);
 	ext_g3d_draw_allwin_active = draw_opengl;
 	ext_calc_cam_param = (void (*) (g3d_cam_param&) )(qt_ui_calc_param);
+	ext_qt_add_traj = qt_add_traj;
 	
 	Graphic::initDrawFunctions();
 }
@@ -286,7 +289,6 @@ void GLWidget::paintGL()
 	G3D_WIN->vs.cameraPosition[1]= Xc[1];
 	G3D_WIN->vs.cameraPosition[2]= Xc[2];
 
-	cout << "g3d_draw()" << endl;
 	g3d_draw();
 
 	glPopMatrix();
@@ -393,7 +395,7 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
-	cout << "GLWidget::mouseMoveEvent" << endl;
+	//cout << "GLWidget::mouseMoveEvent" << endl;
 	
 	if (!_light)
 	{

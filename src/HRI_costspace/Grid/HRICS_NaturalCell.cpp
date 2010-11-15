@@ -259,7 +259,7 @@ double NaturalCell::getCost()
 	return m_Cost;
 }
 
-#ifdef HRI_GENERALIZED_IK
+#ifdef HRI_PLANNER
 void NaturalCell::computeReachability(bool leftArm)
 {
 	Natural* NatSpace = dynamic_cast<NaturalGrid*> (_grid)->getNaturalCostSpace();

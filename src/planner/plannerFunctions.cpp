@@ -23,9 +23,15 @@
 
 #include "Util-pkg.h"
 #include "P3d-pkg.h"
+#include "Move3d-pkg.h"
 #include "Planner-pkg.h"
 
 using namespace std;
+
+// ---------------------------------------------------------------------------------
+// Run number that is counting the run
+// ---------------------------------------------------------------------------------
+unsigned int runNum = 0;
 
 // ---------------------------------------------------------------------------------
 // Run Id that is used in multiRun
@@ -208,8 +214,11 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 		cout << " - _Graph->getNumberOfNodes() = " << graph->getNumberOfNodes() << endl;
 	}
 	
+	runNum++;
+	
 	if(res)
 	{
+		g3d_add_traj( "Specific" , runNum );
 		return graph->getNumberOfNodes();
 	}
 	else

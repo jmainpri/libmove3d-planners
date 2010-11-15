@@ -18,7 +18,7 @@
 
 #endif
 
-#if defined( OOMOVE3D_CORE )
+#if defined( MOVE3D_CORE )
 
 #include "qtUI/qtLibrary.hpp"
 #include "qtUI/qtFormRobot/moverobot.hpp"
@@ -61,7 +61,7 @@ private slots:
 	// HRI GIK functions
 	void computeHriGik(bool leftArm);
 	
-#if defined (HRI_GENERALIZED_IK)
+#if defined (HRI_PLANNER)
 	void computeHriGikLARM() { this->computeHriGik(true); }
 	void computeHriGikRARM() { this->computeHriGik(false); }
 #endif

@@ -2,6 +2,7 @@
 #include "ui_moverobot.h"
 
 #include "qtOpenGL/glwidget.hpp"
+#include "qtMainInterface/mainwindow.hpp"
 
 #include <iostream>
 #include <tr1/memory>
@@ -14,10 +15,6 @@
 
 #ifdef HRI_COSTSPACE
 #include "HRICS_costspace.hpp"
-#endif
-
-#ifdef WITH_XFORMS
-#include "cppToQt.hpp"
 #endif
 
 using namespace std;
@@ -65,7 +62,7 @@ void MoveRobot::initAllForms(GLWidget* ptrOpenGl)
 			connect(m_pageComboBox, SIGNAL(activated(int)), m_StackedLayout, SLOT(setCurrentIndex(int)));
 		}
 		
-#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
+#if defined( CXX_PLANNER ) || defined( MOVE3D_CORE ) 
 		Robot* ptrRob = envPt->getRobot(i);
 		
 		FormRobot* form = newGridLayoutForRobotStacked(ptrRob);
@@ -152,16 +149,50 @@ FormRobot* MoveRobot::newGridLayoutForRobot(Robot* ptrRob)
 	mTabWidget->addTab(tab, QString());
 	mTabWidget->setTabText(mTabWidget->indexOf(tab), robotName );
 	
+	QComboBox* trajectoriesNames = new QComboBox();
+	robotLayoutTab->addWidget(trajectoriesNames);
+	
 	m_ui->MainLayout->addWidget(mTabWidget);
 	
-	FormRobot* formRobot = new FormRobot(ptrRob,gridLayout,positions,mOpenGl);
+	FormRobot* formRobot = new FormRobot(ptrRob,gridLayout,positions,trajectoriesNames,mOpenGl);
 	
 	connect(positions, SIGNAL(currentIndexChanged(int)),formRobot, SLOT(setCurrentPosition(int)));   
+	positions->setCurrentIndex( 0 );
+	
+	connect(trajectoriesNames, SIGNAL(currentIndexChanged(int)),formRobot, SLOT(setCurrentTraj(int)));   
 	positions->setCurrentIndex( 0 );
 	
 	connect(saveButton,SIGNAL(clicked()),formRobot,SLOT(saveCurrentConfigToPosition()));
 	
 	return formRobot;
+}
+
+/*!
+ * Sets the Robot Forms to the initial
+ * configuration of their associated Robots
+ */
+void MoveRobot::updateAllRobotInitPos()
+{
+	for(unsigned int i=0;i<mRobots.size();i++)
+	{
+		Robot* robot = mRobots[i]->getRobot();
+		robot->setAndUpdate( *robot->getInitialPosition() );
+		mRobots[i]->setSliders( *robot->getCurrentPos() );
+		mRobots[i]->getComboBox()->setCurrentIndex(0);
+		cout << "Set Robot " << robot->getName() << " to its initial position" << endl;
+	}
+}
+
+void MoveRobot::changeEvent(QEvent *e)
+{
+	QWidget::changeEvent(e);
+	switch (e->type()) {
+    case QEvent::LanguageChange:
+			m_ui->retranslateUi(this);
+			break;
+    default:
+			break;
+	}
 }
 
 /*!
@@ -200,45 +231,29 @@ FormRobot* MoveRobot::newGridLayoutForRobotStacked(Robot* ptrRob)
 	QPushButton* saveButton = new QPushButton("Save Current");
 	robotLayoutTab->addWidget(saveButton);
 	
+	QComboBox* trajectoriesNames = new QComboBox();
+	robotLayoutTab->addWidget(trajectoriesNames);
+	
 	m_StackedLayout->addWidget( tab );
 	m_pageComboBox->addItem(robotName);
 	
-	FormRobot* formRobot = new FormRobot( ptrRob , gridLayout , positions , mOpenGl );
+	FormRobot* formRobot = new FormRobot( ptrRob , gridLayout , positions , trajectoriesNames ,  mOpenGl );
 	
+	// Connect the init and goal configuration 
+	// Combo widget
 	connect(positions, SIGNAL(currentIndexChanged(int)),formRobot, SLOT(setCurrentPosition(int)));   
 	positions->setCurrentIndex( 0 );
 	
+	// Connect the trajectories
+	// Combo widget
+	connect(trajectoriesNames, SIGNAL(currentIndexChanged(int)),formRobot, SLOT(setCurrentTraj(int)));   
+	trajectoriesNames->setCurrentIndex( 0 );
+	
+	// Connect the formRobot save current configuration
+	// Button
 	connect(saveButton,SIGNAL(clicked()),formRobot,SLOT(saveCurrentConfigToPosition()));
 	
 	return formRobot;
-}
-
-/*!
- * Sets the Robot Forms to the initial
- * configuration of their associated Robots
- */
-void MoveRobot::updateAllRobotInitPos()
-{
-	for(unsigned int i=0;i<mRobots.size();i++)
-	{
-		Robot* robot = mRobots[i]->getRobot();
-		robot->setAndUpdate( *robot->getInitialPosition() );
-		mRobots[i]->setSliders( *robot->getCurrentPos() );
-		mRobots[i]->getComboBox()->setCurrentIndex(0);
-		cout << "Set Robot " << robot->getName() << " to its initial position" << endl;
-	}
-}
-
-void MoveRobot::changeEvent(QEvent *e)
-{
-	QWidget::changeEvent(e);
-	switch (e->type()) {
-    case QEvent::LanguageChange:
-			m_ui->retranslateUi(this);
-			break;
-    default:
-			break;
-	}
 }
 
 //---------------------------------------------------------------------
@@ -484,6 +499,28 @@ void FormRobot::saveCurrentConfigToPosition()
 	}
 }
 
+/*!
+ * Saves the current Config into the robot configuration
+ */
+void FormRobot::addTraj(std::string& name,p3d_traj* trajPt)
+{
+	QString trajName(name.c_str());
+	
+	// Have to be done at the same time
+	// To maintain the id correspondance
+	mTrajectoriesNames->addItem(trajName);
+	mTrajectories.push_back(trajPt);
+}
+
+/*!
+ * Saves the current Config into the robot configuration
+ */
+void FormRobot::setCurrentTraj(int id)
+{
+	cout << "mTrajectories[id]->num = " << mTrajectories[id]->num << endl;
+	global_w->setCurrentTraj( mTrajectories[id] );
+}
+
 //---------------------------------------------------------------------
 // DofSlider
 //---------------------------------------------------------------------
@@ -566,14 +603,20 @@ void DofSlider::dofValueChanged(double value)
 	//    robotPt = (p3d_rob*) p3d_get_desc_curid(P3D_ROBOT);
 	//    nb_dof = p3d_get_robot_ndof();
 	
-#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
+#if defined( CXX_PLANNER ) || defined( MOVE3D_CORE ) 
 	nb_dof =    mRobot->getRobotStruct()->nb_dof; //p3d_get_robot_ndof();
 	ir =        mRobot->getRobotStruct()->num; //p3d_get_desc_curnum(P3D_ROBOT);
 	robotPt =   mRobot->getRobotStruct(); //(p3d_rob*) p3d_get_desc_curid(P3D_ROBOT);
 #endif
 	
 	
-#ifdef HRI_GENERALIZED_IK
+#ifdef HRI_PLANNER
+	if (GLOBAL_AGENTS) 
+	{
+		double distance = 0.0;
+		double cost = hri_distance_cost(GLOBAL_AGENTS,distance);
+	}
+
 	/*
 	if ( mRobot->getName().find("HUMAN") != string::npos ) 
 	{

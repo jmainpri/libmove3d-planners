@@ -14,7 +14,7 @@
 #include <tr1/memory>
 #include <vector>
 
-#if defined( CXX_PLANNER ) || defined( OOMOVE3D_CORE ) 
+#if defined( CXX_PLANNER ) || defined( MOVE3D_CORE ) 
 #include "testModel.hpp"
 #include "SaveContext.hpp"
 #include "API/project.hpp"
@@ -37,6 +37,11 @@
 #ifdef HRI_COSTSPACE
 #include "ui_qtHrics.h"
 #include "HRI_costspace/HRICS_costspace.hpp"
+#endif
+
+#ifdef HRI_PLANNER
+#include "P3d-pkg.h"
+#include "Hri_Planner-pkg.h"
 #endif
 
 using namespace std;
@@ -144,21 +149,21 @@ void Testthread::run()
 {	
 //	try 
 //	{
-		Scene* sc = global_Project->getActiveScene();
-		
-		Robot* rob = sc->getRobotByNameContaining("ROBOT");
-		sc->setActiveRobot(rob->getName());
-		
-		ENV.setBool(Env::isRunning,true);
-		
-		API_activeGraph = new Graph(rob);
-		CostmapPlanner rrt(rob,API_activeGraph);
-		rrt.init();
-		rrt.run();
-		
-		ENV.setBool(Env::isRunning,false);
-		
-		cout << "Ends Planner Thread" << endl;
+//		Scene* sc = global_Project->getActiveScene();
+//		
+//		Robot* rob = sc->getRobotByNameContaining("ROBOT");
+//		sc->setActiveRobot(rob->getName());
+//		
+//		ENV.setBool(Env::isRunning,true);
+//		
+//		API_activeGraph = new Graph(rob);
+//		CostmapPlanner rrt(rob,API_activeGraph);
+//		rrt.init();
+//		rrt.run();
+//		
+//		ENV.setBool(Env::isRunning,false);
+//		
+//		cout << "Ends Planner Thread" << endl;
 //	}
 //	catch (string str) 
 //	{
@@ -168,6 +173,24 @@ void Testthread::run()
 //	{
 //		cout << "Problem in Testthread" << endl;
 //	}
+	cout << "GLOBAL_AGENTS created" << endl;
+	
+	p3d_rob * robot;
+	p3d_rob * object;
+	p3d_env * env = (p3d_env *) p3d_get_desc_curid(P3D_ENV);
+	int i;
+	//ENV.setBool(Env::tRrtComputeGradient,true);
+	//ENV.setDouble(Env::extensionStep,3.0);
+	//global_costSpace->setCost("costMap2D");
+	GLOBAL_AGENTS = hri_create_agents();
+	for(i=0; i<env->nr; i++){
+		if( strcasestr(env->robot[i]->name,"trash") ){
+			object = env->robot[i];
+			continue;
+		}    
+	}
+	
+	hri_is_object_visible(GLOBAL_AGENTS->humans[0], object, 50, TRUE, FALSE);
 }
 
 void MainWindowTestFunctions::test3()

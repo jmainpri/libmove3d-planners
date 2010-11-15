@@ -5,7 +5,7 @@
 #include "basicPlot.hpp"
 #endif
 
-#if defined( OOMOVE3D_CORE )
+#if defined( MOVE3D_CORE )
 #include "qtUI/qtPlot/basicPlot.hpp"
 #endif
 

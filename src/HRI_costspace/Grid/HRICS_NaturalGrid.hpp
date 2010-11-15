@@ -31,7 +31,7 @@ namespace HRICS
 		
 		API::ThreeDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z );
 		void computeAllCellCost();
-#ifdef HRI_GENERALIZED_IK
+#ifdef HRI_PLANNER
 		void computeReachability(bool leftArm);
 #endif
 		int robotConfigInCell(int i);
