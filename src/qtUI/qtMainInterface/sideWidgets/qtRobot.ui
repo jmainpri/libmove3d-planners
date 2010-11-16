@@ -32,7 +32,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <property name="usesScrollButtons">
       <bool>true</bool>
@@ -605,6 +605,13 @@
               <string>Manipulation Requests</string>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
+              <item>
+               <widget class="QPushButton" name="pushButtonResetManipulationData">
+                <property name="text">
+                 <string>Reset Manipulation Data</string>
+                </property>
+               </widget>
+              </item>
               <item>
                <widget class="QPushButton" name="pushButtonArmFree">
                 <property name="text">

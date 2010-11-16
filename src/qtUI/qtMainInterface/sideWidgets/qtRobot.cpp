@@ -448,7 +448,8 @@ void RobotWidget::printPQPColPair()
 // ------------------------------------------------------------------------------
 void RobotWidget::initManipulation()
 {
-	connect(m_ui->pushButtonArmFree,SIGNAL(clicked()),						this,SLOT(armFree()));
+  connect(m_ui->pushButtonResetManipulationData,SIGNAL(clicked()),this,SLOT(resetManipulationData()));
+	connect(m_ui->pushButtonArmFree,SIGNAL(clicked()),this,SLOT(armFree()));
 	connect(m_ui->pushButtonArmPickGoto,SIGNAL(clicked()),				this,SLOT(armPickGoto()));
 	connect(m_ui->pushButtonArmPickTakeToFree,SIGNAL(clicked()),	this,SLOT(armPickTakeToFree()));
 	connect(m_ui->pushButtonArmPickGotoAndTakeToFree,SIGNAL(clicked()),	this,SLOT(armPickGotoAndTakeToFree()));
@@ -558,7 +559,7 @@ void Manipulationthread::run()
 					
 				case P3D_MULTILOCALPATH_PLANNER :
 					
-					manipulation->armPlanTask(ARM_PICK_GOTO,0,
+					manipulation->armPlanTask(ARM_FREE,0,
 																		qInit->getConfigStruct(), 
 																		qGoal->getConfigStruct(), 
 																		OBJECT_NAME, "", confs, smTrajs);
@@ -729,6 +730,28 @@ void Manipulationthread::run()
 	ENV.setBool(Env::isRunning,false);
 	cout << "Ends Manipulation Thread" << endl;
 #endif
+}
+
+void RobotWidget::resetManipulationData()
+{
+  delete manipulation;
+  manipulation = NULL;
+  
+  p3d_rob* rob1 = qInit->getRobot()->getRobotStruct();
+  p3d_rob* rob2 = qGoal->getRobot()->getRobotStruct();
+  
+  if (rob1 != rob2) 
+  {
+    cout << "Error in resetManipulationData robot is not the same in init and goal" << endl;
+  }
+  
+  p3d_copy_config_into(rob1,qInit->getConfigStruct(),&(rob1->ROBOT_POS));
+  p3d_copy_config_into(rob1,qGoal->getConfigStruct(),&(rob1->ROBOT_GOTO));
+  
+  Robot* rob = global_Project->getActiveScene()->getRobotByName(rob1->name);
+  rob->setAndUpdate(*qInit);
+  
+  m_mainWindow->drawAllWinActive();
 }
 
 void RobotWidget::armFree()
