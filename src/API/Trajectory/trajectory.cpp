@@ -159,7 +159,7 @@ HighestCostId(0), isHighestCostIdSet(false)
 
 Trajectory::Trajectory(Robot* R, p3d_traj* t)
 {
-	if ((t != NULL)&&(t->courbePt!=NULL))
+	if ((t == NULL) || (t->courbePt==NULL))
 	{
 		return;
 	}
