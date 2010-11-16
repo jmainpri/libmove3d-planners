@@ -128,7 +128,7 @@ HighestCostId(0), isHighestCostIdSet(false)
 		m_Source	= C.at(0);
 		//m_Target		= C.back();
 		m_Target = C.at(nloc);
-
+		
 		range_param = 0;
 		m_Courbe.clear();
 		
@@ -159,35 +159,35 @@ HighestCostId(0), isHighestCostIdSet(false)
 
 Trajectory::Trajectory(Robot* R, p3d_traj* t)
 {
+	if ((t != NULL)&&(t->courbePt!=NULL))
+	{
+		return;
+	}
+	
 	// TODO Name and file (string based)
 	m_Robot = R;
 	
 	nloc = t->nlp;
 	
-	p3d_localpath *localpathPt;
+	p3d_localpath* localpathPt = t->courbePt;
 	
-	if (t != NULL)
+	while (localpathPt != NULL)
 	{
-		localpathPt = t->courbePt;
-		
-		while (localpathPt != NULL)
-		{
-			LocalPath* path = new LocalPath(m_Robot, localpathPt);
-			//			path->getBegin()->print();
-			//			path->getEnd()->print();
-			m_Courbe.push_back(path);
-			localpathPt = localpathPt->next_lp;
-		}
-		
-#ifdef P3D_PLANNER
-		range_param = p3d_compute_traj_rangeparam(t);
-#else
-		printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
-#endif
+		LocalPath* path = new LocalPath(m_Robot, localpathPt);
+		//			path->getBegin()->print();
+		//			path->getEnd()->print();
+		m_Courbe.push_back(path);
+		localpathPt = localpathPt->next_lp;
 	}
 	
+#ifdef P3D_PLANNER
+	range_param = p3d_compute_traj_rangeparam(t);
+#else
+	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+#endif
+	
 	m_Source = shared_ptr<Configuration> (new Configuration(m_Robot,
-																												p3d_config_at_param_along_traj(t, 0)));
+																													p3d_config_at_param_along_traj(t, 0)));
 	
 	m_Source->setConstraints();
 	
@@ -195,7 +195,7 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t)
 	//	m_Source->print();
 	
 	m_Target = shared_ptr<Configuration> (new Configuration(m_Robot,
-																											p3d_config_at_param_along_traj(t, range_param)));
+																													p3d_config_at_param_along_traj(t, range_param)));
 	
 	m_Target->setConstraints();
 	//	cout << "m_Target:" << endl;
@@ -265,7 +265,7 @@ void Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 	//	cout << "Number of local paths : " << nloc << endl;
 	
 	p3d_localpath *localpathPt = m_Courbe.at(0)->getLocalpathStruct()->copy(
-									trajPt->rob, m_Courbe.at(0)->getLocalpathStruct());
+																																					trajPt->rob, m_Courbe.at(0)->getLocalpathStruct());
 	
 	p3d_localpath *localprevPt = NULL;
 	
@@ -278,7 +278,7 @@ void Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 		localprevPt = localpathPt;
 		
 		localpathPt = m_Courbe.at(i)->getLocalpathStruct()->copy(m_Robot->getRobotStruct(), 
-								  m_Courbe.at(i)->getLocalpathStruct());
+																														 m_Courbe.at(i)->getLocalpathStruct());
 		//		cout << "localpathPt = " << localpathPt << endl;
 		
 		localprevPt->next_lp = localpathPt;
@@ -472,9 +472,9 @@ vector< pair<double,double > > Trajectory::getCostProfile()
 		
 		previousPathParam += m_Courbe[i]->getParamMax();
 		
-//		vectOfCost.insert( vectOfCost.end() , 
-//											tmp.begin(),
-//											tmp.end());
+		//		vectOfCost.insert( vectOfCost.end() , 
+		//											tmp.begin(),
+		//											tmp.end());
 	}
 	
 	return vectOfCost;
@@ -640,7 +640,7 @@ double Trajectory::computeSubPortionCostVisib( vector<LocalPath*>& portion )
 			
 			step_cost = 
 			global_costSpace->deltaStepCost(prevCost, currentCost,distStep);
-//			p3d_ComputeDeltaStepCost(prevCost, currentCost, distStep);
+			//			p3d_ComputeDeltaStepCost(prevCost, currentCost, distStep);
 			
 			cout << " Step Cost = " << step_cost << endl;
 			
@@ -905,7 +905,7 @@ double Trajectory::extractCostPortion(double param1, double param2)
 }
 
 vector<LocalPath*> Trajectory::extractSubPortion(double param1, double param2,
-                                                 uint& first, uint& last)
+																								 uint& first, uint& last)
 {
 	
 	vector<LocalPath*> paths;
@@ -1311,21 +1311,21 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 	}
 	
 	
-// Test
-//	double test = 0.0;
-//	for (unsigned int j = 0; j < portion.size(); j++)
-//	{
-//		double resol = portion[j]->getResolution(dMax);
-//		unsigned int nbOfSmallLP = floor((portion[j]->getParamMax()/resol)+0.5);
-//		
-//		for (unsigned int i=0; i<nbOfSmallLP; i++) 
-//		{
-//			test += portion[j]->getResolution(dMax);
-//		}
-//	}
-//	
-//	cout <<  "test = " << test << endl;
-//	cout <<  "range = " << range << endl;
+	// Test
+	//	double test = 0.0;
+	//	for (unsigned int j = 0; j < portion.size(); j++)
+	//	{
+	//		double resol = portion[j]->getResolution(dMax);
+	//		unsigned int nbOfSmallLP = floor((portion[j]->getParamMax()/resol)+0.5);
+	//		
+	//		for (unsigned int i=0; i<nbOfSmallLP; i++) 
+	//		{
+	//			test += portion[j]->getResolution(dMax);
+	//		}
+	//	}
+	//	
+	//	cout <<  "test = " << test << endl;
+	//	cout <<  "range = " << range << endl;
 	
 	vector<LocalPath*> portionTmp(nbOfSmallLP);
 	
@@ -1338,8 +1338,8 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 		{
 			double resol = portion[j]->getResolution(dMax);
 			param += resol;
-//			cout << "nb of smal lp on big lp : " <<  portion[j]->getParamMax()/resol << endl;
-//			cout << "nb of smal lp on big lp : " <<  floor((portion[j]->getParamMax()/resol)+0.5) << endl;
+			//			cout << "nb of smal lp on big lp : " <<  portion[j]->getParamMax()/resol << endl;
+			//			cout << "nb of smal lp on big lp : " <<  floor((portion[j]->getParamMax()/resol)+0.5) << endl;
 			
 			// Check to go seek the conf on next big LP
 			while ( param > soFar )
@@ -1416,7 +1416,7 @@ void Trajectory::cutTrajInSmallLP(unsigned int nLP)
 		cout << "Exeption in cutTrajInSmallLP" << endl;
 		return;
 	}
-		
+	
 	updateRange();
 	
 	cout << "Cutting into " << nLP << " local paths" << endl;
@@ -1461,7 +1461,7 @@ void Trajectory::replacePortion(unsigned int id1, unsigned int id2, vector<Local
 }
 
 bool Trajectory::replacePortion(double param1, double param2,
-                                vector<LocalPath*> paths)
+																vector<LocalPath*> paths)
 {
 	shared_ptr<Configuration> q11 = paths.at(0)->getBegin();
 	shared_ptr<Configuration> q12 = paths.back()->getEnd();

@@ -51,7 +51,10 @@ Planner::~Planner()
 
 bool Planner::trajFound()
 {
-	return (_Goal ? _Start->inSameComponent(_Goal) : false);
+	bool inSameCompco  = (_Goal ? _Start->inSameComponent(_Goal) : false);
+	bool isTheSame = _Start->equal(_Goal);
+	
+	return (!isTheSame) && inSameCompco;
 }
 
 Robot* Planner::getActivRobot()

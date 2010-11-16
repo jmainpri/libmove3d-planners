@@ -223,6 +223,7 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 	}
 	else
 	{
+		rob->getRobotStruct()->tcur = NULL;
 		cout << "res == false, No traj found" << endl;
 		return false;
 	}
