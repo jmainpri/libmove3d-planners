@@ -137,14 +137,6 @@ ELSE(APPLE)
   SET(LIBS ${LIBS} ${OPENGL_LIBRARIES})
 ENDIF(APPLE)
 
-#-------------- Glut -----------------------------------------------------------
-
-IF(USE_GLUT)
-FIND_PACKAGE (GLUT REQUIRED glut)
-INCLUDE_directories (${GLUT_INCLUDE_DIR})
-SET (LIBS ${LIBS} ${GLUT_glut_LIBRARY})
-ENDIF()
-
 #-------------- Move3D ---------------------------------------------------------
 
 FIND_PACKAGE(MOVE3D-CORE REQUIRED)
@@ -188,31 +180,31 @@ ENDIF(MULTILOCALPATH)
 
 #-------------- Grasp Planner --------------------------------------------------
 
-IF(GRASP_PLANNING)
-  FIND_PACKAGE(GLPK REQUIRED)
-  INCLUDE_directories(${GLPK_INCLUDE_DIR})
-  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GLPK_INCLUDE_DIR})
-  SET(LIBS ${LIBS} ${GLPK_LIBRARIES})
-  
-  FIND_PACKAGE(QHULL REQUIRED)
-  INCLUDE_directories(${QHULL_INCLUDE_DIR})
-  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${QHULL_INCLUDE_DIR})
-  SET(LIBS ${LIBS} ${QHULL_LIBRARIES})
-  
-  FIND_PACKAGE(GLIBCONFIG REQUIRED)
-  INCLUDE_directories(${GLIBCONFIG_INCLUDE_DIR})
-  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GLIBCONFIG_INCLUDE_DIR})
-  
-  FIND_PACKAGE(GLIB REQUIRED)
-  INCLUDE_directories(${GLIB_INCLUDE_DIR})
-  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GLIB_INCLUDE_DIR})
-  SET(LIBS ${LIBS} ${GLIB_LIBRARIES})
-
-  FIND_PACKAGE(GTS REQUIRED)
-  INCLUDE_directories(${GTS_INCLUDE_DIR})
-  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GTS_INCLUDE_DIR})
-  SET(LIBS ${LIBS} ${GTS_LIBRARIES})
-ENDIF(GRASP_PLANNING)
+#IF(GRASP_PLANNING)
+#  FIND_PACKAGE(GLPK REQUIRED)
+#  INCLUDE_directories(${GLPK_INCLUDE_DIR})
+#  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GLPK_INCLUDE_DIR})
+#  SET(LIBS ${LIBS} ${GLPK_LIBRARIES})
+#  
+#  FIND_PACKAGE(QHULL REQUIRED)
+#  INCLUDE_directories(${QHULL_INCLUDE_DIR})
+#  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${QHULL_INCLUDE_DIR})
+#  SET(LIBS ${LIBS} ${QHULL_LIBRARIES})
+#  
+#  FIND_PACKAGE(GLIBCONFIG REQUIRED)
+#  INCLUDE_directories(${GLIBCONFIG_INCLUDE_DIR})
+#  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GLIBCONFIG_INCLUDE_DIR})
+#  
+#  FIND_PACKAGE(GLIB REQUIRED)
+#  INCLUDE_directories(${GLIB_INCLUDE_DIR})
+#  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GLIB_INCLUDE_DIR})
+#  SET(LIBS ${LIBS} ${GLIB_LIBRARIES})
+#
+#  FIND_PACKAGE(GTS REQUIRED)
+#  INCLUDE_directories(${GTS_INCLUDE_DIR})
+#  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GTS_INCLUDE_DIR})
+#  SET(LIBS ${LIBS} ${GTS_LIBRARIES})
+#ENDIF(GRASP_PLANNING)
 
 #-------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -256,8 +248,6 @@ ENDMACRO(Move3DMPLIB_CheckCompilationFlags)
 #-------------------------------------------------------------------------------
 
 Move3DMPLIB_flag(QT_LIBRARY "Sets QtLibrary compiling mode" ON)
-Move3DMPLIB_flag(QT_GL "Sets QtLibrary compiling mode" ON QT_LIBRARY)
-Move3DMPLIB_flag(QT_UI_XML_FILES "Sets QtLibrary compiling mode" ON QT_LIBRARY)
 
 Move3DMPLIB_flag(P3D_CONSTRAINTS "Compilation with module Constraints" ON)
 Move3DMPLIB_flag(P3D_COLLISION_CHECKING "Compilation with module Collision Checking" ON)
@@ -268,7 +258,6 @@ Move3DMPLIB_flag(GRASP_PLANNING "Compilation with module Manipulation Planner" O
 Move3DMPLIB_flag(MULTILOCALPATH "Compilation with module Multilocalpath" ON)
 
 Move3DMPLIB_flag(USE_GBM "Compilation with module Multilocalpath" ON)
-Move3DMPLIB_flag(USE_GLUT "Compilation with a glut window" OFF)
 
 Move3DMPLIB_flag(MOVE3D_CORE "Compiles the planning API and planners" ON)
 

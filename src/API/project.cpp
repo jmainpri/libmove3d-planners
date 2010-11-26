@@ -14,7 +14,7 @@
 
 #include "planEnvironment.hpp"
 
-#include "SaveContext.hpp"
+//#include "SaveContext.hpp"
 
 using namespace std;
 
@@ -30,12 +30,12 @@ Project::Project(Scene* sc)
 	
 	// Creates a vector of maps to save different 
 	// planning contexts
-	storedPlannerContext = new SaveParameterEnv<
-	PlanParam::boolParameter,
-	PlanParam::intParameter,
-	PlanParam::doubleParameter,
-	PlanParam::stringParameter,
-	PlanParam::vectorParameter>(PlanEnv);
+//	storedPlannerContext = new SaveParameterEnv<
+//	PlanParam::boolParameter,
+//	PlanParam::intParameter,
+//	PlanParam::doubleParameter,
+//	PlanParam::stringParameter,
+//	PlanParam::vectorParameter>(PlanEnv);
 }
 
 Project::~Project()

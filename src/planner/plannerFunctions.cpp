@@ -47,9 +47,7 @@ void p3d_planner_functions_SetRunId( unsigned int idRun)
 // Tree Planners
 // ---------------------------------------------------------------------------------
 int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void))
-{
-	ENV.setBool(Env::isRunning,true);
-	
+{	
 	double /*tu,*/ts;
 	
 	GraphPt = GraphPt ? GraphPt : p3d_create_graph();
@@ -201,8 +199,6 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 			cout << "After optim rounds cost : " << optimTrj.cost() << endl;
 		}
 	}
-	
-	ENV.setBool(Env::isRunning,false);
 	
 	if ((rrt->getNumberOfExpansion() - rrt->getNumberOfFailedExpansion() + rrt->getNumberOfInitialNodes()) 
 			!= graph->getNumberOfNodes() ) 

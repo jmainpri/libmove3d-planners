@@ -943,7 +943,7 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 		if ( m_IterationSucceded ) 
 		{
 			double Gain = (( CurCost - NewCost ) / CurCost) ;
-			cout << "Gain = " << 100*Gain <<  " %" << endl;
+			//cout << "Gain = " << 100*Gain <<  " %" << endl;
 			m_GainOfIterations.push_back( Gain );
 		}
 		

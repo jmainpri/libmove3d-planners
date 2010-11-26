@@ -644,12 +644,12 @@ double Natural::basicNaturalArmCost(bool useLeftvsRightArm)
 	shared_ptr<Configuration> q = m_Robot->getCurrentPos();
 	
 	deltaJoint = (SQR((*q)[ShoulderIndex+0]-restq1) + 
-				  SQR((*q)[ShoulderIndex+1]-restq2) +
-				  SQR((*q)[ShoulderIndex+2]-restq3) + 
-				  SQR((*q)[ElbowIndex]-restq4))*6/34.57; // Weird 6
+                SQR((*q)[ShoulderIndex+1]-restq2) +
+                SQR((*q)[ShoulderIndex+2]-restq3) + 
+                SQR((*q)[ElbowIndex]-restq4))*6/34.57; // Weird 6
 	
 	potential = (m_Robot->getJoint(ElbowJoint)->getVectorPos()(2) +
-				 m_Robot->getJoint(WristJoint)->getVectorPos()(2)-2.43)/0.67;
+               m_Robot->getJoint(WristJoint)->getVectorPos()(2)-2.43)/0.67;
 	
 	double Cost = (deltaJoint+potential)/2;
 	//double Cost = deltaJoint;
@@ -925,8 +925,8 @@ Transform3d Natural::getGridOriginMatrix()
 			OriginPos.translation() = trans;
 			
 			rot =	Eigen::AngleAxisd(0, Vector3d::UnitX())
-				*	Eigen::AngleAxisd(0, Vector3d::UnitY())
-				*	Eigen::AngleAxisd(0, Vector3d::UnitZ());
+          *	Eigen::AngleAxisd(0, Vector3d::UnitY())
+          *	Eigen::AngleAxisd(0, Vector3d::UnitZ());
 			
 			OriginPos.linear() = rot;
 			break;

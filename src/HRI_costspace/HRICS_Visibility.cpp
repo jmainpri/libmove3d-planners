@@ -65,24 +65,24 @@ double Visibility::getCost(const Vector3d& WSPoint)
 	
 	//return akinVisibilityCost(WSPoint);
 	
-    double phi,theta;
-    double Dphi, Dtheta;
-    p3d_vector4 realcoord,newcoord;
-    p3d_matrix4 inv;
+  double phi,theta;
+  double Dphi, Dtheta;
+  p3d_vector4 realcoord,newcoord;
+  p3d_matrix4 inv;
 	
 	realcoord[0] = WSPoint[0];
-    realcoord[1] = WSPoint[1];
-    realcoord[2] = WSPoint[2];
-    realcoord[3] = 1;
+  realcoord[1] = WSPoint[1];
+  realcoord[2] = WSPoint[2];
+  realcoord[3] = 1;
 	
 	if (Old_Achile) 
 	{
 		// get the right frame
 		p3d_matrix4 newABS;
 		p3d_matrix4 rotation ={	{1,0,0,0},
-								{0,1,0,0},
-								{0,0,1,0},
-								{0,0,0,1}};
+      {0,1,0,0},
+      {0,0,1,0},
+      {0,0,0,1}};
 		//Matrix4d newAbsPos; = m_Human->getRobotStruct()->joints[HUMANj_NECK_TILT]->abs_pos
 		
 		p3d_mat4Mult(m_Human->getRobotStruct()->joints[HRICS_HUMANj_NECK_TILT]->abs_pos,rotation,newABS);
@@ -95,44 +95,44 @@ double Visibility::getCost(const Vector3d& WSPoint)
 	{
 		double Ccoord[6];
 		p3d_mat4ExtractPosReverseOrder(m_Human->getRobotStruct()->joints[5]->abs_pos,
-									   Ccoord, Ccoord+1, Ccoord+2,Ccoord+3, Ccoord+4, Ccoord+5);
+                                   Ccoord, Ccoord+1, Ccoord+2,Ccoord+3, Ccoord+4, Ccoord+5);
 		
 		p3d_matInvertXform(m_Human->getRobotStruct()->joints[5]->abs_pos, inv);
 		p3d_matvec4Mult(inv, realcoord, newcoord);
 	}
 	
-    // Compute the angle the point make with the
+  // Compute the angle the point make with the
 	// Angular coord of the vector
-    Vector3d newCoordVect;
-    newCoordVect[0] = newcoord[0];
-    newCoordVect[1] = newcoord[1];
-    newCoordVect[2] = newcoord[2];
+  Vector3d newCoordVect;
+  newCoordVect[0] = newcoord[0];
+  newCoordVect[1] = newcoord[1];
+  newCoordVect[2] = newcoord[2];
 	
-    phi = ABS(atan2( newCoordVect[1],newCoordVect[0]));
-    //theta = ABS(acos( newCoordVect[2]/newCoordVect.norm() )- M_PI_2);
+  phi = ABS(atan2( newCoordVect[1],newCoordVect[0]));
+  //theta = ABS(acos( newCoordVect[2]/newCoordVect.norm() )- M_PI_2);
 	
-	Vector2d newCoord2D;
-	newCoord2D[0] = newcoord[0];
-    newCoord2D[1] = newcoord[1];
+  Vector2d newCoord2D;
+  newCoord2D[0] = newcoord[0];
+  newCoord2D[1] = newcoord[1];
 	
-	theta = ABS(atan2( newCoordVect[2],newCoord2D.norm() ));
+  theta = ABS(atan2( newCoordVect[2],newCoord2D.norm() ));
 	
-	// Compute delta cost for PAN
-    if(phi < HRICS_HRI_EYE_TOLERANCE_PAN/2.)
-        Dphi = 0;
-    else
-        Dphi = phi - HRICS_HRI_EYE_TOLERANCE_PAN/2.;
+  // Compute delta cost for PAN
+  if(phi < HRICS_HRI_EYE_TOLERANCE_PAN/2.)
+    Dphi = 0;
+  else
+    Dphi = phi - HRICS_HRI_EYE_TOLERANCE_PAN/2.;
 	
-	// Compute delta cost for TILT
-    if(theta < HRICS_HRI_EYE_TOLERANCE_TILT/2.)
-        Dtheta = 0;
-    else
-        Dtheta = theta - HRICS_HRI_EYE_TOLERANCE_TILT/2.;
+  // Compute delta cost for TILT
+  if(theta < HRICS_HRI_EYE_TOLERANCE_TILT/2.)
+    Dtheta = 0;
+  else
+    Dtheta = theta - HRICS_HRI_EYE_TOLERANCE_TILT/2.;
 	
-    m_Cost = (1/0.65)*((Dtheta+Dphi)/(M_2PI-(HRICS_HRI_EYE_TOLERANCE_TILT/2.)-(HRICS_HRI_EYE_TOLERANCE_PAN/2.)));
+  m_Cost = (1/0.65)*((Dtheta+Dphi)/(M_2PI-(HRICS_HRI_EYE_TOLERANCE_TILT/2.)-(HRICS_HRI_EYE_TOLERANCE_PAN/2.)));
 	
 	//    cout << "Visib =  "  << cost << endl;
-    return m_Cost;
+  return m_Cost;
 }
 
 /*!
@@ -143,7 +143,7 @@ double Visibility::akinVisibilityCost(const Vector3d& WSPoint)
 {
 	double phi,theta;
 	double Dphi, Dtheta;
-//	double Ccoord[6];
+  //	double Ccoord[6];
 	p3d_vector4 realcoord,newcoord;
 	p3d_matrix4 inv;
 	
@@ -155,23 +155,23 @@ double Visibility::akinVisibilityCost(const Vector3d& WSPoint)
 	// get the right frame
 	p3d_matrix4 newABS;
 	p3d_matrix4 rotation ={	{1,0,0,0},
-							{0,0,-1,0},
-							{0,1,0,0},
-							{0,0,0,1}};
+    {0,0,-1,0},
+    {0,1,0,0},
+    {0,0,0,1}};
 	//Matrix4d newAbsPos; = m_Human->getRobotStruct()->joints[HUMANj_NECK_TILT]->abs_pos
 	
 	p3d_mat4Mult(m_Human->getRobotStruct()->joints[HRICS_HUMANj_NECK_TILT]->abs_pos,rotation,newABS);
 	
-//	p3d_mat4ExtractPosReverseOrder(m_Human->getRobotStruct()->joints[6]->abs_pos,
-//								   Ccoord, Ccoord+1, Ccoord+2,Ccoord+3, Ccoord+4, Ccoord+5);
+  //	p3d_mat4ExtractPosReverseOrder(m_Human->getRobotStruct()->joints[6]->abs_pos,
+  //								   Ccoord, Ccoord+1, Ccoord+2,Ccoord+3, Ccoord+4, Ccoord+5);
 	
 	p3d_matInvertXform(newABS,inv);
 	
 	p3d_matvec4Mult(inv, realcoord, newcoord);
 	
 	//p3d_psp_cartesian2spherical(newcoord[0],newcoord[1],newcoord[2],
-//								0,0,0,&phi,&theta);
-
+  //								0,0,0,&phi,&theta);
+  
 	{
 		double x =newcoord[0];
 		double y =newcoord[1];
@@ -182,7 +182,7 @@ double Visibility::akinVisibilityCost(const Vector3d& WSPoint)
 		double originz=0;
 		
 		double distance = DISTANCE3D(x,y,z,originx,originy,originz);
-			
+    
 		phi = atan2( (y-originy),(x-originx) );
 		theta = acos( (z-originz)/distance );
 	}
@@ -211,7 +211,7 @@ double Visibility::akinVisibilityCost(const Vector3d& WSPoint)
  */
 std::vector<double> Visibility::getGaze()
 {
-
+  
 	Vector3d point;
 	p3d_vector3 gazeOrigin;
 	p3d_vector3 xAxis;
@@ -233,7 +233,7 @@ std::vector<double> Visibility::getGaze()
 	m_VectGaze.push_back(xAxis[0]);
 	m_VectGaze.push_back(xAxis[1]);
 	m_VectGaze.push_back(xAxis[2]);  
-
+  
 	return m_VectGaze;
 }
 
