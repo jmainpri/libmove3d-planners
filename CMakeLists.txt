@@ -84,6 +84,32 @@ message( STATUS "CMake Source Dir = ${CMAKE_SOURCE_DIR}")
 message( STATUS "CMake Binary Dir = ${CMAKE_BINARY_DIR}")
 message( STATUS "CMake Install Prefix = ${CMAKE_INSTALL_PREFIX}")
 
+#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# --- Compilation Flags --------------------------------------------------------
+# ------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+Move3DMPLIB_flag(QT_LIBRARY "Sets QtLibrary compiling mode" ON)
+
+Move3DMPLIB_flag(P3D_CONSTRAINTS "Compilation with module Constraints" ON)
+Move3DMPLIB_flag(P3D_COLLISION_CHECKING "Compilation with module Collision Checking" ON)
+Move3DMPLIB_flag(P3D_LOCALPATH "Compilation with module Localpath" ON)
+Move3DMPLIB_flag(P3D_PLANNER "Compilation with module Planner" ON)
+Move3DMPLIB_flag(LIGHT_PLANNER "Compilation with module Light Planner" ON)
+Move3DMPLIB_flag(GRASP_PLANNING "Compilation with module Manipulation Planner" ON)
+Move3DMPLIB_flag(MULTILOCALPATH "Compilation with module Multilocalpath" ON)
+
+Move3DMPLIB_flag(USE_GBM "Compilation with module Multilocalpath" ON)
+Move3DMPLIB_flag(USE_GSL "Compilation with module Hir-planner" ON)
+
+Move3DMPLIB_flag(MOVE3D_CORE "Compiles the planning API and planners" ON)
+
+Move3DMPLIB_flag(HRI_COSTSPACE "With the hri work" ON)
+Move3DMPLIB_flag(HRI_PLANNER "With the hri work done in BioMove3D" ON USE_GSL)
+
+Move3DMPLIB_CheckCompilationFlags()
+
 # ------------------------------------------------------------------------------
 # --- Default compilation option : ---------------------------------------------
 # --- DO NOT MODIFY!!! use ccmake ----------------------------------------------
@@ -240,31 +266,6 @@ MACRO(Move3DMPLIB_CheckCompilationFlags)
     ENDIF()
   ENDFOREACH(flag)
 ENDMACRO(Move3DMPLIB_CheckCompilationFlags)
-
-#-------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------
-# --- Compilation Flags --------------------------------------------------------
-# ------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-
-Move3DMPLIB_flag(QT_LIBRARY "Sets QtLibrary compiling mode" ON)
-
-Move3DMPLIB_flag(P3D_CONSTRAINTS "Compilation with module Constraints" ON)
-Move3DMPLIB_flag(P3D_COLLISION_CHECKING "Compilation with module Collision Checking" ON)
-Move3DMPLIB_flag(P3D_LOCALPATH "Compilation with module Localpath" ON)
-Move3DMPLIB_flag(P3D_PLANNER "Compilation with module Planner" ON)
-Move3DMPLIB_flag(LIGHT_PLANNER "Compilation with module Light Planner" ON)
-Move3DMPLIB_flag(GRASP_PLANNING "Compilation with module Manipulation Planner" ON)
-Move3DMPLIB_flag(MULTILOCALPATH "Compilation with module Multilocalpath" ON)
-
-Move3DMPLIB_flag(USE_GBM "Compilation with module Multilocalpath" ON)
-
-Move3DMPLIB_flag(MOVE3D_CORE "Compiles the planning API and planners" ON)
-
-Move3DMPLIB_flag(HRI_COSTSPACE "With the hri work" ON)
-Move3DMPLIB_flag(HRI_PLANNER "With the hri work done in BioMove3D" ON)
-
-Move3DMPLIB_CheckCompilationFlags()
 
 
 #-------------------------------------------------------------------------------
