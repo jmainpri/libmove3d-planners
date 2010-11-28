@@ -86,6 +86,41 @@ message( STATUS "CMake Install Prefix = ${CMAKE_INSTALL_PREFIX}")
 
 #-------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
+# --- Scripts to search source files -------------------------------------------
+# ------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+SET(Move3DMPLIB_CompilationFlags "")
+SET(Move3DMPLIB_LinkedCompilationFlags "")
+
+MACRO(Move3DMPLIB_flag flagName description status)
+  SET(flagName "${flagName}")
+  SET(description "${description}")
+  SET(status "${status}")
+  OPTION(${flagName} ${description} ${status})
+  LIST(APPEND Move3DMPLIB_CompilationFlags ${flagName})
+  FOREACH(linkFlag ${ARGN})
+    LIST(APPEND Move3DMPLIB_LinkedCompilationFlags "${flagName}:${linkFlag}")
+  ENDFOREACH(linkFlag)
+#  set_property(CACHE ANIMATION PROPERTY VALUE ON)
+ENDMACRO(Move3DMPLIB_flag)
+
+MACRO(Move3DMPLIB_CheckCompilationFlags)
+  SET(Move3DMPLIB_ActiveFlags "")
+  MESSAGE ("Active Flags :")
+  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/smpFlags "#Generated File Do not modify!!!\n" )
+  FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/smpFlags "Move3DMPLIB_COMPILATION_FLAGS = ")
+  FOREACH(flag ${Move3DMPLIB_CompilationFlags})
+    IF(${flag})
+      FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/Move3DMPLIBFlags "-D${flag} ")
+      MESSAGE("${flag}")
+      ADD_DEFINITIONS("-D${flag}")
+      LIST(APPEND Move3DMPLIB_ActiveFlags ${flag})
+    ENDIF()
+  ENDFOREACH(flag)
+ENDMACRO(Move3DMPLIB_CheckCompilationFlags)
+
+#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # --- Compilation Flags --------------------------------------------------------
 # ------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -231,41 +266,6 @@ ENDIF(MULTILOCALPATH)
 #  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GTS_INCLUDE_DIR})
 #  SET(LIBS ${LIBS} ${GTS_LIBRARIES})
 #ENDIF(GRASP_PLANNING)
-
-#-------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------
-# --- Scripts to search source files -------------------------------------------
-# ------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-SET(Move3DMPLIB_CompilationFlags "")
-SET(Move3DMPLIB_LinkedCompilationFlags "")
-
-MACRO(Move3DMPLIB_flag flagName description status)
-  SET(flagName "${flagName}")
-  SET(description "${description}")
-  SET(status "${status}")
-  OPTION(${flagName} ${description} ${status})
-  LIST(APPEND Move3DMPLIB_CompilationFlags ${flagName})
-  FOREACH(linkFlag ${ARGN})
-    LIST(APPEND Move3DMPLIB_LinkedCompilationFlags "${flagName}:${linkFlag}")
-  ENDFOREACH(linkFlag)
-#  set_property(CACHE ANIMATION PROPERTY VALUE ON)
-ENDMACRO(Move3DMPLIB_flag)
-
-MACRO(Move3DMPLIB_CheckCompilationFlags)
-  SET(Move3DMPLIB_ActiveFlags "")
-  MESSAGE ("Active Flags :")
-  FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/smpFlags "#Generated File Do not modify!!!\n" )
-  FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/smpFlags "Move3DMPLIB_COMPILATION_FLAGS = ")
-  FOREACH(flag ${Move3DMPLIB_CompilationFlags})
-    IF(${flag})
-      FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/Move3DMPLIBFlags "-D${flag} ")
-      MESSAGE("${flag}")
-      ADD_DEFINITIONS("-D${flag}")
-      LIST(APPEND Move3DMPLIB_ActiveFlags ${flag})
-    ENDIF()
-  ENDFOREACH(flag)
-ENDMACRO(Move3DMPLIB_CheckCompilationFlags)
 
 
 #-------------------------------------------------------------------------------
