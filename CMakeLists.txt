@@ -18,7 +18,7 @@
 
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6.4)
 
-PROJECT (Move3DMPLIB CXX)
+PROJECT (Move3DMPLIB C CXX)
 
 #Default mode is Debug ---------------------------------------------------------
 IF(NOT CMAKE_BUILD_TYPE)
