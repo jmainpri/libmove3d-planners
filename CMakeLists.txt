@@ -134,6 +134,7 @@ Move3DMPLIB_flag(P3D_PLANNER "Compilation with module Planner" ON)
 Move3DMPLIB_flag(LIGHT_PLANNER "Compilation with module Light Planner" ON)
 Move3DMPLIB_flag(GRASP_PLANNING "Compilation with module Manipulation Planner" ON)
 Move3DMPLIB_flag(MULTILOCALPATH "Compilation with module Multilocalpath" ON)
+Move3DMPLIB_flag(MULTIGRAPH "Compilation with module Multi-Graph" ON)
 
 Move3DMPLIB_flag(USE_GBM "Compilation with module Multilocalpath" ON)
 Move3DMPLIB_flag(USE_GSL "Compilation with module Hir-planner" ON)
