@@ -77,7 +77,7 @@ public:
      * @param Cs la Configuration initiale du robot pour la planification
      * @return un Node a été ajouté au graph
      */
-    bool setStart(std::tr1::shared_ptr<Configuration> Cs);
+    bool setInit(std::tr1::shared_ptr<Configuration> Cs);
 	
     /**
      * place le Node final de la planification
@@ -90,7 +90,7 @@ public:
      * obtient le Node intial de la planification
      * @return le Node intial de la planification
      */
-    Node* getStart();
+    Node* getInit();
 	
     /**
      * obtient le Node final de la planification
@@ -102,13 +102,13 @@ public:
      * test si le Planner est initialisé pour la planification
      * @return le Planner est initialisé
      */
-    bool getInit();
+    bool getInitialized();
     
 	/**
      * modifie la valeur du Booleen de test d'initialisation
      * @param b la valeur entrée
      */
-    void setInit(bool b);
+    void setInitialized(bool b);
 
     /**
      * Méthode d'initialisation du Planner

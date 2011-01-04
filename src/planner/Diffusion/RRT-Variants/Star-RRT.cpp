@@ -49,7 +49,6 @@ int StarRRT::init()
 {
 	int added = TreePlanner::init();
 	_expan = new StarExpansion(_Graph);
-	setInit(true);
 	return added;
 }
 

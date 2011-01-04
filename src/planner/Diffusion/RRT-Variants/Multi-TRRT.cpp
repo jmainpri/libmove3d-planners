@@ -59,7 +59,7 @@ public:
 
 int MultiTRRT::init()
 {
-    int added = TreePlanner::init();
+  int added = TreePlanner::init();
 	
 	m_Roots.push_back( _Start );
 	m_Roots.push_back( _Goal );
@@ -94,26 +94,26 @@ int MultiTRRT::init()
 	//                           this->getStart()->getNodeStruct(),
 	//                           this->getGoal()->getNodeStruct());
 	
-	this->getStart()->getNodeStruct()->temp = ENV.getDouble(Env::initialTemperature);
-    this->getStart()->getNodeStruct()->comp->temperature = ENV.getDouble(Env::initialTemperature);
-    this->getStart()->getNodeStruct()->nbFailedTemp = 0;
+    this->getInit()->getNodeStruct()->temp = ENV.getDouble(Env::initialTemperature);
+    this->getInit()->getNodeStruct()->comp->temperature = ENV.getDouble(Env::initialTemperature);
+    this->getInit()->getNodeStruct()->nbFailedTemp = 0;
 	
 	p3d_SetGlobalNumberOfFail(0);
 	
     //  GlobalNbDown = 0;
     //  Ns->NbDown = 0;
     p3d_SetNodeCost(this->getActivGraph()->getGraphStruct(),
-					this->getStart()->getNodeStruct(), 
-					this->getStart()->getConfiguration()->cost());
+					this->getInit()->getNodeStruct(), 
+					this->getInit()->getConfiguration()->cost());
 	
-    p3d_SetCostThreshold(this->getStart()->getNodeStruct()->cost);
+    p3d_SetCostThreshold(this->getInit()->getNodeStruct()->cost);
 	
     p3d_SetInitCostThreshold( 
-							 p3d_GetNodeCost(this->getStart()->getNodeStruct()) );
+							 p3d_GetNodeCost(this->getInit()->getNodeStruct()) );
 	
 	p3d_SetCostThreshold(MAX(
-							 p3d_GetNodeCost(this->getStart()->getNodeStruct()), 
-							 p3d_GetNodeCost(this->getGoal()->getNodeStruct()) ));
+							 p3d_GetNodeCost(this->getInit()->getNodeStruct()), 
+							 p3d_GetNodeCost(this->getInit()->getNodeStruct()) ));
 	
 	for (unsigned int i=0; i<m_Roots.size(); i++) 
 	{

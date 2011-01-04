@@ -14,6 +14,7 @@
 #include <algorithm>
 
 #include "Util-pkg.h"
+#include "Graphic-pkg.h"
 #include "Planner-pkg.h"
 
 using namespace std;
@@ -751,6 +752,10 @@ void Smoothing::setSortedIndex()
 	myCompObject.ptrOptim = this;
 	
 	m_IdSorted.resize(getNbPaths());
+  
+  if (getNbPaths() == 0 ) {
+    return;
+  }
 	
 	for (int i = 0; i < getNbPaths(); i++)
 	{

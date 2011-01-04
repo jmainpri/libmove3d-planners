@@ -64,11 +64,13 @@ namespace HRICS
 		 * Others
 		 */
 		double basicNaturalArmCost(bool useLeftvsRightArm);
+    void setRobotColorFromConfiguration();
+    
 		/*
 		double akinRightArmReachCost();
 		double akinLeftArmReachCost();
 		 */
-		std::vector<double> getUpperBodyHeigth();
+		std::vector<double> getUpperBodyHeigth(bool useReference = true);
 		double getCustomDistConfig(Configuration& q);
 		double getJointLimits(Configuration& q);
 		
@@ -183,6 +185,12 @@ namespace HRICS
 		 * @bref Mass (Weigts) associated with each arm
 		 */
 		std::vector<double>					m_mg;
+    
+    /**
+     * Height of arms at rest
+     */
+    std::vector<double>        m_armHeightL;
+    std::vector<double>        m_armHeightR;
 		
 		std::tr1::shared_ptr<Configuration> m_q_Init;
 		std::tr1::shared_ptr<Configuration> m_q_Goal;

@@ -62,7 +62,7 @@ bool EST::preConditions()
 			if (direct.isValid())
 			{
 				connectNodeToCompco(
-													this->getStart(),
+													this->getInit(),
 													this->getGoal());
 
 				cout << "Direct connection" << endl;
@@ -73,7 +73,7 @@ bool EST::preConditions()
 		if (ENV.getBool(Env::expandToGoal))
 		{
 			if( connectNodeToCompco(
-					this->getStart(),
+					this->getInit(),
 					this->getGoal()) )
 				return false;
 
@@ -107,8 +107,6 @@ int  EST::init()
 //	}
 
         _Expan = new ESTExpansion(_Graph);
-
-	setInit(true);
 
 	return added;
 }

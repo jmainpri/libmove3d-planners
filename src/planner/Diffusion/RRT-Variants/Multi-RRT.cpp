@@ -69,8 +69,6 @@ int MultiRRT::init()
 		}
 	}
 	
-	setInit(true);
-	
 	return added;
 }
 

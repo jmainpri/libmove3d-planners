@@ -87,8 +87,6 @@ int  RRT::init()
 {
 	int added = TreePlanner::init();
 	_expan = new RRTExpansion(_Graph);
-	//_expan->setDirectionMethod(NAVIGATION_BEFORE_MANIPULATION);
-	setInit(true);
 	return added;
 }
 

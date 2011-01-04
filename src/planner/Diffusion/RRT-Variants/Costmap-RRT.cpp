@@ -46,7 +46,6 @@ int CostmapRRT::init()
 {
 	int added = TreePlanner::init();
 	_expan = new CostmapExpansion(_Graph);
-	setInit(true);
 	return added;
 }
 

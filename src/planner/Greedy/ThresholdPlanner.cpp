@@ -33,7 +33,7 @@ int ThresholdPlanner::init()
 {
 	int added = Planner::init();
 	
-	added += Planner::setStart(_Robot->getInitialPosition());
+	added += Planner::setInit(_Robot->getInitialPosition());
 	added += Planner::setGoal(_Robot->getGoTo());
 	
 	_Graph->setStart(_Start);

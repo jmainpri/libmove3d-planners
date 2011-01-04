@@ -2,9 +2,11 @@
 
 #include "planEnvironment.hpp"
 
+#include "Util-pkg.h"
+#include "Graphic-pkg.h"
 #include "Planner-pkg.h"
 #include "Collision-pkg.h"
-#include "Util-pkg.h"
+
 
 using namespace std;
 using namespace tr1;

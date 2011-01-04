@@ -48,9 +48,6 @@ int TreePlanner::init()
 	m_nbConscutiveFailures = 0;
 	m_nbExpansion = 0;
 	
-	added += setStart(_Robot->getInitialPosition());
-	added += setGoal(_Robot->getGoTo());
-	
 	_Graph->setStart(_Start);
 	_Graph->setGoal(_Goal);
 	
@@ -71,8 +68,7 @@ bool TreePlanner::preConditions()
 //																				== Env::Connect))
 //	{
 //		cout
-//		<< "Warning: Connect expansion strategy \
-//		is usually unadapted for cost spaces\n"
+//		<< "Warning: Connect expansion strategy is usually unadapted for cost spaces\n"
 //		<< endl;
 //	}
 	
@@ -205,7 +201,7 @@ bool TreePlanner::checkStopConditions()
 	
 	if ( PlanEnv->getBool(PlanParam::stopPlanner) )
 	{
-		cout << "Tree expansion cancelled." << endl;
+		cout << "Tree expansion cancelled by user." << endl;
 		return (true);
 	}
 	

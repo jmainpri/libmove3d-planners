@@ -44,7 +44,7 @@ int CostmapPlanner::init()
 	
 	int added = 0;
 	
-	added += setStart(_Robot->getInitialPosition());
+	added += setInit(_Robot->getInitialPosition());
 	added += setGoal(_Robot->getGoTo());
 	
 	return added;
@@ -324,7 +324,7 @@ unsigned int CostmapPlanner::run()
 		
 		delete _Graph;
 		_Graph = API_activeGraph = new Graph(_Robot);
-		setStart(_Robot->getInitialPosition());
+		setInit(_Robot->getInitialPosition());
 		setGoal(gGoal);
 
 		// Set goal to the graph (might be out)

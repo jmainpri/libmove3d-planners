@@ -49,6 +49,10 @@ void p3d_planner_functions_SetRunId( unsigned int idRun)
 int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void))
 {	
 	double /*tu,*/ts;
+  
+  cout << "------------------------------------------------" << endl;
+  cout << "------------------------------------------------" << endl;
+  cout << "p3d_run_rrt (motionPlanner-libs)" << endl;
 	
 	GraphPt = GraphPt ? GraphPt : p3d_create_graph();
 	
@@ -106,11 +110,19 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 	}
 	//#endif
 	
-	int nb_added_nodes = rrt->init();
-	
-	// -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
 	// Main Run functions of all RRTs
 	// -------------------------------------------------------------------------
+  
+  int nb_added_nodes = 0;
+  
+  nb_added_nodes += rrt->setInit(rob->getInitialPosition());
+	nb_added_nodes += rrt->setGoal(rob->getGoTo());
+  
+	nb_added_nodes += rrt->init();
+  
+  rrt->setInitialized(true);
+	
 	nb_added_nodes += rrt->run();
 	
 	// Gets the graph pointer
@@ -135,7 +147,9 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 	
 	// Smoothing phaze
 	// -------------------------------------------------------------------------
-	if(res)
+	bool trajExtractSucceded = false;
+  
+  if(res)
 	{
 		ENV.setBool(Env::isRunning,true);
 		
@@ -147,14 +161,14 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 			
 			cout << "Extract graph to traj" << endl;
 			// Extract traj
-			graphTraj.extractBestTraj(rob->getInitialPosition(),
-																rob->getGoTo());
+			 trajExtractSucceded = graphTraj.extractBestTraj(rob->getInitialPosition(),
+                                                       rob->getGoTo());
 		}
 		else
 		{
 			// Extract traj
-			graph->extractBestTraj(rob->getInitialPosition(),
-														 rob->getGoTo());
+			trajExtractSucceded = graph->extractBestTraj(rob->getInitialPosition(),
+                                                   rob->getGoTo());
 		}
 		if ( !ENV.getBool(Env::use_p3d_structures) ) 
 		{
@@ -162,7 +176,7 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 		}
 		
 		
-		if(PlanEnv->getBool(PlanParam::withSmoothing))
+		if(PlanEnv->getBool(PlanParam::withSmoothing) && trajExtractSucceded )
 		{
 			API::CostOptimization optimTrj(rob,rob->getTrajStruct());
 			
@@ -211,10 +225,15 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 	}
 	
 	runNum++;
+  
+//  if( _Start->equal(_Goal) )
+//  {
+//  }
 	
-	if(res)
+	if( res && trajExtractSucceded )
 	{
-		g3d_add_traj( "Specific" , runNum );
+    char trajName[] = "Specific";
+		g3d_add_traj( trajName , runNum );
 		return graph->getNumberOfNodes();
 	}
 	else

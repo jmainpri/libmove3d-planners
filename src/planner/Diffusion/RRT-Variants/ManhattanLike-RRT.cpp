@@ -28,8 +28,8 @@ int ManhattanLikeRRT::selectNewJntInList(vector<p3d_jnt*>& joints,
     {
       if(oldJoints[j] == joints[i])
       {
-	found = true;
-	break;
+        found = true;
+        break;
       }
     }
     if(!found)

@@ -31,6 +31,8 @@ Planner::Planner() :
 		  _Graph(NULL),
 		  _Init(false)
 {	
+//  cout << "------------------------------------------------" << endl;
+//  cout << " Planner::Planner() ";
 }
 
 Planner::Planner(Robot* rob, Graph* graph) :
@@ -77,7 +79,7 @@ void Planner::setGraph(Graph* G)
 	_Graph = G;
 }
 
-Node* Planner::getStart()
+Node* Planner::getInit()
 {
 	return _Start;
 }
@@ -85,11 +87,6 @@ Node* Planner::getStart()
 Node* Planner::getGoal()
 {
 	return _Goal;
-}
-
-bool Planner::getInit()
-{
-	return _Init;
 }
 
 int Planner::init()
@@ -107,7 +104,7 @@ int Planner::init()
 /*!
  * Set the start and goal configuration
  */
-bool Planner::setStart(shared_ptr<Configuration> Cs)
+bool Planner::setInit(shared_ptr<Configuration> Cs)
 {
 	bool b = false;
 	
@@ -183,7 +180,12 @@ bool Planner::setGoal(shared_ptr<Configuration> Cg)
 	return b;
 }
 
-void Planner::setInit(bool b)
+bool Planner::getInitialized()
+{
+	return _Init;
+}
+
+void Planner::setInitialized(bool b)
 {
 	_Init = b;
 }

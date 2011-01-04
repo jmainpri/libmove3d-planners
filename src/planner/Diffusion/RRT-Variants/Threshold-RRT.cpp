@@ -61,8 +61,7 @@ int ThresholdRRT::init()
 {
     int added = TreePlanner::init();
     _expan = new ThresholdExpansion(_Graph);
-	dynamic_cast<ThresholdExpansion*>(_expan)->setThreshold(ENV.getDouble(Env::costThreshold));
-    setInit(true);
+    dynamic_cast<ThresholdExpansion*>(_expan)->setThreshold(ENV.getDouble(Env::costThreshold));
     return added;
 }
 

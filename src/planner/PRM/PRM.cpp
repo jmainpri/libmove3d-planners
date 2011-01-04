@@ -42,7 +42,7 @@ int PRM::init()
 
 	Planner::init();
 	m_nbConscutiveFailures = 0;
-	ADDED += Planner::setStart(_Robot->getInitialPosition());
+	ADDED += Planner::setInit(_Robot->getInitialPosition());
 	ADDED += Planner::setGoal(_Robot->getGoTo());
 	_Init = true;
 

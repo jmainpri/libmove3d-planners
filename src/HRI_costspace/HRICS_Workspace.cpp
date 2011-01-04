@@ -73,7 +73,8 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 #ifdef LIGHT_PLANNER
 	if(_Robot)
 	{
-		p3d_jnt* FF_Joint = _Robot->getRobotStruct()->ccCntrts[0]->actjnts[0];
+    p3d_jnt* FF_Joint = (*_Robot->getRobotStruct()->armManipulationData)[0].getManipulationJnt();
+		//p3d_jnt* FF_Joint = _Robot->getRobotStruct()->ccCntrts[0]->actjnts[0];
 		ENV.setInt(Env::akinJntId,FF_Joint->num);
 	}
 #else

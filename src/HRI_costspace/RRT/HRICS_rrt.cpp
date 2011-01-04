@@ -34,14 +34,11 @@ int  HRICS_RRT::init()
     _expan = new HRICS_rrtExpansion(_Graph);
 
     p3d_InitSpaceCostParam(this->getActivGraph()->getGraphStruct(),
-                           this->getStart()->getNodeStruct(),
+                           this->getInit()->getNodeStruct(),
                            this->getGoal()->getNodeStruct());
 
     setGrid(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid());
     setCellPath(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getCellPath());
-
-
-    setInit(true);
 
     cout << "End Init HRICS_RRT" << endl;
 

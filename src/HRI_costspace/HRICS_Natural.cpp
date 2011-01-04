@@ -289,6 +289,12 @@ void Natural::initNaturalAchile()
 	
 	m_q_Confort = shared_ptr<Configuration>(
 											new Configuration(m_Robot,p3d_copy_config(m_Robot->getRobotStruct(),q)));
+  
+  m_Robot->setAndUpdate( *m_q_Confort );
+  
+  // Compute the rest posture heights
+  m_leftArmCost = true;   m_armHeightL = getUpperBodyHeigth(false);
+  m_leftArmCost = false;  m_armHeightR = getUpperBodyHeigth(false);
 	
 	
 	/***********************************************
@@ -417,7 +423,7 @@ double Natural::getConfigCost()
 	
 	//shared_ptr<Configuration> q_Actual = m_Robot->getCurrentPos();
 	
-	cout << "-------------------------------" << endl;
+	//cout << "-------------------------------" << endl;
 	//---------------------------------------------------
 	// Joints Displacement
 	double c_f_Joint_displacement = getJointDisplacement();
@@ -444,7 +450,7 @@ double Natural::getConfigCost()
 	
 	//m_leftArmCost = true;
 	//c_natural = basicNaturalArmCost(m_leftArmCost);
-	cout << "Cost = " << c_natural << endl;
+	cout << "NaturalCost = " << c_natural << endl;
 	return c_natural;
 }
 
@@ -467,6 +473,7 @@ double Natural::getEnergy()
 	
 	vector<double> DeltaHeigth = getUpperBodyHeigth();
 	
+  // 0 -> shoulder, 1 -> elbow, 2 -> wrist 
 	for (unsigned int i=1; i<DeltaHeigth.size(); i++) 
 	{
 		if( m_mg[i] > 0)
@@ -475,7 +482,7 @@ double Natural::getEnergy()
 		}
 	}
 	
-	return 0.005*Energy;
+	return 0.2*Energy;
 }
 
 /*!
@@ -491,29 +498,54 @@ double Natural::getDiscomfort()
  * Discomfort : This function evaluates the different in heigth 
  * of each body regarding the confort position from the VRS project at Iwoa
  */
-vector<double> Natural::getUpperBodyHeigth()
+vector<double> Natural::getUpperBodyHeigth(bool useReference)
 {
 	int ShoulJoint,	ElbowJoint, WristJoint;
+  
+  double L0 = 0.0;
+  double L1 = 0.0;
+  double L2 = 0.0;
 	
 	if( m_leftArmCost )
 	{
 		ShoulJoint = m_JOINT_ARM_LEFT_SHOULDER;
 		ElbowJoint = m_JOINT_ARM_LEFT_ELBOW;
 		WristJoint = m_JOINT_ARM_LEFT_WRIST;
+    
+    if (!m_armHeightL.empty()) 
+    {
+      L0 = m_armHeightL[0];
+      L1 = m_armHeightL[0] - m_armHeightL[1];
+      L2 = m_armHeightL[0] - m_armHeightL[2];
+    }
 	}
 	else 
 	{
 		ShoulJoint = m_JOINT_ARM_RIGTH_SHOULDER;
 		ElbowJoint = m_JOINT_ARM_RIGTH_ELBOW;
 		WristJoint = m_JOINT_ARM_RIGTH_WRIST;
+    
+    if (!m_armHeightR.empty()) 
+    {
+      L0 = m_armHeightR[0];
+      L1 = m_armHeightR[0] - m_armHeightR[1];
+      L2 = m_armHeightR[0] - m_armHeightR[2];
+    }
 	}
 	
 	vector<double> heigths;
 	
-	heigths.push_back( m_Robot->getJoint(ShoulJoint)->getVectorPos()(2) );
-	heigths.push_back( m_Robot->getJoint(ElbowJoint)->getVectorPos()(2) );
-	heigths.push_back( m_Robot->getJoint(WristJoint)->getVectorPos()(2) );
-	
+  if (useReference) {
+    heigths.push_back( L0 - m_Robot->getJoint(ShoulJoint)->getVectorPos()(2) );
+    heigths.push_back( L1 - m_Robot->getJoint(ShoulJoint)->getVectorPos()(2) + m_Robot->getJoint(ElbowJoint)->getVectorPos()(2) );
+    heigths.push_back( L2 - m_Robot->getJoint(ShoulJoint)->getVectorPos()(2) + m_Robot->getJoint(WristJoint)->getVectorPos()(2) );
+  }
+  else {
+    heigths.push_back( m_Robot->getJoint(ShoulJoint)->getVectorPos()(2) );
+    heigths.push_back( m_Robot->getJoint(ElbowJoint)->getVectorPos()(2) );
+    heigths.push_back( m_Robot->getJoint(WristJoint)->getVectorPos()(2) );    
+  }
+
 	return heigths;
 }
 
@@ -1010,6 +1042,23 @@ vector< pair<double,Vector3d> > Natural::getReachableWSPoint()
 	}
 	
 	return WSPoints;
+}
+
+void Natural::setRobotColorFromConfiguration()
+{
+  double cost = this->getConfigCost();
+  
+  double colorvector[4];
+	
+  colorvector[0] = 0.0;       //red
+  colorvector[1] = 0.0;       //green
+  colorvector[2] = 0.0;       //blue
+  colorvector[3] = 0.01;      //transparency
+
+  GroundColorMixGreenToRed(colorvector,cost);
+  
+  g3d_set_custom_color_draw(m_Robot->getRobotStruct(),true);
+  g3d_set_custom_color_vect(colorvector);
 }
 
 /*!
