@@ -120,9 +120,13 @@ void g3d_draw_costspace()
 
 void g3d_draw_grids()
 {
+  //cout << "g3d_draw_grids" << endl;
+  
 #ifdef HRI_COSTSPACE
 	if( ENV.getBool(Env::drawGrid) && API_activeGrid )
 	{
+    //cout << "API_activeGrid->draw()" << endl;
+    
 		API_activeGrid->draw();
 		
 		if (ENV.getBool(Env::drawBox)) 

@@ -59,7 +59,7 @@ int TransitionRRT::init()
 	//					this->getStart()->getNodeStruct(), 
 	//					this->getStart()->getConfiguration()->cost());
 	
-  p3d_SetCostThreshold(this->getInit()->getNodeStruct()->cost);
+  p3d_SetCostThreshold( this->getInit()->cost() );
 	
   p3d_SetInitCostThreshold( 
 													 p3d_GetNodeCost(this->getInit()->getNodeStruct()) );
@@ -88,8 +88,8 @@ int TransitionRRT::init()
 	}
 	else
 	{
-		p3d_SetCostThreshold(this->getInit()->getNodeStruct()->cost);
-		p3d_SetInitCostThreshold( this->getInit()->getNodeStruct()->cost );
+		p3d_SetCostThreshold(this->getInit()->cost() );
+		p3d_SetInitCostThreshold( this->getInit()->cost() );
 		p3d_SetAverQsQgCost( this->getActivGraph()->getGraphStruct()->rob->GRAPH->search_start->cost);
 	}
 	

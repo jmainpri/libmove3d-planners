@@ -270,6 +270,7 @@ Node* BaseExpansion::addNode(Node* currentNode,
 		//cout << "insertNode" << endl;
 		Node* newNode = mGraph->insertNode( currentNode, path );
 		nbCreatedNodes++;
+    
 		return (newNode);
 	}
 }

@@ -388,6 +388,9 @@ bool NaturalCell::readCellFromXml(xmlNodePtr cur)
 	}
 	xmlFree(tmp);
 	
+  
+  // Read the corner of the cell
+  // (X,Y,Z)
 	float Corner[3];
 	
 	if ((tmp = xmlGetProp(cur, xmlCharStrdup("CornerX"))) != NULL)

@@ -13,6 +13,7 @@
 
 #include "API/Grids/ThreeDPoints.hpp"
 #include "API/Roadmap/node.hpp"
+#include "API/Roadmap/graph.hpp"
 
 #include <iostream>
 
@@ -110,12 +111,15 @@ int RRT::expandOneStep(Node* fromComp, Node* toComp)
 	Node* directionNode(NULL);
 	Node* expansionNode(NULL);
 	shared_ptr<Configuration> directionConfig;
+  
 	
 	// get direction
 	directionConfig = _expan->getExpansionDirection(fromComp, 
 																									toComp, 
 																									false,
 																									directionNode);
+  
+  
 #ifdef LIGTH_PLANNER
 	if(ENV.getBool(Env::drawPoints))
 	{

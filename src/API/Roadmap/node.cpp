@@ -28,7 +28,8 @@ Node::Node() :
 _Node(NULL),
 m_parent(NULL),
 _SelectCost(0.0),
-_nbExpan(0)
+_nbExpan(0),
+m_specificNode(false)
 {
 	m_is_BGL_Descriptor_Valid = false;
 }
@@ -40,7 +41,8 @@ m_parent(NULL),
 _Configuration(N._Configuration),
 _activ(false),
 _SelectCost(0.0),
-_nbExpan(0)
+_nbExpan(0),
+m_specificNode(false)
 {
 	throw string("Copy constructor has to be removed");
 	
@@ -55,13 +57,15 @@ _nbExpan(0)
 Node::Node(Graph* G, shared_ptr<Configuration> C, bool newCompco) :
 m_parent(NULL),
 _SelectCost(0.0),
-_nbExpan(0)
+_nbExpan(0),
+m_specificNode(false)
 {
 	m_is_BGL_Descriptor_Valid = false;
 	_Graph = G;
 	_Robot = G->getRobot();
 	_Configuration = C;
 	_activ = false;
+  
 	
 	//	_Node = p3d_APInode_make_multisol(G->getGraphStruct(), C->getConfigStruct(), NULL);
 	//	
@@ -139,7 +143,8 @@ _nbExpan(0)
 
 Node::Node(Graph* G, p3d_node* N) :
 _SelectCost(0.0),
-_nbExpan(0)
+_nbExpan(0),
+m_specificNode(false)
 {
 	_Graph = G;
 	_Robot = G->getRobot();
@@ -198,6 +203,11 @@ void Node::deleteNode()
 
 Node::~Node()
 {
+  if(m_specificNode)
+    
+  {
+   // cout << "specific (node) = destroy" << endl; 
+  }
 	//this->deleteNode();
 }
 

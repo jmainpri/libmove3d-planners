@@ -30,9 +30,10 @@ enum CostSpaceFunction
 // Main function for the HRI cost space
 double HRICS_getConfigCost(Configuration& Conf)
 {	
-	Robot* CurrentRobot = Conf.getRobot();
-	shared_ptr<Configuration> q_Saved = CurrentRobot->getCurrentPos();
-	CurrentRobot->setAndUpdate(Conf);
+	Robot* rob = Conf.getRobot();
+	shared_ptr<Configuration> q_Saved = rob->getCurrentPos();
+  
+	rob->setAndUpdate(Conf);
 	
 	if ( ENV.getBool(Env::HRIPlannerTS) )
 	{
@@ -126,10 +127,10 @@ double HRICS_getConfigCost(Configuration& Conf)
 					Cost += ReachCost;
 					
 					if (ReachCost<0) {
-						p3d_set_robot_display_mode(CurrentRobot->getRobotStruct(),P3D_ROB_BLUE_DISPLAY);
+						p3d_set_robot_display_mode(rob->getRobotStruct(),P3D_ROB_BLUE_DISPLAY);
 					}
 					else {
-						p3d_set_robot_display_mode(CurrentRobot->getRobotStruct(),P3D_ROB_DEFAULT_DISPLAY);
+						p3d_set_robot_display_mode(rob->getRobotStruct(),P3D_ROB_DEFAULT_DISPLAY);
 					}
 					
 					if ( DebugCostFunctions )
@@ -156,12 +157,13 @@ double HRICS_getConfigCost(Configuration& Conf)
 	}
 	
 	//                Cost = hri_zones.getHriDistCost(robotPt, true);
-	
-	CurrentRobot->setAndUpdate(*q_Saved);
+  
+	rob->setAndUpdate(*q_Saved);
 	
 	if ( DebugCostFunctions )
 	{
 		cout << "Cost = " << Cost << endl;
 	}
+             
 	return Cost;
 }

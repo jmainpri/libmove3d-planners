@@ -34,7 +34,7 @@ using namespace tr1;
 MultiTRRT::MultiTRRT(Robot* R, Graph* G) :
 MultiRRT(R,G)
 {
-    cout << "Multi-Transition-RRT Constructor" << endl;
+  cout << "Multi-Transition-RRT Constructor" << endl;
 }
 
 MultiTRRT::~MultiTRRT()
@@ -49,10 +49,10 @@ class ConfigurationComparator
 {	
 public:
 	
-    bool operator()(shared_ptr<Configuration> first, shared_ptr<Configuration> second)
-    {
-        return ( first->cost() < second->cost() );
-    }
+  bool operator()(shared_ptr<Configuration> first, shared_ptr<Configuration> second)
+  {
+    return ( first->cost() < second->cost() );
+  }
 	
 } ConfigurationComparatorObject;
 
@@ -86,7 +86,7 @@ int MultiTRRT::init()
 		addSeed(lowCostSeeds[i]);
 	}
 	
-    _expan = new TransitionExpansion(this->getActivGraph());
+  _expan = new TransitionExpansion(this->getActivGraph());
 	//_expan->setDirectionMethod(NAVIGATION_BEFORE_MANIPULATION);
 	
 	
@@ -94,33 +94,33 @@ int MultiTRRT::init()
 	//                           this->getStart()->getNodeStruct(),
 	//                           this->getGoal()->getNodeStruct());
 	
-    this->getInit()->getNodeStruct()->temp = ENV.getDouble(Env::initialTemperature);
-    this->getInit()->getNodeStruct()->comp->temperature = ENV.getDouble(Env::initialTemperature);
-    this->getInit()->getNodeStruct()->nbFailedTemp = 0;
+  this->getInit()->getNodeStruct()->temp = ENV.getDouble(Env::initialTemperature);
+  this->getInit()->getNodeStruct()->comp->temperature = ENV.getDouble(Env::initialTemperature);
+  this->getInit()->getNodeStruct()->nbFailedTemp = 0;
 	
 	p3d_SetGlobalNumberOfFail(0);
 	
-    //  GlobalNbDown = 0;
-    //  Ns->NbDown = 0;
-    p3d_SetNodeCost(this->getActivGraph()->getGraphStruct(),
-					this->getInit()->getNodeStruct(), 
-					this->getInit()->getConfiguration()->cost());
+  //  GlobalNbDown = 0;
+  //  Ns->NbDown = 0;
+  p3d_SetNodeCost(this->getActivGraph()->getGraphStruct(),
+                  this->getInit()->getNodeStruct(), 
+                  this->getInit()->getConfiguration()->cost());
 	
-    p3d_SetCostThreshold(this->getInit()->getNodeStruct()->cost);
+  p3d_SetCostThreshold(this->getInit()->cost() );
 	
-    p3d_SetInitCostThreshold( 
-							 p3d_GetNodeCost(this->getInit()->getNodeStruct()) );
+  p3d_SetInitCostThreshold( 
+                           p3d_GetNodeCost(this->getInit()->getNodeStruct()) );
 	
 	p3d_SetCostThreshold(MAX(
-							 p3d_GetNodeCost(this->getInit()->getNodeStruct()), 
-							 p3d_GetNodeCost(this->getInit()->getNodeStruct()) ));
+                           p3d_GetNodeCost(this->getInit()->getNodeStruct()), 
+                           p3d_GetNodeCost(this->getInit()->getNodeStruct()) ));
 	
 	for (unsigned int i=0; i<m_Roots.size(); i++) 
 	{
 		initalizeRoot(m_Roots[i]);
 	}
 	
-    return added;
+  return added;
 }
 
 void MultiTRRT::initalizeRoot(Node* rootNode)
@@ -130,16 +130,16 @@ void MultiTRRT::initalizeRoot(Node* rootNode)
 	rootNode->getNodeStruct()->nbFailedTemp = 0;
 	
 	p3d_SetNodeCost(_Graph->getGraphStruct(), 
-					rootNode->getNodeStruct(), 
-					rootNode->getConfiguration()->cost());
+                  rootNode->getNodeStruct(), 
+                  rootNode->getConfiguration()->cost());
 	
 	//        p3d_SetCostThreshold(MAX(
 	//								p3d_GetNodeCost(this->getStart()->getNodeStruct()), 
 	//								p3d_GetNodeCost(this->getGoal()->getNodeStruct()) ));
 	
 	p3d_SetAverQsQgCost(
-						( _Graph->getGraphStruct()->search_start->cost
-						 + _Graph->getGraphStruct()->search_goal->cost) / 2.);
+                      ( _Graph->getGraphStruct()->search_start->cost
+                       + _Graph->getGraphStruct()->search_goal->cost) / 2.);
 }
 
 
@@ -158,29 +158,29 @@ bool MultiTRRT::connectNodeToCompco(Node* node, Node* compNode)
 		cout << "Error tries to connect to its own component" << endl;
 	}
 	
-    int SavedIsMaxDis = FALSE;
+  int SavedIsMaxDis = FALSE;
 	
-    SavedIsMaxDis =  PlanEnv->getBool(PlanParam::isMaxDisNeigh);
-    //p3d_SetIsMaxDistNeighbor(FALSE);
-		PlanEnv->setBool(PlanParam::isMaxDisNeigh,false);
+  SavedIsMaxDis =  PlanEnv->getBool(PlanParam::isMaxDisNeigh);
+  //p3d_SetIsMaxDistNeighbor(FALSE);
+  PlanEnv->setBool(PlanParam::isMaxDisNeigh,false);
 	
-    Node* node2 = _Graph->nearestWeightNeighbour(compNode,
-                                           node->getConfiguration(),
-                                           false,
-                                           ENV.getInt(Env::DistConfigChoice));
+  Node* node2 = _Graph->nearestWeightNeighbour(compNode,
+                                               node->getConfiguration(),
+                                               false,
+                                               ENV.getInt(Env::DistConfigChoice));
 	
-    //p3d_SetIsMaxDistNeighbor(SavedIsMaxDis);
-		PlanEnv->setBool(PlanParam::isMaxDisNeigh,SavedIsMaxDis);
+  //p3d_SetIsMaxDistNeighbor(SavedIsMaxDis);
+  PlanEnv->setBool(PlanParam::isMaxDisNeigh,SavedIsMaxDis);
 	
-    double minumFinalCostGap = ENV.getDouble(Env::minimalFinalExpansionGap);
+  double minumFinalCostGap = ENV.getDouble(Env::minimalFinalExpansionGap);
 	
-    LocalPath path(node->getConfiguration(),node2->getConfiguration());
+  LocalPath path(node->getConfiguration(),node2->getConfiguration());
 	
 	if( ENV.getBool(Env::costExpandToGoal) &&
 	   (path.getParamMax() <= (minumFinalCostGap*_expan->step())) &&
 	   _expan->expandToGoal(
-							node,
-							node2->getConfiguration() ))
+                          node,
+                          node2->getConfiguration() ))
 	{
 		if( path.isValid() )
 		{

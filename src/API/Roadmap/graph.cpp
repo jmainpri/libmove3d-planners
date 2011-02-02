@@ -1329,7 +1329,7 @@ Node* Graph::insertNode(Node* expansionNode,LocalPath& path)
 		}
 	}
 	
-	// Insert the end configuration of the inpout localpath
+	// Insert the end configuration of the input localpath
 	// as a node in the graph
 	Node* newNode = insertConfigurationAsNode(path.getEnd(), expansionNode, step);
 	
@@ -1349,9 +1349,9 @@ Node* Graph::insertNode(Node* expansionNode,LocalPath& path)
 		{
 			global_costSpace->setNodeCost( newNode , newNode->parent() );
 		}
-		
+    
 		//for adaptive variant, new temp is refreshed except if it is going down.
-		if (currentCost < expansionNode->getNodeStruct()->cost)
+		if (currentCost < expansionNode->cost() )
 		{
 			newNode->getNodeStruct()->temp = expansionNode->getNodeStruct()->temp;
 		}
@@ -1360,7 +1360,7 @@ Node* Graph::insertNode(Node* expansionNode,LocalPath& path)
 			newNode->getNodeStruct()->temp = expansionNode->getNodeStruct()->temp / 2.;
 		}
 	}
-	
+  
 	//weight updates
 	if (p3d_GetIsWeightedChoice())
 	{
@@ -1560,7 +1560,6 @@ void Graph::addEdges(Node* N1, Node* N2, double Length , bool computeLength )
 	if( ENV.getBool(Env::use_p3d_structures) )
 	{
 		// This is the code copied from 
-		
 		//		p3d_create_edges(m_Graph,
 		//									 N1->getNodeStruct(),
 		//									 N2->getNodeStruct(),

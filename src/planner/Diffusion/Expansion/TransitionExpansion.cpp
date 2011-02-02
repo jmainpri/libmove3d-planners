@@ -256,11 +256,11 @@ int Nb_succes = 0;
 bool TransitionExpansion::costTestSucceeded(Node* previousNode, shared_ptr<
                                             Configuration> currentConfig, double currentCost)
 {
-	p3d_node* previousNodePt(previousNode->getNodeStruct());
+//	p3d_node* previousNodePt(previousNode->getNodeStruct());
 	double ThresholdVal;
 	double dist;
 	bool success(false);
-	configPt previousConfig = previousNodePt->q;
+//	configPt previousConfig = previousNodePt->q;
 	double temperature;
 	// TODO : for Urmson transition
 	// double cVertex, cOpt, cMax;
@@ -268,25 +268,25 @@ bool TransitionExpansion::costTestSucceeded(Node* previousNode, shared_ptr<
 	
 	switch (p3d_GetCostMethodChoice())
 	{
-    case 19022010:
-		{
-			dist = currentConfig->dist(*previousNode->getConfiguration());
-			
-			temperature = previousNode->getConnectedComponent()->getCompcoStruct()->temperature;
-			
-			double NewDelta = p3d_ComputeDeltaStepCost(
-																								 previousNode->cost(),
-																								 currentConfig->cost(),
-																								 dist);
-			
-			double Integral = previousNode->sumCost() + NewDelta;
-			
-			ThresholdVal = exp( - Integral / temperature);
-			
-			//            cout << "ThresholdVal  = " << ThresholdVal << endl;
-			success = p3d_random(0., 1.) < ThresholdVal;
-		}
-			break;
+//    case 19022010:
+//		{
+//			dist = currentConfig->dist(*previousNode->getConfiguration());
+//			
+//			temperature = previousNode->getConnectedComponent()->getCompcoStruct()->temperature;
+//			
+//			double NewDelta = p3d_ComputeDeltaStepCost(
+//																								 previousNode->cost(),
+//																								 currentConfig->cost(),
+//																								 dist);
+//			
+//			double Integral = previousNode->sumCost() + NewDelta;
+//			
+//			ThresholdVal = exp( - Integral / temperature);
+//			
+//			//            cout << "ThresholdVal  = " << ThresholdVal << endl;
+//			success = p3d_random(0., 1.) < ThresholdVal;
+//		}
+//			break;
 			
     case MAXIMAL_THRESHOLD:
 			// Literature method:
@@ -326,7 +326,7 @@ bool TransitionExpansion::costTestSucceeded(Node* previousNode, shared_ptr<
 			// the tree will grow towards the maxima, whereas it should follow the saddle points
 			
 			//new simplified test for down hill slopes
-			if (currentCost <= previousNodePt->cost)
+			if (currentCost <= previousNode->cost() )
 			{
 				return true;
 			}
@@ -337,11 +337,11 @@ bool TransitionExpansion::costTestSucceeded(Node* previousNode, shared_ptr<
 			// In principle, the distance are not necessarly
 			// reversible for non-holonomic robots
 			dist = p3d_dist_q1_q2(mGraph->getRobot()->getRobotStruct(),
-														currentConfig->getConfigStruct(), previousConfig);
+														currentConfig->getConfigStruct(), previousNode->getConfiguration()->getConfigStruct() );
 			// dist = p3d_dist_q1_q2(mR, previousConfig, currentConfig);
 			
 			// get the value of the auto adaptive temperature.
-			temperature = p3d_GetIsLocalCostAdapt() ? previousNodePt->temp
+			temperature = p3d_GetIsLocalCostAdapt() ? previousNode->getNodeStruct()->temp
 			: previousNode->getConnectedComponent()->getCompcoStruct()->temperature;
 			
 			if (p3d_GetCostMethodChoice() == MONTE_CARLO_SEARCH)
@@ -356,7 +356,7 @@ bool TransitionExpansion::costTestSucceeded(Node* previousNode, shared_ptr<
 			
 			//Metropolis criterion (ie Boltzman probability)
 			//    ThresholdVal = exp((PreviousCost-CurrentCost)/(temperature*dist));
-			ThresholdVal = exp((previousNodePt->cost - currentCost) / temperature);
+			ThresholdVal = exp((previousNode->cost() - currentCost) / temperature);
 			
 			//    success = ThresholdVal > 0.5;
 			success = p3d_random(0., 1.) < ThresholdVal;
@@ -364,12 +364,18 @@ bool TransitionExpansion::costTestSucceeded(Node* previousNode, shared_ptr<
 			{
 				break;
 			}
-			//  p3d_EvaluateExpandDiffic(previousNodePt->comp, success);
+      
+      //  p3d_EvaluateExpandDiffic(previousNodePt->comp, success);
+      
+      break;
+			
+    default:
+      cout << "No transition method selected" << endl;
 	}
 	
 	if (ENV.getBool(Env::printTemp))
 	{
-		cout << temperature << "\t" << previousNodePt->cost << "\t"
+		cout << temperature << "\t" << previousNode->cost() << "\t"
 		<< currentCost << endl;
 		
 		if (success)
@@ -434,6 +440,7 @@ bool TransitionExpansion::expandToGoal(Node* expansionNode, shared_ptr<
 {
 	
 	//    cout << "expandToGoal" << endl;
+  
 	bool extensionSucceeded(true);
 	
 	double param(0);
@@ -695,11 +702,17 @@ bool TransitionExpansion::transitionTest(Node& fromNode,
 	}
 }
 
-
+//! extendExpandProcess
+//! @param expansion node is the start node allready in the graph
+//! @param directionConfig is the direction of expansion
+//! @return the number of created nodes
 int TransitionExpansion::extendExpandProcess(Node* expansionNode,
 																						 shared_ptr<Configuration> directionConfig,
 																						 Node* directionNode)
 {
+  
+  //cout << "Expansion node cost = " <<  expansionNode->cost() << endl;
+	//cout << "Expansion node cost = " <<  expansionNode->getNodeStruct()->cost << endl;
 	
 	bool failed(false);
 	int nbCreatedNodes(0);
@@ -781,7 +794,7 @@ int TransitionExpansion::extendExpandProcess(Node* expansionNode,
 			}
 		}
 	}
-	
+  
 	// Add node to graph if everything succeeded
 	if (!failed)
 	{
@@ -795,9 +808,10 @@ int TransitionExpansion::extendExpandProcess(Node* expansionNode,
 			cout << "Connected in Transition" << __func__ << endl;
 			return 0;
 		}
-		
+    
 		if ( extensionCost > expansionNode->getConfiguration()->cost())
 		{
+      //cout << "Adjust temperature (extensionCost > expansionNodeCost)" << endl;
 			adjustTemperature(true, extensionNode);
 		}
 	}
@@ -819,6 +833,8 @@ int TransitionExpansion::extendExpandProcess(Node* expansionNode,
 
 /** 
  * expandProcess
+ * This method takes a node and expands it toward a direction configuration
+ * it differs wether the method used is (Connect or Extend)
  */
 int TransitionExpansion::expandProcess(Node* expansionNode,
 																			 shared_ptr<Configuration> directionConfig,

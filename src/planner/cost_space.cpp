@@ -48,9 +48,17 @@ CostSpace::CostSpace() : m_deltaMethod(cs_integral)
 //------------------------------------------------------------------------------
 double CostSpace::cost(Configuration& conf)
 {
+  shared_ptr<Configuration> q_tmp = conf.copy();
+  
 	if(!mSelectedCost.empty())
 	{
-		return mSelectedCost(conf);
+		double cost = mSelectedCost(conf);
+    
+    if( !conf.equal( *q_tmp ) )
+    {
+      cout << "Cost function modifies the config" << endl;
+    }
+    return cost;
 	}
 	else
 	{
@@ -185,6 +193,9 @@ void CostSpace::setNodeCost( Node* node, Node* parent )
 	//									this->getGoal()->getConfiguration()->cost());
 	//	double cost = node->getConfiguration()->cost();
 	
+  //------------------------------------------------------
+  // Old node cost
+  //------------------------------------------------------
 	if(ENV.getBool(Env::use_p3d_structures))
 	{
 		p3d_node* NodePt = node->getNodeStruct();
@@ -208,6 +219,7 @@ void CostSpace::setNodeCost( Node* node, Node* parent )
 		{
 			NodePt->sumCost = node->cost();
 		}
+    
 		node->getConnectedComponent()->getCompcoStruct()->minCost 
 		= MIN(node->getConfiguration()->cost(),
 					node->getConnectedComponent()->getCompcoStruct()->minCost );
@@ -218,17 +230,21 @@ void CostSpace::setNodeCost( Node* node, Node* parent )
 	}
 	else 
 	{
+    //------------------------------------------------------
+    // New node cost
+    //------------------------------------------------------
 		if ( parent != NULL )
 		{
+      shared_ptr<Configuration> q_tmp = parent->getConfiguration()->copy();
+      
 			// Compute the sum of cost of the node
-			
-			LocalPath path(parent->getConfiguration(),
+      // TODO fix task space bug (should remove the copy)
+			LocalPath path(parent->getConfiguration()->copy(),
 										 node->getConfiguration());
 			
 			node->sumCost() = parent->sumCost() + path.cost();
 			
 			// Min and max cost of the compco
-			
 			node->getConnectedComponent()->getCompcoStruct()->minCost 
 			= std::min(node->getConfiguration()->cost(),
 								 node->getConnectedComponent()->getCompcoStruct()->minCost );
@@ -236,6 +252,11 @@ void CostSpace::setNodeCost( Node* node, Node* parent )
 			node->getConnectedComponent()->getCompcoStruct()->maxCost 
 			= std::max(node->getConfiguration()->cost(),
 								 node->getConnectedComponent()->getCompcoStruct()->maxCost );
+      
+      if ( !parent->getConfiguration()->equal(*q_tmp) )
+      {
+        cout << "Configuration was modified" << endl;
+      }
 		}
 	}
 }
@@ -252,68 +273,91 @@ void CostSpace::setNodeCost( Node* node, Node* parent )
 //----------------------------------------------------------------------
 double CostSpace::cost(LocalPath& path)
 {
-	if (!ENV.getBool(Env::isCostSpace))
+  shared_ptr<Configuration> q_tmp_begin = path.getBegin()->copy();
+  shared_ptr<Configuration> q_tmp_end   = path.getEnd()->copy();
+  
+  double Cost = 0;
+  
+	if (ENV.getBool(Env::isCostSpace))
 	{
-		return path.getParamMax();
-	}
-	
-	double Cost = 0;
-	
-	double currentCost, prevCost;
-	Eigen::Vector3d taskPos;
-	Eigen::Vector3d prevTaskPos(0, 0, 0);
-	
-	double currentParam = 0;
-
-	const double DeltaStep = path.getResolution();
-	const unsigned int nStep = floor( ( path.getParamMax() / DeltaStep) + 0.5) ;
-	
-	double CostDistStep = DeltaStep;
-	
-	//	cout << "nStep = " << nStep <<  endl;
-	
-	shared_ptr<Configuration> confPtr;
-	prevCost = path.getBegin()->cost();
-	//	cout << "prevCost = " << prevCost << endl;
-	
+    double currentCost, prevCost;
+    Eigen::Vector3d taskPos;
+    Eigen::Vector3d prevTaskPos(0, 0, 0);
+    
+    double currentParam = 0;
+    
+    const double DeltaStep = path.getResolution();
+    const unsigned int nStep = floor( ( path.getParamMax() / DeltaStep) + 0.5) ;
+    
+    double CostDistStep = DeltaStep;
+    
+    //	cout << "nStep = " << nStep <<  endl;
+    
+    shared_ptr<Configuration> confPtr;
+    prevCost = path.getBegin()->cost();
+    //	cout << "prevCost = " << prevCost << endl;
+    
 #ifdef LIGHT_PLANNER
-	// If the value of Env::HRIPlannerWS changes while executing this
-	// function, it could lead to the use of the incorrectly initialized 
-	// prevTaskPos variable, and this triggers a compiler warning.
-	// So, save the value of Env::HRIPlannerWS in a local variable.
-	const bool isHRIPlannerWS = ENV.getBool(Env::HRIPlannerWS);
-	//const bool isHRIPlannerWS = false;
-	if(isHRIPlannerWS)
-	{
-		prevTaskPos = path.getBegin()->getTaskPos();
-	}
+    // If the value of Env::HRIPlannerWS changes while executing this
+    // function, it could lead to the use of the incorrectly initialized 
+    // prevTaskPos variable, and this triggers a compiler warning.
+    // So, save the value of Env::HRIPlannerWS in a local variable.
+    const bool isHRIPlannerWS = ENV.getBool(Env::HRIPlannerWS);
+    //const bool isHRIPlannerWS = false;
+    if(isHRIPlannerWS)
+    {
+      if( !q_tmp_begin->equal(*path.getBegin()) )
+      {
+        cout << "Warning => begin was modified by local path cost computation" << endl;
+      }
+      
+      //!TODO fix task space bug in Configuration class
+      prevTaskPos = path.getBegin()->getTaskPos();
+      
+      if( !q_tmp_begin->equal(*path.getBegin()) )
+      {
+        cout << "Warning => begin was modified by local path cost computation" << endl;
+      }
+    }
 #endif
-	// Case of task space
-	vector<double> Pos;
-	
-	//                cout << "nStep =" << nStep << endl;
-	for (unsigned int i = 0; i < nStep; i++)
-	{
-		currentParam += DeltaStep;
-		
-		confPtr = path.configAtParam(currentParam);
-		currentCost = cost(*confPtr);
-		//cout << "CurrentCost = " << currentCost << endl;
+    // Case of task space
+    vector<double> Pos;
+    
+    //                cout << "nStep =" << nStep << endl;
+    for (unsigned int i = 0; i < nStep; i++)
+    {
+      currentParam += DeltaStep;
+      
+      confPtr = path.configAtParam(currentParam);
+      currentCost = cost(*confPtr);
+      //cout << "CurrentCost = " << currentCost << endl;
 #ifdef LIGHT_PLANNER		
-		// Case of task space
-		if(isHRIPlannerWS)
-		{
-			taskPos = confPtr->getTaskPos();
-			CostDistStep = ( taskPos - prevTaskPos ).norm();
-			prevTaskPos = taskPos;
-		}
+      // Case of task space
+      if(isHRIPlannerWS)
+      {
+        taskPos = confPtr->getTaskPos();
+        CostDistStep = ( taskPos - prevTaskPos ).norm();
+        prevTaskPos = taskPos;
+      }
 #endif		
-		Cost += deltaStepCost(prevCost, currentCost, CostDistStep);
-		
-		prevCost = currentCost;
+      Cost += deltaStepCost(prevCost, currentCost, CostDistStep);
+      
+      prevCost = currentCost;
+    }
+  }
+  else 
+  {
+    Cost = path.getParamMax();
 	}
-	
-	//	cout << "Path Cost = " << Cost << endl;
+  
+  if( !q_tmp_begin->equal(*path.getBegin()) )
+  {
+    cout << "Warning => begin was modified by local path cost computation" << endl;
+  }
+  if( !q_tmp_end->equal(*path.getEnd()) ) 
+  {
+    cout << "Warning => end was modified by local path cost computation" << endl;
+  }
 	
 	return Cost;
 }
@@ -339,6 +383,7 @@ double computeIntersectionWithGround(Configuration& conf)
 																				 conf.getConfigStruct()[7], 
 																				 &cost);
 	}
+  //cout << "Ground Cost = " << cost << endl;
 	return(cost);
 }
 
@@ -367,10 +412,10 @@ void CostSpace::initMotionPlanning(Graph* graph, Node* start, Node* goal)
 									start->getNodeStruct(), 
 									start->getConfiguration()->cost());
 	
-	p3d_SetCostThreshold(start->getNodeStruct()->cost);
+	p3d_SetCostThreshold(start->cost() );
 	
 #ifdef P3D_PLANNER
-	p3d_SetInitCostThreshold(start->getNodeStruct()->cost);
+	p3d_SetInitCostThreshold(start->cost() );
 #else
 	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
 #endif
@@ -386,8 +431,8 @@ void CostSpace::initMotionPlanning(Graph* graph, Node* start, Node* goal)
 										goal->getNodeStruct(), 
 										goal->getConfiguration()->cost());
 		
-		p3d_SetCostThreshold(MAX(start->getNodeStruct()->cost, 
-														 goal->getNodeStruct()->cost));
+		p3d_SetCostThreshold(MAX(start->cost() , 
+														 goal->cost() ));
 		
 		//        p3d_SetCostThreshold(MAX(
 		//								p3d_GetNodeCost(this->getStart()->getNodeStruct()), 
@@ -400,8 +445,8 @@ void CostSpace::initMotionPlanning(Graph* graph, Node* start, Node* goal)
 	else
 	{
 #ifdef P3D_PLANNER
-		p3d_SetCostThreshold(start->getNodeStruct()->cost);
-		p3d_SetInitCostThreshold(start->getNodeStruct()->cost );
+		p3d_SetCostThreshold(start->cost() );
+		p3d_SetInitCostThreshold(start->cost() );
 		p3d_SetAverQsQgCost(graph->getGraphStruct()->search_start->cost);
 #else
 		printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);

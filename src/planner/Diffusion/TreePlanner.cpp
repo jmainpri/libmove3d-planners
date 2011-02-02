@@ -71,15 +71,7 @@ bool TreePlanner::preConditions()
 //		<< "Warning: Connect expansion strategy is usually unadapted for cost spaces\n"
 //		<< endl;
 //	}
-	
-	if ((ENV.getBool(Env::biDir) && ENV.getBool(Env::expandToGoal))
-			&& (*_Start->getConfiguration() == *_Goal->getConfiguration()) )
-	{
-		cout << "TreePlanner::preConditions => Tree Expansion failed: root nodes are the same" << endl;
-		return false;
-	}
-	
-	if (_Start->getConfiguration()->isOutOfBounds())
+  if (_Start->getConfiguration()->isOutOfBounds())
 	{
 		cout << "TreePlanner::preConditions => Start is out of bounds" << endl;
 		return false;
@@ -90,6 +82,27 @@ bool TreePlanner::preConditions()
 		cout << "TreePlanner::preConditions => Start in collision" << endl;
 		// TODO print out collision status!!! See FORMenv print call
 		return false;
+	}
+  
+	if (ENV.getBool(Env::biDir) && ENV.getBool(Env::expandToGoal))
+	{
+    if (*_Start->getConfiguration() == *_Goal->getConfiguration()) 
+    {
+      cout << "TreePlanner::preConditions => Tree Expansion failed: root nodes are the same" << endl;
+      return false;
+    }
+    
+    if (!_Graph->searchConf(*_Robot->getInitialPosition())) 
+    {
+      cout << "TreePlanner::preConditions => Config. start not in graph" << endl;
+      return false;
+    }
+    
+    if (!_Graph->searchConf(*_Robot->getGoTo())) 
+    {
+      cout << "TreePlanner::preConditions => Config. goal not in graph" << endl;
+      return false;
+    }
 	}
 	
 	//    if (!(_Start->getConfiguration()->setConstraints()))
@@ -306,6 +319,7 @@ unsigned int TreePlanner::run()
 					&& (fromNode->getConnectedComponent()->getNumberOfNodes()
 							> toNode->getConnectedComponent()->getNumberOfNodes() + 2)))
 		{
+      
 			// expand one way
 			// one time (Main function of Tree like planners
 			NbCurCreatedNodes = expandOneStep(fromNode,toNode); m_nbExpansion++;
@@ -336,6 +350,7 @@ unsigned int TreePlanner::run()
 					{
 						//                        iter = iter + 2;
 						//						cout << "nb Comp : " << _Graph->getGraphStruct()->ncomp<< endl;
+            
 						cout << "connected" << endl;
 						//                      return (NbTotCreatedNodes);
 					}

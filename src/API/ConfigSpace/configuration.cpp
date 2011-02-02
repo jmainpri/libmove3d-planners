@@ -579,10 +579,12 @@ bool Configuration::setConstraints()
 #ifdef LIGHT_PLANNER
 Vector3d Configuration::getTaskPos()
 {
-    if(!ENV.getBool(Env::isInverseKinematics))
-    {
-        this->setConstraints();
-    }
+// TODO: fix the problem of having a function 
+// that modifies the configuration in cost computation
+//    if(!ENV.getBool(Env::isInverseKinematics))
+//    {
+//        this->setConstraints();
+//    }
     Vector3d taskPos;
     int objDof = _Robot->getObjectDof();
 	//cout << "Robot object dof = " << objDof << endl;

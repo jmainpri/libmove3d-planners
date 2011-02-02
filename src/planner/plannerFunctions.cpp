@@ -122,8 +122,14 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 	nb_added_nodes += rrt->init();
   
   rrt->setInitialized(true);
+  
+  cout << "Start in Graph : " << graph->searchConf( *rob->getInitialPosition() ) << endl;
+  cout << "Goal_ in Graph : " << graph->searchConf( *rob->getGoTo() ) << endl;
 	
 	nb_added_nodes += rrt->run();
+  
+  cout << "Start in Graph : " << graph->searchConf( *rob->getInitialPosition() ) << endl;
+  cout << "Goal_ in Graph : " << graph->searchConf( *rob->getGoTo() ) << endl;
 	
 	// Gets the graph pointer
 	// in case it has been modified by the planner
@@ -156,6 +162,10 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 		if( !ENV.getBool(Env::use_p3d_structures) )
 		{
 			cout << "Export the cpp graph to new graph" << endl;
+      
+      cout << "Start in Graph : " << graph->searchConf( *rob->getInitialPosition() ) << endl;
+      cout << "Goal_ in Graph : " << graph->searchConf( *rob->getGoTo() ) << endl;
+      
 			// Copies the graph to a p3d_structured graph
 			Graph graphTraj( rob, graph->exportCppToGraphStruct() );
 			
@@ -170,6 +180,7 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 			trajExtractSucceded = graph->extractBestTraj(rob->getInitialPosition(),
                                                    rob->getGoTo());
 		}
+    
 		if ( !ENV.getBool(Env::use_p3d_structures) ) 
 		{
 			XYZ_GRAPH = graph->exportCppToGraphStruct();

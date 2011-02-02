@@ -321,6 +321,9 @@ private:
 	double _SelectCost;
 	int _nbExpan;
 	std::vector<Node*> _SortedNodes;
+  
+  // Used for debug
+  bool m_specificNode;
 };
 
 #endif
