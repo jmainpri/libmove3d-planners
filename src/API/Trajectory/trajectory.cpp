@@ -8,6 +8,7 @@
 #include "API/Trajectory/trajectory.hpp"
 
 #include "P3d-pkg.h"
+#include "Graphic-pkg.h"
 #include "Localpath-pkg.h"
 #include "GroundHeight-pkg.h"
 #include "Planner-pkg.h"
