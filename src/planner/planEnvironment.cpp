@@ -10,6 +10,7 @@
 #include "planEnvironment.hpp"
 #include "Move3d-pkg.h"
 #include <iostream>
+//#include "env.hpp"
 
 //**********************************************************
 //**********************************************************
@@ -108,4 +109,13 @@ void initPlannerParameters()
 															myDoubleMap,
 															myStringMap,
 															myVectorMap);
+  
+  // Planning Environment
+	// ------------------------------------------------------------------
+  ENV.setExpansionMethod(Env::Extend);
+  ENV.setBool(Env::biDir,true);
+  ENV.setDouble(Env::extensionStep,1.5);
+  
+//  ENV.setBool(Env::);
+  
 }
