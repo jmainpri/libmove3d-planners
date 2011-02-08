@@ -17,13 +17,7 @@
 #include "Planner-pkg.h"
 #include "Localpath-pkg.h"
 
-#if defined( CXX_PLANNER )
-#include "cost_space.hpp"
-#endif
-
-#if defined( MOVE3D_CORE )
 #include "planner/cost_space.hpp"
-#endif
 
 using namespace std;
 using namespace tr1;
@@ -340,7 +334,7 @@ bool Configuration::isInCollision()
 
 bool Configuration::isOutOfBounds()
 {
-	return(p3d_isOutOfBounds(_Robot->getRobotStruct(), _Configuration, false));
+	return(p3d_isOutOfBounds(_Robot->getRobotStruct(), _Configuration ));
 }
 
 void Configuration::setAsNotTested()

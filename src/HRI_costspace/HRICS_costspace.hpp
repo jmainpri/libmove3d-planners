@@ -6,13 +6,8 @@
  *  Copyright 2010 LAAS/CNRS. All rights reserved.
  *
  */
-#if defined( CXX_PLANNER )
-#include "cost_space.hpp"
-#endif
 
-#if defined( MOVE3D_CORE )
 #include "planner/cost_space.hpp"
-#endif
 
 #include "API/ConfigSpace/configuration.hpp"
 

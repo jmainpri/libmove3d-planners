@@ -10,17 +10,9 @@
  *
  */
 
-#if defined( CXX_PLANNER )
-#include "API/planningAPI.hpp"
-#include "planner.hpp"
-#include "Diffusion/RRT.hpp"
-#endif
-
-#if defined( MOVE3D_CORE )
 #include "API/planningAPI.hpp"
 #include "planner/planner.hpp"
 #include "planner/Diffusion/RRT.hpp"
-#endif
 
 #include "HRICS_Distance.hpp"
 #include "HRICS_Visibility.hpp"

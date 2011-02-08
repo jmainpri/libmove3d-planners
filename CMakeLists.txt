@@ -139,8 +139,6 @@ Move3DMPLIB_flag(MULTIGRAPH "Compilation with module Multi-Graph" ON)
 Move3DMPLIB_flag(USE_GBM "Compilation with module Multilocalpath" ON)
 Move3DMPLIB_flag(USE_GSL "Compilation with module Hir-planner" ON)
 
-Move3DMPLIB_flag(MOVE3D_CORE "Compiles the planning API and planners" ON)
-
 Move3DMPLIB_flag(HRI_COSTSPACE "With the hri work" ON)
 Move3DMPLIB_flag(HRI_PLANNER "With the hri work done in BioMove3D" ON USE_GSL)
 
@@ -397,7 +395,7 @@ SET(LIBRARY_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/lib/$ENV{HOSTTYPE}")
 ADD_DEFINITIONS(-DKCD_MOVE3D -DPRINT_ERROR -DPRINT_INFO)
 
 IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-  ADD_DEFINITIONS(-g -Wall -Wno-unknown-pragmas)
+  ADD_DEFINITIONS(-g -Wall -Wno-unknown-pragmas -fstack-protector-all)
 ELSEIF(${CMAKE_BUILD_TYPE} MATCHES "Release")
   ADD_DEFINITIONS(-O2 -Wall -Wno-unknown-pragmas)
 ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")

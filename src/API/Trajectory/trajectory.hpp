@@ -186,7 +186,7 @@ namespace API
 	};
 }
 
-#if defined( CXX_PLANNER ) || ( defined( MOVE3D_CORE ) && defined( QT_LIBRARY ) )
+#if defined( QT_LIBRARY ) 
 #include <vector>
 namespace API { class Trajectory; }
 extern std::vector<API::Trajectory> trajToDraw;
