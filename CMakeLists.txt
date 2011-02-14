@@ -287,6 +287,15 @@ ENDIF(MULTILOCALPATH)
 #  SET(LIBS ${LIBS} ${GTS_LIBRARIES})
 #ENDIF(GRASP_PLANNING)
 
+#------------------- PKG_CONFIG ---------------------------
+#----------------------------------------------------------
+STRING(REPLACE ";" " -D" Move3DMPLIB_CompilationFlags "-D${Move3DMPLIB_CompilationFlags}")
+STRING(REPLACE ";" " -I" Move3DMPLIB_Compilation_includes "-I${INCLUDE_DIRS}")
+
+STRING(REGEX REPLACE "(debug;[^;]*;)|optimized" "" Move3DMPLIB_Compilation_libs "${LIBS}")
+STRING(REPLACE ";" " " Move3DMPLIB_Compilation_libs "${Move3DMPLIB_Compilation_libs}")
+add_subdirectory(pkgconfig)
+
 
 #-------------------------------------------------------------------------------
 # SUBDIR PROCESS 
