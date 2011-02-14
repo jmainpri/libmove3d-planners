@@ -17,7 +17,7 @@ find_path (MOVE3D-CORE_INCLUDE_DIR P3d-pkg.h
  PATHS $ENV{HOME}/workspace/Move3D-core/include $ENV{ROBOTPKG_BASE}/include/BioMove3D/include/
  )
 
-find_library (MOVE3D-CORE_LIBRARIES BioMove3D
+find_library (MOVE3D-CORE_LIBRARIES move3d-viewer
   PATHS ${MOVE3D-CORE_LIB} $ENV{HOME}/workspace/Move3D-core/build_lib/Debug/lib/$ENV{HOSTTYPE} $ENV{ROBOTPKG_BASE}/lib/
   )
 message(blalbla)
