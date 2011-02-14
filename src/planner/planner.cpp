@@ -20,7 +20,7 @@
 using namespace std;
 using namespace tr1;
 
-extern void draw_opengl();
+extern void (*draw_opengl)();
 
 Planner::Planner() :
 		  _stop_func(fct_stop),
