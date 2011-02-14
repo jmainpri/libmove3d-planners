@@ -27,6 +27,8 @@ enum CostSpaceFunction
 	NatuSpace
 } myCostFunction;
 
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
 // Main function for the HRI cost space
 double HRICS_getConfigCost(Configuration& Conf)
 {	
@@ -166,4 +168,82 @@ double HRICS_getConfigCost(Configuration& Conf)
 	}
              
 	return Cost;
+}
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+void HRICS_loadGrid(std::string docname)
+{
+	ENV.setBool(Env::drawGrid,false);
+	
+	HRICS_activeNatu  = new HRICS::Natural;
+	
+	HRICS::NaturalGrid* myGrid = new HRICS::NaturalGrid;
+	myGrid->setNaturalCostSpace(HRICS_activeNatu);
+	
+	bool reading_OK=false;
+	
+	for (int i=0; (i<5)&&(!reading_OK) ; i++) 
+	{
+		cout << "Reading grid at : " << docname << endl;
+		reading_OK = myGrid->loadFromXmlFile(docname);
+	}
+  
+	API_activeGrid = myGrid;
+	
+	if( HRICS_MotionPL != NULL )
+	{
+		if( HRICS_activeNatu->IsHuman() )
+		{
+			cout << "Set Reachability space" << endl;
+			HRICS_MotionPL->setReachability(HRICS_activeNatu);
+		}
+		else 
+		{
+			cout << "Set Natural space" << endl;
+			HRICS_MotionPL->setNatural(HRICS_activeNatu);
+		}
+	}
+	
+	ENV.setBool(Env::drawGrid,true);
+}
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+void HRICS_init()
+{
+  Robot* Human = global_Project->getActiveScene()->getRobotByNameContaining("HUMAN");
+  
+  shared_ptr<Configuration> q = Human->getCurrentPos();
+  
+	HRICS_MotionPL = new HRICS::Workspace;
+	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initGrid();
+	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initDistance();
+	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initVisibility();
+	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initNatural();
+	
+	ENV.setBool(Env::HRIPlannerWS,true);
+	ENV.setDouble(Env::zone_size,0.5);
+	HRICS_activeDist = HRICS_MotionPL->getDistance();
+	
+	API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid();
+	
+	ENV.setBool(Env::enableHri,true);
+	ENV.setBool(Env::isCostSpace,true);
+	
+	if( ENV.getBool(Env::HRIAutoLoadGrid) )
+	{
+		string fileName("/Users/jmainpri/workspace/Move3D-core/statFiles/Cost3DGrids/Cost3DGrid.grid");
+		
+		// Reads the grid from XML and sets it ti the HRICS_MotionPL
+		HRICS_loadGrid(fileName);
+		HRICS_activeNatu->setGrid(dynamic_cast<HRICS::NaturalGrid*>(API_activeGrid));
+		ENV.setBool(Env::drawGrid,false);
+	}
+	
+	ENV.setInt(Env::hriCostType,HRICS_Combine);
+	
+	cout << "new HRI Workspace" << endl;
+  
+  //Human->setAndUpdate( *q );
 }

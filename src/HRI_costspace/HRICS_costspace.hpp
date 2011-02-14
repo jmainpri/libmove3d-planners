@@ -13,6 +13,7 @@
 
 // Main cost function
 extern double HRICS_getConfigCost(Configuration& Conf);
+extern   void HRICS_init();
 
 // Human kinematics
 const int HRICS_HUMANj_BODY=      2;
