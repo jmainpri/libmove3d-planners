@@ -125,12 +125,15 @@ ENDMACRO(Move3DMPLIB_CheckCompilationFlags)
 # ------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-Move3DMPLIB_flag(QT_LIBRARY "Sets QtLibrary compiling mode" ON)
+Move3DMPLIB_flag(GENERATE_MPLIB "Generate the lib for mhp and spark" ON)
+
+Move3DMPLIB_flag(QT_LIBRARY "Sets QtLibrary compiling mode" OFF)
 
 Move3DMPLIB_flag(P3D_CONSTRAINTS "Compilation with module Constraints" ON)
 Move3DMPLIB_flag(P3D_COLLISION_CHECKING "Compilation with module Collision Checking" ON)
 Move3DMPLIB_flag(P3D_LOCALPATH "Compilation with module Localpath" ON)
 Move3DMPLIB_flag(P3D_PLANNER "Compilation with module Planner" ON)
+
 Move3DMPLIB_flag(LIGHT_PLANNER "Compilation with module Light Planner" ON)
 Move3DMPLIB_flag(GRASP_PLANNING "Compilation with module Manipulation Planner" ON)
 Move3DMPLIB_flag(MULTILOCALPATH "Compilation with module Multilocalpath" ON)
@@ -199,11 +202,23 @@ ENDIF(APPLE)
 
 #-------------- Move3D ---------------------------------------------------------
 
+IF(GENERATE_MPLIB)
+
+FIND_PACKAGE(LIBMOVE3D REQUIRED)
+INCLUDE_directories(${MOVE3D-CORE_INCLUDE_DIR} ${p3d_INCLUDE_DIR})
+SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${MOVE3D-CORE_INCLUDE_DIR})
+SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${p3d_INCLUDE_DIR})
+SET(LIBS ${LIBS} ${MOVE3D-CORE_LIBRARIES})
+
+ELSE()
+
 FIND_PACKAGE(MOVE3D-CORE REQUIRED)
 INCLUDE_directories(${MOVE3D-CORE_INCLUDE_DIR} ${p3d_INCLUDE_DIR})
 SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${MOVE3D-CORE_INCLUDE_DIR})
 SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${p3d_INCLUDE_DIR})
 SET(LIBS ${LIBS} ${MOVE3D-CORE_LIBRARIES})
+
+ENDIF()
 
 #-------------- Eigen ----------------------------------------------------------
 
