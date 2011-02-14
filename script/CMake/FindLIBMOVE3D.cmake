@@ -9,7 +9,7 @@
 ## -----------------------------------------------------------------------------
 ## Check for the header files
 
-find_path (LIBMOVE3D_LIBMOVE3D_P3D_INCLUDE_DIR env.hpp
+find_path (LIBMOVE3D_P3D_INCLUDE_DIR env.hpp
  PATHS $ENV{ROBOTPKG_BASE}/include/libmove3d/p3d/ $ENV{HOME}/workspace/libmove3d/p3d  
  )
 
@@ -21,9 +21,9 @@ find_library (LIBMOVE3D_LIBRARIES move3d
   PATHS ${LIBMOVE3D_LIB} $ENV{ROBOTPKG_BASE}/lib/ $ENV{HOME}/workspace/libmove3d/build_lib/Debug/lib/$ENV{HOSTTYPE}
   )
 
-message(${LIBMOVE3D_LIBMOVE3D_P3D_INCLUDE_DIR})
-message(${LIBMOVE3D_INCLUDE_DIR})
-message(${LIBMOVE3D_LIBRARIES})
+#message(${LIBMOVE3D_P3D_INCLUDE_DIR})
+#message(${LIBMOVE3D_INCLUDE_DIR})
+#message(${LIBMOVE3D_LIBRARIES})
 ## -----------------------------------------------------------------------------
 ## Actions taken when all components have been found
 
@@ -40,7 +40,7 @@ endif (LIBMOVE3D_INCLUDE_DIR AND LIBMOVE3D_P3D_INCLUDE_DIR AND MOVE3D-CORE_LIBRA
 if (HAVE_MOVE3D-CORE)
  if (NOT MOVE3D-CORE_FIND_QUIETLY)
    message (STATUS "Found components for libmove3d")
-   message (STATUS "LIBMOVE3D_LIBMOVE3D_P3D_INCLUDE_DIR = ${LIBMOVE3D_LIBMOVE3D_P3D_INCLUDE_DIR}")
+   message (STATUS "LIBMOVE3D_P3D_INCLUDE_DIR = ${LIBMOVE3D_P3D_INCLUDE_DIR}")
    message (STATUS "LIBMOVE3D_INCLUDE_DIR = ${LIBMOVE3D_INCLUDE_DIR}")
    message (STATUS "LIBMOVE3D_LIBRARIES = ${LIBMOVE3D_LIBRARIES}")
  endif (NOT MOVE3D-CORE_FIND_QUIETLY)

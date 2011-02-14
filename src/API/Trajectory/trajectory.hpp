@@ -186,10 +186,10 @@ namespace API
 	};
 }
 
-#if defined( QT_LIBRARY ) 
+//#if defined( QT_LIBRARY ) 
 #include <vector>
 namespace API { class Trajectory; }
 extern std::vector<API::Trajectory> trajToDraw;
-#endif
+//#endif
 
 #endif /* TRAJECTORY_HPP_ */
