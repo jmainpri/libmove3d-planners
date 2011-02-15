@@ -96,8 +96,11 @@ MACRO(Move3DMPLIB_flag flagName description status)
   SET(flagName "${flagName}")
   SET(description "${description}")
   SET(status "${status}")
+  message(status "enter in Move3DMPLIB_flag : ${Move3DMPLIB_CompilationFlags}")
   OPTION(${flagName} ${description} ${status})
-  LIST(APPEND Move3DMPLIB_CompilationFlags ${flagName})
+  IF(${flagName})
+    LIST(APPEND Move3DMPLIB_CompilationFlags ${flagName})
+  ENDIF()
   FOREACH(linkFlag ${ARGN})
     LIST(APPEND Move3DMPLIB_LinkedCompilationFlags "${flagName}:${linkFlag}")
   ENDFOREACH(linkFlag)
@@ -289,13 +292,14 @@ ENDIF(MULTILOCALPATH)
 
 #------------------- PKG_CONFIG ---------------------------
 #----------------------------------------------------------
+message(${Move3DMPLIB_CompilationFlags})
+
 STRING(REPLACE ";" " -D" Move3DMPLIB_CompilationFlags "-D${Move3DMPLIB_CompilationFlags}")
 STRING(REPLACE ";" " -I" Move3DMPLIB_Compilation_includes "-I${INCLUDE_DIRS}")
 
 STRING(REGEX REPLACE "(debug;[^;]*;)|optimized" "" Move3DMPLIB_Compilation_libs "${LIBS}")
 STRING(REPLACE ";" " " Move3DMPLIB_Compilation_libs "${Move3DMPLIB_Compilation_libs}")
 add_subdirectory(pkgconfig)
-
 
 #-------------------------------------------------------------------------------
 # SUBDIR PROCESS 
