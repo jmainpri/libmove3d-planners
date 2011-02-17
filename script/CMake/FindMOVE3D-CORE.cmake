@@ -10,11 +10,11 @@
 ## Check for the header files
 
 find_path (p3d_INCLUDE_DIR env.hpp
- PATHS $ENV{HOME}/workspace/Move3D-core/p3d  $ENV{ROBOTPKG_BASE}/include/BioMove3D/p3d/
+ PATHS $ENV{HOME}/workspace/Move3D-core/p3d  $ENV{ROBOTPKG_BASE}/include/Move3D-core/p3d/
  )
 
 find_path (MOVE3D-CORE_INCLUDE_DIR P3d-pkg.h
- PATHS $ENV{HOME}/workspace/Move3D-core/include $ENV{ROBOTPKG_BASE}/include/BioMove3D/include/
+ PATHS $ENV{HOME}/workspace/Move3D-core/include $ENV{ROBOTPKG_BASE}/include/Move3D-core/include/
  )
 
 find_library (MOVE3D-CORE_LIBRARIES move3d-viewer
