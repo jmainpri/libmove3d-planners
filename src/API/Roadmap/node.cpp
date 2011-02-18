@@ -133,7 +133,6 @@ m_specificNode(false)
 	
 	// Compco are now handled
 	// In the Boost Graph
-	
 	if (newCompco) 
 	{
 		_Graph->createCompco(this);

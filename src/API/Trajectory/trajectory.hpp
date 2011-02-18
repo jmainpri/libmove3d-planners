@@ -107,7 +107,7 @@ namespace API
 		double computeSubPortionRange(std::vector<LocalPath*> portion);
 		
 		void 	replaceP3dTraj();
-		void 	replaceP3dTraj(p3d_traj* trajPt);
+		p3d_traj* 	replaceP3dTraj(p3d_traj* trajPt);
 		
 		void draw(int nbKeyFrame);
 		void print();

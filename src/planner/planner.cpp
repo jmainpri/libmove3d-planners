@@ -16,20 +16,20 @@
 
 #include "P3d-pkg.h"
 #include "Move3d-pkg.h"
+#include "Graphic-pkg.h" 
 
 using namespace std;
 using namespace tr1;
 
-extern void (*draw_opengl)();
-
 Planner::Planner() :
 		  _stop_func(fct_stop),
-		  _draw_func(draw_opengl),
+		  _draw_func(ext_g3d_draw_allwin_active),
 		  _Start(NULL),
 		  _Goal(NULL),
 		  _Robot(NULL),
 		  _Graph(NULL),
-		  _Init(false)
+		  _Init(false),
+      m_fail(false)
 {	
 //  cout << "------------------------------------------------" << endl;
 //  cout << " Planner::Planner() ";
@@ -37,12 +37,13 @@ Planner::Planner() :
 
 Planner::Planner(Robot* rob, Graph* graph) :
 		  _stop_func(fct_stop),
-		  _draw_func(draw_opengl),
+		  _draw_func(ext_g3d_draw_allwin_active),
 		  _Start(NULL),
 		  _Goal(NULL),
 		  _Robot(rob),
 		  _Graph(graph),
-		  _Init(false)
+      _Init(false),
+      m_fail(false)
 {
 }
 
@@ -56,7 +57,7 @@ bool Planner::trajFound()
 	bool inSameCompco  = (_Goal ? _Start->inSameComponent(_Goal) : false);
 	bool isTheSame = _Start->equal(_Goal);
 	
-	return (!isTheSame) && inSameCompco;
+	return (!isTheSame) && inSameCompco && (!m_fail);
 }
 
 Robot* Planner::getActivRobot()

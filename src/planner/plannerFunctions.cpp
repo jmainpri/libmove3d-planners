@@ -27,6 +27,7 @@
 #include "Planner-pkg.h"
 
 using namespace std;
+using namespace tr1;
 
 // ---------------------------------------------------------------------------------
 // Run number that is counting the run
@@ -44,28 +45,13 @@ void p3d_planner_functions_SetRunId( unsigned int idRun)
 }
 
 // ---------------------------------------------------------------------------------
-// Tree Planners
+// Allocates an RRT depending on env variables
 // ---------------------------------------------------------------------------------
-int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void))
-{	
-	double /*tu,*/ts;
+RRT* allocate_RRT(Robot* rob,Graph* graph)
+{
+  RRT* rrt;
   
-  cout << "------------------------------------------------" << endl;
-  cout << "------------------------------------------------" << endl;
-  cout << "p3d_run_rrt (motionPlanner-libs)" << endl;
-	
-	GraphPt = GraphPt ? GraphPt : p3d_create_graph();
-	
-	Robot* rob = global_Project->getActiveScene()->getActiveRobot();
-	Graph* graph = 	API_activeGraph =  new Graph(rob,GraphPt);
-	
-	cout << "Planning for robot : " << rob->getName() << endl;
-	
-	RRT* rrt;
-	
-	// Initialize all RRTs
-	// -------------------------------------------------------------------------
-	if(ENV.getBool(Env::isManhattan))
+  if(ENV.getBool(Env::isManhattan))
 	{
 		rrt = new ManhattanLikeRRT(rob,graph);
 	}
@@ -108,8 +94,182 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 		
 		rrt = new RRT(rob,graph);
 	}
-	//#endif
+  
+  return rrt;
+}
+
+// ---------------------------------------------------------------------------------
+// Planner function (RRT) for connection with Manipulation planner
+// ---------------------------------------------------------------------------------
+p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
+{
+  cout << "* PLANNING ***************" << endl;
+  
+  double ts;
+  
+  // Gets the robot pointer
+  Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
+  
+  // Gets the 2 configurations
+  shared_ptr<Configuration> q_Source( new Configuration(rob,qs) );
+  shared_ptr<Configuration> q_Target( new Configuration(rob,qg) );
+  
+  // Allocate the graph if does't exist
+  p3d_graph* GraphPt = robotPt->GRAPH;
+  GraphPt = GraphPt ? GraphPt : p3d_create_graph();
+  Graph* graph = 	API_activeGraph =  new Graph(rob,GraphPt);
+  
+  // Allocate RRT
+  RRT* rrt = allocate_RRT(rob,graph);
+  
+	// Main Run functions of all RRTs
+  // All RRTs are initilized with init and run here
+  int nb_added_nodes = 0;
+  
+  nb_added_nodes += rrt->setInit(q_Source);
+	nb_added_nodes += rrt->setGoal(q_Target);
+  
+	nb_added_nodes += rrt->init();
+  
+  rrt->setInitialized(true);
 	
+  nb_added_nodes += rrt->run();
+	
+	// Gets the graph pointer
+	// in case it has been modified by the planner
+	graph = rrt->getActivGraph();
+	
+	ChronoTimes(&(graph->getGraphStruct()->rrtTime), &ts);
+	
+  // Debug
+	cout << "graph time ="  << graph->getGraphStruct()->rrtTime << endl;
+	cout << "nb added nodes " << nb_added_nodes << endl;
+	cout << "nb nodes (Wrapper) " << (int)graph->getNodes().size() << endl;
+	cout << "nb nodes " << graph->getGraphStruct()->nnode << endl;
+  
+  if ((rrt->getNumberOfExpansion() - rrt->getNumberOfFailedExpansion() + rrt->getNumberOfInitialNodes()) 
+      != graph->getNumberOfNodes() ) 
+  {
+    cout << "Nb of nodes differ from number of expansion succes " << endl;
+    cout << " - m_nbExpansion = " << rrt->getNumberOfExpansion() << endl;
+    cout << " - m_nbInitNodes = " << rrt->getNumberOfInitialNodes() << endl;
+    cout << " - m_nbExpansion + m_nbInitNodes - m_nbExpansionFailed  =  " << (rrt->getNumberOfExpansion() + rrt->getNumberOfInitialNodes() - rrt->getNumberOfFailedExpansion() ) << endl;
+    cout << " - _Graph->getNumberOfNodes() = " << graph->getNumberOfNodes() << endl;
+	}
+	
+	graph->getGraphStruct()->totTime = graph->getGraphStruct()->rrtTime;
+  
+  API::Trajectory* traj = NULL;
+  
+  // If traj is found
+  // Extract it from the graph
+  if (rrt->trajFound()) 
+  {
+    if( !ENV.getBool(Env::use_p3d_structures) )
+    {
+      // Export the graph when not using the classical p3d_sctructures
+      // Copies the graph to a p3d_structured graph
+      cout << "Export the cpp graph to new graph" << endl;
+      XYZ_GRAPH = robotPt->GRAPH = graph->exportCppToGraphStruct();
+      
+      Graph graphTraj( rob, XYZ_GRAPH );
+      
+      cout << "Extract graph to traj" << endl;
+      traj = graphTraj.extractBestTraj(q_Source,q_Target);
+    }
+    else
+    {
+      traj = graph->extractBestTraj(q_Source,q_Target);
+    }
+  }
+  
+  delete rrt;
+  runNum++;
+  
+  // Return trajectory or NULL if falses
+  if (traj) 
+  {
+    p3d_traj* result=NULL; 
+    result = traj->replaceP3dTraj(result); 
+    cout << "result = " << result << endl;
+    robotPt->tcur = result;
+    char trajName[] = "Specific";
+		g3d_add_traj( trajName , runNum ,robotPt , robotPt->tcur );
+    delete traj;
+    return result;
+  }
+  else 
+  {
+    rob->getRobotStruct()->tcur = NULL;
+		cout << __FILE__ << " , " << __func__ << " : No traj found" << endl;
+    return NULL;
+  }
+}
+
+// ---------------------------------------------------------------------------------
+// Smoothing function (Shortcut) for connection with Manipulation planner
+// ---------------------------------------------------------------------------------
+void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double maxTime)
+{
+  cout << "* SMOOTHING ***************" << endl;
+  // Gets the robot pointer
+  Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
+  
+  API::CostOptimization optimTrj(rob,traj);
+  
+#ifdef QT_LIBRARY
+  optimTrj.setContextName( ENV.getString(Env::nameOfFile).toStdString() );
+#endif
+  
+  //XYZ_GRAPH->rrtCost1 = optimTrj.cost();
+  
+  double optTime = 0.0;
+  if(PlanEnv->getBool(PlanParam::withDeformation))
+  {
+    ENV.setBool(Env::FKShoot,true);
+    optimTrj.runDeformation( ENV.getInt(Env::nbCostOptimize) , runId );
+    ENV.setBool(Env::FKShoot,false);
+    optTime += optimTrj.getTime();
+  }
+  
+  optimTrj.resetCostComputed();
+  
+  //XYZ_GRAPH->rrtCost2 = optimTrj.cost();
+  
+  if(PlanEnv->getBool(PlanParam::withShortCut))
+  {
+    optimTrj.runShortCut( ENV.getInt(Env::nbCostOptimize) , runId );
+    optTime += optimTrj.getTime();
+  }
+  
+  optimTrj.replaceP3dTraj();
+  optimTrj.resetCostComputed();
+  
+  //XYZ_GRAPH->totTime += optTime;
+  
+  cout << "After optim rounds cost : " << optimTrj.cost() << endl;
+}
+
+// ---------------------------------------------------------------------------------
+// Tree Planners
+// ---------------------------------------------------------------------------------
+int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void))
+{	
+	double /*tu,*/ts;
+  
+  cout << "------------------------------------------------" << endl;
+  cout << "------------------------------------------------" << endl;
+  cout << "p3d_run_rrt (motionPlanner-libs)" << endl;
+	
+	GraphPt = GraphPt ? GraphPt : p3d_create_graph();
+	
+	Robot* rob = global_Project->getActiveScene()->getActiveRobot();
+	Graph* graph = 	API_activeGraph =  new Graph(rob,GraphPt);
+	
+	cout << "Planning for robot : " << rob->getName() << endl;
+	
+	RRT* rrt = allocate_RRT(rob,graph);
+
   // -------------------------------------------------------------------------
 	// Main Run functions of all RRTs
 	// -------------------------------------------------------------------------
@@ -244,7 +404,7 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
 	if( res && trajExtractSucceded )
 	{
     char trajName[] = "Specific";
-		g3d_add_traj( trajName , runNum );
+		g3d_add_traj( trajName , runNum , rob->getRobotStruct() , rob->getRobotStruct()->tcur );
 		return graph->getNumberOfNodes();
 	}
 	else

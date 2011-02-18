@@ -288,6 +288,7 @@ unsigned int TreePlanner::run()
 	//	cout << "ENV.getInt(Env::maxNodeCompco) = " << ENV.getInt(Env::maxNodeCompco) << endl;
 	if(!preConditions())
 	{
+    m_fail = true;
 		cout << "Stoped in Tree planner, pre condition" << endl;
 		return 0;
 	}

@@ -10,6 +10,10 @@
 #include "HRICS_costspace.hpp"
 #include "API/planningAPI.hpp"
 
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+#include "cost_space.hpp"
+
 #include "P3d-pkg.h"
 
 const bool DebugCostFunctions=false;
@@ -211,7 +215,10 @@ void HRICS_loadGrid(std::string docname)
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 void HRICS_init()
-{
+{  
+  ENV.setBool(Env::isCostSpace,true);
+  GlobalCostSpace::initialize();
+  
   Robot* Human = global_Project->getActiveScene()->getRobotByNameContaining("HUMAN");
   
   shared_ptr<Configuration> q = Human->getCurrentPos();
@@ -224,8 +231,8 @@ void HRICS_init()
 	
 	ENV.setBool(Env::HRIPlannerWS,true);
 	ENV.setDouble(Env::zone_size,0.5);
+  
 	HRICS_activeDist = HRICS_MotionPL->getDistance();
-	
 	API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid();
 	
 	ENV.setBool(Env::enableHri,true);

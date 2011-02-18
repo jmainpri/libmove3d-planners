@@ -238,7 +238,7 @@ void Trajectory::replaceP3dTraj()
 	replaceP3dTraj(p3d_get_robot_by_name(m_Robot->getRobotStruct()->name)->tcur);
 }
 
-void Trajectory::replaceP3dTraj(p3d_traj* trajPt)
+p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 {
 	//	print();
 	
@@ -247,7 +247,7 @@ void Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 		if(strcmp(trajPt->rob->name,m_Robot->getRobotStruct()->name) != 0 )
 		{
 			cout << " Warning : Robot not the same as the robot in traj "  << endl;
-			return;
+			return NULL;
 		}
 		destroy_list_localpath(m_Robot->getRobotStruct(), trajPt->courbePt);
 	}
@@ -304,8 +304,9 @@ void Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 #else
 	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
 #endif
-	
-	//	print()	
+  
+  return trajPt;
+		//	print()	
 }
 
 void Trajectory::copyPaths( vector<LocalPath*>& vect )

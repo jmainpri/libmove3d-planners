@@ -22,6 +22,19 @@ Global std::vector<Planner*> plannerlist;
 void p3d_planner_functions_SetRunId( unsigned int idRun );
 
 /**
+ * @ingroup NEW_CPP_MODULE
+ * Funtion for planning (Manip. Module)
+ */
+p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg);
+
+/**
+ * @ingroup NEW_CPP_MODULE
+ * Funtion for smoothing a trajectory (Manip. Module)
+ */
+void smoothing_Function(p3d_rob* p3d_Robot, p3d_traj* traj, int nbSteps, double maxTime);
+
+
+/**
   @ingroup NEW_CPP_MODULE
  * \fn int p3d_run_prm(p3d_graph* Graph_Pt, int* fail, int (*fct_stop)(void), void (*fct_draw)(void))
  * \brief fonction de lancement de l'algorithme PRM

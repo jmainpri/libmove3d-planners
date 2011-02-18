@@ -41,6 +41,7 @@ namespace HRICS
 		void initGeneral();
 		void initNaturalJustin();
 		void initNaturalAchile();
+    void initNaturalHerakles();
 		
 		void printBodyPos();
 		
@@ -129,7 +130,8 @@ namespace HRICS
 		{
 			Default,
 			Justin,
-			Achile
+			Achile,
+      Herakles
 		};
 		
 		bool			m_IsHuman;

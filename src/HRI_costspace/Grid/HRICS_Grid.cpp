@@ -237,7 +237,7 @@ void Grid::draw()
 			
             //colorvector[1] = 0.5*(1-10*ENV.getDouble(Env::colorThreshold2)*alpha)+0.5;
             //colorvector[3] = 0.20*(1-ENV.getDouble(Env::colorThreshold2)*alpha);
-			colorvector[3] = 0.20*ENV.getDouble(Env::colorThreshold2)*alpha; 
+          colorvector[3] = 0.20*ENV.getDouble(Env::colorThreshold2)*alpha; 
         }
         glColor4dv(colorvector);
         //        g3d_set_color_mat(Any,colorvector);

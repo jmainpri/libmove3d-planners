@@ -121,6 +121,8 @@ public:
 		virtual unsigned int run() = 0;
 
 protected:
+    bool m_fail;
+  
     int (*_stop_func)();
     void (*_draw_func)();
 

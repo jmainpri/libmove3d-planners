@@ -284,28 +284,30 @@ int NaturalGrid::robotConfigInCell(int i)
  * between the robot and the grid point
  */
 Eigen::Transform3d NaturalGrid::getTransformFromRobotPos()
-{
-	shared_ptr<Configuration> q_actual = getRobot()->getCurrentPos();
-	
-	Transform3d actual(Transform3d::Identity());
-	
-	Vector3d trans;
-	
-	trans[0] = (*q_actual)[6];
-	trans[1] = (*q_actual)[7];
-	trans[2] = (*q_actual)[8];
-	
-	actual.translation() = trans;
-	
-	Matrix3d rot;
-	
-	rot =	Eigen::AngleAxisd((*q_actual)[9],  Vector3d::UnitX())
-		*	Eigen::AngleAxisd((*q_actual)[10], Vector3d::UnitY())
-		*	Eigen::AngleAxisd((*q_actual)[11], Vector3d::UnitZ());
-	
-	actual.linear() = rot;
-	
-	Transform3d t2( actual * getRobotOrigin().inverse() );
+{	
+// shared_ptr<Configuration> q_actual = getRobot()->getCurrentPos();
+//  
+//	Transform3d actual(Transform3d::Identity());
+//	
+//	Vector3d trans;
+//	
+//	trans[0] = (*q_actual)[6];
+//	trans[1] = (*q_actual)[7];
+//	trans[2] = (*q_actual)[8];
+//	
+//	actual.translation() = trans;
+//	
+//	Matrix3d rot;
+//	
+//	rot =	Eigen::AngleAxisd((*q_actual)[9],  Vector3d::UnitX())
+//		 *	Eigen::AngleAxisd((*q_actual)[10], Vector3d::UnitY())
+//		 *	Eigen::AngleAxisd((*q_actual)[11], Vector3d::UnitZ());
+//	
+//	actual.linear() = rot;
+//
+//	Transform3d t2( actual * getRobotOrigin().inverse() );
+  
+  Transform3d t2( getRobot()->getJoint(1)->getMatrixPos() * getRobotOrigin().inverse() );  
 	return t2;
 }
 

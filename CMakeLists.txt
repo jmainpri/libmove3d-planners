@@ -96,7 +96,7 @@ MACRO(Move3DMPLIB_flag flagName description status)
   SET(flagName "${flagName}")
   SET(description "${description}")
   SET(status "${status}")
-  message(status "enter in Move3DMPLIB_flag : ${Move3DMPLIB_CompilationFlags}")
+#  message(status "enter in Move3DMPLIB_flag : ${Move3DMPLIB_CompilationFlags}")
   OPTION(${flagName} ${description} ${status})
   IF(${flagName})
     LIST(APPEND Move3DMPLIB_CompilationFlags ${flagName})
@@ -292,7 +292,7 @@ ENDIF(MULTILOCALPATH)
 
 #------------------- PKG_CONFIG ---------------------------
 #----------------------------------------------------------
-message(${Move3DMPLIB_CompilationFlags})
+#message(${Move3DMPLIB_CompilationFlags})
 
 STRING(REPLACE ";" " -D" Move3DMPLIB_CompilationFlags "-D${Move3DMPLIB_CompilationFlags}")
 STRING(REPLACE ";" " -I" Move3DMPLIB_Compilation_includes "-I${INCLUDE_DIRS}")

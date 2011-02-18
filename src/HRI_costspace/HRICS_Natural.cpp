@@ -59,14 +59,29 @@ void Natural::initGeneral()
 	
 	kinos["Error"] = Default;
 	kinos["ROBOT_JUSTIN"] = Justin;
-	kinos["HUMAN_ACHILE"] = Achile;
+	kinos["ACHILE"] = Achile;
+  kinos["HERAKLES"] = Herakles;
+  
+  if ( m_Robot->getName().find( "ROBOT_JUSTIN" ) != string::npos ) 
+  {
+    m_KinType = Justin;
+  }
+  else if ( m_Robot->getName().find( "ACHILE" ) !=string::npos ) 
+  {
+    m_KinType = Achile;
+  }
+  else if ( m_Robot->getName().find( "HERAKLES" ) !=string::npos ) 
+  {
+    m_KinType = Herakles;
+  }
+  
 	
-	m_KinType = kinos[m_Robot->getName()];
 	
 #ifdef HRI_PLANNER
 	m_Agents = hri_create_agents();
 #endif
-	
+	shared_ptr<Configuration> q_curr = m_Robot->getCurrentPos();
+  
 	switch (m_KinType) 
 	{
 		case Justin:
@@ -86,12 +101,22 @@ void Natural::initGeneral()
 			m_computeNbOfIK = false;
 			m_IsHuman = true;
 			break;
+      
+    case Herakles:
+			cout << "KinType of HRICS::Natural is Herakles ( " << m_Robot->getName() << " ) "<< endl;
+			initNaturalHerakles();
+			m_IndexObjectDof = NULL;
+			m_computeNbOfIK = false;
+			m_IsHuman = true;
+			break;
 			
 		default:
 			cout << "No proper robot has been selected in Natural cost function" << endl;
 			break;
 	}
 	
+  m_Robot->setAndUpdate( *q_curr );
+  
 	m_Grid = NULL;
 	cout << "Object Dof is " << m_IndexObjectDof << endl;	
 }
@@ -182,54 +207,29 @@ void Natural::initNaturalJustin()
 	
 }
 /***********************************************/
-// Achile NORMAL
-//const int ACHILE_JOINT_SPINE = 2;					//  2,  3,  4
-//const int ACHILE_JOINT_HEAD = 5;					//  5,  6,  7
-//
-//const int ACHILE_JOINT_ARM_RIGTH_SHOULDER = 8;		//  8,  9, 10
-//const int ACHILE_JOINT_ARM_RIGTH_ELBOW = 11;		// 11
-//const int ACHILE_JOINT_ARM_RIGTH_WRIST = 12;		// 12, 13, 14
-//
-//const int ACHILE_JOINT_ARM_LEFT_SHOULDER = 15;		// 15, 16, 17
-//const int ACHILE_JOINT_ARM_LEFT_ELBOW = 18;			// 18
-//const int ACHILE_JOINT_ARM_LEFT_WRIST = 19;			// 19, 20, 21 
-//
-//// ---------------------------------------------
-//const int ACHILE_CONFIG_INDEX_SPINE = 12;					//  2,  3,  4
-//const int ACHILE_CONFIG_INDEX_HEAD = 15;					//  5,  6,  7
-//
-//const int ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER = 18;		//  8,  9, 10
-//const int ACHILE_CONFIG_INDEX_ARM_RIGTH_ELBOW = 21;		// 11
-//const int ACHILE_CONFIG_INDEX_ARM_RIGTH_WRIST = 22;		// 12, 13, 14
-//
-//const int ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER = 25;		// 15, 16, 17
-//const int ACHILE_CONFIG_INDEX_ARM_LEFT_ELBOW = 28;			// 18
-//const int ACHILE_CONFIG_INDEX_ARM_LEFT_WRIST = 29;			// 19, 20, 21 
-
-// KINECT
+/* Achile NORMAL */
 const int ACHILE_JOINT_SPINE = 2;					//  2,  3,  4
 const int ACHILE_JOINT_HEAD = 5;					//  5,  6,  7
 
 const int ACHILE_JOINT_ARM_RIGTH_SHOULDER = 8;		//  8,  9, 10
-const int ACHILE_JOINT_ARM_RIGTH_ELBOW = 12;		// 11
-const int ACHILE_JOINT_ARM_RIGTH_WRIST = 14;		// 12, 13, 14
+const int ACHILE_JOINT_ARM_RIGTH_ELBOW = 11;		// 11
+const int ACHILE_JOINT_ARM_RIGTH_WRIST = 12;		// 12, 13, 14
 
-const int ACHILE_JOINT_ARM_LEFT_SHOULDER = 17;		// 15, 16, 17
-const int ACHILE_JOINT_ARM_LEFT_ELBOW = 21;			// 18
-const int ACHILE_JOINT_ARM_LEFT_WRIST = 23;			// 19, 20, 21 
+const int ACHILE_JOINT_ARM_LEFT_SHOULDER = 15;		// 15, 16, 17
+const int ACHILE_JOINT_ARM_LEFT_ELBOW = 18;			// 18
+const int ACHILE_JOINT_ARM_LEFT_WRIST = 19;			// 19, 20, 21 
 
-//// ---------------------------------------------
-const int ACHILE_CONFIG_INDEX_SPINE = 12;					
-const int ACHILE_CONFIG_INDEX_HEAD = 15;					
+// ---------------------------------------------
+const int ACHILE_CONFIG_INDEX_SPINE = 12;					//  2,  3,  4
+const int ACHILE_CONFIG_INDEX_HEAD = 15;					//  5,  6,  7
 
-const int ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER = 18;	
-const int ACHILE_CONFIG_INDEX_ARM_RIGTH_ELBOW = 22;		
-const int ACHILE_CONFIG_INDEX_ARM_RIGTH_WRIST = 24;		
+const int ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER = 18;		//  8,  9, 10
+const int ACHILE_CONFIG_INDEX_ARM_RIGTH_ELBOW = 21;		// 11
+const int ACHILE_CONFIG_INDEX_ARM_RIGTH_WRIST = 22;		// 12, 13, 14
 
-const int ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER = 27;	
-const int ACHILE_CONFIG_INDEX_ARM_LEFT_ELBOW = 31;		
-const int ACHILE_CONFIG_INDEX_ARM_LEFT_WRIST = 33;		
-
+const int ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER = 25;		// 15, 16, 17
+const int ACHILE_CONFIG_INDEX_ARM_LEFT_ELBOW = 28;			// 18
+const int ACHILE_CONFIG_INDEX_ARM_LEFT_WRIST = 29;			// 19, 20, 21 	
 
 void Natural::initNaturalAchile()
 {
@@ -264,122 +264,54 @@ void Natural::initNaturalAchile()
 	 * Neutral Position NORMAL
 	 */
 	
-//	q[0] = 0;
-//	q[1] = 0;
-//	q[2] = 0;
-//	q[3] = 0;
-//	q[4] = 0;
-//	q[5] = 0;
-//	
-//	q[6] = 0;
-//	q[7] = 0;
-//	q[8] = 0;
-//	q[9] = 0;
-//	q[10] = 0;
-//	q[11] = 0;
-//	
-//	q[12] = 0;
-//	q[13] = 0;
-//	q[14] = 0;
-//	q[15] = 0;
-//	q[16] = 0;
-//	q[17] = 0;
-//	q[18] = 1.33012;
-//	q[19] = 0.365646;
-//	q[20] = -0.12706;
-//	q[21] = 0.525519;
-//	q[22] = 0.17558;
-//	q[23] = -0.342085;
-//	q[24] = 0.0233874;
-//	q[25] = -1.22784;
-//	q[26] = 0.482584;
-//	q[27] = 0.00436332;
-//	q[28] = -0.368439;
-//	q[29] = -0.210487;
-//	q[30] = 0;
-//	q[31] = -0.0935496;
-//	q[32] = 0;
-//	q[33] = 0;
-//	q[34] = 0;
-//	q[35] = 0;
-//	q[36] = 0;
-//	q[37] = 0;
-//	q[38] = 0;
-//	q[39] = 0;
-//	q[40] = 0;
-//	q[41] = 0;
-//	q[42] = 0;
-//	q[43] = 0;
-//	q[44] = 0;
-//	q[45] = 0;
-  
-  
-  /****** KINECT *****/
-  q[0] = 0;
-  q[1] = 0;
-  q[2] = 0;
-  q[3] = 0;
-  q[4] = 0;
-  q[5] = 0;
-  q[6] = 0;
-  q[7] = 0;
-  q[8] = 0;
-  q[9] = 0;
-  q[10] = 0;
-  q[11] = 0;
-  q[12] = 0;
-  q[13] = 0;
-  q[14] = 0;
-  q[15] = 0;
-  q[16] = 0;
-  q[17] = 0;
-  q[18] = 1.19817;
-  q[19] = 0.106116;
-  q[20] = -0.346273;
-  q[21] = 0;
-  q[22] = 0.479442;
-  q[23] = 0;
-  q[24] = 0;
-  q[25] = 0;
-  q[26] = 0;
-  q[27] = -1.25158;
-  q[28] = -0.106116;
-  q[29] = -0.266337;
-  q[30] = 0;
-  q[31] = -0.452389;
-  q[32] = 0;
-  q[33] = -0.252898;
-  q[34] = 0;
-  q[35] = 0;
-  q[36] = 0;
-  q[37] = 0;
-  q[38] = 0;
-  q[39] = 0;
-  q[40] = 0;
-  q[41] = 0;
-  q[42] = 0;
-  q[43] = 0;
-  q[44] = 0;
-  q[45] = 0;
-  q[46] = 0;
-  q[47] = 0;
-  q[48] = 0;
-  q[49] = 0;
-  q[50] = 0;
-  q[51] = 0;
-  q[52] = 0;
-  q[53] = 0;
-  q[54] = 0;
-  q[55] = 0;
-  q[56] = 0;
-  q[57] = 0;
-  q[58] = 0;
-  q[59] = 0;
-  q[60] = 0;
-  q[61] = 0;
-  q[62] = 0;
-  q[63] = 0;
-  q[64] = 0;
+	q[0] = 0;
+	q[1] = 0;
+	q[2] = 0;
+	q[3] = 0;
+	q[4] = 0;
+	q[5] = 0;
+	
+	q[6] = 0;
+	q[7] = 0;
+	q[8] = 0;
+	q[9] = 0;
+	q[10] = 0;
+	q[11] = 0;
+	
+	q[12] = 0;
+	q[13] = 0;
+	q[14] = 0;
+	q[15] = 0;
+	q[16] = 0;
+	q[17] = 0;
+	q[18] = 1.33012;
+	q[19] = 0.365646;
+	q[20] = -0.12706;
+	q[21] = 0.525519;
+	q[22] = 0.17558;
+	q[23] = -0.342085;
+	q[24] = 0.0233874;
+	q[25] = -1.22784;
+	q[26] = 0.482584;
+	q[27] = 0.00436332;
+	q[28] = -0.368439;
+	q[29] = -0.210487;
+	q[30] = 0;
+	q[31] = -0.0935496;
+	q[32] = 0;
+	q[33] = 0;
+	q[34] = 0;
+	q[35] = 0;
+	q[36] = 0;
+	q[37] = 0;
+	q[38] = 0;
+	q[39] = 0;
+	q[40] = 0;
+	q[41] = 0;
+	q[42] = 0;
+	q[43] = 0;
+	q[44] = 0;
+	q[45] = 0;
 	
 	m_q_Confort = shared_ptr<Configuration>(
 											new Configuration(m_Robot,p3d_copy_config(m_Robot->getRobotStruct(),q)));
@@ -471,6 +403,184 @@ void Natural::initNaturalAchile()
  ACHILE_JOINT_ARM_LEFT_ELBOW =  28
  ACHILE_JOINT_ARM_LEFT_WRIST =  29
  */
+
+// KINECT
+const int HERAKLES_JOINT_SPINE = 2;					//  2,  3,  4
+const int HERAKLES_JOINT_HEAD = 5;					//  5,  6,  7
+
+const int HERAKLES_JOINT_ARM_RIGTH_SHOULDER = 8;		//  8,  9, 10
+const int HERAKLES_JOINT_ARM_RIGTH_ELBOW = 12;		// 11
+const int HERAKLES_JOINT_ARM_RIGTH_WRIST = 14;		// 12, 13, 14
+
+const int HERAKLES_JOINT_ARM_LEFT_SHOULDER = 17;		// 15, 16, 17
+const int HERAKLES_JOINT_ARM_LEFT_ELBOW = 21;			// 18
+const int HERAKLES_JOINT_ARM_LEFT_WRIST = 23;			// 19, 20, 21 
+
+//// ---------------------------------------------
+const int HERAKLES_CONFIG_INDEX_SPINE = 12;					
+const int HERAKLES_CONFIG_INDEX_HEAD = 15;					
+
+const int HERAKLES_CONFIG_INDEX_ARM_RIGTH_SHOULDER = 18;	
+const int HERAKLES_CONFIG_INDEX_ARM_RIGTH_ELBOW = 22;		
+const int HERAKLES_CONFIG_INDEX_ARM_RIGTH_WRIST = 24;		
+
+const int HERAKLES_CONFIG_INDEX_ARM_LEFT_SHOULDER = 27;	
+const int HERAKLES_CONFIG_INDEX_ARM_LEFT_ELBOW = 31;		
+const int HERAKLES_CONFIG_INDEX_ARM_LEFT_WRIST = 33;	
+
+void Natural::initNaturalHerakles()
+{
+  /***********************************************/
+	m_JOINT_SPINE = HERAKLES_JOINT_SPINE;
+	m_JOINT_HEAD = HERAKLES_JOINT_HEAD;
+	
+	m_JOINT_ARM_RIGTH_SHOULDER = HERAKLES_JOINT_ARM_RIGTH_SHOULDER;
+	m_JOINT_ARM_RIGTH_ELBOW = HERAKLES_JOINT_ARM_RIGTH_ELBOW;
+	m_JOINT_ARM_RIGTH_WRIST = HERAKLES_JOINT_ARM_RIGTH_WRIST;
+	
+	m_JOINT_ARM_LEFT_SHOULDER = HERAKLES_JOINT_ARM_LEFT_SHOULDER;
+	m_JOINT_ARM_LEFT_ELBOW = HERAKLES_JOINT_ARM_LEFT_ELBOW;
+	m_JOINT_ARM_LEFT_WRIST = HERAKLES_JOINT_ARM_LEFT_WRIST; 
+	
+	/***********************************************/
+	m_CONFIG_INDEX_SPINE = HERAKLES_CONFIG_INDEX_SPINE;
+	m_CONFIG_INDEX_HEAD = HERAKLES_CONFIG_INDEX_HEAD;
+	
+	m_CONFIG_INDEX_ARM_RIGTH_SHOULDER = HERAKLES_CONFIG_INDEX_ARM_RIGTH_SHOULDER;
+	m_CONFIG_INDEX_ARM_RIGTH_ELBOW = HERAKLES_CONFIG_INDEX_ARM_RIGTH_ELBOW;
+	m_CONFIG_INDEX_ARM_RIGTH_WRIST = HERAKLES_CONFIG_INDEX_ARM_RIGTH_WRIST;
+	
+	m_CONFIG_INDEX_ARM_LEFT_SHOULDER = HERAKLES_CONFIG_INDEX_ARM_LEFT_SHOULDER;
+	m_CONFIG_INDEX_ARM_LEFT_ELBOW = HERAKLES_CONFIG_INDEX_ARM_LEFT_ELBOW;
+	m_CONFIG_INDEX_ARM_LEFT_WRIST = HERAKLES_CONFIG_INDEX_ARM_LEFT_WRIST; 
+	
+	configPt q;
+	q = p3d_alloc_config(m_Robot->getRobotStruct());
+	
+	/***********************************************
+	 * Neutral Position NORMAL
+	 */
+  /****** KINECT *****/
+  q[0] = 0;
+  q[1] = 0;
+  q[2] = 0;
+  q[3] = 0;
+  q[4] = 0;
+  q[5] = 0;
+  q[6] = 0;
+  q[7] = 0;
+  q[8] = 0;
+  q[9] = 0;
+  q[10] = 0;
+  q[11] = 0;
+  q[12] = 0;
+  q[13] = 0;
+  q[14] = 0;
+  q[15] = 0;
+  q[16] = 0;
+  q[17] = 0;
+  q[18] = 1.19817;
+  q[19] = 0.106116;
+  q[20] = -0.346273;
+  q[21] = 0;
+  q[22] = 0.479442;
+  q[23] = 0;
+  q[24] = 0;
+  q[25] = 0;
+  q[26] = 0;
+  q[27] = -1.25158;
+  q[28] = -0.106116;
+  q[29] = -0.266337;
+  q[30] = 0;
+  q[31] = -0.452389;
+  q[32] = 0;
+  q[33] = -0.252898;
+  q[34] = 0;
+  q[35] = 0;
+  q[36] = 0;
+  q[37] = 0;
+  q[38] = 0;
+  q[39] = 0;
+  q[40] = 0;
+  q[41] = 0;
+  q[42] = 0;
+  q[43] = 0;
+  q[44] = 0;
+  q[45] = 0;
+  q[46] = 0;
+  q[47] = 0;
+  q[48] = 0;
+  q[49] = 0;
+  q[50] = 0;
+  q[51] = 0;
+  q[52] = 0;
+  q[53] = 0;
+  q[54] = 0;
+  q[55] = 0;
+  q[56] = 0;
+  q[57] = 0;
+  q[58] = 0;
+  q[59] = 0;
+  q[60] = 0;
+  q[61] = 0;
+  q[62] = 0;
+  q[63] = 0;
+  q[64] = 0;
+	
+	m_q_Confort = shared_ptr<Configuration>(
+                                          new Configuration(m_Robot,p3d_copy_config(m_Robot->getRobotStruct(),q)));
+  
+  m_Robot->setAndUpdate( *m_q_Confort );
+  
+  // Compute the rest posture heights
+  m_leftArmCost = true;   m_armHeightL = getUpperBodyHeigth(false);
+  m_leftArmCost = false;  m_armHeightR = getUpperBodyHeigth(false);
+	
+	
+	/***********************************************
+	 * Wieghts for the Configuration Distance
+	 */
+  
+  p3d_destroy_config(m_Robot->getRobotStruct(),q);
+  q = p3d_alloc_config(m_Robot->getRobotStruct());
+  
+  q[m_CONFIG_INDEX_SPINE+0] = 100;	// Torso
+  q[m_CONFIG_INDEX_SPINE+1] = 100;
+  q[m_CONFIG_INDEX_SPINE+2] = 100;
+  
+  q[m_CONFIG_INDEX_HEAD+0] = 0;		// Head
+  q[m_CONFIG_INDEX_HEAD+1] = 0;
+  q[m_CONFIG_INDEX_HEAD+2] = 0;
+  
+  q[m_CONFIG_INDEX_ARM_RIGTH_SHOULDER+0] = 5;		// Right Shoulder
+  q[m_CONFIG_INDEX_ARM_RIGTH_SHOULDER+1] = 1;
+  q[m_CONFIG_INDEX_ARM_RIGTH_SHOULDER+2] = 1;
+  
+  q[m_JOINT_ARM_RIGTH_ELBOW] = 1;		// Right Elbow
+  
+  q[m_CONFIG_INDEX_ARM_RIGTH_WRIST+0] = 1;		// Right Wrist
+  q[m_CONFIG_INDEX_ARM_RIGTH_WRIST+1] = 1;
+  q[m_CONFIG_INDEX_ARM_RIGTH_WRIST+2] = 1;
+  
+  q[m_CONFIG_INDEX_ARM_LEFT_SHOULDER+0] = 5;		// Left Shoulder 
+  q[m_CONFIG_INDEX_ARM_LEFT_SHOULDER+1] = 1;
+  q[m_CONFIG_INDEX_ARM_LEFT_SHOULDER+2] = 1;
+  
+  q[m_CONFIG_INDEX_ARM_LEFT_ELBOW] = 1;		// Left Elbow
+  
+  q[m_CONFIG_INDEX_ARM_LEFT_WRIST+0] = 1;		// Right Wrist
+  q[m_CONFIG_INDEX_ARM_LEFT_WRIST+1] = 1;
+  q[m_CONFIG_INDEX_ARM_LEFT_WRIST+2] = 1;
+	
+	m_q_ConfortWeigths = shared_ptr<Configuration>(
+                                                 new Configuration(m_Robot,p3d_copy_config(m_Robot->getRobotStruct(),q)));
+	
+	m_mg.push_back( 30 );
+	m_mg.push_back(  4 );
+	m_mg.push_back(  1 );
+}
+
+
 void Natural::printBodyPos()
 {
 	if ( m_KinType == Achile )
@@ -1043,7 +1153,7 @@ Transform3d Natural::getGridOriginMatrix()
 	switch (m_KinType) 
 	{
 		case Achile:
-			
+    case Herakles:		
 			cout << "Set Achile Offset" << endl;
 			
 			trans[0] = 0;
@@ -1058,7 +1168,7 @@ Transform3d Natural::getGridOriginMatrix()
 			
 			OriginPos.linear() = rot;
 			break;
-			
+      
 		default:
 			break;
 	}
