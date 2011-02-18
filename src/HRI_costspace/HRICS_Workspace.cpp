@@ -48,6 +48,8 @@ using namespace HRICS;
 //USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
 
+extern string global_ActiveRobotName;
+
 Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 {
 	mHumans.clear();
@@ -56,7 +58,7 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 	
 	Scene* environnement = global_Project->getActiveScene();
 	
-        this->setRobot(	   environnement->getRobotByNameContaining("JIDOKUKA_ROBOT") );
+        this->setRobot(	   environnement->getRobotByNameContaining(global_ActiveRobotName) );
 	mHumans.push_back( environnement->getRobotByNameContaining("HUMAN") );
 	
 	if (_Robot) 
@@ -113,7 +115,7 @@ HumanAwareMotionPlanner(rob, graph) , mPathExist(false)
 {
 	cout << "Robot is " << rob->getName() << endl;
 	
-	if(rob->getName().find("ROBOT") == string::npos )
+	if(rob->getName().find(global_ActiveRobotName) == string::npos )
 	{
 		cout << "Workspace::Error robot des not contain ROBOT" << endl;
 	}

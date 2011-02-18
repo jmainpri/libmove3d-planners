@@ -240,10 +240,10 @@ void HRICS_init()
 	
 	if( ENV.getBool(Env::HRIAutoLoadGrid) )
 	{
-                string home(getenv("HOME_MOVE3D"));
-                string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
+    string home(getenv("HOME_MOVE3D"));
+    string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
 		
-                fileName = home + fileName;
+    fileName = home + fileName;
 
 		// Reads the grid from XML and sets it ti the HRICS_MotionPL
 		HRICS_loadGrid(fileName);

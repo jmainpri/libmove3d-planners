@@ -6,7 +6,6 @@
  *  Copyright 2009 LAAS/CNRS. All rights reserved.
  *
  */
-
 #include "HRICS_costspace.hpp"
 #include "HRICS_Distance.hpp"
 
@@ -21,27 +20,19 @@ using namespace HRICS;
 //USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
 
+extern string global_ActiveRobotName;
+
 /*!
  * Constructor that sets the Human and Robot structures
  */
 Distance::Distance()
 {
-	for (int i=0; i<XYZ_ENV->nr; i++)
-	{
-		string name(XYZ_ENV->robot[i]->name);
-		
-		if(name.find("ROBOT") != string::npos )
-		{
-			m_Robot = new Robot(XYZ_ENV->robot[i]);
-			cout << "Robot is " << name << endl;
-		}
-		
-		if(name.find("HUMAN") != string::npos )
-		{
-			_Humans.push_back(new Robot(XYZ_ENV->robot[i]));
-			cout << "Humans is " << name << endl;
-		}
-	}
+  Scene* sc =  global_Project->getActiveScene();
+  
+  m_Robot = sc->getRobotByNameContaining( global_ActiveRobotName );
+  
+  _Humans.push_back( sc->getRobotByNameContaining( "HUMAN" ) );
+  
 	cout << "HRICS::Distance with " << " Robot " << m_Robot->getName() 
 	<< " and human " << _Humans[0]->getName() << endl;
 	_SafeRadius = 0;
@@ -130,10 +121,26 @@ void Distance::parseHumans()
 			//size_t found;
 			b_name = body;
 			
-			//            cout << "Looking for " << body << endl;
-			
-			//            buffer = b_name.substr(0,10);
-			//            cout << "buffer = " << buffer << endl;
+			if( body.find("headGhost") != string::npos)
+			{
+				safetyZonesId.push_back(j);
+				//                cout << "safetyZonesId += " << j << endl;
+				continue;
+			}
+      
+      if( body.find("pelvisGhost") != string::npos)
+			{
+				safetyZonesId.push_back(j);
+				//                cout << "safetyZonesId += " << j << endl;
+				continue;
+			}
+      
+      if( body.find("safety_zone_ghost") != string::npos)
+			{
+				safetyZonesId.push_back(j);
+				//                cout << "safetyZonesId += " << j << endl;
+				continue;
+			}
 			
 			if( body.find("safety_zone_ghost") != string::npos)
 			{
@@ -162,7 +169,7 @@ void Distance::parseHumans()
 						break;
 					}
 					
-					if(shape == 3){
+					if(shape==3){
 						//                        cout << "Shape is sphere" << endl;
 					}
 					if(shape==4){
@@ -268,7 +275,6 @@ void Distance::activateSafetyZonesMode()
 			{
 				p3d_col_activate_rob_obj(m_Robot->getRobotStruct(),
 																 _Humans[j]->getRobotStruct()->o[i]);
-				//                                cout << "Activate " << _Robot->getName() << " to " << _Humans[j]->getRobotStruct()->o[i]->name << endl;
 			}
 			else
 			{
@@ -388,6 +394,7 @@ vector<double> Distance::getDistToZones()
 			
 			
 		case Boxes:
+      cout << "Boxes Distance" << endl;
 			activateSafetyZonesMode();
 			distances[k] = computeBBDist(body[k], other[k]);
 			_PenetrationDist[k] = (_SafeRadius - distances[k])/_SafeRadius;
@@ -396,11 +403,11 @@ vector<double> Distance::getDistToZones()
 			
 			
 		case Full:
-			activateSafetyZonesMode();
 			switch (p3d_col_get_mode())
 		{
 			case p3d_col_mode_kcd:
 			{
+        activateSafetyZonesMode();
 				int settings = get_kcd_which_test();
 				set_kcd_which_test((p3d_type_col_choice)(20+3));
 				// 40 = KCD_ROB_ENV
@@ -427,12 +434,13 @@ vector<double> Distance::getDistToZones()
 				}
 				
 				set_kcd_which_test((p3d_type_col_choice)settings);// ROB_ALL + BOOL
+        activateNormalMode();
 			}
 				break;
 				
-#ifdef PQP
 			case p3d_col_mode_pqp:
 			{
+        cout << "PQP distance = " << endl;
 				distances[k] =  pqp_robot_robot_distance(
 																								 m_Robot->getRobotStruct(),
 																								 _Humans[k]->getRobotStruct(),
@@ -442,11 +450,10 @@ vector<double> Distance::getDistToZones()
 				_PenetrationDist[k] = (_SafeRadius - distances[k])/_SafeRadius;
 			}
 				break;
-#endif
+
 			default:
 				break;
 		}
-			activateNormalMode();
 			break;
 			
 		default:
@@ -471,8 +478,8 @@ vector<double> Distance::getDistToZones()
 		vect_jim.push_back(other[k][1]);
 		vect_jim.push_back(other[k][2]);
 		
-//		cout << "vect_jim[0] = " << vect_jim[0] << " vect_jim[1] = " << vect_jim[1] << " vect_jim[2] = " << vect_jim[2] << endl;
-//		cout << "vect_jim[3] = " << vect_jim[3] << " vect_jim[4] = " << vect_jim[4] << " vect_jim[5] = " << vect_jim[5] << endl;
+		cout << "vect_jim[0] = " << vect_jim[0] << " vect_jim[1] = " << vect_jim[1] << " vect_jim[2] = " << vect_jim[2] << endl;
+		cout << "vect_jim[3] = " << vect_jim[3] << " vect_jim[4] = " << vect_jim[4] << " vect_jim[5] = " << vect_jim[5] << endl;
 	}
 	
 	
@@ -507,33 +514,39 @@ double Distance::computeBBDist(p3d_vector3 robot, p3d_vector3 human)
 	//    double tu,ts;
 	//    ChronoOn();
 	
+  cout << "Distance for Robot = " << m_Robot->getName() << endl;
+  
 	for(unsigned int i=0; i<_Humans.size(); i++)
 	{
-		//        cout << _Robot->getRobotStruct() << endl;
+		cout << "Distance for Human = " << _Humans[i]->getName() << endl;
+    
 		p3d_col_activate_rob_rob(m_Robot->getRobotStruct(),_Humans[i]->getRobotStruct());
 		
 		for(unsigned int j =0; j<_SafetyZonesBodyId[i].size();j++)
 		{
 			p3d_obj* Obj2= _Humans[i]->getRobotStruct()->o[_SafetyZonesBodyId[i][j]];
 			
-			bool activBody = false;
+			bool pureGraphic = true;
 			
+      // Is object pure graphic
 			for(int k =0; k<m_Robot->getRobotStruct()->no; k++)
 			{
 				for(int l=0; l<m_Robot->getRobotStruct()->o[k]->np;l++)
 				{
 					if(m_Robot->getRobotStruct()->o[k]->pol[l]->TYPE!=P3D_GRAPHIC)
 					{
-						activBody = true;
+						pureGraphic = false;
 					}
 				}
 				
-				if(activBody)
+				if(!pureGraphic)
 				{
 					p3d_obj* Obj1= m_Robot->getRobotStruct()->o[k];
 					
 					double minDistance2;
 					double minDistance1 = p3d_BB_obj_obj_extern_dist ( Obj1 , Obj2, &minDistance2 );
+          
+          cout << "minDistance1 = " << minDistance1 << endl;
 					
 					if(minDistance1 < minDistance1Prev)
 					{
@@ -552,40 +565,40 @@ double Distance::computeBBDist(p3d_vector3 robot, p3d_vector3 human)
 		}
 	}
 	
-#if defined(LIGHT_PLANNER) && defined(PQP)
-	if(m_Robot->getRobotStruct()->isCarryingObject)
-	{
-		//        if(_Robot->getRobotStruct()->carriedObject->joints[1]->o > 1)
-		//        {
-		//            cout << "Warning Distance::computeBBDist => FF with more than 1 object"  << endl;
-		//        }
-		p3d_obj* Obj1 = m_Robot->getRobotStruct()->carriedObject->joints[1]->o;
-		
-		for( unsigned int i=0; i<_Humans.size(); i++ )
-		{
-			for( unsigned int j =0; j<_SafetyZonesBodyId[i].size();j++)
-			{
-				p3d_obj* Obj2= _Humans[i]->getRobotStruct()->o[_SafetyZonesBodyId[i][j]];
-				
-				double minDistance2;
-				double minDistance1 = p3d_BB_obj_obj_extern_dist ( Obj1 , Obj2, &minDistance2 );
-				
-				if(minDistance1 < minDistance1Prev)
-				{
-					minDistance1Prev = minDistance1;
-					
-					robot[0] = (Obj1->BB.xmax +  Obj1->BB.xmin)/2;
-					robot[1] = (Obj1->BB.ymax +  Obj1->BB.ymin)/2;
-					robot[2] = (Obj1->BB.zmax +  Obj1->BB.zmin)/2;
-					
-					human[0] = (Obj2->BB.xmax +  Obj2->BB.xmin)/2;
-					human[1] = (Obj2->BB.ymax +  Obj2->BB.ymin)/2;
-					human[2] = (Obj2->BB.zmax +  Obj2->BB.zmin)/2;
-				}
-			}
-		}
-	}
-#endif
+//#if defined(LIGHT_PLANNER) && defined(PQP)
+//	if(m_Robot->getRobotStruct()->isCarryingObject)
+//	{
+//		//        if(_Robot->getRobotStruct()->carriedObject->joints[1]->o > 1)
+//		//        {
+//		//            cout << "Warning Distance::computeBBDist => FF with more than 1 object"  << endl;
+//		//        }
+//		p3d_obj* Obj1 = m_Robot->getRobotStruct()->carriedObject->joints[1]->o;
+//		
+//		for( unsigned int i=0; i<_Humans.size(); i++ )
+//		{
+//			for( unsigned int j =0; j<_SafetyZonesBodyId[i].size();j++)
+//			{
+//				p3d_obj* Obj2= _Humans[i]->getRobotStruct()->o[_SafetyZonesBodyId[i][j]];
+//				
+//				double minDistance2;
+//				double minDistance1 = p3d_BB_obj_obj_extern_dist ( Obj1 , Obj2, &minDistance2 );
+//				
+//				if(minDistance1 < minDistance1Prev)
+//				{
+//					minDistance1Prev = minDistance1;
+//					
+//					robot[0] = (Obj1->BB.xmax +  Obj1->BB.xmin)/2;
+//					robot[1] = (Obj1->BB.ymax +  Obj1->BB.ymin)/2;
+//					robot[2] = (Obj1->BB.zmax +  Obj1->BB.zmin)/2;
+//					
+//					human[0] = (Obj2->BB.xmax +  Obj2->BB.xmin)/2;
+//					human[1] = (Obj2->BB.ymax +  Obj2->BB.ymin)/2;
+//					human[2] = (Obj2->BB.zmax +  Obj2->BB.zmin)/2;
+//				}
+//			}
+//		}
+//	}
+//#endif
 	
 	//    ChronoMicroTimes(&tu, &ts);
 	//    ChronoOff();
@@ -602,9 +615,9 @@ bool Distance::computeCylinderZone(Vector3d &p1, Vector3d& p2)
 {
 	// First compute the human segment
 	unsigned int ObjIndex;
-	bool noZone = false;
+	bool noZone = true;
 	
-	for(unsigned int i=0; i<_Humans.size(); i++)
+/*	for(unsigned int i=0; i<_Humans.size(); i++)
 	{
 		// Checks that the safety zone exists
 		if (_SafetyZonesBodyId[i].empty()) 
@@ -625,7 +638,7 @@ bool Distance::computeCylinderZone(Vector3d &p1, Vector3d& p2)
 				break;
 			}
 		}
-	}
+	} */
 	
 	const double TopAndBottom = 0.7;
 	
@@ -708,11 +721,6 @@ double Distance::computeBoundingBalls(const Vector3d& WSPoint, p3d_vector3 robot
 	double pointneckdist;
 	double pointbodydist = numeric_limits<double>::max();
 	
-	//    Vector3d hbody;
-	//    hbody[0] = _Humans[0]->getRobotStruct()->joints[HRICS_HUMANj_BODY]->abs_pos[0][3];
-	//    hbody[1] = _Humans[0]->getRobotStruct()->joints[HRICS_HUMANj_BODY]->abs_pos[1][3];
-	//    hbody[2] = _Humans[0]->getRobotStruct()->joints[HRICS_HUMANj_BODY]->abs_pos[2][3];
-	
 	Vector3d p1,p2;
 	Vector3d closestPoint;
 	
@@ -726,13 +734,6 @@ double Distance::computeBoundingBalls(const Vector3d& WSPoint, p3d_vector3 robot
 	hneck = _Humans[0]->getJoint(HRICS_HUMANj_NECK_TILT)->getVectorPos();
 	
 	pointneckdist = ( WSPoint - hneck ).norm()-0.30; // Head radius
-	
-	// Warning here
-	
-	//    double human_max_reach_length = 1.5;
-	
-	//    cout << "pointbodydist = "  << pointbodydist << endl;
-	//    cout << "pointneckdist = "  << pointneckdist << endl;
 	
 	if( pointneckdist < pointbodydist)
 	{
@@ -756,14 +757,4 @@ double Distance::computeBoundingBalls(const Vector3d& WSPoint, p3d_vector3 robot
 		
 		return pointbodydist;
 	}
-	
-	//    if(pointneckdist > human_max_reach_length)
-	//    {
-	//        return 0;
-	//    }
-	
-	//    return  cos((mindist[0]/human_max_reach_length)*M_PI_2)*
-	//            cos((mindist[1]/human_max_reach_length)*M_PI_2)*
-	//            cos((mindist[2]/human_max_reach_length)*M_PI_2);
-	
 }

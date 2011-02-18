@@ -28,6 +28,8 @@ using namespace HRICS;
 //USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
 
+extern string global_ActiveRobotName;
+
 /**
   * Reads the ENV structure and gets the Humans and the Robots named respectivly
   * HUMAN and ROBOT and performs init
@@ -40,7 +42,7 @@ ConfigSpace::ConfigSpace() : HumanAwareMotionPlanner() , mPathExist(false)
     {
         string name(XYZ_ENV->robot[i]->name);
 
-        if(name.find("ROBOT") != string::npos )
+        if(name.find(global_ActiveRobotName) != string::npos )
         {
             _Robot = new Robot(XYZ_ENV->robot[i]);
             cout << "Robot is " << name << endl;

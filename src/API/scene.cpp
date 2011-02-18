@@ -18,6 +18,8 @@
 
 using namespace std;
 
+string global_ActiveRobotName;
+
 Scene::Scene(p3d_env* environnement)
 {
 	m_Scene = environnement;
@@ -30,10 +32,14 @@ Scene::Scene(p3d_env* environnement)
 		m_Robot.push_back( new Robot( m_Scene->robot[i] ) );
 		m_Robot.back()->setActiveScene( this );
 	}
+  
+  // For all HRI planner the robot 
+  // Will be set here
+  global_ActiveRobotName = "JIDOKUKA";
 	
 	// Set the robot by name containing ROBOT to active
 	
-	Robot* rob = getRobotByNameContaining("ROBOT");
+	Robot* rob = getRobotByNameContaining(global_ActiveRobotName);
 	
 	if (rob != NULL) 
 	{
