@@ -56,7 +56,7 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 	
 	Scene* environnement = global_Project->getActiveScene();
 	
-	this->setRobot(	   environnement->getRobotByNameContaining("ROBOT") );
+        this->setRobot(	   environnement->getRobotByNameContaining("JIDOKUKA_ROBOT") );
 	mHumans.push_back( environnement->getRobotByNameContaining("HUMAN") );
 	
 	if (_Robot) 
@@ -68,17 +68,17 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 		cout << "No Robot in Workspace planner" << endl;
 	}
 	
-	cout << "Human is " << mHumans[0]->getName() << endl;
-	
+        cout << "Human is " << mHumans[0]->getName() << endl;
+
 #ifdef LIGHT_PLANNER
-	if(_Robot)
-	{
+        if(_Robot)
+        {
     p3d_jnt* FF_Joint = (*_Robot->getRobotStruct()->armManipulationData)[0].getManipulationJnt();
-		//p3d_jnt* FF_Joint = _Robot->getRobotStruct()->ccCntrts[0]->actjnts[0];
-		ENV.setInt(Env::akinJntId,FF_Joint->num);
-	}
+                //p3d_jnt* FF_Joint = _Robot->getRobotStruct()->ccCntrts[0]->actjnts[0];
+                ENV.setInt(Env::akinJntId,FF_Joint->num);
+        }
 #else
-	cout << "Warning: Lihght Planner not compiled" << endl;
+        cout << "Warning: Lihght Planner not compiled" << endl;
 #endif
 	
 #ifdef P3D_PLANNER
@@ -798,6 +798,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint)
 
 bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 {	
+        cout << "---------1----------" << endl;
 	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
 	
 	if ( m_ReachableSpace == NULL )
@@ -805,7 +806,7 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 		cout << "No ReachableSpace cost space initialized" << endl;
 		return false;
 	}
-	
+        cout << "---------2----------" << endl;
 	vector< pair<double,Vector3d > > ReachablePoints = m_ReachableSpace->getReachableWSPoint();
 	
 	for (unsigned int i=0; i<ReachablePoints.size(); i++)
@@ -820,7 +821,7 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 		
 		ReachablePoints[i].first /= 3;
 	}
-	
+        cout << "---------3----------" << endl;
 	sort(ReachablePoints.begin(),ReachablePoints.end(),NaturalPointsCompObject);
 	
 	if( ReachablePoints.empty() )
@@ -830,7 +831,7 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 	}
 	
 	transfPoint = ReachablePoints[0].second;
-	
+        cout << "---------4----------" << endl;
 	return true;
 }
 
