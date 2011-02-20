@@ -24,6 +24,10 @@ void GlobalCostSpace::initialize()
 {
 	// initialize the cost function object.
 	global_costSpace = new CostSpace();
+  
+  std::cout << "Initializing the dummy cost Function" << std::endl;
+	global_costSpace->addCost("NoCost",boost::bind(computeFlatCost, _1));
+	global_costSpace->setCost("NoCost");
 	
 	std::cout << "Initializing the dist to obst costmap cost function" << std::endl;
 	global_costSpace->addCost("costDistToObst",boost::bind(computeDistanceToObstacles, _1));
@@ -45,6 +49,7 @@ CostSpace* global_costSpace(NULL);
 CostSpace::CostSpace() : m_deltaMethod(cs_integral)
 {
 }
+
 //------------------------------------------------------------------------------
 double CostSpace::cost(Configuration& conf)
 {
@@ -366,7 +371,7 @@ double CostSpace::cost(LocalPath& path)
 // Basic cost functions
 //----------------------------------------------------------------------
 
-double computeBasicCost(Configuration& conf)
+double computeFlatCost(Configuration& conf)
 {
 	return 1.0;
 }

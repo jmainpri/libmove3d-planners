@@ -16,6 +16,9 @@
 #include "env.hpp"
 #include "API/Roadmap/graph.hpp"
 
+// These are function that are called
+// From within libmove3d 
+
 void g3d_export_cpp_graph()
 {
 	//std::cout << "API_activeGraph : " << API_activeGraph << std::endl;
@@ -49,4 +52,5 @@ void Graphic::initDrawFunctions()
 {
 	ext_g3d_draw_cost_features = (void (*)())(g3d_draw_cost_features);
 	ext_g3d_export_cpp_graph = (void (*)())(g3d_export_cpp_graph);
+  ext_compute_config_cost_along_traj = computeConfigCostOnTraj;
 }

@@ -104,7 +104,14 @@ void Distance::parseHumans()
 	string body;
 	string b_name;
 	string buffer;
-	
+  
+  vector<string> AchileActivePartsName;
+  
+  AchileActivePartsName.push_back( "headGhost" );
+	AchileActivePartsName.push_back( "pelvisGhost" );
+  AchileActivePartsName.push_back( "rFemurGhost" );
+  AchileActivePartsName.push_back( "lFemurGhost" );
+  
 	//    _SafeRadius = 0;
 	
 	_SafetyZonesBodyId.clear();
@@ -120,38 +127,38 @@ void Distance::parseHumans()
 			body = human->getRobotStruct()->o[j]->name;
 			//size_t found;
 			b_name = body;
-			
-			if( body.find("headGhost") != string::npos)
-			{
-				safetyZonesId.push_back(j);
-				//                cout << "safetyZonesId += " << j << endl;
-				continue;
-			}
       
-      if( body.find("pelvisGhost") != string::npos)
-			{
-				safetyZonesId.push_back(j);
-				//                cout << "safetyZonesId += " << j << endl;
-				continue;
-			}
+      bool isActiveAchilePartFound = false;
+      
+      for (unsigned int i=0; i<AchileActivePartsName.size(); i++) 
+      {
+        if( body.find( AchileActivePartsName[i] ) != string::npos)
+        {
+          safetyZonesId.push_back(j);
+          isActiveAchilePartFound = true;
+          break;
+        }
+      }
+      
+      if (isActiveAchilePartFound) 
+      {
+        continue;
+      }
       
       if( body.find("safety_zone_ghost") != string::npos)
 			{
 				safetyZonesId.push_back(j);
-				//                cout << "safetyZonesId += " << j << endl;
 				continue;
 			}
 			
 			if( body.find("safety_zone_ghost") != string::npos)
 			{
 				safetyZonesId.push_back(j);
-				//                cout << "safetyZonesId += " << j << endl;
 				continue;
 			}
 			
 			if( body.find("safety_zone_graphic") != string::npos)
 			{
-				//                cout << "Found safety Zones" << endl;
 				for(int k=0;k< human->getRobotStruct()->o[j]->np ; k++)
 				{
 					//                    cout << "j = " << j << endl;
@@ -394,7 +401,7 @@ vector<double> Distance::getDistToZones()
 			
 			
 		case Boxes:
-      cout << "Boxes Distance" << endl;
+      //cout << "Boxes Distance" << endl;
 			activateSafetyZonesMode();
 			distances[k] = computeBBDist(body[k], other[k]);
 			_PenetrationDist[k] = (_SafeRadius - distances[k])/_SafeRadius;
@@ -476,10 +483,9 @@ vector<double> Distance::getDistToZones()
 		vect_jim.push_back(body[k][2]);
 		vect_jim.push_back(other[k][0]);
 		vect_jim.push_back(other[k][1]);
-		vect_jim.push_back(other[k][2]);
-		
-		cout << "vect_jim[0] = " << vect_jim[0] << " vect_jim[1] = " << vect_jim[1] << " vect_jim[2] = " << vect_jim[2] << endl;
-		cout << "vect_jim[3] = " << vect_jim[3] << " vect_jim[4] = " << vect_jim[4] << " vect_jim[5] = " << vect_jim[5] << endl;
+		vect_jim.push_back(other[k][2]);		
+//		cout << "vect_jim[0] = " << vect_jim[0] << " vect_jim[1] = " << vect_jim[1] << " vect_jim[2] = " << vect_jim[2] << endl;
+//		cout << "vect_jim[3] = " << vect_jim[3] << " vect_jim[4] = " << vect_jim[4] << " vect_jim[5] = " << vect_jim[5] << endl;
 	}
 	
 	
@@ -514,11 +520,11 @@ double Distance::computeBBDist(p3d_vector3 robot, p3d_vector3 human)
 	//    double tu,ts;
 	//    ChronoOn();
 	
-  cout << "Distance for Robot = " << m_Robot->getName() << endl;
+  //cout << "Distance for Robot = " << m_Robot->getName() << endl;
   
 	for(unsigned int i=0; i<_Humans.size(); i++)
 	{
-		cout << "Distance for Human = " << _Humans[i]->getName() << endl;
+		//cout << "Distance for Human = " << _Humans[i]->getName() << endl;
     
 		p3d_col_activate_rob_rob(m_Robot->getRobotStruct(),_Humans[i]->getRobotStruct());
 		
@@ -546,7 +552,7 @@ double Distance::computeBBDist(p3d_vector3 robot, p3d_vector3 human)
 					double minDistance2;
 					double minDistance1 = p3d_BB_obj_obj_extern_dist ( Obj1 , Obj2, &minDistance2 );
           
-          cout << "minDistance1 = " << minDistance1 << endl;
+          //cout << "minDistance1 = " << minDistance1 << endl;
 					
 					if(minDistance1 < minDistance1Prev)
 					{

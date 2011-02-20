@@ -48,8 +48,8 @@ std::vector<double> vect_jim;
 //   V3 -- V4
 //
 void g3d_draw_eigen_box(	const Eigen::Vector3d& v1, const Eigen::Vector3d& v2, const Eigen::Vector3d& v3, const Eigen::Vector3d& v4,
-							const Eigen::Vector3d& v5, const Eigen::Vector3d& v6, const Eigen::Vector3d& v7, const Eigen::Vector3d& v8,
-						int color, int fill, double width) {
+                        const Eigen::Vector3d& v5, const Eigen::Vector3d& v6, const Eigen::Vector3d& v7, const Eigen::Vector3d& v8,
+                        int color, int fill, double width) {
 	
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
@@ -132,11 +132,11 @@ void g3d_draw_grids()
 		if (ENV.getBool(Env::drawBox)) 
 		{
 			CXX_drawBox = API_activeGrid->getBox();
-		
+      
 			if (!CXX_drawBox.empty()) 
 			{
 				g3d_draw_eigen_box(	CXX_drawBox[0], CXX_drawBox[1], CXX_drawBox[2], CXX_drawBox[3],
-														CXX_drawBox[4], CXX_drawBox[5], CXX_drawBox[6], CXX_drawBox[7],
+                           CXX_drawBox[4], CXX_drawBox[5], CXX_drawBox[6], CXX_drawBox[7],
 													 Red, 0, 3);
 			}
 		}
@@ -149,19 +149,19 @@ void g3d_draw_grids()
 		if (!CXX_drawBox.empty()) 
 		{
 			g3d_draw_eigen_box(	CXX_drawBox[0], CXX_drawBox[1], CXX_drawBox[2], CXX_drawBox[3],
-													CXX_drawBox[4], CXX_drawBox[5], CXX_drawBox[6], CXX_drawBox[7],
-													Red, 0, 3);
+                         CXX_drawBox[4], CXX_drawBox[5], CXX_drawBox[6], CXX_drawBox[7],
+                         Red, 0, 3);
 		}
 	}
 	
 	if( HRICS_activeNatu )
 	{
-	   HRICS_activeNatu->printBodyPos();
+    HRICS_activeNatu->printBodyPos();
 	}
 	
 #endif
 	
-// TODO callback OOMOVE3D
+  // TODO callback OOMOVE3D
 #if defined( CXX_PLANNER )
 	if( ENV.getBool(Env::drawPoints) )
 	{
@@ -173,9 +173,9 @@ void g3d_draw_grids()
 	}
 	
 	// Draws a sphere of 10 cm of radius
-//	g3d_drawSphere(global_DrawnSphere(0),
-//								 global_DrawnSphere(1),
-//								 global_DrawnSphere(2), 0.1 );
+  //	g3d_drawSphere(global_DrawnSphere(0),
+  //								 global_DrawnSphere(1),
+  //								 global_DrawnSphere(2), 0.1 );
 #endif
 }
 
@@ -222,7 +222,7 @@ void g3d_draw_hrics()
 		
 		glLineWidth(1.);
 	}
-
+  
 	if ( ENV.getBool(Env::drawGaze) && ( ENV.getBool(Env::HRIPlannerWS) ||  ENV.getBool(Env::HRIPlannerCS) ) )
 	{
 		vector<double> Gaze;
@@ -246,3 +246,31 @@ void g3d_draw_hrics()
 }
 #endif
 
+void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
+{
+  if(ENV.getBool(Env::isCostSpace))
+  {
+    p3d_rob* costRobot = rob;
+    configPt cost_q = q;
+    
+#ifdef HRI_COSTSPACE
+    if ( ENV.getBool(Env::enableHri) ) 
+    {
+      std::string robotName(costRobot->name);
+      
+      if( robotName.find("ROBOT") == std::string::npos ) // Does not contain Robot
+      {
+        costRobot = p3d_get_robot_by_name_containing("ROBOT");
+        cost_q = p3d_get_robot_config(costRobot);
+        //cout << "Change the robot position = " << robotPt->name << endl;
+      }
+    }
+#endif
+    
+    Robot* r_Cost( global_Project->getActiveScene()->getRobotByName(costRobot->name) );
+    Configuration	q_Cost(r_Cost,cost_q);
+    
+    std::cout << "Cost for " << r_Cost->getName() << " = " 
+    << global_costSpace->cost(q_Cost) << std::endl;
+  }
+}

@@ -216,8 +216,16 @@ void HRICS_loadGrid(std::string docname)
 //----------------------------------------------------------------------
 void HRICS_init()
 {  
-  ENV.setBool(Env::isCostSpace,true);
+  // When loaded with the cost space turned off
+  // This function create and initizialises the global_costSpace object
   GlobalCostSpace::initialize();
+  
+  ENV.setBool(Env::isCostSpace,true);
+  
+  ENV.setBool(Env::enableHri,true);
+  ENV.setBool(Env::HRIPlannerWS,true);
+  ENV.setInt(Env::hriCostType,HRICS_Combine);
+  ENV.setDouble(Env::zone_size,0.5);
   
   Robot* Human = global_Project->getActiveScene()->getRobotByNameContaining("HUMAN");
   
@@ -228,15 +236,9 @@ void HRICS_init()
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initDistance();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initVisibility();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initNatural();
-	
-	ENV.setBool(Env::HRIPlannerWS,true);
-	ENV.setDouble(Env::zone_size,0.5);
   
 	HRICS_activeDist = HRICS_MotionPL->getDistance();
 	API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid();
-	
-	ENV.setBool(Env::enableHri,true);
-	ENV.setBool(Env::isCostSpace,true);
 	
 	if( ENV.getBool(Env::HRIAutoLoadGrid) )
 	{
@@ -250,10 +252,9 @@ void HRICS_init()
 		HRICS_activeNatu->setGrid(dynamic_cast<HRICS::NaturalGrid*>(API_activeGrid));
 		ENV.setBool(Env::drawGrid,false);
 	}
-	
-	ENV.setInt(Env::hriCostType,HRICS_Combine);
-	
-	cout << "new HRI Workspace" << endl;
   
+  global_costSpace->addCost("costHRI",boost::bind(HRICS_getConfigCost,_1));
+  global_costSpace->setCost("costHRI");
+	cout << "new HRI Workspace" << endl;
   //Human->setAndUpdate( *q );
 }

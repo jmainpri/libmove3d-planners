@@ -167,6 +167,9 @@ void Workspace::initGrid()
 
 void Workspace::initDistance()
 {
+  ENV.setBool(Env::useBoxDist,true);
+	ENV.setBool(Env::useBallDist,false);
+  
 	m_DistanceSpace = new Distance(_Robot,mHumans);
 	
 	if (_Robot) 

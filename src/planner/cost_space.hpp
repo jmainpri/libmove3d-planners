@@ -80,7 +80,7 @@ namespace GlobalCostSpace
 extern CostSpace* global_costSpace;
 
 double computeIntersectionWithGround(Configuration& conf);
-double computeBasicCost(Configuration& conf);
+double computeFlatCost(Configuration& conf);
 double computeDistanceToObstacles(Configuration& conf);
 
 #endif
