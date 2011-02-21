@@ -31,7 +31,6 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
         Node* expandComp, Node* goalComp, bool samplePassive,
         Node*& directionNode)
 {
-
     if (p3d_GetCostMethodChoice() == MONTE_CARLO_SEARCH)
     {
 
@@ -120,9 +119,10 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
 			break;
 #endif
 			case GLOBAL_CS_EXP:
-              default:
-                // Selection in the entire CSpace
-                q = mGraph->getRobot()->shoot(samplePassive);
+          default:
+            // Selection in the entire CSpace
+            cout << "Default Shoot" << endl;
+            q = mGraph->getRobot()->shoot(samplePassive);
         }
     }
     if (!m_IsDirSampleWithRlg)

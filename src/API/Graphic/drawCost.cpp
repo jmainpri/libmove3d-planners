@@ -161,13 +161,11 @@ void g3d_draw_grids()
 	
 #endif
 	
-  // TODO callback OOMOVE3D
-#if defined( CXX_PLANNER )
 	if( ENV.getBool(Env::drawPoints) )
 	{
 		if(PointsToDraw != NULL)
 		{
-			//cout << "Drawing points" << endl;
+      //cout << "PointsToDraw = " << PointsToDraw << endl;
 			PointsToDraw->drawAllPoints();
 		}
 	}
@@ -176,7 +174,6 @@ void g3d_draw_grids()
   //	g3d_drawSphere(global_DrawnSphere(0),
   //								 global_DrawnSphere(1),
   //								 global_DrawnSphere(2), 0.1 );
-#endif
 }
 
 /**

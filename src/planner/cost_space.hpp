@@ -82,5 +82,6 @@ extern CostSpace* global_costSpace;
 double computeIntersectionWithGround(Configuration& conf);
 double computeFlatCost(Configuration& conf);
 double computeDistanceToObstacles(Configuration& conf);
+double computeLocalpathKinematicCost(p3d_rob* rob, p3d_localpath* LP);
 
 #endif

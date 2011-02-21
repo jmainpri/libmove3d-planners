@@ -73,12 +73,11 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
         cout << "Human is " << mHumans[0]->getName() << endl;
 
 #ifdef LIGHT_PLANNER
-        if(_Robot)
-        {
+  if(_Robot)
+  {
     p3d_jnt* FF_Joint = (*_Robot->getRobotStruct()->armManipulationData)[0].getManipulationJnt();
-                //p3d_jnt* FF_Joint = _Robot->getRobotStruct()->ccCntrts[0]->actjnts[0];
-                ENV.setInt(Env::akinJntId,FF_Joint->num);
-        }
+    ENV.setInt(Env::akinJntId,FF_Joint->num);
+  }
 #else
         cout << "Warning: Lihght Planner not compiled" << endl;
 #endif
@@ -167,9 +166,6 @@ void Workspace::initGrid()
 
 void Workspace::initDistance()
 {
-  ENV.setBool(Env::useBoxDist,true);
-	ENV.setBool(Env::useBallDist,false);
-  
 	m_DistanceSpace = new Distance(_Robot,mHumans);
 	
 	if (_Robot) 

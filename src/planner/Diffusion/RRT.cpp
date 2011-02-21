@@ -119,9 +119,8 @@ int RRT::expandOneStep(Node* fromComp, Node* toComp)
 																									false,
 																									directionNode);
   
-  
-#ifdef LIGTH_PLANNER
-	if(ENV.getBool(Env::drawPoints))
+#ifdef LIGHT_PLANNER
+	if( ENV.getBool(Env::drawPoints) && PointsToDraw )
 	{
 		PointsToDraw->push_back(directionConfig->getTaskPos());
 	}

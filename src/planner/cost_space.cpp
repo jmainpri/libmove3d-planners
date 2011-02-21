@@ -6,6 +6,7 @@
 #include "Roadmap/compco.hpp"
 
 #include "P3d-pkg.h"
+#include "Localpath-pkg.h"
 #include "GroundHeight-pkg.h"
 #include "Planner-pkg.h"
 #include "Collision-pkg.h"
@@ -39,6 +40,8 @@ void GlobalCostSpace::initialize()
 		global_costSpace->addCost("costMap2D",boost::bind(computeIntersectionWithGround, _1));
 		global_costSpace->setCost("costMap2D");
 	}
+  
+  ext_compute_localpath_kin_cost = computeLocalpathKinematicCost;
 }
 
 //using std::string;
@@ -398,10 +401,23 @@ double computeDistanceToObstacles(Configuration& conf)
 	shared_ptr<Configuration> qActual = robotPt->getCurrentPos();
 	robotPt->setAndUpdate(conf);
 	double cost = p3d_GetMinDistCost(robotPt->getRobotStruct());
-	//	cout << "cost = "<< cost << endl;
 	robotPt->setAndUpdate(*qActual);
 	return cost;
 }
+
+double computeLocalpathKinematicCost(p3d_rob* rob, p3d_localpath* LP)
+{
+  if (LP == NULL) {
+    return 1;
+  }
+  
+  Robot* currRob = global_Project->getActiveScene()->getRobotByNameContaining(rob->name);
+  LocalPath path(currRob,LP);
+  double cost = path.cost();
+  cout << "Kinematic cost = " << cost << endl;
+  return cost;
+}
+
 //----------------------------------------------------------------------
 void CostSpace::initMotionPlanning(Graph* graph, Node* start, Node* goal)
 {

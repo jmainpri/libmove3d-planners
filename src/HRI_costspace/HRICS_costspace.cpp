@@ -16,7 +16,7 @@
 
 #include "P3d-pkg.h"
 
-const bool DebugCostFunctions=false;
+#define DebugCostFunctions 0
 
 using namespace std;
 using namespace tr1;
@@ -85,10 +85,9 @@ double HRICS_getConfigCost(Configuration& Conf)
 				{
 					Cost += ENV.getDouble(Env::Kdistance)*(HRICS_MotionPL->getDistance()->getDistToZones()[0]);
 					
-					if ( DebugCostFunctions )
-					{
+#if DebugCostFunctions
 						cout << "Distance Cost = " << Cost << endl;
-					}
+#endif
 				}
 				
 				if( ( ENV.getInt(Env::hriCostType) == HRICS_Visibility || ENV.getInt(Env::hriCostType) == HRICS_Combine )
@@ -105,10 +104,9 @@ double HRICS_getConfigCost(Configuration& Conf)
 					double VisibCost = ENV.getDouble(Env::Kvisibility)*(HRICS_MotionPL->getVisibility()->getCost(WSPoint));
 					Cost += VisibCost;
 					
-					if ( DebugCostFunctions )
-					{
+#if DebugCostFunctions
 						cout << "Visibility Cost = " << VisibCost << endl;
-					}
+#endif
 				}
 				
 				/*if( ENV.getInt(Env::hriCostType) == HRICS_Naturality || ENV.getInt(Env::hriCostType) == HRICS_Combine )
@@ -139,10 +137,9 @@ double HRICS_getConfigCost(Configuration& Conf)
 						p3d_set_robot_display_mode(rob->getRobotStruct(),P3D_ROB_DEFAULT_DISPLAY);
 					}
 					
-					if ( DebugCostFunctions )
-					{
+#if DebugCostFunctions
 						cout << "Reach Cost = " << ReachCost << endl;
-					}
+#endif
 				}
 			}
 			break;
@@ -161,15 +158,11 @@ double HRICS_getConfigCost(Configuration& Conf)
 			cout << "Warning :: p3d_GetConfigCost :: No Cost While costspace and HRI are on!!!" << endl;
 			break;
 	}
-	
-	//                Cost = hri_zones.getHriDistCost(robotPt, true);
-  
 	rob->setAndUpdate(*q_Saved);
 	
-	if ( DebugCostFunctions )
-	{
+#if DebugCostFunctions
 		cout << "Cost = " << Cost << endl;
-	}
+#endif
              
 	return Cost;
 }
@@ -225,7 +218,14 @@ void HRICS_init()
   ENV.setBool(Env::enableHri,true);
   ENV.setBool(Env::HRIPlannerWS,true);
   ENV.setInt(Env::hriCostType,HRICS_Combine);
-  ENV.setDouble(Env::zone_size,0.5);
+  
+  ENV.setBool(Env::useBoxDist,false);
+	ENV.setBool(Env::useBallDist,true);
+  ENV.setDouble(Env::zone_size,0.80);
+  
+  ENV.setDouble( Env::Kdistance,   80 );
+  ENV.setDouble( Env::Kvisibility, 50 );
+  ENV.setDouble( Env::Kreachable,  10 );
   
   Robot* Human = global_Project->getActiveScene()->getRobotByNameContaining("HUMAN");
   

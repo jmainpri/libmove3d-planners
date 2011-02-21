@@ -392,7 +392,6 @@ vector<double> Distance::getDistToZones()
 	{
 		case Balls:
 		{
-			//cout << "Ball radius for joint : " << ENV.getInt(Env::akinJntId) << endl;
 			Vector3d WSPoint = m_Robot->getJointPos(ENV.getInt(Env::akinJntId));
 			distances[k] = computeBoundingBalls(WSPoint,body[k], other[k]);
 			_PenetrationDist[k] = (_SafeRadius - distances[k])/_SafeRadius;
@@ -646,7 +645,7 @@ bool Distance::computeCylinderZone(Vector3d &p1, Vector3d& p2)
 		}
 	} */
 	
-	const double TopAndBottom = 0.7;
+	const double TopAndBottom = 1.0; // The top to bottom body is 1 meter
 	
 	if( noZone )
 	{
@@ -719,9 +718,9 @@ double Distance::pointToLineSegmentDistance(const Vector3d& p, const Vector3d& p
 	}
 }
 
-/*!
- * Bounding Balls Distance
- */
+//! Bounding Balls Distance
+//! computes the distance to a line and a sphere
+//! The Line is the body and the sphere is the 
 double Distance::computeBoundingBalls(const Vector3d& WSPoint, p3d_vector3 robot, p3d_vector3 human)
 {
 	double pointneckdist;
@@ -732,7 +731,7 @@ double Distance::computeBoundingBalls(const Vector3d& WSPoint, p3d_vector3 robot
 	
 	if (computeCylinderZone(p1,p2))
 	{
-		pointbodydist = pointToLineSegmentDistance(WSPoint,p1,p2,closestPoint);
+		pointbodydist = pointToLineSegmentDistance(WSPoint,p1,p2,closestPoint)-0.20; // Body radius
 	}
 	
 	Vector3d hneck;
@@ -743,9 +742,9 @@ double Distance::computeBoundingBalls(const Vector3d& WSPoint, p3d_vector3 robot
 	
 	if( pointneckdist < pointbodydist)
 	{
+    // Closest point is neck
 		for(int i=0; i<3; i++)
 		{
-			//            mindist[i] = ABS(WSPoint[i] - hneck[i]);
 			robot[i] = WSPoint[i];
 			human[i] = hneck[i];
 		}
@@ -754,9 +753,9 @@ double Distance::computeBoundingBalls(const Vector3d& WSPoint, p3d_vector3 robot
 	}
 	else
 	{
+    // Cosest point is Body
 		for(int i=0; i<3; i++)
 		{
-			//            mindist[i] = ABS(WSPoint[i] - hbody[i]);
 			robot[i] = WSPoint[i];
 			human[i] = closestPoint[i];
 		}

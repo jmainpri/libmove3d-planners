@@ -114,7 +114,8 @@ void initPlannerParameters()
 	// ------------------------------------------------------------------
   ENV.setExpansionMethod(Env::Extend);
   ENV.setBool(Env::biDir,true);
-  ENV.setDouble(Env::extensionStep,10.0);
+  ENV.setDouble(Env::extensionStep,14.0);
+  PlanEnv->setBool(PlanParam::withDeformation,true);
   PlanEnv->setBool(PlanParam::withDeformation,false);
   
 //  ENV.setBool(Env::);

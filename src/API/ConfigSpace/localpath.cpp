@@ -176,23 +176,10 @@ p3d_localpath* LocalPath::getLocalpathStruct()
 {
 	if (!_LocalPath)
 	{
-		//cout << "local palnner is " << p3d_local_planner << endl;
-		
-		//printf("LP : destroy is : %p\n",_LocalPath->destroy);
-//		printf("LP : Local path is : %p\n",_LocalPath);
-		
 		_LocalPath = p3d_local_planner(
 																	 _Robot->getRobotStruct(),
 																	 _Begin->getConfigStruct(), 
 																	 _End->getConfigStruct());
-		
-//		printf("-----------------------------------\n");
-//		printf("LP : Local path is : %p\n",_LocalPath);
-//		printf("LP : destroy is : %p\n",_LocalPath->destroy);
-//		printf("LP : length_lp is : %f\n",_LocalPath->length_lp);
-//		
-//		
-//		configAtParam(0)->print();
 
 		if (_LocalPath)
 		{
@@ -211,11 +198,6 @@ shared_ptr<Configuration> LocalPath::getEnd()
 {
 	return _End;
 }
-
-//Graph* LocalPath::getGraph()
-//{
-//	return _Graph;
-//}
 
 Robot* LocalPath::getRobot()
 {
@@ -264,17 +246,9 @@ bool LocalPath::classicTest()
 													 this->getLocalpathStruct(),
 													 /*&(_Graph->getGraphStruct()->nb_test_coll)*/&_NbColTest,
 													 &_lastValidParam, q_atKpath);
-//		LocalPathValidTest testLP(*this);
-//		_NbColTest = static_cast<unsigned int>(testLP.getNbCollisionTest());
 		
 		_Evaluated = true;
 		_lastValidEvaluated = true;
-		
-//		if (getNbColTest()>0) 
-//		{
-//			printf("Nb Of Call test : %d\n",getNbColTest());
-//			printf("Valid is : %d\n",_Valid);
-//		}
 	}
 	return(_Valid);
 }
@@ -286,29 +260,19 @@ bool LocalPath::isValid()
 		if (_End->isInCollision())
 		{
 			_Valid = false;
-//                        cout << "End in collision" << endl;
 		}
 		else
 		{
 			if (*_Begin != *_End)
 			{
-//				LocalPathValidTest testLP(*this);
-//				_Valid = testLP.testIsValid();
-//				_NbColTest = testLP.getNbCollisionTest();
 				
 				_Valid = !p3d_unvalid_localpath_test(_Robot->getRobotStruct(),
 						this->getLocalpathStruct(), &_NbColTest);
 			}
 		}
 		_NbColTest++;
-		//cout << "_NbColTest = " << _NbColTest << endl;
 		
 		_Evaluated = true;
-		
-//		if (getNbColTest()>0) 
-//		{
-//			printf("Nb Of Call test : %d\n",getNbColTest());
-//		}
 	}
 	return _Valid;
 }

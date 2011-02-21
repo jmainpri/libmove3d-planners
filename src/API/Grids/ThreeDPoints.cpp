@@ -39,6 +39,7 @@ void ThreeDPoints::drawAllPoints()
     glEnable(GL_CULL_FACE);
     glBegin(GL_QUADS);
 
+    //std::cout << "Drawing " << m_AllPoints.size() << " points" << std::endl;
     for(unsigned i=0; i<m_AllPoints.size(); i++)
     {
         glColor4dv(colorvector);

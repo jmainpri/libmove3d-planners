@@ -200,10 +200,10 @@ bool Robot::isActiveCcConstraint()
  */
 void Robot::activateCcConstraint()
 {
-	activateCcCntrts(_Robot,-1,false);
-	desactivateTwoJointsFixCntrt(_Robot,_Robot->curObjectJnt,
-															 _Robot->ccCntrts[0]->pasjnts[ _Robot->ccCntrts[0]->npasjnts-1 ]
-															 );
+  int pas_jnt_index = _Robot->ccCntrts[0]->npasjnts-1;
+  p3d_jnt* manip_jnt = (*_Robot->armManipulationData)[0].getManipulationJnt();
+  activateCcCntrts(_Robot,-1,false);
+	desactivateTwoJointsFixCntrt(_Robot,manip_jnt,_Robot->ccCntrts[0]->pasjnts[ pas_jnt_index ]);
 }
 
 /**
@@ -211,10 +211,10 @@ void Robot::activateCcConstraint()
  */
 void Robot::deactivateCcConstraint()
 {
+  int pas_jnt_index = _Robot->ccCntrts[0]->npasjnts-1;
+  p3d_jnt* manip_jnt = (*_Robot->armManipulationData)[0].getManipulationJnt();
 	deactivateCcCntrts(_Robot,-1);
-	setAndActivateTwoJointsFixCntrt(_Robot,_Robot->curObjectJnt,
-																	_Robot->ccCntrts[0]->pasjnts[ _Robot->ccCntrts[0]->npasjnts-1 ]
-																	);
+	setAndActivateTwoJointsFixCntrt(_Robot,manip_jnt,_Robot->ccCntrts[0]->pasjnts[ pas_jnt_index ]);
 }
 
 /**
@@ -222,9 +222,13 @@ void Robot::deactivateCcConstraint()
  */
 int Robot::getObjectDof() 
 {
-	if (_Robot->curObjectJnt) 
+  p3d_jnt* jnt = NULL;
+  
+  jnt = (*_Robot->armManipulationData)[0].getManipulationJnt();
+  
+	if ( jnt ) 
 	{
-		return _Robot->curObjectJnt->index_dof;
+		return jnt->index_dof;
 	}
 	else 
 	{
@@ -378,20 +382,16 @@ shared_ptr<Configuration> Robot::shootBase()
 shared_ptr<Configuration> Robot::shoot(bool samplePassive)
 {
 	shared_ptr<Configuration> q(new Configuration(this));
+  
 #ifdef LIGHT_PLANNER
 	if(ENV.getBool(Env::FKShoot))
 	{
-		deactivateCcCntrts(_Robot,-1);
+		this->deactivateCcConstraint();
 		p3d_shoot(_Robot, q->getConfigStruct(), false);
 		setAndUpdate(*q);
 		q = getCurrentPos();
-		activateCcCntrts(_Robot,-1,true);
-		
-		if (ENV.getBool(Env::drawPoints)) {
-			PointsToDraw->push_back(q->getTaskPos());
-			//g3d_draw_allwin_active();
-		}
-		
+		this->activateCcConstraint();
+//    cout << "FKShoot" <<endl;
 		return q;
 	}
 	else
