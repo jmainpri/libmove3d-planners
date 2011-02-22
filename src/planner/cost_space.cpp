@@ -41,7 +41,7 @@ void GlobalCostSpace::initialize()
 		global_costSpace->setCost("costMap2D");
 	}
   
-  ext_compute_localpath_kin_cost = computeLocalpathKinematicCost;
+  //ext_compute_localpath_kin_cost = computeLocalpathKinematicCost;
 }
 
 //using std::string;
