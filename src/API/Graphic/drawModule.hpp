@@ -7,7 +7,12 @@
  *
  */
 
+#ifndef GRAPHIC_M3D_MODULE_HPP
+#define GRAPHIC_M3D_MODULE_HPP
+
 namespace Graphic 
 {
 	void initDrawFunctions();
 };
+
+#endif
