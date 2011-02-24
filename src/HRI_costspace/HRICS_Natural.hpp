@@ -84,12 +84,23 @@ namespace HRICS
 		 * Compute if the Workspace Point is Reachable
 		 * Leaves the Robot in the Configuration
 		 */
-		bool computeIsReachable( const Eigen::Vector3d& WSPoint, bool leftArm);
+                bool computeIsReachableAndMove( const Eigen::Vector3d& WSPoint, bool leftArm);
 		
+                /**
+                 * Compute if the Workspace Point is Reachable
+                 *  Move the robot
+                 */
+                bool computeIsReachableOnly(const Eigen::Vector3d& WSPoint, bool leftArm);
+
 		/**
 		 * Computation on the Grid
 		 */ 
 		Eigen::Transform3d getGridOriginMatrix();
+
+                /**
+                 * compute a NaturalGrid (calling class NaturalGrid)
+                 * by using Env variable.
+                 */
 		NaturalGrid* computeNaturalGrid();
 		void computeAllCellCost();
 		void computeAllReachableCellCost();

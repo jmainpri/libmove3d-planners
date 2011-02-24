@@ -35,6 +35,8 @@ using namespace tr1;
 
 std::vector<double> vect_jim;
 
+extern Eigen::Vector3d current_WSPoint;
+
 // TODO callback OOMOVE3D
 //#if defined( CXX_PLANNER )
 
@@ -176,6 +178,7 @@ void g3d_draw_grids()
   //								 global_DrawnSphere(2), 0.1 );
 }
 
+
 /**
  * @ingroup graphics
  * Draws the thing related to HRI_COSTSPACE
@@ -240,6 +243,38 @@ void g3d_draw_hrics()
 		
 		glLineWidth(1.);
 	}
+
+        if (current_WSPoint(0) != 0 && current_WSPoint(1) != 0)
+        {
+
+                double colorvector[4];
+
+                colorvector[1] = 1.0;       //green
+                colorvector[2] = 0.0;       //blue
+
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+//                Vector3d center = getWorkspacePoint();
+
+                colorvector[0] = 0.0;       //red
+                colorvector[3] = 0.9;       //transparency
+
+                g3d_set_color(Any,colorvector);
+                g3d_draw_solid_sphere(current_WSPoint[0], current_WSPoint[1], current_WSPoint[2], 0.02, 10);
+//                        GroundColorMixGreenToRed(colorvector,Cost);
+
+                colorvector[0] = 1.0;       //red
+                colorvector[3] = 0.5;       //transparency
+
+                g3d_set_color(Any,colorvector);
+                g3d_draw_solid_sphere(current_WSPoint[0], current_WSPoint[1], current_WSPoint[2], 0.10, 30);
+
+
+                //    glDisable(GL_CULL_FACE);
+                glDisable(GL_BLEND);
+
+        }
 }
 #endif
 

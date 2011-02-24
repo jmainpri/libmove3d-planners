@@ -325,8 +325,8 @@ bool Configuration::isInCollision()
     {
         this->getRobot()->setAndUpdate(*this);
         _CollisionTested = true;
-        _InCollision = p3d_col_test();
-        //	return p3d_col_test_robot(_Robot->getRobotStruct(), JUST_BOOL);
+        //_InCollision = p3d_col_test();
+        _InCollision = p3d_col_test_robot(_Robot->getRobotStruct(), JUST_BOOL);
     }
 
 		return _InCollision;

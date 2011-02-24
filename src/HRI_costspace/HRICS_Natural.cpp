@@ -971,7 +971,7 @@ double Natural::getCost(const Vector3d& WSPoint, bool useLeftvsRightArm , bool w
 			
 		case Achile:
 #ifdef HRI_PLANNER
-			if( computeIsReachable(WSPoint,useLeftvsRightArm) )
+                        if( computeIsReachableAndMove(WSPoint,useLeftvsRightArm) )
 			{
 				m_leftArmCost = useLeftvsRightArm;
 				return getConfigCost();
@@ -1045,13 +1045,15 @@ double Natural::getNumberOfIKCost(const Vector3d& WSPoint)
 /*! 
  * Compute Wether a point is reachable
  */
-bool Natural::computeIsReachable(const Vector3d& WSPoint,bool useLeftvsRightArm)
+bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRightArm)
 {
 #ifdef HRI_PLANNER
+//        cout << "Natural::computeIsReachableAndMove" << endl;
 	shared_ptr<Configuration> configStored = m_Robot->getCurrentPos();
+
 	
-	bool IKSucceded;
-	const bool withSideEffect = true;
+        bool IKSucceded;
+        const bool withSideEffect = true;
 	
 	// 2 - Select Task
 	HRI_GIK_TASK_TYPE task;
@@ -1059,7 +1061,7 @@ bool Natural::computeIsReachable(const Vector3d& WSPoint,bool useLeftvsRightArm)
 	if (useLeftvsRightArm == true) 
 	{
 		//task = GIK_LAREACH; // Left Arm GIK
-		task = GIK_LATREACH;
+                task = GIK_LATREACH;
 	}
 	else 
 	{
@@ -1067,7 +1069,6 @@ bool Natural::computeIsReachable(const Vector3d& WSPoint,bool useLeftvsRightArm)
 		task = GIK_RATREACH;
 	}
 	
-	configPt q;
 	
 	p3d_vector3 Tcoord;
 	
@@ -1075,46 +1076,54 @@ bool Natural::computeIsReachable(const Vector3d& WSPoint,bool useLeftvsRightArm)
 	Tcoord[1] = WSPoint[1];
 	Tcoord[2] = WSPoint[2];
 	
-	if(	(m_IsHuman && (m_Agents->humans_no > 0)) || ( (!m_IsHuman) && (m_Agents->robots_no > 0))) // Humans ot Robots
+        if((m_IsHuman && (m_Agents->humans_no > 0)) || ( (!m_IsHuman) && (m_Agents->robots_no > 0))) // Humans ot Robots
 	{
-		q = p3d_get_robot_config(m_Robot->getRobotStruct());
-		
-		HRI_AGENT* agent;
-		
-		if (m_IsHuman) 
-		{
-			agent = m_Agents->humans[0];
-		}
-		else 
-		{
-			agent = m_Agents->robots[0];
-		}
+                HRI_AGENTS * agents = hri_create_agents();
 
-		double approach_distance = 1.0;
-		IKSucceded =  hri_agent_single_task_manip_move(agent, task, &Tcoord, approach_distance, &q);
-		
-		shared_ptr<Configuration> ptrQ(new Configuration(m_Robot,q));
-		
-		if ( IKSucceded ) 
-		{
-			//shared_ptr<Configuration> ptrQ(new Configuration(m_Robot,q));
-			
-			if( /*ptrQ->setConstraintsWithSideEffect() &&*/ !ptrQ->isInCollision() )
-			{
-				m_Robot->setAndUpdateHumanArms(*ptrQ);
-			}
-			else 
-			{
-				IKSucceded = false;
-				//Cost = 0.0; 
-				cout << "Config in collision in " << __func__ << endl;
-			}
-		}
-		else 
-		{
-			//Cost = 36;
-			cout << "IK Failed in " << __func__ << endl;
-		}
+                configPt q;
+
+                double distance_tolerance = 4.0;
+
+                if(m_IsHuman) // Humans
+                {
+                        q = p3d_get_robot_config(agents->humans[0]->robotPt);
+                        IKSucceded = !hri_agent_single_task_manip_move(agents->humans[0], task, &Tcoord, distance_tolerance, &q);
+
+
+                        shared_ptr<Configuration> ptrQ(new Configuration(m_Robot,q));
+
+                        if (IKSucceded)
+                        {
+                                if( /*ptrQ->setConstraintsWithSideEffect() &&*/ !ptrQ->isInCollision())
+                                {
+//                                        cout << "Configuration is OK in computeIsReachableAndMove" << endl;
+                                        //p3d_set_and_update_this_robot_conf(agents->humans[0]->robotPt,q);
+                                        m_Robot->setAndUpdate(*configStored);
+                                        m_Robot->setAndUpdate(*ptrQ);
+                                }
+                                else
+                                {
+                                        IKSucceded = false;
+                                        //Cost = 0.0;
+//                                        m_Robot->setAndUpdate(*configStored);
+                                        cout << "Config in collision in " << __func__ << endl;
+                                }
+                        }
+                        else
+                        {
+                                //Cost = 36;
+                                cout << "IK Failed in " << __func__ << endl;
+                        }
+                }
+                else // Robots
+                {
+                        q = p3d_get_robot_config(agents->robots[0]->robotPt);
+                        IKSucceded = hri_agent_single_task_manip_move(agents->robots[0], task, &Tcoord, distance_tolerance, &q);
+                        p3d_set_and_update_this_robot_conf(agents->robots[0]->robotPt,q);
+                }
+
+
+
 		
 		
 	}
@@ -1135,10 +1144,58 @@ bool Natural::computeIsReachable(const Vector3d& WSPoint,bool useLeftvsRightArm)
 		m_Robot->setAndUpdate(*configStored);
 	}
 	
-	return IKSucceded;
+        return IKSucceded;
 #else
 	cout << "HRI_GIK : " << "not compiled" << endl;
 	return false;
+#endif
+}
+
+bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRightArm)
+{
+#ifdef HRI_PLANNER
+        shared_ptr<Configuration> configStored = m_Robot->getCurrentPos();
+        bool IKSucceded;
+        HRI_GIK_TASK_TYPE task;
+
+        if (useLeftvsRightArm == true){
+                //task = GIK_LAREACH; // Left Arm GIK
+                task = GIK_LATREACH;
+        }else{
+                //task = GIK_RAREACH; // Left Arm GIK
+                task = GIK_RATREACH;
+        }
+        p3d_vector3 Tcoord;
+
+        Tcoord[0] = WSPoint[0];
+        Tcoord[1] = WSPoint[1];
+        Tcoord[2] = WSPoint[2];
+
+        if((m_IsHuman && (m_Agents->humans_no > 0)) || ( (!m_IsHuman) && (m_Agents->robots_no > 0))) // Humans ot Robots
+        {
+                HRI_AGENTS * agents = hri_create_agents();
+                configPt q;
+                double distance_tolerance = 4.0;
+                if(m_IsHuman)
+                {
+                        q = p3d_get_robot_config(agents->humans[0]->robotPt);
+                        IKSucceded = !hri_agent_single_task_manip_move(agents->humans[0], task, &Tcoord, distance_tolerance, &q);
+                        shared_ptr<Configuration> ptrQ(new Configuration(m_Robot,q));
+
+                        if (IKSucceded){
+                                if( ptrQ->isInCollision()){
+                                        IKSucceded = false;
+                                        cout << "Config in collision in " << __func__ << endl;
+                                }}else{
+                                cout << "IK Failed in " << __func__ << endl;
+                        }}}else{
+                cout << "Warning: No Agent for GIK" << endl;
+        }
+        m_Robot->setAndUpdate(*configStored);
+        return IKSucceded;
+#else
+        cout << "HRI_GIK : " << "not compiled" << endl;
+        return false;
 #endif
 }
 

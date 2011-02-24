@@ -266,7 +266,7 @@ void NaturalCell::computeReachability(bool leftArm)
 	
 	shared_ptr<Configuration> q_actual = NatSpace->getRobot()->getCurrentPos();
 	
-	if ( NatSpace->computeIsReachable(getCenter(),leftArm) )
+        if ( NatSpace->computeIsReachableAndMove(getCenter(),leftArm) )
 	{
 		m_IsReachable = true;
 		

@@ -49,6 +49,7 @@ using namespace HRICS;
 using namespace Eigen;
 
 extern string global_ActiveRobotName;
+Eigen::Vector3d current_WSPoint;
 
 Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 {
@@ -161,7 +162,9 @@ void Workspace::initGrid()
 	//#ifdef QT_LIBRARY
 	//    std::string str = "g3d_draw_allwin_active";
 	//    write(qt_fl_pipe[1],str.c_str(),str.length()+1);
-	//#endif
+        //#endif\
+
+
 }
 
 void Workspace::initDistance()
@@ -636,7 +639,7 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 		if (!q_base->isInCollision()) 
 		{
 			deactivateOnlyBaseCollision();
-			//_Robot->setAndUpdate(*q_base);
+                        //_Robot->setAndUpdate(*q_base);
 			return true;
 		}
 	}
@@ -698,9 +701,7 @@ public:
 
 bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint)
 {	
-	p3d_col_activate_rob_rob(
-													 _Robot->getRobotStruct(), 
-													 mHumans[0]->getRobotStruct());
+        p3d_col_activate_rob_rob( _Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
 	
 	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
 	
@@ -713,17 +714,20 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint)
 	vector< pair<double,Vector3d > > ReachablePoints = m_ReachableSpace->getReachableWSPoint();
 	
 	for (unsigned int i=0; i<ReachablePoints.size(); i++)
-	{
-		double KDist = ENV.getDouble(Env::Kdistance);
-		double KVisi = ENV.getDouble(Env::Kvisibility);
-		double KReac = ENV.getDouble(Env::Kreachable);
-		
-		ReachablePoints[i].first *= KReac;
-		ReachablePoints[i].first += KVisi*m_VisibilitySpace->getCost(ReachablePoints[i].second);
-		ReachablePoints[i].first += KDist*m_DistanceSpace->getWorkspaceCost(ReachablePoints[i].second);
-		
-		ReachablePoints[i].first /= 3;
-	}
+        {
+                double KDist = ENV.getDouble(Env::Kdistance);
+                double KVisi = ENV.getDouble(Env::Kvisibility);
+                double KReac = ENV.getDouble(Env::Kreachable);
+
+                Vector3d point   = ReachablePoints[i].second;
+
+                double CostDist = m_DistanceSpace->getWorkspaceCost(point);
+                double CostReach = ReachablePoints[i].first;
+                double CostVisib = m_VisibilitySpace->getCost(point);
+
+
+                ReachablePoints[i].first = (KDist*CostDist + KVisi*CostVisib + KReac*CostReach )/ 3;
+        }
 	
 	sort(ReachablePoints.begin(),ReachablePoints.end(),NaturalPointsCompObject);
 	
@@ -732,7 +736,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint)
 	for (unsigned int i=0; i<ReachablePoints.size(); i++)
 	{
 		points.push_back(ReachablePoints[i].second);
-		cout << "Cost = " << ReachablePoints[i].first << endl;
+                cout << "Cost = " << ReachablePoints[i].first << endl;
 	}
 	
 	if( points.empty() )
@@ -764,7 +768,10 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint)
 	
 	q_base->setAsNotTested();
 	
-	PointsToDraw->clear();
+        if (PointsToDraw == NULL){
+                PointsToDraw = new ThreeDPoints();
+        }
+        PointsToDraw->clear();
 	
 	//find a configuration for the whole robot (mobile base + arm):
 	for(unsigned int i=0; i<100; i++)
@@ -799,7 +806,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint)
 
 bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 {	
-        cout << "---------1----------" << endl;
+
 	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
 	
 	if ( m_ReachableSpace == NULL )
@@ -807,22 +814,25 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 		cout << "No ReachableSpace cost space initialized" << endl;
 		return false;
 	}
-        cout << "---------2----------" << endl;
+
 	vector< pair<double,Vector3d > > ReachablePoints = m_ReachableSpace->getReachableWSPoint();
 	
 	for (unsigned int i=0; i<ReachablePoints.size(); i++)
-	{
-		double KDist = ENV.getDouble(Env::Kdistance);
-		double KVisi = ENV.getDouble(Env::Kvisibility);
-		double KReac = ENV.getDouble(Env::Kreachable);
-		
-		ReachablePoints[i].first *= KReac;
-		ReachablePoints[i].first += KVisi*m_VisibilitySpace->getCost(ReachablePoints[i].second);
-		ReachablePoints[i].first += KDist*m_DistanceSpace->getWorkspaceCost(ReachablePoints[i].second);
-		
-		ReachablePoints[i].first /= 3;
-	}
-        cout << "---------3----------" << endl;
+        {
+                double KDist = ENV.getDouble(Env::Kdistance);
+                double KVisi = ENV.getDouble(Env::Kvisibility);
+                double KReac = ENV.getDouble(Env::Kreachable);
+
+                Vector3d point   = ReachablePoints[i].second;
+
+                double CostDist = m_DistanceSpace->getWorkspaceCost(point);
+                double CostReach = ReachablePoints[i].first;
+                double CostVisib = m_VisibilitySpace->getCost(point);
+
+
+                ReachablePoints[i].first = (KDist*CostDist + KVisi*CostVisib + KReac*CostReach )/ 3;
+        }
+
 	sort(ReachablePoints.begin(),ReachablePoints.end(),NaturalPointsCompObject);
 	
 	if( ReachablePoints.empty() )
@@ -832,7 +842,7 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 	}
 	
 	transfPoint = ReachablePoints[0].second;
-        cout << "---------4----------" << endl;
+
 	return true;
 }
 
@@ -848,17 +858,22 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 	
 	vector< pair<double,Vector3d > > ReachablePoints = m_ReachableSpace->getReachableWSPoint();
 	
+        // Fills each pair with
+        // the cost of the sum of each criteria
 	for (unsigned int i=0; i<ReachablePoints.size(); i++)
 	{
 		double KDist = ENV.getDouble(Env::Kdistance);
 		double KVisi = ENV.getDouble(Env::Kvisibility);
 		double KReac = ENV.getDouble(Env::Kreachable);
+
+                Vector3d point   = ReachablePoints[i].second;
+
+                double CostDist = m_DistanceSpace->getWorkspaceCost(point);
+                double CostReach = ReachablePoints[i].first;
+                double CostVisib = m_VisibilitySpace->getCost(point);
+
 		
-		ReachablePoints[i].first *= KReac;
-		ReachablePoints[i].first += KVisi*m_VisibilitySpace->getCost(ReachablePoints[i].second);
-		ReachablePoints[i].first += KDist*m_DistanceSpace->getWorkspaceCost(ReachablePoints[i].second);
-		
-		ReachablePoints[i].first /= 3;
+                ReachablePoints[i].first = (KDist*CostDist + KVisi*CostVisib + KReac*CostReach )/ 3;
 	}
 	
 	sort(ReachablePoints.begin(),ReachablePoints.end(),NaturalPointsCompObject);
@@ -867,7 +882,7 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 	{
 		transfPoint = ReachablePoints[i].second;
 		
-		if (m_ReachableSpace->computeIsReachable(transfPoint,m_ReachableSpace->getGrid()->isReachableWithLA(transfPoint))) 
+                if (m_ReachableSpace->computeIsReachableOnly(transfPoint,m_ReachableSpace->getGrid()->isReachableWithLA(transfPoint)))
 		{
 			return true;
 		}
@@ -877,3 +892,50 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 	
 	return false;
 }
+
+
+
+bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type)
+{
+        if (ENV.getBool(Env::isCostSpace)){
+
+//                cout << "OtpWidget::computeTheOtp" << endl;
+                ENV.setBool(Env::HRIComputeOTP,true);
+
+                if ( ENV.getBool(Env::HRIComputeOTP) ){
+
+                        Eigen::Vector3d WSPoint;
+                        bool hasComputed = false;
+
+                        if (type == 0){
+                                hasComputed = computeBestTransferPoint(WSPoint);
+                        }else if(type==1){
+                                hasComputed = computeBestFeasableTransferPoint(WSPoint);
+                        }else if(type==2){
+                                hasComputed = chooseBestTransferPoint(WSPoint);
+
+                        }
+
+                        if( hasComputed ){
+                                HRICS::Natural* reachSpace = HRICS_MotionPL->getReachability();
+                                if (Move){
+                                        reachSpace->computeIsReachableAndMove(WSPoint, reachSpace->getGrid()->isReachableWithLA(WSPoint));
+                                }else{
+                                       reachSpace->computeIsReachableOnly(WSPoint, reachSpace->getGrid()->isReachableWithLA(WSPoint));
+                                }
+                                current_WSPoint = WSPoint;
+//                                cout << WSPoint << endl;
+                        }/*else{
+                                current_WSPoint << 0.0 ,0.0, 0.0;
+                        }*/}
+
+                ENV.setBool(Env::HRIComputeOTP,false);
+
+//                cout << "The OTP has been computed succesfully"<< endl ;
+
+        }else{
+                cout << "Cost Space not initialized" << endl;
+        }
+        return true;
+}
+

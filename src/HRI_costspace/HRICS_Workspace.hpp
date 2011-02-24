@@ -182,13 +182,36 @@ namespace HRICS
 		 */
 		void deactivateOnlyBaseCollision();
 		void activateOnlyBaseCollision();
+
+                /**
+                 * Test if Jido (Base?) is in collision in this configuration
+                 */
 		bool sampleRobotBase(std::tr1::shared_ptr<Configuration> q_base, const Eigen::Vector3d& WSPoint);
+
+                /**
+                 * Test if Jido is in collision in this configuration (?)
+                 */
 		bool transPFromBaseConf(std::tr1::shared_ptr<Configuration> q_base, std::vector< Eigen::Vector3d > points );
 		bool baseInSight(std::tr1::shared_ptr<Configuration> q_base);
 		
 		bool chooseBestTransferPoint(Eigen::Vector3d& transfPoint);
+
+                /**
+                 * Compute a transfert point from a loaded grid, without taking into acount a possible colision.
+                 * If a trandfert point is found, return true and put the vector into transfPoint else return false
+                 */
 		bool computeBestTransferPoint(Eigen::Vector3d& transfPoint);
+
+                /**
+                 * Compute a transfert point from a loaded grid, taking into acount a possible colision.
+                 * If a trandfert point is found, return true and put the vector into transfPoint else return false
+                 */
 		bool computeBestFeasableTransferPoint(Eigen::Vector3d& transfPoint);
+
+                /**
+                 * compute an object transfert point
+                 */
+                bool ComputeTheObjectTransfertPoint(bool Move, int type);
 		
 	private:
 		

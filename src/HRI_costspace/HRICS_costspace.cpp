@@ -252,9 +252,14 @@ void HRICS_init()
 		HRICS_activeNatu->setGrid(dynamic_cast<HRICS::NaturalGrid*>(API_activeGrid));
 		ENV.setBool(Env::drawGrid,false);
 	}
-  
-  global_costSpace->addCost("costHRI",boost::bind(HRICS_getConfigCost,_1));
-  global_costSpace->setCost("costHRI");
+	
+	ENV.setInt(Env::hriCostType,HRICS_Combine);
+
+        std::cout << "Initializing the HRI costmap cost function" << std::endl;
+        global_costSpace->addCost("costHRI",boost::bind(HRICS_getConfigCost, _1));
+        global_costSpace->setCost("costHRI");
+	
 	cout << "new HRI Workspace" << endl;
-  //Human->setAndUpdate( *q );
+
+        //Human->setAndUpdate( *q );
 }
