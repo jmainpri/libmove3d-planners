@@ -59,8 +59,8 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 	
 	Scene* environnement = global_Project->getActiveScene();
 	
-        this->setRobot(	   environnement->getRobotByNameContaining(global_ActiveRobotName) );
-	mHumans.push_back( environnement->getRobotByNameContaining("HUMAN") );
+  this->setRobot(	   environnement->getRobotByNameContaining(global_ActiveRobotName) );
+  mHumans.push_back( environnement->getRobotByNameContaining("HUMAN") );
 	
 	if (_Robot) 
 	{

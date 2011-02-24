@@ -30,6 +30,8 @@ Eigen::Vector3d global_DrawnSphere;
 #include <iostream>
 #include <tr1/memory>
 
+extern std::string global_ActiveRobotName;
+
 using namespace std;
 using namespace tr1;
 
@@ -290,9 +292,9 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
     {
       std::string robotName(costRobot->name);
       
-      if( robotName.find("ROBOT") == std::string::npos ) // Does not contain Robot
+      if( robotName.find( global_ActiveRobotName ) == std::string::npos ) // Does not contain Robot
       {
-        costRobot = p3d_get_robot_by_name_containing("ROBOT");
+        costRobot = p3d_get_robot_by_name_containing( global_ActiveRobotName.c_str() );
         cost_q = p3d_get_robot_config(costRobot);
         //cout << "Change the robot position = " << robotPt->name << endl;
       }

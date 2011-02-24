@@ -6,6 +6,8 @@
  *  Copyright 2010 LAAS/CNRS. All rights reserved.
  *
  */
+#ifndef HRI_COSTSPACE_HPP
+#define HRI_COSTSPACE_HPP
 
 #include "planner/cost_space.hpp"
 
@@ -59,4 +61,6 @@ extern HRICS::HumanAwareMotionPlanner*	HRICS_MotionPL;
  */ 
 extern API::ThreeDCell*		BiasedCell3D;
 extern API::TwoDCell*		BiasedCell2D;
+
+#endif
 
