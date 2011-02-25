@@ -84,13 +84,13 @@ namespace HRICS
 		 * Compute if the Workspace Point is Reachable
 		 * Leaves the Robot in the Configuration
 		 */
-                bool computeIsReachableAndMove( const Eigen::Vector3d& WSPoint, bool leftArm);
+    bool computeIsReachableAndMove( const Eigen::Vector3d& WSPoint, bool leftArm);
 		
-                /**
-                 * Compute if the Workspace Point is Reachable
-                 *  Move the robot
-                 */
-                bool computeIsReachableOnly(const Eigen::Vector3d& WSPoint, bool leftArm);
+    /**
+     * Compute if the Workspace Point is Reachable
+     *  Move the robot
+     */
+    bool computeIsReachableOnly(const Eigen::Vector3d& WSPoint, bool leftArm);
 
 		/**
 		 * Computation on the Grid

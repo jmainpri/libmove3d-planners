@@ -223,6 +223,11 @@ void g3d_draw_hrics()
 		}
 		
 		glLineWidth(1.);
+    
+    if( HRICS_activeNatu )
+    {
+      HRICS_activeNatu->setRobotColorFromConfiguration();
+    }
 	}
   
 	if ( ENV.getBool(Env::drawGaze) && ( ENV.getBool(Env::HRIPlannerWS) ||  ENV.getBool(Env::HRIPlannerCS) ) )

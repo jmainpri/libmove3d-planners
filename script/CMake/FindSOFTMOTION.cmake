@@ -10,13 +10,20 @@
 ## Check for the header files
 
 find_path (SOFTMOTION_INCLUDE_DIR softMotion/softMotion.h
-  PATHS ${SOFTMOTION_INC} /Users/jmainpri/workspace/softMotion-libs/build/install/include
+  PATHS ${SOFTMOTION_INC} /usr/local/include /usr/include /sw/include /opt/local/include ${CMAKE_CURRENT_SOURCE_DIR}/other_libraries/softMotion-libs/build/install/include $ENV{ROBOTPKG_BASE}/include
   )
+#if(${SOFTMOTION_INCLUDE_DIR} MATCHES "SOFTMOTION_INCLUDE_DIR-NOTFOUND")
+#  add_subdirectory(${BioMove3D_SOURCE_DIR}/other_libraries/softMotion)
+#endif(${SOFTMOTION_INCLUDE_DIR} MATCHES "SOFTMOTION_INCLUDE_DIR-NOTFOUND")
+#find_path (SOFTMOTION_INCLUDE_DIR softMotion/softMotion.h 
+#  PATHS /usr/local/include /usr/include /sw/include /opt/local/include ${CMAKE_CURRENT_SOURCE_DIR}/other_libraries/softMotion-libs/build/install/include
+#)
+
 ## -----------------------------------------------------------------------------
 ## Check for the library
 
 find_library (SOFTMOTION_LIBRARIES softMotion
-  PATHS ${SOFTMOTION_LIB} /Users/jmainpri/workspace/softMotion-libs/build/install/lib
+  PATHS ${SOFTMOTION_LIB} /usr/local/lib /usr/lib /lib /sw/lib /opt/local/lib ${CMAKE_CURRENT_SOURCE_DIR}/other_libraries/softMotion-libs/build/install/lib  $ENV{ROBOTPKG_BASE}/lib
   )
 
 ## -----------------------------------------------------------------------------

@@ -262,6 +262,14 @@ INCLUDE_directories(${GBM_INCLUDE_DIR})
 SET(LIBS ${LIBS} ${GBM_LIBRARIES})
 ENDIF(MULTILOCALPATH)
 
+#-------------- SOFTMOTION -----------------------------------------------------
+IF(MULTILOCALPATH)
+  FIND_PACKAGE(SOFTMOTION REQUIRED)
+  INCLUDE_directories(${SOFTMOTION_INCLUDE_DIR})
+  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${SOFTMOTION_INCLUDE_DIR})
+  SET(LIBS ${LIBS} ${SOFTMOTION_LIBRARIES})
+ENDIF(MULTILOCALPATH)
+
 #-------------- Grasp Planner --------------------------------------------------
 
 #IF(GRASP_PLANNING)
