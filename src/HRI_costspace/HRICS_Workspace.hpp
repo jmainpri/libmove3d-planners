@@ -210,9 +210,12 @@ namespace HRICS
 		bool computeBestFeasableTransferPoint(Eigen::Vector3d& transfPoint);
     
     /**
-     * compute an object transfert point
+     * compute an object transfert point.
+     * the first variable make the human go to the posture or just show it
+     * the second one allow to choose different computing fonctions taking into account or not the environment
      */
     bool ComputeTheObjectTransfertPoint(bool Move, int type, Eigen::Vector3d& transfPoint);
+
 		
 	private:
 		

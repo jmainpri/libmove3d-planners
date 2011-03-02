@@ -560,7 +560,7 @@ bool Workspace::transPFromBaseConf(shared_ptr<Configuration> q_base, vector< Vec
 	
 	//On met à jour la configuration du robot pour que sa base soit dans la configuration
 	//souhaitée:
-	//_Robot->setAndUpdate(*q_base);
+        _Robot->setAndUpdate(*q_base);
 	
 	//pour chaque point de la liste:
 	for(unsigned int i=0; i < points.size(); i++)
@@ -617,15 +617,19 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 		// That rotates a point around the human gaze
 		Transform2d t;
 		
-		Vector2d HumanPos;
+                Vector2d HumanPos;
 		
 		HumanPos[0] = WSPoint[0];
 		HumanPos[1] = WSPoint[1];
 		
+
 		t.translation() = HumanPos;
 		
-		Rotation2Dd rot(p3d_random(-M_PI/4, M_PI/4));
-		t.linear() = rot.toRotationMatrix();
+                Rotation2Dd rot(p3d_random(-M_PI/4, M_PI/4));
+                t.linear() = rot.toRotationMatrix();
+                t(2,0) = 0;
+                t(2,1) = 0;
+                t(2,2) = 1;
 		
 		Vector2d point = t * gazePoint;
 		
@@ -642,7 +646,7 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 		Vector3d CirclePoint;
 		
 		CirclePoint(0) = point[0];
-		CirclePoint(1) = point[1];
+                CirclePoint(1) = point[1];
 		CirclePoint(2) = 0.30;
 		
 		PointsToDraw->push_back(CirclePoint);
@@ -653,13 +657,13 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 		if (!q_base->isInCollision()) 
 		{
 			deactivateOnlyBaseCollision();
-                        //_Robot->setAndUpdate(*q_base);
+                        _Robot->setAndUpdate(*q_cur);
 			return true;
 		}
 	}
 	
 	deactivateOnlyBaseCollision();
-	//_Robot->setAndUpdate(*q_cur);
+        _Robot->setAndUpdate(*q_cur);
 	return false;
 }
 
@@ -715,6 +719,8 @@ public:
 
 bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint)
 {	
+
+
         p3d_col_activate_rob_rob( _Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
 	
 	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
@@ -745,12 +751,16 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint)
 	
 	sort(ReachablePoints.begin(),ReachablePoints.end(),NaturalPointsCompObject);
 	
+
+
+
+
 	vector<Vector3d> points;
 	
 	for (unsigned int i=0; i<ReachablePoints.size(); i++)
 	{
 		points.push_back(ReachablePoints[i].second);
-                cout << "Cost = " << ReachablePoints[i].first << endl;
+//                cout << "Cost = " << ReachablePoints[i].first << endl;
 	}
 	
 	if( points.empty() )
@@ -776,46 +786,50 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint)
 	
 	Vector3d WSPoint;
 	
-	WSPoint[0] = (*q_cur_human)[6];
-	WSPoint[1] = (*q_cur_human)[7];
-	WSPoint[2] = (*q_cur_human)[8];
+        return m_ReachableSpace->computeIsReachableForRobot(_Robot, WSPoint, true);
+
+//        // Human pos (x,y,z)
+//	WSPoint[0] = (*q_cur_human)[6];
+//	WSPoint[1] = (*q_cur_human)[7];
+//	WSPoint[2] = (*q_cur_human)[8];
 	
-	q_base->setAsNotTested();
+//	q_base->setAsNotTested();
 	
-        if (PointsToDraw == NULL){
-                PointsToDraw = new ThreeDPoints();
-        }
-        PointsToDraw->clear();
+//        if (PointsToDraw == NULL){
+//                PointsToDraw = new ThreeDPoints();
+//        }
+//        PointsToDraw->clear();
 	
-	//find a configuration for the whole robot (mobile base + arm):
-	for(unsigned int i=0; i<100; i++)
-	{
-		if( sampleRobotBase(q_base,WSPoint) )
-		{
-			cout << "Valid Base config at " << i << endl;
-			if ( transPFromBaseConf(q_base,points) )
-			{
-				cout << "Configuration at iteration " << i << " found!!!" << endl;
+//	//find a configuration for the whole robot (mobile base + arm):
+//	for(unsigned int i=0; i<100; i++)
+//	{
+//		if( sampleRobotBase(q_base,WSPoint) )
+//		{
+//			cout << "Valid Base config at " << i << endl;
+//			if ( transPFromBaseConf(q_base,points) )
+//			{
+//				cout << "Configuration at iteration " << i << " found!!!" << endl;
 				
-				transfPoint[0] = (*q_base)[mIndexObjectDof+0];
-				transfPoint[1] = (*q_base)[mIndexObjectDof+1];
-				transfPoint[2] = (*q_base)[mIndexObjectDof+2];
+//                                transfPoint[0] = (*q_base)[mIndexObjectDof+0];
+//                                transfPoint[1] = (*q_base)[mIndexObjectDof+1];
+//                                transfPoint[2] = (*q_base)[mIndexObjectDof+2];
 				
-				_Robot->setAndUpdate(*q_base);
-				p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
-				return true;
-			}
-		}
+////				_Robot->setAndUpdate(*q_base);
+//                                p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+//                                _Robot->setAndUpdate(*q_cur_robot);
+//				return true;
+//			}
+//		}
 		
-		_Robot->setAndUpdate(*q_cur_robot);
+//		_Robot->setAndUpdate(*q_cur_robot);
 		
-	}
+//	}
 	
-	_Robot->setAndUpdate(*q_cur_robot);
-	p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
-	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
-	cout << "No Point found" << endl;
-	return false;
+//	_Robot->setAndUpdate(*q_cur_robot);
+//	p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+//	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+//	cout << "No Point found" << endl;
+//	return false;
 }
 
 bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
@@ -911,6 +925,10 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 
 bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WSPoint)
 {
+  ENV.setDouble( Env::Kdistance,   5 );
+  ENV.setDouble( Env::Kvisibility, 25 );
+  ENV.setDouble( Env::Kreachable,  90 );
+
   bool hasComputed = false;
   
   if (ENV.getBool(Env::isCostSpace)){
@@ -933,14 +951,14 @@ bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WS
         HRICS::Natural* reachSpace = HRICS_MotionPL->getReachability();
         if (Move){
           reachSpace->computeIsReachableAndMove(WSPoint, reachSpace->getGrid()->isReachableWithLA(WSPoint));
+
         }else{
           reachSpace->computeIsReachableOnly(WSPoint, reachSpace->getGrid()->isReachableWithLA(WSPoint));
         }
-        current_WSPoint = WSPoint;
-        //                                cout << WSPoint << endl;
-      }/*else{
+        current_WSPoint = WSPoint;                               cout << WSPoint << endl;
+      }else{
         current_WSPoint << 0.0 ,0.0, 0.0;
-        }*/
+        }
     }
     
     ENV.setBool(Env::HRIComputeOTP,false);

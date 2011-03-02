@@ -1068,7 +1068,7 @@ double Natural::getNumberOfIKCost(const Vector3d& WSPoint)
 }
 
 /*! 
- * Compute Wether a point is reachable
+ * Compute Wether a point is reachable for a human
  */
 bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRightArm)
 {
@@ -1142,23 +1142,23 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
       p3d_set_and_update_this_robot_conf(m_Agents->robots[0]->robotPt,q);
     }
     
-	}
-	//	else 
-	//	if ( m_Agents->robots_no > 0) // Robots
-	//	{
-	//		q = p3d_get_robot_config(m_Agents->robots[0]->robotPt);
-	//		IKSucceded = hri_agent_single_task_manip_move(m_Agents->robots[0], task, Tcoord, &q);
-	//		//p3d_set_and_update_this_robot_conf(m_Agents->robots[0]->robotPt,q);
-	//	}
-	else 
-	{
-		cout << "Warning: No Agent for GIK" << endl;
-	}
-	
-	if(!withSideEffect)
-	{
-		m_Robot->setAndUpdate(*configStored);
-	}
+    }
+    //	else
+    //	if ( m_Agents->robots_no > 0) // Robots
+    //	{
+    //		q = p3d_get_robot_config(m_Agents->robots[0]->robotPt);
+    //		IKSucceded = hri_agent_single_task_manip_move(m_Agents->robots[0], task, Tcoord, &q);
+    //		//p3d_set_and_update_this_robot_conf(m_Agents->robots[0]->robotPt,q);
+    //	}
+    else
+    {
+        cout << "Warning: No Agent for GIK" << endl;
+    }
+
+    if(!withSideEffect)
+    {
+        m_Robot->setAndUpdate(*configStored);
+    }
 	
   return IKSucceded;
 #else
@@ -1213,6 +1213,39 @@ bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRight
   cout << "HRI_GIK : " << "not compiled" << endl;
   return false;
 #endif
+}
+
+bool Natural::computeIsReachableForRobot(Robot* _Robot, const Vector3d& WSPoint,bool useLeftvsRightArm)
+{
+#ifdef HRI_PLANNER
+        cout << "--------------------->" <<_Robot->getName() << endl;
+
+        p3d_vector3 Tcoord;
+        Tcoord[0] = WSPoint[0];
+        Tcoord[1] = WSPoint[1];
+        Tcoord[2] = WSPoint[2];
+
+        HRI_AGENTS * agents = hri_create_agents();
+
+        HRI_GIK_TASK_TYPE task;
+        task = (HRI_GIK_TASK_TYPE) 1;
+        configPt q;
+        bool IKSucceded;
+        double distance_tolerance = 4.0;
+
+        q = p3d_get_robot_config(agents->robots[0]->robotPt);
+
+        IKSucceded = !hri_agent_single_task_manip_move(agents->robots[0], task, &Tcoord, distance_tolerance, &q);
+        shared_ptr<Configuration> ptrQ(new Configuration(_Robot,q));
+
+        _Robot->setAndUpdate(*ptrQ);
+
+        return IKSucceded;
+#else
+        cout << "HRI_GIK : " << "not compiled" << endl;
+        return false;
+#endif
+
 }
 
 

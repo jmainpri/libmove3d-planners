@@ -327,7 +327,12 @@ bool Configuration::isInCollision()
         _CollisionTested = true;
         //_InCollision = p3d_col_test();
         _InCollision = p3d_col_test_robot(_Robot->getRobotStruct(), JUST_BOOL);
+//        shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
+//        cout << "6" << " : "<<_Configuration[6] << endl;
+//        cout << "7" << " : "<<_Configuration[7] << endl;
+//        cout << "---------" << endl;
     }
+
 
 		return _InCollision;
 }
