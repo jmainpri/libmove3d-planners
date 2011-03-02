@@ -10,20 +10,21 @@
 ## Check for the header files
 
 find_path (p3d_INCLUDE_DIR env.hpp
- PATHS $ENV{HOME}/workspace/Move3D-core/p3d  $ENV{ROBOTPKG_BASE}/include/libmove3d/p3d/
+ PATHS $ENV{HOME}/workspace/Move3D-core/p3d  $ENV{ROBOTPKG_BASE}/include/libmove3d-viewer/p3d/
  )
 
 find_path (MOVE3D-CORE_INCLUDE_DIR P3d-pkg.h
- PATHS $ENV{HOME}/workspace/Move3D-core/include $ENV{ROBOTPKG_BASE}/include/libmove3d/include/
+ PATHS $ENV{HOME}/workspace/Move3D-core/include $ENV{ROBOTPKG_BASE}/include/libmove3d-viewer/include/
  )
 
 find_library (MOVE3D-CORE_LIBRARIES move3d-viewer
   PATHS ${MOVE3D-CORE_LIB} $ENV{HOME}/workspace/Move3D-core/build_lib/Debug/lib/$ENV{HOSTTYPE} $ENV{ROBOTPKG_BASE}/lib/
   )
-message(blalbla)
+
 message(${p3d_INCLUDE_DIR})
 message(${MOVE3D-CORE_INCLUDE_DIR})
 message(${MOVE3D-CORE_LIBRARIES})
+
 ## -----------------------------------------------------------------------------
 ## Actions taken when all components have been found
 
