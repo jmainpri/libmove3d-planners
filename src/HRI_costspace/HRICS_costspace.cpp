@@ -223,9 +223,13 @@ void HRICS_init()
 	ENV.setBool(Env::useBallDist,true);
   ENV.setDouble(Env::zone_size,0.80);
   
-  ENV.setDouble( Env::Kdistance,   80 );
-  ENV.setDouble( Env::Kvisibility, 50 );
-  ENV.setDouble( Env::Kreachable,  10 );
+//  ENV.setDouble( Env::Kdistance,   80 );
+//  ENV.setDouble( Env::Kvisibility, 50 );
+//  ENV.setDouble( Env::Kreachable,  10 );
+
+  ENV.setDouble( Env::Kdistance,   5 );
+  ENV.setDouble( Env::Kvisibility, 25 );
+  ENV.setDouble( Env::Kreachable,  90 );
   
   Robot* Human = global_Project->getActiveScene()->getRobotByNameContaining("HUMAN");
   

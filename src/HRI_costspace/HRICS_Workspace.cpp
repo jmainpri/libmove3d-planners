@@ -925,9 +925,11 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 
 bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WSPoint)
 {
-  ENV.setDouble( Env::Kdistance,   5 );
-  ENV.setDouble( Env::Kvisibility, 25 );
-  ENV.setDouble( Env::Kreachable,  90 );
+
+
+   ENV.setDouble( Env::Kdistance,   5 );
+   ENV.setDouble( Env::Kvisibility, 25 );
+   ENV.setDouble( Env::Kreachable,  90 );
 
   bool hasComputed = false;
   
