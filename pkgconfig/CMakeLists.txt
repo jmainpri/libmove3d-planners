@@ -21,6 +21,15 @@ IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   SET(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Move3D-motionPlanner-libs install prefix" FORCE)
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
+
+IF(GENERATE_MPLIB)
+
+configure_file (${CMAKE_SOURCE_DIR}/pkgconfig/libmove3d-motionplanner.pc.cmake ${CMAKE_BINARY_DIR}/pkgconfig/libmove3d-motionplanner.pc @ONLY)
+INSTALL (FILES ${CMAKE_BINARY_DIR}/pkgconfig/libmove3d-motionplanner.pc DESTINATION lib/pkgconfig)
+
+ELSE()
+
 configure_file (${CMAKE_SOURCE_DIR}/pkgconfig/Move3D-motionPlanner-libs.pc.cmake ${CMAKE_BINARY_DIR}/pkgconfig/Move3D-motionPlanner-libs.pc @ONLY)
 INSTALL (FILES ${CMAKE_BINARY_DIR}/pkgconfig/Move3D-motionPlanner-libs.pc DESTINATION lib/pkgconfig)
 
+ENDIF()
