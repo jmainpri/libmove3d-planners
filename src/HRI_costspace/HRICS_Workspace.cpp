@@ -895,47 +895,47 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 
 
 
-bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type)
+bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WSPoint)
 {
-        if (ENV.getBool(Env::isCostSpace)){
-
-//                cout << "OtpWidget::computeTheOtp" << endl;
-                ENV.setBool(Env::HRIComputeOTP,true);
-
-                if ( ENV.getBool(Env::HRIComputeOTP) ){
-
-                        Eigen::Vector3d WSPoint;
-                        bool hasComputed = false;
-
-                        if (type == 0){
-                                hasComputed = computeBestTransferPoint(WSPoint);
-                        }else if(type==1){
-                                hasComputed = computeBestFeasableTransferPoint(WSPoint);
-                        }else if(type==2){
-                                hasComputed = chooseBestTransferPoint(WSPoint);
-
-                        }
-
-                        if( hasComputed ){
-                                HRICS::Natural* reachSpace = HRICS_MotionPL->getReachability();
-                                if (Move){
-                                        reachSpace->computeIsReachableAndMove(WSPoint, reachSpace->getGrid()->isReachableWithLA(WSPoint));
-                                }else{
-                                       reachSpace->computeIsReachableOnly(WSPoint, reachSpace->getGrid()->isReachableWithLA(WSPoint));
-                                }
-                                current_WSPoint = WSPoint;
-//                                cout << WSPoint << endl;
-                        }/*else{
-                                current_WSPoint << 0.0 ,0.0, 0.0;
-                        }*/}
-
-                ENV.setBool(Env::HRIComputeOTP,false);
-
-//                cout << "The OTP has been computed succesfully"<< endl ;
-
+  bool hasComputed = false;
+  
+  if (ENV.getBool(Env::isCostSpace)){
+    
+    //                cout << "OtpWidget::computeTheOtp" << endl;
+    ENV.setBool(Env::HRIComputeOTP,true);
+    
+    if ( ENV.getBool(Env::HRIComputeOTP) ){
+      
+      if (type == 0){
+        hasComputed = computeBestTransferPoint(WSPoint);
+      }else if(type==1){
+        hasComputed = computeBestFeasableTransferPoint(WSPoint);
+      }else if(type==2){
+        hasComputed = chooseBestTransferPoint(WSPoint);
+        
+      }
+      
+      if( hasComputed ){
+        HRICS::Natural* reachSpace = HRICS_MotionPL->getReachability();
+        if (Move){
+          reachSpace->computeIsReachableAndMove(WSPoint, reachSpace->getGrid()->isReachableWithLA(WSPoint));
         }else{
-                cout << "Cost Space not initialized" << endl;
+          reachSpace->computeIsReachableOnly(WSPoint, reachSpace->getGrid()->isReachableWithLA(WSPoint));
         }
-        return true;
+        current_WSPoint = WSPoint;
+        //                                cout << WSPoint << endl;
+      }/*else{
+        current_WSPoint << 0.0 ,0.0, 0.0;
+        }*/
+    }
+    
+    ENV.setBool(Env::HRIComputeOTP,false);
+    
+    //                cout << "The OTP has been computed succesfully"<< endl ;
+    
+  }else{
+    cout << "Cost Space not initialized" << endl;
+  }
+  return hasComputed;
 }
 
