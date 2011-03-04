@@ -197,6 +197,20 @@ void Workspace::initNatural()
 	m_NaturalSpace = NULL;
 }
 
+Eigen::Vector3d Workspace::getVisball()
+{
+  Eigen::Vector3d pos;
+  Robot* visball = global_Project->getActiveScene()->getRobotByName("VISBALL");
+  
+  if (visball) {
+    shared_ptr<Configuration> q = visball->getCurrentPos();
+    pos[0] = (*q)[6];
+    pos[1] = (*q)[7];
+    pos[2] = (*q)[8];
+  }
+  return pos;
+}
+
 /**
  * Takes the robot initial config and calls the solve A*
  * to compute the 3D path

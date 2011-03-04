@@ -142,7 +142,8 @@ namespace HRICS
 		 * Get Robot and Human
 		 */
 		Robot* getHuman(){ return mHumans[0]; }
-		
+    Eigen::Vector3d getVisball();
+    
 		/**
 		 * Computes A* in Grid
 		 */

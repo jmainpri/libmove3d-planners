@@ -44,6 +44,7 @@ namespace HRICS
     void initNaturalHerakles();
 		
 		void printBodyPos();
+    void setRobotToConfortPosture();
 		
 		/**
 		 * Get the cost of the current configuration

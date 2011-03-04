@@ -129,16 +129,20 @@ void NaturalGrid::resetReachability()
  */
 void NaturalGrid::computeAllCellCost()
 {
-    int nbCells = this->getNumberOfCells();
-    shared_ptr<Configuration> q = getRobot()->getCurrentPos();
+  cout << "NaturalGrid::computeAllCellCost" << endl;
+  
+  int nbCells = this->getNumberOfCells();
+  shared_ptr<Configuration> q = getRobot()->getCurrentPos();
 	
-    for(int i=0; i<nbCells; i++)
-    {
-        dynamic_cast<NaturalCell*>( _cells[i] )->getCost();
-    }
+  m_NaturalCostSpace->setRobotToConfortPosture();
+  
+  for(int i=0; i<nbCells; i++)
+  {
+    dynamic_cast<NaturalCell*>( _cells[i] )->getCost();
+  }
 	
-    getRobot()->setAndUpdate(*q);
-    API_activeGrid = this;
+  getRobot()->setAndUpdate(*q);
+  API_activeGrid = this;
 }
 
 /*!

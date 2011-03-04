@@ -64,6 +64,12 @@ double Visibility::getCost(const Vector3d& WSPoint)
 {
 	
 	//return akinVisibilityCost(WSPoint);
+//  p3d_vector3 pos;
+//  pos[0] = WSPoint[0];
+//  pos[1] = WSPoint[1];
+//  pos[2] = WSPoint[2];
+//  
+//  return hri_simple_is_point_visible_by_robot(pos,m_Human->getRobotStruct());
 	
   double phi,theta;
   double Dphi, Dtheta;
@@ -203,7 +209,6 @@ double Visibility::akinVisibilityCost(const Vector3d& WSPoint)
 	return (Dtheta+Dphi)/(M_2PI-(HRICS_HRI_EYE_TOLERANCE_TILT/2.)-(HRICS_HRI_EYE_TOLERANCE_PAN/2.))/0.65;
 	//return Dphi/M_PI;
 	//return Dtheta/M_PI_2;
-	
 }
 
 /*!
