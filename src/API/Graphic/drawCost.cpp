@@ -6,6 +6,7 @@
  *  Copyright 2010 LAAS/CNRS. All rights reserved.
  *
  */
+#include <QPair>
 
 #include "P3d-pkg.h"
 #include "Graphic-pkg.h"
@@ -38,6 +39,8 @@ using namespace tr1;
 std::vector<double> vect_jim;
 
 extern Eigen::Vector3d current_WSPoint;
+extern QPair<double, QList<double> > current_cost;
+double cost_max = 30.0;
 
 // TODO callback OOMOVE3D
 //#if defined( CXX_PLANNER )
@@ -90,7 +93,7 @@ void g3d_draw_eigen_box(	const Eigen::Vector3d& v1, const Eigen::Vector3d& v2, c
 	glVertex3d(v4[0],v4[1],v4[2]);
 	glVertex3d(v8[0],v8[1],v8[2]);
 	glVertex3d(v7[0],v7[1],v7[2]);
-	glEnd();
+        glEnd();
 	
 	glPopAttrib();
 }
@@ -179,6 +182,37 @@ void g3d_draw_grids()
   //								 global_DrawnSphere(1),
   //								 global_DrawnSphere(2), 0.1 );
 }
+
+void drawGauge(int number, double cost)
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    double cylinderColorvector[4];
+
+    cylinderColorvector[1] = 1.0;       //green
+    cylinderColorvector[2] = 0.0;       //blue
+    cylinderColorvector[0] = 0.0;       //red
+    cylinderColorvector[3] = 0.7;       //transparency
+
+    GroundColorMixGreenToRed(cylinderColorvector, cost);
+
+    g3d_set_color(Any,cylinderColorvector);
+
+
+    g3d_draw_solid_cylinder(1.0, -1.0 - (number * 0.5), 0.09, cost * 2, 30);
+
+    cylinderColorvector[1] = 0.5;       //green
+    cylinderColorvector[2] = 0.5;       //blue
+    cylinderColorvector[0] = 0.5;       //red
+    cylinderColorvector[3] = 0.4;       //transparency
+
+    g3d_set_color(Any,cylinderColorvector);
+    g3d_draw_solid_cylinder(1.0, -1.0 - (number * 0.5), 0.10, 2, 30);
+
+    glDisable(GL_BLEND);
+}
+
 
 
 /**
@@ -280,10 +314,20 @@ void g3d_draw_hrics()
 
                 //    glDisable(GL_CULL_FACE);
                 glDisable(GL_BLEND);
+                drawGauge(0, current_cost.first/cost_max);
+                drawGauge(1, current_cost.second[0]);
+                drawGauge(2, current_cost.second[1]);
+                drawGauge(3, current_cost.second[2]);
+
 
         }
 }
 #endif
+
+
+
+
+
 
 void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
 {

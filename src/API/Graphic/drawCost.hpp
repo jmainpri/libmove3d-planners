@@ -21,6 +21,8 @@ void g3d_draw_grids();
 void g3d_draw_hrics();
 #endif
 
+void drawGauge(int number, double cost);
+
 void computeConfigCostOnTraj(p3d_rob* rob,configPt q);
 
 #endif

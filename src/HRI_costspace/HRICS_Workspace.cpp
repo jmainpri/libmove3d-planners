@@ -6,6 +6,9 @@
  *  Copyright 2009 LAAS/CNRS. All rights reserved.
  *
  */
+#include <QMap>
+#include <QList>
+#include <QPair>
 
 #include "HRICS_costspace.hpp"
 #include "Grid/HRICS_Grid.hpp"
@@ -50,6 +53,7 @@ using namespace Eigen;
 
 extern string global_ActiveRobotName;
 Eigen::Vector3d current_WSPoint;
+QPair<double,QList<double> > current_cost;
 
 Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 {
@@ -57,6 +61,8 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 	_Robot = NULL;
 	cout << "New Workspace" << endl;
 	
+	current_WSPoint << 0.0 ,0.0, 0.0;
+
 	Scene* environnement = global_Project->getActiveScene();
 	
   this->setRobot(	   environnement->getRobotByNameContaining(global_ActiveRobotName) );
@@ -76,8 +82,16 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 #ifdef LIGHT_PLANNER
   if(_Robot)
   {
-    p3d_jnt* FF_Joint = (*_Robot->getRobotStruct()->armManipulationData)[0].getManipulationJnt();
-    ENV.setInt(Env::akinJntId,FF_Joint->num);
+    if((*_Robot->getRobotStruct()->armManipulationData).size() >= 1 )
+    {
+        p3d_jnt* FF_Joint = (*_Robot->getRobotStruct()->armManipulationData)[0].getManipulationJnt();
+        ENV.setInt(Env::akinJntId,FF_Joint->num);
+        mIndexObjectDof = FF_Joint->index_dof;
+    }
+    else
+    {
+            cout << "Error : Manipulation Data uninitialized" << endl;
+    }
   }
 #else
         cout << "Warning: Lihght Planner not compiled" << endl;
@@ -91,9 +105,6 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 	
 	if(_Robot)
 	{
-#ifdef LIGHT_PLANNER
-		mIndexObjectDof = _Robot->getObjectDof();
-#endif
 		cout << "VIRTUAL_OBJECT_DOF Joint is " << mIndexObjectDof << endl;
 		cout << "HRI Cost type is "  << ENV.getInt(Env::hriCostType) << endl;
 		cout << "Ball Dist is " << ENV.getBool(Env::useBallDist) << endl;
@@ -114,7 +125,8 @@ Workspace::Workspace(Robot* rob, Graph* graph) :
 HumanAwareMotionPlanner(rob, graph) , mPathExist(false)
 {
 	cout << "Robot is " << rob->getName() << endl;
-	
+	current_WSPoint << 0.0 ,0.0, 0.0;
+
 	if(rob->getName().find(global_ActiveRobotName) == string::npos )
 	{
 		cout << "Workspace::Error robot des not contain ROBOT" << endl;
@@ -844,6 +856,7 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 	}
 
 	vector< pair<double,Vector3d > > ReachablePoints = m_ReachableSpace->getReachableWSPoint();
+	QMap<double,QList<double> > costs;
 	
 	for (unsigned int i=0; i<ReachablePoints.size(); i++)
         {
@@ -857,8 +870,13 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
                 double CostReach = ReachablePoints[i].first;
                 double CostVisib = m_VisibilitySpace->getCost(point);
 
+                QList<double> localCosts;
+                localCosts << CostDist << CostReach << CostVisib;
+
 
                 ReachablePoints[i].first = (KDist*CostDist + KVisi*CostVisib + KReac*CostReach )/ 3;
+                costs.insert(ReachablePoints[i].first, localCosts);
+
         }
 
 	sort(ReachablePoints.begin(),ReachablePoints.end(),NaturalPointsCompObject);
@@ -870,6 +888,8 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 	}
 	
 	transfPoint = ReachablePoints[0].second;
+	current_cost.first = ReachablePoints[0].first;
+	current_cost.second = costs[current_cost.first];
 
 	return true;
 }
@@ -885,6 +905,7 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 	}
 	
 	vector< pair<double,Vector3d > > ReachablePoints = m_ReachableSpace->getReachableWSPoint();
+	QMap<double,QList<double> > costs;
 	
         // Fills each pair with
         // the cost of the sum of each criteria
@@ -894,14 +915,18 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 		double KVisi = ENV.getDouble(Env::Kvisibility);
 		double KReac = ENV.getDouble(Env::Kreachable);
 
-                Vector3d point   = ReachablePoints[i].second;
+		Vector3d point   = ReachablePoints[i].second;
 
-                double CostDist = m_DistanceSpace->getWorkspaceCost(point);
-                double CostReach = ReachablePoints[i].first;
-                double CostVisib = m_VisibilitySpace->getCost(point);
+        double CostDist = m_DistanceSpace->getWorkspaceCost(point);
+        double CostReach = ReachablePoints[i].first;
+        double CostVisib = m_VisibilitySpace->getCost(point);
 
-		
-                ReachablePoints[i].first = (KDist*CostDist + KVisi*CostVisib + KReac*CostReach )/ 3;
+        QList<double> localCosts;
+        localCosts << CostDist << CostReach << CostVisib;
+
+
+		ReachablePoints[i].first = (KDist*CostDist + KVisi*CostVisib + KReac*CostReach )/ 3;
+		costs.insert(ReachablePoints[i].first, localCosts);
 	}
 	
 	sort(ReachablePoints.begin(),ReachablePoints.end(),NaturalPointsCompObject);
@@ -910,14 +935,17 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 	{
 		transfPoint = ReachablePoints[i].second;
 		
-                if (m_ReachableSpace->computeIsReachableOnly(transfPoint,m_ReachableSpace->getGrid()->isReachableWithLA(transfPoint)))
+		if (m_ReachableSpace->computeIsReachableOnly(transfPoint,m_ReachableSpace->getGrid()->isReachableWithLA(transfPoint)))
 		{
+			current_cost.first = ReachablePoints[i].first;
+			current_cost.second = costs[current_cost.first];
 			return true;
 		}
 	}
 	
 	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
 	
+
 	return false;
 }
 
@@ -957,7 +985,8 @@ bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WS
         }else{
           reachSpace->computeIsReachableOnly(WSPoint, reachSpace->getGrid()->isReachableWithLA(WSPoint));
         }
-        current_WSPoint = WSPoint;                               cout << WSPoint << endl;
+        current_WSPoint = WSPoint;
+        cout << WSPoint << endl;
       }else{
         current_WSPoint << 0.0 ,0.0, 0.0;
         }
