@@ -7,8 +7,7 @@
  *
  */
 #include <QMap>
-#include <QList>
-#include <QPair>
+
 
 #include "HRICS_costspace.hpp"
 #include "Grid/HRICS_Grid.hpp"
@@ -53,7 +52,7 @@ using namespace Eigen;
 
 extern string global_ActiveRobotName;
 Eigen::Vector3d current_WSPoint;
-QPair<double,QList<double> > current_cost;
+pair<double,Eigen::Vector3d > current_cost;
 
 Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 {
@@ -856,7 +855,7 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 	}
 
 	vector< pair<double,Vector3d > > ReachablePoints = m_ReachableSpace->getReachableWSPoint();
-	QMap<double,QList<double> > costs;
+	vector< pair<double,Vector3d > > costs;
 	
 	for (unsigned int i=0; i<ReachablePoints.size(); i++)
         {
@@ -870,16 +869,24 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
                 double CostReach = ReachablePoints[i].first;
                 double CostVisib = m_VisibilitySpace->getCost(point);
 
-                QList<double> localCosts;
-                localCosts << CostDist << CostReach << CostVisib;
+                Vector3d localCosts;
+                localCosts[0] = CostDist;
+                localCosts[1] = CostReach;
+                localCosts[2] = CostVisib;
 
 
                 ReachablePoints[i].first = (KDist*CostDist + KVisi*CostVisib + KReac*CostReach )/ 3;
-                costs.insert(ReachablePoints[i].first, localCosts);
+
+                pair<double,Vector3d > p;
+                p.first = ReachablePoints[i].first;
+                p.second = localCosts;
+
+                costs.push_back( p );
 
         }
 
 	sort(ReachablePoints.begin(),ReachablePoints.end(),NaturalPointsCompObject);
+	sort(costs.begin(),costs.end(),NaturalPointsCompObject);
 	
 	if( ReachablePoints.empty() )
 	{
@@ -889,7 +896,7 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 	
 	transfPoint = ReachablePoints[0].second;
 	current_cost.first = ReachablePoints[0].first;
-	current_cost.second = costs[current_cost.first];
+	current_cost.second = costs[0].second;
 
 	return true;
 }
@@ -905,7 +912,7 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 	}
 	
 	vector< pair<double,Vector3d > > ReachablePoints = m_ReachableSpace->getReachableWSPoint();
-	QMap<double,QList<double> > costs;
+	vector< pair<double,Vector3d > > costs;
 	
         // Fills each pair with
         // the cost of the sum of each criteria
@@ -921,15 +928,22 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
         double CostReach = ReachablePoints[i].first;
         double CostVisib = m_VisibilitySpace->getCost(point);
 
-        QList<double> localCosts;
-        localCosts << CostDist << CostReach << CostVisib;
-
+        Vector3d localCosts;
+        localCosts[0] = CostDist;
+        localCosts[1] = CostReach;
+        localCosts[2] = CostVisib;
 
 		ReachablePoints[i].first = (KDist*CostDist + KVisi*CostVisib + KReac*CostReach )/ 3;
-		costs.insert(ReachablePoints[i].first, localCosts);
+
+		pair<double,Vector3d > p;
+		p.first = ReachablePoints[i].first;
+		p.second = localCosts;
+
+		costs.push_back( p );
 	}
 	
 	sort(ReachablePoints.begin(),ReachablePoints.end(),NaturalPointsCompObject);
+	sort(costs.begin(),costs.end(),NaturalPointsCompObject);
 	
 	for (unsigned int i=0; i<ReachablePoints.size(); i++) 
 	{
@@ -938,7 +952,7 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 		if (m_ReachableSpace->computeIsReachableOnly(transfPoint,m_ReachableSpace->getGrid()->isReachableWithLA(transfPoint)))
 		{
 			current_cost.first = ReachablePoints[i].first;
-			current_cost.second = costs[current_cost.first];
+			current_cost.second = costs[i].second;
 			return true;
 		}
 	}
@@ -955,9 +969,9 @@ bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WS
 {
 
 
-   ENV.setDouble( Env::Kdistance,   5 );
-   ENV.setDouble( Env::Kvisibility, 25 );
-   ENV.setDouble( Env::Kreachable,  90 );
+//   ENV.setDouble( Env::Kdistance,   5 );
+//   ENV.setDouble( Env::Kvisibility, 15 );
+//   ENV.setDouble( Env::Kreachable,  80 );
 
   bool hasComputed = false;
   
@@ -986,7 +1000,7 @@ bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WS
           reachSpace->computeIsReachableOnly(WSPoint, reachSpace->getGrid()->isReachableWithLA(WSPoint));
         }
         current_WSPoint = WSPoint;
-        cout << WSPoint << endl;
+//        cout << WSPoint << endl;
       }else{
         current_WSPoint << 0.0 ,0.0, 0.0;
         }

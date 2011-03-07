@@ -6,7 +6,6 @@
  *  Copyright 2010 LAAS/CNRS. All rights reserved.
  *
  */
-#include <QPair>
 
 #include "P3d-pkg.h"
 #include "Graphic-pkg.h"
@@ -39,7 +38,7 @@ using namespace tr1;
 std::vector<double> vect_jim;
 
 extern Eigen::Vector3d current_WSPoint;
-extern QPair<double, QList<double> > current_cost;
+extern pair<double, Eigen::Vector3d > current_cost;
 double cost_max = 30.0;
 
 // TODO callback OOMOVE3D
@@ -315,6 +314,7 @@ void g3d_draw_hrics()
                 //    glDisable(GL_CULL_FACE);
                 glDisable(GL_BLEND);
                 drawGauge(0, current_cost.first/cost_max);
+
                 drawGauge(1, current_cost.second[0]);
                 drawGauge(2, current_cost.second[1]);
                 drawGauge(3, current_cost.second[2]);
