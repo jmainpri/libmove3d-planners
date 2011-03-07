@@ -1119,7 +1119,7 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
       {
         if( !ptrQ->isInCollision() )
         {
-          cout << "Configuration is OK in computeIsReachableAndMove" << endl;
+//          cout << "Configuration is OK in computeIsReachableAndMove" << endl;
           m_Robot->setAndUpdate(*ptrQ);
         }
         else
@@ -1191,7 +1191,7 @@ bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRight
   {
     HRI_AGENTS * agents = hri_create_agents();
     configPt q;
-    double distance_tolerance = 4.0;
+    double distance_tolerance = 0.02;
     if(m_IsHuman)
     {
       q = p3d_get_robot_config(agents->humans[0]->robotPt);
@@ -1231,7 +1231,7 @@ bool Natural::computeIsReachableForRobot(Robot* _Robot, const Vector3d& WSPoint,
         task = (HRI_GIK_TASK_TYPE) 1;
         configPt q;
         bool IKSucceded;
-        double distance_tolerance = 4.0;
+        double distance_tolerance = 0.02;
 
         q = p3d_get_robot_config(agents->robots[0]->robotPt);
 

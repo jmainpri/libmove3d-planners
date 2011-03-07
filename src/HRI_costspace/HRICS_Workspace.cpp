@@ -969,9 +969,9 @@ bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WS
 {
 
 
-//   ENV.setDouble( Env::Kdistance,   5 );
-//   ENV.setDouble( Env::Kvisibility, 15 );
-//   ENV.setDouble( Env::Kreachable,  80 );
+   ENV.setDouble( Env::Kdistance,   5 );
+   ENV.setDouble( Env::Kvisibility, 15 );
+   ENV.setDouble( Env::Kreachable,  65 );
 
   bool hasComputed = false;
   
