@@ -6,8 +6,9 @@
  *  Copyright 2009 LAAS/CNRS. All rights reserved.
  *
  */
+#ifdef QT_LIBRARY
 #include <QMap>
-
+#endif
 
 #include "HRICS_costspace.hpp"
 #include "Grid/HRICS_Grid.hpp"

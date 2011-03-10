@@ -25,7 +25,7 @@
 #include "P3d-pkg.h"
 #include "Move3d-pkg.h"
 #include "Planner-pkg.h"
-#include "lightPlanner-pkg.h"
+#include "LightPlanner-pkg.h"
 
 using namespace std;
 using namespace tr1;
