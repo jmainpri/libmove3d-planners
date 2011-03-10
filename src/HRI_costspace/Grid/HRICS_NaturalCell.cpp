@@ -166,8 +166,22 @@ void NaturalCell::createDisplaylist()
 
 void NaturalCell::draw()
 {
-	if (!m_IsReachable) 
+	if (!m_IsReachable)
 	{
+		if (ENV.getBool(Env::drawEntireGrid))
+		{
+			Vector3d center = getWorkspacePoint();
+			double colorvector[4];
+
+			colorvector[0] = 0.5;       //red
+			colorvector[1] = 0.5;       //green
+			colorvector[2] = 0.5;       //blue
+			colorvector[3] = 0.01;       //transparency
+			double diagonal = getCellSize().minCoeff();
+			g3d_set_color(Any,colorvector);
+			g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/6, 10);
+		}
+
 		return;
 	}
 	
@@ -188,8 +202,8 @@ void NaturalCell::draw()
 //	}
 	
 	Vector3d center = getWorkspacePoint();
-	
-	if ( Cost != 0.0 ) 
+
+	if ( Cost != 0.0 )
 	{
 		GroundColorMixGreenToRed(colorvector,Cost);
 		g3d_set_color(Any,colorvector);
@@ -198,7 +212,7 @@ void NaturalCell::draw()
 		g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/6, 10);
 		//cout << "Robot : " << dynamic_cast<NaturalGrid*>(_grid)->getRobot()->getName() << "Draw Sphere, Cost = " << Cost << endl;
 	}
-	
+
 	if ( (Cost == 0.0) && m_IsReachable )
 	{
 		g3d_set_color(Any,colorvector);
@@ -221,6 +235,9 @@ int NaturalCell::setRobotToStoredConfig()
 	return -1;
 }
 
+/*!
+ * compute cost depending on right/left hand
+ */
 double NaturalCell::getCost()
 {
 	if (!m_IsCostComputed) 
@@ -229,28 +246,44 @@ double NaturalCell::getCost()
 		
 		if(m_IsReachable)
 		{
+			double rightArmPref = 1.0;
+			double leftArmPref = 1.0;
 			//cout << "Computing cost of cell number ( " << _index << " )" << endl;
 			//Vector3d center = getCenter();
 
-			bool useLeftVsRight=false;
-			
-			if ( m_IsReachWithLeftArm ) 
+			double pref = ENV.getDouble(Env::coeffArmPr);
+			if (pref >= 0.0)
 			{
-				useLeftVsRight = true;
+				rightArmPref -= pref;
 			}
-			if ( m_IsReachWithRightArm ) // Right prefered
+			else
 			{
-				useLeftVsRight = false;
+				leftArmPref -= pref;
 			}
-			
-			// Get the cost of the Workspace point associated to the cell
-			Natural* NatSpace = dynamic_cast<NaturalGrid*>(_grid)->getNaturalCostSpace();
-			
-			shared_ptr<Configuration> q_actual = NatSpace->getRobot()->getCurrentPos();
-			
-			m_Cost = NatSpace->getCost(getWorkspacePoint(),useLeftVsRight);
-			
-			NatSpace->getRobot()->setAndUpdate(*q_actual);
+
+			if (m_IsReachWithLeftArm && !m_IsReachWithRightArm)
+			{
+				m_Cost = getCost(true) * leftArmPref;
+			}
+			else if (!m_IsReachWithLeftArm && m_IsReachWithRightArm)
+			{
+				m_Cost = getCost(false) * rightArmPref;
+			}
+			else if (m_IsReachWithLeftArm && m_IsReachWithRightArm)
+			{
+				double left_cost = getCost(true) * leftArmPref;
+				double right_cost = getCost(false) * rightArmPref;
+
+				if (left_cost<right_cost)
+				{
+					m_Cost = left_cost;
+				}
+				else
+				{
+					m_Cost = right_cost;
+				}
+			}
+
 		}
 		
 		m_IsCostComputed = true;
@@ -259,43 +292,82 @@ double NaturalCell::getCost()
 	return m_Cost;
 }
 
-#ifdef HRI_PLANNER
-void NaturalCell::computeReachability(bool leftArm)
+/*
+ shouldn't be called alone : see upside.
+ */
+double NaturalCell::getCost(bool leftArm)
 {
-	Natural* NatSpace = dynamic_cast<NaturalGrid*> (_grid)->getNaturalCostSpace();
-	
-	shared_ptr<Configuration> q_actual = NatSpace->getRobot()->getCurrentPos();
-	
-        if ( NatSpace->computeIsReachableAndMove(getCenter(),leftArm) )
-	{
-		m_IsReachable = true;
-		
-		if (leftArm) 
-		{
-			m_IsReachWithLeftArm = true;
-		}
-		else 
-		{
-			m_IsReachWithRightArm = true;
-		}
 
-	}
-	else 
+	// Get the cost of the Workspace point associated to the cell
+	Natural* NatSpace = dynamic_cast<NaturalGrid*>(_grid)->getNaturalCostSpace();
+	shared_ptr<Configuration> q_actual = NatSpace->getRobot()->getCurrentPos();
+
+	HRI_GIK_TASK_TYPE task;
+	task = GIK_RATREACH;
+	if ( leftArm )
 	{
-		m_IsReachable = false;
-		
-		if (leftArm) 
+		task = GIK_LATREACH;
+	}
+
+    p3d_vector3 Tcoord;
+    Vector3d center = getWorkspacePoint();
+    Tcoord[0] = center[0];
+    Tcoord[1] = center[1];
+    Tcoord[2] = center[2];
+
+    configPt q;
+    HRI_AGENTS * agents = hri_create_agents();
+
+	q = p3d_get_robot_config(agents->humans[0]->robotPt);
+
+	bool IKSucceded;
+	double distance_tolerance = 0.02;
+	IKSucceded = hri_agent_single_task_manip_move(agents->humans[0], task, &Tcoord, distance_tolerance, &q);
+
+	shared_ptr<Configuration> ptrQ(new Configuration(NatSpace->getRobot(),q));
+
+	if (IKSucceded)
+	{
+		if( !ptrQ->isInCollision())
 		{
-			m_IsReachWithLeftArm = false;
+			NatSpace->getRobot()->setAndUpdate(*ptrQ);
+			m_Cost = NatSpace->getCost(getWorkspacePoint(),leftArm);
+			if (m_Cost < 0.0)
+			{
+				resetReachable();
+			}
 		}
-		else 
+		else
 		{
-			m_IsReachWithRightArm = false;
+			resetReachable();
 		}
 	}
-	
+	else
+	{
+		resetReachable();
+	}
+
 	NatSpace->getRobot()->setAndUpdate(*q_actual);
 
+	return m_Cost;
+}
+
+#ifdef HRI_PLANNER
+void NaturalCell::computeReachability()
+{
+	Natural* NatSpace = dynamic_cast<NaturalGrid*> (_grid)->getNaturalCostSpace();
+	resetReachable();
+	if ( NatSpace->computeIsReachableOnly(getWorkspacePoint(),true) )
+	{
+		m_IsReachable = true;
+		m_IsReachWithLeftArm = true;
+	}
+
+	if ( NatSpace->computeIsReachableOnly(getWorkspacePoint(),false) )
+	{
+		m_IsReachable = true;
+		m_IsReachWithRightArm = true;
+	}
 }
 #endif
 

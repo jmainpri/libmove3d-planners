@@ -8,7 +8,7 @@
  */
 
 #include "HRICS_NaturalCell.hpp"
-#include "HRICS_NaturalCell.hpp"
+#include "HRICS_NaturalGrid.hpp"
 #include "HRICS_Natural.hpp"
 
 #include "gridsAPI.hpp"
@@ -129,38 +129,65 @@ void NaturalGrid::resetReachability()
  */
 void NaturalGrid::computeAllCellCost()
 {
-  cout << "NaturalGrid::computeAllCellCost" << endl;
+	cout << "NaturalGrid::computeAllCellCost" << endl;
+	vector<HRICS::NaturalCell*> cells = getAllReachableCells();
+
+	shared_ptr<Configuration> q = getRobot()->getCurrentPos();
+
+	unsigned int nbCells = cells.size();
+
+	for (unsigned int i=0; i < nbCells; i++)
+	{
+		double cost = cells[i]->getCost();
+
+		if (cost <= 0.0 )
+		{
+			cells[i]->setIsReachable(false);
+		}
+		else
+		{
+			cout << "cell " << i << " cost is : " << cost << endl;
+		}
+	}
+	cout << nbCells - getAllReachableCells().size() << " cells lost!!!" << endl;
+
   
-  int nbCells = this->getNumberOfCells();
-  shared_ptr<Configuration> q = getRobot()->getCurrentPos();
+//  int nbCells = this->getNumberOfCells();
+
 	
-  m_NaturalCostSpace->setRobotToConfortPosture();
+//  m_NaturalCostSpace->setRobotToConfortPosture();
   
-  for(int i=0; i<nbCells; i++)
-  {
-    dynamic_cast<NaturalCell*>( _cells[i] )->getCost();
-  }
+//  for(int i=0; i<nbCells; i++)
+//  {
+//    cout << "cell " << i << "cost is : " << dynamic_cast<NaturalCell*>( _cells[i] )->getCost() << endl;
+//  }
 	
   getRobot()->setAndUpdate(*q);
   API_activeGrid = this;
 }
 
 /*!
- * Compute Grid Accecibility
+ * \brief Compute Grid Accecibility whith right and left hand !
  */
 #ifdef HRI_PLANNER
-void NaturalGrid::computeReachability(bool LeftArm)
+void NaturalGrid::computeReachability()
 {
+
 	int nbCells = this->getNumberOfCells();
-    shared_ptr<Configuration> robotConf = getRobot()->getInitialPosition();
+	m_NaturalCostSpace->setRobotToConfortPosture();
+//    shared_ptr<Configuration> robotConf = getRobot()->getInitialPosition();
 	
-    for(int i=0; i<nbCells; i++)
+	for(int i=0; i<nbCells; i++)
     {
-        dynamic_cast<NaturalCell*>( BaseGrid::getCell(i) )->computeReachability(LeftArm);
-		getRobot()->setAndUpdate(*robotConf);
-		cout << "Computing Reachability of Cell : " << i << endl;
+        cout <<  "Computing Reachability of Cell : " << i << endl;
+        dynamic_cast<NaturalCell*>( BaseGrid::getCell(i) )->computeReachability();
+//		getRobot()->setAndUpdate(*robotConf);
+        m_NaturalCostSpace->setRobotToConfortPosture();
+
     }
-	
+
+
+
     API_activeGrid = this;
 }
 #endif
@@ -338,7 +365,7 @@ bool NaturalGrid::isInReachableGrid(const Eigen::Vector3d& WSPoint)
 	// Hack
 	Vector3d topCorner = _originCorner+gridSize;
 	
-	for (unsigned int i=0; i<3; i++) 
+	for (unsigned int i=0; i<3; i++)
 	{
 		if( (WSPoint[i] > topCorner[i]) || (WSPoint[i] < _originCorner[i]))
 		{

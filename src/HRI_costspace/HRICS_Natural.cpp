@@ -599,7 +599,22 @@ void Natural::initNaturalHerakles()
 	m_mg.push_back(  4 );
 	m_mg.push_back(  1 );
 }
+void Natural::initHumanBaseGrid(vector<double> box)
+{
+//    cout << "Natural::initHumanBaseGrid()" << endl;
 
+    vector<double>  envSize(6);
+
+    configPt q;
+    q = p3d_get_robot_config(m_Agents->humans[0]->robotPt);
+
+    envSize[0] = *(q+6) + box[0]; envSize[1] = *(q+6) + box[1];
+    envSize[2] = *(q+7) + box[2]; envSize[3] = *(q+7) + box[3];
+    envSize[4] = *(q+8) + box[4]; envSize[5] = *(q+8) + box[5];
+
+    m_Grid = new NaturalGrid(0.1,envSize,this);
+
+}
 
 void Natural::printBodyPos()
 {
@@ -658,15 +673,15 @@ double Natural::getConfigCost()
 	//---------------------------------------------------
 	// Joints Displacement
 	double c_f_Joint_displacement = getJointDisplacement();
-	cout << "JDis = " << c_f_Joint_displacement << endl;
+//	cout << "JDis = " << c_f_Joint_displacement << endl;
 	//---------------------------------------------------
 	// Energy
 	double c_f_Energy = getEnergy(); 
-	cout << "Ener = " << c_f_Energy << endl;
+//	cout << "Ener = " << c_f_Energy << endl;
 	//---------------------------------------------------
 	// Discomfort
 	double c_f_Discomfort = getDiscomfort();
-	cout << "Disc = " << c_f_Discomfort << endl;
+//	cout << "Disc = " << c_f_Discomfort << endl;
 	//---------------------------------------------------
 	
 	
@@ -681,7 +696,7 @@ double Natural::getConfigCost()
 	
 	//m_leftArmCost = true;
 	//c_natural = basicNaturalArmCost(m_leftArmCost);
-	cout << "NaturalCost = " << c_natural << endl;
+//	cout << "NaturalCost = " << c_natural << endl;
 	return c_natural;
 }
 
@@ -996,15 +1011,17 @@ double Natural::getCost(const Vector3d& WSPoint, bool useLeftvsRightArm , bool w
 			
 		case Achile:
 #ifdef HRI_PLANNER
-      if( computeIsReachableAndMove(WSPoint,useLeftvsRightArm) )
-			{
-				m_leftArmCost = useLeftvsRightArm;
-				return getConfigCost();
-			}
-			else {
-				cout << "Warning : compute cost of unreachable point" << endl;
-				return numeric_limits<double>::max();
-			}
+		if( computeIsReachableOnly(WSPoint,useLeftvsRightArm) )
+		{
+			m_leftArmCost = useLeftvsRightArm;
+			return getConfigCost();
+		}
+		else
+		{
+			cout << "Warning : compute cost of unreachable point" << endl;
+//			return numeric_limits<double>::max();
+			return -1.0;
+		}
 #endif
 			break;
 			
@@ -1194,19 +1211,23 @@ bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRight
     double distance_tolerance = 0.02;
     if(m_IsHuman)
     {
-      q = p3d_get_robot_config(agents->humans[0]->robotPt);
-      IKSucceded = hri_agent_single_task_manip_move(agents->humans[0], task, &Tcoord, distance_tolerance, &q);
-      shared_ptr<Configuration> ptrQ(new Configuration(m_Robot,q));
-      
-      if (IKSucceded){
-        if( ptrQ->isInCollision()){
-          IKSucceded = false;
-          cout << "Config in collision in " << __func__ << endl;
-        }}else{
-          cout << "IK Failed in " << __func__ << endl;
-        }}}else{
-          cout << "Warning: No Agent for GIK" << endl;
+        q = p3d_get_robot_config(agents->humans[0]->robotPt);
+        IKSucceded = hri_agent_single_task_manip_move(agents->humans[0], task, &Tcoord, distance_tolerance, &q);
+        shared_ptr<Configuration> ptrQ(new Configuration(m_Robot,q));
+
+        if (IKSucceded){
+            if( ptrQ->isInCollision())
+            {
+              IKSucceded = false;
+              cout << "Config in collision in " << __func__ << endl;
+            }
+        }else{
+//          cout << "IK Failed in " << __func__ << endl;
         }
+    }
+  }else{
+    cout << "Warning: No Agent for GIK" << endl;
+  }
   m_Robot->setAndUpdate(*configStored);
   return IKSucceded;
 #else
@@ -1356,21 +1377,28 @@ vector< pair<double,Vector3d> > Natural::getReachableWSPoint()
 	return WSPoints;
 }
 
-void Natural::setRobotColorFromConfiguration()
+void Natural::setRobotColorFromConfiguration(bool toSet)
 {
-  double cost = this->getConfigCost();
-  
-  double colorvector[4];
-	
-  colorvector[0] = 0.0;       //red
-  colorvector[1] = 0.0;       //green
-  colorvector[2] = 0.0;       //blue
-  colorvector[3] = 0.01;      //transparency
+    if (toSet)
+    {
+        double cost = this->getConfigCost();
 
-  GroundColorMixGreenToRed(colorvector,cost);
-  
-  g3d_set_custom_color_draw(m_Robot->getRobotStruct(),true);
-  g3d_set_custom_color_vect(colorvector);
+        double colorvector[4];
+
+        colorvector[0] = 0.0;       //red
+        colorvector[1] = 0.0;       //green
+        colorvector[2] = 0.0;       //blue
+        colorvector[3] = 0.01;      //transparency
+
+        GroundColorMixGreenToRed(colorvector,cost);
+
+        g3d_set_custom_color_draw(m_Robot->getRobotStruct(),toSet);
+        g3d_set_custom_color_vect(colorvector);
+    }
+    else
+    {
+        g3d_set_custom_color_draw(m_Robot->getRobotStruct(),toSet);
+    }
 }
 
 /*!

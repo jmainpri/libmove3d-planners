@@ -29,11 +29,12 @@ namespace HRICS
 		~NaturalCell() { }
 		
 		double getCost();
+		double getCost(bool leftHand);
 		void setCost(double Cost) { m_Cost = Cost; }
 		void setBlankCost();
 		
 #ifdef HRI_PLANNER
-		void computeReachability(bool leftArm);
+		void computeReachability();
 #endif
 		void resetReachable();
 		bool getIsLeftArmReachable();

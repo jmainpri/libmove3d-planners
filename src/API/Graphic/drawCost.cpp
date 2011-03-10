@@ -129,6 +129,12 @@ void g3d_draw_grids()
   //cout << "g3d_draw_grids" << endl;
   
 #ifdef HRI_COSTSPACE
+
+	if( ENV.getBool(Env::drawEntireGrid) && API_activeGrid )
+	{
+		ENV.setBool(Env::drawGrid,true);
+	}
+
 	if( ENV.getBool(Env::drawGrid) && API_activeGrid )
 	{
     //cout << "API_activeGrid->draw()" << endl;
@@ -259,7 +265,7 @@ void g3d_draw_hrics()
     
     if( HRICS_activeNatu )
     {
-      HRICS_activeNatu->setRobotColorFromConfiguration();
+      HRICS_activeNatu->setRobotColorFromConfiguration(true);
     }
 	}
   

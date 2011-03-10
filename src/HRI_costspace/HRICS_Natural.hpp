@@ -41,7 +41,8 @@ namespace HRICS
 		void initGeneral();
 		void initNaturalJustin();
 		void initNaturalAchile();
-    void initNaturalHerakles();
+		void initNaturalHerakles();
+		void initHumanBaseGrid(std::vector<double> box);
 		
 		void printBodyPos();
     void setRobotToConfortPosture();
@@ -66,7 +67,7 @@ namespace HRICS
 		 * Others
 		 */
 		double basicNaturalArmCost(bool useLeftvsRightArm);
-    void setRobotColorFromConfiguration();
+		void setRobotColorFromConfiguration(bool toSet);
     
 		/*
 		double akinRightArmReachCost();

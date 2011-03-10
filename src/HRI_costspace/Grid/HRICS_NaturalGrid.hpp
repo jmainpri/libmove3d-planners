@@ -32,7 +32,10 @@ namespace HRICS
 		API::ThreeDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z );
 		void computeAllCellCost();
 #ifdef HRI_PLANNER
-		void computeReachability(bool leftArm);
+		/*
+		 * compute all reacheable point in the grid : either with right or left hand
+		 */
+		void computeReachability();
 #endif
 		int robotConfigInCell(int i);
 		
