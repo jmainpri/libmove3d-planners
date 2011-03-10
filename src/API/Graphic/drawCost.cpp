@@ -183,9 +183,9 @@ void g3d_draw_grids()
 	}
 	
 	// Draws a sphere of 10 cm of radius
-  //	g3d_drawSphere(global_DrawnSphere(0),
-  //								 global_DrawnSphere(1),
-  //								 global_DrawnSphere(2), 0.1 );
+  g3d_drawSphere(global_DrawnSphere(0),
+  							 global_DrawnSphere(1),
+  							 global_DrawnSphere(2), 0.02 );
 }
 
 void drawGauge(int number, double cost)
@@ -288,6 +288,16 @@ void g3d_draw_hrics()
 		}
 		
 		glLineWidth(1.);
+    
+//    GLdouble GreenColor[4] =   { 0.0, 0.5, 0.0, 0.7 };
+//    GLdouble GreenColorT[4] =   { 0.0, 0.5, 0.0, 0.0 };
+//    GLdouble GreyColor[4] =   { 0.5, 0.5, 0.5, 0.5 };
+//    GLdouble GreyColorT[4] =   { 0.5, 0.5, 0.5, 0.0 };
+    
+//    g3d_draw_visibility_by_frame(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint(42)->getJointStruct()->abs_pos,
+//                                 DTOR(160),
+//                                 DTOR(160*0.75),
+//                                 1, GreyColor, GreyColorT);
 	}
 
         if (current_WSPoint(0) != 0 && current_WSPoint(1) != 0)

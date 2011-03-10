@@ -112,8 +112,9 @@ void Distance::parseHumans()
   AchileActivePartsName.push_back( "rFemurGhost" );
   AchileActivePartsName.push_back( "lFemurGhost" );
   
-	//    _SafeRadius = 0;
-	
+	//_SafeRadius = 0;
+	ENV.setDouble(Env::zone_size,0.8);
+  
 	_SafetyZonesBodyId.clear();
 	
 	for(unsigned int i=0;i<_Humans.size();i++)

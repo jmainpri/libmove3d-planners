@@ -3,7 +3,7 @@
  *  BioMove3D
  *
  *  Created by Jim Mainprice on 01/06/10.
- *  Copyright 2010 __MyCompanyName__. All rights reserved.
+ *  Copyright 2010 LAAS/CNRS. All rights reserved.
  *
  */
 
@@ -100,6 +100,8 @@ double HRICS_getConfigCost(Configuration& Conf)
 					WSPoint[0] = Conf[object+0];
 					WSPoint[1] = Conf[object+1];
 					WSPoint[2] = Conf[object+2];
+          
+          //WSPoint = dynamic_cast<Workspace*>(HRICS_MotionPL)->getVisball();
 					
 					double VisibCost = ENV.getDouble(Env::Kvisibility)*(HRICS_MotionPL->getVisibility()->getCost(WSPoint));
 					Cost += VisibCost;
@@ -207,7 +209,7 @@ void HRICS_loadGrid(std::string docname)
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
-void HRICS_init()
+void HRICS_init(HRI_AGENTS* agents)
 {  
   // When loaded with the cost space turned off
   // This function create and initizialises the global_costSpace object
@@ -223,23 +225,33 @@ void HRICS_init()
 	ENV.setBool(Env::useBallDist,true);
   ENV.setDouble(Env::zone_size,0.80);
   
-//  ENV.setDouble( Env::Kdistance,   80 );
-//  ENV.setDouble( Env::Kvisibility, 50 );
-//  ENV.setDouble( Env::Kreachable,  10 );
-
-  ENV.setDouble( Env::Kdistance,   5 );
-  ENV.setDouble( Env::Kvisibility, 25 );
-  ENV.setDouble( Env::Kreachable,  90 );
+  //  ENV.setDouble( Env::Kdistance,   80 );
+  //  ENV.setDouble( Env::Kvisibility, 50 );
+  //  ENV.setDouble( Env::Kreachable,  10 );
+  
+  //  ENV.setDouble( Env::Kdistance,   5 );
+  //  ENV.setDouble( Env::Kvisibility, 25 );
+  //  ENV.setDouble( Env::Kreachable,  90 );
+  
+  ENV.setDouble( Env::Kdistance,   40 );
+  ENV.setDouble( Env::Kvisibility, 50 );
+  ENV.setDouble( Env::Kreachable,  10 );
   
   Robot* Human = global_Project->getActiveScene()->getRobotByNameContaining("HUMAN");
   
   shared_ptr<Configuration> q = Human->getCurrentPos();
+  
+  if (agents == NULL) 
+  {
+    agents = hri_create_agents();
+  }
   
 	HRICS_MotionPL = new HRICS::Workspace;
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initGrid();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initDistance();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initVisibility();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initNatural();
+  dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
   
 	HRICS_activeDist = HRICS_MotionPL->getDistance();
 	API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid();
@@ -250,7 +262,7 @@ void HRICS_init()
     string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
 		
     fileName = home + fileName;
-
+    
 		// Reads the grid from XML and sets it ti the HRICS_MotionPL
 		HRICS_loadGrid(fileName);
 		HRICS_activeNatu->setGrid(dynamic_cast<HRICS::NaturalGrid*>(API_activeGrid));
@@ -258,12 +270,11 @@ void HRICS_init()
 	}
 	
 	ENV.setInt(Env::hriCostType,HRICS_Combine);
-
-        std::cout << "Initializing the HRI costmap cost function" << std::endl;
-        global_costSpace->addCost("costHRI",boost::bind(HRICS_getConfigCost, _1));
-        global_costSpace->setCost("costHRI");
-	
+  
+  std::cout << "Initializing the HRI costmap cost function" << std::endl;
+  global_costSpace->addCost("costHRI",boost::bind(HRICS_getConfigCost, _1));
+  global_costSpace->setCost("costHRI");
 	cout << "new HRI Workspace" << endl;
-
-        //Human->setAndUpdate( *q );
+  
+  //Human->setAndUpdate( *q );
 }

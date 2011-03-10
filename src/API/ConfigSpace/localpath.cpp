@@ -454,7 +454,7 @@ double LocalPath::getResolution(double step)
 			double n = floor(length/step); // minimal number of segment
 			_Resolution = length / n;
 		}
-		
+		//cout << "_Resolution = " << _Resolution << endl;
 		_ResolEvaluated = true;
 	}
 

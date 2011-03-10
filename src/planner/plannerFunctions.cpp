@@ -25,6 +25,7 @@
 #include "P3d-pkg.h"
 #include "Move3d-pkg.h"
 #include "Planner-pkg.h"
+#include "lightPlanner-pkg.h"
 
 using namespace std;
 using namespace tr1;
@@ -206,6 +207,8 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
   }
 }
 
+p3d_traj* pathPt=NULL;
+
 // ---------------------------------------------------------------------------------
 // Smoothing function (Shortcut) for connection with Manipulation planner
 // ---------------------------------------------------------------------------------
@@ -242,12 +245,103 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
     optTime += optimTrj.getTime();
   }
   
+  double dmax = global_Project->getActiveScene()->getDMax();
+  double range = optimTrj.getRangeMax();
+  
+  cout << "Cut the traj in several local paths" << endl;
+  cout << "optimTrj range is : " << range << endl;
+  
+  optimTrj.cutTrajInSmallLP( floor( range / (15*dmax) ) );
   optimTrj.replaceP3dTraj();
   optimTrj.resetCostComputed();
+  
+  pathPt = robotPt->tcur;
   
   //XYZ_GRAPH->totTime += optTime;
   
   cout << "After optim rounds cost : " << optimTrj.cost() << endl;
+}
+
+// ---------------------------------------------------------------------------------
+// Re-Planning
+// ---------------------------------------------------------------------------------
+void replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 target, int deformationViaPoint)
+{
+  cout << "* REPLANNING ***************" << endl;
+  
+  //traj = pathPt;
+  ManipulationUtils::printConstraintInfo(robotPt);
+  p3d_multilocapath_print_group_info(robotPt);
+  p3d_multilocalpath_switch_to_linear_groups (robotPt);
+  
+  // Gets the robot pointer
+  Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
+  
+  API::Trajectory oldTraj(rob,traj);
+  
+#ifdef QT_LIBRARY
+  //oldTraj.setContextName( ENV.getString(Env::nameOfFile).toStdString() );
+#endif
+  
+  unsigned int lastViaPoint = oldTraj.getNbPaths();
+  
+  API::CostOptimization optimTrj = oldTraj.extractSubTrajectory( (unsigned int)deformationViaPoint, lastViaPoint-1 );
+  
+  Eigen::Vector3d WSPoint;
+  WSPoint[0] = target[0];
+  WSPoint[1] = target[1];
+  WSPoint[2] = target[2];
+  
+  unsigned int validShortCutId,endId;
+  double* q = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->testTransferPointToTrajectory(WSPoint, optimTrj,validShortCutId);
+  if ( q ) 
+  {
+    endId = optimTrj.getNbPaths();
+    
+    vector<LocalPath*> path;
+    
+    shared_ptr<Configuration> q_source(optimTrj.getLocalPathPtrAt(validShortCutId)->getEnd());
+    shared_ptr<Configuration> q_target(new Configuration(rob,q));
+    
+    path.push_back( new LocalPath(q_source,q_target) );
+    
+//    vector<LocalPath*> courbe = optimTrj.getCourbe();
+//    optimTrj.copyPaths( courbe );
+    optimTrj.replacePortion(validShortCutId,endId,path);
+  }
+  
+  double optTime = 0.0;
+//  if(PlanEnv->getBool(PlanParam::withDeformation))
+//  {
+    //ENV.setBool(Env::FKShoot,true);
+//    optimTrj.runDeformation( ENV.getInt(Env::nbCostOptimize) , runId );
+    //ENV.setBool(Env::FKShoot,false);
+//    optTime += optimTrj.getTime();
+//  }
+  
+  optimTrj.resetCostComputed();
+  
+  //XYZ_GRAPH->rrtCost2 = optimTrj.cost();
+  
+//  if(PlanEnv->getBool(PlanParam::withShortCut))
+//  {
+//    optimTrj.runShortCut( ENV.getInt(Env::nbCostOptimize) , runId );
+//    optTime += optimTrj.getTime();
+//  }
+  
+  double dmax = global_Project->getActiveScene()->getDMax();
+  double range = optimTrj.getRangeMax();
+  
+  cout << "** END CUTTING **************" << endl;
+  cout << "NLP = " << floor( range / (15*dmax)) << endl;
+  
+  optimTrj.cutTrajInSmallLP( floor( range / (15*dmax) ) );
+  
+  vector<LocalPath*> courbe = optimTrj.getCourbe();
+  optimTrj.copyPaths( courbe );
+  
+  oldTraj.replacePortion((unsigned int)deformationViaPoint, lastViaPoint, courbe);
+  oldTraj.replaceP3dTraj();
 }
 
 // ---------------------------------------------------------------------------------

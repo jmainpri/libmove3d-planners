@@ -51,9 +51,11 @@ namespace API
 		std::vector<LocalPath*> extractSubPortion(
 																							double param1,
 																							double param2,
-																							uint& first,
-																							uint& last);
+																							unsigned int& first,
+																							unsigned int& last);
 		
+    Trajectory extractSubTrajectory(unsigned int id_start, unsigned int id_end);
+    
 		Trajectory extractSubTrajectory(
 																		double param1,
 																		double param2);
@@ -61,12 +63,12 @@ namespace API
 		void replacePortion(
 												unsigned int id1,
 												unsigned int id2,
-												std::vector<LocalPath*> paths);
+												std::vector<LocalPath*> paths, bool freeMemory = true );
 		
 		bool replacePortion(
 												double param1,
 												double param2,
-												std::vector<LocalPath*> paths);
+												std::vector<LocalPath*> paths , bool freeMemory = true );
 		
 		void cutTrajInSmallLP(unsigned int nLP);
 		uint cutPortionInSmallLP(std::vector<LocalPath*>& portion, uint nLP);

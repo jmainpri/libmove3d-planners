@@ -908,9 +908,8 @@ double Trajectory::extractCostPortion(double param1, double param2)
 }
 
 vector<LocalPath*> Trajectory::extractSubPortion(double param1, double param2,
-																								 uint& first, uint& last)
+																								 unsigned int& first, unsigned int& last)
 {
-	
 	vector<LocalPath*> paths;
 	vector<shared_ptr<Configuration> > conf;
 	
@@ -1030,6 +1029,42 @@ vector<LocalPath*> Trajectory::extractSubPortion(double param1, double param2,
 	}
 	
 	return paths;
+}
+
+Trajectory Trajectory::extractSubTrajectory(unsigned int id_start, unsigned int id_end)
+{
+	vector<LocalPath*> path;
+	
+	if (id_start > id_end)
+	{
+		cout << "Warning: inconsistant query in extractSubTrajectory" << endl;
+	}
+	else
+	{
+    for (unsigned int i=id_start; i<=id_end; i++) {
+      path.push_back(new LocalPath(*m_Courbe[i]));
+    }
+	}
+	
+	Trajectory newTraj(m_Robot);
+	
+	newTraj.m_Courbe = path;
+	newTraj.nloc = path.size();
+	
+	if (path.size() == 0)
+	{
+		newTraj.m_Source = m_Courbe[id_start]->getBegin();
+		newTraj.m_Target = m_Courbe[id_end]->getEnd();
+		newTraj.range_param = 0;
+	}
+	else
+	{
+		newTraj.m_Source = path.at(0)->getBegin();
+		newTraj.m_Target = path.back()->getEnd();
+		newTraj.range_param = computeSubPortionRange(path);
+	}
+	
+	return newTraj;
 }
 
 Trajectory Trajectory::extractSubTrajectory(double param1, double param2)
@@ -1306,30 +1341,35 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 	
 	// Compute real number of small LP
 	unsigned int nbOfSmallLP = 0;
-	
+
 	for (unsigned int i = 0; i<portion.size(); i++)
 	{
-		double resol = portion[i]->getResolution(dMax);
-		nbOfSmallLP += floor((portion[i]->getParamMax()/resol)+0.5);
+		double resol;
+    double length = portion[i]->getParamMax();
+    
+    if ( length < dMax )
+		{
+			resol = length;
+		}
+		else if ( floor(length/dMax) == length/dMax ) 
+		{
+			resol = dMax;
+		}
+		else 
+		{
+			double n = floor(length/dMax); // minimal number of segment
+			resol = length / n;
+		}
+    
+    unsigned int nbOfDMax = floor((portion[i]->getParamMax()/resol)+0.5);
+    nbOfSmallLP += nbOfDMax;
+//    cout << "dMax = " << dMax << endl;
+//    cout << "resol = " << resol << endl;
+//    cout << "nbOfDMax = " << nbOfDMax << endl;
+//    cout << "getParamMax() = " << portion[i]->getParamMax() << endl;
 	}
-	
-	
-	// Test
-	//	double test = 0.0;
-	//	for (unsigned int j = 0; j < portion.size(); j++)
-	//	{
-	//		double resol = portion[j]->getResolution(dMax);
-	//		unsigned int nbOfSmallLP = floor((portion[j]->getParamMax()/resol)+0.5);
-	//		
-	//		for (unsigned int i=0; i<nbOfSmallLP; i++) 
-	//		{
-	//			test += portion[j]->getResolution(dMax);
-	//		}
-	//	}
-	//	
-	//	cout <<  "test = " << test << endl;
-	//	cout <<  "range = " << range << endl;
-	
+	cout << "range = " << range << endl;
+  cout << "nbOfSmallLP = " << nbOfSmallLP << endl;
 	vector<LocalPath*> portionTmp(nbOfSmallLP);
 	
 	try
@@ -1339,7 +1379,23 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 		// Loop for every Small LP
 		for (unsigned int i = 0; i<nbOfSmallLP-1; i++)
 		{
-			double resol = portion[j]->getResolution(dMax);
+			double resol;
+      double length = portion[j]->getParamMax();
+      
+      if ( length < dMax )
+      {
+        resol = length;
+      }
+      else if ( floor(length/dMax) == length/dMax ) 
+      {
+        resol = dMax;
+      }
+      else 
+      {
+        double n = floor(length/dMax); // minimal number of segment
+        resol = length / n;
+      }
+      
 			param += resol;
 			//			cout << "nb of smal lp on big lp : " <<  portion[j]->getParamMax()/resol << endl;
 			//			cout << "nb of smal lp on big lp : " <<  floor((portion[j]->getParamMax()/resol)+0.5) << endl;
@@ -1439,17 +1495,20 @@ void Trajectory::cutTrajInSmallLP(unsigned int nLP)
 	}
 }
 
-void Trajectory::replacePortion(unsigned int id1, unsigned int id2, vector<LocalPath*> paths)
+void Trajectory::replacePortion(unsigned int id1, unsigned int id2, vector<LocalPath*> paths, bool freeMemory )
 {
 	// WARNING: the ids are ids of nodes and not
 	// LocalPaths
 	
 	if (id1 < id2)
 	{
-		for (uint i = id1; i < id2; i++)
-		{
-			delete m_Courbe.at(i);
-		}
+    if (freeMemory) 
+    {
+      for (uint i = id1; i < id2; i++)
+      {
+        delete m_Courbe.at(i);
+      }
+    } 
 		
 		m_Courbe.erase(m_Courbe.begin() + id1, m_Courbe.begin() + id2);
 	}
@@ -1464,7 +1523,7 @@ void Trajectory::replacePortion(unsigned int id1, unsigned int id2, vector<Local
 }
 
 bool Trajectory::replacePortion(double param1, double param2,
-																vector<LocalPath*> paths)
+																vector<LocalPath*> paths , bool freeMemory )
 {
 	shared_ptr<Configuration> q11 = paths.at(0)->getBegin();
 	shared_ptr<Configuration> q12 = paths.back()->getEnd();
@@ -1616,7 +1675,7 @@ bool Trajectory::replacePortion(double param1, double param2,
 	unsigned int id1_erase = id_LP_1;
 	unsigned int id2_erase = id_LP_2 + 1;
 	
-	replacePortion(id1_erase, id2_erase, paths);
+	replacePortion(id1_erase, id2_erase, paths, freeMemory );
 	return true;
 }
 

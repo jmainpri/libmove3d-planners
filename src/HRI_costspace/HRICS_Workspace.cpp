@@ -678,6 +678,183 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 	return false;
 }
 
+struct target_info 
+{
+  unsigned int id;
+  double* q;
+};
+
+double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::Trajectory& traj , unsigned int& id)
+{
+  cout << " * Start testing for new OTP ***************" << endl;
+  ChronoOn();
+  
+  int armId = 0;
+  ArmManipulationData& armData = (*_Robot->getRobotStruct()->armManipulationData)[armId];
+  ManipulationConfigs manipConf(_Robot->getRobotStruct());
+  gpGrasp grasp;
+  double confCost = -1;
+  
+  vector<double> target(6);
+  target.at(0) = WSPoint(0);
+  target.at(1) = WSPoint(1);
+  target.at(2) = WSPoint(2);
+  target.at(3) = 0;
+  target.at(4) = 0;
+  target.at(5) = P3D_HUGE;
+  
+  double* q = manipConf.getFreeHoldingConf(NULL, armId, grasp, armData.getCcCntrt()->Tatt, confCost, target, NULL);
+  
+  vector< pair<double,unsigned int> > costOfPoint;
+  
+  for(unsigned int i=0;i<(unsigned int)traj.getNbPaths();i++)
+  {
+    shared_ptr<Configuration> q_target(new Configuration(_Robot,q));
+    
+    LocalPath path(traj.getLocalPathPtrAt(i)->getEnd(),q_target);
+    
+    if (path.isValid()) 
+    {
+      costOfPoint.push_back( make_pair(path.cost(),i));
+    }
+  }
+  
+  if (!costOfPoint.empty()) 
+  {
+    sort(costOfPoint.begin(),costOfPoint.end());
+    id = costOfPoint[0].second;
+    ChronoPrint("");
+    ChronoOff();
+    cout << " * End testing for new OTP (Succed) ***********" << endl;
+    return q;
+  }
+  else {
+    p3d_destroy_config(_Robot->getRobotStruct(),q);
+  }
+  
+  ChronoPrint("");
+  ChronoOff();
+  cout << " * End testing for new OTP (Error) ***************" << endl;
+  return NULL;
+}
+
+/**
+double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::Trajectory& traj , unsigned int& id)
+{
+  cout << " * Start testing for new OTP ***************" << endl;
+  ChronoOn();
+  
+//  int armId = 0;
+//  ArmManipulationData& armData = (*_Robot->getRobotStruct()->armManipulationData)[armId];
+//  ManipulationConfigs manipConf(_Robot->getRobotStruct());
+//  gpGrasp grasp;
+//  double confCost = -1;
+//  
+//  vector<double> target(6);
+//  
+//  target.at(0) = WSPoint(0);
+//  target.at(1) = WSPoint(1);
+//  target.at(2) = WSPoint(2);
+//  target.at(3) = P3D_HUGE;
+//  target.at(4) = P3D_HUGE;
+//  target.at(5) = P3D_HUGE;
+  
+  //double* q = manipConf.getFreeHoldingConf(NULL, armId, grasp, armData.getCcCntrt()->Tatt, confCost, target, NULL);
+  
+  // 1 - Create Agent
+	//HRI_AGENTS * agents = hri_create_agents();
+  HRI_AGENTS * agents = m_Agents;
+  
+  // 2 - Select Task
+	HRI_GIK_TASK_TYPE task = GIK_RATREACH; // Left Arm GIK
+
+  // 3 - Select Agent
+  HRI_AGENT* agent = hri_get_one_agent_of_type(agents, HRI_JIDOKUKA);
+  
+  p3d_vector3 Tcoord;
+  Tcoord[0] = WSPoint[0];
+  Tcoord[1] = WSPoint[1];
+  Tcoord[2] = WSPoint[2];
+  
+  double distance_tolerance = 0.10;
+  
+//  showConfig_2(q);
+  double* q;
+  
+  if ( true ) 
+  {
+    vector< pair<double,target_info> > costOfPoint;
+    
+    for(unsigned int i=0;i<(unsigned int)traj.getNbPaths();i++)
+    {
+      p3d_set_and_update_this_robot_conf(agent->robotPt,
+                                         traj.getLocalPathPtrAt(i)->getEnd()->getConfigStruct());
+      
+      q = p3d_get_robot_config(agent->robotPt);
+      
+      bool succeed = hri_agent_single_task_manip_move(agent, task, &Tcoord, distance_tolerance, &q);
+      
+      if(succeed)
+      {
+        shared_ptr<Configuration> q_target(new Configuration(_Robot,q));
+        
+        p3d_update_virtual_object_config_for_arm_ik_constraint(_Robot->getRobotStruct(), 0, q);
+        
+        //ManipulationUtils::checkConfigForCartesianMode(q,NULL);
+    
+        if (p3d_is_collision_free(_Robot->getRobotStruct(),q)) 
+        {
+          showConfig_2(q);
+          
+          LocalPath path(traj.getLocalPathPtrAt(i)->getEnd(),q_target);
+          
+          if (path.isValid()) 
+          {
+            pair<double,target_info> costOfTarget;
+            target_info targ;
+            
+            targ.id = i;
+            targ.q = p3d_copy_config(agent->robotPt,q);
+            
+            costOfPoint.push_back( make_pair(path.cost(),targ));
+          }
+        }
+      }
+      else {
+        p3d_destroy_config(_Robot->getRobotStruct(),q);
+      }
+    }
+    
+    if (!costOfPoint.empty()) 
+    {
+      //sort(costOfPoint.begin(),costOfPoint.end());
+      pair<double,target_info> costOfTargetTmp;
+      costOfTargetTmp.first = P3D_HUGE;
+      
+      for (unsigned int i=0; i<costOfPoint.size(); i++) 
+      {
+        if (costOfPoint[i].first < costOfTargetTmp.first ) 
+        {
+          costOfTargetTmp = costOfPoint[i];
+        }
+      }
+      
+      id = costOfTargetTmp.second.id;
+      ChronoPrint("");
+      ChronoOff();
+      cout << " * End testing for new OTP (Succed) ***********" << endl;
+      return costOfTargetTmp.second.q;
+    }
+    else {
+      p3d_destroy_config(_Robot->getRobotStruct(),q);
+    }
+  }
+  ChronoPrint("");
+  ChronoOff();
+  cout << " * End testing for new OTP (Error) ***************" << endl;
+  return NULL;
+}*/
+      
 /*bool Workspace::baseInSight(shared_ptr<Configuration> q_base)
  {
  

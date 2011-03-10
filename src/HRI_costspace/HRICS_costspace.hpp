@@ -13,9 +13,11 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 
+#include "Hri_planner-pkg.h"
+
 // Main cost function
 extern double HRICS_getConfigCost(Configuration& Conf);
-extern   void HRICS_init();
+extern   void HRICS_init(HRI_AGENTS* agents = NULL);
 
 // Human kinematics
 const int HRICS_HUMANj_BODY=      2;

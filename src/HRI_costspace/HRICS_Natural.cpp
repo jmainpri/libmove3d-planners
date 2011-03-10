@@ -77,10 +77,6 @@ void Natural::initGeneral()
     m_KinType = Herakles;
   }
   
-#ifdef HRI_PLANNER
-	m_Agents = hri_create_agents();
-#endif
-  
 	shared_ptr<Configuration> q_curr = m_Robot->getCurrentPos();
   
 	switch (m_KinType) 

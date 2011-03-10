@@ -137,6 +137,8 @@ namespace HRICS
 		void initVisibility();
 		void initReachable();
 		void initNatural();
+    
+    void setAgents( HRI_AGENTS* agents ) { m_Agents = agents; }
 		
 		/**
 		 * Get Robot and Human
@@ -195,6 +197,11 @@ namespace HRICS
 		bool transPFromBaseConf(std::tr1::shared_ptr<Configuration> q_base, std::vector< Eigen::Vector3d > points );
 		bool baseInSight(std::tr1::shared_ptr<Configuration> q_base);
 		
+    /**
+     * Test straight lines between target point and the point of the trajectory
+     */
+    double* testTransferPointToTrajectory( const Eigen::Vector3d& WSPoint, API::Trajectory& traj, unsigned int& id);
+    
 		bool chooseBestTransferPoint(Eigen::Vector3d& transfPoint);
     
     /**
@@ -237,13 +244,16 @@ namespace HRICS
 		 */
 		Grid*                   m3DGrid;
 		
+#ifdef HRI_PLANNER
+		HRI_AGENTS*		m_Agents;
+#endif
 		
 		/**
 		 * 3d path internals
 		 */
 		bool mPathExist;
 		std::vector<Eigen::Vector3d>   m3DPath;
-		std::vector<API::ThreeDCell*> m3DCellPath;
+		std::vector<API::ThreeDCell*>  m3DCellPath;
 	};
 }
 
