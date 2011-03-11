@@ -57,6 +57,7 @@ namespace HRICS
 		
 		NaturalGrid* mergeWith(NaturalGrid* otherGrid);
 		std::vector<NaturalCell*> getAllReachableCells();
+		std::vector<std::pair<double,NaturalCell*> > getAllReachableCellsSorted();
 		std::vector<NaturalCell*> getAllReachableCells(double CostThreshold);
 		
 		void setNaturalCostSpace(Natural* NCS) { m_NaturalCostSpace = NCS; setGridOrigin(); }

@@ -273,7 +273,50 @@ vector<NaturalCell*> NaturalGrid::getAllReachableCells()
 			ReachableCells.push_back( cell );
 		}
     }
-	
+
+	return ReachableCells;
+}
+
+/*!
+ * Natural cell comparator
+ */
+class NaturalCellComp
+{
+public:
+
+	bool operator()(pair<double,NaturalCell*> first, pair<double,NaturalCell*> second)
+	{
+		return ( first.first < second.first );
+	}
+
+} NaturalCellCompObj;
+
+
+/*!
+ * @breif Reachable Cells sorted
+ */
+vector<pair<double,NaturalCell*> > NaturalGrid::getAllReachableCellsSorted()
+{
+	vector<pair<double,NaturalCell*> > ReachableCells;
+
+	ReachableCells.clear();
+
+	unsigned int nbCells = this->getNumberOfCells();
+
+    for(unsigned int i=0; i<nbCells; i++)
+    {
+        NaturalCell* cell = dynamic_cast<NaturalCell*>( _cells[i] );
+
+		if ( cell->isReachable() )
+		{
+			pair<double, NaturalCell*> costCell;
+			costCell.second = cell;
+			costCell.first = cell->getCost();
+			ReachableCells.push_back( costCell );
+		}
+	}
+	sort(ReachableCells.begin(),ReachableCells.end(),NaturalCellCompObj);
+
 	return ReachableCells;
 }
 
