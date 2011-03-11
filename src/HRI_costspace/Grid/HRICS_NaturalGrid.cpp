@@ -536,3 +536,453 @@ void NaturalGrid::draw()
 	
 	//getRobot()->setAndUpdate(*m_ActualConfig);
 }
+
+bool NaturalGrid::writeToXmlFile(string docname)
+{
+    stringstream ss;
+    string str;
+
+    //Creating the file Variable version 1.0
+    xmlDocPtr doc = xmlNewDoc(xmlCharStrdup("1.0"));
+
+    //Writing the root node
+    xmlNodePtr root = xmlNewNode (NULL, xmlCharStrdup("Grid"));
+
+    xmlNewProp (root, xmlCharStrdup("Type"), xmlCharStrdup("3D"));
+
+	//Writing the first Node
+	xmlNodePtr cur = xmlNewChild (root, NULL, xmlCharStrdup("OriginCorner"), NULL);
+
+    str.clear(); ss << _originCorner[0]; ss >> str; ss.clear();
+    xmlNewProp (cur, xmlCharStrdup("X"), xmlCharStrdup(str.c_str()));
+
+    str.clear(); ss << _originCorner[1]; ss >> str; ss.clear();
+    xmlNewProp (cur, xmlCharStrdup("Y"), xmlCharStrdup(str.c_str()));
+
+    str.clear(); ss << _originCorner[2]; ss >> str; ss.clear();
+    xmlNewProp (cur, xmlCharStrdup("Z"), xmlCharStrdup(str.c_str()));
+
+	//Writing cell size
+	cur = xmlNewChild (cur, NULL, xmlCharStrdup("CellSize"), NULL);
+
+    str.clear(); ss << _cellSize[0]; ss >> str; ss.clear();
+    xmlNewProp (cur, xmlCharStrdup("X"), xmlCharStrdup(str.c_str()));
+
+    str.clear(); ss << _cellSize[1]; ss >> str; ss.clear();
+    xmlNewProp (cur, xmlCharStrdup("Y"), xmlCharStrdup(str.c_str()));
+
+    str.clear(); ss << _cellSize[2]; ss >> str; ss.clear();
+    xmlNewProp (cur, xmlCharStrdup("Z"), xmlCharStrdup(str.c_str()));
+
+    //Writing the cells
+    cur = xmlNewChild (cur, NULL, xmlCharStrdup("Cells"), NULL);
+
+    str.clear(); ss << getNumberOfCells(); ss >> str; ss.clear();
+    xmlNewProp (cur, xmlCharStrdup("NbOfCells"), xmlCharStrdup(str.c_str()));
+
+    str.clear(); ss << _nbCellsX; ss >> str; ss.clear();
+    xmlNewProp (cur, xmlCharStrdup("NbOnX"), xmlCharStrdup(str.c_str()));
+
+    str.clear(); ss << _nbCellsY; ss >> str; ss.clear();
+    xmlNewProp (cur, xmlCharStrdup("NbOnY"), xmlCharStrdup(str.c_str()));
+
+    str.clear(); ss << _nbCellsZ; ss >> str; ss.clear();
+    xmlNewProp (cur, xmlCharStrdup("NbOnZ"), xmlCharStrdup(str.c_str()));
+
+    for (unsigned int i=0; i<getNumberOfCells(); i++)
+    {
+        xmlNodePtr _XmlCellNode_ = xmlNewChild(cur,
+                                               NULL,
+                                               xmlCharStrdup("Cell"), NULL);
+
+        _cells[i]->writeToXml(_XmlCellNode_);
+    }
+
+    ////Writing the second Node (coef prop)
+    xmlNodePtr coef = xmlNewChild (root, NULL, xmlCharStrdup("EnvCoeff"), NULL);
+
+    str.clear(); ss << ENV.getDouble(Env::coeffJoint);; ss >> str; ss.clear();
+    xmlNewProp (coef, xmlCharStrdup("coeffJoint"), xmlCharStrdup(str.c_str()));
+
+    str.clear(); ss << ENV.getDouble(Env::coeffEnerg);; ss >> str; ss.clear();
+    xmlNewProp (coef, xmlCharStrdup("coeffEnerg"), xmlCharStrdup(str.c_str()));
+
+    str.clear(); ss << ENV.getDouble(Env::coeffConfo);; ss >> str; ss.clear();
+    xmlNewProp (coef, xmlCharStrdup("coeffConfo"), xmlCharStrdup(str.c_str()));
+
+    str.clear(); ss << ENV.getDouble(Env::coeffArmPr);; ss >> str; ss.clear();
+    xmlNewProp (coef, xmlCharStrdup("coeffArmPr"), xmlCharStrdup(str.c_str()));
+
+    xmlDocSetRootElement(doc, root);
+    //	writeRootNode(graph, root);
+    //	writeSpeGraph(graph, file, root);
+
+    //Writing the file on HD
+    xmlSaveFormatFile (docname.c_str(), doc, 1);
+    xmlFreeDoc(doc);
+
+    cout << "Writing Grid to : " << docname << endl;
+
+    return true;
+}
+
+/*!
+ * \brief Reads the grid
+ * from an xml file
+ */
+bool NaturalGrid::loadFromXmlFile(string docname)
+{
+    //Creating the file Variable version 1.0
+    xmlDocPtr doc;
+    xmlNodePtr cur;
+    xmlNodePtr root;
+
+    doc = xmlParseFile(docname.c_str());
+
+    if(doc==NULL)
+    {
+        cout << "Document not parsed successfully (doc==NULL)" << endl;
+        return false;
+    }
+
+    root = xmlDocGetRootElement(doc);
+
+    if (root == NULL)
+    {
+        cout << "Document not parsed successfully" << endl;
+        xmlFreeDoc(doc);
+        return false;
+    }
+
+
+	if (xmlStrcmp(root->name, xmlCharStrdup("Grid")))
+	{
+		cout << "Document of the wrong type root node not Grid" << endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+
+
+	xmlChar* tmp;
+
+	tmp = xmlGetProp(root, xmlCharStrdup("Type"));
+	if (xmlStrcmp(tmp, xmlCharStrdup("3D")))
+	{
+		cout << "Doccument not a 3D grid"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+	xmlFree(tmp);
+
+	/***************************************/
+	// NODE OriginCorner
+
+	cur = root->xmlChildrenNode->next;
+	root = cur;
+
+	float originCorner[3];
+
+	if (xmlStrcmp(cur->name, xmlCharStrdup("OriginCorner")))
+	{
+		cout << "Document second node is not OriginCorner ( " << cur->name << " )"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+
+	if ((tmp = xmlGetProp(cur, xmlCharStrdup("X"))) != NULL)
+	{
+		sscanf((char *) tmp, "%f", originCorner+0 );
+	}
+	else
+	{
+		xmlFree(tmp);
+		cout << "Document error origin X"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+	xmlFree(tmp);
+
+	if ((tmp = xmlGetProp(cur, xmlCharStrdup("Y"))) != NULL)
+	{
+		sscanf((char *) tmp, "%f", originCorner+1 );
+	}
+	else
+	{
+		xmlFree(tmp);
+		cout << "Document error origin Y"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+	xmlFree(tmp);
+
+	if ((tmp = xmlGetProp(cur, xmlCharStrdup("Z"))) != NULL)
+	{
+		sscanf((char *) tmp, "%f", originCorner+2 );
+	}
+	else
+	{
+		xmlFree(tmp);
+		cout << "Document error NbOnZ"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+	xmlFree(tmp);
+
+	_originCorner[0] = originCorner[0];
+	_originCorner[1] = originCorner[1];
+	_originCorner[2] = originCorner[2];
+
+	cout << "_originCorner = " << endl <<_originCorner << endl;
+
+	/***************************************/
+	// NODE CellSize
+
+	cur = cur->xmlChildrenNode->next;
+
+	float cellSize[3];
+
+	if (xmlStrcmp(cur->name, xmlCharStrdup("CellSize")))
+	{
+		cout << "Document second node is not CellSize ( " << cur->name << " )"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+
+	if ((tmp = xmlGetProp(cur, xmlCharStrdup("X"))) != NULL)
+	{
+		sscanf((char *) tmp, "%f", cellSize+0);
+	}
+	else
+	{
+		xmlFree(tmp);
+		cout << "Document error origin X"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+	xmlFree(tmp);
+
+	if ((tmp = xmlGetProp(cur, xmlCharStrdup("Y"))) != NULL)
+	{
+		sscanf((char *) tmp, "%f", cellSize+1);
+	}
+	else
+	{
+		xmlFree(tmp);
+		cout << "Document error origin Y"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+	xmlFree(tmp);
+
+	if ((tmp = xmlGetProp(cur, xmlCharStrdup("Z"))) != NULL)
+	{
+		sscanf((char *) tmp, "%f", cellSize+2);
+	}
+	else
+	{
+		xmlFree(tmp);
+		cout << "Document error NbOnZ"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+	xmlFree(tmp);
+
+	_cellSize[0] = cellSize[0];
+	_cellSize[1] = cellSize[1];
+	_cellSize[2] = cellSize[2];
+
+	cout << "_cellSize = " << endl <<_cellSize << endl;
+
+	/***************************************/
+	// NODE Cells
+
+	cur = cur->xmlChildrenNode->next;
+
+	if (xmlStrcmp(cur->name, xmlCharStrdup("Cells")))
+	{
+		cout << "Document second node is not Cells ( " << cur->name << " )"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+
+	unsigned int NbOfCells;
+	if ((tmp = xmlGetProp(cur, xmlCharStrdup("NbOfCells"))) != NULL)
+	{
+		sscanf((char *) tmp, "%d", &(NbOfCells));
+	}
+	else
+	{
+		xmlFree(tmp);
+		cout << "Document not a 3D grid"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+	xmlFree(tmp);
+
+	if ((tmp = xmlGetProp(cur, xmlCharStrdup("NbOnX"))) != NULL)
+	{
+		sscanf((char *) tmp, "%d", &(_nbCellsX));
+	}
+	else
+	{
+		xmlFree(tmp);
+		cout << "Document error NbOnX"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+	xmlFree(tmp);
+
+	if ((tmp = xmlGetProp(cur, xmlCharStrdup("NbOnY"))) != NULL)
+	{
+		sscanf((char *) tmp, "%d", &(_nbCellsY));
+	}
+	else
+	{
+		xmlFree(tmp);
+		cout << "Doccument error NbOnY"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+	xmlFree(tmp);
+
+	if ((tmp = xmlGetProp(cur, xmlCharStrdup("NbOnZ"))) != NULL)
+	{
+		sscanf((char *) tmp, "%d", &(_nbCellsZ));
+	}
+	else
+	{
+		xmlFree(tmp);
+		cout << "Doccument error NbOnZ"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+	xmlFree(tmp);
+
+	if( _nbCellsX*_nbCellsY*_nbCellsZ != NbOfCells )
+	{
+		cout << "Doccument error _nbCellsX*_nbCellsY*_nbCellsZ != NbOfCells"<< endl;
+		xmlFreeDoc(doc);
+		return false;
+	}
+
+	/***************************************/
+	//  Reads the Cells
+
+	_cells.resize(NbOfCells);
+
+	cur = cur->xmlChildrenNode;
+
+	for (unsigned int i=0; i<NbOfCells; i++)
+	{
+
+		cur = cur->next;
+
+		if (cur == NULL)
+		{
+			cout << "Document error on the number of Cell" << endl;
+			break;
+		}
+
+		_cells[i] = createNewCell(i,0,0,0);
+
+		if (xmlStrcmp(cur->name, xmlCharStrdup("Cell")))
+		{
+			cout << "Document node is not Cell ( " << cur->name << " )"<< endl;
+			xmlFreeDoc(doc);
+			return false;
+		}
+
+		if ( ! _cells[i]->readCellFromXml(cur) )
+		{
+			cout << "Document error while reading cell"<< endl;
+			xmlFreeDoc(doc);
+			return false;
+		}
+
+		cur = cur->next;
+	}
+
+	/***************************************/
+	//  Reads the EnvCoeff
+	cur = root->next->next;
+	if (cur)
+	{
+		double result = 0;
+		std::stringstream ss;
+		if (!xmlStrcmp(cur->name, xmlCharStrdup("EnvCoeff")))
+		{
+			if ((tmp = xmlGetProp(cur, xmlCharStrdup("coeffJoint"))) == NULL)
+			{
+				xmlFree(tmp);
+				cout << "Document error coeffJoint"<< endl;
+				xmlFreeDoc(doc);
+				return false;
+			}
+			else
+			{
+
+				ss << (char *) tmp;
+				ss >> result;
+				ENV.setDouble(Env::coeffJoint,result);
+				xmlFree(tmp);
+				result = 0;
+			}
+
+			if ((tmp = xmlGetProp(cur, xmlCharStrdup("coeffEnerg"))) == NULL)
+			{
+				xmlFree(tmp);
+				cout << "Document error coeffEnerg"<< endl;
+				xmlFreeDoc(doc);
+				return false;
+			}
+			else
+			{
+				ss.clear();
+				ss << (char *) tmp;
+				ss >> result;
+				ENV.setDouble(Env::coeffEnerg,result);
+				xmlFree(tmp);
+				result = 0;
+			}
+
+			if ((tmp = xmlGetProp(cur, xmlCharStrdup("coeffConfo"))) == NULL)
+			{
+				xmlFree(tmp);
+				cout << "Document error coeffConfo"<< endl;
+				xmlFreeDoc(doc);
+				return false;
+			}
+			else
+			{
+				ss.clear();
+				ss << (char *) tmp;
+				ss >> result;
+				ENV.setDouble(Env::coeffConfo,result);
+				xmlFree(tmp);
+				result = 0;
+			}
+
+			if ((tmp = xmlGetProp(cur, xmlCharStrdup("coeffArmPr"))) == NULL)
+			{
+				xmlFree(tmp);
+				cout << "Document error coeffArmPr"<< endl;
+				xmlFreeDoc(doc);
+				return false;
+			}
+			else
+			{
+				ss.clear();
+				ss << (char *) tmp;
+				ss >> result;
+				ENV.setDouble(Env::coeffArmPr,result);
+				xmlFree(tmp);
+			}
+		}
+	}
+
+    cout << "Reading Grid : " << docname << endl;
+    xmlFreeDoc(doc);
+    return true;
+}
+
+

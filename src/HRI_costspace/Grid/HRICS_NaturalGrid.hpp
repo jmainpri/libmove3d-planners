@@ -66,8 +66,11 @@ namespace HRICS
 		//std::tr1::shared_ptr<Configuration> getActualConfig() { return m_ActualConfig; }
 		
 		Robot* getRobot();
-		
-		
+
+		bool writeToXmlFile(std::string docname);
+		bool loadFromXmlFile(std::string docname);
+
+
 	private:
 		Natural*													m_NaturalCostSpace;
 		bool															m_firstDisplay;
