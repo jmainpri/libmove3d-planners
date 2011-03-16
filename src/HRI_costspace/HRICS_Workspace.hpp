@@ -223,7 +223,15 @@ namespace HRICS
      */
     bool ComputeTheObjectTransfertPoint(bool Move, int type, Eigen::Vector3d& transfPoint);
 
-		
+		/**
+     * compute an object transfert point.
+     * The pose if the left or right hand of Herakles is used depending
+     * on the flag given as input
+     * @param use the rightHand if true
+     * @return a position vector in world coordiate
+     */
+    Eigen::Vector3d computeOTPFromHandPose( bool rightHand );
+    
 	private:
 		
 		void solveAStar(State* start,State* goal);

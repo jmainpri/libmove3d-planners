@@ -304,6 +304,13 @@ void g3d_draw_hrics()
                                  DTOR(160*0.75),
                                  1, GreenColor, GreenColorT);
 	}
+  
+  if( HRICS_MotionPL )
+	{
+    bool rightHand = true;
+    Eigen::Vector3d WSPoint = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->computeOTPFromHandPose( rightHand );
+    g3d_draw_solid_sphere(WSPoint[0], WSPoint[1], WSPoint[2], 0.10, 30);
+  }
 
         if (current_WSPoint(0) != 0 && current_WSPoint(1) != 0)
         {

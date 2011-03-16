@@ -28,10 +28,7 @@ using namespace Eigen;
 Joint::Joint(Robot *R, p3d_jnt* jntPt, bool copy ) : m_Robot(R)
 {
 	m_Joint = jntPt;
-	
-	string name(jntPt->name);
-    m_Name = name;
-	
+  m_Name = jntPt->name;
 }
 
 Vector3d Joint::getVectorPos()

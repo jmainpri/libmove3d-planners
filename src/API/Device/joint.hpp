@@ -24,19 +24,24 @@ struct jnt;
  @brief This class holds a Joint and is associated with a Body (Link)
  It's the basic element of a kinematic chain
  */
-class Joint {
-	
+class Joint 
+{	
 public:
 	/**
-     * Constructor
-     * @param The p3d_jnt that is used
-     */
-    Joint(Robot* R, jnt* jntPt , bool copy = false );
+   * Constructor
+   * @param The p3d_jnt that is used
+   */
+  Joint(Robot* R, jnt* jntPt , bool copy = false );
 	
-    /**
-     * Destructor of the class
-     */
-    ~Joint();
+  /**
+   * Destructor of the class
+   */
+  ~Joint();
+  
+  /**
+   * Returns the name of the joint
+   */
+  std::string getName() { return m_Name; }
 	
 	/**
 	 * Get the Joint structue
@@ -61,7 +66,7 @@ public:
 	/**
 	 * Random shoot the joint
 	 */
-	void				shoot(Configuration& q,bool sample_passive=false);
+	void          shoot(Configuration& q,bool sample_passive=false);
 	
 	/**
 	 * Returns the Joint Dof
@@ -96,7 +101,7 @@ public:
 private:
 	Robot*				m_Robot;
 	jnt*				m_Joint; /*!< The p3d structure for the Joint*/
-    std::string			m_Name; /*!< The Joint's Name */
+  std::string			m_Name; /*!< The Joint's Name */
 	bool				m_copy; /*!< Is true if the p3d_jnt copies and not only points to the structure */
 	
 };

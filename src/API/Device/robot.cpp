@@ -69,10 +69,8 @@ Robot::Robot(p3d_rob* robotPt, bool copy )
 	else {
 		_Robot = robotPt;
 	}
-
-
-    string name(robotPt->name);
-    _Name = name;
+  
+  _Name = robotPt->name;
 	
 	m_Joints.clear();
 	
@@ -124,6 +122,19 @@ unsigned int Robot::getNumberOfJoints()
 Joint* Robot::getJoint(unsigned int i)
 {
 	return m_Joints[i];
+}
+
+Joint* Robot::getJoint(std::string name)
+{
+  for (unsigned int i=0; i<m_Joints.size(); i++) 
+  {
+    if( m_Joints[i]->getName() == name )
+    {
+      return m_Joints[i];
+    }
+  }
+  
+  return NULL;
 }
 
 vector<Vector3d> Robot::getObjectBox()

@@ -1026,7 +1026,6 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint)
 
 bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 {	
-
 	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
 	
 	if ( m_ReachableSpace == NULL )
@@ -1148,8 +1147,6 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 
 bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WSPoint)
 {
-
-
    ENV.setDouble( Env::Kdistance,   5 );
    ENV.setDouble( Env::Kvisibility, 15 );
    ENV.setDouble( Env::Kreachable,  65 );
@@ -1195,5 +1192,27 @@ bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WS
     cout << "Cost Space not initialized" << endl;
   }
   return hasComputed;
+}
+
+Eigen::Vector3d Workspace::computeOTPFromHandPose( bool rightHand )
+{
+  Joint* j;
+  
+  if (rightHand) 
+  {
+    j = mHumans[0]->getJoint("rPalm");
+  }
+  else {
+    j = mHumans[0]->getJoint("lPalm");
+  }
+
+  Transform3d t( j->getMatrixPos() );
+  
+  Vector3d offSet;
+  offSet(0) = 0.15;
+  offSet(1) = 0.10;
+  offSet(2) = -0.15;
+  
+  return t*offSet;
 }
 

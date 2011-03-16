@@ -95,6 +95,12 @@ public:
 	 * @return ith joint structure
 	 */
 	Joint* getJoint(unsigned int i);
+  
+  /**
+	 * Gets joint by name
+	 * @return pointer to the joint by name or NULL if not found
+	 */
+	Joint* getJoint(std::string name);
 	
 	/**
 	 * Returns the Object
