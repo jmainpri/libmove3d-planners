@@ -247,6 +247,11 @@ void g3d_draw_hrics()
 			}
 		}
 	}
+  
+  if( HRICS_activeDist )
+	{
+		HRICS_activeDist->drawInteractionZone();
+  }
 	
 	if( ENV.getBool(Env::drawDistance) && HRICS_activeDist )
 	{
@@ -278,26 +283,26 @@ void g3d_draw_hrics()
 		
 		Gaze = HRICS_MotionPL->getVisibility()->getGaze();
 		
-		glLineWidth(3.);
-		
-		if( (Gaze.size() == 6))
-		{		
-			g3d_drawOneLine(Gaze[0], Gaze[1],
-											Gaze[2], Gaze[3],
-											Gaze[4], Gaze[5], Blue, NULL);
-		}
-		
-		glLineWidth(1.);
+//		glLineWidth(3.);
+//		
+//		if( (Gaze.size() == 6))
+//		{		
+//			g3d_drawOneLine(Gaze[0], Gaze[1],
+//											Gaze[2], Gaze[3],
+//											Gaze[4], Gaze[5], Blue, NULL);
+//		}
+//		
+//		glLineWidth(1.);
     
-//    GLdouble GreenColor[4] =   { 0.0, 0.5, 0.0, 0.7 };
-//    GLdouble GreenColorT[4] =   { 0.0, 0.5, 0.0, 0.0 };
-//    GLdouble GreyColor[4] =   { 0.5, 0.5, 0.5, 0.5 };
-//    GLdouble GreyColorT[4] =   { 0.5, 0.5, 0.5, 0.0 };
+    GLdouble GreenColor[4] =   { 0.0, 0.5, 0.0, 0.7 };
+    GLdouble GreenColorT[4] =   { 0.0, 0.5, 0.0, 0.0 };
+    GLdouble GreyColor[4] =   { 0.5, 0.5, 0.5, 0.5 };
+    GLdouble GreyColorT[4] =   { 0.5, 0.5, 0.5, 0.0 };
     
-//    g3d_draw_visibility_by_frame(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint(42)->getJointStruct()->abs_pos,
-//                                 DTOR(160),
-//                                 DTOR(160*0.75),
-//                                 1, GreyColor, GreyColorT);
+    g3d_draw_visibility_by_frame(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint(46)->getJointStruct()->abs_pos,
+                                 DTOR(160),
+                                 DTOR(160*0.75),
+                                 1, GreenColor, GreenColorT);
 	}
 
         if (current_WSPoint(0) != 0 && current_WSPoint(1) != 0)

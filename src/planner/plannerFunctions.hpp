@@ -37,7 +37,7 @@ void smoothing_Function(p3d_rob* p3d_Robot, p3d_traj* traj, int nbSteps, double 
  * @ingroup NEW_CPP_MODULE
  * Funtion to replan from a certain via point
  */
-void replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 target, int deformationViaPoint);
+p3d_traj* replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 target, int deformationViaPoint);
 
 /**
   @ingroup NEW_CPP_MODULE

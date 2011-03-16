@@ -121,7 +121,6 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
 			case GLOBAL_CS_EXP:
           default:
             // Selection in the entire CSpace
-            cout << "Default Shoot" << endl;
             q = mGraph->getRobot()->shoot(samplePassive);
         }
     }

@@ -38,11 +38,6 @@ LocalPath::LocalPath(shared_ptr<Configuration> B, shared_ptr<Configuration> E) :
   _ResolEvaluated(false), _Resolution(0.0),
   _Type(LINEAR)
 {
-	/*if(*_Begin == *_End)
-	 {
-	 cout << "Error: LocalPath _Begin == _End" << endl;
-	 }*/
-	
 	if ( _Begin->getRobot() != _End->getRobot() ) 
 	{
 		cout << "_Begin->getRobot() != _End->getRobot() in LocalPath" << endl;

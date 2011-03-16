@@ -57,6 +57,10 @@ namespace HRICS
 		Eigen::Vector3d getColsestPointToHuman() { return mClosestPointToHuman; }
 		
 		void setSafeRadius(double radius) { _SafeRadius = radius; }
+    
+    void drawInteractionZone();
+    
+    int isPointInInteractionZone(const Eigen::Vector3d& WSPoint);
 		
 		
 	private:
@@ -67,6 +71,7 @@ namespace HRICS
 		std::vector<double> vect_jim;
 		double _SafeOffset;
 		double _SafeRadius;
+    double m_InteractionRadius;
 		
 		enum Computation 
 		{

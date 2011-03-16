@@ -36,6 +36,7 @@ Distance::Distance()
 	cout << "HRICS::Distance with " << " Robot " << m_Robot->getName() 
 	<< " and human " << _Humans[0]->getName() << endl;
 	_SafeRadius = 0;
+  m_InteractionRadius = 1.5;
 }
 
 
@@ -52,6 +53,7 @@ _Humans(humans)
 	cout << "HRICS::Distance with " << robName << " as robot and human " 
 	<< _Humans[0]->getName() << endl;
 	_SafeRadius = 0;
+  m_InteractionRadius = 1.5;
 }
 
 
@@ -764,3 +766,74 @@ double Distance::computeBoundingBalls(const Vector3d& WSPoint, p3d_vector3 robot
 		return pointbodydist;
 	}
 }
+
+void Distance::drawInteractionZone()
+{
+  Vector3d WSPoint;
+  Vector3d robotCenter = m_Robot->getJoint(1)->getVectorPos();
+    
+  Transform3d World_2_Robot( m_Robot->getJoint(1)->getMatrixPos() );
+  
+  GLint circle_points = 30;
+  GLdouble color_vect[4];
+
+  glEnable(GL_LIGHTING);
+  glEnable(GL_LIGHT0);
+  
+  g3d_set_color(Green,color_vect);
+  
+  glBegin(GL_POLYGON);
+  for (int i = 0; i < circle_points; i++) 
+  {
+    double angle = M_PI*i/circle_points - (M_PI/2);
+    
+    Vector3d p;
+    p[0] = m_InteractionRadius*cos(angle);
+    p[1] = m_InteractionRadius*sin(angle);
+    p[2] = 0;
+    
+    p = World_2_Robot*p;
+    
+    glVertex3d(p[0],p[1],p[2]);
+  }
+  glEnd();
+  
+  int isHumanInInteractionZone = isPointInInteractionZone(_Humans[0]->getJoint(1)->getVectorPos());
+  cout << "isHumanInInteractionZone = " << isHumanInInteractionZone << endl;
+}
+
+int Distance::isPointInInteractionZone(const Vector3d& WSPoint)
+{
+  Vector3d robCenter = m_Robot->getJoint(1)->getVectorPos();
+  
+  Vector2d p1,p2;
+  
+  p1[0] = robCenter[0];
+  p1[1] = robCenter[1];
+  
+  p2[0] = WSPoint[0];
+  p2[1] = WSPoint[1];
+  
+  double dist = ( p1 - p2 ).norm();
+  
+  if ( dist > m_InteractionRadius ) {
+    return 0;
+  }
+  
+  Transform3d Robot_2_World( m_Robot->getJoint(1)->getMatrixPos().inverse() );
+  
+  Vector3d p = Robot_2_World*WSPoint;
+  
+  double alpha = atan2(p[1],p[0]);
+  
+  if ( alpha > 1.57 ) {
+    return 0;
+  }
+  
+  if ( alpha < -1.57 ) {
+    return 0;
+  }
+  
+  return 1;
+}
+

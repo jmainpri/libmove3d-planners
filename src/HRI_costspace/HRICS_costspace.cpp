@@ -233,9 +233,9 @@ void HRICS_init(HRI_AGENTS* agents)
   //  ENV.setDouble( Env::Kvisibility, 25 );
   //  ENV.setDouble( Env::Kreachable,  90 );
   
-  ENV.setDouble( Env::Kdistance,   40 );
-  ENV.setDouble( Env::Kvisibility, 50 );
-  ENV.setDouble( Env::Kreachable,  10 );
+  ENV.setDouble( Env::Kdistance,   80 );
+  ENV.setDouble( Env::Kvisibility, 80 );
+  ENV.setDouble( Env::Kreachable,  20 );
   
   Robot* Human = global_Project->getActiveScene()->getRobotByNameContaining("HUMAN");
   

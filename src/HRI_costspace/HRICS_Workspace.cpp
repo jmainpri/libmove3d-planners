@@ -705,6 +705,9 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::
   target.at(5) = P3D_HUGE;
   
   double* q = manipConf.getFreeHoldingConf(NULL, armId, grasp, armData.getCcCntrt()->Tatt, confCost, target, NULL);
+  _Robot->activateCcConstraint();
+  
+  ChronoPrint("");
   
   vector< pair<double,unsigned int> > costOfPoint;
   

@@ -251,7 +251,7 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
   cout << "Cut the traj in several local paths" << endl;
   cout << "optimTrj range is : " << range << endl;
   
-  optimTrj.cutTrajInSmallLP( floor( range / (15*dmax) ) );
+  optimTrj.cutTrajInSmallLP( floor( range / (30*dmax) ) );
   optimTrj.replaceP3dTraj();
   optimTrj.resetCostComputed();
   
@@ -265,14 +265,15 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
 // ---------------------------------------------------------------------------------
 // Re-Planning
 // ---------------------------------------------------------------------------------
-void replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 target, int deformationViaPoint)
+p3d_traj* replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 target, int deformationViaPoint)
 {
   cout << "* REPLANNING ***************" << endl;
   
-  //traj = pathPt;
   ManipulationUtils::printConstraintInfo(robotPt);
-  p3d_multilocapath_print_group_info(robotPt);
   p3d_multilocalpath_switch_to_linear_groups (robotPt);
+  p3d_multilocapath_print_group_info(robotPt);
+  
+//  traj = pathPt;
   
   // Gets the robot pointer
   Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
@@ -303,11 +304,24 @@ void replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 target, i
     shared_ptr<Configuration> q_source(optimTrj.getLocalPathPtrAt(validShortCutId)->getEnd());
     shared_ptr<Configuration> q_target(new Configuration(rob,q));
     
-    path.push_back( new LocalPath(q_source,q_target) );
+//    cout << "q_source = " << endl;
+//    q_source->print(true);
+//    
+//    cout << "q_target = " << endl;
+//    q_target->print(true);
     
-//    vector<LocalPath*> courbe = optimTrj.getCourbe();
-//    optimTrj.copyPaths( courbe );
-    optimTrj.replacePortion(validShortCutId,endId,path);
+    LocalPath* pathPt = new LocalPath(q_source,q_target);
+    
+    if (!pathPt->isValid()) {
+      cout << "ERROR : LocalPath Not Valid" << endl;
+    }
+    else {
+      path.push_back( pathPt );
+      
+      //    vector<LocalPath*> courbe = optimTrj.getCourbe();
+      //    optimTrj.copyPaths( courbe );
+      optimTrj.replacePortion(validShortCutId+1,endId,path);
+    }
   }
   
   double optTime = 0.0;
@@ -329,19 +343,25 @@ void replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 target, i
 //    optTime += optimTrj.getTime();
 //  }
   
-  double dmax = global_Project->getActiveScene()->getDMax();
-  double range = optimTrj.getRangeMax();
+  //-----------------------------------
   
-  cout << "** END CUTTING **************" << endl;
-  cout << "NLP = " << floor( range / (15*dmax)) << endl;
+//  double dmax = global_Project->getActiveScene()->getDMax();
+//  double range = optimTrj.getRangeMax();
+//  
+//  cout << "** END CUTTING **************" << endl;
+//  cout << "NLP = " << floor( range / (15*dmax)) << endl;
+//  
+//  optimTrj.cutTrajInSmallLP( floor( range / (15*dmax) ) );
   
-  optimTrj.cutTrajInSmallLP( floor( range / (15*dmax) ) );
+  //-----------------------------------
   
   vector<LocalPath*> courbe = optimTrj.getCourbe();
   optimTrj.copyPaths( courbe );
   
   oldTraj.replacePortion((unsigned int)deformationViaPoint, lastViaPoint, courbe);
   oldTraj.replaceP3dTraj();
+  
+  return rob->getTrajStruct();
 }
 
 // ---------------------------------------------------------------------------------

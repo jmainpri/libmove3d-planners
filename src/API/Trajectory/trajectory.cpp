@@ -267,7 +267,7 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 	//	cout << "Number of local paths : " << nloc << endl;
 	
 	p3d_localpath *localpathPt = m_Courbe.at(0)->getLocalpathStruct()->copy(
-																																					trajPt->rob, m_Courbe.at(0)->getLocalpathStruct());
+																trajPt->rob, m_Courbe.at(0)->getLocalpathStruct());
 	
 	p3d_localpath *localprevPt = NULL;
 	
