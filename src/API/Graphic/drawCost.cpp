@@ -39,6 +39,7 @@ std::vector<double> vect_jim;
 
 extern Eigen::Vector3d current_WSPoint;
 extern pair<double, Eigen::Vector3d > current_cost;
+extern std::string hri_text_to_display;
 double cost_max = 30.0;
 
 // TODO callback OOMOVE3D
@@ -310,8 +311,16 @@ void g3d_draw_hrics()
     bool rightHand = true;
     Eigen::Vector3d WSPoint = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->computeOTPFromHandPose( rightHand );
     g3d_draw_solid_sphere(WSPoint[0], WSPoint[1], WSPoint[2], 0.10, 30);
+    
+    stringstream s;
+    s << "c1 = " << endl;
+    s << "c2 = " << endl;
+    hri_text_to_display = s.str();
   }
 
+  
+  //"HRI cost = %2.2f"
+  
         if (current_WSPoint(0) != 0 && current_WSPoint(1) != 0)
         {
 
