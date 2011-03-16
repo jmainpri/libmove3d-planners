@@ -312,10 +312,10 @@ void g3d_draw_hrics()
     Eigen::Vector3d WSPoint = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->computeOTPFromHandPose( rightHand );
     g3d_draw_solid_sphere(WSPoint[0], WSPoint[1], WSPoint[2], 0.10, 30);
     
-    stringstream s;
-    s << "c1 = " << endl;
-    s << "c2 = " << endl;
-    hri_text_to_display = s.str();
+    //   stringstream s;
+    //    s << "c1 = " << endl;
+    //    s << "c2 = " << endl;
+    //   hri_text_to_display = s.str();
   }
 
   
