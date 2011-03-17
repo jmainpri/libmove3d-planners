@@ -1495,31 +1495,32 @@ void Trajectory::cutTrajInSmallLP(unsigned int nLP)
 	}
 }
 
-void Trajectory::replacePortion(unsigned int id1, unsigned int id2, vector<LocalPath*> paths, bool freeMemory )
+bool Trajectory::replacePortion(unsigned int id1, unsigned int id2, vector<LocalPath*> paths, bool freeMemory )
 {
-	// WARNING: the ids are ids of nodes and not
-	// LocalPaths
-	
-	if (id1 < id2)
-	{
-    if (freeMemory) 
-    {
-      for (uint i = id1; i < id2; i++)
-      {
-        delete m_Courbe.at(i);
-      }
-    } 
-		
-		m_Courbe.erase(m_Courbe.begin() + id1, m_Courbe.begin() + id2);
-	}
+	// WARNING: the ids are ids of nodes and not LocalPaths
 	if (id1 == id2)
 	{
 		cout << "Error: in replace local (id1 and id2 are the same)" << endl;
+    return false;
 	}
-	
+  if (id2 < id1) 
+  {
+    cout << "Error: in replace local (id2 > id2)" << endl;
+    return false;
+  }
+  if (freeMemory) 
+  {
+    for (uint i = id1; i < id2; i++)
+    {
+      delete m_Courbe.at(i);
+    }
+  } 
+  
+  m_Courbe.erase(m_Courbe.begin() + id1, m_Courbe.begin() + id2);
 	m_Courbe.insert(m_Courbe.begin() + id1, paths.begin(), paths.end());
 	
 	updateRange();
+  return true;
 }
 
 bool Trajectory::replacePortion(double param1, double param2,
@@ -1530,7 +1531,7 @@ bool Trajectory::replacePortion(double param1, double param2,
 	
 	shared_ptr<Configuration> q21;
 	shared_ptr<Configuration> q22;
-	
+
 	if (param1 > param2)
 	{
 		cout

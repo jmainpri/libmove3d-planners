@@ -60,7 +60,7 @@ namespace API
 																		double param1,
 																		double param2);
 		
-		void replacePortion(
+		bool replacePortion(
 												unsigned int id1,
 												unsigned int id2,
 												std::vector<LocalPath*> paths, bool freeMemory = true );

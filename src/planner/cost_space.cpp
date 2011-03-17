@@ -289,8 +289,8 @@ double CostSpace::cost(LocalPath& path)
 	if (ENV.getBool(Env::isCostSpace))
 	{
     double currentCost, prevCost;
-    Eigen::Vector3d taskPos;
-    Eigen::Vector3d prevTaskPos(0, 0, 0);
+    Eigen::Vector3d taskVectorPos;
+    Eigen::Vector3d prevTaskVectorPos(0, 0, 0);
     
     double currentParam = 0;
     
@@ -320,7 +320,7 @@ double CostSpace::cost(LocalPath& path)
       }
       
       //!TODO fix task space bug in Configuration class
-      prevTaskPos = path.getBegin()->getTaskPos();
+      prevTaskVectorPos = path.getBegin()->getTaskPos();
       
       if( !q_tmp_begin->equal(*path.getBegin()) )
       {
@@ -328,8 +328,6 @@ double CostSpace::cost(LocalPath& path)
       }
     }
 #endif
-    // Case of task space
-    vector<double> Pos;
     
     //                cout << "nStep =" << nStep << endl;
     for (unsigned int i = 0; i < nStep; i++)
@@ -343,9 +341,9 @@ double CostSpace::cost(LocalPath& path)
       // Case of task space
       if(isHRIPlannerWS)
       {
-        taskPos = confPtr->getTaskPos();
-        CostDistStep = ( taskPos - prevTaskPos ).norm();
-        prevTaskPos = taskPos;
+        taskVectorPos = confPtr->getTaskPos();
+        CostDistStep = ( taskVectorPos - prevTaskVectorPos ).norm();
+        prevTaskVectorPos = taskVectorPos;
       }
 #endif		
       Cost += deltaStepCost(prevCost, currentCost, CostDistStep);

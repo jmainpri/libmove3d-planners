@@ -790,7 +790,7 @@ void Distance::drawInteractionZone()
     Vector3d p;
     p[0] = m_InteractionRadius*cos(angle);
     p[1] = m_InteractionRadius*sin(angle);
-    p[2] = 0;
+    p[2] = 0.10;
     
     p = World_2_Robot*p;
     
@@ -798,8 +798,8 @@ void Distance::drawInteractionZone()
   }
   glEnd();
   
-  int isHumanInInteractionZone = isPointInInteractionZone(_Humans[0]->getJoint(1)->getVectorPos());
-  cout << "isHumanInInteractionZone = " << isHumanInInteractionZone << endl;
+//  int isHumanInInteractionZone = isPointInInteractionZone(_Humans[0]->getJoint(1)->getVectorPos());
+//  cout << "isHumanInInteractionZone = " << isHumanInInteractionZone << endl;
 }
 
 int Distance::isPointInInteractionZone(const Vector3d& WSPoint)

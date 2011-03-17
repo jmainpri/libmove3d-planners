@@ -198,10 +198,29 @@ namespace HRICS
 		bool baseInSight(std::tr1::shared_ptr<Configuration> q_base);
 		
     /**
+     * Set the OTP from given point
+     */
+    void setCurrentOTP(const Eigen::Vector3d& p) { m_OTP = p; }
+    
+    /**
+     * Return the OTP
+     */
+    Eigen::Vector3d getCurrentOTP() { return m_OTP; }
+    
+    /**
+     * Draws the current OTP
+     */
+    void drawCurrentOTP();
+    
+    /**
      * Test straight lines between target point and the point of the trajectory
      */
     double* testTransferPointToTrajectory( const Eigen::Vector3d& WSPoint, API::Trajectory& traj, unsigned int& id);
     
+    
+    /**
+     * Choses a good transfer point
+     */
 		bool chooseBestTransferPoint(Eigen::Vector3d& transfPoint);
     
     /**
@@ -236,29 +255,24 @@ namespace HRICS
 		
 		void solveAStar(State* start,State* goal);
 		
-		/** 
-		 * Members
-		 */
-		
-		/**
-		 * Humans in the scene
-		 */
+		//! Humans in the scene
 		std::vector<Robot*>     mHumans;
 		
+    //! index of the Dof from which the robot holds
+    //! the object
 		int mIndexObjectDof;
-		
-		/**
-		 * 3d grid to compute a Workspace path
-		 */
+    
+    //! OPT (object transfer point)
+    Eigen::Vector3d m_OTP;
+    
+		//! 3d grid to compute a Workspace path
 		Grid*                   m3DGrid;
 		
 #ifdef HRI_PLANNER
 		HRI_AGENTS*		m_Agents;
 #endif
 		
-		/**
-		 * 3d path internals
-		 */
+		//! 3d path internals
 		bool mPathExist;
 		std::vector<Eigen::Vector3d>   m3DPath;
 		std::vector<API::ThreeDCell*>  m3DCellPath;

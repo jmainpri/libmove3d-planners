@@ -119,6 +119,7 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 	
 	m3DPath.clear();
 	
+  m_OTP = Vector3d::Zero();
 }
 
 Workspace::Workspace(Robot* rob, Graph* graph) :
@@ -675,8 +676,32 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 	}
 	
 	deactivateOnlyBaseCollision();
-        _Robot->setAndUpdate(*q_cur);
+  _Robot->setAndUpdate(*q_cur);
 	return false;
+}
+
+void Workspace::drawCurrentOTP()
+{
+  double color_array[4];
+    
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  
+  color_array[0]= 1.0;
+  color_array[1]= 0.0;
+  color_array[2]= 0.0;
+  color_array[3]= 1.0;
+  g3d_set_color(Any,color_array);
+  g3d_draw_solid_sphere(m_OTP[0], m_OTP[1], m_OTP[2], 0.03, 10);
+  
+  color_array[0]= 0.0;
+  color_array[1]= 1.0;
+  color_array[2]= 0.0;
+  color_array[3]= 0.5;
+  g3d_set_color(Any,color_array);
+  g3d_draw_solid_sphere(m_OTP[0], m_OTP[1], m_OTP[2], 0.20, 10);
+  
+  glDisable(GL_BLEND);
 }
 
 struct target_info 
@@ -729,7 +754,8 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::
     id = costOfPoint[0].second;
     ChronoPrint("");
     ChronoOff();
-    cout << " * End testing for new OTP (Succed) ***********" << endl;
+    setCurrentOTP(WSPoint);
+    cout << " * End testing for new OTP (Succeed) ***********" << endl;
     return q;
   }
   else {
@@ -1209,9 +1235,9 @@ Eigen::Vector3d Workspace::computeOTPFromHandPose( bool rightHand )
   Transform3d t( j->getMatrixPos() );
   
   Vector3d offSet;
-  offSet(0) = 0.15;
-  offSet(1) = 0.10;
-  offSet(2) = -0.15;
+  offSet(0) = 0.00;
+  offSet(1) = 0.20;
+  offSet(2) = 0.00;
   
   return t*offSet;
 }

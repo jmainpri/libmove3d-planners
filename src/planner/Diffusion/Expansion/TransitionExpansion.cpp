@@ -710,7 +710,6 @@ int TransitionExpansion::extendExpandProcess(Node* expansionNode,
 																						 shared_ptr<Configuration> directionConfig,
 																						 Node* directionNode)
 {
-  
   //cout << "Expansion node cost = " <<  expansionNode->cost() << endl;
 	//cout << "Expansion node cost = " <<  expansionNode->getNodeStruct()->cost << endl;
 	

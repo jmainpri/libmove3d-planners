@@ -93,7 +93,7 @@ void g3d_draw_eigen_box(	const Eigen::Vector3d& v1, const Eigen::Vector3d& v2, c
 	glVertex3d(v4[0],v4[1],v4[2]);
 	glVertex3d(v8[0],v8[1],v8[2]);
 	glVertex3d(v7[0],v7[1],v7[2]);
-        glEnd();
+  glEnd();
 	
 	glPopAttrib();
 }
@@ -130,12 +130,12 @@ void g3d_draw_grids()
   //cout << "g3d_draw_grids" << endl;
   
 #ifdef HRI_COSTSPACE
-
+  
 	if( ENV.getBool(Env::drawEntireGrid) && API_activeGrid )
 	{
 		ENV.setBool(Env::drawGrid,true);
 	}
-
+  
 	if( ENV.getBool(Env::drawGrid) && API_activeGrid )
 	{
     //cout << "API_activeGrid->draw()" << endl;
@@ -191,32 +191,32 @@ void g3d_draw_grids()
 
 void drawGauge(int number, double cost)
 {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    double cylinderColorvector[4];
-
-    cylinderColorvector[1] = 1.0;       //green
-    cylinderColorvector[2] = 0.0;       //blue
-    cylinderColorvector[0] = 0.0;       //red
-    cylinderColorvector[3] = 0.7;       //transparency
-
-    GroundColorMixGreenToRed(cylinderColorvector, cost);
-
-    g3d_set_color(Any,cylinderColorvector);
-
-
-    g3d_draw_solid_cylinder(1.0, -1.0 - (number * 0.5), 0.09, cost * 2, 30);
-
-    cylinderColorvector[1] = 0.5;       //green
-    cylinderColorvector[2] = 0.5;       //blue
-    cylinderColorvector[0] = 0.5;       //red
-    cylinderColorvector[3] = 0.4;       //transparency
-
-    g3d_set_color(Any,cylinderColorvector);
-    g3d_draw_solid_cylinder(1.0, -1.0 - (number * 0.5), 0.10, 2, 30);
-
-    glDisable(GL_BLEND);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  
+  double cylinderColorvector[4];
+  
+  cylinderColorvector[1] = 1.0;       //green
+  cylinderColorvector[2] = 0.0;       //blue
+  cylinderColorvector[0] = 0.0;       //red
+  cylinderColorvector[3] = 0.7;       //transparency
+  
+  GroundColorMixGreenToRed(cylinderColorvector, cost);
+  
+  g3d_set_color(Any,cylinderColorvector);
+  
+  
+  g3d_draw_solid_cylinder(1.0, -1.0 - (number * 0.5), 0.09, cost * 2, 30);
+  
+  cylinderColorvector[1] = 0.5;       //green
+  cylinderColorvector[2] = 0.5;       //blue
+  cylinderColorvector[0] = 0.5;       //red
+  cylinderColorvector[3] = 0.4;       //transparency
+  
+  g3d_set_color(Any,cylinderColorvector);
+  g3d_draw_solid_cylinder(1.0, -1.0 - (number * 0.5), 0.10, 2, 30);
+  
+  glDisable(GL_BLEND);
 }
 
 
@@ -253,7 +253,11 @@ void g3d_draw_hrics()
 	{
 		HRICS_activeDist->drawInteractionZone();
   }
-	
+  
+  if (HRICS_MotionPL) {
+    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->drawCurrentOTP();
+  }
+  
 	if( ENV.getBool(Env::drawDistance) && HRICS_activeDist )
 	{
 		vect_jim = HRICS_activeDist->getVectorJim();
@@ -284,22 +288,23 @@ void g3d_draw_hrics()
 		
 		Gaze = HRICS_MotionPL->getVisibility()->getGaze();
 		
-//		glLineWidth(3.);
-//		
-//		if( (Gaze.size() == 6))
-//		{		
-//			g3d_drawOneLine(Gaze[0], Gaze[1],
-//											Gaze[2], Gaze[3],
-//											Gaze[4], Gaze[5], Blue, NULL);
-//		}
-//		
-//		glLineWidth(1.);
+    //		glLineWidth(3.);
+    //		
+    //		if( (Gaze.size() == 6))
+    //		{		
+    //			g3d_drawOneLine(Gaze[0], Gaze[1],
+    //											Gaze[2], Gaze[3],
+    //											Gaze[4], Gaze[5], Blue, NULL);
+    //		}
+    //		
+    //		glLineWidth(1.);
     
     GLdouble GreenColor[4] =   { 0.0, 0.5, 0.0, 0.7 };
     GLdouble GreenColorT[4] =   { 0.0, 0.5, 0.0, 0.0 };
     GLdouble GreyColor[4] =   { 0.5, 0.5, 0.5, 0.5 };
     GLdouble GreyColorT[4] =   { 0.5, 0.5, 0.5, 0.0 };
     
+    // 46 is for HERAKLES
     g3d_draw_visibility_by_frame(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint(46)->getJointStruct()->abs_pos,
                                  DTOR(160),
                                  DTOR(160*0.75),
@@ -310,60 +315,65 @@ void g3d_draw_hrics()
 	{
     bool rightHand = true;
     Eigen::Vector3d WSPoint = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->computeOTPFromHandPose( rightHand );
-    g3d_draw_solid_sphere(WSPoint[0], WSPoint[1], WSPoint[2], 0.10, 30);
+    
+    double color_array[4];
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    color_array[0]= 0.0;
+    color_array[1]= 0.0;
+    color_array[2]= 1.0;
+    color_array[3]= 0.7;
+    g3d_set_color(Any,color_array);
+    g3d_draw_solid_sphere(WSPoint[0], WSPoint[1], WSPoint[2], 0.10, 10);
+    
+    glDisable(GL_BLEND);
     
     //   stringstream s;
     //    s << "c1 = " << endl;
     //    s << "c2 = " << endl;
     //   hri_text_to_display = s.str();
   }
-
+  
   
   //"HRI cost = %2.2f"
   
-        if (current_WSPoint(0) != 0 && current_WSPoint(1) != 0)
-        {
-
-                double colorvector[4];
-
-                colorvector[1] = 1.0;       //green
-                colorvector[2] = 0.0;       //blue
-
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-//                Vector3d center = getWorkspacePoint();
-
-                colorvector[0] = 0.0;       //red
-                colorvector[3] = 0.9;       //transparency
-
-                g3d_set_color(Any,colorvector);
-                g3d_draw_solid_sphere(current_WSPoint[0], current_WSPoint[1], current_WSPoint[2], 0.02, 10);
-//                        GroundColorMixGreenToRed(colorvector,Cost);
-
-                colorvector[0] = 1.0;       //red
-                colorvector[3] = 0.5;       //transparency
-
-                g3d_set_color(Any,colorvector);
-                g3d_draw_solid_sphere(current_WSPoint[0], current_WSPoint[1], current_WSPoint[2], 0.10, 30);
-
-
-                //    glDisable(GL_CULL_FACE);
-                glDisable(GL_BLEND);
-                drawGauge(0, current_cost.first/cost_max);
-
-                drawGauge(1, current_cost.second[0]);
-                drawGauge(2, current_cost.second[1]);
-                drawGauge(3, current_cost.second[2]);
-
-
-        }
+  if (current_WSPoint(0) != 0 && current_WSPoint(1) != 0)
+  {
+    double colorvector[4];
+    
+    colorvector[1] = 1.0;       //green
+    colorvector[2] = 0.0;       //blue
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    //                Vector3d center = getWorkspacePoint();
+    
+    colorvector[0] = 0.0;       //red
+    colorvector[3] = 0.9;       //transparency
+    
+    g3d_set_color(Any,colorvector);
+    g3d_draw_solid_sphere(current_WSPoint[0], current_WSPoint[1], current_WSPoint[2], 0.02, 10);
+    //                        GroundColorMixGreenToRed(colorvector,Cost);
+    
+    colorvector[0] = 1.0;       //red
+    colorvector[3] = 0.5;       //transparency
+    
+    g3d_set_color(Any,colorvector);
+    g3d_draw_solid_sphere(current_WSPoint[0], current_WSPoint[1], current_WSPoint[2], 0.10, 30);
+    
+    //    glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+    drawGauge(0, current_cost.first/cost_max);
+    
+    drawGauge(1, current_cost.second[0]);
+    drawGauge(2, current_cost.second[1]);
+    drawGauge(3, current_cost.second[2]);
+  }
 }
 #endif
-
-
-
-
 
 
 void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
