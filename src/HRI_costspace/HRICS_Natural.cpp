@@ -654,6 +654,16 @@ void Natural::printBodyPos()
 
 void Natural::setRobotToConfortPosture()
 {
+  shared_ptr<Configuration> q_cur = m_Robot->getCurrentPos();
+
+  m_IndexObjectDof = 6;
+  (*m_q_Confort)[m_IndexObjectDof+0] = (*q_cur)[m_IndexObjectDof+0];
+  (*m_q_Confort)[m_IndexObjectDof+1] = (*q_cur)[m_IndexObjectDof+1];
+  (*m_q_Confort)[m_IndexObjectDof+2] = (*q_cur)[m_IndexObjectDof+2];
+  (*m_q_Confort)[m_IndexObjectDof+3] = (*q_cur)[m_IndexObjectDof+3];
+  (*m_q_Confort)[m_IndexObjectDof+4] = (*q_cur)[m_IndexObjectDof+4];
+  (*m_q_Confort)[m_IndexObjectDof+5] = (*q_cur)[m_IndexObjectDof+5];
+
   m_Robot->setAndUpdate(*m_q_Confort);
 }
 
