@@ -96,11 +96,6 @@ namespace HRICS
     bool computeIsReachableOnly(const Eigen::Vector3d& WSPoint, bool leftArm);
 
 
-                /**
-                 * Compute if the Workspace Point is Reachable
-                 *
-                 */
-                bool computeIsReachableForRobot(Robot* _Robot, const Eigen::Vector3d& WSPoint, bool useLeftvsRightArm);
 
 		/**
 		 * Computation on the Grid

@@ -221,7 +221,7 @@ namespace HRICS
     /**
      * Choses a good transfer point
      */
-		bool chooseBestTransferPoint(Eigen::Vector3d& transfPoint);
+        bool chooseBestTransferPoint(Eigen::Vector3d& transfPoint, bool move);
     
     /**
      * Compute a transfert point from a loaded grid, without taking into acount a possible colision.
