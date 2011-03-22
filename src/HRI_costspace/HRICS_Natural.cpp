@@ -97,6 +97,8 @@ void Natural::initGeneral()
 			m_IndexObjectDof = NULL;
 			m_computeNbOfIK = false;
 			m_IsHuman = true;
+			//A meanwhile to make the soft work ...
+			m_Agents = hri_create_agents();
 			break;
       
     case Herakles:
