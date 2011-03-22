@@ -258,7 +258,7 @@ double NaturalCell::getCost()
 			}
 			else
 			{
-				leftArmPref -= pref;
+				leftArmPref += pref;
 			}
 
 			if (m_IsReachWithLeftArm && !m_IsReachWithRightArm)
@@ -276,10 +276,12 @@ double NaturalCell::getCost()
 
 				if (left_cost<right_cost)
 				{
+					m_IsReachWithRightArm = false;
 					m_Cost = left_cost;
 				}
 				else
 				{
+					m_IsReachWithLeftArm = false;
 					m_Cost = right_cost;
 				}
 			}
