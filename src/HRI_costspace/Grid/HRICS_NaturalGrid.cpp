@@ -174,15 +174,15 @@ void NaturalGrid::computeReachability()
 {
 
 	int nbCells = this->getNumberOfCells();
-	m_NaturalCostSpace->setRobotToConfortPosture();
-//    shared_ptr<Configuration> robotConf = getRobot()->getInitialPosition();
+//	m_NaturalCostSpace->setRobotToConfortPosture();
+	shared_ptr<Configuration> robotConf = getRobot()->getInitialPosition();
 	
 	for(int i=0; i<nbCells; i++)
     {
         cout <<  "Computing Reachability of Cell : " << i << endl;
         dynamic_cast<NaturalCell*>( BaseGrid::getCell(i) )->computeReachability();
-//		getRobot()->setAndUpdate(*robotConf);
-        m_NaturalCostSpace->setRobotToConfortPosture();
+        getRobot()->setAndUpdate(*robotConf);
+//        m_NaturalCostSpace->setRobotToConfortPosture();
 
     }
 

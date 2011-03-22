@@ -723,7 +723,7 @@ double Distance::pointToLineSegmentDistance(const Vector3d& p, const Vector3d& p
 
 //! Bounding Balls Distance
 //! computes the distance to a line and a sphere
-//! The Line is the body and the sphere is the 
+//! The Line is the body and the sphere is the head
 double Distance::computeBoundingBalls(const Vector3d& WSPoint, p3d_vector3 robot, p3d_vector3 human)
 {
 	double pointneckdist;
