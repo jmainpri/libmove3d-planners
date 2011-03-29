@@ -606,72 +606,118 @@ bool Workspace::transPFromBaseConf(shared_ptr<Configuration> q_base, vector< Vec
 	return false;
 }
 
-const double HRICS_innerRadius = 1.2;
-const double HRICS_outerRadius = 1.5;
+const double HRICS_innerRadius = 1.3;
+const double HRICS_outerRadius = 1.6;
 
 bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d& WSPoint)
 {
 	shared_ptr<Configuration> q_cur = _Robot->getCurrentPos(); //store the current configuration
 	
-	const unsigned int iterMax = 20;
+	unsigned int iterMax = 20;
 	
 	activateOnlyBaseCollision();
-	
-	for (unsigned int i=0; i<iterMax; i++) 
+	int radI = 0;
+	int angI = 0;
+	int radMaxI = 4;
+	int angMaxI = 5;
+	while (radI < radMaxI)
 	{
-		double radius= p3d_random(HRICS_innerRadius,HRICS_outerRadius);
-		
-		Vector2d gazePoint = m_VisibilitySpace->get2dPointAlongGaze(radius);
-		
-		// Build the 2d transformation matrix
-		// That rotates a point around the human gaze
-		Transform2d t;
-		
-                Vector2d HumanPos;
-		
-		HumanPos[0] = WSPoint[0];
-		HumanPos[1] = WSPoint[1];
-		
-
-		t.translation() = HumanPos;
-		
-                Rotation2Dd rot(p3d_random(-M_PI/4, M_PI/4));
-                t.linear() = rot.toRotationMatrix();
-                t(2,0) = 0;
-                t(2,1) = 0;
-                t(2,2) = 1;
-		
-		Vector2d point = t * gazePoint;
-		
-		const int plantformIndexDof = 6;
-		
-		(*q_base)[plantformIndexDof + 0]    = point[0];
-		(*q_base)[plantformIndexDof + 1]    = point[1];
-		//(*q_base)[plantformIndexDof + 5]    = p3d_random(-M_PI, M_PI);;
-		
-		Vector2d gazeDirect = HumanPos - point;
-		(*q_base)[plantformIndexDof + 5] = atan2(gazeDirect.y(),gazeDirect.x());
-		//cout << "(*q_base)[plantformIndexDof + 5]" << 180*(*q_base)[plantformIndexDof + 5]/M_PI << endl;
-		
-		Vector3d CirclePoint;
-		
-		CirclePoint(0) = point[0];
-                CirclePoint(1) = point[1];
-		CirclePoint(2) = 0.30;
-		
-		PointsToDraw->push_back(CirclePoint);
-		//cout << "Add Point to draw" << endl;
-		
-		q_base->setAsNotTested();
-		
-		if (!q_base->isInCollision()) 
+		double radius;
+		double rotationAngle;
+		if (!ENV.getBool(Env::FastComputingRobotBase))
 		{
-			deactivateOnlyBaseCollision();
-                        _Robot->setAndUpdate(*q_cur);
-			return true;
+
+
+			if (radI ==  0) {radius = HRICS_innerRadius;}
+			else
+			{
+				radius = HRICS_innerRadius + (HRICS_outerRadius-HRICS_innerRadius) * radI / (radMaxI - 1.0);
+			}
+
+			if (angI ==  0) {rotationAngle = 100.0; angI++;}
+			else
+			{
+				rotationAngle = pow(2,5-angI);
+				angI++;
+			}
+
+			if (angI >= angMaxI)
+			{
+				radI++;
+				angI = 0;
+			}
+
+			if (radI+angI == 0){iterMax = 1;}
+			else {iterMax = 10;}
+		}
+		else
+		{
+			radI = radMaxI;
+			rotationAngle = 4;
+			radius = HRICS_outerRadius;
+		}
+		for (unsigned int i=0; i<iterMax; i++)
+		{
+//			radius = p3d_random(HRICS_innerRadius,HRICS_outerRadius);
+
+			Vector2d gazePoint;
+			if (radius == HRICS_innerRadius){gazePoint = m_VisibilitySpace->get2dPointAlongGaze(HRICS_innerRadius);}
+			else
+			{
+				gazePoint = m_VisibilitySpace->get2dPointAlongGaze(p3d_random(HRICS_innerRadius, radius));
+			}
+
+			// Build the 2d transformation matrix
+			// That rotates a point around the human gaze
+			Transform2d t;
+
+			Vector2d HumanPos;
+
+			HumanPos[0] = WSPoint[0];
+			HumanPos[1] = WSPoint[1];
+
+
+			t.translation() = HumanPos;
+
+			Rotation2Dd	rot( p3d_random(-M_PI/rotationAngle, M_PI/rotationAngle));//p3d_random(-M_PI/4, M_PI/4));
+
+
+			t.linear() = rot.toRotationMatrix();
+			t(2,0) = 0;
+			t(2,1) = 0;
+			t(2,2) = 1;
+
+			Vector2d point = t * gazePoint;
+
+			const int plantformIndexDof = 6;
+
+			(*q_base)[plantformIndexDof + 0]    = point[0];
+			(*q_base)[plantformIndexDof + 1]    = point[1];
+			//(*q_base)[plantformIndexDof + 5]    = p3d_random(-M_PI, M_PI);;
+
+			Vector2d gazeDirect = HumanPos - point;
+			(*q_base)[plantformIndexDof + 5] = atan2(gazeDirect.y(),gazeDirect.x());
+			//cout << "(*q_base)[plantformIndexDof + 5]" << 180*(*q_base)[plantformIndexDof + 5]/M_PI << endl;
+
+			Vector3d CirclePoint;
+
+			CirclePoint(0) = point[0];
+					CirclePoint(1) = point[1];
+			CirclePoint(2) = 0.30;
+
+			PointsToDraw->push_back(CirclePoint);
+			//cout << "Add Point to draw" << endl;
+
+			q_base->setAsNotTested();
+
+			if (!q_base->isInCollision())
+			{
+				deactivateOnlyBaseCollision();
+							_Robot->setAndUpdate(*q_cur);
+				return true;
+			}
 		}
 	}
-	
 	deactivateOnlyBaseCollision();
   _Robot->setAndUpdate(*q_cur);
 	return false;
@@ -935,10 +981,10 @@ public:
 bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
 {	
 	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+	_Robot->setAndUpdate(*_Robot->getInitialPosition());
 
 	p3d_col_activate_rob_rob( _Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
 	
-//	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
 	
 	if ( m_ReachableSpace == NULL )
 	{
@@ -1007,8 +1053,9 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
 	}
 	
 	shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
+	shared_ptr<Configuration> q_human_pos  = _Robot->getCurrentPos();
 	
-	Vector3d WSPoint;
+
 	
 	for (unsigned int i=0; i<ReachablePoints.size(); i++)
 	{
@@ -1022,7 +1069,17 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
 		}
 	}
 
-	WSPoint = transfPoint;
+//	Vector3d WSPoint;
+//	WSPoint = transfPoint;
+
+	shared_ptr<Configuration> q_cur_human = mHumans[0]->getCurrentPos();
+
+	Vector3d WSPoint;
+
+	WSPoint[0] = (*q_cur_human)[6];
+	WSPoint[1] = (*q_cur_human)[7];
+	WSPoint[2] = (*q_cur_human)[8];
+
 
 	q_base->setAsNotTested();
 	
@@ -1042,6 +1099,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
 				cout << "Configuration at iteration " << i << " found!!!" << endl;
 
                                 p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+                                mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
                                 if (!move)
                                 {
                                     _Robot->setAndUpdate(*q_cur_robot);
