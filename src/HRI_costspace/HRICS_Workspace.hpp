@@ -260,7 +260,7 @@ namespace HRICS
 		
     //! index of the Dof from which the robot holds
     //! the object
-		int mIndexObjectDof;
+        int mIndexObjectDof;
     
     //! OPT (object transfer point)
     Eigen::Vector3d m_OTP;

@@ -576,7 +576,7 @@ bool Workspace::transPFromBaseConf(shared_ptr<Configuration> q_base, vector< Vec
 	for(unsigned int i=0; i < points.size(); i++)
 	{
 		Vector3d WSPoint = points[i];
-		
+
 		(*q_base)[mIndexObjectDof+0] = WSPoint[0];
 		(*q_base)[mIndexObjectDof+1] = WSPoint[1];
 		(*q_base)[mIndexObjectDof+2] = WSPoint[2];

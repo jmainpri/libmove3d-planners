@@ -11,6 +11,10 @@ using namespace API;
 //USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
 
+
+TwoDGrid* API_activeRobotGrid = NULL;
+
+
 /*!
  * \brief Constructor
  *
@@ -150,6 +154,8 @@ TwoDCell* TwoDGrid::getCell(const Vector2i& coord)
     return dynamic_cast<TwoDCell*>( _cells[ coord[0] + coord[1]*_nbCellsX ] );
 }
 
+
+
 /*!
  * \brief Retruns the Cell at (x,y)
  *
@@ -208,6 +214,16 @@ TwoDCell* TwoDGrid::getCell(double* pos)
     return getCell(coord);
 }
 
+/*!
+ * \brief Get Cell
+ *
+ * \param index
+ */
+TwoDCell* TwoDGrid::getCell(unsigned int index)
+{
+    return dynamic_cast<TwoDCell*>(_cells[index]);
+}
+
 /**
   * \brief Is a Coord inside the Grid (used to debug)
   * \param index vector
@@ -264,8 +280,8 @@ Vector2d TwoDGrid::computeCellCorner(int x, int y )
 {
     Vector2d corner;
 
-    corner[0] = _originCorner[0] + x*_cellSize[0];
-    corner[1] = _originCorner[1] + y*_cellSize[1];
+    corner[0] = _originCorner[0] + x*(_cellSize[0]*1.0);
+    corner[1] = _originCorner[1] + y*(_cellSize[1]*1.0);
 
     //    cout << " = (" << x <<"," << y << "," << z << ")" << endl;
     //    cout << " = (" << corner[0] <<"," << corner[1] << ")" << endl;

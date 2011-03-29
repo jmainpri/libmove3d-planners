@@ -17,6 +17,7 @@
 #include "API/Grids/ThreeDPoints.hpp"
 
 extern API::BaseGrid* API_activeGrid;
+extern API::TwoDGrid* API_activeRobotGrid;
 #ifdef CXX_PLANNER
 extern Eigen::Vector3d global_DrawnSphere;
 #endif

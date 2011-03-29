@@ -40,6 +40,7 @@ namespace API
        TwoDCell* getCell(int x, int y );
        TwoDCell* getCell(Eigen::Vector2d pos);
        TwoDCell* getCell(double* pos);
+       TwoDCell* getCell(unsigned int index);
 
        bool isCellCoordInGrid(const Eigen::Vector2i& coord);
 

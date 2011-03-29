@@ -15,6 +15,10 @@
 #include "HRI_costspace/Grid/HRICS_NaturalGrid.hpp"
 #include "HRI_costspace/Grid/HRICS_NaturalCell.hpp"
 
+#include "HRI_costspace/Grid/HRICS_TwoDGrid.hpp"
+
+#include "HRI_costspace/Grid/HRICS_RobotBaseGrid.hpp"
+
 #ifdef HRI_PLANNER
 #include "Hri_planner-pkg.h"
 #endif
@@ -24,6 +28,7 @@
  */
 namespace HRICS
 {
+	class RobotBaseGrid;
 	/**
 	 * Natural Motion and Arm Confort
 	 */
@@ -43,6 +48,7 @@ namespace HRICS
 		void initNaturalAchile();
 		void initNaturalHerakles();
 		void initHumanBaseGrid(std::vector<double> box);
+		void initRobotBaseGrid(std::vector<double> box);
 		
 		void printBodyPos();
     void setRobotToConfortPosture();
@@ -120,6 +126,7 @@ namespace HRICS
 		bool IsHuman() { return m_IsHuman; }
 		NaturalGrid* getGrid() { return m_Grid; }
 		Robot* getRobot() { return m_Robot; }
+		RobotBaseGrid* getRobotBaseGrid() { return m_PlanBaseGrid; }
 		
 		
 		/**
@@ -141,6 +148,8 @@ namespace HRICS
 		
 		Robot*			m_Robot;
 		NaturalGrid*	m_Grid;
+
+		RobotBaseGrid*	m_PlanBaseGrid;
 		
 		enum Kinematic 
 		{

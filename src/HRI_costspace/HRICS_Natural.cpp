@@ -8,7 +8,7 @@
  */
 
 #include "HRICS_Natural.hpp"
-#include "Grids/gridsAPI.hpp"
+#include "API/Grids/gridsAPI.hpp"
 
 #include "P3d-pkg.h"
 #include "Planner-pkg.h"
@@ -22,6 +22,8 @@ using namespace HRICS;
 using namespace Eigen;
 
 extern Eigen::Vector3d global_DrawnSphere;
+
+extern API::TwoDGrid* API_activeRobotGrid;
 
 Natural::Natural() : 
 m_leftArmCost(false),
@@ -1375,6 +1377,24 @@ void Natural::setRobotColorFromConfiguration(bool toSet)
         g3d_set_custom_color_draw(m_Robot->getRobotStruct(),toSet);
     }
 }
+
+void Natural::initRobotBaseGrid(std::vector<double> box)
+{
+    vector<double>  envSize(4);
+
+    configPt q;
+    q = p3d_get_robot_config(m_Agents->humans[0]->robotPt);
+
+    envSize[0] = *(q+6) + box[0]; envSize[1] = *(q+6) + box[1];
+    envSize[2] = *(q+7) + box[2]; envSize[3] = *(q+7) + box[3];
+
+    m_PlanBaseGrid = new RobotBaseGrid(0.1,envSize, this);
+    API_activeRobotGrid = m_PlanBaseGrid;
+//    m_Grid = new NaturalGrid(0.1,envSize,this);
+}
+
+
+
 
 /*!
  *
