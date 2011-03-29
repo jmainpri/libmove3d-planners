@@ -308,12 +308,22 @@ void g3d_draw_hrics()
     GLdouble GreenColorT[4] =   { 0.0, 0.5, 0.0, 0.0 };
     GLdouble GreyColor[4] =   { 0.5, 0.5, 0.5, 0.5 };
     GLdouble GreyColorT[4] =   { 0.5, 0.5, 0.5, 0.0 };
-    
+
+
+    int gazeIndex = 46;
+    if (dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getName().compare("ACHILE_HUMAN1") == 0 )
+    {
+        gazeIndex = 42;
+    }
+
+
     // 46 is for HERAKLES
-    g3d_draw_visibility_by_frame(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint(46)->getJointStruct()->abs_pos,
+    // 42 is for ACHILE
+    g3d_draw_visibility_by_frame(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint(gazeIndex)->getJointStruct()->abs_pos,
                                  DTOR(160),
                                  DTOR(160*0.75),
                                  1, GreenColor, GreenColorT);
+
 	}
   
   if( HRICS_MotionPL )
