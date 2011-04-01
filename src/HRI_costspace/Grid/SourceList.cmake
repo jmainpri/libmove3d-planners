@@ -8,6 +8,7 @@ HRICS_GridState.cpp
 HRICS_TwoDGrid.cpp
 HRICS_NaturalGrid.cpp
 HRICS_NaturalCell.cpp
+HRICS_RobotBaseGrid.cpp
 
 )
 
