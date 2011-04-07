@@ -438,8 +438,10 @@ bool Configuration::equal(Configuration& Conf)
     {
         if(_Configuration==NULL)
         {
-            return true;
+            return false;
         }
+      
+      return true;
     }
     else
     {

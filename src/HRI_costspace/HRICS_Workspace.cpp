@@ -172,7 +172,7 @@ void Workspace::initGrid()
 	//#ifdef QT_LIBRARY
 	//    std::string str = "g3d_draw_allwin_active";
 	//    write(qt_fl_pipe[1],str.c_str(),str.length()+1);
-        //#endif\
+  // #endif
 
 
 }
@@ -637,7 +637,7 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 			if (angI ==  0) {rotationAngle = 100.0; angI++;}
 			else
 			{
-				rotationAngle = pow(2,5-angI);
+				rotationAngle = std::pow(2,(double)(5-angI));
 				angI++;
 			}
 

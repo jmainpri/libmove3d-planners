@@ -263,37 +263,38 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 	
 	//	cout << m_Robot->getRobotStruct() << endl;
 	
-	nloc = (int) m_Courbe.size();
-	//	cout << "Number of local paths : " << nloc << endl;
+	nloc = 0;
 	
-	p3d_localpath *localpathPt = m_Courbe.at(0)->getLocalpathStruct()->copy(
-																trajPt->rob, m_Courbe.at(0)->getLocalpathStruct());
-	
+	p3d_localpath *localpathPt = NULL;
 	p3d_localpath *localprevPt = NULL;
+  
+  bool first = true;
 	
-	localpathPt->prev_lp = localprevPt;
-	trajPt->courbePt = localpathPt;
-	
-	for (uint i = 1; i < nloc; i++)
+	for (unsigned int i = 0; i < m_Courbe.size(); i++)
 	{
-		
+    if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() ) 
+    {
+      continue;
+    }
+    
 		localprevPt = localpathPt;
-		
-		localpathPt = m_Courbe.at(i)->getLocalpathStruct()->copy(m_Robot->getRobotStruct(), 
-																														 m_Courbe.at(i)->getLocalpathStruct());
-		//		cout << "localpathPt = " << localpathPt << endl;
-		
-		localprevPt->next_lp = localpathPt;
-		//		cout << "localprevPt->next_lp = " << localpathPt << endl;
-		
+		localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( m_Robot->getRobotStruct(), 
+                                                           m_Courbe[i]->getLocalpathStruct() );
+
+    if( localprevPt )
+    {
+      localprevPt->next_lp = localpathPt;
+    }
+    
 		localpathPt->prev_lp = localprevPt;
-		//		cout << "localpathPt->prev_lp = " << localpathPt << endl;
-		
-		if (i != nloc - 1)
-		{
-			localpathPt->next_lp = m_Courbe.at(i + 1)->getLocalpathStruct();
-			//			cout << "localpathPt->next_lp = " << m_Courbe.at(i+1)->getLocalpathStruct() << endl;
-		}
+    
+    if ( first ) 
+    {
+      trajPt->courbePt = localpathPt;
+      first = false;
+    }
+    
+    nloc++;
 	}
 	
 	localpathPt->next_lp = NULL;
@@ -1744,4 +1745,22 @@ void Trajectory::print()
 	}
 	
 	cout << "-----------------------------------" << endl;
+}
+
+void draw_traj_debug()
+{
+  if( ENV.getBool(Env::debugCostOptim) || ENV.getBool(Env::drawTrajVector) )
+  {
+    //std::cout << "Should be drawing traj" << std::endl;
+    for(unsigned i=0;i<trajToDraw.size();i++)
+    {
+      trajToDraw.at(i).draw(500);
+      //std::cout << "Drawing traj" << std::endl;
+    }
+    p3d_rob *robotPt = (p3d_rob *) p3d_get_desc_curid(P3D_ROBOT);
+    if (!robotPt->tcur)
+    {
+      trajToDraw.clear();
+    }
+  }	
 }

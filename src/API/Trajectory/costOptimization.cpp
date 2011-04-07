@@ -431,9 +431,9 @@ shared_ptr<Configuration> CostOptimization::perturbCurrent(shared_ptr<Configurat
 	shared_ptr<Configuration> qNewPt;
 	
 	// Dividing the step n times to stay in the bounds
-	const unsigned int	max_div = 10;
+	const unsigned int	max_div = 4;
 	unsigned int				ith_div = 0;
-	double							divFactor = 1/PlanEnv->getDouble(PlanParam::MaxFactor); 
+	double							divFactor = 1/PlanEnv->getDouble(PlanParam::MinStep); 
 	bool								QIsOutOfBounds = true;
 	
 	for (ith_div=0; ith_div<max_div && QIsOutOfBounds; ith_div++) 
@@ -442,6 +442,7 @@ shared_ptr<Configuration> CostOptimization::perturbCurrent(shared_ptr<Configurat
 		{
 			qNewPt = path.configAtParam( divFactor*m_step  );
 			QIsOutOfBounds = qNewPt->isOutOfBounds();
+      divFactor /= 2;
 		}
 		else 
 		{
@@ -449,6 +450,10 @@ shared_ptr<Configuration> CostOptimization::perturbCurrent(shared_ptr<Configurat
 			QIsOutOfBounds = false;
 		}
 	}
+  
+//  cout << "path.getParamMax() = " << path.getParamMax() << endl;
+//  cout << "divFactor = " << divFactor << endl;
+//  cout << "m_step = " << m_step << endl;
 	
 	//qNewPt->print();
 	
@@ -790,7 +795,7 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
 {
 	//cout << "Before Deform : Traj cost = " << this->cost() << endl;
 	double costBeforeDeformation = this->cost();
-	double factor = PlanEnv->getDouble(PlanParam::MaxFactor);
+	double initalRange = getRangeMax();
 	
 	m_GainOfIterations.clear();
 	m_MaxNumberOfIterations = nbIteration;
@@ -801,18 +806,13 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
 	
 	PointsToDraw = new ThreeDPoints;
 	
-	factor = 1.0;
-	
-	// The step
-	m_step = getRangeMax() / 10 ;
-	
 	if (PlanEnv->getBool(PlanParam::withDescent)) 
 	{
 		m_descent = true;
 	}
 	else
 	{
-		m_descent = true;
+		m_descent = false;
 	}
 	
 	double ts(0.0); m_time = 0.0; ChronoOn();
@@ -821,8 +821,9 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
 	for ( ith_deformation = 0; 
 			 !checkStopConditions(ith_deformation); ith_deformation++)
 	{
-		//factor -= (ENV.getDouble(PlanParam::MaxFactor) - PlanEnv->getDouble(PlanParam::MinStep)) / ((double)nbIteration);
-		double CurCost = cost();
+    m_step = initalRange/PlanEnv->getDouble(PlanParam::MaxFactor);
+//    cout << "m_step = " << m_step << endl;
+    double CurCost = cost();
 		
 		oneLoopDeform();
 		

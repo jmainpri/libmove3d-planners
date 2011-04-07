@@ -233,7 +233,7 @@ void HRICS_init(HRI_AGENTS* agents)
   //  ENV.setDouble( Env::Kvisibility, 25 );
   //  ENV.setDouble( Env::Kreachable,  90 );
   
-  ENV.setDouble( Env::Kdistance,   80 );
+  ENV.setDouble( Env::Kdistance,   60 );
   ENV.setDouble( Env::Kvisibility, 60 );
   ENV.setDouble( Env::Kreachable,  10 );
   

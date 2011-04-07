@@ -122,8 +122,7 @@ LocalPath::LocalPath(Robot* R, p3d_localpath* lpPtr) :
   _lastValidEvaluated(false),
   _NbColTest(0),
   _costEvaluated(false), _Cost(0.0),
-  _ResolEvaluated(false), _Resolution(0.0),  
-  _Type(lpPtr->type_lp)
+  _ResolEvaluated(false), _Resolution(0.0)
 {
   // TODO : check which copy are/are not necessary.
   if (lpPtr)
@@ -147,6 +146,8 @@ LocalPath::LocalPath(Robot* R, p3d_localpath* lpPtr) :
 					  getLocalpathStruct()->range_param),true));
     
     _End->setConstraints();
+    
+    _Type = lpPtr->type_lp;
   }
   else
   {

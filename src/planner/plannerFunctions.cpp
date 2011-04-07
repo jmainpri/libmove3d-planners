@@ -251,7 +251,11 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
   cout << "Cut the traj in several local paths" << endl;
   cout << "optimTrj range is : " << range << endl;
   
-  optimTrj.cutTrajInSmallLP( floor( range / (30*dmax) ) );
+  unsigned int nLP = floor( range / (8*dmax));
+  
+  if ( nLP>1 )
+    optimTrj.cutTrajInSmallLP(  nLP );
+
   optimTrj.replaceP3dTraj();
   optimTrj.resetCostComputed();
   
@@ -269,9 +273,12 @@ p3d_traj* replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 targ
 {
   cout << "* REPLANNING ***************" << endl;
   
-  ManipulationUtils::printConstraintInfo(robotPt);
-  p3d_multilocalpath_switch_to_linear_groups (robotPt);
-  p3d_multilocapath_print_group_info(robotPt);
+  if ( robotPt->lpl_type == MULTI_LOCALPATH ) 
+  {
+    ManipulationUtils::printConstraintInfo(robotPt);
+    p3d_multilocalpath_switch_to_linear_groups (robotPt);
+    p3d_multilocapath_print_group_info(robotPt);
+  }
   
 //  traj = pathPt;
   
@@ -286,6 +293,12 @@ p3d_traj* replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 targ
   
   unsigned int lastViaPoint = oldTraj.getNbPaths();
   
+  if (lastViaPoint <= deformationViaPoint) 
+  {
+    cout << "No optimization possible (lastViaPoint <= deformationViaPoint)" << endl;
+    return NULL;
+  }
+  
   API::CostOptimization optimTrj = oldTraj.extractSubTrajectory( (unsigned int)deformationViaPoint, lastViaPoint-1 );
   
   Eigen::Vector3d WSPoint;
@@ -293,7 +306,8 @@ p3d_traj* replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 targ
   WSPoint[1] = target[1];
   WSPoint[2] = target[2];
   
-  unsigned int validShortCutId,endId;
+  /**
+   unsigned int validShortCutId,endId;
   double* q = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->testTransferPointToTrajectory(WSPoint, optimTrj,validShortCutId);
   if ( q ) 
   {
@@ -323,15 +337,18 @@ p3d_traj* replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 targ
       optimTrj.replacePortion(validShortCutId+1,endId,path);
     }
   }
+   */
   
   double optTime = 0.0;
 //  if(PlanEnv->getBool(PlanParam::withDeformation))
 //  {
-    //ENV.setBool(Env::FKShoot,true);
-//    optimTrj.runDeformation( ENV.getInt(Env::nbCostOptimize) , runId );
-    //ENV.setBool(Env::FKShoot,false);
-//    optTime += optimTrj.getTime();
+    ENV.setBool(Env::FKShoot,true);
+    optimTrj.runDeformation( ENV.getInt(Env::nbCostOptimize) , runId );
+    ENV.setBool(Env::FKShoot,false);
+    optTime += optimTrj.getTime();
 //  }
+  
+  cout << "optTime = " << optTime << endl;
   
   optimTrj.resetCostComputed();
   

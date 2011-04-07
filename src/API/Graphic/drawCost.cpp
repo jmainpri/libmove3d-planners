@@ -254,14 +254,14 @@ void g3d_draw_hrics()
 		}
 	}
   
-  if( HRICS_activeDist )
-	{
-		HRICS_activeDist->drawInteractionZone();
-  }
-  
-  if (HRICS_MotionPL) {
-    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->drawCurrentOTP();
-  }
+//  if( HRICS_activeDist )
+//	{
+//		HRICS_activeDist->drawInteractionZone();
+//  }
+//  
+//  if (HRICS_MotionPL) {
+//    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->drawCurrentOTP();
+//  }
   
 	if( ENV.getBool(Env::drawDistance) && HRICS_activeDist )
 	{
@@ -328,27 +328,22 @@ void g3d_draw_hrics()
   
   if( HRICS_MotionPL )
 	{
-    bool rightHand = true;
-    Eigen::Vector3d WSPoint = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->computeOTPFromHandPose( rightHand );
-    
-    double color_array[4];
-    
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
-    color_array[0]= 0.0;
-    color_array[1]= 0.0;
-    color_array[2]= 1.0;
-    color_array[3]= 0.7;
-    g3d_set_color(Any,color_array);
-    g3d_draw_solid_sphere(WSPoint[0], WSPoint[1], WSPoint[2], 0.10, 10);
-    
-    glDisable(GL_BLEND);
-    
-    //   stringstream s;
-    //    s << "c1 = " << endl;
-    //    s << "c2 = " << endl;
-    //   hri_text_to_display = s.str();
+//    bool rightHand = true;
+//    Eigen::Vector3d WSPoint = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->computeOTPFromHandPose( rightHand );
+//    
+//    double color_array[4];
+//    
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//    
+//    color_array[0]= 0.0;
+//    color_array[1]= 0.0;
+//    color_array[2]= 1.0;
+//    color_array[3]= 0.7;
+//    g3d_set_color(Any,color_array);
+//    g3d_draw_solid_sphere(WSPoint[0], WSPoint[1], WSPoint[2], 0.10, 10);
+//    
+//    glDisable(GL_BLEND);
   }
   
   
