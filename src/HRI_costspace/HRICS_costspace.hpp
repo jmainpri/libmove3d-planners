@@ -13,7 +13,7 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 
-#include "Hri_planner-pkg.h"
+#include <hri/hri.h>
 
 // Main cost function
 extern double HRICS_getConfigCost(Configuration& Conf);

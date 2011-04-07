@@ -9,7 +9,7 @@
 #define HRITASKSPACECOST_HPP_
 
 
-#include "Hri_planner-pkg.h"
+#include <hri/hri.h>
 #include "API/planningAPI.hpp"
 
 /**

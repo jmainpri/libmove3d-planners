@@ -8,7 +8,7 @@
 
 #include "HRICS_HAMP.hpp"
 #include "Planner-pkg.h"
-#include "Move3d-pkg.h"
+#include "move3d-headless.h"
 
 using namespace std;
 using namespace tr1;

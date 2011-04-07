@@ -20,7 +20,7 @@
 #include "HRI_costspace/Grid/HRICS_RobotBaseGrid.hpp"
 
 #ifdef HRI_PLANNER
-#include "Hri_planner-pkg.h"
+#include <hri/hri.h>
 #endif
 
 /**

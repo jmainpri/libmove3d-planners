@@ -1,7 +1,7 @@
 #include "HRICS_Cell.hpp"
 
 #ifdef HRI_PLANNER
-#include "Hri_planner-pkg.h"
+#include <hri/hri.h>
 #endif
 
 #include "../HRICS_costspace.hpp"
