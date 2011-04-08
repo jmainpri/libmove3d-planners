@@ -246,6 +246,7 @@ void HRICS_init(HRI_AGENTS* agents)
     agents = hri_create_agents();
   }
   
+  
 	HRICS_MotionPL = new HRICS::Workspace;
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initGrid();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initDistance();

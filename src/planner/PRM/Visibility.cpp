@@ -14,7 +14,7 @@
 #include "API/Roadmap/node.hpp"
 #include "API/Roadmap/graph.hpp"
 
-#include "env.hpp"
+#include "../p3d/env.hpp"
 
 using namespace std;
 using namespace tr1;

@@ -5,7 +5,7 @@
  *      Author: jmainpri
  */
 
-#include "env.hpp"
+#include "../p3d/env.hpp"
 
 #include "planEnvironment.hpp"
 #include "planners_cxx.hpp"

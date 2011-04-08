@@ -7,7 +7,7 @@
 #include "smoothing.hpp"
 
 #include "API/Device/robot.hpp"
-#include "env.hpp"
+#include "../p3d/env.hpp"
 #include "planEnvironment.hpp"
 
 #include <fstream>
