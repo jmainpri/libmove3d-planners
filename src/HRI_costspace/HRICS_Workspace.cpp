@@ -606,12 +606,100 @@ bool Workspace::transPFromBaseConf(shared_ptr<Configuration> q_base, vector< Vec
 	return false;
 }
 
+bool Workspace::testCol(shared_ptr<Configuration> q_base)
+{
+//	shared_ptr<Configuration> q_base = _Robot->getCurrentPos();
+	bool jidoBaseActivation = false;
+	if (q_base->getRobot()->getName().find("JIDO") != string::npos)
+	{
+		jidoBaseActivation = true;
+	}
+
+	if (jidoBaseActivation)
+	{
+		activateOnlyBaseCollision();
+	}
+	q_base->setAsNotTested();
+
+	if (q_base->isInCollision())
+	{
+		if (jidoBaseActivation)
+		{
+			deactivateOnlyBaseCollision();
+		}
+		return true;
+	}
+	if (jidoBaseActivation)
+	{
+		deactivateOnlyBaseCollision();
+	}
+	return false;
+}
+
+/*!
+ * Natural cell comparator
+ */
+class NaturalPoints
+{
+public:
+
+	bool operator()(pair<double,Vector3d> first, pair<double,Vector3d> second)
+	{
+		return ( first.first < second.first );
+	}
+
+} NaturalPointsCompObject;
+
 const double HRICS_innerRadius = 1.3;
 const double HRICS_outerRadius = 1.6;
 
 bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d& WSPoint)
 {
+
 	shared_ptr<Configuration> q_cur = _Robot->getCurrentPos(); //store the current configuration
+	const int plantformIndexDof = 6;
+
+	vector< pair<double,Vector3d > > PossiblePoints = m_ReachableSpace->getBaseGridPoint();
+
+
+	sort(PossiblePoints.begin(),PossiblePoints.end(),NaturalPointsCompObject);
+
+	for (unsigned int i= 0; i < PossiblePoints.size(); i++)
+	{
+		Vector2d point;
+		point[0] = PossiblePoints[i].second[0];
+		point[1] = PossiblePoints[i].second[1];
+
+		Vector2d HumanPos;
+
+		HumanPos[0] = WSPoint[0];
+		HumanPos[1] = WSPoint[1];
+
+		Vector2d gazeDirect = HumanPos - point;
+
+		(*q_base)[plantformIndexDof + 0]    = point[0];
+		(*q_base)[plantformIndexDof + 1]    = point[1];
+		(*q_base)[plantformIndexDof + 5] = atan2(gazeDirect.y(),gazeDirect.x());
+
+		Vector3d CirclePoint;
+
+		CirclePoint(0) = point[0];
+		CirclePoint(1) = point[1];
+		CirclePoint(2) = 0.30;
+		PointsToDraw->push_back(CirclePoint);
+
+		if(!testCol(q_base))
+		{
+			return true;
+		}
+		_Robot->setAndUpdate(*q_cur);
+	}
+
+	_Robot->setAndUpdate(*q_cur);
+	return false;
+
+
+	/*shared_ptr<Configuration> q_cur = _Robot->getCurrentPos(); //store the current configuration
 	
 	unsigned int iterMax = 20;
 	
@@ -720,7 +808,7 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 	}
 	deactivateOnlyBaseCollision();
   _Robot->setAndUpdate(*q_cur);
-	return false;
+    return false;*/
 }
 
 void Workspace::drawCurrentOTP()
@@ -964,19 +1052,7 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::
  
  }*/
 
-/*!
- * Natural cell comparator
- */
-class NaturalPoints
-{	
-public:
-	
-	bool operator()(pair<double,Vector3d> first, pair<double,Vector3d> second)
-	{
-		return ( first.first < second.first );
-	}
-	
-} NaturalPointsCompObject;
+
 
 bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
 {	
@@ -1087,30 +1163,33 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
 			PointsToDraw = new ThreeDPoints();
 	}
 	PointsToDraw->clear();
+
+	initPR2RepoConf();
+
 	
 	//find a configuration for the whole robot (mobile base + arm):
-	for(unsigned int i=0; i<100; i++)
-	{
+//	for(unsigned int i=0; i<100; i++)
+//	{
 		if( sampleRobotBase(q_base,WSPoint) )
 		{
-			cout << "Valid Base config at " << i << endl;
-			if ( transPFromBaseConf(q_base,points) )
-			{
-				cout << "Configuration at iteration " << i << " found!!!" << endl;
+//			cout << "Valid Base config at " << i << endl;
+//			if ( transPFromBaseConf(q_base,points) )
+//			{
+//				cout << "Configuration at iteration " << i << " found!!!" << endl;
 
-                                p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
-                                mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
-                                if (!move)
-                                {
-                                    _Robot->setAndUpdate(*q_cur_robot);
-                                }
+                p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+                mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+                if (!move)
+                {
+                    _Robot->setAndUpdate(*q_cur_robot);
+                }
                 return true;
-            }
+//            }
         }
 		
-		_Robot->setAndUpdate(*q_cur_robot);
+//		_Robot->setAndUpdate(*q_cur_robot);
 		
-	}
+//	}
 	
 	_Robot->setAndUpdate(*q_cur_robot);
 	p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
@@ -1243,9 +1322,9 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 
 bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WSPoint)
 {
-   ENV.setDouble( Env::Kdistance,   5 );
-   ENV.setDouble( Env::Kvisibility, 15 );
-   ENV.setDouble( Env::Kreachable,  65 );
+//   ENV.setDouble( Env::Kdistance,   5 );
+//   ENV.setDouble( Env::Kvisibility, 15 );
+//   ENV.setDouble( Env::Kreachable,  65 );
 
   bool hasComputed = false;
   
@@ -1322,3 +1401,62 @@ Eigen::Vector3d Workspace::computeOTPFromHandPose( bool rightHand )
   return t*offSet;
 }
 
+void Workspace::initPR2RepoConf()
+{
+	 shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
+	 int IndexObjectDof = 6;
+
+	configPt q;
+	q = p3d_alloc_config(_Robot->getRobotStruct());
+	q[0] = 0;
+	q[1] = 0;
+	q[2] = 0;
+	q[3] = 0;
+	q[4] = 0;
+	q[5] = 0;
+	q[6] = (*q_cur)[IndexObjectDof+0];
+	q[7] = (*q_cur)[IndexObjectDof+1];
+	q[8] = (*q_cur)[IndexObjectDof+2];
+	q[9] = (*q_cur)[IndexObjectDof+3];
+	q[10] = (*q_cur)[IndexObjectDof+4];
+	q[11] = (*q_cur)[IndexObjectDof+5];
+	q[12] = 0;
+	q[13] = 0;
+	q[14] = 0;
+	q[15] = 0;
+	q[16] = 0;
+	q[17] = 54.00*M_PI/180;
+	q[18] = -85.00*M_PI/180;
+	q[19] = -111.00*M_PI/180;
+	q[20] = -66.00*M_PI/180;
+	q[21] = -116.00*M_PI/180;
+	q[22] = 180.00*M_PI/180;
+	q[23] = 0;
+	q[24] = 0;
+	q[25] = 0;
+	q[26] = 80.00*M_PI/180;
+	q[27] = 85.00*M_PI/180;
+	q[28] = -90.00*M_PI/180;
+	q[29] = 0;
+	q[30] = 0;
+	q[31] = 90.00*M_PI/180;
+	q[32] = 0;
+	q[33] = 0;
+	q[34] = 0;
+	q[35] = 0;
+	q[36] = 0;
+	q[37] = 0;
+	q[38] = 0;
+	q[39] = 0;
+	q[40] = 0;
+	q[41] = 0;
+	q[42] = 0;
+
+
+    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
+                                          new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
+    _Robot->setInitialPosition(*m_q);
+    _Robot->setAndUpdate( *m_q );
+
+
+}

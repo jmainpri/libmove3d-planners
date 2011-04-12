@@ -92,6 +92,23 @@ void RobotBaseGrid::recomputeAllCosts()
     }
 }
 
+vector<pair<double,Vector3d> > RobotBaseGrid::getCells()
+{
+    m_NaturalCostSpace->getRobotBaseGrid()->recomputeAllCosts();
+    vector<pair<double,Vector3d> > cellsCosts;
+    for (unsigned int i = 0; i < getNumberOfCells(); i++)
+    {
+        RobotBaseCell* iCell = dynamic_cast<RobotBaseCell*>( _cells[i] );
+        pair<double,Vector3d> cellPair;
+        cellPair.first = iCell->getCost();
+        cellPair.second = iCell->getWorkspacePoint();
+        cellsCosts.push_back(cellPair);
+
+    }
+
+    return cellsCosts;
+}
+
 //---------------------------------------------------------------------------
 // Cell
 //---------------------------------------------------------------------------
@@ -130,7 +147,7 @@ double RobotBaseCell::getCost()
         Robot* r =dynamic_cast<RobotBaseGrid*>(_grid)->getNaturalCostSpace()->getRobot();
 //        cout << r->getName() << endl;
 //        cout << _index << endl;
-        if (r->getName() == "HUMAN_ACHILE")
+        if (r->getName().find( "ACHILE") != string::npos)
         {
 //            shared_ptr<Configuration> q = r->getCurrentPos();
             int mIndexOfDoF = 6;

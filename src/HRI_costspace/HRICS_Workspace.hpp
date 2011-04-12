@@ -208,6 +208,16 @@ namespace HRICS
     Eigen::Vector3d getCurrentOTP() { return m_OTP; }
     
     /**
+     * testColision for the given configuration
+     */
+    bool testCol(std::tr1::shared_ptr<Configuration> q_base);
+
+    /**
+     * set Repo Pose of PR2
+     */
+    void initPR2RepoConf();
+
+    /**
      * Draws the current OTP
      */
     void drawCurrentOTP();

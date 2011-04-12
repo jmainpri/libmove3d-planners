@@ -34,6 +34,8 @@ namespace HRICS
 		Natural* getNaturalCostSpace() { return m_NaturalCostSpace; }
 		Eigen::Transform3d getRobotOrigin() { return m_RobotOriginPos; }
 
+		std::vector<std::pair<double,Eigen::Vector3d> > getCells();
+
 		void recomputeAllCosts();
 
 	private:

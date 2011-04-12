@@ -1382,11 +1382,9 @@ void Natural::initRobotBaseGrid(std::vector<double> box)
 {
     vector<double>  envSize(4);
 
-    configPt q;
-    q = p3d_get_robot_config(m_Agents->humans[0]->robotPt);
 
-    envSize[0] = *(q+6) + box[0]; envSize[1] = *(q+6) + box[1];
-    envSize[2] = *(q+7) + box[2]; envSize[3] = *(q+7) + box[3];
+    envSize[0] = box[0]; envSize[1] =  box[1];
+    envSize[2] = box[2]; envSize[3] = box[3];
 
     m_PlanBaseGrid = new RobotBaseGrid(0.1,envSize, this);
     API_activeRobotGrid = m_PlanBaseGrid;
@@ -1394,7 +1392,10 @@ void Natural::initRobotBaseGrid(std::vector<double> box)
 }
 
 
-
+vector< pair<double,Vector3d> > Natural::getBaseGridPoint()
+{
+    return m_PlanBaseGrid->getCells();
+}
 
 /*!
  *

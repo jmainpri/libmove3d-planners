@@ -118,6 +118,12 @@ namespace HRICS
 		std::vector< Eigen::Vector3d > getSortedReachableWSPoint();
 		std::vector< std::pair<double,Eigen::Vector3d> > getReachableWSPoint();
 	
+
+		/**
+		 * get points of the basegridgrid with their associeted and computed costs
+		 */
+		std::vector< std::pair<double,Eigen::Vector3d> > getBaseGridPoint();
+
 		
 		/**
 		 * Basic accesors
