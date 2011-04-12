@@ -117,6 +117,12 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 	m3DPath.clear();
 	
   m_OTP = Vector3d::Zero();
+
+  //set a "normal" values to this factors
+  ENV.setDouble( Env::Kdistance,   5 );
+  ENV.setDouble( Env::Kvisibility, 45 );
+  ENV.setDouble( Env::Kreachable,  90 );
+
 }
 
 Workspace::Workspace(Robot* rob, Graph* graph) :
