@@ -51,7 +51,7 @@ void g3d_draw_cost_features()
 
 void Graphic::initDrawFunctions()
 {
-  ext_g3d_traj_debug = draw_traj_debug;
+  //ext_g3d_traj_debug = draw_traj_debug;
 	ext_g3d_draw_cost_features = (void (*)())(g3d_draw_cost_features);
 	ext_g3d_export_cpp_graph = (void (*)())(g3d_export_cpp_graph);
   //ext_compute_config_cost_along_traj = computeConfigCostOnTraj;
