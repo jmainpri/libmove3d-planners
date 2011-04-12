@@ -260,7 +260,7 @@ void HRICS_init(HRI_AGENTS* agents)
 	if( ENV.getBool(Env::HRIAutoLoadGrid) )
 	{
     string home(getenv("HOME_MOVE3D"));
-    string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
+    string fileName("/statFiles/Cost3DGrids/Cost3DGrid2.grid");
 		
     fileName = home + fileName;
     
