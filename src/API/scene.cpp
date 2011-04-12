@@ -35,7 +35,7 @@ Scene::Scene(p3d_env* environnement)
   
   // For all HRI planner the robot 
   // Will be set here
-  global_ActiveRobotName = "JIDOKUKA";
+  global_ActiveRobotName = "PR2_ROBOT";
 	
 	// Set the robot by name containing ROBOT to active
 	
