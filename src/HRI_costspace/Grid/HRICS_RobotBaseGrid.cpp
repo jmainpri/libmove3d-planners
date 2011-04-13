@@ -125,6 +125,7 @@ RobotBaseCell::RobotBaseCell(int i, Vector2i coord, Vector2d corner, RobotBaseGr
         mCostIsComputed(false),
         mCost(1.0)
 {
+    ENV.setDouble(Env::optimalDist, 1.10);
 }
 
 Vector3d RobotBaseCell::getWorkspacePoint()

@@ -218,6 +218,26 @@ namespace HRICS
     void initPR2RepoConf();
 
     /**
+     * set PR2 to Give configuration
+     */
+    void initPR2GiveConf();
+
+    /**
+     * set PR2 and Human to testing position
+     */
+    void initPR2AndHumanTest();
+
+    /**
+     * Compute the position of the Robot Arm considering the current configuration
+     */
+    void computePR2GIK();
+
+    /**
+     * change Robot position to test PR2
+     */
+    void ChangeRobotPos(double value);
+
+    /**
      * Draws the current OTP
      */
     void drawCurrentOTP();
