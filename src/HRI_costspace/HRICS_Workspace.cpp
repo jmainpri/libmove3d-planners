@@ -1723,12 +1723,18 @@ void Workspace::computePR2GIK(bool move)
         }
         i++;
     }
-
-//    _Robot->setGoTo(*m_q_tmp);
-
-//    _Robot->setAndUpdate( *q_cur );
-//    _Robot->setInitialPosition(*q_cur);
-
+    if (dist > distThreshold)
+    {
+        cout << "Transfer configuration : Not found!!!"<< endl;
+        initPR2GiveConf();
+    }
+    else
+    {
+        // Set the robot in motion planning configuration
+        _Robot->setGoTo(*m_q_tmp);
+        _Robot->setInitialPosition(*q_cur);
+        cout << "Transfer configuration : have been set for motion planning!!!"<< endl;
+    }
 }
 
 
