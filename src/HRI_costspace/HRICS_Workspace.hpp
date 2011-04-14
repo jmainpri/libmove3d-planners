@@ -251,7 +251,7 @@ namespace HRICS
     /**
      * Choses a good transfer point
      */
-        bool chooseBestTransferPoint(Eigen::Vector3d& transfPoint, bool move);
+        bool chooseBestTransferPoint(Eigen::Vector3d& transfPoint, bool move, int threshold);
     
     /**
      * Compute a transfert point from a loaded grid, without taking into acount a possible colision.
@@ -270,7 +270,7 @@ namespace HRICS
      * the first variable make the human go to the posture or just show it
      * the second one allow to choose different computing fonctions taking into account or not the environment
      */
-    bool ComputeTheObjectTransfertPoint(bool Move, int type, Eigen::Vector3d& transfPoint);
+    bool ComputeTheObjectTransfertPoint(bool Move, int type, Eigen::Vector3d& transfPoint, int threshold);
 
 		/**
      * compute an object transfert point.

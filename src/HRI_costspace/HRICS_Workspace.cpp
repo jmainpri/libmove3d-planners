@@ -1060,23 +1060,31 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::
 
 
 
-bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
-{	
+bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, int threshold)
+{
 	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
 	_Robot->setAndUpdate(*_Robot->getInitialPosition());
 
 	p3d_col_activate_rob_rob( _Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
-	
-	
+
+	shared_ptr<Configuration> q_base = _Robot->getCurrentPos();
+	shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
+
 	if ( m_ReachableSpace == NULL )
 	{
 		cout << "No ReachableSpace cost space initialized" << endl;
 		return false;
 	}
-	
+
 	vector< pair<double,Vector3d > > ReachablePoints = m_ReachableSpace->getReachableWSPoint();
 	vector< pair<double,Vector3d > > costs;
-	
+
+	if (ReachablePoints.empty())
+	{
+		cout << "No OTP found" << endl;
+		return false;
+	}
+
 	for (unsigned int i=0; i<ReachablePoints.size(); i++)
 	{
 		double KDist = ENV.getDouble(Env::Kdistance);
@@ -1108,51 +1116,18 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
 	sort(ReachablePoints.begin(),ReachablePoints.end(),NaturalPointsCompObject);
 	sort(costs.begin(),costs.end(),NaturalPointsCompObject);
 
-	vector<Vector3d> points;
-	
-	for (unsigned int i=0; i<ReachablePoints.size(); i++)
-	{
-		points.push_back(ReachablePoints[i].second);
-//                cout << "Cost = " << ReachablePoints[i].first << endl;
-	}
-	
-	if( points.empty() )
-	{
-		cout << "No WSPoint to compute transfer point" << endl;
-		return false;
-	}
-	
-	shared_ptr<Configuration> q_base = _Robot->getCurrentPos();
-	
-	if ( /*baseInSight(q_base)*/ false ) 
-	{
-		if( transPFromBaseConf(q_base,points) )
-		{
-			_Robot->setAndUpdate(*q_base);
-			//cout << "0 : from base config" << endl;
-			return true;
-		}
-	}
-	
-	shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
-	shared_ptr<Configuration> q_human_pos  = _Robot->getCurrentPos();
-	
 
-	
 	for (unsigned int i=0; i<ReachablePoints.size(); i++)
 	{
 		transfPoint = ReachablePoints[i].second;
 
-		if (m_ReachableSpace->computeIsReachableOnly(transfPoint,m_ReachableSpace->getGrid()->isReachableWithLA(transfPoint)))
+		if (m_ReachableSpace->computeIsReachableOnly(transfPoint,m_ReachableSpace->getGrid()->isReachableWithLA(transfPoint)) && i > threshold)
 		{
 			current_cost.first = ReachablePoints[i].first;
 			current_cost.second = costs[i].second;
 			break;
 		}
 	}
-
-//	Vector3d WSPoint;
-//	WSPoint = transfPoint;
 
 	shared_ptr<Configuration> q_cur_human = mHumans[0]->getCurrentPos();
 
@@ -1164,14 +1139,13 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
 
 
 	q_base->setAsNotTested();
-	
+
 	if (PointsToDraw == NULL){
 			PointsToDraw = new ThreeDPoints();
 	}
 	PointsToDraw->clear();
 
 	initPR2RepoConf();
-
 
 	if( sampleRobotBase(q_base,WSPoint) )
 	{
@@ -1185,11 +1159,126 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
 	}
 
 	_Robot->setAndUpdate(*q_cur_robot);
+	p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+	cout << "No Point found" << endl;
+	return false;
+}
+
+//changing this function
+//bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
+//{
+//	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+//	_Robot->setAndUpdate(*_Robot->getInitialPosition());
+
+//	p3d_col_activate_rob_rob( _Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+	
+	
+//	if ( m_ReachableSpace == NULL )
+//	{
+//		cout << "No ReachableSpace cost space initialized" << endl;
+//		return false;
+//	}
+	
+//	vector< pair<double,Vector3d > > ReachablePoints = m_ReachableSpace->getReachableWSPoint();
+//	vector< pair<double,Vector3d > > costs;
+	
+//	for (unsigned int i=0; i<ReachablePoints.size(); i++)
+//	{
+//		double KDist = ENV.getDouble(Env::Kdistance);
+//		double KVisi = ENV.getDouble(Env::Kvisibility);
+//		double KReac = ENV.getDouble(Env::Kreachable);
+
+//		Vector3d point   = ReachablePoints[i].second;
+
+//        double CostDist = m_DistanceSpace->getWorkspaceCost(point);
+//        double CostReach = ReachablePoints[i].first;
+//        double CostVisib = m_VisibilitySpace->getCost(point);
+
+//        Vector3d localCosts;
+//        localCosts[0] = CostDist;
+//        localCosts[1] = CostReach;
+//        localCosts[2] = CostVisib;
 
 
+//        ReachablePoints[i].first = (KDist*CostDist + KVisi*CostVisib + KReac*CostReach )/ 3;
+
+//        pair<double,Vector3d > p;
+//        p.first = ReachablePoints[i].first;
+//        p.second = localCosts;
+
+//        costs.push_back( p );
+
+//    }
+
+//	sort(ReachablePoints.begin(),ReachablePoints.end(),NaturalPointsCompObject);
+//	sort(costs.begin(),costs.end(),NaturalPointsCompObject);
+
+//	vector<Vector3d> points;
+	
+//	for (unsigned int i=0; i<ReachablePoints.size(); i++)
+//	{
+//		points.push_back(ReachablePoints[i].second);
+////                cout << "Cost = " << ReachablePoints[i].first << endl;
+//	}
+	
+//	if( points.empty() )
+//	{
+//		cout << "No WSPoint to compute transfer point" << endl;
+//		return false;
+//	}
+	
+//	shared_ptr<Configuration> q_base = _Robot->getCurrentPos();
+	
+//	if ( /*baseInSight(q_base)*/ false )
+//	{
+//		if( transPFromBaseConf(q_base,points) )
+//		{
+//			_Robot->setAndUpdate(*q_base);
+//			//cout << "0 : from base config" << endl;
+//			return true;
+//		}
+//	}
+	
+//	shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
+	
+
+	
+//	for (unsigned int i=0; i<ReachablePoints.size(); i++)
+//	{
+//		transfPoint = ReachablePoints[i].second;
+
+//		if (m_ReachableSpace->computeIsReachableOnly(transfPoint,m_ReachableSpace->getGrid()->isReachableWithLA(transfPoint)))
+//		{
+//			current_cost.first = ReachablePoints[i].first;
+//			current_cost.second = costs[i].second;
+//			break;
+//		}
+//	}
+
+////	Vector3d WSPoint;
+////	WSPoint = transfPoint;
+
+//	shared_ptr<Configuration> q_cur_human = mHumans[0]->getCurrentPos();
+
+//	Vector3d WSPoint;
+
+//	WSPoint[0] = (*q_cur_human)[6];
+//	WSPoint[1] = (*q_cur_human)[7];
+//	WSPoint[2] = (*q_cur_human)[8];
 
 
-	//find a configuration for the whole robot (mobile base + arm):
+//	q_base->setAsNotTested();
+	
+//	if (PointsToDraw == NULL){
+//			PointsToDraw = new ThreeDPoints();
+//	}
+//	PointsToDraw->clear();
+
+//	initPR2RepoConf();
+
+
+//	//find a configuration for the whole robot (mobile base + arm):
 //	for(unsigned int i=0; i<100; i++)
 //	{
 //		if( sampleRobotBase(q_base,WSPoint) )
@@ -1212,13 +1301,13 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
 //		_Robot->setAndUpdate(*q_cur_robot);
 		
 //	}
-	
-	_Robot->setAndUpdate(*q_cur_robot);
-	p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
-	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
-	cout << "No Point found" << endl;
-	return false;
-}
+
+//	_Robot->setAndUpdate(*q_cur_robot);
+//	p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+//	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+//	cout << "No Point found" << endl;
+//	return false;
+//}
 
 bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 {	
@@ -1342,7 +1431,7 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 
 
 
-bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WSPoint)
+bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WSPoint, int threshold)
 {
 //   ENV.setDouble( Env::Kdistance,   5 );
 //   ENV.setDouble( Env::Kvisibility, 15 );
@@ -1365,7 +1454,7 @@ bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WS
       }else if(type==1){
         hasComputed = computeBestFeasableTransferPoint(WSPoint);
       }else if(type==2){
-        hasComputed = chooseBestTransferPoint(WSPoint, Move);
+        hasComputed = chooseBestTransferPoint(WSPoint, Move, threshold);
         
       }
       
