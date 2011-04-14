@@ -1496,7 +1496,7 @@ void Workspace::initPR2GiveConf()
    q[9] = (*q_cur)[IndexObjectDof+3];
    q[10] = (*q_cur)[IndexObjectDof+4];
    q[11] = (*q_cur)[IndexObjectDof+5];
-   q[12] = 0;
+   q[12] = (*q_cur)[IndexObjectDof+6];
    q[13] = 0;
    q[14] = 0;
    q[15] = 0;
@@ -1602,7 +1602,9 @@ void Workspace::computePR2GIK()
     q[39] = current_WSPoint[2];
 
     double dist = 99.0;
-    double threshold = 0.15;
+    double distThreshold = 0.15;
+    unsigned int i = 0;
+    unsigned int loopThreshold = 50;
 
     shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
                                           new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
@@ -1610,7 +1612,7 @@ void Workspace::computePR2GIK()
 
     shared_ptr<Configuration> m_q_tmp;
 
-    while (dist > threshold )
+    while (dist > distThreshold && i < loopThreshold)
     {
         _Robot->setAndUpdate( *m_q );
         q[40] = p3d_random(-M_PI,M_PI);
@@ -1627,6 +1629,7 @@ void Workspace::computePR2GIK()
         {
             dist = 99.0;
         }
+        i++;
     }
 
 //    _Robot->setGoTo(*m_q_tmp);
@@ -1639,11 +1642,12 @@ void Workspace::computePR2GIK()
 
 void Workspace::ChangeRobotPos(double value)
 {
+
     int IndexObjectDof = 6;
     cout << "Workspace::ChangeRobotPos()" << endl;
     cout << value << endl;
 
-    shared_ptr<Configuration> q_cur = _Robot->getInitialPosition();
+    shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
     configPt q;
     q = p3d_alloc_config(_Robot->getRobotStruct());
 
@@ -1658,5 +1662,7 @@ void Workspace::ChangeRobotPos(double value)
                                           new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
     _Robot->setInitialPosition(*m_q);
     _Robot->setAndUpdate( *m_q );
+
+    computePR2GIK();
 
 }
