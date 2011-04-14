@@ -230,7 +230,7 @@ namespace HRICS
     /**
      * Compute the position of the Robot Arm considering the current configuration
      */
-    void computePR2GIK();
+    void computePR2GIK(bool move);
 
     /**
      * change Robot position to test PR2

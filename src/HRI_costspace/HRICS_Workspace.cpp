@@ -1369,6 +1369,7 @@ bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WS
           reachSpace->computeIsReachableOnly(WSPoint, reachSpace->getGrid()->isReachableWithLA(WSPoint));
         }
         current_WSPoint = WSPoint;
+        computePR2GIK(Move);
 //        cout << WSPoint << endl;
       }else{
         current_WSPoint << 0.0 ,0.0, 0.0;
@@ -1484,19 +1485,6 @@ void Workspace::initPR2GiveConf()
        q[i] = (*q_cur)[i];
    }
 
-   q[0] = 0;
-   q[1] = 0;
-   q[2] = 0;
-   q[3] = 0;
-   q[4] = 0;
-   q[5] = 0;
-   q[6] = (*q_cur)[IndexObjectDof+0];
-   q[7] = (*q_cur)[IndexObjectDof+1];
-   q[8] = (*q_cur)[IndexObjectDof+2];
-   q[9] = (*q_cur)[IndexObjectDof+3];
-   q[10] = (*q_cur)[IndexObjectDof+4];
-   q[11] = (*q_cur)[IndexObjectDof+5];
-   q[12] = (*q_cur)[IndexObjectDof+6];
    q[13] = 0;
    q[14] = 0;
    q[15] = 0;
@@ -1583,7 +1571,7 @@ void Workspace::initPR2AndHumanTest()
 }
 
 
-void Workspace::computePR2GIK()
+void Workspace::computePR2GIK(bool move)
 {
     initPR2GiveConf();
     cout << "Workspace::computePR2GIK()" << endl;
@@ -1660,9 +1648,9 @@ void Workspace::ChangeRobotPos(double value)
 
     shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
                                           new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
-    _Robot->setInitialPosition(*m_q);
+//    _Robot->setInitialPosition(*m_q);
     _Robot->setAndUpdate( *m_q );
 
-    computePR2GIK();
+    computePR2GIK(true);
 
 }
