@@ -1172,26 +1172,42 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
 
 	initPR2RepoConf();
 
-	
+
+	if( sampleRobotBase(q_base,WSPoint) )
+	{
+		p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+		mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+		if (!move)
+		{
+			_Robot->setAndUpdate(*q_cur_robot);
+		}
+		return true;
+	}
+
+	_Robot->setAndUpdate(*q_cur_robot);
+
+
+
+
 	//find a configuration for the whole robot (mobile base + arm):
 //	for(unsigned int i=0; i<100; i++)
 //	{
-		if( sampleRobotBase(q_base,WSPoint) )
-		{
+//		if( sampleRobotBase(q_base,WSPoint) )
+//		{
 //			cout << "Valid Base config at " << i << endl;
 //			if ( transPFromBaseConf(q_base,points) )
 //			{
 //				cout << "Configuration at iteration " << i << " found!!!" << endl;
 
-                p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
-                mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
-                if (!move)
-                {
-                    _Robot->setAndUpdate(*q_cur_robot);
-                }
-                return true;
+//                p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+//                mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+//                if (!move)
+//                {
+//                    _Robot->setAndUpdate(*q_cur_robot);
+//                }
+//                return true;
 //            }
-        }
+//        }
 		
 //		_Robot->setAndUpdate(*q_cur_robot);
 		
@@ -1514,7 +1530,6 @@ void Workspace::initPR2GiveConf()
 
    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
                                          new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
-   _Robot->setInitialPosition(*m_q);
    _Robot->setAndUpdate( *m_q );
 }
 
@@ -1555,7 +1570,7 @@ void Workspace::initPR2AndHumanTest()
        q[i] = (*q_cur)[i];
    }
 
-   q[6] = (*q_cur_human)[IndexObjectDof+0] + 2.0;
+   q[6] = (*q_cur_human)[IndexObjectDof+0] + 1.0;
    q[7] = (*q_cur_human)[IndexObjectDof+1];
 
    //it should be 180 or -180 but it won't work unless that.
