@@ -9,6 +9,9 @@
 #include "Grid/HRICS_Grid.hpp"
 #include "Grid/HRICS_TwoDGrid.hpp"
 
+
+#include <Eigen/StdVector>
+
 /**
     @defgroup HRICS Hri Cost space
  */
@@ -71,7 +74,7 @@ namespace HRICS
         Grid* m3DGrid;
 
         PlanGrid* m2DGrid;
-        std::vector< Eigen::Vector2d >   m2DPath;
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m2DPath;
         std::vector<API::TwoDCell*> m2DCellPath;
 
         int mIndexObjectDof;
