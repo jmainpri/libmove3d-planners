@@ -242,9 +242,10 @@ double PlanCell::getCost()
     shared_ptr<Configuration> q_cur = rob->getCurrentPos();
 
     shared_ptr<Configuration> q_tmp = rob->getCurrentPos();
+    int firstIndexOfDof = dynamic_cast<p3d_jnt*>(rob->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 
-    (*q_tmp)[6] = this->getCenter()[0];
-    (*q_tmp)[7] = this->getCenter()[1];
+    (*q_tmp)[firstIndexOfDof + 0] = this->getCenter()[0];
+    (*q_tmp)[firstIndexOfDof + 1] = this->getCenter()[1];
 
     rob->setAndUpdate(*q_tmp);
 

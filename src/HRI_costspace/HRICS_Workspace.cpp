@@ -83,7 +83,7 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
     {
         p3d_jnt* FF_Joint = (*_Robot->getRobotStruct()->armManipulationData)[0].getManipulationJnt();
         ENV.setInt(Env::akinJntId,FF_Joint->num);
-        mIndexObjectDof = FF_Joint->index_dof;
+        mIndexObjectDof = FF_Joint->index_dof;//_Robot->getRobotStruct()->baseJnt;
     }
     else
     {
@@ -1523,7 +1523,8 @@ Eigen::Vector3d Workspace::computeOTPFromHandPose( bool rightHand )
 void Workspace::initPR2RepoConf()
 {
 	 shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
-	 int IndexObjectDof = 6;
+
+	 int IndexObjectDof = m_ReachableSpace->getRobot()->getJoint("Pelvis")->getIndexOfFirstDof();
 
 	configPt q;
 	q = p3d_alloc_config(_Robot->getRobotStruct());
@@ -1586,7 +1587,6 @@ void Workspace::initPR2GiveConf()
     cout << "Workspace::initPR2GiveConf()" << endl;
 
     shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
-    int IndexObjectDof = 6;
 
    configPt q;
    q = p3d_alloc_config(_Robot->getRobotStruct());
@@ -1635,20 +1635,20 @@ void Workspace::initPR2AndHumanTest()
     cout << "Workspace::initPR2AndHumanTest()" << endl;
 
 
-    shared_ptr<Configuration> q_cur_human = m_ReachableSpace->getRobot()->getCurrentPos();
-    int IndexObjectDof = 6;
+   shared_ptr<Configuration> q_cur_human = m_ReachableSpace->getRobot()->getCurrentPos();
+   int firstIndexOfHumanDof = m_ReachableSpace->getRobot()->getJoint("Pelvis")->getIndexOfFirstDof();
 
    configPt q_h;
    q_h = p3d_alloc_config(m_ReachableSpace->getRobot()->getRobotStruct());
-   for (unsigned int i = 0; i < m_ReachableSpace->getRobot()->getNumberOfActiveDoF() + IndexObjectDof; i++)
+   for (unsigned int i = 0; i < m_ReachableSpace->getRobot()->getRobotStruct()->nb_dof; i++)
    {
        q_h[i] = (*q_cur_human)[i];
    }
 
 
-   q_h[6] = (*q_cur_human)[IndexObjectDof+0];
-   q_h[7] = (*q_cur_human)[IndexObjectDof+1];
-   q_h[11] = 0;
+   q_h[firstIndexOfHumanDof + 0] = (*q_cur_human)[firstIndexOfHumanDof+0];
+   q_h[firstIndexOfHumanDof + 1] = (*q_cur_human)[firstIndexOfHumanDof+1];
+   q_h[firstIndexOfHumanDof + 5] = 0;
 
    shared_ptr<Configuration> m_q_human = shared_ptr<Configuration>(
                                          new Configuration(m_ReachableSpace->getRobot(),p3d_copy_config(m_ReachableSpace->getRobot()->getRobotStruct(),q_h)));
@@ -1661,16 +1661,18 @@ void Workspace::initPR2AndHumanTest()
    configPt q;
    q = p3d_alloc_config(_Robot->getRobotStruct());
 
-   for (unsigned int i = 0; i < _Robot->getNumberOfActiveDoF() + IndexObjectDof + 12; i++)
+   for (unsigned int i = 0; i < _Robot->getRobotStruct()->nb_dof; i++)
    {
        q[i] = (*q_cur)[i];
    }
 
-   q[6] = (*q_cur_human)[IndexObjectDof+0] + 1.0;
-   q[7] = (*q_cur_human)[IndexObjectDof+1];
+   int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+   q[firstIndexOfRobotDof + 0] = (*q_cur_human)[firstIndexOfHumanDof+0] + 1.0;
+   q[firstIndexOfRobotDof + 1] = (*q_cur_human)[firstIndexOfHumanDof+1];
 
    //it should be 180 or -180 but it won't work unless that.
-   q[11] = 179.0*M_PI;
+   q[firstIndexOfRobotDof + 5] = 179.0*M_PI;
 
    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
                                          new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
@@ -1686,19 +1688,21 @@ void Workspace::computePR2GIK(bool move)
 {
     initPR2GiveConf();
     cout << "Workspace::computePR2GIK()" << endl;
-    int IndexObjectDof = 6;
+
 
     shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
     configPt q;
     q = p3d_alloc_config(_Robot->getRobotStruct());
 
-    for (unsigned int i = 0; i < _Robot->getNumberOfActiveDoF() + IndexObjectDof+ 12; i++)
+    for (unsigned int i = 0; i < _Robot->getRobotStruct()->nb_dof ; i++)
     {
         q[i] = (*q_cur)[i];
+
     }
-    q[37] = current_WSPoint[0];
-    q[38] = current_WSPoint[1];
-    q[39] = current_WSPoint[2];
+    int virtualObjectDOF = _Robot->getJoint("virtual_object_right")->getIndexOfFirstDof();
+    q[virtualObjectDOF + 0] = current_WSPoint[0];
+    q[virtualObjectDOF + 1] = current_WSPoint[1];
+    q[virtualObjectDOF + 2] = current_WSPoint[2];
 
     double dist = 99.0;
     double distThreshold = 0.15;
@@ -1714,9 +1718,9 @@ void Workspace::computePR2GIK(bool move)
     while (dist > distThreshold && i < loopThreshold)
     {
         _Robot->setAndUpdate( *m_q );
-        q[40] = p3d_random(-M_PI,M_PI);
-        q[41] = p3d_random(-M_PI,M_PI);
-        q[42] = p3d_random(-M_PI,M_PI);
+        q[virtualObjectDOF + 3] = p3d_random(-M_PI,M_PI);
+        q[virtualObjectDOF + 4] = p3d_random(-M_PI,M_PI);
+        q[virtualObjectDOF + 5] = p3d_random(-M_PI,M_PI);
         Joint* j14 = _Robot->getJoint("fingerJointGripper_0");
 
         m_q_tmp = shared_ptr<Configuration>(new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
@@ -1748,7 +1752,7 @@ void Workspace::computePR2GIK(bool move)
 void Workspace::ChangeRobotPos(double value)
 {
 
-    int IndexObjectDof = 6;
+    int firstIndexOfDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
     cout << "Workspace::ChangeRobotPos()" << endl;
     cout << value << endl;
 
@@ -1756,12 +1760,13 @@ void Workspace::ChangeRobotPos(double value)
     configPt q;
     q = p3d_alloc_config(_Robot->getRobotStruct());
 
-    for (unsigned int i = 0; i < _Robot->getNumberOfActiveDoF() + IndexObjectDof + 12; i++)
+    for (unsigned int i = 0; i < _Robot->getRobotStruct()->nb_dof; i++)
     {
         q[i] = (*q_cur)[i];
     }
 
-    q[6] = value;
+
+    q[firstIndexOfDof] = value;
 
     shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
                                           new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
