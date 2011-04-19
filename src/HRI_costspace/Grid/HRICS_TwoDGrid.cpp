@@ -140,6 +140,17 @@ void PlanGrid::draw()
     //    glEnable(GL_LIGHTING);
     //    glEnable(GL_LIGHT0);
 }
+/**
+ * call setBlankCost() in each cell
+ */
+void PlanGrid::setCellsToblankCost()
+{
+    for (unsigned int i = 0; i < getNumberOfCells(); i++)
+    {
+        dynamic_cast<PlanCell*>(this->getCell(i))->setBlankCost();
+    }
+
+}
 
 /**
  * Write a Cost Tab to

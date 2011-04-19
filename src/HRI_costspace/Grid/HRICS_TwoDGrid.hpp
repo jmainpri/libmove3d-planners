@@ -27,6 +27,8 @@ namespace HRICS
 		void draw();
 		
 		void setRobotToStoredConfig();
+
+		void setCellsToblankCost();
 		
 	private:
 		Robot* mRobot;
