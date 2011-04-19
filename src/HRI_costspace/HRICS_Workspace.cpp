@@ -1451,14 +1451,18 @@ bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WS
     
     if ( ENV.getBool(Env::HRIComputeOTP) ){
       
+      API::BaseGrid* tmp_grid;
+      tmp_grid = API_activeGrid;
+      API_activeGrid = reachSpace->getGrid();
+
       if (type == 0){
         hasComputed = computeBestTransferPoint(WSPoint);
       }else if(type==1){
         hasComputed = computeBestFeasableTransferPoint(WSPoint);
       }else if(type==2){
         hasComputed = chooseBestTransferPoint(WSPoint, Move, threshold);
-        
       }
+
       
       if( hasComputed ){
 
@@ -1476,11 +1480,12 @@ bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WS
           reachSpace->computeIsReachableOnly(WSPoint, reachSpace->getGrid()->isReachableWithLA(WSPoint));
         }
         current_WSPoint = WSPoint;
-        computePR2GIK(Move);
+//        computePR2GIK(Move);
 //        cout << WSPoint << endl;
       }else{
         current_WSPoint << 0.0 ,0.0, 0.0;
         }
+      API_activeGrid = tmp_grid;
     }
     
     ENV.setBool(Env::HRIComputeOTP,false);
