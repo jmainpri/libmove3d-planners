@@ -156,13 +156,13 @@ double Cell::getCost()
         switch ( ENV.getInt(Env::hriCostType))
         {
         case 0 :
-            _Cost = dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPL)->getDistanceCost();
+            _Cost = dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPLConfig)->getDistanceCost();
             break;
         case 1 :
-            _Cost = dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPL)->getVisibilityCost(cellCenter);
+            _Cost = dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPLConfig)->getVisibilityCost(cellCenter);
             break;
         case 2 :
-            _Cost = dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPL)->getConfigCost();
+            _Cost = dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPLConfig)->getConfigCost();
             break;
         default:
             cout << "Type of Cost undefine in Grid "  << endl;

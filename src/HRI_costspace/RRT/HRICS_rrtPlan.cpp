@@ -37,8 +37,8 @@ int  HRICS_RRTPlan::init()
                            this->getInit()->getNodeStruct(),
                            this->getGoal()->getNodeStruct());
 
-    this->setGrid(dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPL)->getPlanGrid());
-    this->setCellPath(dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPL)->getCellPath());
+    this->setGrid(dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPLConfig)->getPlanGrid());
+    this->setCellPath(dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPLConfig)->getCellPath());
 
     cout << "End Init HRICS_RRTPlan" << endl;
 

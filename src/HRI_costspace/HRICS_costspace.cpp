@@ -94,7 +94,7 @@ double HRICS_getConfigCost(Configuration& Conf)
 				   && ( ENV.getDouble(Env::Kvisibility) != 0.0 ) )
 				{
 					int object = dynamic_cast<Workspace*>(HRICS_MotionPL)->getIndexObjectDof();
-					
+
 					Eigen::Vector3d WSPoint;
 					
 					WSPoint[0] = Conf[object+0];
@@ -121,7 +121,8 @@ double HRICS_getConfigCost(Configuration& Conf)
 				if( ( ENV.getInt(Env::hriCostType) == HRICS_Reachability || ENV.getInt(Env::hriCostType) == HRICS_Combine )
 				   && ( ENV.getDouble(Env::Kreachable) != 0.0 ) )
 				{
-					int object = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getIndexObjectDof();
+					int object = dynamic_cast<Workspace*>(HRICS_MotionPL)->getIndexObjectDof();
+
 					
 					Eigen::Vector3d WSPoint;
 					
@@ -129,8 +130,10 @@ double HRICS_getConfigCost(Configuration& Conf)
 					WSPoint[1] = Conf[object+1];
 					WSPoint[2] = Conf[object+2];
 					
+
 					double ReachCost = ENV.getDouble(Env::Kreachable)*(HRICS_MotionPL->getReachability()->getCostInGrid(WSPoint));
 					Cost += ReachCost;
+
 					
 					if (ReachCost<0) {
 						p3d_set_robot_display_mode(rob->getRobotStruct(),P3D_ROB_BLUE_DISPLAY);

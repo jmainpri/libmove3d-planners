@@ -88,7 +88,7 @@ void PlanGrid::draw()
     glEnable(GL_CULL_FACE);
     glBegin(GL_QUADS);
 
-    double depth = -0.60;
+    double depth = 0.0;
 
     //    cout << "Drawing 2D Grid"  << endl;
 
@@ -103,15 +103,18 @@ void PlanGrid::draw()
 
             PlanCell* Cell = dynamic_cast<PlanCell*>(getCell(x,y));
 
-            double colorRation = ENV.getDouble(Env::colorThreshold1)-(Cell->getCost()/(ENV.getDouble(Env::Kdistance)+ENV.getDouble(Env::Kvisibility)));
+//            double colorRation = ENV.getDouble(Env::colorThreshold1)-(Cell->getCost()/(ENV.getDouble(Env::Kdistance)+ENV.getDouble(Env::Kvisibility)));
 
+            double colorRation = Cell->getCost()*360;
             Vector2d center = Cell->getCenter();
 
             //            double colorRation = (((double)x*(double)_nbCellsY)+(double)y)/(nbCells);
             //            cout << " X = "  << _nbCellsX << " , Y = "  << _nbCellsY << endl;
             //            cout << "ColorRation[" << x*_nbCellsY+y << "]  =  "  << colorRation << endl;
 
-            GroundColorMix(color,colorRation*ENV.getDouble(Env::colorThreshold2)*1000,0,1);
+//            colorRation = colorRation*ENV.getDouble(Env::colorThreshold2)*1000;
+            GroundColorMix(color,colorRation,0,1);
+
             glColor3d(color[0],color[1],color[2]);
 
             glVertex3d( (double)(center[0] - _cellSize[0]/2) , (double)(center[1] - _cellSize[1]/2), depth );
@@ -216,8 +219,38 @@ PlanCell::PlanCell(int i, Vector2i coord, Vector2d corner, PlanGrid* grid) :
         mCost(0.0)
 {
 }
-
 double PlanCell::getCost()
+{
+    if(mCostIsComputed && (!ENV.getBool(Env::RecomputeCellCost)))
+    {
+        return mCost;
+    }
+
+    Robot* rob = dynamic_cast<PlanGrid*>(_grid)->getRobot();
+    mCost=0;
+    shared_ptr<Configuration> q_cur = rob->getCurrentPos();
+
+    shared_ptr<Configuration> q_tmp = rob->getCurrentPos();
+
+    (*q_tmp)[6] = this->getCenter()[0];
+    (*q_tmp)[7] = this->getCenter()[1];
+
+    rob->setAndUpdate(*q_tmp);
+
+    mCost=0.3;
+    if (rob->isInCollision())
+    {
+        mCost=0.5;
+    }
+
+    rob->setAndUpdate(*q_cur);
+    mCostIsComputed = true;
+
+    return mCost;
+}
+
+
+double PlanCell::getCost2()
 {
     if(mCostIsComputed && (!ENV.getBool(Env::RecomputeCellCost)))
     {

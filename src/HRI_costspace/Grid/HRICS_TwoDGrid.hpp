@@ -47,6 +47,10 @@ namespace HRICS
 		
 		double getCost(); /* { std::cout << " Warning not implemented"  << std::endl; }*/
 		
+		double getCost2();
+
+		void setCost(double value) {mCost = value; }
+
 		void setBlankCost() { mCostIsComputed = false; }
 		
 		Eigen::Vector2i getCoord() { return _Coord; }

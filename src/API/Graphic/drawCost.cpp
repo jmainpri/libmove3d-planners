@@ -18,6 +18,8 @@
 #include "HRI_costspace/HRICS_costspace.hpp"
 #endif
 
+#include "HRI_costspace/HRICS_ConfigSpace.hpp"
+
 #include "API/Grids/gridsAPI.hpp"
 
 #include <Eigen/Core>
@@ -176,6 +178,7 @@ void g3d_draw_grids()
 	{
 		API_activeRobotGrid->draw();
 	}
+
 	
 #endif
 	
@@ -238,7 +241,7 @@ void g3d_draw_hrics()
 		if( ENV.getBool(Env::HRIPlannerCS) && ENV.getBool(Env::drawTraj) )
 		{
 			//          printf("Draw 2d path\n");
-			dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPL)->draw2dPath();
+			dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPLConfig)->draw2dPath();
 		}
 		
 		if( ENV.getBool(Env::isCostSpace) )

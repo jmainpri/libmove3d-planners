@@ -20,6 +20,7 @@
 #include "move3d-headless.h"
 #include "Planner-pkg.h"
 
+
 using namespace std;
 using namespace tr1;
 using namespace HRICS;
@@ -29,6 +30,8 @@ using namespace HRICS;
 using namespace Eigen;
 
 extern string global_ActiveRobotName;
+
+HRICS::HumanAwareMotionPlanner*		HRICS_MotionPLConfig = NULL;
 
 /**
   * Reads the ENV structure and gets the Humans and the Robots named respectivly
@@ -109,6 +112,8 @@ void ConfigSpace::initCostSpace()
     mEnvSize.resize(4);
     m2DGrid = new PlanGrid(ENV.getDouble(Env::PlanCellSize),mEnvSize);
     m2DGrid->setRobot(_Robot);
+//    API_activeGrid = m2DGrid;
+//    API_EnvGrid = m2DGrid;
 }
 
 double ConfigSpace::getConfigCost()
@@ -289,7 +294,7 @@ void ConfigSpace::solveAStar(PlanState* start,PlanState* goal)
 
         for (int i=path.size()-1;i>=0;i--)
         {
-            API::TwoDCell* cell = dynamic_cast<PlanState*>(path[i])->getCell();
+            PlanCell* cell = dynamic_cast<PlanState*>(path[i])->getCell();
             m2DPath.push_back( cell->getCenter() );
             m2DCellPath.push_back( cell );
         }
@@ -310,8 +315,8 @@ void ConfigSpace::draw2dPath()
         for(unsigned int i=0;i<m2DPath.size()-1;i++)
         {
             glLineWidth(3.);
-            g3d_drawOneLine(m2DPath[i][0],      m2DPath[i][1],      -0.4,
-                            m2DPath[i+1][0],    m2DPath[i+1][1],    -0.4,
+            g3d_drawOneLine(m2DPath[i][0],      m2DPath[i][1],      0.4,
+                            m2DPath[i+1][0],    m2DPath[i+1][1],    0.4,
                             Yellow, NULL);
             glLineWidth(1.);
         }
@@ -354,127 +359,3 @@ bool ConfigSpace::initHriRRT()
     cout << "  p3d_set_user_drawnjnt(1) "  << endl;
     return true;
 }
-
-/*
-const int HUMANj_NECK_PAN=  4;
-const int HUMANj_NECK_TILT= 7; // 5
-
-const double HRI_EYE_TOLERANCE_TILT=0.3;
-const double HRI_EYE_TOLERANCE_PAN=0.3;
-
-double ConfigSpace::getVisibilityCost(Vector3d WSPoint)
-{
-    double phi,theta;
-    double Dphi, Dtheta;
-    //    double Ccoord[6];
-    p3d_vector4 realcoord,newcoord;
-    p3d_matrix4 inv;
-	
-    realcoord[0] = WSPoint[0];
-    realcoord[1] = WSPoint[1];
-    realcoord[2] = WSPoint[2];
-    realcoord[3] = 1;
-	
-    // get the right frame
-    p3d_matrix4 rotation = {
-        {-1,0,0,0},
-        {0,-1,0,0},
-        {0,0,1,0},
-        {0,0,0,1}};
-    p3d_matrix4 newABS;
-    p3d_mat4Mult(mHuman->getRobotStruct()->joints[HUMANj_NECK_TILT]->abs_pos,rotation,newABS);
-	
-    // Invert frame and get the point in this frame
-    p3d_matInvertXform(
-					   newABS, inv);
-    p3d_matvec4Mult(inv, realcoord, newcoord);
-	
-	
-    // Compute the angle the point make with the
-    Vector3d newCoordVect;
-    newCoordVect[0] = newcoord[0];
-    newCoordVect[1] = newcoord[1];
-    newCoordVect[2] = newcoord[2];
-	
-    phi = ABS(atan2( newCoordVect[0],newCoordVect[1]));
-    theta = ABS(acos( newCoordVect[2]/newCoordVect.norm() )- M_PI_2);
-	
-    if(phi < HRI_EYE_TOLERANCE_PAN/2.)
-        Dphi = 0;
-    else
-        Dphi = phi - HRI_EYE_TOLERANCE_PAN/2.;
-	
-    if(theta < HRI_EYE_TOLERANCE_TILT/2.)
-        Dtheta = 0;
-    else
-        Dtheta = theta - HRI_EYE_TOLERANCE_TILT/2.;
-	
-    double cost = (1/0.65)*((Dtheta+Dphi)/(M_2PI-(HRI_EYE_TOLERANCE_TILT/2.)-(HRI_EYE_TOLERANCE_PAN/2.)));
-	
-    //    cout << "Visib =  "  << cost << endl;
-    return cost;
-}*/
-
-/**
-  * Runs a HRI RRT
-  */
-/*bool ConfigSpace::runHriRRT()
-{
-    ChronoOn();
-    p3d_del_graph(XYZ_GRAPH);
-    XYZ_GRAPH = NULL;
-    _Graph = new Graph(this->getActivRobot(),XYZ_GRAPH);
-
-    if(ENV.getBool(Env::drawPoints)&&PointsToDraw)
-    {
-        delete PointsToDraw;
-        PointsToDraw = NULL;
-    }
-
-//    ENV.setBool(Env::costBeforeColl,true);
-
-    if(ENV.getBool(Env::isInverseKinematics))
-    {
-        activateCcCntrts(_Robot->getRobotStruct(),-1,true);
-    }
-    else
-    {
-        deactivateCcCntrts(_Robot->getRobotStruct(),-1);//true);
-    }
-
-    RRT* rrt = new HRICS_RRTPlan(_Robot,_Graph);
-
-    int nb_added_nodes = rrt->init();
-    cout << "nb nodes "<< _Graph->getNodes().size() << endl;
-
-    dynamic_cast<HRICS_RRTPlan*>(rrt)->setGrid(m2DGrid);
-    dynamic_cast<HRICS_RRTPlan*>(rrt)->setCellPath(m2DCellPath);
-
-    //    ENV.setBool(Env::biDir,true);
-    //    ENV.setBool(Env::isGoalBiased,true);
-    //    ENV.setDouble(Env::Bias,0.5);
-
-    ENV.setBool(Env::isRunning,true);
-    nb_added_nodes += rrt->run();
-
-    cout << "nb added nodes " << nb_added_nodes << endl;
-    cout << "nb nodes " << _Graph->getNodes().size() << endl;
-
-    bool trajFound = rrt->trajFound();
-
-    ChronoPrint("");
-    ChronoOff();
-
-    if(trajFound)
-    {
-        p3d_ExtractBestTraj(_Graph->getGraphStruct());
-        Smoothing traj(_Robot,_Robot->getTrajStruct());
-        if( ENV.getBool(Env::withShortCut))
-        {
-            traj.runShortCut(ENV.getInt(Env::nbCostOptimize));
-        }
-        traj.replaceP3dTraj();
-    }
-
-    return trajFound;
-}*/

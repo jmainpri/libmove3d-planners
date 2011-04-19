@@ -57,6 +57,7 @@ extern HRICS::Natural*		HRICS_activeReac;
  * Active Motion planner framework
  */
 extern HRICS::HumanAwareMotionPlanner*	HRICS_MotionPL;
+extern HRICS::HumanAwareMotionPlanner*	HRICS_MotionPLConfig;
 
 /**
  * Cells to be drawn
