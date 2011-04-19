@@ -248,10 +248,10 @@ double PlanCell::getCost()
 
     rob->setAndUpdate(*q_tmp);
 
-    mCost=0.3;
+    mCost=0.1;
     if (rob->isInCollision())
     {
-        mCost=0.5;
+        mCost=1.0;
     }
 
     rob->setAndUpdate(*q_cur);
