@@ -696,6 +696,8 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 
 		if(!testCol(q_base))
 		{
+			_Robot->setInitialPosition(*q_cur);
+			_Robot->setGoTo(*q_base);
 			return true;
 		}
 		_Robot->setAndUpdate(*q_cur);
