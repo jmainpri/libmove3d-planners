@@ -136,7 +136,7 @@ void TwoDGrid::createAllCells()
             x=0;
             if( y >= _nbCellsY )
             {
-                cout << "ThreeDGrid : Error Size of ThreeDGrid " << endl;
+                cout << "TwoDGrid : Error Size of TwoDGrid " << endl;
                 return;
             }
         }
