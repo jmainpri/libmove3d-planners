@@ -9,6 +9,7 @@ HRICS_Natural.cpp
 HRICS_Workspace.cpp
 HRICS_ConfigSpace.cpp
 HRICS_old.cpp
+HRICS_otpmotionpl.cpp
 
 )
 

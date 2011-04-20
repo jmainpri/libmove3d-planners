@@ -31,6 +31,7 @@ const int HRICS_HUMANj_LHAND=     26; /* or 27 or 28 */
 #include "HRICS_Natural.hpp"
 #include "HRICS_Workspace.hpp"
 #include "HRICS_ConfigSpace.hpp"
+#include "HRICS_otpmotionpl.hpp"
 
 #ifdef HRI_PLANNER
 #include "HRICS_HAMP.hpp"

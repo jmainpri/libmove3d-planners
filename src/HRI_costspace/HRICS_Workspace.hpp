@@ -29,7 +29,7 @@
  */
 namespace HRICS
 {
-	
+
 	/*! 
 	 * Base class for the HRICS motion planners
 	 */
@@ -280,7 +280,7 @@ namespace HRICS
      * @return a position vector in world coordiate
      */
     Eigen::Vector3d computeOTPFromHandPose( bool rightHand );
-    
+
 	private:
 		
 		void solveAStar(State* start,State* goal);
@@ -297,7 +297,7 @@ namespace HRICS
     
 		//! 3d grid to compute a Workspace path
 		Grid*                   m3DGrid;
-		
+
 #ifdef HRI_PLANNER
 		HRI_AGENTS*		m_Agents;
 #endif
