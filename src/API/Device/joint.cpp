@@ -87,8 +87,8 @@ void Joint::shoot(Configuration& q,bool sample_passive)
 	
 		if ( 
 			sample_passive ||
-			(p3d_jnt_get_dof_is_user(m_Joint, j) && p3d_jnt_get_dof_is_active_for_planner(m_Joint,j)) &&
-			(q.getRobot()->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) ) 
+			((p3d_jnt_get_dof_is_user(m_Joint, j) && p3d_jnt_get_dof_is_active_for_planner(m_Joint,j)) &&
+			(q.getRobot()->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) ) )
 		{
 			double vmin,vmax;
 			p3d_jnt_get_dof_rand_bounds(m_Joint, j, &vmin, &vmax);

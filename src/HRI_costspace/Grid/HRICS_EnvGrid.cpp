@@ -145,7 +145,7 @@ void EnvGrid::draw()
  */
 void EnvGrid::setCellsToblankCost()
 {
-    for (unsigned int i = 0; i < getNumberOfCells(); i++)
+    for (int i = 0; i < getNumberOfCells(); i++)
     {
         dynamic_cast<EnvCell*>(this->getCell(i))->setBlankCost();
     }

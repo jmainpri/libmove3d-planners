@@ -308,8 +308,8 @@ void g3d_draw_hrics()
     
     GLdouble GreenColor[4] =   { 0.0, 0.5, 0.0, 0.7 };
     GLdouble GreenColorT[4] =   { 0.0, 0.5, 0.0, 0.0 };
-    GLdouble GreyColor[4] =   { 0.5, 0.5, 0.5, 0.5 };
-    GLdouble GreyColorT[4] =   { 0.5, 0.5, 0.5, 0.0 };
+//    GLdouble GreyColor[4] =   { 0.5, 0.5, 0.5, 0.5 };
+//    GLdouble GreyColorT[4] =   { 0.5, 0.5, 0.5, 0.0 };
 
 
     Robot* human = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman();
