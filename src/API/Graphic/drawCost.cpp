@@ -19,6 +19,7 @@
 #endif
 
 #include "HRI_costspace/HRICS_ConfigSpace.hpp"
+#include "HRI_costspace/HRICS_otpmotionpl.hpp"
 
 #include "API/Grids/gridsAPI.hpp"
 #include "planner/planEnvironment.hpp"
@@ -241,6 +242,11 @@ void g3d_draw_hrics()
 		{
 			//          printf("Draw 2d path\n");
 			dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPLConfig)->draw2dPath();
+		}
+
+		if( ENV.getBool(Env::HRIPlannerCS) && ENV.getBool(Env::drawOTPTraj) )
+		{
+			dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->draw2dPath();
 		}
 		
 		if( ENV.getBool(Env::isCostSpace) )

@@ -78,43 +78,46 @@ namespace HRICS
 		double mCost;
 		
 	};
-	
-//	/**
-//	 @ingroup HRICS
-//	 @brief Plannar HRI State
-//	 */
-//	class PlanState : public API::State
-//	{
-//	public:
-//		PlanState() {}
-//		PlanState( Eigen::Vector2i cell, PlanGrid* grid);
-//		PlanState( PlanCell* cell , PlanGrid* grid);
-		
-//		std::vector<API::State*> getSuccessors();
-		
-//		bool isLeaf();		/* leaf control for an admissible heuristic function; the test of h==0*/
-//		bool equal(API::State* other);
-		
-//		void setClosed(std::vector<PlanState*>& closedStates,std::vector<PlanState*>& openStates);
-//		bool isColsed(std::vector<PlanState*>& closedStates);
-		
-//		void setOpen(std::vector<PlanState*>& openStates);
-//		bool isOpen(std::vector<PlanState*>& openStates);
-		
-//		void reset();
-		
-//		void print();
-		
-//		PlanCell* getCell() { return _Cell; }
-		
-//	protected:
-//		double computeLength(API::State *parent);       /* g */
-//		double computeHeuristic(API::State *parent = NULL ,API::State* goal = NULL);    /* h */
-		
-//	private:
-//		PlanGrid* _Grid;
-//		PlanCell* _Cell;
-//	};
+
+
+	/**
+	 @ingroup HRICS
+	 @brief Plannar HRI State
+	 */
+	class EnvState : public API::State
+	{
+	public:
+		EnvState() {}
+		EnvState( Eigen::Vector2i cell, EnvGrid* grid);
+		EnvState( EnvCell* cell , EnvGrid* grid);
+
+		std::vector<API::State*> getSuccessors();
+
+		bool isLeaf();		/* leaf control for an admissible heuristic function; the test of h==0*/
+		bool equal(API::State* other);
+
+		void setClosed(std::vector<EnvState*>& closedStates,std::vector<EnvState*>& openStates);
+		bool isColsed(std::vector<EnvState*>& closedStates);
+
+		void setOpen(std::vector<EnvState*>& openStates);
+		bool isOpen(std::vector<EnvState*>& openStates);
+
+		void reset();
+
+		void print();
+
+		EnvCell* getCell() { return _Cell; }
+
+	protected:
+		double computeLength(API::State *parent);       /* g */
+		double computeHeuristic(API::State *parent = NULL ,API::State* goal = NULL);    /* h */
+
+	private:
+		EnvGrid* _Grid;
+		EnvCell* _Cell;
+	};
 }
+
+
 
 #endif // HRICS_TWODGRID_HPP

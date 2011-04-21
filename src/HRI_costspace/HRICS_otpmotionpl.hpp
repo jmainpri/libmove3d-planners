@@ -15,6 +15,9 @@
 #include "HRICS_Workspace.hpp"
 
 #include "Grid/HRICS_EnvGrid.hpp"
+#include "Grid/HRICS_TwoDGrid.hpp"
+
+#include <Eigen/StdVector>
 
 /**
  @defgroup HRICS Hri Cost space
@@ -40,6 +43,10 @@ namespace HRICS
         EnvGrid* getPlanGrid() { return m2DGrid; }
 
 
+        bool computeAStarIn2DGrid();
+
+        void solveAStar(EnvState* start, EnvState* goal, bool isHuman);
+        void draw2dPath();
 
     private:
         void initCostSpace();
@@ -48,6 +55,14 @@ namespace HRICS
         EnvGrid* m2DGrid;
 
         std::vector<double> mEnvSize;
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m2DPath;
+        std::vector<API::TwoDCell*> m2DCellPath;
+
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m2DHumanPath;
+        std::vector<API::TwoDCell*> m2DHumanCellPath;
+
+        bool mPathExist;
+        bool mHumanPathExist;
     };
 
 }

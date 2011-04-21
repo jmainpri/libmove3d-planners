@@ -264,129 +264,129 @@ double EnvCell::getCost()
 
 
 
-////---------------------------------------------------------------------------
-//// State
-////---------------------------------------------------------------------------
-//PlanState::PlanState( Vector2i cell , PlanGrid* grid) :
-//        _Grid(grid)
-//{
-//    _Cell = dynamic_cast<PlanCell*>(grid->getCell(cell));
-//}
+//---------------------------------------------------------------------------
+// State
+//---------------------------------------------------------------------------
+EnvState::EnvState( Vector2i cell , EnvGrid* grid) :
+        _Grid(grid)
+{
+    _Cell = dynamic_cast<EnvCell*>(grid->getCell(cell));
+}
 
-//PlanState::PlanState( PlanCell* cell , PlanGrid* grid) :
-//        _Grid(grid),
-//        _Cell(cell)
-//{
+EnvState::EnvState( EnvCell* cell , EnvGrid* grid) :
+        _Grid(grid),
+        _Cell(cell)
+{
 
-//}
-
-
-//vector<API::State*> PlanState::getSuccessors()
-//{
-//    vector<API::State*> newStates;
-//    //    newStates.reserve(26);
-
-//    //    cout << "--------------------" << endl;
-//    for(int i=0;i<8;i++)
-//    {
-//        PlanCell* neigh = dynamic_cast<PlanCell*>(_Grid->getNeighbour( _Cell->getCoord(), i));
-//        if( neigh != NULL )
-//        {
-//            //            _Grid->isVirtualObjectPathValid(dynamic_cast<PlanCell*>(_Cell),neigh);
-//            newStates.push_back( new PlanState(neigh,_Grid));
-//        }
-//    }
-
-//    return newStates;
-//}
-
-//bool PlanState::isLeaf()
-//{
-//    return false;
-//}
-
-//bool PlanState::equal(API::State* other)
-//{
-////    bool equal(false);
-//    PlanState* state = dynamic_cast<PlanState*>(other);
-//    Vector2i pos = _Cell->getCoord();
-//    for(int i=0;i<2;i++)
-//    {
-//        if( pos[i] != state->_Cell->getCoord()[i] )
-//        {
-//            //            cout << "PlanState::equal false" << endl;
-//            return false;
-//        }
-//    }
+}
 
 
-//    //    cout << "State::equal true" << endl;
-//    return true;
-//}
+vector<API::State*> EnvState::getSuccessors()
+{
+    vector<API::State*> newStates;
+    //    newStates.reserve(26);
 
-//void PlanState::setClosed(std::vector<PlanState*>& closedStates,std::vector<PlanState*>& openStates)
-//{
-//    //    cout << "State :: set Closed" <<endl;
-//    _Cell->setClosed();
-//}
+    //    cout << "--------------------" << endl;
+    for(int i=0;i<8;i++)
+    {
+        EnvCell* neigh = dynamic_cast<EnvCell*>(_Grid->getNeighbour( _Cell->getCoord(), i));
+        if( neigh != NULL )
+        {
+            //            _Grid->isVirtualObjectPathValid(dynamic_cast<EnvCell*>(_Cell),neigh);
+            newStates.push_back( new EnvState(neigh,_Grid));
+        }
+    }
 
-//bool PlanState::isColsed(std::vector<PlanState*>& closedStates)
-//{
-//    //    cout << "State :: get Closed" <<endl;
-//    return _Cell->getClosed();
-//}
+    return newStates;
+}
 
-//void PlanState::setOpen(std::vector<PlanState*>& openStates)
-//{
-//    //     cout << "State :: set open" <<endl;
-//    _Cell->setOpen();
-//}
+bool EnvState::isLeaf()
+{
+    return false;
+}
+
+bool EnvState::equal(API::State* other)
+{
+//    bool equal(false);
+    EnvState* state = dynamic_cast<EnvState*>(other);
+    Vector2i pos = _Cell->getCoord();
+    for(int i=0;i<2;i++)
+    {
+        if( pos[i] != state->_Cell->getCoord()[i] )
+        {
+            //            cout << "EnvState::equal false" << endl;
+            return false;
+        }
+    }
 
 
-//bool PlanState::isOpen(std::vector<PlanState*>& openStates)
-//{
-//    //    cout << "State :: get open" <<endl;
-//    return _Cell->getOpen();
-//}
+    //    cout << "State::equal true" << endl;
+    return true;
+}
 
-//void PlanState::reset()
-//{
-//    _Cell->resetExplorationStatus();
-//}
+void EnvState::setClosed(std::vector<EnvState*>& closedStates,std::vector<EnvState*>& openStates)
+{
+    //    cout << "State :: set Closed" <<endl;
+    _Cell->setClosed();
+}
 
-//void PlanState::print()
-//{
+bool EnvState::isColsed(std::vector<EnvState*>& closedStates)
+{
+    //    cout << "State :: get Closed" <<endl;
+    return _Cell->getClosed();
+}
 
-//}
+void EnvState::setOpen(std::vector<EnvState*>& openStates)
+{
+    //     cout << "State :: set open" <<endl;
+    _Cell->setOpen();
+}
 
-//double PlanState::computeLength(API::State *parent)
-//{
-//    PlanState* preced = dynamic_cast<PlanState*>(parent);
 
-//    Vector2d pos1 = _Cell->getCenter();
-//    Vector2d pos2 = preced->_Cell->getCenter();
+bool EnvState::isOpen(std::vector<EnvState*>& openStates)
+{
+    //    cout << "State :: get open" <<endl;
+    return _Cell->getOpen();
+}
 
-//    double dist = ( pos1 - pos2 ).norm();
+void EnvState::reset()
+{
+    _Cell->resetExplorationStatus();
+}
 
-//    //    double cost1 = preced->_Cell->getCost();
-//    double cost2 = _Cell->getCost();
-//    double g = preced->g() + /*cost1 +*/ cost2 * dist;
+void EnvState::print()
+{
 
-//    //    cout << "dist = " << dist << endl;
-//    //    cout << "g = " << g << endl;
-//    return g;
-//}
+}
 
-//double PlanState::computeHeuristic( API::State *parent, API::State* goal )
-//{
-//    PlanState* state = dynamic_cast<PlanState*>(goal);
+double EnvState::computeLength(API::State *parent)
+{
+    EnvState* preced = dynamic_cast<EnvState*>(parent);
 
-//    Vector2d posGoal = state->_Cell->getCenter();
-//    Vector2d posThis = _Cell->getCenter();
+    Vector2d pos1 = _Cell->getCenter();
+    Vector2d pos2 = preced->_Cell->getCenter();
 
-//    double dist=0;
+    double dist = ( pos1 - pos2 ).norm();
 
-////    dist += ( posGoal - posThis ).norm();
+    //    double cost1 = preced->_Cell->getCost();
+    double cost2 = _Cell->getCost();
+    double g = preced->g() + /*cost1 +*/ cost2 * dist;
 
-//    return dist;
-//}
+    //    cout << "dist = " << dist << endl;
+    //    cout << "g = " << g << endl;
+    return g;
+}
+
+double EnvState::computeHeuristic( API::State *parent, API::State* goal )
+{
+    EnvState* state = dynamic_cast<EnvState*>(goal);
+
+    Vector2d posGoal = state->_Cell->getCenter();
+    Vector2d posThis = _Cell->getCenter();
+
+    double dist=0;
+
+//    dist += ( posGoal - posThis ).norm();
+
+    return dist;
+}
