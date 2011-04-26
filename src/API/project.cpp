@@ -7,7 +7,6 @@
 // Author: Florian Pilardeau,B90,6349 <fpilarde@jolimont>, (C) 2009
 //
 // Copyright: See COPYING file that comes with this distribution
-//
 
 #include "project.hpp"
 #include "scene.hpp"
@@ -19,6 +18,7 @@
 using namespace std;
 
 Project* global_Project = NULL;
+
 
 Project::Project(Scene* sc)
 {

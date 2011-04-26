@@ -8,6 +8,8 @@
 struct env;
 #endif
 
+extern std::string global_ActiveRobotName;
+
 /**
  @ingroup CPP_API
  

@@ -70,7 +70,7 @@ bool CostOptimization::oneLoopDeform()
 	m_inCollision=false;
 	
 	double TrajCost = this->cost();
-	//	cout << "nloc = " << getNbPaths() << endl;
+	//	cout << "nloc = " << getNbOfPaths() << endl;
 	//	cout << "TrajCost = " << TrajCost << endl;
 	
 	//Get 3 configurations at random along the trajectory
@@ -217,7 +217,7 @@ bool CostOptimization::oneLoopDeform()
 					double delta1 = costOfPortion - sumOfCost;
 					double delta2 = TrajCost - newTrajCost;
 					
-					//	cout << "nloc = " << getNbPaths() << endl;
+					//	cout << "nloc = " << getNbOfPaths() << endl;
 					//	cout << "newTrajCost = " << newTrajCost << endl;
 					
 					if( TrajCost < newTrajCost )
@@ -295,7 +295,7 @@ bool CostOptimization::oneLoopDeformRecompute(double step)
 	m_inCollision=false;
 	
 	// double TrajCost = cost();
-	//	cout << "nloc = " << getNbPaths() << endl;
+	//	cout << "nloc = " << getNbOfPaths() << endl;
 	//	cout << "TrajCost = " << TrajCost << endl;
 	
 	//Get 3 configurations at random along the trajectory

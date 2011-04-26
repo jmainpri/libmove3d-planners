@@ -115,29 +115,28 @@ Trajectory& Trajectory::operator=(const Trajectory& t)
 	return *this;
 }
 
-Trajectory::Trajectory( vector< shared_ptr<Configuration> >& C) :
+Trajectory::Trajectory( vector< shared_ptr<Configuration> >& configs) :
 HighestCostId(0), isHighestCostIdSet(false)
 {
-	if ( !C.empty() )
+	if ( !configs.empty() )
 	{
 		name = "";
 		file = "";
 		
-		nloc = C.size() - 1; /* Number of localpath */
-		m_Robot	= C.at(0)->getRobot();
+		nloc = configs.size()-1; /* Number of localpath */
+		m_Robot	= configs[0]->getRobot();
 		
-		m_Source	= C.at(0);
-		//m_Target		= C.back();
-		m_Target = C.at(nloc);
+		m_Source = configs[0];
+		m_Target = configs[nloc];
 		
 		range_param = 0;
 		m_Courbe.clear();
 		
 		for (unsigned int i = 0; i < nloc; i++)
 		{
-			if ( !C[i]->equal(*C[i+1]) ) 
+			if ( !configs[i]->equal( *configs[i+1]) ) 
 			{
-				LocalPath* path = new LocalPath(C.at(i), C.at(i + 1));
+				LocalPath* path = new LocalPath( configs[i], configs[i+1] );
 				range_param += path->getParamMax();
 				m_Courbe.push_back(path);
 			}
@@ -274,6 +273,7 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 	{
     if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() ) 
     {
+      cout << "null LocalPath in replaceP3dTraj" << endl;
       continue;
     }
     
@@ -297,7 +297,15 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
     nloc++;
 	}
 	
-	localpathPt->next_lp = NULL;
+  if (nloc != 0) 
+  {
+    localpathPt->next_lp = NULL;
+  }
+	else 
+  {
+    cout << "replaceP3dTraj with empty trajectory" << endl;
+  }
+
 	trajPt->nlp = nloc;
 	
 #ifdef P3D_PLANNER
@@ -411,7 +419,7 @@ LocalPath* Trajectory::getLocalPathPtrAt(uint id)
 	return m_Courbe.at(id);
 }
 
-int Trajectory::getNbPaths()
+int Trajectory::getNbOfPaths()
 {
 	return m_Courbe.size();
 }

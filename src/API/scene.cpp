@@ -7,8 +7,7 @@
 // Author: Florian Pilardeau,B90,6349 <fpilarde@jolimont>, (C) 2009
 //
 // Copyright: See COPYING file that comes with this distribution
-//
-//
+
 #include "scene.hpp"
 
 #include "P3d-pkg.h"
@@ -18,7 +17,7 @@
 
 using namespace std;
 
-string global_ActiveRobotName;
+std::string global_ActiveRobotName;
 
 Scene::Scene(p3d_env* environnement)
 {
@@ -35,10 +34,18 @@ Scene::Scene(p3d_env* environnement)
   
   // For all HRI planner the robot 
   // Will be set here
-  global_ActiveRobotName = "PR2_ROBOT";
-	
+  if (m_Scene->active_robot) 
+  {
+    global_ActiveRobotName = m_Scene->active_robot->name;
+    cout << "The Scene global_ActiveRobotName is : " << global_ActiveRobotName << endl;
+  }
+  else 
+  {
+    global_ActiveRobotName = "";
+    cout << "The Scene global_ActiveRobotName has not been set" << endl;
+  }
+  
 	// Set the robot by name containing ROBOT to active
-	
 	Robot* rob = getRobotByNameContaining(global_ActiveRobotName);
 	
 	if (rob != NULL) 

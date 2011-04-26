@@ -119,7 +119,7 @@ bool Smoothing::oneLoopShortCut( )
 	double lFirst(0.0);
 	double lSecond(0.0);
 	
-	if (!(getNbPaths() > 1))
+	if (!(getNbOfPaths() > 1))
 		return false;
 	
 	vector<shared_ptr<Configuration> > vectConf;
@@ -202,7 +202,7 @@ bool Smoothing::oneLoopShortCutRecompute()
 	double lFirst(0.0);
 	double lSecond(0.0);
 	
-	if (!(getNbPaths() > 1))
+	if (!(getNbOfPaths() > 1))
 		return false;
 	
 	vector<shared_ptr<Configuration> > vectConf;
@@ -264,7 +264,7 @@ bool Smoothing::partialShortcut()
 	shared_ptr<Configuration> qFirstPt;
 	shared_ptr<Configuration> qSecondPt;
 	
-	if (!(getNbPaths() > 1))
+	if (!(getNbOfPaths() > 1))
 		return false;
 	
 	//cout << "ithActiveDoF = " << ithActiveDoF << endl;
@@ -495,7 +495,7 @@ void Smoothing::removeRedundantNodes()
 	//	this->cutTrajInSmallLP(20);
 	//	this->cost();
 	
-	uint NbNodes = getNbPaths();
+	uint NbNodes = getNbOfPaths();
 	uint initNbNodes = NbNodes;
 	uint nbRemoved(0);
 	
@@ -527,7 +527,7 @@ void Smoothing::removeRedundantNodes()
 					vector<LocalPath*> path;
 					path.push_back(pathPtr);
 					this->replacePortion(i, j, path);
-					NbNodes = getNbPaths();
+					NbNodes = getNbOfPaths();
 					nbRemoved++;
 					if(!isValid())
 					{
@@ -667,7 +667,7 @@ vector<shared_ptr<Configuration> > Smoothing::get2RandomConf(
 	unsigned int id1 = 0;
 	unsigned int id2 = 0;
 	
-	if (getNbPaths() == 1)
+	if (getNbOfPaths() == 1)
 	{
 		vector<shared_ptr<Configuration> > vect(0);
 		return vect;
@@ -751,13 +751,13 @@ void Smoothing::setSortedIndex()
 	
 	myCompObject.ptrOptim = this;
 	
-	m_IdSorted.resize(getNbPaths());
+	m_IdSorted.resize(getNbOfPaths());
   
-  if (getNbPaths() == 0 ) {
+  if (getNbOfPaths() == 0 ) {
     return;
   }
 	
-	for (int i = 0; i < getNbPaths(); i++)
+	for (int i = 0; i < getNbOfPaths(); i++)
 	{
 		m_IdSorted.at(i) = i;
 	}
@@ -782,12 +782,12 @@ double Smoothing::getBiasedParamOnTraj()
 {
 	double x = (double) (pow(p3d_random(0, 1), 3));
 	
-	uint id = (uint) (x * (getNbPaths() - 1));
+	uint id = (uint) (x * (getNbOfPaths() - 1));
 	
 	double randDist = 0;
 	
 	//	cout <<"mIdSorted[id] = "<<  mIdSorted[id] << endl;
-	//	cout <<"getNbPaths()"<< getNbPaths() << endl;
+	//	cout <<"getNbOfPaths()"<< getNbOfPaths() << endl;
 	
 	for (uint i = 0; i < m_IdSorted[id]; i++)
 	{

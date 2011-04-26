@@ -267,13 +267,13 @@ LinearTrajectory* RoboptimFactory::make_Roboptim(API::Trajectory& traj)
 	}
 
 	//std::cerr << "RoboptimFactory::make_Roboptim => New param vector" << std::endl;
-	ublas::vector<double> params( (traj.getNbPaths() + 1)*outputSize );
+	ublas::vector<double> params( (traj.getNbOfPaths() + 1)*outputSize );
 	
 	try
 	{
 		std::tr1::shared_ptr<Configuration> q;
 		
-		for ( int i=-1; i< traj.getNbPaths() ; i++) 
+		for ( int i=-1; i< traj.getNbOfPaths() ; i++) 
 		{
 			if ( i == -1 ) 
 			{
@@ -295,7 +295,7 @@ LinearTrajectory* RoboptimFactory::make_Roboptim(API::Trajectory& traj)
 		std::cerr << "RoboptimFactory::make_Roboptim => Problem in assigning the param vector" <<  std::endl;
 	}
 	
-//	std::cout << "Number of control points : " << traj.getNbPaths() + 1 << std::endl;
+//	std::cout << "Number of control points : " << traj.getNbOfPaths() + 1 << std::endl;
 //	std::cout << "Output Size : " << outputSize << std::endl;
 //	std::cout << "params = " << params << std::endl;
 	

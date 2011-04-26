@@ -468,14 +468,14 @@ bool Robot::isInCollision()
 	/* collision checking */
 	if( g3d_get_KCD_CHOICE_IS_ACTIVE() )
 	{
-		if(G3D_ACTIVE_CC)
+//		if(G3D_ACTIVE_CC)
 		{
 			ncol = p3d_col_test_choice();
 		}
 	}
 	else
 	{
-		if(G3D_ACTIVE_CC)
+//		if(G3D_ACTIVE_CC)
 		{
 			//cout << "p3d_col_test_all()" << endl;
 			ncol = p3d_col_test_all();

@@ -21,28 +21,27 @@
 #include "HRI_costspace/HRICS_ConfigSpace.hpp"
 
 #include "API/Grids/gridsAPI.hpp"
+#include "planner/planEnvironment.hpp"
 
 #include <Eigen/Core>
 #define EIGEN_USE_NEW_STDVECTOR
 #include <Eigen/StdVector>
 #include <Eigen/Geometry> 
-std::vector<Eigen::Vector3d> CXX_drawBox; 
-Eigen::Vector3d global_DrawnSphere;
 
 #include <iostream>
 #include <tr1/memory>
 
-extern std::string global_ActiveRobotName;
-
 using namespace std;
 using namespace tr1;
 
-std::vector<double> vect_jim;
+Eigen::Vector3d global_DrawnSphere;
+vector<Eigen::Vector3d> CXX_drawBox; 
+vector<double> vect_jim;
+double cost_max = 30.0;
 
 extern Eigen::Vector3d current_WSPoint;
 extern pair<double, Eigen::Vector3d > current_cost;
 extern std::string hri_text_to_display;
-double cost_max = 30.0;
 
 // TODO callback OOMOVE3D
 //#if defined( CXX_PLANNER )
@@ -281,7 +280,7 @@ void g3d_draw_hrics()
 		
 		glLineWidth(1.);
     
-    if( HRICS_activeNatu )
+    if( HRICS_activeNatu && PlanEnv->getBool(PlanParam::drawColorConfig) )
     {
       HRICS_activeNatu->setRobotColorFromConfiguration(true);
     }
@@ -313,19 +312,19 @@ void g3d_draw_hrics()
     GLdouble GreyColorT[4] =   { 0.5, 0.5, 0.5, 0.0 };
 
 
+    Robot* human = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman();
     int gazeIndex = 46;
-    if (dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getName().compare("ACHILE_HUMAN1") == 0 )
+    if ( human->getName() == "ACHILE_HUMAN1" )
     {
         gazeIndex = 42;
     }
 
+//    cout << "HUMAN = " << human->getName() << endl;
+    p3d_jnt* eyes = human->getJoint(gazeIndex)->getJointStruct();
 
     // 46 is for HERAKLES
     // 42 is for ACHILE
-    g3d_draw_visibility_by_frame(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint(gazeIndex)->getJointStruct()->abs_pos,
-                                 DTOR(160),
-                                 DTOR(160*0.75),
-                                 1, GreenColor, GreenColorT);
+    g3d_draw_visibility_by_frame(eyes->abs_pos,DTOR(160),DTOR(160*0.75),1, GreenColor, GreenColorT);
 
 	}
   
@@ -405,7 +404,6 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
       {
         costRobot = p3d_get_robot_by_name_containing( global_ActiveRobotName.c_str() );
         cost_q = p3d_get_robot_config(costRobot);
-        //cout << "Change the robot position = " << robotPt->name << endl;
       }
     }
 #endif
