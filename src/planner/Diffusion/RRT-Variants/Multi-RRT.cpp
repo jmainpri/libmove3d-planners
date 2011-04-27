@@ -9,6 +9,7 @@
 
 #include "Multi-RRT.hpp"
 
+#include "API/scene.hpp"
 #include "API/Roadmap/node.hpp"
 #include "API/Roadmap/compco.hpp"
 #include "API/Roadmap/graph.hpp"
@@ -18,8 +19,6 @@
 
 using namespace std;
 using namespace tr1;
-
-extern string global_ActiveRobotName;
 
 MultiRRT::MultiRRT(Robot* R, Graph* G) :
 RRT(R,G)
@@ -41,7 +40,7 @@ int MultiRRT::init()
 	
 	_expan = new RRTExpansion(_Graph);
 	
-	if(_Robot->getName().compare( global_ActiveRobotName ) == 0)
+	if(_Robot->getName() == global_ActiveRobotName )
 	{
 #ifdef LIGHT_PLANNER
 		_expan->setDirectionMethod(NAVIGATION_BEFORE_MANIPULATION);

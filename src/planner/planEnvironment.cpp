@@ -70,6 +70,7 @@ void initPlannerParameters()
 	myBoolMap.insert( std::make_pair( PlanParam::withShortCut,			new boolContainer(true)));
 	myBoolMap.insert( std::make_pair( PlanParam::withDeformation,		new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::withDescent,				new boolContainer(false)));
+  myBoolMap.insert( std::make_pair( PlanParam::drawColorConfig,		new boolContainer(false)));
 	
 	// Int
 	// ------------------------------------------------------------------
@@ -121,7 +122,9 @@ void initPlannerParameters()
   
   PlanEnv->setBool(PlanParam::withSmoothing,true);
   PlanEnv->setBool(PlanParam::withDeformation,false);
-  
-//  ENV.setBool(Env::);
+
+  // Drawing environment
+  // -------------------------------------------------------------------
+  ENV.setBool(Env::drawMultiColorLocalpath,true);
   
 }

@@ -36,7 +36,8 @@ namespace  PlanParam
 		withSmoothing,
 		withShortCut,
 		withDeformation,
-		withDescent
+		withDescent,
+    drawColorConfig
 	};
 	
 	enum intParameter 

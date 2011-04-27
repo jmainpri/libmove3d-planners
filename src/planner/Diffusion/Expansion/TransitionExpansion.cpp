@@ -256,134 +256,62 @@ int Nb_succes = 0;
 bool TransitionExpansion::costTestSucceeded(Node* previousNode, shared_ptr<
                                             Configuration> currentConfig, double currentCost)
 {
-//	p3d_node* previousNodePt(previousNode->getNodeStruct());
+  //	p3d_node* previousNodePt(previousNode->getNodeStruct());
 	double ThresholdVal;
 	double dist;
 	bool success(false);
-//	configPt previousConfig = previousNodePt->q;
+  //	configPt previousConfig = previousNodePt->q;
 	double temperature;
 	// TODO : for Urmson transition
 	// double cVertex, cOpt, cMax;
 	// double minThreshold = 0.05;
 	
-	switch (p3d_GetCostMethodChoice())
-	{
-//    case 19022010:
-//		{
-//			dist = currentConfig->dist(*previousNode->getConfiguration());
-//			
-//			temperature = previousNode->getConnectedComponent()->getCompcoStruct()->temperature;
-//			
-//			double NewDelta = p3d_ComputeDeltaStepCost(
-//																								 previousNode->cost(),
-//																								 currentConfig->cost(),
-//																								 dist);
-//			
-//			double Integral = previousNode->sumCost() + NewDelta;
-//			
-//			ThresholdVal = exp( - Integral / temperature);
-//			
-//			//            cout << "ThresholdVal  = " << ThresholdVal << endl;
-//			success = p3d_random(0., 1.) < ThresholdVal;
-//		}
-//			break;
-			
-    case MAXIMAL_THRESHOLD:
-			// Literature method:
-			// the condition test is only based on
-			// an absolute cost which increase continuously.
-#ifdef P3D_PLANNER
-			success = currentConfig->cost() < p3d_GetCostThreshold();
-#else
-			printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
-#endif
-			
-			break;
-    case URMSON_TRANSITION:
-			//TODO !
-			// cVertex = p3d_ComputeUrmsonNodeCost(Graph->getGraphStruct(), previousNodePt);
-			// cOpt = _Start->getCompcoStruct()->minCost * (_Start->getConfiguration()->dist(*_Goal->getConfiguration(),
-			// 										    ENV.getInt(Env::DistConfigChoice))+1) / (2. * this->step());
-			// cMax = _Start->getCompcoStruct()->maxUrmsonCost;
-			// ThresholdVal = 1 - (cVertex - cOpt) / (cMax - cOpt);
-			// ThresholdVal = MAX(ThresholdVal, minThreshold);
-			// PrintInfo(("Threshold value : %f,cVertex:%f, cOpt:%f, cMax:%f \n ",ThresholdVal, cVertex, cOpt, cMax));
-			// success = p3d_random(0., 1.) < ThresholdVal;
-			// cout << "success: " << success << endl;
-			cout << "ERROR : TransitionExpansion::costTestSucceeded : URMSON_TRANSITION is not implemented." << endl;
-			break;
-			//the same part is used for TRANSITION_RRT and
-			//MONTE_CARLO_SEARCH
-    case TRANSITION_RRT:
-    case TRANSITION_RRT_CYCLE:
-    case MONTE_CARLO_SEARCH:
-			
-			// IsRaisingCost is FALSE when we are expanding the InitComp:
-			// Downhill slopes have better chances to be accepted. If
-			// we are expanding the GoalComp tests are inversed: Uphill
-			// slopes have better chances to be accepted
-			// update: this doesn't work. Inverting the acceptance test means that
-			// the tree will grow towards the maxima, whereas it should follow the saddle points
-			
-			//new simplified test for down hill slopes
-			if (currentCost <= previousNode->cost() )
-			{
-				return true;
-			}
-			
-			//  GlobalNbDown =0;
-			// previousNodePt->NbDown =0;
-			
-			// In principle, the distance are not necessarly
-			// reversible for non-holonomic robots
-			dist = p3d_dist_q1_q2(mGraph->getRobot()->getRobotStruct(),
-														currentConfig->getConfigStruct(), previousNode->getConfiguration()->getConfigStruct() );
-			// dist = p3d_dist_q1_q2(mR, previousConfig, currentConfig);
-			
-			// get the value of the auto adaptive temperature.
-			temperature = p3d_GetIsLocalCostAdapt() ? previousNode->getNodeStruct()->temp
-			: previousNode->getConnectedComponent()->getCompcoStruct()->temperature;
-			
-			if (p3d_GetCostMethodChoice() == MONTE_CARLO_SEARCH)
-			{
-				temperature = 0.001 * ENV.getDouble(Env::alpha) * ENV.getInt(
-																																		 Env::maxCostOptimFailures);
-			}
-			/*Main function to test if the next config
-			 will be selected as a new node.
-			 The TemperatureParam adjust itself automatically
-			 in function of the fails and successes of extensions*/
-			
-			//Metropolis criterion (ie Boltzman probability)
-			//    ThresholdVal = exp((PreviousCost-CurrentCost)/(temperature*dist));
-			ThresholdVal = exp((previousNode->cost() - currentCost) / temperature);
-			
-			//    success = ThresholdVal > 0.5;
-			success = p3d_random(0., 1.) < ThresholdVal;
-			if (p3d_GetCostMethodChoice() == MONTE_CARLO_SEARCH)
-			{
-				break;
-			}
-      
-      //  p3d_EvaluateExpandDiffic(previousNodePt->comp, success);
-      
-      break;
-			
-    default:
-      cout << "No transition method selected" << endl;
-	}
-	
-	if (ENV.getBool(Env::printTemp))
-	{
-		cout << temperature << "\t" << previousNode->cost() << "\t"
-		<< currentCost << endl;
-		
-		if (success)
-		{
-			cout << "-----------------------------------------------" << endl;
-			cout << "Nb_succes = " << Nb_succes++ << endl;
-			cout << "-----------------------------------------------" << endl;
-		}
+  //new simplified test for down hill slopes
+  if (currentCost <= previousNode->cost() )
+  {
+    return true;
+  }
+  
+  //  GlobalNbDown =0;
+  // previousNodePt->NbDown =0;
+  
+  // In principle, the distance are not necessarly
+  // reversible for non-holonomic robots
+  dist = p3d_dist_q1_q2(mGraph->getRobot()->getRobotStruct(),
+                        currentConfig->getConfigStruct(), previousNode->getConfiguration()->getConfigStruct() );
+  // dist = p3d_dist_q1_q2(mR, previousConfig, currentConfig);
+  
+  // get the value of the auto adaptive temperature.
+  temperature = p3d_GetIsLocalCostAdapt() ? previousNode->getNodeStruct()->temp
+  : previousNode->getConnectedComponent()->getCompcoStruct()->temperature;
+  
+  if (p3d_GetCostMethodChoice() == MONTE_CARLO_SEARCH)
+  {
+    temperature = 0.001 * ENV.getDouble(Env::alpha) * ENV.getInt(
+                                                                 Env::maxCostOptimFailures);
+  }
+  
+  //Metropolis criterion (ie Boltzman probability)
+  //    ThresholdVal = exp((PreviousCost-CurrentCost)/(temperature*dist));
+  ThresholdVal = exp((previousNode->cost() - currentCost) / temperature);
+  
+  //    success = ThresholdVal > 0.5;
+  success = p3d_random(0., 1.) < ThresholdVal;
+  
+  //  p3d_EvaluateExpandDiffic(previousNodePt->comp, success);
+//  cout << "No transition method selected" << endl;
+  
+  if (ENV.getBool(Env::printTemp))
+  {
+    cout << temperature << "\t" << previousNode->cost() << "\t"
+    << currentCost << endl;
+    
+    if (success)
+    {
+      cout << "-----------------------------------------------" << endl;
+      cout << "Nb_succes = " << Nb_succes++ << endl;
+      cout << "-----------------------------------------------" << endl;
+    }
 	}
 	
 	if (previousNode->equalCompco(mGraph->getStart()))
@@ -535,7 +463,7 @@ bool TransitionExpansion::expandCostConnect(Node& expansionNode, shared_ptr<
 		{
 			// Expansion Control
 			if ( ENV.getBool(Env::expandControl) && !this->expandControl(
-																							directionPath, 1.0, expansionNode) )
+                                                                   directionPath, 1.0, expansionNode) )
 			{
 				failed = true;
 			}
@@ -600,8 +528,8 @@ bool TransitionExpansion::expandCostConnect(Node& expansionNode, shared_ptr<
 	// if at least one extention has succeded
 	double posAlongDirection =  positionAlongPath ( directionPath , praramAlongDirection );
 	
-//	cout << "nbCreatedNodes = " << nbCreatedNodes << endl;
-//	cout << "posAlongDirection = " << posAlongDirection << endl;
+  //	cout << "nbCreatedNodes = " << nbCreatedNodes << endl;
+  //	cout << "posAlongDirection = " << posAlongDirection << endl;
 	
 	if (nbCreatedNodes == 1 && (!toGoal || (toGoal && posAlongDirection >= 1.0)))
 	{	
@@ -690,7 +618,6 @@ bool TransitionExpansion::transitionTest(Node& fromNode,
 	else
 	{
 		//		cout << "Failed : Cost invalid" << endl;
-		
 		int nbCostFail = ENV.getInt(Env::nbCostTransFailed);
 		nbCostFail++;
 		ENV.setInt(Env::nbCostTransFailed, nbCostFail);
@@ -713,6 +640,7 @@ int TransitionExpansion::extendExpandProcess(Node* expansionNode,
   //cout << "Expansion node cost = " <<  expansionNode->cost() << endl;
 	//cout << "Expansion node cost = " <<  expansionNode->getNodeStruct()->cost << endl;
 	
+  bool valid(true);
 	bool failed(false);
 	int nbCreatedNodes(0);
 	
@@ -753,6 +681,7 @@ int TransitionExpansion::extendExpandProcess(Node* expansionNode,
 		//		cout << "Failed expandControl test in " << __func__ << endl;
 		return 0;
 	}
+  
 	extensionCost = extensionLocalpath.getEnd()->cost();
 	
 	// Transition test and collision check
@@ -766,12 +695,12 @@ int TransitionExpansion::extendExpandProcess(Node* expansionNode,
 				failed = true;
 				//cout << "Failed transition test in " << __func__ << endl;
 			}
-			
 		}
 		if (!failed)
 		{
 			if (!extensionLocalpath.isValid())
 			{
+        valid = false;
 				failed = true;
 			}
 		}
@@ -780,6 +709,7 @@ int TransitionExpansion::extendExpandProcess(Node* expansionNode,
 	{
 		if (!extensionLocalpath.isValid())
 		{
+      valid = false;
 			failed = true;
 		}
 		if (!failed)
@@ -810,14 +740,16 @@ int TransitionExpansion::extendExpandProcess(Node* expansionNode,
     
 		if ( extensionCost > expansionNode->getConfiguration()->cost())
 		{
-      //cout << "Adjust temperature (extensionCost > expansionNodeCost)" << endl;
+      //cout << "extensionCost = " << extensionCost << " , "
 			adjustTemperature(true, extensionNode);
 		}
 	}
 	else
 	{
-		adjustTemperature(false, fromNode);
-		//cout << "New temperature in " << __func__ << " is " << node->temp() << endl;
+    if(valid)
+    {
+      adjustTemperature(false, fromNode);
+    }
 		this->expansionFailed(*expansionNode);
 	}
 	

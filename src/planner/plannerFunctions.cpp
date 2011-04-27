@@ -104,6 +104,7 @@ RRT* allocate_RRT(Robot* rob,Graph* graph)
 // ---------------------------------------------------------------------------------
 p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
 {
+//  fixAllJointsWithoutArm(robotPt,0);
   cout << "* PLANNING ***************" << endl;
   
   double ts;
@@ -173,10 +174,23 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
       cout << "Export the cpp graph to new graph" << endl;
       XYZ_GRAPH = robotPt->GRAPH = graph->exportCppToGraphStruct();
       
-      Graph graphTraj( rob, XYZ_GRAPH );
-      
-      cout << "Extract graph to traj" << endl;
-      traj = graphTraj.extractBestTraj(q_Source,q_Target);
+      // Case of direct connection
+      if( nb_added_nodes == 2 )
+      {
+        vector < shared_ptr<Configuration> > configs;
+        
+        configs.push_back( q_Source );
+        configs.push_back( q_Target );
+        
+        cout << "Creating trajectory from two confgurations" << endl;
+        traj = new API::Trajectory( configs );
+      }
+      else 
+      {
+        Graph graphTraj( rob, XYZ_GRAPH );
+        cout << "Extract graph to traj" << endl;
+        traj = graphTraj.extractBestTraj(q_Source,q_Target);
+      }
     }
     else
     {
@@ -191,8 +205,13 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
   if (traj) 
   {
     p3d_traj* result=NULL; 
+
     result = traj->replaceP3dTraj(result); 
+    
     cout << "result = " << result << endl;
+    cout << "result->nlp = " << result->nlp << endl;
+    cout << "result->range_param = " << result->range_param << endl;
+    
     robotPt->tcur = result;
     char trajName[] = "Specific";
 		g3d_add_traj( trajName , runNum ,robotPt , robotPt->tcur );
@@ -218,13 +237,14 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
   // Gets the robot pointer
   Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
   
+  cout << "traj->nlp = " << traj->nlp << endl;
+  cout << "traj->range_param = " << traj->range_param << endl;
+  
   API::CostOptimization optimTrj(rob,traj);
   
 #ifdef QT_LIBRARY
   optimTrj.setContextName( ENV.getString(Env::nameOfFile).toStdString() );
 #endif
-  
-  //XYZ_GRAPH->rrtCost1 = optimTrj.cost();
   
   double optTime = 0.0;
   if(PlanEnv->getBool(PlanParam::withDeformation))
@@ -248,14 +268,20 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
   double dmax = global_Project->getActiveScene()->getDMax();
   double range = optimTrj.getRangeMax();
   
-  cout << "Cut the traj in several local paths" << endl;
   cout << "optimTrj range is : " << range << endl;
   
-  unsigned int nLP = floor( range / (8*dmax));
+  // Cut localpaths in small localpaths
+  const unsigned int nLP_max = 20; 
+  unsigned int nLP = optimTrj.getNbOfPaths();
+  unsigned int nLP_toCut = floor( range / (8*dmax));
   
-  if ( nLP>1 )
-    optimTrj.cutTrajInSmallLP(  nLP );
+  if ( (nLP_toCut<nLP_max) && (nLP_toCut>nLP) && (nLP_toCut>1) )
+  {
+    cout << "Cut the traj in several local paths" << endl;
+    optimTrj.cutTrajInSmallLP( nLP_toCut );
+  }
 
+  // Replace current trajectory
   optimTrj.replaceP3dTraj();
   optimTrj.resetCostComputed();
   
@@ -264,6 +290,7 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
   //XYZ_GRAPH->totTime += optTime;
   
   cout << "After optim rounds cost : " << optimTrj.cost() << endl;
+  cout << "Nb of localpaths : " << robotPt->tcur->nlp << endl;
 }
 
 // ---------------------------------------------------------------------------------
@@ -291,9 +318,9 @@ p3d_traj* replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 targ
   //oldTraj.setContextName( ENV.getString(Env::nameOfFile).toStdString() );
 #endif
   
-  unsigned int lastViaPoint = oldTraj.getNbPaths();
+  unsigned int lastViaPoint = oldTraj.getNbOfPaths();
   
-  if (lastViaPoint <= deformationViaPoint) 
+  if (lastViaPoint <= (unsigned int)deformationViaPoint) 
   {
     cout << "No optimization possible (lastViaPoint <= deformationViaPoint)" << endl;
     return NULL;
@@ -311,7 +338,7 @@ p3d_traj* replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 targ
   double* q = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->testTransferPointToTrajectory(WSPoint, optimTrj,validShortCutId);
   if ( q ) 
   {
-    endId = optimTrj.getNbPaths();
+    endId = optimTrj.getNbOfPaths();
     
     vector<LocalPath*> path;
     
@@ -386,164 +413,16 @@ p3d_traj* replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 targ
 // ---------------------------------------------------------------------------------
 int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void))
 {	
-	double /*tu,*/ts;
+  Robot* rob = global_Project->getActiveScene()->getActiveRobot();
   
-  cout << "------------------------------------------------" << endl;
-  cout << "------------------------------------------------" << endl;
-  cout << "p3d_run_rrt (motionPlanner-libs)" << endl;
-	
-	GraphPt = GraphPt ? GraphPt : p3d_create_graph();
-	
-	Robot* rob = global_Project->getActiveScene()->getActiveRobot();
-	Graph* graph = 	API_activeGraph =  new Graph(rob,GraphPt);
-	
-	cout << "Planning for robot : " << rob->getName() << endl;
-	
-	RRT* rrt = allocate_RRT(rob,graph);
-
-  // -------------------------------------------------------------------------
-	// Main Run functions of all RRTs
-	// -------------------------------------------------------------------------
+  shared_ptr<Configuration> q_source = rob->getInitialPosition();
+  shared_ptr<Configuration> q_target = rob->getGoTo();
   
-  int nb_added_nodes = 0;
+  p3d_traj* path = planner_Function(rob->getRobotStruct(), 
+                                 q_source->getConfigStruct(),  
+                                 q_target->getConfigStruct() );
   
-  nb_added_nodes += rrt->setInit(rob->getInitialPosition());
-	nb_added_nodes += rrt->setGoal(rob->getGoTo());
-  
-	nb_added_nodes += rrt->init();
-  
-  rrt->setInitialized(true);
-  
-  cout << "Start in Graph : " << graph->searchConf( *rob->getInitialPosition() ) << endl;
-  cout << "Goal_ in Graph : " << graph->searchConf( *rob->getGoTo() ) << endl;
-	
-	nb_added_nodes += rrt->run();
-  
-  cout << "Start in Graph : " << graph->searchConf( *rob->getInitialPosition() ) << endl;
-  cout << "Goal_ in Graph : " << graph->searchConf( *rob->getGoTo() ) << endl;
-	
-	// Gets the graph pointer
-	// in case it has been modified by the planner
-	graph = rrt->getActivGraph();
-	
-	ChronoTimes(&(graph->getGraphStruct()->rrtTime), &ts);
-	
-	printf("graph time = %f\n",graph->getGraphStruct()->rrtTime);
-	printf("nb added nodes %d\n", nb_added_nodes);
-	printf("nb nodes (Wrapper) %d\n",(int)graph->getNodes().size());
-	printf("nb nodes %d\n",graph->getGraphStruct()->nnode);
-	
-	bool res = rrt->trajFound();
-	
-	if( (!ENV.getBool(Env::isCostSpace)) && (!ENV.getBool(Env::useTRRT)) )
-	{
-		ENV.setBool(Env::isCostSpace,true);
-	}
-	
-	graph->getGraphStruct()->totTime = graph->getGraphStruct()->rrtTime;
-	
-	// Smoothing phaze
-	// -------------------------------------------------------------------------
-	bool trajExtractSucceded = false;
-  
-  if(res)
-	{
-		ENV.setBool(Env::isRunning,true);
-		
-		if( !ENV.getBool(Env::use_p3d_structures) )
-		{
-			cout << "Export the cpp graph to new graph" << endl;
-      
-      cout << "Start in Graph : " << graph->searchConf( *rob->getInitialPosition() ) << endl;
-      cout << "Goal_ in Graph : " << graph->searchConf( *rob->getGoTo() ) << endl;
-      
-			// Copies the graph to a p3d_structured graph
-			Graph graphTraj( rob, graph->exportCppToGraphStruct() );
-			
-			cout << "Extract graph to traj" << endl;
-			// Extract traj
-			 trajExtractSucceded = graphTraj.extractBestTraj(rob->getInitialPosition(),
-                                                       rob->getGoTo());
-		}
-		else
-		{
-			// Extract traj
-			trajExtractSucceded = graph->extractBestTraj(rob->getInitialPosition(),
-                                                   rob->getGoTo());
-		}
-    
-		if ( !ENV.getBool(Env::use_p3d_structures) ) 
-		{
-			XYZ_GRAPH = graph->exportCppToGraphStruct();
-		}
-		
-		
-		if(PlanEnv->getBool(PlanParam::withSmoothing) && trajExtractSucceded )
-		{
-			API::CostOptimization optimTrj(rob,rob->getTrajStruct());
-			
-#ifdef QT_LIBRARY
-			optimTrj.setContextName( ENV.getString(Env::nameOfFile).toStdString() );
-#endif
-			
-			XYZ_GRAPH->rrtCost1 = optimTrj.cost();
-			
-			double optTime = 0.0;
-			if(PlanEnv->getBool(PlanParam::withDeformation))
-			{
-				ENV.setBool(Env::FKShoot,true);
-				optimTrj.runDeformation( ENV.getInt(Env::nbCostOptimize) , runId );
-				ENV.setBool(Env::FKShoot,false);
-				optTime += optimTrj.getTime();
-			}
-			
-			optimTrj.resetCostComputed();
-			
-			XYZ_GRAPH->rrtCost2 = optimTrj.cost();
-			
-			if(PlanEnv->getBool(PlanParam::withShortCut))
-			{
-				optimTrj.runShortCut( ENV.getInt(Env::nbCostOptimize) , runId );
-				optTime += optimTrj.getTime();
-			}
-			
-			optimTrj.replaceP3dTraj();
-			optimTrj.resetCostComputed();
-			
-			XYZ_GRAPH->totTime += optTime;
-			
-			cout << "After optim rounds cost : " << optimTrj.cost() << endl;
-		}
-	}
-	
-	if ((rrt->getNumberOfExpansion() - rrt->getNumberOfFailedExpansion() + rrt->getNumberOfInitialNodes()) 
-			!= graph->getNumberOfNodes() ) 
-	{
-		cout << "Nb of nodes differ from number of expansion succes " << endl;
-		cout << " - m_nbExpansion = " << rrt->getNumberOfExpansion() << endl;
-		cout << " - m_nbInitNodes = " << rrt->getNumberOfInitialNodes() << endl;
-		cout << " - m_nbExpansion + m_nbInitNodes - m_nbExpansionFailed  =  " << (rrt->getNumberOfExpansion() + rrt->getNumberOfInitialNodes() - rrt->getNumberOfFailedExpansion() ) << endl;
-		cout << " - _Graph->getNumberOfNodes() = " << graph->getNumberOfNodes() << endl;
-	}
-	
-	runNum++;
-  
-//  if( _Start->equal(_Goal) )
-//  {
-//  }
-	
-	if( res && trajExtractSucceded )
-	{
-    char trajName[] = "Specific";
-		g3d_add_traj( trajName , runNum , rob->getRobotStruct() , rob->getRobotStruct()->tcur );
-		return graph->getNumberOfNodes();
-	}
-	else
-	{
-		rob->getRobotStruct()->tcur = NULL;
-		cout << "res == false, No traj found" << endl;
-		return false;
-	}
+  smoothing_Function(rob->getRobotStruct(), path, 100, 4.0);
 }
 
 

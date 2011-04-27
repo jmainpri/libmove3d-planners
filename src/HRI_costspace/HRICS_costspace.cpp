@@ -224,21 +224,54 @@ void HRICS_init(HRI_AGENTS* agents)
   ENV.setBool(Env::HRIPlannerWS,true);
   ENV.setInt(Env::hriCostType,HRICS_Combine);
   
-  ENV.setBool(Env::useBoxDist,false);
-	ENV.setBool(Env::useBallDist,true);
-  ENV.setDouble(Env::zone_size,0.80);
-  
-  //  ENV.setDouble( Env::Kdistance,   80 );
-  //  ENV.setDouble( Env::Kvisibility, 50 );
-  //  ENV.setDouble( Env::Kreachable,  10 );
-  
-  //  ENV.setDouble( Env::Kdistance,   5 );
-  //  ENV.setDouble( Env::Kvisibility, 25 );
-  //  ENV.setDouble( Env::Kreachable,  90 );
-  
-  ENV.setDouble( Env::Kdistance,   60 );
-  ENV.setDouble( Env::Kvisibility, 60 );
-  ENV.setDouble( Env::Kreachable,  10 );
+  if ( global_ActiveRobotName == "JIDOKUKA_ROBOT" ) 
+  {
+    ENV.setBool(Env::useBoxDist,false);
+    ENV.setBool(Env::useBallDist,true);
+    ENV.setDouble(Env::zone_size,0.80);
+    
+    ENV.setDouble( Env::Kdistance,   60 );
+    ENV.setDouble( Env::Kvisibility, 60 );
+    ENV.setDouble( Env::Kreachable,  10 );
+    
+    ENV.setDouble(Env::extensionStep,14.0);
+    ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
+    ENV.setDouble(Env::temperatureRate,30);
+  }
+  else 
+  if ( global_ActiveRobotName == "ROBOT_JUSTIN" ) 
+  {
+    ENV.setBool(Env::useBoxDist,false);
+    ENV.setBool(Env::useBallDist,true);
+    ENV.setDouble(Env::zone_size,0.80);
+    
+    ENV.setDouble( Env::Kdistance,   80 );
+    ENV.setDouble( Env::Kvisibility, 60 );
+    ENV.setDouble( Env::Kreachable,  10 );
+    
+    ENV.setDouble(Env::extensionStep,1.5);
+    ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
+    ENV.setDouble(Env::temperatureRate,30);
+  }
+  else 
+  if ( global_ActiveRobotName == "PR2_ROBOT" ) 
+  {
+    ENV.setBool(Env::useBoxDist,false);
+    ENV.setBool(Env::useBallDist,true);
+    ENV.setDouble(Env::zone_size,0.80);
+    
+    ENV.setDouble( Env::Kdistance,   80 );
+    ENV.setDouble( Env::Kvisibility, 60 );
+    ENV.setDouble( Env::Kreachable,  10 );
+    
+    ENV.setDouble(Env::extensionStep,1.5);
+    ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
+    ENV.setDouble(Env::temperatureRate,30);
+  }
+  else 
+  {
+    cout << "ERROR in HRICS_init : global_ActiveRobotName is not of a known specified type" << endl;
+  }
   
   Robot* Human = global_Project->getActiveScene()->getRobotByNameContaining("HUMAN");
   
@@ -248,7 +281,6 @@ void HRICS_init(HRI_AGENTS* agents)
   {
     agents = hri_create_agents();
   }
-  
   
 	HRICS_MotionPL = new HRICS::Workspace;
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initGrid();
@@ -263,7 +295,7 @@ void HRICS_init(HRI_AGENTS* agents)
 	if( ENV.getBool(Env::HRIAutoLoadGrid) )
 	{
     string home(getenv("HOME_MOVE3D"));
-    string fileName("/statFiles/Cost3DGrids/Cost3DGrid2.grid");
+    string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
 		
     fileName = home + fileName;
     

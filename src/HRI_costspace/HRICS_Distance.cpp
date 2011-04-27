@@ -20,8 +20,6 @@ using namespace HRICS;
 //USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
 
-extern string global_ActiveRobotName;
-
 /*!
  * Constructor that sets the Human and Robot structures
  */
@@ -33,8 +31,9 @@ Distance::Distance()
   
   _Humans.push_back( sc->getRobotByNameContaining( "HUMAN" ) );
   
-	cout << "HRICS::Distance with " << " Robot " << m_Robot->getName() 
-	<< " and human " << _Humans[0]->getName() << endl;
+	cout  << "HRICS::Distance with " << " Robot " << m_Robot->getName() 
+        << " and human " << _Humans[0]->getName() << endl;
+  
 	_SafeRadius = 0;
   m_InteractionRadius = 1.5;
 }
@@ -48,14 +47,13 @@ Distance::Distance(Robot* rob, vector<Robot*> humans) :
 m_Robot(rob),
 _Humans(humans)
 {
-	string robName( m_Robot ? m_Robot->getName() : "No" );
+	string robName( m_Robot ? m_Robot->getName() : "No Robot" );
 	
 	cout << "HRICS::Distance with " << robName << " as robot and human " 
 	<< _Humans[0]->getName() << endl;
 	_SafeRadius = 0;
   m_InteractionRadius = 1.5;
 }
-
 
 /*!
  * Destructor sets back the safety
@@ -486,8 +484,8 @@ vector<double> Distance::getDistToZones()
 		vect_jim.push_back(other[k][0]);
 		vect_jim.push_back(other[k][1]);
 		vect_jim.push_back(other[k][2]);		
-//		cout << "vect_jim[0] = " << vect_jim[0] << " vect_jim[1] = " << vect_jim[1] << " vect_jim[2] = " << vect_jim[2] << endl;
-//		cout << "vect_jim[3] = " << vect_jim[3] << " vect_jim[4] = " << vect_jim[4] << " vect_jim[5] = " << vect_jim[5] << endl;
+		cout << "vect_jim[0] = " << vect_jim[0] << " vect_jim[1] = " << vect_jim[1] << " vect_jim[2] = " << vect_jim[2] << endl;
+		cout << "vect_jim[3] = " << vect_jim[3] << " vect_jim[4] = " << vect_jim[4] << " vect_jim[5] = " << vect_jim[5] << endl;
 	}
 	
 	
