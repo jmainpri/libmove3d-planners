@@ -1056,7 +1056,7 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::
 
 
 
-bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, int threshold)
+bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsigned int threshold)
 {
 	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
 	_Robot->setAndUpdate(*_Robot->getInitialPosition());
@@ -1634,7 +1634,7 @@ void Workspace::initPR2AndHumanTest()
 
    configPt q_h;
    q_h = p3d_alloc_config(m_ReachableSpace->getRobot()->getRobotStruct());
-   for (unsigned int i = 0; i < m_ReachableSpace->getRobot()->getRobotStruct()->nb_dof; i++)
+   for (int i = 0; i < m_ReachableSpace->getRobot()->getRobotStruct()->nb_dof; i++)
    {
        q_h[i] = (*q_cur_human)[i];
    }
@@ -1655,7 +1655,7 @@ void Workspace::initPR2AndHumanTest()
    configPt q;
    q = p3d_alloc_config(_Robot->getRobotStruct());
 
-   for (unsigned int i = 0; i < _Robot->getRobotStruct()->nb_dof; i++)
+   for (int i = 0; i < _Robot->getRobotStruct()->nb_dof; i++)
    {
        q[i] = (*q_cur)[i];
    }
@@ -1683,8 +1683,33 @@ void Workspace::computePR2GIK(bool move)
     initPR2GiveConf();
     cout << "Workspace::computePR2GIK()" << endl;
 
+    int armId = 0;
+    ArmManipulationData& armData = (*_Robot->getRobotStruct()->armManipulationData)[armId];
+    ManipulationConfigs manipConf(_Robot->getRobotStruct());
+    gpGrasp grasp;
+    double confCost = -1;
 
-    shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
+    vector<double> target(6);
+    target.at(0) = current_WSPoint(0);
+    target.at(1) = current_WSPoint(1);
+    target.at(2) = current_WSPoint(2);
+    target.at(3) = 0;
+    target.at(4) = 0;
+    target.at(5) = P3D_HUGE;
+
+    double* q = manipConf.getFreeHoldingConf(NULL, armId, grasp, armData.getCcCntrt()->Tatt, confCost, target, NULL);
+    _Robot->activateCcConstraint();
+    if (q != NULL)
+    {
+        shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
+                                              new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
+        _Robot->setAndUpdate( *m_q );
+    }
+
+
+
+
+    /*shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
     configPt q;
     q = p3d_alloc_config(_Robot->getRobotStruct());
 
@@ -1739,7 +1764,7 @@ void Workspace::computePR2GIK(bool move)
         _Robot->setGoTo(*m_q_tmp);
         _Robot->setInitialPosition(*q_cur);
         cout << "Transfer configuration : have been set for motion planning!!!"<< endl;
-    }
+    }*/
 }
 
 
@@ -1754,7 +1779,7 @@ void Workspace::ChangeRobotPos(double value)
     configPt q;
     q = p3d_alloc_config(_Robot->getRobotStruct());
 
-    for (unsigned int i = 0; i < _Robot->getRobotStruct()->nb_dof; i++)
+    for (int i = 0; i < _Robot->getRobotStruct()->nb_dof; i++)
     {
         q[i] = (*q_cur)[i];
     }

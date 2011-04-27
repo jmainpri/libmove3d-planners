@@ -245,10 +245,10 @@ double EnvCell::getCost()
         (*q_tmp)[firstIndexOfDof + 0] = this->getCenter()[0];
         (*q_tmp)[firstIndexOfDof + 1] = this->getCenter()[1];
 
-        rob->setAndUpdate(*q_tmp);
+//        rob->setAndUpdate(*q_tmp);
 
         mCost=0.1;
-        if (rob->isInCollision())
+        if (q_tmp->isInCollision())
         {
             mCost=1.0;
         }

@@ -1144,10 +1144,11 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
       
       if (IKSucceded)
       {
-        if( !ptrQ->isInCollision() )
+        m_Robot->setAndUpdate(*ptrQ);
+        if( !m_Robot->isInCollision() )
         {
-//          cout << "Configuration is OK in computeIsReachableAndMove" << endl;
-          m_Robot->setAndUpdate(*ptrQ);
+          cout << "Configuration is OK in computeIsReachableAndMove" << endl;
+//          m_Robot->setAndUpdate(*ptrQ);
         }
         else
         {

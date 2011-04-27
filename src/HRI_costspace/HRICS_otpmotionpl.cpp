@@ -555,6 +555,7 @@ bool OTPMotionPl::computeObjectTransfertPoint()
 bool OTPMotionPl::FindTraj(Vector2d startPos, Vector2d goalPos, bool isHuman)
 {
 
+//    p3d_col_activate_robot(_Robot);
     EnvCell* startCell = dynamic_cast<EnvCell*>(m2DGrid->getCell(startPos));
     EnvState* start = new EnvState(
             startCell,
@@ -597,8 +598,10 @@ bool OTPMotionPl::FindTraj(Vector2d startPos, Vector2d goalPos, bool isHuman)
 
             (*q_tmp)[firstIndexOfRobotDof + 0] = center[0];
             (*q_tmp)[firstIndexOfRobotDof + 1] = center[1];
-            _Robot->setAndUpdate(*q_tmp);
-            if (_Robot->isInCollision())
+//            _Robot->setAndUpdate(*q_tmp);
+
+            q_tmp->setAsNotTested();
+            if (q_tmp->isInCollision())
             {
                 _Robot->setAndUpdate(*q_cur);
                 return false;

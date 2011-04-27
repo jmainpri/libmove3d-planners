@@ -77,7 +77,7 @@ namespace HRICS
         bool mPathExist;
         bool mHumanPathExist;
 
-        int pathIndex;
+        unsigned int pathIndex;
 
 
     };
