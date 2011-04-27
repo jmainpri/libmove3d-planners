@@ -28,12 +28,12 @@
  */
 namespace HRICS
 {
-
     /**
       * Motion Planing for an object transfert point
       */
     class OTPMotionPl : public HumanAwareMotionPlanner
     {
+
     public:
         OTPMotionPl();
         OTPMotionPl(Robot* R, Robot* H);
@@ -48,11 +48,24 @@ namespace HRICS
         void solveAStar(EnvState* start, EnvState* goal, bool isHuman);
         void draw2dPath();
 
+        bool computeObjectTransfertPoint();
+
+        bool FindTraj(Eigen::Vector2d startPos, Eigen::Vector2d goalPos, bool isHuman);
+        bool computeUpBodyOpt();
+
+        void initDistance();
+
+        bool moveToNextPos();
+        void SetPathIndexNull(){ pathIndex = -1; }
+
+
     private:
         void initCostSpace();
+        void initHumanCenteredGrid();
 
         Robot* mHuman;
         EnvGrid* m2DGrid;
+        EnvGrid* M2DHumanCenteredGrid;
 
         std::vector<double> mEnvSize;
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m2DPath;
@@ -63,6 +76,10 @@ namespace HRICS
 
         bool mPathExist;
         bool mHumanPathExist;
+
+        int pathIndex;
+
+
     };
 
 }

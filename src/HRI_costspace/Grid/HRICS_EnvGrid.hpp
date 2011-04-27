@@ -15,24 +15,32 @@ namespace HRICS
 	{
 	public:
 		EnvGrid();
-		EnvGrid(double pace, std::vector<double> envSize);
+		EnvGrid(double pace, std::vector<double> envSize, bool isHumanCentered);
+
+		bool isHumanCentered(){ return _isHumanCentered; }
 		
 		void setRobot(Robot* R) { mRobot = R; }
 		Robot* getRobot() { return mRobot; }
-		
-//		void writeToOBPlane();
-		
+
+		void setHuman(Robot* R) { mHuman = R; }
+		Robot* getHuman() { return mHuman; }
 		
 		API::TwoDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y );
 		
 		void draw();
-		
-//		void setRobotToStoredConfig();
 
 		void setCellsToblankCost();
+
+		std::vector<EnvCell*> getSortedCells();
+
+		void recomputeCostRobotOnly();
 		
 	private:
 		Robot* mRobot;
+		Robot* mHuman;
+
+		// this is for differenciation between grids.
+		bool _isHumanCentered;
 	};
 	
 	/**
@@ -50,7 +58,7 @@ namespace HRICS
 		
 		double getCost(); /* { std::cout << " Warning not implemented"  << std::endl; }*/
 
-//		void setCost(double value) {mCost = value; }
+		void setCost(double value) {mCost = value; }
 
 		void setBlankCost() { mCostIsComputed = false; }
 		

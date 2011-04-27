@@ -158,6 +158,18 @@ double RobotBaseCell::getCost()
             //the distance with a distordance parameter
             double distance = std::sqrt(std::pow(x - getWorkspacePoint()[0],2) + std::pow((y - getWorkspacePoint()[1]),2));
 
+            double distanceParam = 0.0;
+            if (distance < optimalDist)
+            {
+                distanceParam = 1 - std::exp(-(std::pow((distance - optimalDist)*2,2)));
+            }
+            else
+            {
+                distanceParam = (distance - optimalDist)/10.0;
+            }
+            if (distanceParam > 1){ distanceParam = 1.; }
+            else if (distanceParam < 0){ distanceParam = 0.; }
+
             // get the rotation of the human
             double rot = (*r->getCurrentPos())[mIndexOfDoF + 5];
             double angle = atan2((getWorkspacePoint()[1] - y ), getWorkspacePoint()[0] - x);
@@ -203,11 +215,11 @@ double RobotBaseCell::getCost()
                   b = b / d;
                   c = c / d;
 
-                  mCost = 1 - (a * std::exp(-(std::pow((distance - optimalDist)*2,2))) + b * (1 - RobotPreference) + c * (1 - fieldOfVision));
+                  mCost = 1 - (a * (1 - distanceParam) + b * (1 - RobotPreference) + c * (1 - fieldOfVision));
                   // 1 - (weighted sum of : human ditance (e^(-(2*(x-optimalDist)^2))) ), robot distance and field of vision)
               }
 
-              else if (type == 1){ mCost = 1 - std::exp(-(std::pow((distance - optimalDist)*2,2))); }
+              else if (type == 1){ mCost = distanceParam; }
               else if (type == 2){ mCost = RobotPreference; }
               else if (type == 3){ mCost = fieldOfVision; }
 
