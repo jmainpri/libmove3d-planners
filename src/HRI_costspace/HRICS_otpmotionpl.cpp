@@ -701,6 +701,8 @@ bool OTPMotionPl::moveToNextPos()
 {
 	if (pathIndex == -1)
 	{
+		_Robot->setAndUpdate(*_Robot->getInitialPosition());
+		mHuman->setAndUpdate(*mHuman->getInitialPosition());
 		pathIndex = 0;
 	}
 

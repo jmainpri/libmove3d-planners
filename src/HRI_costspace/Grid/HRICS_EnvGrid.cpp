@@ -295,7 +295,7 @@ double EnvCell::getCost()
 
             // the opening angle of the field of vision
             double cAngle = ENV.getDouble(Env::gazeAngle)*M_PI/180.0 ;
-            if ((angle < cAngle + rot && angle > 0 + rot) || (cAngle + rot > M_PI && angle < cAngle + rot - 2*M_PI))
+            if ((angle <= cAngle + rot && angle >= 0 + rot) || (cAngle + rot >= M_PI && angle <= cAngle + rot - 2*M_PI))
             {
                 fieldOfVision = tan(angle - rot) / tan(cAngle);
             }
