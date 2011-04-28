@@ -246,25 +246,25 @@ namespace HRICS
      * Test straight lines between target point and the point of the trajectory
      */
     double* testTransferPointToTrajectory( const Eigen::Vector3d& WSPoint, API::Trajectory& traj, unsigned int& id);
-    
-    
+
+
     /**
      * Choses a good transfer point
      */
         bool chooseBestTransferPoint(Eigen::Vector3d& transfPoint, bool move, unsigned int threshold);
-    
+
     /**
      * Compute a transfert point from a loaded grid, without taking into acount a possible colision.
      * If a trandfert point is found, return true and put the vector into transfPoint else return false
      */
-		bool computeBestTransferPoint(Eigen::Vector3d& transfPoint);
-    
+        bool computeBestTransferPoint(Eigen::Vector3d& transfPoint);
+
     /**
      * Compute a transfert point from a loaded grid, taking into acount a possible colision.
      * If a trandfert point is found, return true and put the vector into transfPoint else return false
      */
-		bool computeBestFeasableTransferPoint(Eigen::Vector3d& transfPoint);
-    
+    bool computeBestFeasableTransferPoint(Eigen::Vector3d& transfPoint);
+
     /**
      * compute an object transfert point.
      * the first variable make the human go to the posture or just show it
@@ -272,7 +272,7 @@ namespace HRICS
      */
     bool ComputeTheObjectTransfertPoint(bool Move, int type, Eigen::Vector3d& transfPoint, int threshold);
 
-		/**
+        /**
      * compute an object transfert point.
      * The pose if the left or right hand of Herakles is used depending
      * on the flag given as input

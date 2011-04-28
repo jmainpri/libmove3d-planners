@@ -1621,6 +1621,7 @@ void Workspace::initPR2GiveConf()
    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
                                          new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
    _Robot->setAndUpdate( *m_q );
+   _Robot->setInitialPosition(*m_q );
 }
 
 
@@ -1662,7 +1663,7 @@ void Workspace::initPR2AndHumanTest()
 
    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 
-   q[firstIndexOfRobotDof + 0] = (*q_cur_human)[firstIndexOfHumanDof+0] + 1.0;
+   q[firstIndexOfRobotDof + 0] = (*q_cur_human)[firstIndexOfHumanDof+0] + 1.5;
    q[firstIndexOfRobotDof + 1] = (*q_cur_human)[firstIndexOfHumanDof+1];
 
    //it should be 180 or -180 but it won't work unless that.
@@ -1670,6 +1671,7 @@ void Workspace::initPR2AndHumanTest()
 
    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
                                          new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
+
    _Robot->setInitialPosition(*m_q);
    _Robot->setAndUpdate( *m_q );
 
@@ -1680,7 +1682,7 @@ void Workspace::initPR2AndHumanTest()
 
 void Workspace::computePR2GIK(bool move)
 {
-    initPR2GiveConf();
+//    initPR2GiveConf();
     cout << "Workspace::computePR2GIK()" << endl;
 
     int armId = 0;
@@ -1693,8 +1695,8 @@ void Workspace::computePR2GIK(bool move)
     target.at(0) = current_WSPoint(0);
     target.at(1) = current_WSPoint(1);
     target.at(2) = current_WSPoint(2);
-    target.at(3) = 0;
-    target.at(4) = 0;
+    target.at(3) = P3D_HUGE;
+    target.at(4) = P3D_HUGE;
     target.at(5) = P3D_HUGE;
 
     double* q = manipConf.getFreeHoldingConf(NULL, armId, grasp, armData.getCcCntrt()->Tatt, confCost, target, NULL);
@@ -1771,6 +1773,9 @@ void Workspace::computePR2GIK(bool move)
 void Workspace::ChangeRobotPos(double value)
 {
 
+    int firstIndexOfHumanDof = m_ReachableSpace->getRobot()->getJoint("Pelvis")->getIndexOfFirstDof();
+    shared_ptr<Configuration> q_cur_human = m_ReachableSpace->getRobot()->getCurrentPos();
+
     int firstIndexOfDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
     cout << "Workspace::ChangeRobotPos()" << endl;
     cout << value << endl;
@@ -1785,7 +1790,7 @@ void Workspace::ChangeRobotPos(double value)
     }
 
 
-    q[firstIndexOfDof] = value;
+    q[firstIndexOfDof] = (*q_cur_human)[firstIndexOfHumanDof + 0] + value;
 
     shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
                                           new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));

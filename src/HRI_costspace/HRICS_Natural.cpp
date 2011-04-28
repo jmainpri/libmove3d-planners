@@ -1134,7 +1134,7 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
 	{
     configPt q;
     
-    double distance_tolerance = 0.02;
+    double distance_tolerance = 0.005;
     
     if(m_IsHuman) // Humans
     {

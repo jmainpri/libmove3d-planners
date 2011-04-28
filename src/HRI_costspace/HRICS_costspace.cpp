@@ -287,7 +287,7 @@ void HRICS_init(HRI_AGENTS* agents)
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initDistance();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initVisibility();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initNatural();
-  dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
+	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
   
 	HRICS_activeDist = HRICS_MotionPL->getDistance();
 	API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid();
@@ -310,7 +310,7 @@ void HRICS_init(HRI_AGENTS* agents)
   std::cout << "Initializing the HRI costmap cost function" << std::endl;
   global_costSpace->addCost("costHRI",boost::bind(HRICS_getConfigCost, _1));
   global_costSpace->setCost("costHRI");
-	cout << "new HRI Workspace" << endl;
+  cout << "new HRI Workspace" << endl;
   
   //Human->setAndUpdate( *q );
 }
