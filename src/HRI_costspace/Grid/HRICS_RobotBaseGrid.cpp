@@ -148,7 +148,8 @@ double RobotBaseCell::getCost()
         Robot* r =dynamic_cast<RobotBaseGrid*>(_grid)->getNaturalCostSpace()->getRobot();
 //        cout << r->getName() << endl;
 //        cout << _index << endl;
-        if (r->getName().find( "ACHILE") != string::npos)
+        if ( (r->getName().find( "ACHILE") != string::npos) ||
+              (r->getName().find( "HERAKLES") != string::npos) )
         {
 //            shared_ptr<Configuration> q = r->getCurrentPos();
             int mIndexOfDoF = 6;
@@ -189,7 +190,7 @@ double RobotBaseCell::getCost()
 
             Scene* environnement = global_Project->getActiveScene();
 
-            Robot* r2 = environnement->getRobotByNameContaining(global_ActiveRobotName);
+            Robot* r2 = environnement->getRobotByNameContaining( global_ActiveRobotName );
 
             double RobotPreference = 1.0;
             if (r2->getName() == "JIDOKUKA_ROBOT")

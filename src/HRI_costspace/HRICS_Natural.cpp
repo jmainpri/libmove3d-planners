@@ -109,6 +109,7 @@ void Natural::initGeneral()
 			m_IndexObjectDof = NULL;
 			m_computeNbOfIK = false;
 			m_IsHuman = true;
+      m_Agents = hri_create_agents();
 			break;
 			
 		default:
@@ -1217,13 +1218,13 @@ bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRight
   
   if((m_IsHuman && (m_Agents->humans_no > 0)) || ( (!m_IsHuman) && (m_Agents->robots_no > 0))) // Humans ot Robots
   {
-    HRI_AGENTS * agents = hri_create_agents();
     configPt q;
     double distance_tolerance = 0.02;
     if(m_IsHuman)
     {
-        q = p3d_get_robot_config(agents->humans[0]->robotPt);
-        IKSucceded = hri_agent_single_task_manip_move(agents->humans[0], task, &Tcoord, distance_tolerance, &q);
+        q = p3d_get_robot_config(m_Agents->humans[0]->robotPt);
+        cout << "agents->humans[0]->robotPt->name = " << m_Agents->humans[0]->robotPt->name << endl;
+        IKSucceded = hri_agent_single_task_manip_move(m_Agents->humans[0], task, &Tcoord, distance_tolerance, &q);
         shared_ptr<Configuration> ptrQ(new Configuration(m_Robot,q));
 
         if (IKSucceded){

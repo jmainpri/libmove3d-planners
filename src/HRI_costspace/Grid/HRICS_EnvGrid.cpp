@@ -266,7 +266,8 @@ double EnvCell::getCost()
         double robotDistanceMax = ENV.getDouble(Env::robotMaximalDist);
 
         Robot* r =dynamic_cast<EnvGrid*>(_grid)->getHuman();
-        if (r->getName().find( "ACHILE") != string::npos)
+      if ( (r->getName().find( "ACHILE") != string::npos) ||
+          (r->getName().find( "HERAKLES") != string::npos) )
         {
             int mIndexOfDoF = r->getJoint("Pelvis")->getIndexOfFirstDof();
             double x = (*r->getCurrentPos())[mIndexOfDoF + 0];
