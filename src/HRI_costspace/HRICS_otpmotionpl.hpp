@@ -40,7 +40,7 @@ namespace HRICS
 
         ~OTPMotionPl();
 
-        EnvGrid* getPlanGrid() { return m2DGrid; }
+        EnvGrid* getPlanGrid() { return m_2DGrid; }
 
 
         bool computeAStarIn2DGrid();
@@ -48,6 +48,7 @@ namespace HRICS
         void solveAStar(EnvState* start, EnvState* goal, bool isHuman);
         void draw2dPath();
 
+        bool simpleComputeBaseAndOTP();
         bool computeObjectTransfertPoint();
 
         bool FindTraj(Eigen::Vector2d startPos, Eigen::Vector2d goalPos, bool isHuman);
@@ -56,30 +57,28 @@ namespace HRICS
         void initDistance();
 
         bool moveToNextPos();
-        void SetPathIndexNull(){ pathIndex = -1; }
+        void SetPathIndexNull(){ m_pathIndex = -1; }
 
 
     private:
         void initCostSpace();
         void initHumanCenteredGrid();
 
-        Robot* mHuman;
-        EnvGrid* m2DGrid;
-        EnvGrid* M2DHumanCenteredGrid;
+        Robot* m_Human;
+        EnvGrid* m_2DGrid;
+        EnvGrid* m_2DHumanCenteredGrid;
 
-        std::vector<double> mEnvSize;
-        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m2DPath;
-        std::vector<API::TwoDCell*> m2DCellPath;
+        std::vector<double> m_EnvSize;
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m_2DPath;
+        std::vector<API::TwoDCell*> m_2DCellPath;
 
-        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m2DHumanPath;
-        std::vector<API::TwoDCell*> m2DHumanCellPath;
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m_2DHumanPath;
+        std::vector<API::TwoDCell*> m_2DHumanCellPath;
 
-        bool mPathExist;
-        bool mHumanPathExist;
+        bool m_PathExist;
+        bool m_HumanPathExist;
 
-        unsigned int pathIndex;
-
-
+        unsigned int m_pathIndex;
     };
 
 }

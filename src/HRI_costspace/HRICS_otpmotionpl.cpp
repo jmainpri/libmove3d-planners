@@ -31,7 +31,7 @@ extern API::TwoDGrid* API_activeRobotGrid;
 extern Eigen::Vector3d current_WSPoint;
 extern pair<double,Eigen::Vector3d > current_cost;
 
-OTPMotionPl::OTPMotionPl() : HumanAwareMotionPlanner() , mPathExist(false) , mHumanPathExist(false), pathIndex(-1)
+OTPMotionPl::OTPMotionPl() : HumanAwareMotionPlanner() , m_PathExist(false) , m_HumanPathExist(false), m_pathIndex(-1)
 {
     cout << "New OTPMotionPl HRI planner" << endl;
 
@@ -47,53 +47,53 @@ OTPMotionPl::OTPMotionPl() : HumanAwareMotionPlanner() , mPathExist(false) , mHu
 
         if(name.find("HUMAN") != string::npos )
         {
-            mHuman = new Robot(XYZ_ENV->robot[i]);
+            m_Human = new Robot(XYZ_ENV->robot[i]);
             cout << "Humans is " << name << endl;
         }
     }
     initCostSpace();
     initDistance();
-    m_VisibilitySpace = new Visibility(mHuman);
+    m_VisibilitySpace = new Visibility(m_Human);
 }
 
 
-OTPMotionPl::OTPMotionPl(Robot* R, Robot* H) : HumanAwareMotionPlanner() , mHuman(H) , mPathExist(false) , mHumanPathExist(false), pathIndex(-1)
+OTPMotionPl::OTPMotionPl(Robot* R, Robot* H) : HumanAwareMotionPlanner() , m_Human(H) , m_PathExist(false) , m_HumanPathExist(false), m_pathIndex(-1)
 {
     this->setRobot(R);
     initCostSpace();
     initDistance();
-    m_VisibilitySpace = new Visibility(mHuman);
+    m_VisibilitySpace = new Visibility(m_Human);
 }
 
 OTPMotionPl::~OTPMotionPl()
 {
-    delete m2DGrid;
+    delete m_2DGrid;
 }
 
 
 void OTPMotionPl::initCostSpace()
 {
-    mEnvSize.resize(4);
-    mEnvSize[0] = XYZ_ENV->box.x1; mEnvSize[1] = XYZ_ENV->box.x2;
-    mEnvSize[2] = XYZ_ENV->box.y1; mEnvSize[3] = XYZ_ENV->box.y2;
+    m_EnvSize.resize(4);
+    m_EnvSize[0] = XYZ_ENV->box.x1; m_EnvSize[1] = XYZ_ENV->box.x2;
+    m_EnvSize[2] = XYZ_ENV->box.y1; m_EnvSize[3] = XYZ_ENV->box.y2;
 
-    m2DGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),mEnvSize,false);
-    m2DGrid->setRobot(_Robot);
-    m2DGrid->setHuman(mHuman);
+    m_2DGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),m_EnvSize,false);
+    m_2DGrid->setRobot(_Robot);
+    m_2DGrid->setHuman(m_Human);
 }
 
 
 void OTPMotionPl::initHumanCenteredGrid()
 {
-    mEnvSize.resize(4);
-    mEnvSize[0] = XYZ_ENV->box.x1; mEnvSize[1] = XYZ_ENV->box.x2;
-    mEnvSize[2] = XYZ_ENV->box.y1; mEnvSize[3] = XYZ_ENV->box.y2;
+    m_EnvSize.resize(4);
+    m_EnvSize[0] = XYZ_ENV->box.x1; m_EnvSize[1] = XYZ_ENV->box.x2;
+    m_EnvSize[2] = XYZ_ENV->box.y1; m_EnvSize[3] = XYZ_ENV->box.y2;
 
-    M2DHumanCenteredGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),mEnvSize,true);
-    M2DHumanCenteredGrid->setRobot(_Robot);
-    M2DHumanCenteredGrid->setHuman(mHuman);
+    m_2DHumanCenteredGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),m_EnvSize,true);
+    m_2DHumanCenteredGrid->setRobot(_Robot);
+    m_2DHumanCenteredGrid->setHuman(m_Human);
 
-    API_activeRobotGrid = M2DHumanCenteredGrid;
+    API_activeRobotGrid = m_2DHumanCenteredGrid;
 }
 
 
@@ -117,7 +117,7 @@ bool OTPMotionPl::computeAStarIn2DGrid()
     pos[0] = config->at(firstIndexOfRobotDof + 0);
     pos[1] = config->at(firstIndexOfRobotDof + 1);
 
-    EnvCell* startCell = dynamic_cast<EnvCell*>(m2DGrid->getCell(pos));
+    EnvCell* startCell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(pos));
     Vector2i startCoord = startCell->getCoord();
 
     cout << "Start Pos = (" <<
@@ -130,14 +130,14 @@ bool OTPMotionPl::computeAStarIn2DGrid()
 
     EnvState* start = new EnvState(
             startCell,
-            m2DGrid);
+            m_2DGrid);
 
     config = _Robot->getGoTo();
 
     pos[0] = config->at(firstIndexOfRobotDof + 0);
     pos[1] = config->at(firstIndexOfRobotDof + 1);
 
-    EnvCell* goalCell = dynamic_cast<EnvCell*>(m2DGrid->getCell(pos));
+    EnvCell* goalCell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(pos));
     Vector2i goalCoord = goalCell->getCoord();
 
     cout << "Goal Pos = (" <<
@@ -156,14 +156,14 @@ bool OTPMotionPl::computeAStarIn2DGrid()
 
     EnvState* goal = new EnvState(
             goalCell,
-            m2DGrid);
+            m_2DGrid);
 
     solveAStar(start,goal,false);
 
     double SumOfCost= 0.0;
-    for(unsigned int i=0; i< m2DPath.size() ; i++ )
+    for(unsigned int i=0; i< m_2DPath.size() ; i++ )
     {
-        SumOfCost +=  dynamic_cast<EnvCell*>(m2DCellPath[i])->getCost();
+        SumOfCost +=  dynamic_cast<EnvCell*>(m_2DCellPath[i])->getCost();
     }
 
     // testing trajectory
@@ -173,40 +173,40 @@ bool OTPMotionPl::computeAStarIn2DGrid()
     cout << " SumOfCost = "  << SumOfCost << endl;
     cout << " The Robot will move throuth the followings cells " << endl;
 
-    for (unsigned int i = 0; i < m2DCellPath.size(); i++)
+    for (unsigned int i = 0; i < m_2DCellPath.size(); i++)
     {
-        Eigen::Vector2d center = m2DCellPath.at(i)->getCenter();
-//        cout << i << " = " << endl << "abs Pos : "<< endl << center << endl << "coord : " << endl << dynamic_cast<EnvCell*>(m2DCellPath.at(i))->getCoord() << endl << "---------------" << endl;
+        Eigen::Vector2d center = m_2DCellPath.at(i)->getCenter();
+//        cout << i << " = " << endl << "abs Pos : "<< endl << center << endl << "coord : " << endl << dynamic_cast<EnvCell*>(m_2DCellPath.at(i))->getCoord() << endl << "---------------" << endl;
 
         (*q)[firstIndexOfRobotDof + 0] = center[0];
         (*q)[firstIndexOfRobotDof + 1] = center[1];
         _Robot->setAndUpdate(*q);
         if (_Robot->isInCollision())
         {
-            m2DCellPath.resize(i);
-            m2DPath.resize(i);
+            m_2DCellPath.resize(i);
+            m_2DPath.resize(i);
             break;
         }
     }
     _Robot->setAndUpdate(*q_cur);
 
-    API::TwoDCell* lastReachedCell = m2DCellPath.at(m2DCellPath.size()-1);
+    API::TwoDCell* lastReachedCell = m_2DCellPath.at(m_2DCellPath.size()-1);
 
     if (lastReachedCell != goalCell)
     {
         cout << "The cell that the robot should access to is unreacheable." <<
                 "Motion Planing for the human." << endl;
 
-        config = mHuman->getInitialPosition();
+        config = m_Human->getInitialPosition();
 
 //        config->print();
 
-        int firstIndexOfHumanDof = mHuman->getJoint("Pelvis")->getIndexOfFirstDof();
+        int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
 
         pos[0] = config->at(firstIndexOfHumanDof + 0);
         pos[1] = config->at(firstIndexOfHumanDof + 1);
 
-        EnvCell* startHumanCell = dynamic_cast<EnvCell*>(m2DGrid->getCell(pos));
+        EnvCell* startHumanCell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(pos));
         Vector2i startHumanCoord = startHumanCell->getCoord();
 
         cout << "Start Human Pos = (" <<
@@ -219,14 +219,14 @@ bool OTPMotionPl::computeAStarIn2DGrid()
 
         EnvState* startHuman = new EnvState(
                 startHumanCell,
-                m2DGrid);
+                m_2DGrid);
 
 //        config = _Robot->getGoTo();
 
 //        pos[0] = config->at(firstIndexOfRobotDof + 0);
 //        pos[1] = config->at(firstIndexOfRobotDof + 1);
 
-        EnvCell* goalHumanCell = dynamic_cast<EnvCell*>(lastReachedCell);//(m2DGrid->getCell(pos));
+        EnvCell* goalHumanCell = dynamic_cast<EnvCell*>(lastReachedCell);//(m_2DGrid->getCell(pos));
         Vector2i goalHumanCoord = goalHumanCell->getCoord();
 
         cout << "Goal Pos = (" <<
@@ -245,44 +245,44 @@ bool OTPMotionPl::computeAStarIn2DGrid()
 
         EnvState* goalHuman = new EnvState(
                 goalHumanCell,
-                m2DGrid);
+                m_2DGrid);
 
         solveAStar(startHuman,goalHuman, true);
 
         double SumOfCost= 0.0;
-        for(unsigned int i=0; i< m2DPath.size() ; i++ )
+        for(unsigned int i=0; i< m_2DPath.size() ; i++ )
         {
-            SumOfCost +=  dynamic_cast<EnvCell*>(m2DCellPath[i])->getCost();
+            SumOfCost +=  dynamic_cast<EnvCell*>(m_2DCellPath[i])->getCost();
         }
 
         // testing trajectory
-        shared_ptr<Configuration> q_human_cur = mHuman->getCurrentPos();
+        shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
         shared_ptr<Configuration> q_human = _Robot->getCurrentPos();
 
         cout << " SumOfCost = "  << SumOfCost << endl;
-        for (unsigned int i = 0; i < m2DHumanCellPath.size(); i++)
+        for (unsigned int i = 0; i < m_2DHumanCellPath.size(); i++)
         {
-            Eigen::Vector2d center = m2DHumanCellPath.at(i)->getCenter();
-//            cout << i << " = " << endl << "abs Pos : "<< endl << center << endl << "coord : " << endl << dynamic_cast<EnvCell*>(m2DHumanCellPath.at(i))->getCoord() << endl << "---------------" << endl;
+            Eigen::Vector2d center = m_2DHumanCellPath.at(i)->getCenter();
+//            cout << i << " = " << endl << "abs Pos : "<< endl << center << endl << "coord : " << endl << dynamic_cast<EnvCell*>(m_2DHumanCellPath.at(i))->getCoord() << endl << "---------------" << endl;
 
             (*q_human)[firstIndexOfHumanDof + 0] = center[0];
             (*q_human)[firstIndexOfHumanDof + 1] = center[1];
-            mHuman->setAndUpdate(*q_human);
-            if (mHuman->isInCollision())
+            m_Human->setAndUpdate(*q_human);
+            if (m_Human->isInCollision())
             {
-                m2DHumanCellPath.resize(i);
-                m2DHumanPath.resize(i);
+                m_2DHumanCellPath.resize(i);
+                m_2DHumanPath.resize(i);
                 break;
             }
         }
-        mHuman->setAndUpdate(*q_human_cur);
+        m_Human->setAndUpdate(*q_human_cur);
 
     }
     else
     {
-        m2DHumanPath.clear();
+        m_2DHumanPath.clear();
 
-        m2DHumanCellPath.clear();
+        m_2DHumanCellPath.clear();
     }
 
 
@@ -304,9 +304,9 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
 {
     if (!isHuman)
     {
-        m2DPath.clear();
+        m_2DPath.clear();
 
-        m2DCellPath.clear();
+        m_2DCellPath.clear();
 
     //    shared_ptr<Configuration> config = _Robot->getCurrentPos();
 
@@ -322,9 +322,9 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
             if(path.size() == 0 )
             {
 
-                m2DPath.clear();
-                m2DCellPath.clear();
-                mPathExist = false;
+                m_2DPath.clear();
+                m_2DCellPath.clear();
+                m_PathExist = false;
                 return;
 
             }
@@ -332,8 +332,8 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
             for (unsigned int i=0;i<path.size();i++)
             {
                 API::TwoDCell* cell = dynamic_cast<EnvState*>(path[i])->getCell();
-                m2DPath.push_back( cell->getCenter() );
-                m2DCellPath.push_back( cell );
+                m_2DPath.push_back( cell->getCenter() );
+                m_2DCellPath.push_back( cell );
             }
         }
         else
@@ -343,27 +343,27 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
 
             if(path.size() == 0 )
             {
-                m2DPath.clear();
-                m2DCellPath.clear();
-                mPathExist = false;
+                m_2DPath.clear();
+                m_2DCellPath.clear();
+                m_PathExist = false;
                 return;
             }
 
             for (int i=path.size()-1;i>=0;i--)
             {
                 EnvCell* cell = dynamic_cast<EnvState*>(path[i])->getCell();
-                m2DPath.push_back( cell->getCenter() );
-                m2DCellPath.push_back( cell );
+                m_2DPath.push_back( cell->getCenter() );
+                m_2DCellPath.push_back( cell );
             }
         }
-        mPathExist = true;
+        m_PathExist = true;
         return;
     }
     else
     {
-        m2DHumanPath.clear();
+        m_2DHumanPath.clear();
 
-        m2DHumanCellPath.clear();
+        m_2DHumanCellPath.clear();
 
     //    shared_ptr<Configuration> config = _Robot->getCurrentPos();
 
@@ -379,9 +379,9 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
             if(path.size() == 0 )
             {
 
-                m2DHumanPath.clear();
-                m2DHumanCellPath.clear();
-                mHumanPathExist = false;
+                m_2DHumanPath.clear();
+                m_2DHumanCellPath.clear();
+                m_HumanPathExist = false;
                 return;
 
             }
@@ -389,8 +389,8 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
             for (unsigned int i=0;i<path.size();i++)
             {
                 API::TwoDCell* cell = dynamic_cast<EnvState*>(path[i])->getCell();
-                m2DHumanPath.push_back( cell->getCenter() );
-                m2DHumanCellPath.push_back( cell );
+                m_2DHumanPath.push_back( cell->getCenter() );
+                m_2DHumanCellPath.push_back( cell );
             }
         }
         else
@@ -400,20 +400,20 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
 
             if(path.size() == 0 )
             {
-                m2DHumanPath.clear();
-                m2DHumanCellPath.clear();
-                mHumanPathExist = false;
+                m_2DHumanPath.clear();
+                m_2DHumanCellPath.clear();
+                m_HumanPathExist = false;
                 return;
             }
 
             for (int i=path.size()-1;i>=0;i--)
             {
                 EnvCell* cell = dynamic_cast<EnvState*>(path[i])->getCell();
-                m2DHumanPath.push_back( cell->getCenter() );
-                m2DHumanCellPath.push_back( cell );
+                m_2DHumanPath.push_back( cell->getCenter() );
+                m_2DHumanCellPath.push_back( cell );
             }
         }
-        mHumanPathExist = true;
+        m_HumanPathExist = true;
         return;
     }
 }
@@ -423,27 +423,27 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
   */
 void OTPMotionPl::draw2dPath()
 {
-    if( mPathExist)
+    if( m_PathExist)
     {
 //        cout << "Drawing 2D path" << endl;
-        for(unsigned int i=0;i<m2DPath.size()-1;i++)
+        for(unsigned int i=0;i<m_2DPath.size()-1;i++)
         {
             glLineWidth(3.);
-            g3d_drawOneLine(m2DPath[i][0],      m2DPath[i][1],      0.4,
-                            m2DPath[i+1][0],    m2DPath[i+1][1],    0.4,
+            g3d_drawOneLine(m_2DPath[i][0],      m_2DPath[i][1],      0.4,
+                            m_2DPath[i+1][0],    m_2DPath[i+1][1],    0.4,
                             Yellow, NULL);
             glLineWidth(1.);
         }
     }
 
-    if( mHumanPathExist)
+    if( m_HumanPathExist)
     {
 //        cout << "Drawing 2D path" << endl;
-        for(unsigned int i=0;i<m2DHumanPath.size()-1;i++)
+        for(unsigned int i=0;i<m_2DHumanPath.size()-1;i++)
         {
             glLineWidth(3.);
-            g3d_drawOneLine(m2DHumanPath[i][0],      m2DHumanPath[i][1],      0.4,
-                            m2DHumanPath[i+1][0],    m2DHumanPath[i+1][1],    0.4,
+            g3d_drawOneLine(m_2DHumanPath[i][0],      m_2DHumanPath[i][1],      0.4,
+                            m_2DHumanPath[i+1][0],    m_2DHumanPath[i+1][1],    0.4,
                             Green, NULL);
             glLineWidth(1.);
         }
@@ -451,18 +451,55 @@ void OTPMotionPl::draw2dPath()
 }
 
 
-
+bool OTPMotionPl::simpleComputeBaseAndOTP()
+{
+  cout << "Simple Compute the OTP" << endl;
+  
+  m_2DGrid->setCellsToblankCost();
+  
+  shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+  shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+  
+  m_Human->setInitialPosition(*q_human_cur);
+  _Robot->setInitialPosition(*q_robot_cur);
+  
+  cout << "This function is separeted in ? parts : " << endl;
+  cout << "First Part" << endl;
+  
+  cout << "Second part : Motion Planing for robot (and human if nessessary)" << endl;
+  
+  //    ENV.setDouble(Env::robotMaximalDistFactor,0.0);
+  initHumanCenteredGrid();
+  vector<EnvCell*> sortedCells = m_2DHumanCenteredGrid->getSortedCells();
+  
+  Vector2d startPos;
+  
+  for (unsigned int i=0; i < sortedCells.size(); i++)
+  {
+      if (computeUpBodyOpt())
+      {
+        _Robot->setGoTo(*_Robot->getCurrentPos());
+        _Robot->setAndUpdate(*q_robot_cur);
+        
+        m_Human->setGoTo(*m_Human->getCurrentPos());
+        m_Human->setAndUpdate(*q_human_cur);
+        
+        return true;
+      }
+  }
+  return false;
+}
 
 bool OTPMotionPl::computeObjectTransfertPoint()
 {
     cout << "Compute the OTP" << endl;
 
-    m2DGrid->setCellsToblankCost();
+    m_2DGrid->setCellsToblankCost();
 
-    shared_ptr<Configuration> q_human_cur = mHuman->getCurrentPos();
+    shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
     shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
 
-    mHuman->setInitialPosition(*q_human_cur);
+    m_Human->setInitialPosition(*q_human_cur);
     _Robot->setInitialPosition(*q_robot_cur);
 
     cout << "This function is separeted in ? parts : " << endl;
@@ -472,7 +509,7 @@ bool OTPMotionPl::computeObjectTransfertPoint()
 
 //    ENV.setDouble(Env::robotMaximalDistFactor,0.0);
     initHumanCenteredGrid();
-    vector<EnvCell*> sortedCells = M2DHumanCenteredGrid->getSortedCells();
+    vector<EnvCell*> sortedCells = m_2DHumanCenteredGrid->getSortedCells();
 
     Vector2d startPos;
     for (unsigned int i=0; i < sortedCells.size(); i++)
@@ -480,7 +517,7 @@ bool OTPMotionPl::computeObjectTransfertPoint()
         cout << i <<" = "<< sortedCells.at(i)->getCost() << "---------------------------------------" << endl;
 
         int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
-        int firstIndexOfHumanDof = mHuman->getJoint("Pelvis")->getIndexOfFirstDof();
+        int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
 
         Vector2d startPos;
         startPos[0] = q_robot_cur->at(firstIndexOfRobotDof + 0);
@@ -495,44 +532,44 @@ bool OTPMotionPl::computeObjectTransfertPoint()
 //        return true;
         if (trajFound)
         {
-//            M2DHumanCenteredGrid->recomputeCostRobotOnly();
+//            m_2DHumanCenteredGrid->recomputeCostRobotOnly();
             startPos[0] = q_human_cur->at(firstIndexOfHumanDof + 0);
             startPos[1] = q_human_cur->at(firstIndexOfHumanDof + 1);
 
-            goalPos[0] = m2DCellPath.at(m2DCellPath.size()-1)->getCenter()[0];
-            goalPos[1] = m2DCellPath.at(m2DCellPath.size()-1)->getCenter()[1];
+            goalPos[0] = m_2DCellPath.at(m_2DCellPath.size()-1)->getCenter()[0];
+            goalPos[1] = m_2DCellPath.at(m_2DCellPath.size()-1)->getCenter()[1];
 
             FindTraj(startPos,goalPos,true);
-            shared_ptr<Configuration> q_human = mHuman->getCurrentPos();
+            shared_ptr<Configuration> q_human = m_Human->getCurrentPos();
 
-            for (unsigned int i = 0; i < m2DHumanCellPath.size(); i++)
+            for (unsigned int i = 0; i < m_2DHumanCellPath.size(); i++)
             {
-                Eigen::Vector2d center = m2DHumanCellPath.at(i)->getCenter();
-    //            cout << i << " = " << endl << "abs Pos : "<< endl << center << endl << "coord : " << endl << dynamic_cast<EnvCell*>(m2DHumanCellPath.at(i))->getCoord() << endl << "---------------" << endl;
+                Eigen::Vector2d center = m_2DHumanCellPath.at(i)->getCenter();
+    //            cout << i << " = " << endl << "abs Pos : "<< endl << center << endl << "coord : " << endl << dynamic_cast<EnvCell*>(m_2DHumanCellPath.at(i))->getCoord() << endl << "---------------" << endl;
 
                 (*q_human)[firstIndexOfHumanDof + 0] = center[0];
                 (*q_human)[firstIndexOfHumanDof + 1] = center[1];
-                mHuman->setAndUpdate(*q_human);
+                m_Human->setAndUpdate(*q_human);
                 q_human->setAsNotTested();
 
                 if (q_human->isInCollision())
                 {
-                    m2DHumanCellPath.resize(i);
-                    m2DHumanPath.resize(i);
+                    m_2DHumanCellPath.resize(i);
+                    m_2DHumanPath.resize(i);
                 }
             }
-            mHuman->setAndUpdate(*q_human_cur);
+            m_Human->setAndUpdate(*q_human_cur);
 
              //compute the OTP for the configs found.
-            shared_ptr<Configuration> q_human_otp = mHuman->getCurrentPos();
+            shared_ptr<Configuration> q_human_otp = m_Human->getCurrentPos();
             shared_ptr<Configuration> q_robot_otp = _Robot->getCurrentPos();
 
-            (*q_human_otp)[firstIndexOfHumanDof + 0] = m2DHumanCellPath.at(m2DHumanCellPath.size()-1)->getCenter()[0];
-            (*q_human_otp)[firstIndexOfHumanDof + 1] = m2DHumanCellPath.at(m2DHumanCellPath.size()-1)->getCenter()[1];
-            mHuman->setAndUpdate(*q_human_otp);
+            (*q_human_otp)[firstIndexOfHumanDof + 0] = m_2DHumanCellPath.at(m_2DHumanCellPath.size()-1)->getCenter()[0];
+            (*q_human_otp)[firstIndexOfHumanDof + 1] = m_2DHumanCellPath.at(m_2DHumanCellPath.size()-1)->getCenter()[1];
+            m_Human->setAndUpdate(*q_human_otp);
 
-            (*q_robot_otp)[firstIndexOfRobotDof + 0] = m2DCellPath.at(m2DCellPath.size()-1)->getCenter()[0];
-            (*q_robot_otp)[firstIndexOfRobotDof + 1] = m2DCellPath.at(m2DCellPath.size()-1)->getCenter()[1];
+            (*q_robot_otp)[firstIndexOfRobotDof + 0] = m_2DCellPath.at(m_2DCellPath.size()-1)->getCenter()[0];
+            (*q_robot_otp)[firstIndexOfRobotDof + 1] = m_2DCellPath.at(m_2DCellPath.size()-1)->getCenter()[1];
             _Robot->setAndUpdate(*q_robot_otp);
 
             if (computeUpBodyOpt())
@@ -540,8 +577,8 @@ bool OTPMotionPl::computeObjectTransfertPoint()
                 _Robot->setGoTo(*_Robot->getCurrentPos());
                 _Robot->setAndUpdate(*q_robot_cur);
 
-                mHuman->setGoTo(*mHuman->getCurrentPos());
-                mHuman->setAndUpdate(*q_human_cur);
+                m_Human->setGoTo(*m_Human->getCurrentPos());
+                m_Human->setAndUpdate(*q_human_cur);
 
                 return true;
             }
@@ -556,15 +593,15 @@ bool OTPMotionPl::FindTraj(Vector2d startPos, Vector2d goalPos, bool isHuman)
 {
 
 //    p3d_col_activate_robot(_Robot);
-    EnvCell* startCell = dynamic_cast<EnvCell*>(m2DGrid->getCell(startPos));
+    EnvCell* startCell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(startPos));
     EnvState* start = new EnvState(
             startCell,
-            m2DGrid);
+            m_2DGrid);
 
-    EnvCell* goalCell = dynamic_cast<EnvCell*>(m2DGrid->getCell(goalPos));
+    EnvCell* goalCell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(goalPos));
     EnvState* goal = new EnvState(
             goalCell,
-            m2DGrid);
+            m_2DGrid);
 
     if ( startCell == NULL ||  goalCell == NULL)
     {
@@ -581,9 +618,9 @@ bool OTPMotionPl::FindTraj(Vector2d startPos, Vector2d goalPos, bool isHuman)
     if (!isHuman)
     {
         double SumOfCost= 0.0;
-        for(unsigned int i=0; i< m2DPath.size() ; i++ )
+        for(unsigned int i=0; i< m_2DPath.size() ; i++ )
         {
-            SumOfCost +=  dynamic_cast<EnvCell*>(m2DCellPath[i])->getCost();
+            SumOfCost +=  dynamic_cast<EnvCell*>(m_2DCellPath[i])->getCost();
         }
         cout << "SumOfCost=" << SumOfCost << endl;
 
@@ -591,10 +628,10 @@ bool OTPMotionPl::FindTraj(Vector2d startPos, Vector2d goalPos, bool isHuman)
         shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
         shared_ptr<Configuration> q_tmp = _Robot->getCurrentPos();
 
-        for (unsigned int i = 0; i < m2DCellPath.size(); i++)
+        for (unsigned int i = 0; i < m_2DCellPath.size(); i++)
         {
-            Eigen::Vector2d center = m2DCellPath.at(i)->getCenter();
-    //        cout << i << " = " << endl << "abs Pos : "<< endl << center << endl << "coord : " << endl << dynamic_cast<EnvCell*>(m2DCellPath.at(i))->getCoord() << endl << "---------------" << endl;
+            Eigen::Vector2d center = m_2DCellPath.at(i)->getCenter();
+    //        cout << i << " = " << endl << "abs Pos : "<< endl << center << endl << "coord : " << endl << dynamic_cast<EnvCell*>(m_2DCellPath.at(i))->getCoord() << endl << "---------------" << endl;
 
             (*q_tmp)[firstIndexOfRobotDof + 0] = center[0];
             (*q_tmp)[firstIndexOfRobotDof + 1] = center[1];
@@ -684,9 +721,9 @@ bool OTPMotionPl::computeUpBodyOpt()
 
 void OTPMotionPl::initDistance()
 {
-	vector<Robot*> mHumans;
-	mHumans.push_back(mHuman);
-	m_DistanceSpace = new Distance(_Robot,mHumans);
+	vector<Robot*> m_Humans;
+	m_Humans.push_back(m_Human);
+	m_DistanceSpace = new Distance(_Robot,m_Humans);
 
 	if (_Robot)
 	{
@@ -699,39 +736,39 @@ void OTPMotionPl::initDistance()
 
 bool OTPMotionPl::moveToNextPos()
 {
-	if (pathIndex == -1)
+	if (m_pathIndex == -1)
 	{
 		_Robot->setAndUpdate(*_Robot->getInitialPosition());
-		mHuman->setAndUpdate(*mHuman->getInitialPosition());
-		pathIndex = 0;
+		m_Human->setAndUpdate(*m_Human->getInitialPosition());
+		m_pathIndex = 0;
 	}
 
 	bool robotPathLimit = true;
-	if (mPathExist && pathIndex < m2DCellPath.size())
+	if (m_PathExist && m_pathIndex < m_2DCellPath.size())
 	{
 		int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 		shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
-		(*q_cur)[firstIndexOfRobotDof + 0] = m2DCellPath[pathIndex]->getCenter()[0];
-		(*q_cur)[firstIndexOfRobotDof + 1] = m2DCellPath[pathIndex]->getCenter()[1];
+		(*q_cur)[firstIndexOfRobotDof + 0] = m_2DCellPath[m_pathIndex]->getCenter()[0];
+		(*q_cur)[firstIndexOfRobotDof + 1] = m_2DCellPath[m_pathIndex]->getCenter()[1];
 		_Robot->setAndUpdate(*q_cur);
 		robotPathLimit = false;
 	}
 
 	bool humanPathLimit = true;
-	if (mHumanPathExist && pathIndex < m2DHumanCellPath.size())
+	if (m_HumanPathExist && m_pathIndex < m_2DHumanCellPath.size())
 	{
-		int firstIndexOfHumanDof = mHuman->getJoint("Pelvis")->getIndexOfFirstDof();
-		shared_ptr<Configuration> q_cur = mHuman->getCurrentPos();
-		(*q_cur)[firstIndexOfHumanDof + 0] = m2DHumanCellPath[pathIndex]->getCenter()[0];
-		(*q_cur)[firstIndexOfHumanDof + 1] = m2DHumanCellPath[pathIndex]->getCenter()[1];
-		mHuman->setAndUpdate(*q_cur);
+		int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+		shared_ptr<Configuration> q_cur = m_Human->getCurrentPos();
+		(*q_cur)[firstIndexOfHumanDof + 0] = m_2DHumanCellPath[m_pathIndex]->getCenter()[0];
+		(*q_cur)[firstIndexOfHumanDof + 1] = m_2DHumanCellPath[m_pathIndex]->getCenter()[1];
+		m_Human->setAndUpdate(*q_cur);
 		humanPathLimit = false;
 	}
-	cout << pathIndex++ << endl;
+	cout << m_pathIndex++ << endl;
 
 	if (humanPathLimit)
 	{
-		mHuman->setAndUpdate(*mHuman->getGoTo());
+		m_Human->setAndUpdate(*m_Human->getGoTo());
 	}
 
 
