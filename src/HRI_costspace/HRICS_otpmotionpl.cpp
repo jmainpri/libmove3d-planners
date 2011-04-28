@@ -83,13 +83,13 @@ void OTPMotionPl::initCostSpace()
 }
 
 
-void OTPMotionPl::initHumanCenteredGrid()
+void OTPMotionPl::initHumanCenteredGrid(double cellsize)
 {
     m_EnvSize.resize(4);
     m_EnvSize[0] = XYZ_ENV->box.x1; m_EnvSize[1] = XYZ_ENV->box.x2;
     m_EnvSize[2] = XYZ_ENV->box.y1; m_EnvSize[3] = XYZ_ENV->box.y2;
 
-    m_2DHumanCenteredGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),m_EnvSize,true);
+    m_2DHumanCenteredGrid = new EnvGrid(cellsize,m_EnvSize,true);
     m_2DHumanCenteredGrid->setRobot(_Robot);
     m_2DHumanCenteredGrid->setHuman(m_Human);
 
@@ -469,22 +469,43 @@ bool OTPMotionPl::simpleComputeBaseAndOTP()
   cout << "Second part : Motion Planing for robot (and human if nessessary)" << endl;
   
   //    ENV.setDouble(Env::robotMaximalDistFactor,0.0);
-  initHumanCenteredGrid();
+  initHumanCenteredGrid(0.1);
   vector<EnvCell*> sortedCells = m_2DHumanCenteredGrid->getSortedCells();
   
-  Vector2d startPos;
+  Vector2d point;
+
+
+  Vector2d HumanPos;
+
+  HumanPos[0] = (*q_human_cur)[6];
+  HumanPos[1] = (*q_human_cur)[7];
+
+
   
   for (unsigned int i=0; i < sortedCells.size(); i++)
   {
-      if (computeUpBodyOpt())
+      shared_ptr<Configuration> q_robot_tmp = _Robot->getCurrentPos();
+
+      point[0] = sortedCells[i]->getCenter()[0];
+      point[1] = sortedCells[i]->getCenter()[1];
+      Vector2d gazeDirect = HumanPos - point;
+
+      (*q_robot_tmp)[6] = sortedCells[i]->getCenter()[0];
+      (*q_robot_tmp)[7] = sortedCells[i]->getCenter()[1];
+      (*q_robot_tmp)[11] = atan2(gazeDirect.y(),gazeDirect.x());
+
+      if(!q_robot_tmp->isInCollision())
       {
-        _Robot->setGoTo(*_Robot->getCurrentPos());
-        _Robot->setAndUpdate(*q_robot_cur);
-        
-        m_Human->setGoTo(*m_Human->getCurrentPos());
-        m_Human->setAndUpdate(*q_human_cur);
-        
-        return true;
+          if (computeUpBodyOpt())
+          {
+            _Robot->setGoTo(*_Robot->getCurrentPos());
+            _Robot->setAndUpdate(*q_robot_cur);
+
+            m_Human->setGoTo(*m_Human->getCurrentPos());
+            m_Human->setAndUpdate(*q_human_cur);
+
+            return true;
+          }
       }
   }
   return false;
@@ -508,7 +529,7 @@ bool OTPMotionPl::computeObjectTransfertPoint()
     cout << "Second part : Motion Planing for robot (and human if nessessary)" << endl;
 
 //    ENV.setDouble(Env::robotMaximalDistFactor,0.0);
-    initHumanCenteredGrid();
+    initHumanCenteredGrid(ENV.getDouble(Env::PlanCellSize));
     vector<EnvCell*> sortedCells = m_2DHumanCenteredGrid->getSortedCells();
 
     Vector2d startPos;

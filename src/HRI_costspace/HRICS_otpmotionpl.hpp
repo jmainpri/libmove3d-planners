@@ -62,7 +62,7 @@ namespace HRICS
 
     private:
         void initCostSpace();
-        void initHumanCenteredGrid();
+        void initHumanCenteredGrid(double cellsize);
 
         Robot* m_Human;
         EnvGrid* m_2DGrid;
