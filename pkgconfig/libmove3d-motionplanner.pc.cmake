@@ -10,5 +10,5 @@ MPLibsLibs=@Move3DMPLIB_Compilation_libs@
 Name: libmove3d-motionplanner
 Description: Motion Planning Platform - Headless library
 Version: @BIOMOVE3D_VERSION@
-Libs: ${MPLibsFlags} -L${libdir} -llibmove3d-motionplanner
+Libs: ${MPLibsFlags} -L${libdir} -lmove3d-motionplanner
 Cflags: -I${includedir}/libmove3d-motionplanner/src ${MPLibsIncludes} ${MPLibsFlags} 

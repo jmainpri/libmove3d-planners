@@ -292,18 +292,23 @@ void HRICS_init(HRI_AGENTS* agents)
 	HRICS_activeDist = HRICS_MotionPL->getDistance();
 	API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid();
 	
-	if( ENV.getBool(Env::HRIAutoLoadGrid) )
+	if( ENV.getBool(Env::HRIAutoLoadGrid) && getenv("HOME_MOVE3D") )
 	{
-    string home(getenv("HOME_MOVE3D"));
-    string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
+	  string home(getenv("HOME_MOVE3D"));
+	  string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
 		
-    fileName = home + fileName;
-    
-		// Reads the grid from XML and sets it ti the HRICS_MotionPL
-		HRICS_loadGrid(fileName);
-		HRICS_activeNatu->setGrid(dynamic_cast<HRICS::NaturalGrid*>(API_activeGrid));
-		ENV.setBool(Env::drawGrid,false);
+	  fileName = home + fileName;
+	  
+	  // Reads the grid from XML and sets it ti the HRICS_MotionPL
+	  HRICS_loadGrid(fileName);
+	  HRICS_activeNatu->setGrid(dynamic_cast<HRICS::NaturalGrid*>(API_activeGrid));
+	  ENV.setBool(Env::drawGrid,false);
 	}
+	else
+	  {
+	    cout << "HRICS Error : Grid not loaded!!!" << endl;
+	    cout << "HOME_MOVE3D is : " << getenv("HOME_MOVE3D") << endl;
+	  }
 	
 	ENV.setInt(Env::hriCostType,HRICS_Combine);
   
