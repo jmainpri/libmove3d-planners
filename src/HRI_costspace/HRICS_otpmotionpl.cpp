@@ -16,6 +16,10 @@
 
 #include "API/Trajectory/smoothing.hpp"
 
+#ifdef LIGHT_PLANNER
+#include "LightPlanner-pkg.h"
+#endif
+
 using namespace std;
 using namespace tr1;
 using namespace HRICS;
@@ -30,6 +34,9 @@ extern API::TwoDGrid* API_activeRobotGrid;
 
 extern Eigen::Vector3d current_WSPoint;
 extern pair<double,Eigen::Vector3d > current_cost;
+
+std::vector<Eigen::Vector3d> OTPList;
+int ConfigHR::index = 0;
 
 OTPMotionPl::OTPMotionPl() : HumanAwareMotionPlanner() , m_PathExist(false) , m_HumanPathExist(false), m_pathIndex(-1)
 {
@@ -51,18 +58,14 @@ OTPMotionPl::OTPMotionPl() : HumanAwareMotionPlanner() , m_PathExist(false) , m_
             cout << "Humans is " << name << endl;
         }
     }
-    initCostSpace();
-    initDistance();
-    m_VisibilitySpace = new Visibility(m_Human);
-}
 
+    initAll();
+}
 
 OTPMotionPl::OTPMotionPl(Robot* R, Robot* H) : HumanAwareMotionPlanner() , m_Human(H) , m_PathExist(false) , m_HumanPathExist(false), m_pathIndex(-1)
 {
     this->setRobot(R);
-    initCostSpace();
-    initDistance();
-    m_VisibilitySpace = new Visibility(m_Human);
+    initAll();
 }
 
 OTPMotionPl::~OTPMotionPl()
@@ -70,9 +73,9 @@ OTPMotionPl::~OTPMotionPl()
     delete m_2DGrid;
 }
 
-
-void OTPMotionPl::initCostSpace()
+void OTPMotionPl::initAll()
 {
+    // initCostSpace
     m_EnvSize.resize(4);
     m_EnvSize[0] = XYZ_ENV->box.x1; m_EnvSize[1] = XYZ_ENV->box.x2;
     m_EnvSize[2] = XYZ_ENV->box.y1; m_EnvSize[3] = XYZ_ENV->box.y2;
@@ -80,8 +83,27 @@ void OTPMotionPl::initCostSpace()
     m_2DGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),m_EnvSize,false);
     m_2DGrid->setRobot(_Robot);
     m_2DGrid->setHuman(m_Human);
-}
 
+	// initDistance
+	vector<Robot*> m_Humans;
+	m_Humans.push_back(m_Human);
+	m_DistanceSpace = new Distance(_Robot,m_Humans);
+
+	if (_Robot)
+	{
+		cout << "Robot " << _Robot->getName() << endl;
+		cout << "Robot get struct " << _Robot->getRobotStruct() << endl;
+	}
+
+	m_DistanceSpace->parseHumans();
+
+	// initVisibility
+	m_VisibilitySpace = new Visibility(m_Human);
+
+    // init pos
+    shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+    m_Human->setInitialPosition(*q_human_cur);
+}
 
 void OTPMotionPl::initHumanCenteredGrid(double cellsize)
 {
@@ -95,8 +117,6 @@ void OTPMotionPl::initHumanCenteredGrid(double cellsize)
 
     API_activeRobotGrid = m_2DHumanCenteredGrid;
 }
-
-
 
 /**
   * Takes the robot initial config and calls the solve A*
@@ -221,11 +241,6 @@ bool OTPMotionPl::computeAStarIn2DGrid()
                 startHumanCell,
                 m_2DGrid);
 
-//        config = _Robot->getGoTo();
-
-//        pos[0] = config->at(firstIndexOfRobotDof + 0);
-//        pos[1] = config->at(firstIndexOfRobotDof + 1);
-
         EnvCell* goalHumanCell = dynamic_cast<EnvCell*>(lastReachedCell);//(m_2DGrid->getCell(pos));
         Vector2i goalHumanCoord = goalHumanCell->getCoord();
 
@@ -285,20 +300,8 @@ bool OTPMotionPl::computeAStarIn2DGrid()
         m_2DHumanCellPath.clear();
     }
 
-
-
-
-    //    Trajectory* traj = new Trajectory(new Robot(XYZ_ROBOT));
-    //
-    //    traj->replaceP3dTraj();
-    //    string str = "g3d_draw_allwin_active";
-    //    write(qt_fl_pipe[1],str.c_str(),str.length()+1);
-    //    ENV.setBool(Env::drawTraj,true);
-    //    cout << "solution : End Search" << endl;
-
     return true;
 }
-
 
 void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
 {
@@ -450,6 +453,69 @@ void OTPMotionPl::draw2dPath()
     }
 }
 
+bool OTPMotionPl::OTPonly(int th)
+{
+
+	m_Human->setAndUpdate(*m_Human->getInitialPosition());
+	Vector3d transfPoint;
+	if ( m_ReachableSpace == NULL )
+	{
+		cout << "No ReachableSpace cost space initialized" << endl;
+		return false;
+	}
+
+	vector< pair<double,Vector3d > > ReachablePoints = m_ReachableSpace->getReachableWSPoint();
+	vector< pair<double,Vector3d > > costs;
+
+        // Fills each pair with
+        // the cost of the sum of each criteria
+    for (unsigned int i=0; i<ReachablePoints.size(); i++)
+    {
+        double KDist = ENV.getDouble(Env::Kdistance);
+        double KVisi = ENV.getDouble(Env::Kvisibility);
+        double KReac = ENV.getDouble(Env::Kreachable);
+
+        Vector3d point   = ReachablePoints[i].second;
+
+        double CostDist = m_DistanceSpace->getWorkspaceCost(point);
+        double CostReach = ReachablePoints[i].first;
+        double CostVisib = m_VisibilitySpace->getCost(point);
+
+        Vector3d localCosts;
+        localCosts[0] = CostDist;
+        localCosts[1] = CostReach;
+        localCosts[2] = CostVisib;
+
+        ReachablePoints[i].first = (KDist*CostDist + KVisi*CostVisib + KReac*CostReach )/ 3;
+
+		pair<double,Vector3d > p;
+		p.first = ReachablePoints[i].first;
+		p.second = localCosts;
+
+		costs.push_back( p );
+	}
+
+	transfPoint = ReachablePoints[th].second;
+
+	if (m_ReachableSpace->computeIsReachableAndMove(transfPoint,false))
+	{
+		current_cost.first = ReachablePoints[th].first;
+		current_cost.second = costs[th].second;
+		current_WSPoint = transfPoint;
+
+		cout << "the OTP is : \n" << transfPoint << endl;
+
+		computeProx(transfPoint,1);
+		computeHight(transfPoint,1);
+		computeAngle(transfPoint,1);
+
+		return true;
+	}
+
+	m_Human->setAndUpdate(*m_Human->getInitialPosition());
+	placeRobot();
+	return false;
+}
 
 bool OTPMotionPl::simpleComputeBaseAndOTP()
 {
@@ -498,17 +564,53 @@ bool OTPMotionPl::simpleComputeBaseAndOTP()
       {
           if (computeUpBodyOpt())
           {
+//              ComputePR2Gik();
             _Robot->setGoTo(*_Robot->getCurrentPos());
-            _Robot->setAndUpdate(*q_robot_cur);
+//            _Robot->setAndUpdate(*q_robot_cur);
 
             m_Human->setGoTo(*m_Human->getCurrentPos());
-            m_Human->setAndUpdate(*q_human_cur);
+//            m_Human->setAndUpdate(*q_human_cur);
 
             return true;
           }
       }
   }
   return false;
+}
+
+bool OTPMotionPl::ComputePR2Gik()
+{
+    initPR2GiveConf();
+    cout << "Workspace::computePR2GIK()" << endl;
+
+    int armId = 0;
+    ArmManipulationData& armData = (*_Robot->getRobotStruct()->armManipulationData)[armId];
+    ManipulationConfigs manipConf(_Robot->getRobotStruct());
+    gpGrasp grasp;
+    double confCost = -1;
+
+    vector<double> target(6);
+    target.at(0) = current_WSPoint(0);
+    target.at(1) = current_WSPoint(1);
+    target.at(2) = current_WSPoint(2);
+    target.at(3) = P3D_HUGE;
+    target.at(4) = P3D_HUGE;
+    target.at(5) = P3D_HUGE;
+
+    double* q = manipConf.getFreeHoldingConf(NULL, armId, grasp, armData.getCcCntrt()->Tatt, confCost, target, NULL);
+    _Robot->activateCcConstraint();
+    if (q != NULL)
+    {
+        shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
+                                              new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
+        _Robot->setAndUpdate( *m_q );
+        return true;
+    }
+    else
+    {
+        initPR2GiveConf();
+        return false;
+    }
 }
 
 bool OTPMotionPl::computeObjectTransfertPoint()
@@ -727,7 +829,6 @@ bool OTPMotionPl::computeUpBodyOpt()
 	for (unsigned int i=0; i<ReachablePoints.size(); i++)
 	{
 		transfPoint = ReachablePoints[i].second;
-
 		if (m_ReachableSpace->computeIsReachableAndMove(transfPoint,m_ReachableSpace->getGrid()->isReachableWithLA(transfPoint)))
 		{
 			current_cost.first = ReachablePoints[i].first;
@@ -736,28 +837,14 @@ bool OTPMotionPl::computeUpBodyOpt()
 
 			return true;
 		}
+
 	}
 	return false;
 }
 
-void OTPMotionPl::initDistance()
-{
-	vector<Robot*> m_Humans;
-	m_Humans.push_back(m_Human);
-	m_DistanceSpace = new Distance(_Robot,m_Humans);
-
-	if (_Robot)
-	{
-		cout << "Robot " << _Robot->getName() << endl;
-		cout << "Robot get struct " << _Robot->getRobotStruct() << endl;
-	}
-
-	m_DistanceSpace->parseHumans();
-}
-
 bool OTPMotionPl::moveToNextPos()
 {
-	if (m_pathIndex == -1)
+	if (m_pathIndex < 0)
 	{
 		_Robot->setAndUpdate(*_Robot->getInitialPosition());
 		m_Human->setAndUpdate(*m_Human->getInitialPosition());
@@ -795,4 +882,429 @@ bool OTPMotionPl::moveToNextPos()
 
 	return robotPathLimit && humanPathLimit;
 
+}
+
+void OTPMotionPl::initPR2GiveConf()
+{
+    cout << "Workspace::initPR2GiveConf()" << endl;
+
+    shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
+
+   configPt q;
+   q = p3d_alloc_config(_Robot->getRobotStruct());
+
+
+   for (unsigned int i = 0; i < 48; i++)
+   {
+       q[i] = (*q_cur)[i];
+   }
+
+//   q[12] = 0;
+   q[13] = 0;
+   q[14] = 0;
+   q[15] = 0;
+   q[17] = 37.00*M_PI/180;
+   q[18] = -29.00*M_PI/180;
+   q[19] = -133.00*M_PI/180;
+   q[20] = -187.00*M_PI/180;
+   q[21] = -75.00*M_PI/180;
+   q[22] = 180.00*M_PI/180;
+   q[23] = 0;
+   q[24] = 0;
+   q[25] = 0;
+   q[26] = 80.00*M_PI/180;
+   q[27] = 85.00*M_PI/180;
+   q[28] = -90.00*M_PI/180;
+   q[29] = 0;
+   q[30] = 0;
+   q[31] = 90.00*M_PI/180;
+   q[32] = 0;
+   q[33] = 0;
+   q[34] = 0;
+   q[35] = 0;
+   q[36] = 0;
+
+
+
+   shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
+                                         new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
+   _Robot->setAndUpdate( *m_q );
+   _Robot->setInitialPosition(*m_q );
+}
+
+bool OTPMotionPl::computeProx(Vector3d WSPoint, int proximiti)
+{
+	int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+	shared_ptr<Configuration> q_cur = m_Human->getCurrentPos();
+	double x = (*q_cur)[firstIndexOfHumanDof + 0];
+	double y = (*q_cur)[firstIndexOfHumanDof + 1];
+	double dist = std::sqrt(std::pow(WSPoint[0] - x, 2) + std::pow(WSPoint[1] - y, 2));
+
+	cout << "planar distance is                  : " << dist << endl;
+
+	if (proximiti == 0 && dist < 0.35) { return true; }
+	else if (proximiti == 1 && dist < 0.7 && dist >= 0.35) { return true; }
+	else if (proximiti == 2 && dist >= 0.7 ) { return true; }
+
+	return false;
+
+}
+
+bool OTPMotionPl::computeHight(Eigen::Vector3d WSPoint, int hight)
+{
+
+	cout << "height is                           : " << WSPoint[2] << endl;
+	if (hight == 0 && WSPoint[2] < 1.05) { return true; }
+	else if (hight == 1 && WSPoint[2] < 1.35 && WSPoint[2] >= 1.05) { return true; }
+	else if (hight == 2 && WSPoint[2] >= 1.35 ) { return true; }
+
+	return false;
+}
+
+bool OTPMotionPl::computeAngle(Eigen::Vector3d WSPoint, int angle)
+{
+	int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+	shared_ptr<Configuration> q_cur = m_Human->getCurrentPos();
+	double x = (*q_cur)[firstIndexOfHumanDof + 0];
+	double y = (*q_cur)[firstIndexOfHumanDof + 1];
+	double gaze = (*q_cur)[firstIndexOfHumanDof + 5];
+	double refAngle = std::atan2(WSPoint[1] - y, WSPoint[0] - x) - gaze;
+
+	cout << "the angle between gaze and point is : " << refAngle*180/M_PI << endl;
+
+	if (angle == 0 && refAngle < M_PI/3 + M_PI/36 && refAngle > M_PI/3 - M_PI/36) { return true; }
+	else if (angle == 1 && refAngle <  M_PI/6 + M_PI/36 && refAngle >  M_PI/6 - M_PI/36) { return true; }
+	else if (angle == 2 && refAngle <  0      + M_PI/36 && refAngle >  0      - M_PI/36) { return true; }
+	else if (angle == 3 && refAngle < -M_PI/6 + M_PI/36 && refAngle > -M_PI/6 - M_PI/36) { return true; }
+	else if (angle == 4 && refAngle < -M_PI/3 + M_PI/36 && refAngle > -M_PI/3 - M_PI/36) { return true; }
+	else if (angle == 5 && refAngle < -M_PI/2 + M_PI/36 && refAngle > -M_PI/2 - M_PI/36) { return true; }
+
+	return false;
+}
+
+void OTPMotionPl::addToList()
+{
+	int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+	shared_ptr<Configuration> q_cur = m_Human->getCurrentPos();
+	Vector3d OTPHumanCenter;
+	OTPHumanCenter[0] = current_WSPoint[0] - (*q_cur)[firstIndexOfHumanDof + 0];
+	OTPHumanCenter[1] = current_WSPoint[1] - (*q_cur)[firstIndexOfHumanDof + 1];
+	OTPHumanCenter[2] = current_WSPoint[2] - (*q_cur)[firstIndexOfHumanDof + 2];
+
+	m_OTPList.push_back(OTPHumanCenter);
+}
+
+void OTPMotionPl::addToList(Eigen::Vector3d WSPoint)
+{
+//	int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+//	shared_ptr<Configuration> q_cur = m_Human->getCurrentPos();
+	Vector3d OTPHumanCenter;
+	OTPHumanCenter[0] = WSPoint[0];
+	OTPHumanCenter[1] = WSPoint[1];
+	OTPHumanCenter[2] = WSPoint[2];
+
+	m_OTPList.push_back(OTPHumanCenter);
+}
+
+void OTPMotionPl::showOTPList()
+{
+	for (unsigned int i =0 ; i < m_OTPList.size(); i++)
+	{
+		cout << "-----------------------" << endl << "the OTP is : \n" << m_OTPList.at(i) << endl;
+		computeProx(m_OTPList.at(i),1);
+		computeHight(m_OTPList.at(i),1);
+		computeAngle(m_OTPList.at(i),1);
+
+	}
+}
+
+void OTPMotionPl::setCurrentOTP(Eigen::Vector3d WSPoint)
+{
+
+	m_Human->setAndUpdate(*m_Human->getInitialPosition());
+	int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+	shared_ptr<Configuration> q_cur = m_Human->getCurrentPos();
+
+
+	current_WSPoint[0] = WSPoint[0] + (*q_cur)[firstIndexOfHumanDof + 0];
+	current_WSPoint[1] = WSPoint[1] + (*q_cur)[firstIndexOfHumanDof + 1];
+	current_WSPoint[2] = WSPoint[2] + (*q_cur)[firstIndexOfHumanDof + 2];
+
+	shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+	shared_ptr<Configuration> q_robot_tmp = _Robot->getCurrentPos();
+	int firstIndexOfDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+	(*q_robot_tmp)[firstIndexOfDof + 0] = 0;
+	(*q_robot_tmp)[firstIndexOfDof + 1] = 0;
+	_Robot->setAndUpdate(*q_robot_tmp);
+
+	m_ReachableSpace->computeIsReachableAndMove(current_WSPoint,false);
+	_Robot->setAndUpdate(*q_robot_cur);
+}
+
+bool OTPMotionPl::placeRobot()
+{
+	int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+	shared_ptr<Configuration> q_cur = m_Human->getCurrentPos();
+	shared_ptr<Configuration> q_tmp = m_Human->getCurrentPos();
+
+	Vector2d HumanPos;
+
+	HumanPos[0] = (*q_cur)[firstIndexOfHumanDof + 0];
+	HumanPos[1] = (*q_cur)[firstIndexOfHumanDof + 1];
+
+	double gaze = (*q_cur)[firstIndexOfHumanDof + 5];
+	double refAngle = std::atan2(current_WSPoint[1] - HumanPos[1], current_WSPoint[0] - HumanPos[0]) - gaze;
+
+	shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+	int firstIndexOfDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+	(*q_robot_cur)[firstIndexOfDof + 0] = cos(refAngle)*0.7 + current_WSPoint[0];
+	(*q_robot_cur)[firstIndexOfDof + 1] = sin(refAngle)*0.7 + current_WSPoint[1];
+
+	Vector2d point;
+	point[0] = current_WSPoint[0];
+	point[1] = current_WSPoint[1];
+
+	Vector2d gazeDirect = HumanPos - point;
+
+	(*q_robot_cur)[firstIndexOfDof + 5] = atan2(gazeDirect.y(),gazeDirect.x());
+	(*q_robot_cur)[firstIndexOfDof + 6] = 0.0;
+	_Robot->setAndUpdate(*q_robot_cur);
+
+	m_Human->setAndUpdate(*m_Human->getInitialPosition());
+
+	initPR2GiveConf();
+
+	if (!ComputePR2Gik())
+	{
+		(*q_robot_cur)[firstIndexOfDof + 6] = 0.31;
+		_Robot->setAndUpdate(*q_robot_cur);
+		if (!ComputePR2Gik())
+		{
+			(*q_robot_cur)[firstIndexOfDof + 6] = 0;
+			_Robot->setAndUpdate(*q_robot_cur);
+			return false;
+		}
+
+	}
+
+	m_Human->setAndUpdate(*q_cur);
+
+
+	return true;
+}
+
+void OTPMotionPl::drawOTPList(bool value)
+{
+	if (value)
+	{
+		OTPList = m_OTPList;
+	}
+	else
+	{
+		OTPList.clear();
+	}
+}
+
+
+void OTPMotionPl::placeHuman()
+{
+	shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+	_Robot->setAndUpdate(*_Robot->getInitialPosition());
+
+	m_ReachableSpace->computeIsReachableAndMove(current_WSPoint,false);
+	_Robot->setAndUpdate(*q_robot_cur);
+
+
+//	char file[256];
+//	sprintf(file,"/home/magharbi/MySofts/test.ttt");
+//	cout << "Saving graph to : " << file << endl;
+//	p3d_writeGraph(XYZ_GRAPH, file, DEFAULTGRAPH);
+
+}
+
+std::vector<ConfigHR> OTPMotionPl::addConfToList()
+{
+	shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+	shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+
+	ConfigHR chr;
+	chr.setHumanConf(m_Human, q_human_cur->getConfigStruct());
+	chr.setRobotConf(_Robot, q_robot_cur->getConfigStruct());
+
+	m_configList.push_back(chr);
+
+	return m_configList;
+}
+
+void OTPMotionPl::removeLastConf()
+{
+	m_configList.pop_back();
+	ConfigHR::index--;
+}
+
+void OTPMotionPl::saveToXml(string filename)
+{
+    stringstream ss;
+    string str;
+
+    //Creating the file Variable version 1.0
+    xmlDocPtr doc = xmlNewDoc(xmlCharStrdup("1.0"));
+
+
+    //Writing the root node
+    xmlNodePtr root = xmlNewNode (NULL, xmlCharStrdup("StoredConfiguration"));
+
+    //nb node
+    str.clear(); ss << m_configList.size(); ss >> str; ss.clear();
+    xmlNewProp (root, xmlCharStrdup("nb_node"), xmlCharStrdup(str.c_str()));
+
+    for (unsigned int i = 0; i< m_configList.size(); i++)
+    {
+        std::ostringstream oss;
+        oss << i;
+        string name = "node_" + oss.str();
+        xmlNodePtr cur = xmlNewChild (root, NULL, xmlCharStrdup(name.c_str()), NULL);
+        xmlNodePtr curHuman = xmlNewChild (cur, NULL, xmlCharStrdup("humanConfig"), NULL);
+        writeXmlRobotConfig(curHuman,m_Human->getRobotStruct(),m_configList.at(i).getHumanConf());
+        xmlNodePtr curRobot = xmlNewChild (cur, NULL, xmlCharStrdup("robotConfig"), NULL);
+        writeXmlRobotConfig(curRobot,_Robot->getRobotStruct(),m_configList.at(i).getRobotConf());
+    }
+
+
+    xmlDocSetRootElement(doc, root);
+    //	writeRootNode(graph, root);
+    //	writeSpeGraph(graph, file, root);
+
+    //Writing the file on HD
+    xmlSaveFormatFile (filename.c_str(), doc, 1);
+    xmlFreeDoc(doc);
+
+    cout << "Writing Grid to : " << filename << endl;
+
+}
+
+int OTPMotionPl::loadFromXml(string filename)
+{
+
+    int nbNode = 0;
+
+    xmlDocPtr doc;
+    xmlNodePtr cur;
+    xmlNodePtr root;
+
+    doc = xmlParseFile(filename.c_str());
+
+    if(doc==NULL)
+    {
+        cout << "Document not parsed successfully (doc==NULL)" << endl;
+        return 0;
+    }
+
+    root = xmlDocGetRootElement(doc);
+
+    if (root == NULL)
+    {
+        cout << "Document not parsed successfully" << endl;
+        xmlFreeDoc(doc);
+        return 0;
+    }
+
+	if (xmlStrcmp(root->name, xmlCharStrdup("StoredConfiguration")))
+	{
+		cout << "Document of the wrong type root node not StoredConfiguration" << endl;
+		xmlFreeDoc(doc);
+		return 0;
+	}
+
+	xmlChar* tmp;
+
+	tmp = xmlGetProp(root, xmlCharStrdup("nb_node"));
+
+	sscanf((char *) tmp, "%d", &nbNode );
+	xmlFree(tmp);
+
+	/***************************************/
+	cur = root->xmlChildrenNode->next;
+	int i =0;
+
+	m_configList.clear();
+	while (i < nbNode)
+	{
+		if (cur == NULL)
+		{
+			cout << "Document error on the number of node" << endl;
+			return 0;
+		}
+		std::string name(reinterpret_cast<const char*>(cur->name));
+
+
+		if (name.find("node") != string::npos )
+		{
+			i++;
+			xmlNodePtr ptrTmp = cur->xmlChildrenNode->next;
+			if (xmlStrcmp(ptrTmp->name, xmlCharStrdup("humanConfig")))
+			{
+				cout << "Error: no human config" << endl;
+				return 0;
+			}
+			configPt q_hum =readXmlConfig(m_Human->getRobotStruct(),ptrTmp->xmlChildrenNode->next);
+
+
+//			cout << cur->name << endl;
+//			readXmlConfig()
+
+			ptrTmp = ptrTmp->next->next;
+			if (xmlStrcmp(ptrTmp->name, xmlCharStrdup("robotConfig")))
+			{
+				cout << "Error: no human config" << endl;
+				return 0;
+			}
+			configPt q_rob =readXmlConfig(_Robot->getRobotStruct(),ptrTmp->xmlChildrenNode->next);
+
+			ConfigHR chr;
+			chr.setHumanConf(m_Human, q_hum);
+			chr.setRobotConf(_Robot, q_rob);
+
+			m_configList.push_back(chr);
+		}
+
+
+
+		cur = cur->next;
+	}
+
+
+	return nbNode;
+
+//	configPt readXmlConfig(p3d_rob *robot, xmlNodePtr cur)
+
+}
+
+void OTPMotionPl::setRobotsToConf(int id)
+{
+	for (unsigned int i = 0; i< m_configList.size(); i++)
+	{
+		if (m_configList.at(i).getId() == id)
+		{
+			shared_ptr<Configuration> ptrQ_robot(new Configuration(_Robot,m_configList.at(i).getRobotConf()));
+			_Robot->setAndUpdate(*ptrQ_robot);
+
+			shared_ptr<Configuration> ptrQ_human(new Configuration(m_Human,m_configList.at(i).getHumanConf()));
+			m_Human->setAndUpdate(*ptrQ_human);
+			break;
+		}
+	}
+}
+
+
+void ConfigHR::setHumanConf(Robot* human, configPt q)
+{
+	q_hum = p3d_copy_config(human->getRobotStruct(),q);
+}
+
+void ConfigHR::setRobotConf(Robot* robot, configPt q)
+{
+	q_rob = p3d_copy_config(robot->getRobotStruct(),q);
 }

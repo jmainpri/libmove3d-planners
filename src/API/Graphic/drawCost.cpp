@@ -44,6 +44,8 @@ extern Eigen::Vector3d current_WSPoint;
 extern pair<double, Eigen::Vector3d > current_cost;
 extern std::string hri_text_to_display;
 
+extern std::vector<Eigen::Vector3d> OTPList;
+
 // TODO callback OOMOVE3D
 //#if defined( CXX_PLANNER )
 
@@ -236,6 +238,10 @@ void drawGauge(int number, double cost)
 #ifdef HRI_COSTSPACE
 void g3d_draw_hrics()
 {
+
+
+
+
 	if( ENV.getBool(Env::enableHri) )
 	{
 		if( ENV.getBool(Env::HRIPlannerCS) && ENV.getBool(Env::drawTraj) )
@@ -359,6 +365,8 @@ void g3d_draw_hrics()
   
   if (current_WSPoint(0) != 0 && current_WSPoint(1) != 0)
   {
+
+
     double colorvector[4];
     
     colorvector[1] = 1.0;       //green
@@ -384,12 +392,47 @@ void g3d_draw_hrics()
     
     //    glDisable(GL_CULL_FACE);
     glDisable(GL_BLEND);
-    drawGauge(0, current_cost.first/cost_max);
+//    drawGauge(0, current_cost.first/cost_max);
     
-    drawGauge(1, current_cost.second[0]);
-    drawGauge(2, current_cost.second[1]);
-    drawGauge(3, current_cost.second[2]);
+//    drawGauge(1, current_cost.second[0]);
+//    drawGauge(2, current_cost.second[1]);
+//    drawGauge(3, current_cost.second[2]);
+
+    shared_ptr<Configuration> q_rob = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot()->getCurrentPos();
+    shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
+
+//    glLineWidth(3.);
+//    g3d_drawOneLine((*q_hum)[indexFirstDof + 0],   (*q_hum)[indexFirstDof + 1],    current_WSPoint[2],
+//                    (*q_rob)[indexFirstDof + 0],   (*q_rob)[indexFirstDof + 1],    current_WSPoint[2],
+//                    Yellow, NULL);
+//    glLineWidth(1.);
+
+
   }
+  int OTPListSize = OTPList.size();
+  if (OTPListSize > 0)
+  {
+      shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
+      int indexFirstDof = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint("Pelvis")->getIndexOfFirstDof();
+      for (int i=0; i < OTPListSize; i ++)
+      {
+          double colorvector[4];
+          colorvector[0] = 0.0;       //red
+          colorvector[1] = 1.0;       //green
+          colorvector[2] = 0.0;       //blue
+          colorvector[3] = 0.9;       //transparency
+
+          glEnable(GL_BLEND);
+          g3d_set_color(Any,colorvector);
+          g3d_draw_solid_sphere(OTPList.at(i)[0] + (*q_hum)[indexFirstDof + 0],
+                                OTPList.at(i)[1] + (*q_hum)[indexFirstDof + 1],
+                                OTPList.at(i)[2] + (*q_hum)[indexFirstDof + 2],
+                                0.02, 10);
+          glDisable(GL_BLEND);
+      }
+  }
+
+
 }
 #endif
 
