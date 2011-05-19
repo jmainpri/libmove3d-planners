@@ -96,7 +96,7 @@ vector<pair<double,Vector3d> > RobotBaseGrid::getCells()
 {
     m_NaturalCostSpace->getRobotBaseGrid()->recomputeAllCosts();
     vector<pair<double,Vector3d> > cellsCosts;
-    for (unsigned int i = 0; i < getNumberOfCells(); i++)
+    for (int i = 0; i < getNumberOfCells(); i++)
     {
         RobotBaseCell* iCell = dynamic_cast<RobotBaseCell*>( _cells[i] );
         pair<double,Vector3d> cellPair;

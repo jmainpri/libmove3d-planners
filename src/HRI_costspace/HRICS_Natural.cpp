@@ -609,9 +609,9 @@ void Natural::initHumanBaseGrid(vector<double> box)
     configPt q;
     q = p3d_get_robot_config(m_Agents->humans[0]->robotPt);
 
-    envSize[0] = *(q+6) + box[0]; envSize[1] = *(q+6) + box[1];
-    envSize[2] = *(q+7) + box[2]; envSize[3] = *(q+7) + box[3];
-    envSize[4] = *(q+8) + box[4]; envSize[5] = *(q+8) + box[5];
+    envSize[0] = /**(q+6) +*/ box[0]; envSize[1] = /**(q+6) +*/ box[1];
+    envSize[2] = /**(q+7) +*/ box[2]; envSize[3] = /**(q+7) +*/ box[3];
+    envSize[4] = /**(q+8) +*/ box[4]; envSize[5] = /**(q+8) +*/ box[5];
 
     m_Grid = new NaturalGrid(0.1,envSize,this);
 
@@ -1134,7 +1134,7 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
 	{
     configPt q;
     
-    double distance_tolerance = 0.005;
+    double distance_tolerance = 0.05;
     
     if(m_IsHuman) // Humans
     {
@@ -1219,7 +1219,7 @@ bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRight
   if((m_IsHuman && (m_Agents->humans_no > 0)) || ( (!m_IsHuman) && (m_Agents->robots_no > 0))) // Humans ot Robots
   {
     configPt q;
-    double distance_tolerance = 0.02;
+    double distance_tolerance = 0.5;
     if(m_IsHuman)
     {
         q = p3d_get_robot_config(m_Agents->humans[0]->robotPt);
@@ -1228,8 +1228,9 @@ bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRight
         shared_ptr<Configuration> ptrQ(new Configuration(m_Robot,q));
 
         if (IKSucceded){
-            if( ptrQ->isInCollision())
+            if(! ptrQ->isInCollision())
             {
+                ptrQ->print();
               IKSucceded = false;
               cout << "Config in collision in " << __func__ << endl;
             }

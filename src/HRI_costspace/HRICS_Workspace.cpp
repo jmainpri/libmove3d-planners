@@ -1707,6 +1707,10 @@ void Workspace::computePR2GIK(bool move)
                                               new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
         _Robot->setAndUpdate( *m_q );
     }
+    else
+    {
+        initPR2GiveConf();
+    }
 
 
 
