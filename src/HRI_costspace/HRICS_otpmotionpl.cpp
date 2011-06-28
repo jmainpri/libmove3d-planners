@@ -2291,7 +2291,7 @@ void OTPMotionPl::clearCostsfile()
     ofstream myfile;
     string fileName = "/statFiles/OtpComputing/configurationsCosts.lst";
     string home = getenv("HOME_MOVE3D") + fileName;
-    myfile.open (home.c_str(),ios::app);
+    myfile.open (home.c_str());
     myfile << "" << endl;
     myfile.close();
 }

@@ -319,6 +319,16 @@ public:
 
 std::vector<std::pair<double,EnvCell*> > EnvGrid::getSortedGrid()
 {
+    double robotSpeed = PlanEnv->getDouble(PlanParam::env_robotSpeed);//1;
+    double humanSpeed = PlanEnv->getDouble(PlanParam::env_humanSpeed);//1;
+    double timeStamp = PlanEnv->getDouble(PlanParam::env_timeStamp);//0.1;
+    double psi = PlanEnv->getDouble(PlanParam::env_psi);//0.99;
+    double delta = PlanEnv->getDouble(PlanParam::env_delta);//0.01;
+    double objectNecessity = PlanEnv->getDouble(PlanParam::env_objectNessecity);
+
+    double ksi = PlanEnv->getDouble(PlanParam::env_ksi);//0.5;
+    double rho = PlanEnv->getDouble(PlanParam::env_rho);//0.5;
+
     if (!gridIsSorted)
     {
         std::vector<std::pair<double,EnvCell*> > vect;
@@ -328,8 +338,14 @@ std::vector<std::pair<double,EnvCell*> > EnvGrid::getSortedGrid()
             p.second = m_HumanAccessible.at(i);
             if (p.second->getCurrentHumanRobotReacheable().size() > 0 && p.second->isHumAccessible())
             {
-                p.first = max((m_HumanAccessible.at(i)->getRobotBestPos().first / m_robotMaxDist)*PlanEnv->getDouble(PlanParam::env_objectNessecity)
-                               ,(m_HumanAccessible.at(i)->getHumanDist()/m_humanMaxDist));
+//                p.first = max((m_HumanAccessible.at(i)->getRobotBestPos().first / m_robotMaxDist)*PlanEnv->getDouble(PlanParam::env_objectNessecity)
+//                               ,(m_HumanAccessible.at(i)->getHumanDist()/m_humanMaxDist));
+                double hTime = m_HumanAccessible.at(i)->getHumanDist()/humanSpeed;
+                double rTime = m_HumanAccessible.at(i)->getRobotBestPos().first/robotSpeed;
+                double tempCost = max(hTime,rTime) * timeStamp;
+
+                double mvCost = m_HumanAccessible.at(i)->getHumanDist();
+                p.first = (ksi * mvCost) * (1 - objectNecessity)/(rho + ksi) + tempCost * objectNecessity;
                 vect.push_back(p);
             }
         }
