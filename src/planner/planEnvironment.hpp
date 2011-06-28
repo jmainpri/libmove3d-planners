@@ -37,12 +37,35 @@ namespace  PlanParam
 		withShortCut,
 		withDeformation,
 		withDescent,
-    drawColorConfig
+	drawColorConfig,
+
+        //Object Transfert point variable
+        env_humanGridDraw,
+        env_robotGridDraw,
+        drawRandomMap,
+        env_isStanding,
+        env_drawRandomPoint,
+        env_drawDistGrid,
+        env_drawOnlyBest,
+        env_normalRand,
+        env_fusedGridRand
 	};
 	
 	enum intParameter 
 	{
-		tata
+		tata,
+
+		// Object TransfertPoint variable
+		env_maxIter,
+		env_nbRandomRotOnly,
+		env_totMaxIter,
+
+		// grid cells
+		env_xToDraw,
+		env_yToDraw,
+		env_timeShow,
+		env_pow
+
 	};
 	
 	enum doubleParameter 
@@ -51,7 +74,22 @@ namespace  PlanParam
 		optimTimeLimit,
 		MaxFactor,
 		MinStep,
-		costTraj
+		costTraj,
+
+		// Object TransfertPoint variable
+		env_randomXMinLimit,
+		env_randomXMaxLimit,
+		env_randomYMinLimit,
+		env_randomYMaxLimit,
+		env_robotSpeed,
+		env_humanSpeed,
+		env_timeStamp,
+		env_psi,
+		env_delta,
+		env_ksi,
+		env_rho,
+		env_sittingOffset,
+		env_objectNessecity
 	};
 	
 	enum stringParameter 
