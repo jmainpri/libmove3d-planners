@@ -2269,7 +2269,9 @@ double OTPMotionPl::getDistFromCell(int x, int y, bool isHuman)
 void OTPMotionPl::saveCostsTofile(double cost, double randomCost)
 {
     ofstream myfile;
-    myfile.open ("/home/magharbi/Desktop/configurationsCosts.lst",ios::app);
+    string fileName = "/statFiles/OtpComputing/configurationsCosts.lst";
+    string home = getenv("HOME_MOVE3D") + fileName;
+    myfile.open (home.c_str(),ios::app);
     myfile << cost << "\t" << randomCost << endl;
     myfile.close();
 }
@@ -2277,7 +2279,9 @@ void OTPMotionPl::saveCostsTofile(double cost, double randomCost)
 void OTPMotionPl::saveCostsTofile(string cost)
 {
     ofstream myfile;
-    myfile.open ("/home/magharbi/Desktop/configurationsCosts.lst",ios::app);
+    string fileName = "/statFiles/OtpComputing/configurationsCosts.lst";
+    string home = getenv("HOME_MOVE3D") + fileName;
+    myfile.open (home.c_str(),ios::app);
     myfile << cost << endl;
     myfile.close();
 }
@@ -2285,7 +2289,9 @@ void OTPMotionPl::saveCostsTofile(string cost)
 void OTPMotionPl::clearCostsfile()
 {
     ofstream myfile;
-    myfile.open ("/home/magharbi/Desktop/configurationsCosts.lst");
+    string fileName = "/statFiles/OtpComputing/configurationsCosts.lst";
+    string home = getenv("HOME_MOVE3D") + fileName;
+    myfile.open (home.c_str(),ios::app);
     myfile << "" << endl;
     myfile.close();
 }
