@@ -54,11 +54,13 @@ namespace API
 																							unsigned int& first,
 																							unsigned int& last);
 		
-    Trajectory extractSubTrajectory(unsigned int id_start, unsigned int id_end);
+		Trajectory extractSubTrajectory(unsigned int id_start, unsigned int id_end);
     
 		Trajectory extractSubTrajectory(
 																		double param1,
 																		double param2);
+
+		bool concat(const Trajectory& traj);
 		
 		bool replacePortion(
 												unsigned int id1,

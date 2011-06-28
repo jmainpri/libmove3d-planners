@@ -271,11 +271,11 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 	
 	for (unsigned int i = 0; i < m_Courbe.size(); i++)
 	{
-    if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() ) 
-    {
-      cout << "null LocalPath in replaceP3dTraj" << endl;
-      continue;
-    }
+//    if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() )
+//    {
+//      cout << "null LocalPath in replaceP3dTraj" << endl;
+//      continue;
+//    }
     
 		localprevPt = localpathPt;
 		localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( m_Robot->getRobotStruct(), 
@@ -1504,6 +1504,17 @@ void Trajectory::cutTrajInSmallLP(unsigned int nLP)
 	}
 }
 
+bool Trajectory::concat(const Trajectory& traj)
+{
+    for( unsigned int i=0; i<traj.m_Courbe.size(); i++ )
+    {
+        m_Courbe.push_back( new LocalPath( *traj.m_Courbe[i] ));
+    }
+
+    updateRange();
+    return true;
+}
+
 bool Trajectory::replacePortion(unsigned int id1, unsigned int id2, vector<LocalPath*> paths, bool freeMemory )
 {
 	// WARNING: the ids are ids of nodes and not LocalPaths
@@ -1525,7 +1536,7 @@ bool Trajectory::replacePortion(unsigned int id1, unsigned int id2, vector<Local
     }
   } 
   
-  m_Courbe.erase(m_Courbe.begin() + id1, m_Courbe.begin() + id2);
+    m_Courbe.erase(m_Courbe.begin() + id1, m_Courbe.begin() + id2);
 	m_Courbe.insert(m_Courbe.begin() + id1, paths.begin(), paths.end());
 	
 	updateRange();
