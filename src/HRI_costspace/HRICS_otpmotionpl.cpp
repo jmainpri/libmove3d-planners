@@ -15,6 +15,8 @@
 #include "Planner-pkg.h"
 
 #include "API/Trajectory/smoothing.hpp"
+#include "planEnvironment.hpp"
+#include "time.h"
 
 #ifdef LIGHT_PLANNER
 #include "LightPlanner-pkg.h"
@@ -38,7 +40,7 @@ extern pair<double,Eigen::Vector3d > current_cost;
 std::vector<Eigen::Vector3d> OTPList;
 int ConfigHR::index = 0;
 
-OTPMotionPl::OTPMotionPl() : HumanAwareMotionPlanner() , m_PathExist(false) , m_HumanPathExist(false), m_pathIndex(-1)
+OTPMotionPl::OTPMotionPl() : HumanAwareMotionPlanner() , m_PathExist(false) , m_HumanPathExist(false), m_noPath(true), m_pathIndex(-1)
 {
     cout << "New OTPMotionPl HRI planner" << endl;
 
@@ -60,9 +62,10 @@ OTPMotionPl::OTPMotionPl() : HumanAwareMotionPlanner() , m_PathExist(false) , m_
     }
 
     initAll();
+    initHumanCenteredGrid(0.1);
 }
 
-OTPMotionPl::OTPMotionPl(Robot* R, Robot* H) : HumanAwareMotionPlanner() , m_Human(H) , m_PathExist(false) , m_HumanPathExist(false), m_pathIndex(-1)
+OTPMotionPl::OTPMotionPl(Robot* R, Robot* H) : HumanAwareMotionPlanner() , m_Human(H) , m_PathExist(false) , m_HumanPathExist(false), m_noPath(true), m_pathIndex(-1)
 {
     this->setRobot(R);
     initAll();
@@ -80,9 +83,11 @@ void OTPMotionPl::initAll()
     m_EnvSize[0] = XYZ_ENV->box.x1; m_EnvSize[1] = XYZ_ENV->box.x2;
     m_EnvSize[2] = XYZ_ENV->box.y1; m_EnvSize[3] = XYZ_ENV->box.y2;
 
-    m_2DGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),m_EnvSize,false);
-    m_2DGrid->setRobot(_Robot);
-    m_2DGrid->setHuman(m_Human);
+//    m_2DGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),m_EnvSize,false);
+
+    m_2DGrid = new EnvGrid(0.2,m_EnvSize,false,_Robot,m_Human);
+//    m_2DGrid->setRobot(_Robot);
+//    m_2DGrid->setHuman(m_Human);
 
 	// initDistance
 	vector<Robot*> m_Humans;
@@ -103,6 +108,9 @@ void OTPMotionPl::initAll()
     // init pos
     shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
     m_Human->setInitialPosition(*q_human_cur);
+
+    // Init Manipulation Planner
+    m_ManipPl = new ManipulationPlanner( _Robot->getRobotStruct() );
 }
 
 void OTPMotionPl::initHumanCenteredGrid(double cellsize)
@@ -111,7 +119,7 @@ void OTPMotionPl::initHumanCenteredGrid(double cellsize)
     m_EnvSize[0] = XYZ_ENV->box.x1; m_EnvSize[1] = XYZ_ENV->box.x2;
     m_EnvSize[2] = XYZ_ENV->box.y1; m_EnvSize[3] = XYZ_ENV->box.y2;
 
-    m_2DHumanCenteredGrid = new EnvGrid(cellsize,m_EnvSize,true);
+    m_2DHumanCenteredGrid = new EnvGrid(cellsize,m_EnvSize,true, _Robot, m_Human);
     m_2DHumanCenteredGrid->setRobot(_Robot);
     m_2DHumanCenteredGrid->setHuman(m_Human);
 
@@ -328,6 +336,7 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
                 m_2DPath.clear();
                 m_2DCellPath.clear();
                 m_PathExist = false;
+                m_noPath = true;
                 return;
 
             }
@@ -349,8 +358,10 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
                 m_2DPath.clear();
                 m_2DCellPath.clear();
                 m_PathExist = false;
+                m_noPath = true;
                 return;
             }
+
 
             for (int i=path.size()-1;i>=0;i--)
             {
@@ -359,6 +370,7 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
                 m_2DCellPath.push_back( cell );
             }
         }
+        m_noPath = false;
         m_PathExist = true;
         return;
     }
@@ -385,6 +397,7 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
                 m_2DHumanPath.clear();
                 m_2DHumanCellPath.clear();
                 m_HumanPathExist = false;
+                m_noPath = true;
                 return;
 
             }
@@ -406,6 +419,7 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
                 m_2DHumanPath.clear();
                 m_2DHumanCellPath.clear();
                 m_HumanPathExist = false;
+                m_noPath = true;
                 return;
             }
 
@@ -416,6 +430,7 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
                 m_2DHumanCellPath.push_back( cell );
             }
         }
+        m_noPath = false;
         m_HumanPathExist = true;
         return;
     }
@@ -439,7 +454,7 @@ void OTPMotionPl::draw2dPath()
         }
     }
 
-    if( m_HumanPathExist)
+    if( m_HumanPathExist )
     {
 //        cout << "Drawing 2D path" << endl;
         for(unsigned int i=0;i<m_2DHumanPath.size()-1;i++)
@@ -513,7 +528,7 @@ bool OTPMotionPl::OTPonly(int th)
 	}
 
 	m_Human->setAndUpdate(*m_Human->getInitialPosition());
-	placeRobot();
+//	placeRobot();
 	return false;
 }
 
@@ -712,31 +727,67 @@ bool OTPMotionPl::computeObjectTransfertPoint()
 
 }
 
-bool OTPMotionPl::FindTraj(Vector2d startPos, Vector2d goalPos, bool isHuman)
+double OTPMotionPl::FindTraj(Vector2d startPos, Vector2d goalPos, bool isHuman)
 {
 
 //    p3d_col_activate_robot(_Robot);
     EnvCell* startCell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(startPos));
+    cout << "start cell coord : x = " << startCell->getCoord()[0] << " y = " << startCell->getCoord()[1] << endl;
     EnvState* start = new EnvState(
             startCell,
             m_2DGrid);
 
     EnvCell* goalCell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(goalPos));
+    cout << "goal cell coord : x = " << goalCell->getCoord()[0] << " y = " << goalCell->getCoord()[1] << endl;
     EnvState* goal = new EnvState(
             goalCell,
             m_2DGrid);
 
     if ( startCell == NULL ||  goalCell == NULL)
     {
-        return false;
+        return -1;
     }
 
     if (goalCell == startCell)
     {
         cout << "Same start and goal cell" << endl;
-        return true;
+        if (isHuman)
+        {
+            m_2DHumanPath.clear();
+            m_2DHumanCellPath.clear();
+            m_HumanPathExist = false;
+        }
+        else
+        {
+            m_2DPath.clear();
+            m_2DCellPath.clear();
+            m_PathExist = false;
+        }
+        m_noPath = false;
+        return 0;
     }
     solveAStar(start,goal,isHuman);
+
+    double dist = 0;
+
+    if (isHuman)
+    {
+        for (unsigned int i = 1; i < m_2DHumanCellPath.size(); i++)
+        {
+            Eigen::Vector2d center = m_2DHumanCellPath.at(i)->getCenter();
+            Eigen::Vector2d oldCenter = m_2DHumanCellPath.at(i-1)->getCenter();
+            dist += std::sqrt(pow( center[0] - oldCenter[0], 2) + pow( center[1] - oldCenter[1], 2));
+        }
+    }
+    else
+    {
+        for (unsigned int i = 1; i < m_2DCellPath.size(); i++)
+        {
+            Eigen::Vector2d center = m_2DCellPath.at(i)->getCenter();
+            Eigen::Vector2d oldCenter = m_2DCellPath.at(i-1)->getCenter();
+            dist += std::sqrt(pow( center[0] - oldCenter[0], 2) + pow( center[1] - oldCenter[1], 2));
+        }
+    }
 
     if (!isHuman)
     {
@@ -747,29 +798,31 @@ bool OTPMotionPl::FindTraj(Vector2d startPos, Vector2d goalPos, bool isHuman)
         }
         cout << "SumOfCost=" << SumOfCost << endl;
 
-        int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+//        int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
         shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
         shared_ptr<Configuration> q_tmp = _Robot->getCurrentPos();
+
+
 
         for (unsigned int i = 0; i < m_2DCellPath.size(); i++)
         {
             Eigen::Vector2d center = m_2DCellPath.at(i)->getCenter();
     //        cout << i << " = " << endl << "abs Pos : "<< endl << center << endl << "coord : " << endl << dynamic_cast<EnvCell*>(m_2DCellPath.at(i))->getCoord() << endl << "---------------" << endl;
 
-            (*q_tmp)[firstIndexOfRobotDof + 0] = center[0];
-            (*q_tmp)[firstIndexOfRobotDof + 1] = center[1];
+//            (*q_tmp)[firstIndexOfRobotDof + 0] = center[0];
+//            (*q_tmp)[firstIndexOfRobotDof + 1] = center[1];
 //            _Robot->setAndUpdate(*q_tmp);
 
-            q_tmp->setAsNotTested();
-            if (q_tmp->isInCollision())
-            {
-                _Robot->setAndUpdate(*q_cur);
-                return false;
-            }
+//            q_tmp->setAsNotTested();
+//            if (q_tmp->isInCollision())
+//            {
+//                _Robot->setAndUpdate(*q_cur);
+//                return false;
+//            }
         }
         _Robot->setAndUpdate(*q_cur);
     }
-    return true;
+    return dist;
 }
 
 class NaturalPoints2
@@ -886,7 +939,7 @@ bool OTPMotionPl::moveToNextPos()
 
 void OTPMotionPl::initPR2GiveConf()
 {
-    cout << "Workspace::initPR2GiveConf()" << endl;
+    cout << "OTPMotionPl::initPR2GiveConf()" << endl;
 
     shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
 
@@ -1107,7 +1160,6 @@ void OTPMotionPl::drawOTPList(bool value)
 	}
 }
 
-
 void OTPMotionPl::placeHuman()
 {
 	shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
@@ -1128,6 +1180,19 @@ std::vector<ConfigHR> OTPMotionPl::addConfToList()
 {
 	shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
 	shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+
+//    int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+//    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+//	(*q_robot_cur)[firstIndexOfRobotDof + 0] = (*q_robot_cur)[firstIndexOfRobotDof + 0] - (*q_human_cur)[firstIndexOfHumanDof + 0];
+//	(*q_robot_cur)[firstIndexOfRobotDof + 1] = (*q_robot_cur)[firstIndexOfRobotDof + 1] - (*q_human_cur)[firstIndexOfHumanDof + 1];
+//	(*q_robot_cur)[firstIndexOfRobotDof + 5] = (*q_robot_cur)[firstIndexOfRobotDof + 5] - (*q_human_cur)[firstIndexOfHumanDof + 5];
+//	(*q_human_cur)[firstIndexOfHumanDof + 0] = 0;
+//	(*q_human_cur)[firstIndexOfHumanDof + 1] = 0;
+////	q_human_cur[firstIndexOfHumanDof + 2] = 1.07;
+//	(*q_human_cur)[firstIndexOfHumanDof + 5] = 0;
+
+
 
 	ConfigHR chr;
 	chr.setHumanConf(m_Human, q_human_cur->getConfigStruct());
@@ -1160,6 +1225,9 @@ void OTPMotionPl::saveToXml(string filename)
     str.clear(); ss << m_configList.size(); ss >> str; ss.clear();
     xmlNewProp (root, xmlCharStrdup("nb_node"), xmlCharStrdup(str.c_str()));
 
+//    int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+//    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
     for (unsigned int i = 0; i< m_configList.size(); i++)
     {
         std::ostringstream oss;
@@ -1167,8 +1235,19 @@ void OTPMotionPl::saveToXml(string filename)
         string name = "node_" + oss.str();
         xmlNodePtr cur = xmlNewChild (root, NULL, xmlCharStrdup(name.c_str()), NULL);
         xmlNodePtr curHuman = xmlNewChild (cur, NULL, xmlCharStrdup("humanConfig"), NULL);
+
+//        shared_ptr<Configuration> hq(new Configuration(m_Human,m_configList.at(i).getHumanConf()));
+//        (*hq)[firstIndexOfHumanDof + 0] = 0;
+//        (*hq)[firstIndexOfHumanDof + 1] = 0;
+//        (*hq)[firstIndexOfHumanDof + 5] = 0;
         writeXmlRobotConfig(curHuman,m_Human->getRobotStruct(),m_configList.at(i).getHumanConf());
+
         xmlNodePtr curRobot = xmlNewChild (cur, NULL, xmlCharStrdup("robotConfig"), NULL);
+
+//        shared_ptr<Configuration> rq(new Configuration(_Robot,m_configList.at(i).getRobotConf()));
+//        (*rq)[firstIndexOfRobotDof + 0] -= (*hq)[firstIndexOfHumanDof + 0];
+//        (*rq)[firstIndexOfRobotDof + 1] -= (*hq)[firstIndexOfHumanDof + 1];
+//        (*rq)[firstIndexOfRobotDof + 5] -= (*hq)[firstIndexOfHumanDof + 5];
         writeXmlRobotConfig(curRobot,_Robot->getRobotStruct(),m_configList.at(i).getRobotConf());
     }
 
@@ -1185,8 +1264,27 @@ void OTPMotionPl::saveToXml(string filename)
 
 }
 
-int OTPMotionPl::loadFromXml(string filename)
+
+int OTPMotionPl::loadConfsFromXML(string filename, bool isStanding)
 {
+    if (isStanding)
+    {
+        m_configList = loadFromXml(filename);
+        sortConfigList(m_configList.size(),isStanding);
+        return m_configList.size();
+    }
+    else
+    {
+        m_sittingConfigList = loadFromXml(filename);
+        sortConfigList(m_sittingConfigList.size(),isStanding);
+        return m_sittingConfigList.size();
+    }
+
+}
+
+std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
+{
+    vector<ConfigHR> vectConfs;
 
     int nbNode = 0;
 
@@ -1199,7 +1297,7 @@ int OTPMotionPl::loadFromXml(string filename)
     if(doc==NULL)
     {
         cout << "Document not parsed successfully (doc==NULL)" << endl;
-        return 0;
+        return vectConfs;
     }
 
     root = xmlDocGetRootElement(doc);
@@ -1208,14 +1306,14 @@ int OTPMotionPl::loadFromXml(string filename)
     {
         cout << "Document not parsed successfully" << endl;
         xmlFreeDoc(doc);
-        return 0;
+        return vectConfs;
     }
 
 	if (xmlStrcmp(root->name, xmlCharStrdup("StoredConfiguration")))
 	{
 		cout << "Document of the wrong type root node not StoredConfiguration" << endl;
 		xmlFreeDoc(doc);
-		return 0;
+		return vectConfs;
 	}
 
 	xmlChar* tmp;
@@ -1229,13 +1327,16 @@ int OTPMotionPl::loadFromXml(string filename)
 	cur = root->xmlChildrenNode->next;
 	int i =0;
 
-	m_configList.clear();
+    int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+	vectConfs.clear();
 	while (i < nbNode)
 	{
 		if (cur == NULL)
 		{
 			cout << "Document error on the number of node" << endl;
-			return 0;
+			return vectConfs;
 		}
 		std::string name(reinterpret_cast<const char*>(cur->name));
 
@@ -1247,7 +1348,7 @@ int OTPMotionPl::loadFromXml(string filename)
 			if (xmlStrcmp(ptrTmp->name, xmlCharStrdup("humanConfig")))
 			{
 				cout << "Error: no human config" << endl;
-				return 0;
+				return vectConfs;
 			}
 			configPt q_hum =readXmlConfig(m_Human->getRobotStruct(),ptrTmp->xmlChildrenNode->next);
 
@@ -1259,15 +1360,26 @@ int OTPMotionPl::loadFromXml(string filename)
 			if (xmlStrcmp(ptrTmp->name, xmlCharStrdup("robotConfig")))
 			{
 				cout << "Error: no human config" << endl;
-				return 0;
+				return vectConfs;
 			}
 			configPt q_rob =readXmlConfig(_Robot->getRobotStruct(),ptrTmp->xmlChildrenNode->next);
 
 			ConfigHR chr;
+
+
+
+			q_rob[firstIndexOfRobotDof + 0] = q_rob[firstIndexOfRobotDof + 0] - q_hum[firstIndexOfHumanDof + 0];
+			q_rob[firstIndexOfRobotDof + 1] = q_rob[firstIndexOfRobotDof + 1] - q_hum[firstIndexOfHumanDof + 1];
+			q_rob[firstIndexOfRobotDof + 5] = q_rob[firstIndexOfRobotDof + 5] - q_hum[firstIndexOfHumanDof + 5];
+			q_hum[firstIndexOfHumanDof + 0] = 0;
+			q_hum[firstIndexOfHumanDof + 1] = 0;
+//			q_hum[firstIndexOfHumanDof + 2] = 1.07;
+			q_hum[firstIndexOfHumanDof + 5] = 0;
+
 			chr.setHumanConf(m_Human, q_hum);
 			chr.setRobotConf(_Robot, q_rob);
 
-			m_configList.push_back(chr);
+			vectConfs.push_back(chr);
 		}
 
 
@@ -1276,27 +1388,1167 @@ int OTPMotionPl::loadFromXml(string filename)
 	}
 
 
-	return nbNode;
+
+
+	return vectConfs;
 
 //	configPt readXmlConfig(p3d_rob *robot, xmlNodePtr cur)
 
 }
 
-void OTPMotionPl::setRobotsToConf(int id)
+pair<shared_ptr<Configuration>,shared_ptr<Configuration> > OTPMotionPl::setRobotsToConf(int id, bool isStanding)
 {
-	for (unsigned int i = 0; i< m_configList.size(); i++)
+	pair<shared_ptr<Configuration>,shared_ptr<Configuration> > resConf;
+	vector<ConfigHR> vectConfs;
+	if (isStanding)
 	{
-		if (m_configList.at(i).getId() == id)
+		vectConfs = m_configList;
+	}
+	else
+	{
+		vectConfs = m_sittingConfigList;
+	}
+	for (unsigned int i = 0; i< vectConfs.size(); i++)
+	{
+		if (vectConfs.at(i).getId() == id)
 		{
-			shared_ptr<Configuration> ptrQ_robot(new Configuration(_Robot,m_configList.at(i).getRobotConf()));
-			_Robot->setAndUpdate(*ptrQ_robot);
 
-			shared_ptr<Configuration> ptrQ_human(new Configuration(m_Human,m_configList.at(i).getHumanConf()));
+			int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+			int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+//			shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+			shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+
+			shared_ptr<Configuration> ptrQ_human(new Configuration(m_Human,vectConfs.at(i).getHumanConf()));
+			(*ptrQ_human)[firstIndexOfHumanDof + 0] = (*q_human_cur)[firstIndexOfHumanDof + 0];
+			(*ptrQ_human)[firstIndexOfHumanDof + 1] = (*q_human_cur)[firstIndexOfHumanDof + 1];
+			(*ptrQ_human)[firstIndexOfHumanDof + 5] = (*q_human_cur)[firstIndexOfHumanDof + 5];
 			m_Human->setAndUpdate(*ptrQ_human);
+			resConf.first = ptrQ_human;
+
+			shared_ptr<Configuration> ptrQ_robot(new Configuration(_Robot,vectConfs.at(i).getRobotConf()));
+			(*ptrQ_robot)[firstIndexOfRobotDof + 5] += (*q_human_cur)[firstIndexOfHumanDof + 5];
+			double dist = sqrt(pow( (*ptrQ_robot)[firstIndexOfRobotDof + 0], 2) + pow( (*ptrQ_robot)[firstIndexOfRobotDof + 1], 2));
+			(*ptrQ_robot)[firstIndexOfRobotDof + 0] = -cos((*ptrQ_robot)[firstIndexOfRobotDof + 5])*dist + (*ptrQ_human)[firstIndexOfHumanDof + 0];
+			(*ptrQ_robot)[firstIndexOfRobotDof + 1] = -sin((*ptrQ_robot)[firstIndexOfRobotDof + 5])*dist + (*ptrQ_human)[firstIndexOfHumanDof + 1];
+
+			_Robot->setAndUpdate(*ptrQ_robot);
+			resConf.second = ptrQ_robot;
+
+
+			return resConf;
+		}
+	}
+	return resConf;
+}
+
+pair<shared_ptr<Configuration>,shared_ptr<Configuration> > OTPMotionPl::setRobotsToConf(int id, bool isStanding ,double x, double y, double Rz)
+{
+	int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+	shared_ptr<Configuration> ptrQ_human = m_Human->getCurrentPos();
+	(*ptrQ_human)[firstIndexOfHumanDof + 0] = x;
+	(*ptrQ_human)[firstIndexOfHumanDof + 1] = y;
+	(*ptrQ_human)[firstIndexOfHumanDof + 5] = Rz;
+	m_Human->setAndUpdate(*ptrQ_human);
+
+	return setRobotsToConf(id, isStanding);
+}
+
+double OTPMotionPl::computeConfigCost(configPt q_rob_initial,
+									  configPt q_rob_final,
+									  configPt q_hum_initial,
+									  configPt q_hum_final)
+{
+	shared_ptr<Configuration> ptrQ_human(new Configuration(m_Human,q_hum_final));
+	m_Human->setAndUpdate(*ptrQ_human);
+
+	// compute the confort of human posture
+	double confortCost = m_ReachableSpace->getConfigCost();
+
+	m_Human->setAndUpdate(*m_Human->getInitialPosition());
+
+	// compute the trajectory between initial and final configuration
+
+	int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+
+    Vector2d startPos;
+    startPos[0] = q_rob_initial[firstIndexOfRobotDof + 0];
+    startPos[1] = q_rob_initial[firstIndexOfRobotDof + 1];
+
+    Vector2d goalPos;
+    goalPos[0] = q_rob_final[firstIndexOfRobotDof + 0];
+    goalPos[1] = q_rob_final[firstIndexOfRobotDof + 1];
+
+    /*bool robotTrajFound = */FindTraj(startPos,goalPos,false);
+
+    int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+
+    startPos[0] = q_hum_initial[firstIndexOfHumanDof + 0];
+    startPos[1] = q_hum_initial[firstIndexOfHumanDof + 1];
+
+    goalPos[0] = q_hum_final[firstIndexOfHumanDof + 0];
+    goalPos[1] = q_hum_final[firstIndexOfHumanDof + 1];
+
+    /*bool humanTrajFound = */FindTraj(startPos,goalPos,true);
+
+    return confortCost;
+}
+
+double OTPMotionPl::testComputeConfigCost()
+{
+    if (m_configList.size() > 0)
+    {
+        return computeConfigCost(_Robot->getInitialPosition()->getConfigStruct(),
+                                 m_configList.at(7).getRobotConf(),
+                                 m_Human->getInitialPosition()->getConfigStruct(),
+                                 m_configList.at(7).getHumanConf());
+    }
+    return 0;
+}
+
+/*!
+ * configuration cost sorter
+ */
+class ConfigurationCost
+{
+public:
+
+    bool operator()(ConfigHR first, ConfigHR second)
+    {
+        return ( first.getCost() < second.getCost() );
+    }
+
+} ConfigurationCostCompObject;
+
+
+void OTPMotionPl::sortConfigList(double nbNode, bool isStanding)
+{
+    shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+    shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+
+    vector<ConfigHR> vectConfs;
+    if (isStanding)
+    {
+        vectConfs = m_configList;
+    }
+    else
+    {
+        vectConfs = m_sittingConfigList;
+    }
+
+    for (int i = 0; i < nbNode; i++)
+    {
+        shared_ptr<Configuration> ptrQ_robot(new Configuration(_Robot,vectConfs.at(i).getRobotConf()));
+        _Robot->setAndUpdate(*ptrQ_robot);
+
+		shared_ptr<Configuration> ptrQ_human(new Configuration(m_Human,vectConfs.at(i).getHumanConf()));
+		m_Human->setAndUpdate(*ptrQ_human);
+
+		vectConfs.at(i).setCost(m_ReachableSpace->getConfigCost());
+	}
+	_Robot->setAndUpdate(*q_robot_cur);
+	m_Human->setAndUpdate(*q_human_cur);
+
+	sort(vectConfs.begin(),vectConfs.end(),ConfigurationCostCompObject);
+
+    for (int i = 0; i < nbNode; i++)
+    {
+        vectConfs.at(i).setId(i);
+    }
+
+    if (isStanding)
+    {
+        m_configList = vectConfs;
+    }
+    else
+    {
+       m_sittingConfigList = vectConfs;
+    }
+
+
+}
+
+class OutputConfSort
+{
+public:
+
+	bool operator()(OutputConf first, OutputConf second)
+	{
+		return ( first.cost < second.cost );
+	}
+
+} OutputConfSortObj;
+
+string str;
+
+Vector3d OTPMotionPl::getRandomPoints(double id)
+{
+    Vector3d vect;
+
+    if (PlanEnv->getBool(PlanParam::env_normalRand))
+    {
+        shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+        int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+
+        double x = (*q_human_cur)[firstIndexOfHumanDof + 0];
+        double y = (*q_human_cur)[firstIndexOfHumanDof + 1];
+//        double Rz = (*q_human_cur)[firstIndexOfHumanDof + 5];
+
+        double randomXMinLimit = PlanEnv->getDouble(PlanParam::env_randomXMinLimit);//-3.0
+        double randomXMaxLimit = PlanEnv->getDouble(PlanParam::env_randomXMaxLimit);//3.0
+        double randomYMinLimit = PlanEnv->getDouble(PlanParam::env_randomYMinLimit);//-3.0
+        double randomYMaxLimit = PlanEnv->getDouble(PlanParam::env_randomYMaxLimit);//3.0
+        int nbRandomRotOnly = PlanEnv->getInt(PlanParam::env_nbRandomRotOnly);//10
+
+        vect[0] = p3d_random(x + randomXMinLimit, x + randomXMaxLimit);
+        vect[1] = p3d_random(y + randomYMinLimit, y + randomYMaxLimit);
+        if (id < nbRandomRotOnly)
+        {
+            vect[0] = x;
+            vect[1] = y;
+        }
+        vect[2] = p3d_random(-M_PI,M_PI);
+    }
+    else if (PlanEnv->getBool(PlanParam::env_fusedGridRand))
+    {
+        std::vector<std::pair<double,EnvCell*> > sortedCell = m_2DGrid->getSortedGrid();
+        double rand = p3d_random(0,1);
+        rand = pow(rand,PlanEnv->getInt(PlanParam::env_pow)); // giving a higher probability of getting small numbers
+        int cellNb = floor(rand*(sortedCell.size()-1));
+        Vector2d center = sortedCell.at(cellNb).second->getCenter();
+        Vector2d cellSize = sortedCell.at(cellNb).second->getCellSize();
+        vect[0] = p3d_random(center[0] - cellSize[0]/2, center[0] + cellSize[0]/2);
+        vect[1] = p3d_random(center[1] - cellSize[1]/2, center[1] + cellSize[1]/2);
+        vect[2] = p3d_random(-M_PI,M_PI);
+
+    }
+    else
+    {
+        cout << "ERROR in random" << endl ;
+        vect[0] = 0;
+        vect[1] = 0;
+        vect[2] = 0;
+    }
+
+    return vect;
+}
+
+void OTPMotionPl::newComputeOTP()
+{
+    clock_t start = clock();
+//    m_2DGrid->init(computeHumanRobotDist());
+    m_2DGrid->initGrid();
+    m_2DGrid->setCellsToblankCost();
+
+    clock_t gridInit = clock();
+
+    bool isStanding = PlanEnv->getBool(PlanParam::env_isStanding);
+    double objectNecessity = PlanEnv->getDouble(PlanParam::env_objectNessecity);
+
+    int maxIter = PlanEnv->getInt(PlanParam::env_maxIter); //300
+//    int totMaxIter = PlanEnv->getInt(PlanParam::env_totMaxIter); //1000
+//    int nbRandomRotOnly = PlanEnv->getInt(PlanParam::env_nbRandomRotOnly);//10
+//    double randomXMinLimit = PlanEnv->getDouble(PlanParam::env_randomXMinLimit);//-3.0
+//    double randomXMaxLimit = PlanEnv->getDouble(PlanParam::env_randomXMaxLimit);//3.0
+//    double randomYMinLimit = PlanEnv->getDouble(PlanParam::env_randomYMinLimit);//-3.0
+//    double randomYMaxLimit = PlanEnv->getDouble(PlanParam::env_randomYMaxLimit);//3.0
+
+    clearCostsfile();
+    if (m_configList.empty() || m_sittingConfigList.empty())
+    {
+        cout << "No configuration lists" << endl;
+        return;
+    }
+    shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+    shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+    int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+
+
+    double x = (*q_human_cur)[firstIndexOfHumanDof + 0];
+    double y = (*q_human_cur)[firstIndexOfHumanDof + 1];
+    double Rz = (*q_human_cur)[firstIndexOfHumanDof + 5];
+
+    cout << "---------------------------------------------------" << endl;
+    cout << "start OTP search" << endl <<"---------------------------------------------------" << endl;
+    OutputConf bestConf;
+
+
+    confList.clear();
+
+    clock_t varInit = clock();
+    if (isStanding)
+    {
+        bestConf = lookForBestLocalConf(x,y,Rz,objectNecessity);
+        confList.push_back(bestConf);
+        saveCostsTofile(bestConf.cost,bestConf.cost);
+        isInitSiting = false;
+    }
+    else
+    {
+        bestConf = findBestPosForHumanSitConf(objectNecessity);
+        isInitSiting = true;
+    }
+
+
+//    cout << "init conf cost :"<< bestConf.cost << endl;
+    int i = 0;
+    int id = confList.size();
+    bestConf.id = id;
+//    cout << "current id = "<< id << endl;
+
+    m_Human->setAndUpdate(*q_human_cur);
+    _Robot->setAndUpdate(*q_robot_cur);
+
+    m_2DGrid->setAsNotSorted();
+
+    clock_t firstConfs = clock();
+    while (true)
+    {
+//        cout << "---------------------------------------------------" << endl;
+//        cout << "new section, init pos : x = " << x << " y = " << y << " Rz = " << Rz << endl;
+        Vector3d vect = getRandomPoints(id);
+        double randomX = vect[0];
+        double randomY = vect[1];
+        double randomRz = vect[2];
+//        cout << "random : x = " << randomX << " y = " << randomY << " Rz = " << randomRz << endl;
+
+        OutputConf tmpConf = lookForBestLocalConf(randomX,randomY,randomRz,objectNecessity);
+        tmpConf.id = id;
+//        cout << "Cost : "<< tmpConf.cost << endl;
+        if (tmpConf.cost < numeric_limits<double>::max( ))
+        {
+            confList.push_back(tmpConf);
+//            saveCostsTofile(bestConf.cost);
+
+        }
+        saveCostsTofile(bestConf.cost,tmpConf.cost);
+
+        if (tmpConf.cost < bestConf.cost)
+        {
+            bestConf = tmpConf;
+            i = 0;
+
+        }
+        else if (tmpConf.cost < numeric_limits<double>::max( )){ i++; }
+        id++;
+//        cout << "current id = "<< id << endl;
+//        cout << "current iteration worst than the best one : " << i << endl;
+        if (i > maxIter || id > PlanEnv->getInt(PlanParam::env_totMaxIter)) { break; }
+
+        int time = PlanEnv->getInt(PlanParam::env_timeShow)*1000;
+        if (PlanEnv->getBool(PlanParam::env_drawOnlyBest) && (time > 0))
+        {
+            if (bestConf.cost < numeric_limits<double>::max( ))\
+            {
+                double xf = (*bestConf.humanConf)[firstIndexOfHumanDof + 0];
+                double yf = (*bestConf.humanConf)[firstIndexOfHumanDof + 1];
+                double Rzf = (*bestConf.humanConf)[firstIndexOfHumanDof + 5];
+                setRobotsToConf(bestConf.configNumberInList,bestConf.isStandingInThisConf,xf,yf,Rzf);
+                g3d_draw_allwin_active();
+                usleep(time);
+            }
+        }
+
+
+        m_Human->setAndUpdate(*q_human_cur);
+        _Robot->setAndUpdate(*q_robot_cur);
+
+    }
+    clock_t endLoop = clock();
+    if (bestConf.cost >= numeric_limits<double>::max( ))
+    {
+        cout << "No transfer configuration for this initials positions" << endl;
+        cout << "Total time = " << ((double)endLoop - start) / CLOCKS_PER_SEC << " s"<< endl;
+
+        _Robot->setAndUpdate(*q_robot_cur);
+        m_Human->setAndUpdate(*q_human_cur);
+        return;
+    }
+
+
+    sort(confList.begin(),confList.end(),OutputConfSortObj);
+
+    cout << "--------------------------------------" << endl << "End of OTP search" << endl << "--------------------------------------" << endl;
+    cout << "Number of tested configuration = " << id << endl;
+    cout << "Number of solutions found = " << confList.size() << endl;
+    cout << "Success rate = " << (double)confList.size() / (double)id << endl;
+//    bestConf.humanConf->print();
+//    bestConf.robotConf->print();
+//    cout << "the choosed conf id is : " << bestConf.id << endl;
+    cout << "the choosed configuration cost is : " << bestConf.cost << endl;
+    m_2DHumanPath.clear();
+    m_2DPath.clear();
+    m_2DHumanPath = bestConf.humanTraj;
+    m_HumanPathExist = bestConf.humanTrajExist;
+    m_2DPath = bestConf.robotTraj;
+    m_PathExist = bestConf.robotTrajExist;
+    double xf = (*bestConf.humanConf)[firstIndexOfHumanDof + 0];
+    double yf = (*bestConf.humanConf)[firstIndexOfHumanDof + 1];
+    double Rzf = (*bestConf.humanConf)[firstIndexOfHumanDof + 5];
+    setRobotsToConf(bestConf.configNumberInList,bestConf.isStandingInThisConf,xf,yf,Rzf);
+//    createTrajectoryFromOutputConf(bestConf);
+    clock_t end = clock();
+    cout << "==========" << endl <<"time elapsed to : " << endl;
+    cout << "init grid = " << ((double)gridInit - start) / CLOCKS_PER_SEC << " s"<< endl;
+    cout << "init variable = " << ((double)varInit - gridInit) / CLOCKS_PER_SEC << " s"<< endl;
+    cout << "look for the first conf = " << ((double)firstConfs - varInit) / CLOCKS_PER_SEC << " s"<< endl;
+    cout << "pass the loop = " << ((double)endLoop - firstConfs) / CLOCKS_PER_SEC << " s"<< endl;
+    cout << "end the function = " << ((double)end - endLoop) / CLOCKS_PER_SEC << " s"<< endl;
+    cout << "----------" << endl << "Total time = " << ((double)end - start) / CLOCKS_PER_SEC << " s"<< endl;
+    cout << "==========" << endl;
+}
+
+OutputConf OTPMotionPl::lookForBestLocalConf(double x, double y, double Rz, double objectNecessity)
+{
+    OutputConf bestLocalConf;
+    bestLocalConf.isStandingInThisConf = true;
+
+    if (x < XYZ_ENV->box.x1 ||  x > XYZ_ENV->box.x2 || y < XYZ_ENV->box.y1 || y > XYZ_ENV->box.y2)
+    {
+//        cout << "human out of bound : x = " << x << " y = " << y << " Rz = " << Rz << endl;
+        bestLocalConf.clearAll();
+        return bestLocalConf;
+    }
+
+    double robotSpeed = PlanEnv->getDouble(PlanParam::env_robotSpeed);//1;
+    double humanSpeed = PlanEnv->getDouble(PlanParam::env_humanSpeed);//1;
+    double timeStamp = PlanEnv->getDouble(PlanParam::env_timeStamp);//0.1;
+    double psi = PlanEnv->getDouble(PlanParam::env_psi);//0.99;
+    double delta = PlanEnv->getDouble(PlanParam::env_delta);//0.01;
+
+    double ksi = PlanEnv->getDouble(PlanParam::env_ksi);//0.5;
+    double rho = PlanEnv->getDouble(PlanParam::env_rho);//0.5;
+
+    double sittingOffset = PlanEnv->getDouble(PlanParam::env_sittingOffset);//0.2;
+
+    shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+    shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+
+    double configCost = -1;
+    vector<ConfigHR> vectConfs = m_configList;
+
+    if (!vectConfs.empty())
+    {
+        for(unsigned int i = 0; i < vectConfs.size(); i++)
+        {
+            pair<shared_ptr<Configuration>,shared_ptr<Configuration> > conf = setRobotsToConf(i,true,x,y,Rz);
+
+            conf.first->setAsNotTested();
+            conf.second->setAsNotTested();
+//            if (!conf.first->isInCollision() && !conf.second->isInCollision())
+            string humanStr = testCol(true,false)?"is in collision":"is NOT in collision";
+            string robotStr = testCol(false,false)?"is in collision":"is NOT in collision";
+//            cout << "test colision : human " << humanStr << " and robot " << robotStr << endl;
+            if (!testCol(true,false) && !testCol(false,true))
+            {
+                bestLocalConf.humanConf = conf.first;
+                bestLocalConf.robotConf = conf.second;
+                bestLocalConf.configNumberInList = i;
+                configCost = vectConfs.at(i).getCost();
+//                cout << "the choosed configuration in the configuration list is : " << i << endl;
+                break;
+            }
+        }
+
+    }
+
+    if (configCost < 0)
+    {
+//        cout << "No conf found for that position : x = " << x << " y = " << y << " Rz = " << Rz << endl;
+//        bestLocalConf.cost = numeric_limits<double>::max( );
+        bestLocalConf.clearAll();
+        return bestLocalConf;
+    }
+
+//    cout << "Config cost = " << configCost << endl;
+
+    int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+
+//    Vector2d startPos;
+//    startPos[0] = (*q_human_cur)[firstIndexOfHumanDof + 0];
+//    startPos[1] = (*q_human_cur)[firstIndexOfHumanDof + 1];
+
+//    EnvCell* scell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(startPos));
+//    cout << "human start coord : x " << scell->getCoord()[0] << " y " << scell->getCoord()[1] << endl;
+
+    Vector2d goalPos;
+    goalPos[0] = (*bestLocalConf.humanConf)[firstIndexOfHumanDof + 0];
+    goalPos[1] = (*bestLocalConf.humanConf)[firstIndexOfHumanDof + 1];
+
+    EnvCell* cell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(goalPos));
+    if (!cell)
+    {
+  //      cout << "No cell for this human position : x = " << x << " y = " << y << " Rz = " << Rz << endl;
+        bestLocalConf.clearAll();
+        return bestLocalConf;
+    }
+    if (!cell->isHumAccessible())
+    {
+//        cout << "No human traj found for that position : x = " << x << " y = " << y << " Rz = " << Rz << endl;
+//        cout << "coords : x = " << cell->getCoord()[0] << " y = " << cell->getCoord()[1] << endl;
+        bestLocalConf.clearAll();
+        return bestLocalConf;
+    }
+
+//    cout << "human goal coord : x " << cell->getCoord()[0] << " y " << cell->getCoord()[1] << endl;
+//    for (unsigned int i =0; i < cell->getHumanTraj().size(); i++)
+//    {
+//        cout << "traj at " << i << " coord is : x "<< cell->getHumanTraj().at(i)->getCoord()[0] << " y " << cell->getHumanTraj().at(i)->getCoord()[1] << endl;
+//    }
+
+    double hDist = cell->getHumanDist() / m_2DGrid->getHumanMaxDist();
+
+    if (isInitSiting)
+    {
+        hDist += sittingOffset;
+    }
+
+    bestLocalConf.humanTraj = cell->getHumanVectorTraj();
+    bestLocalConf.humanTrajExist = false;
+    if (bestLocalConf.humanTraj.size()> 0)
+    {
+        bestLocalConf.humanTrajExist = true;
+    }
+
+    double hRot = (*bestLocalConf.humanConf)[firstIndexOfHumanDof + 5] - (*q_human_cur)[firstIndexOfHumanDof + 5];
+
+    double mvCost = (psi*hDist + delta*fabs(hRot) )/(psi+delta);
+
+//    cout << "moving cost = " << mvCost << endl;
+
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+//    startPos[0] = (*q_robot_cur)[firstIndexOfRobotDof + 0];
+//    startPos[1] = (*q_robot_cur)[firstIndexOfRobotDof + 1];
+
+//    scell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(startPos));
+//    cout << "robot start coord : x " << scell->getCoord()[0] << " y " << scell->getCoord()[1] << endl;
+
+
+    goalPos[0] = (*bestLocalConf.robotConf)[firstIndexOfRobotDof + 0];
+    goalPos[1] = (*bestLocalConf.robotConf)[firstIndexOfRobotDof + 1];
+
+    if (goalPos[0] < XYZ_ENV->box.x1 ||  goalPos[0] > XYZ_ENV->box.x2 || goalPos[1] < XYZ_ENV->box.y1 || goalPos[1] > XYZ_ENV->box.y2)
+    {
+//        cout << "Robot out of bound : x = " << goalPos[0] << " y = " << goalPos[1] << " Rz = " << endl;
+        bestLocalConf.clearAll();
+        return bestLocalConf;
+    }
+
+    EnvCell* rCell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(goalPos));
+    if (!rCell)
+    {
+//        cout << "No cell for this robot position : x = " << goalPos[0] << " y = " << goalPos[1] << endl;
+        bestLocalConf.clearAll();
+        return bestLocalConf;
+    }
+    if (!rCell->isRobAccessible())
+    {
+//        cout << "No robot traj found for that position : x = " << x << " y = " << y << " Rz = " << Rz << endl;
+//        cout << "coords : x = " << cell->getCoord()[0] << " y = " << cell->getCoord()[1] << endl;
+        bestLocalConf.clearAll();
+//        bestLocalConf.cost = numeric_limits<double>::max( );
+        return bestLocalConf;
+    }
+
+//    cout << "robot goal coord : x " << cell->getCoord()[0] << " y " << cell->getCoord()[1] << endl;
+//    for (unsigned int i =0; i < cell->getRobotTraj().size(); i++)
+//    {
+//        cout << "traj at " << i << " coord is : x "<< cell->getRobotTraj().at(i)->getCoord()[0] << " y " << cell->getRobotTraj().at(i)->getCoord()[1] << endl;
+//    }
+
+    double rDist = rCell->getRobotDist() / m_2DGrid->getRobotMaxDist();
+
+    bestLocalConf.robotTraj = rCell->getRobotVectorTraj();
+    bestLocalConf.robotTrajExist = false;
+    if (bestLocalConf.robotTraj.size()> 0)
+    {
+        bestLocalConf.robotTrajExist = true;
+    }
+
+    double hTime = hDist/humanSpeed;
+
+    double rTime = rDist/robotSpeed;
+
+    double tempCost = hTime * timeStamp;
+    if (hTime < rTime)
+    {
+        tempCost = rTime * timeStamp;
+    }
+
+//    cout << "temporal cost = " << tempCost << endl;
+
+    bestLocalConf.cost = (ksi * mvCost + rho * configCost) * (1 - objectNecessity)/(rho + ksi) + tempCost * objectNecessity;
+
+    int time = PlanEnv->getInt(PlanParam::env_timeShow)*1000;
+    if (ENV.getBool(Env::drawGraph) && !PlanEnv->getBool(PlanParam::env_drawOnlyBest) && (time > 0))
+    {
+        g3d_draw_allwin_active();
+        usleep(time);
+    }
+
+    cell->addPoint(Rz);
+
+    _Robot->setAndUpdate(*q_robot_cur);
+    m_Human->setAndUpdate(*q_human_cur);
+
+    return bestLocalConf;
+}
+
+OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
+{
+
+    shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+    shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+
+    OutputConf bestLocalConf;
+    bestLocalConf.cost = numeric_limits<double>::max( );
+    OutputConf bestConf;
+    bestConf.cost = numeric_limits<double>::max( );
+    double ksi = PlanEnv->getDouble(PlanParam::env_ksi);//0.5;
+    double rho = PlanEnv->getDouble(PlanParam::env_rho);//0.5;
+
+    double robotSpeed = PlanEnv->getDouble(PlanParam::env_robotSpeed);//1;
+    double timeStamp = PlanEnv->getDouble(PlanParam::env_timeStamp);//0.1;
+
+    if (m_sittingConfigList.empty())
+    {
+        return bestLocalConf;
+    }
+
+//    cout << "sitting test" << endl;
+    double configCost = 0;
+    int id = 0;
+    for(unsigned int i = 0; i < m_sittingConfigList.size(); i++)
+    {
+//        cout << "---------------------------" << endl;
+        pair<shared_ptr<Configuration>,shared_ptr<Configuration> > conf = setRobotsToConf(i,false);
+
+        conf.first->setAsNotTested();
+        conf.second->setAsNotTested();
+
+
+        string humanStr = testCol(true,false)?"is in collision":"is NOT in collision";
+        string robotStr = testCol(false,false)?"is in collision":"is NOT in collision";
+//        cout << "test colision : human " << humanStr << " and robot " << robotStr << endl;
+
+        if (!testCol(true,false) && !testCol(false,true))
+        {
+            int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+            Vector2d goalPos;
+            goalPos[0] = (*conf.second)[firstIndexOfRobotDof + 0];
+            goalPos[1] = (*conf.second)[firstIndexOfRobotDof + 1];
+
+            if (goalPos[0] < XYZ_ENV->box.x1 ||  goalPos[0] > XYZ_ENV->box.x2 || goalPos[1] < XYZ_ENV->box.y1 || goalPos[1] > XYZ_ENV->box.y2)
+            {
+//                cout << "Robot out of bound : x = " << goalPos[0] << " y = " << goalPos[1] << " Rz = " << endl;
+                continue;
+            }
+
+            EnvCell* cell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(goalPos));
+
+            if (!cell)
+            {
+//                cout << "No cell for this robot position : x = " << goalPos[0] << " y = " << goalPos[1] << endl;
+                continue;
+            }
+            if (cell->isRobAccessible())
+            {
+
+                OutputConf localConf;
+                localConf.humanConf = conf.first;
+                localConf.robotConf = conf.second;
+                localConf.configNumberInList = i;
+                configCost = m_sittingConfigList.at(i).getCost();
+                double tempCost = (cell->getRobotDist() / m_2DGrid->getRobotMaxDist())/robotSpeed * timeStamp;
+                double mvCost = 0 ;
+                localConf.cost = (ksi * mvCost + rho * configCost) * (1 - objectNecessity)/(rho + ksi) + tempCost * objectNecessity;
+                localConf.robotTraj = cell->getRobotVectorTraj();
+                localConf.humanTrajExist = false;
+                localConf.robotTrajExist = false;
+                if (localConf.robotTraj.size()> 0)
+                {
+                    localConf.robotTrajExist = true;
+                }
+
+                localConf.isStandingInThisConf = false;
+//                cout << "global cost = " << localConf.cost<< endl;
+                localConf.id = id++;
+                if (localConf.cost < bestConf.cost)
+                {
+                    bestConf = localConf;
+                }
+                confList.push_back(localConf);
+                saveCostsTofile(bestConf.cost,localConf.cost);
+
+                int time = PlanEnv->getInt(PlanParam::env_timeShow)*1000;
+                if (ENV.getBool(Env::drawGraph) && !PlanEnv->getBool(PlanParam::env_drawOnlyBest) && (time > 0))
+                {
+                    g3d_draw_allwin_active();
+                    usleep(time);
+                }
+
+//                cout << "the choosed configuration in the sitting configuration list is : " << i << endl;
+            }
+        }
+    }
+
+    _Robot->setAndUpdate(*q_robot_cur);
+    m_Human->setAndUpdate(*q_human_cur);
+
+    Robot* humCyl;
+    for (int i=0; i<XYZ_ENV->nr; i++)
+    {
+        string name(XYZ_ENV->robot[i]->name);
+        if(name.find("HUMCYLINDER") != string::npos )
+        {
+            humCyl = new Robot(XYZ_ENV->robot[i]);
+            break;
+        }
+
+    }
+
+    if (!humCyl)
+    {
+        cout << "No human cylinder found" << endl;
+        return bestConf;
+    }
+
+    int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+    shared_ptr<Configuration> q_human = m_Human->getCurrentPos();
+    double x = (*q_human)[firstIndexOfHumanDof + 0];
+    double y = (*q_human)[firstIndexOfHumanDof + 1];
+    double Rz = (*q_human)[firstIndexOfHumanDof + 5];
+
+    (*q_human)[firstIndexOfHumanDof + 0] = -3;
+    (*q_human)[firstIndexOfHumanDof + 1] = 0;
+    m_Human->setAndUpdate(*q_human);
+
+    shared_ptr<Configuration> q_humCyl_cur = humCyl->getCurrentPos();
+    shared_ptr<Configuration> q_humCyl = humCyl->getCurrentPos();
+
+    double standingDist = 0;
+    double maxStandingDist = 0.6;
+    while (humCyl->isInCollisionWithOthersAndEnv() && standingDist < maxStandingDist)
+    {
+        (*q_humCyl)[6] = x + standingDist*cos(Rz);
+        (*q_humCyl)[7] = y + standingDist*sin(Rz);
+        humCyl->setAndUpdate(*q_humCyl);
+        standingDist += 0.05;
+    }
+
+    if (!humCyl->isInCollisionWithOthersAndEnv())
+    {
+        getReachability()->setRobotToConfortPosture();
+        q_human = m_Human->getCurrentPos();
+        (*q_human)[firstIndexOfHumanDof + 0] = (*q_humCyl)[6];
+        (*q_human)[firstIndexOfHumanDof + 1] = (*q_humCyl)[7];
+        (*q_human)[firstIndexOfHumanDof + 2] = 1.07;
+        m_Human->setAndUpdate(*q_human);
+    }
+    else
+    {
+        m_Human->setAndUpdate(*q_human_cur);
+        cout << "Human can not stand up : too much obstacle in front of him" << endl;
+    }
+
+
+    humCyl->setAndUpdate(*q_humCyl_cur);
+
+    m_2DGrid->initGrid();
+
+
+    return bestConf;
+
+}
+
+
+bool  OTPMotionPl::testCol(bool isHuman, bool useConf)
+{
+    if (isHuman)
+    {
+        if (useConf)
+        {
+            shared_ptr<Configuration> q(m_Human->getCurrentPos());
+            q->setAsNotTested();
+            return q->isInCollision();
+        }
+        else
+        {
+            return m_Human->isInCollisionWithOthersAndEnv();
+        }
+    }
+    else
+    {
+        if (useConf)
+        {
+            shared_ptr<Configuration> q(_Robot->getCurrentPos());
+            q->setAsNotTested();
+            return q->isInCollision();
+        }
+        else
+        {
+            return _Robot->isInCollision();
+        }
+    }
+}
+
+void OTPMotionPl::saveInitConf()
+{
+    savedConf.humanConf = m_Human->getCurrentPos();
+    savedConf.robotConf = _Robot->getCurrentPos();
+
+}
+
+void OTPMotionPl::loadInitConf()
+{
+    if (savedConf.humanConf && savedConf.robotConf)
+    {
+        m_Human->setAndUpdate(*savedConf.humanConf);
+        _Robot->setAndUpdate(*savedConf.robotConf);
+    }
+}
+
+double OTPMotionPl::showConf(unsigned int i)
+{
+
+    if (confList.size() > i)
+    {
+        int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+        OutputConf conf = confList.at(i);
+        m_2DHumanPath = conf.humanTraj;
+        m_HumanPathExist = conf.humanTrajExist;
+        m_2DPath = conf.robotTraj;
+        m_PathExist = conf.robotTrajExist;
+        double xf = (*conf.humanConf)[firstIndexOfHumanDof + 0];
+        double yf = (*conf.humanConf)[firstIndexOfHumanDof + 1];
+        double Rzf = (*conf.humanConf)[firstIndexOfHumanDof + 5];
+        setRobotsToConf(conf.configNumberInList,conf.isStandingInThisConf,xf,yf,Rzf);
+        return conf.cost;
+    }
+    return -1;
+}
+
+
+OutputConf OTPMotionPl::showBestConf()
+{
+    int id = 0;
+    for (unsigned int i = 1; i < confList.size(); i++)
+    {
+        if (confList.at(i).cost < confList.at(id).cost)
+        {
+            id = i;
+        }
+    }
+    showConf(id);
+    return confList.at(id);
+}
+
+void OTPMotionPl::initGrid()
+{
+    m_2DGrid->init(computeHumanRobotDist());
+    m_2DGrid->initGrid();
+}
+
+double OTPMotionPl::getDistFromCell(int x, int y, bool isHuman)
+{
+    EnvCell* cell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(x,y));
+    if (isHuman)
+    {
+        if (cell->isHumanDistComputed())    { return cell->getHumanDist();}
+        else                                { return -1.0; }
+    }
+    else
+    {
+        if (cell->isRobotDistComputed())    { return cell->getRobotDist();}
+        else                                { return -1.0; }
+    }
+}
+
+void OTPMotionPl::saveCostsTofile(double cost, double randomCost)
+{
+    ofstream myfile;
+    myfile.open ("/home/magharbi/Desktop/configurationsCosts.lst",ios::app);
+    myfile << cost << "\t" << randomCost << endl;
+    myfile.close();
+}
+
+void OTPMotionPl::saveCostsTofile(string cost)
+{
+    ofstream myfile;
+    myfile.open ("/home/magharbi/Desktop/configurationsCosts.lst",ios::app);
+    myfile << cost << endl;
+    myfile.close();
+}
+
+void OTPMotionPl::clearCostsfile()
+{
+    ofstream myfile;
+    myfile.open ("/home/magharbi/Desktop/configurationsCosts.lst");
+    myfile << "" << endl;
+    myfile.close();
+}
+
+int OTPMotionPl::getConfListSize()
+{
+    if (PlanEnv->getBool(PlanParam::env_isStanding))
+    {
+        return m_configList.size();
+    }
+    else
+    {
+        return m_sittingConfigList.size();
+    }
+}
+
+configPt OTPMotionPl::getRobotConfigAt(int i)
+{
+    if (PlanEnv->getBool(PlanParam::env_isStanding))
+    {
+        return m_configList.at(i).getRobotConf();
+    }
+    else
+    {
+        return m_sittingConfigList.at(i).getRobotConf();
+    }
+}
+
+std::vector<ConfigHR> OTPMotionPl::getConfList()
+{
+    if (PlanEnv->getBool(PlanParam::env_isStanding))
+    {
+        return m_configList;
+    }
+    else
+    {
+        return m_sittingConfigList;
+    }
+}
+
+double angle_limit_PI(double angle){
+
+  while (angle < -M_PI){
+    angle += 2*M_PI;
+  }
+  while (angle > M_PI){
+    angle -= 2*M_PI;
+  }
+  return angle;
+}
+
+
+API::Trajectory OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
+{
+    vector<shared_ptr<Configuration> > vectorConf;
+    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > Traj2D = conf.robotTraj;
+//    initPR2GiveConf();
+    shared_ptr<Configuration> q_cur(_Robot->getCurrentPos());
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+    int nbConf = Traj2D.size();
+    for(int i =0; i < nbConf - 1; i++)
+    {
+        shared_ptr<Configuration> q_tmp(_Robot->getCurrentPos());
+        double x = Traj2D.at (i)[0];
+        double y = Traj2D.at(i)[1];
+        (*q_tmp)[firstIndexOfRobotDof + 0] = x;
+        (*q_tmp)[firstIndexOfRobotDof + 1] = y;
+//        (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(Traj2D.at(i+1)[0] - Traj2D.at(i)[0], Traj2D.at(i+1)[1] - Traj2D.at(i)[1]);
+
+        (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(
+                Traj2D.at(i+1)[1] - Traj2D.at(i)[1],
+                Traj2D.at(i+1)[0] - Traj2D.at(i)[0]);
+
+        vectorConf.push_back(q_tmp);
+//        q_tmp->print();
+
+    }
+
+    vectorConf.push_back(conf.robotConf);
+
+    p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
+    p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPl->getBaseMLP(), 1, false);
+
+    //////////////////
+    API::Trajectory base_traj(vectorConf);
+    base_traj.replaceP3dTraj();
+
+    cout << base_traj.getRangeMax() << endl;
+    cout << base_traj.getNbOfPaths() << endl;
+
+    //////////////////
+    API::Trajectory arm_traj;
+
+//    shared_ptr<Configuration> qInit( base_traj.configAtParam( base_traj.getRangeMax()) );
+//    configPt qConfInit =;
+   (*conf.robotConf)[11] = angle_limit_PI( (*conf.robotConf)[11] );
+   (*conf.robotConf)[22] = angle_limit_PI( (*conf.robotConf)[22] );
+
+    (*q_cur)[6]  = (*conf.robotConf)[6];
+    (*q_cur)[7]  = (*conf.robotConf)[7];
+    (*q_cur)[11] = (*conf.robotConf)[11];
+
+    shared_ptr<Configuration> qGoal( conf.robotConf );
+
+//    q_cur->print();
+//    qGoal->print();
+
+//    if( this->computeArmMotion(   q_cur->getConfigStruct(),
+//                                  qGoal->getConfigStruct(),
+//                                  arm_traj ) )
+//    {
+//        cout << "Concat traj ..." << endl;
+//       base_traj.concat( arm_traj );
+//    }
+
+    base_traj.replaceP3dTraj();
+
+    return base_traj;
+}
+
+bool OTPMotionPl::computeArmMotion(double* qInit, double* qGoal, API::Trajectory& traj)
+{
+	MANIPULATION_TASK_TYPE_STR type = ARM_FREE;
+
+	bool succeed = false;
+
+	std::vector <MANPIPULATION_TRAJECTORY_CONF_STR> confs;
+	std::vector <SM_TRAJ> smTrajs;
+	std::vector <p3d_traj*> trajs;
+
+	string OBJECT_NAME = "GREY_TAPE";
+
+	vector<double> objGoto,objStart;
+
+	objGoto.resize(6);
+//    m_objGoto[0] = 4.23;
+//    m_objGoto[1] = -2.22;
+//    m_objGoto[2] = 1.00;
+
+    objGoto[0] = P3D_HUGE;
+    objGoto[1] = P3D_HUGE;
+    objGoto[2] = P3D_HUGE;
+
+    objGoto[3] = P3D_HUGE;
+    objGoto[4] = P3D_HUGE;
+    objGoto[5] = P3D_HUGE;
+
+	cout << "Manipulation planning for " << OBJECT_NAME << endl;
+	MANIPULATION_TASK_MESSAGE status;
+	string str = m_ManipPl->robot()->name;
+
+	if( str == "PR2_ROBOT" )
+	{
+		fixAllJointsWithoutArm(m_ManipPl->robot(),0);
+	}
+
+	switch ( (unsigned int) m_ManipPl->robot()->lpl_type )
+	{
+	case LINEAR :
+		{
+			gpGrasp grasp;
+			status = m_ManipPl->armPlanTask(type,0,qInit,qGoal, objStart, objGoto,
+												 /* m_OBJECT_NAME.c_str() */ "", "", (char*)"", grasp, trajs);
+
+			if(status == MANIPULATION_TASK_OK )
+			{
+				m_ManipPl->robot()->tcur = p3d_create_traj_by_copy(trajs[0]);
+
+				for(unsigned int i = 1; i < trajs.size(); i++){
+					p3d_concat_traj(m_ManipPl->robot()->tcur, trajs[i]);
+				}
+
+				//m_manipulation->setRobotPath(m_manipulation->robot()->tcur);
+			}
+			break;
+		}
+
+	case MULTI_LOCALPATH : {
+			gpGrasp grasp;
+			status = m_ManipPl->armPlanTask(type,0,qInit,qGoal, objStart, objGoto,
+							 /*m_OBJECT_NAME.c_str()*/ "", "", (char*)"", grasp, confs, smTrajs);
+			break;
+		}
+
+	case SOFT_MOTION:{
+			cout << "Manipulation : localpath softmotion should not be called" << endl;
+			succeed = false;
 			break;
 		}
 	}
+
+	if (status != MANIPULATION_TASK_OK )
+	{ succeed = false; }
+	else
+	{ succeed = true; }
+
+	if( succeed )
+	{
+		traj = API::Trajectory( _Robot, m_ManipPl->robot()->tcur );
+	}
+
+	return succeed;
 }
+
+std::pair<double,double> OTPMotionPl::computeHumanRobotDist()
+{
+	pair<double,double> minMax;
+	minMax.first = numeric_limits<double>::max( );
+	minMax.second = 0;
+	std::vector<ConfigHR> list;
+	if (PlanEnv->getBool(PlanParam::env_isStanding))
+	{
+		list = m_configList;
+	}
+	else
+	{
+		list = m_sittingConfigList;
+	}
+	shared_ptr<Configuration> q_human (m_Human->getCurrentPos());
+	shared_ptr<Configuration> q_robot (_Robot->getCurrentPos());
+
+	for(unsigned int i = 0; i < list.size(); i++)
+	{
+		setRobotsToConf(i,PlanEnv->getBool(PlanParam::env_isStanding));
+		double dist = getHumanRobotDist();
+
+		if (dist > minMax.second)
+		{
+			minMax.second = dist;
+		}
+		if (dist < minMax.first)
+		{
+			minMax.first = dist;
+		}
+	}
+
+	m_Human->setAndUpdate(*q_human);
+	_Robot->setAndUpdate(*q_robot);
+
+
+	return minMax;
+
+}
+
+double OTPMotionPl::getHumanRobotDist()
+{
+	shared_ptr<Configuration> q_human (m_Human->getCurrentPos());
+	shared_ptr<Configuration> q_robot (_Robot->getCurrentPos());
+
+	int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+	int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+
+	double xh = (*q_human)[firstIndexOfHumanDof + 0];
+	double yh = (*q_human)[firstIndexOfHumanDof + 1];
+	double xr = (*q_robot)[firstIndexOfRobotDof + 0];
+	double yr = (*q_robot)[firstIndexOfRobotDof + 1];
+
+
+	return sqrt( pow( xh - xr , 2) + pow( yh - yr , 2) );
+}
+
+
 
 
 void ConfigHR::setHumanConf(Robot* human, configPt q)
@@ -1308,3 +2560,34 @@ void ConfigHR::setRobotConf(Robot* robot, configPt q)
 {
 	q_rob = p3d_copy_config(robot->getRobotStruct(),q);
 }
+
+void OutputConf::clearAll()
+{
+//    humanConf = NULL;
+    humanTraj.clear();
+    humanTrajExist = false;
+
+//    robotConf = NULL;
+    robotTraj.clear();
+    robotTrajExist = false;
+
+    cost = numeric_limits<double>::max( );
+    configNumberInList = -1;
+    id = -1;
+    isStandingInThisConf = true; }
+
+//OutputConf& OutputConf::operator= (const OutputConf& o)
+//{
+//    OutputConf conf;
+//    conf.configNumberInList = o.configNumberInList;
+//    conf.cost = o.cost;
+//    conf.humanConf = o.humanConf;
+//    conf.humanTraj = o.humanTraj;
+//    conf.humanTrajExist = o.humanTrajExist;
+//    conf.id = o.id;
+//    conf.isStandingInThisConf = o.isStandingInThisConf;
+//    conf.robotConf = o.robotConf;
+//    conf.robotTraj = o.robotTraj;
+//    conf.robotTrajExist = o.robotTrajExist;
+//    return conf;
+//}

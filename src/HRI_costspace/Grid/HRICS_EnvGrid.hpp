@@ -16,6 +16,13 @@ namespace HRICS
 	public:
 		EnvGrid();
 		EnvGrid(double pace, std::vector<double> envSize, bool isHumanCentered);
+		EnvGrid(double pace, std::vector<double> envSize, bool isHumanCentered, Robot* robot, Robot* human);
+
+		void init(std::pair<double,double> minMax);
+
+		void initGrid();
+
+		void computeHumanRobotReacheability(std::pair<double,double> minMax);
 
 		bool isHumanCentered(){ return _isHumanCentered; }
 		
@@ -24,8 +31,13 @@ namespace HRICS
 
 		void setHuman(Robot* R) { mHuman = R; }
 		Robot* getHuman() { return mHuman; }
+
+		Robot* getHumanCylinder() {return humCyl;}
+		Robot* getRobotCylinder() {return robotCyl;}
 		
 		API::TwoDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y );
+
+		void computeDistances(EnvCell* cell, bool isHuman);
 		
 		void draw();
 
@@ -34,13 +46,37 @@ namespace HRICS
 		std::vector<EnvCell*> getSortedCells();
 
 		void recomputeCostRobotOnly();
+
+		double getNbCellX() {return _nbCellsX;}
+		double getNbCellY() {return _nbCellsY;}
+
+		void initAllCellState();
+		void initAllReachability();
+
+		double getHumanMaxDist() {return m_humanMaxDist;}
+		double getRobotMaxDist() { return m_robotMaxDist;}
+
+		std::vector<std::pair<double,EnvCell*> > getSortedGrid();
+		void setAsNotSorted() {gridIsSorted = false;}
 		
 	private:
 		Robot* mRobot;
 		Robot* mHuman;
 
+		Robot* humCyl;
+		Robot* robotCyl;
+
 		// this is for differenciation between grids.
 		bool _isHumanCentered;
+
+		double m_humanMaxDist;
+		double m_robotMaxDist;
+
+		std::vector<EnvCell*> m_HumanAccessible;
+		std::vector<EnvCell*> m_RobotAccessible;
+
+		std::vector<std::pair<double,EnvCell*> > sortedGrid;
+		bool gridIsSorted;
 	};
 	
 	/**
@@ -58,7 +94,19 @@ namespace HRICS
 		
 		double getCost(); /* { std::cout << " Warning not implemented"  << std::endl; }*/
 
+		void computeReach();
+
 		void setCost(double value) {mCost = value; }
+
+		void setHumanDist(double value) {m_humanDist = value; }
+		double getHumanDist() {return m_humanDist; }
+		void setHumanDistIsComputed() {m_humanDistIsComputed = true;}
+		bool isHumanDistComputed() {return m_humanDistIsComputed;}
+
+		void setRobotDist(double value) {m_robotDist = value; }
+		double getRobotDist() {return m_robotDist; }
+		void setRobotDistIsComputed() {m_robotDistIsComputed = true;}
+		bool isRobotDistComputed() {return m_robotDistIsComputed;}
 
 		void setBlankCost() { mCostIsComputed = false; }
 		
@@ -71,8 +119,48 @@ namespace HRICS
 		void setClosed() { _Closed = true; }
 		
 		void resetExplorationStatus() { _Open = false; _Closed = false; }
+		void resetReacheability();
 		//        void draw();
-		
+		bool isNotAccessible;
+
+		bool isHumAccessible() {return m_isHumanAccessible;}
+		void setHumAccessible(bool value) {m_isHumanAccessible = value;}
+		bool isRobAccessible() {return m_isRobotAccessible;}
+		void setRobAccessible(bool value) {m_isRobotAccessible = value;}
+
+		std::vector<EnvCell*> getNeighbors(bool isHuman);
+
+		double computeDist(EnvCell* neighCell);
+
+		std::vector<EnvCell*> getHumanTraj() {return humanTraj;}
+		void setHumanTraj(std::vector<EnvCell*> _humanTraj) {humanTraj = _humanTraj; }
+
+		std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > getHumanVectorTraj() {return humanVectorTraj;}
+		void setHumanVectorTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > _humanVectorTraj) {humanVectorTraj = _humanVectorTraj; }
+
+		std::vector<EnvCell*> getRobotTraj() {return robotTraj;}
+		void setRobotTraj(std::vector<EnvCell*> _robotTraj) {robotTraj = _robotTraj; }
+
+		std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > getRobotVectorTraj() {return robotVectorTraj;}
+		void setRobotVectorTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > _RobotVectorTraj) {robotVectorTraj = _RobotVectorTraj; }
+
+		void addPoint(double Rz);
+
+		std::vector<double> getRandomVector(){return randomVectorPoint;}
+
+		void setHumanRobotReacheable(std::vector<EnvCell*> value) {initHumanRobotReacheable = value;}
+		std::vector<EnvCell*> getHumanRobotReacheable() {return initHumanRobotReacheable;}
+		void addToHumanRobotReacheable(EnvCell* cell) {initHumanRobotReacheable.push_back(cell);}
+		void clearHumanRobotReacheable() {initHumanRobotReacheable.clear();}
+
+		void setCurrentHumanRobotReacheable(std::vector<EnvCell*> value) {currentHumanRobotReacheable = value;}
+		std::vector<EnvCell*> getCurrentHumanRobotReacheable() {return currentHumanRobotReacheable;}
+		void addToCurrentHumanRobotReacheable(EnvCell* cell) {currentHumanRobotReacheable.push_back(cell);}
+		void clearCurrentHumanRobotReacheable() {currentHumanRobotReacheable.clear();}
+
+		std::pair<double,EnvCell*> getRobotBestPos(){return robotBestPos;}
+		void setRobotBestPos(std::pair<double,EnvCell*> value){robotBestPos = value;}
+
 	private:
 		
 		Eigen::Vector2i _Coord;
@@ -84,7 +172,28 @@ namespace HRICS
 		
 		bool mCostIsComputed;
 		double mCost;
-		
+
+		bool m_isHumanAccessible;
+		bool m_isRobotAccessible;
+
+		bool m_reachComputed;
+
+		bool m_humanDistIsComputed;
+		double m_humanDist;
+		std::vector<EnvCell*> humanTraj;
+		std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanVectorTraj;
+
+		bool m_robotDistIsComputed;
+		double m_robotDist;
+		std::vector<EnvCell*> robotTraj;
+		std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > robotVectorTraj;
+
+		std::vector<double> randomVectorPoint;
+
+		std::vector<EnvCell*> initHumanRobotReacheable;
+		std::vector<EnvCell*> currentHumanRobotReacheable;
+		std::pair<double,EnvCell*> robotBestPos;
+
 	};
 
 
