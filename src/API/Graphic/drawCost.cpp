@@ -16,7 +16,10 @@
 
 #ifdef HRI_COSTSPACE
 #include "HRI_costspace/HRICS_costspace.hpp"
+
 #endif
+
+#include "HRI_costspace/HRICS_otpmotionpl.hpp"
 
 #include "HRI_costspace/HRICS_ConfigSpace.hpp"
 #include "HRI_costspace/HRICS_otpmotionpl.hpp"
@@ -45,6 +48,7 @@ extern pair<double, Eigen::Vector3d > current_cost;
 extern std::string hri_text_to_display;
 
 extern std::vector<Eigen::Vector3d> OTPList;
+
 
 // TODO callback OOMOVE3D
 //#if defined( CXX_PLANNER )
@@ -342,6 +346,42 @@ void g3d_draw_hrics()
     g3d_draw_visibility_by_frame(eyes->abs_pos,DTOR(160),DTOR(160*0.75),1, GreenColor, GreenColorT);
 
 	}
+
+	if (PlanEnv->getBool(PlanParam::drawRandomMap))
+	{
+		double depth = 1.0;
+
+		shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
+		int indexFirstDof = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint("Pelvis")->getIndexOfFirstDof();
+
+		double xMin = (*q_hum)[indexFirstDof + 0] + PlanEnv->getDouble(PlanParam::env_randomXMinLimit);
+		double xMax = (*q_hum)[indexFirstDof + 0] + PlanEnv->getDouble(PlanParam::env_randomXMaxLimit);
+		double yMin = (*q_hum)[indexFirstDof + 1] + PlanEnv->getDouble(PlanParam::env_randomYMinLimit);
+		double yMax = (*q_hum)[indexFirstDof + 1] + PlanEnv->getDouble(PlanParam::env_randomYMaxLimit);
+		glLineWidth(3.);
+		g3d_drawOneLine(xMin,   yMin,    depth,
+						xMin,   yMax,    depth,
+						Black, NULL);
+		glLineWidth(1.);
+
+		glLineWidth(3.);
+		g3d_drawOneLine(xMin,   yMax,    depth,
+						xMax,   yMax,    depth,
+						Black, NULL);
+		glLineWidth(1.);
+
+		glLineWidth(3.);
+		g3d_drawOneLine(xMax,   yMax,    depth,
+						xMax,   yMin,    depth,
+						Black, NULL);
+		glLineWidth(1.);
+
+		glLineWidth(3.);
+		g3d_drawOneLine(xMax,   yMin,    depth,
+						xMin,   yMin,    depth,
+						Black, NULL);
+		glLineWidth(1.);
+	}
   
   if( HRICS_MotionPL )
 	{
@@ -412,12 +452,13 @@ void g3d_draw_hrics()
 
 
   }
-  int OTPListSize = OTPList.size();
+  OTPListSize = OTPList.size();
   if (OTPListSize > 0)
   {
+      drawSlice();
       shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
       int indexFirstDof = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint("Pelvis")->getIndexOfFirstDof();
-      for (int i=0; i < OTPListSize; i ++)
+      for (unsigned int i=0; i < OTPList.size(); i ++)
       {
           double colorvector[4];
           colorvector[0] = 0.0;       //red
@@ -427,8 +468,10 @@ void g3d_draw_hrics()
 
           glEnable(GL_BLEND);
           g3d_set_color(Any,colorvector);
-          g3d_draw_solid_sphere(OTPList.at(i)[0] + (*q_hum)[indexFirstDof + 0],
-                                OTPList.at(i)[1] + (*q_hum)[indexFirstDof + 1],
+          double pDist = std::sqrt(pow( OTPList.at(i)[0], 2) + pow( OTPList.at(i)[1], 2));
+          double ang = atan2(OTPList.at(i)[1],OTPList.at(i)[0]);
+          g3d_draw_solid_sphere(cos(ang + (*q_hum)[indexFirstDof + 5])*pDist + (*q_hum)[indexFirstDof + 0],
+                                sin(ang + (*q_hum)[indexFirstDof + 5])*pDist + (*q_hum)[indexFirstDof + 1],
                                 OTPList.at(i)[2] + (*q_hum)[indexFirstDof + 2],
                                 0.02, 10);
           glDisable(GL_BLEND);

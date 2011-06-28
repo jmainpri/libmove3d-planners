@@ -12,6 +12,7 @@
 
 #include "device.h"
 
+
 void g3d_draw_costspace();
 
 void g3d_draw_grids();
