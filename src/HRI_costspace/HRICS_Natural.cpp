@@ -600,6 +600,7 @@ void Natural::initNaturalHerakles()
 	m_mg.push_back(  4 );
 	m_mg.push_back(  1 );
 }
+
 void Natural::initHumanBaseGrid(vector<double> box)
 {
 //    cout << "Natural::initHumanBaseGrid()" << endl;
@@ -614,7 +615,6 @@ void Natural::initHumanBaseGrid(vector<double> box)
     envSize[4] = /**(q+8) +*/ box[4]; envSize[5] = /**(q+8) +*/ box[5];
 
     m_Grid = new NaturalGrid(0.1,envSize,this);
-
 }
 
 void Natural::printBodyPos()

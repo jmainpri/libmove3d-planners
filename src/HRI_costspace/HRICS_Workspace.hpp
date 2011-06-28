@@ -137,6 +137,7 @@ namespace HRICS
 		void initVisibility();
 		void initReachable();
 		void initNatural();
+    void initOtpPlanner();
     
     void setAgents( HRI_AGENTS* agents ) { m_Agents = agents; }
 		

@@ -206,7 +206,7 @@ void CostmapPlanner::autumnLeaves()
 bool CostmapPlanner::deleteHighCostPortion(LocalPath& path, double thresh)
 {
 	double pathCost = path.cost();
-	double param = path.whenCostIntegralPasses(pathCost/2);
+	/*double param =*/ path.whenCostIntegralPasses(pathCost/2);
 	return false;
 }
 

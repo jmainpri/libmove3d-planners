@@ -4,7 +4,7 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Roadmap/compco.hpp"
 #include "API/Roadmap/graph.hpp"
-#include "API/Grids/ThreeDPoints.hpp"
+#include "API/Grids/PointCloud.hpp"
 
 #include "P3d-pkg.h"
 #include "Planner-pkg.h"

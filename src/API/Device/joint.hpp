@@ -66,22 +66,22 @@ public:
 	/**
 	 * Random shoot the joint
 	 */
-	void          shoot(Configuration& q,bool sample_passive=false);
+	void            shoot(Configuration& q,bool sample_passive=false);
 	
 	/**
 	 * Returns the Joint Dof
 	 */
-	double				getJointDof(int ithDoF);
+	double          getJointDof(int ithDoF);
 	
 	/**
 	 * Set the Joint Dof
 	 */
-	void				setJointDof(int ithDoF, double value);
+	void            setJointDof(int ithDoF, double value);
 	
 	/**
 	 * Get Min Max dof
 	 */
-	void				getDofBounds(int ithDoF, double& vmin, double& vmax);
+	void            getDofBounds(int ithDoF, double& vmin, double& vmax);
 	
 	/**
 	 * Get Number of DoF
@@ -96,13 +96,13 @@ public:
 	/**
 	 * Set the config from the DoF values
 	 */
-	void				setConfigFromDofValues(Configuration& q);
+	void            setConfigFromDofValues(Configuration& q);
 	
 private:
 	Robot*				m_Robot;
-	jnt*				m_Joint; /*!< The p3d structure for the Joint*/
-  std::string			m_Name; /*!< The Joint's Name */
-	bool				m_copy; /*!< Is true if the p3d_jnt copies and not only points to the structure */
+	jnt*          m_Joint; /*!< The p3d structure for the Joint*/
+  std::string		m_Name; /*!< The Joint's Name */
+	bool          m_copy; /*!< Is true if the p3d_jnt copies and not only points to the structure */
 	
 };
 

@@ -102,8 +102,8 @@ namespace API
 		std::vector< std::tr1::shared_ptr<Configuration> > getVectorOfConfiguration();
 		
 		uint					getIdOfPathAt(double param);
-		LocalPath* 		getLocalPathPtrAt(uint id);
-		int						getNbOfPaths();
+		LocalPath* 		getLocalPathPtrAt(unsigned int id) const;
+		int						getNbOfPaths() const;
 		
 		bool isValid();
 		
@@ -128,32 +128,32 @@ namespace API
 		
 		void setColor(int col) {mColor=col;}
 		
-		uint getHighestCostId()
+		unsigned int getHighestCostId() const
 		{
 			return HighestCostId;
 		}
 		
-		Robot* getRobot()
+		Robot* getRobot() const
 		{
 			return m_Robot;
 		}
 		
-		double getRangeMax()
+		double getRangeMax() const
 		{
 			return range_param;
 		}
 		
-		std::tr1::shared_ptr<Configuration> getBegin()
+		std::tr1::shared_ptr<Configuration> getBegin() const
 		{
 			return m_Source;
 		}
 		
-		std::tr1::shared_ptr<Configuration> getEnd()
+		std::tr1::shared_ptr<Configuration> getEnd() const
 		{
 			return m_Target;
 		}
 		
-		std::vector<LocalPath*> getCourbe() 
+		std::vector<LocalPath*> getCourbe() const
 		{	
 			return m_Courbe;
 		}

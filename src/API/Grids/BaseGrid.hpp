@@ -4,7 +4,6 @@
 #include "API/Grids/BaseCell.hpp"
 
 #include <vector>
-
 #include <Eigen/Core>
 
 /**
@@ -12,16 +11,16 @@
   */
 namespace API
 {
-    class BaseGrid
-    {
-    public:
-        BaseGrid();
+  class BaseGrid
+  {
+  public:
+    BaseGrid();
 		BaseGrid(const BaseGrid& grid);
-        virtual ~BaseGrid();
-
-        BaseCell* getCell(unsigned int i);
+    virtual ~BaseGrid();
+    
+    BaseCell* getCell(unsigned int i);
 		unsigned int getNumberOfCells();
-        
+    
 		virtual void draw() =0;
 		
 		virtual std::vector<Eigen::Vector3d> getBox();
@@ -30,11 +29,11 @@ namespace API
 		virtual bool loadFromXmlFile(std::string file);
 		
 		std::string getName() { return m_name; }
-
-    protected:
-        std::vector<BaseCell*> _cells;
-		std::string m_name;
-    };
+    
+  protected:
+    std::vector<BaseCell*> _cells;
+    std::string m_name;
+  };
 }
 
 #endif // BASEGRID_HPP

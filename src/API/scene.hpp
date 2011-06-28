@@ -91,6 +91,11 @@ public:
 	 * Returns the scene resolution step DMax
 	 */
 	double getDMax();
+  
+  /**
+   * Returns boundries of scene
+   */
+  std::vector<double> getBounds();
 	
 private:
 	std::vector<Robot*> m_Robot;/*!< All Robots in the scene */

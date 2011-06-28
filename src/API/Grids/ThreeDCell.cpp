@@ -1,7 +1,9 @@
 #include "ThreeDCell.hpp"
 #include "ThreeDGrid.hpp"
+
 #include <iostream>
 #include "Graphic-pkg.h"
+#include "P3d-pkg.h"
 
 #include <Eigen/Array>
 
@@ -219,6 +221,28 @@ void ThreeDCell::draw()
     glDisable(GL_CULL_FACE);
     glDisable(GL_BLEND);
     glPopAttrib();
+}
+
+void ThreeDCell::drawColorGradient( double value, double min, double max, bool inverse )
+{
+  double colorvector[4];
+  double alpha = (value-min) / (max-min);
+  double diagonal = getCellSize().minCoeff();
+  Vector3d center = getCenter();
+  
+  if (alpha < 0.0) 
+  { alpha = 0.0; }
+  
+  if (alpha > 1.0) 
+  { alpha = 1.0; }
+  
+  if ( inverse ) 
+  { alpha = 1 - alpha; }
+	
+  colorvector[3] = 0.05; //transparency
+  GroundColorMixGreenToRed(colorvector,alpha);
+  g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/6, 10);
+  glColor4dv(colorvector);
 }
 
 bool ThreeDCell::writeToXml(xmlNodePtr _XmlCellNode_)

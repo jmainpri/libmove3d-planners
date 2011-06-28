@@ -139,5 +139,16 @@ double Scene::getDMax()
 	return m_Scene->dmax;
 }
 
-
+std::vector<double> Scene::getBounds()
+{
+  vector<double> bounds(6);
+  bounds[0] = m_Scene->box.x1;
+  bounds[1] = m_Scene->box.x2;
+  bounds[2] = m_Scene->box.y1;
+  bounds[3] = m_Scene->box.y2;
+  bounds[4] = m_Scene->box.z1;
+  bounds[5] = m_Scene->box.z2;
+  
+  return bounds;
+}
 

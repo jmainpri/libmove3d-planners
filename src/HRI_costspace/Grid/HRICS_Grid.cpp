@@ -183,6 +183,7 @@ void Grid::draw()
 {
 	if (ENV.getBool(Env::drawVectorField)) 
 	{
+    cout << "drawVectorFeild" << endl;
 		return drawVectorFeild();
 	}
 	//cout << "Drawing spheres" << endl;
@@ -277,7 +278,7 @@ void Grid::drawVectorFeild()
 {
 	//cout << "Drawing Vector Field" << endl;
 	
-	const int nbCells = getNumberOfCells();
+    const int nbCells = getNumberOfCells();
 	
     for(int i=0; i<nbCells; i++)
     {

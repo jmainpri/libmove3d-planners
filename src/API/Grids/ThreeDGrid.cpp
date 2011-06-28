@@ -185,19 +185,22 @@ void ThreeDGrid::createAllCells()
  *
  * \param integers x, y, z
  */
-ThreeDCell* ThreeDGrid::getCell(unsigned int x, unsigned int y, unsigned int z)
+ThreeDCell* ThreeDGrid::getCell(unsigned int x, unsigned int y, unsigned int z) const
 {
     if(x<0 || x >= _nbCellsX)
     {
-        cout << "ThreeDGrid Error : out of bands"<< endl;
+        //cout << "ThreeDGrid Error : out of bands"<< endl;
+        return NULL;
     }
     if(y<0 || y >= _nbCellsY)
     {
-        cout << "ThreeDGrid Error : out of bands"<< endl;
+        //cout << "ThreeDGrid Error : out of bands"<< endl;
+        return NULL;
     }
     if(z<0 || z >= _nbCellsZ)
     {
-        cout << "ThreeDGrid Error : out of bands"<< endl;
+        //cout << "ThreeDGrid Error : out of bands"<< endl;
+        return NULL;
     }
 	
     return dynamic_cast<ThreeDCell*>(_cells[ x + y*_nbCellsX + z*_nbCellsX*_nbCellsY ]);
@@ -208,7 +211,7 @@ ThreeDCell* ThreeDGrid::getCell(unsigned int x, unsigned int y, unsigned int z)
  *
  * \param index
  */
-ThreeDCell* ThreeDGrid::getCell(Vector3i cell)
+ThreeDCell* ThreeDGrid::getCell(Vector3i cell) const
 {
     return getCell(cell[0],cell[1],cell[2]);
 }
@@ -218,21 +221,28 @@ ThreeDCell* ThreeDGrid::getCell(Vector3i cell)
  *
  * \param index
  */
-ThreeDCell* ThreeDGrid::getCell(const Vector3d& point)
+const bool DebugCell = false;
+ThreeDCell* ThreeDGrid::getCell(const Vector3d& point) const
 {
 	if( (point[0]<_originCorner[0]) || (point[0]>(_originCorner[0]+_nbCellsX*_cellSize[0]) ))
 	{
+    if (DebugCell)
 		cout << "Error point not in grid in " << __func__ << endl;
+    return 0x00;
 	}
 	
 	if( (point[1]<_originCorner[1]) || (point[1]>(_originCorner[1]+_nbCellsY*_cellSize[1]) ))
 	{
+    if (DebugCell)
 		cout << "Error point not in grid in " << __func__ << endl;
+    return 0x00;
 	}
 	
 	if( (point[2]<_originCorner[2]) || (point[2]>(_originCorner[2]+_nbCellsZ*_cellSize[2]) ))
 	{
+    if (DebugCell)
 		cout << "Error point not in grid in " << __func__ << endl;
+    return 0x00;
 	}
 	
     unsigned int x = (unsigned int)floor((point[0]-_originCorner[0])/_cellSize[0]);
@@ -243,9 +253,12 @@ ThreeDCell* ThreeDGrid::getCell(const Vector3d& point)
 	
     if( x>=_nbCellsX ||  y>=_nbCellsY || z>=_nbCellsZ || x<0 || y<0 || z<0 )
     {
-		cout << "WSPoint = " << endl << point << endl;
-        cout << "ThreeDGrid:: OutBands " << __func__ << endl;
-        return 0x0;
+      if (DebugCell)
+      {
+      cout << "WSPoint = " << endl << point << endl;
+      cout << "ThreeDGrid:: OutBands " << __func__ << endl;
+      }
+      return 0x0;
     }
 	
     return getCell(x,y,z);
@@ -256,7 +269,7 @@ ThreeDCell* ThreeDGrid::getCell(const Vector3d& point)
  *
  * \param index
  */
-ThreeDCell* ThreeDGrid::getCell(double* pos)
+ThreeDCell* ThreeDGrid::getCell(double* pos) const
 {
   Vector3d vect(pos[0],pos[1],pos[2]);
   return getCell(vect);
@@ -267,7 +280,7 @@ ThreeDCell* ThreeDGrid::getCell(double* pos)
  *
  * \param index
  */
-Vector3i ThreeDGrid::getCellCoord(ThreeDCell* ptrCell)
+Vector3i ThreeDGrid::getCellCoord(ThreeDCell* ptrCell) const
 {
     Vector3i coord;
 //	
@@ -330,44 +343,44 @@ Vector3d ThreeDGrid::computeCellCorner(unsigned int x, unsigned int y, unsigned 
 /*!
  * \brief Get Neighboor Cell
  */
-ThreeDCell* ThreeDGrid::getNeighbour( const Vector3i& pos, unsigned int i)
+ThreeDCell* ThreeDGrid::getNeighbour( const Vector3i& pos, unsigned int i) const
 {
-    if( i<0 || i>26 )
+  if( i<0 || i>26 )
+  {
+    return 0x0;
+  }
+  else
+  {
+    if(i>=13) i++;
+		
+    unsigned int dx =  (i/1) % 3 - 1 ;
+    unsigned int dy =  (i/3) % 3 - 1 ;
+    unsigned int dz =  (i/9) % 3 - 1 ;
+		
+    //        cout << "( "<<dx<<" , "<<dy<<" , "<<dz<<" ) "<< endl;
+		
+    unsigned int x = pos[0] + dx ;
+    unsigned int y = pos[1] + dy ;
+    unsigned int z = pos[2] + dz ;
+		
+    if( x>=_nbCellsX ||  y>=_nbCellsY || z>=_nbCellsZ || x<0 || y<0 || z<0 )
     {
-        return 0x0;
+      //            cout << "( "<<x<<" , "<<y<<" , "<<z<<" ) "<< endl;
+      //            cout << "OutBands" << endl;
+      return 0x0;
     }
     else
     {
-        if(i>=13) i++;
-		
-        unsigned int dx =  (i/1) % 3 - 1 ;
-        unsigned int dy =  (i/3) % 3 - 1 ;
-        unsigned int dz =  (i/9) % 3 - 1 ;
-		
-        //        cout << "( "<<dx<<" , "<<dy<<" , "<<dz<<" ) "<< endl;
-		
-        unsigned int x = pos[0] + dx ;
-        unsigned int y = pos[1] + dy ;
-        unsigned int z = pos[2] + dz ;
-		
-        if( x>=_nbCellsX ||  y>=_nbCellsY || z>=_nbCellsZ || x<0 || y<0 || z<0 )
-        {
-            //            cout << "( "<<x<<" , "<<y<<" , "<<z<<" ) "<< endl;
-            //            cout << "OutBands" << endl;
-            return 0x0;
-        }
-        else
-        {
-            //            cout << "( "<<x<<" , "<<y<<" , "<<z<<" ) "<< endl;
-            return getCell(x,y,z);
-        }
+      //            cout << "( "<<x<<" , "<<y<<" , "<<z<<" ) "<< endl;
+      return getCell(x,y,z);
     }
+  }
 }
 
 /**
  * Retrive the X Y Z coordinate of the cell from its index
  */
-Vector3d ThreeDGrid::getCoordinates(ThreeDCell* cell)
+Vector3d ThreeDGrid::getCoordinates(ThreeDCell* cell) const
 {
     Vector3d coordinates;
     int index = cell->getIndex();

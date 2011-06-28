@@ -37,21 +37,21 @@ namespace API
 		 * @return 
 		 */
 		std::vector< std::tr1::shared_ptr<Configuration> > get3RandSuccesConfAlongTraj(
-																																									 double& prevDistPt,
-																																									 double& randDistPt,
-																																									 double& nextDistPt,
-																																									 double step);
+                                                                                       double& prevDistPt,
+                                                                                       double& randDistPt,
+                                                                                       double& nextDistPt,
+                                                                                       double step);
 		
 		/**
 		 * Returns the 3 configurations that are the closest to the input configuration
 		 * @param 
 		 */
 		std::vector< std::tr1::shared_ptr<Configuration> > getClosestConfOnTraj(
-																																						double& prevDistPt,
-																																						double& randDistPt,
-																																						double& nextDistPt,
-																																						std::tr1::shared_ptr<Configuration> ptrConf,
-																																						double step);
+                                                                                double& prevDistPt,
+                                                                                double& randDistPt,
+                                                                                double& nextDistPt,
+                                                                                std::tr1::shared_ptr<Configuration> ptrConf,
+                                                                                double step);
 		
 		/**
 		 * Cheat for Justin
@@ -81,7 +81,7 @@ namespace API
 		 * Expand the configuration to a ne
 		 */
 		std::tr1::shared_ptr<Configuration> perturbCurrent(std::tr1::shared_ptr<Configuration> qCurrPt,
-																											 std::tr1::shared_ptr<Configuration> qRandPt);
+                                                           std::tr1::shared_ptr<Configuration> qRandPt);
 		
 		/**
 		 * Get the minimal cost

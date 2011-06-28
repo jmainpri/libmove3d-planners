@@ -393,8 +393,8 @@ vector<double> Distance::getDistToZones()
 	{
 		case Balls:
 		{
-			Vector3d WSPoint = m_Robot->getJointPos(ENV.getInt(Env::akinJntId));
-			distances[k] = computeBoundingBalls(WSPoint,body[k], other[k]);
+			Vector3d WSPoint = m_Robot->getJointPos( ENV.getInt(Env::akinJntId) );
+			distances[k] = computeBoundingBalls( WSPoint, body[k], other[k] );
 			_PenetrationDist[k] = (_SafeRadius - distances[k])/_SafeRadius;
 			break;
 		}
@@ -484,6 +484,7 @@ vector<double> Distance::getDistToZones()
 		vect_jim.push_back(other[k][0]);
 		vect_jim.push_back(other[k][1]);
 		vect_jim.push_back(other[k][2]);		
+    cout << "ENV.getInt(Env::akinJntId) = " << ENV.getInt(Env::akinJntId) << endl;
 		cout << "vect_jim[0] = " << vect_jim[0] << " vect_jim[1] = " << vect_jim[1] << " vect_jim[2] = " << vect_jim[2] << endl;
 		cout << "vect_jim[3] = " << vect_jim[3] << " vect_jim[4] = " << vect_jim[4] << " vect_jim[5] = " << vect_jim[5] << endl;
 	}

@@ -7,7 +7,7 @@ BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})
 BM3D_SRC_SUBDIR_PROCESS(
 ThreeDCell.cpp
 ThreeDGrid.cpp 
-ThreeDPoints.cpp
+PointCloud.cpp
 NDCell.cpp
 NDGrid.cpp
 TwoDCell.cpp

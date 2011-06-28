@@ -1964,7 +1964,7 @@ void Graph::createRandConfs(int NMAX)
 				break;
 			}
 			
-			if (fct_stop)
+			if (fct_stop != NULL)
 			{
 				if (!(*fct_stop)())
 				{

@@ -414,12 +414,12 @@ vector<shared_ptr<Configuration> > Trajectory::getNConfAtParam(double delta)
 	
 }
 
-LocalPath* Trajectory::getLocalPathPtrAt(uint id)
+LocalPath* Trajectory::getLocalPathPtrAt(unsigned int id) const
 {
 	return m_Courbe.at(id);
 }
 
-int Trajectory::getNbOfPaths()
+int Trajectory::getNbOfPaths() const
 {
 	return m_Courbe.size();
 }

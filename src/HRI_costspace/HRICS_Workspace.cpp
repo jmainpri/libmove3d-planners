@@ -74,7 +74,7 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 		cout << "No Robot in Workspace planner" << endl;
 	}
 	
-        cout << "Human is " << mHumans[0]->getName() << endl;
+  cout << "Human is " << mHumans[0]->getName() << endl;
 
 #ifdef LIGHT_PLANNER
   if(_Robot)
@@ -87,7 +87,7 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
     }
     else
     {
-            cout << "Error : Manipulation Data uninitialized" << endl;
+        cout << "Error : Manipulation Data uninitialized" << endl;
     }
   }
 #else
@@ -102,6 +102,7 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 	
 	if(_Robot)
 	{
+    cout << "VIRTUAL Joint is " << ENV.getInt(Env::akinJntId) << endl;
 		cout << "VIRTUAL_OBJECT_DOF Joint is " << mIndexObjectDof << endl;
 		cout << "HRI Cost type is "  << ENV.getInt(Env::hriCostType) << endl;
 		cout << "Ball Dist is " << ENV.getBool(Env::useBallDist) << endl;
@@ -205,6 +206,26 @@ void Workspace::initNatural()
 {
 	//m_NaturalSpace = new Natural( _Robot );
 	m_NaturalSpace = NULL;
+}
+
+void Workspace::initOtpPlanner()
+{
+ 	HRICS_MotionPLConfig  = new HRICS::OTPMotionPl;
+	HRICS_activeDist = HRICS_MotionPL->getDistance();
+  
+  //	ENV.setBool(Env::HRIPlannerCS,true);
+	ENV.setBool(Env::enableHri,true);
+	ENV.setBool(Env::isCostSpace,true);
+  
+	ENV.setBool(Env::useBallDist,false);
+	ENV.setBool(Env::useBoxDist,true);
+  
+  API_activeGrid = dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getPlanGrid();
+  api_store_new_grid(API_activeGrid);
+  
+  ENV.setBool(Env::drawGrid,true);
+  //		m_mainWindow->setBoolFloor(false);
+  //		m_mainWindow->drawAllWinActive();
 }
 
 Eigen::Vector3d Workspace::getVisball()
@@ -1137,7 +1158,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 	q_base->setAsNotTested();
 
 	if (PointsToDraw == NULL){
-			PointsToDraw = new ThreeDPoints();
+			PointsToDraw = new PointCloud();
 	}
 	PointsToDraw->clear();
 
@@ -1267,7 +1288,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 //	q_base->setAsNotTested();
 	
 //	if (PointsToDraw == NULL){
-//			PointsToDraw = new ThreeDPoints();
+//			PointsToDraw = new PointCloud();
 //	}
 //	PointsToDraw->clear();
 

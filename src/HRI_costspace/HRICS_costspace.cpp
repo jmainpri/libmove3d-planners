@@ -13,6 +13,7 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include "cost_space.hpp"
+#include "planEnvironment.hpp"
 
 #include "P3d-pkg.h"
 
@@ -237,6 +238,9 @@ void HRICS_init(HRI_AGENTS* agents)
     ENV.setDouble(Env::extensionStep,14.0);
     ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
     ENV.setDouble(Env::temperatureRate,30);
+    
+    PlanEnv->setDouble(PlanParam::MaxFactor,5.0);
+    PlanEnv->setDouble(PlanParam::MinStep,2);
   }
   else 
   if ( global_ActiveRobotName == "ROBOT_JUSTIN" ) 
@@ -252,6 +256,9 @@ void HRICS_init(HRI_AGENTS* agents)
     ENV.setDouble(Env::extensionStep,1.5);
     ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
     ENV.setDouble(Env::temperatureRate,30);
+    
+    PlanEnv->setDouble(PlanParam::MaxFactor,1.5);
+    PlanEnv->setDouble(PlanParam::MinStep,2);
   }
   else 
   if ( global_ActiveRobotName == "PR2_ROBOT" ) 
@@ -287,10 +294,14 @@ void HRICS_init(HRI_AGENTS* agents)
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initDistance();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initVisibility();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initNatural();
-	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
+  //dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initOtpPlanner();
+  dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
   
 	HRICS_activeDist = HRICS_MotionPL->getDistance();
 	API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid();
+	api_store_new_grid( API_activeGrid );
+  
+	if( ENV.getBool(Env::HRIAutoLoadGrid) )
 	
 	if( ENV.getBool(Env::HRIAutoLoadGrid) && getenv("HOME_MOVE3D") )
 	{

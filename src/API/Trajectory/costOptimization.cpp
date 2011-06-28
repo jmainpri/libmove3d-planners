@@ -804,7 +804,7 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
 		delete PointsToDraw;
 	}
 	
-	PointsToDraw = new ThreeDPoints;
+	PointsToDraw = new PointCloud;
 	
 	if (PlanEnv->getBool(PlanParam::withDescent)) 
 	{

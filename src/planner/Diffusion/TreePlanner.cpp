@@ -7,7 +7,7 @@
 
 #include "TreePlanner.hpp"
 
-#include "API/Grids/ThreeDPoints.hpp"
+#include "API/Grids/PointCloud.hpp"
 
 #include "API/Roadmap/node.hpp"
 #include "API/Roadmap/compco.hpp"
@@ -138,7 +138,7 @@ bool TreePlanner::preConditions()
 	
 	if(ENV.getBool(Env::drawPoints))
 	{
-		PointsToDraw = new ThreeDPoints;
+		PointsToDraw = new PointCloud;
 	}
 	
 	return true;

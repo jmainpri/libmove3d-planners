@@ -536,10 +536,32 @@ Eigen::VectorXd Configuration::getEigenVector()
 	return q;
 }
 
+Eigen::VectorXd Configuration::getEigenVector(const int& startIndex, const int& endIndex)
+{	
+	VectorXd q(endIndex - startIndex);
+  
+	// Get the values of the dofs
+	for (int i = startIndex; i < endIndex; i++) 
+	{
+		q(i) = _Configuration[i];
+	}
+	
+	return q;
+}
+
 void Configuration::setFromEigenVector(const Eigen::VectorXd& conf)
 {	
 	// Get the values of the dofs
 	for (int i = 0; i < conf.size(); i++) 
+	{
+		_Configuration[i] = conf(i);
+	}
+}
+
+void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, const int& startIndex, const int& endIndex)
+{
+  // Get the values of the dofs
+	for (int i = startIndex; i < endIndex; i++) 
 	{
 		_Configuration[i] = conf(i);
 	}

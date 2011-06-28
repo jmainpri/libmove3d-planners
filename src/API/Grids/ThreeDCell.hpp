@@ -8,55 +8,56 @@
 #include <libxml/parser.h>
 
 /**
-  * @ingroup CPP_API
-  * @defgroup GRID Grid over the WS
-  */
+ * @ingroup CPP_API
+ * @defgroup GRID Grid over the WS
+ */
 
 /**
-  @ingroup GRID
-  */
+ @ingroup GRID
+ */
 namespace API
 {
-    class ThreeDGrid;
+  class ThreeDGrid;
 	
-
-    class ThreeDCell : public BaseCell
-    {
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  
+  class ThreeDCell : public BaseCell
+  {
+  public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 		
-        ThreeDCell();
+    ThreeDCell();
 		ThreeDCell(int i, ThreeDGrid* grid);
-        ThreeDCell(int i, Eigen::Vector3d corner, ThreeDGrid* grid);
+    ThreeDCell(int i, Eigen::Vector3d corner, ThreeDGrid* grid);
 		
-        virtual ~ThreeDCell();
+    virtual ~ThreeDCell();
 		
 		virtual double getCost() { return 0; };
-
-        bool isInsideCell(Eigen::Vector3d point);
-
-        Eigen::Vector3d getCenter();
-        Eigen::Vector3d getCorner() { return _corner; }
-        Eigen::Vector3d getRandomPoint();
-        Eigen::Vector3d getCellSize();
-
-        int getIndex() { return _index; }
-
+    
+    bool isInsideCell(Eigen::Vector3d point);
+    
+    Eigen::Vector3d getCenter();
+    Eigen::Vector3d getCorner() { return _corner; }
+    Eigen::Vector3d getRandomPoint();
+    Eigen::Vector3d getCellSize();
+    
+    int getIndex() { return _index; }
+    
 		void setCorner(const Eigen::Vector3d& corner) { _corner = corner; }
 		void setGrid( ThreeDGrid* grid ) { _grid = grid; }
 		
-        virtual void draw();
+    virtual void draw();
+    void drawColorGradient( double value, double min, double max , bool inverse = false );
 		
 		bool writeToXml(xmlNodePtr cur);
 		bool readCellFromXml(xmlNodePtr cur);
-
-        bool operator==( ThreeDCell otherCell) { return ((otherCell._index) == (this->_index)); }
-
-    protected:
-        int _index;
-        Eigen::Vector3d _corner;
-        ThreeDGrid* _grid;
-    };
-
+    
+    bool operator==( ThreeDCell otherCell) { return ((otherCell._index) == (this->_index)); }
+    
+  protected:
+    int _index;
+    Eigen::Vector3d _corner;
+    ThreeDGrid* _grid;
+  };
+  
 }
 #endif // CELL_HPP

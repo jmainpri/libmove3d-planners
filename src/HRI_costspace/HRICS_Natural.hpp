@@ -142,20 +142,20 @@ namespace HRICS
 		
 		
 	private:
-		bool			m_debug;
+		bool                m_debug;
 		
-		int				m_IndexObjectDof;
+		int                 m_IndexObjectDof;
 		
-		bool			m_computeNbOfIK;
+		bool                m_computeNbOfIK;
 		
-		bool			m_leftArmCost;
+		bool                m_leftArmCost;
 		
-		bool			m_BestPointsSorted;
+		bool                m_BestPointsSorted;
 		
-		Robot*			m_Robot;
-		NaturalGrid*	m_Grid;
-
-		RobotBaseGrid*	m_PlanBaseGrid;
+		Robot*              m_Robot;
+    
+		NaturalGrid*        m_Grid;
+		RobotBaseGrid*      m_PlanBaseGrid;
 		
 		enum Kinematic 
 		{

@@ -11,7 +11,7 @@
 //
 #include "RRT.hpp"
 
-#include "API/Grids/ThreeDPoints.hpp"
+#include "API/Grids/PointCloud.hpp"
 #include "API/Roadmap/node.hpp"
 #include "API/Roadmap/graph.hpp"
 

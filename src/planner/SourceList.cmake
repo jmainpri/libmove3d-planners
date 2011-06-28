@@ -14,3 +14,4 @@ planEnvironment.hpp
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Diffusion/SourceList.cmake)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/PRM/SourceList.cmake)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Greedy/SourceList.cmake)
+include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/TrajectoryOptim/Chomp/SourceList.cmake)

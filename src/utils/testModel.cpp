@@ -16,7 +16,7 @@
 #include "P3d-pkg.h"
 #include "Collision-pkg.h"
 
-//#include "Greedy/GridCollisionChecker.h"
+//#include "Greedy/CollisionSpace.h"
 
 using namespace std;
 using namespace tr1;
@@ -40,7 +40,7 @@ int TestModel::nbOfVoxelCCPerSeconds()
     for (int i = 0;; i++)
     {
 			robotPt->setAndUpdate(*robotPt->shoot());
-       // global_GridCollisionChecker->updateRobotOccupationCells(robotPt);
+       // global_CollisionSpace->updateRobotOccupationCells(robotPt);
 			cout << "Warning not imlemented" << endl;
 
         ChronoTimes(&tu, &ts);

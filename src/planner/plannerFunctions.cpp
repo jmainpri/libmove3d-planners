@@ -270,17 +270,21 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
   
   cout << "optimTrj range is : " << range << endl;
   
-  // Cut localpaths in small localpaths
-  const unsigned int nLP_max = 20; 
-  unsigned int nLP = optimTrj.getNbOfPaths();
-  unsigned int nLP_toCut = floor( range / (8*dmax));
+  bool doCutInsmallLP = false;
   
-  if ( (nLP_toCut<nLP_max) && (nLP_toCut>nLP) && (nLP_toCut>1) )
-  {
-    cout << "Cut the traj in several local paths" << endl;
-    optimTrj.cutTrajInSmallLP( nLP_toCut );
+  if (doCutInsmallLP) {
+    // Cut localpaths in small localpaths
+    const unsigned int nLP_max = 20; 
+    unsigned int nLP = optimTrj.getNbOfPaths();
+    unsigned int nLP_toCut = floor( range / (8*dmax));
+    
+    if ( (nLP_toCut<nLP_max) && (nLP_toCut>nLP) && (nLP_toCut>1) )
+    {
+      cout << "Cut the traj in several local paths" << endl;
+      optimTrj.cutTrajInSmallLP( nLP_toCut );
+    }
   }
-
+  
   // Replace current trajectory
   optimTrj.replaceP3dTraj();
   optimTrj.resetCostComputed();
@@ -422,7 +426,12 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
                                  q_source->getConfigStruct(),  
                                  q_target->getConfigStruct() );
   
-  smoothing_Function(rob->getRobotStruct(), path, 100, 4.0);
+  if(!PlanEnv->getBool(PlanParam::stopPlanner))
+  {
+     smoothing_Function(rob->getRobotStruct(), path, 100, 4.0);
+  }
+    
+    return true;
 }
 
 

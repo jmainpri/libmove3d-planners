@@ -121,7 +121,6 @@ public:
 		virtual unsigned int run() = 0;
 
 protected:
-    bool m_fail;
   
     int (*_stop_func)();
     void (*_draw_func)();
@@ -134,6 +133,7 @@ protected:
 
     bool _Init;/*!< Le Planner a été initialisé*/
 
+    bool m_fail;
 };
 
 #endif

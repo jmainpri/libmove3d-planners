@@ -26,6 +26,7 @@
 
 #include "API/Grids/gridsAPI.hpp"
 #include "planner/planEnvironment.hpp"
+#include "planner/Greedy/CollisionSpace.hpp"
 
 #include <Eigen/Core>
 #define EIGEN_USE_NEW_STDVECTOR
@@ -133,17 +134,139 @@ void g3d_draw_costspace()
 	}
 }
 
+void g3d_draw_squeleton()
+{
+  double boxA[8][3];
+  double boxB[8][3];
+  
+  CXX_drawBox.resize(8);
+  
+  Robot* robot = global_Project->getActiveScene()->getRobotByNameContaining("PR2") ;
+  
+  for(unsigned int i=0; i<robot->getNumberOfJoints(); i++)
+  {
+    Joint* jnt = robot->getJoint(i);
+    p3d_obj* obj = jnt->getJointStruct()->o;
+    
+    if(obj)
+    {
+      Eigen::Vector3d vect1,vect2,vect5,vect6;
+      //pqp_draw_OBB_first_level(obj);
+      
+      if ( pqp_get_OBB_first_level(obj,boxA) )
+      {
+        for(int j=0; j<8; j++)
+        {
+          CXX_drawBox[j][0] = boxA[j][0];
+          CXX_drawBox[j][1] = boxA[j][1]; 
+          CXX_drawBox[j][2] = boxA[j][2];
+          
+          boxA[j][0] = CXX_drawBox[j][0];
+          boxA[j][1] = CXX_drawBox[j][1];
+          boxA[j][2] = CXX_drawBox[j][2];
+          
+//          if (j == 1) 
+//          { vect1 = CXX_drawBox[j]; }
+//          if (j == 2) 
+//          { vect2 = CXX_drawBox[j]; }
+//          if (j == 5) 
+//          { vect5 = CXX_drawBox[j]; }
+//          if (j == 6) 
+//          { vect6 = CXX_drawBox[j]; }
+          
+          CXX_drawBox[j] = jnt->getMatrixPos()*CXX_drawBox[j];
+          
+          boxB[j][0] = CXX_drawBox[j][0];
+          boxB[j][1] = CXX_drawBox[j][1];
+          boxB[j][2] = CXX_drawBox[j][2];
+          
+//          if (j == ENV.getDouble(Env::extensionStep)) {
+//            continue;
+//          }
+          
+          double alpha = (double)j/8;
+          double colorvector[4];
+          GroundColorMixGreenToRed(colorvector,alpha);
+          
+//          glColor4dv(colorvector);
+//          g3d_draw_simple_box(boxA[j][0],boxA[j][0]+0.02,
+//                              boxA[j][1],boxA[j][1]+0.02,
+//                              boxA[j][2],boxA[j][2]+0.02, FALSE, TRUE, 0.01);
+          
+          
+          glColor4dv(colorvector);
+          g3d_draw_simple_box(boxB[j][0],boxB[j][0]+0.02,
+                              boxB[j][1],boxB[j][1]+0.02,
+                              boxB[j][2],boxB[j][2]+0.02, FALSE, TRUE, 0.01);
+        }
+        
+        //g3d_draw_complex_black_box(boxA);
+        g3d_draw_complex_black_box(boxB);
+        
+        vect1 = CXX_drawBox[1];
+        vect2 = CXX_drawBox[2];
+        vect5 = CXX_drawBox[5];
+        vect6 = CXX_drawBox[6];
+        
+        Eigen::Vector3d p1Eigen = 0.5*(vect1+vect2);
+        Eigen::Vector3d p2Eigen = 0.5*(vect5+vect6);
+        
+        g3d_draw_simple_box(p1Eigen[0],p1Eigen[0]+0.02,
+                            p1Eigen[1],p1Eigen[1]+0.02,
+                            p1Eigen[2],p1Eigen[2]+0.02, FALSE, FALSE, 0.01);
+        
+        g3d_draw_simple_box(p2Eigen[0],p2Eigen[0]+0.02,
+                            p2Eigen[1],p2Eigen[1]+0.02,
+                            p2Eigen[2],p2Eigen[2]+0.02, FALSE, FALSE, 0.01);
+        
+        double p1[3], p2[3];
+        double radius = 0.5*( ( vect1 - vect2 ).norm() );
+        
+        p1[0] = p1Eigen[0];
+        p1[1] = p1Eigen[1];
+        p1[2] = p1Eigen[2];
+        
+        p2[0] = p2Eigen[0];
+        p2[1] = p2Eigen[1];
+        p2[2] = p2Eigen[2];
+        
+        double colorvector[4];
+        colorvector[0] = 1.0;
+        colorvector[1] = 1.0;
+        colorvector[2] = 0.0;
+        colorvector[3] = 0.5;
+        
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        
+        glColor4dv(colorvector);
+        g3d_draw_cylinder(p1, p2, radius, 20 );
+
+        glDisable(GL_BLEND);
+      }
+    }
+  }
+}
+
 void g3d_draw_grids()
 {
+  //g3d_draw_squeleton();
   //cout << "g3d_draw_grids" << endl;
   
+  //pqp_draw_all_OBBs(1);
+  
+  //double tx, ty, tz, ax, ay, az;
+  //double xmin, xmax, ymin, ymax, zmin, zmax;
+  //p3d_matrix4 mat;
+
+    
 #ifdef HRI_COSTSPACE
   
 	if( ENV.getBool(Env::drawEntireGrid) && API_activeGrid )
 	{
 		ENV.setBool(Env::drawGrid,true);
 	}
-  
+  //-------------------------------------------------------------
 	if( ENV.getBool(Env::drawGrid) && API_activeGrid )
 	{
     //cout << "API_activeGrid->draw()" << endl;
@@ -157,12 +280,12 @@ void g3d_draw_grids()
 			if (!CXX_drawBox.empty()) 
 			{
 				g3d_draw_eigen_box(	CXX_drawBox[0], CXX_drawBox[1], CXX_drawBox[2], CXX_drawBox[3],
-                           CXX_drawBox[4], CXX_drawBox[5], CXX_drawBox[6], CXX_drawBox[7],
+                            CXX_drawBox[4], CXX_drawBox[5], CXX_drawBox[6], CXX_drawBox[7],
 													 Red, 0, 3);
 			}
 		}
 	}
-	
+	//-------------------------------------------------------------
 	if (ENV.getBool(Env::drawBox)) 
 	{
 		CXX_drawBox = API_activeRobot->getObjectBox();
@@ -174,20 +297,38 @@ void g3d_draw_grids()
                          Red, 0, 3);
 		}
 	}
-	
+	//-------------------------------------------------------------
 	if( HRICS_activeNatu )
 	{
     HRICS_activeNatu->printBodyPos();
 	}
 
-	if( API_activeRobotGrid && ENV.getBool(Env::DrawRobotBaseGridCosts))
+	if( API_activeRobotGrid && ENV.getBool(Env::DrawRobotBaseGridCosts) )
 	{
 		API_activeRobotGrid->draw();
 	}
-
-	
 #endif
-	
+  
+  if( global_CollisionSpace && PlanEnv->getBool(PlanParam::drawOccupVoxels) )
+  {
+    global_CollisionSpace->draw();
+    //global_CollisionSpace->drawGradient();
+  }
+  
+  if( global_CollisionSpace && PlanEnv->getBool(PlanParam::drawStaticVoxels) )
+  {
+    global_CollisionSpace->drawStaticVoxels();
+  }
+  
+	if( global_CollisionSpace && PlanEnv->getBool(PlanParam::drawSampledPoints) )
+  {
+    global_CollisionSpace->getBodySampler()->draw();
+  }
+  
+  if (global_CollisionSpace && PlanEnv->getBool(PlanParam::drawStaticVoxels)) {
+    global_CollisionSpace->drawSquaredDist();
+  }
+    
 	if( ENV.getBool(Env::drawPoints) )
 	{
 		if(PointsToDraw != NULL)
@@ -257,7 +398,7 @@ void g3d_draw_hrics()
 			//dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPLConfig)->draw2dPath();
 		}
 
-		if( ENV.getBool(Env::HRIPlannerCS) && ENV.getBool(Env::drawOTPTraj) )
+		if( ENV.getBool(Env::drawOTPTraj) )
 		{
 			dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->draw2dPath();
 		}

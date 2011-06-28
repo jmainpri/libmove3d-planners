@@ -64,7 +64,7 @@ extern HRICS::HumanAwareMotionPlanner*	HRICS_MotionPLConfig;
  * Cells to be drawn
  */ 
 extern API::ThreeDCell*		BiasedCell3D;
-extern API::TwoDCell*		BiasedCell2D;
+extern API::TwoDCell*		  BiasedCell2D;
 
 #endif
 

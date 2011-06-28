@@ -116,6 +116,8 @@ bool ThresholdPlanner::newTrajectoryExtracted(API::Trajectory* trajPt)
 		return false;
 	}
  */
+    
+    return false;
 } 
 
 

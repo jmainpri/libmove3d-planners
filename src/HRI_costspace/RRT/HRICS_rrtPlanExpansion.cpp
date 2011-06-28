@@ -1,6 +1,6 @@
 #include "HRICS_rrtPlanExpansion.hpp"
 #include "../HRICS_ConfigSpace.hpp"
-#include "API/Grids/ThreeDPoints.hpp"
+#include "API/Grids/PointCloud.hpp"
 
 #include "Planner-pkg.h"
 
@@ -93,7 +93,7 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getExpansionDirection(
     {
         if(PointsToDraw==NULL)
         {
-            PointsToDraw = new ThreeDPoints();
+            PointsToDraw = new PointCloud();
         }
         Vector3d randomPoint;
         randomPoint[0] = q->at(6);
