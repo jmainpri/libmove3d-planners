@@ -167,9 +167,15 @@ public:
 	
 	/**
 	 * Returns true if the robot is 
-	 * in colision with obstacles
+	 * in colision with obstacles, other robots and self
 	 */
 	bool isInCollision();
+
+	/**
+	 * Returns true if the robot is
+	 * in colision with obstacles or other robots
+	 */
+	bool isInCollisionWithOthersAndEnv();
 	
 	/**
 	 * Sets the Initial Position of the Robot

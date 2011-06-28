@@ -16,6 +16,7 @@
 
 #include "P3d-pkg.h"
 #include "Planner-pkg.h"
+#include "move3d-gui.h"
 #include "move3d-headless.h"
 #include "Collision-pkg.h"
 
@@ -484,6 +485,11 @@ bool Robot::isInCollision()
 	
 	return ncol;
 	//cout << "Collision = " << ncol << endl;
+}
+
+bool Robot::isInCollisionWithOthersAndEnv()
+{
+    return pqp_robot_all_no_self_collision_test(_Robot);
 }
 
 shared_ptr<Configuration> Robot::getInitialPosition()
