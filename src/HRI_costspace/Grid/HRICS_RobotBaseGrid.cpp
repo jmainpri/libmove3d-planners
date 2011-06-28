@@ -143,7 +143,7 @@ double RobotBaseCell::getCost()
     double robotDistanceMax = ENV.getDouble(Env::robotMaximalDist);
 
 
-    if (!mCostIsComputed)
+    if (false && !mCostIsComputed)
     {
         Robot* r =dynamic_cast<RobotBaseGrid*>(_grid)->getNaturalCostSpace()->getRobot();
 //        cout << r->getName() << endl;
@@ -224,6 +224,31 @@ double RobotBaseCell::getCost()
               else if (type == 2){ mCost = RobotPreference; }
               else if (type == 3){ mCost = fieldOfVision; }
 
+        }
+
+
+        mCostIsComputed = true;
+    }
+    else if (!mCostIsComputed)
+    {
+        Robot* r =dynamic_cast<RobotBaseGrid*>(_grid)->getNaturalCostSpace()->getRobot();
+
+        int mIndexOfDoF = 6;
+        double x = (*r->getCurrentPos())[mIndexOfDoF + 0];
+        double y = (*r->getCurrentPos())[mIndexOfDoF + 1];
+        double angle = atan2((getWorkspacePoint()[1] - y ), getWorkspacePoint()[0] - x);
+        double distance = std::sqrt(std::pow(x - getWorkspacePoint()[0],2) + std::pow((y - getWorkspacePoint()[1]),2));
+
+        if (fabs(distance) < 0.5)
+        {
+            mCost = 0.3 * fabs(distance);
+        }
+        else
+        {
+            mCost = 2.33333 * fabs(distance) - 0.866666;
+
+
+            if (mCost > 1) {mCost = 1;}
         }
 
         mCostIsComputed = true;
