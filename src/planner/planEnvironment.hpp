@@ -37,12 +37,17 @@ namespace  PlanParam
 		withShortCut,
 		withDeformation,
 		withDescent,
-	drawColorConfig,
-
+        
+        // Drawing (gl) stuff
+        drawColorConfig,
+        drawOccupVoxels,
+        drawSampledPoints,
+        drawStaticVoxels,
+        drawRandomMap,
+        
         //Object Transfert point variable
         env_humanGridDraw,
         env_robotGridDraw,
-        drawRandomMap,
         env_isStanding,
         env_drawRandomPoint,
         env_drawDistGrid,
@@ -75,21 +80,22 @@ namespace  PlanParam
 		MaxFactor,
 		MinStep,
 		costTraj,
-
-		// Object TransfertPoint variable
-		env_randomXMinLimit,
-		env_randomXMaxLimit,
-		env_randomYMinLimit,
-		env_randomYMaxLimit,
-		env_robotSpeed,
-		env_humanSpeed,
-		env_timeStamp,
-		env_psi,
-		env_delta,
-		env_ksi,
-		env_rho,
-		env_sittingOffset,
-		env_objectNessecity
+        distMinToDraw,
+        
+        // Object TransfertPoint variable
+        env_randomXMinLimit,
+        env_randomXMaxLimit,
+        env_randomYMinLimit,
+        env_randomYMaxLimit,
+        env_robotSpeed,
+        env_humanSpeed,
+        env_timeStamp,
+        env_psi,
+        env_delta,
+        env_ksi,
+        env_rho,
+        env_objectNessecity,
+        env_sittingOffset
 	};
 	
 	enum stringParameter 

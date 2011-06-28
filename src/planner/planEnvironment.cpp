@@ -27,6 +27,8 @@ bool Env_stopUser()
 	return stop;
 }
 
+using namespace std;
+
 
 // A new container is created for each module
 // First declaire the maps of praramters
@@ -48,28 +50,18 @@ void initPlannerParameters()
 	// Create 5 maps for all types and fill the 5 maps
 	// ------------------------------------------------------------------
 	std::map<PlanParam::boolParameter,		boolContainer*>				myBoolMap;
-	std::map<PlanParam::intParameter,			intContainer*>				myIntMap;
+	std::map<PlanParam::intParameter,			intContainer*>			myIntMap;
 	std::map<PlanParam::doubleParameter,	doubleContainer*>			myDoubleMap;
 	std::map<PlanParam::stringParameter,	stringContainer*>			myStringMap;
 	std::map<PlanParam::vectorParameter,	vectorContainer*>			myVectorMap;
 	
 	// Bool
 	// ------------------------------------------------------------------
-	myBoolMap.insert( std::make_pair( PlanParam::stopPlanner,				new boolContainer(false)));
+	myBoolMap.insert( std::make_pair( PlanParam::stopPlanner,			new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::isMaxDisNeigh,			new boolContainer(false)));
-	myBoolMap.insert( std::make_pair( PlanParam::isWeightedChoice,	new boolContainer(false)));
+	myBoolMap.insert( std::make_pair( PlanParam::isWeightedChoice,      new boolContainer(false)));
 
-	// Object TransfertPoint variable
-	myBoolMap.insert( std::make_pair( PlanParam::env_humanGridDraw,		new boolContainer(true)));
-	myBoolMap.insert( std::make_pair( PlanParam::env_robotGridDraw,		new boolContainer(false)));
-	myBoolMap.insert( std::make_pair( PlanParam::drawRandomMap,			new boolContainer(false)));
-	myBoolMap.insert( std::make_pair( PlanParam::env_isStanding,		new boolContainer(false)));
-	myBoolMap.insert( std::make_pair( PlanParam::env_drawDistGrid,		new boolContainer(false)));
-	myBoolMap.insert( std::make_pair( PlanParam::env_drawOnlyBest,		new boolContainer(false)));
-	myBoolMap.insert( std::make_pair( PlanParam::env_normalRand,		new boolContainer(true)));
-	myBoolMap.insert( std::make_pair( PlanParam::env_fusedGridRand,		new boolContainer(false)));
-
-	// Smoothing stage
+    // Smoothing stage
 	myBoolMap.insert( std::make_pair( PlanParam::partialShortcut,		new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::saveTrajCost,			new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::trajCostRecompute,		new boolContainer(false)));
@@ -80,9 +72,24 @@ void initPlannerParameters()
 	myBoolMap.insert( std::make_pair( PlanParam::withShortCut,			new boolContainer(true)));
 	myBoolMap.insert( std::make_pair( PlanParam::withDeformation,		new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::withDescent,			new boolContainer(false)));
-	myBoolMap.insert( std::make_pair( PlanParam::drawColorConfig,		new boolContainer(false)));
-	myBoolMap.insert( std::make_pair( PlanParam::env_drawRandomPoint,	new boolContainer(false)));
-	
+    
+	// Drawing (gl) stuff
+    myBoolMap.insert( std::make_pair( PlanParam::drawColorConfig,		new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( PlanParam::drawOccupVoxels,		new boolContainer(true)));
+    myBoolMap.insert( std::make_pair( PlanParam::drawSampledPoints,     new boolContainer(true)));
+    myBoolMap.insert( std::make_pair( PlanParam::drawStaticVoxels,      new boolContainer(true)));
+    myBoolMap.insert( std::make_pair( PlanParam::drawRandomMap,			new boolContainer(false)));
+    
+    // Object TransfertPoint variable
+	myBoolMap.insert( std::make_pair( PlanParam::env_humanGridDraw,		new boolContainer(true)));
+	myBoolMap.insert( std::make_pair( PlanParam::env_robotGridDraw,		new boolContainer(false)));
+	myBoolMap.insert( std::make_pair( PlanParam::env_isStanding,		new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( PlanParam::env_drawRandomPoint,	new boolContainer(false)));
+	myBoolMap.insert( std::make_pair( PlanParam::env_drawDistGrid,		new boolContainer(false)));
+	myBoolMap.insert( std::make_pair( PlanParam::env_drawOnlyBest,		new boolContainer(false)));
+	myBoolMap.insert( std::make_pair( PlanParam::env_normalRand,		new boolContainer(true)));
+	myBoolMap.insert( std::make_pair( PlanParam::env_fusedGridRand,		new boolContainer(false)));
+    
 	// Int
 	// ------------------------------------------------------------------
 	myIntMap.insert(std::make_pair( PlanParam::tata,						new intContainer(5)));
@@ -100,10 +107,11 @@ void initPlannerParameters()
 	// Double
 	// ------------------------------------------------------------------
 	// Post-processing phaze
-	myDoubleMap.insert( std::make_pair( PlanParam::optimTimeLimit,	new doubleContainer(4.0)));
+	myDoubleMap.insert( std::make_pair( PlanParam::optimTimeLimit,          new doubleContainer(4.0)));
 	myDoubleMap.insert( std::make_pair( PlanParam::MaxFactor,				new doubleContainer(3.0)));
 	myDoubleMap.insert( std::make_pair( PlanParam::MinStep,					new doubleContainer(2.0)));
 	myDoubleMap.insert( std::make_pair( PlanParam::costTraj,				new doubleContainer(1.0)));
+    myDoubleMap.insert( std::make_pair( PlanParam::distMinToDraw,           new doubleContainer(0.7)));
 	
 	// Object TransfertPoint variable
 	myDoubleMap.insert( std::make_pair( PlanParam::env_randomXMinLimit,		new doubleContainer(-3.0)));
@@ -117,9 +125,10 @@ void initPlannerParameters()
 	myDoubleMap.insert( std::make_pair( PlanParam::env_delta,				new doubleContainer(0.01)));
 	myDoubleMap.insert( std::make_pair( PlanParam::env_ksi,					new doubleContainer(0.43)));
 	myDoubleMap.insert( std::make_pair( PlanParam::env_rho,					new doubleContainer(0.57)));
+    myDoubleMap.insert( std::make_pair( PlanParam::env_objectNessecity,		new doubleContainer(0.5)));
 	myDoubleMap.insert( std::make_pair( PlanParam::env_sittingOffset,		new doubleContainer(0.2)));
-	myDoubleMap.insert( std::make_pair( PlanParam::env_objectNessecity,		new doubleContainer(0.5)));
 
+    //cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble( PlanParam::env_objectNessecity ) << endl;
 
 	// String
 	// ------------------------------------------------------------------
