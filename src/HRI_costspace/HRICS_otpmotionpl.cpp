@@ -1209,6 +1209,12 @@ void OTPMotionPl::removeLastConf()
 	ConfigHR::index--;
 }
 
+void OTPMotionPl::clearConfList()
+{
+	m_configList.clear();
+	ConfigHR::index = 0;
+}
+
 void OTPMotionPl::saveToXml(string filename)
 {
     stringstream ss;

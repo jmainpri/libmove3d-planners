@@ -164,8 +164,20 @@ namespace HRICS
 
         void drawOTPList(bool value);
 
+        /**
+          * Adding the actual configuration to m_configList
+          */
         std::vector<ConfigHR> addConfToList();
+
+        /**
+          * removing the last configuration of m_configList
+          */
         void removeLastConf();
+
+        /**
+          * Clear m_configList;
+          */
+        void clearConfList();
 
         /**
           * save what's in m_configList to the filename file.
