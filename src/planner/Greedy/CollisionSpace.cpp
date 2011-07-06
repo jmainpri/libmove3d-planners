@@ -23,7 +23,7 @@ CollisionSpace* global_CollisionSpace = NULL;
 using namespace std;
 using namespace tr1;
 
-CollisionSpace::CollisionSpace() : m_sampler(NULL)
+CollisionSpace::CollisionSpace(Robot* rob) : m_sampler(NULL)
 {
 	m_nbMaxCells = ENV.getInt(Env::nbCells);
 	double cellSize = (XYZ_ENV->box.x2 - XYZ_ENV->box.x1);
@@ -42,11 +42,11 @@ CollisionSpace::CollisionSpace() : m_sampler(NULL)
 	
 	//_nbCells = _nbCellsX * _nbCellsY * _nbCellsZ;
 	_cellSize[0] = _cellSize[1] = _cellSize[2] = cellSize;
-  
-  //unvalid cells for each robot except current one ?
-  m_size = max( max(  _cellSize[0]*getXNumberOfCells() , 
+    
+    //unvalid cells for each robot except current one ?
+    m_size = max( max(  _cellSize[0]*getXNumberOfCells() , 
                       _cellSize[1]*getYNumberOfCells() ),
-                      _cellSize[2]*getZNumberOfCells() );
+                 _cellSize[2]*getZNumberOfCells() );
 	
 	this->createAllCells();
 	
@@ -55,10 +55,10 @@ CollisionSpace::CollisionSpace() : m_sampler(NULL)
 	cout << "Cell size(2) = " << _cellSize[2] << endl;
 	
 	cout << "Number total of cells = " << _nbCellsX*_nbCellsY*_nbCellsZ << endl;
-  
-  cout << "Max distance sq = " <<( _nbCellsX*_nbCellsX 
-                                 + _nbCellsY*_nbCellsY  
-                                 + _nbCellsZ*_nbCellsZ ) / 2  << endl;
+    
+    cout << "Max distance sq = " <<( _nbCellsX*_nbCellsX 
+                                    + _nbCellsY*_nbCellsY  
+                                    + _nbCellsZ*_nbCellsZ ) / 2  << endl;
 	
 	//Build the meshes env edges
 	if(XYZ_ENV->o[0]->pol[0]->poly->the_edges == NULL)
@@ -73,8 +73,9 @@ CollisionSpace::CollisionSpace() : m_sampler(NULL)
 		}
 	}
 	
-  m_Robot = global_Project->getActiveScene()->getActiveRobot();
-  
+    //m_Robot = global_Project->getActiveScene()->getActiveRobot();
+    m_Robot = rob;
+    
 	init();
 }
 
@@ -111,10 +112,6 @@ void CollisionSpace::init(void)
   //m_sampler->computeRobotBodiesPointCloud(m_Robot);
 	m_sampler->computeStaticObjectsPointCloud();
 	m_sampler->computeAllRobotsBodiesPointCloud();
-  
-  //m_sampler->generateRobotBoudingCylinder(m_Robot);
-  m_sampler->generateAllRobotsBoundingCylinders();
-	
   
 	//unvalid static object Cells
 //	for(int i = 0; i < XYZ_ENV->no; i++)
@@ -331,11 +328,28 @@ void CollisionSpace::initNeighborhoods()
   }
 }
 
+void CollisionSpace::addRobotBody(Joint* jnt)
+{
+  vector<Eigen::Vector3d> points;
+  
+  p3d_obj* obj = jnt->getJointStruct()->o;
+  
+  if ( obj == NULL ) 
+    return;
+  
+  PointCloud& cloud = m_sampler->getPointCloud( obj );
+  
+  for (unsigned int j=0; j<cloud.size(); j++) 
+  { points.push_back( jnt->getMatrixPos()*cloud[j] ); }
+  
+  addPointsToField(points);
+}
+
 void CollisionSpace::addAllPointsToField()
 {
   vector<Eigen::Vector3d> points;
   
-  // Static Obstacles
+  // Add Static Obstacles
   for (int i=0; i<XYZ_ENV->no; i++) 
   {
     PointCloud& cloud = m_sampler->getPointCloud(XYZ_ENV->o[i]);
@@ -344,12 +358,13 @@ void CollisionSpace::addAllPointsToField()
     { points.push_back( cloud[j] ); }
   }
   
-  // Moving Obstacles
+  // Add Moving Obstacles
   Scene* sc = global_Project->getActiveScene();
   for (unsigned int i=0; i<sc->getNumberOfRobots(); i++) 
   {
     Robot* mov_obst = sc->getRobot(i);
     
+    // The robot is not a Human or a robot
     if (  mov_obst->getName().find( "ROBOT" ) == string::npos && 
           mov_obst->getName().find( "HUMAN" ) == string::npos ) 
     {
@@ -518,8 +533,9 @@ double CollisionSpace::getDistance(CollisionSpaceCell* cell) const
     //std::cout << "cell dist is : " << cell->m_DistanceSquare << std::endl;
     return 0;
   }
-  
   return m_SqrtTable[cell->m_DistanceSquare];
+  
+//  return sqrt(cell->m_DistanceSquare)*_cellSize[0];
 }
 
 bool CollisionSpace::getCollisionPointPotentialGradient(const CollisionPoint& collision_point, 
@@ -637,7 +653,7 @@ void CollisionSpace::drawSquaredDist()
     distToClosObst = getDistance(cell);
     
     if (distToClosObst < PlanEnv->getDouble(PlanParam::distMinToDraw) ) 
-      cell->drawColorGradient(distToClosObst,0.0,3.0,true);
+      cell->drawColorGradient(distToClosObst,0.0,0.5,true);
 	}
 }
 

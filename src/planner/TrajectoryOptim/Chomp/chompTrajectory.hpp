@@ -62,12 +62,12 @@ public:
   /**
    * \brief Constructs a trajectory for a given robot model, trajectory duration, and discretization
    */
-  ChompTrajectory(const API::Trajectory& T,int diff_rule_length);
+  ChompTrajectory(const API::Trajectory& T,int diff_rule_length, const std::vector<int>& active_p3d_joints);
   
   /**
    * \brief Constructs a trajectory for a given robot model, number of trajectory points, and discretization
    */
- // ChompTrajectory(const ChompRobotModel* robot_model, int num_points, double discretization);
+  // ChompTrajectory(const ChompRobotModel* robot_model, int num_points, double discretization);
   
   /**
    * \brief Creates a new containing only the joints of interest, and adds padding to the start
@@ -75,9 +75,9 @@ public:
    */
   ChompTrajectory(const ChompTrajectory& source_traj, int diff_rule_length);
   
-//  ChompTrajectory(const ChompRobotModel* robot_model,
-//                  const ChompRobotModel::ChompPlanningGroup* planning_group, 
-//                  const trajectory_msgs::JointTrajectory& traj);
+  //  ChompTrajectory(const ChompRobotModel* robot_model,
+  //                  const ChompRobotModel::ChompPlanningGroup* planning_group, 
+  //                  const trajectory_msgs::JointTrajectory& traj);
   
   /**
    * \brief Destructor
@@ -175,15 +175,19 @@ public:
   
   double getDuration() const;
   
+  // Returns the Move3d robot
   Robot* getRobot() { return robot_model_; }
+  
+  // prints the big matrix
+  void print();
   
 private:
   
   void init();                                          /**< \brief Allocates memory for the trajectory */
   
   Robot* robot_model_;                             /**< Robot Model */
-//  const ChompRobotModel* robot_model_;                  /**< Robot Model */
-//  const ChompRobotModel::ChompPlanningGroup* planning_group_;    /**< Planning group that this trajectory corresponds to, if any */
+  //  const ChompRobotModel* robot_model_;                  /**< Robot Model */
+  //  const ChompRobotModel::ChompPlanningGroup* planning_group_;    /**< Planning group that this trajectory corresponds to, if any */
   int num_points_;                                      /**< Number of points in the trajectory */
   int num_joints_;                                      /**< Number of joints in each trajectory point */
   double discretization_;                               /**< Discretization of the trajectory */
@@ -259,6 +263,9 @@ inline Eigen::MatrixXd& ChompTrajectory::getTrajectory()
 
 inline Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic> ChompTrajectory::getFreeTrajectoryBlock()
 {
+//  std::cout << "getNumFreePoints() = " << getNumFreePoints() << std::endl;
+//  std::cout << "getNumJoints() = " << getNumJoints()  << std::endl;
+  
   return trajectory_.block(start_index_, 0, getNumFreePoints(), getNumJoints());
 }
 

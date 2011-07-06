@@ -30,7 +30,7 @@ public:
   //constructors and destructors
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   
-  CollisionSpace();
+  CollisionSpace(Robot* rob);
   virtual ~CollisionSpace();
 	
   //setters and getters
@@ -63,6 +63,7 @@ public:
   // ---------------------------------------------------------------
   void initNeighborhoods();
   
+  void addRobotBody(Joint* jnt);
   void addAllPointsToField();
   double addPointsToField(const std::vector<Eigen::Vector3d>& points);
 

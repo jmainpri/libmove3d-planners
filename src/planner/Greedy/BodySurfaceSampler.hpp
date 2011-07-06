@@ -24,26 +24,6 @@ typedef struct obj;
 typedef struct env;
 #endif
 
-class BoundingCylinder  
-{
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  
-  BoundingCylinder(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, double radius) :
-  m_p1(p1), m_p2(p2), m_radius(radius)
-  {}
-  
-  BoundingCylinder(const Eigen::Vector3d& vect1, const Eigen::Vector3d& vect2,
-                   const Eigen::Vector3d& vect5, const Eigen::Vector3d& vect6);
-  
-  void draw( const Eigen::Transform3d& T );
-  
-private:
-  Eigen::Vector3d m_p1;
-  Eigen::Vector3d m_p2;
-  double m_radius;
-};
-
 class BodySurfaceSampler 
 {
 public:
@@ -63,11 +43,12 @@ public:
   }
   
   BoundingCylinder* generateBoudingCylinder(p3d_obj* obj);
-  void generateRobotBoudingCylinder(Robot* rob);
+  void generateRobotBoudingCylinder(Robot* rob, const std::vector<Joint*>& activeJoints);
   void generateAllRobotsBoundingCylinders();
   
-  std::vector<CollisionPoint> generateAllCollisionPoints(Robot* rob);
-  std::vector<CollisionPoint> generateCollisionPointsForLink(Robot* rob,int link_id);
+  std::vector<CollisionPoint> generateRobotCollisionPoints(Robot* robot, const std::vector<int>& active_joints, const std::vector<int>& planner_joints);
+  
+  std::vector<CollisionPoint> getLinksCollisionPoints(Joint* jnt, int segment_number , const std::vector<int>& parent_joints );
   
   void draw();
 	

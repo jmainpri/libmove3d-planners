@@ -179,54 +179,6 @@ bool BodySurfaceSampler::isPointInEnvironment( const Eigen::Vector3d& point )
   return true;
 }
 
-BoundingCylinder::BoundingCylinder(const Eigen::Vector3d& vect1, const Eigen::Vector3d& vect2,
-                                   const Eigen::Vector3d& vect5, const Eigen::Vector3d& vect6)
-{
-  m_p1 = 0.5*(vect1+vect2);
-  m_p2 = 0.5*(vect5+vect6);
-  
-  m_radius = 0.5*( ( vect1 - vect2 ).norm() );
-}
-
-void BoundingCylinder::draw( const Eigen::Transform3d& T )
-{
-  double p1[3], p2[3];
-  
-  Eigen::Vector3d p1Trans; 
-  Eigen::Vector3d p2Trans;
-  
-//  if (withTransform) {
-//    p1Trans = m_p1;
-//    p2Trans = m_p2;
-//  }
-//  else {
-    p1Trans = T*m_p1;
-    p2Trans = T*m_p2;
-//  }
-  
-  p1[0] = p1Trans[0];
-  p1[1] = p1Trans[1];
-  p1[2] = p1Trans[2];
-  
-  p2[0] = p2Trans[0];
-  p2[1] = p2Trans[1];
-  p2[2] = p2Trans[2];
-  
-  double colorvector[4];
-  colorvector[0] = 1.0;
-  colorvector[1] = 1.0;
-  colorvector[2] = 0.0;
-  colorvector[3] = 0.7;
-  
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  
-  glColor4dv(colorvector);
-  g3d_draw_cylinder(p1, p2, m_radius, 20 );
-  
-  glDisable(GL_BLEND);
-}
-
 BoundingCylinder* BodySurfaceSampler::generateBoudingCylinder(p3d_obj* obj)
 {
   if(!obj)
@@ -262,13 +214,13 @@ BoundingCylinder* BodySurfaceSampler::generateBoudingCylinder(p3d_obj* obj)
   return new BoundingCylinder(p1,p2,radius);
 }
 
-void BodySurfaceSampler::generateRobotBoudingCylinder(Robot* robot)
+void BodySurfaceSampler::generateRobotBoudingCylinder(Robot* robot,const vector<Joint*>& activeJoints)
 {
-  for(unsigned int i=0;i<robot->getNumberOfJoints();i++)
+  for(unsigned int i=0;i<activeJoints.size();i++)
   {
-    p3d_obj* obj = robot->getJoint(i)->getJointStruct()->o;
+    p3d_obj* obj = activeJoints[i]->getJointStruct()->o;
     
-		if(obj)
+    if(obj)
     { 
       BoundingCylinder* bc = generateBoudingCylinder(obj);
       
@@ -282,29 +234,93 @@ void BodySurfaceSampler::generateRobotBoudingCylinder(Robot* robot)
 void BodySurfaceSampler::generateAllRobotsBoundingCylinders()
 {
   Scene* sc = global_Project->getActiveScene();
+  Robot* rob;
   
 	for(unsigned int i=0;i<sc->getNumberOfRobots(); i++)
 	{
- 		generateRobotBoudingCylinder( sc->getRobot(i) );
+    rob = sc->getRobot(i);
+ 		generateRobotBoudingCylinder( rob , rob->getAllJoints() );
 	}
 }
 
-std::vector<CollisionPoint> BodySurfaceSampler::generateAllCollisionPoints(Robot* robot)
+std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Robot* robot, const std::vector<int>& active_joints, const std::vector<int>& planner_joints )
 {
-  std::vector<CollisionPoint> points;
-
+  std::vector<CollisionPoint> all_points;
+  all_points.clear();
   
-  return points;
+  std::vector<int> parent_joints;
+  
+  for (unsigned int i=0; i<active_joints.size(); i++) 
+  {
+    // Compute the planner joints, this doesn't handle trees
+    // only handles chains, the planner joints before the active 
+    // joints are taken into account
+    parent_joints.clear();
+    for (unsigned int j=0; j<planner_joints.size(); j++) 
+    {
+      if ( planner_joints[j] <= active_joints[i] ) 
+      {
+        parent_joints.push_back( planner_joints[j] );
+      }
+    }
+    
+    // Get collision points of the link of the assciated joint
+    Joint* jnt = robot->getJoint( active_joints[i] );
+    
+    std::vector<CollisionPoint> points = getLinksCollisionPoints( jnt , i, parent_joints );
+    for (unsigned int j=0; j<points.size(); j++) 
+    {
+      all_points.push_back( points[j] );
+    }
+  }
+  return all_points;
 }
 
-std::vector<CollisionPoint> BodySurfaceSampler::generateCollisionPointsForLink(Robot* rob, int link_id)
+std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* jnt, int segment_number , const std::vector<int>& parent_joints )
 {
-  std::vector<CollisionPoint> points;
-  Joint* jnt = rob->getJoint(link_id);
-  double box[8][3];
-  p3d_obj* obj = jnt->getJointStruct()->o;
+  std::vector<CollisionPoint> collision_points;
   
-  return points;
+  if (m_objectToBoCylinderMap.empty())
+    return collision_points;
+  
+  BoundingCylinder* bc = m_objectToBoCylinderMap[jnt->getJointStruct()->o];
+  
+  if (bc == NULL)
+    return collision_points;
+
+  const double collision_clearance_default = 0.10;
+  
+  double radius = bc->getRadius();
+  double length = bc->getLength();
+  
+//  Eigen::Vector3d p(0,0,0);
+//  Eigen::Vector3d p2;
+  
+  Eigen::Vector3d p1 = bc->getPoint1();
+  Eigen::Vector3d p2 = bc->getPoint2();
+  
+  Eigen::Vector3d p;
+  
+  double spacing = radius/2.0;
+  int num_points = ceil(length/spacing)+1;
+  spacing = length/(num_points-1.0);
+  
+//  cout << "spacing = " << spacing << endl;
+//  cout << "num_points = " << num_points << endl;
+  
+  for (int i=0; i<num_points; ++i) 
+  {
+//    p(2) = -length/2.0 + i*spacing;
+//    p2 = f*p;
+    
+    Eigen::Vector3d p = p1 + ((double)i/(double)num_points)*(p2-p1);
+    
+//    cout << "Center(" << i << ") :  " << endl << p << endl;
+    
+    collision_points.push_back(CollisionPoint(parent_joints, radius, collision_clearance_default, segment_number, p));
+  }
+  
+  return collision_points;
 }
 
 void BodySurfaceSampler::draw()
@@ -312,30 +328,28 @@ void BodySurfaceSampler::draw()
 //	for(int i = 0; i < XYZ_ENV->no; i++)
 //	{
 //		m_objectToPointCloudMap[XYZ_ENV->o[i]]->drawAllPoints();
-//	}
+//	}  
   
   Joint* jnt;
-  Robot* robot;
+  Robot* rob;
   Scene* sc = global_Project->getActiveScene();
   
 	for(unsigned int j=0; j<sc->getNumberOfRobots(); j++)
 	{
-		robot = sc->getRobot(j) ;
+		rob = sc->getRobot(j) ;
     
-    if (robot->getName().find("PR2") == string::npos )
+    if (rob->getName().find("PR2") == string::npos )
       continue;
-        
-    for( unsigned int i=2; i<robot->getNumberOfJoints(); i++ )
+    
+    for( unsigned int i=2; i<rob->getNumberOfJoints(); i++ )
     {
-      jnt = robot->getJoint(i);
+      jnt = rob->getJoint(i);
       p3d_obj* obj = jnt->getJointStruct()->o;
       
       if(obj)
       {
         Eigen::Transform3d t = jnt->getMatrixPos();
         
-        //m_objectToPointCloudMap[obj]->drawAllPoints(t);
-    
         BoundingCylinder* bc = m_objectToBoCylinderMap[obj];
         if (bc) {
           bc->draw(t);

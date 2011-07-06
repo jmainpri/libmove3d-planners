@@ -15,13 +15,41 @@
 #include <Eigen/Geometry>
 #include <algorithm>
 
+class BoundingCylinder  
+{
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  
+  BoundingCylinder(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, double radius) :
+  m_p1(p1), m_p2(p2), m_radius(radius)
+  {}
+  
+  BoundingCylinder(const Eigen::Vector3d& vect1, const Eigen::Vector3d& vect2,
+                   const Eigen::Vector3d& vect5, const Eigen::Vector3d& vect6);
+  
+  double getLength() { return ( m_p1 - m_p2 ).norm(); } 
+  double getRadius() { return m_radius; }
+  
+  Eigen::Vector3d& getPoint1() { return m_p1; }
+  Eigen::Vector3d& getPoint2() { return m_p2; }
+  
+  void draw( const Eigen::Transform3d& T );
+  
+private:
+  Eigen::Vector3d m_p1;
+  Eigen::Vector3d m_p2;
+  double m_radius;
+};
+
 class CollisionPoint
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  CollisionPoint(const std::vector<int>& parent_joints, double radius, double clearance,
-                 int segment_number, const Eigen::Vector3d& position);
+  
+  CollisionPoint(const std::vector<int>& parent_joints, double radius, double clearance, int segment_number, const Eigen::Vector3d& position);
+  
   CollisionPoint(const CollisionPoint &point, const std::vector<int>& parent_joints);
+  
   virtual ~CollisionPoint();
   
   bool isParentJoint(int joint) const;
@@ -40,11 +68,11 @@ public:
   
   void getTransformedPosition(std::vector<Eigen::Transform3d>& segment_frames, Eigen::Vector3d& position) const;
   
-  void getJacobian(std::vector<Eigen::Map<Eigen::Vector3d> >& joint_pos, 
-                   std::vector<Eigen::Map<Eigen::Vector3d> >& joint_axis,
-                   Eigen::Map<Eigen::Vector3d>& collision_point_pos, 
+  void getJacobian(std::vector</*Eigen::Map<*/Eigen::Vector3d> /*>*/& joint_pos, 
+                   std::vector</*Eigen::Map<*/Eigen::Vector3d> /*>*/& joint_axis,
+                   /*Eigen::Map<*/Eigen::Vector3d/*>*/& collision_point_pos, 
                    Eigen::MatrixXd& jacobian, 
-                   const std::vector<int>& group_joint_to_kdl_joint_index) const;
+                   const std::vector<int>& group_joint_to_move3d_joint_index) const;
   
   void draw(const Eigen::Transform3d& T);
   

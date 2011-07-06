@@ -75,9 +75,9 @@ void initPlannerParameters()
     
 	// Drawing (gl) stuff
     myBoolMap.insert( std::make_pair( PlanParam::drawColorConfig,		new boolContainer(false)));
-    myBoolMap.insert( std::make_pair( PlanParam::drawOccupVoxels,		new boolContainer(true)));
-    myBoolMap.insert( std::make_pair( PlanParam::drawSampledPoints,     new boolContainer(true)));
-    myBoolMap.insert( std::make_pair( PlanParam::drawStaticVoxels,      new boolContainer(true)));
+    myBoolMap.insert( std::make_pair( PlanParam::drawOccupVoxels,		new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( PlanParam::drawSampledPoints,     new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( PlanParam::drawStaticVoxels,      new boolContainer(false)));
     myBoolMap.insert( std::make_pair( PlanParam::drawRandomMap,			new boolContainer(false)));
     
     // Object TransfertPoint variable
@@ -111,7 +111,7 @@ void initPlannerParameters()
 	myDoubleMap.insert( std::make_pair( PlanParam::MaxFactor,				new doubleContainer(3.0)));
 	myDoubleMap.insert( std::make_pair( PlanParam::MinStep,					new doubleContainer(2.0)));
 	myDoubleMap.insert( std::make_pair( PlanParam::costTraj,				new doubleContainer(1.0)));
-    myDoubleMap.insert( std::make_pair( PlanParam::distMinToDraw,           new doubleContainer(0.7)));
+    myDoubleMap.insert( std::make_pair( PlanParam::distMinToDraw,           new doubleContainer(0.3)));
 	
 	// Object TransfertPoint variable
 	myDoubleMap.insert( std::make_pair( PlanParam::env_randomXMinLimit,		new doubleContainer(-3.0)));

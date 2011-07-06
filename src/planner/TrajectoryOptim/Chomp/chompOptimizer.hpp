@@ -13,14 +13,15 @@
 #include "chompParameters.hpp"
 #include "chompCost.hpp"
 #include "chompTrajectory.hpp"
+#include "chompPlanningGroup.hpp"
 
 #include "planner/Greedy/CollisionSpace.hpp"
 
 #include <Eigen/Core>
 
 #include <vector>
-namespace API
-{
+//namespace API
+//{
   class ChompOptimizer 
   {
   public:
@@ -29,7 +30,11 @@ namespace API
     //                 const ros::Publisher& vis_marker_array_publisher,
     //                 const ros::Publisher& vis_marker_publisher,
     //                 ChompCollisionSpace *collision_space);
-    ChompOptimizer(ChompTrajectory *trajectory);
+    ChompOptimizer(ChompTrajectory *trajectory, 
+                   const ChompParameters *parameters, 
+                   const ChompPlanningGroup *planning_group,
+                   const CollisionSpace *collision_space);
+      
     virtual ~ChompOptimizer();
     
     void runDeformation( int nbIteration , int idRun=0 );
@@ -47,15 +52,15 @@ namespace API
     int collision_free_iteration_;
     
     ChompTrajectory *full_trajectory_;
-    //  const ChompRobotModel *robot_model_;
-    //  const ChompRobotModel::ChompPlanningGroup *planning_group_;
-    const ChompParameters *parameters_;
-    CollisionSpace *collision_space_;
     ChompTrajectory group_trajectory_;
+    //  const ChompRobotModel *robot_model_;
+    const ChompPlanningGroup *planning_group_;
+    const ChompParameters *parameters_;
+    const CollisionSpace *collision_space_;
     std::vector<ChompCost> joint_costs_;
     
     std::vector<int> planner_p3d_joints_;
-    std::vector<int> group_joint_to_p3d_joint_index_;
+    std::vector<int> group_joint_to_move3d_joint_index_;
     
     //  std::vector<std::vector<KDL::Vector> > joint_axis_;
     //  std::vector<std::vector<KDL::Vector> > joint_pos_;
@@ -114,6 +119,7 @@ namespace API
     void calculateSmoothnessIncrements();
     void calculateCollisionIncrements();
     void calculateTotalIncrements();
+    void getFrames(int i, const Eigen::VectorXd& joint_array);
     void performForwardKinematics();
     void addIncrementsToTrajectory();
     void updateFullTrajectory();
@@ -121,7 +127,7 @@ namespace API
     void eigenMapTest();
     void handleJointLimits();
     //void animatePath();
-    //void animateEndeffector();
+    void animateEndeffector();
     //void visualizeState(int index);
     double getTrajectoryCost();
     double getSmoothnessCost();
@@ -132,5 +138,5 @@ namespace API
     void updatePositionFromMomentum();
     void calculatePseudoInverse();
   };
-}
+//}
 #endif

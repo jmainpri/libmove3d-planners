@@ -45,6 +45,7 @@ public:
   ChompParameters();
   virtual ~ChompParameters();
   
+  void init();
   void initFromNodeHandle();
   
   double getPlanningTimeLimit() const;

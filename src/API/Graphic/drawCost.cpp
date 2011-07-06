@@ -6,6 +6,17 @@
  *  Copyright 2010 LAAS/CNRS. All rights reserved.
  *
  */
+#ifdef HRI_COSTSPACE
+#include "HRI_costspace/HRICS_costspace.hpp"
+#include "HRI_costspace/HRICS_otpmotionpl.hpp"
+#include "HRI_costspace/HRICS_ConfigSpace.hpp"
+#endif
+
+#include "planner/planEnvironment.hpp"
+#include "planner/Greedy/CollisionSpace.hpp"
+#include "planner/TrajectoryOptim/trajectoryOptim.hpp"
+
+#include "API/Grids/gridsAPI.hpp"
 
 #include "P3d-pkg.h"
 #include "Graphic-pkg.h"
@@ -13,20 +24,6 @@
 #ifdef P3D_COLLISION_CHECKING
 #include "Collision-pkg.h"
 #endif
-
-#ifdef HRI_COSTSPACE
-#include "HRI_costspace/HRICS_costspace.hpp"
-
-#endif
-
-#include "HRI_costspace/HRICS_otpmotionpl.hpp"
-
-#include "HRI_costspace/HRICS_ConfigSpace.hpp"
-#include "HRI_costspace/HRICS_otpmotionpl.hpp"
-
-#include "API/Grids/gridsAPI.hpp"
-#include "planner/planEnvironment.hpp"
-#include "planner/Greedy/CollisionSpace.hpp"
 
 #include <Eigen/Core>
 #define EIGEN_USE_NEW_STDVECTOR
@@ -337,6 +334,8 @@ void g3d_draw_grids()
 			PointsToDraw->drawAllPoints();
 		}
 	}
+  
+  traj_optim_draw_collision_points();
 	
 	// Draws a sphere of 10 cm of radius
   g3d_drawSphere(global_DrawnSphere(0),

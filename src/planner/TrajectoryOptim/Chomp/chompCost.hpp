@@ -44,8 +44,8 @@
 
 #include <vector>
 
-namespace API
-{
+//namespace API
+//{
   /**
    * \brief Represents the smoothness cost for CHOMP, for a single joint
    */
@@ -103,7 +103,7 @@ namespace API
     return joint_trajectory.dot(quad_cost_full_ * joint_trajectory);
   }
   
-} // namespace chomp
+//} // namespace chomp
 
 #endif /* CHOMP_COST_H_ */
 
