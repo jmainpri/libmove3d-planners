@@ -58,6 +58,8 @@ namespace HRICS
 
 		std::vector<std::pair<double,EnvCell*> > getSortedGrid();
 		void setAsNotSorted() {gridIsSorted = false;}
+
+		std::vector<EnvCell*> getHumanAccessibleCells() {return m_HumanAccessible;}
 		
 	private:
 		Robot* mRobot;
@@ -161,6 +163,9 @@ namespace HRICS
 		std::pair<double,EnvCell*> getRobotBestPos(){return robotBestPos;}
 		void setRobotBestPos(std::pair<double,EnvCell*> value){robotBestPos = value;}
 
+		void setAngleForHumanComming(double value) {angleForHumanComming = value;}
+		double getAngleForHumanComming(){return angleForHumanComming;}
+
 	private:
 		
 		Eigen::Vector2i _Coord;
@@ -193,6 +198,8 @@ namespace HRICS
 		std::vector<EnvCell*> initHumanRobotReacheable;
 		std::vector<EnvCell*> currentHumanRobotReacheable;
 		std::pair<double,EnvCell*> robotBestPos;
+
+		double angleForHumanComming;
 
 	};
 

@@ -190,9 +190,9 @@ namespace HRICS
         std::vector<ConfigHR> loadFromXml(std::string filename);
 
         /**
-          * load configs from filename and put them, either in sitting or standing list.
+          * load configs from filename and put them, either in sitting or standing list in the correct vector.
           */
-        int loadConfsFromXML(std::string filename, bool isStanding);
+        int loadConfsFromXML(std::string filename, bool isStanding, bool isSlice);
 
         /**
           * return the size of the selected config list
@@ -227,11 +227,27 @@ namespace HRICS
 
         double testComputeConfigCost();
 
-        void sortConfigList(double nbNode, bool isStanding);
+        /**
+          * sort configuration stored by confort cost
+          */
+        void sortConfigList(double nbNode, bool isStanding, bool isSlice);
 
         void initHumanCenteredGrid(double cellsize);
+
+        /**
+          * compute OTP using newComputeOTP() n time, the returning the average
+          */
+        double multipliComputeOtp(int n);
+
+        /**
+          * Compute the OTP using the last algorithme
+          */
         void newComputeOTP();
 
+        /**
+          * Used in newComputeOTP(), this function compoute a conf for human an robot
+          * from a position (x,y,Rz) of the human.
+          */
         OutputConf lookForBestLocalConf(double x, double y, double Rz, double objectNecessity);
 
         /**
@@ -278,6 +294,11 @@ namespace HRICS
           * get distance from human or robot of a cell.
           */
         double getDistFromCell(int x, int y, bool isHuman);
+
+        /**
+          * get rotation from human or robot of a cell.
+          */
+        double getrotFromCell(int x, int y);
 
         /**
           * save the costs to a file
@@ -347,14 +368,24 @@ namespace HRICS
         std::vector<Eigen::Vector3d> m_OTPList;
 
         /**
-          * store configs (store configs for standing human when loading)
+          * store configs (for standing human when loading)
           */
         std::vector<ConfigHR> m_configList;
 
         /**
-          * store configs (store configs for sitting human when loading)
+          * store configs (for sitting human when loading)
           */
         std::vector<ConfigHR> m_sittingConfigList;
+
+        /**
+          * store configs in a slice (for standing human when loading)
+          */
+        std::vector<ConfigHR> m_configListSlice;
+
+        /**
+          * store configs in a slice (for sitting human when loading)
+          */
+        std::vector<ConfigHR> m_sittingConfigListSlice;
 
         /**
           * to save and reload configuration
@@ -370,6 +401,26 @@ namespace HRICS
           * is the human is initially sitting
           */
         bool isInitSiting;
+
+        /**
+          * vector used for choosing randoms when using slices
+          */
+        Eigen::Vector3d sliceVect;
+
+        /**
+          * is at false if the human cannot stand
+          */
+        bool m_humanCanStand;
+
+        /**
+          * time to compute OTP
+          */
+        double m_time;
+
+        /**
+          * to show or hide text when computing OTP
+          */
+        bool m_showText;
 
     };
 

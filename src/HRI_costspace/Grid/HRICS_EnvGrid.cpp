@@ -180,33 +180,50 @@ void EnvGrid::initGrid()
             EnvCell* Cell = dynamic_cast<EnvCell*>(getCell(x,y));
             Cell->setHumAccessible(Cell->isHumanDistComputed());
             Cell->setRobAccessible(Cell->isRobotDistComputed());
+            if (PlanEnv->getBool(PlanParam::env_useOrientedSlice))
+            {
+                if (Cell->getHumanTraj().size() > 1)
+                {
+                    Vector2d prevCenter = Cell->getHumanTraj().at(Cell->getHumanTraj().size() - 2)->getCenter();
+                    Cell->setAngleForHumanComming(atan2(Cell->getCenter()[1] - prevCenter[1], Cell->getCenter()[0] - prevCenter[0]));
+    //                cout << "x = " << x << " y = " << y << " angle = " << Cell->getAngleForHumanComming() << endl;
+                }
+                else
+                {
+                    Cell->setAngleForHumanComming(numeric_limits<double>::max());
+                }
+            }
+
         }
     }
 
-    for (unsigned int i = 0; i < m_HumanAccessible.size(); i++)
+    if (!PlanEnv->getBool(PlanParam::env_normalRand) && !PlanEnv->getBool(PlanParam::env_useAllGrid))
     {
-        EnvCell* cell = dynamic_cast<EnvCell*>(m_HumanAccessible.at(i));
-        vector<EnvCell*> newVect;
-        pair<double,EnvCell*> p;
-        p.first = numeric_limits<double>::max( );
-        for (unsigned int j = 0; j < cell->getHumanRobotReacheable().size(); j++)
+        for (unsigned int i = 0; i < m_HumanAccessible.size(); i++)
         {
-            if (cell->getHumanRobotReacheable().at(j)->isRobAccessible())
+            EnvCell* cell = dynamic_cast<EnvCell*>(m_HumanAccessible.at(i));
+            vector<EnvCell*> newVect;
+            pair<double,EnvCell*> p;
+            p.first = numeric_limits<double>::max( );
+            for (unsigned int j = 0; j < cell->getHumanRobotReacheable().size(); j++)
             {
-                newVect.push_back(cell->getHumanRobotReacheable().at(j));
-                if (cell->getHumanRobotReacheable().at(j)->getRobotDist() < p.first)
+                if (cell->getHumanRobotReacheable().at(j)->isRobAccessible())
                 {
-                    p.first = cell->getHumanRobotReacheable().at(j)->getRobotDist();
-                    p.second = cell->getHumanRobotReacheable().at(j);
-                }
+                    newVect.push_back(cell->getHumanRobotReacheable().at(j));
+                    if (cell->getHumanRobotReacheable().at(j)->getRobotDist() < p.first)
+                    {
+                        p.first = cell->getHumanRobotReacheable().at(j)->getRobotDist();
+                        p.second = cell->getHumanRobotReacheable().at(j);
+                    }
 
+                }
             }
+    //        p.first = max((p.second->getRobotDist()/ m_robotMaxDist)*PlanEnv->getDouble(PlanParam::env_objectNessecity) ,(cell->getHumanDist()/m_humanMaxDist));
+    //        p.first = 0;
+            cell->clearCurrentHumanRobotReacheable();
+            cell->setCurrentHumanRobotReacheable(newVect);
+            cell->setRobotBestPos(p);
         }
-//        p.first = max((p.second->getRobotDist()/ m_robotMaxDist)*PlanEnv->getDouble(PlanParam::env_objectNessecity) ,(cell->getHumanDist()/m_humanMaxDist));
-//        p.first = 0;
-        cell->clearCurrentHumanRobotReacheable();
-        cell->setCurrentHumanRobotReacheable(newVect);
-        cell->setRobotBestPos(p);
     }
 
 
@@ -322,8 +339,6 @@ std::vector<std::pair<double,EnvCell*> > EnvGrid::getSortedGrid()
     double robotSpeed = PlanEnv->getDouble(PlanParam::env_robotSpeed);//1;
     double humanSpeed = PlanEnv->getDouble(PlanParam::env_humanSpeed);//1;
     double timeStamp = PlanEnv->getDouble(PlanParam::env_timeStamp);//0.1;
-    double psi = PlanEnv->getDouble(PlanParam::env_psi);//0.99;
-    double delta = PlanEnv->getDouble(PlanParam::env_delta);//0.01;
     double objectNecessity = PlanEnv->getDouble(PlanParam::env_objectNessecity);
 
     double ksi = PlanEnv->getDouble(PlanParam::env_ksi);//0.5;
@@ -524,6 +539,15 @@ void EnvGrid::draw()
                             g3d_drawOneLine(xMax,   yMin,    height,
                                             xMin,   yMin,    height,
                                             distColor, NULL);
+                            glLineWidth(1.);
+                        }
+
+                        for(unsigned int i=0;i<Cell->getHumanTraj().size()-1;i++)
+                        {
+                            glLineWidth(3.);
+                            g3d_drawOneLine(Cell->getHumanTraj().at(i)->getCenter()[0],      Cell->getHumanTraj().at(i)->getCenter()[1],      0.4,
+                                            Cell->getHumanTraj().at(i + 1)->getCenter()[0],  Cell->getHumanTraj().at(i + 1)->getCenter()[1],  0.4,
+                                            Green, NULL);
                             glLineWidth(1.);
                         }
                     }

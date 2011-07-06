@@ -53,7 +53,10 @@ namespace  PlanParam
         env_drawDistGrid,
         env_drawOnlyBest,
         env_normalRand,
-        env_fusedGridRand
+        env_fusedGridRand,
+        env_useSlice,
+        env_useOrientedSlice,
+        env_useAllGrid
 	};
 	
 	enum intParameter 
@@ -63,13 +66,15 @@ namespace  PlanParam
 		// Object TransfertPoint variable
 		env_maxIter,
 		env_nbRandomRotOnly,
+		env_nbSittingRotation,
 		env_totMaxIter,
 
 		// grid cells
 		env_xToDraw,
 		env_yToDraw,
 		env_timeShow,
-		env_pow
+		env_pow,
+		env_MOTP
 
 	};
 	
@@ -95,7 +100,8 @@ namespace  PlanParam
         env_ksi,
         env_rho,
         env_objectNessecity,
-        env_sittingOffset
+        env_sittingOffset,
+        env_limitRot
 	};
 	
 	enum stringParameter 

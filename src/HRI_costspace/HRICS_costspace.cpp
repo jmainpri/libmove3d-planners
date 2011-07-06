@@ -302,25 +302,26 @@ void HRICS_init(HRI_AGENTS* agents)
 	api_store_new_grid( API_activeGrid );
   
 	if( ENV.getBool(Env::HRIAutoLoadGrid) )
-	
-	if( ENV.getBool(Env::HRIAutoLoadGrid) && getenv("HOME_MOVE3D") )
 	{
+		if( ENV.getBool(Env::HRIAutoLoadGrid) && getenv("HOME_MOVE3D") )
+		{
 
-    string home(getenv("HOME_MOVE3D"));
-    string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
-		
-	  fileName = home + fileName;
-	  
-	  // Reads the grid from XML and sets it ti the HRICS_MotionPL
-	  HRICS_loadGrid(fileName);
-	  HRICS_activeNatu->setGrid(dynamic_cast<HRICS::NaturalGrid*>(API_activeGrid));
-	  ENV.setBool(Env::drawGrid,false);
+		string home(getenv("HOME_MOVE3D"));
+		string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
+
+		  fileName = home + fileName;
+
+		  // Reads the grid from XML and sets it ti the HRICS_MotionPL
+		  HRICS_loadGrid(fileName);
+		  HRICS_activeNatu->setGrid(dynamic_cast<HRICS::NaturalGrid*>(API_activeGrid));
+		  ENV.setBool(Env::drawGrid,false);
+		}
+		else
+		  {
+			cout << "HRICS Error : Grid not loaded!!!" << endl;
+			cout << "HOME_MOVE3D is : " << getenv("HOME_MOVE3D") << endl;
+		  }
 	}
-	else
-	  {
-	    cout << "HRICS Error : Grid not loaded!!!" << endl;
-	    cout << "HOME_MOVE3D is : " << getenv("HOME_MOVE3D") << endl;
-	  }
 	
 	ENV.setInt(Env::hriCostType,HRICS_Combine);
   

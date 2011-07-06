@@ -81,28 +81,33 @@ void initPlannerParameters()
     myBoolMap.insert( std::make_pair( PlanParam::drawRandomMap,			new boolContainer(false)));
     
     // Object TransfertPoint variable
-	myBoolMap.insert( std::make_pair( PlanParam::env_humanGridDraw,		new boolContainer(true)));
+    myBoolMap.insert( std::make_pair( PlanParam::env_humanGridDraw,		new boolContainer(true )));
 	myBoolMap.insert( std::make_pair( PlanParam::env_robotGridDraw,		new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::env_isStanding,		new boolContainer(false)));
     myBoolMap.insert( std::make_pair( PlanParam::env_drawRandomPoint,	new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::env_drawDistGrid,		new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::env_drawOnlyBest,		new boolContainer(false)));
-	myBoolMap.insert( std::make_pair( PlanParam::env_normalRand,		new boolContainer(true)));
+	myBoolMap.insert( std::make_pair( PlanParam::env_normalRand,		new boolContainer(true )));
 	myBoolMap.insert( std::make_pair( PlanParam::env_fusedGridRand,		new boolContainer(false)));
-    
+	myBoolMap.insert( std::make_pair( PlanParam::env_useSlice,			new boolContainer(false)));
+	myBoolMap.insert( std::make_pair( PlanParam::env_useOrientedSlice,	new boolContainer(false)));
+	myBoolMap.insert( std::make_pair( PlanParam::env_useAllGrid,		new boolContainer(false)));
+
 	// Int
 	// ------------------------------------------------------------------
 	myIntMap.insert(std::make_pair( PlanParam::tata,						new intContainer(5)));
 
 	// Object TransfertPoint variable
-	myIntMap.insert(std::make_pair( PlanParam::env_maxIter,					new intContainer(300)));
+	myIntMap.insert(std::make_pair( PlanParam::env_maxIter,					new intContainer(100)));
 	myIntMap.insert(std::make_pair( PlanParam::env_nbRandomRotOnly,			new intContainer(10)));
-	myIntMap.insert(std::make_pair( PlanParam::env_totMaxIter,				new intContainer(1000)));
+	myIntMap.insert(std::make_pair( PlanParam::env_nbSittingRotation,		new intContainer(500)));
+	myIntMap.insert(std::make_pair( PlanParam::env_totMaxIter,				new intContainer(400)));
 
 	myIntMap.insert(std::make_pair( PlanParam::env_xToDraw,				new intContainer(-1)));
 	myIntMap.insert(std::make_pair( PlanParam::env_yToDraw,				new intContainer(-1)));
 	myIntMap.insert(std::make_pair( PlanParam::env_timeShow,			new intContainer(2)));
 	myIntMap.insert(std::make_pair( PlanParam::env_pow,					new intContainer(2)));
+	myIntMap.insert(std::make_pair( PlanParam::env_MOTP,				new intContainer(20)));
 	
 	// Double
 	// ------------------------------------------------------------------
@@ -127,6 +132,7 @@ void initPlannerParameters()
 	myDoubleMap.insert( std::make_pair( PlanParam::env_rho,					new doubleContainer(0.57)));
     myDoubleMap.insert( std::make_pair( PlanParam::env_objectNessecity,		new doubleContainer(0.5)));
 	myDoubleMap.insert( std::make_pair( PlanParam::env_sittingOffset,		new doubleContainer(0.2)));
+	myDoubleMap.insert( std::make_pair( PlanParam::env_limitRot,			new doubleContainer(M_PI/3)));
 
     //cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble( PlanParam::env_objectNessecity ) << endl;
 
