@@ -223,6 +223,10 @@ void ThreeDCell::draw()
     glPopAttrib();
 }
 
+//! @value should be between min and max
+//! @min the min value that value can take
+//! @max the max value that value can take
+//! @inverse set the color gradient to be the inverse of 0 => blue, 1 => red
 void ThreeDCell::drawColorGradient( double value, double min, double max, bool inverse )
 {
   double colorvector[4];

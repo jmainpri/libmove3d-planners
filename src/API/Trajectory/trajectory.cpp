@@ -41,6 +41,7 @@ mColor(0),
 range_param(0),
 m_Source(new Configuration(m_Robot,NULL))
 {
+  
 }
 
 Trajectory::Trajectory(Robot* R) :
@@ -54,6 +55,7 @@ mColor(0),
 range_param(0),
 m_Source(new Configuration(m_Robot,NULL))
 {
+  
 }
 
 Trajectory::Trajectory(const Trajectory& T) :
@@ -1296,10 +1298,9 @@ double Trajectory::costOfPortion(double param1, double param2)
 
 void Trajectory::push_back(shared_ptr<Configuration> q)
 {
-	if(m_Courbe.size()==0)
+	if( m_Courbe.empty() )
 	{
-		Configuration q_null(NULL);
-		if(*m_Source==q_null)
+		if( m_Source->getConfigStruct() == NULL )
 		{
 			m_Source = q;
 		}

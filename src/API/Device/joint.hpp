@@ -31,7 +31,7 @@ public:
    * Constructor
    * @param The p3d_jnt that is used
    */
-  Joint(Robot* R, jnt* jntPt , bool copy = false );
+  Joint(Robot* R, jnt* jntPt , int id = -1, bool copy = false );
 	
   /**
    * Destructor of the class
@@ -41,22 +41,22 @@ public:
   /**
    * Returns the name of the joint
    */
-  std::string getName() { return m_Name; }
+  std::string getName() const { return m_Name; }
 	
 	/**
 	 * Get the Joint structue
 	 */
-	jnt* getJointStruct() { return m_Joint; }
+	jnt* getJointStruct() const { return m_Joint; }
 	
 	/**
 	 * Get the Matrix abs_pos of the Joint 
 	 */
-	Eigen::Transform3d	getMatrixPos();
+	Eigen::Transform3d	getMatrixPos() const;
 	
 	/**
 	 * Get the Vector abs_pos of the Joint 
 	 */
-	Eigen::Vector3d		getVectorPos();
+	Eigen::Vector3d		getVectorPos() const;
 	
 	/**
 	 * Get the p3d abs pos
@@ -71,7 +71,7 @@ public:
 	/**
 	 * Returns the Joint Dof
 	 */
-	double          getJointDof(int ithDoF);
+	double          getJointDof(int ithDoF) const;
 	
 	/**
 	 * Set the Joint Dof
@@ -81,28 +81,40 @@ public:
 	/**
 	 * Get Min Max dof
 	 */
-	void            getDofBounds(int ithDoF, double& vmin, double& vmax);
+	void            getDofBounds(int ithDoF, double& vmin, double& vmax) const;
 	
 	/**
 	 * Get Number of DoF
 	 */
-	unsigned int		getNumberOfDof();
+	unsigned int		getNumberOfDof() const;
 	
 	/**
 	 * Get Dof Pos in Configuration
 	 */
-	unsigned int		getIndexOfFirstDof();
+	unsigned int		getIndexOfFirstDof() const;
+  
+  /**
+   * Get the id in the joint structure of the robot
+   */
+  int getId() const { return m_id; }
 	
 	/**
 	 * Set the config from the DoF values
 	 */
 	void            setConfigFromDofValues(Configuration& q);
+  
+  /**
+   * Get Previous joints
+   */
+  Joint* getPreviousJoint();
+
 	
 private:
 	Robot*				m_Robot;
 	jnt*          m_Joint; /*!< The p3d structure for the Joint*/
   std::string		m_Name; /*!< The Joint's Name */
 	bool          m_copy; /*!< Is true if the p3d_jnt copies and not only points to the structure */
+  int           m_id;   /*!< id with which it was initilized */
 	
 };
 

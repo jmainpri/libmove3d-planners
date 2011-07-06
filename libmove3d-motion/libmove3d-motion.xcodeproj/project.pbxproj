@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXContainerItemProxy section */
-		46266DFB13B9CFF200ECF78F /* PBXContainerItemProxy */ = {
+		4619AB9A13C451640066DD08 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 46266DE213B9CF9000ECF78F /* Move3D-core.xcodeproj */;
 			proxyType = 1;
@@ -17,8 +17,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4616BF2C13BB525C009BF8D9 /* libhri.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = libhri.xcodeproj; path = ../../libhri/libhri/libhri.xcodeproj; sourceTree = "<group>"; };
+		4619051A13C1B7D50033A96B /* chompPlanningGroup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = chompPlanningGroup.cpp; sourceTree = "<group>"; };
+		4619051B13C1B7D50033A96B /* chompPlanningGroup.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = chompPlanningGroup.hpp; sourceTree = "<group>"; };
 		46266DE213B9CF9000ECF78F /* Move3D-core.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Move3D-core.xcodeproj"; path = "../../Move3D-core/Move3D-core/Move3D-core.xcodeproj"; sourceTree = "<group>"; };
-		46266DF413B9CFD500ECF78F /* Move3D-Qt-Gui.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "Move3D-Qt-Gui.xcodeproj"; path = "../../Move3D-Qt-Gui-libs/Move3D-Qt-Gui/Move3D-Qt-Gui.xcodeproj"; sourceTree = "<group>"; };
 		4651336413B3DA25007BB181 /* cost_space.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cost_space.cpp; sourceTree = "<group>"; };
 		4651336513B3DA25007BB181 /* cost_space.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = cost_space.hpp; sourceTree = "<group>"; };
 		4651336713B3DA25007BB181 /* EST.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EST.cpp; sourceTree = "<group>"; };
@@ -58,7 +60,6 @@
 		4651338B13B3DA25007BB181 /* SourceList.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SourceList.cmake; sourceTree = "<group>"; };
 		4651338C13B3DA25007BB181 /* TreePlanner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TreePlanner.cpp; sourceTree = "<group>"; };
 		4651338D13B3DA25007BB181 /* TreePlanner.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = TreePlanner.hpp; sourceTree = "<group>"; };
-		4651338F13B3DA25007BB181 /* English */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = English; path = English.lproj/planner_handler.cpp; sourceTree = "<group>"; };
 		4651339113B3DA25007BB181 /* BodySurfaceSampler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BodySurfaceSampler.cpp; sourceTree = "<group>"; };
 		4651339213B3DA25007BB181 /* BodySurfaceSampler.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = BodySurfaceSampler.hpp; sourceTree = "<group>"; };
 		4651339313B3DA25007BB181 /* CollisionPoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CollisionPoint.cpp; sourceTree = "<group>"; };
@@ -95,7 +96,6 @@
 		465133B313B3DA25007BB181 /* Visibility.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Visibility.cpp; sourceTree = "<group>"; };
 		465133B413B3DA25007BB181 /* Visibility.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Visibility.hpp; sourceTree = "<group>"; };
 		465133B513B3DA25007BB181 /* SourceList.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SourceList.cmake; sourceTree = "<group>"; };
-		465133B613B3DA25007BB181 /* test_functions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = test_functions.cpp; sourceTree = "<group>"; };
 		465133B913B3DA25007BB181 /* chompCost.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = chompCost.cpp; sourceTree = "<group>"; };
 		465133BA13B3DA25007BB181 /* chompCost.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = chompCost.hpp; sourceTree = "<group>"; };
 		465133BB13B3DA25007BB181 /* chompMultivariateGaussian.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = chompMultivariateGaussian.hpp; sourceTree = "<group>"; };
@@ -124,10 +124,8 @@
 		465133D613B3DA25007BB181 /* robot.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = robot.hpp; sourceTree = "<group>"; };
 		465133D713B3DA25007BB181 /* SourceList.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SourceList.cmake; sourceTree = "<group>"; };
 		465133D913B3DA25007BB181 /* drawCost.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawCost.cpp; sourceTree = "<group>"; };
-		465133DA13B3DA25007BB181 /* drawCost.cpp.orig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = drawCost.cpp.orig; sourceTree = "<group>"; };
 		465133DB13B3DA25007BB181 /* drawCost.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = drawCost.hpp; sourceTree = "<group>"; };
 		465133DC13B3DA25007BB181 /* drawModule.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawModule.cpp; sourceTree = "<group>"; };
-		465133DD13B3DA25007BB181 /* drawModule.cpp.orig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = drawModule.cpp.orig; sourceTree = "<group>"; };
 		465133DE13B3DA25007BB181 /* drawModule.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = drawModule.hpp; sourceTree = "<group>"; };
 		465133DF13B3DA25007BB181 /* SourceList.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SourceList.cmake; sourceTree = "<group>"; };
 		465133E113B3DA25007BB181 /* BaseCell.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BaseCell.cpp; sourceTree = "<group>"; };
@@ -175,7 +173,6 @@
 		4651340D13B3DA25007BB181 /* node.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = node.hpp; sourceTree = "<group>"; };
 		4651340E13B3DA25007BB181 /* SourceList.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SourceList.cmake; sourceTree = "<group>"; };
 		4651340F13B3DA25007BB181 /* scene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = scene.cpp; sourceTree = "<group>"; };
-		4651341013B3DA25007BB181 /* scene.cpp.orig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = scene.cpp.orig; sourceTree = "<group>"; };
 		4651341113B3DA25007BB181 /* scene.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = scene.hpp; sourceTree = "<group>"; };
 		4651341413B3DA25007BB181 /* AStar.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AStar.cpp; sourceTree = "<group>"; };
 		4651341513B3DA25007BB181 /* AStar.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = AStar.hpp; sourceTree = "<group>"; };
@@ -261,17 +258,20 @@
 		4651346B13B3DA26007BB181 /* SourceList.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SourceList.cmake; sourceTree = "<group>"; };
 		4651346C13B3DA26007BB181 /* SourceList.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SourceList.cmake; sourceTree = "<group>"; };
 		4651346D13B3DA26007BB181 /* SourceList.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = SourceList.cmake; path = ../src/SourceList.cmake; sourceTree = "<group>"; };
+		4691B87F13BE16D100551E42 /* trajectoryOptim.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = trajectoryOptim.cpp; sourceTree = "<group>"; };
+		4691B88013BE16D100551E42 /* trajectoryOptim.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = trajectoryOptim.hpp; sourceTree = "<group>"; };
+		4691B88113BE175A00551E42 /* SourceList.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = SourceList.cmake; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-		46266DE313B9CF9000ECF78F /* Products */ = {
+		4616BF2D13BB525C009BF8D9 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		46266DF513B9CFD500ECF78F /* Products */ = {
+		46266DE313B9CF9000ECF78F /* Products */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -281,10 +281,10 @@
 		4651335613B3D998007BB181 = {
 			isa = PBXGroup;
 			children = (
-				46266DF413B9CFD500ECF78F /* Move3D-Qt-Gui.xcodeproj */,
 				46266DE213B9CF9000ECF78F /* Move3D-core.xcodeproj */,
-				4651336313B3DA25007BB181 /* planner */,
+				4616BF2C13BB525C009BF8D9 /* libhri.xcodeproj */,
 				465133C513B3DA25007BB181 /* API */,
+				4651336313B3DA25007BB181 /* planner */,
 				4651342C13B3DA26007BB181 /* utils */,
 				4651343B13B3DA26007BB181 /* HRI_costspace */,
 				4651346D13B3DA26007BB181 /* SourceList.cmake */,
@@ -300,7 +300,6 @@
 				465133B713B3DA25007BB181 /* TrajectoryOptim */,
 				4651336413B3DA25007BB181 /* cost_space.cpp */,
 				4651336513B3DA25007BB181 /* cost_space.hpp */,
-				4651338E13B3DA25007BB181 /* planner_handler.cpp */,
 				465133A413B3DA25007BB181 /* planEnvironment.cpp */,
 				465133A513B3DA25007BB181 /* planEnvironment.hpp */,
 				465133A613B3DA25007BB181 /* planner.cpp */,
@@ -309,7 +308,6 @@
 				465133A913B3DA25007BB181 /* plannerFunctions.hpp */,
 				465133AA13B3DA25007BB181 /* planners_cxx.hpp */,
 				465133B513B3DA25007BB181 /* SourceList.cmake */,
-				465133B613B3DA25007BB181 /* test_functions.cpp */,
 			);
 			name = planner;
 			path = ../src/planner;
@@ -318,13 +316,13 @@
 		4651336613B3DA25007BB181 /* Diffusion */ = {
 			isa = PBXGroup;
 			children = (
-				4651336713B3DA25007BB181 /* EST.cpp */,
-				4651336813B3DA25007BB181 /* EST.hpp */,
+				4651338B13B3DA25007BB181 /* SourceList.cmake */,
 				4651336913B3DA25007BB181 /* Expansion */,
 				4651337913B3DA25007BB181 /* RRT-Variants */,
+				4651336713B3DA25007BB181 /* EST.cpp */,
+				4651336813B3DA25007BB181 /* EST.hpp */,
 				4651338913B3DA25007BB181 /* RRT.cpp */,
 				4651338A13B3DA25007BB181 /* RRT.hpp */,
-				4651338B13B3DA25007BB181 /* SourceList.cmake */,
 				4651338C13B3DA25007BB181 /* TreePlanner.cpp */,
 				4651338D13B3DA25007BB181 /* TreePlanner.hpp */,
 			);
@@ -422,6 +420,9 @@
 			children = (
 				465133B813B3DA25007BB181 /* Chomp */,
 				465133C413B3DA25007BB181 /* Stomp */,
+				4691B87F13BE16D100551E42 /* trajectoryOptim.cpp */,
+				4691B88013BE16D100551E42 /* trajectoryOptim.hpp */,
+				4691B88113BE175A00551E42 /* SourceList.cmake */,
 			);
 			path = TrajectoryOptim;
 			sourceTree = "<group>";
@@ -429,6 +430,8 @@
 		465133B813B3DA25007BB181 /* Chomp */ = {
 			isa = PBXGroup;
 			children = (
+				4619051A13C1B7D50033A96B /* chompPlanningGroup.cpp */,
+				4619051B13C1B7D50033A96B /* chompPlanningGroup.hpp */,
 				465133B913B3DA25007BB181 /* chompCost.cpp */,
 				465133BA13B3DA25007BB181 /* chompCost.hpp */,
 				465133BB13B3DA25007BB181 /* chompMultivariateGaussian.hpp */,
@@ -457,17 +460,16 @@
 				465133C613B3DA25007BB181 /* ConfigSpace */,
 				465133D213B3DA25007BB181 /* Device */,
 				465133D813B3DA25007BB181 /* Graphic */,
+				4651340313B3DA25007BB181 /* Roadmap */,
 				465133E013B3DA25007BB181 /* Grids */,
+				4651341213B3DA25007BB181 /* Search */,
+				4651342213B3DA26007BB181 /* Trajectory */,
 				4651340013B3DA25007BB181 /* planningAPI.hpp */,
 				4651340113B3DA25007BB181 /* project.cpp */,
 				4651340213B3DA25007BB181 /* project.hpp */,
-				4651340313B3DA25007BB181 /* Roadmap */,
 				4651340F13B3DA25007BB181 /* scene.cpp */,
-				4651341013B3DA25007BB181 /* scene.cpp.orig */,
 				4651341113B3DA25007BB181 /* scene.hpp */,
-				4651341213B3DA25007BB181 /* Search */,
 				4651342113B3DA26007BB181 /* SourceList.cmake */,
-				4651342213B3DA26007BB181 /* Trajectory */,
 			);
 			name = API;
 			path = ../src/API;
@@ -507,10 +509,8 @@
 			isa = PBXGroup;
 			children = (
 				465133D913B3DA25007BB181 /* drawCost.cpp */,
-				465133DA13B3DA25007BB181 /* drawCost.cpp.orig */,
 				465133DB13B3DA25007BB181 /* drawCost.hpp */,
 				465133DC13B3DA25007BB181 /* drawModule.cpp */,
-				465133DD13B3DA25007BB181 /* drawModule.cpp.orig */,
 				465133DE13B3DA25007BB181 /* drawModule.hpp */,
 				465133DF13B3DA25007BB181 /* SourceList.cmake */,
 			);
@@ -657,6 +657,7 @@
 			isa = PBXGroup;
 			children = (
 				4651343C13B3DA26007BB181 /* Grid */,
+				4651346213B3DA26007BB181 /* RRT */,
 				4651344E13B3DA26007BB181 /* HRICS_ConfigSpace.cpp */,
 				4651344F13B3DA26007BB181 /* HRICS_ConfigSpace.cpp.orig */,
 				4651345013B3DA26007BB181 /* HRICS_ConfigSpace.hpp */,
@@ -677,7 +678,6 @@
 				4651345F13B3DA26007BB181 /* HRICS_Visibility.hpp */,
 				4651346013B3DA26007BB181 /* HRICS_Workspace.cpp */,
 				4651346113B3DA26007BB181 /* HRICS_Workspace.hpp */,
-				4651346213B3DA26007BB181 /* RRT */,
 				4651346C13B3DA26007BB181 /* SourceList.cmake */,
 			);
 			name = HRI_costspace;
@@ -736,7 +736,7 @@
 			buildToolPath = /usr/bin/make;
 			buildWorkingDirectory = "/Users/jmainpri/workspace/Move3D-motionPlanner-libs/build";
 			dependencies = (
-				46266DFC13B9CFF200ECF78F /* PBXTargetDependency */,
+				4619AB9B13C451640066DD08 /* PBXTargetDependency */,
 			);
 			name = "libmove3d-motion";
 			passBuildSettingsInEnvironment = 1;
@@ -759,12 +759,12 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = 46266DE313B9CF9000ECF78F /* Products */;
-					ProjectRef = 46266DE213B9CF9000ECF78F /* Move3D-core.xcodeproj */;
+					ProductGroup = 4616BF2D13BB525C009BF8D9 /* Products */;
+					ProjectRef = 4616BF2C13BB525C009BF8D9 /* libhri.xcodeproj */;
 				},
 				{
-					ProductGroup = 46266DF513B9CFD500ECF78F /* Products */;
-					ProjectRef = 46266DF413B9CFD500ECF78F /* Move3D-Qt-Gui.xcodeproj */;
+					ProductGroup = 46266DE313B9CF9000ECF78F /* Products */;
+					ProjectRef = 46266DE213B9CF9000ECF78F /* Move3D-core.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -775,23 +775,12 @@
 /* End PBXProject section */
 
 /* Begin PBXTargetDependency section */
-		46266DFC13B9CFF200ECF78F /* PBXTargetDependency */ = {
+		4619AB9B13C451640066DD08 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "Move3D-core lib";
-			targetProxy = 46266DFB13B9CFF200ECF78F /* PBXContainerItemProxy */;
+			targetProxy = 4619AB9A13C451640066DD08 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
-/* Begin PBXVariantGroup section */
-		4651338E13B3DA25007BB181 /* planner_handler.cpp */ = {
-			isa = PBXVariantGroup;
-			children = (
-				4651338F13B3DA25007BB181 /* English */,
-			);
-			name = planner_handler.cpp;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		4651335E13B3D999007BB181 /* Debug */ = {

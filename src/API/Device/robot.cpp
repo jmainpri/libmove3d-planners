@@ -77,7 +77,7 @@ Robot::Robot(p3d_rob* robotPt, bool copy )
 	
 	for (int i=0; i<=_Robot->njoints; i++) 
 	{
-		m_Joints.push_back( new Joint( this , _Robot->joints[i] , _copy ) );
+		m_Joints.push_back( new Joint( this , _Robot->joints[i] , i , _copy ) );
 	}
 }
 
@@ -136,6 +136,11 @@ Joint* Robot::getJoint(std::string name)
   }
   
   return NULL;
+}
+
+const std::vector<Joint*>& Robot::getAllJoints()
+{
+  return m_Joints;
 }
 
 vector<Vector3d> Robot::getObjectBox()

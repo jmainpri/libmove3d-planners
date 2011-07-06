@@ -25,13 +25,15 @@ using namespace std;
 //USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
 
-Joint::Joint(Robot *R, p3d_jnt* jntPt, bool copy ) : m_Robot(R)
+Joint::Joint(Robot *R, p3d_jnt* jntPt, int id, bool copy ) : 
+  m_Robot(R),
+  m_id(id)
 {
 	m_Joint = jntPt;
   m_Name = jntPt->name;
 }
 
-Vector3d Joint::getVectorPos()
+Vector3d Joint::getVectorPos() const
 {
 	Vector3d v;
 	
@@ -42,7 +44,7 @@ Vector3d Joint::getVectorPos()
 	return v;
 }
 
-Transform3d Joint::getMatrixPos()
+Transform3d Joint::getMatrixPos() const
 {
 	Transform3d t;
 	
@@ -102,7 +104,7 @@ void Joint::shoot(Configuration& q,bool sample_passive)
 	}
 }
 
-double Joint::getJointDof(int ithDoF)
+double Joint::getJointDof(int ithDoF) const
 {
 	return p3d_jnt_get_dof(m_Joint,ithDoF);
 }
@@ -112,18 +114,18 @@ void Joint::setJointDof(int ithDoF, double value)
 	p3d_jnt_set_dof(m_Joint,ithDoF,value);
 }
 
-void Joint::getDofBounds(int ithDoF, double& vmin, double& vmax)
+void Joint::getDofBounds(int ithDoF, double& vmin, double& vmax) const
 {
 	vmin = m_Joint->dof_data[ithDoF].vmin;
 	vmax = m_Joint->dof_data[ithDoF].vmax;
 }
 
-unsigned int Joint::getNumberOfDof()
+unsigned int Joint::getNumberOfDof() const
 {
 	return m_Joint->dof_equiv_nbr;
 }
 
-unsigned int Joint::getIndexOfFirstDof()
+unsigned int Joint::getIndexOfFirstDof() const
 {
 	return m_Joint->index_dof;
 }
@@ -135,4 +137,19 @@ void Joint::setConfigFromDofValues(Configuration& q)
 		int k = m_Joint->index_dof + j;
 		q[k] = getJointDof(j); 
 	}
+}
+
+Joint* Joint::getPreviousJoint()
+{
+  for (unsigned int i=0; 
+       i<m_Robot->getNumberOfJoints(); i++ ) 
+  {
+    Joint* jnt = m_Robot->getJoint(i);
+    if (m_Joint->prev_jnt == jnt->m_Joint ) 
+    {
+      return jnt;
+    }
+  }
+  
+  return NULL;
 }

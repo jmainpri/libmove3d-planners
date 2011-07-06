@@ -46,31 +46,31 @@ namespace API
 		void copyPaths( std::vector<LocalPath*>& vect );
 		
 		std::vector< std::tr1::shared_ptr<Configuration> > getTowConfigurationAtParam(
-																																									double param1, double param2 , uint& lp1, uint& lp2);
+                                                                                      double param1, double param2 , uint& lp1, uint& lp2);
 		
 		std::vector<LocalPath*> extractSubPortion(
-																							double param1,
-																							double param2,
-																							unsigned int& first,
-																							unsigned int& last);
+                                                  double param1,
+                                                  double param2,
+                                                  unsigned int& first,
+                                                  unsigned int& last);
 		
 		Trajectory extractSubTrajectory(unsigned int id_start, unsigned int id_end);
-    
+        
 		Trajectory extractSubTrajectory(
-																		double param1,
-																		double param2);
-
+                                        double param1,
+                                        double param2);
+        
 		bool concat(const Trajectory& traj);
 		
 		bool replacePortion(
-												unsigned int id1,
-												unsigned int id2,
-												std::vector<LocalPath*> paths, bool freeMemory = true );
+                            unsigned int id1,
+                            unsigned int id2,
+                            std::vector<LocalPath*> paths, bool freeMemory = true );
 		
 		bool replacePortion(
-												double param1,
-												double param2,
-												std::vector<LocalPath*> paths , bool freeMemory = true );
+                            double param1,
+                            double param2,
+                            std::vector<LocalPath*> paths , bool freeMemory = true );
 		
 		void cutTrajInSmallLP(unsigned int nLP);
 		uint cutPortionInSmallLP(std::vector<LocalPath*>& portion, uint nLP);

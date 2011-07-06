@@ -101,6 +101,11 @@ public:
 	 * @return pointer to the joint by name or NULL if not found
 	 */
 	Joint* getJoint(std::string name);
+  
+  /**
+   * Returns an vector of all robot joints
+   */
+  const std::vector<Joint*>& getAllJoints();
 	
 	/**
 	 * Returns the Object
