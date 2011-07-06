@@ -10,7 +10,7 @@
 
 #include "API/project.hpp"
 #include "API/Device/robot.hpp"
-#include "API/trajectory/trajectory.hpp"
+#include "API/Trajectory/trajectory.hpp"
 
 #include "planner/Greedy/CollisionSpace.hpp"
 
