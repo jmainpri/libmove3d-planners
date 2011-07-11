@@ -12,6 +12,7 @@
 #include <iostream>
 //#include "../p3d/env.hpp"
 
+
 //**********************************************************
 //**********************************************************
 
@@ -72,13 +73,17 @@ void initPlannerParameters()
 	myBoolMap.insert( std::make_pair( PlanParam::withShortCut,			new boolContainer(true)));
 	myBoolMap.insert( std::make_pair( PlanParam::withDeformation,		new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::withDescent,			new boolContainer(false)));
-    
+  
+  // Stomp/Chomp
+  myBoolMap.insert( std::make_pair( PlanParam::withCurrentTraj,			new boolContainer(false)));
+  
 	// Drawing (gl) stuff
-    myBoolMap.insert( std::make_pair( PlanParam::drawColorConfig,		new boolContainer(false)));
-    myBoolMap.insert( std::make_pair( PlanParam::drawOccupVoxels,		new boolContainer(false)));
-    myBoolMap.insert( std::make_pair( PlanParam::drawSampledPoints,     new boolContainer(false)));
-    myBoolMap.insert( std::make_pair( PlanParam::drawStaticVoxels,      new boolContainer(false)));
-    myBoolMap.insert( std::make_pair( PlanParam::drawRandomMap,			new boolContainer(false)));
+  myBoolMap.insert( std::make_pair( PlanParam::drawColorConfig,		new boolContainer(false)));
+  myBoolMap.insert( std::make_pair( PlanParam::drawOccupVoxels,		new boolContainer(false)));
+  myBoolMap.insert( std::make_pair( PlanParam::drawSampledPoints,     new boolContainer(false)));
+  myBoolMap.insert( std::make_pair( PlanParam::drawStaticVoxels,      new boolContainer(false)));
+  myBoolMap.insert( std::make_pair( PlanParam::drawRandomMap,			new boolContainer(false)));
+  myBoolMap.insert( std::make_pair( PlanParam::drawBoundingVolumes,			new boolContainer(false)));
     
     // Object TransfertPoint variable
     myBoolMap.insert( std::make_pair( PlanParam::env_humanGridDraw,		new boolContainer(true )));

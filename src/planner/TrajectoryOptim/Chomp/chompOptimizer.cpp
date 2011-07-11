@@ -17,7 +17,13 @@
 //#include <chomp_motion_planner/chomp_utils.h>
 #include <Eigen/LU>
 
+#include "planner/planEnvironment.hpp"
+
 #include "Graphic-pkg.h"
+#include "P3d-pkg.h"
+#include "Util-pkg.h"
+
+#include "move3d-headless.h"
 
 using namespace std;
 USING_PART_OF_NAMESPACE_EIGEN
@@ -70,23 +76,11 @@ void ChompOptimizer::initialize()
   cout << "Setting free vars start to " << free_vars_start_ << " end " << free_vars_end_;
   
   // set up joint index:
-//  group_joint_to_move3d_joint_index_.resize(num_joints_);
-//  for (int i=0; i<num_joints_; ++i)
-//  {
-//    group_joint_to_move3d_joint_index_[i] = 
-//  }
-  
-  // SPECIAL PR2
-  group_joint_to_move3d_joint_index_.clear();
-  group_joint_to_move3d_joint_index_.push_back( 6 );
-  group_joint_to_move3d_joint_index_.push_back( 7 );
-  group_joint_to_move3d_joint_index_.push_back( 8 );
-  group_joint_to_move3d_joint_index_.push_back( 9 );
-  group_joint_to_move3d_joint_index_.push_back( 10 );
-  group_joint_to_move3d_joint_index_.push_back( 11 );
-  group_joint_to_move3d_joint_index_.push_back( 12 );
-  
-  num_joints_ = group_joint_to_move3d_joint_index_.size();
+  group_joint_to_move3d_joint_index_.resize(num_joints_);
+  for (int i=0; i<num_joints_; ++i)
+  {
+    group_joint_to_move3d_joint_index_[i] = planning_group_->chomp_joints_[i].move3d_joint_index_;
+  }
   
   num_collision_points_ = planning_group_->collision_points_.size();
   
@@ -94,12 +88,12 @@ void ChompOptimizer::initialize()
   joint_costs_.reserve(num_joints_);
   
   double max_cost_scale = 0.0;
-//  ros::NodeHandle nh("~");
+  //  ros::NodeHandle nh("~");
   for (int i=0; i<num_joints_; i++)
   {
     double joint_cost = 1.0;
     std::string joint_name = planning_group_->chomp_joints_[i].joint_name_;
-//    nh.param("joint_costs/"+joint_name, joint_cost, 1.0);
+    //    nh.param("joint_costs/"+joint_name, joint_cost, 1.0);
     std::vector<double> derivative_costs(3);
     derivative_costs[0] = joint_cost*parameters_->getSmoothnessCostVelocity();
     derivative_costs[1] = joint_cost*parameters_->getSmoothnessCostAcceleration();
@@ -132,15 +126,17 @@ void ChompOptimizer::initialize()
   group_trajectory_backup_ = group_trajectory_.getTrajectory();
   best_group_trajectory_ = group_trajectory_.getTrajectory();
   
-//  joint_axis_.resize(num_vars_all_, std::vector<KDL::Vector>(robot_model_->getKDLTree()->getNrOfJoints()));
-//  joint_pos_.resize(num_vars_all_, std::vector<KDL::Vector>(robot_model_->getKDLTree()->getNrOfJoints()));
-//  segment_frames_.resize(num_vars_all_, std::vector<KDL::Frame>(robot_model_->getKDLTree()->getNrOfSegments()));
-//  collision_point_pos_.resize(num_vars_all_, std::vector<KDL::Vector>(num_collision_points_));
-//  collision_point_vel_.resize(num_vars_all_, std::vector<KDL::Vector>(num_collision_points_));
-//  collision_point_acc_.resize(num_vars_all_, std::vector<KDL::Vector>(num_collision_points_));
+  //  joint_axis_.resize(num_vars_all_, std::vector<KDL::Vector>(robot_model_->getKDLTree()->getNrOfJoints()));
+  //  joint_pos_.resize(num_vars_all_, std::vector<KDL::Vector>(robot_model_->getKDLTree()->getNrOfJoints()));
+  //  segment_frames_.resize(num_vars_all_, std::vector<KDL::Frame>(robot_model_->getKDLTree()->getNrOfSegments()));
+  //  collision_point_pos_.resize(num_vars_all_, std::vector<KDL::Vector>(num_collision_points_));
+  //  collision_point_vel_.resize(num_vars_all_, std::vector<KDL::Vector>(num_collision_points_));
+  //  collision_point_acc_.resize(num_vars_all_, std::vector<KDL::Vector>(num_collision_points_));
   
-  collision_point_potential_.resize(num_vars_all_, std::vector<double>(num_collision_points_));
-  collision_point_vel_mag_.resize(num_vars_all_, std::vector<double>(num_collision_points_));
+  collision_point_potential_ = Eigen::MatrixXd::Zero(num_vars_all_, num_collision_points_);
+  collision_point_vel_mag_ = Eigen::MatrixXd::Zero(num_vars_all_, num_collision_points_);
+  //collision_point_potential_.resize(num_vars_all_, std::vector<double>(num_collision_points_));
+  //collision_point_vel_mag_.resize(num_vars_all_, std::vector<double>(num_collision_points_));
   collision_point_potential_gradient_.resize(num_vars_all_, std::vector<Eigen::Vector3d>(num_collision_points_));
   
   segment_frames_.resize( num_vars_all_ );
@@ -166,11 +162,11 @@ void ChompOptimizer::initialize()
   }
   
   // create the eigen maps:
-//  kdlVecVecToEigenVecVec(joint_axis_, joint_axis_eigen_, 3, 1);
-//  kdlVecVecToEigenVecVec(joint_pos_, joint_pos_eigen_, 3, 1);
-//  kdlVecVecToEigenVecVec(collision_point_pos_, collision_point_pos_eigen_, 3, 1);
-//  kdlVecVecToEigenVecVec(collision_point_vel_, collision_point_vel_eigen_, 3, 1);
-//  kdlVecVecToEigenVecVec(collision_point_acc_, collision_point_acc_eigen_, 3, 1);
+  //  kdlVecVecToEigenVecVec(joint_axis_, joint_axis_eigen_, 3, 1);
+  //  kdlVecVecToEigenVecVec(joint_pos_, joint_pos_eigen_, 3, 1);
+  //  kdlVecVecToEigenVecVec(collision_point_pos_, collision_point_pos_eigen_, 3, 1);
+  //  kdlVecVecToEigenVecVec(collision_point_vel_, collision_point_vel_eigen_, 3, 1);
+  //  kdlVecVecToEigenVecVec(collision_point_acc_, collision_point_acc_eigen_, 3, 1);
   
   createEigenMapsFromP3dRobot();
   
@@ -196,7 +192,6 @@ void ChompOptimizer::initialize()
   
   // animation init:
   //animate_endeffector_segment_number_ = robot_model_->getForwardKinematicsSolver()->segmentNameToIndex(parameters_->getAnimateEndeffectorSegment());
-  
 }
 
 void ChompOptimizer::createEigenMapsFromP3dRobot()
@@ -223,9 +218,18 @@ void ChompOptimizer::runDeformation( int nbIteration , int idRun )
     //animatePath();
   }
   
+  double ts(0.0), time = 0.0; ChronoOn();
+  
   // iterate
-  for (iteration_=0; iteration_<parameters_->getMaxIterations(); iteration_++)
+  for (iteration_=0; 
+       iteration_<parameters_->getMaxIterations() && 
+       !PlanEnv->getBool(PlanParam::stopPlanner); 
+       iteration_++)
   {
+    //    cout << "----------------------------------------------------" << endl;
+    //    cout << " Interation :  " << iteration_ << endl;
+    //    cout << "----------------------------------------------------" << endl;
+    
     performForwardKinematics();
     double cost = getTrajectoryCost();
     
@@ -265,8 +269,8 @@ void ChompOptimizer::runDeformation( int nbIteration , int idRun )
     handleJointLimits();
     updateFullTrajectory();
     
-    if (iteration_%10==0)
-      printf("Trajectory cost: %f (s=%f, c=%f)\n", getTrajectoryCost(), getSmoothnessCost(), getCollisionCost());
+    //if (iteration_%10==0)
+    printf("Trajectory cost: %f (s=%f, c=%f)\n", getTrajectoryCost(), getSmoothnessCost(), getCollisionCost());
     
     if (collision_free_iteration_ >= parameters_->getMaxIterationsAfterCollisionFree())
     {
@@ -284,13 +288,14 @@ void ChompOptimizer::runDeformation( int nbIteration , int idRun )
       updateFullTrajectory();
       performForwardKinematics();
       double new_cost = getTrajectoryCost();
+      
       if (new_cost < original_cost)
       {
-        printf("Random jump improved cost from %.10f to %.10f!\n", original_cost, new_cost);
+        //printf("Random jump improved cost from %.10f to %.10f!\n", original_cost, new_cost);
       }
       else
       {
-        printf("Random jump worsened cost from %.10f to %.10f!\n", original_cost, new_cost);
+        //printf("Random jump worsened cost from %.10f to %.10f!\n", original_cost, new_cost);
         group_trajectory_.getTrajectory() = group_trajectory_backup_;
         updateFullTrajectory();
       }
@@ -309,6 +314,9 @@ void ChompOptimizer::runDeformation( int nbIteration , int idRun )
   }
   cout << "We think the path is collision free: " << is_collision_free_ << endl;
   
+  ChronoTimes( &time , &ts );
+  ChronoOff();
+  
   if (parameters_->getAnimatePath())
   {
     //animatePath();
@@ -317,13 +325,17 @@ void ChompOptimizer::runDeformation( int nbIteration , int idRun )
   group_trajectory_.getTrajectory() = best_group_trajectory_;
   updateFullTrajectory();
   
-//  collision_space_->unlock();
-  if (parameters_->getAnimatePath())
+  //if (parameters_->getAnimateEndeffector())
   {
-  //  animatePath();
+    animateEndeffector();
   }
   
-  double time = 0.0;
+  //  collision_space_->unlock();
+  if (parameters_->getAnimatePath())
+  {
+    //  animatePath();
+  }
+  
   printf( "Terminated after %d iterations, using path from iteration %d", iteration_, last_improvement_iteration_);
   printf( "Optimization core finished in %f sec", time /*(ros::WallTime::now() - start_time).toSec()*/ );
 }
@@ -337,10 +349,14 @@ void ChompOptimizer::calculateSmoothnessIncrements()
                                                                     group_trajectory_.getStartIndex(),
                                                                     num_vars_free_);
   }
+  
+  //  cout << "smoothness_increments_ : " << endl;
+  //  cout << smoothness_increments_ << endl;
 }
 
 void ChompOptimizer::calculateCollisionIncrements()
 {
+  //  cout << "calculateCollisionIncrements" << endl;
   double potential;
   double vel_mag_sq;
   double vel_mag;
@@ -350,32 +366,34 @@ void ChompOptimizer::calculateCollisionIncrements()
   Vector3d curvature_vector;
   Vector3d cartesian_gradient;
   
+  //  cout << collision_point_potential_ << endl;
+  
   collision_increments_.setZero(num_vars_free_, num_joints_);
   for (int i=free_vars_start_; i<=free_vars_end_; i++)
   {
     for (int j=0; j<num_collision_points_; j++)
     {
-      potential = collision_point_potential_[i][j];
+      potential = collision_point_potential_(i,j);
       if (potential <= 1e-10)
         continue;
       
+      //      cout << "collision_point_potential_gradient_" << endl;
+      //      cout << collision_point_potential_gradient_[i][j] << endl;
       potential_gradient = collision_point_potential_gradient_[i][j];
       
-      vel_mag = collision_point_vel_mag_[i][j];
+      //      cout << "collision_point_vel_mag_" << endl;
+      //      cout << collision_point_vel_mag_(i,j) << endl;
+      
+      vel_mag = collision_point_vel_mag_(i,j);
       vel_mag_sq = vel_mag*vel_mag;
+      //      cout << "collision_point_vel_eigen_" << endl;
+      //      cout << collision_point_vel_eigen_[i][j] << endl;
       
       // all math from the CHOMP paper:
       normalized_velocity = collision_point_vel_eigen_[i][j] / vel_mag;
       orthogonal_projector = Matrix3d::Identity() - (normalized_velocity * normalized_velocity.transpose());
       curvature_vector = (orthogonal_projector * collision_point_acc_eigen_[i][j]) / vel_mag_sq;
       cartesian_gradient = vel_mag*(orthogonal_projector*potential_gradient - potential*curvature_vector);
-
-// Arguments of the jacobian function
-//      std::vector<Eigen::Map<Eigen::Vector3d> >& joint_pos
-//      std::vector<Eigen::Map<Eigen::Vector3d> >& joint_axis
-//      Eigen::Map<Eigen::Vector3d>& collision_point_pos
-//      Eigen::MatrixXd& jacobian
-//      const std::vector<int>& group_joint_to_move3d_joint_index
       
       // pass it through the jacobian transpose to get the increments
       planning_group_->collision_points_[j].getJacobian(joint_pos_eigen_[i], 
@@ -391,12 +409,6 @@ void ChompOptimizer::calculateCollisionIncrements()
       }
       else
       {
-        cout << "cartesian_gradient  : " << endl;
-        cout << cartesian_gradient << endl;
-        
-        cout << "jacobian_.transpose() * cartesian_gradient : " << endl;
-        cout << jacobian_.transpose() * cartesian_gradient << endl;
-        
         collision_increments_.row(i-free_vars_start_).transpose() -=
         jacobian_.transpose() * cartesian_gradient;
       }
@@ -404,8 +416,8 @@ void ChompOptimizer::calculateCollisionIncrements()
         break;
     }
   }
-  cout << "collision_increments_ : " << endl;
-  cout << collision_increments_ << endl;
+  //  cout << "collision_increments_ : " << endl;
+  //  cout << collision_increments_ << endl;
 }
 
 void ChompOptimizer::calculatePseudoInverse()
@@ -427,6 +439,9 @@ void ChompOptimizer::calculateTotalIncrements()
       )
      );
   }
+  
+  //  cout << "final_increments_ : " << endl;
+  //  cout << final_increments_ << endl;
 }
 
 void ChompOptimizer::addIncrementsToTrajectory()
@@ -449,13 +464,10 @@ void ChompOptimizer::addIncrementsToTrajectory()
     
     group_trajectory_.getFreeTrajectoryBlock().col(i) += scale * final_increments_.col(i);
   }
-  printf("Scale: %f\n",scale);
+  //printf("Scale: %f\n",scale);
   
-  cout << "group_trajectory_.getFreeTrajectoryBlock() : " << endl;
-  cout << group_trajectory_.getFreeTrajectoryBlock() << endl;
-  
-  cout << "final_increments_ : " << endl;
-  cout << final_increments_ << endl;
+  //  cout << "group_trajectory_.getFreeTrajectoryBlock() : " << endl;
+  //  cout << group_trajectory_.getFreeTrajectoryBlock() << endl;
   
   group_trajectory_.getFreeTrajectoryBlock() += scale * final_increments_;
 }
@@ -501,7 +513,7 @@ double ChompOptimizer::getCollisionCost()
     double state_collision_cost = 0.0;
     for (int j=0; j<num_collision_points_; j++)
     {
-      state_collision_cost += collision_point_potential_[i][j] * collision_point_vel_mag_[i][j];
+      state_collision_cost += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
     }
     collision_cost += state_collision_cost;
     if (state_collision_cost > worst_collision_cost)
@@ -518,8 +530,8 @@ void ChompOptimizer::handleJointLimits()
 {
   for (int joint=0; joint<num_joints_; joint++)
   {
-//    if (!planning_group_->chomp_joints_[joint].has_joint_limits_)
-//      continue;
+    //    if (!planning_group_->chomp_joints_[joint].has_joint_limits_)
+    //      continue;
     
     double joint_max = planning_group_->chomp_joints_[joint].joint_limit_max_;
     double joint_min = planning_group_->chomp_joints_[joint].joint_limit_min_;
@@ -570,13 +582,10 @@ void ChompOptimizer::handleJointLimits()
   }
 }
 
-void ChompOptimizer::getFrames(int i, const Eigen::VectorXd& joint_array)
+void ChompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array)
 {
   //std::vector< Eigen::Vector3d > null_vect;
   //null_vect.push_back( Eigen::Vector3d::Zero() );
-  
-  //joint_pos_eigen_[i] = null_vect;
-  //joint_axis_eigen_[i] = null_vect;
   
   Configuration q = *robot_model_->getCurrentPos();
   
@@ -599,12 +608,19 @@ void ChompOptimizer::getFrames(int i, const Eigen::VectorXd& joint_array)
   
   for(int j=0; j<planning_group_->num_joints_;j++)
   {
-    segment_frames_[i][j] = joints[j].move3d_joint_->getMatrixPos();
+    Eigen::Transform3d t = joints[j].move3d_joint_->getMatrixPos();
+    
+    segment_frames_[segment][j]  = t;
+    joint_pos_eigen_[segment][j] = t.translation();
+    joint_axis_eigen_[segment][j](0) = t(0,2);
+    joint_axis_eigen_[segment][j](0) = t(1,2);
+    joint_axis_eigen_[segment][j](0) = t(2,2);
   }
 }
 
 void ChompOptimizer::performForwardKinematics()
 {
+  //  cout << "performForwardKinematics()" << endl;
   double invTime = 1.0 / group_trajectory_.getDiscretization();
   double invTimeSq = invTime*invTime;
   
@@ -628,11 +644,11 @@ void ChompOptimizer::performForwardKinematics()
     //full_trajectory_->getTrajectoryPointKDL(full_traj_index, kdl_joint_array_);
     full_trajectory_->getTrajectoryPointP3d(full_traj_index, joint_array);
     
-//    cout << "Trajectory point " << i << " index " << full_traj_index << endl;
-//    for(int j = 0; j < joint_array.rows(); j++) 
-//    {
-//      cout << j << " " << joint_array(j) << endl;
-//    }
+    //    cout << "Trajectory point " << i << " index " << full_traj_index << endl;
+    //    for(int j = 0; j < joint_array.rows(); j++) 
+    //    {
+    //      cout << j << " " << joint_array(j) << endl;
+    //    }
     
     if (iteration_==0)
     {
@@ -659,15 +675,18 @@ void ChompOptimizer::performForwardKinematics()
     for (int j=0; j<num_collision_points_; j++)
     {
       planning_group_->collision_points_[j].getTransformedPosition(segment_frames_[i], collision_point_pos_eigen_[i][j]);
+      //cout << "coll_point(" << i << " , "  << j << ") = " << endl << collision_point_pos_eigen_[i][j] << endl;
       
-      int segment_number = planning_group_->collision_points_[j].getSegmentNumber();
-      
-      collision_point_pos_eigen_[i][j] = segment_frames_[i][segment_number] * planning_group_->collision_points_[j].getPosition();
+      //int segment_number = planning_group_->collision_points_[j].getSegmentNumber();
+      //collision_point_pos_eigen_[i][j] = segment_frames_[i][segment_number] * planning_group_->collision_points_[j].getPosition();
       
       bool colliding = collision_space_->getCollisionPointPotentialGradient(planning_group_->collision_points_[j],
                                                                             collision_point_pos_eigen_[i][j],
-                                                                            collision_point_potential_[i][j],
+                                                                            collision_point_potential_(i,j),
                                                                             collision_point_potential_gradient_[i][j]);
+      
+//      cout << "collision_point_potential_(" << i << " , "  << j << ") = " << endl << collision_point_potential_(i,j) << endl;
+//      cout << "collision_point_potential_gradient_(" << i << " , "  << j << ") = " << endl << collision_point_potential_gradient_[i][j] << endl;
       
       point_is_in_collision_[i][j] = colliding;
       
@@ -697,7 +716,14 @@ void ChompOptimizer::performForwardKinematics()
         collision_point_pos_eigen_[i+k][j];
       }
       // get the norm of the velocity:
-      collision_point_vel_mag_[i][j] = collision_point_vel_eigen_[i][j].norm();
+      collision_point_vel_mag_(i,j) = collision_point_vel_eigen_[i][j].norm();
+      
+      //      cout << "collision_point_pos_eigen_(" << i << " , "  << j << ") = " << endl << collision_point_pos_eigen_[i][j] << endl;
+      //      cout << "collision_point_potential_(" << i << " , "  << j << ") = " << endl << collision_point_potential_[i][j] << endl;
+      //      cout << "collision_point_potential_gradient_(" << i << " , "  << j << ") = " << endl << collision_point_potential_gradient_[i][j] << endl;
+      //      cout << "collision_point_vel_mag_(" << i << " , "  << j << ") = " << endl << collision_point_vel_mag_[i][j] << endl;
+      //      cout << "collision_point_vel_eigen_(" << i << " , "  << j << ") = " << endl << collision_point_vel_eigen_[i][j] << endl;
+      //      cout << "collision_point_acc_eigen_(" << i << " , "  << j << ") = " << endl << collision_point_acc_eigen_[i][j] << endl;
     }
   }
   
@@ -713,33 +739,33 @@ void ChompOptimizer::eigenMapTest()
   double foo_eigen;
   double foo_kdl;
   
-//  cout << "Eigen location: " << joint_axis_eigen_[free_vars_start_][0](0) << endl;
-//  "  KDL location: " << &(joint_axis_[free_vars_start_][0](0)) << endl;
+  //  cout << "Eigen location: " << joint_axis_eigen_[free_vars_start_][0](0) << endl;
+  //  "  KDL location: " << &(joint_axis_[free_vars_start_][0](0)) << endl;
   
   foo_eigen = joint_axis_eigen_[free_vars_start_][0](0);
-//  foo_kdl = joint_axis_[free_vars_start_][0](0);
+  //  foo_kdl = joint_axis_[free_vars_start_][0](0);
   printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
   //ROS_ASSERT(foo_eigen==foo_kdl);
   
   joint_axis_eigen_[free_vars_start_][0](0) = 1.0;
   foo_eigen = joint_axis_eigen_[free_vars_start_][0](0);
-//  foo_kdl = joint_axis_[free_vars_start_][0](0);
+  //  foo_kdl = joint_axis_[free_vars_start_][0](0);
   printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
   //ROS_ASSERT(foo_kdl == foo_eigen);
   
-//  joint_axis_[free_vars_start_][0](0) = 2.0;
+  //  joint_axis_[free_vars_start_][0](0) = 2.0;
   foo_eigen = joint_axis_eigen_[free_vars_start_][0](0);
-//  foo_kdl = joint_axis_[free_vars_start_][0](0);
+  //  foo_kdl = joint_axis_[free_vars_start_][0](0);
   printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
   //ROS_ASSERT(foo_eigen == foo_kdl);
   
   foo_eigen = joint_pos_eigen_[free_vars_start_][0](0);
-//  foo_kdl = joint_pos_[free_vars_start_][0](0);
-//  printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
+  //  foo_kdl = joint_pos_[free_vars_start_][0](0);
+  //  printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
   //ROS_ASSERT(foo_eigen==foo_kdl);
   
   foo_eigen = collision_point_pos_eigen_[free_vars_start_][5](0);
-//  foo_kdl = collision_point_pos_[free_vars_start_][5](0);
+  //  foo_kdl = collision_point_pos_[free_vars_start_][5](0);
   printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
   //ROS_ASSERT(foo_eigen==foo_kdl);
 }
@@ -800,6 +826,9 @@ void ChompOptimizer::updatePositionFromMomentum()
 
 void ChompOptimizer::animateEndeffector()
 {
+  p3d_set_user_drawnjnt(28);
+  ENV.setBool(Env::drawTraj,true);
+  
   API::Trajectory T(robot_model_);
   
   // calculate the forward kinematics for the fixed states only in the first iteration:
@@ -813,9 +842,9 @@ void ChompOptimizer::animateEndeffector()
   
   Configuration q = *robot_model_->getCurrentPos();
   
-  cout << "animateEndeffector()" << endl;
-  cout << "group_trajectory : " << endl;
-  cout << group_trajectory_.getTrajectory() << endl;
+  //  cout << "animateEndeffector()" << endl;
+  //  cout << "group_trajectory : " << endl;
+  //  cout << group_trajectory_.getTrajectory() << endl;
   
   // for each point in the trajectory
   for (int i=start; i<=end; ++i)
@@ -826,15 +855,19 @@ void ChompOptimizer::animateEndeffector()
     
     for(int j=0; j<planning_group_->num_joints_;j++)
     {
-      int dof = joints[j].move3d_joint_->getIndexOfFirstDof();
-      q[dof] = point[j];
+      q[joints[j].move3d_joint_->getIndexOfFirstDof()] = point[j];
     }
     
     T.push_back( std::tr1::shared_ptr<Configuration>(new Configuration(q)) );
   }
   
-  T.replaceP3dTraj();
+  if( T.isValid() )
+  {
+    cout << "T is valid" << endl;
+    //PlanEnv->setBool(PlanParam::stopPlanner, true);
+  }
   
+  T.replaceP3dTraj();
   g3d_draw_allwin_active();
 }
 

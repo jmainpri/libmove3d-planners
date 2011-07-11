@@ -37,6 +37,9 @@ namespace  PlanParam
 		withShortCut,
 		withDeformation,
 		withDescent,
+    
+    // Stomp/Chomp
+    withCurrentTraj,
         
         // Drawing (gl) stuff
         drawColorConfig,
@@ -44,6 +47,7 @@ namespace  PlanParam
         drawSampledPoints,
         drawStaticVoxels,
         drawRandomMap,
+        drawBoundingVolumes,
         
         //Object Transfert point variable
         env_humanGridDraw,

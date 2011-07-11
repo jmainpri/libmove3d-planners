@@ -306,6 +306,10 @@ void g3d_draw_grids()
 	}
 #endif
   
+  if( global_CollisionSpace && ENV.getBool(Env::drawVectorField) ) 
+  {
+     global_CollisionSpace->drawGradient();  
+  }
   if( global_CollisionSpace && PlanEnv->getBool(PlanParam::drawOccupVoxels) )
   {
     global_CollisionSpace->draw();
@@ -322,10 +326,16 @@ void g3d_draw_grids()
     global_CollisionSpace->getBodySampler()->draw();
   }
   
-  if (global_CollisionSpace && PlanEnv->getBool(PlanParam::drawStaticVoxels)) {
+  if (global_CollisionSpace && PlanEnv->getBool(PlanParam::drawStaticVoxels)) 
+  {
     global_CollisionSpace->drawSquaredDist();
   }
-    
+   
+  if ( PlanEnv->getBool(PlanParam::drawBoundingVolumes) ) 
+  {
+    traj_optim_draw_collision_points();
+  }
+  
 	if( ENV.getBool(Env::drawPoints) )
 	{
 		if(PointsToDraw != NULL)
@@ -334,8 +344,6 @@ void g3d_draw_grids()
 			PointsToDraw->drawAllPoints();
 		}
 	}
-  
-  traj_optim_draw_collision_points();
 	
 	// Draws a sphere of 10 cm of radius
   g3d_drawSphere(global_DrawnSphere(0),

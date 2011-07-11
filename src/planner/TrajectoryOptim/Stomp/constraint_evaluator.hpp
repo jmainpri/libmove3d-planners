@@ -1,7 +1,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2010, Willow Garage, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -34,63 +34,41 @@
 
 /** \author Mrinal Kalakrishnan */
 
+#ifndef CONSTRAINT_EVALUATOR_H_
+#define CONSTRAINT_EVALUATOR_H_
 
-#ifndef CHOMP_UTILS_H_
-#define CHOMP_UTILS_H_
+#include "Chomp/chompTrajectory.hpp"
+#include "OrientationConstraint.hpp"
 
-//#include <kdl/jntarray.hpp>
-//#include <chomp_motion_planner/chomp_robot_model.h>
-#include <iostream>
-#include <Eigen/Core>
-
-//namespace chomp
+//namespace stomp_motion_planner
 //{
+class ConstraintEvaluator
+{
+public:
+  ConstraintEvaluator();
+  virtual ~ConstraintEvaluator();
+
+  virtual bool getCost(const std::vector<Eigen::Tranform3d>& frame, const Eigen::VectorXd& full_trajectory_joint_pos, double& cost)=0;
+};
+
+class OrientationConstraintEvaluator: public ConstraintEvaluator
+{
+public:
+  OrientationConstraintEvaluator(const motion_planning_msgs::OrientationConstraint &oc,
+                                 const StompRobotModel& robot_model);
   
-  static const int DIFF_RULE_LENGTH = 7;
-  static const int NUM_DIFF_RULES = 3;
+  virtual ~OrientationConstraintEvaluator();
+  bool getCost(const std::vector<KDL::Frame>& frame, const Eigen::VectorXd& full_trajectory_joint_pos, double& cost);
 
-  // the differentiation rules (centered at the center)
-  static const double DIFF_RULES[NUM_DIFF_RULES][DIFF_RULE_LENGTH] = {
-    {0, 0, -2/6.0, -3/6.0, 6/6.0, -1/6.0, 0},                   // velocity
-    {0, -1/12.0, 16/12.0, -30/12.0, 16/12.0, -1/12.0, 0},       // acceleration
-    {0, 1/12.0, -17/12.0, 46/12.0, -46/12.0, 17/12.0, -1/12.0}  // jerk
-  };
-  
-//  inline void debugJointArray(KDL::JntArray& joint_array)
-//  {
-//    for (unsigned int i=0; i<joint_array.rows(); i++)
-//    {
-//      std::cout << joint_array(i) << "\t";
-//    }
-//    std::cout << std::endl;
-//  }
-//  
-//  template<typename KDLType, typename EigenType>
-//  void kdlVecToEigenVec(std::vector<KDLType>& kdl_v, std::vector<Eigen::Map<EigenType> >& eigen_v, int rows, int cols)
-//  {
-//    int size = kdl_v.size();
-//    eigen_v.clear();
-//    for (int i=0; i<size; i++)
-//    {
-//      eigen_v.push_back(Eigen::Map<EigenType>(kdl_v[i].data, rows, cols));
-//    }
-//  }
-//  
-//  template<typename KDLType, typename EigenType>
-//  void kdlVecVecToEigenVecVec(std::vector<std::vector<KDLType> >& kdl_vv, std::vector<std::vector<Eigen::Map<EigenType> > > & eigen_vv, int rows, int cols)
-//  {
-//    int size = kdl_vv.size();
-//    eigen_vv.resize(size);
-//    for (int i=0; i<size; i++)
-//    {
-//      kdlVecToEigenVec(kdl_vv[i], eigen_vv[i], rows, cols);
-//    }
-//  }
-  
-  
-//} //namespace chomp
+private:
+  double absolute_roll_tolerance_, absolute_pitch_tolerance_, absolute_yaw_tolerance_;
+  double roll_weight_, pitch_weight_, yaw_weight_;
+  btMatrix3x3 nominal_orientation_, nominal_orientation_inverse_;
+  bool body_fixed_orientation_constraint_;
+  int frame_number_;
+  double weight_;
+  void getRPYDistance(const btMatrix3x3 &orientation_matrix, double &roll, double &pitch, double &yaw) const;
+};
+//}
 
-
-#endif /* CHOMP_UTILS_H_ */
-
-
+#endif /* CONSTRAINT_EVALUATOR_H_ */

@@ -61,17 +61,15 @@ public:
   // ---------------------------------------------------------------
   // Distance field
   // ---------------------------------------------------------------
-  void initNeighborhoods();
-  
   void addRobotBody(Joint* jnt);
+  void addRobot(Robot* rob);
   void addAllPointsToField();
   double addPointsToField(const std::vector<Eigen::Vector3d>& points);
 
+  void initNeighborhoods();
   int getDirectionNumber(int dx, int dy, int dz) const;
-  
   double getDistanceGradient(const Eigen::Vector3d& point,Eigen::Vector3d& gradient) const;
   double getDistance(CollisionSpaceCell* cell) const;
-  
   bool getCollisionPointPotentialGradient(const CollisionPoint& collision_point, 
                                           const Eigen::Vector3d& collision_point_pos,
                                           double& potential, 
@@ -104,6 +102,8 @@ private:
   double m_invTwiceResolution;
 	
 	BodySurfaceSampler* m_sampler;
+  
+  double m_MaxClearance;
   
   //double a__,b__,c__; //,e__,f__,g__;
   

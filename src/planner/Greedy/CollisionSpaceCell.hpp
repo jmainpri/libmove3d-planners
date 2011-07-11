@@ -30,6 +30,8 @@ public:
 	inline bool isOccupied(void) {return m_Occupied;}
 	inline void setOccupied(bool value) {m_Occupied = value;}
   
+  const Eigen::Vector3i& getLocation() { return m_Location; }
+  
   void drawStatic();
   void draw(int color, int width);
   void draw(void);
@@ -48,6 +50,7 @@ private:
 	bool m_Occupied;
 	
   Eigen::Vector3d _cellSize;
+  Eigen::Vector3i   m_Location;               /**< Place in the grid */
 };
 
 #endif

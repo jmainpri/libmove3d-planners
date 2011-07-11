@@ -235,7 +235,7 @@ Trajectory::~Trajectory()
 
 void Trajectory::replaceP3dTraj()
 {
-  cout << "Robot name : " << m_Robot->getRobotStruct()->name << endl;
+  //cout << "Robot name : " << m_Robot->getRobotStruct()->name << endl;
 	replaceP3dTraj(p3d_get_robot_by_name(m_Robot->getRobotStruct()->name)->tcur);
 }
 

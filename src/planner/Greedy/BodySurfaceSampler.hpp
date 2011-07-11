@@ -43,12 +43,16 @@ public:
   }
   
   BoundingCylinder* generateBoudingCylinder(p3d_obj* obj);
-  void generateRobotBoudingCylinder(Robot* rob, const std::vector<Joint*>& activeJoints);
+  
+  //! returns the max radius
+  double generateRobotBoudingCylinder(Robot* rob, const std::vector<Joint*>& activeJoints);
   void generateAllRobotsBoundingCylinders();
   
   std::vector<CollisionPoint> generateRobotCollisionPoints(Robot* robot, const std::vector<int>& active_joints, const std::vector<int>& planner_joints);
   
   std::vector<CollisionPoint> getLinksCollisionPoints(Joint* jnt, int segment_number , const std::vector<int>& parent_joints );
+  
+  double getDefaultClearance() { return m_collision_clearance_default; } 
   
   void draw();
 	
@@ -64,6 +68,8 @@ private:
   std::map<obj*,BoundingCylinder*>    m_objectToBoCylinderMap;
   
   std::vector<CollisionPoint*> m_collisionPoints;
+  
+  double m_collision_clearance_default;
 };
 
 #endif

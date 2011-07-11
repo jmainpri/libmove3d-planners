@@ -26,6 +26,7 @@ using namespace tr1;
 CollisionSpace::CollisionSpace(Robot* rob) : m_sampler(NULL)
 {
 	m_nbMaxCells = ENV.getInt(Env::nbCells);
+  
 	double cellSize = (XYZ_ENV->box.x2 - XYZ_ENV->box.x1);
 	
 	cellSize = MAX(XYZ_ENV->box.y2 - XYZ_ENV->box.y1, cellSize);
@@ -42,11 +43,11 @@ CollisionSpace::CollisionSpace(Robot* rob) : m_sampler(NULL)
 	
 	//_nbCells = _nbCellsX * _nbCellsY * _nbCellsZ;
 	_cellSize[0] = _cellSize[1] = _cellSize[2] = cellSize;
-    
-    //unvalid cells for each robot except current one ?
-    m_size = max( max(  _cellSize[0]*getXNumberOfCells() , 
+  
+  //unvalid cells for each robot except current one ?
+  m_size = max( max(  _cellSize[0]*getXNumberOfCells() , 
                       _cellSize[1]*getYNumberOfCells() ),
-                 _cellSize[2]*getZNumberOfCells() );
+                      _cellSize[2]*getZNumberOfCells() );
 	
 	this->createAllCells();
 	
@@ -55,10 +56,10 @@ CollisionSpace::CollisionSpace(Robot* rob) : m_sampler(NULL)
 	cout << "Cell size(2) = " << _cellSize[2] << endl;
 	
 	cout << "Number total of cells = " << _nbCellsX*_nbCellsY*_nbCellsZ << endl;
-    
-    cout << "Max distance sq = " <<( _nbCellsX*_nbCellsX 
-                                    + _nbCellsY*_nbCellsY  
-                                    + _nbCellsZ*_nbCellsZ ) / 2  << endl;
+  
+  cout << "Max distance sq = " << (  _nbCellsX*_nbCellsX 
+                                   + _nbCellsY*_nbCellsY  
+                                   + _nbCellsZ*_nbCellsZ )   << endl;
 	
 	//Build the meshes env edges
 	if(XYZ_ENV->o[0]->pol[0]->poly->the_edges == NULL)
@@ -73,9 +74,9 @@ CollisionSpace::CollisionSpace(Robot* rob) : m_sampler(NULL)
 		}
 	}
 	
-    //m_Robot = global_Project->getActiveScene()->getActiveRobot();
-    m_Robot = rob;
-    
+  //m_Robot = global_Project->getActiveScene()->getActiveRobot();
+  m_Robot = rob;
+  
 	init();
 }
 
@@ -84,25 +85,9 @@ CollisionSpace::~CollisionSpace()
 	delete m_sampler;
 }
 
-//protected functions
-/*!
- * \brief Virtual function that creates a new Cell
- *
- * \param index the cell index
- * \param x The position of the cell over x
- * \param y The position of the cell over y
- * \param z The position of the cell over z
- */
 API::ThreeDCell* CollisionSpace::createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z )
 {
-  CollisionSpaceCell* newCell = new CollisionSpaceCell( index, computeCellCorner(x,y,z) , this );
-  
-  newCell->m_DistanceSquare = 
-    (  _nbCellsX*_nbCellsX*_cellSize[0]*_cellSize[0]
-     + _nbCellsY*_nbCellsY*_cellSize[1]*_cellSize[1]  
-     + _nbCellsZ*_nbCellsZ*_cellSize[2]*_cellSize[2] ) ;
-  
-  return newCell;
+  return new CollisionSpaceCell( index, computeCellCorner(x,y,z) , this );
 }
 
 void CollisionSpace::init(void)
@@ -114,14 +99,14 @@ void CollisionSpace::init(void)
 	m_sampler->computeAllRobotsBodiesPointCloud();
   
 	//unvalid static object Cells
-//	for(int i = 0; i < XYZ_ENV->no; i++)
-//	{
-//		unvalidObjectCells(XYZ_ENV->o[i]);
-//	}
+  //	for(int i = 0; i < XYZ_ENV->no; i++)
+  //	{
+  //		unvalidObjectCells(XYZ_ENV->o[i]);
+  //	}
   
-  int maxSq = (  _nbCellsX*_nbCellsX*_cellSize[0]*_cellSize[0]
-               + _nbCellsY*_nbCellsY*_cellSize[1]*_cellSize[1]  
-               + _nbCellsZ*_nbCellsZ*_cellSize[2]*_cellSize[2] ) ;
+  int maxSq = (  _nbCellsX*_nbCellsX 
+               + _nbCellsY*_nbCellsY  
+               + _nbCellsZ*_nbCellsZ ) ;
   
   double resolution = _cellSize[0];
   
@@ -132,6 +117,8 @@ void CollisionSpace::init(void)
     m_SqrtTable[i] = sqrt(double(i))*resolution; 
     //cout << "m_SqrtTable["<<i<<"] = " << m_SqrtTable[i] << endl;
   }
+  
+  cout << "Max m_SqrtTable : " << m_SqrtTable.back() << endl;
   
   // double inverse de la resolution
   m_invTwiceResolution = 1.0/(2.0*resolution);
@@ -158,8 +145,8 @@ void CollisionSpace::updateRobotOccupationCells(Robot* myRobot)
 		if(obj)
 		{
 			vector<CollisionSpaceCell*> objectCell = getCellListForObject( 
-																obj, 
-																myRobot->getJoint(i)->getMatrixPos() );
+                                                                    obj, 
+                                                                    myRobot->getJoint(i)->getMatrixPos() );
 			
 			m_OccupationCells.insert(m_OccupationCells.end(), 
                                objectCell.begin(), 
@@ -204,7 +191,7 @@ vector<CollisionSpaceCell*> CollisionSpace::getCellListForObject(p3d_obj* obj, c
 			objectCells.push_back(cell);
 		}
 	}
-
+  
 	for(unsigned int i = 0; i < objectCells.size(); i++)
 	{ objectCells[i]->setVisited(false); }
 	
@@ -212,35 +199,35 @@ vector<CollisionSpaceCell*> CollisionSpace::getCellListForObject(p3d_obj* obj, c
 }
 
 /*
-vector<CollisionSpaceCell*> CollisionSpace::computeOccupiedCells(LocalPath& path)
-{
-	double ParamMax = path.getParamMax();
-	double Step = path.getResolution();
-	double u = 0.0;
-	
-	set<CollisionSpaceCell*> setCells;
-	
-	while( u < ParamMax ) 
-	{
-		shared_ptr<Configuration> q = path.configAtParam(u);
-		
-		if( m_Robot->setAndUpdate(*q) )
-		{
-			updateRobotOccupationCells(m_Robot);
-			setCells.insert( m_OccupationCells.begin(), m_OccupationCells.end() );
-		}
-		u += Step;
-	}
-	
-	vector<CollisionSpaceCell*> vectCells;
-	set<CollisionSpaceCell*>::iterator it;
-	
-	for (it=setCells.begin(); it!=setCells.end(); it++)
-	{ vectCells.push_back(*it); }
-	
-	return vectCells;
-}
-*/
+ vector<CollisionSpaceCell*> CollisionSpace::computeOccupiedCells(LocalPath& path)
+ {
+ double ParamMax = path.getParamMax();
+ double Step = path.getResolution();
+ double u = 0.0;
+ 
+ set<CollisionSpaceCell*> setCells;
+ 
+ while( u < ParamMax ) 
+ {
+ shared_ptr<Configuration> q = path.configAtParam(u);
+ 
+ if( m_Robot->setAndUpdate(*q) )
+ {
+ updateRobotOccupationCells(m_Robot);
+ setCells.insert( m_OccupationCells.begin(), m_OccupationCells.end() );
+ }
+ u += Step;
+ }
+ 
+ vector<CollisionSpaceCell*> vectCells;
+ set<CollisionSpaceCell*>::iterator it;
+ 
+ for (it=setCells.begin(); it!=setCells.end(); it++)
+ { vectCells.push_back(*it); }
+ 
+ return vectCells;
+ }
+ */
 
 bool CollisionSpace::areCellsValid(const vector<CollisionSpaceCell*>& cells)
 {
@@ -256,13 +243,13 @@ bool CollisionSpace::areCellsValid(const vector<CollisionSpaceCell*>& cells)
 bool CollisionSpace::collisionCheck()
 {
   updateRobotOccupationCells(m_Robot);
-
+  
   for(unsigned int i=0; i<m_OccupationCells.size(); ++i)
   {
     if(!m_OccupationCells[i]->isValid())
     { return true; }
   }
-
+  
   return false;
 }
 
@@ -328,62 +315,16 @@ void CollisionSpace::initNeighborhoods()
   }
 }
 
-void CollisionSpace::addRobotBody(Joint* jnt)
-{
-  vector<Eigen::Vector3d> points;
-  
-  p3d_obj* obj = jnt->getJointStruct()->o;
-  
-  if ( obj == NULL ) 
-    return;
-  
-  PointCloud& cloud = m_sampler->getPointCloud( obj );
-  
-  for (unsigned int j=0; j<cloud.size(); j++) 
-  { points.push_back( jnt->getMatrixPos()*cloud[j] ); }
-  
-  addPointsToField(points);
-}
-
-void CollisionSpace::addAllPointsToField()
-{
-  vector<Eigen::Vector3d> points;
-  
-  // Add Static Obstacles
-  for (int i=0; i<XYZ_ENV->no; i++) 
-  {
-    PointCloud& cloud = m_sampler->getPointCloud(XYZ_ENV->o[i]);
-    
-    for (unsigned int j=0; j<cloud.size(); j++) 
-    { points.push_back( cloud[j] ); }
-  }
-  
-  // Add Moving Obstacles
-  Scene* sc = global_Project->getActiveScene();
-  for (unsigned int i=0; i<sc->getNumberOfRobots(); i++) 
-  {
-    Robot* mov_obst = sc->getRobot(i);
-    
-    // The robot is not a Human or a robot
-    if (  mov_obst->getName().find( "ROBOT" ) == string::npos && 
-          mov_obst->getName().find( "HUMAN" ) == string::npos ) 
-    {
-      Joint* jnt = mov_obst->getJoint(1);
-      PointCloud& cloud = m_sampler->getPointCloud( jnt->getJointStruct()->o );
-      
-      for (unsigned int j=0; j<cloud.size(); j++) 
-      { points.push_back( jnt->getMatrixPos()*cloud[j] ); }
-    }
-  }
-  
-  addPointsToField(points);
-}
-
 double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& points)
 {
   cout << "Add points to distance field" << endl;
+  cout << "Propagate distance" << endl;
   
-  double max_distance_sq = m_size*m_size;
+  double max_distance_sq = (  _nbCellsX*_nbCellsX 
+                            + _nbCellsY*_nbCellsY  
+                            + _nbCellsZ*_nbCellsZ );
+  
+  //cout << "max_distance_sq : " << max_distance_sq << endl;
   
   // initialize the bucket queue
   vector< vector<CollisionSpaceCell*> > bucket_queue;
@@ -396,12 +337,12 @@ double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& poin
   {
     Eigen::Vector3d point = points[i];
     CollisionSpaceCell* voxel = dynamic_cast<CollisionSpaceCell*>(this->getCell( point ));
-     
+    
     if (!voxel)
       continue;
     
     Eigen::Vector3i coord = getCellCoord(voxel);
-
+    
     voxel->m_DistanceSquare = 0;
     voxel->m_ClosestPoint = coord;
     voxel->m_UpdateDirection = initial_update_direction;
@@ -416,7 +357,7 @@ double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& poin
     while(list_it!=bucket_queue[i].end())
     {
       CollisionSpaceCell* vptr = *list_it;
-    
+      
       // Get the cell location in grid
       Eigen::Vector3i loc = getCellCoord(vptr);
       
@@ -450,21 +391,25 @@ double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& poin
         if (!neighbour)
           continue;
         
-//        cout << "loc = " << endl << loc << endl;
-//        cout << "vptr->m_ClosestPoint = " << endl << vptr->m_ClosestPoint << endl;
+        //        cout << "loc = " << endl << loc << endl;
+        //        cout << "vptr->m_ClosestPoint = " << endl << vptr->m_ClosestPoint << endl;
         
         double new_distance_sq_float = ( vptr->m_ClosestPoint - neigh_loc ).squaredNorm();
+        
         int new_distance_sq = new_distance_sq_float;
         if (new_distance_sq > max_distance_sq)
+        {
+          cout << "new_distance_sq : " << new_distance_sq << endl;
           continue;
+        }
         
-//        cout << "new_distance_sq_float = " << new_distance_sq_float << endl;
-//        cout << "---------------------------------------" << endl;
+        //        cout << "new_distance_sq_float = " << new_distance_sq_float << endl;
+        //        cout << "---------------------------------------" << endl;
         if (new_distance_sq < neighbour->m_DistanceSquare)
         {
-//         cout << "loc = " <<  loc << endl;
-//          cout << "vptr->m_ClosestPoint = " <<  vptr->m_ClosestPoint << endl;
-//          cout << "new_distance_sq_float = " << new_distance_sq_float << endl;
+          //         cout << "loc = " <<  loc << endl;
+          //cout << "vptr->m_ClosestPoint = " << endl << vptr->m_ClosestPoint << endl;
+          //cout << "new_distance_sq_float = " << new_distance_sq_float << endl;
           //cout << "new_distance_sq = " << new_distance_sq << endl;
           // update the neighboring voxel
           neighbour->m_DistanceSquare = new_distance_sq;
@@ -483,6 +428,66 @@ double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& poin
   return 0.0;
 }
 
+void CollisionSpace::addRobotBody(Joint* jnt)
+{
+  vector<Eigen::Vector3d> points;
+  
+  p3d_obj* obj = jnt->getJointStruct()->o;
+  
+  if ( obj == NULL ) 
+    return;
+  
+  PointCloud& cloud = m_sampler->getPointCloud( obj );
+  
+  for (unsigned int j=0; j<cloud.size(); j++) 
+  { points.push_back( jnt->getMatrixPos()*cloud[j] ); }
+  
+  addPointsToField(points);
+}
+
+void CollisionSpace::addRobot(Robot* rob)
+{
+  for (unsigned int joint_id=0; 
+       joint_id<rob->getNumberOfJoints(); joint_id++) 
+  {
+    addRobotBody( rob->getJoint( joint_id ) ); 
+  }
+}
+
+void CollisionSpace::addAllPointsToField()
+{
+  vector<Eigen::Vector3d> points;
+  
+  // Add Static Obstacles
+  for (int i=0; i<XYZ_ENV->no; i++) 
+  {
+    PointCloud& cloud = m_sampler->getPointCloud(XYZ_ENV->o[i]);
+    
+    for (unsigned int j=0; j<cloud.size(); j++) 
+    { points.push_back( cloud[j] ); }
+  }
+  
+  // Add Moving Obstacles
+  Scene* sc = global_Project->getActiveScene();
+  for (unsigned int i=0; i<sc->getNumberOfRobots(); i++) 
+  {
+    Robot* mov_obst = sc->getRobot(i);
+    
+    // The robot is not a robot or a human
+    if (  mov_obst->getName().find( "ROBOT" ) == string::npos && 
+          mov_obst->getName().find( "HUMAN" ) == string::npos ) 
+    {
+      Joint* jnt = mov_obst->getJoint(1);
+      PointCloud& cloud = m_sampler->getPointCloud( jnt->getJointStruct()->o );
+      
+      for (unsigned int j=0; j<cloud.size(); j++) 
+      { points.push_back( jnt->getMatrixPos()*cloud[j] ); }
+    }
+  }
+  
+  addPointsToField(points);
+}
+
 int CollisionSpace::getDirectionNumber(int dx, int dy, int dz) const
 {
   return (dx+1)*9 + (dy+1)*3 + dz+1;
@@ -490,15 +495,15 @@ int CollisionSpace::getDirectionNumber(int dx, int dy, int dz) const
 
 double CollisionSpace::getDistanceGradient(const Eigen::Vector3d& point,Eigen::Vector3d& gradient) const
 {
-  CollisionSpaceCell* cell = dynamic_cast<CollisionSpaceCell*>( getCell( point ) );
+  CollisionSpaceCell* cell = static_cast<CollisionSpaceCell*>( getCell( point ) );
   
-  if(!getCell(point))
+  if( !cell )
   {
     gradient = Eigen::Vector3d::Zero();
     return 0;
   }
   
-  Eigen::Vector3i loc = getCellCoord( cell );
+  const Eigen::Vector3i& loc = cell->getLocation();
   
   unsigned int gx = loc(0);
   unsigned int gy = loc(1);
@@ -518,12 +523,12 @@ double CollisionSpace::getDistanceGradient(const Eigen::Vector3d& point,Eigen::V
   gradient(2) = (getDistanceFromCell(gx,gy,gz+1) - getDistanceFromCell(gx,gy,gz-1))*m_invTwiceResolution;
   
   //return getDistanceFromCell(gx,gy,gz);
-  return 1;
+  return getDistance( cell );
 }
 
 double CollisionSpace::getDistanceFromCell(int x, int y, int z) const
 {
-  return getDistance( dynamic_cast<CollisionSpaceCell*>(getCell(x,y,z)) );
+  return getDistance( static_cast<CollisionSpaceCell*>(getCell(x,y,z)) );
 }
 
 double CollisionSpace::getDistance(CollisionSpaceCell* cell) const
@@ -535,7 +540,7 @@ double CollisionSpace::getDistance(CollisionSpaceCell* cell) const
   }
   return m_SqrtTable[cell->m_DistanceSquare];
   
-//  return sqrt(cell->m_DistanceSquare)*_cellSize[0];
+  //  return sqrt(cell->m_DistanceSquare)*_cellSize[0];
 }
 
 bool CollisionSpace::getCollisionPointPotentialGradient(const CollisionPoint& collision_point, 
@@ -546,11 +551,14 @@ bool CollisionSpace::getCollisionPointPotentialGradient(const CollisionPoint& co
   Eigen::Vector3d field_gradient;
   double field_distance = this->getDistanceGradient( collision_point_pos, field_gradient );
   
-//  field_gradient(0) += field_bias_x_;
-//  field_gradient(1) += field_bias_y_;
-//  field_gradient(2) += field_bias_z_;
+  //  field_gradient(0) += field_bias_x_;
+  //  field_gradient(1) += field_bias_y_;
+  //  field_gradient(2) += field_bias_z_;
   
   double d = field_distance - collision_point.getRadius();
+  
+  //  cout << "collision_point_pos = " << collision_point_pos << endl;
+  //  cout << "d = " << d << endl;
   
   // three cases below:
   if (d >= collision_point.getClearance())
@@ -585,14 +593,14 @@ void CollisionSpace::drawStaticVoxels()
 
 void CollisionSpace::drawGradient()
 {
-//  Eigen::Vector3d unitX(1, 0, 0);
-//  Eigen::Vector3d unitY(0, 1, 0);
-//  Eigen::Vector3d unitZ(0, 0, 1);
+  //  Eigen::Vector3d unitX(1, 0, 0);
+  //  Eigen::Vector3d unitY(0, 1, 0);
+  //  Eigen::Vector3d unitZ(0, 0, 1);
   
   for (unsigned int n=0; n<getNumberOfCells(); n++) 
   {
     CollisionSpaceCell* cell = static_cast<CollisionSpaceCell*>(_cells[n]);
-
+    
     if (getDistance(cell) > PlanEnv->getDouble(PlanParam::distMinToDraw) ) 
       continue;
     
@@ -608,21 +616,21 @@ void CollisionSpace::drawGradient()
     }
     
     /**
-    Eigen::Vector3d axis = //gradient.cross(unitX).length() > 0 ?  
-    gradient.cross(Eigen::Vector3d::UnitX()); // : unitY;
-    double angle = -gradient.dot(Eigen::Vector3d::UnitX());
-    
-    Eigen::Transform3d t = Eigen::AngleAxisd(angle,axis) * Eigen::Translation3d(point);
-    
-    p3d_matrix4 mat;
-    for (unsigned int i=0; i<4; i++) {
-      for (unsigned int j=0;j<4; j++) {
-        mat[i][j] =  t(i,j);
-        //cout << t.matrix() << endl;
-      }
-    }
-    g3d_draw_frame(mat, 0.10);
-    */
+     Eigen::Vector3d axis = //gradient.cross(unitX).length() > 0 ?  
+     gradient.cross(Eigen::Vector3d::UnitX()); // : unitY;
+     double angle = -gradient.dot(Eigen::Vector3d::UnitX());
+     
+     Eigen::Transform3d t = Eigen::AngleAxisd(angle,axis) * Eigen::Translation3d(point);
+     
+     p3d_matrix4 mat;
+     for (unsigned int i=0; i<4; i++) {
+     for (unsigned int j=0;j<4; j++) {
+     mat[i][j] =  t(i,j);
+     //cout << t.matrix() << endl;
+     }
+     }
+     g3d_draw_frame(mat, 0.10);
+     */
     
     p3d_vector3 p1;
     Eigen::Vector3d p1Eigen = cell->getCenter();
@@ -652,8 +660,10 @@ void CollisionSpace::drawSquaredDist()
     
     distToClosObst = getDistance(cell);
     
+    //cout << "distToClosObst : " << distToClosObst << endl;
+    
     if (distToClosObst < PlanEnv->getDouble(PlanParam::distMinToDraw) ) 
-      cell->drawColorGradient(distToClosObst,0.0,0.5,true);
+      cell->drawColorGradient(distToClosObst,0.0,1.0,true);
 	}
 }
 
@@ -665,13 +675,13 @@ void CollisionSpace::draw()
   updateRobotOccupationCells(m_Robot);
   
   // For all robot in the scene
-//  Scene* sc = global_Project->getActiveScene();
-//  for (unsigned int i=0; i< sc->getNumberOfRobots(); i++) 
-//  {
-//    updateRobotOccupationCells( sc->getRobot(i) );
-//  }
+  //  Scene* sc = global_Project->getActiveScene();
+  //  for (unsigned int i=0; i< sc->getNumberOfRobots(); i++) 
+  //  {
+  //    updateRobotOccupationCells( sc->getRobot(i) );
+  //  }
   
-//  updateRobotOccupationCells( sc->getRobotByNameContaining("LOTR") );
+  //  updateRobotOccupationCells( sc->getRobotByNameContaining("LOTR") );
   
   // Draw all cells
   CollisionSpaceCell* cell;

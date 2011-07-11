@@ -837,9 +837,6 @@ void EnvGrid::recomputeCostRobotOnly()
     ENV.setDouble(Env::robotMaximalDist,6);
 
     setCellsToblankCost();
-
-
-
 }
 
 //---------------------------------------------------------------------------

@@ -10,6 +10,8 @@
 
 #include "P3d-pkg.h"
 
+using namespace std;
+
 ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& active_joints )
 {
   m_robot = rob;
@@ -62,14 +64,17 @@ bool ChompPlanningGroup::addCollisionPoint(CollisionPoint& collision_point)
     return false;
   
   collision_points_.push_back(CollisionPoint(collision_point, collision_point.getParentJoints()));
-  
   return true;
 }
 
 void ChompPlanningGroup::draw()
 {
+  //cout << "Number of collision points : " << collision_points_.size() << endl;
   for (unsigned int i=0; i<collision_points_.size(); i++) 
   {
+//    if (i>=38) 
+//      continue;
+    
     Eigen::Transform3d T = m_robot->getJoint( collision_points_[i].getParentJoints().back() )->getMatrixPos();
     
     collision_points_[i].draw(T);

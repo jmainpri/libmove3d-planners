@@ -34,52 +34,53 @@
 
 /** \author Mrinal Kalakrishnan */
 
-#include "chompParameters.hpp"
+#include "stompParameters.hpp"
 
-#include "Planner-pkg.h"
+namespace stomp_motion_planner
+{
 
-//namespace chomp
-//{
-
-ChompParameters::ChompParameters()
+StompParameters::StompParameters()
 {
 }
 
-ChompParameters::~ChompParameters()
+StompParameters::~StompParameters()
 {
 }
-
-void ChompParameters::init()
+  
+void StompParameters::init()
 {
   planning_time_limit_ = 1.0;
-  max_iterations_ = 100;
+  max_iterations_ = 500;
   max_iterations_after_collision_free_ = 100;
   
   smoothness_cost_weight_ = 0.1;
   obstacle_cost_weight_ = 1.0;
+  constraint_cost_weight_ = 0.0;
+  torque_cost_weight_ = 0.0;
   
   learning_rate_ = 0.01;
   animate_path_ = false;
+  add_randomness_ = true;
   
   smoothness_cost_velocity_ = 0.0;
   smoothness_cost_acceleration_ = 1.0;
   smoothness_cost_jerk_ = 0.0;
-  add_randomness_ = true;
   
   use_hamiltonian_monte_carlo_ = false;
-  hmc_stochasticity_ = 0.01;
   hmc_discretization_ = 0.01;
-  hmc_annealing_factor_ = 1.99;
+  hmc_stochasticity_ = 0.01;
+  hmc_annealing_factor_ = 0.99;
   
   ridge_factor_ = 0.0;
   use_pseudo_inverse_ = false;
   pseudo_inverse_ridge_factor_ = 1e-4;
   
-  animate_endeffector_ = ENV.getBool(Env::drawTraj);
+  animate_endeffector_ = true;
   animate_endeffector_segment_ = "r_gripper_tool_frame";
+  use_chomp_ = true;
 }
-
-void ChompParameters::initFromNodeHandle()
+  
+void StompParameters::initFromNodeHandle()
 {
 //  ros::NodeHandle node_handle("~");
 //  node_handle.param("planning_time_limit", planning_time_limit_, 1.0);
@@ -87,6 +88,8 @@ void ChompParameters::initFromNodeHandle()
 //  node_handle.param("max_iterations_after_collision_free", max_iterations_after_collision_free_, 100);
 //  node_handle.param("smoothness_cost_weight", smoothness_cost_weight_, 0.1);
 //  node_handle.param("obstacle_cost_weight", obstacle_cost_weight_, 1.0);
+//  node_handle.param("constraint_cost_weight", constraint_cost_weight_, 1.0);
+//  node_handle.param("torque_cost_weight", torque_cost_weight_, 0.0);
 //  node_handle.param("learning_rate", learning_rate_, 0.01);
 //  node_handle.param("animate_path", animate_path_, false);
 //  node_handle.param("add_randomness", add_randomness_, true);
@@ -102,7 +105,8 @@ void ChompParameters::initFromNodeHandle()
 //  node_handle.param("pseudo_inverse_ridge_factor", pseudo_inverse_ridge_factor_, 1e-4);
 //  node_handle.param("animate_endeffector", animate_endeffector_, false);
 //  node_handle.param("animate_endeffector_segment", animate_endeffector_segment_, std::string("r_gripper_tool_frame"));
+//  node_handle.param("use_chomp", use_chomp_, false);
 }
 
 
-//} // namespace chomp
+} // namespace stomp

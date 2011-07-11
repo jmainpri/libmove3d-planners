@@ -28,7 +28,10 @@ API::ThreeDCell(i, corner, grid)
 	_nodes.clear();
 	_cellSize = grid->getCellSize();
   
-  m_DistanceSquare = 10.0;
+  // Max radius
+  m_DistanceSquare = 10000;
+  
+  m_Location = grid->getCellCoord( this );
 }
 
 void CollisionSpaceCell::draw(int color, int width)

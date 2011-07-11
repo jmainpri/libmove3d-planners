@@ -70,16 +70,16 @@
     //  std::vector<std::vector<KDL::Vector> > collision_point_acc_;
     
     std::vector<std::vector<Eigen::Transform3d> > segment_frames_;
-    
     std::vector<std::vector<Eigen::Vector3d> >  joint_axis_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  joint_pos_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_pos_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_vel_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_acc_eigen_;
     
-    std::vector<std::vector<double> > collision_point_potential_;
-    std::vector<std::vector<double> > collision_point_vel_mag_;
+    Eigen::MatrixXd collision_point_potential_;
+    Eigen::MatrixXd collision_point_vel_mag_;
     std::vector<std::vector<Eigen::Vector3d> > collision_point_potential_gradient_;
+    
     Eigen::MatrixXd group_trajectory_backup_;
     Eigen::MatrixXd best_group_trajectory_;
     double best_group_trajectory_cost_;
