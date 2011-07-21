@@ -51,6 +51,11 @@
 using namespace std;
 USING_PART_OF_NAMESPACE_EIGEN
 
+//--------------------------------------------------------
+// External
+//--------------------------------------------------------
+boost::shared_ptr<stomp_motion_planner::StompOptimizer> optimizer;
+
 namespace stomp_motion_planner
 {
   
@@ -239,7 +244,16 @@ void StompOptimizer::initialize()
   // initialize the policy trajectory
   Eigen::VectorXd start = group_trajectory_.getTrajectoryPoint(free_vars_start_-1).transpose();
   Eigen::VectorXd end = group_trajectory_.getTrajectoryPoint(free_vars_end_+1).transpose();
+  
+  // set paramters
+  int free_vars_start_index = DIFF_RULE_LENGTH - 1;
+  vector< Eigen::VectorXd > parameters(num_joints_);
+  for (int i=0; i<num_joints_; i++) 
+  {
+    parameters[i] =  group_trajectory_.getJointTrajectory(i).segment(free_vars_start_index, num_vars_free_);
+  }
   policy_->setToMinControlCost(start, end);
+  policy_->setParameters( parameters );
 
   // initialize the constraints:
 //  for (int i=0; i<int(constraints_.orientation_constraints.size()); ++i)
@@ -278,6 +292,29 @@ void StompOptimizer::doChompOptimization()
   updateFullTrajectory();
   last_trajectory_collision_free_ = performForwardKinematics();
   last_trajectory_constraints_satisfied_ = true;
+  
+  if (!last_trajectory_collision_free_ && parameters_->getAddRandomness())
+  {
+    performForwardKinematics();
+    double original_cost = getTrajectoryCost();
+    group_trajectory_backup_ = group_trajectory_.getTrajectory();
+    perturbTrajectory();
+    handleJointLimits();
+    updateFullTrajectory();
+    performForwardKinematics();
+    double new_cost = getTrajectoryCost();
+    
+    if (new_cost < original_cost)
+    {
+      //printf("Random jump improved cost from %.10f to %.10f!\n", original_cost, new_cost);
+    }
+    else
+    {
+      //printf("Random jump worsened cost from %.10f to %.10f!\n", original_cost, new_cost);
+      group_trajectory_.getTrajectory() = group_trajectory_backup_;
+      updateFullTrajectory();
+    }
+  }
 
   double cost = 0.0;
   for (int i=free_vars_start_; i<=free_vars_end_; i++)
@@ -307,19 +344,22 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
   stomp_statistics_->success = false;
   stomp_statistics_->costs.clear();
 
+  ChronoOn();
   // initialize pi_loop
 //  ros::NodeHandle nh("~");
   PolicyImprovementLoop pi_loop;
   pi_loop.initialize(/*nh,*/ this_shared_ptr_);
-  
 //  collision_space_->lock();
-
+  
+  group_trajectory_.print();
 
   iteration_ = 0;
   copyPolicyToGroupTrajectory();
   handleJointLimits();
   updateFullTrajectory();
   performForwardKinematics();
+  
+  group_trajectory_.print();
 
   if (parameters_->getAnimateEndeffector())
   {
@@ -384,8 +424,9 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
     }
     else
     {
-      if (cost < best_group_trajectory_cost_ && last_trajectory_collision_free_ && last_trajectory_constraints_satisfied_)
+      if (cost < best_group_trajectory_cost_ /*&& last_trajectory_collision_free_ && last_trajectory_constraints_satisfied_*/)
       {
+        cout << "New best" << endl;
         best_group_trajectory_ = group_trajectory_.getTrajectory();
         best_group_trajectory_cost_ = cost;
         last_improvement_iteration_ = iteration_;
@@ -393,7 +434,8 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
     }
 
     //if (iteration_%1==0)
-    printf( "Trajectory cost: %f (s=%f, c=%f)\n", getTrajectoryCost(), getSmoothnessCost(), getCollisionCost());
+    printf( "%3d Trajectory cost: %f (s=%f, c=%f)\n", iteration_, getTrajectoryCost(), getSmoothnessCost(), getCollisionCost());
+    //cout << "We think the path is collision free: " << last_trajectory_collision_free_ << endl;
     
     if (collision_free_iteration_ >= parameters_->getMaxIterationsAfterCollisionFree())
     {
@@ -423,13 +465,18 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
   group_trajectory_.getTrajectory() = best_group_trajectory_;
   updateFullTrajectory();
   performForwardKinematics();
-  if (parameters_->getAnimateEndeffector())
-  {
+  
+  ChronoPrint("");
+  ChronoOff();
+  
+//  if (parameters_->getAnimateEndeffector())
+//  {
     animateEndeffector();
-  }
-//  ROS_INFO("Terminated after %d iterations, using path from iteration %d", iteration_, last_improvement_iteration_);
-//  ROS_INFO("Best cost = %f", best_group_trajectory_cost_);
-//  ROS_INFO("Optimization core finished in %f sec", (ros::WallTime::now() - start_time).toSec());
+//  }
+  
+  printf("Terminated after %d iterations, using path from iteration %d\n", iteration_, last_improvement_iteration_);
+  printf("Best cost = %f\n", best_group_trajectory_cost_);
+  //printf("Optimization core finished in %f sec", (ros::WallTime::now() - start_time).toSec());
   stomp_statistics_->best_cost = best_group_trajectory_cost_;
 
 //  collision_space_->unlock();
@@ -620,6 +667,9 @@ double StompOptimizer::getCollisionCost()
     }
   }
 
+//  cout << "parameters_->getObstacleCostWeight() = " << parameters_->getObstacleCostWeight() << endl;
+//  cout << "collision_cost = " << collision_cost << endl;
+  
   return parameters_->getObstacleCostWeight() * collision_cost;
 }
 
@@ -697,6 +747,7 @@ void StompOptimizer::handleJointLimits()
         q[dof]= joint_array[j];
       }
       else {
+        cout << "q[" << dof << "] is nan" << endl;
         q[dof]= 0;
       }
     }
@@ -739,24 +790,8 @@ bool StompOptimizer::performForwardKinematics()
   {
     int full_traj_index = group_trajectory_.getFullTrajectoryIndex(i);
     full_trajectory_->getTrajectoryPointP3d(full_traj_index, joint_array);
-
-    //ROS_INFO_STREAM("Trajectory point " << i << " index " << full_traj_index);
-//     for(unsigned int j = 0; j < kdl_joint_array_.rows(); j++) {
-//       ROS_INFO_STREAM(j << " " << kdl_joint_array_(j));
-//     }
-
-    if (iteration_==0)
-    {
-//      planning_group_->fk_solver_->JntToCartFull(kdl_joint_array_, joint_pos_[i], joint_axis_[i], segment_frames_[i]);
-    }
-    else
-    {
-//      planning_group_->fk_solver_->JntToCartPartial(kdl_joint_array_, joint_pos_[i], joint_axis_[i], segment_frames_[i]);
-    }
-
-    //robot_model_->getForwardKinematicsSolver()->JntToCart(kdl_joint_array_, joint_pos_[i], joint_axis_[i], segment_frames_[i]);
-
-    getFrames(i,joint_array);
+    
+    getFrames( i, joint_array );
     
     state_is_in_collision_[i] = false;
 
@@ -779,12 +814,20 @@ bool StompOptimizer::performForwardKinematics()
 
       point_is_in_collision_[i][j] = colliding;
 
-      if (colliding)
-        state_is_in_collision_[i] = true;
+      if ( colliding )
+      {
+        // discard joints close to the base
+        if( planning_group_->collision_points_[j].getSegmentNumber() > 8 )
+        {
+//          cout << "CollisionPoint[" << j << "] is colliding" << endl;
+          state_is_in_collision_[i] = true;
+        }
+      }
     }
 
     if (state_is_in_collision_[i])
     {
+      //cout << "Stat[" << i << "] is colliding" << endl;
       is_collision_free_ = false;
     }
   }
@@ -815,12 +858,24 @@ bool StompOptimizer::performForwardKinematics()
       //      cout << "collision_point_acc_eigen_(" << i << " , "  << j << ") = " << endl << collision_point_acc_eigen_[i][j] << endl;
     }
   }
-
-
-//  if (is_collision_free_)
-//    collision_free_iteration_++;
-//  else
-//    collision_free_iteration_ = 0;
+  
+//  if (is_collision_free_) 
+//  {
+//    cout << "-----------------------" << endl;
+//    cout << "Collision Free Traj" << endl;
+//    cout << "-----------------------" << endl;
+//  }
+//  else {
+//    cout << "------------------------------------" << endl;
+//    for (int i=start; i<=end; ++i) 
+//    {
+//      if (state_is_in_collision_[i]) 
+//      {
+//        cout << "state[" << i << "] in collision" << endl;
+//      }
+//    }
+//    cout << "------------------------------------" << endl;
+//  }
 
   return is_collision_free_;
 }
@@ -944,9 +999,6 @@ void StompOptimizer::clearAnimations()
 
 void StompOptimizer::animateEndeffector()
 {
-  p3d_set_user_drawnjnt(28);
-  ENV.setBool(Env::drawTraj,true);
-  
   API::Trajectory T(robot_model_);
   
   // calculate the forward kinematics for the fixed states only in the first iteration:
@@ -964,11 +1016,11 @@ void StompOptimizer::animateEndeffector()
   //  cout << "group_trajectory : " << endl;
   //  cout << group_trajectory_.getTrajectory() << endl;
   
+  const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+  
   // for each point in the trajectory
   for (int i=start; i<=end; ++i)
   {
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
-    
     Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(i).transpose();
     
     for(int j=0; j<planning_group_->num_joints_;j++)
@@ -986,6 +1038,16 @@ void StompOptimizer::animateEndeffector()
   }
   
   T.replaceP3dTraj();
+  ENV.setBool(Env::drawTraj,true);
+  
+  // Set the robot to the first configuration
+  Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(1).transpose();
+  
+  for(int j=0; j<planning_group_->num_joints_;j++)
+    q[joints[j].move3d_joint_->getIndexOfFirstDof()] = point[j];
+  
+  robot_model_->setAndUpdate( q );
+
   g3d_draw_allwin_active();
   
 //  visualization_msgs::Marker msg;
@@ -1061,6 +1123,19 @@ void StompOptimizer::animateEndeffector()
   //std::cin.get(c);
 }
 
+  void StompOptimizer::draw()
+  {
+    // Draws the first point on trajectory    
+    
+    int middle = (free_vars_start_+free_vars_end_)/2;
+    
+    int start = middle - 3;
+    int end = middle + 3;
+    
+    planning_group_->draw(segment_frames_[start]);
+    planning_group_->draw(segment_frames_[end]);
+  }
+  
 void StompOptimizer::visualizeState(int index)
 {
 //  visualization_msgs::MarkerArray msg;
@@ -1206,6 +1281,8 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
   }
 
+  //cout << "group_trajectory_ = " << endl << group_trajectory_.getTrajectory() << endl;
+  
   // respect joint limits:
   handleJointLimits();
 
@@ -1238,6 +1315,7 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
       cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
 //      state_collision_cost += collision_point_potential_[i][j] * collision_point_vel_mag_[i][j];
       state_collision_cost += cumulative;
+      //cout << "state(" << j << ") = " << collision_point_potential_(i,j) * collision_point_vel_mag_(i,j) << endl;
     }
 
     // evaluate the constraints:
@@ -1285,13 +1363,12 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
         parameters_->getObstacleCostWeight() * state_collision_cost +
         parameters_->getConstraintCostWeight() * state_constraint_cost +
         parameters_->getTorqueCostWeight() * state_torque_cost;
-
   }
 
   last_trajectory_cost_ = costs.sum();
   //last_trajectory_constraints_satisfied_ = (constraint_cost < 1e-6);
 
-  //ROS_INFO("Obstacle cost = %f, constraint cost = %f, torque_cost = %f", obstacle_cost, constraint_cost, torque_cost);
+  //printf("Obstacle cost = %f, constraint cost = %f, torque_cost = %f\n", obstacle_cost, constraint_cost, torque_cost);
   //animateEndeffector();
   //ros::spinOnce();
   //ros::Duration(1.0).sleep();

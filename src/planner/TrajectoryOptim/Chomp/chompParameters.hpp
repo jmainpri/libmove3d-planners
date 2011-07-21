@@ -191,11 +191,6 @@ inline double ChompParameters::getPseudoInverseRidgeFactor() const
   return pseudo_inverse_ridge_factor_;
 }
 
-inline bool ChompParameters::getAnimateEndeffector() const
-{
-  return animate_endeffector_;
-}
-
 inline std::string ChompParameters::getAnimateEndeffectorSegment() const
 {
   return animate_endeffector_segment_;

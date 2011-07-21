@@ -17,9 +17,15 @@ Global std::vector<Planner*> plannerlist;
 
 /**
  * @ingroup NEW_CPP_MODULE
- * This function sets the idRun for multi run cases
+ * Funtion to set multirun Ids
  */
 void p3d_planner_functions_SetRunId( unsigned int idRun );
+
+/**
+ * @ingroup NEW_CPP_MODULE
+ * Funtion to get multi-run Ids
+ */
+unsigned int p3d_planner_functions_GetRunId();
 
 /**
  * @ingroup NEW_CPP_MODULE
@@ -33,11 +39,6 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg);
  */
 void smoothing_Function(p3d_rob* p3d_Robot, p3d_traj* traj, int nbSteps, double maxTime);
 
-/**
- * @ingroup NEW_CPP_MODULE
- * Funtion to replan from a certain via point
- */
-p3d_traj* replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 target, int deformationViaPoint);
 
 /**
   @ingroup NEW_CPP_MODULE

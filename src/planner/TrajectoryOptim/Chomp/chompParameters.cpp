@@ -52,7 +52,7 @@ ChompParameters::~ChompParameters()
 void ChompParameters::init()
 {
   planning_time_limit_ = 1.0;
-  max_iterations_ = 100;
+  max_iterations_ = 500;
   max_iterations_after_collision_free_ = 100;
   
   smoothness_cost_weight_ = 0.1;
@@ -77,6 +77,12 @@ void ChompParameters::init()
   
   animate_endeffector_ = ENV.getBool(Env::drawTraj);
   animate_endeffector_segment_ = "r_gripper_tool_frame";
+}
+
+bool ChompParameters::getAnimateEndeffector() const
+{
+//  return animate_endeffector_;
+  return ENV.getBool(Env::drawTraj);
 }
 
 void ChompParameters::initFromNodeHandle()

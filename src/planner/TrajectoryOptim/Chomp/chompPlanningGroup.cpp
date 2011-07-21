@@ -67,7 +67,7 @@ bool ChompPlanningGroup::addCollisionPoint(CollisionPoint& collision_point)
   return true;
 }
 
-void ChompPlanningGroup::draw()
+void ChompPlanningGroup::draw() const
 {
   //cout << "Number of collision points : " << collision_points_.size() << endl;
   for (unsigned int i=0; i<collision_points_.size(); i++) 
@@ -78,6 +78,15 @@ void ChompPlanningGroup::draw()
     Eigen::Transform3d T = m_robot->getJoint( collision_points_[i].getParentJoints().back() )->getMatrixPos();
     
     collision_points_[i].draw(T);
+  }
+}
+
+void ChompPlanningGroup::draw(std::vector<Eigen::Transform3d>& segment) const
+{
+  for (unsigned int i=0; i<collision_points_.size(); i++) 
+  {
+    Eigen::Transform3d T = segment[collision_points_[i].getSegmentNumber()];
+    collision_points_[i].draw( T );
   }
 }
 

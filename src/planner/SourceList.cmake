@@ -5,6 +5,7 @@ planner.cpp
 plannerFunctions.cpp 
 planEnvironment.cpp
 cost_space.cpp
+replanning.cpp
 )
 
 #BM3D_QT_GENERATE_MOC(

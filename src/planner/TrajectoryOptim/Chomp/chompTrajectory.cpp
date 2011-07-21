@@ -355,7 +355,13 @@ void ChompTrajectory::getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt
   jnt_array.resize( num_joints_ );
   
   for (int i=0; i<num_joints_; i++)
+  {
     jnt_array(i) = trajectory_(traj_point,i);
+    if ( isnan(jnt_array(i)) ) 
+    {
+      jnt_array(i) = 0;
+    }
+  }
 }
 
 void ChompTrajectory::print()

@@ -31,7 +31,7 @@ using namespace std;
 using namespace tr1;
 
 // ---------------------------------------------------------------------------------
-// Run number that is counting the run
+// Run number that is counting planner run
 // ---------------------------------------------------------------------------------
 unsigned int runNum = 0;
 
@@ -40,9 +40,14 @@ unsigned int runNum = 0;
 // ---------------------------------------------------------------------------------
 unsigned int runId = 0;
 
-void p3d_planner_functions_SetRunId( unsigned int idRun)
+void p3d_planner_functions_SetRunId( unsigned int idRun )
 {
 	runId = idRun;
+}
+
+unsigned int p3d_planner_functions_GetRunId()
+{
+  return runId;
 }
 
 // ---------------------------------------------------------------------------------
@@ -144,15 +149,18 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
 	ChronoTimes(&(graph->getGraphStruct()->rrtTime), &ts);
 	
   // Debug
-	cout << "graph time ="  << graph->getGraphStruct()->rrtTime << endl;
-	cout << "nb added nodes " << nb_added_nodes << endl;
-	cout << "nb nodes (Wrapper) " << (int)graph->getNodes().size() << endl;
-	cout << "nb nodes " << graph->getGraphStruct()->nnode << endl;
+  cout << "** ** --------------------------" << endl;
+	cout << "TIME ="  << graph->getGraphStruct()->rrtTime << endl;
+	cout << "NB NODES " << (int)graph->getNodes().size() << endl;
+	cout << "** ** --------------------------" << endl;
   
   if ((rrt->getNumberOfExpansion() - rrt->getNumberOfFailedExpansion() + rrt->getNumberOfInitialNodes()) 
       != graph->getNumberOfNodes() ) 
   {
+    cout << "----------------------" << endl;
     cout << "Nb of nodes differ from number of expansion succes " << endl;
+    cout << "nb added nodes " << nb_added_nodes << endl;
+    cout << "nb nodes " << graph->getGraphStruct()->nnode << endl;
     cout << " - m_nbExpansion = " << rrt->getNumberOfExpansion() << endl;
     cout << " - m_nbInitNodes = " << rrt->getNumberOfInitialNodes() << endl;
     cout << " - m_nbExpansion + m_nbInitNodes - m_nbExpansionFailed  =  " << (rrt->getNumberOfExpansion() + rrt->getNumberOfInitialNodes() - rrt->getNumberOfFailedExpansion() ) << endl;
@@ -171,7 +179,7 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
     {
       // Export the graph when not using the classical p3d_sctructures
       // Copies the graph to a p3d_structured graph
-      cout << "Export the cpp graph to new graph" << endl;
+//      cout << "Export the cpp graph to new graph" << endl;
       XYZ_GRAPH = robotPt->GRAPH = graph->exportCppToGraphStruct();
       
       // Case of direct connection
@@ -208,7 +216,7 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
 
     result = traj->replaceP3dTraj(result); 
     
-    cout << "result = " << result << endl;
+//    cout << "result = " << result << endl;
     cout << "result->nlp = " << result->nlp << endl;
     cout << "result->range_param = " << result->range_param << endl;
     
@@ -297,120 +305,6 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
   cout << "Nb of localpaths : " << robotPt->tcur->nlp << endl;
 }
 
-// ---------------------------------------------------------------------------------
-// Re-Planning
-// ---------------------------------------------------------------------------------
-p3d_traj* replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 target, int deformationViaPoint)
-{
-  cout << "* REPLANNING ***************" << endl;
-  
-  if ( robotPt->lpl_type == MULTI_LOCALPATH ) 
-  {
-    ManipulationUtils::printConstraintInfo(robotPt);
-    p3d_multilocalpath_switch_to_linear_groups (robotPt);
-    p3d_multilocapath_print_group_info(robotPt);
-  }
-  
-//  traj = pathPt;
-  
-  // Gets the robot pointer
-  Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-  
-  API::Trajectory oldTraj(rob,traj);
-  
-#ifdef QT_LIBRARY
-  //oldTraj.setContextName( ENV.getString(Env::nameOfFile).toStdString() );
-#endif
-  
-  unsigned int lastViaPoint = oldTraj.getNbOfPaths();
-  
-  if (lastViaPoint <= (unsigned int)deformationViaPoint) 
-  {
-    cout << "No optimization possible (lastViaPoint <= deformationViaPoint)" << endl;
-    return NULL;
-  }
-  
-  API::CostOptimization optimTrj = oldTraj.extractSubTrajectory( (unsigned int)deformationViaPoint, lastViaPoint-1 );
-  
-  Eigen::Vector3d WSPoint;
-  WSPoint[0] = target[0];
-  WSPoint[1] = target[1];
-  WSPoint[2] = target[2];
-  
-  /**
-   unsigned int validShortCutId,endId;
-  double* q = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->testTransferPointToTrajectory(WSPoint, optimTrj,validShortCutId);
-  if ( q ) 
-  {
-    endId = optimTrj.getNbOfPaths();
-    
-    vector<LocalPath*> path;
-    
-    shared_ptr<Configuration> q_source(optimTrj.getLocalPathPtrAt(validShortCutId)->getEnd());
-    shared_ptr<Configuration> q_target(new Configuration(rob,q));
-    
-//    cout << "q_source = " << endl;
-//    q_source->print(true);
-//    
-//    cout << "q_target = " << endl;
-//    q_target->print(true);
-    
-    LocalPath* pathPt = new LocalPath(q_source,q_target);
-    
-    if (!pathPt->isValid()) {
-      cout << "ERROR : LocalPath Not Valid" << endl;
-    }
-    else {
-      path.push_back( pathPt );
-      
-      //    vector<LocalPath*> courbe = optimTrj.getCourbe();
-      //    optimTrj.copyPaths( courbe );
-      optimTrj.replacePortion(validShortCutId+1,endId,path);
-    }
-  }
-   */
-  
-  double optTime = 0.0;
-//  if(PlanEnv->getBool(PlanParam::withDeformation))
-//  {
-    ENV.setBool(Env::FKShoot,true);
-    optimTrj.runDeformation( ENV.getInt(Env::nbCostOptimize) , runId );
-    ENV.setBool(Env::FKShoot,false);
-    optTime += optimTrj.getTime();
-//  }
-  
-  cout << "optTime = " << optTime << endl;
-  
-  optimTrj.resetCostComputed();
-  
-  //XYZ_GRAPH->rrtCost2 = optimTrj.cost();
-  
-//  if(PlanEnv->getBool(PlanParam::withShortCut))
-//  {
-//    optimTrj.runShortCut( ENV.getInt(Env::nbCostOptimize) , runId );
-//    optTime += optimTrj.getTime();
-//  }
-  
-  //-----------------------------------
-  
-//  double dmax = global_Project->getActiveScene()->getDMax();
-//  double range = optimTrj.getRangeMax();
-//  
-//  cout << "** END CUTTING **************" << endl;
-//  cout << "NLP = " << floor( range / (15*dmax)) << endl;
-//  
-//  optimTrj.cutTrajInSmallLP( floor( range / (15*dmax) ) );
-  
-  //-----------------------------------
-  
-  vector<LocalPath*> courbe = optimTrj.getCourbe();
-  optimTrj.copyPaths( courbe );
-  
-  oldTraj.replacePortion((unsigned int)deformationViaPoint, lastViaPoint, courbe);
-  oldTraj.replaceP3dTraj();
-  
-  return rob->getTrajStruct();
-}
 
 // ---------------------------------------------------------------------------------
 // Tree Planners
@@ -423,15 +317,16 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
   shared_ptr<Configuration> q_target = rob->getGoTo();
   
   p3d_traj* path = planner_Function(rob->getRobotStruct(), 
-                                 q_source->getConfigStruct(),  
-                                 q_target->getConfigStruct() );
+                                    q_source->getConfigStruct(),  
+                                    q_target->getConfigStruct() );
   
-  if(!PlanEnv->getBool(PlanParam::stopPlanner))
+  if(!PlanEnv->getBool(PlanParam::stopPlanner) &&
+     PlanEnv->getBool(PlanParam::withSmoothing))
   {
-     smoothing_Function(rob->getRobotStruct(), path, 100, 4.0);
+    smoothing_Function(rob->getRobotStruct(), path, 100, 4.0);
   }
-    
-    return true;
+  
+  return true;
 }
 
 

@@ -44,6 +44,8 @@
 //#include "param_server.hpp"
 //#include <boost/filesystem.hpp>
 
+using namespace std;
+
 namespace stomp_motion_planner
 {
   const std::string PI_STATISTICS_TOPIC_NAME = std::string("policy_improvement_statistics");
@@ -88,14 +90,15 @@ namespace stomp_motion_planner
   bool PolicyImprovementLoop::initialize(/*ros::NodeHandle& node_handle,*/ boost::shared_ptr<stomp_motion_planner::Task> task)
   {
     //node_handle_ = node_handle;
+    task->getPolicy(policy_);
+    policy_->getNumDimensions(num_dimensions_);
+    policy_->getNumTimeSteps(num_time_steps_);
+    
     readParameters();
     
     task_ = task;
     task_->initialize(/*node_handle_,*/ num_time_steps_);
-    task_->getPolicy(policy_);
     task_->getControlCostWeight(control_cost_weight_);
-    
-    policy_->getNumDimensions(num_dimensions_);
     
     assert( num_dimensions_ == static_cast<int>(noise_decay_.size()));
     assert( num_dimensions_ == static_cast<int>(noise_stddev_.size()));
@@ -124,10 +127,13 @@ namespace stomp_motion_planner
     
     num_rollouts_ = 10;
     num_reused_rollouts_ = 5;
-    num_time_steps_ = 21;
+    //num_time_steps_ = 51;
     
-    noise_stddev_.resize(7,2.0);
-    noise_decay_.resize(7,0.99);
+    noise_stddev_.clear();
+    noise_decay_.clear();
+    
+    noise_stddev_.resize(num_dimensions_,2.);
+    noise_decay_.resize(num_dimensions_,.99);
     
 //    noise_stddev
 //    noise_decay
@@ -173,6 +179,7 @@ namespace stomp_motion_planner
     for (int i=0; i<num_dimensions_; ++i)
     {
       noise[i] = noise_stddev_[i] * pow(noise_decay_[i], iteration_number-1);
+      //cout << "noise_stddev = " << noise[i] << endl;
     }
     
     // get rollouts and execute them
@@ -191,10 +198,18 @@ namespace stomp_motion_planner
     
     // improve the policy
     assert(policy_improvement_.improvePolicy(parameter_updates_));
+    
+//    for (int d=0; d<num_dimensions_; ++d)
+//    {
+//      parameters_.resize(num_dimensions_, Eigen::VectorXd::Zero(num_time_steps_));
+//      parameters_[d] = parameter_updates_[d].row(0).transpose();
+//    }
     assert(policy_->updateParameters(parameter_updates_));
     
     // get a noise-less rollout to check the cost
     assert(policy_->getParameters(parameters_));
+    
+    // Get the trajectory cost
     assert(task_->execute(parameters_, tmp_rollout_cost_, iteration_number));
     //printf("Noiseless cost = %lf\n", stats_msg.noiseless_cost);
     
@@ -206,6 +221,8 @@ namespace stomp_motion_planner
     extra_rollout[0] = parameters_;
     extra_rollout_cost[0] = tmp_rollout_cost_;
     assert(policy_improvement_.addExtraRollouts(extra_rollout, extra_rollout_cost));
+    
+    //cout << "rollout_cost_ = " << tmp_rollout_cost_.sum() << endl;
     
     if (write_to_file_)
     {

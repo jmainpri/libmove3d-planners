@@ -116,6 +116,11 @@ public:
      * @return true on success, false on failure
      */
     bool updateParameters(const std::vector<Eigen::MatrixXd>& updates);
+  
+    /**
+     * print paramters in standard output
+     */
+    void printParameters();
 
     /**
      * Get the policy parameters per dimension
@@ -206,6 +211,18 @@ inline bool CovariantTrajectoryPolicy::getParameters(std::vector<Eigen::VectorXd
         parameters[d] = parameters_all_[d].segment(free_vars_start_index_, num_vars_free_);
     }
     return true;
+}
+  
+inline void CovariantTrajectoryPolicy::printParameters()
+{
+    Eigen::MatrixXd parameters( num_time_steps_, num_dimensions_);
+    
+    for (int d=0; d<num_dimensions_; ++d)
+    {
+      parameters.col(d) = parameters_all_[d].segment(free_vars_start_index_, num_vars_free_);
+    }
+    
+    std::cout << parameters << std::endl;
 }
 
 inline bool CovariantTrajectoryPolicy::getParametersAll(std::vector<Eigen::VectorXd>& parameters)

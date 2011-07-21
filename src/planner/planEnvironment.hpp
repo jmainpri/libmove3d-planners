@@ -40,6 +40,7 @@ namespace  PlanParam
     
     // Stomp/Chomp
     withCurrentTraj,
+    doReplanning,
         
         // Drawing (gl) stuff
         drawColorConfig,
@@ -66,6 +67,7 @@ namespace  PlanParam
 	enum intParameter 
 	{
 		tata,
+    nb_pointsOnTraj,
 
 		// Object TransfertPoint variable
 		env_maxIter,

@@ -826,7 +826,6 @@ void ChompOptimizer::updatePositionFromMomentum()
 
 void ChompOptimizer::animateEndeffector()
 {
-  p3d_set_user_drawnjnt(28);
   ENV.setBool(Env::drawTraj,true);
   
   API::Trajectory T(robot_model_);

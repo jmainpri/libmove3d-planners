@@ -41,6 +41,8 @@
 #include <Eigen/Array>
 #include <sstream>
 
+using namespace std;
+
 USING_PART_OF_NAMESPACE_EIGEN
 
 namespace stomp_motion_planner
@@ -73,23 +75,24 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
                                            const double cost_ridge_factor,
                                            const std::vector<double>& derivative_costs)
 {
-    //node_handle_ = node_handle;
-
+  //node_handle_ = node_handle;
+  
   num_time_steps_ = num_time_steps;
   num_dimensions_ = num_dimensions;
-  movement_duration_ = movement_duration;
+  //movement_duration_ = movement_duration;
+  movement_duration_ = 5.0;
   cost_ridge_factor_ = cost_ridge_factor;
   derivative_costs_ = derivative_costs;
   
-  initializeVariables();
-  initializeCosts();
-  initializeBasisFunctions();
-
-    assert(initializeVariables());
-    assert(initializeCosts());
-    assert(initializeBasisFunctions());
-
-    return true;
+//  initializeVariables();
+//  initializeCosts();
+//  initializeBasisFunctions();
+  
+  assert(initializeVariables());
+  assert(initializeCosts());
+  assert(initializeBasisFunctions());
+  
+  return true;
 }
 
 bool CovariantTrajectoryPolicy::readParameters()
@@ -107,36 +110,60 @@ bool CovariantTrajectoryPolicy::readParameters()
     return true;
 }
 
+//! compute the minmal control costs
+//! given a start and goal state
 bool CovariantTrajectoryPolicy::setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal)
 {
-    for (int d=0; d<num_dimensions_; ++d)
+  for (int d=0; d<num_dimensions_; ++d)
+  {
+    // set the start and end of the trajectory
+    for (int i=0; i<DIFF_RULE_LENGTH-1; ++i)
     {
-        // set the start and end of the trajectory
-        for (int i=0; i<DIFF_RULE_LENGTH-1; ++i)
-        {
-            parameters_all_[d](i) = start(d);
-            parameters_all_[d](num_vars_all_-1-i) = goal(d);
-        }
-
+      parameters_all_[d](i) = start(d);
+      parameters_all_[d](num_vars_all_-1-i) = goal(d);
     }
-    computeLinearControlCosts();
-    computeMinControlCostParameters();
-    return true;
+  }
+  
+  cout << "1 : " << endl;
+  printParameters();
+  computeLinearControlCosts();
+  
+  cout << "2 : " << endl;
+  printParameters();
+  computeMinControlCostParameters();
+  
+  cout << "3 : " << endl;
+  printParameters();
+  return true;
 }
 
 bool CovariantTrajectoryPolicy::computeLinearControlCosts()
 {
-    linear_control_costs_.clear();
-    linear_control_costs_.resize(num_dimensions_, VectorXd::Zero(num_vars_free_));
-    for (int d=0; d<num_dimensions_; ++d)
-    {
-        linear_control_costs_[d].transpose() = parameters_all_[d].segment(0, DIFF_RULE_LENGTH-1).transpose() *
-                control_costs_all_[d].block(0, free_vars_start_index_, DIFF_RULE_LENGTH-1, num_vars_free_);
-        linear_control_costs_[d].transpose() += parameters_all_[d].segment(free_vars_end_index_+1, DIFF_RULE_LENGTH-1).transpose() *
-                control_costs_all_[d].block(free_vars_end_index_+1, free_vars_start_index_, DIFF_RULE_LENGTH-1, num_vars_free_);
-        linear_control_costs_[d] *= 2.0;
-    }
-    return true;
+  linear_control_costs_.clear();
+  linear_control_costs_.resize(num_dimensions_, VectorXd::Zero(num_vars_free_));
+  
+  for (int d=0; d<num_dimensions_; ++d)
+  {
+    linear_control_costs_[d].transpose() = parameters_all_[d].segment(0, DIFF_RULE_LENGTH-1).transpose() *
+    control_costs_all_[d].block(0, free_vars_start_index_, DIFF_RULE_LENGTH-1, num_vars_free_);
+    
+    linear_control_costs_[d].transpose() += parameters_all_[d].segment(free_vars_end_index_+1, DIFF_RULE_LENGTH-1).transpose() *
+    control_costs_all_[d].block(free_vars_end_index_+1, free_vars_start_index_, DIFF_RULE_LENGTH-1, num_vars_free_);
+    
+    linear_control_costs_[d] *= 2.0;
+  }
+  
+//  Eigen::MatrixXd control_costs( num_time_steps_, num_dimensions_ );
+//  
+//  for (int d=0; d<num_dimensions_; ++d)
+//  {
+//    control_costs.col(d) = linear_control_costs_[d].segment(free_vars_start_index_, num_vars_free_);
+//  }
+//  
+//  cout << "Control Costs : " << endl;
+//  cout << control_costs << endl;
+  
+  return true;
 }
 
 bool CovariantTrajectoryPolicy::computeMinControlCostParameters()
@@ -175,27 +202,29 @@ bool CovariantTrajectoryPolicy::initializeVariables()
 
 bool CovariantTrajectoryPolicy::initializeCosts()
 {
-    createDifferentiationMatrices();
-
-    control_costs_all_.clear();
-    control_costs_.clear();
-    inv_control_costs_.clear();
-    for (int d=0; d<num_dimensions_; ++d)
+  createDifferentiationMatrices();
+  
+  control_costs_all_.clear();
+  control_costs_.clear();
+  inv_control_costs_.clear();
+  for (int d=0; d<num_dimensions_; ++d)
+  {
+    // construct the quadratic cost matrices (for all variables)
+    MatrixXd cost_all = MatrixXd::Identity(num_vars_all_, num_vars_all_) * cost_ridge_factor_;
+    for (int i=0; i<NUM_DIFF_RULES; ++i)
     {
-        // construct the quadratic cost matrices (for all variables)
-        MatrixXd cost_all = MatrixXd::Identity(num_vars_all_, num_vars_all_) * cost_ridge_factor_;
-        for (int i=0; i<NUM_DIFF_RULES; ++i)
-        {
-            cost_all += derivative_costs_[i] * (differentiation_matrices_[i].transpose() * differentiation_matrices_[i]);
-        }
-        control_costs_all_.push_back(cost_all);
-
-        // extract the quadratic cost just for the free variables:
-        MatrixXd cost_free = cost_all.block(DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_, num_vars_free_);
-        control_costs_.push_back(cost_free);
-        inv_control_costs_.push_back(cost_free.inverse());
+      cost_all += derivative_costs_[i] * (differentiation_matrices_[i].transpose() * differentiation_matrices_[i]);
     }
-    return true;
+    control_costs_all_.push_back(cost_all);
+    
+    // extract the quadratic cost just for the free variables:
+    MatrixXd cost_free = cost_all.block(DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_, num_vars_free_);
+    
+    //cout << "cost_free("<<d<<") = " << cost_free << endl;
+    control_costs_.push_back(cost_free);
+    inv_control_costs_.push_back(cost_free.inverse());
+  }
+  return true;
 }
 
 bool CovariantTrajectoryPolicy::initializeBasisFunctions()
@@ -207,7 +236,6 @@ bool CovariantTrajectoryPolicy::initializeBasisFunctions()
     }
     return true;
 }
-
 
 void CovariantTrajectoryPolicy::createDifferentiationMatrices()
 {
@@ -229,7 +257,8 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices()
                 differentiation_matrices_[d](i,index) = multiplier * DIFF_RULES[d][j+DIFF_RULE_LENGTH/2];
             }
         }
-        //ROS_INFO_STREAM(differentiation_matrices_[d]);
+        cout << "differentiation_matrices_["<<d<<"] = " << endl 
+        << differentiation_matrices_[d] << endl ;
     }
 }
 
@@ -257,7 +286,6 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
           control_costs[d](num_vars_free_-1) += costs_all(num_vars_all_-(i+1));
       }
   }
-
 
   return true;
 }
@@ -307,7 +335,6 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
         }
     }
 
-
     return true;
 }
 
@@ -328,6 +355,8 @@ bool CovariantTrajectoryPolicy::updateParameters(const std::vector<Eigen::Matrix
     {
         parameters_all_[d].segment(free_vars_start_index_, num_vars_free_).transpose() +=
                 divisor * updates[d].row(0);
+      
+//      cout << "parameters_all_[" << d << "] = " << endl << parameters_all_[d] << endl;
     }
 
     // this weights updates by number of time-steps remaining:

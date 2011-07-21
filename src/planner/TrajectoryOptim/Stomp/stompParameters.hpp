@@ -213,11 +213,6 @@ inline double StompParameters::getPseudoInverseRidgeFactor() const
   return pseudo_inverse_ridge_factor_;
 }
 
-inline bool StompParameters::getAnimateEndeffector() const
-{
-  return animate_endeffector_;
-}
-
 inline std::string StompParameters::getAnimateEndeffectorSegment() const
 {
   return animate_endeffector_segment_;

@@ -66,7 +66,8 @@ public:
   /**
    * Displays all bounding spheres
    */
-  void draw();
+  void draw() const;
+  void draw(std::vector<Eigen::Transform3d>& segment) const;
 };
 
 template <typename Derived>

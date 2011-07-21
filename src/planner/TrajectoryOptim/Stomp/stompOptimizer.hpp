@@ -120,6 +120,11 @@ public:
    * @return
    */
   bool getControlCostWeight(double& control_cost_weight);
+  
+  /**
+   * Draw function to be called outside
+   */
+  void draw();
 
 
 private:
@@ -254,5 +259,7 @@ private:
 };
 
 }
+
+extern boost::shared_ptr<stomp_motion_planner::StompOptimizer> optimizer;
 
 #endif /* STOMP_OPTIMIZER_H_ */

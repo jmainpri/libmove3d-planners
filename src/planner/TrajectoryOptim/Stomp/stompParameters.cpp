@@ -36,6 +36,8 @@
 
 #include "stompParameters.hpp"
 
+#include "Planner-pkg.h"
+
 namespace stomp_motion_planner
 {
 
@@ -75,9 +77,15 @@ void StompParameters::init()
   use_pseudo_inverse_ = false;
   pseudo_inverse_ridge_factor_ = 1e-4;
   
-  animate_endeffector_ = true;
+  animate_endeffector_ = true; // ENV.getBool(Env::drawTraj);
   animate_endeffector_segment_ = "r_gripper_tool_frame";
-  use_chomp_ = true;
+  use_chomp_ = false;
+}
+  
+bool StompParameters::getAnimateEndeffector() const
+{
+  //  return animate_endeffector_;
+  return ENV.getBool(Env::drawTraj);
 }
   
 void StompParameters::initFromNodeHandle()
