@@ -7,6 +7,7 @@
 //
 
 #include "chompPlanningGroup.hpp"
+#include "chompUtils.hpp"
 
 #include "P3d-pkg.h"
 
@@ -86,6 +87,16 @@ void ChompPlanningGroup::draw(std::vector<Eigen::Transform3d>& segment) const
   for (unsigned int i=0; i<collision_points_.size(); i++) 
   {
     Eigen::Transform3d T = segment[collision_points_[i].getSegmentNumber()];
+    collision_points_[i].draw( T );
+  }
+}
+
+void ChompPlanningGroup::draw(std::vector<std::vector<double> >& segment) const
+{
+  for (unsigned int i=0; i<collision_points_.size(); i++) 
+  {
+    Eigen::Transform3d T;
+    stdVectorToEigenTransform(segment[collision_points_[i].getSegmentNumber()],T);
     collision_points_[i].draw( T );
   }
 }

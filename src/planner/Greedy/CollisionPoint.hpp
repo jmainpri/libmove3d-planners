@@ -15,6 +15,8 @@
 #include <Eigen/Geometry>
 #include <algorithm>
 
+#include "TrajectoryOptim/Chomp/chompUtils.hpp"
+
 class BoundingCylinder  
 {
 public:
@@ -67,6 +69,7 @@ public:
   }
   
   void getTransformedPosition(std::vector<Eigen::Transform3d>& segment_frames, Eigen::Vector3d& position) const;
+  void getTransformedPosition(std::vector<std::vector<double> >& segment_frames, Eigen::Vector3d& position) const;
   
   void getJacobian(std::vector</*Eigen::Map<*/Eigen::Vector3d> /*>*/& joint_pos, 
                    std::vector</*Eigen::Map<*/Eigen::Vector3d> /*>*/& joint_axis,
@@ -129,5 +132,15 @@ inline void CollisionPoint::getTransformedPosition(std::vector<Eigen::Transform3
 {
   position = segment_frames[m_segment_number] * m_position;
 }
+
+inline void CollisionPoint::getTransformedPosition(std::vector<std::vector<double> >& segment_frames, 
+                                                   Eigen::Vector3d& position) const
+{
+  Eigen::Transform3d T;
+  stdVectorToEigenTransform(segment_frames[m_segment_number],T);
+  position = T*m_position;
+}
+
+
 
 #endif /* COLLISION_POINT_HPP */

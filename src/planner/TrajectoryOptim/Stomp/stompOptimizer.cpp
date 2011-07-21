@@ -758,7 +758,10 @@ void StompOptimizer::handleJointLimits()
     {
       Eigen::Transform3d t = joints[j].move3d_joint_->getMatrixPos();
       
-      segment_frames_[segment][j]  = t;
+      std::vector<double> vect;
+      eigenTransformToStdVector(t,vect);
+      
+      segment_frames_[segment][j]  = vect;
       joint_pos_eigen_[segment][j] = t.translation();
       joint_axis_eigen_[segment][j](0) = t(0,2);
       joint_axis_eigen_[segment][j](0) = t(1,2);
@@ -1131,9 +1134,10 @@ void StompOptimizer::animateEndeffector()
     
     int start = middle - 3;
     int end = middle + 3;
+  
     
     planning_group_->draw(segment_frames_[start]);
-    planning_group_->draw(segment_frames_[end]);
+    planning_group_->draw(segment_frames_[start]);
   }
   
 void StompOptimizer::visualizeState(int index)

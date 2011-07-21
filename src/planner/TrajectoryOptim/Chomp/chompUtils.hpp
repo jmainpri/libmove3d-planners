@@ -41,7 +41,12 @@
 //#include <kdl/jntarray.hpp>
 //#include <chomp_motion_planner/chomp_robot_model.h>
 #include <iostream>
+#include <vector>
+
 #include <Eigen/Core>
+#include <Eigen/Geometry>
+
+using namespace std;
 
 //namespace chomp
 //{
@@ -56,6 +61,37 @@
     {0, 1/12.0, -17/12.0, 46/12.0, -46/12.0, 17/12.0, -1/12.0}  // jerk
   };
   
+
+inline void stdVectorToEigenTransform(const std::vector<double>& stl, Eigen::Transform3d& T)
+  {
+    for (int j=0; j<4; j++)
+    {
+      for (int i=0; i<3; i++)
+      {
+        T(i,j) = stl[i*4+j];
+      }
+    }
+    
+    T(3,0) = 0;
+    T(3,1) = 0;
+    T(3,2) = 0;
+    T(3,3) = 1;
+    
+    //cout << "Transfo : " << endl << T.matrix() << endl;
+  }
+
+inline void eigenTransformToStdVector(const Eigen::Transform3d& T, std::vector<double>& stl )
+{
+  stl.resize(12);
+  for (int j=0; j<4; j++)
+  {
+    for (int i=0; i<3; i++)
+    {
+      stl[i*4+j] = T(i,j);
+    }
+  }
+}
+
 //  inline void debugJointArray(KDL::JntArray& joint_array)
 //  {
 //    for (unsigned int i=0; i<joint_array.rows(); i++)

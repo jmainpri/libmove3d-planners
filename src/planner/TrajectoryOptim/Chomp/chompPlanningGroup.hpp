@@ -68,6 +68,7 @@ public:
    */
   void draw() const;
   void draw(std::vector<Eigen::Transform3d>& segment) const;
+  void draw(std::vector<std::vector<double> >& segment) const;
 };
 
 template <typename Derived>
