@@ -268,14 +268,14 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Rob
     // Compute the planner joints, this doesn't handle trees
     // only handles chains, the planner joints before the active 
     // joints are taken into account
-//    parent_joints.clear();
-//    for (unsigned int j=0; j<planner_joints.size(); j++) 
-//    {
-//      if ( planner_joints[j] <= joint ) 
-//      {
-//        parent_joints.push_back( planner_joints[j] );
-//      }
-//    }
+    parent_joints.clear();
+    for (unsigned int j=0; j<planner_joints.size(); j++) 
+    {
+      if ( planner_joints[j] <= joint ) 
+      {
+        parent_joints.push_back( planner_joints[j] );
+      }
+    }
     
     parent_joints.clear();
     for (unsigned int j=0; j<active_joints.size(); j++) 
@@ -298,12 +298,12 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Rob
     int segment;
     
     // Becarefull!!!
-//    if ( i >= (planner_joints.size()-1) ) {
-//      segment = planner_joints.size()-1;
-//    }
-//    else {
+    if ( i >= (planner_joints.size()-1) ) {
+      segment = planner_joints.size()-1;
+    }
+    else {
       segment = i;
-//    }
+    }
     
     std::vector<CollisionPoint> points = getLinksCollisionPoints( jnt, segment, parent_joints );
     
