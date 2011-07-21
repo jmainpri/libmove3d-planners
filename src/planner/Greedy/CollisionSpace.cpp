@@ -579,7 +579,43 @@ bool CollisionSpace::getCollisionPointPotentialGradient(const CollisionPoint& co
     potential = -d + 0.5 * collision_point.getClearance();
   }
   
+//  cout << "----------------------------" << endl;
+//  cout << "field_distance = " << field_distance << endl;
+//  cout << "collision_point.getRadius() = " << collision_point.getRadius() << endl;
+  
   return (field_distance <= collision_point.getRadius()); // true if point is in collision
+}
+
+bool CollisionSpace::isRobotColliding() const
+{
+  cout << "Test collision space is robot colliding" << endl;
+  bool isRobotColliding = false;
+  double potential;
+  Eigen::Vector3d position,gradient;
+  
+  for( unsigned int i=0; i<m_Robot->getNumberOfJoints(); i++ )
+  {
+    Joint* jnt = m_Robot->getJoint(i);
+    
+    Eigen::Transform3d T = jnt->getMatrixPos();
+    vector<CollisionPoint>& points = m_sampler->getCollisionPoints(jnt);
+    
+    for( unsigned int j=0; j<points.size(); j++ )
+    {
+      position = T*points[j].getPosition();
+      
+      if( getCollisionPointPotentialGradient( points[j], position, potential, gradient ) )
+      {
+        points[j].m_is_colliding = true;
+        isRobotColliding = true;
+      }
+      else {
+        points[j].m_is_colliding = false;
+      }
+    }
+  }
+  
+  return isRobotColliding;
 }
 
 void CollisionSpace::drawStaticVoxels()
@@ -665,6 +701,35 @@ void CollisionSpace::drawSquaredDist()
     if (distToClosObst < PlanEnv->getDouble(PlanParam::distMinToDraw) ) 
       cell->drawColorGradient(distToClosObst,0.0,1.0,true);
 	}
+}
+
+void CollisionSpace::drawCollisionPoints()
+{
+  for( unsigned int i=0; i<m_Robot->getNumberOfJoints(); i++ )
+  {
+    Joint* jnt = m_Robot->getJoint(i);
+    Eigen::Transform3d T = jnt->getMatrixPos();
+    vector<CollisionPoint>& points = m_sampler->getCollisionPoints(jnt);
+    
+    for( unsigned int j=0; j<points.size(); j++ )
+    {
+      if( points[j].m_is_colliding )
+      {
+        double color[4];
+        
+        color[1] = 0.0;       //green
+        color[2] = 0.0;       //blue
+        color[0] = 1.0;       //red
+        color[3] = 0.7;       //transparency
+        
+        g3d_set_color(Any,color);
+      }
+      
+      bool yellow = (!points[j].m_is_colliding);
+      
+      points[j].draw(T,yellow);
+    }
+  }
 }
 
 void CollisionSpace::draw()

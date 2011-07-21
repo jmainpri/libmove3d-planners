@@ -37,9 +37,11 @@ public:
   
   bool isPointInEnvironment( const Eigen::Vector3d& point );
   
+  // Access to the sampled point cloud
+  // Given a robot object
   PointCloud& getPointCloud(obj* o) 
   { 
-    return*m_objectToPointCloudMap[o]; 
+    return *m_objectToPointCloudMap[o]; 
   }
   
   BoundingCylinder* generateBoudingCylinder(p3d_obj* obj);
@@ -51,6 +53,13 @@ public:
   std::vector<CollisionPoint> generateRobotCollisionPoints(Robot* robot, const std::vector<int>& active_joints, const std::vector<int>& planner_joints);
   
   std::vector<CollisionPoint> getLinksCollisionPoints(Joint* jnt, int segment_number , const std::vector<int>& parent_joints );
+  
+  // Access a collision point vector
+  // Given a joint
+  std::vector<CollisionPoint>& getCollisionPoints(Joint* jnt) 
+  { 
+    return m_jointToCollisionPoint[jnt]; 
+  }
   
   double getDefaultClearance() { return m_collision_clearance_default; } 
   
@@ -66,8 +75,7 @@ private:
   std::vector<PointCloud*> m_robotsPoints;
   
   std::map<obj*,BoundingCylinder*>    m_objectToBoCylinderMap;
-  
-  std::vector<CollisionPoint*> m_collisionPoints;
+  std::map<Joint*, std::vector<CollisionPoint> >    m_jointToCollisionPoint;
   
   double m_collision_clearance_default;
 };

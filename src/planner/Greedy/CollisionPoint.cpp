@@ -38,10 +38,12 @@ CollisionPoint::CollisionPoint(const CollisionPoint &point, const std::vector<in
   m_segment_number(point.m_segment_number),
   m_position(point.m_position)
 {
+  
 }
 
 CollisionPoint::~CollisionPoint()
 {
+  
 }
 
 void CollisionPoint::getJacobian(std::vector</*Eigen::Map<*/Eigen::Vector3d> /*>*/& joint_pos, 
@@ -65,10 +67,10 @@ void CollisionPoint::getJacobian(std::vector</*Eigen::Map<*/Eigen::Vector3d> /*>
   }
 }
 
-void CollisionPoint::draw(const Eigen::Transform3d& T)
+void CollisionPoint::draw(const Eigen::Transform3d& T, bool yellow) const
 {
   Eigen::Vector3d point = T*m_position; 
-  
+
   double colorvector[4];
   colorvector[0] = 1.0;
   colorvector[1] = 1.0;
@@ -78,7 +80,11 @@ void CollisionPoint::draw(const Eigen::Transform3d& T)
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   
-  glColor4dv(colorvector);
+  if (yellow) 
+  {
+    glColor4dv(colorvector);
+  }
+  
   g3d_draw_solid_sphere(point[0], 
                         point[1],
                         point[2], m_radius, 20);

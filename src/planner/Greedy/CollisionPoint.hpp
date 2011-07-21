@@ -74,7 +74,9 @@ public:
                    Eigen::MatrixXd& jacobian, 
                    const std::vector<int>& group_joint_to_move3d_joint_index) const;
   
-  void draw(const Eigen::Transform3d& T);
+  void draw(const Eigen::Transform3d& T, bool yellow=true) const;
+  
+  bool m_is_colliding;                  /**< Collision point in collision */
   
 private:
   std::vector<int> m_parent_joints;      /**< Which joints can influence the motion of this point */

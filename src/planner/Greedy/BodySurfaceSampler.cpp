@@ -261,19 +261,28 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Rob
   
   std::vector<int> parent_joints;
   
-  for (unsigned int i=0; i<active_joints.size(); i++) 
+  for (unsigned int i=1; i<active_joints.size(); i++) 
   {
     int joint = active_joints[i];
     
     // Compute the planner joints, this doesn't handle trees
     // only handles chains, the planner joints before the active 
     // joints are taken into account
+//    parent_joints.clear();
+//    for (unsigned int j=0; j<planner_joints.size(); j++) 
+//    {
+//      if ( planner_joints[j] <= joint ) 
+//      {
+//        parent_joints.push_back( planner_joints[j] );
+//      }
+//    }
+    
     parent_joints.clear();
-    for (unsigned int j=0; j<planner_joints.size(); j++) 
+    for (unsigned int j=0; j<active_joints.size(); j++) 
     {
-      if ( planner_joints[j] <= joint ) 
+      if ( active_joints[j] <= joint ) 
       {
-        parent_joints.push_back( planner_joints[j] );
+        parent_joints.push_back( active_joints[j] );
       }
     }
     
@@ -284,23 +293,29 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Rob
 //    }
     
     // Get collision points of the link of the assciated joint
-    Joint* jnt = robot->getJoint( active_joints[i] );
+    Joint* jnt = robot->getJoint( joint );
     
     int segment;
     
-    if ( i >= (planner_joints.size()-1) ) {
-      segment = planner_joints.size()-1;
-    }
-    else {
+    // Becarefull!!!
+//    if ( i >= (planner_joints.size()-1) ) {
+//      segment = planner_joints.size()-1;
+//    }
+//    else {
       segment = i;
-    }
+//    }
     
-    std::vector<CollisionPoint> points = getLinksCollisionPoints( jnt , segment, parent_joints );
+    std::vector<CollisionPoint> points = getLinksCollisionPoints( jnt, segment, parent_joints );
+    
+    // Stores the collision point in a map of the corresponding joint
+    m_jointToCollisionPoint[jnt] = points;
+    
     for (unsigned int j=0; j<points.size(); j++) 
     {
       all_points.push_back( points[j] );
     }
   }
+  
   return all_points;
 }
 
@@ -353,7 +368,7 @@ void BodySurfaceSampler::draw()
 {
 	for(int i = 0; i < XYZ_ENV->no; i++)
 	{
-		m_objectToPointCloudMap[XYZ_ENV->o[i]]->drawAllPoints();
+		//m_objectToPointCloudMap[XYZ_ENV->o[i]]->drawAllPoints();
 	}  
   
   Joint* jnt;
@@ -367,11 +382,19 @@ void BodySurfaceSampler::draw()
     for( unsigned int i=0; i<rob->getNumberOfJoints(); i++ )
     {
       jnt = rob->getJoint(i);
+      
+      Eigen::Transform3d t = jnt->getMatrixPos();
+//      vector<CollisionPoint> points = m_jointToCollisionPoint[jnt];
+//      
+//      for( unsigned int i=0; i<points.size(); i++ )
+//      {
+//        points[i].draw(t);
+//      }
+      
       p3d_obj* obj = jnt->getJointStruct()->o;
       
-      if(obj)
+      if( obj )
       {
-        Eigen::Transform3d t = jnt->getMatrixPos();
         m_objectToPointCloudMap[obj]->drawAllPoints(t,NULL);
         
         if (rob->getName().find("PR2") == string::npos )

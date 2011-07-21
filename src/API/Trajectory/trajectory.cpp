@@ -1758,12 +1758,33 @@ void Trajectory::print()
 	cout << " Number of LP " << nloc << endl;
 	cout << " Range Parameter " << this->range_param << endl;
 	
-	for (uint i = 0; i < nloc; i++)
-	{
-		cout << "Number " << i << endl;
-		m_Courbe.at(i)->print();
+//	for (uint i = 0; i < nloc; i++)
+//	{
+//		cout << "Number " << i << endl;
+//		m_Courbe.at(i)->print();
+//	}
+  
+  if( nloc > 0 )
+  {
+    int size1 = nloc+1;
+    int size2 = m_Courbe.at(0)->getBegin()->getEigenVector().size();
+    
+    // size1 = nRow
+    // size2 = nCol
+    Eigen::MatrixXd mat(size1,size2);
+    //Eigen::VectorXd vect
+    for (unsigned int j=0; j<nloc; j++)
+    {
+      mat.row(j) = m_Courbe.at(j)->getBegin()->getEigenVector();
+    }
+    
+    if( nloc-1 >= 0 )
+    {
+      mat.row(nloc-1) = m_Courbe.at(nloc-1)->getEnd()->getEigenVector();
+    }
+    
+    cout << mat << endl;
 	}
-	
 	cout << "-----------------------------------" << endl;
 }
 

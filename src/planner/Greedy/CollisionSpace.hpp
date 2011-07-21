@@ -32,16 +32,19 @@ public:
   
   CollisionSpace(Robot* rob);
   virtual ~CollisionSpace();
+  
+  // returns the robot associated with the collisionspace
+  Robot* getRobot() { return m_Robot; }
 	
-  //setters and getters
+  // setters and getters
   inline int getNbCellsOverX(void){return _nbCellsX;}
   inline int getNbCellsOverY(void){return _nbCellsY;}
   inline int getNbCellsOverZ(void){return _nbCellsZ;}
   
-  //the sampler on body and obstacles with all points
+  // the sampler on body and obstacles with all points
   BodySurfaceSampler* getBodySampler() { return m_sampler; }
 	
-  //functions
+  // functions
   void init(void);
 	
   // ---------------------------------------------------------------
@@ -75,12 +78,15 @@ public:
                                           double& potential, 
                                           Eigen::Vector3d& gradient) const;
   
+  bool isRobotColliding() const;
+  
   // ---------------------------------------------------------------
   // OpenGl display
   // ---------------------------------------------------------------
   void drawSquaredDist();
   void drawGradient();
   void drawStaticVoxels();
+  void drawCollisionPoints();
   void draw();
   
 protected:

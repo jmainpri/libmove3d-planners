@@ -15,6 +15,7 @@
 #include "planner/planEnvironment.hpp"
 #include "planner/Greedy/CollisionSpace.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
+#include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
 
 #include "API/Grids/gridsAPI.hpp"
 
@@ -333,7 +334,13 @@ void g3d_draw_grids()
    
   if ( PlanEnv->getBool(PlanParam::drawBoundingVolumes) ) 
   {
-    traj_optim_draw_collision_points();
+    //traj_optim_draw_collision_points();
+    global_CollisionSpace->drawCollisionPoints();
+  }
+  
+  if ((optimizer.get() != NULL) && ENV.getBool(Env::drawTraj))
+  {
+    optimizer->draw();
   }
   
 	if( ENV.getBool(Env::drawPoints) )
