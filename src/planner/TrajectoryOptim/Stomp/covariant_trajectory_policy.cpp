@@ -40,6 +40,7 @@
 #include <Eigen/Core>
 #include <Eigen/Array>
 #include <sstream>
+#include <stdio.h>
 
 using namespace std;
 

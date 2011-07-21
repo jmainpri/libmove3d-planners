@@ -36,7 +36,7 @@
 
 // system includes
 #include <cassert>
-
+#include <stdio.h>
 // ros includes
 //#include <ros/package.h>
 #include "policy_improvement_loop.hpp"

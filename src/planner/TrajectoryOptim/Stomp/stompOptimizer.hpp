@@ -39,11 +39,11 @@
 
 #include <boost/shared_ptr.hpp>
 #include "stompParameters.hpp"
-#include "chomp/chompPlanningGroup.hpp"
-#include "chomp/chompTrajectory.hpp"
-#include "chomp/chompCost.hpp"
+#include "Chomp/chompPlanningGroup.hpp"
+#include "Chomp/chompTrajectory.hpp"
+#include "Chomp/chompCost.hpp"
 #include "Greedy/CollisionSpace.hpp"
-#include "chomp/chompMultivariateGaussian.hpp"
+#include "Chomp/chompMultivariateGaussian.hpp"
 #include "task.hpp"
 #include "covariant_trajectory_policy.hpp"
 #include "policy_improvement_loop.hpp"

@@ -36,6 +36,7 @@
 // system includes
 #include <time.h>
 #include <cfloat>
+#include <stdio.h>
 //#include <ros/assert.h>
 
 #include <Eigen/LU>
