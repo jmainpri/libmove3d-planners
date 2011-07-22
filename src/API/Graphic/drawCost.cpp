@@ -664,6 +664,27 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
     std::cout << "Cost for " << r_Cost->getName() << " = " 
     << global_costSpace->cost(q_Cost) << std::endl;
   }
+  
+  if( global_CollisionSpace )
+  {
+    int ncol = global_CollisionSpace->isRobotColliding();
+    
+    Robot* robCollSapce = global_CollisionSpace->getRobot();
+    
+    if( ncol )
+    {
+      double colorvector[4];
+      
+      GroundColorMixGreenToRed(colorvector,1.0);
+      
+      g3d_set_custom_color_draw( robCollSapce->getRobotStruct(), true );
+      g3d_set_custom_color_vect(colorvector);
+    }
+    else 
+    {
+      g3d_set_custom_color_draw( robCollSapce->getRobotStruct(), false );
+    }
+  }
 }
 
 void drawSlice()

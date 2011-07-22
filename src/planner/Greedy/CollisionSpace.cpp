@@ -588,7 +588,7 @@ bool CollisionSpace::getCollisionPointPotentialGradient(const CollisionPoint& co
 
 bool CollisionSpace::isRobotColliding() const
 {
-  cout << "Test collision space is robot colliding" << endl;
+  //cout << "Test collision space is robot colliding" << endl;
   bool isRobotColliding = false;
   double potential;
   Eigen::Vector3d position,gradient;

@@ -62,5 +62,5 @@ void Graphic::initDrawFunctions()
 #ifdef HRI_PLANNER
   ext_g3d_draw_hri_features = g3d_hri_main;
 #endif
-  //ext_compute_config_cost_along_traj = computeConfigCostOnTraj;
+  ext_compute_config_cost_along_traj = computeConfigCostOnTraj;
 }
