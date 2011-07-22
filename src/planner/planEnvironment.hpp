@@ -91,7 +91,8 @@ namespace  PlanParam
 		MaxFactor,
 		MinStep,
 		costTraj,
-        distMinToDraw,
+    distMinToDraw,
+    trajDuration,
         
         // Object TransfertPoint variable
         env_randomXMinLimit,

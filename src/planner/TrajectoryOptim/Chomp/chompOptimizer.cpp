@@ -694,7 +694,14 @@ void ChompOptimizer::performForwardKinematics()
       point_is_in_collision_[i][j] = colliding;
       
       if (colliding)
-        state_is_in_collision_[i] = true;
+      {
+        // This is the function that
+        // discards joints too close to the base
+        if( planning_group_->collision_points_[j].getSegmentNumber() > 8 )
+        {
+          state_is_in_collision_[i] = true;
+        }
+      }
     }
     
     if (state_is_in_collision_[i])

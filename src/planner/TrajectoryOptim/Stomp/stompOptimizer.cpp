@@ -819,10 +819,10 @@ bool StompOptimizer::performForwardKinematics()
 
       if ( colliding )
       {
-        // discard joints close to the base
+        // This is the function that
+        // discards joints too close to the base
         if( planning_group_->collision_points_[j].getSegmentNumber() > 8 )
         {
-//          cout << "CollisionPoint[" << j << "] is colliding" << endl;
           state_is_in_collision_[i] = true;
         }
       }

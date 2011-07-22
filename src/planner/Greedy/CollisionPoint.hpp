@@ -15,7 +15,7 @@
 #include <Eigen/Geometry>
 #include <algorithm>
 
-#include "TrajectoryOptim/Chomp/chompUtils.hpp"
+#include "planner/TrajectoryOptim/Chomp/chompUtils.hpp"
 
 class BoundingCylinder  
 {
@@ -137,7 +137,7 @@ inline void CollisionPoint::getTransformedPosition(std::vector<std::vector<doubl
                                                    Eigen::Vector3d& position) const
 {
   Eigen::Transform3d T;
-  stdVectorToEigenTransform(segment_frames[m_segment_number],T);
+  stdVectorToEigenTransform( segment_frames[m_segment_number], T );
   position = T*m_position;
 }
 

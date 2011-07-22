@@ -42,6 +42,8 @@
 #include <sstream>
 #include <stdio.h>
 
+#include "planEnvironment.hpp"
+
 using namespace std;
 
 USING_PART_OF_NAMESPACE_EIGEN
@@ -81,7 +83,7 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
   num_time_steps_ = num_time_steps;
   num_dimensions_ = num_dimensions;
   //movement_duration_ = movement_duration;
-  movement_duration_ = 5.0;
+  movement_duration_ = PlanEnv->getDouble(PlanParam::trajDuration);
   cost_ridge_factor_ = cost_ridge_factor;
   derivative_costs_ = derivative_costs;
   
