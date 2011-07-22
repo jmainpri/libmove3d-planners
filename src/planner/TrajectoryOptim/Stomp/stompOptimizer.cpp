@@ -1128,8 +1128,8 @@ void StompOptimizer::animateEndeffector()
 
   void StompOptimizer::draw()
   {
-    // Draws the first point on trajectory    
-    
+    return;
+    // Draws two points in the trajectory   
     int middle = (free_vars_start_+free_vars_end_)/2;
     
     int start = middle - 3;
@@ -1137,7 +1137,7 @@ void StompOptimizer::animateEndeffector()
   
     
     planning_group_->draw(segment_frames_[start]);
-    planning_group_->draw(segment_frames_[start]);
+    planning_group_->draw(segment_frames_[end]);
   }
   
 void StompOptimizer::visualizeState(int index)
