@@ -610,7 +610,7 @@ void g3d_draw_hrics()
   OTPListSize = OTPList.size();
   if (OTPListSize > 0)
   {
-      drawSlice();
+
       shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
       int indexFirstDof = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint("Pelvis")->getIndexOfFirstDof();
       for (unsigned int i=0; i < OTPList.size(); i ++)
@@ -633,6 +633,10 @@ void g3d_draw_hrics()
       }
   }
 
+  if (PlanEnv->getBool(PlanParam::env_drawSlice))
+  {
+      drawSlice();
+  }
 
 }
 #endif
@@ -689,7 +693,6 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
 
 void drawSlice()
 {
-    cout << "Draw slice" << endl;
     Robot* rob = global_Project->getActiveScene()->getRobotByNameContaining("PR2");
     Robot* human = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman();
     shared_ptr<Configuration> q_cur(human->getCurrentPos());
@@ -724,5 +727,4 @@ void drawSlice()
 //        g3d_draw_robot(human->getRobotStruct()->num, win);
     }
     human->setAndUpdate(*q_cur);
-    cout << "--------------------------" << endl;
 }
