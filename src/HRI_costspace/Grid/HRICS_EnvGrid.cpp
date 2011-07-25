@@ -62,6 +62,8 @@ EnvGrid::EnvGrid(double pace, vector<double> envSize, bool isHumanCentered, Robo
 
 void EnvGrid::init(pair<double,double> minMax)
 {
+    cout << "in: EnvGrid::init(pair<double,double> minMax)\n" << endl;
+    cout << "Store position of all robot in the scene (object too); and move them out of the scene" << endl;
     vector<pair<Robot*,shared_ptr<Configuration> > > initConfiguration;
     for (int i=0; i<XYZ_ENV->nr; i++)
     {
@@ -91,7 +93,8 @@ void EnvGrid::init(pair<double,double> minMax)
         return;
     }
 
-
+    cout << "All Robot moved with success\n" << endl;
+    cout << "Compute reacheability of each cell by the robot and by the human" << endl;
     initAllReachability();
     for (unsigned int x =0;x<_nbCellsX;++x)
     {
@@ -110,14 +113,20 @@ void EnvGrid::init(pair<double,double> minMax)
             }
         }
     }
+    cout << "Reacheability computed\n" << endl;
 
+    cout << "find in which cell the robot can be placed accordingly to each cell where the human can be" << endl;
     computeHumanRobotReacheability(minMax);
+    cout << "Robot cells list found\n" << endl;
 
+    cout << "Replace all robot to there original place (object too)" << endl;
     for(unsigned int i=0;i < initConfiguration.size(); i++)
     {
         initConfiguration.at(i).first->setAndUpdate(*initConfiguration.at(i).second);
     }
+    cout << "All robot are replaced\n" << endl;
 
+    cout << "Move the cylinder out of the scenne" << endl;
     shared_ptr<Configuration> q = humCyl->getCurrentPos();
     (*q)[6] = -3;
     (*q)[7] = 1;
@@ -127,12 +136,15 @@ void EnvGrid::init(pair<double,double> minMax)
     (*q)[6] = -3;
     (*q)[7] = 1;
     robotCyl->setAndUpdate(*q);
+    cout << "Cylinder has been moved\n" << endl;
 
-
+    cout << "out of: EnvGrid::init(pair<double,double> minMax)\n\n" << endl;
 }
 
 void EnvGrid::initGrid()
 {
+    cout << "in: void EnvGrid::initGrid()\n" << endl;
+    cout << "Compute cells reacheability for both human and robot with the obstacles" << endl;
     initAllReachability();
     for (unsigned int i = 0; i < m_HumanAccessible.size(); i++)
     {
@@ -143,6 +155,7 @@ void EnvGrid::initGrid()
     {
         m_RobotAccessible.at(i)->computeReach();
     }
+    cout << "End computing reacheability\n" << endl;
 
     if (!humCyl || !robotCyl)
     {
@@ -150,6 +163,7 @@ void EnvGrid::initGrid()
         return;
     }
 
+    cout << "Compute human distances" << endl;
     initAllCellState();
 
     shared_ptr<Configuration> q_human_cur = mHuman->getCurrentPos();
@@ -161,8 +175,9 @@ void EnvGrid::initGrid()
 
     EnvCell* cell = dynamic_cast<EnvCell*>(getCell(pos));
     computeDistances(cell, true);
+    cout << "Human distances computed with sucess\n" << endl;
 
-
+    cout << "Compute Robot distances" << endl;
     initAllCellState();
 
     shared_ptr<Configuration> q_robot_cur = mRobot->getCurrentPos();
@@ -172,7 +187,9 @@ void EnvGrid::initGrid()
 
     cell = dynamic_cast<EnvCell*>(getCell(pos));
     computeDistances(cell, false);
+    cout << "Robot distances computed with success\n" << endl;
 
+    cout << "Update Reacheability in fuction of the computed distances, and compute if necessary the angle of human arrival" << endl;
     for (unsigned int x =0;x<_nbCellsX;++x)
     {
         for (unsigned int y =0;y<_nbCellsY;++y)
@@ -196,7 +213,9 @@ void EnvGrid::initGrid()
 
         }
     }
+    cout << "End updating\n" << endl;
 
+    cout << "Update Human robot reacheability while the obstacles is in the scenne" << endl;
     if (!PlanEnv->getBool(PlanParam::env_normalRand) && !PlanEnv->getBool(PlanParam::env_useAllGrid))
     {
         for (unsigned int i = 0; i < m_HumanAccessible.size(); i++)
