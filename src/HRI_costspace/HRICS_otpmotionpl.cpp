@@ -112,11 +112,26 @@ void OTPMotionPl::initAll()
 
     // Init Manipulation Planner
     m_ManipPl = new ManipulationPlanner( _Robot->getRobotStruct() );
+    m_ManipPlHum = new ManipulationPlanner( m_Human->getRobotStruct() );
 
     // Init Vector for using Slices
     sliceVect[0] = 0;
     sliceVect[1] = 0;
     sliceVect[2] = numeric_limits<double>::max( );
+
+    //Init the chair
+    for (int i=0; i<XYZ_ENV->nr; i++)
+    {
+        string name(XYZ_ENV->robot[i]->name);
+        if(name.find("SIMPLECHAIR") != string::npos )
+        {
+            m_simpleChair = new Robot(XYZ_ENV->robot[i]);
+        }
+    }
+    if (!m_simpleChair)
+    {
+        cout << "No simpleChair, human should not be sitting" << endl;
+    }
 }
 
 void OTPMotionPl::initHumanCenteredGrid(double cellsize)
@@ -602,7 +617,15 @@ bool OTPMotionPl::simpleComputeBaseAndOTP()
 bool OTPMotionPl::ComputePR2Gik()
 {
     initPR2GiveConf();
-    cout << "Workspace::computePR2GIK()" << endl;
+    cout << "OTPMotionPl::computePR2GIK()" << endl;
+
+    shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+    shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+//    double angle = (*q_human_cur)[11] - (*q_robot_cur)[11] + M_PI;
+//    if (angle>M_PI)
+//    {
+//        angle -= 2*M_PI;
+//    }
 
     int armId = 0;
     ArmManipulationData& armData = (*_Robot->getRobotStruct()->armManipulationData)[armId];
@@ -617,19 +640,19 @@ bool OTPMotionPl::ComputePR2Gik()
     target.at(1) = current_WSPoint(1);
     target.at(2) = current_WSPoint(2);
     target.at(3) = M_PI/2;
-    target.at(4) = -7*M_PI/8;
+    target.at(4) = (*q_robot_cur)[11] - 7*M_PI/8 + M_PI;
     target.at(5) = 0;
 
     vect.push_back(target);
 
     target.at(3) = M_PI/2;
-    target.at(4) = -M_PI/2;
+    target.at(4) = (*q_robot_cur)[11] - M_PI/2 + M_PI;
     target.at(5) = 0;
 
     vect.push_back(target);
 
     target.at(3) = M_PI/2;
-    target.at(4) = -7*M_PI/8;
+    target.at(4) = (*q_robot_cur)[11] - 7*M_PI/8 + M_PI;
     target.at(5) = P3D_HUGE;
 
     vect.push_back(target);
@@ -1171,11 +1194,11 @@ bool OTPMotionPl::placeRobot()
 	if (PlanEnv->getBool(PlanParam::env_isStanding))
 	{
 		(*q_robot_cur)[firstIndexOfDof + 6] = 0.15;
-		if ((current_WSPoint[2] > 0.4 + (*q_cur)[firstIndexOfHumanDof + 2]) ||
-			(current_WSPoint[2] > 0.2 + (*q_cur)[firstIndexOfHumanDof + 2] && dist > 0.6 ))
-		{
-			(*q_robot_cur)[firstIndexOfDof + 6] = 0.3;
-		}
+//		if ((current_WSPoint[2] > 0.9 + (*q_cur)[firstIndexOfHumanDof + 2]) ||
+//			(current_WSPoint[2] > 0.7 + (*q_cur)[firstIndexOfHumanDof + 2] && dist > 0.6 ))
+//		{
+//			(*q_robot_cur)[firstIndexOfDof + 6] = 0.3;
+//		}
 	}
 	else
 	{
@@ -1189,7 +1212,7 @@ bool OTPMotionPl::placeRobot()
 	m_Human->setAndUpdate(*m_Human->getInitialPosition());
 	if (!ComputePR2Gik())
 	{
-		initPR2GiveConf();
+//		initPR2GiveConf();
 		return false;
 	}
 
@@ -1371,7 +1394,6 @@ int OTPMotionPl::loadConfsFromXML(string filename, bool isStanding, bool isSlice
             return m_sittingConfigList.size();
         }
     }
-
 }
 
 std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
@@ -2114,6 +2136,7 @@ void OTPMotionPl::newComputeOTP()
         cout << "----------" << endl << "Total time = " << m_time << " s"<< endl;
         cout << "==========" << endl;
     }
+    showBestConf();
 }
 
 OutputConf OTPMotionPl::lookForBestLocalConf(double x, double y, double Rz, double objectNecessity)

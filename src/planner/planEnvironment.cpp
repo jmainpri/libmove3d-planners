@@ -98,6 +98,9 @@ void initPlannerParameters()
 	myBoolMap.insert( std::make_pair( PlanParam::env_useSlice,			new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::env_useOrientedSlice,	new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::env_useAllGrid,		new boolContainer(false)));
+	myBoolMap.insert( std::make_pair( PlanParam::env_drawSlice,			new boolContainer(false)));
+	myBoolMap.insert( std::make_pair( PlanParam::env_showHumanTraj,		new boolContainer(false)));
+	myBoolMap.insert( std::make_pair( PlanParam::env_useOldDude,		new boolContainer(false)));
 
 	// Int
 	// ------------------------------------------------------------------

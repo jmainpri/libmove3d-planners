@@ -61,7 +61,10 @@ namespace  PlanParam
         env_fusedGridRand,
         env_useSlice,
         env_useOrientedSlice,
-        env_useAllGrid
+        env_useAllGrid,
+        env_drawSlice,
+        env_showHumanTraj,
+        env_useOldDude
 	};
 	
 	enum intParameter 

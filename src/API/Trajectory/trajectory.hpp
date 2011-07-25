@@ -112,6 +112,8 @@ namespace API
 		
 		void 	replaceP3dTraj();
 		p3d_traj* 	replaceP3dTraj(p3d_traj* trajPt);
+
+		p3d_traj* 	replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt);
 		
 		void draw(int nbKeyFrame);
 		void print();
