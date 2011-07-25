@@ -607,7 +607,11 @@ bool CollisionSpace::isRobotColliding() const
       if( getCollisionPointPotentialGradient( points[j], position, potential, gradient ) )
       {
         points[j].m_is_colliding = true;
-        isRobotColliding = true;
+        
+        if ( points[j].getSegmentNumber() > 1 ) 
+        {
+          isRobotColliding = true;
+        }
       }
       else {
         points[j].m_is_colliding = false;
@@ -713,6 +717,9 @@ void CollisionSpace::drawCollisionPoints()
     
     for( unsigned int j=0; j<points.size(); j++ )
     {
+//      if (points[j].getSegmentNumber() < ENV.getDouble(Env::extensionStep))
+//        continue;
+      
       if( points[j].m_is_colliding )
       {
         double color[4];

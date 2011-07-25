@@ -301,6 +301,11 @@ void ChompOptimizer::runDeformation( int nbIteration , int idRun )
       }
     }
     
+//    if(!is_collision_free_)
+//    {
+//      cout << "Solution collides" << endl;
+//    }
+    
     if (parameters_->getAnimateEndeffector())
     {
       animateEndeffector();
@@ -697,7 +702,7 @@ void ChompOptimizer::performForwardKinematics()
       {
         // This is the function that
         // discards joints too close to the base
-        if( planning_group_->collision_points_[j].getSegmentNumber() > 8 )
+        if( planning_group_->collision_points_[j].getSegmentNumber() > 1 )
         {
           state_is_in_collision_[i] = true;
         }
