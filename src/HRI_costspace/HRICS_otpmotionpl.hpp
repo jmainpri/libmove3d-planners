@@ -188,7 +188,6 @@ namespace HRICS
           * save what's in m_configList to the filename file.
           */
         void saveToXml(std::string filename);
-<<<<<<< Updated upstream
 
         /**
           * load and return configs stored in filename
@@ -359,23 +358,6 @@ namespace HRICS
           */
         bool standUp();
 
-=======
-        int loadFromXml(std::string filename);
-        int getConfListSize() {return m_configList.size();}
-        configPt getRobotConfigAt(int i) {return m_configList.at(i).getHumanConf(); }
-        std::vector<ConfigHR> getConfList() {return m_configList;}
-        void setRobotsToConf(int id);
-        double computeConfigCost(configPt q_rob_initial,
-                                 configPt q_rob_final,
-                                 configPt q_hum_initial,
-                                 configPt q_hum_final);
-
-        double testComputeConfigCost();
-
-        void sortConfigList(double nbNode);
-
-        void initHumanCenteredGrid(double cellsize);
->>>>>>> Stashed changes
     private:
 
 
