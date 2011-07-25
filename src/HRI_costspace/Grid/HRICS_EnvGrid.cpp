@@ -224,7 +224,7 @@ void EnvGrid::initGrid()
             vector<EnvCell*> newVect;
             pair<double,EnvCell*> p;
             p.first = numeric_limits<double>::max( );
-            for (unsigned int j = 0; j < cell->getHumanRobotReacheable().size(); j++)
+             for (unsigned int j = 0; j < cell->getHumanRobotReacheable().size(); j++)
             {
                 if (cell->getHumanRobotReacheable().at(j)->isRobAccessible())
                 {
@@ -244,103 +244,31 @@ void EnvGrid::initGrid()
             cell->setRobotBestPos(p);
         }
     }
+    cout << "End updating\n" << endl;
 
-
+    cout << "out of: void EnvGrid::initGrid()\n" << endl;
 }
 
 
 void EnvGrid::computeHumanRobotReacheability(std::pair<double,double> minMax)
 {
-
-    vector<EnvCell*> passedCells;
-    for (unsigned int x =0;x<_nbCellsX;++x)
+    int k = 0;
+    for (unsigned int i = 0; i < m_HumanAccessible.size(); i++)
     {
-        for (unsigned int y =0;y<_nbCellsY;++y)
+        for (unsigned int j = 0; j < m_RobotAccessible.size(); j++)
         {
-            EnvCell* Cell = dynamic_cast<EnvCell*>(getCell(x,y));
-            pair<double,EnvCell*> p;
-            p.first = numeric_limits<double>::max( );
-            p.second = Cell;
-            Cell->setRobotBestPos(p);
-            if (Cell->isHumAccessible())
+            double dist = sqrt( pow( m_RobotAccessible.at(j)->getCenter()[0] - m_HumanAccessible.at(i)->getCenter()[0] , 2) +
+                                pow( m_RobotAccessible.at(j)->getCenter()[1] - m_HumanAccessible.at(i)->getCenter()[1] , 2) );
+            if (dist > minMax.first && dist < minMax.second)
             {
-                for (unsigned int i = 0; i < passedCells.size(); i++)
-                {
-                    double dist = sqrt( pow( passedCells.at(i)->getCenter()[0] - Cell->getCenter()[0] , 2) + pow( passedCells.at(i)->getCenter()[1] - Cell->getCenter()[1] , 2) );
-                    if (dist > minMax.first && dist < minMax.second)
-                    {
-                        if (Cell->isRobAccessible())
-                        {
-                            passedCells.at(i)->addToHumanRobotReacheable(Cell);
-                            p = passedCells.at(i)->getRobotBestPos();
-//                            if (Cell->getRobotDist() <= p.second->getRobotDist() )
-//                            {
-                                double distCost = max((Cell->getRobotDist()/ m_robotMaxDist)*PlanEnv->getDouble(PlanParam::env_objectNessecity) ,(passedCells.at(i)->getHumanDist()/m_humanMaxDist));
-                                if(distCost < p.first)
-                                {
-                                    p.first = distCost;
-                                    p.second = Cell;
-                                    passedCells.at(i)->setRobotBestPos(p);
-                                }
-//                            }
-                        }
-                        if (passedCells.at(i)->isRobAccessible())
-                        {
-                            Cell->addToHumanRobotReacheable(passedCells.at(i));
-                            p = Cell->getRobotBestPos();
-                            if(passedCells.at(i)->getRobotDist() <= p.second->getRobotDist())
-                            {
-                                double distCost = max((passedCells.at(i)->getRobotDist()/ m_robotMaxDist)*PlanEnv->getDouble(PlanParam::env_objectNessecity) ,(Cell->getHumanDist()/m_humanMaxDist));
-                                if(distCost < Cell->getRobotBestPos().first)
-                                {
-                                    p.first = distCost;
-                                    p.second = passedCells.at(i);
-                                    Cell->setRobotBestPos(p);
-                                }
-                            }
-                        }
-                    }
-                }
-                passedCells.push_back(Cell);
+                m_HumanAccessible.at(i)->addToHumanRobotReacheable(m_RobotAccessible.at(j));
+                k++;
             }
         }
     }
-
-//    for (unsigned int x =0;x<_nbCellsX;++x)
-//    {
-//        for (unsigned int y =0;y<_nbCellsY;++y)
-//        {
-//            EnvCell* Cell = dynamic_cast<EnvCell*>(getCell(x,y));
-
-//            if (Cell->isHumAccessible())
-//            {
-//                std::vector<EnvCell*> vect;
-//                pair<double,EnvCell*> p;
-//                p.first = numeric_limits<double>::max( );
-//                for(unsigned int i= 0; i < _cells.size(); i++)
-//                {
-//                    EnvCell* tmpCell = dynamic_cast<EnvCell*>(getCell(i));
-//                    double dist = sqrt( pow( tmpCell->getCenter()[0] - Cell->getCenter()[0] , 2) + pow( tmpCell->getCenter()[1] - Cell->getCenter()[1] , 2) );
-//                    if (dist > minMax.first && dist < minMax.second && tmpCell->isRobAccessible())
-//                    {
-//                        vect.push_back(tmpCell);
-//                        double distCost = max((tmpCell->getRobotDist()/ m_robotMaxDist)*PlanEnv->getDouble(PlanParam::env_objectNessecity) ,(Cell->getHumanDist()/m_humanMaxDist)) ;
-//                        if (distCost < p.first)
-//                        {
-//                            p.first = distCost;
-//                            p.second = tmpCell;
-//                        }
-//                    }
-//                }
-//                Cell->setHumanRobotReacheable(vect);
-//                Cell->setRobotBestPos(p);
-
-
-//            }
-//        }
-//    }
-
+    cout << k << " cells has been computed." << endl;
 }
+
 
 class CellDistComp
 {
@@ -355,8 +283,10 @@ public:
 
 std::vector<std::pair<double,EnvCell*> > EnvGrid::getSortedGrid()
 {
-    double robotSpeed = PlanEnv->getDouble(PlanParam::env_robotSpeed);//1;
+    double robotSpeed =  PlanEnv->getDouble(PlanParam::env_robotSpeed);//1;
     double humanSpeed = PlanEnv->getDouble(PlanParam::env_humanSpeed);//1;
+
+
     double timeStamp = PlanEnv->getDouble(PlanParam::env_timeStamp);//0.1;
     double objectNecessity = PlanEnv->getDouble(PlanParam::env_objectNessecity);
 

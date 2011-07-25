@@ -236,7 +236,7 @@ double RobotBaseCell::getCost()
         int mIndexOfDoF = 6;
         double x = (*r->getCurrentPos())[mIndexOfDoF + 0];
         double y = (*r->getCurrentPos())[mIndexOfDoF + 1];
-        double angle = atan2((getWorkspacePoint()[1] - y ), getWorkspacePoint()[0] - x);
+//        double angle = atan2((getWorkspacePoint()[1] - y ), getWorkspacePoint()[0] - x);
         double distance = std::sqrt(std::pow(x - getWorkspacePoint()[0],2) + std::pow((y - getWorkspacePoint()[1]),2));
 
         if (fabs(distance) < 0.5)
