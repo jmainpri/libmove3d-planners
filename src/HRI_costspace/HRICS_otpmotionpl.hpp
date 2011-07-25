@@ -22,6 +22,9 @@
 
 #include <Eigen/StdVector>
 
+extern void g3d_show_tcur_both_rob(p3d_rob *robotPt, int (*fct)(p3d_rob* robot, p3d_localpath* curLp),
+                                   p3d_rob *hum_robotPt, int (*hum_fct)(p3d_rob* hum_robot, p3d_localpath* hum_curLp));
+
 /**
  @defgroup HRICS Hri Cost space
  */
@@ -49,6 +52,8 @@ namespace HRICS
         bool isStandingInThisConf;
 
         void clearAll();
+
+        std::tr1::shared_ptr<Configuration> chairConf;
 //        OutputConf& operator= (const OutputConf& o);
 
     };
@@ -268,7 +273,7 @@ namespace HRICS
         /**
           * reload the saved human and robot conf
           */
-        void loadInitConf();
+        void loadInitConf(bool reloadHuman, bool relaodRobot);
 
         /**
           * show a computed conf from it's number in the list
@@ -319,7 +324,7 @@ namespace HRICS
         /**
           * create a trajectory from a configuration
           */
-        API::Trajectory createTrajectoryFromOutputConf(OutputConf conf);
+        void createTrajectoryFromOutputConf(OutputConf conf);
 
         /**
           * generate a trajectory for the Arm
@@ -341,6 +346,18 @@ namespace HRICS
           */
         Eigen::Vector3d getRandomPoints(double id);
 
+        /**
+          * write cost of current configList
+          */
+        void dumpCosts();
+
+        /**
+          * Put human to a standing position
+          * the standing postition is right in from of him if there is no obstacle
+          * if obstacles is detected, the human push bach the chair and stand up without moving.
+          */
+        bool standUp();
+
     private:
 
 
@@ -358,6 +375,8 @@ namespace HRICS
         std::vector<API::TwoDCell*> m_2DHumanCellPath;
 
         ManipulationPlanner* m_ManipPl;
+        ManipulationPlanner* m_ManipPlHum;
+
 
         bool m_PathExist;
         bool m_HumanPathExist;
@@ -421,6 +440,11 @@ namespace HRICS
           * to show or hide text when computing OTP
           */
         bool m_showText;
+
+        /**
+          * the chair where the human is sitting
+          */
+        Robot* m_simpleChair;
 
     };
 
