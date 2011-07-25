@@ -398,12 +398,6 @@ void drawSlice();
 void g3d_draw_hrics()
 {
     int OTPListSize = OTPList.size();
-//    if (OTPListSize > 0)
-//    {
-//        drawSlice();
-//    }
-//    return;
-
 	if( ENV.getBool(Env::enableHri) )
 	{
 		if( ENV.getBool(Env::HRIPlannerCS) && ENV.getBool(Env::drawTraj) )
@@ -610,7 +604,6 @@ void g3d_draw_hrics()
   OTPListSize = OTPList.size();
   if (OTPListSize > 0)
   {
-
       shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
       int indexFirstDof = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint("Pelvis")->getIndexOfFirstDof();
       for (unsigned int i=0; i < OTPList.size(); i ++)
@@ -727,4 +720,43 @@ void drawSlice()
 //        g3d_draw_robot(human->getRobotStruct()->num, win);
     }
     human->setAndUpdate(*q_cur);
+}
+
+void drawSlice()
+{
+    cout << "Draw slice" << endl;
+    Robot* rob = global_Project->getActiveScene()->getRobotByNameContaining("PR2");
+    Robot* human = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman();
+
+//    getConfListSize() {return m_configList.size();}
+//            configPt getRobotConfigAt
+
+    if (dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig))
+    {
+        dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getConfList();
+    }
+
+    G3D_Window *win;
+    win = g3d_get_cur_win();
+    //win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
+    win->vs.transparency_mode= G3D_OPAQUE;
+
+    for(int i = 0; i < dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getConfListSize(); i++)
+    {
+//        shared_ptr<Configuration> q( new Configuration(rob,
+//        dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getRobotConfigAt(i) ));
+//        rob->setAndUpdate(*q);
+//        global_Project->getActiveScene()->setActiveRobot("PR2_ROBOT");
+//        //cout << "g3d_draw_robot" << endl;
+//        //q->print();
+//        g3d_draw_robot(rob->getRobotStruct()->num, win );
+
+        shared_ptr<Configuration> q( new Configuration(human,dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getRobotConfigAt(i) ));
+        human->setAndUpdate(*q);
+        global_Project->getActiveScene()->setActiveRobot("ACHILE_HUMAN1");
+        //cout << "g3d_draw_robot" << endl;
+        //q->print();
+        g3d_draw_robot(human->getRobotStruct()->num, win);
+    }
+    cout << "--------------------------" << endl;
 }

@@ -90,6 +90,7 @@ void OTPMotionPl::initAll()
 //    m_2DGrid->setRobot(_Robot);
 //    m_2DGrid->setHuman(m_Human);
 
+
 	// initDistance
 	vector<Robot*> m_Humans;
 	m_Humans.push_back(m_Human);
@@ -880,6 +881,7 @@ double OTPMotionPl::FindTraj(Vector2d startPos, Vector2d goalPos, bool isHuman)
 //            _Robot->setAndUpdate(*q_tmp);
 
 //            q_tmp->setAsNotTested();
+
 //            if (q_tmp->isInCollision())
 //            {
 //                _Robot->setAndUpdate(*q_cur);
@@ -1362,6 +1364,7 @@ void OTPMotionPl::saveToXml(string filename)
 }
 
 
+
 int OTPMotionPl::loadConfsFromXML(string filename, bool isStanding, bool isSlice)
 {
     if (isSlice)
@@ -1502,10 +1505,8 @@ std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
 		cur = cur->next;
 	}
 
-
-
-
 	return vectConfs;
+
 
 //	configPt readXmlConfig(p3d_rob *robot, xmlNodePtr cur)
 
@@ -1571,6 +1572,7 @@ pair<shared_ptr<Configuration>,shared_ptr<Configuration> > OTPMotionPl::setRobot
 	return resConf;
 }
 
+
 pair<shared_ptr<Configuration>,shared_ptr<Configuration> > OTPMotionPl::setRobotsToConf(int id, bool isStanding ,double x, double y, double Rz)
 {
 	int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
@@ -1582,6 +1584,7 @@ pair<shared_ptr<Configuration>,shared_ptr<Configuration> > OTPMotionPl::setRobot
 
 	return setRobotsToConf(id, isStanding);
 }
+
 
 double OTPMotionPl::computeConfigCost(configPt q_rob_initial,
 									  configPt q_rob_final,
@@ -1761,7 +1764,6 @@ void OTPMotionPl::sortConfigList(double nbNode, bool isStanding, bool isSlice)
 
 
 }
-
 
 double OTPMotionPl::multipliComputeOtp(int n)
 {
