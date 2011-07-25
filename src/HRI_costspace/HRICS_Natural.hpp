@@ -47,6 +47,7 @@ namespace HRICS
 		void initNaturalJustin();
 		void initNaturalAchile();
 		void initNaturalHerakles();
+		void initNaturalOldDude();
 		void initHumanBaseGrid(std::vector<double> box);
 		void initRobotBaseGrid(std::vector<double> box);
 		
@@ -162,7 +163,8 @@ namespace HRICS
 			Default,
 			Justin,
 			Achile,
-      Herakles
+			Herakles,
+			OldDude
 		};
 		
 		bool			m_IsHuman;

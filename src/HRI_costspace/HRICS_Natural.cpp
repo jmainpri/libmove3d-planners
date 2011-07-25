@@ -78,6 +78,10 @@ void Natural::initGeneral()
   {
     m_KinType = Herakles;
   }
+  else if (m_Robot->getName().find( "OLDDUDE" ) !=string::npos)
+  {
+    m_KinType = OldDude;
+  }
   
 	shared_ptr<Configuration> q_curr = m_Robot->getCurrentPos();
   
@@ -109,8 +113,18 @@ void Natural::initGeneral()
 			m_IndexObjectDof = NULL;
 			m_computeNbOfIK = false;
 			m_IsHuman = true;
-      m_Agents = hri_create_agents();
+			m_Agents = hri_create_agents();
 			break;
+
+	case OldDude:
+			cout << "KinType of HRICS::Natural is OldDude ( " << m_Robot->getName() << " ) "<< endl;
+			initNaturalOldDude();
+			m_IndexObjectDof = NULL;
+			m_computeNbOfIK = false;
+			m_IsHuman = true;
+			m_Agents = hri_create_agents();
+			break;
+
 			
 		default:
 			cout << "No proper robot has been selected in Natural cost function" << endl;
@@ -600,6 +614,171 @@ void Natural::initNaturalHerakles()
 	m_mg.push_back(  4 );
 	m_mg.push_back(  1 );
 }
+
+/***********************************************/
+/* Achile NORMAL */
+const int OLDDUDE_JOINT_SPINE = 2;					//  2,  3,  4
+const int OLDDUDE_JOINT_HEAD = 5;					//  5,  6,  7
+
+const int OLDDUDE_JOINT_ARM_RIGTH_SHOULDER = 8;		//  8,  9, 10
+const int OLDDUDE_JOINT_ARM_RIGTH_ELBOW = 11;		// 11
+const int OLDDUDE_JOINT_ARM_RIGTH_WRIST = 12;		// 12, 13, 14
+
+const int OLDDUDE_JOINT_ARM_LEFT_SHOULDER = 15;		// 15, 16, 17
+const int OLDDUDE_JOINT_ARM_LEFT_ELBOW = 18;			// 18
+const int OLDDUDE_JOINT_ARM_LEFT_WRIST = 19;			// 19, 20, 21
+
+// ---------------------------------------------
+const int OLDDUDE_CONFIG_INDEX_SPINE = 12;					//  2,  3,  4
+const int OLDDUDE_CONFIG_INDEX_HEAD = 15;					//  5,  6,  7
+
+const int OLDDUDE_CONFIG_INDEX_ARM_RIGTH_SHOULDER = 18;		//  8,  9, 10
+const int OLDDUDE_CONFIG_INDEX_ARM_RIGTH_ELBOW = 21;		// 11
+const int OLDDUDE_CONFIG_INDEX_ARM_RIGTH_WRIST = 22;		// 12, 13, 14
+
+const int OLDDUDE_CONFIG_INDEX_ARM_LEFT_SHOULDER = 25;		// 15, 16, 17
+const int OLDDUDE_CONFIG_INDEX_ARM_LEFT_ELBOW = 28;			// 18
+const int OLDDUDE_CONFIG_INDEX_ARM_LEFT_WRIST = 29;			// 19, 20, 21
+
+void Natural::initNaturalOldDude()
+{
+	/***********************************************/
+	m_JOINT_SPINE = OLDDUDE_JOINT_SPINE;
+	m_JOINT_HEAD = OLDDUDE_JOINT_HEAD;
+
+	m_JOINT_ARM_RIGTH_SHOULDER = OLDDUDE_JOINT_ARM_RIGTH_SHOULDER;
+	m_JOINT_ARM_RIGTH_ELBOW = OLDDUDE_JOINT_ARM_RIGTH_ELBOW;
+	m_JOINT_ARM_RIGTH_WRIST = OLDDUDE_JOINT_ARM_RIGTH_WRIST;
+
+	m_JOINT_ARM_LEFT_SHOULDER = OLDDUDE_JOINT_ARM_LEFT_SHOULDER;
+	m_JOINT_ARM_LEFT_ELBOW = OLDDUDE_JOINT_ARM_LEFT_ELBOW;
+	m_JOINT_ARM_LEFT_WRIST = OLDDUDE_JOINT_ARM_LEFT_WRIST;
+
+	/***********************************************/
+	m_CONFIG_INDEX_SPINE = OLDDUDE_CONFIG_INDEX_SPINE;
+	m_CONFIG_INDEX_HEAD = OLDDUDE_CONFIG_INDEX_HEAD;
+
+	m_CONFIG_INDEX_ARM_RIGTH_SHOULDER = OLDDUDE_CONFIG_INDEX_ARM_RIGTH_SHOULDER;
+	m_CONFIG_INDEX_ARM_RIGTH_ELBOW = OLDDUDE_CONFIG_INDEX_ARM_RIGTH_ELBOW;
+	m_CONFIG_INDEX_ARM_RIGTH_WRIST = OLDDUDE_CONFIG_INDEX_ARM_RIGTH_WRIST;
+
+	m_CONFIG_INDEX_ARM_LEFT_SHOULDER = OLDDUDE_CONFIG_INDEX_ARM_LEFT_SHOULDER;
+	m_CONFIG_INDEX_ARM_LEFT_ELBOW = OLDDUDE_CONFIG_INDEX_ARM_LEFT_ELBOW;
+	m_CONFIG_INDEX_ARM_LEFT_WRIST = OLDDUDE_CONFIG_INDEX_ARM_LEFT_WRIST;
+
+	configPt q;
+	q = p3d_alloc_config(m_Robot->getRobotStruct());
+
+	/***********************************************
+	 * Neutral Position NORMAL
+	 */
+
+	q[0] = 0;
+	q[1] = 0;
+	q[2] = 0;
+	q[3] = 0;
+	q[4] = 0;
+	q[5] = 0;
+
+	q[6] = 0;
+	q[7] = 0;
+	q[8] = 0;
+	q[9] = 0;
+	q[10] = 0;
+	q[11] = 0;
+
+	q[12] = 0;
+	q[13] = 0;
+	q[14] = 0;
+	q[15] = 0;
+	q[16] = 0;
+	q[17] = 0;
+
+	q[18] = 1.39626;
+	q[19] = 0;
+	q[20] = 0;
+	q[21] = 0;
+	q[22] = 0;
+	q[23] = 0;
+	q[24] = 0;
+
+	q[25] = -1.39626;
+	q[26] = 0;
+	q[27] = 0;
+	q[28] = 0;
+	q[29] = 0;
+	q[30] = 0;
+	q[31] = 0;
+
+	q[32] = 0;
+	q[33] = 0;
+	q[34] = 0;
+	q[35] = 0;
+	q[36] = 0;
+	q[37] = 0;
+	q[38] = 0;
+	q[39] = 0;
+	q[40] = 0;
+	q[41] = 0;
+	q[42] = 0;
+	q[43] = 0;
+	q[44] = 0;
+	q[45] = 0;
+
+	m_q_Confort = shared_ptr<Configuration>(
+											new Configuration(m_Robot,p3d_copy_config(m_Robot->getRobotStruct(),q)));
+
+  m_Robot->setAndUpdate( *m_q_Confort );
+
+  // Compute the rest posture heights
+  m_leftArmCost = true;   m_armHeightL = getUpperBodyHeigth(false);
+  m_leftArmCost = false;  m_armHeightR = getUpperBodyHeigth(false);
+
+
+	/***********************************************
+	 * Wieghts for the Configuration Distance
+	 */
+
+  p3d_destroy_config(m_Robot->getRobotStruct(),q);
+  q = p3d_alloc_config(m_Robot->getRobotStruct());
+
+
+  q[m_CONFIG_INDEX_SPINE+0] = 100;	// Torso
+  q[m_CONFIG_INDEX_SPINE+1] = 100;
+  q[m_CONFIG_INDEX_SPINE+2] = 100;
+
+  q[m_CONFIG_INDEX_HEAD+0] = 0;		// Head
+  q[m_CONFIG_INDEX_HEAD+1] = 0;
+  q[m_CONFIG_INDEX_HEAD+2] = 0;
+
+  q[m_CONFIG_INDEX_ARM_RIGTH_SHOULDER+0] = 5;		// Right Shoulder
+  q[m_CONFIG_INDEX_ARM_RIGTH_SHOULDER+1] = 1;
+  q[m_CONFIG_INDEX_ARM_RIGTH_SHOULDER+2] = 1;
+
+  q[m_JOINT_ARM_RIGTH_ELBOW] = 1;		// Right Elbow
+
+  q[m_CONFIG_INDEX_ARM_RIGTH_WRIST+0] = 1;		// Right Wrist
+  q[m_CONFIG_INDEX_ARM_RIGTH_WRIST+1] = 1;
+  q[m_CONFIG_INDEX_ARM_RIGTH_WRIST+2] = 1;
+
+  q[m_CONFIG_INDEX_ARM_LEFT_SHOULDER+0] = 5;		// Left Shoulder
+  q[m_CONFIG_INDEX_ARM_LEFT_SHOULDER+1] = 1;
+  q[m_CONFIG_INDEX_ARM_LEFT_SHOULDER+2] = 1;
+
+  q[m_CONFIG_INDEX_ARM_LEFT_ELBOW] = 1;		// Left Elbow
+
+  q[m_CONFIG_INDEX_ARM_LEFT_WRIST+0] = 1;		// Right Wrist
+  q[m_CONFIG_INDEX_ARM_LEFT_WRIST+1] = 1;
+  q[m_CONFIG_INDEX_ARM_LEFT_WRIST+2] = 1;
+
+	m_q_ConfortWeigths = shared_ptr<Configuration>(
+												   new Configuration(m_Robot,p3d_copy_config(m_Robot->getRobotStruct(),q)));
+
+	m_mg.push_back( 30 );
+	m_mg.push_back(  4 );
+	m_mg.push_back(  1 );
+}
+
 
 void Natural::initHumanBaseGrid(vector<double> box)
 {
