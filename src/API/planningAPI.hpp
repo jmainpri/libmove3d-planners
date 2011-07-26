@@ -55,8 +55,8 @@
 #include "API/Search/AStar/AStar.hpp"
 #include "API/Search/Dijkstra/dijkstra.hpp"
 
-//#include "API/Trajectory/costOptimization.hpp"
-//#include "API/Trajectory/smoothing.hpp"
+//#include "planner/TrajectoryOptim/costOptimization.hpp"
+//#include "planner/TrajectoryOptim/smoothing.hpp"
 #include "API/Trajectory/trajectory.hpp"
 
 #include "API/scene.hpp"

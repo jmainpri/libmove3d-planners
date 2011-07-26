@@ -8,10 +8,10 @@
 
 #include "replanning.hpp"
 
-#include "API/Trajectory/costOptimization.hpp"
 #include "API/project.hpp"
 
 #include "planner/plannerFunctions.hpp"
+#include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 
 #include "LightPlanner-pkg.h"
 #include "Graphic-pkg.h"
@@ -28,6 +28,11 @@ using namespace tr1;
 // ---------------------------------------------------------------------------------
 static bool m_init=false;
 static Robot* m_robot=NULL;
+
+static int m_BaseMLP=0;
+static int m_HeadMLP=0;
+static int m_UpBodyMLP=0;
+static int m_UpBodySmMLP=0;
 
 
 // ---------------------------------------------------------------------------------
@@ -46,11 +51,54 @@ p3d_rob* replann_getRobot()
 // ---------------------------------------------------------------------------------
 // Init function
 // ---------------------------------------------------------------------------------
+
+//! set mlp for this robot
+void replann_set_MultiLP()
+{
+  for (int i = 0; m_robot && i < m_robot->getRobotStruct()->mlp->nblpGp; i++) {
+    if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "base")) {
+      m_BaseMLP = i;
+    } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "head")) {
+      m_HeadMLP = i;
+    } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "upBody")) {
+      m_UpBodyMLP = i;
+    } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "upBodySm")) {
+      m_UpBodySmMLP = i;
+    }
+  }
+}
+
+//! invalidate all constraints
+// -----------------------------------------------
+void replann_invalidate_cntrts()
+{
+  if (!m_robot) {
+    cout << "robot not initialized in file " 
+    << __FILE__ << " ,  " << __func__ << endl;
+    return;
+  }
+  
+  p3d_rob* rob = m_robot->getRobotStruct();
+  p3d_cntrt* ct;
+  
+  // over all constraints
+	for(int i=0; i<rob->cntrt_manager->ncntrts; i++) 
+	{
+    // get constraint from the cntrts manager
+    ct = rob->cntrt_manager->cntrts[i];
+    p3d_desactivateCntrt( rob, ct );
+  }
+}
+
+//! replanning initialiwation loop
+// -----------------------------------------------
 bool replann_initialize()
 {
   m_robot = global_Project->getActiveScene()->getRobotByName( global_ActiveRobotName );
   return true;
 }
+
+
 
 // ---------------------------------------------------------------------------------
 // Re-Planning

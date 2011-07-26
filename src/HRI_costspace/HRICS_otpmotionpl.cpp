@@ -14,7 +14,7 @@
 #include "move3d-headless.h"
 #include "Planner-pkg.h"
 
-#include "API/Trajectory/smoothing.hpp"
+#include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 #include "planEnvironment.hpp"
 #include "time.h"
 

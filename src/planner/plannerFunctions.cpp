@@ -10,7 +10,7 @@
 #include "planEnvironment.hpp"
 #include "planners_cxx.hpp"
 #include "plannerFunctions.hpp"
-#include "API/Trajectory/costOptimization.hpp"
+#include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 
 #include "Diffusion/RRT-Variants/Threshold-RRT.hpp"
 #include "Diffusion/RRT-Variants/Star-RRT.hpp"

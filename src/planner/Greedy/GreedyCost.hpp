@@ -2,8 +2,8 @@
 #define P3D_GREEDY_PROTO_HH
 
 #include "API/planningAPI.hpp"
-#include "API/Trajectory/costOptimization.hpp"
-#include "API/Trajectory/smoothing.hpp"
+#include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
+#include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 
 #include "planner/Diffusion/RRT.hpp"
 #include "planner/Diffusion/RRT-Variants/Transition-RRT.hpp"

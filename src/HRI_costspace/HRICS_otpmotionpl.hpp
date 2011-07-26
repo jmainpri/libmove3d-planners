@@ -10,6 +10,7 @@
  *
  */
 #include "API/planningAPI.hpp"
+
 #include "API/Trajectory/trajectory.hpp"
 #include "planner/planner.hpp"
 

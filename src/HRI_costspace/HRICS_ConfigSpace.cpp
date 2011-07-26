@@ -14,7 +14,7 @@
 #include "RRT/HRICS_rrtPlan.hpp"
 #include "RRT/HRICS_rrtPlanExpansion.hpp"
 
-#include "API/Trajectory/smoothing.hpp"
+#include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 
 #include "P3d-pkg.h"
 #include "move3d-headless.h"

@@ -3,8 +3,9 @@
 
 #include "planEnvironment.hpp"
 #include "plannerFunctions.hpp"
-#include "API/Trajectory/smoothing.hpp"
-#include "API/Trajectory/costOptimization.hpp"
+
+#include "planner/TrajectoryOptim/Classic/smoothing.hpp"
+#include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 //#include "Greedy/GreedyCost.hpp"
 #include "cppToQt.hpp"
 //#include "PlanningThread.hpp"
