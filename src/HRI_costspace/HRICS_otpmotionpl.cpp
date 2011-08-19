@@ -3260,9 +3260,8 @@ bool OTPMotionPl::standUp()
 
 bool OTPMotionPl::InitMhpObjectTransfert()
 {
-
-    HRICS_init();
-    HRICS_MotionPLConfig  = new HRICS::OTPMotionPl;
+//    HRICS_init();
+//    HRICS_MotionPLConfig  = new HRICS::OTPMotionPl;
     PlanEnv->setBool(PlanParam::env_isStanding,true);
     PlanEnv->setBool(PlanParam::env_fusedGridRand,true);
     PlanEnv->setBool(PlanParam::env_normalRand,false);
