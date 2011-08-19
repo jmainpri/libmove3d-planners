@@ -31,7 +31,7 @@ using namespace HRICS;
 //USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
 
-extern HRICS::HumanAwareMotionPlanner*		HRICS_MotionPLConfig;
+//extern HRICS::HumanAwareMotionPlanner*		HRICS_MotionPLConfig;
 extern string global_ActiveRobotName;
 extern API::TwoDGrid* API_activeRobotGrid;
 
@@ -3308,15 +3308,15 @@ bool OTPMotionPl::InitMhpObjectTransfert()
 
 	initGrid();
 
-    API_activeGrid = getPlanGrid();
+	API_activeGrid = getPlanGrid();
 //    newComputeOTP();
-    ENV.setBool(Env::drawGrid,false);
-    return true;
+	ENV.setBool(Env::drawGrid,false);
+	return true;
 }
 
 bool OTPMotionPl::getOtp(std::vector<pair<double,double> >& traj, configPt& handConf)
 {
-    InitMhpObjectTransfert();
+  //InitMhpObjectTransfert();
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 
     newComputeOTP();

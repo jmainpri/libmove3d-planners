@@ -101,8 +101,10 @@ namespace HRICS
 
         ~OTPMotionPl();
 
-        EnvGrid* getPlanGrid() { return m_2DGrid; }
+      Robot* getHuman() { return m_Human; }
+      Robot* getRobot() { return _Robot; }
 
+        EnvGrid* getPlanGrid() { return m_2DGrid; }
 
         /**
           * use solveAStar to find a trajectory between initial and final conf of each robot
