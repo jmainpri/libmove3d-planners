@@ -295,7 +295,9 @@ void HRICS_init(HRI_AGENTS* agents)
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initVisibility();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initNatural();
   //dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initOtpPlanner();
-  dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
+    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
+
+    HRICS_MotionPLConfig = new HRICS::OTPMotionPl;
   
 	HRICS_activeDist = HRICS_MotionPL->getDistance();
 	API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid();

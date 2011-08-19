@@ -9,6 +9,7 @@
 
 #include "HRICS_otpmotionpl.hpp"
 #include "Grid/HRICS_Grid.hpp"
+#include "HRICS_costspace.hpp"
 
 #include "P3d-pkg.h"
 #include "move3d-headless.h"
@@ -86,7 +87,7 @@ void OTPMotionPl::initAll()
 
 //    m_2DGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),m_EnvSize,false);
 
-    m_2DGrid = new EnvGrid(0.1,m_EnvSize,false,_Robot,m_Human);
+    m_2DGrid = new EnvGrid(PlanEnv->getDouble(PlanParam::env_Cellsize),m_EnvSize,false,_Robot,m_Human);
 //    m_2DGrid->setRobot(_Robot);
 //    m_2DGrid->setHuman(m_Human);
 
@@ -1399,6 +1400,46 @@ int OTPMotionPl::loadConfsFromXML(string filename, bool isStanding, bool isSlice
     }
 }
 
+configPt OTPMotionPl::convertAchileConfToHerakles(configPt q_humAchile)
+{
+    configPt q_humHerakles = p3d_alloc_config( m_Human->getRobotStruct() );
+    //m_Human->getCurrentPos()->getConfigStruct();
+    for (int i = 0; i< 18;i++)
+    {
+        q_humHerakles[i] = q_humAchile[i];
+    }
+
+    q_humHerakles[18] = q_humAchile[18];
+    q_humHerakles[19] = q_humAchile[20] ;
+    q_humHerakles[20] = q_humAchile[19];
+
+    q_humHerakles[21] = 0;
+    q_humHerakles[22] =  DTOR(q_humAchile[21]) ;
+    cout << "q_humHerakles[22] = " << q_humHerakles[22] << endl;
+    q_humHerakles[23] = 0;
+
+    for (int i = 24; i<27 ;i++)
+    {
+        q_humHerakles[i] = q_humAchile[i-2];
+    }
+
+    q_humHerakles[27] = q_humAchile[25];
+    q_humHerakles[28] = q_humAchile[27] ;
+    q_humHerakles[29] = q_humAchile[26];
+
+    q_humHerakles[30] = 0;
+    q_humHerakles[31] = DTOR(q_humAchile[28]) ;
+    q_humHerakles[32] = 0;
+
+    for (int i = 33; i<m_Human->getRobotStruct()->nb_dof ;i++)
+    {
+        q_humHerakles[i] = q_humAchile[i-4];
+    }
+
+//    configPt tmp = p3d_copy_config( m_Human->getRobotStruct(), q_humHerakles );
+    return q_humHerakles;
+}
+
 std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
 {
     vector<ConfigHR> vectConfs;
@@ -1468,7 +1509,19 @@ std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
 				cout << "Error: no human config" << endl;
 				return vectConfs;
 			}
-			configPt q_hum =readXmlConfig(m_Human->getRobotStruct(),ptrTmp->xmlChildrenNode->next);
+
+			configPt q_humTmp = readXmlConfig(m_Human->getRobotStruct(),ptrTmp->xmlChildrenNode->next);
+
+
+//			if( m_Human->getName() == "HERAKLES_HUMAN1" )
+//			{
+//				configPt q_humAchile = readXmlConfig(m_Human->getRobotStruct(),ptrTmp->xmlChildrenNode->next);
+//				q_hum = convertAchileConfToHerakles(q_humAchile);
+//			}
+//			else
+//			{
+//				q_hum = readXmlConfig(m_Human->getRobotStruct(),ptrTmp->xmlChildrenNode->next);
+//			}
 
 
 //			cout << cur->name << endl;
@@ -1477,14 +1530,22 @@ std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
 			ptrTmp = ptrTmp->next->next;
 			if (xmlStrcmp(ptrTmp->name, xmlCharStrdup("robotConfig")))
 			{
-				cout << "Error: no human config" << endl;
+				cout << "Error: no robot config" << endl;
 				return vectConfs;
 			}
 			configPt q_rob =readXmlConfig(_Robot->getRobotStruct(),ptrTmp->xmlChildrenNode->next);
 
 			ConfigHR chr;
 
-
+			configPt q_hum = q_humTmp;
+			if( m_Human->getName() == "HERAKLES_HUMAN1" )
+			{
+				q_hum = convertAchileConfToHerakles(q_humTmp);
+			}
+			else
+			{
+				q_hum = q_humTmp;
+			}
 
 			q_rob[firstIndexOfRobotDof + 0] = q_rob[firstIndexOfRobotDof + 0] - q_hum[firstIndexOfHumanDof + 0];
 			q_rob[firstIndexOfRobotDof + 1] = q_rob[firstIndexOfRobotDof + 1] - q_hum[firstIndexOfHumanDof + 1];
@@ -1498,6 +1559,7 @@ std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
 			chr.setRobotConf(_Robot, q_rob);
 
 			vectConfs.push_back(chr);
+			cout << "test" << endl;
 		}
 
 
@@ -2038,7 +2100,10 @@ void OTPMotionPl::newComputeOTP()
     if (isStanding)
     {
         bestConf = lookForBestLocalConf(x,y,Rz,objectNecessity);
-        bestConf.chairConf = m_simpleChair->getCurrentPos();
+        if (m_simpleChair)
+        {
+            bestConf.chairConf = m_simpleChair->getCurrentPos();
+        }
 
         Vector2d v;
         v[0] = x;
@@ -2095,7 +2160,10 @@ void OTPMotionPl::newComputeOTP()
         OutputConf tmpConf = lookForBestLocalConf(randomX,randomY,randomRz,objectNecessity);
         tmpConf.id = id;
 //        cout << "Cost : "<< tmpConf.cost << endl;
-        tmpConf.chairConf = m_simpleChair->getCurrentPos();
+        if (m_simpleChair)
+        {
+            tmpConf.chairConf = m_simpleChair->getCurrentPos();
+        }
 
         Vector2d v;
         v[0] = x;
@@ -2484,7 +2552,10 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
                     localConf.isStandingInThisConf = false;
     //                cout << "global cost = " << localConf.cost<< endl;
                     localConf.id = id++;
-                    localConf.chairConf = m_simpleChair->getCurrentPos();
+                    if (m_simpleChair)
+                    {
+                        localConf.chairConf = m_simpleChair->getCurrentPos();
+                    }
 
                     Vector2d v;
                     v[0] = (*q_hum)[firstIndexOfHumanDof + 0];
@@ -2572,7 +2643,10 @@ void OTPMotionPl::saveInitConf()
 {
     savedConf.humanConf = m_Human->getCurrentPos();
     savedConf.robotConf = _Robot->getCurrentPos();
-    savedConf.chairConf = m_simpleChair->getCurrentPos();
+    if (m_simpleChair)
+    {
+        savedConf.chairConf = m_simpleChair->getCurrentPos();
+    }
 
 }
 
@@ -2583,7 +2657,10 @@ void OTPMotionPl::loadInitConf(bool reloadHuman, bool relaodRobot)
         if (reloadHuman)
         {
             m_Human->setAndUpdate(*savedConf.humanConf);
-            m_simpleChair->setAndUpdate(*savedConf.chairConf);
+            if (m_simpleChair)
+            {
+                m_simpleChair->setAndUpdate(*savedConf.chairConf);
+            }
         }
         if (relaodRobot)
         {
@@ -2608,7 +2685,10 @@ double OTPMotionPl::showConf(unsigned int i)
         m_2DHumanPath = conf.humanTraj;
         m_HumanPathExist = conf.humanTrajExist;
         setRobotsToConf(conf.configNumberInList,conf.isStandingInThisConf,xf,yf,Rzf);
-        m_simpleChair->setAndUpdate(*conf.chairConf);
+        if (m_simpleChair)
+        {
+            m_simpleChair->setAndUpdate(*conf.chairConf);
+        }
         return conf.cost;
     }
     return -1;
@@ -3178,6 +3258,110 @@ bool OTPMotionPl::standUp()
     return m_humanCanStand;
 }
 
+bool OTPMotionPl::InitMhpObjectTransfert()
+{
+
+    HRICS_init();
+    HRICS_MotionPLConfig  = new HRICS::OTPMotionPl;
+    PlanEnv->setBool(PlanParam::env_isStanding,true);
+    PlanEnv->setBool(PlanParam::env_fusedGridRand,true);
+    PlanEnv->setBool(PlanParam::env_normalRand,false);
+    ENV.setDouble(Env::Kdistance,10.0);
+    ENV.setDouble(Env::Kvisibility,35.0);
+    ENV.setDouble(Env::Kreachable,50.0);
+    PlanEnv->setInt(PlanParam::env_timeShow,0);
+    PlanEnv->setDouble(PlanParam::env_Cellsize,0.20);
+
+    HRICS_activeDist = HRICS_MotionPL->getDistance();
+
+	ENV.setBool(Env::HRIPlannerCS,true);
+	ENV.setBool(Env::enableHri,true);
+	ENV.setBool(Env::isCostSpace,true);
+
+	ENV.setBool(Env::useBallDist,false);
+	ENV.setBool(Env::useBoxDist,true);
+	if(ENV.getBool(Env::HRIPlannerCS))
+	{
+		ENV.setBool(Env::drawGrid,true);
+	}
+
+	setReachability(HRICS_activeNatu);
+
+
+	string home( getenv("HOME_MOVE3D") );
+
+	string fileNameStand = "/statFiles/OtpComputing/conf.xml";
+	string fileNameSit = "/statFiles/OtpComputing/confSit.xml";
+	string fileNameStandSlice = "/statFiles/OtpComputing/confTranche.xml";
+	string fileNameSitSlice = "/statFiles/OtpComputing/confSitTranche.xml";
+
+	fileNameStand = home + fileNameStand;
+	fileNameSit = home + fileNameSit;
+	fileNameStandSlice = home + fileNameStandSlice;
+	fileNameSitSlice = home + fileNameSitSlice;
+
+
+	loadConfsFromXML(fileNameStand,true, false) ;
+	loadConfsFromXML(fileNameSit,false, false);
+
+	loadConfsFromXML(fileNameStandSlice,true, true);
+	loadConfsFromXML(fileNameSitSlice,false, true);
+
+	initGrid();
+
+    API_activeGrid = getPlanGrid();
+//    newComputeOTP();
+    ENV.setBool(Env::drawGrid,false);
+    return true;
+}
+
+bool OTPMotionPl::getOtp(std::vector<pair<double,double> >& traj, configPt& handConf)
+{
+    InitMhpObjectTransfert();
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+    newComputeOTP();
+
+    if (confList.empty())
+    {
+        cout << "no result found" << endl;
+        return false;
+    }
+
+    int id = 0;
+    for (unsigned int i = 1; i < confList.size(); i++)
+    {
+        if (confList.at(i).cost < confList.at(id).cost)
+        {
+            id = i;
+        }
+    }
+
+    OutputConf conf = confList.at(id);
+//    Vector2d pos = conf.robotTraj.at(conf.robotTraj.size()-1);
+//    double rot = (*conf.robotConf)[firstIndexOfRobotDof + 5];
+
+
+//    BDockingPos[0] = pos[0]-( dockingDist * cos(rot));
+//    BDockingPos[1] = pos[1]+( dockingDist * sin(rot));
+//    BDockingPos[2] = rot;
+//    cout << BDockingPos << endl;
+    for (int i = 0; i < conf.robotTraj.size();i++)
+    {
+        pair<double,double> p;
+        p.first = conf.robotTraj.at(i)[0];
+        p.second = conf.robotTraj.at(i)[1];
+        traj.push_back(p);
+    }
+
+
+    handConf = conf.robotConf->getConfigStruct();
+
+    return true;
+
+
+}
+
 void OTPMotionPl::dumpCosts()
 {
 
@@ -3217,6 +3401,8 @@ void OTPMotionPl::dumpCosts()
     }
 
 }
+
+
 
 
 /*

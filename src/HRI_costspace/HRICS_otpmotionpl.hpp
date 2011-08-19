@@ -191,6 +191,11 @@ namespace HRICS
         void saveToXml(std::string filename);
 
         /**
+          * convert Achile conf to herakles conf
+          */
+        configPt convertAchileConfToHerakles(configPt q_humAchile);
+
+        /**
           * load and return configs stored in filename
           */
         std::vector<ConfigHR> loadFromXml(std::string filename);
@@ -358,6 +363,17 @@ namespace HRICS
           * if obstacles is detected, the human push bach the chair and stand up without moving.
           */
         bool standUp();
+
+        /**
+          * function to be called from codels
+          */
+        bool getOtp(std::vector<std::pair<double,double> >& traj, configPt& handConf);
+
+        /**
+          * initialisation of OTP computing for usage in mhp
+          */
+        bool InitMhpObjectTransfert();
+
 
     private:
 

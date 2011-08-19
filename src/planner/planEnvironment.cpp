@@ -144,6 +144,7 @@ void initPlannerParameters()
     myDoubleMap.insert( std::make_pair( PlanParam::env_objectNessecity,		new doubleContainer(0.5)));
 	myDoubleMap.insert( std::make_pair( PlanParam::env_sittingOffset,		new doubleContainer(0.2)));
 	myDoubleMap.insert( std::make_pair( PlanParam::env_limitRot,			new doubleContainer(M_PI/3)));
+	myDoubleMap.insert( std::make_pair( PlanParam::env_Cellsize,			new doubleContainer(0.2)));
 
     //cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble( PlanParam::env_objectNessecity ) << endl;
 

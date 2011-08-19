@@ -111,7 +111,8 @@ namespace  PlanParam
         env_rho,
         env_objectNessecity,
         env_sittingOffset,
-        env_limitRot
+        env_limitRot,
+        env_Cellsize
 	};
 	
 	enum stringParameter 

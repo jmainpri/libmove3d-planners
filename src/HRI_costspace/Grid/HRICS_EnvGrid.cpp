@@ -159,8 +159,23 @@ void EnvGrid::initGrid()
 
     if (!humCyl || !robotCyl)
     {
-        cout << "No cylinder to make reacheability tests. The Otp may segfault." << endl;
-        return;
+        for (int i=0; i<XYZ_ENV->nr; i++)
+        {
+            string name(XYZ_ENV->robot[i]->name);
+            if(name.find("HUMCYLINDER") != string::npos )
+            {
+                humCyl = new Robot(XYZ_ENV->robot[i]);
+            }
+            else if (name.find("PR_2CYLINDER") != string::npos)
+            {
+                robotCyl = new Robot(XYZ_ENV->robot[i]);
+            }
+        }
+        if (!humCyl || !robotCyl)
+        {
+            cout << "No cylinder to make reacheability tests. The Otp may segfault. (in initGrid)" << endl;
+            return;
+        }
     }
 
     cout << "Compute human distances" << endl;
@@ -189,7 +204,7 @@ void EnvGrid::initGrid()
     computeDistances(cell, false);
     cout << "Robot distances computed with success\n" << endl;
 
-    cout << "Update Reacheability in fuction of the computed distances, and compute if necessary the angle of human arrival" << endl;
+    cout << "Update Reacheability in function of the computed distances, and compute if necessary the angle of human arrival" << endl;
     for (unsigned int x =0;x<_nbCellsX;++x)
     {
         for (unsigned int y =0;y<_nbCellsY;++y)
