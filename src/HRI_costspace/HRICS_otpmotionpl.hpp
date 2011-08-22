@@ -369,13 +369,17 @@ namespace HRICS
         /**
           * function to be called from codels
           */
-        bool getOtp(std::vector<std::pair<double,double> >& traj, configPt& handConf);
+        bool getOtp(std::vector<std::pair<double,double> >& traj, configPt& handConf,bool isStanding, double objectNessecity);
 
         /**
           * initialisation of OTP computing for usage in mhp
           */
         bool InitMhpObjectTransfert();
 
+        /**
+          * Change Human (in case of multiple human in the scenne)
+          */
+        bool changeHumanByName(std::string humanName);
 
     private:
 

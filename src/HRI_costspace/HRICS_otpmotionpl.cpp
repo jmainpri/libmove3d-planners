@@ -32,6 +32,7 @@ using namespace HRICS;
 using namespace Eigen;
 
 //extern HRICS::HumanAwareMotionPlanner*		HRICS_MotionPLConfig;
+
 extern string global_ActiveRobotName;
 extern API::TwoDGrid* API_activeRobotGrid;
 
@@ -87,6 +88,7 @@ void OTPMotionPl::initAll()
 
 //    m_2DGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),m_EnvSize,false);
 
+    changeHumanByName("HERAKLES_HUMAN1");
     m_2DGrid = new EnvGrid(PlanEnv->getDouble(PlanParam::env_Cellsize),m_EnvSize,false,_Robot,m_Human);
 //    m_2DGrid->setRobot(_Robot);
 //    m_2DGrid->setHuman(m_Human);
@@ -2714,6 +2716,8 @@ void OTPMotionPl::initGrid()
     cout << "---------------------------" << endl;
     cout << "Begin initialising the grid\n" << endl;
 
+
+//    changeHumanByName("HERAKLES_HUMAN1");
     if(!PlanEnv->getBool(PlanParam::env_isStanding))
     {
         cout << "case: human is sitting\n" << endl;
@@ -3314,10 +3318,14 @@ bool OTPMotionPl::InitMhpObjectTransfert()
 	return true;
 }
 
-bool OTPMotionPl::getOtp(std::vector<pair<double,double> >& traj, configPt& handConf)
+bool OTPMotionPl::getOtp(std::vector<pair<double,double> >& traj, configPt& handConf,bool isStanding, double objectNessecity)
 {
-  //InitMhpObjectTransfert();
-    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+    PlanEnv->setBool(PlanParam::env_isStanding,isStanding);
+    PlanEnv->setDouble(PlanParam::env_objectNessecity,objectNessecity);
+    //InitMhpObjectTransfert();
+//    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
 
     newComputeOTP();
 
@@ -3401,7 +3409,31 @@ void OTPMotionPl::dumpCosts()
 
 }
 
+bool OTPMotionPl::changeHumanByName(std::string humanName)
+{
+    if (humanName.find("HERAKLES") != string::npos && m_Human->getName().find("HERAKLES") != string::npos
+        || humanName.find("ACHILE") != string::npos && m_Human->getName().find("ACHILE") != string::npos)
+    {
+        Robot* newHum;
+        for (int i=0; i<XYZ_ENV->nr; i++)
+        {
+            string name(XYZ_ENV->robot[i]->name);
+            if(name.find(humanName) != string::npos )
+            {
+                newHum = new Robot(XYZ_ENV->robot[i]);
+                break;
+            }
+        }
+        m_Human = newHum;
+        if (m_2DGrid)
+        {
+            m_2DGrid->setHuman(newHum);
+        }
+        return true;
+    }
 
+    return false;
+}
 
 
 /*
