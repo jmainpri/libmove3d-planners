@@ -60,6 +60,7 @@ namespace HRICS
 		void setAsNotSorted() {gridIsSorted = false;}
 
 		std::vector<EnvCell*> getHumanAccessibleCells() {return m_HumanAccessible;}
+
 		
 	private:
 		Robot* mRobot;
@@ -165,6 +166,8 @@ namespace HRICS
 
 		void setAngleForHumanComming(double value) {angleForHumanComming = value;}
 		double getAngleForHumanComming(){return angleForHumanComming;}
+
+
 
 	private:
 		

@@ -113,11 +113,13 @@ void EnvGrid::init(pair<double,double> minMax)
             }
         }
     }
+
     cout << "Reacheability computed\n" << endl;
 
     cout << "find in which cell the robot can be placed accordingly to each cell where the human can be" << endl;
     computeHumanRobotReacheability(minMax);
     cout << "Robot cells list found\n" << endl;
+
 
     cout << "Replace all robot to there original place (object too)" << endl;
     for(unsigned int i=0;i < initConfiguration.size(); i++)
@@ -155,6 +157,7 @@ void EnvGrid::initGrid()
     {
         m_RobotAccessible.at(i)->computeReach();
     }
+
     cout << "End computing reacheability\n" << endl;
 
     if (!humCyl || !robotCyl)
@@ -263,6 +266,7 @@ void EnvGrid::initGrid()
 
     cout << "out of: void EnvGrid::initGrid()\n" << endl;
 }
+
 
 
 void EnvGrid::computeHumanRobotReacheability(std::pair<double,double> minMax)

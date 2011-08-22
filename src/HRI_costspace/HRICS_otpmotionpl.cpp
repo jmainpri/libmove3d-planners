@@ -88,7 +88,7 @@ void OTPMotionPl::initAll()
 
 //    m_2DGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),m_EnvSize,false);
 
-    changeHumanByName("HERAKLES_HUMAN1");
+//    changeHumanByName("HERAKLES_HUMAN1");
     m_2DGrid = new EnvGrid(PlanEnv->getDouble(PlanParam::env_Cellsize),m_EnvSize,false,_Robot,m_Human);
 //    m_2DGrid->setRobot(_Robot);
 //    m_2DGrid->setHuman(m_Human);
@@ -1561,7 +1561,6 @@ std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
 			chr.setRobotConf(_Robot, q_rob);
 
 			vectConfs.push_back(chr);
-			cout << "test" << endl;
 		}
 
 
@@ -3262,8 +3261,10 @@ bool OTPMotionPl::standUp()
     return m_humanCanStand;
 }
 
-bool OTPMotionPl::InitMhpObjectTransfert()
+bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 {
+    changeHumanByName(humanName);
+
 //    HRICS_init();
 //    HRICS_MotionPLConfig  = new HRICS::OTPMotionPl;
     PlanEnv->setBool(PlanParam::env_isStanding,true);
@@ -3318,7 +3319,7 @@ bool OTPMotionPl::InitMhpObjectTransfert()
 	return true;
 }
 
-bool OTPMotionPl::getOtp(std::vector<pair<double,double> >& traj, configPt& handConf,bool isStanding, double objectNessecity)
+bool OTPMotionPl::getOtp(std::string humanName, std::vector<pair<double,double> >& traj, configPt& handConf,bool isStanding, double objectNessecity)
 {
 
     PlanEnv->setBool(PlanParam::env_isStanding,isStanding);
@@ -3414,21 +3415,30 @@ bool OTPMotionPl::changeHumanByName(std::string humanName)
     if (humanName.find("HERAKLES") != string::npos && m_Human->getName().find("HERAKLES") != string::npos
         || humanName.find("ACHILE") != string::npos && m_Human->getName().find("ACHILE") != string::npos)
     {
-        Robot* newHum;
-        for (int i=0; i<XYZ_ENV->nr; i++)
+        if (humanName.find(m_Human->getName()) != string::npos)
         {
-            string name(XYZ_ENV->robot[i]->name);
-            if(name.find(humanName) != string::npos )
+            cout << "The human name corresponds to the nam of the human robot used" << endl;
+        }
+        else
+        {
+            Robot* newHum;
+            for (int i=0; i<XYZ_ENV->nr; i++)
             {
-                newHum = new Robot(XYZ_ENV->robot[i]);
-                break;
+                string name(XYZ_ENV->robot[i]->name);
+                if(name.find(humanName) != string::npos )
+                {
+                    newHum = new Robot(XYZ_ENV->robot[i]);
+                    break;
+                }
             }
+            m_Human = newHum;
+            if (m_2DGrid)
+            {
+                m_2DGrid->setHuman(newHum);
+            }
+            cout << "Human loaded with success" << endl;
         }
-        m_Human = newHum;
-        if (m_2DGrid)
-        {
-            m_2DGrid->setHuman(newHum);
-        }
+
         return true;
     }
 
