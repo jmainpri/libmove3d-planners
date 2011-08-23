@@ -3378,13 +3378,15 @@ bool OTPMotionPl::getOtp(std::string humanName, std::vector<pair<double,double> 
     double Conf[7];
     if(conf.robotConf)
     {
-        Conf[0] = (*conf.robotConf)[15];
-        Conf[1] = (*conf.robotConf)[16];
-        Conf[2] = (*conf.robotConf)[17];
-        Conf[3] = (*conf.robotConf)[18];
-        Conf[4] = (*conf.robotConf)[19];
-        Conf[5] = (*conf.robotConf)[20];
-        Conf[6] = (*conf.robotConf)[21];
+        Conf[0] = (*conf.robotConf)[11];
+        Conf[1] = (*conf.robotConf)[15];
+        Conf[2] = (*conf.robotConf)[16];
+        Conf[3] = (*conf.robotConf)[17];
+        Conf[4] = (*conf.robotConf)[18];
+        Conf[5] = (*conf.robotConf)[19];
+        Conf[6] = (*conf.robotConf)[20];
+        Conf[7] = (*conf.robotConf)[21];
+
     }
     handConf = Conf;
 
