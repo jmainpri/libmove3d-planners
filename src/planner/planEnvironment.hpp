@@ -64,7 +64,8 @@ namespace  PlanParam
         env_useAllGrid,
         env_drawSlice,
         env_showHumanTraj,
-        env_useOldDude
+        env_useOldDude,
+        env_isInit
 	};
 	
 	enum intParameter 

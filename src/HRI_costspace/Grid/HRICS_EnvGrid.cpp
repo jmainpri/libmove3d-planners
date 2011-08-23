@@ -320,8 +320,8 @@ std::vector<std::pair<double,EnvCell*> > EnvGrid::getSortedGrid()
             pair<double,EnvCell*> p;
             p.second = m_HumanAccessible.at(i);
 
-	    cout << "p.second->getCurrentHumanRobotReacheable().size() = " << p.second->getCurrentHumanRobotReacheable().size() << endl;
-	    cout << "p.second->isHumAccessible() = "  << p.second->isHumAccessible() << endl;
+//	    cout << "p.second->getCurrentHumanRobotReacheable().size() = " << p.second->getCurrentHumanRobotReacheable().size() << endl;
+//	    cout << "p.second->isHumAccessible() = "  << p.second->isHumAccessible() << endl;
 
             if (p.second->getCurrentHumanRobotReacheable().size() > 0 && p.second->isHumAccessible())
             {
@@ -342,7 +342,7 @@ std::vector<std::pair<double,EnvCell*> > EnvGrid::getSortedGrid()
     }
     else
       {
-	cout << "Grid : Is not sorted" << endl;
+//	cout << "Grid : Is not sorted" << endl;
       }
     return sortedGrid;
 }

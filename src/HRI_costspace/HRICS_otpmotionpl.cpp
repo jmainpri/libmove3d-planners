@@ -88,7 +88,6 @@ void OTPMotionPl::initAll()
 
 //    m_2DGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),m_EnvSize,false);
 
-//    changeHumanByName("HERAKLES_HUMAN1");
     m_2DGrid = new EnvGrid(PlanEnv->getDouble(PlanParam::env_Cellsize),m_EnvSize,false,_Robot,m_Human);
 //    m_2DGrid->setRobot(_Robot);
 //    m_2DGrid->setHuman(m_Human);
@@ -1199,11 +1198,11 @@ bool OTPMotionPl::placeRobot()
 	if (PlanEnv->getBool(PlanParam::env_isStanding))
 	{
 		(*q_robot_cur)[firstIndexOfDof + 6] = 0.15;
-//		if ((current_WSPoint[2] > 0.9 + (*q_cur)[firstIndexOfHumanDof + 2]) ||
-//			(current_WSPoint[2] > 0.7 + (*q_cur)[firstIndexOfHumanDof + 2] && dist > 0.6 ))
-//		{
-//			(*q_robot_cur)[firstIndexOfDof + 6] = 0.3;
-//		}
+		if ((current_WSPoint[2] > 0.9 + (*q_cur)[firstIndexOfHumanDof + 2]) ||
+			(current_WSPoint[2] > 0.7 + (*q_cur)[firstIndexOfHumanDof + 2] && dist > 0.6 ))
+		{
+			(*q_robot_cur)[firstIndexOfDof + 6] = 0.3;
+		}
 	}
 	else
 	{
@@ -1952,14 +1951,24 @@ Vector3d OTPMotionPl::getRandomPoints(double id)
     else if (PlanEnv->getBool(PlanParam::env_fusedGridRand))
     {
         std::vector<std::pair<double,EnvCell*> > sortedCell = m_2DGrid->getSortedGrid();
-        double rand = p3d_random(0,1);
-        rand = pow(rand,PlanEnv->getInt(PlanParam::env_pow)); // giving a higher probability of getting small numbers
-        int cellNb = floor(rand*(sortedCell.size()-1));
-        Vector2d center = sortedCell.at(cellNb).second->getCenter();
-        Vector2d cellSize = sortedCell.at(cellNb).second->getCellSize();
-        vect[0] = p3d_random(center[0] - cellSize[0]/2, center[0] + cellSize[0]/2);
-        vect[1] = p3d_random(center[1] - cellSize[1]/2, center[1] + cellSize[1]/2);
-        vect[2] = p3d_random(-M_PI,M_PI);
+        if (sortedCell.empty())
+        {
+            cout << "ERROR: no human placement possible. Might result from human not specified very well. (in multiple human case)" << endl ;
+            vect[0] = 0;
+            vect[1] = 0;
+            vect[2] = 0;
+        }
+        else
+        {
+            double rand = p3d_random(0,1);
+            rand = pow(rand,PlanEnv->getInt(PlanParam::env_pow)); // giving a higher probability of getting small numbers
+            int cellNb = floor(rand*(sortedCell.size()-1));
+            Vector2d center = sortedCell.at(cellNb).second->getCenter();
+            Vector2d cellSize = sortedCell.at(cellNb).second->getCellSize();
+            vect[0] = p3d_random(center[0] - cellSize[0]/2, center[0] + cellSize[0]/2);
+            vect[1] = p3d_random(center[1] - cellSize[1]/2, center[1] + cellSize[1]/2);
+            vect[2] = p3d_random(-M_PI,M_PI);
+        }
 
     }
     else if (PlanEnv->getBool(PlanParam::env_useSlice))
@@ -2716,7 +2725,6 @@ void OTPMotionPl::initGrid()
     cout << "Begin initialising the grid\n" << endl;
 
 
-//    changeHumanByName("HERAKLES_HUMAN1");
     if(!PlanEnv->getBool(PlanParam::env_isStanding))
     {
         cout << "case: human is sitting\n" << endl;
@@ -3263,6 +3271,11 @@ bool OTPMotionPl::standUp()
 
 bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 {
+    if (PlanEnv->getBool(PlanParam::env_isInit))
+    {
+        cout << "The function is already initialized" << endl;
+        return true;
+    }
     changeHumanByName(humanName);
 
 //    HRICS_init();
@@ -3362,8 +3375,20 @@ bool OTPMotionPl::getOtp(std::string humanName, std::vector<pair<double,double> 
         traj.push_back(p);
     }
 
+    double Conf[7];
+    if(conf.robotConf)
+    {
+        Conf[0] = (*conf.robotConf)[15];
+        Conf[1] = (*conf.robotConf)[16];
+        Conf[2] = (*conf.robotConf)[17];
+        Conf[3] = (*conf.robotConf)[18];
+        Conf[4] = (*conf.robotConf)[19];
+        Conf[5] = (*conf.robotConf)[20];
+        Conf[6] = (*conf.robotConf)[21];
+    }
+    handConf = Conf;
 
-    handConf = conf.robotConf->getConfigStruct();
+    //handConf = conf.robotConf->getConfigStruct();
 
     return true;
 
