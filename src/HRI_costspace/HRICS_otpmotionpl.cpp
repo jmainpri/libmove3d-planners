@@ -3276,6 +3276,7 @@ bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
         cout << "The function is already initialized" << endl;
         return true;
     }
+    PlanEnv->setBool(PlanParam::env_isInit,true);
     changeHumanByName(humanName);
 
 //    HRICS_init();
@@ -3358,6 +3359,8 @@ bool OTPMotionPl::getOtp(std::string humanName, std::vector<pair<double,double> 
         }
     }
 
+
+
     OutputConf conf = confList.at(id);
 //    Vector2d pos = conf.robotTraj.at(conf.robotTraj.size()-1);
 //    double rot = (*conf.robotConf)[firstIndexOfRobotDof + 5];
@@ -3375,22 +3378,24 @@ bool OTPMotionPl::getOtp(std::string humanName, std::vector<pair<double,double> 
         traj.push_back(p);
     }
 
-    double Conf[7];
-    if(conf.robotConf)
-    {
-        Conf[0] = (*conf.robotConf)[11];
-        Conf[1] = (*conf.robotConf)[15];
-        Conf[2] = (*conf.robotConf)[16];
-        Conf[3] = (*conf.robotConf)[17];
-        Conf[4] = (*conf.robotConf)[18];
-        Conf[5] = (*conf.robotConf)[19];
-        Conf[6] = (*conf.robotConf)[20];
-        Conf[7] = (*conf.robotConf)[21];
 
-    }
-    handConf = Conf;
+//    double Conf[8];
+//    if(conf.robotConf)
+//    {
+//        Conf[0] = (*conf.robotConf)[11];
+//        Conf[1] = (*conf.robotConf)[15];
+//        Conf[2] = (*conf.robotConf)[16];
+//        Conf[3] = (*conf.robotConf)[17];
+//        Conf[4] = (*conf.robotConf)[18];
+//        Conf[5] = (*conf.robotConf)[19];
+//        Conf[6] = (*conf.robotConf)[20];
+//        Conf[7] = (*conf.robotConf)[21];
 
-    //handConf = conf.robotConf->getConfigStruct();
+//    }
+//    handConf = Conf;
+
+
+    handConf = conf.robotConf->getConfigStruct();
 
     return true;
 
@@ -3439,8 +3444,8 @@ void OTPMotionPl::dumpCosts()
 
 bool OTPMotionPl::changeHumanByName(std::string humanName)
 {
-    if (humanName.find("HERAKLES") != string::npos && m_Human->getName().find("HERAKLES") != string::npos
-        || humanName.find("ACHILE") != string::npos && m_Human->getName().find("ACHILE") != string::npos)
+    if ((humanName.find("HERAKLES") != string::npos && m_Human->getName().find("HERAKLES") != string::npos)
+        || (humanName.find("ACHILE") != string::npos && m_Human->getName().find("ACHILE") != string::npos))
     {
         if (humanName.find(m_Human->getName()) != string::npos)
         {
