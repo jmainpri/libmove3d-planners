@@ -465,7 +465,7 @@ void OTPMotionPl::solveAStar(EnvState* start, EnvState* goal, bool isHuman)
   */
 void OTPMotionPl::draw2dPath()
 {
-    if( m_PathExist)
+    if( m_PathExist && m_2DPath.size() > 1)
     {
 //        cout << "Drawing 2D path" << endl;
         for(unsigned int i=0;i<m_2DPath.size()-1;i++)
@@ -2965,22 +2965,34 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     humanVectorConf.push_back(conf.humanConf);
 
 
-    p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
-    p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPl->getBaseMLP(), 1, false);
+    if (robotTraj2D.size() > 2)
+    {
+        p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
+        p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPl->getBaseMLP(), 1, false);
 
-    //////////////////
-    API::Trajectory base_traj(robotVectorConf);
-    base_traj.replaceP3dTraj();
+        //////////////////
+        API::Trajectory base_traj(robotVectorConf);
+        base_traj.replaceP3dTraj();
+    }
 
 
-    if (nbConf > 0)
+    if (humanTraj2D.size() > 2)
     {
         p3d_multiLocalPath_disable_all_groupToPlan( m_Human->getRobotStruct() , false );
         p3d_multiLocalPath_set_groupToPlan( m_Human->getRobotStruct(), m_ManipPlHum->getBaseMLP(), 1, false);
 
         //////////////////
         API::Trajectory base_hum_traj(humanVectorConf);
+//        if (m_Human->getTrajStruct()->)
         base_hum_traj.replaceHumanP3dTraj(m_Human, m_Human->getTrajStruct());
+    }
+    else
+    {
+        if ( m_Human->getTrajStruct())
+        {
+            destroy_list_localpath(m_Human->getRobotStruct(), m_Human->getTrajStruct()->courbePt);
+            m_Human->getRobotStruct()->tcur = NULL;
+        }
     }
 
 //    cout << base_traj.getRangeMax() << endl;
