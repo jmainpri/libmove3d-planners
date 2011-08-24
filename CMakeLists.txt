@@ -256,9 +256,10 @@ SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${Eigen_INCLUDE_DIR})
 
 # boost is used e.g. for managing the cost functions (T-RRT).
 FIND_PACKAGE(Boost REQUIRED COMPONENTS thread)
-INCLUDE_directories(/opt/local/include/)        
-SET(INCLUDE_DIRS ${INCLUDE_DIRS} /opt/local/include/ ${BOOST_INCLUDE_DIRS})
+#INCLUDE_directories(/opt/local/include/)        
+SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${BOOST_INCLUDE_DIRS})
 SET(LIBS ${LIBS} ${Boost_LIBRARIES})
+ADD_DEFINITIONS(-pthread)
 
 #-------------- GBM ------------------------------------------------------------
 IF(MULTILOCALPATH)
