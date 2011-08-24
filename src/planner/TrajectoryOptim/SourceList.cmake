@@ -9,5 +9,4 @@ include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Classic/SourceList.cmake)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Chomp/SourceList.cmake)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Stomp/SourceList.cmake)
 
-
 SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME_TMP})

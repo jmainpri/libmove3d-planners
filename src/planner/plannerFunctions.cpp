@@ -123,7 +123,7 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
   
   // Allocate the graph if does't exist
   p3d_graph* GraphPt = robotPt->GRAPH;
-  GraphPt = GraphPt ? GraphPt : p3d_create_graph();
+  GraphPt = GraphPt ? GraphPt : p3d_create_graph(robotPt);
   Graph* graph = 	API_activeGraph =  new Graph(rob,GraphPt);
   
   // Allocate RRT

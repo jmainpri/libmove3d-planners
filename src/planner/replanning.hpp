@@ -22,6 +22,11 @@ p3d_rob* replann_getRobot();
 bool replann_initialize();
 
 /**
+ * Replan initial path
+ */
+bool replan_plan_initial_path();
+
+/**
  * @ingroup NEW_CPP_MODULE
  * Funtion to replan from a certain via point
  */

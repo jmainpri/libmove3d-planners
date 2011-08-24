@@ -48,15 +48,17 @@ const bool graph_debug_import_export = false;
 
 Graph::Graph(Robot* R, p3d_graph* G)
 {
-	if (G)
+	m_Robot = R;
+  
+  if (G)
 	{
 		m_Graph = new p3d_graph(*G);
 	}
 	else
 	{
-		m_Graph = p3d_create_graph();
+		m_Graph = p3d_create_graph(R->getRobotStruct());
 	}
-	m_Robot = R;
+	
 	m_Graph->rob->GRAPH = m_Graph;
 	m_Traj = NULL;
 	m_graphChanged = true;

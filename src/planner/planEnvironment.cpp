@@ -67,7 +67,7 @@ void initPlannerParameters()
 	myBoolMap.insert( std::make_pair( PlanParam::saveTrajCost,			new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::trajCostRecompute,	new boolContainer(false)));
 	myBoolMap.insert( std::make_pair( PlanParam::withMaxIteration,	new boolContainer(false)));
-	myBoolMap.insert( std::make_pair( PlanParam::withGainLimit,			new boolContainer(false)));
+	myBoolMap.insert( std::make_pair( PlanParam::withGainLimit,			new boolContainer(true)));
 	myBoolMap.insert( std::make_pair( PlanParam::withTimeLimit,			new boolContainer(true)));
 	myBoolMap.insert( std::make_pair( PlanParam::withSmoothing,			new boolContainer(true)));
 	myBoolMap.insert( std::make_pair( PlanParam::withShortCut,			new boolContainer(true)));
@@ -123,7 +123,7 @@ void initPlannerParameters()
 	// Double
 	// ------------------------------------------------------------------
 	// Post-processing phaze
-	myDoubleMap.insert( std::make_pair( PlanParam::optimTimeLimit,          new doubleContainer(4.0)));
+	myDoubleMap.insert( std::make_pair( PlanParam::optimTimeLimit,          new doubleContainer(2.0)));
 	myDoubleMap.insert( std::make_pair( PlanParam::MaxFactor,				new doubleContainer(3.0)));
 	myDoubleMap.insert( std::make_pair( PlanParam::MinStep,					new doubleContainer(2.0)));
 	myDoubleMap.insert( std::make_pair( PlanParam::costTraj,				new doubleContainer(1.0)));
@@ -179,7 +179,7 @@ void initPlannerParameters()
 	// ------------------------------------------------------------------
   ENV.setBool(Env::biDir,true);
   ENV.setExpansionMethod(Env::Extend);
-  ENV.setDouble(Env::extensionStep,14.0);
+  ENV.setDouble(Env::extensionStep,6.0);
   
   ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
   ENV.setDouble(Env::temperatureRate,30);
