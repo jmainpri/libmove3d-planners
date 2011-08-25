@@ -3407,7 +3407,9 @@ bool OTPMotionPl::getOtp(std::string humanName, std::vector<pair<double,double> 
 //    handConf = Conf;
 
 
+
     handConf = conf.robotConf->getConfigStruct();
+    handConf[11] = angle_limit_PI(handConf[11]);
 
     return true;
 
