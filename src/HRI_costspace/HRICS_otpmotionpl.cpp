@@ -3345,13 +3345,14 @@ bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 	return true;
 }
 
-bool OTPMotionPl::getOtp(std::string humanName, std::vector<pair<double,double> >& traj, configPt& handConf,bool isStanding, double objectNessecity)
+bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d dockPos,
+                         std::vector<pair<double,double> >& traj, configPt& handConf,bool isStanding, double objectNessecity)
 {
 
     PlanEnv->setBool(PlanParam::env_isStanding,isStanding);
     PlanEnv->setDouble(PlanParam::env_objectNessecity,objectNessecity);
     //InitMhpObjectTransfert();
-//    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 
 
     newComputeOTP();
@@ -3372,16 +3373,17 @@ bool OTPMotionPl::getOtp(std::string humanName, std::vector<pair<double,double> 
     }
 
 
-
+    double dockingDist = 0.5;
     OutputConf conf = confList.at(id);
-//    Vector2d pos = conf.robotTraj.at(conf.robotTraj.size()-1);
-//    double rot = (*conf.robotConf)[firstIndexOfRobotDof + 5];
+    Vector2d pos = conf.robotTraj.at(conf.robotTraj.size()-1);
+    double rot = (*conf.robotConf)[firstIndexOfRobotDof + 5];
 
 
-//    BDockingPos[0] = pos[0]-( dockingDist * cos(rot));
-//    BDockingPos[1] = pos[1]+( dockingDist * sin(rot));
-//    BDockingPos[2] = rot;
-//    cout << BDockingPos << endl;
+    dockPos[0] = pos[0]-( dockingDist * cos(rot));
+    dockPos[1] = pos[1]-( dockingDist * sin(rot));
+    dockPos[2] = rot;
+
+
     for (int i = 0; i < conf.robotTraj.size();i++)
     {
         pair<double,double> p;
@@ -3389,23 +3391,6 @@ bool OTPMotionPl::getOtp(std::string humanName, std::vector<pair<double,double> 
         p.second = conf.robotTraj.at(i)[1];
         traj.push_back(p);
     }
-
-
-//    double Conf[8];
-//    if(conf.robotConf)
-//    {
-//        Conf[0] = (*conf.robotConf)[11];
-//        Conf[1] = (*conf.robotConf)[15];
-//        Conf[2] = (*conf.robotConf)[16];
-//        Conf[3] = (*conf.robotConf)[17];
-//        Conf[4] = (*conf.robotConf)[18];
-//        Conf[5] = (*conf.robotConf)[19];
-//        Conf[6] = (*conf.robotConf)[20];
-//        Conf[7] = (*conf.robotConf)[21];
-
-//    }
-//    handConf = Conf;
-
 
 
     handConf = conf.robotConf->getConfigStruct();
