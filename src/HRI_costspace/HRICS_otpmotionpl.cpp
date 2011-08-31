@@ -3284,9 +3284,15 @@ bool OTPMotionPl::standUp()
 void OTPMotionPl::dumpVar()
 {
 	cout << "------------ OTP variable -----------" <<endl;
+
+    cout << "fused grid = "  << PlanEnv->getBool(PlanParam::env_fusedGridRand) << endl;
+    cout << "normal rand = "  << PlanEnv->getBool(PlanParam::env_normalRand) << endl;
+    cout << "oriented slice = "  << PlanEnv->getBool(PlanParam::env_useOrientedSlice) << endl;
+    cout << "slices = "  << PlanEnv->getBool(PlanParam::env_useSlice) << endl;
+    cout << "all grid = "  << PlanEnv->getBool(PlanParam::env_useAllGrid) << endl << endl;
+
 	cout << " isStanding = " << PlanEnv->getBool(PlanParam::env_isStanding) << endl;
 	cout << " objectNecessity = " <<PlanEnv->getDouble(PlanParam::env_objectNessecity) << endl;
-	cout << " useFusedGrid  = " << PlanEnv->getBool(PlanParam::env_fusedGridRand) << endl;
 	cout << " pow for random  = " << PlanEnv->getInt(PlanParam::env_pow) << endl;
 	cout << " sleeping time  = " << PlanEnv->getInt(PlanParam::env_timeShow) << endl;
 	cout << " maxIter = " << PlanEnv->getInt(PlanParam::env_maxIter)<< endl;
@@ -3314,6 +3320,45 @@ void OTPMotionPl::dumpVar()
 	cout << "------------ OTP variable end--------" <<endl;
 }
 
+void OTPMotionPl::setVar()
+{
+    PlanEnv->setBool(PlanParam::env_fusedGridRand,true);
+    PlanEnv->setBool(PlanParam::env_normalRand,false);
+    PlanEnv->setBool(PlanParam::env_useOrientedSlice,false);
+    PlanEnv->setBool(PlanParam::env_useSlice,false);
+    PlanEnv->setBool(PlanParam::env_useAllGrid,false);
+
+    PlanEnv->setInt(PlanParam::env_timeShow,0);
+    PlanEnv->setDouble(PlanParam::env_Cellsize,0.20);
+    PlanEnv->setInt(PlanParam::env_nbSittingRotation,300);
+
+	PlanEnv->setInt(PlanParam::env_pow,2);
+	PlanEnv->setInt(PlanParam::env_timeShow,0);
+	PlanEnv->setInt(PlanParam::env_maxIter,100);
+	PlanEnv->setInt(PlanParam::env_totMaxIter,400);
+	PlanEnv->setInt(PlanParam::env_nbRandomRotOnly,10);
+	PlanEnv->setInt(PlanParam::env_nbSittingRotation,300);
+	PlanEnv->setDouble(PlanParam::env_robotSpeed,1.0);
+	PlanEnv->setDouble(PlanParam::env_humanSpeed,1);
+	PlanEnv->setDouble(PlanParam::env_timeStamp,0.35);
+
+	PlanEnv->setDouble(PlanParam::env_psi,0.99);
+	PlanEnv->setDouble(PlanParam::env_delta,0.01);
+	PlanEnv->setDouble(PlanParam::env_ksi,0.43);
+	PlanEnv->setDouble(PlanParam::env_rho,0.57);
+	PlanEnv->setDouble(PlanParam::env_sittingOffset,0.2);
+
+    ENV.setDouble(Env::Kdistance,10.0);
+    ENV.setDouble(Env::Kvisibility,35.0);
+    ENV.setDouble(Env::Kreachable,50.0);
+
+	ENV.setDouble(Env::coeffJoint,0.5);
+	ENV.setDouble(Env::coeffEnerg,1);
+	ENV.setDouble(Env::coeffConfo,10);
+
+}
+
+
 bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 {
     if (PlanEnv->getBool(PlanParam::env_isInit))
@@ -3326,15 +3371,10 @@ bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 
 //    HRICS_init();
 //    HRICS_MotionPLConfig  = new HRICS::OTPMotionPl;
-    PlanEnv->setBool(PlanParam::env_isStanding,true);
-    PlanEnv->setBool(PlanParam::env_fusedGridRand,true);
-    PlanEnv->setBool(PlanParam::env_normalRand,false);
-    ENV.setDouble(Env::Kdistance,10.0);
-    ENV.setDouble(Env::Kvisibility,35.0);
-    ENV.setDouble(Env::Kreachable,50.0);
-    PlanEnv->setInt(PlanParam::env_timeShow,0);
-    PlanEnv->setDouble(PlanParam::env_Cellsize,0.20);
-    PlanEnv->setInt(PlanParam::env_nbSittingRotation,300);
+//    PlanEnv->setBool(PlanParam::env_isStanding,true);
+
+    setVar();
+
 
     HRICS_activeDist = HRICS_MotionPL->getDistance();
 
