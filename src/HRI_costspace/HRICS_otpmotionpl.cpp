@@ -1539,14 +1539,14 @@ std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
 			ConfigHR chr;
 
 			configPt q_hum = q_humTmp;
-			if( m_Human->getName() == "HERAKLES_HUMAN1" )
-			{
-				q_hum = convertAchileConfToHerakles(q_humTmp);
-			}
-			else
-			{
-				q_hum = q_humTmp;
-			}
+//			if( m_Human->getName() == "HERAKLES_HUMAN1" )
+//			{
+//				q_hum = convertAchileConfToHerakles(q_humTmp);
+//			}
+//			else
+//			{
+//				q_hum = q_humTmp;
+//			}
 
 			q_rob[firstIndexOfRobotDof + 0] = q_rob[firstIndexOfRobotDof + 0] - q_hum[firstIndexOfHumanDof + 0];
 			q_rob[firstIndexOfRobotDof + 1] = q_rob[firstIndexOfRobotDof + 1] - q_hum[firstIndexOfHumanDof + 1];
@@ -3301,6 +3301,7 @@ bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
     ENV.setDouble(Env::Kreachable,50.0);
     PlanEnv->setInt(PlanParam::env_timeShow,0);
     PlanEnv->setDouble(PlanParam::env_Cellsize,0.20);
+    PlanEnv->setInt(PlanParam::env_nbSittingRotation,300);
 
     HRICS_activeDist = HRICS_MotionPL->getDistance();
 
@@ -3320,10 +3321,40 @@ bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 
 	string home( getenv("HOME_MOVE3D") );
 
-	string fileNameStand = "/statFiles/OtpComputing/conf.xml";
-	string fileNameSit = "/statFiles/OtpComputing/confSit.xml";
-	string fileNameStandSlice = "/statFiles/OtpComputing/confTranche.xml";
-	string fileNameSitSlice = "/statFiles/OtpComputing/confSitTranche.xml";
+	string fileNameStand;
+	string fileNameSit;
+	string fileNameStandSlice;
+	string fileNameSitSlice;
+
+
+	if (m_Human->getName().find("HERAKLES")!= string::npos)
+	{
+		fileNameStand = "/statFiles/OtpComputing/confHerakles.xml";
+		fileNameSit = "/statFiles/OtpComputing/confHeraklesSit.xml";
+		fileNameStandSlice = "/statFiles/OtpComputing/confHerakles.xml";
+		fileNameSitSlice = "/statFiles/OtpComputing/confHeraklesSit.xml";
+	}
+	else if (m_Human->getName().find("OLDDUDE")!= string::npos)
+	{
+		fileNameStand = "/statFiles/OtpComputing/confOldDude.xml";
+		fileNameSit = "/statFiles/OtpComputing/confOldDudeSit.xml";
+		fileNameStandSlice = "/statFiles/OtpComputing/confOldDude.xml";
+		fileNameSitSlice = "/statFiles/OtpComputing/confOldDudeSit.xml";
+	}
+	else if (m_Human->getName().find("ACHILE")!= string::npos)
+	{
+		fileNameStand = "/statFiles/OtpComputing/confAchile.xml";
+		fileNameSit = "/statFiles/OtpComputing/confAchileSit.xml";
+		fileNameStandSlice = "/statFiles/OtpComputing/confAchileTranche.xml";
+		fileNameSitSlice = "/statFiles/OtpComputing/confAchileTrancheSit.xml";
+	}
+	else
+	{
+		cout << "No configurations found" << endl;
+	}
+
+
+
 
 	fileNameStand = home + fileNameStand;
 	fileNameSit = home + fileNameSit;
@@ -3345,13 +3376,15 @@ bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 	return true;
 }
 
-bool OTPMotionPl::getOtp(std::string humanName, std::vector<pair<double,double> >& traj, configPt& handConf,bool isStanding, double objectNessecity)
+bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
+                         std::vector<pair<double,double> >& traj,
+                         configPt& handConf,bool isStanding, double objectNessecity)
 {
 
     PlanEnv->setBool(PlanParam::env_isStanding,isStanding);
     PlanEnv->setDouble(PlanParam::env_objectNessecity,objectNessecity);
     //InitMhpObjectTransfert();
-//    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 
 
     newComputeOTP();
@@ -3373,15 +3406,33 @@ bool OTPMotionPl::getOtp(std::string humanName, std::vector<pair<double,double> 
 
 
 
+    double dockingDist = 0.5;
     OutputConf conf = confList.at(id);
-//    Vector2d pos = conf.robotTraj.at(conf.robotTraj.size()-1);
-//    double rot = (*conf.robotConf)[firstIndexOfRobotDof + 5];
+    if (!conf.humanConf && !conf.robotConf && conf.cost < numeric_limits<double>::max( ))
+    {
+        cout << "ERROR: configuration problems" << endl;
+        return false;
+    }
+
+    Vector2d pos;
+    if (conf.robotTraj.size() > 0)
+    {
+        pos = conf.robotTraj.at(conf.robotTraj.size()-1);
+    }
+    else
+    {
+        pos[0] = (*conf.robotConf)[firstIndexOfRobotDof + 0];
+        pos[1] = (*conf.robotConf)[firstIndexOfRobotDof + 1];
+    }
+
+    double rot = angle_limit_PI((*conf.robotConf)[firstIndexOfRobotDof + 5]);
 
 
-//    BDockingPos[0] = pos[0]-( dockingDist * cos(rot));
-//    BDockingPos[1] = pos[1]+( dockingDist * sin(rot));
-//    BDockingPos[2] = rot;
-//    cout << BDockingPos << endl;
+    dockPos[0] = pos[0]-( dockingDist * cos(rot));
+    dockPos[1] = pos[1]-( dockingDist * sin(rot));
+    dockPos[2] = rot;
+
+
     for (int i = 0; i < conf.robotTraj.size();i++)
     {
         pair<double,double> p;
@@ -3391,23 +3442,8 @@ bool OTPMotionPl::getOtp(std::string humanName, std::vector<pair<double,double> 
     }
 
 
-//    double Conf[8];
-//    if(conf.robotConf)
-//    {
-//        Conf[0] = (*conf.robotConf)[11];
-//        Conf[1] = (*conf.robotConf)[15];
-//        Conf[2] = (*conf.robotConf)[16];
-//        Conf[3] = (*conf.robotConf)[17];
-//        Conf[4] = (*conf.robotConf)[18];
-//        Conf[5] = (*conf.robotConf)[19];
-//        Conf[6] = (*conf.robotConf)[20];
-//        Conf[7] = (*conf.robotConf)[21];
-
-//    }
-//    handConf = Conf;
-
-
     handConf = conf.robotConf->getConfigStruct();
+    handConf[11] = angle_limit_PI(handConf[11]);
 
     return true;
 
