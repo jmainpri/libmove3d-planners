@@ -3419,7 +3419,7 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
     //InitMhpObjectTransfert();
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 
-
+    dumpVar();
     newComputeOTP();
 
     if (confList.empty())
