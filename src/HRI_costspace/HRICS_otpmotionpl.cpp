@@ -2591,6 +2591,7 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
                         g3d_draw_allwin_active();
                         usleep(time);
                     }
+                    break;
 
     //                cout << "the choosed configuration in the sitting configuration list is : " << i << endl;
                 }
@@ -3336,7 +3337,7 @@ void OTPMotionPl::setVar()
 	PlanEnv->setInt(PlanParam::env_timeShow,0);
 	PlanEnv->setInt(PlanParam::env_maxIter,100);
 	PlanEnv->setInt(PlanParam::env_totMaxIter,400);
-	PlanEnv->setInt(PlanParam::env_nbRandomRotOnly,10);
+	PlanEnv->setInt(PlanParam::env_nbRandomRotOnly,50);
 	PlanEnv->setInt(PlanParam::env_nbSittingRotation,300);
 	PlanEnv->setDouble(PlanParam::env_robotSpeed,1.0);
 	PlanEnv->setDouble(PlanParam::env_humanSpeed,1);
