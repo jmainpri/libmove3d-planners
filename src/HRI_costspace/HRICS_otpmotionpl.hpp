@@ -367,6 +367,11 @@ namespace HRICS
         bool standUp();
 
         /**
+          * writing variable
+          */
+        void dumpVar();
+
+        /**
           * function to be called from codels
           */
         bool getOtp(std::string humanName, Eigen::Vector3d &dockPos, std::vector<std::pair<double,double> >& traj, configPt& handConf,bool isStanding, double objectNessecity);

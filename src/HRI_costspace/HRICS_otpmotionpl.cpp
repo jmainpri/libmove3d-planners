@@ -3281,6 +3281,39 @@ bool OTPMotionPl::standUp()
     return m_humanCanStand;
 }
 
+void OTPMotionPl::dumpVar()
+{
+	cout << "------------ OTP variable -----------" <<endl;
+	cout << " isStanding = " << PlanEnv->getBool(PlanParam::env_isStanding) << endl;
+	cout << " objectNecessity = " <<PlanEnv->getDouble(PlanParam::env_objectNessecity) << endl;
+	cout << " useFusedGrid  = " << PlanEnv->getBool(PlanParam::env_fusedGridRand) << endl;
+	cout << " pow for random  = " << PlanEnv->getInt(PlanParam::env_pow) << endl;
+	cout << " sleeping time  = " << PlanEnv->getInt(PlanParam::env_timeShow) << endl;
+	cout << " maxIter = " << PlanEnv->getInt(PlanParam::env_maxIter)<< endl;
+	cout << " totMaxIter = " <<PlanEnv->getInt(PlanParam::env_totMaxIter) << endl;
+	cout << " nbRotation = " <<PlanEnv->getInt(PlanParam::env_nbRandomRotOnly) << endl;
+	cout << " nb sitting Rotation = " <<PlanEnv->getInt(PlanParam::env_nbSittingRotation) << endl;
+	cout << " robotSpeed = " << PlanEnv->getDouble(PlanParam::env_robotSpeed)<< endl;
+	cout << " humanSpeed = " <<PlanEnv->getDouble(PlanParam::env_humanSpeed) << endl;
+	cout << " timeStamp = " <<PlanEnv->getDouble(PlanParam::env_timeStamp) << endl << endl;
+
+	cout << " psi = " <<PlanEnv->getDouble(PlanParam::env_psi) << endl;
+	cout << " delta = " <<PlanEnv->getDouble(PlanParam::env_delta) << endl;
+	cout << " ksi = " <<PlanEnv->getDouble(PlanParam::env_ksi) << endl;
+	cout << " rho = " <<PlanEnv->getDouble(PlanParam::env_rho) << endl;
+	cout << " sittingOffset = " <<PlanEnv->getDouble(PlanParam::env_sittingOffset) << endl << endl;
+
+	cout << " Distance = " <<ENV.getDouble(Env::Kdistance) << endl;
+	cout << " visibility = " <<ENV.getDouble(Env::Kvisibility) << endl;
+	cout << " Reacheable = " <<ENV.getDouble(Env::Kreachable) << endl << endl;
+
+	cout << " Neutral = " <<ENV.getDouble(Env::coeffJoint) << endl;
+	cout << " Energie = " <<ENV.getDouble(Env::coeffEnerg) << endl;
+	cout << " Disconfort = " <<ENV.getDouble(Env::coeffConfo) << endl;
+
+	cout << "------------ OTP variable end--------" <<endl;
+}
+
 bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 {
     if (PlanEnv->getBool(PlanParam::env_isInit))
