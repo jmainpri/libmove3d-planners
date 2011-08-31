@@ -3405,9 +3405,26 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
     }
 
 
+
     double dockingDist = 0.5;
     OutputConf conf = confList.at(id);
-    Vector2d pos = conf.robotTraj.at(conf.robotTraj.size()-1);
+    if (!conf.humanConf && !conf.robotConf && conf.cost < numeric_limits<double>::max( ))
+    {
+        cout << "ERROR: configuration problems" << endl;
+        return false;
+    }
+
+    Vector2d pos;
+    if (conf.robotTraj.size() > 0)
+    {
+        pos = conf.robotTraj.at(conf.robotTraj.size()-1);
+    }
+    else
+    {
+        pos[0] = (*conf.robotConf)[firstIndexOfRobotDof + 0];
+        pos[1] = (*conf.robotConf)[firstIndexOfRobotDof + 1];
+    }
+
     double rot = angle_limit_PI((*conf.robotConf)[firstIndexOfRobotDof + 5]);
 
 
