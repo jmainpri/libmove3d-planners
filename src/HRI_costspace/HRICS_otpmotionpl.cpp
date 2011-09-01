@@ -2159,7 +2159,8 @@ void OTPMotionPl::newComputeOTP()
     clock_t firstConfs = clock();
     while (finished)
     {
-        cout << nb_of_true_iterations++ << endl;
+//        cout << nb_of_true_iterations++ << endl;
+        id++;
 //        cout << "---------------------------------------------------" << endl;
 //        cout << "new section, init pos : x = " << x << " y = " << y << " Rz = " << Rz << endl;
         Vector3d vect = getRandomPoints(id);
@@ -2202,7 +2203,7 @@ void OTPMotionPl::newComputeOTP()
 
         }
         else if (tmpConf.cost < numeric_limits<double>::max( )){ i++; }
-        id++;
+
 //        cout << "current id = "<< id << endl;
 //        cout << "current iteration worst than the best one : " << i << endl;
         if (i > maxIter + beginId || id > PlanEnv->getInt(PlanParam::env_totMaxIter) + beginId) { break; }
