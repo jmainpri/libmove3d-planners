@@ -1198,8 +1198,8 @@ bool OTPMotionPl::placeRobot()
 	if (PlanEnv->getBool(PlanParam::env_isStanding))
 	{
 		(*q_robot_cur)[firstIndexOfDof + 6] = 0.15;
-		if ((current_WSPoint[2] > 0.9 + (*q_cur)[firstIndexOfHumanDof + 2]) ||
-			(current_WSPoint[2] > 0.7 + (*q_cur)[firstIndexOfHumanDof + 2] && dist > 0.6 ))
+		if ((current_WSPoint[2] >= 0.7 + (*q_cur)[firstIndexOfHumanDof + 2]) ||
+			(current_WSPoint[2] >= 0.5 + (*q_cur)[firstIndexOfHumanDof + 2] && dist > 0.6 ))
 		{
 			(*q_robot_cur)[firstIndexOfDof + 6] = 0.3;
 		}
@@ -2155,10 +2155,11 @@ void OTPMotionPl::newComputeOTP()
         finished = false;
     }
 
-
+    int nb_of_true_iterations = 0;
     clock_t firstConfs = clock();
     while (finished)
     {
+        cout << nb_of_true_iterations++ << endl;
 //        cout << "---------------------------------------------------" << endl;
 //        cout << "new section, init pos : x = " << x << " y = " << y << " Rz = " << Rz << endl;
         Vector3d vect = getRandomPoints(id);
@@ -2244,6 +2245,7 @@ void OTPMotionPl::newComputeOTP()
         cout.flush();
         cout << "--------------------------------------" << endl << "End of OTP search" << endl << "--------------------------------------" << endl;
         cout << "Number of tested configuration = " << id << endl;
+        cout << "nb_of_true_iterations = " << nb_of_true_iterations << endl;
         cout << "Number of solutions found = " << confList.size() << endl;
         cout << "Success rate = " << (double)confList.size() / (double)id << endl;
     //    bestConf.humanConf->print();
@@ -2409,7 +2411,7 @@ OutputConf OTPMotionPl::lookForBestLocalConf(double x, double y, double Rz, doub
     EnvCell* rCell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(goalPos));
     if (!rCell)
     {
-//        cout << "No cell for this robot position : x = " << goalPos[0] << " y = " << goalPos[1] << endl;
+        cout << "No cell for this robot position : x = " << goalPos[0] << " y = " << goalPos[1] << endl;
         bestLocalConf.clearAll();
         return bestLocalConf;
     }
@@ -2621,17 +2623,18 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
 
 bool  OTPMotionPl::testCol(bool isHuman, bool useConf)
 {
+    bool ret = true;
     if (isHuman)
     {
         if (useConf)
         {
             shared_ptr<Configuration> q(m_Human->getCurrentPos());
             q->setAsNotTested();
-            return q->isInCollision();
+            ret = q->isInCollision();
         }
         else
         {
-            return m_Human->isInCollisionWithOthersAndEnv();
+            ret = m_Human->isInCollisionWithOthersAndEnv();
         }
     }
     else
@@ -2640,14 +2643,16 @@ bool  OTPMotionPl::testCol(bool isHuman, bool useConf)
         {
             shared_ptr<Configuration> q(_Robot->getCurrentPos());
             q->setAsNotTested();
-            return q->isInCollision();
+            ret = q->isInCollision();
         }
         else
         {
 
-            return _Robot->isInCollision();
+            ret = _Robot->isInCollision();
         }
     }
+
+    return ret;
 }
 
 void OTPMotionPl::saveInitConf()
