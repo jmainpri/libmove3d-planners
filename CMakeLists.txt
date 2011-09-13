@@ -142,8 +142,8 @@ Move3DMPLIB_flag(GRASP_PLANNING "Compilation with module Manipulation Planner" O
 Move3DMPLIB_flag(MULTILOCALPATH "Compilation with module Multilocalpath" ON)
 Move3DMPLIB_flag(MULTIGRAPH "Compilation with module Multi-Graph" ON)
 
-Move3DMPLIB_flag(USE_GBM "Compilation with module Multilocalpath" ON)
-Move3DMPLIB_flag(USE_GSL "Compilation with module Hir-planner" ON)
+Move3DMPLIB_flag(USE_GBM "Compilation with module GBM" ON)
+Move3DMPLIB_flag(USE_GSL "Compilation with module Hri-planner" ON)
 
 Move3DMPLIB_flag(HRI_COSTSPACE "With the hri work" ON)
 Move3DMPLIB_flag(HRI_PLANNER "With the hri work done in BioMove3D" ON USE_GSL)
@@ -231,10 +231,12 @@ ELSE()
 ENDIF()
 
 ### libhri dependency
-PKG_CHECK_MODULES(LIBHRI REQUIRED libhri)
-INCLUDE_DIRECTORIES(${LIBHRI_INCLUDE_DIRS})
-LINK_DIRECTORIES( ${LIBHRI_LIBRARY_DIRS} )
-SET(LIBS ${LIBS} ${LIBHRI_LIBRARIES})
+IF(HRI_PLANNER)
+  PKG_CHECK_MODULES(LIBHRI REQUIRED libhri)
+  INCLUDE_DIRECTORIES(${LIBHRI_INCLUDE_DIRS})
+  LINK_DIRECTORIES( ${LIBHRI_LIBRARY_DIRS} )
+  SET(LIBS ${LIBS} ${LIBHRI_LIBRARIES})
+ENDIF()
 
 #-------------- Eigen ----------------------------------------------------------
 
@@ -264,12 +266,12 @@ SET(LIBS ${LIBS} ${Boost_LIBRARIES})
 ADD_DEFINITIONS(-pthread)
 
 #-------------- GBM ------------------------------------------------------------
-IF(MULTILOCALPATH)
+IF(USE_GBM)
 FIND_PACKAGE(GBM REQUIRED)
 INCLUDE_directories(${GBM_INCLUDE_DIR})
   SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GBM_INCLUDE_DIR})
 SET(LIBS ${LIBS} ${GBM_LIBRARIES})
-ENDIF(MULTILOCALPATH)
+ENDIF(USE_GBM)
 
 #-------------- SOFTMOTION -----------------------------------------------------
 IF(MULTILOCALPATH)
