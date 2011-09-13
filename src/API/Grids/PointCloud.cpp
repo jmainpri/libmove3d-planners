@@ -128,7 +128,7 @@ void PointCloud::drawOnePoint(bool withTransform, const Eigen::Transform3d& t, i
   
   Eigen::Vector3d point = m_AllPoints[i];
   
-  if (withTransform = true) 
+  if (withTransform == true) 
   {
      point = t * point;
   }
