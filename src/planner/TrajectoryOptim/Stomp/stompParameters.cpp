@@ -36,6 +36,7 @@
 
 #include "stompParameters.hpp"
 
+#include "../p3d/env.hpp"
 #include "Planner-pkg.h"
 
 namespace stomp_motion_planner

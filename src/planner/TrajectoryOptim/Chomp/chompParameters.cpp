@@ -36,6 +36,7 @@
 
 #include "chompParameters.hpp"
 
+#include "../p3d/env.hpp"
 #include "Planner-pkg.h"
 
 //namespace chomp

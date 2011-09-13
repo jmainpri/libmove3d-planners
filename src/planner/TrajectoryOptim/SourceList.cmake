@@ -3,7 +3,9 @@ SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME}/TrajectoryOptim)
 
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})
 
+IF(MULTILOCALPATH)
 BM3D_SRC_SUBDIR_PROCESS(trajectoryOptim.cpp)
+ENDIF()
 
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Classic/SourceList.cmake)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Chomp/SourceList.cmake)

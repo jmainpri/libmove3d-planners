@@ -16,6 +16,8 @@
 #include "planner/Greedy/CollisionSpace.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
+#include "API/project.hpp"
+#include "planner/cost_space.hpp"
 
 #include "API/Grids/gridsAPI.hpp"
 
@@ -684,6 +686,7 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
   }
 }
 
+#ifdef HRI_COSTSPACE
 void drawSlice()
 {
     Robot* rob = global_Project->getActiveScene()->getRobotByNameContaining("PR2");
@@ -721,4 +724,4 @@ void drawSlice()
     }
     human->setAndUpdate(*q_cur);
 }
-
+#endif
