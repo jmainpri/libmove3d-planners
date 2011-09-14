@@ -18,19 +18,7 @@
 
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6.2)
 
-PROJECT (Move3DMPLIB C CXX)
-
-#Default mode is Debug ---------------------------------------------------------
-IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE Debug CACHE STRING
-      "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-      FORCE)
-ENDIF(NOT CMAKE_BUILD_TYPE)
-
-IF(APPLE)
-    ADD_DEFINITIONS(-DMACOSX)
-ENDIF(APPLE)
-
+PROJECT (libmove3d-motionplanner C CXX)
 	
 # Set the project version ------------------------------------------------------
 
@@ -128,9 +116,7 @@ ENDMACRO(Move3DMPLIB_CheckCompilationFlags)
 # ------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
-Move3DMPLIB_flag(GENERATE_MPLIB "Generate the lib for mhp and spark" ON)
-
-Move3DMPLIB_flag(QT_LIBRARY "Sets QtLibrary compiling mode" OFF)
+#Move3DMPLIB_flag(QT_LIBRARY "Sets QtLibrary compiling mode" OFF)
 
 Move3DMPLIB_flag(P3D_CONSTRAINTS "Compilation with module Constraints" ON)
 Move3DMPLIB_flag(P3D_COLLISION_CHECKING "Compilation with module Collision Checking" ON)
@@ -158,22 +144,31 @@ Move3DMPLIB_CheckCompilationFlags()
 #-------------------------------------------------------------------------------
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/script/CMake")
 
-IF(NOT GENERATE_MPLIB)
-	SET(QT_LIBRARY)
-	MESSAGE("WARNING HAVE YOU SET QT_LIBRARY ON!!!")
-ENDIF()
+#IF(NOT DISABLE_QT)
+#	SET(QT_LIBRARY)
+#	MESSAGE("WARNING HAVE YOU SET QT_LIBRARY ON!!!")
+#ENDIF()
 
 #-------------- Qt Library -----------------------------------------------------
-IF(QT_LIBRARY)
-  FIND_PACKAGE(Qt4 REQUIRED)
+FIND_PACKAGE(Qt4) #Qt4 is not required. If not found, set QT_LIBRARY to OFF.
+
+IF(QT_INCLUDE_DIR)
+  MESSAGE("I've found Qt4 libraries. I will compile libmove3d-motionplanner with it.")
+  SET(QT_LIBRARY ON CACHE BOOL "" FORCE)
   INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR})
   SET(Move3DMPLIB_COMPILATION_INCLUDES ${Move3DMPLIB_COMPILATION_INCLUDES} ${QT_INCLUDE_DIR})
   IF(QT_GL)
-    SET(QT_USE_QTOPENGL TRUE)
+	SET(QT_USE_QTOPENGL TRUE)
   ENDIF(QT_GL)
   INCLUDE(${QT_USE_FILE})
   SET(LIBS ${LIBS} ${QT_LIBRARIES})
-ENDIF(QT_LIBRARY)
+ELSE()
+  MESSAGE("I've not found Qt4 libraries. I won't compile libmove3d-motionplanner with support for Qt.")
+  SET(QT_LIBRARY OFF CACHE BOOL "" FORCE)
+ENDIF()
+
+
+#-------------- X11 Library -----------------------------------------------------
 FIND_PACKAGE(X11 REQUIRED)
 INCLUDE_directories(${X11_INCLUDE_DIR})
 SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${X11_INCLUDE_DIR})
@@ -211,7 +206,7 @@ ENDIF(APPLE)
 #-------------- Move3D ---------------------------------------------------------
 FIND_PACKAGE (PkgConfig REQUIRED)
 
-IF(GENERATE_MPLIB)
+IF(NOT QT_LIBRARY)
   MESSAGE("IMPORTANT : ----- linking against ----> libmove3d ")
   PKG_CHECK_MODULES(MOVE3D REQUIRED libmove3d)
   INCLUDE_DIRECTORIES(${MOVE3D_INCLUDE_DIRS})
@@ -244,23 +239,10 @@ FIND_PACKAGE(EIGEN REQUIRED)
 INCLUDE_directories(${Eigen_INCLUDE_DIR})
 SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${Eigen_INCLUDE_DIR})
 
-#-------------- Robotpim -------------------------------------------------------
-
-#  FIND_PACKAGE(ROBOPTIM REQUIRED)
-#  INCLUDE_directories(${ROBOPTIM_INCLUDE_DIR})
-#  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${ROBOPTIM_INCLUDE_DIR})
-#  SET(LIBS ${LIBS} ${ROBOPTIM_LIBRARIES})
-
 #-------------- Boost ----------------------------------------------------------
 
 # boost is used e.g. for managing the cost functions (T-RRT).
-#  FIND_PACKAGE(Boost REQUIRED)
-#  INCLUDE_directories(${BOOST_INCLUDE_DIR})
-#  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${BOOST_INCLUDE_DIR})
-
-# boost is used e.g. for managing the cost functions (T-RRT).
 FIND_PACKAGE(Boost REQUIRED COMPONENTS thread)
-#INCLUDE_directories(/opt/local/include/)        
 SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${BOOST_INCLUDE_DIRS})
 SET(LIBS ${LIBS} ${Boost_LIBRARIES})
 ADD_DEFINITIONS(-pthread)
@@ -283,7 +265,6 @@ ENDIF(MULTILOCALPATH)
 
 #------------------- PKG_CONFIG ---------------------------
 #----------------------------------------------------------
-#message(${Move3DMPLIB_CompilationFlags})
 
 STRING(REPLACE ";" " -D" Move3DMPLIB_CompilationFlags "-D${Move3DMPLIB_CompilationFlags}")
 STRING(REPLACE ";" " -I" Move3DMPLIB_Compilation_includes "-I${INCLUDE_DIRS}")
@@ -339,14 +320,13 @@ MACRO(BM3D_QT_GENERATE_UI_HEADERS)
 ENDMACRO(BM3D_QT_GENERATE_UI_HEADERS)
 
 FOREACH(srcDir ${Move3DMPLIB_SOURCE_DIRECTORIES})
-  INCLUDE(${Move3DMPLIB_SOURCE_DIR}/${srcDir}/SourceList.cmake)
+  INCLUDE(${PROJECT_SOURCE_DIR}/${srcDir}/SourceList.cmake)
 ENDFOREACH(srcDir)
 
 #-------------------------------------------------------------------------------
 # Directories to include 
 #-------------------------------------------------------------------------------
-BM3D_INC_DIR_PROCESS(${Move3DMPLIB_SOURCE_DIR})
-BM3D_INC_DIR_PROCESS(${Move3DMPLIB_SOURCE_DIR})
+BM3D_INC_DIR_PROCESS(${PROJECT_SOURCE_DIR})
 
 #MESSAGE("Move3DMPLIB_src : ${Move3DMPLIB_src}") #Uncomment to print the included file by Cmake
 #MESSAGE("Move3DMPLIB_inc : ${Move3DMPLIB_inc}") #Uncomment to print the included file by Cmake
@@ -412,10 +392,6 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 
 SET(LIBRARY_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/lib/$ENV{HOSTTYPE}")
 
-# SET(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/bin/$ENV{HOSTTYPE}")
-# ADD_EXECUTABLE(move3d ${Move3DMPLIB_src} ${Move3DMPLIB_QT_MOC} ${Move3DMPLIB_QT_UI_HEADERS} ${Move3DMPLIB_inc})
-# TARGET_LINK_LIBRARIES(move3d ${LIBS} m)
-
 #Default Flags
 ADD_DEFINITIONS(-DKCD_MOVE3D -DPRINT_ERROR -DPRINT_INFO)
 
@@ -425,23 +401,13 @@ ELSEIF(${CMAKE_BUILD_TYPE} MATCHES "Release")
   ADD_DEFINITIONS(-O2 -Wall -Wno-unknown-pragmas)
 ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
-#IF(ADD_EXECUTABLE(move3d ${BioMove3D_SOURCE_DIR}/move3d/move3d.c ${Move3DMPLIB_inc})
-#TARGET_LINK_LIBRARIES(move3d Move3DMPLIB ${LIBS} m)
-
-
-
-IF(GENERATE_MPLIB)
-
-ADD_LIBRARY(move3d-motionplanner SHARED ${Move3DMPLIB_src} ${Move3DMPLIB_inc})
-TARGET_LINK_LIBRARIES(move3d-motionplanner ${LIBS} m)
-
+IF(QT_LIBRARY)
+	ADD_LIBRARY(move3d-motionplanner SHARED ${Move3DMPLIB_src} ${Move3DMPLIB_QT_MOC} ${Move3DMPLIB_QT_UI_HEADERS} ${Move3DMPLIB_inc})
 ELSE()
-
-ADD_LIBRARY(Move3D-motionPlanner SHARED ${Move3DMPLIB_src} ${Move3DMPLIB_QT_MOC} ${Move3DMPLIB_QT_UI_HEADERS} ${Move3DMPLIB_inc})
-TARGET_LINK_LIBRARIES(Move3D-motionPlanner ${LIBS} m)
-
+	ADD_LIBRARY(move3d-motionplanner SHARED ${Move3DMPLIB_src} ${Move3DMPLIB_inc})
 ENDIF()
 
+TARGET_LINK_LIBRARIES(move3d-motionplanner ${LIBS})
 
 # ------------------------------------------------------------------------------
 # Intallation
@@ -450,20 +416,12 @@ IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   SET(CMAKE_INSTALL_PREFIX "${Move3DMPLIB_BINARY_DIR}/install" CACHE PATH "Move3DMPLIB install prefix" FORCE)
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
-IF(GENERATE_MPLIB)
-
 INSTALL(TARGETS move3d-motionplanner
-        RUNTIME DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE CONFIGURATIONS ${CMAKE_BUILD_TYPE}
-        LIBRARY DESTINATION lib PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ CONFIGURATIONS ${CMAKE_BUILD_TYPE})
+        RUNTIME DESTINATION bin CONFIGURATIONS ${CMAKE_BUILD_TYPE}
+        LIBRARY DESTINATION lib CONFIGURATIONS ${CMAKE_BUILD_TYPE})
 	
-INSTALL(DIRECTORY ${Move3DMPLIB_SOURCE_DIRECTORIES} DESTINATION include/libmove3d-motionplanner FILES_MATCHING REGEX "\\.[h|hpp]")
+INSTALL(
+	DIRECTORY ${Move3DMPLIB_SOURCE_DIRECTORIES}/ 
+	DESTINATION include/libmove3d-motionplanner 
+	FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 
-ELSE()
-
-INSTALL(TARGETS Move3D-motionPlanner
-        RUNTIME DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE CONFIGURATIONS ${CMAKE_BUILD_TYPE}
-        LIBRARY DESTINATION lib PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ CONFIGURATIONS ${CMAKE_BUILD_TYPE})
-	
-INSTALL(DIRECTORY ${Move3DMPLIB_SOURCE_DIRECTORIES} DESTINATION include/Move3D-motionPlanner FILES_MATCHING REGEX "\\.[h|hpp]")
-
-ENDIF() 
