@@ -7,7 +7,7 @@ planEnvironment.cpp
 cost_space.cpp
 )
 
-IF(MULTI_LOCALPATH AND LIGHT_PLANNER)
+IF(MULTILOCALPATH AND LIGHT_PLANNER)
 BM3D_SRC_SUBDIR_PROCESS(
 replanning.cpp
 )
