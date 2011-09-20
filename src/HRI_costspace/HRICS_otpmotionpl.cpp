@@ -86,28 +86,26 @@ void OTPMotionPl::initAll()
     m_EnvSize[0] = XYZ_ENV->box.x1; m_EnvSize[1] = XYZ_ENV->box.x2;
     m_EnvSize[2] = XYZ_ENV->box.y1; m_EnvSize[3] = XYZ_ENV->box.y2;
 
-//    m_2DGrid = new EnvGrid(ENV.getDouble(Env::PlanCellSize),m_EnvSize,false);
-
     m_2DGrid = new EnvGrid(PlanEnv->getDouble(PlanParam::env_Cellsize),m_EnvSize,false,_Robot,m_Human);
-//    m_2DGrid->setRobot(_Robot);
-//    m_2DGrid->setHuman(m_Human);
 
+    // initDistance
+    vector<Robot*> m_Humans;
+    m_Humans.push_back(m_Human);
+    m_DistanceSpace = new Distance(_Robot,m_Humans);
 
-	// initDistance
-	vector<Robot*> m_Humans;
-	m_Humans.push_back(m_Human);
-	m_DistanceSpace = new Distance(_Robot,m_Humans);
+    if (_Robot)
+    {
+            cout << "Robot " << _Robot->getName() << endl;
+            cout << "Robot get struct " << _Robot->getRobotStruct() << endl;
+    }
 
-	if (_Robot)
-	{
-		cout << "Robot " << _Robot->getName() << endl;
-		cout << "Robot get struct " << _Robot->getRobotStruct() << endl;
-	}
+    m_DistanceSpace->parseHumans();
 
-	m_DistanceSpace->parseHumans();
+    // initVisibility
+    m_VisibilitySpace = new Visibility(m_Human);
 
-	// initVisibility
-	m_VisibilitySpace = new Visibility(m_Human);
+    //initReachability
+    setReachability(new Natural());
 
     // init pos
     shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
@@ -135,6 +133,8 @@ void OTPMotionPl::initAll()
     {
         cout << "No simpleChair, human should not be sitting" << endl;
     }
+
+
 }
 
 void OTPMotionPl::initHumanCenteredGrid(double cellsize)

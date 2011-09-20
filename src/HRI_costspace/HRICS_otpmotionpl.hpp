@@ -101,8 +101,8 @@ namespace HRICS
 
         ~OTPMotionPl();
 
-      Robot* getHuman() { return m_Human; }
-      Robot* getRobot() { return _Robot; }
+        Robot* getHuman() { return m_Human; }
+        Robot* getRobot() { return _Robot; }
 
         EnvGrid* getPlanGrid() { return m_2DGrid; }
 
