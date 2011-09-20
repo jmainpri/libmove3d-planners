@@ -1560,24 +1560,8 @@ void Natural::setRobotColorFromConfiguration(bool toSet)
     }
 }
 
-void Natural::initRobotBaseGrid(std::vector<double> box)
-{
-    vector<double>  envSize(4);
 
 
-    envSize[0] = box[0]; envSize[1] =  box[1];
-    envSize[2] = box[2]; envSize[3] = box[3];
-
-    m_PlanBaseGrid = new RobotBaseGrid(0.1,envSize, this);
-    API_activeRobotGrid = m_PlanBaseGrid;
-//    m_Grid = new NaturalGrid(0.1,envSize,this);
-}
-
-
-vector< pair<double,Vector3d> > Natural::getBaseGridPoint()
-{
-    return m_PlanBaseGrid->getCells();
-}
 
 /*!
  *

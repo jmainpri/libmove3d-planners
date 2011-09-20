@@ -303,10 +303,6 @@ void g3d_draw_grids()
     HRICS_activeNatu->printBodyPos();
 	}
 
-	if( API_activeRobotGrid && ENV.getBool(Env::DrawRobotBaseGridCosts) )
-	{
-		API_activeRobotGrid->draw();
-	}
 #endif
   
   if( global_CollisionSpace && ENV.getBool(Env::drawVectorField) ) 

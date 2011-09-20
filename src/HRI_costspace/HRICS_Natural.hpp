@@ -17,7 +17,6 @@
 
 #include "HRI_costspace/Grid/HRICS_TwoDGrid.hpp"
 
-#include "HRI_costspace/Grid/HRICS_RobotBaseGrid.hpp"
 
 #ifdef HRI_PLANNER
 #include <hri/hri.h>
@@ -28,7 +27,6 @@
  */
 namespace HRICS
 {
-	class RobotBaseGrid;
 	/**
 	 * Natural Motion and Arm Confort
 	 */
@@ -49,7 +47,6 @@ namespace HRICS
 		void initNaturalHerakles();
 		void initNaturalOldDude();
 		void initHumanBaseGrid(std::vector<double> box);
-		void initRobotBaseGrid(std::vector<double> box);
 		
 		void printBodyPos();
     void setRobotToConfortPosture();
@@ -120,10 +117,6 @@ namespace HRICS
 		std::vector< std::pair<double,Eigen::Vector3d> > getReachableWSPoint();
 	
 
-		/**
-		 * get points of the basegridgrid with their associeted and computed costs
-		 */
-		std::vector< std::pair<double,Eigen::Vector3d> > getBaseGridPoint();
 
 		
 		/**
@@ -133,7 +126,6 @@ namespace HRICS
 		bool IsHuman() { return m_IsHuman; }
 		NaturalGrid* getGrid() { return m_Grid; }
 		Robot* getRobot() { return m_Robot; }
-		RobotBaseGrid* getRobotBaseGrid() { return m_PlanBaseGrid; }
 		
 		
 		/**
@@ -156,7 +148,6 @@ namespace HRICS
 		Robot*              m_Robot;
     
 		NaturalGrid*        m_Grid;
-		RobotBaseGrid*      m_PlanBaseGrid;
 		
 		enum Kinematic 
 		{

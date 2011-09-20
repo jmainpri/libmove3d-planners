@@ -677,7 +677,7 @@ const double HRICS_outerRadius = 1.6;
 bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d& WSPoint)
 {
 
-	shared_ptr<Configuration> q_cur = _Robot->getCurrentPos(); //store the current configuration
+        /*shared_ptr<Configuration> q_cur = _Robot->getCurrentPos(); //store the current configuration
 	const int plantformIndexDof = 6;
 
 	vector< pair<double,Vector3d > > PossiblePoints = m_ReachableSpace->getBaseGridPoint();
@@ -719,10 +719,10 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 	}
 
 	_Robot->setAndUpdate(*q_cur);
-	return false;
+        return false;*/
 
 
-	/*shared_ptr<Configuration> q_cur = _Robot->getCurrentPos(); //store the current configuration
+        shared_ptr<Configuration> q_cur = _Robot->getCurrentPos(); //store the current configuration
 	
 	unsigned int iterMax = 20;
 	
@@ -735,38 +735,11 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 	{
 		double radius;
 		double rotationAngle;
-		if (!ENV.getBool(Env::FastComputingRobotBase))
-		{
 
+                radI = radMaxI;
+                rotationAngle = 4;
+                radius = HRICS_outerRadius;
 
-			if (radI ==  0) {radius = HRICS_innerRadius;}
-			else
-			{
-				radius = HRICS_innerRadius + (HRICS_outerRadius-HRICS_innerRadius) * radI / (radMaxI - 1.0);
-			}
-
-			if (angI ==  0) {rotationAngle = 100.0; angI++;}
-			else
-			{
-				rotationAngle = std::pow(2,(double)(5-angI));
-				angI++;
-			}
-
-			if (angI >= angMaxI)
-			{
-				radI++;
-				angI = 0;
-			}
-
-			if (radI+angI == 0){iterMax = 1;}
-			else {iterMax = 10;}
-		}
-		else
-		{
-			radI = radMaxI;
-			rotationAngle = 4;
-			radius = HRICS_outerRadius;
-		}
 		for (unsigned int i=0; i<iterMax; i++)
 		{
 //			radius = p3d_random(HRICS_innerRadius,HRICS_outerRadius);
@@ -831,7 +804,7 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 	}
 	deactivateOnlyBaseCollision();
   _Robot->setAndUpdate(*q_cur);
-    return false;*/
+    return false;
 }
 
 void Workspace::drawCurrentOTP()

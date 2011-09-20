@@ -963,7 +963,7 @@ double EnvCell::getCost()
             }
 
 
-              int type =  ENV.getInt(Env::typeRobotBaseGrid);
+              int type =  0; //ENV.getInt(Env::typeRobotBaseGrid);
               if (type == 0)
               {
                   double a = ENV.getDouble(Env::optimalDistFactor);
