@@ -6,7 +6,7 @@
  *  BioMove3D
  *
  *  Created by Mamoun Gharbi on 20/04/11.
- *  Copyright 2009 magharbi@laas.fr All rights reserved.
+ *  Copyright 2011 magharbi@laas.fr All rights reserved.
  *
  */
 #include "API/planningAPI.hpp"
@@ -101,77 +101,70 @@ namespace HRICS
 
         ~OTPMotionPl();
 
+        //getters and setters
         Robot* getHuman() { return m_Human; }
         Robot* getRobot() { return _Robot; }
 
         EnvGrid* getPlanGrid() { return m_2DGrid; }
+        std::vector<Eigen::Vector3d> getOTPList() { return m_OTPList; }
+        int getNbConf(){ return m_confList.size(); }
+
+        void clearOTPList() { m_OTPList.clear(); }
 
         /**
-          * use solveAStar to find a trajectory between initial and final conf of each robot
-          */
-        bool computeAStarIn2DGrid();
-
-        /**
-          * find a path in m_2DGrid between start and goal position
-          * start : the position for robot start
-          * goal : the final position of the robot
-          * isHuman : true if the robot is the Human false otherwise.
-          */
-        void solveAStar(EnvState* start, EnvState* goal, bool isHuman);
-
-        /**
-          * Draw the computed path
+          * Draws the 3D path as a yellow line for robot and green one for human
           */
         void draw2dPath();
 
         /**
-          * compute base placement and OTP only
+          * Change Human (in case of multiple human in the scenne)
           */
-        bool simpleComputeBaseAndOTP();
+        bool changeHumanByName(std::string humanName);
 
-        /**
-          * Compute only the OTP for the human. th is a thershold for changing the OTP
-          */
-        bool OTPonly(int th);
+        //##########################################
+        //functions for changing config list #######
+        //##########################################
 
-        /**
-          * a complete function to compute : robot base placement, PR2 GIK and human OTP
-          */
-        bool computeObjectTransfertPoint();
-
+        //about the robot
         /**
           * Compute only PR2 GIK
           */
         bool ComputePR2Gik();
 
         /**
-          * Find trajectory for either human or robot, and co;puting the distance of this trajectory
+          * set Pr2 to a giving configuration
           */
-        double FindTraj(Eigen::Vector2d startPos, Eigen::Vector2d goalPos, bool isHuman);
-        bool computeUpBodyOpt();
-
-        bool moveToNextPos();
-        void SetPathIndexNull(){ m_pathIndex = -1; }
-
         void initPR2GiveConf();
 
-        bool computeProx(Eigen::Vector3d WSPoint, int proximiti);
-        bool computeHight(Eigen::Vector3d WSPoint, int hight);
-        bool computeAngle(Eigen::Vector3d WSPoint, int angle);
-
-        void addToList();
-        void addToList(Eigen::Vector3d WSPoint);
-        void removeLastFromOTPList() {m_OTPList.pop_back(); }
-        std::vector<Eigen::Vector3d> getOTPList() { return m_OTPList; }
-        void showOTPList();
-
-        void setCurrentOTP(Eigen::Vector3d WSPoint);
-        void clearOTPList() { m_OTPList.clear(); }
+        /**
+          * Compute GIK and place robot base
+          */
         bool placeRobot();
+
+        // about the human
+        /**
+          * Compute human GIK
+          */
         void placeHuman();
 
+
+        // about the OTP list (of point to compute GIK)
+        /**
+          * Adding a 3D point to the OTP list This function is used when loading a set of OTPs in order to test them
+          */
+        void addToList(Eigen::Vector3d WSPoint);
+
+        /**
+          * Change the current OTP. Used when choosing new configurations
+          */
+        void setCurrentOTP(Eigen::Vector3d WSPoint);
+
+        /**
+          * draw the OTP list
+          */
         void drawOTPList(bool value);
 
+        //about the configuration to store/stored
         /**
           * Adding the actual configuration to m_configList
           */
@@ -191,11 +184,6 @@ namespace HRICS
           * save what's in m_configList to the filename file.
           */
         void saveToXml(std::string filename);
-
-        /**
-          * convert Achile conf to herakles conf
-          */
-        configPt convertAchileConfToHerakles(configPt q_humAchile);
 
         /**
           * load and return configs stored in filename
@@ -222,6 +210,33 @@ namespace HRICS
           */
         std::vector<ConfigHR> getConfList();
 
+        // after loading confs, computing distances
+        /**
+          * return the minimal and maximal dist between human and robot in the loaded configuration
+          */
+        std::pair<double,double> computeHumanRobotDist();
+
+        /**
+          * return  distance between human and robot
+          */
+        double getHumanRobotDist();
+
+        //##########################################
+        //Tools for Computing OTP ##################
+        //##########################################
+
+        //initialisation
+        /**
+          * init the plan grid with the costs and the distances
+          */
+        void initGrid();
+
+        /**
+          * called for initialisation
+          */
+        void initAll();
+
+        //Place from a stored config
         /**
           * chamge robot configuration to the one with the specified id in the correct list
           * return a pair of the resulting human and robot configuration
@@ -233,24 +248,24 @@ namespace HRICS
           * return a pair of the resulting human and robot configuration
           */
         std::pair<std::tr1::shared_ptr<Configuration>, std::tr1::shared_ptr<Configuration> > setRobotsToConf(int id, bool isStanding, double x, double y, double Rz);
-        double computeConfigCost(configPt q_rob_initial,
-                                 configPt q_rob_final,
-                                 configPt q_hum_initial,
-                                 configPt q_hum_final);
 
-        double testComputeConfigCost();
+        // saving and reloading a configuration
+        /**
+          * save the actual robot and human conf to reload it afterwards
+          */
+        void saveInitConf();
 
         /**
-          * sort configuration stored by confort cost
+          * reload the saved human and robot conf
           */
-        void sortConfigList(double nbNode, bool isStanding, bool isSlice);
+        void loadInitConf(bool reloadHuman, bool relaodRobot);
 
-        void initHumanCenteredGrid(double cellsize);
+        //actual algorithm
 
         /**
-          * compute OTP using newComputeOTP() n time, the returning the average
+          * return the randomly choosed x, y and Rz. the random can be biased or not. the choice is done in the GUI
           */
-        double multipliComputeOtp(int n);
+        Eigen::Vector3d getRandomPoints(double id);
 
         /**
           * Compute the OTP using the last algorithme
@@ -268,55 +283,63 @@ namespace HRICS
           */
         OutputConf findBestPosForHumanSitConf(double objectNecessity);
 
+        //other
+        /**
+          * sort configuration stored by confort cost
+          */
+        void sortConfigList(double nbNode, bool isStanding, bool isSlice);
+
         /**
           * testing collision for human and robot
           */
         bool testCol(bool isHuman, bool useConf);
 
         /**
-          * save the actual robot and human conf to reload it afterwards
+          * Put human to a standing position
+          * the standing postition is right in from of him if there is no obstacle
+          * if obstacles is detected, the human push bach the chair and stand up without moving.
           */
-        void saveInitConf();
+        bool standUp();
 
-        /**
-          * reload the saved human and robot conf
-          */
-        void loadInitConf(bool reloadHuman, bool relaodRobot);
 
+        // Showing the configurations
         /**
           * show a computed conf from it's number in the list
           */
         double showConf(unsigned int i);
 
         /**
-        * get the number of conf computed
-        */
-        int getNbConf(){ return confList.size(); }
-
-        /**
-        * show the best co;puted conf
+        * show the best computed conf
         */
         OutputConf showBestConf();
 
         /**
-          * init the plan grid with the costs and the distances
+        * show the best computed conf for the robot only
+        */
+        void showBestConfRobOnly();
+
+
+        //creating trajectories
+        /**
+          * create a trajectory from a configuration
           */
-        void initGrid();
+        void createTrajectoryFromOutputConf(OutputConf conf);
 
         /**
-          * get distance from human or robot of a cell.
+          * generate a trajectory for the Arm
           */
-        double getDistFromCell(int x, int y, bool isHuman);
+        bool computeArmMotion(double* qInit, double* qGoal, API::Trajectory& traj);
 
-        /**
-          * get rotation from human or robot of a cell.
-          */
-        double getrotFromCell(int x, int y);
-
+        // results functions
         /**
           * save the costs to a file
           */
         void saveCostsTofile(double cost, double randomCost);
+
+        /**
+          * save all the costs computed in multipli conpute OTP in a file
+          */
+        void saveAllCostsToFile();
 
         /**
           * save the costs to a file (take string as entry)
@@ -328,49 +351,38 @@ namespace HRICS
           */
         void clearCostsfile();
 
+        /**
+          * compute OTP using newComputeOTP() n time, the returning the average
+          */
+        double multipliComputeOtp(int n);
+
+        //##########################################
+        //Tools for Using from as lib ##############
+        //##########################################
+
+        //about cells
+        /**
+          * get distance from human or robot of a cell.
+          */
+        double getDistFromCell(int x, int y, bool isHuman);
 
         /**
-          * create a trajectory from a configuration
+          * get rotation from human or robot of a cell.
           */
-        void createTrajectoryFromOutputConf(OutputConf conf);
+        double getrotFromCell(int x, int y);
 
-        /**
-          * generate a trajectory for the Arm
-          */
-        bool computeArmMotion(double* qInit, double* qGoal, API::Trajectory& traj);
-
-        /**
-          * return the minimal and maximal dist between human and robot in the loaded configuration
-          */
-        std::pair<double,double> computeHumanRobotDist();
-
-        /**
-          * return  distance between human and robot
-          */
-        double getHumanRobotDist();
-
-        /**
-          * return the randomly choosed x, y and Rz
-          */
-        Eigen::Vector3d getRandomPoints(double id);
-
+        //about values
         /**
           * write cost of current configList
           */
         void dumpCosts();
 
         /**
-          * Put human to a standing position
-          * the standing postition is right in from of him if there is no obstacle
-          * if obstacles is detected, the human push bach the chair and stand up without moving.
-          */
-        bool standUp();
-
-        /**
           * writing variable
           */
         void dumpVar();
 
+        // using from mhp
         /**
           * setting variables
           */
@@ -386,37 +398,51 @@ namespace HRICS
           */
         bool InitMhpObjectTransfert(std::string humanName);
 
-        /**
-          * Change Human (in case of multiple human in the scenne)
-          */
-        bool changeHumanByName(std::string humanName);
-
     private:
 
-
-        void initAll();
-
+        /**
+          * the human robot
+          */
         Robot* m_Human;
+
+        /**
+          * The grid used for all the computations
+          */
         EnvGrid* m_2DGrid;
-        EnvGrid* m_2DHumanCenteredGrid;
 
-        std::vector<double> m_EnvSize;
+        /**
+          * robot path to be draw
+          */
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m_2DPath;
-        std::vector<API::TwoDCell*> m_2DCellPath;
 
+        /**
+          * human path to be draw
+          */
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m_2DHumanPath;
-        std::vector<API::TwoDCell*> m_2DHumanCellPath;
 
+        /**
+          * Manipulation planner for robot usage
+          */
         ManipulationPlanner* m_ManipPl;
+
+        /**
+          * Manipulation planner for human usage
+          */
         ManipulationPlanner* m_ManipPlHum;
 
-
+        /**
+          * if the robot path exist
+          */
         bool m_PathExist;
+
+        /**
+          * if the human path exist
+          */
         bool m_HumanPathExist;
-        bool m_noPath;
 
-        unsigned int m_pathIndex;
-
+        /**
+          * the list of OTPs used to create a new config list
+          */
         std::vector<Eigen::Vector3d> m_OTPList;
 
         /**
@@ -442,22 +468,22 @@ namespace HRICS
         /**
           * to save and reload configuration
           */
-        OutputConf savedConf;
+        OutputConf m_savedConf;
 
         /**
           * save different configuration in order to show them afterwards
           */
-        std::vector<OutputConf> confList;
+        std::vector<OutputConf> m_confList;
 
         /**
           * is the human is initially sitting
           */
-        bool isInitSiting;
+        bool m_isInitSiting;
 
         /**
           * vector used for choosing randoms when using slices
           */
-        Eigen::Vector3d sliceVect;
+        Eigen::Vector3d m_sliceVect;
 
         /**
           * is at false if the human cannot stand
@@ -470,14 +496,31 @@ namespace HRICS
         double m_time;
 
         /**
-          * to show or hide text when computing OTP
+          * time to compute sitting OTP
           */
-        bool m_showText;
+        double m_sittingTime;
+
+        /**
+          * the data used in multiplyCompute OTP
+          * 1: totalTime, 2: initGrid time,3: first config time, 4: loop time, 5: cost, 6:nb Iterations, 7:nb Found solutions
+           */
+        std::vector<double> m_multipleData;
 
         /**
           * the chair where the human is sitting
           */
         Robot* m_simpleChair;
+
+        /**
+          * a vector of all the costs computed when computing a bunch of OTPs
+          */
+        std::vector<std::vector<double> > m_multipliComputeCostVector;
+
+        /**
+          * The cost vector
+          */
+        std::vector<double> m_costVector;
+
 
     };
 

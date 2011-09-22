@@ -728,9 +728,7 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
 	
 	activateOnlyBaseCollision();
 	int radI = 0;
-	int angI = 0;
 	int radMaxI = 4;
-	int angMaxI = 5;
 	while (radI < radMaxI)
 	{
 		double radius;

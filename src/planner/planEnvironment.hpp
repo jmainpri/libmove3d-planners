@@ -65,7 +65,8 @@ namespace  PlanParam
         env_drawSlice,
         env_showHumanTraj,
         env_useOldDude,
-        env_isInit
+        env_isInit,
+        env_showText
 	};
 	
 	enum intParameter 
@@ -113,7 +114,11 @@ namespace  PlanParam
         env_objectNessecity,
         env_sittingOffset,
         env_limitRot,
-        env_Cellsize
+        env_Cellsize,
+        env_timeLimitation,
+        env_sitTimeLimitation,
+        env_timeToDump
+
 	};
 	
 	enum stringParameter 

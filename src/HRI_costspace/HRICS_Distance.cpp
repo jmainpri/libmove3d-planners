@@ -621,7 +621,7 @@ double Distance::computeBBDist(p3d_vector3 robot, p3d_vector3 human)
 bool Distance::computeCylinderZone(Vector3d &p1, Vector3d& p2)
 {
 	// First compute the human segment
-	unsigned int ObjIndex;
+        unsigned int ObjIndex = 0;
 	bool noZone = true;
 	
 /*	for(unsigned int i=0; i<_Humans.size(); i++)
