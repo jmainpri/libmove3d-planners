@@ -114,6 +114,11 @@ void Joint::setJointDof(int ithDoF, double value)
 	p3d_jnt_set_dof(m_Joint,ithDoF,value);
 }
 
+bool Joint::isJointDofUser(int ithDoF) const
+{
+  return p3d_jnt_get_dof_is_user(m_Joint,ithDoF);
+}
+
 void Joint::getDofBounds(int ithDoF, double& vmin, double& vmax) const
 {
 	vmin = m_Joint->dof_data[ithDoF].vmin;

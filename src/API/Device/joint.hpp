@@ -77,6 +77,11 @@ public:
 	 * Set the Joint Dof
 	 */
 	void            setJointDof(int ithDoF, double value);
+  
+  /**
+	 * True if Joint Dof is user
+	 */
+	bool            isJointDofUser(int ithDoF) const;
 	
 	/**
 	 * Get Min Max dof

@@ -1386,16 +1386,22 @@ void Trajectory::push_back(shared_ptr<Configuration> q)
 		}
 		else
 		{
-			m_Courbe.push_back(new LocalPath(m_Source,q));
-			m_Target = q;
-			updateRange();
+      if ( !m_Source->equal(*q) ) 
+      {
+        m_Courbe.push_back(new LocalPath(m_Source,q));
+        m_Target = q;
+        updateRange();
+      }
 		}
 	}
 	else
 	{
-		m_Courbe.push_back(new LocalPath(m_Target,q));
-		m_Target = q;
-		updateRange();
+    if ( !m_Target->equal(*q) ) 
+    {
+      m_Courbe.push_back(new LocalPath(m_Target,q));
+      m_Target = q;
+      updateRange();
+    }
 	}
 }
 
@@ -1860,7 +1866,7 @@ void Trajectory::print()
     
     if( nloc-1 >= 0 )
     {
-      mat.row(nloc-1) = m_Courbe.at(nloc-1)->getEnd()->getEigenVector();
+      mat.row(nloc) = m_Courbe.at(nloc-1)->getEnd()->getEigenVector();
     }
     
     cout << mat << endl;

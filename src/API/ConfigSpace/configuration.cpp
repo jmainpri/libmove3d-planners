@@ -18,6 +18,7 @@
 #include "Localpath-pkg.h"
 
 #include "planner/cost_space.hpp"
+#include "planner/Greedy/CollisionSpace.hpp"
 
 using namespace std;
 using namespace tr1;
@@ -87,8 +88,28 @@ Configuration::Configuration(const Configuration& conf) :
     else
     {
         _Configuration = p3d_copy_config(_Robot->getRobotStruct(), conf._Configuration);
-        //            this->initQuaternions();
     }
+}
+
+Configuration& Configuration::operator= (const Configuration& source)
+{
+  _flagInitQuaternions = source._flagInitQuaternions;
+  _CollisionTested = source._CollisionTested;
+  _InCollision = source._InCollision;
+  _CostTested = source._CostTested;
+  _Cost = source._Cost;
+  _Robot = source._Robot;
+  
+  if(_Robot==NULL)
+  {
+    _Configuration = NULL;
+  }
+  else
+  {
+    p3d_copy_config_into(_Robot->getRobotStruct(), source._Configuration, &_Configuration) ;
+  }
+  
+  return *this;
 }
 
 Configuration::~Configuration()
@@ -102,8 +123,6 @@ void Configuration::Clear()
     {
         p3d_destroy_config(_Robot->getRobotStruct(), _Configuration);
     }
-
-//    delete _Robot;
 }
 
 
@@ -325,14 +344,21 @@ bool Configuration::isInCollision()
     {
         this->getRobot()->setAndUpdate(*this);
         _CollisionTested = true;
-        //_InCollision = p3d_col_test();
+        //_InCollision = p3d_col_test();      
+      if( global_CollisionSpace )
+      {
+        _InCollision = global_CollisionSpace->isRobotColliding();
+        
+      }
+      else
+      {
         _InCollision = p3d_col_test_robot(_Robot->getRobotStruct(), JUST_BOOL);
+      }
 //        shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
 //        cout << "6" << " : "<<_Configuration[6] << endl;
 //        cout << "7" << " : "<<_Configuration[7] << endl;
 //        cout << "---------" << endl;
     }
-
 
 		return _InCollision;
 }

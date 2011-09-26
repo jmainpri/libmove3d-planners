@@ -51,6 +51,11 @@ public:
 	 * Destructeur de la classe
 	 */
 	~Configuration();
+  
+  /**
+	 * Asignation
+	 */
+  Configuration & operator= (const Configuration & other);
 	
 	/**
 	 * Acces the configuration

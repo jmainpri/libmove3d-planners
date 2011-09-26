@@ -261,7 +261,6 @@ bool LocalPath::isValid()
 		{
 			if (*_Begin != *_End)
 			{
-				
 				_Valid = !p3d_unvalid_localpath_test(_Robot->getRobotStruct(),
 						this->getLocalpathStruct(), &_NbColTest);
         //cout << "_NbColTest : " << _NbColTest << endl;
