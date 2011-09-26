@@ -54,9 +54,11 @@ void StompParameters::init()
 {
   planning_time_limit_ = 1.0;
   max_iterations_ = 500;
-  max_iterations_after_collision_free_ = 100;
+  //max_iterations_after_collision_free_ = 100;
+  max_iterations_after_collision_free_ = 200;
   
-  smoothness_cost_weight_ = 0.1;
+  //smoothness_cost_weight_ = 0.1;
+  smoothness_cost_weight_ = 0.000001;
   obstacle_cost_weight_ = 1.0;
   constraint_cost_weight_ = 0.0;
   torque_cost_weight_ = 0.0;

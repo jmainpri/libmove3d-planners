@@ -21,6 +21,7 @@ struct ChompJoint
 {
   const Joint* move3d_joint_;                                 /**< Pointer to the Move3D joint in the tree */
   int move3d_joint_index_;                                    /**< Index for use in a Move3D joint array */
+  int move3d_dof_index_;                                       /**< Index in the configuration */
   int chomp_joint_index_;                                     /**< Joint index for CHOMP */
   std::string joint_name_;                                    /**< Name of the joint */
   std::string link_name_;                                     /**< Name of the corresponding link (from planning.yaml) */

@@ -87,7 +87,7 @@ namespace stomp_motion_planner
     noise_generators_.clear();
     for (int d=0; d<num_dimensions_; ++d)
     {
-      cout << "control_costs_[" << d << "] = " << control_costs_[d] << endl;
+      //cout << "control_costs_[" << d << "] = " << control_costs_[d] << endl;
       inv_control_costs_.push_back(control_costs_[d].inverse());
       MultivariateGaussian mvg(VectorXd::Zero(num_parameters_[d]), inv_control_costs_[d]);
       noise_generators_.push_back(mvg);

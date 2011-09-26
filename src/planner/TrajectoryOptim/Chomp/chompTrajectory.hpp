@@ -44,6 +44,7 @@
 #include "API/Trajectory/trajectory.hpp"
 
 #include "chompUtils.hpp"
+#include "chompPlanningGroup.hpp"
 
 #include <vector>
 //#include <kdl/jntarray.hpp>
@@ -62,7 +63,7 @@ public:
   /**
    * \brief Constructs a trajectory for a given robot model, trajectory duration, and discretization
    */
-  ChompTrajectory(const API::Trajectory& T,int diff_rule_length, const std::vector<int>& active_p3d_joints);
+  ChompTrajectory(const API::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_);
   
   /**
    * \brief Constructs a trajectory for a given robot model, number of trajectory points, and discretization

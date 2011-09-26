@@ -167,6 +167,7 @@ private:
   std::vector<std::vector<Eigen::Vector3d> >  collision_point_vel_eigen_;
   std::vector<std::vector<Eigen::Vector3d> >  collision_point_acc_eigen_;
 
+  Eigen::VectorXd general_cost_potential_;
   
   Eigen::MatrixXd collision_point_potential_;
   Eigen::MatrixXd collision_point_vel_mag_;
@@ -229,7 +230,8 @@ private:
   void calculateSmoothnessIncrements();
   void calculateCollisionIncrements();
   void calculateTotalIncrements();
-  void getFrames(int segment, const Eigen::VectorXd& joint_array);
+  void getFrames(int segment, const Eigen::VectorXd& joint_array, Configuration& q);
+  bool getConfigObstacleCost(int segment, int dof, Configuration& q);
   bool performForwardKinematics(); /**< Return true if collision free */
   void addIncrementsToTrajectory();
   void updateFullTrajectory();

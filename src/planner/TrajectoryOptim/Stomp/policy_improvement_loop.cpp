@@ -44,6 +44,8 @@
 //#include "param_server.hpp"
 //#include <boost/filesystem.hpp>
 
+#include "planner/planEnvironment.hpp"
+
 using namespace std;
 
 namespace stomp_motion_planner
@@ -58,34 +60,7 @@ namespace stomp_motion_planner
   PolicyImprovementLoop::~PolicyImprovementLoop()
   {
   }
-  
-  /*
-   bool PolicyImprovementLoop::initializeAndRunTaskByName(ros::NodeHandle& node_handle, std::string& task_name)
-   {
-   // load the task
-   //    TaskManager task_manager;
-   //    assert(task_manager.initialize());
-   
-   boost::shared_ptr<Task> task;
-   assert(task_manager.getTaskByName(task_name, task));
-   
-   // initialize the PI loop
-   assert(initialize(task));
-   
-   int first_trial, last_trial;
-   
-   // first_trial defaults to 1:
-   //node_handle.param("first_trial", first_trial, 1);
-   //assert(stomp_motion_planner::read(node_handle, std::string("first_trial"), first_trial));
-   //    assert(stomp_motion_planner::read(node_handle, std::string("last_trial"), last_trial));
-   
-   //    for (int i=first_trial; i<=last_trial; ++i)
-   //    {
-   //        assert(runSingleIteration(i));
-   //        ros::spinOnce();
-   //    }
-   return true;
-   }*/
+
   
   bool PolicyImprovementLoop::initialize(/*ros::NodeHandle& node_handle,*/ boost::shared_ptr<stomp_motion_planner::Task> task)
   {
@@ -132,7 +107,8 @@ namespace stomp_motion_planner
     noise_stddev_.clear();
     noise_decay_.clear();
     
-    noise_stddev_.resize(num_dimensions_,2.);
+    //noise_stddev_.resize(num_dimensions_,2.);
+    noise_stddev_.resize(num_dimensions_,PlanEnv->getDouble(PlanParam::trajOptimStdDev));
     noise_decay_.resize(num_dimensions_,.99);
     
 //    noise_stddev

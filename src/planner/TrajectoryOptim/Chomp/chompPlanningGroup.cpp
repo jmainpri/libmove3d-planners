@@ -16,31 +16,38 @@ using namespace std;
 ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& active_joints )
 {
   m_robot = rob;
-  num_joints_ = active_joints.size();
   chomp_joints_.clear();
   
-  for (int i=0; i<num_joints_; i++) 
+  for (unsigned int i=0; i<active_joints.size(); i++)
   {
-    ChompJoint jnt;
-    
-    jnt.move3d_joint_ = m_robot->getJoint( active_joints[i] );
-    jnt.move3d_joint_index_ = active_joints[i];
-    jnt.chomp_joint_index_ = i;
-    jnt.joint_name_ = jnt.move3d_joint_->getName();
-    //jnt.link_name_ = 
-    jnt.wrap_around_ = false;      
-    jnt.has_joint_limits_ = !p3d_jnt_is_dof_circular(jnt.move3d_joint_->getJointStruct(),0);
-    
-    double min,max;
-    jnt.move3d_joint_->getDofBounds(0,min,max);
-    
-    jnt.joint_limit_min_ = min;
-    jnt.joint_limit_max_ = max;
-    
-    jnt.joint_update_limit_ = 0.10; 
-    
-    chomp_joints_.push_back( jnt );
+    for (unsigned int j=0; j<m_robot->getJoint( active_joints[i] )->getNumberOfDof(); j++) 
+    {
+      if( !m_robot->getJoint( active_joints[i] )->isJointDofUser(j) )
+        continue;
+      
+      ChompJoint jnt;
+      
+      jnt.move3d_joint_ = m_robot->getJoint( active_joints[i] );
+      jnt.move3d_joint_index_ = active_joints[i];
+      jnt.move3d_dof_index_ = jnt.move3d_joint_->getIndexOfFirstDof() + j;
+      jnt.chomp_joint_index_ = i;
+      jnt.joint_name_ = jnt.move3d_joint_->getName();
+      jnt.wrap_around_ = false;
+      jnt.has_joint_limits_ = !p3d_jnt_is_dof_circular(jnt.move3d_joint_->getJointStruct(),0);
+      
+      double min,max;
+      jnt.move3d_joint_->getDofBounds(j,min,max);
+      
+      jnt.joint_limit_min_ = min;
+      jnt.joint_limit_max_ = max;
+      
+      jnt.joint_update_limit_ = 0.10; 
+      
+      chomp_joints_.push_back( jnt );
+    }
   }
+  
+  num_joints_ = chomp_joints_.size();
 }
 
 bool ChompPlanningGroup::addCollisionPoint(CollisionPoint& collision_point)

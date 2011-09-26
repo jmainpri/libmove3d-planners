@@ -43,41 +43,74 @@ using namespace tr1;
 //namespace chomp
 //{
 
-/**
-ChompTrajectory::ChompTrajectory(const ChompRobotModel* robot_model, double duration, double discretization):
-robot_model_(robot_model),
-planning_group_(NULL),
-num_points_((duration/discretization)+1),
-num_joints_(robot_model_->getNumKDLJoints()),
-discretization_(discretization),
-duration_(duration),
-start_index_(1),
-end_index_(num_points_-2)
+ChompTrajectory::ChompTrajectory(const API::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_):
+robot_model_(T.getRobot())
+//planning_group_(planning_group),
+//discretization_(source_traj.discretization_)
 {
+  //num_joints_ = robot_model_->getNumberOfJoints();
+  num_joints_ = active_joints_.num_joints_;
+  
+  duration_ = T.getRangeMax();
+  
+  int number_inital_points = T.getNbOfPaths()+1;
+  
+  // figure out the num_points_:
+  // we need diff_rule_length-1 extra points on either side:
+  int start_extra = (diff_rule_length - 1);
+  int end_extra = (diff_rule_length - 1);
+  
+  num_points_ = (T.getNbOfPaths()+1) + start_extra + end_extra;
+  
+  start_index_ = diff_rule_length - 1;
+  end_index_ = (num_points_ - 1) - (diff_rule_length - 1);
+  //duration_ = (num_points_ - 1)*discretization_;
+  discretization_ = duration_/(num_points_-1);
+  
+  // allocate the memory:
   init();
-}
-
-
-ChompTrajectory::ChompTrajectory(const ChompRobotModel* robot_model, int num_points, double discretization):
-robot_model_(robot_model),
-planning_group_(NULL),
-num_points_(num_points),
-num_joints_(robot_model_->getNumKDLJoints()),
-discretization_(discretization),
-duration_((num_points-1)*discretization),
-start_index_(1),
-end_index_(num_points_-2)
-{
-  init();
+  
+  full_trajectory_index_.resize(num_points_);
+  
+  // now copy the trajectories over:
+  for (int i=0; i<num_points_; i++)
+  {
+    int source_traj_point = i - start_extra;
+    
+    if (source_traj_point < 0)
+      source_traj_point = 0;
+    
+    if (source_traj_point >= number_inital_points )
+      source_traj_point = number_inital_points-1;
+    
+    full_trajectory_index_[i] = source_traj_point;
+    
+    for(int j=0; j<num_joints_; j++)
+    {
+      int source_joint = active_joints_.chomp_joints_[j].move3d_dof_index_;
+      
+      shared_ptr<Configuration> q;
+      
+      if( source_traj_point != (number_inital_points-1) )
+      {
+        q = T.getLocalPathPtrAt( source_traj_point )->getBegin();
+      }
+      else
+      {
+        q = T.getLocalPathPtrAt( source_traj_point-1 )->getEnd();
+      }
+      
+      (*this)(i,j) = (*q)[source_joint];
+    }
+  }
 }
 
 ChompTrajectory::ChompTrajectory(const ChompTrajectory& source_traj, 
- const ChompRobotModel::ChompPlanningGroup* planning_group, int diff_rule_length):
+                                 int diff_rule_length):
 robot_model_(source_traj.robot_model_),
-planning_group_(planning_group),
 discretization_(source_traj.discretization_)
 {
-  num_joints_ = planning_group_->num_joints_;
+  num_joints_ = source_traj.num_joints_;
   
   // figure out the num_points_:
   // we need diff_rule_length-1 extra points on either side:
@@ -85,6 +118,11 @@ discretization_(source_traj.discretization_)
   int end_extra = (diff_rule_length - 1) - ((source_traj.num_points_-1) - source_traj.end_index_);
   
   num_points_ = source_traj.num_points_ + start_extra + end_extra;
+  
+  cout << "source_traj.num_points_ = " << source_traj.num_points_ << endl;
+  cout << "start_extra = " << start_extra << endl;
+  cout << "end_extra = " << end_extra << endl;
+  
   start_index_ = diff_rule_length - 1;
   end_index_ = (num_points_ - 1) - (diff_rule_length - 1);
   duration_ = (num_points_ - 1)*discretization_;
@@ -98,156 +136,15 @@ discretization_(source_traj.discretization_)
   for (int i=0; i<num_points_; i++)
   {
     int source_traj_point = i - start_extra;
+    
     if (source_traj_point < 0)
       source_traj_point = 0;
+    
     if (source_traj_point >= source_traj.num_points_)
       source_traj_point = source_traj.num_points_-1;
+    
     full_trajectory_index_[i] = source_traj_point;
-    for (int j=0; j<num_joints_; j++)
-    {
-      int source_joint = planning_group_->chomp_joints_[j].kdl_joint_index_;
-      (*this)(i,j) = source_traj(source_traj_point, source_joint);
-    }
-  }
-}
-
-ChompTrajectory::ChompTrajectory(const ChompRobotModel* robot_model,
-                                 const ChompRobotModel::ChompPlanningGroup* planning_group, 
-                                 const trajectory_msgs::JointTrajectory& traj) :
-robot_model_(robot_model),
-planning_group_(planning_group),
-num_joints_(robot_model_->getNumKDLJoints())
-{
-  double discretization = (traj.points[1].time_from_start-traj.points[0].time_from_start).toSec();
-  
-  double discretization2 = (traj.points[2].time_from_start-traj.points[1].time_from_start).toSec();
-  
-  if(fabs(discretization2-discretization) > .001) {
-    ROS_WARN_STREAM("Trajectory Discretization not constant " << discretization << " " << discretization2);
-  }
-  discretization_ = discretization;
-  
-  num_points_ = traj.points.size()+1;
-  duration_ = (traj.points.back().time_from_start-traj.points[0].time_from_start).toSec();
-  
-  start_index_ = 1;
-  end_index_ = num_points_-2;
-  
-  init();
-  
-  for(int i = 0; i < num_points_; i++) {
-    for(int j = 0; j < num_joints_; j++) {
-      trajectory_(i,j) = 0.0;
-    }
-  }
-  overwriteTrajectory(traj);
-}
-*/
-
-ChompTrajectory::ChompTrajectory(const API::Trajectory& T, int diff_rule_length, const vector<int>& active_p3d_joints):
-robot_model_(T.getRobot())
-//planning_group_(planning_group),
-//discretization_(source_traj.discretization_)
-{
-    //num_joints_ = robot_model_->getNumberOfJoints();
-    num_joints_ = active_p3d_joints.size();
     
-    duration_ = T.getRangeMax();
-    
-    int number_inital_points = T.getNbOfPaths()+1;
-    
-    // figure out the num_points_:
-    // we need diff_rule_length-1 extra points on either side:
-    int start_extra = (diff_rule_length - 1);
-    int end_extra = (diff_rule_length - 1);
-    
-    num_points_ = (T.getNbOfPaths()+1) + start_extra + end_extra;
-    
-    start_index_ = diff_rule_length - 1;
-    end_index_ = (num_points_ - 1) - (diff_rule_length - 1);
-    //duration_ = (num_points_ - 1)*discretization_;
-    discretization_ = duration_/(num_points_-1);
-    
-    // allocate the memory:
-    init();
-    
-    full_trajectory_index_.resize(num_points_);
-    
-    // now copy the trajectories over:
-    for (int i=0; i<num_points_; i++)
-    {
-        int source_traj_point = i - start_extra;
-        
-        if (source_traj_point < 0)
-            source_traj_point = 0;
-        
-        if (source_traj_point >= number_inital_points )
-            source_traj_point = number_inital_points-1;
-        
-        full_trajectory_index_[i] = source_traj_point;
-        
-        for(int j=0; j<num_joints_; j++)
-        {
-            //int source_joint = planning_group_->chomp_joints_[j].kdl_joint_index_;
-            int source_joint = robot_model_->getJoint(active_p3d_joints[j])->getIndexOfFirstDof();
-            
-            //(*this)(i,j) = source_traj(source_traj_point, source_joint);
-            shared_ptr<Configuration> q;
-            
-            if( source_traj_point != (number_inital_points-1) )
-            {
-                q = T.getLocalPathPtrAt( source_traj_point )->getBegin();
-            }
-            else
-            {
-                q = T.getLocalPathPtrAt( source_traj_point-1 )->getEnd();
-            }
-            
-            (*this)(i,j) = (*q)[source_joint];
-        }
-    }
-}
-
-ChompTrajectory::ChompTrajectory(const ChompTrajectory& source_traj, 
-                                 int diff_rule_length):
-robot_model_(source_traj.robot_model_),
-discretization_(source_traj.discretization_)
-{
-    num_joints_ = source_traj.num_joints_;
-    
-    // figure out the num_points_:
-    // we need diff_rule_length-1 extra points on either side:
-    int start_extra = (diff_rule_length - 1) - source_traj.start_index_;
-    int end_extra = (diff_rule_length - 1) - ((source_traj.num_points_-1) - source_traj.end_index_);
-    
-    num_points_ = source_traj.num_points_ + start_extra + end_extra;
-    
-    cout << "source_traj.num_points_ = " << source_traj.num_points_ << endl;
-    cout << "start_extra = " << start_extra << endl;
-    cout << "end_extra = " << end_extra << endl;
-    
-    start_index_ = diff_rule_length - 1;
-    end_index_ = (num_points_ - 1) - (diff_rule_length - 1);
-    duration_ = (num_points_ - 1)*discretization_;
-    
-  // allocate the memory:
-  init();
-  
-  full_trajectory_index_.resize(num_points_);
-  
-  // now copy the trajectories over:
-  for (int i=0; i<num_points_; i++)
-  {
-    int source_traj_point = i - start_extra;
-   
-      if (source_traj_point < 0)
-      source_traj_point = 0;
-    
-      if (source_traj_point >= source_traj.num_points_)
-      source_traj_point = source_traj.num_points_-1;
-    
-      full_trajectory_index_[i] = source_traj_point;
-      
     for (int j=0; j<num_joints_; j++)
     {
       int source_joint =j;
@@ -261,23 +158,6 @@ ChompTrajectory::~ChompTrajectory()
   
 }
 
-//void ChompTrajectory::overwriteTrajectory(const trajectory_msgs::JointTrajectory& traj) {
-//  std::vector<int> ind;
-//  for(unsigned int j = 0; j < traj.joint_names.size(); j++) {
-//    int kdl_number = robot_model_->urdfNameToKdlNumber(traj.joint_names[j]);
-//    if(kdl_number == 0) {
-//      ROS_WARN_STREAM("Can't find kdl index for joint " << traj.joint_names[j]);
-//    }
-//    ind.push_back(kdl_number);
-//  }
-//  
-//  for(unsigned int i = 1; i <= traj.points.size(); i++) {
-//    for(unsigned int j = 0; j < traj.joint_names.size(); j++) {
-//      trajectory_(i,ind[j]) = traj.points[i-1].positions[j];
-//    }3
-//  }  
-//}
-
 void ChompTrajectory::init()
 {
   //trajectory_.resize(num_points_, Eigen::VectorXd(num_joints_));
@@ -289,12 +169,12 @@ void ChompTrajectory::updateFromGroupTrajectory(const ChompTrajectory& group_tra
   //cout << "Todo : updateFromGroupTrajectory" << endl;
   int num_vars_free = end_index_ - start_index_ + 1;
   
-//  for (int i=0; i<group_trajectory.planning_group_->num_joints_; i++)
-//  {
-//    int target_joint = group_trajectory.planning_group_->chomp_joints_[i].kdl_joint_index_;
-//    trajectory_.block(start_index_, target_joint, num_vars_free, 1)
-//    = group_trajectory.trajectory_.block(group_trajectory.start_index_, i, num_vars_free, 1);
-//  }
+  //  for (int i=0; i<group_trajectory.planning_group_->num_joints_; i++)
+  //  {
+  //    int target_joint = group_trajectory.planning_group_->chomp_joints_[i].kdl_joint_index_;
+  //    trajectory_.block(start_index_, target_joint, num_vars_free, 1)
+  //    = group_trajectory.trajectory_.block(group_trajectory.start_index_, i, num_vars_free, 1);
+  //  }
   
   for (int i=0; i<group_trajectory.num_joints_; i++)
   {
@@ -366,7 +246,7 @@ void ChompTrajectory::getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt
 
 void ChompTrajectory::print()
 {
-    cout << trajectory_ << endl;
+  cout << trajectory_ << endl;
 }
 
 // } // namespace chomp

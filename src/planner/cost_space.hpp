@@ -31,24 +31,27 @@ class CostSpace
 public:
   CostSpace();
   
+  // Get selected cost function name
+  std::string getSelectedCostName();
+  
+  // Get All Cost Functions
+  std::vector<std::string> getAllCost();
+  
+  // Select the cost function with the given name in the map
+  bool setCost(std::string name);
+  
+  // Register a new cost function.
+  void addCost(std::string name, 
+               boost::function<double(Configuration&)> f);
+	
+  // Delete a cost function
+  void deleteCost(std::string name);
+  
   // Compute the cost of the configuration conf.
   double cost(Configuration& conf);
 	
   // Compute the cost of
   double cost(LocalPath& path);
-  
-  // Select the cost function with the given name in the map
-  void setCost(std::string name);
-
-  // Register a new cost function.
-  void addCost(std::string name, 
-	       boost::function<double(Configuration&)> f);
-	
-  // Delete a cost function
-  void deleteCost(std::string name);
-	
-  // Get All Cost Functions
-  std::vector<std::string> getAllCost();
 	
 	// Set node cost
 	void setNodeCost(Node* node, Node* parent);
@@ -63,6 +66,7 @@ public:
   double deltaStepCost(double cost1, double cost2, double length);
   
 protected:
+  std::string mSelectedCostName;
   boost::function<double(Configuration&)> mSelectedCost;
   std::map<std::string, boost::function<double(Configuration&)> > mFunctions;
 	

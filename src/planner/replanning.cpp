@@ -377,7 +377,7 @@ p3d_traj* replanning_RRT_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 
     return NULL;
   }
   
-  unsigned int runSmoothId = p3d_planner_functions_GetRunId();
+//  unsigned int runSmoothId = p3d_planner_functions_GetRunId();
   
   if ( robotPt->lpl_type == MULTI_LOCALPATH ) 
   {
@@ -425,7 +425,7 @@ p3d_traj* replanning_RRT_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 
     
     API::Trajectory optimTrj( rob, path );
     
-    double optTime = 0.0;
+//    double optTime = 0.0;
     
     optimTrj.resetCostComputed();
     

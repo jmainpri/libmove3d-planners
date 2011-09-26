@@ -50,8 +50,72 @@ void GlobalCostSpace::initialize()
 CostSpace* global_costSpace(NULL);
 
 //------------------------------------------------------------------------------
-CostSpace::CostSpace() : m_deltaMethod(cs_integral)
+CostSpace::CostSpace() : mSelectedCostName("No Cost"), m_deltaMethod(cs_integral) 
 {
+
+}
+
+//------------------------------------------------------------------------------
+std::string CostSpace::getSelectedCostName()
+{
+  return mSelectedCostName;
+}
+
+//------------------------------------------------------------------------------
+std::vector<string> CostSpace::getAllCost()
+{
+	std::vector<string> functions;
+	std::map< string, boost::function<double(Configuration&)> >::iterator it;
+	
+	for ( it=mFunctions.begin() ; it != mFunctions.end(); it++ )
+		functions.push_back((*it).first);
+	
+	return functions;
+}
+
+//------------------------------------------------------------------------------
+bool CostSpace::setCost(string name)
+{
+	if(mFunctions.find(name) != mFunctions.end())
+	{
+    mSelectedCostName = name;
+		mSelectedCost = mFunctions[name];
+    return true;
+	}
+	else
+	{
+		std::cout << "Warning : in CostSpace::setCost(string name), could not find a cost function named " << name  << std::endl;
+    return false;
+	}
+}
+//------------------------------------------------------------------------------
+void CostSpace::addCost(string name, 
+												boost::function<double(Configuration&)> f)
+{
+	if(mFunctions.find(name) == mFunctions.end())
+	{
+		mFunctions[name] = f;
+	}
+	else
+	{
+		std::cout << "Warning : in CostSpace::addCost, replacing the cost function named " << name << "by another." << std::endl;
+		mFunctions[name] = f;
+	}
+}
+//------------------------------------------------------------------------------
+void CostSpace::deleteCost(string name)
+{
+  std::map< string, boost::function<double(Configuration&)> >::iterator 
+  it = mFunctions.find(name);
+	
+  if(it != mFunctions.end())
+	{
+		mFunctions.erase (it);
+	}
+	else 
+	{
+		std::cout << "Warning : in CostSpace::deleteCost, the cost function " << name << " does not exist." << std::endl;
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -75,57 +139,6 @@ double CostSpace::cost(Configuration& conf)
 		the cost function has not been set." << std::endl;
 		return(1.0);
 	}
-}
-//------------------------------------------------------------------------------
-void CostSpace::setCost(string name)
-{
-	if(mFunctions.find(name) != mFunctions.end())
-	{
-		mSelectedCost = mFunctions[name];
-	}
-	else
-	{
-		std::cout << "Warning : in CostSpace::setCost(string name), could not find a cost function named " << name  << std::endl;
-	}
-}
-//------------------------------------------------------------------------------
-void CostSpace::addCost(string name, 
-												boost::function<double(Configuration&)> f)
-{
-	if(mFunctions.find(name) == mFunctions.end())
-	{
-		mFunctions[name] = f;
-	}
-	else
-	{
-		std::cout << "Warning : in CostSpace::addCost, replacing the cost function named " << name << "by another." << std::endl;
-		mFunctions[name] = f;
-	}
-}
-//------------------------------------------------------------------------------
-void CostSpace::deleteCost(string name)
-{
-	if(mFunctions.find(name) != mFunctions.end())
-	{
-		std::map< string, boost::function<double(Configuration&)> >::iterator it;
-		it=mFunctions.find(name);
-		mFunctions.erase (it);
-	}
-	else 
-	{
-		std::cout << "Warning : in CostSpace::deleteCost, the cost function " << name << " does not exist." << std::endl;
-	}
-}
-//------------------------------------------------------------------------------
-std::vector<string> CostSpace::getAllCost()
-{
-	std::vector<string> functions;
-	std::map< string, boost::function<double(Configuration&)> >::iterator it;
-	
-	for ( it=mFunctions.begin() ; it != mFunctions.end(); it++ )
-		functions.push_back((*it).first);
-	
-	return functions;
 }
 
 //------------------------------------------------------------------------------

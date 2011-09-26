@@ -82,8 +82,11 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
   
   num_time_steps_ = num_time_steps;
   num_dimensions_ = num_dimensions;
-  //movement_duration_ = movement_duration;
-  movement_duration_ = PlanEnv->getDouble(PlanParam::trajDuration);
+  movement_duration_ = movement_duration;
+//  movement_duration_ = 5.0;
+//  movement_duration_ = movement_duration*7.716;
+//  movement_duration_ = movement_duration*1.5432;
+  //movement_duration_ = PlanEnv->getDouble(PlanParam::trajDuration);
   cost_ridge_factor_ = cost_ridge_factor;
   derivative_costs_ = derivative_costs;
   
@@ -94,6 +97,14 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
   assert(initializeVariables());
   assert(initializeCosts());
   assert(initializeBasisFunctions());
+  
+  cout << "--------------------------------- " << endl;
+  cout << "Trajectory duration : " << movement_duration << endl;
+  cout << "--------------------------------- " << endl;
+  
+  cout <<"movement_duration_ : " << movement_duration_ << endl;
+  cout <<"num_time_steps_  : " << num_time_steps_ << endl;
+  cout <<"num_dimensions_  : " << num_dimensions_ << endl;
   
   return true;
 }
@@ -108,6 +119,8 @@ bool CovariantTrajectoryPolicy::readParameters()
   num_dimensions_ =  1;
   movement_duration_ =  1.0;
   cost_ridge_factor_ =  0.00001;
+  
+  cout <<"Movement duration : " << movement_duration_ << endl;
   
     //assert(stomp_motion_planner::readDoubleArray(node_handle_, "derivative_costs", derivative_costs_));
     return true;
@@ -247,6 +260,8 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices()
     differentiation_matrices_.resize(NUM_DIFF_RULES, MatrixXd::Zero(num_vars_all_, num_vars_all_));
     for (int d=0; d<NUM_DIFF_RULES; ++d)
     {
+        cout <<"Movement duration : " << movement_duration_ << endl;
+        cout <<"Movement dt : " << movement_dt_ << endl;
         multiplier /= movement_dt_;
         for (int i=0; i<num_vars_all_; i++)
         {
@@ -260,8 +275,8 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices()
                 differentiation_matrices_[d](i,index) = multiplier * DIFF_RULES[d][j+DIFF_RULE_LENGTH/2];
             }
         }
-        cout << "differentiation_matrices_["<<d<<"] = " << endl 
-        << differentiation_matrices_[d] << endl ;
+        //cout << "differentiation_matrices_["<<d<<"] = " << endl 
+        //<< differentiation_matrices_[d] << endl ;
     }
 }
 

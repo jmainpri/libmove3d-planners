@@ -598,7 +598,7 @@ void ChompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array)
   
   for(int j=0; j<planning_group_->num_joints_;j++)
   {
-    int dof = joints[j].move3d_joint_->getIndexOfFirstDof();
+    int dof = joints[j].move3d_dof_index_;
     
     if ( !isnan(joint_array[j]) ) 
     {
@@ -869,7 +869,7 @@ void ChompOptimizer::animateEndeffector()
     
     for(int j=0; j<planning_group_->num_joints_;j++)
     {
-      q[joints[j].move3d_joint_->getIndexOfFirstDof()] = point[j];
+      q[joints[j].move3d_dof_index_] = point[j];
     }
     
     T.push_back( std::tr1::shared_ptr<Configuration>(new Configuration(q)) );

@@ -14,6 +14,7 @@
 
 #include "planner/Greedy/CollisionSpace.hpp"
 #include "planner/planEnvironment.hpp"
+#include "planner/cost_space.hpp"
 
 #include "Chomp/chompTrajectory.hpp"
 #include "Chomp/chompOptimizer.hpp"
@@ -186,26 +187,63 @@ bool traj_optim_init_collision_points()
   return true;
 }
 
+//! Initializes the optimization for a costspace
+// -----------------------------------------------
+bool traj_optim_init_costspace()
+{
+  m_robot = global_Project->getActiveScene()->getActiveRobot();
+  
+  if (m_robot == NULL) 
+  {
+    return false;
+  }
+  
+  // Set the active joints (links)
+  m_active_joints.clear();
+  m_active_joints.push_back( 1 );
+  
+  // Set the planner joints
+  m_planner_joints.clear();
+  m_planner_joints.push_back( 1 );
+  
+  p3d_set_user_drawnjnt(1);
+  
+  m_coll_space = NULL;
+
+  bool valid_costspace = global_costSpace->setCost("costMap2D");
+  return valid_costspace;
+}
+
 //! Get current robot
 //! Initializes the multi-localpaths
 // -----------------------------------------------
-void traj_optim_init()
+bool traj_optim_init()
 {
   if (m_init == true)
-    return;
+    return true;
   
-  traj_optim_set_localpath_and_cntrts();
-  
-  // If the collision space exists we use it
-  if( !global_CollisionSpace ) 
+  if( ENV.getBool(Env::isCostSpace) )
   {
-    traj_optim_init_collision_space();
+    if( !traj_optim_init_costspace() )
+      return false;
   }
-  else {
-    m_coll_space = global_CollisionSpace;
+  else
+  {
+    traj_optim_set_localpath_and_cntrts();
+    
+    // If the collision space exists we use it
+    if( !global_CollisionSpace ) 
+    {
+      traj_optim_init_collision_space();
+    }
+    else {
+      m_coll_space = global_CollisionSpace;
+    }
+    
+    traj_optim_init_collision_points();
   }
   
-  traj_optim_init_collision_points();
+  return true;
 }
 
 //! Sets the robot and the local method to be used
@@ -257,7 +295,10 @@ bool traj_optim_runChomp()
   }
   else
   {
-    traj_optim_set_localpath_and_cntrts();
+    if (m_coll_space) 
+    {
+      traj_optim_set_localpath_and_cntrts();
+    }
   }
   
   // Get Initial trajectory
@@ -282,18 +323,18 @@ bool traj_optim_runChomp()
   
   // Create Optimizer
   // -----------------------------------------------
-  m_chomptraj = new ChompTrajectory(T,DIFF_RULE_LENGTH, m_planner_joints );
-  m_chomptraj->print();
-  cout << "chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
-  cout << "Initialize optimizer" << endl;
-  
   m_chompparams = new ChompParameters;
   m_chompparams->init();
   
   m_chompplangroup = new ChompPlanningGroup( m_robot, m_planner_joints );
   m_chompplangroup->collision_points_ = m_collision_points;
   
-  ChompOptimizer optimizer(m_chomptraj,m_chompparams,m_chompplangroup,m_coll_space);
+  m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup );
+  m_chomptraj->print();
+  cout << "chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
+  cout << "Initialize optimizer" << endl;
+  
+  ChompOptimizer optimizer( m_chomptraj, m_chompparams, m_chompplangroup, m_coll_space );
   cout << "Optimizer created" << endl;
   
   optimizer.runDeformation(0,0);
@@ -334,15 +375,15 @@ bool traj_optim_runStomp()
   
   // Create Optimizer
   // -----------------------------------------------
-  m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, m_planner_joints );
-  m_chomptraj->print();
-  cout << "Chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
-  
   m_stompparams = new stomp_motion_planner::StompParameters;
   m_stompparams->init();
   
   m_chompplangroup = new ChompPlanningGroup( m_robot, m_planner_joints );
   m_chompplangroup->collision_points_ = m_collision_points;
+  
+  m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup );
+  m_chomptraj->print();
+  cout << "Chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
   
   cout << "Initialize optimizer" << endl;
   optimizer.reset(new stomp_motion_planner::StompOptimizer(m_chomptraj,

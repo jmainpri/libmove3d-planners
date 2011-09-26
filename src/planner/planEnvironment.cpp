@@ -129,6 +129,7 @@ void initPlannerParameters()
         myDoubleMap.insert( std::make_pair( PlanParam::costTraj,                new doubleContainer(1.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::distMinToDraw,           new doubleContainer(0.3)));
         myDoubleMap.insert( std::make_pair( PlanParam::trajDuration,            new doubleContainer(5.0)));
+        myDoubleMap.insert( std::make_pair( PlanParam::trajOptimStdDev,            new doubleContainer(2.0)));
   
 	// Object TransfertPoint variable
         myDoubleMap.insert( std::make_pair( PlanParam::env_randomXMinLimit,	new doubleContainer(-3.0)));
