@@ -9,7 +9,7 @@
 #define HRITASKSPACECOST_HPP_
 
 
-#include <hri/hri.h>
+#include <libmove3d/hri/hri.h>
 #include "API/planningAPI.hpp"
 
 /**

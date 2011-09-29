@@ -19,7 +19,7 @@
 
 
 #ifdef HRI_PLANNER
-#include <hri/hri.h>
+#include <libmove3d/hri/hri.h>
 #endif
 
 /**

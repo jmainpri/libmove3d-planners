@@ -13,7 +13,7 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 
-#include <hri/hri.h>
+#include <libmove3d/hri/hri.h>
 
 // Main cost function
 extern double HRICS_getConfigCost(Configuration& Conf);

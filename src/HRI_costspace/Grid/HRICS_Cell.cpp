@@ -1,7 +1,7 @@
 #include "HRICS_Cell.hpp"
 
 #ifdef HRI_PLANNER
-#include <hri/hri.h>
+#include <libmove3d/hri/hri.h>
 #endif
 
 #include "../HRICS_costspace.hpp"
