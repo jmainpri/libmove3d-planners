@@ -18,7 +18,7 @@
 
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6.2)
 
-PROJECT (libmove3d-motionplanner C CXX)
+PROJECT (libmove3d-planners C CXX)
 	
 # Set the project version ------------------------------------------------------
 
@@ -29,7 +29,7 @@ set( PROJECT_MAJOR_VERSION 1)
 endif( NOT PROJECT_MAJOR_VERSION)
 
 if( NOT PROJECT_MINOR_VERSION)
-set( PROJECT_MINOR_VERSION 0)
+set( PROJECT_MINOR_VERSION 1)
 endif( NOT PROJECT_MINOR_VERSION)
 
 if( NOT PROJECT_REVISION)
@@ -153,7 +153,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/script/CMake")
 FIND_PACKAGE(Qt4) #Qt4 is not required. If not found, set QT_LIBRARY to OFF.
 
 IF(QT_INCLUDE_DIR)
-  MESSAGE("I've found Qt4 libraries. I will compile libmove3d-motionplanner with it.")
+  MESSAGE("I've found Qt4 libraries. I will compile libmove3d-planners with it.")
   SET(QT_LIBRARY ON CACHE BOOL "" FORCE)
   INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR})
   SET(Move3DMPLIB_COMPILATION_INCLUDES ${Move3DMPLIB_COMPILATION_INCLUDES} ${QT_INCLUDE_DIR})
@@ -163,7 +163,7 @@ IF(QT_INCLUDE_DIR)
   INCLUDE(${QT_USE_FILE})
   SET(LIBS ${LIBS} ${QT_LIBRARIES})
 ELSE()
-  MESSAGE("I've not found Qt4 libraries. I won't compile libmove3d-motionplanner with support for Qt.")
+  MESSAGE("I've not found Qt4 libraries. I won't compile libmove3d-planners with support for Qt.")
   SET(QT_LIBRARY OFF CACHE BOOL "" FORCE)
 ENDIF()
 
@@ -402,12 +402,12 @@ ELSEIF(${CMAKE_BUILD_TYPE} MATCHES "Release")
 ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
 IF(QT_LIBRARY)
-	ADD_LIBRARY(move3d-motionplanner SHARED ${Move3DMPLIB_src} ${Move3DMPLIB_QT_MOC} ${Move3DMPLIB_QT_UI_HEADERS} ${Move3DMPLIB_inc})
+	ADD_LIBRARY(move3d-planners SHARED ${Move3DMPLIB_src} ${Move3DMPLIB_QT_MOC} ${Move3DMPLIB_QT_UI_HEADERS} ${Move3DMPLIB_inc})
 ELSE()
-	ADD_LIBRARY(move3d-motionplanner SHARED ${Move3DMPLIB_src} ${Move3DMPLIB_inc})
+	ADD_LIBRARY(move3d-planners SHARED ${Move3DMPLIB_src} ${Move3DMPLIB_inc})
 ENDIF()
 
-TARGET_LINK_LIBRARIES(move3d-motionplanner ${LIBS})
+TARGET_LINK_LIBRARIES(move3d-planners ${LIBS})
 
 # ------------------------------------------------------------------------------
 # Intallation
@@ -416,12 +416,12 @@ IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   SET(CMAKE_INSTALL_PREFIX "${Move3DMPLIB_BINARY_DIR}/install" CACHE PATH "Move3DMPLIB install prefix" FORCE)
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
-INSTALL(TARGETS move3d-motionplanner
+INSTALL(TARGETS move3d-planners
         RUNTIME DESTINATION bin CONFIGURATIONS ${CMAKE_BUILD_TYPE}
         LIBRARY DESTINATION lib CONFIGURATIONS ${CMAKE_BUILD_TYPE})
 	
 INSTALL(
 	DIRECTORY ${Move3DMPLIB_SOURCE_DIRECTORIES}/ 
-	DESTINATION include/libmove3d-motionplanner 
+	DESTINATION include/libmove3d/planners 
 	FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 
