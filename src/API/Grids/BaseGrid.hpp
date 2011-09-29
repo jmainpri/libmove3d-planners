@@ -4,6 +4,7 @@
 #include "API/Grids/BaseCell.hpp"
 
 #include <vector>
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 
 /**

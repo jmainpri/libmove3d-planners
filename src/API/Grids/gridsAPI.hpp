@@ -9,6 +9,8 @@
 #ifndef GRID_API_H
 #define GRID_API_H
 
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+
 #include <Eigen/Core>
 
 #include "API/Grids/BaseGrid.hpp"

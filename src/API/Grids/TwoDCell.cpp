@@ -4,6 +4,9 @@
 #include <iostream>
 #include "Graphic-pkg.h"
 
+#define EIGEN2_SUPPORT
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+
 #include <Eigen/Array>
 
 using namespace std;

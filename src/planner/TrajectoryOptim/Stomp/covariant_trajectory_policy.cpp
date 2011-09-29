@@ -36,6 +36,7 @@
 
 #include "covariant_trajectory_policy.hpp"
 //#include "param_server.hpp"
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/LU>
 #include <Eigen/Core>
 #include <Eigen/Array>

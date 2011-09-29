@@ -37,6 +37,7 @@
 #ifndef MULTIVARIATE_GAUSSIAN_H_
 #define MULTIVARIATE_GAUSSIAN_H_
 
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 #include <Eigen/Cholesky>
 #include <boost/random/variate_generator.hpp>

@@ -15,6 +15,8 @@
 //#include <ros/ros.h>
 //#include <visualization_msgs/MarkerArray.h>
 //#include <chomp_motion_planner/chomp_utils.h>
+
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/LU>
 
 #include "planner/planEnvironment.hpp"

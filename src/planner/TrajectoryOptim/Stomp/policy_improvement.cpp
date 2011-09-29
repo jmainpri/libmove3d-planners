@@ -39,6 +39,7 @@
 #include <stdio.h>
 //#include <ros/assert.h>
 
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/LU>
 #include <Eigen/Array>
 

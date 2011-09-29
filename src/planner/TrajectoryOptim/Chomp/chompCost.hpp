@@ -37,6 +37,7 @@
 #ifndef CHOMP_COST_H_
 #define CHOMP_COST_H_
 
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 //#include <chomp_motion_planner/chomp_trajectory.h>
 #include "API/Trajectory/trajectory.hpp"

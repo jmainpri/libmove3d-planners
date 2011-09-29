@@ -39,6 +39,7 @@
 #include <boost/shared_ptr.hpp>
 
 //#include <ros/node_handle.h>
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 #include "policy.hpp"
 

@@ -1,6 +1,8 @@
 #ifndef CELL_HPP
 #define CELL_HPP
 
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+
 #include <Eigen/Core>
 
 #include "API/Grids/BaseCell.hpp"

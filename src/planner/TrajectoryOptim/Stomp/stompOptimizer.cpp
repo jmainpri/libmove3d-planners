@@ -38,6 +38,7 @@
 //#include <ros/ros.h>
 //#include <visualization_msgs/MarkerArray.h>
 #include "Chomp/chompUtils.hpp"
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/LU>
 
 #include "planner/planEnvironment.hpp"

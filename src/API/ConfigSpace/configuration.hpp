@@ -1,6 +1,8 @@
 #ifndef CONFIGURATION_HPP
 #define CONFIGURATION_HPP
 
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+
 #include <Eigen/Core>
 #define EIGEN_USE_NEW_STDVECTOR
 #include <Eigen/Geometry>

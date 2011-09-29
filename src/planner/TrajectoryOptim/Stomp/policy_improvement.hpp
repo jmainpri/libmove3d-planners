@@ -38,6 +38,8 @@
 
 // ros includes
 //#include <ros/ros.h>
+
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 
 // local includes
