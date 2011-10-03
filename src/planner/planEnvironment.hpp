@@ -37,6 +37,7 @@ namespace  PlanParam
 		withShortCut,
 		withDeformation,
 		withDescent,
+    trajOptimTestMultiGauss,
     
     // Stomp/Chomp
     withCurrentTraj,
@@ -99,7 +100,8 @@ namespace  PlanParam
     distMinToDraw,
     trajDuration,
     trajOptimStdDev,
-        
+    trajOptimSmoothWeight,
+    trajOptimObstacWeight,
         // Object TransfertPoint variable
         env_randomXMinLimit,
         env_randomXMaxLimit,
