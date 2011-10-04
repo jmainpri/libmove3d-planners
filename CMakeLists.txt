@@ -116,6 +116,33 @@ ENDMACRO(Move3DMPLIB_CheckCompilationFlags)
 # ------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/script/CMake")
+
+#IF(NOT DISABLE_QT)
+#	SET(QT_LIBRARY)
+#	MESSAGE("WARNING HAVE YOU SET QT_LIBRARY ON!!!")
+#ENDIF()
+
+#-------------- Qt Library -----------------------------------------------------
+FIND_PACKAGE(Qt4) #Qt4 is not required. If not found, set QT_LIBRARY to OFF.
+
+IF(QT_INCLUDE_DIR)
+  MESSAGE("I've found Qt4 libraries. I will compile libmove3d-planners with it.")
+  SET(QT_LIBRARY ON CACHE BOOL "" FORCE)
+  INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR})
+  SET(Move3DMPLIB_COMPILATION_INCLUDES
+  ${Move3DMPLIB_COMPILATION_INCLUDES} ${QT_INCLUDE_DIR})
+  Move3DMPLIB_flag(QT_LIBRARY "Sets QtLibrary compiling mode" ON)
+  IF(QT_GL)
+	SET(QT_USE_QTOPENGL TRUE)
+  ENDIF(QT_GL)
+  INCLUDE(${QT_USE_FILE})
+  SET(LIBS ${LIBS} ${QT_LIBRARIES})
+ELSE()
+  MESSAGE("I've not found Qt4 libraries. I won't compile libmove3d-planners with support for Qt.")
+  SET(QT_LIBRARY OFF CACHE BOOL "" FORCE)
+ENDIF()
+
 #Move3DMPLIB_flag(QT_LIBRARY "Sets QtLibrary compiling mode" OFF)
 
 Move3DMPLIB_flag(P3D_CONSTRAINTS "Compilation with module Constraints" ON)
@@ -142,30 +169,6 @@ Move3DMPLIB_CheckCompilationFlags()
 #-------------------------------------------------------------------------------
 #-------------- Modules --------------------------------------------------------
 #-------------------------------------------------------------------------------
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/script/CMake")
-
-#IF(NOT DISABLE_QT)
-#	SET(QT_LIBRARY)
-#	MESSAGE("WARNING HAVE YOU SET QT_LIBRARY ON!!!")
-#ENDIF()
-
-#-------------- Qt Library -----------------------------------------------------
-FIND_PACKAGE(Qt4) #Qt4 is not required. If not found, set QT_LIBRARY to OFF.
-
-IF(QT_INCLUDE_DIR)
-  MESSAGE("I've found Qt4 libraries. I will compile libmove3d-planners with it.")
-  SET(QT_LIBRARY ON CACHE BOOL "" FORCE)
-  INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR})
-  SET(Move3DMPLIB_COMPILATION_INCLUDES ${Move3DMPLIB_COMPILATION_INCLUDES} ${QT_INCLUDE_DIR})
-  IF(QT_GL)
-	SET(QT_USE_QTOPENGL TRUE)
-  ENDIF(QT_GL)
-  INCLUDE(${QT_USE_FILE})
-  SET(LIBS ${LIBS} ${QT_LIBRARIES})
-ELSE()
-  MESSAGE("I've not found Qt4 libraries. I won't compile libmove3d-planners with support for Qt.")
-  SET(QT_LIBRARY OFF CACHE BOOL "" FORCE)
-ENDIF()
 
 
 #-------------- X11 Library -----------------------------------------------------
