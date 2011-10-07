@@ -19,7 +19,7 @@ void g3d_draw_grids();
 
 
 #ifdef HRI_COSTSPACE
-void g3d_draw_hrics();
+void g3d_draw_hrics(int opengl_context);
 #endif
 
 void drawGauge(int number, double cost);

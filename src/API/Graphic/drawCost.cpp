@@ -386,14 +386,14 @@ void drawGauge(int number, double cost)
   glDisable(GL_BLEND);
 }
 
-void drawSlice();
+void drawSlice(int opengl_context);
 
 /**
  * @ingroup graphics
  * Draws the thing related to HRI_COSTSPACE
  */
 #ifdef HRI_COSTSPACE
-void g3d_draw_hrics()
+void g3d_draw_hrics(int opengl_context)
 {
     int OTPListSize = OTPList.size();
 	if( ENV.getBool(Env::enableHri) )
@@ -626,7 +626,7 @@ void g3d_draw_hrics()
 
   if (PlanEnv->getBool(PlanParam::env_drawSlice))
   {
-      drawSlice();
+      drawSlice(opengl_context);
   }
 
 }
@@ -683,7 +683,7 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
 }
 
 #ifdef HRI_COSTSPACE
-void drawSlice()
+void drawSlice(int opengl_context)
 {
     Robot* rob = global_Project->getActiveScene()->getRobotByNameContaining("PR2");
     Robot* human = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman();
@@ -709,7 +709,7 @@ void drawSlice()
         global_Project->getActiveScene()->setActiveRobot("PR2_ROBOT");
         //cout << "g3d_draw_robot" << endl;
         //q->print();
-        g3d_draw_robot(rob->getRobotStruct()->num, win );
+        g3d_draw_robot(rob->getRobotStruct()->num, win , opengl_context);
 
 //        shared_ptr<Configuration> q( new Configuration(human,dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getRobotConfigAt(i) ));
 //        human->setAndUpdate(*q);
