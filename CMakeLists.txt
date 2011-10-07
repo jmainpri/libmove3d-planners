@@ -416,7 +416,8 @@ TARGET_LINK_LIBRARIES(move3d-planners ${LIBS})
 # Intallation
 # ------------------------------------------------------------------------------
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  SET(CMAKE_INSTALL_PREFIX "${Move3DMPLIB_BINARY_DIR}/install" CACHE PATH "Move3DMPLIB install prefix" FORCE)
+#  SET(CMAKE_INSTALL_PREFIX "${Move3DMPLIB_BINARY_DIR}/install" CACHE PATH "Move3DMPLIB install prefix" FORCE)
+   SET(CMAKE_INSTALL_PREFIX "$ENV{ROBOTPKG_BASE}" CACHE PATH "Move3DMPLIB install prefix" FORCE)
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 INSTALL(TARGETS move3d-planners
