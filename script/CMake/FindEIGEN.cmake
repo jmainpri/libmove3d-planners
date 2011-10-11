@@ -10,8 +10,9 @@
 ## Check for the header files
 
 find_path (Eigen_INCLUDE_DIR Eigen/Cholesky
- PATHS /usr/local/include /usr/include /sw/include /opt/local/include /usr/local/motion ${CMAKE_CURRENT_SOURCE_DIR}/other_libraries/eigen/build/install/include
+ PATHS $ENV{ROBOTPKG_BASE}/include /usr/local/include /usr/include /sw/include /opt/local/include /usr/local/motion ${CMAKE_CURRENT_SOURCE_DIR}/other_libraries/eigen/build/install/include  ${PC_EIGEN_INCLUDEDIR}
  PATH_SUFFIXES eigen2 eigen
+ NO_CMAKE_SYSTEM_PATH
  )
 
 ## -----------------------------------------------------------------------------
