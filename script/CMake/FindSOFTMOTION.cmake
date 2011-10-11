@@ -9,8 +9,11 @@
 ## -----------------------------------------------------------------------------
 ## Check for the header files
 
+find_package(PkgConfig)
+pkg_check_modules(PC_SOFTMOTION QUIET softMotion-libs)
+
 find_path (SOFTMOTION_INCLUDE_DIR softMotion/softMotion.h
-  PATHS ${SOFTMOTION_INC} $ENV{ROBOTPKG_BASE}/include /usr/local/include /usr/include /sw/include /opt/local/include ${CMAKE_CURRENT_SOURCE_DIR}/other_libraries/softMotion-libs/build/install/include 
+  PATHS ${SOFTMOTION_INC} $ENV{ROBOTPKG_BASE}/include /usr/local/include /usr/include /sw/include /opt/local/include ${CMAKE_CURRENT_SOURCE_DIR}/other_libraries/softMotion-libs/build/install/include ${PC_SOFTMOTION_INCLUDEDIR} ${PC_SOFTMOTION_INCLUDE_DIRS}
   )
 #if(${SOFTMOTION_INCLUDE_DIR} MATCHES "SOFTMOTION_INCLUDE_DIR-NOTFOUND")
 #  add_subdirectory(${BioMove3D_SOURCE_DIR}/other_libraries/softMotion)
@@ -23,7 +26,7 @@ find_path (SOFTMOTION_INCLUDE_DIR softMotion/softMotion.h
 ## Check for the library
 
 find_library (SOFTMOTION_LIBRARIES softMotion
-  PATHS ${SOFTMOTION_LIB} $ENV{ROBOTPKG_BASE}/lib /usr/local/lib /usr/lib /lib /sw/lib /opt/local/lib ${CMAKE_CURRENT_SOURCE_DIR}/other_libraries/softMotion-libs/build/install/lib 
+  PATHS ${SOFTMOTION_LIB} $ENV{ROBOTPKG_BASE}/lib /usr/local/lib /usr/lib /lib /sw/lib /opt/local/lib ${CMAKE_CURRENT_SOURCE_DIR}/other_libraries/softMotion-libs/build/install/lib ${PC_SOFTMOTION_LIBRARY_DIRS}
   )
 
 ## -----------------------------------------------------------------------------
