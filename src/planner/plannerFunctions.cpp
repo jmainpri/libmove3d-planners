@@ -322,8 +322,9 @@ int p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void)
                                     q_source->getConfigStruct(),  
                                     q_target->getConfigStruct() );
   
-  if(!PlanEnv->getBool(PlanParam::stopPlanner) &&
-     PlanEnv->getBool(PlanParam::withSmoothing))
+  if( path != NULL && 
+     !PlanEnv->getBool(PlanParam::stopPlanner) &&
+     PlanEnv->getBool(PlanParam::withSmoothing) )
   {
     smoothing_Function(rob->getRobotStruct(), path, 100, 4.0);
   }
