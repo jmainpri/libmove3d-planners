@@ -52,6 +52,36 @@ unsigned int p3d_planner_functions_GetRunId()
   return runId;
 }
 
+
+// ---------------------------------------------------------------------------------
+// Delete graph if it exists
+// ---------------------------------------------------------------------------------
+void delete_graph( p3d_graph* &G )
+{
+  if (API_activeGraph) 
+  {
+    delete API_activeGraph;
+    API_activeGraph = NULL;
+    cerr << "Delete C++ API Graph" << endl;
+  }
+  
+  if( !p3d_del_graph(G) ) 
+  {
+    cerr << "Graph allready deleded" << endl;
+  }
+  
+  G = NULL;
+  
+  if( !p3d_del_graph(XYZ_GRAPH) )
+  {
+    cerr << "XYZ_GRAPH allready deleted" << endl;
+  }
+  XYZ_GRAPH = NULL;
+  
+  cerr << "G = " << G << endl;
+  cerr <<  "XYZ_GRAPH = " << XYZ_GRAPH << endl;
+}
+
 // ---------------------------------------------------------------------------------
 // Allocates an RRT depending on env variables
 // ---------------------------------------------------------------------------------
@@ -125,7 +155,10 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
   
   // Allocate the graph if does't exist
   p3d_graph* GraphPt = robotPt->GRAPH;
-  GraphPt = GraphPt ? GraphPt : p3d_create_graph(robotPt);
+  
+  // Removes graph if it exists
+  delete_graph( GraphPt );
+    
   Graph* graph = 	API_activeGraph =  new Graph(rob,GraphPt);
   
   // Allocate RRT
