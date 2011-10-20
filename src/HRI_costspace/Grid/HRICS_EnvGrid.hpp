@@ -50,6 +50,11 @@ namespace HRICS
 		void initGrid();
 
                 /**
+                  * recompute the grid cost if human move
+                  */
+                void recomputeGridWhenHumanMove();
+
+                /**
                   * Compute the crown arround the human for reacheability
                   */
 		void computeHumanRobotReacheability(std::pair<double,double> minMax);

@@ -1168,7 +1168,8 @@ void OTPMotionPl::newComputeOTP()
 {
     clock_t start = clock();
 //    m_2DGrid->init(computeHumanRobotDist());
-    m_2DGrid->initGrid();
+//    m_2DGrid->initGrid();
+    m_2DGrid->recomputeGridWhenHumanMove();
     m_2DGrid->setCellsToblankCost();
 
     m_costVector.clear();
