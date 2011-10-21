@@ -15,28 +15,34 @@ using namespace std;
 
 ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& active_joints )
 {
-  m_robot = rob;
+  robot_ = rob;
   chomp_joints_.clear();
   
   for (unsigned int i=0; i<active_joints.size(); i++)
   {
-    for (unsigned int j=0; j<m_robot->getJoint( active_joints[i] )->getNumberOfDof(); j++) 
+    for (unsigned int j=0; j<robot_->getJoint( active_joints[i] )->getNumberOfDof(); j++) 
     {
-      if( !m_robot->getJoint( active_joints[i] )->isJointDofUser(j) )
+      if( !robot_->getJoint( active_joints[i] )->isJointDofUser(j) )
+        continue;
+      
+      double min,max;
+      robot_->getJoint( active_joints[i] )->getDofBounds(j,min,max);
+      
+      cout << "Joint(" << j << ") : ";
+      cout << "min = " << min << ", max = " << max << endl;
+      
+      if (min == max)
         continue;
       
       ChompJoint jnt;
       
-      jnt.move3d_joint_ = m_robot->getJoint( active_joints[i] );
+      jnt.move3d_joint_ = robot_->getJoint( active_joints[i] );
       jnt.move3d_joint_index_ = active_joints[i];
       jnt.move3d_dof_index_ = jnt.move3d_joint_->getIndexOfFirstDof() + j;
       jnt.chomp_joint_index_ = i;
       jnt.joint_name_ = jnt.move3d_joint_->getName();
       jnt.wrap_around_ = false;
       jnt.has_joint_limits_ = !p3d_jnt_is_dof_circular(jnt.move3d_joint_->getJointStruct(),0);
-      
-      double min,max;
-      jnt.move3d_joint_->getDofBounds(j,min,max);
       
       jnt.joint_limit_min_ = min;
       jnt.joint_limit_max_ = max;
@@ -83,7 +89,7 @@ void ChompPlanningGroup::draw() const
 //    if (i>=38) 
 //      continue;
     
-    Eigen::Transform3d T = m_robot->getJoint( collision_points_[i].getParentJoints().back() )->getMatrixPos();
+    Eigen::Transform3d T = robot_->getJoint( collision_points_[i].getParentJoints().back() )->getMatrixPos();
     
     collision_points_[i].draw(T);
   }

@@ -35,6 +35,7 @@
 /** \author Mrinal Kalakrishnan */
 
 #include "stompParameters.hpp"
+#include "planner/planEnvironment.hpp"
 
 #include "../p3d/env.hpp"
 #include "Planner-pkg.h"
@@ -58,8 +59,12 @@ void StompParameters::init()
   max_iterations_after_collision_free_ = 200;
   
   //smoothness_cost_weight_ = 0.1;
-  smoothness_cost_weight_ = 0.000001;
-  obstacle_cost_weight_ = 1.0;
+//  smoothness_cost_weight_ = 0.05;
+//  obstacle_cost_weight_ = 1.0;
+
+  smoothness_cost_weight_ = PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight);
+  obstacle_cost_weight_ =   PlanEnv->getDouble(PlanParam::trajOptimObstacWeight);
+  
   constraint_cost_weight_ = 0.0;
   torque_cost_weight_ = 0.0;
   

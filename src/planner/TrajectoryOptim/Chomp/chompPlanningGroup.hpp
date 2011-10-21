@@ -42,7 +42,7 @@ public:
   // Creates the planning group
   ChompPlanningGroup(Robot* rob, const std::vector<int>& active_joints );
   
-  Robot* m_robot;                                            /** Move3D robot which is planned **/
+  Robot* robot_;                                            /** Move3D robot which is planned **/
   
   std::string name_;                                          /**< Name of the planning group */
   int num_joints_;                                            /**< Number of joints used in planning */

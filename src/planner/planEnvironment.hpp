@@ -42,6 +42,7 @@ namespace  PlanParam
     // Stomp/Chomp
     withCurrentTraj,
     doReplanning,
+    useSelectedDuration,
         
         // Drawing (gl) stuff
         drawColorConfig,

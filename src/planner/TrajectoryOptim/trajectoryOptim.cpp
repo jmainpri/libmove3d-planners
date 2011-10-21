@@ -38,6 +38,9 @@ bool m_add_human = true;
 
 static Robot* m_robot = NULL;
 
+enum ScenarioType { CostMap, Shelf, Navigation };
+static ScenarioType m_sce;
+
 CollisionSpace* m_coll_space=NULL;
 
 ChompPlanningGroup* m_chompplangroup= NULL;
@@ -56,7 +59,7 @@ vector<int> m_planner_joints;
 vector<CollisionPoint> m_collision_points;
 
 //--------------------------------------------------------
-// Init Functions
+// General method
 //--------------------------------------------------------
 
 //! set mlp for this robot
@@ -76,7 +79,7 @@ void traj_optim_set_MultiLP()
 }
 
 //! invalidate all constraints
-// -----------------------------------------------
+// --------------------------------------------------------
 void traj_optim_invalidate_cntrts()
 {
   if (!m_robot) {
@@ -97,15 +100,39 @@ void traj_optim_invalidate_cntrts()
   }
 }
 
+//****************************************************************
+//* Shelf example
+//****************************************************************
+
+//! Sets the robot and the local method to be used
+//! Also sets the constraints and fixes the joints
+//! which are not used durring the planning/optimization phaze
+// --------------------------------------------------------
+void traj_optim_shelf_set_localpath_and_cntrts()
+{
+  cout << "Set robot, localpath and cntrts" << endl;
+  m_robot = global_Project->getActiveScene()->getActiveRobot();
+  
+  traj_optim_set_MultiLP();
+  traj_optim_invalidate_cntrts();
+  
+  p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
+  p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
+  
+  fixAllJointsWithoutArm( m_robot->getRobotStruct() , 0 );
+  
+  p3d_set_user_drawnjnt(28);
+}
+
 //! initializes the collision space
-// -----------------------------------------------
-void traj_optim_init_collision_space()
+// --------------------------------------------------------
+void traj_optim_shelf_init_collision_space()
 {
   m_coll_space = new CollisionSpace(m_robot);
   
   // Set the active joints (links)
   m_active_joints.clear();
-//  m_active_joints.push_back( 5 );
+  //  m_active_joints.push_back( 5 );
   m_active_joints.push_back( 6 );
   m_active_joints.push_back( 7 );
   m_active_joints.push_back( 8 );
@@ -119,7 +146,7 @@ void traj_optim_init_collision_space()
   
   // Set the planner joints
   m_planner_joints.clear();
-//  m_planner_joints.push_back( 5 );
+  //  m_planner_joints.push_back( 5 );
   m_planner_joints.push_back( 6 );
   m_planner_joints.push_back( 7 );
   m_planner_joints.push_back( 8 );
@@ -158,8 +185,8 @@ void traj_optim_init_collision_space()
 }
 
 //! initializes the collision points
-// -----------------------------------------------
-bool traj_optim_init_collision_points()
+// --------------------------------------------------------
+bool traj_optim_shelf_init_collision_points()
 {
   // Generate Bounding volumes for active joints
   BodySurfaceSampler* sampler = m_coll_space->getBodySampler();
@@ -187,9 +214,13 @@ bool traj_optim_init_collision_points()
   return true;
 }
 
+//****************************************************************
+//* 2D Costmap example
+//****************************************************************
+
 //! Initializes the optimization for a costspace
-// -----------------------------------------------
-bool traj_optim_init_costspace()
+// --------------------------------------------------------
+bool traj_optim_costspace_init()
 {
   m_robot = global_Project->getActiveScene()->getActiveRobot();
   
@@ -209,48 +240,20 @@ bool traj_optim_init_costspace()
   p3d_set_user_drawnjnt(1);
   
   m_coll_space = NULL;
-
+  
   bool valid_costspace = global_costSpace->setCost("costMap2D");
   return valid_costspace;
 }
 
-//! Get current robot
-//! Initializes the multi-localpaths
-// -----------------------------------------------
-bool traj_optim_init()
-{
-  if (m_init == true)
-    return true;
-  
-  if( ENV.getBool(Env::isCostSpace) )
-  {
-    if( !traj_optim_init_costspace() )
-      return false;
-  }
-  else
-  {
-    traj_optim_set_localpath_and_cntrts();
-    
-    // If the collision space exists we use it
-    if( !global_CollisionSpace ) 
-    {
-      traj_optim_init_collision_space();
-    }
-    else {
-      m_coll_space = global_CollisionSpace;
-    }
-    
-    traj_optim_init_collision_points();
-  }
-  
-  return true;
-}
+//****************************************************************
+//* Navigation example
+//****************************************************************
 
 //! Sets the robot and the local method to be used
 //! Also sets the constraints and fixes the joints
 //! which are not used durring the planning/optimization phaze
-// ------------------------------------------------------------
-void traj_optim_set_localpath_and_cntrts()
+// --------------------------------------------------------
+void traj_optim_navigation_set_localpath_and_cntrts()
 {
   cout << "Set robot, localpath and cntrts" << endl;
   m_robot = global_Project->getActiveScene()->getActiveRobot();
@@ -259,15 +262,52 @@ void traj_optim_set_localpath_and_cntrts()
   traj_optim_invalidate_cntrts();
   
   p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-  p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
+  p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_BaseMLP, 1, false);
   
-  fixAllJointsWithoutArm( m_robot->getRobotStruct() , 0 );
+  fixAllJointsExceptBase( m_robot->getRobotStruct() );
   
-  p3d_set_user_drawnjnt(28);
+  p3d_set_user_drawnjnt(1);
 }
 
+void traj_optim_navigation_generate_points()
+{
+  // Set the active joints (links)
+  m_active_joints.clear();
+  m_active_joints.push_back( 1 );
+  
+  // Set the planner joints
+  m_planner_joints.clear();
+  m_planner_joints.push_back( 1 );
+  
+  // Generate Bounding volumes for active joints
+  BodySurfaceSampler* sampler = m_coll_space->getBodySampler();
+  
+  // Get all joints active in the motion planning
+  // and compute bounding cylinders
+  vector<Joint*> joints;
+  joints.clear();
+  for (unsigned int i=0; i<m_active_joints.size(); i++) 
+  {
+    joints.push_back( m_robot->getJoint( m_active_joints[i] ) );
+  }
+  sampler->generateRobotBoudingCylinder( m_robot, joints );
+  
+  // Get all planner joint and compute collision points
+  vector<int> planner_joints_id;
+  for (unsigned int i=0; i<m_planner_joints.size(); i++) 
+  {
+    planner_joints_id.push_back( m_planner_joints[i] );
+  }
+  m_collision_points = sampler->generateRobotCollisionPoints( m_robot, m_active_joints, planner_joints_id );
+}
+
+//****************************************************************
+//* Common functions 
+//****************************************************************
+
 //! Create initial Move3D trajectory
-// -----------------------------------------------
+//! this function creates a straigt trajectory
+// --------------------------------------------------------
 API::Trajectory traj_optim_create_sraight_line_traj()
 {
   shared_ptr<Configuration> q_init( m_robot->getInitialPosition() );
@@ -283,9 +323,93 @@ API::Trajectory traj_optim_create_sraight_line_traj()
   return T;
 }
 
-//--------------------------------------------------------
-// Run Functions
-//--------------------------------------------------------
+//! Get current robot
+//! Initializes the costspace and multi localpath
+// --------------------------------------------------------
+bool traj_optim_init()
+{
+  if (m_init == true)
+    return true;
+  
+  switch (m_sce) 
+  {
+    case CostMap:
+      
+      if( !traj_optim_costspace_init() )
+        return false;
+      
+      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.2);
+      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
+      break;
+      
+    case Shelf:
+      
+      traj_optim_shelf_set_localpath_and_cntrts();
+      
+      if( !global_CollisionSpace ) 
+      {
+        traj_optim_shelf_init_collision_space();
+        traj_optim_shelf_init_collision_points();
+      }
+      else {
+        m_coll_space = global_CollisionSpace;
+      }
+      
+      PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
+      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,15);
+      break;
+      
+    case Navigation:
+      
+      if( !global_CollisionSpace )
+        return false;
+      else
+      {
+        m_coll_space = global_CollisionSpace;
+        
+        traj_optim_navigation_set_localpath_and_cntrts();
+        traj_optim_navigation_generate_points();
+      }
+      
+      PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
+      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,15);
+      break;
+  }
+  
+  return true;
+}
+
+//! Set the type of scenario
+//! Depending on global variables
+// --------------------------------------------------------
+void traj_set_scenario_type()
+{
+  if( ENV.getBool(Env::isCostSpace) )
+  {
+    m_sce = CostMap;
+  }
+  else
+  {
+    const bool navigation = true;
+    
+    if( navigation )
+    {
+      m_sce = Shelf;
+    }
+    else
+    {
+      m_sce = Navigation;
+    }
+  }
+}
+
+
+//****************************************************************
+//*   Run Functions 
+//****************************************************************
+
+//! Chomp
+// --------------------------------------------------------
 bool traj_optim_runChomp()
 {
   if( !m_init )
@@ -295,14 +419,14 @@ bool traj_optim_runChomp()
   }
   else
   {
-    if (m_coll_space) 
+    if ( m_coll_space && m_sce == Shelf ) 
     {
-      traj_optim_set_localpath_and_cntrts();
+      traj_optim_shelf_set_localpath_and_cntrts();
     }
   }
   
   // Get Initial trajectory
-  // -----------------------------------------------
+  // ----------------------
   API::Trajectory T;
   
   if( PlanEnv->getBool(PlanParam::withCurrentTraj) )
@@ -322,7 +446,7 @@ bool traj_optim_runChomp()
   g3d_draw_allwin_active();
   
   // Create Optimizer
-  // -----------------------------------------------
+  // ----------------
   m_chompparams = new ChompParameters;
   m_chompparams->init();
   
@@ -341,9 +465,9 @@ bool traj_optim_runChomp()
   return true;
 }
 
-//--------------------------------------------------------
-// Run Functions
-//--------------------------------------------------------
+//!
+//! Stomp
+// --------------------------------------------------------
 bool traj_optim_runStomp()
 {
   if( !m_init )
@@ -353,7 +477,7 @@ bool traj_optim_runStomp()
   }
   
   // Get Initial trajectory
-  // -----------------------------------------------
+  // ----------------------
   API::Trajectory T;
   
   if( PlanEnv->getBool(PlanParam::withCurrentTraj) )
@@ -374,7 +498,7 @@ bool traj_optim_runStomp()
   g3d_draw_allwin_active();
   
   // Create Optimizer
-  // -----------------------------------------------
+  // ----------------
   m_stompparams = new stomp_motion_planner::StompParameters;
   m_stompparams->init();
   
@@ -387,21 +511,31 @@ bool traj_optim_runStomp()
   
   cout << "Initialize optimizer" << endl;
   optimizer.reset(new stomp_motion_planner::StompOptimizer(m_chomptraj,
-                                                 m_stompparams,
-                                                 m_chompplangroup,
-                                                 m_coll_space));
+                                                           m_stompparams,
+                                                           m_chompplangroup,
+                                                           m_coll_space));
   
   cout << "Optimizer created" << endl;
-  optimizer->setSharedPtr(optimizer);
-  optimizer->runDeformation(0,0);
-  optimizer->resetSharedPtr();
+  
+  if(!PlanEnv->getBool(PlanParam::trajOptimTestMultiGauss))
+  {
+    optimizer->setSharedPtr(optimizer);
+    optimizer->runDeformation(0,0);
+    optimizer->resetSharedPtr();
+  }
+  else
+  {
+    optimizer->setSharedPtr(optimizer);
+    optimizer->testMultiVariateGaussianSampler();
+    optimizer->resetSharedPtr();
+  }
   
   return true;
 }
 
-//--------------------------------------------------------
+// --------------------------------------------------------
 // Draw Functions
-//--------------------------------------------------------
+// --------------------------------------------------------
 void traj_optim_draw_collision_points()
 {
   if (m_chompplangroup && !m_chompplangroup->collision_points_.empty()) 

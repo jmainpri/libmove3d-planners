@@ -51,7 +51,7 @@ void CollisionSpaceCell::draw(int color, int width)
 
 void CollisionSpaceCell::drawStatic()
 {
-  if( !this->m_Valid )
+  if( !m_Valid )
 	{
     draw(Red, 1);
   }
@@ -59,7 +59,7 @@ void CollisionSpaceCell::drawStatic()
 
 void CollisionSpaceCell::draw()
 {
-	if( !this->m_Valid )
+	if( !m_Valid )
 	{
 		//drawStatic()
 	}

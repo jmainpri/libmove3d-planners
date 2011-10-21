@@ -83,6 +83,7 @@ public:
   void runDeformation( int nbIteration , int idRun=0 );
   void setSharedPtr(boost::shared_ptr<StompOptimizer>& ptr);
   void resetSharedPtr();
+  void testMultiVariateGaussianSampler();
 
   // stuff derived from Task:
   /**
@@ -122,6 +123,11 @@ public:
   bool getControlCostWeight(double& control_cost_weight);
   
   /**
+   * Returns the planning group of the optimizer
+   */
+  const ChompPlanningGroup* getPlanningGroup() const { return planning_group_; } 
+  
+  /**
    * Draw function to be called outside
    */
   void draw();
@@ -141,7 +147,7 @@ private:
   ChompTrajectory *full_trajectory_;
 //  const StompRobotModel *robot_model_;
   const ChompPlanningGroup *planning_group_;
-  const StompParameters *parameters_;
+  const StompParameters *stomp_parameters_;
   const CollisionSpace *collision_space_;
   ChompTrajectory group_trajectory_;
   std::vector<ChompCost> joint_costs_;
@@ -227,6 +233,7 @@ private:
   boost::shared_ptr<StompStatistics>  stomp_statistics_;
 
   void initialize();
+  void initPolicy();
   void calculateSmoothnessIncrements();
   void calculateCollisionIncrements();
   void calculateTotalIncrements();

@@ -50,12 +50,30 @@
 #include <algorithm>
 #include <iostream>
 
+std::vector<double> global_noiseTrajectory1;
+std::vector<double> global_noiseTrajectory2;
+
 using namespace std;
 
 USING_PART_OF_NAMESPACE_EIGEN
 
 namespace stomp_motion_planner
 {
+  //! Computes the cost the rollout
+  //! the function sums the control costs of all dumensions
+  double Rollout::getCost()
+  {
+    double cost = state_costs_.sum();
+    int num_dim = control_costs_.size();
+    for (int d=0; d<num_dim; ++d)
+      cost += control_costs_[d].sum();
+    return cost;
+  }
+  
+  //----------------------------------------------------------------------
+  //----------------------------------------------------------------------
+  //----------------------------------------------------------------------
+  //----------------------------------------------------------------------
   
   PolicyImprovement::PolicyImprovement():
   initialized_(false)
@@ -68,6 +86,9 @@ namespace stomp_motion_planner
     
   }
   
+  //! Initialize policy improvment
+  //! 1 - Allocates a multivariate gaussian sampler
+  //! 2 - Computes the projection matrix
   bool PolicyImprovement::initialize(const int num_rollouts, const int num_time_steps, const int num_reused_rollouts,
                                      const int num_extra_rollouts, boost::shared_ptr<Policy> policy,
                                      bool use_cumulative_costs)
@@ -83,17 +104,7 @@ namespace stomp_motion_planner
     policy_->getBasisFunctions(basis_functions_);
     policy_->getParameters(parameters_);
     
-    // invert the control costs, initialize noise generators:
-    inv_control_costs_.clear();
-    noise_generators_.clear();
-    for (int d=0; d<num_dimensions_; ++d)
-    {
-      //cout << "control_costs_[" << d << "] = " << control_costs_[d] << endl;
-      inv_control_costs_.push_back(control_costs_[d].inverse());
-      MultivariateGaussian mvg(VectorXd::Zero(num_parameters_[d]), inv_control_costs_[d]);
-      noise_generators_.push_back(mvg);
-    }
-    
+    assert(preAllocateMultivariateGaussianSampler());
     assert(setNumRollouts(num_rollouts, num_reused_rollouts, num_extra_rollouts));
     assert(preAllocateTempVariables());
     assert(preComputeProjectionMatrices());
@@ -101,6 +112,29 @@ namespace stomp_motion_planner
     return (initialized_ = true);
   }
   
+  //! Allocates the sampler
+  //! also initializes the control cost inverse structure
+  bool PolicyImprovement::preAllocateMultivariateGaussianSampler()
+  {
+    // invert the control costs, initialize noise generators:
+    inv_control_costs_.clear();
+    noise_generators_.clear();
+    for (int d=0; d<num_dimensions_; ++d)
+    {
+      //cout << "control_costs_[" << d << "] = " << endl << control_costs_[d] << endl;
+      cout << "inv_control_costs_[" << d << "] = " << endl << control_costs_[d].inverse() << endl;
+      inv_control_costs_.push_back(control_costs_[d].inverse());
+      MultivariateGaussian mvg(VectorXd::Zero(num_parameters_[d]), inv_control_costs_[d]);
+      noise_generators_.push_back(mvg);
+    }
+    
+    return true;
+  }
+  
+  //! Allocates the rollout structures
+  //! @param num_rollouts the total number of rollouts
+  //! @param num_reused_rollouts the reused number of rollouts
+  //! @param num_extra_rollouts the number of extra rollouts
   bool PolicyImprovement::setNumRollouts(const int num_rollouts, const int num_reused_rollouts, const int num_extra_rollouts)
   {
     num_rollouts_ = num_rollouts;
@@ -159,13 +193,86 @@ namespace stomp_motion_planner
     return true;
   }
   
-  double Rollout::getCost()
+  //! Allocates Temporary Variables
+  bool PolicyImprovement::preAllocateTempVariables()
   {
-    double cost = state_costs_.sum();
-    int num_dim = control_costs_.size();
-    for (int d=0; d<num_dim; ++d)
-      cost += control_costs_[d].sum();
-    return cost;
+    tmp_noise_.clear();
+    tmp_parameters_.clear();
+    parameter_updates_.clear();
+    for (int d=0; d<num_dimensions_; ++d)
+    {
+      tmp_noise_.push_back(VectorXd::Zero(num_parameters_[d]));
+      tmp_parameters_.push_back(VectorXd::Zero(num_parameters_[d]));
+      parameter_updates_.push_back(MatrixXd::Zero(num_time_steps_, num_parameters_[d]));
+    }
+    tmp_max_cost_ = VectorXd::Zero(num_time_steps_);
+    tmp_min_cost_ = VectorXd::Zero(num_time_steps_);
+    tmp_sum_rollout_probabilities_ = VectorXd::Zero(num_time_steps_);
+    
+    return true;
+  }
+  
+  //! Precomputes the projection matrices M using the inverse of the control cost matrix
+  //! Each column of the 
+  bool PolicyImprovement::preComputeProjectionMatrices()
+  {
+    //  ROS_INFO("Precomputing projection matrices..");
+    projection_matrix_.resize(num_dimensions_);
+    for (int d=0; d<num_dimensions_; ++d)
+    {
+      projection_matrix_[d] = inv_control_costs_[d];
+      for (int p=0; p<num_parameters_[d]; ++p)
+      {
+        double column_max = inv_control_costs_[d](0,p);
+        for (int p2 = 1; p2 < num_parameters_[d]; ++p2)
+        {
+          if (inv_control_costs_[d](p2,p) > column_max)
+            column_max = inv_control_costs_[d](p2,p);
+        }
+        projection_matrix_[d].col(p) *= (1.0/(num_parameters_[d]*column_max));
+      }
+      
+      //cout << "Projection Matrix = " << endl << projection_matrix_[d] << endl;
+    }
+    
+    //  ROS_INFO("Done precomputing projection matrices.");
+    return true;
+  }
+  
+  //----------------------------------------------------------------------
+  //----------------------------------------------------------------------
+  //----------------------------------------------------------------------
+  //----------------------------------------------------------------------
+  
+  bool PolicyImprovement::copyParametersFromPolicy()
+  {
+    if (!policy_->getParameters(parameters_))
+    {
+      //        ROS_ERROR("Failed to get policy parametertes.");
+      return false;
+    }
+    return true;
+  }
+  
+  bool PolicyImprovement::computeProjectedNoise(Rollout& rollout)
+  {
+    for (int d=0; d<num_dimensions_; ++d)
+    {
+      rollout.noise_projected_[d] = projection_matrix_[d] * rollout.noise_[d];
+      //rollout.parameters_noise_projected_[d] = rollout.parameters_[d] + rollout.noise_projected_[d];
+      //cout << "rollout.noise_projected_[" << d << "] = " << rollout.noise_projected_[d].transpose() << endl;
+    }
+    
+    return true;
+  }
+  
+  bool PolicyImprovement::computeProjectedNoise()
+  {
+    for (int r=0; r<num_rollouts_; ++r)
+    {
+      computeProjectedNoise(rollouts_[r]);
+    }
+    return true;
   }
   
   bool PolicyImprovement::generateRollouts(const std::vector<double>& noise_stddev)
@@ -245,6 +352,31 @@ namespace stomp_motion_planner
         noise_generators_[d].sample(tmp_noise_[d]);
         rollouts_[r].noise_[d] = noise_stddev[d]*tmp_noise_[d];
         rollouts_[r].parameters_[d] = parameters_[d] + rollouts_[r].noise_[d];
+        
+        // Saves the first rollout for first dimenstion
+        if (r == 0 && d == 0) 
+        {          
+          global_noiseTrajectory1.clear();
+          
+          for (int i=0; i<rollouts_[r].parameters_[d].size(); i++) 
+          {
+            global_noiseTrajectory1.push_back(rollouts_[r].noise_[d][i]);
+            //global_noiseTrajectory1.push_back(rollouts_[r].parameters_[d][i]);
+          }
+        }
+        // Saves the first rollout for second dimenstion
+        if (r == 0 && d == 1) 
+        {          
+          global_noiseTrajectory2.clear();
+          
+          for (int i=0; i<rollouts_[r].parameters_[d].size(); i++) 
+          {
+            global_noiseTrajectory2.push_back(rollouts_[r].noise_[d][i]);
+            //global_noiseTrajectory2.push_back(rollouts_[r].parameters_[d][i]);
+          }
+        }
+        //cout << "rollouts_[" << r << "].noise_[" << d << "] = "<< rollouts_[r].noise_[d].transpose() << endl;
+        //cout << "rollouts_[" << r << "].parameters_[" << d << "] = "<< rollouts_[r].parameters_[d].transpose() << endl;
       }
     }
     
@@ -255,7 +387,7 @@ namespace stomp_motion_planner
   {
     if (!generateRollouts(noise_variance))
     {
-      //        ROS_ERROR("Failed to generate rollouts.");
+      cout << "Failed to generate rollouts." << endl;
       return false;
     }
     
@@ -263,14 +395,21 @@ namespace stomp_motion_planner
     for (int r=0; r<num_rollouts_gen_; ++r)
     {
       rollouts.push_back(rollouts_[r].parameters_);
+      
+//      for (int d=0; d<num_dimensions_; d++) 
+//      {
+//        cout << "rollouts_[" << d << "].parameters_ = " << rollouts_[r].noise_[d].transpose() << endl;
+//      }
     }
     
-    //ros::WallTime start_time = ros::WallTime::now();
     computeProjectedNoise();
-    //ROS_INFO("Noise projection took %f seconds", (ros::WallTime::now() - start_time).toSec());
-    
     return true;
   }
+  
+  //----------------------------------------------------------------------
+  //----------------------------------------------------------------------
+  //----------------------------------------------------------------------
+  //----------------------------------------------------------------------
   
   bool PolicyImprovement::setRolloutCosts(const Eigen::MatrixXd& costs, const double control_cost_weight, std::vector<double>& rollout_costs_total)
   {
@@ -289,15 +428,6 @@ namespace stomp_motion_planner
     for (int r=0; r<num_rollouts_; ++r)
     {
       rollout_costs_total[r] = rollouts_[r].getCost();
-    }
-    return true;
-  }
-  
-  bool PolicyImprovement::computeProjectedNoise()
-  {
-    for (int r=0; r<num_rollouts_; ++r)
-    {
-      computeProjectedNoise(rollouts_[r]);
     }
     return true;
   }
@@ -429,46 +559,6 @@ namespace stomp_motion_planner
     return true;
   }
   
-  bool PolicyImprovement::preAllocateTempVariables()
-  {
-    tmp_noise_.clear();
-    tmp_parameters_.clear();
-    parameter_updates_.clear();
-    for (int d=0; d<num_dimensions_; ++d)
-    {
-      tmp_noise_.push_back(VectorXd::Zero(num_parameters_[d]));
-      tmp_parameters_.push_back(VectorXd::Zero(num_parameters_[d]));
-      parameter_updates_.push_back(MatrixXd::Zero(num_time_steps_, num_parameters_[d]));
-    }
-    tmp_max_cost_ = VectorXd::Zero(num_time_steps_);
-    tmp_min_cost_ = VectorXd::Zero(num_time_steps_);
-    tmp_sum_rollout_probabilities_ = VectorXd::Zero(num_time_steps_);
-    
-    return true;
-  }
-  
-  bool PolicyImprovement::preComputeProjectionMatrices()
-  {
-    //  ROS_INFO("Precomputing projection matrices..");
-    projection_matrix_.resize(num_dimensions_);
-    for (int d=0; d<num_dimensions_; ++d)
-    {
-      projection_matrix_[d] = inv_control_costs_[d];
-      for (int p=0; p<num_parameters_[d]; ++p)
-      {
-        double column_max = inv_control_costs_[d](0,p);
-        for (int p2 = 1; p2 < num_parameters_[d]; ++p2)
-        {
-          if (inv_control_costs_[d](p2,p) > column_max)
-            column_max = inv_control_costs_[d](p2,p);
-        }
-        projection_matrix_[d].col(p) *= (1.0/(num_parameters_[d]*column_max));
-      }
-    }
-    //  ROS_INFO("Done precomputing projection matrices.");
-    return true;
-  }
-  
   bool PolicyImprovement::addExtraRollouts(std::vector<std::vector<Eigen::VectorXd> >& rollouts, std::vector<Eigen::VectorXd>& rollout_costs)
   {
     assert(int(rollouts.size()) == num_rollouts_extra_);
@@ -499,17 +589,6 @@ namespace stomp_motion_planner
     return true;
   }
   
-  bool PolicyImprovement::computeProjectedNoise(Rollout& rollout)
-  {
-    for (int d=0; d<num_dimensions_; ++d)
-    {
-      rollout.noise_projected_[d] = projection_matrix_[d] * rollout.noise_[d];
-      //rollout.parameters_noise_projected_[d] = rollout.parameters_[d] + rollout.noise_projected_[d];
-    }
-    
-    return true;
-  }
-  
   bool PolicyImprovement::computeRolloutControlCosts(Rollout& rollout)
   {
     policy_->computeControlCosts(control_costs_, rollout.parameters_, rollout.noise_projected_,
@@ -517,14 +596,49 @@ namespace stomp_motion_planner
     return true;
   }
   
-  bool PolicyImprovement::copyParametersFromPolicy()
+  void PolicyImprovement::testNoiseGenerators()
   {
-    if (!policy_->getParameters(parameters_))
+    for (int d=0; d<num_dimensions_; ++d)
     {
-      //        ROS_ERROR("Failed to get policy parameters.");
-      return false;
+      // For all dimensions
+      const unsigned int N = 10000;
+    
+      Eigen::VectorXd sum(VectorXd::Zero(num_parameters_[d]));
+      Eigen::MatrixXd samples(N,num_parameters_[d]);
+      
+      for (unsigned int i=0; i<N; ++i) 
+      {
+        Eigen::VectorXd tmp(VectorXd::Zero(num_parameters_[d]));
+        
+        noise_generators_[d].sample( tmp );
+        
+        //cout << "sampler = " << tmp.transpose() << endl;
+        samples.row(i) = tmp.transpose();
+        sum += tmp;
+      }
+      
+      Eigen::VectorXd mean((1/((double)N))*sum);
+      Eigen::MatrixXd covariance(MatrixXd::Zero(num_parameters_[d],num_parameters_[d]));
+      
+      for ( int k=0; k<num_parameters_[d]; ++k) 
+      {
+        for ( int j=0; j<num_parameters_[d]; ++j) 
+        {
+          for ( int i=0; i<int(N); ++i) 
+          {
+            covariance(j,k) += ( samples(i,j) - mean(j) )*( samples(i,k) - mean(k) ) ;
+          }
+        }
+      }
+      covariance /= N;
+      
+      cout << "CoV dimension [" << d << "] = " << endl << covariance << endl;
+      cout << "Sum dimension [" << d << "] = " << endl << sum.transpose() << endl;
+      cout << "Mean dimension [" << d << "] = " << endl << mean.transpose() << endl;
     }
-    return true;
   }
   
 };
+
+
+

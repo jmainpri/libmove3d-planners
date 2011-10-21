@@ -46,6 +46,12 @@ BodySurfaceSampler::~BodySurfaceSampler()
   }
 }
 
+//! Computes a point cloud for an object
+//! 
+//! Discard points of they are not in the evironment box
+//! also dicard points of they are bellow 0 in z (bellow ground)
+//! this enables a pading while keeping a ground object for the
+//! calssical collision checker based algorithm
 void BodySurfaceSampler::computeObjectPointCloud( p3d_obj* obj, PointCloud& pointCloud, bool isRobot )
 {
   //  cout << "Sample Object : " << obj->name << endl;
@@ -107,7 +113,7 @@ void BodySurfaceSampler::computeObjectPointCloud( p3d_obj* obj, PointCloud& poin
           //					obj->pointCloud[obj->nbPointCloud + k][0] = point(0);
           //					obj->pointCloud[obj->nbPointCloud + k][1] = point(1);
           //					obj->pointCloud[obj->nbPointCloud + k][2] = point(2);
-          if( isRobot || isPointInEnvironment( point ) )
+          if( isRobot || ( isPointInEnvironment( point ) && isPointOverGround( point )) )
           { 
             (*m_objectToPointCloudMap[obj]).push_back( point ); 
           }
@@ -162,6 +168,14 @@ void BodySurfaceSampler::computeAllRobotsBodiesPointCloud()
 	{
  		computeRobotBodiesPointCloud( sc->getRobot(i) );
 	}
+}
+bool BodySurfaceSampler::isPointOverGround( const Eigen::Vector3d& point )
+{
+  if ( point[2] < 0 ) {
+    return false;
+  }
+  
+  return true;
 }
 
 bool BodySurfaceSampler::isPointInEnvironment( const Eigen::Vector3d& point ) 
@@ -254,71 +268,9 @@ void BodySurfaceSampler::generateAllRobotsBoundingCylinders()
 	}
 }
 
-std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Robot* robot, const std::vector<int>& active_joints, const std::vector<int>& planner_joints )
-{
-  std::vector<CollisionPoint> all_points;
-  all_points.clear();
-  
-  std::vector<int> parent_joints;
-  
-  for (unsigned int i=1; i<active_joints.size(); i++) 
-  {
-    int joint = active_joints[i];
-    
-    // Compute the planner joints, this doesn't handle trees
-    // only handles chains, the planner joints before the active 
-    // joints are taken into account
-    parent_joints.clear();
-    for (unsigned int j=0; j<planner_joints.size(); j++) 
-    {
-      if ( planner_joints[j] <= joint ) 
-      {
-        parent_joints.push_back( planner_joints[j] );
-      }
-    }
-    
-    parent_joints.clear();
-    for (unsigned int j=0; j<active_joints.size(); j++) 
-    {
-      if ( active_joints[j] <= joint ) 
-      {
-        parent_joints.push_back( active_joints[j] );
-      }
-    }
-    
-//    if ( !find(parent_joints.begin(), parent_joints.end(), joint ) 
-//        != parent_joints.end()); ) 
-//    {
-//        
-//    }
-    
-    // Get collision points of the link of the assciated joint
-    Joint* jnt = robot->getJoint( joint );
-    
-    int segment;
-    
-    // Becarefull!!!
-    if ( i >= (planner_joints.size()-1) ) {
-      segment = planner_joints.size()-1;
-    }
-    else {
-      segment = i;
-    }
-    
-    std::vector<CollisionPoint> points = getLinksCollisionPoints( jnt, segment, parent_joints );
-    
-    // Stores the collision point in a map of the corresponding joint
-    m_jointToCollisionPoint[jnt] = points;
-    
-    for (unsigned int j=0; j<points.size(); j++) 
-    {
-      all_points.push_back( points[j] );
-    }
-  }
-  
-  return all_points;
-}
-
+//! Generates the collision point for a given link
+//! Stores the segment number (the id of the joint for planning)
+//! Also store the parent joints of the link
 std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* jnt, int segment_number , const std::vector<int>& parent_joints )
 {
   std::vector<CollisionPoint> collision_points;
@@ -334,8 +286,8 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* j
   double radius = bc->getRadius();
   double length = bc->getLength();
   
-//  Eigen::Vector3d p(0,0,0);
-//  Eigen::Vector3d p2;
+  //  Eigen::Vector3d p(0,0,0);
+  //  Eigen::Vector3d p2;
   
   Eigen::Vector3d p1 = bc->getPoint1();
   Eigen::Vector3d p2 = bc->getPoint2();
@@ -346,17 +298,17 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* j
   int num_points = ceil(length/spacing)+1;
   spacing = length/(num_points-1.0);
   
-//  cout << "spacing = " << spacing << endl;
-//  cout << "num_points = " << num_points << endl;
+  //  cout << "spacing = " << spacing << endl;
+  //  cout << "num_points = " << num_points << endl;
   
   for (int i=0; i<num_points; ++i) 
   {
-//    p(2) = -length/2.0 + i*spacing;
-//    p2 = f*p;
+    //    p(2) = -length/2.0 + i*spacing;
+    //    p2 = f*p;
     
     Eigen::Vector3d p = p1 + ((double)i/(double)num_points)*(p2-p1);
     
-//    cout << "Center(" << i << ") :  " << endl << p << endl;
+    //    cout << "Center(" << i << ") :  " << endl << p << endl;
     
     collision_points.push_back(CollisionPoint(parent_joints, radius, m_collision_clearance_default, segment_number, p));
   }
@@ -364,11 +316,82 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* j
   return collision_points;
 }
 
+//! Computes the parent joints, the segment of the joint
+//! and generate the collision point for the joint
+//! supposing that the bounding cylinder has been computed before
+std::vector<CollisionPoint> BodySurfaceSampler::generateJointCollisionPoints(Robot* robot, int id, const std::vector<int>& active_joints, const std::vector<int>& planner_joints)
+{
+  const int joint = active_joints[id];
+  Joint* jnt = robot->getJoint( joint );
+  
+  std::vector<int> parent_joints;
+  parent_joints.clear();
+  
+  // Compute the parent joints of joint, 
+  // this doesn't handle trees, only handles chains
+  for (unsigned int j=0; j<active_joints.size(); j++) 
+  {
+    if ( active_joints[j] <= joint ) 
+    {
+      parent_joints.push_back( active_joints[j] );
+    }
+  }
+  
+  int segment; // The segment is the index of the joint in the planner
+  
+  // Becarefull!!! the segment maybe wrong if the size of the active joints set 
+  // is greater than the planner joint set
+  if ( id >= int(planner_joints.size()-1) )
+    segment = planner_joints.size()-1;
+  else 
+    segment = id;
+  
+  // Generate the collision points of the joint link 
+  std::vector<CollisionPoint> points = getLinksCollisionPoints( jnt, segment, parent_joints );
+  
+  // Stores the collision point in a map of the corresponding joint
+  m_jointToCollisionPoint[jnt] = points;
+  
+  return points;
+}
+
+//! Generate the collision points for links associated to the active joints
+//! It computes the parent joints of the joint
+std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Robot* robot, const std::vector<int>& active_joints, const std::vector<int>& planner_joints )
+{
+  std::vector<CollisionPoint> all_points;
+  all_points.clear();
+  
+  // If only one joint is active
+  if(active_joints.size() == 1)
+  {
+    std::vector<CollisionPoint> points = generateJointCollisionPoints( robot, 0, active_joints, planner_joints );
+    
+    for (int i=0; i<int(points.size()); i++) 
+    {
+      all_points.push_back( points[i] );
+    }
+  }
+  
+  // Else only do not account for the first joint
+  for (int id=1; id<int(active_joints.size()); ++id) 
+  {
+    std::vector<CollisionPoint> points = generateJointCollisionPoints( robot, id, active_joints, planner_joints );
+    
+    for (int i=0; i<int(points.size()); i++) 
+    {
+      all_points.push_back( points[i] );
+    }
+  }
+  
+  return all_points;
+}
+
 void BodySurfaceSampler::draw()
 {
 	for(int i = 0; i < XYZ_ENV->no; i++)
 	{
-		//m_objectToPointCloudMap[XYZ_ENV->o[i]]->drawAllPoints();
+		m_objectToPointCloudMap[XYZ_ENV->o[i]]->drawAllPoints();
 	}  
   
   Joint* jnt;
@@ -384,12 +407,12 @@ void BodySurfaceSampler::draw()
       jnt = rob->getJoint(i);
       
       Eigen::Transform3d t = jnt->getMatrixPos();
-//      vector<CollisionPoint> points = m_jointToCollisionPoint[jnt];
-//      
-//      for( unsigned int i=0; i<points.size(); i++ )
-//      {
-//        points[i].draw(t);
-//      }
+      //      vector<CollisionPoint> points = m_jointToCollisionPoint[jnt];
+      //      
+      //      for( unsigned int i=0; i<points.size(); i++ )
+      //      {
+      //        points[i].draw(t);
+      //      }
       
       p3d_obj* obj = jnt->getJointStruct()->o;
       

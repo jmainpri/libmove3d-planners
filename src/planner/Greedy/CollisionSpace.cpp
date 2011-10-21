@@ -493,6 +493,25 @@ int CollisionSpace::getDirectionNumber(int dx, int dy, int dz) const
   return (dx+1)*9 + (dy+1)*3 + dz+1;
 }
 
+double CollisionSpace::getDistanceFromCell(int x, int y, int z) const
+{
+  return getDistance( static_cast<CollisionSpaceCell*>(getCell(x,y,z)) );
+}
+
+double CollisionSpace::getDistance(CollisionSpaceCell* cell) const
+{
+  if ( cell->m_DistanceSquare >= (int)m_SqrtTable.size() ) 
+  {
+    //std::cout << "cell dist is : " << cell->m_DistanceSquare << std::endl;
+    return 0;
+  }
+  return m_SqrtTable[cell->m_DistanceSquare];
+  
+  //  return sqrt(cell->m_DistanceSquare)*_cellSize[0];
+}
+
+//! Computes the finiate differenting gradient
+//! 
 double CollisionSpace::getDistanceGradient(const Eigen::Vector3d& point,Eigen::Vector3d& gradient) const
 {
   CollisionSpaceCell* cell = static_cast<CollisionSpaceCell*>( getCell( point ) );
@@ -526,39 +545,27 @@ double CollisionSpace::getDistanceGradient(const Eigen::Vector3d& point,Eigen::V
   return getDistance( cell );
 }
 
-double CollisionSpace::getDistanceFromCell(int x, int y, int z) const
-{
-  return getDistance( static_cast<CollisionSpaceCell*>(getCell(x,y,z)) );
-}
-
-double CollisionSpace::getDistance(CollisionSpaceCell* cell) const
-{
-  if ( cell->m_DistanceSquare >= (int)m_SqrtTable.size() ) 
-  {
-    //std::cout << "cell dist is : " << cell->m_DistanceSquare << std::endl;
-    return 0;
-  }
-  return m_SqrtTable[cell->m_DistanceSquare];
-  
-  //  return sqrt(cell->m_DistanceSquare)*_cellSize[0];
-}
-
+//! The distance potential and the gradient is computed for a collision point
+//! First the distance d of the collision point (sphere) to the closest obstacle is computed
+//! Then 3 cases apear to compute the potential
+//! - 0 if this distance is greater than the coll point clearance
+//! - 
 bool CollisionSpace::getCollisionPointPotentialGradient(const CollisionPoint& collision_point, 
                                                         const Eigen::Vector3d& collision_point_pos,
+                                                        double& field_distance,
                                                         double& potential, 
                                                         Eigen::Vector3d& gradient) const
 {
   Eigen::Vector3d field_gradient;
-  double field_distance = this->getDistanceGradient( collision_point_pos, field_gradient );
+  
+  // Compute the distance gradient and distance to nearest obstacle
+  field_distance = this->getDistanceGradient( collision_point_pos, field_gradient );
   
   //  field_gradient(0) += field_bias_x_;
   //  field_gradient(1) += field_bias_y_;
   //  field_gradient(2) += field_bias_z_;
   
   double d = field_distance - collision_point.getRadius();
-  
-  //  cout << "collision_point_pos = " << collision_point_pos << endl;
-  //  cout << "d = " << d << endl;
   
   // three cases below:
   if (d >= collision_point.getClearance())
@@ -586,11 +593,21 @@ bool CollisionSpace::getCollisionPointPotentialGradient(const CollisionPoint& co
   return (field_distance <= collision_point.getRadius()); // true if point is in collision
 }
 
-bool CollisionSpace::isRobotColliding() const
+
+//! Goes through all points and computes whether the robot is colliding
+//! Computes the transform of all point from the joint transform
+//! Uses the potential gradient function
+bool CollisionSpace::isRobotColliding(double& dist) const
 {
   //cout << "Test collision space is robot colliding" << endl;
   bool isRobotColliding = false;
-  double potential;
+  
+  double potential = 0.0;
+  double max_potential = -numeric_limits<double>::max();
+  
+  double distance = 0.0 ;
+  double min_distance = numeric_limits<double>::max();
+  
   Eigen::Vector3d position,gradient;
   
   for( unsigned int i=0; i<m_Robot->getNumberOfJoints(); i++ )
@@ -600,15 +617,18 @@ bool CollisionSpace::isRobotColliding() const
     Eigen::Transform3d T = jnt->getMatrixPos();
     vector<CollisionPoint>& points = m_sampler->getCollisionPoints(jnt);
     
+    //cout << "Joint(" << i << "), nbCollisionPoints : " << points.size() << endl;
+    
     for( unsigned int j=0; j<points.size(); j++ )
     {
       position = T*points[j].getPosition();
       
-      if( getCollisionPointPotentialGradient( points[j], position, potential, gradient ) )
+      if( getCollisionPointPotentialGradient( points[j], position, distance, potential, gradient ) )
       {
         points[j].m_is_colliding = true;
         
-        if ( points[j].getSegmentNumber() > 1 ) 
+        // Hack!!!
+        //if ( points[j].getSegmentNumber() > 1 ) 
         {
           isRobotColliding = true;
         }
@@ -616,12 +636,23 @@ bool CollisionSpace::isRobotColliding() const
       else {
         points[j].m_is_colliding = false;
       }
+      
+      if( max_potential < potential )
+        max_potential = potential;
+      
+      if( min_distance > distance )
+        min_distance = distance;
+      
     }
   }
   
+  dist = min_distance;
   return isRobotColliding;
 }
 
+//! Draws a sphere in all voxels
+//! the color of the sphere represent the distance 
+//! to the nearest obstacle
 void CollisionSpace::drawStaticVoxels()
 {
   // Draw all cells

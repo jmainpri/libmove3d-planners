@@ -75,10 +75,11 @@ public:
   double getDistance(CollisionSpaceCell* cell) const;
   bool getCollisionPointPotentialGradient(const CollisionPoint& collision_point, 
                                           const Eigen::Vector3d& collision_point_pos,
+                                          double& distance,
                                           double& potential, 
                                           Eigen::Vector3d& gradient) const;
   
-  bool isRobotColliding() const;
+  bool isRobotColliding(double& distance) const;
   
   // ---------------------------------------------------------------
   // OpenGl display

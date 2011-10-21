@@ -44,6 +44,7 @@
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <cstdlib>
+#include <iostream>
 
 //namespace chomp
 //{
@@ -78,11 +79,16 @@
   mean_(mean),
   covariance_(covariance),
   covariance_cholesky_(covariance_.llt().matrixL()),
-  normal_dist_(0.0,1.0),
+  rng_(rand()), 
   gaussian_(rng_, normal_dist_)
   {
-    rng_.seed(rand());
+    //int seed_nb = rand();
+    //std::cout << "MultivariateGaussian::MultivariateGaussian seed(" << seed_nb << ") = "<< std::endl;
+    
+    //rng_.seed( seed_nb );
     size_ = mean.rows();
+    
+    //gaussian_ = boost::variate_generator<boost::mt19937, boost::normal_distribution<> >(rng_, normal_dist_);
   }
   
   template <typename Derived>

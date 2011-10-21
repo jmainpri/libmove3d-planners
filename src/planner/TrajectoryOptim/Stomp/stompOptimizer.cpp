@@ -53,6 +53,8 @@
 using namespace std;
 USING_PART_OF_NAMESPACE_EIGEN
 
+const double hack_tweek = 2;
+
 //--------------------------------------------------------
 // External
 //--------------------------------------------------------
@@ -66,7 +68,7 @@ namespace stomp_motion_planner
                                  const CollisionSpace *collision_space) : 
   full_trajectory_(trajectory),
   planning_group_(planning_group),
-  parameters_(parameters),
+  stomp_parameters_(parameters),
   collision_space_(collision_space),
   group_trajectory_(*full_trajectory_, DIFF_RULE_LENGTH)
   {
@@ -109,11 +111,11 @@ namespace stomp_motion_planner
       std::string joint_name = planning_group_->chomp_joints_[i].joint_name_;
       //    nh.param("joint_costs/"+joint_name, joint_cost, 1.0);
       std::vector<double> derivative_costs(3);
-      derivative_costs[0] = joint_cost*parameters_->getSmoothnessCostVelocity();
-      derivative_costs[1] = joint_cost*parameters_->getSmoothnessCostAcceleration();
-      derivative_costs[2] = joint_cost*parameters_->getSmoothnessCostJerk();
+      derivative_costs[0] = joint_cost*stomp_parameters_->getSmoothnessCostVelocity();
+      derivative_costs[1] = joint_cost*stomp_parameters_->getSmoothnessCostAcceleration();
+      derivative_costs[2] = joint_cost*stomp_parameters_->getSmoothnessCostJerk();
       
-      joint_costs_.push_back(ChompCost(group_trajectory_, i, derivative_costs, parameters_->getRidgeFactor()));
+      joint_costs_.push_back(ChompCost(group_trajectory_, i, derivative_costs, stomp_parameters_->getRidgeFactor()));
       double cost_scale = joint_costs_[i].getMaxQuadCostInvValue();
       if (max_cost_scale < cost_scale)
         max_cost_scale = cost_scale;
@@ -195,28 +197,10 @@ namespace stomp_motion_planner
     }
     
     // animation init:
-    //  animate_endeffector_segment_number_ = robot_model_->getForwardKinematicsSolver()->segmentNameToIndex(parameters_->getAnimateEndeffectorSegment());
+    //  animate_endeffector_segment_number_ = robot_model_->getForwardKinematicsSolver()->segmentNameToIndex(stomp_parameters_->getAnimateEndeffectorSegment());
     
     // initialize the policy
-    policy_.reset(new CovariantTrajectoryPolicy());
-    
-    std::vector<double> derivative_costs = parameters_->getSmoothnessCosts();
-    policy_->initialize(/*nh,*/ num_vars_free_, num_joints_, group_trajectory_.getDuration(),
-                        parameters_->getRidgeFactor(), derivative_costs);
-    
-    // initialize the policy trajectory
-    Eigen::VectorXd start = group_trajectory_.getTrajectoryPoint(free_vars_start_-1).transpose();
-    Eigen::VectorXd end = group_trajectory_.getTrajectoryPoint(free_vars_end_+1).transpose();
-    
-    // set paramters
-    int free_vars_start_index = DIFF_RULE_LENGTH - 1;
-    vector< Eigen::VectorXd > parameters(num_joints_);
-    for (int i=0; i<num_joints_; i++) 
-    {
-      parameters[i] =  group_trajectory_.getJointTrajectory(i).segment(free_vars_start_index, num_vars_free_);
-    }
-    policy_->setToMinControlCost(start, end);
-    policy_->setParameters( parameters );
+    initPolicy();
     
     // initialize the constraints:
     //  for (int i=0; i<int(constraints_.orientation_constraints.size()); ++i)
@@ -237,7 +221,7 @@ namespace stomp_motion_planner
     calculateCollisionIncrements();
     calculateTotalIncrements();
     
-    if (!parameters_->getUseHamiltonianMonteCarlo())
+    if (!stomp_parameters_->getUseHamiltonianMonteCarlo())
     {
       // non-stochastic version:
       addIncrementsToTrajectory();
@@ -248,7 +232,7 @@ namespace stomp_motion_planner
       getRandomMomentum();
       updateMomentum();
       updatePositionFromMomentum();
-      stochasticity_factor_ *= parameters_->getHmcAnnealingFactor();
+      stochasticity_factor_ *= stomp_parameters_->getHmcAnnealingFactor();
     }
     
     handleJointLimits();
@@ -256,7 +240,7 @@ namespace stomp_motion_planner
     last_trajectory_collision_free_ = performForwardKinematics();
     last_trajectory_constraints_satisfied_ = true;
     
-    if (!last_trajectory_collision_free_ && parameters_->getAddRandomness())
+    if (!last_trajectory_collision_free_ && stomp_parameters_->getAddRandomness())
     {
       performForwardKinematics();
       double original_cost = getTrajectoryCost();
@@ -290,7 +274,7 @@ namespace stomp_motion_planner
         //state_collision_cost += collision_point_potential_[i][j] * collision_point_vel_mag_[i][j];
         state_collision_cost += cumulative;
       }
-      cost += state_collision_cost * parameters_->getObstacleCostWeight();
+      cost += state_collision_cost * stomp_parameters_->getObstacleCostWeight();
     }
     last_trajectory_cost_ = cost;
   }
@@ -323,26 +307,26 @@ namespace stomp_motion_planner
     
     group_trajectory_.print();
     
-    if (parameters_->getAnimateEndeffector())
+    if (stomp_parameters_->getAnimateEndeffector())
     {
       animateEndeffector();
     }
     
-    if (parameters_->getAnimatePath())
+    if (stomp_parameters_->getAnimatePath())
     {
       animatePath();
     }
     
     // iterate
     for (iteration_=0; 
-         iteration_<parameters_->getMaxIterations()&& 
+         iteration_<stomp_parameters_->getMaxIterations()&& 
          !PlanEnv->getBool(PlanParam::stopPlanner); 
          iteration_++)
     {
       //    if (!ros::ok())
       //      break;
       
-      if (!parameters_->getUseChomp())
+      if (!stomp_parameters_->getUseChomp())
       {
         // after this, the latest "group trajectory" and "full trajectory" is the one optimized by pi^2
         //ros::WallTime start_time = ros::WallTime::now();
@@ -399,18 +383,18 @@ namespace stomp_motion_planner
       printf( "%3d Trajectory cost: %f (s=%f, c=%f)\n", iteration_, getTrajectoryCost(), getSmoothnessCost(), getCollisionCost());
       //cout << "We think the path is collision free: " << last_trajectory_collision_free_ << endl;
       
-      if (collision_free_iteration_ >= parameters_->getMaxIterationsAfterCollisionFree())
+      if (collision_free_iteration_ >= stomp_parameters_->getMaxIterationsAfterCollisionFree())
       {
         iteration_++;
         break;
       }
       
-      if (parameters_->getAnimateEndeffector())
+      if (stomp_parameters_->getAnimateEndeffector())
       {
         animateEndeffector();
       }
       
-      //    if (parameters_->getAnimatePath() && iteration_%1 == 0)
+      //    if (stomp_parameters_->getAnimatePath() && iteration_%1 == 0)
       //    {
       //      animatePath();
       //    }
@@ -419,7 +403,7 @@ namespace stomp_motion_planner
     if (last_improvement_iteration_>-1)
       cout << "We think the path is collision free: " << is_collision_free_ << endl;
     
-    //  if (parameters_->getAnimatePath())
+    //  if (stomp_parameters_->getAnimatePath())
     //  {
     //    animatePath();
     //  }
@@ -433,7 +417,7 @@ namespace stomp_motion_planner
     ChronoPrint("");
     ChronoOff();
     
-    //  if (parameters_->getAnimateEndeffector())
+    //  if (stomp_parameters_->getAnimateEndeffector())
     //  {
     animateEndeffector();
     //  }
@@ -444,7 +428,7 @@ namespace stomp_motion_planner
     //printf("Optimization core finished in %f sec", (ros::WallTime::now() - start_time).toSec());
     stomp_statistics_->best_cost = best_group_trajectory_cost_;
     
-    if (parameters_->getAnimatePath())
+    if (stomp_parameters_->getAnimatePath())
       animatePath();
   }
   
@@ -502,7 +486,7 @@ namespace stomp_motion_planner
                                                           jacobian_, 
                                                           group_joint_to_move3d_joint_index_);
         
-        if (parameters_->getUsePseudoInverse())
+        if (stomp_parameters_->getUsePseudoInverse())
         {
           calculatePseudoInverse();
           collision_increments_.row(i-free_vars_start_).transpose() -=
@@ -523,7 +507,7 @@ namespace stomp_motion_planner
   
   void StompOptimizer::calculatePseudoInverse()
   {
-    jacobian_jacobian_tranpose_ = jacobian_*jacobian_.transpose() + Eigen::MatrixXd::Identity(3,3)*parameters_->getPseudoInverseRidgeFactor();
+    jacobian_jacobian_tranpose_ = jacobian_*jacobian_.transpose() + Eigen::MatrixXd::Identity(3,3)*stomp_parameters_->getPseudoInverseRidgeFactor();
     jacobian_pseudo_inverse_ = jacobian_.transpose() * jacobian_jacobian_tranpose_.inverse();
   }
   
@@ -531,12 +515,12 @@ namespace stomp_motion_planner
   {
     for (int i=0; i<num_joints_; i++)
     {
-      final_increments_.col(i) = parameters_->getLearningRate() *
+      final_increments_.col(i) = stomp_parameters_->getLearningRate() *
       (
        joint_costs_[i].getQuadraticCostInverse() *
        (
-        parameters_->getSmoothnessCostWeight() * smoothness_increments_.col(i) +
-        parameters_->getObstacleCostWeight() * collision_increments_.col(i)
+        stomp_parameters_->getSmoothnessCostWeight() * smoothness_increments_.col(i) +
+        stomp_parameters_->getObstacleCostWeight() * collision_increments_.col(i)
         )
        );
     }
@@ -587,7 +571,7 @@ namespace stomp_motion_planner
     for (int i=0; i<num_joints_; i++)
       smoothness_cost += joint_costs_[i].getCost(group_trajectory_.getJointTrajectory(i));
     
-    return parameters_->getSmoothnessCostWeight() * smoothness_cost;
+    return stomp_parameters_->getSmoothnessCostWeight() * smoothness_cost;
   }
   
   double StompOptimizer::getCollisionCost()
@@ -611,7 +595,7 @@ namespace stomp_motion_planner
       }
       else
       {
-        state_collision_cost = general_cost_potential_(i);
+        state_collision_cost = pow( general_cost_potential_(i) , hack_tweek );
         //cout << "state_collision_cost = " << state_collision_cost << endl;
       }
       
@@ -623,10 +607,10 @@ namespace stomp_motion_planner
       }
     }
     
-    //  cout << "parameters_->getObstacleCostWeight() = " << parameters_->getObstacleCostWeight() << endl;
+    //  cout << "stomp_parameters_->getObstacleCostWeight() = " << stomp_parameters_->getObstacleCostWeight() << endl;
     //  cout << "collision_cost = " << collision_cost << endl;
     
-    return parameters_->getObstacleCostWeight() * collision_cost;
+    return stomp_parameters_->getObstacleCostWeight() * collision_cost;
   }
   
   void StompOptimizer::handleJointLimits()
@@ -754,8 +738,11 @@ namespace stomp_motion_planner
     {
       planning_group_->collision_points_[j].getTransformedPosition(segment_frames_[i], collision_point_pos_eigen_[i][j]);
       
+      double distance;
+      
       colliding = collision_space_->getCollisionPointPotentialGradient(planning_group_->collision_points_[j],
                                                                        collision_point_pos_eigen_[i][j],
+                                                                       distance,
                                                                        collision_point_potential_(i,j),
                                                                        collision_point_potential_gradient_[i][j]);
     }
@@ -922,14 +909,14 @@ namespace stomp_motion_planner
   
   void StompOptimizer::updateMomentum()
   {
-    double eps = parameters_->getHmcDiscretization();
+    double eps = stomp_parameters_->getHmcDiscretization();
     
     //  if (iteration_ > 0)
     //    momentum_ = (momentum_ + eps*final_increments_);
     //  else
     //    momentum_ = random_momentum_;
     
-    double alpha = 1.0 - parameters_->getHmcStochasticity();
+    double alpha = 1.0 - stomp_parameters_->getHmcStochasticity();
     //if (iteration_ > 0)
     momentum_ = alpha * (momentum_ + eps*final_increments_) + sqrt(1.0-alpha*alpha)*random_momentum_;
     //else
@@ -938,7 +925,7 @@ namespace stomp_motion_planner
   
   void StompOptimizer::updatePositionFromMomentum()
   {
-    double eps = parameters_->getHmcDiscretization();
+    double eps = stomp_parameters_->getHmcDiscretization();
     group_trajectory_.getFreeTrajectoryBlock() += eps * momentum_;
   }
   
@@ -999,7 +986,16 @@ namespace stomp_motion_planner
       //PlanEnv->setBool(PlanParam::stopPlanner, true);
     }
     
-    T.replaceP3dTraj();
+    if(!ENV.getBool(Env::drawTrajVector))
+    {
+      T.replaceP3dTraj();
+    }
+    else
+    {
+      T.setColor(Red);
+      trajToDraw.push_back( T );
+    }
+    
     ENV.setBool(Env::drawTraj,true);
     
     // Set the robot to the first configuration
@@ -1031,8 +1027,15 @@ namespace stomp_motion_planner
   
   void StompOptimizer::visualizeState(int index)
   {
+    
   }
   
+  void StompOptimizer::testMultiVariateGaussianSampler()
+  {
+    PolicyImprovementLoop pi_loop;
+    pi_loop.initialize(/*nh,*/ this_shared_ptr_);
+    pi_loop.testSampler();
+  }
   
   bool StompOptimizer::initialize(/*ros::NodeHandle& node_handle,*/ int num_time_steps)
   {
@@ -1132,7 +1135,7 @@ namespace stomp_motion_planner
         full_trajectory_->getTrajectoryPointP3d(index_i, q_i);
         full_trajectory_->getTrajectoryPointP3d(index_f, q_f);
         
-        state_collision_cost += ( general_cost_potential_(i) * ( q_f - q_i ).norm() ) ;
+        state_collision_cost += ( pow( general_cost_potential_(i) , hack_tweek ) /* ( q_f - q_i ).norm() */) ;
       }
       
       // evaluate the constraints:
@@ -1148,7 +1151,7 @@ namespace stomp_motion_planner
       // evaluate inverse dynamics:
       double state_torque_cost = 0.0;
       
-      //    if (parameters_->getTorqueCostWeight() > 1e-9)
+      //    if (stomp_parameters_->getTorqueCostWeight() > 1e-9)
       //    {
       //      full_trajectory_->getTrajectoryPointKDL(i, kdl_joint_array_);
       //      full_trajectory_->getJointVelocities(i, full_joint_state_velocities_);
@@ -1172,16 +1175,17 @@ namespace stomp_motion_planner
       //      }
       //    }
       
-      obstacle_cost += parameters_->getObstacleCostWeight() * state_collision_cost;
-      constraint_cost += parameters_->getConstraintCostWeight() * state_constraint_cost;
-      torque_cost += parameters_->getTorqueCostWeight() * state_torque_cost;
+      obstacle_cost += stomp_parameters_->getObstacleCostWeight() * state_collision_cost;
+      constraint_cost += stomp_parameters_->getConstraintCostWeight() * state_constraint_cost;
+      torque_cost += stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
       
       costs(i-free_vars_start_) =
-      parameters_->getObstacleCostWeight() * state_collision_cost +
-      parameters_->getConstraintCostWeight() * state_constraint_cost +
-      parameters_->getTorqueCostWeight() * state_torque_cost;
+      stomp_parameters_->getObstacleCostWeight() * state_collision_cost +
+      stomp_parameters_->getConstraintCostWeight() * state_constraint_cost +
+      stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
     }
     
+//    cout << "costs = " << costs << endl;
     last_trajectory_cost_ = costs.sum();
     //last_trajectory_constraints_satisfied_ = (constraint_cost < 1e-6);
     
@@ -1189,6 +1193,34 @@ namespace stomp_motion_planner
     //animateEndeffector();
     //ROS_INFO("Rollout took %f seconds, ", (ros::WallTime::now() - start_time).toSec());
     return true;
+  }
+  
+  void StompOptimizer::initPolicy()
+  {
+    policy_.reset(new CovariantTrajectoryPolicy());
+    
+    std::vector<double> derivative_costs = stomp_parameters_->getSmoothnessCosts();
+    
+    policy_->initialize(/*nh,*/ 
+                        num_vars_free_, 
+                        num_joints_, 
+                        group_trajectory_.getDuration(),
+                        stomp_parameters_->getRidgeFactor(), 
+                        derivative_costs);
+    
+    // initialize the policy trajectory
+    Eigen::VectorXd start = group_trajectory_.getTrajectoryPoint(free_vars_start_-1).transpose();
+    Eigen::VectorXd end = group_trajectory_.getTrajectoryPoint(free_vars_end_+1).transpose();
+    
+    // set paramters
+    int free_vars_start_index = DIFF_RULE_LENGTH - 1;
+    vector< Eigen::VectorXd > parameters(num_joints_);
+    for (int i=0; i<num_joints_; i++) 
+    {
+      parameters[i] =  group_trajectory_.getJointTrajectory(i).segment(free_vars_start_index, num_vars_free_);
+    }
+    policy_->setToMinControlCost(start, end);
+    policy_->setParameters( parameters );
   }
   
   bool StompOptimizer::getPolicy(boost::shared_ptr<stomp_motion_planner::Policy>& policy)
@@ -1204,7 +1236,7 @@ namespace stomp_motion_planner
   
   bool StompOptimizer::getControlCostWeight(double& control_cost_weight)
   {
-    control_cost_weight = parameters_->getSmoothnessCostWeight();
+    control_cost_weight = stomp_parameters_->getSmoothnessCostWeight();
     return true;
   }
   

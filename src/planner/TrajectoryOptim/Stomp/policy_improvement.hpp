@@ -44,9 +44,12 @@
 
 // local includes
 #include "policy.hpp"
-#include "Chomp/chompMultivariateGaussian.hpp"
+#include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
 
 #include <boost/shared_ptr.hpp>
+
+extern std::vector<double> global_noiseTrajectory1;
+extern std::vector<double> global_noiseTrajectory2;
 
 namespace stomp_motion_planner
 {
@@ -128,6 +131,11 @@ public:
      * Adds extra rollouts to the set of rollouts to be reused
      */
     bool addExtraRollouts(std::vector<std::vector<Eigen::VectorXd> >& rollouts, std::vector<Eigen::VectorXd>& rollout_costs);
+  
+    /**
+     * Tests the noise generators
+     */
+    void testNoiseGenerators();
 
 private:
 
@@ -173,6 +181,8 @@ private:
     Eigen::VectorXd tmp_max_minus_min_cost_;                /**< num_time_steps */
     Eigen::VectorXd tmp_sum_rollout_probabilities_;         /**< num_time_steps */
     std::vector<std::pair<double, int> > rollout_cost_sorter_;  /**< vector used for sorting rollouts by their cost */
+  
+    bool preAllocateMultivariateGaussianSampler();
     bool preAllocateTempVariables();
     bool preComputeProjectionMatrices();
 
@@ -188,7 +198,6 @@ private:
     bool copyParametersFromPolicy();
 
     bool generateRollouts(const std::vector<double>& noise_variance);
-
 };
 
 }

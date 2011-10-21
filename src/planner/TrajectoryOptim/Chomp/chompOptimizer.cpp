@@ -690,8 +690,11 @@ void ChompOptimizer::performForwardKinematics()
       //int segment_number = planning_group_->collision_points_[j].getSegmentNumber();
       //collision_point_pos_eigen_[i][j] = segment_frames_[i][segment_number] * planning_group_->collision_points_[j].getPosition();
       
+      double distance;
+      
       bool colliding = collision_space_->getCollisionPointPotentialGradient(planning_group_->collision_points_[j],
                                                                             collision_point_pos_eigen_[i][j],
+                                                                            distance,
                                                                             collision_point_potential_(i,j),
                                                                             collision_point_potential_gradient_[i][j]);
       

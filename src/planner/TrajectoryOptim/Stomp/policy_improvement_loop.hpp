@@ -60,6 +60,7 @@ public:
 
     bool initialize(/*ros::NodeHandle& node_handle,*/ boost::shared_ptr<Task> task);
     bool runSingleIteration(int iteration_number);
+    void testSampler();
 
 private:
 
@@ -95,8 +96,8 @@ private:
     int policy_iteration_counter_;
     bool readPolicy(const int iteration_number);
     bool writePolicy(const int iteration_number, bool is_rollout = false, int rollout_id = 0);
-
     //bool writePolicyImprovementStatistics(const policy_improvement_loop::PolicyImprovementStatistics& stats_msg);
+    void addRolloutsToDraw();
 
 };
 

@@ -44,7 +44,14 @@
 //#include "param_server.hpp"
 //#include <boost/filesystem.hpp>
 
+#include "stompOptimizer.hpp"
+
 #include "planner/planEnvironment.hpp"
+
+#include "API/ConfigSpace/configuration.hpp"
+#include "API/Trajectory/trajectory.hpp"
+
+#include "p3d/env.hpp"
 
 using namespace std;
 
@@ -108,6 +115,7 @@ namespace stomp_motion_planner
     noise_decay_.clear();
     
     //noise_stddev_.resize(num_dimensions_,2.);
+    //PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.008);
     noise_stddev_.resize(num_dimensions_,PlanEnv->getDouble(PlanParam::trajOptimStdDev));
     noise_decay_.resize(num_dimensions_,.99);
     
@@ -161,6 +169,11 @@ namespace stomp_motion_planner
     // get rollouts and execute them
     assert(policy_improvement_.getRollouts(rollouts_, noise));
     
+    if (ENV.getBool(Env::drawTrajVector)) 
+    {
+      addRolloutsToDraw();
+    }
+    
     for (int r=0; r<int(rollouts_.size()); ++r)
     {
       assert(task_->execute(rollouts_[r], tmp_rollout_cost_, iteration_number));
@@ -210,6 +223,47 @@ namespace stomp_motion_planner
     return true;
   }
   
+  void PolicyImprovementLoop::testSampler()
+  {
+    policy_improvement_.testNoiseGenerators();
+  }
+  
+  void PolicyImprovementLoop::addRolloutsToDraw()
+  {
+    trajToDraw.clear();
+    boost::shared_ptr<StompOptimizer> optimizer = boost::static_pointer_cast<StompOptimizer>(task_);
+    Configuration q = *optimizer->getPlanningGroup()->robot_->getCurrentPos();
+    
+    for ( int k=0; k<int(rollouts_.size()); ++k) 
+    {
+      const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
+      
+      API::Trajectory T(optimizer->getPlanningGroup()->robot_);
+      Eigen::MatrixXd parameters(num_dimensions_,num_time_steps_);
+      
+      for ( int i=0; i<num_dimensions_; ++i)
+      {
+        parameters.row(i) = rollouts_[k][i].transpose();
+      }
+      
+      //cout << "Add rollout(" << k << ") to draw" << endl;
+      
+      cout << "rollout (" << k << ") :" << endl << parameters << endl;
+      
+      for ( int j=0; j<num_time_steps_; ++j)
+      {
+        for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+        {  
+          q[joints[i].move3d_dof_index_] = parameters(i,j);
+        }
+        T.push_back( std::tr1::shared_ptr<Configuration>(new Configuration(q)));
+      }
+      T.print();
+      T.setColor(k);
+      trajToDraw.push_back( T );
+    }
+  }
+
   /*
    bool PolicyImprovementLoop::writePolicyImprovementStatistics(const policy_improvement_loop::PolicyImprovementStatistics& stats_msg)
    {

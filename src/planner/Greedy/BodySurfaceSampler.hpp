@@ -36,6 +36,7 @@ public:
 	void computeAllRobotsBodiesPointCloud();
   
   bool isPointInEnvironment( const Eigen::Vector3d& point );
+  bool isPointOverGround( const Eigen::Vector3d& point );
   
   // Access to the sampled point cloud
   // Given a robot object
@@ -50,9 +51,12 @@ public:
   double generateRobotBoudingCylinder(Robot* rob, const std::vector<Joint*>& activeJoints);
   void generateAllRobotsBoundingCylinders();
   
+  // Generate collision points
+  std::vector<CollisionPoint> getLinksCollisionPoints(Joint* jnt, int segment_number , const std::vector<int>& parent_joints );
+  std::vector<CollisionPoint> generateJointCollisionPoints(Robot* robot, int id, const std::vector<int>& active_joints, const std::vector<int>& planner_joints);
   std::vector<CollisionPoint> generateRobotCollisionPoints(Robot* robot, const std::vector<int>& active_joints, const std::vector<int>& planner_joints);
   
-  std::vector<CollisionPoint> getLinksCollisionPoints(Joint* jnt, int segment_number , const std::vector<int>& parent_joints );
+
   
   // Access a collision point vector
   // Given a joint
