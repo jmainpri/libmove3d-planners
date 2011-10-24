@@ -169,7 +169,7 @@ void EnvGrid::init(pair<double,double> minMax)
     }
 }
 
-void EnvGrid::initGrid()
+void EnvGrid::initGrid(Eigen::Vector3d humanPos)
 {
     bool showText = PlanEnv->getBool(PlanParam::env_showText);
     if (showText)
@@ -236,12 +236,15 @@ void EnvGrid::initGrid()
     }
     initAllCellState();
 
-    q_human_cur = mHuman->getCurrentPos();
+//    qCurrentPos();
 
     int firstIndexOfHumanDof = mHuman->getJoint("Pelvis")->getIndexOfFirstDof();
     Vector2d pos;
     pos[0] = (*q_human_cur)[firstIndexOfHumanDof + 0];
     pos[1] = (*q_human_cur)[firstIndexOfHumanDof + 1];
+
+    pos[0] = humanPos[0];
+    pos[1] = humanPos[1];
 
     EnvCell* cell = dynamic_cast<EnvCell*>(getCell(pos));
     computeDistances(cell, true);
@@ -331,17 +334,18 @@ void EnvGrid::initGrid()
     }
 }
 
-void EnvGrid::recomputeGridWhenHumanMove()
+void EnvGrid::recomputeGridWhenHumanMove(Eigen::Vector3d humanPos)
 {
 
+    initAllTrajs();
     initAllCellState();
 
     shared_ptr<Configuration> q_human_cur = mHuman->getCurrentPos();
 
     int firstIndexOfHumanDof = mHuman->getJoint("Pelvis")->getIndexOfFirstDof();
     Vector2d pos;
-    pos[0] = (*q_human_cur)[firstIndexOfHumanDof + 0];
-    pos[1] = (*q_human_cur)[firstIndexOfHumanDof + 1];
+    pos[0] = humanPos[0];
+    pos[1] = humanPos[1];
 
     EnvCell* cell = dynamic_cast<EnvCell*>(getCell(pos));
     computeDistances(cell, true);
@@ -356,6 +360,16 @@ void EnvGrid::recomputeGridWhenHumanMove()
 
     cell = dynamic_cast<EnvCell*>(getCell(pos));
     computeDistances(cell, false);
+
+    for (unsigned int x =0;x<_nbCellsX;++x)
+    {
+        for (unsigned int y =0;y<_nbCellsY;++y)
+        {
+            EnvCell* Cell = dynamic_cast<EnvCell*>(getCell(x,y));
+            Cell->setHumAccessible(Cell->isHumanDistComputed());
+            Cell->setRobAccessible(Cell->isRobotDistComputed());
+        }
+    }
 
 
 
@@ -738,6 +752,14 @@ void EnvGrid::initAllCellState()
     }
 }
 
+void EnvGrid::initAllTrajs()
+{
+    for (int i = 0; i < getNumberOfCells(); i++)
+    {
+        dynamic_cast<EnvCell*>(this->getCell(i))->resetTraj();
+    }
+}
+
 void EnvGrid::initAllReachability()
 {
     for (int i = 0; i < getNumberOfCells(); i++)
@@ -1030,6 +1052,16 @@ void EnvCell::resetReacheability()
     robotTraj.clear();
     robotVectorTraj.clear();
     randomVectorPoint.clear();
+}
+
+void EnvCell::resetTraj()
+{
+    m_humanDistIsComputed = false;
+    m_robotDistIsComputed = false;
+    humanTraj.clear();
+    humanVectorTraj.clear();
+    robotTraj.clear();
+    robotVectorTraj.clear();
 }
 
 void EnvCell::addPoint(double Rz)

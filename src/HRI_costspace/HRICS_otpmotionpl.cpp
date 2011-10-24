@@ -978,6 +978,38 @@ double OTPMotionPl::multipliComputeOtp(int n)
 
 }
 
+void OTPMotionPl::getInputs()
+{
+    shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+    int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+    if (PlanEnv->getBool(PlanParam::env_realTime))
+    {
+        Robot* visball = global_Project->getActiveScene()->getRobotByNameContaining("VISBALL");
+        (*q_human_cur)[firstIndexOfHumanDof + 0] = (*visball->getCurrentPos())[6];
+        (*q_human_cur)[firstIndexOfHumanDof + 1] = (*visball->getCurrentPos())[7];
+        (*q_human_cur)[firstIndexOfHumanDof + 5] = (*visball->getCurrentPos())[11];
+        m_Human->setAndUpdate(*q_human_cur);
+        saveInitConf();
+    }
+
+
+    m_humanPos[0] = (*q_human_cur)[firstIndexOfHumanDof + 0];
+    m_humanPos[1] = (*q_human_cur)[firstIndexOfHumanDof + 1];
+    m_humanPos[2] = (*q_human_cur)[firstIndexOfHumanDof + 5];
+
+    shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+    m_robotPos[0] = (*q_robot_cur)[firstIndexOfRobotDof + 0];
+    m_robotPos[1] = (*q_robot_cur)[firstIndexOfRobotDof + 1];
+    m_robotPos[2] = (*q_robot_cur)[firstIndexOfRobotDof + 5];
+
+
+    m_isStanding = PlanEnv->getBool(PlanParam::env_isStanding);
+    m_mobility = PlanEnv->getDouble(PlanParam::env_objectNessecity);
+}
+
+
+
 Vector3d OTPMotionPl::getRandomPoints(double id)
 {
     Vector3d vect;
@@ -1164,19 +1196,20 @@ Vector3d OTPMotionPl::getRandomPoints(double id)
     return vect;
 }
 
-void OTPMotionPl::newComputeOTP()
+bool OTPMotionPl::newComputeOTP()
 {
     clock_t start = clock();
+    getInputs();
 //    m_2DGrid->init(computeHumanRobotDist());
-//    m_2DGrid->initGrid();
-    m_2DGrid->recomputeGridWhenHumanMove();
+//    m_2DGrid->initGrid(m_humanPos);
+    m_2DGrid->recomputeGridWhenHumanMove(m_humanPos);
     m_2DGrid->setCellsToblankCost();
 
     m_costVector.clear();
     clock_t gridInit = clock();
 
-    bool isStanding = PlanEnv->getBool(PlanParam::env_isStanding);
-    double objectNecessity = PlanEnv->getDouble(PlanParam::env_objectNessecity);
+    bool isStanding = m_isStanding;
+    double objectNecessity = m_mobility;
     bool m_showText = PlanEnv->getBool(PlanParam::env_showText);
     double timeLimitation = PlanEnv->getDouble(PlanParam::env_timeLimitation);
     double dumpTime = PlanEnv->getDouble(PlanParam::env_timeToDump);
@@ -1188,16 +1221,16 @@ void OTPMotionPl::newComputeOTP()
     if (m_configList.empty() || m_sittingConfigList.empty())
     {
         cout << "No configuration lists" << endl;
-        return;
+        return false;
     }
     shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
     shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
     int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
 
 
-    double x = (*q_human_cur)[firstIndexOfHumanDof + 0];
-    double y = (*q_human_cur)[firstIndexOfHumanDof + 1];
-    double Rz = (*q_human_cur)[firstIndexOfHumanDof + 5];
+    double x = m_humanPos[0];
+    double y = m_humanPos[1];
+    double Rz = m_humanPos[2];
 
     if (m_showText)
     {
@@ -1263,7 +1296,6 @@ void OTPMotionPl::newComputeOTP()
     clock_t firstConfs = clock();
     while (finished)
     {
-//        cout << nb_of_true_iterations++ << endl;
         id++;
 //        cout << "---------------------------------------------------" << endl;
 //        cout << "new section, init pos : x = " << x << " y = " << y << " Rz = " << Rz << endl;
@@ -1351,7 +1383,7 @@ void OTPMotionPl::newComputeOTP()
         m_time = -1;
         _Robot->setAndUpdate(*q_robot_cur);
         m_Human->setAndUpdate(*q_human_cur);
-        return;
+        return false;
     }
     for (unsigned int i = 0; i < m_costVector.size(); i++)
     {
@@ -1425,6 +1457,7 @@ void OTPMotionPl::newComputeOTP()
     }
     showBestConf();
     m_costVector.clear();
+    return true;
 }
 
 OutputConf OTPMotionPl::lookForBestLocalConf(double x, double y, double Rz, double objectNecessity)
@@ -1536,7 +1569,7 @@ OutputConf OTPMotionPl::lookForBestLocalConf(double x, double y, double Rz, doub
     }
 
     int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
-    double hRot = (*bestLocalConf.humanConf)[firstIndexOfHumanDof + 5] - (*q_human_cur)[firstIndexOfHumanDof + 5];
+    double hRot = (*bestLocalConf.humanConf)[firstIndexOfHumanDof + 5] - m_humanPos[2];
 
     double mvCost = (psi*hDist + delta*fabs(hRot) )/(psi+delta);
 
@@ -1670,8 +1703,8 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
             conf.second->setAsNotTested();
 
 
-            string humanStr = testCol(true,false)?"is in collision":"is NOT in collision";
-            string robotStr = testCol(false,false)?"is in collision":"is NOT in collision";
+//            string humanStr = testCol(true,false)?"is in collision":"is NOT in collision";
+//            string robotStr = testCol(false,false)?"is in collision":"is NOT in collision";
     //        cout << "test colision : human " << humanStr << " and robot " << robotStr << endl;
 
             if (!testCol(true,false) && !testCol(false,true))
@@ -1789,7 +1822,7 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
 
     standUp();
 
-    m_2DGrid->initGrid();
+    m_2DGrid->initGrid(m_humanPos);
 
 
     return bestConf;
@@ -1863,7 +1896,7 @@ void OTPMotionPl::loadInitConf(bool reloadHuman, bool relaodRobot)
 
 double OTPMotionPl::showConf(unsigned int i)
 {
-    if (m_confList.size() > i)
+    if (m_confList.size() > i && m_confList.size() >1)
     {
         int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
         OutputConf conf = m_confList.at(i);
@@ -1935,7 +1968,7 @@ void OTPMotionPl::initGrid()
         clock_t start = clock();
         m_2DGrid->init(computeHumanRobotDist());
         clock_t second = clock();
-        m_2DGrid->initGrid();
+        m_2DGrid->initGrid(m_humanPos);
         clock_t stop = clock();
 
         m_Human->setAndUpdate(*q_human);
@@ -1953,7 +1986,8 @@ void OTPMotionPl::initGrid()
         clock_t start = clock();
         m_2DGrid->init(computeHumanRobotDist());
         clock_t second = clock();
-        m_2DGrid->initGrid();
+        getInputs();
+        m_2DGrid->initGrid(m_humanPos);
         clock_t stop = clock();
 
         cout << "initializing the grid take : " << ((double)second - start) / CLOCKS_PER_SEC << " s"<< endl;

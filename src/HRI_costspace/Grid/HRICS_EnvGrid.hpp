@@ -47,12 +47,12 @@ namespace HRICS
                 /**
                   * initialising the part of the grid needed for fused grid use
                   */
-		void initGrid();
+                void initGrid(Eigen::Vector3d humanPos);
 
                 /**
                   * recompute the grid cost if human move
                   */
-                void recomputeGridWhenHumanMove();
+                void recomputeGridWhenHumanMove(Eigen::Vector3d humanPos);
 
                 /**
                   * Compute the crown arround the human for reacheability
@@ -88,6 +88,11 @@ namespace HRICS
                  * call resetexplorationstatus() in each cell
                  */
 		void initAllCellState();
+
+                /**
+                 * call resetTrajs() in each cell
+                 */
+                void initAllTrajs();
 
                 /**
                  * call resetexplorationstatus() in each cell
@@ -251,6 +256,11 @@ namespace HRICS
                   * reset the reacheability computing
                   */
 		void resetReacheability();
+
+                /**
+                  * reset the Trajectories computing
+                  */
+                void resetTraj();
 
                 /**
                   * find the neighbors of this cell (used when computing distance propagation)

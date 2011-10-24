@@ -111,6 +111,8 @@ namespace HRICS
 
         void clearOTPList() { m_OTPList.clear(); }
 
+        Eigen::Vector3d getHumanPos(){return m_humanPos;}
+
         /**
           * Draws the 3D path as a yellow line for robot and green one for human
           */
@@ -270,7 +272,7 @@ namespace HRICS
         /**
           * Compute the OTP using the last algorithme
           */
-        void newComputeOTP();
+        bool newComputeOTP();
 
         /**
           * Used in newComputeOTP(), this function compoute a conf for human an robot
@@ -282,6 +284,13 @@ namespace HRICS
           * if the human is stitting, special features should be than.
           */
         OutputConf findBestPosForHumanSitConf(double objectNecessity);
+
+        // redundant call of OTP Computing
+        /**
+          * getting the inputs from a unique source. this function permit using redundant call to the computing OTP function.
+          * this function put the input in global variable that can be used by others.
+          */
+        void getInputs();
 
         //other
         /**
@@ -520,6 +529,15 @@ namespace HRICS
           * The cost vector
           */
         std::vector<double> m_costVector;
+
+        /**
+          * inputs for computing OTP
+          */
+        Eigen::Vector3d m_humanPos;
+        Eigen::Vector3d m_robotPos;
+        bool m_isStanding;
+        double m_mobility;
+
 
 
     };
