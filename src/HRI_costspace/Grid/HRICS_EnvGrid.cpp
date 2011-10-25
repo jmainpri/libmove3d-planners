@@ -89,15 +89,15 @@ void EnvGrid::init(pair<double,double> minMax)
         {
             robotCyl = new Robot(XYZ_ENV->robot[i]);
         }
-        Robot* r = new Robot(XYZ_ENV->robot[i]);
-        pair<Robot*,shared_ptr<Configuration> > p;
-        p.first = r;
-        shared_ptr<Configuration> q = r->getCurrentPos();
-        p.second = r->getCurrentPos();
-        initConfiguration.push_back(p);
-
-        (*q)[6] = -3;
-        r->setAndUpdate(*q);
+//        Robot* r = new Robot(XYZ_ENV->robot[i]);
+//        pair<Robot*,shared_ptr<Configuration> > p;
+//        p.first = r;
+//        shared_ptr<Configuration> q = r->getCurrentPos();
+//        p.second = r->getCurrentPos();
+//        initConfiguration.push_back(p);
+//
+//        (*q)[6] = -3;
+//        r->setAndUpdate(*q);
     }
 
     if (!humCyl || !robotCyl)
@@ -247,7 +247,7 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
     pos[1] = humanPos[1];
 
     EnvCell* cell = dynamic_cast<EnvCell*>(getCell(pos));
-    computeDistances(cell, true);
+    computeHumanDistances(cell);
     if (showText)
     {
         cout << "Human distances computed with sucess\n" << endl;
@@ -262,7 +262,7 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
     pos[1] = (*q_robot_cur)[firstIndexOfHumanDof + 1];
 
     cell = dynamic_cast<EnvCell*>(getCell(pos));
-    computeDistances(cell, false);
+    computeRobotDistances(cell);
     if (showText)
     {
         cout << "Robot distances computed with success\n" << endl;
@@ -337,70 +337,45 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
 void EnvGrid::recomputeGridWhenHumanMove(Eigen::Vector3d humanPos)
 {
 
+
+
     initAllTrajs();
     initAllCellState();
 
     shared_ptr<Configuration> q_human_cur = mHuman->getCurrentPos();
+    shared_ptr<Configuration> q_robot_cur = mRobot->getCurrentPos();
+    shared_ptr<Configuration> q_human = mHuman->getCurrentPos();
+    shared_ptr<Configuration> q_robot = mRobot->getCurrentPos();
 
     int firstIndexOfHumanDof = mHuman->getJoint("Pelvis")->getIndexOfFirstDof();
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(mRobot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+
+    (*q_human)[firstIndexOfHumanDof + 0] = 10;
+    (*q_human)[firstIndexOfHumanDof + 1] = 1;
+    mHuman->setAndUpdate(*q_human);
+
+
     Vector2d pos;
-    pos[0] = humanPos[0];
-    pos[1] = humanPos[1];
+    pos[0] = (*q_robot_cur)[firstIndexOfRobotDof + 0];
+    pos[1] = (*q_robot_cur)[firstIndexOfRobotDof + 1];
 
     EnvCell* cell = dynamic_cast<EnvCell*>(getCell(pos));
-    computeDistances(cell, true);
+    computeRobotDistances(cell);
 
 
     initAllCellState();
 
-    shared_ptr<Configuration> q_robot_cur = mRobot->getCurrentPos();
+    mHuman->setAndUpdate(*q_human_cur);
+    pos[0] = humanPos[0];
+    pos[1] = humanPos[1];
 
-    pos[0] = (*q_robot_cur)[firstIndexOfHumanDof + 0];
-    pos[1] = (*q_robot_cur)[firstIndexOfHumanDof + 1];
+    (*q_robot)[firstIndexOfRobotDof + 0] = 10;
+    (*q_robot)[firstIndexOfRobotDof + 1] = 1;
+    mRobot->setAndUpdate(*q_robot);
 
-    cell = dynamic_cast<EnvCell*>(getCell(pos));
-    computeDistances(cell, false);
-
-    for (unsigned int x =0;x<_nbCellsX;++x)
-    {
-        for (unsigned int y =0;y<_nbCellsY;++y)
-        {
-            EnvCell* Cell = dynamic_cast<EnvCell*>(getCell(x,y));
-            Cell->setHumAccessible(Cell->isHumanDistComputed());
-            Cell->setRobAccessible(Cell->isRobotDistComputed());
-        }
-    }
-
-
-
-//    if (!PlanEnv->getBool(PlanParam::env_normalRand) && !PlanEnv->getBool(PlanParam::env_useAllGrid))
-//    {
-//        for (unsigned int i = 0; i < m_HumanAccessible.size(); i++)
-//        {
-//            EnvCell* cell = dynamic_cast<EnvCell*>(m_HumanAccessible.at(i));
-//            vector<EnvCell*> newVect;
-//            pair<double,EnvCell*> p;
-//            p.first = numeric_limits<double>::max( );
-//            for (unsigned int j = 0; j < cell->getHumanRobotReacheable().size(); j++)
-//            {
-//                if (cell->getHumanRobotReacheable().at(j)->isRobAccessible())
-//                {
-//                    newVect.push_back(cell->getHumanRobotReacheable().at(j));
-//                    if (cell->getHumanRobotReacheable().at(j)->getRobotDist() < p.first)
-//                    {
-//                        p.first = cell->getHumanRobotReacheable().at(j)->getRobotDist();
-//                        p.second = cell->getHumanRobotReacheable().at(j);
-//                    }
-//
-//                }
-//            }
-//    //        p.first = max((p.second->getRobotDist()/ m_robotMaxDist)*PlanEnv->getDouble(PlanParam::env_objectNessecity) ,(cell->getHumanDist()/m_humanMaxDist));
-//    //        p.first = 0;
-//            cell->clearCurrentHumanRobotReacheable();
-//            cell->setCurrentHumanRobotReacheable(newVect);
-//            cell->setRobotBestPos(p);
-//        }
-//    }
+     cell = dynamic_cast<EnvCell*>(getCell(pos));
+    computeHumanDistances(cell);
 
 
 }
@@ -408,58 +383,52 @@ void EnvGrid::recomputeGridWhenHumanMove(Eigen::Vector3d humanPos)
 
 void EnvGrid::computeHumanRobotReacheability(std::pair<double,double> minMax)
 {
-    int k = 0;
     for (unsigned int i = 0; i < m_HumanAccessible.size(); i++)
     {
-        for (unsigned int j = 0; j < m_RobotAccessible.size(); j++)
-        {
-            double dist = sqrt( pow( m_RobotAccessible.at(j)->getCenter()[0] - m_HumanAccessible.at(i)->getCenter()[0] , 2) +
-                                pow( m_RobotAccessible.at(j)->getCenter()[1] - m_HumanAccessible.at(i)->getCenter()[1] , 2) );
-            if (dist > minMax.first && dist < minMax.second)
-            {
-                m_HumanAccessible.at(i)->addToHumanRobotReacheable(m_RobotAccessible.at(j));
-                k++;
-            }
-        }
+        m_HumanAccessible.at(i)->getCrown(minMax.first,minMax.second);
     }
-    cout << k << " cells has been computed." << endl;
 }
 
 std::vector<std::pair<double,EnvCell*> > EnvGrid::getSortedGrid()
 {
-    double robotSpeed =  PlanEnv->getDouble(PlanParam::env_robotSpeed);//1;
-    double humanSpeed = PlanEnv->getDouble(PlanParam::env_humanSpeed);//1;
-
-
-    double timeStamp = PlanEnv->getDouble(PlanParam::env_timeStamp);//0.1;
-    double objectNecessity = PlanEnv->getDouble(PlanParam::env_objectNessecity);
-
-    double ksi = PlanEnv->getDouble(PlanParam::env_ksi);//0.5;
-    double rho = PlanEnv->getDouble(PlanParam::env_rho);//0.5;
+//    double robotSpeed =  PlanEnv->getDouble(PlanParam::env_robotSpeed);//1;
+//    double humanSpeed = PlanEnv->getDouble(PlanParam::env_humanSpeed);//1;
+//
+//
+//    double timeStamp = PlanEnv->getDouble(PlanParam::env_timeStamp);//0.1;
+//    double objectNecessity = PlanEnv->getDouble(PlanParam::env_objectNessecity);
+//
+//    double ksi = PlanEnv->getDouble(PlanParam::env_ksi);//0.5;
+//    double rho = PlanEnv->getDouble(PlanParam::env_rho);//0.5;
 
     if (!gridIsSorted)
     {
         std::vector<std::pair<double,EnvCell*> > vect;
         for (unsigned int i = 0; i < m_HumanAccessible.size() ; i++)
         {
-            pair<double,EnvCell*> p;
-            p.second = m_HumanAccessible.at(i);
+            if (m_HumanAccessible.at(i)->isHumanDistComputed())
+            {
+                pair<double,EnvCell*> p;
+                p.second = m_HumanAccessible.at(i);
+                p.first = p.second->getCost();
+                vect.push_back(p);
+            }
 
 //	    cout << "p.second->getCurrentHumanRobotReacheable().size() = " << p.second->getCurrentHumanRobotReacheable().size() << endl;
 //	    cout << "p.second->isHumAccessible() = "  << p.second->isHumAccessible() << endl;
 
-            if (p.second->getCurrentHumanRobotReacheable().size() > 0 && p.second->isHumAccessible())
-            {
-//                p.first = max((m_HumanAccessible.at(i)->getRobotBestPos().first / m_robotMaxDist)*PlanEnv->getDouble(PlanParam::env_objectNessecity)
-//                               ,(m_HumanAccessible.at(i)->getHumanDist()/m_humanMaxDist));
-                double hTime = m_HumanAccessible.at(i)->getHumanDist()/humanSpeed;
-                double rTime = m_HumanAccessible.at(i)->getRobotBestPos().first/robotSpeed;
-                double tempCost = max(hTime,rTime) * timeStamp;
-
-                double mvCost = m_HumanAccessible.at(i)->getHumanDist();
-                p.first = (ksi * mvCost) * (1 - objectNecessity)/(rho + ksi) + tempCost * objectNecessity;
-                vect.push_back(p);
-            }
+//            if (p.second->getCurrentHumanRobotReacheable().size() > 0 && p.second->isHumAccessible())
+//            {
+////                p.first = max((m_HumanAccessible.at(i)->getRobotBestPos().first / m_robotMaxDist)*PlanEnv->getDouble(PlanParam::env_objectNessecity)
+////                               ,(m_HumanAccessible.at(i)->getHumanDist()/m_humanMaxDist));
+//                double hTime = m_HumanAccessible.at(i)->getHumanDist()/humanSpeed;
+//                double rTime = m_HumanAccessible.at(i)->getRobotBestPos().first/robotSpeed;
+//                double tempCost = max(hTime,rTime) * timeStamp;
+//
+//                double mvCost = m_HumanAccessible.at(i)->getHumanDist();
+//                p.first = (ksi * mvCost) * (1 - objectNecessity)/(rho + ksi) + tempCost * objectNecessity;
+//                vect.push_back(p);
+//            }
         }
         sort(vect.begin(),vect.end(),CellDistCompObject);
         sortedGrid = vect;
@@ -744,6 +713,8 @@ void EnvGrid::setCellsToblankCost()
 
 }
 
+
+
 void EnvGrid::initAllCellState()
 {
     for (int i = 0; i < getNumberOfCells(); i++)
@@ -770,6 +741,189 @@ void EnvGrid::initAllReachability()
     m_humanMaxDist = 0;
     m_robotMaxDist = 0;
 }
+
+
+void  EnvGrid::computeHumanDistances(EnvCell* cell)
+{
+    cell->setOpen();
+    vector<EnvCell*> openCells;
+    openCells.push_back(cell);
+
+    cell->setHumAccessible(true);
+    cell->setHumanDist(0);
+    cell->setHumanDistIsComputed();
+    cell->computeCost();
+
+    std::vector<std::pair<double,EnvCell*> > vect;
+
+    pair<double,EnvCell*> p;
+    p.second = cell;
+    p.first = cell->getCost();
+    vect.push_back(p);
+
+    while (openCells.size() > 0)
+    {
+        EnvCell* currentCell = openCells.front();
+        vector<EnvCell*> currentNeighbors = currentCell->getNeighbors(true);
+
+        double currentDist = 0;
+
+        if (currentCell->isHumanDistComputed())
+        {
+            currentDist = currentCell->getHumanDist();
+        }
+        else
+        {
+            currentCell->setHumanDistIsComputed();
+            currentCell->setHumAccessible(true);
+        }
+
+        for (unsigned int i = 0; i < currentNeighbors.size(); i++)
+        {
+            EnvCell* neighCell = currentNeighbors.at(i);
+            if (!neighCell->getClosed())
+            {
+                double dist = currentDist + currentCell->computeDist(neighCell);
+                if (neighCell->getOpen())
+                {
+                    if (dist > neighCell->getHumanDist())
+                    {
+                        dist = neighCell->getHumanDist();
+                    }
+                    else
+                    {
+                        vector<EnvCell*> traj = currentCell->getHumanTraj();
+                        traj.push_back(neighCell);
+
+                        vector<Vector2d,Eigen::aligned_allocator<Vector2d> > vectorTraj = currentCell->getHumanVectorTraj();
+                        vectorTraj.push_back(neighCell->getCenter());
+
+                        neighCell->setHumanTraj(traj);
+                        neighCell->setHumanVectorTraj(vectorTraj);
+                    }
+                }
+                else
+                {
+                    vector<EnvCell*> traj = currentCell->getHumanTraj();
+                    traj.push_back(neighCell);
+
+                    vector<Vector2d,Eigen::aligned_allocator<Vector2d> > vectorTraj = currentCell->getHumanVectorTraj();
+                    vectorTraj.push_back(neighCell->getCenter());
+
+                    neighCell->setHumanTraj(traj);
+                    neighCell->setHumanVectorTraj(vectorTraj);
+
+                    neighCell->setOpen();
+                    openCells.push_back(neighCell);
+                }
+                neighCell->setHumanDist(dist);
+                neighCell->setHumanDistIsComputed();
+                neighCell->setHumAccessible(true);
+                if (dist > m_humanMaxDist) {m_humanMaxDist = dist; }
+//                neighCell->computeBestRobotPos();
+                neighCell->computeCost();
+
+
+                pair<double,EnvCell*> p;
+                p.second = neighCell;
+                p.first = p.second->getCost();
+                vect.push_back(p);
+            }
+
+        }
+        currentCell->setClosed();
+        openCells.erase(openCells.begin());
+    }
+    sort(vect.begin(),vect.end(),CellDistCompObject);
+    sortedGrid = vect;
+    gridIsSorted = true;
+
+}
+
+void  EnvGrid::computeRobotDistances(EnvCell* cell)
+{
+    cell->setOpen();
+    vector<EnvCell*> openCells;
+    openCells.push_back(cell);
+
+
+    cell->setRobAccessible(true);
+    cell->setRobotDist(0);
+    cell->setRobotDistIsComputed();
+
+
+
+    while (openCells.size() > 0)
+    {
+
+        EnvCell* currentCell = openCells.front();
+        vector<EnvCell*> currentNeighbors = currentCell->getNeighbors(false);
+
+        double currentDist = 0;
+
+        if (currentCell->isRobotDistComputed())
+        {
+            currentDist = currentCell->getRobotDist();
+        }
+        else
+        {
+            currentCell->setRobotDistIsComputed();
+            currentCell->setRobAccessible(true);
+        }
+
+
+        for (unsigned int i = 0; i < currentNeighbors.size(); i++)
+        {
+            EnvCell* neighCell = currentNeighbors.at(i);
+
+            if (!neighCell->getClosed())
+            {
+                double dist = currentDist + currentCell->computeDist(neighCell);
+                if (neighCell->getOpen())
+                {
+                    if (dist > neighCell->getRobotDist())
+                    {
+                        dist = neighCell->getRobotDist();
+                    }
+                    else
+                    {
+                        vector<EnvCell*> traj = currentCell->getRobotTraj();
+                        traj.push_back(neighCell);
+
+                        vector<Vector2d,Eigen::aligned_allocator<Vector2d> > vectorTraj = currentCell->getRobotVectorTraj();
+                        vectorTraj.push_back(neighCell->getCenter());
+
+                        neighCell->setRobotTraj(traj);
+                        neighCell->setRobotVectorTraj(vectorTraj);
+                    }
+                }
+                else
+                {
+                    vector<EnvCell*> traj = currentCell->getRobotTraj();
+                    traj.push_back(neighCell);
+
+                    vector<Vector2d,Eigen::aligned_allocator<Vector2d> > vectorTraj = currentCell->getRobotVectorTraj();
+                    vectorTraj.push_back(neighCell->getCenter());
+
+                    neighCell->setRobotTraj(traj);
+                    neighCell->setRobotVectorTraj(vectorTraj);
+
+                    neighCell->setOpen();
+                    openCells.push_back(neighCell);
+                }
+                neighCell->setRobotDist(dist);
+                neighCell->setRobotDistIsComputed();
+                neighCell->setRobAccessible(true);
+                if (dist > m_robotMaxDist) {m_robotMaxDist = dist; }
+
+            }
+
+        }
+        currentCell->setClosed();
+        openCells.erase(openCells.begin());
+    }
+}
+
 
 void  EnvGrid::computeDistances(EnvCell* cell, bool ishuman)
 {
@@ -806,6 +960,7 @@ void  EnvGrid::computeDistances(EnvCell* cell, bool ishuman)
             else
             {
                 currentCell->setHumanDistIsComputed();
+                currentCell->setHumAccessible(true);
             }
         }
         else
@@ -817,6 +972,7 @@ void  EnvGrid::computeDistances(EnvCell* cell, bool ishuman)
             else
             {
                 currentCell->setRobotDistIsComputed();
+                currentCell->setRobAccessible(true);
             }
         }
 
@@ -862,7 +1018,10 @@ void  EnvGrid::computeDistances(EnvCell* cell, bool ishuman)
                     }
                     neighCell->setHumanDist(dist);
                     neighCell->setHumanDistIsComputed();
+                    neighCell->setHumAccessible(true);
                     if (dist > m_humanMaxDist) {m_humanMaxDist = dist; }
+                    neighCell->computeBestRobotPos();
+                    neighCell->computeCost();
 
                 }
             }
@@ -905,6 +1064,7 @@ void  EnvGrid::computeDistances(EnvCell* cell, bool ishuman)
                     }
                     neighCell->setRobotDist(dist);
                     neighCell->setRobotDistIsComputed();
+                    neighCell->setRobAccessible(true);
                     if (dist > m_robotMaxDist) {m_robotMaxDist = dist; }
 
                 }
@@ -1003,6 +1163,61 @@ void EnvCell::computeReach()
     m_reachComputed = true;
 }
 
+
+double EnvCell::computeCost()
+{
+    double robotSpeed =  PlanEnv->getDouble(PlanParam::env_robotSpeed);//1;
+    double humanSpeed = PlanEnv->getDouble(PlanParam::env_humanSpeed);//1;
+
+
+    double timeStamp = PlanEnv->getDouble(PlanParam::env_timeStamp);//0.1;
+    double objectNecessity = PlanEnv->getDouble(PlanParam::env_objectNessecity);
+
+    double ksi = PlanEnv->getDouble(PlanParam::env_ksi);//0.5;
+    double rho = PlanEnv->getDouble(PlanParam::env_rho);//0.5;
+
+    double cost = numeric_limits<double>::max();
+    if (getCurrentHumanRobotReacheable().size() > 0 && isHumAccessible())
+    {
+//                p.first = max((m_HumanAccessible.at(i)->getRobotBestPos().first / m_robotMaxDist)*PlanEnv->getDouble(PlanParam::env_objectNessecity)
+//                               ,(m_HumanAccessible.at(i)->getHumanDist()/m_humanMaxDist));
+        double hTime = getHumanDist()/humanSpeed;
+        double rTime = getRobotBestPos().first/robotSpeed;
+        double tempCost = max(hTime,rTime) * timeStamp;
+
+        double mvCost = getHumanDist();
+        cost = (ksi * mvCost) * (1 - objectNecessity)/(rho + ksi) + tempCost * objectNecessity;
+    }
+    mCost = cost;
+
+    return mCost;
+
+}
+
+bool EnvCell::computeBestRobotPos()
+{
+    if (getCurrentHumanRobotReacheable().empty())
+    {
+        return false;
+    }
+    double index = 0;
+    double dist = numeric_limits<double>::max();
+    for (unsigned int i =0; i < getCurrentHumanRobotReacheable().size(); i++)
+    {
+        double tmp = getCurrentHumanRobotReacheable().at(i)->getRobotDist();
+        if (tmp < dist)
+        {
+            dist = tmp;
+            index = i;
+        }
+    }
+    std::pair<double,EnvCell*> p;
+    p.first = dist;
+    p.second = getCurrentHumanRobotReacheable().at(index);
+    setRobotBestPos(p);
+    return true;
+}
+
 std::vector<EnvCell*> EnvCell::getNeighbors(bool isHuman)
 {
     std::vector<EnvCell*> neighbors;
@@ -1068,3 +1283,79 @@ void EnvCell::addPoint(double Rz)
 {
     randomVectorPoint.push_back(Rz);
 }
+
+
+std::vector<EnvCell*> EnvCell::getCrown(double min, double max)
+{
+    vector<EnvCell*> crownCells;
+    double idMaxDist = max/getCellSize()[0];
+//    double idMinDist = min/(sqrt(2)* getCellSize()[0]);
+
+    double maxInitX = getCoord()[0] - idMaxDist;
+    if(maxInitX < 0)
+    {
+        maxInitX = 0;
+    }
+
+    double maxInitY = getCoord()[1] - idMaxDist;
+    if(maxInitY < 0)
+    {
+        maxInitY = 0;
+    }
+
+    double maxEndX = getCoord()[0] + idMaxDist;
+    if (maxEndX >= dynamic_cast<EnvGrid*>(_grid)->getNbCellX())
+    {
+        maxEndX = dynamic_cast<EnvGrid*>(_grid)->getNbCellX();
+    }
+
+    double maxEndY = getCoord()[1] + idMaxDist;
+    if (maxEndY >= dynamic_cast<EnvGrid*>(_grid)->getNbCellY()-1)
+    {
+        maxEndY = dynamic_cast<EnvGrid*>(_grid)->getNbCellY()-1;
+    }
+
+//    double minInit = getCenter()[0] - idMinDist;
+//    if(minInit < 0)
+//    {
+//        minInit = 0;
+//    }
+//
+//    double minEnd = getCenter()[0] + idMinDist;
+//    if(minEnd > dynamic_cast<EnvGrid*>(_grid)->_nbCellsX)
+//    {
+//        minEnd = dynamic_cast<EnvGrid*>(_grid)->_nbCellsX;
+//    }
+//
+
+
+    initHumanRobotReacheable.clear();
+    crownCells.clear();
+    for (int x = maxInitX; x <= maxEndX ; x++)
+    {
+        for (int y = maxInitY; y <= maxEndY  ; y ++)
+        {
+            EnvCell* cell = dynamic_cast<EnvCell*>(dynamic_cast<EnvGrid*>(_grid)->getCell(x,y));
+            double dist = sqrt( pow( getCenter()[0] - cell->getCenter()[0] , 2) +
+                                pow( getCenter()[1] - cell->getCenter()[1] , 2) );
+            if (fabs(dist) <= max && fabs(dist) >= min)
+            {
+                crownCells.push_back(cell);
+                initHumanRobotReacheable.push_back(cell);
+            }
+        }
+    }
+
+    return crownCells;
+}
+
+
+
+
+
+
+
+
+
+
+

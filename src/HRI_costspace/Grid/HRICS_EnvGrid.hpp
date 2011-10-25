@@ -73,6 +73,16 @@ namespace HRICS
                   * using the method of distance propagation to compute distances
                   */
 		void computeDistances(EnvCell* cell, bool isHuman);
+
+                /**
+                  * using the method of distance propagation to compute distances for robot
+                  */
+                void  computeRobotDistances(EnvCell* cell);
+
+                /**
+                  * using the method of distance propagation to compute distances for human
+                  */
+                void  computeHumanDistances(EnvCell* cell);
 		
                 /**
                   * drawing the grid
@@ -236,6 +246,7 @@ namespace HRICS
                 //other
                 void setBlankCost() { mCostIsComputed = false; }
                 void setCost(double value) {mCost = value; }
+                double getCost() {return mCost; }
 
                 Eigen::Vector2i getCoord() { return _Coord; }
 
@@ -244,13 +255,23 @@ namespace HRICS
 
 
                 //#######################
-                //getters et setters ####
+                // others ###############
                 //#######################
 
                 /**
                   * test if there is a collision with a BB (the cylinders) for both human and the robot
                   */
 		void computeReach();
+
+                /**
+                  * compute partial cost
+                  */
+                double computeCost();
+
+                /**
+                  * compute best robot pos
+                  */
+                bool computeBestRobotPos();
 
                 /**
                   * reset the reacheability computing
@@ -276,6 +297,11 @@ namespace HRICS
                   * add a point to the random vector in order to draw it (the red arrows)
                   */
 		void addPoint(double Rz);
+
+                /**
+                  * return the crown arround the cell taking the min and max value
+                  */
+                std::vector<EnvCell*> getCrown(double min, double max);
 
 	private:
                 /**

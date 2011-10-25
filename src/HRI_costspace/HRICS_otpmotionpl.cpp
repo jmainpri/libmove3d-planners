@@ -1202,8 +1202,11 @@ bool OTPMotionPl::newComputeOTP()
     getInputs();
 //    m_2DGrid->init(computeHumanRobotDist());
 //    m_2DGrid->initGrid(m_humanPos);
-    m_2DGrid->recomputeGridWhenHumanMove(m_humanPos);
-    m_2DGrid->setCellsToblankCost();
+    if (!PlanEnv->getBool(PlanParam::env_normalRand) && ! PlanEnv->getBool(PlanParam::env_useAllGrid))
+    {
+        m_2DGrid->recomputeGridWhenHumanMove(m_humanPos);
+    }
+//    m_2DGrid->setCellsToblankCost();
 
     m_costVector.clear();
     clock_t gridInit = clock();
@@ -1285,7 +1288,7 @@ bool OTPMotionPl::newComputeOTP()
     m_Human->setAndUpdate(*q_human_cur);
     _Robot->setAndUpdate(*q_robot_cur);
 
-    m_2DGrid->setAsNotSorted();
+//    m_2DGrid->setAsNotSorted();
 
     bool finished = true;
     if (!m_humanCanStand && m_isInitSiting)
@@ -2056,7 +2059,8 @@ void OTPMotionPl::saveAllCostsToFile()
     string home = getenv("HOME_MOVE3D") + fileName;
     myfile.open(home.c_str());
 
-    for (int i = 0; i < int(maxSize); i++)
+
+    for (unsigned int i = 0; i < maxSize; i++)
     {
         for (unsigned int costVectorId=0; costVectorId < m_multipliComputeCostVector.size(); costVectorId++)
         {
