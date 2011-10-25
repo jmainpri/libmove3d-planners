@@ -392,7 +392,7 @@ shared_ptr<Configuration> LocalPath::configAtParam(double param)
 		throw string("Could not find configuration along path");
 	}
 	
-	shared_ptr<Configuration> ptrQ(new Configuration(_Robot, q));
+	shared_ptr<Configuration> ptrQ(new Configuration(_Robot, q , true));
 	ptrQ->setConstraints();
 	return ptrQ;
 }

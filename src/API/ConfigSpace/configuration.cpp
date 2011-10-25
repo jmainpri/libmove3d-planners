@@ -345,9 +345,10 @@ bool Configuration::isInCollision()
         this->getRobot()->setAndUpdate(*this);
         _CollisionTested = true;
         //_InCollision = p3d_col_test();      
-      if( global_CollisionSpace )
+      if( global_collisionSpace )
       {
-        _InCollision = global_CollisionSpace->isRobotColliding();
+        double dist = numeric_limits<double>::max();
+        //_InCollision = global_collisionSpace->isRobotColliding(dist);
         
       }
       else
@@ -484,8 +485,7 @@ bool Configuration::equal(Configuration& Conf)
 //copie la Configuration courante dans une nouvelle Configuration
 shared_ptr<Configuration> Configuration::copy()
 {
-    return (shared_ptr<Configuration> (new Configuration(_Robot,
-                                                         p3d_copy_config(_Robot->getRobotStruct(), _Configuration))));
+    return (shared_ptr<Configuration>(new Configuration(*this)));
 }
 
 void Configuration::copyPassive(Configuration& C)
@@ -648,8 +648,12 @@ double Configuration::cost()
 {
     if(!_CostTested)
     {
+      if( global_costSpace )
+      {
         _Cost = global_costSpace->cost(*this);
-        _CostTested = true;
+      }
+      
+      _CostTested = true;
 //				cout << "Cost = " << _Cost << endl;
     }
 	
