@@ -19,6 +19,8 @@
 #include "HRI_costspace/HRICS_HAMP.hpp"
 #endif
 
+#include "move3d-headless.h"
+
 using namespace std;
 using namespace tr1;
 
@@ -161,6 +163,8 @@ HighestCostId(0), isHighestCostIdSet(false)
 
 Trajectory::Trajectory(Robot* R, p3d_traj* t)
 {
+  m_Courbe.clear();
+  
 	if ((t == NULL) || (t->courbePt==NULL))
 	{
 		return;
@@ -233,11 +237,10 @@ Trajectory::~Trajectory()
 	}
 }
 
-void Trajectory::replaceP3dTraj()
+bool Trajectory::replaceP3dTraj()
 {
   //cout << "Robot name : " << m_Robot->getRobotStruct()->name << endl;
-    replaceP3dTraj(p3d_get_robot_by_name(m_Robot->getRobotStruct()->name)->tcur);
-
+  return replaceP3dTraj( p3d_get_robot_by_name( m_Robot->getName().c_str() )->tcur );
 }
 
 p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
@@ -301,13 +304,9 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 	}
 	
   if (nloc != 0) 
-  {
     localpathPt->next_lp = NULL;
-  }
 	else 
-  {
     cout << "replaceP3dTraj with empty trajectory" << endl;
-  }
 
 	trajPt->nlp = nloc;
 	
@@ -494,6 +493,11 @@ vector<shared_ptr<Configuration> > Trajectory::getNConfAtParam(double delta)
 	
 	return tmpVector;
 	
+}
+
+bool Trajectory::isEmpty()
+{
+  return m_Courbe.empty();
 }
 
 LocalPath* Trajectory::getLocalPathPtrAt(unsigned int id) const
@@ -1208,29 +1212,35 @@ extern void* GroundCostObj;
 
 void Trajectory::draw(int nbKeyFrame)
 {
-	
 	double du = range_param / nbKeyFrame;
 	double u = du;
 	
 	int val1, val2;
 	double Cost1, Cost2;
 	
-	p3d_obj *o;
+//	p3d_obj* o;
+  p3d_jnt* 	drawnjnt;
 	
-	int NumBody = m_Robot->getRobotStruct()->no - 1;
-	
-	if ((NumBody >= m_Robot->getRobotStruct()->no) || (NumBody < 0))
-		return;
-	
-	if (!(o = m_Robot->getRobotStruct()->o[NumBody]))
-		return;
+//	int NumBody = m_Robot->getRobotStruct()->no - 1;
+//	
+//	if ((NumBody >= m_Robot->getRobotStruct()->no) || (NumBody < 0))
+//		return;
+
+	int indexjnt = p3d_get_user_drawnjnt();
+  
+  if (indexjnt != -1 && indexjnt <= m_Robot->getRobotStruct()->njoints ) {
+    drawnjnt = m_Robot->getRobotStruct()->joints[indexjnt];
+  }
+  
+//	if (!(o = m_Robot->getRobotStruct()->o[NumBody]))
+//		return;
 	
 	shared_ptr<Configuration> qSave = m_Robot->getCurrentPos();
 	shared_ptr<Configuration> q = m_Source;
 	m_Robot->setAndUpdate(*q);
 	
 	p3d_vector3 pi, pf;
-	p3d_jnt_get_cur_vect_point(o->jnt, pi);
+	p3d_jnt_get_cur_vect_point(drawnjnt, pi);
 	
 	int saveColor;
 	bool red = false;
@@ -1240,7 +1250,7 @@ void Trajectory::draw(int nbKeyFrame)
 		/* position of the robot corresponding to parameter u */
 		q = configAtParam(u);
 		m_Robot->setAndUpdate(*q);
-		p3d_jnt_get_cur_vect_point(o->jnt, pf);
+		p3d_jnt_get_cur_vect_point(drawnjnt, pf);
 		
 		if (isHighestCostIdSet)
 		{
@@ -1279,6 +1289,17 @@ void Trajectory::draw(int nbKeyFrame)
 		p3d_vectCopy(pf, pi);
 		u += du;
 	}
+  
+  if ((ENV.getBool(Env::isCostSpace)) && (GroundCostObj != NULL)) 
+  {
+    for (unsigned int i=0; i<m_Courbe.size(); i++) 
+    {
+      m_Robot->setAndUpdate(*m_Courbe[i]->getEnd());
+      p3d_jnt_get_cur_vect_point(drawnjnt, pf);
+      val2 = GHintersectionVerticalLineWithGround(GroundCostObj, pf[0],pf[1], &Cost2);
+      g3d_drawSphere(pf[0],pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02,1.);
+    }
+  }
 	
 	m_Robot->setAndUpdate(*qSave);
 }
@@ -1422,6 +1443,12 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 	{
 		return nLP;
 	}
+  
+  if( portion.empty() )
+  {
+    cout << "Can not cut an empty portion" << endl;
+    return 0;
+  }
 	
 	cout << "NB Of LP = " << portion.size() << endl;
 	cout << "NB Of LP = " << nLP << endl;
@@ -1839,17 +1866,10 @@ vector<double> Trajectory::getCostAlongTrajectory(int nbSample)
 
 void Trajectory::print()
 {
-	
 	cout << "-------------- Trajectory --------------" << endl;
 	cout << " Number of LP " << nloc << endl;
 	cout << " Range Parameter " << this->range_param << endl;
-	
-//	for (uint i = 0; i < nloc; i++)
-//	{
-//		cout << "Number " << i << endl;
-//		m_Courbe.at(i)->print();
-//	}
-  
+	  
   if( nloc > 0 )
   {
     int size1 = nloc+1;
@@ -1884,10 +1904,10 @@ void draw_traj_debug()
       trajToDraw.at(i).draw(500);
       //std::cout << "Drawing traj" << std::endl;
     }
-    p3d_rob *robotPt = (p3d_rob *) p3d_get_desc_curid(P3D_ROBOT);
-    if (!robotPt->tcur)
-    {
-      trajToDraw.clear();
-    }
+//    p3d_rob *robotPt = (p3d_rob *) p3d_get_desc_curid(P3D_ROBOT);
+//    if (!robotPt->tcur)
+//    {
+//      trajToDraw.clear();
+//    }
   }	
 }

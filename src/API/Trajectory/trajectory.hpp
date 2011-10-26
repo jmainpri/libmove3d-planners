@@ -95,10 +95,11 @@ namespace API
 		
 		//---------------------------------------------------------
 		// Basic
+    bool isEmpty();
+    
 		std::tr1::shared_ptr<Configuration> configAtParam(double param);
 		
 		std::vector< std::tr1::shared_ptr<Configuration> > getNConfAtParam(double delta);
-		
 		std::vector< std::tr1::shared_ptr<Configuration> > getVectorOfConfiguration();
 		
 		uint					getIdOfPathAt(double param);
@@ -110,7 +111,7 @@ namespace API
 		void 	updateRange();
 		double computeSubPortionRange(std::vector<LocalPath*> portion);
 		
-		void 	replaceP3dTraj();
+		bool 	replaceP3dTraj();
 		p3d_traj* 	replaceP3dTraj(p3d_traj* trajPt);
 
 		p3d_traj* 	replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt);
