@@ -395,31 +395,31 @@ void drawSlice(int opengl_context);
 void g3d_draw_hrics(int opengl_context)
 {
     int OTPListSize = OTPList.size();
-	if( ENV.getBool(Env::enableHri) )
-	{
-		if( ENV.getBool(Env::HRIPlannerCS) && ENV.getBool(Env::drawTraj) )
-		{
-			//          printf("Draw 2d path\n");
-			//dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPLConfig)->draw2dPath();
-		}
+    if( ENV.getBool(Env::enableHri) )
+    {
+            if( ENV.getBool(Env::HRIPlannerCS) && ENV.getBool(Env::drawTraj) )
+            {
+                    //          printf("Draw 2d path\n");
+                    //dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPLConfig)->draw2dPath();
+            }
 
-		if( ENV.getBool(Env::drawOTPTraj) )
-		{
-			dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->draw2dPath();
-		}
-		
-		if( ENV.getBool(Env::isCostSpace) )
-		{
-			if( ENV.getBool(Env::enableHri) )
-			{
-				if( ENV.getBool(Env::HRIPlannerWS) && ENV.getBool(Env::drawTraj) )
-				{
-					//              printf("Draw 3d path\n");
-					dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->draw3dPath();
-				}
-			}
-		}
-	}
+            if( ENV.getBool(Env::drawOTPTraj) )
+            {
+                    dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->draw2dPath();
+            }
+
+            if( ENV.getBool(Env::isCostSpace) )
+            {
+                    if( ENV.getBool(Env::enableHri) )
+                    {
+                            if( ENV.getBool(Env::HRIPlannerWS) && ENV.getBool(Env::drawTraj) )
+                            {
+                                    //              printf("Draw 3d path\n");
+                                    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->draw3dPath();
+                            }
+                    }
+            }
+    }
   
 //  if( HRICS_activeDist )
 //	{
@@ -430,68 +430,68 @@ void g3d_draw_hrics(int opengl_context)
 //    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->drawCurrentOTP();
 //  }
   
-	if( ENV.getBool(Env::drawDistance) && HRICS_activeDist )
-	{
-		vect_jim = HRICS_activeDist->getVectorJim();
-		
-		glLineWidth(3.);
-		
-		for (unsigned int i = 0; i < vect_jim.size() / 6; i++)
-		{
-			g3d_drawOneLine(vect_jim[0 + 6 * i], vect_jim[1 + 6 * i],
-											vect_jim[2 + 6 * i], vect_jim[3 + 6 * i],
-											vect_jim[4 + 6 * i], vect_jim[5 + 6 * i], Red, NULL);
-		}
-		
-		glLineWidth(1.);
-    
-    if( HRICS_activeNatu && PlanEnv->getBool(PlanParam::drawColorConfig) )
+    if( ENV.getBool(Env::drawDistance) && HRICS_activeDist )
     {
-      HRICS_activeNatu->setRobotColorFromConfiguration(true);
-    }
-	}
-  
-	if ( ENV.getBool(Env::drawGaze) && ( ENV.getBool(Env::HRIPlannerWS) ||  ENV.getBool(Env::HRIPlannerCS) ) )
-	{
-		vector<double> Gaze;
-		Gaze.clear();
-		
-		//cout << "Draw Gaze" << endl;
-		
-		Gaze = HRICS_MotionPL->getVisibility()->getGaze();
-		
-    //		glLineWidth(3.);
-    //		
-    //		if( (Gaze.size() == 6))
-    //		{		
-    //			g3d_drawOneLine(Gaze[0], Gaze[1],
-    //											Gaze[2], Gaze[3],
-    //											Gaze[4], Gaze[5], Blue, NULL);
-    //		}
-    //		
-    //		glLineWidth(1.);
+            vect_jim = HRICS_activeDist->getVectorJim();
+
+            glLineWidth(3.);
+
+            for (unsigned int i = 0; i < vect_jim.size() / 6; i++)
+            {
+                    g3d_drawOneLine(vect_jim[0 + 6 * i], vect_jim[1 + 6 * i],
+                                                                                    vect_jim[2 + 6 * i], vect_jim[3 + 6 * i],
+                                                                                    vect_jim[4 + 6 * i], vect_jim[5 + 6 * i], Red, NULL);
+            }
+
+            glLineWidth(1.);
     
-    GLdouble GreenColor[4] =   { 0.0, 0.5, 0.0, 0.7 };
-    GLdouble GreenColorT[4] =   { 0.0, 0.5, 0.0, 0.0 };
+            if( HRICS_activeNatu && PlanEnv->getBool(PlanParam::drawColorConfig) )
+            {
+              HRICS_activeNatu->setRobotColorFromConfiguration(true);
+            }
+    }
+
+    if ( ENV.getBool(Env::drawGaze) && ( ENV.getBool(Env::HRIPlannerWS) ||  ENV.getBool(Env::HRIPlannerCS) ) )
+    {
+            vector<double> Gaze;
+            Gaze.clear();
+
+            //cout << "Draw Gaze" << endl;
+
+            Gaze = HRICS_MotionPL->getVisibility()->getGaze();
+
+//		glLineWidth(3.);
+//
+//		if( (Gaze.size() == 6))
+//		{
+//			g3d_drawOneLine(Gaze[0], Gaze[1],
+//											Gaze[2], Gaze[3],
+//											Gaze[4], Gaze[5], Blue, NULL);
+//		}
+//
+//		glLineWidth(1.);
+    
+            GLdouble GreenColor[4] =   { 0.0, 0.5, 0.0, 0.7 };
+            GLdouble GreenColorT[4] =   { 0.0, 0.5, 0.0, 0.0 };
 //    GLdouble GreyColor[4] =   { 0.5, 0.5, 0.5, 0.5 };
 //    GLdouble GreyColorT[4] =   { 0.5, 0.5, 0.5, 0.0 };
 
 
-    Robot* human = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman();
-    int gazeIndex = 46;
-    if ( human->getName() == "ACHILE_HUMAN1" )
-    {
-        gazeIndex = 42;
+            Robot* human = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman();
+            int gazeIndex = 46;
+            if ( human->getName() == "ACHILE_HUMAN1" )
+            {
+                gazeIndex = 42;
+            }
+
+        //    cout << "HUMAN = " << human->getName() << endl;
+            p3d_jnt* eyes = human->getJoint(gazeIndex)->getJointStruct();
+
+            // 46 is for HERAKLES
+            // 42 is for ACHILE
+            g3d_draw_visibility_by_frame(eyes->abs_pos,DTOR(160),DTOR(160*0.75),1, GreenColor, GreenColorT);
+
     }
-
-//    cout << "HUMAN = " << human->getName() << endl;
-    p3d_jnt* eyes = human->getJoint(gazeIndex)->getJointStruct();
-
-    // 46 is for HERAKLES
-    // 42 is for ACHILE
-    g3d_draw_visibility_by_frame(eyes->abs_pos,DTOR(160),DTOR(160*0.75),1, GreenColor, GreenColorT);
-
-	}
 
 	if ( HRICS_MotionPL != NULL && PlanEnv->getBool(PlanParam::drawRandomMap))
 	{
@@ -528,9 +528,10 @@ void g3d_draw_hrics(int opengl_context)
 						Black, NULL);
 		glLineWidth(1.);
 	}
+
   
-  if( HRICS_MotionPL )
-	{
+    if( HRICS_MotionPL )
+    {
 //    bool rightHand = true;
 //    Eigen::Vector3d WSPoint = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->computeOTPFromHandPose( rightHand );
 //    
@@ -547,7 +548,7 @@ void g3d_draw_hrics(int opengl_context)
 //    g3d_draw_solid_sphere(WSPoint[0], WSPoint[1], WSPoint[2], 0.10, 10);
 //    
 //    glDisable(GL_BLEND);
-  }
+    }
   
   
   //"HRI cost = %2.2f"
@@ -556,45 +557,45 @@ void g3d_draw_hrics(int opengl_context)
   {
 
 
-    double colorvector[4];
-    
-    colorvector[1] = 1.0;       //green
-    colorvector[2] = 0.0;       //blue
-    
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
-    //                Vector3d center = getWorkspacePoint();
-    
-    colorvector[0] = 0.0;       //red
-    colorvector[3] = 0.9;       //transparency
-    
-    g3d_set_color(Any,colorvector);
-    g3d_draw_solid_sphere(current_WSPoint[0], current_WSPoint[1], current_WSPoint[2], 0.02, 10);
-    //                        GroundColorMixGreenToRed(colorvector,Cost);
-    
-    colorvector[0] = 1.0;       //red
-    colorvector[3] = 0.5;       //transparency
-    
-    g3d_set_color(Any,colorvector);
-    g3d_draw_solid_sphere(current_WSPoint[0], current_WSPoint[1], current_WSPoint[2], 0.10, 30);
-    
-    //    glDisable(GL_CULL_FACE);
-    glDisable(GL_BLEND);
-//    drawGauge(0, current_cost.first/cost_max);
-    
-//    drawGauge(1, current_cost.second[0]);
-//    drawGauge(2, current_cost.second[1]);
-//    drawGauge(3, current_cost.second[2]);
+            double colorvector[4];
 
-    shared_ptr<Configuration> q_rob = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot()->getCurrentPos();
-    shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
+            colorvector[1] = 1.0;       //green
+            colorvector[2] = 0.0;       //blue
 
-//    glLineWidth(3.);
-//    g3d_drawOneLine((*q_hum)[indexFirstDof + 0],   (*q_hum)[indexFirstDof + 1],    current_WSPoint[2],
-//                    (*q_rob)[indexFirstDof + 0],   (*q_rob)[indexFirstDof + 1],    current_WSPoint[2],
-//                    Yellow, NULL);
-//    glLineWidth(1.);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            //                Vector3d center = getWorkspacePoint();
+
+            colorvector[0] = 0.0;       //red
+            colorvector[3] = 0.9;       //transparency
+
+            g3d_set_color(Any,colorvector);
+            g3d_draw_solid_sphere(current_WSPoint[0], current_WSPoint[1], current_WSPoint[2], 0.02, 10);
+            //                        GroundColorMixGreenToRed(colorvector,Cost);
+
+            colorvector[0] = 1.0;       //red
+            colorvector[3] = 0.5;       //transparency
+
+            g3d_set_color(Any,colorvector);
+            g3d_draw_solid_sphere(current_WSPoint[0], current_WSPoint[1], current_WSPoint[2], 0.10, 30);
+
+            //    glDisable(GL_CULL_FACE);
+            glDisable(GL_BLEND);
+            //    drawGauge(0, current_cost.first/cost_max);
+
+            //    drawGauge(1, current_cost.second[0]);
+            //    drawGauge(2, current_cost.second[1]);
+            //    drawGauge(3, current_cost.second[2]);
+
+            shared_ptr<Configuration> q_rob = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot()->getCurrentPos();
+            shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
+
+            //    glLineWidth(3.);
+            //    g3d_drawOneLine((*q_hum)[indexFirstDof + 0],   (*q_hum)[indexFirstDof + 1],    current_WSPoint[2],
+            //                    (*q_rob)[indexFirstDof + 0],   (*q_rob)[indexFirstDof + 1],    current_WSPoint[2],
+            //                    Yellow, NULL);
+            //    glLineWidth(1.);
 
 
   }
@@ -623,10 +624,51 @@ void g3d_draw_hrics(int opengl_context)
       }
   }
 
-  if (PlanEnv->getBool(PlanParam::env_drawSlice))
-  {
-      drawSlice(opengl_context);
-  }
+    if (PlanEnv->getBool(PlanParam::env_drawSlice))
+    {
+        drawSlice(opengl_context);
+    }
+
+    if (PlanEnv->getBool(PlanParam::env_drawHumanModel))
+    {
+        Eigen::Vector3d humanPos = dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getHumanPos();
+
+        double height = 2;
+
+        double colorvector[4];
+        colorvector[0] = 0.0;       //red
+        colorvector[1] = 1.0;       //green
+        colorvector[2] = 0.0;       //blue
+        colorvector[3] = 0.9;       //transparency
+
+//        glEnable(GL_BLEND);
+        g3d_set_color(Any,colorvector);
+
+        glLineWidth(3.);
+        g3d_drawOneLine(humanPos[0],    humanPos[1],    0,
+                        humanPos[0],    humanPos[1],    height,
+                        Black, NULL);
+        glLineWidth(1.);
+
+
+        g3d_draw_solid_sphere(humanPos[0],
+                              humanPos[1],
+                              height,
+                              0.1, 20);
+
+
+        p3d_vector3 origin, end;
+        end[0] = humanPos[0] + cos(humanPos[2])* 0.2;
+        end[1] = humanPos[1] + sin(humanPos[2])* 0.2 ;
+        end[2] = height;
+
+        origin[0] = humanPos[0];
+        origin[1] = humanPos[1];
+        origin[2] = height;
+
+        g3d_draw_arrow(origin, end, 1, 0, 0);
+    }
+
 
 }
 #endif

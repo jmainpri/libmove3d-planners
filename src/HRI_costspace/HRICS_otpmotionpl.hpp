@@ -109,9 +109,13 @@ namespace HRICS
         std::vector<Eigen::Vector3d> getOTPList() { return m_OTPList; }
         int getNbConf(){ return m_confList.size(); }
 
+        Eigen::Vector3d getHumanActualPos();
+        Eigen::Vector3d getRobotActualPos();
+
         void clearOTPList() { m_OTPList.clear(); }
 
         Eigen::Vector3d getHumanPos(){return m_humanPos;}
+        Eigen::Vector3d getRobotPos(){return m_robotPos;}
 
         /**
           * Draws the 3D path as a yellow line for robot and green one for human
@@ -291,6 +295,11 @@ namespace HRICS
           * this function put the input in global variable that can be used by others.
           */
         void getInputs();
+
+        /**
+          * setting the inputs !!
+          */
+        void setInputs( Eigen::Vector3d humanPos, Eigen::Vector3d robotPos,bool isStanding, double mobility);
 
         //other
         /**

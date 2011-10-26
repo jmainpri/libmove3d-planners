@@ -391,15 +391,6 @@ void EnvGrid::computeHumanRobotReacheability(std::pair<double,double> minMax)
 
 std::vector<std::pair<double,EnvCell*> > EnvGrid::getSortedGrid()
 {
-//    double robotSpeed =  PlanEnv->getDouble(PlanParam::env_robotSpeed);//1;
-//    double humanSpeed = PlanEnv->getDouble(PlanParam::env_humanSpeed);//1;
-//
-//
-//    double timeStamp = PlanEnv->getDouble(PlanParam::env_timeStamp);//0.1;
-//    double objectNecessity = PlanEnv->getDouble(PlanParam::env_objectNessecity);
-//
-//    double ksi = PlanEnv->getDouble(PlanParam::env_ksi);//0.5;
-//    double rho = PlanEnv->getDouble(PlanParam::env_rho);//0.5;
 
     if (!gridIsSorted)
     {

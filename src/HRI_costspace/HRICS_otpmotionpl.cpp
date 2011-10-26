@@ -978,6 +978,19 @@ double OTPMotionPl::multipliComputeOtp(int n)
 
 }
 
+
+
+
+void OTPMotionPl::setInputs( Eigen::Vector3d humanPos, Eigen::Vector3d robotPos,bool isStanding, double mobility)
+{
+    m_humanPos = humanPos;
+    m_robotPos = robotPos;
+    isStanding = m_isStanding;
+    mobility = m_mobility;
+}
+
+
+
 void OTPMotionPl::getInputs()
 {
     shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
@@ -1199,7 +1212,7 @@ Vector3d OTPMotionPl::getRandomPoints(double id)
 bool OTPMotionPl::newComputeOTP()
 {
     clock_t start = clock();
-    getInputs();
+//    getInputs();
 //    m_2DGrid->init(computeHumanRobotDist());
 //    m_2DGrid->initGrid(m_humanPos);
     if (!PlanEnv->getBool(PlanParam::env_normalRand) && ! PlanEnv->getBool(PlanParam::env_useAllGrid))
@@ -2866,6 +2879,30 @@ bool OTPMotionPl::changeHumanByName(std::string humanName)
     }
 
     return false;
+}
+
+Eigen::Vector3d OTPMotionPl::getHumanActualPos()
+{
+    Eigen::Vector3d pos;
+    shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+    int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+    pos[0] = (*q_human_cur)[firstIndexOfHumanDof + 0];
+    pos[1] = (*q_human_cur)[firstIndexOfHumanDof + 1];
+    pos[2] = (*q_human_cur)[firstIndexOfHumanDof + 5];
+
+    return pos;
+}
+
+Eigen::Vector3d OTPMotionPl::getRobotActualPos()
+{
+    Eigen::Vector3d pos;
+    shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+    pos[0] = (*q_robot_cur)[firstIndexOfRobotDof + 0];
+    pos[1] = (*q_robot_cur)[firstIndexOfRobotDof + 1];
+    pos[2] = (*q_robot_cur)[firstIndexOfRobotDof + 5];
+
+    return pos;
 }
 
 /**

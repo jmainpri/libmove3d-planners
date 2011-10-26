@@ -130,7 +130,8 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::trajOptimTestMultiGauss,    new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::env_realTime,               new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::useSelectedDuration,        new boolContainer(false))); 
-
+        myBoolMap.insert( std::make_pair( PlanParam::env_drawHumanModel,         new boolContainer(false)));
+  
         // Int
         // ------------------------------------------------------------------
         myIntMap.insert(std::make_pair( PlanParam::tata,                         new intContainer(5)));
@@ -186,6 +187,9 @@ void initPlannerParameters()
 
         myDoubleMap.insert( std::make_pair( PlanParam::env_sitTimeLimitation,    new doubleContainer(0.2)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_timeToDump,           new doubleContainer(0.002)));
+        myDoubleMap.insert( std::make_pair( PlanParam::env_futurX,               new doubleContainer(0)));
+        myDoubleMap.insert( std::make_pair( PlanParam::env_futurY,               new doubleContainer(0)));
+        myDoubleMap.insert( std::make_pair( PlanParam::env_futurRZ,              new doubleContainer(0)));
 
     //cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble( PlanParam::env_objectNessecity ) << endl;
 

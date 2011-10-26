@@ -87,7 +87,8 @@ namespace PlanParam
             env_useOldDude,
             env_isInit,
             env_showText,
-            env_realTime
+            env_realTime,
+            env_drawHumanModel
         };
 
         enum intParameter
@@ -140,7 +141,10 @@ namespace PlanParam
             env_Cellsize,
             env_timeLimitation,
             env_sitTimeLimitation,
-            env_timeToDump
+            env_timeToDump,
+            env_futurX,
+            env_futurY,
+            env_futurRZ
 
         };
 
