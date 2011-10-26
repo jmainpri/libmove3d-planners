@@ -344,10 +344,10 @@ bool Configuration::isInCollision()
     {
         this->getRobot()->setAndUpdate(*this);
         _CollisionTested = true;
-        //_InCollision = p3d_col_test();      
-      if( global_collisionSpace )
-      {
-        double dist = numeric_limits<double>::max();
+        _InCollision = p3d_col_test();      
+	if( /*global_collisionSpace*/ false )
+	{
+        //double dist = numeric_limits<double>::max();
         //_InCollision = global_collisionSpace->isRobotColliding(dist);
         
       }

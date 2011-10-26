@@ -661,7 +661,7 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
     << global_costSpace->cost(q_Cost) << std::endl;
   }
   
-  if( global_CollisionSpace )
+  /*if( global_CollisionSpace )
   {
     int ncol = global_CollisionSpace->isRobotColliding();
     
@@ -680,7 +680,7 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
     {
       g3d_set_custom_color_draw( robCollSapce->getRobotStruct(), false );
     }
-  }
+    }*/
 }
 
 #ifdef HRI_COSTSPACE
