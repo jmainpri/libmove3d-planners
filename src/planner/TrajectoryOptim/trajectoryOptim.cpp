@@ -23,7 +23,9 @@
 #include "Stomp/stompOptimizer.hpp"
 #include "Stomp/stompParameters.hpp"
 
+#ifdef LIGHT_PLANNER
 #include "LightPlanner-pkg.h"
+#endif
 #include "Graphic-pkg.h"
 #include "move3d-headless.h"
 
@@ -62,6 +64,7 @@ vector<CollisionPoint> m_collision_points;
 // General method
 //--------------------------------------------------------
 
+#ifdef MULTILOCALPATH
 //! set mlp for this robot
 void traj_optim_set_MultiLP()
 {
@@ -77,6 +80,7 @@ void traj_optim_set_MultiLP()
     }
   }
 }
+#endif
 
 //! invalidate all constraints
 // --------------------------------------------------------
@@ -112,7 +116,8 @@ void traj_optim_shelf_set_localpath_and_cntrts()
 {
   cout << "Set robot, localpath and cntrts" << endl;
   m_robot = global_Project->getActiveScene()->getActiveRobot();
-  
+
+#ifdef MULTILOCALPATH
   traj_optim_set_MultiLP();
   traj_optim_invalidate_cntrts();
   
@@ -120,7 +125,7 @@ void traj_optim_shelf_set_localpath_and_cntrts()
   p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
   
   fixAllJointsWithoutArm( m_robot->getRobotStruct() , 0 );
-  
+#endif
   p3d_set_user_drawnjnt(28);
 }
 
@@ -257,7 +262,8 @@ void traj_optim_navigation_set_localpath_and_cntrts()
 {
   cout << "Set robot, localpath and cntrts" << endl;
   m_robot = global_Project->getActiveScene()->getActiveRobot();
-  
+
+#if defined(MULTILOCALPATH) && defined(LIGHT_PLANNER)
   traj_optim_set_MultiLP();
   traj_optim_invalidate_cntrts();
   
@@ -265,7 +271,8 @@ void traj_optim_navigation_set_localpath_and_cntrts()
   p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_BaseMLP, 1, false);
   
   fixAllJointsExceptBase( m_robot->getRobotStruct() );
-  
+#endif
+
   p3d_set_user_drawnjnt(1);
 }
 

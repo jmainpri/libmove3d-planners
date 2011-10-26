@@ -51,7 +51,7 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Trajectory/trajectory.hpp"
 
-#include "p3d/env.hpp"
+#include "../p3d/env.hpp"
 
 using namespace std;
 
