@@ -193,6 +193,23 @@ void OTPMotionPl::draw2dPath()
             glLineWidth(1.);
         }
     }
+
+    if (m_2DHumanRealPath.size()> 0)
+    {
+        for(unsigned int i=0;i<m_2DHumanRealPath.size()-1;i++)
+        {
+
+            if (m_2DHumanRealPath[i][0] != m_2DHumanRealPath[i+1][0] || m_2DHumanRealPath[i][1] != m_2DHumanRealPath[i+1][1])
+            {
+//                cout << "to draw \n" << m_2DHumanRealPath[i] << endl;
+                glLineWidth(3.);
+                g3d_drawOneLine(m_2DHumanRealPath[i][0],      m_2DHumanRealPath[i][1],      0.4,
+                                m_2DHumanRealPath[i+1][0],    m_2DHumanRealPath[i+1][1],    0.4,
+                                Yellow, NULL);
+                glLineWidth(1.);
+            }
+        }
+    }
 }
 
 bool OTPMotionPl::ComputePR2Gik()
@@ -1021,6 +1038,165 @@ void OTPMotionPl::getInputs()
     m_mobility = PlanEnv->getDouble(PlanParam::env_objectNessecity);
 }
 
+void OTPMotionPl::setRobotPos()
+{
+    shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+    m_robotPos[0] = (*q_robot_cur)[firstIndexOfRobotDof + 0];
+    m_robotPos[1] = (*q_robot_cur)[firstIndexOfRobotDof + 1];
+    m_robotPos[2] = (*q_robot_cur)[firstIndexOfRobotDof + 5];
+}
+
+bool OTPMotionPl::isTheRealNearThePredicted(double threshold)
+{
+
+    if (m_2DHumanRealPath.size()> 0)
+    {
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmp;
+        tmp.push_back(m_2DHumanRealPath.at(0));
+
+        for(unsigned int i=0;i<m_2DHumanRealPath.size()-1;i++)
+        {
+            if (m_2DHumanRealPath[i][0] != m_2DHumanRealPath[i+1][0] || m_2DHumanRealPath[i][1] != m_2DHumanRealPath[i+1][1])
+            {
+                tmp.push_back(m_2DHumanRealPath.at(i+1));
+//                cout << m_2DHumanRealPath.at(i+1)[0] << "  " << m_2DHumanRealPath.at(i+1)[1]<< endl;
+            }
+        }
+        m_2DHumanRealPath = tmp;
+    }
+
+//    if (m_2DHumanPath.size()> 0)
+//    {
+//        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmp;
+//        tmp.push_back(m_2DHumanPath.at(0));
+//
+//        for(unsigned int i=0;i<m_2DHumanPath.size()-1;i++)
+//        {
+//            if (m_2DHumanPath[i][0] != m_2DHumanPath[i+1][0] || m_2DHumanPath[i][1] != m_2DHumanPath[i+1][1])
+//            {
+//                tmp.push_back(m_2DHumanPath.at(i+1));
+////                cout << m_2DHumanRealPath.at(i+1)[0] << "  " << m_2DHumanRealPath.at(i+1)[1]<< endl;
+//            }
+//        }
+//        m_2DHumanPath = tmp;
+//    }
+
+//    if (m_2DHumanRealPath.size()> 0 && m_HumanPathExist )
+//    {
+//        cout <<  "real path" << endl;
+//
+//        for (unsigned int i=0;i<m_2DHumanRealPath.size();i++)
+//        {
+//            cout << m_2DHumanRealPath.at(i)[0] << "  " << m_2DHumanRealPath.at(i)[1]<< endl;
+//        }
+//
+//        cout <<  "predicted path" << endl;
+//        for (unsigned int i=0;i<m_2DHumanPath.size();i++)
+//        {
+//            cout << m_2DHumanPath.at(i)[0] << "  " << m_2DHumanPath.at(i)[1]<< endl;
+//        }
+//    }
+
+    if( !m_HumanPathExist )
+    {
+        Eigen::Vector2d tmp(m_humanPos[0],m_humanPos[1]);
+        m_2DHumanPath.clear();
+        m_2DHumanPath.push_back(tmp);
+    }
+    if (m_2DHumanRealPath.size() == 0)
+    {
+        Eigen::Vector2d tmp(m_humanPos[0],m_humanPos[1]);
+        m_2DHumanRealPath.clear();
+        m_2DHumanRealPath.push_back(tmp);
+    }
+
+    if(m_2DHumanRealPath.size() > 1)
+    {
+        bool tmp = false;
+        for(unsigned int j=0;j<m_2DHumanRealPath.size();j++)
+        {
+            tmp=false;
+            for(unsigned int i=0;i<m_2DHumanPath.size()-1;i++)
+            {
+                double h = ComputePlanarDistancesLineToSegment(m_2DHumanRealPath.at(j), m_2DHumanPath.at(i), m_2DHumanPath.at(i+1));
+
+                if (h <= threshold )
+                {
+                    tmp=true;
+                    break;
+                }
+            }
+            if (!tmp)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    else
+    {
+        for(unsigned int i=0;i<m_2DHumanPath.size();i++)
+        {
+            if (sqrt(pow(m_2DHumanRealPath.at(0)[0] - m_2DHumanPath.at(i)[0],2) + pow(m_2DHumanRealPath.at(0)[1] - m_2DHumanPath.at(i)[1],2)) < threshold)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+}
+
+double OTPMotionPl::ComputePlanarDistancesLineToSegment(Eigen::Vector2d p, Eigen::Vector2d p1, Eigen::Vector2d p2)
+{
+
+//    cout << "\n\np \n" << p << "\np1 \n" << p1<< "\np2 \n" <<p2 << endl;
+
+    double a = sqrt(pow(p[0] - p1[0],2) + pow(p[1] - p1[1],2));
+    double b = sqrt(pow(p[0] - p2[0],2) + pow(p[1] - p2[1],2));
+    double dist = sqrt(pow(p1[0] - p2[0],2) + pow(p1[1] - p2[1],2));
+
+//    cout << "a = " << a << endl;
+//    cout << "b = " << b << endl;
+//    cout << "dist = " << dist << endl;
+
+    double h = numeric_limits<double>::max( );
+    if (p1[0] == p2[0] && p1[1] == p2[1])
+    {
+        return a;
+    }
+    else if (p1[0] == p2[0])
+    {
+        h = fabs(p1[0]-p[0]);
+    }
+    else if (p1[1] == p2[1])
+    {
+        h = fabs(p1[1]-p[1]);
+    }
+    else
+    {
+        double a = (p2[1] - p1[1])/(p2[0] - p1[0]);
+        double b = p1[1] - p1[0]* a;
+        h = fabs(a*p[0] - p[1] + b)/sqrt(1 + a*a);
+    }
+
+
+    double hypo = sqrt(h*h + dist*dist);
+    if (a <= hypo && b <= hypo)
+    {
+        return h;
+    }
+    else if (a < b)
+    {
+        return a;
+    }
+    else if (a >= b)
+    {
+        return b;
+    }
+    return numeric_limits<double>::max( );
+}
 
 
 Vector3d OTPMotionPl::getRandomPoints(double id)
@@ -2904,6 +3080,15 @@ Eigen::Vector3d OTPMotionPl::getRobotActualPos()
 
     return pos;
 }
+
+
+void OTPMotionPl::addVectorToRealTreajectory(Eigen::Vector2d vect)
+{
+//    cout << "saving to list : x = " << vect[0] << " y = " << vect[1] << endl;
+    m_2DHumanRealPath.push_back(vect);
+}
+
+
 
 /**
  * show trajectory of both robot and human

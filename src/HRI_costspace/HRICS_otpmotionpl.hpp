@@ -267,7 +267,10 @@ namespace HRICS
         void loadInitConf(bool reloadHuman, bool relaodRobot);
 
         //actual algorithm
-
+        /**
+          * compute a distance in a planar grid between a point (p) and a segment [p1,p2]
+          */
+        double ComputePlanarDistancesLineToSegment(Eigen::Vector2d p, Eigen::Vector2d p1, Eigen::Vector2d p2);
         /**
           * return the randomly choosed x, y and Rz. the random can be biased or not. the choice is done in the GUI
           */
@@ -300,6 +303,26 @@ namespace HRICS
           * setting the inputs !!
           */
         void setInputs( Eigen::Vector3d humanPos, Eigen::Vector3d robotPos,bool isStanding, double mobility);
+
+        /**
+          * adding path to real trajectory
+          */
+        void addVectorToRealTreajectory(Eigen::Vector2d vect);
+
+        /**
+          * set robotPos to actual pos
+          */
+        void setRobotPos();
+
+        /**
+          * clear real trajectory
+          */
+        void clearRealTreajectory(){m_2DHumanRealPath.clear();}
+
+        /**
+          * compare the real trajectory with the predicted trajectory
+          */
+        bool isTheRealNearThePredicted(double threshold);
 
         //other
         /**
@@ -437,6 +460,11 @@ namespace HRICS
           * human path to be draw
           */
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m_2DHumanPath;
+
+        /**
+          * human real path
+          */
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m_2DHumanRealPath;
 
         /**
           * Manipulation planner for robot usage
