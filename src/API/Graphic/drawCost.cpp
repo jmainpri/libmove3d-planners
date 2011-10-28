@@ -643,27 +643,30 @@ void g3d_draw_hrics(int opengl_context)
 
 //        glEnable(GL_BLEND);
         g3d_set_color(Any,colorvector);
+        double fx  = PlanEnv->getDouble(PlanParam::env_futurX);
+        double fy  = PlanEnv->getDouble(PlanParam::env_futurY);
+        double fRz = PlanEnv->getDouble(PlanParam::env_futurRZ);
 
         glLineWidth(3.);
-        g3d_drawOneLine(humanPos[0],    humanPos[1],    0,
-                        humanPos[0],    humanPos[1],    height,
+        g3d_drawOneLine(fx,    fy,    0,
+                        fx,    fy,    height,
                         Black, NULL);
         glLineWidth(1.);
 
 
-        g3d_draw_solid_sphere(humanPos[0],
-                              humanPos[1],
+        g3d_draw_solid_sphere(fx,
+                              fy,
                               height,
                               0.1, 20);
 
 
         p3d_vector3 origin, end;
-        end[0] = humanPos[0] + cos(humanPos[2])* 0.2;
-        end[1] = humanPos[1] + sin(humanPos[2])* 0.2 ;
+        end[0] = fx + cos(fRz)* 0.2;
+        end[1] = fy + sin(fRz)* 0.2 ;
         end[2] = height;
 
-        origin[0] = humanPos[0];
-        origin[1] = humanPos[1];
+        origin[0] = fx;
+        origin[1] = fy;
         origin[2] = height;
 
         g3d_draw_arrow(origin, end, 1, 0, 0);

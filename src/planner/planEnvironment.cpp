@@ -109,13 +109,14 @@ void initPlannerParameters()
         // Object TransfertPoint variable
         myBoolMap.insert( std::make_pair( PlanParam::env_humanGridDraw,          new boolContainer(true )));
         myBoolMap.insert( std::make_pair( PlanParam::env_robotGridDraw,          new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( PlanParam::env_isStanding,             new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::env_isStanding,             new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::env_drawRandomPoint,        new boolContainer(false)));
 
         myBoolMap.insert( std::make_pair( PlanParam::env_drawDistGrid,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::env_drawOnlyBest,           new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( PlanParam::env_normalRand,             new boolContainer(true )));
-        myBoolMap.insert( std::make_pair( PlanParam::env_fusedGridRand,          new boolContainer(false)));
+
+        myBoolMap.insert( std::make_pair( PlanParam::env_normalRand,             new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::env_fusedGridRand,          new boolContainer(true )));
 
         myBoolMap.insert( std::make_pair( PlanParam::env_useSlice,               new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::env_useOrientedSlice,       new boolContainer(false)));
@@ -178,8 +179,12 @@ void initPlannerParameters()
         myDoubleMap.insert( std::make_pair( PlanParam::env_delta,                new doubleContainer(0.01)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_ksi,                  new doubleContainer(0.43)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_rho,                  new doubleContainer(0.57)));
+<<<<<<< HEAD
         myDoubleMap.insert( std::make_pair( PlanParam::env_objectNessecity,      new doubleContainer(0.5)));
 
+=======
+        myDoubleMap.insert( std::make_pair( PlanParam::env_objectNessecity,      new doubleContainer(0.9)));
+>>>>>>> Make MovingHuman independant
         myDoubleMap.insert( std::make_pair( PlanParam::env_sittingOffset,        new doubleContainer(0.2)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_limitRot,             new doubleContainer(M_PI/3)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_Cellsize,             new doubleContainer(0.2)));
