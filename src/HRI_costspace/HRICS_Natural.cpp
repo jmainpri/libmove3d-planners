@@ -1377,7 +1377,6 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
 
 bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRightArm)
 {
-#ifdef HRI_PLANNER
   shared_ptr<Configuration> configStored = m_Robot->getCurrentPos();
   bool IKSucceded;
   HRI_GIK_TASK_TYPE task;
@@ -1422,10 +1421,6 @@ bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRight
   }
   m_Robot->setAndUpdate(*configStored);
   return IKSucceded;
-#else
-  cout << "HRI_GIK : " << "not compiled" << endl;
-  return false;
-#endif
 }
 
 

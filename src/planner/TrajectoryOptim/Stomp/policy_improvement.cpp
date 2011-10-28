@@ -122,7 +122,7 @@ namespace stomp_motion_planner
     for (int d=0; d<num_dimensions_; ++d)
     {
       //cout << "control_costs_[" << d << "] = " << endl << control_costs_[d] << endl;
-      cout << "inv_control_costs_[" << d << "] = " << endl << control_costs_[d].inverse() << endl;
+      //cout << "inv_control_costs_[" << d << "] = " << endl << control_costs_[d].inverse() << endl;
       inv_control_costs_.push_back(control_costs_[d].inverse());
       MultivariateGaussian mvg(VectorXd::Zero(num_parameters_[d]), inv_control_costs_[d]);
       noise_generators_.push_back(mvg);
@@ -158,7 +158,7 @@ namespace stomp_motion_planner
     rollout.total_costs_.clear();
     rollout.cumulative_costs_.clear();
     rollout.probabilities_.clear();
-  
+    
     //cout << "num_time_steps_  = " << num_time_steps_ << endl; 
     
     for (int d=0; d<num_dimensions_; ++d)
@@ -174,6 +174,7 @@ namespace stomp_motion_planner
       rollout.probabilities_.push_back(VectorXd::Zero(num_time_steps_));
     }
     rollout.state_costs_ = VectorXd::Zero(num_time_steps_);
+    rollout.out_of_bounds_ = false;
     
     // duplicate this rollout:
     for (int r=0; r<num_rollouts; ++r)
@@ -243,7 +244,6 @@ namespace stomp_motion_planner
   //----------------------------------------------------------------------
   //----------------------------------------------------------------------
   //----------------------------------------------------------------------
-  
   bool PolicyImprovement::copyParametersFromPolicy()
   {
     if (!policy_->getParameters(parameters_))
@@ -383,7 +383,7 @@ namespace stomp_motion_planner
     return true;
   }
   
-  bool PolicyImprovement::getRollouts(std::vector<std::vector<Eigen::VectorXd> >& rollouts, const std::vector<double>& noise_variance)
+  bool PolicyImprovement::getRollouts(std::vector<std::vector<Eigen::VectorXd> >& generated_rollouts, const std::vector<double>& noise_variance, bool get_reused, std::vector<std::vector<Eigen::VectorXd> >& reused_rollouts)
   {
     if (!generateRollouts(noise_variance))
     {
@@ -391,17 +391,31 @@ namespace stomp_motion_planner
       return false;
     }
     
-    rollouts.clear();
+    generated_rollouts.clear();
     for (int r=0; r<num_rollouts_gen_; ++r)
     {
-      rollouts.push_back(rollouts_[r].parameters_);
+      generated_rollouts.push_back(rollouts_[r].parameters_);
       
-//      for (int d=0; d<num_dimensions_; d++) 
-//      {
-//        cout << "rollouts_[" << d << "].parameters_ = " << rollouts_[r].noise_[d].transpose() << endl;
-//      }
+      //      for (int d=0; d<num_dimensions_; d++) 
+      //      {
+      //        cout << "rollouts_[" << d << "].parameters_ = " << rollouts_[r].noise_[d].transpose() << endl;
+      //      }
     }
     
+    if( get_reused )
+    {
+      reused_rollouts.clear();
+      
+      if (rollouts_reused_)
+      {
+        for (int r=0; r<num_rollouts_reused_; ++r)
+        {
+          reused_rollouts.push_back(rollouts_[num_rollouts_gen_+r].parameters_);
+          cout << "resued rollout (" << r << ")" ;
+          cout << " is out of bounds : " << rollouts_[num_rollouts_gen_+r].out_of_bounds_ << endl;
+        }
+      }
+    }
     computeProjectedNoise();
     return true;
   }
@@ -410,6 +424,15 @@ namespace stomp_motion_planner
   //----------------------------------------------------------------------
   //----------------------------------------------------------------------
   //----------------------------------------------------------------------
+  void PolicyImprovement::setRolloutOutOfBounds(int r)
+  {
+    assert(initialized_);
+    
+    if( r<0 || r>=num_rollouts_gen_ )
+      return;
+    
+    rollouts_[r].out_of_bounds_ = true;
+  }
   
   bool PolicyImprovement::setRolloutCosts(const Eigen::MatrixXd& costs, const double control_cost_weight, std::vector<double>& rollout_costs_total)
   {
@@ -448,9 +471,9 @@ namespace stomp_motion_planner
     {
       for (int d=0; d<num_dimensions_; ++d)
       {
-//        cout << "rollouts_[r].total_costs_[d] = " << endl << rollouts_[r].total_costs_[d] << endl;
-//        cout << "rollouts_[r].state_costs = " << endl << rollouts_[r].state_costs_ << endl;
-//        cout << "rollouts_[r].control_costs_[d] = " << endl << rollouts_[r].control_costs_[d] << endl;        
+        //        cout << "rollouts_[r].total_costs_[d] = " << endl << rollouts_[r].total_costs_[d] << endl;
+        //        cout << "rollouts_[r].state_costs = " << endl << rollouts_[r].state_costs_ << endl;
+        //        cout << "rollouts_[r].control_costs_[d] = " << endl << rollouts_[r].control_costs_[d] << endl;        
         rollouts_[r].total_costs_[d] = rollouts_[r].state_costs_ + rollouts_[r].control_costs_[d];
         rollouts_[r].cumulative_costs_[d] = rollouts_[r].total_costs_[d];
         if (use_cumulative_costs_)
@@ -469,10 +492,10 @@ namespace stomp_motion_planner
   {
     for (int d=0; d<num_dimensions_; ++d)
     {
-//      cout  << "dimension " << d << ", Cumulative costs " << rollouts_[0].cumulative_costs_[d] << endl;
-//              tmp_min_cost_ = rollout_cumulative_costs_[d].colwise().minCoeff().transpose();
-//              tmp_max_cost_ = rollout_cumulative_costs_[d].colwise().maxCoeff().transpose();
-//              tmp_max_minus_min_cost_ = tmp_max_cost_ - tmp_min_cost_;
+      //      cout  << "dimension " << d << ", Cumulative costs " << rollouts_[0].cumulative_costs_[d] << endl;
+      //              tmp_min_cost_ = rollout_cumulative_costs_[d].colwise().minCoeff().transpose();
+      //              tmp_max_cost_ = rollout_cumulative_costs_[d].colwise().maxCoeff().transpose();
+      //              tmp_max_minus_min_cost_ = tmp_max_cost_ - tmp_min_cost_;
       
       for (int t=0; t<num_time_steps_; t++)
       {
@@ -532,7 +555,7 @@ namespace stomp_motion_planner
       parameter_updates_[d].row(0).transpose() = projection_matrix_[d]*parameter_updates_[d].row(0).transpose();
     }
     
-//    cout << "noise_update : " << endl << noise_update << endl;
+    //    cout << "noise_update : " << endl << noise_update << endl;
     return true;
   }
   
@@ -551,10 +574,10 @@ namespace stomp_motion_planner
     //ROS_INFO("Updates took %f seconds", (ros::WallTime::now() - start_time).toSec());
     parameter_updates = parameter_updates_;
     
-//    for (int d=0; d<num_dimensions_; d++) 
-//    {
-//      cout << "parameter_updates[" << d << "] = " << endl << parameter_updates_[d] << endl;
-//    }
+    //    for (int d=0; d<num_dimensions_; d++) 
+    //    {
+    //      cout << "parameter_updates[" << d << "] = " << endl << parameter_updates_[d] << endl;
+    //    }
     
     return true;
   }
@@ -602,7 +625,7 @@ namespace stomp_motion_planner
     {
       // For all dimensions
       const unsigned int N = 10000;
-    
+      
       Eigen::VectorXd sum(VectorXd::Zero(num_parameters_[d]));
       Eigen::MatrixXd samples(N,num_parameters_[d]);
       

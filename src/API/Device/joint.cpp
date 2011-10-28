@@ -115,7 +115,7 @@ void Joint::setJointDof(int ithDoF, double value)
 }
 
 bool Joint::isJointDofUser(int ithDoF) const
-{
+{  
   return p3d_jnt_get_dof_is_user(m_Joint,ithDoF);
 }
 
@@ -146,15 +146,43 @@ void Joint::setConfigFromDofValues(Configuration& q)
 
 Joint* Joint::getPreviousJoint()
 {
-  for (unsigned int i=0; 
-       i<m_Robot->getNumberOfJoints(); i++ ) 
+  Joint* prevJnt=NULL; int found=0;
+  
+  for (unsigned int i=0; i<m_Robot->getNumberOfJoints(); i++ ) 
   {
     Joint* jnt = m_Robot->getJoint(i);
     if (m_Joint->prev_jnt == jnt->m_Joint ) 
     {
-      return jnt;
+      found++;
+      prevJnt = jnt;
     }
   }
   
+  if (found == 1) {
+    return prevJnt;
+  }
+  else if (found > 1 ) {
+    cout << "Found : " << found << " prev. joints!!!" << endl; 
+  }
+
   return NULL;
 }
+
+std::vector<Joint*> Joint::getAllPrevJoints()
+{
+  Joint* jnt( getPreviousJoint() );
+ 
+  std::vector<Joint*> prevJoints;
+  prevJoints.clear();
+
+  cout << "Prev Joints ---------" << endl; 
+  while (jnt != NULL)
+  {
+    cout << "jnt->m_id = " << jnt->m_id << endl;
+    prevJoints.push_back( jnt );
+    jnt = jnt->getPreviousJoint();
+  }
+  
+  return prevJoints;
+}
+

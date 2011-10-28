@@ -9,7 +9,7 @@ HRICS_TwoDGrid.cpp
 HRICS_NaturalGrid.cpp
 HRICS_NaturalCell.cpp
 HRICS_EnvGrid.cpp
-
+HRICS_AgentGrid.cpp
 )
 
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})

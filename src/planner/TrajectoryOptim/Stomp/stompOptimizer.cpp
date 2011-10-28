@@ -613,8 +613,11 @@ namespace stomp_motion_planner
     return stomp_parameters_->getObstacleCostWeight() * collision_cost;
   }
   
-  void StompOptimizer::handleJointLimits()
+  bool StompOptimizer::handleJointLimits()
   {
+    bool succes_joint_limits = true;
+    joint_limits_violation_ = 0;
+    
     for (int joint=0; joint<num_joints_; joint++)
     {
       if (!planning_group_->chomp_joints_[joint].has_joint_limits_)
@@ -627,14 +630,16 @@ namespace stomp_motion_planner
 //      cout << "Joint min : " << joint_min << endl;
       
       int count = 0;
-      
       bool violation = false;
+      int count_violation = false;
+      
       do
       {
         double max_abs_violation =  1e-6;
         double max_violation = 0.0;
         int max_violation_index = 0;
         violation = false;
+        count_violation = false;
         for (int i=free_vars_start_; i<=free_vars_end_; i++)
         {
           double amount = 0.0;
@@ -655,11 +660,25 @@ namespace stomp_motion_planner
             max_violation = amount;
             max_violation_index = i;
             violation = true;
+            
+//            cout << "Violation (" << absolute_amount ;
+//            cout << " , " << max_abs_violation << ")" << endl;
+            
+            if (i != free_vars_start_ && 
+                i != free_vars_end_) {
+              count_violation = true;
+            }
           }
         }
         
         if (violation)
         {
+          // Only count joint limits violation for 
+          // interpolated configurations
+          if( count_violation )
+          {
+            joint_limits_violation_++;
+          }
 //          cout << "Violation of Limits (joint) : " <<  joint << endl;
           int free_var_index = max_violation_index - free_vars_start_;
           double multiplier = max_violation / joint_costs_[joint].getQuadraticCostInverse()(free_var_index,free_var_index);
@@ -668,6 +687,7 @@ namespace stomp_motion_planner
         }
         if (++count > 10)
         {
+          succes_joint_limits = false;
           //cout << "group_trajectory_(i, joint) = " << endl << group_trajectory_.getFreeJointTrajectoryBlock(joint) << endl;
           break;
         }
@@ -679,6 +699,8 @@ namespace stomp_motion_planner
         //cout << "Violation of joint limits (joint) = " << joint << endl;
       }
     }
+    
+    return succes_joint_limits;
   }
   
   void StompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array, Configuration& q )
@@ -731,14 +753,13 @@ namespace stomp_motion_planner
   {
     bool colliding = true;
     
-    int i= segment;
-    int j= coll_point;
-    
     if(collision_space_)
     {
-      planning_group_->collision_points_[j].getTransformedPosition(segment_frames_[i], collision_point_pos_eigen_[i][j]);
-      
+      int i= segment;
+      int j= coll_point;
       double distance;
+      
+      planning_group_->collision_points_[j].getTransformedPosition(segment_frames_[i], collision_point_pos_eigen_[i][j]);
       
       colliding = collision_space_->getCollisionPointPotentialGradient(planning_group_->collision_points_[j],
                                                                        collision_point_pos_eigen_[i][j],
@@ -748,7 +769,7 @@ namespace stomp_motion_planner
     }
     else
     {
-      general_cost_potential_[i] = global_costSpace->cost(q);
+      general_cost_potential_[segment] = global_costSpace->cost(q);
 //      cout << "config cost = " << global_costSpace->cost(q) << endl;
       colliding = false;
     }
@@ -862,6 +883,17 @@ namespace stomp_motion_planner
     //  }
     
     return is_collision_free_;
+  }
+  
+  void StompOptimizer::getTrajectoryCost( std::vector<double>& cost, double step )
+  {
+    cost.clear();
+    cout << "best_group_trajectory_ = " << best_group_trajectory_ << endl;
+    
+//    for( double param=0; param<traj.getRangeMax(); param = param + step)
+//    {
+//      cost.push_back( traj.configAtParam(param)->cost() );
+//    }  
   }
   
   void StompOptimizer::eigenMapTest()
@@ -980,11 +1012,11 @@ namespace stomp_motion_planner
       T.push_back( std::tr1::shared_ptr<Configuration>(new Configuration(q)) );
     }
     
-    if( T.isValid() )
-    {
-      cout << "T is valid" << endl;
-      //PlanEnv->setBool(PlanParam::stopPlanner, true);
-    }
+//    if( T.isValid() )
+//    {
+//      cout << "T is valid" << endl;
+//      //PlanEnv->setBool(PlanParam::stopPlanner, true);
+//    }
     
     if(!ENV.getBool(Env::drawTrajVector))
     {
@@ -1007,7 +1039,6 @@ namespace stomp_motion_planner
     }
     
     robot_model_->setAndUpdate( q );
-    
     g3d_draw_allwin_active();
   }
   
@@ -1075,7 +1106,7 @@ namespace stomp_motion_planner
    }
    */
   
-  bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number)
+  bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number )
   {
     //  ros::WallTime start_time = ros::WallTime::now();
     
@@ -1088,8 +1119,8 @@ namespace stomp_motion_planner
     //cout << "group_trajectory_ = " << endl << group_trajectory_.getTrajectory() << endl;
     
     // respect joint limits:
-    handleJointLimits();
-    
+    succeded_joint_limits_ = handleJointLimits();
+    //cout << "Violation number : " << joint_limits_violation_ << endl;
     // copy to full traj:
     updateFullTrajectory();
     

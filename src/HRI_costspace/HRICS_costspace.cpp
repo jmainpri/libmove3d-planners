@@ -104,7 +104,7 @@ double HRICS_getConfigCost(Configuration& Conf)
           
           //WSPoint = dynamic_cast<Workspace*>(HRICS_MotionPL)->getVisball();
 					
-					double VisibCost = ENV.getDouble(Env::Kvisibility)*(HRICS_MotionPL->getVisibility()->getCost(WSPoint));
+					double VisibCost = ENV.getDouble(Env::Kvisibility)*(HRICS_MotionPL->getVisibility()->getWorkspaceCost(WSPoint));
 					Cost += VisibCost;
 					
 #if DebugCostFunctions
@@ -123,7 +123,6 @@ double HRICS_getConfigCost(Configuration& Conf)
 				   && ( ENV.getDouble(Env::Kreachable) != 0.0 ) )
 				{
 					int object = dynamic_cast<Workspace*>(HRICS_MotionPL)->getIndexObjectDof();
-
 					
 					Eigen::Vector3d WSPoint;
 					
@@ -294,38 +293,41 @@ void HRICS_init(HRI_AGENTS* agents)
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initDistance();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initVisibility();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initNatural();
+  dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initAgentGrids( ENV.getDouble(Env::CellSize) );
+  
   //dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initOtpPlanner();
-    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
-
-    HRICS_MotionPLConfig = new HRICS::OTPMotionPl;
+  dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
+  
+  HRICS_MotionPLConfig = new HRICS::OTPMotionPl;
   
 	HRICS_activeDist = HRICS_MotionPL->getDistance();
-	API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid();
-	api_store_new_grid( API_activeGrid );
+	//API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid();
+	
+  api_store_new_grid( API_activeGrid );
   
 	if( ENV.getBool(Env::HRIAutoLoadGrid) )
 	{
 		if( ENV.getBool(Env::HRIAutoLoadGrid) && getenv("HOME_MOVE3D") )
 		{
-
-		string home(getenv("HOME_MOVE3D"));
-		string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
-
+      string home(getenv("HOME_MOVE3D"));
+      string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
+      
 		  fileName = home + fileName;
-
+      
 		  // Reads the grid from XML and sets it ti the HRICS_MotionPL
 		  HRICS_loadGrid(fileName);
 		  HRICS_activeNatu->setGrid(dynamic_cast<HRICS::NaturalGrid*>(API_activeGrid));
 		  ENV.setBool(Env::drawGrid,false);
 		}
 		else
-		  {
+    {
 			cout << "HRICS Error : Grid not loaded!!!" << endl;
 			cout << "HOME_MOVE3D is : " << getenv("HOME_MOVE3D") << endl;
-		  }
+    }
 	}
 	
-	ENV.setInt(Env::hriCostType,HRICS_Combine);
+  API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getAgentGrids()[0];
+	ENV.setInt(Env::hriCostType,HRICS_Distance);
   
   std::cout << "Initializing the HRI costmap cost function" << std::endl;
   global_costSpace->addCost("costHRI",boost::bind(HRICS_getConfigCost, _1));

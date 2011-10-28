@@ -121,6 +121,6 @@ private:
   std::vector<std::vector<int> > m_DirectionNumberToDirection;
 };
 
-extern CollisionSpace* global_CollisionSpace;
+extern CollisionSpace* global_collisionSpace;
 
 #endif

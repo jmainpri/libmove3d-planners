@@ -80,7 +80,7 @@ Distance::~Distance()
 					 * 7=cone */
 					
 					int shape = _Humans[j]->getRobotStruct()->o[i]->pol[k]->entity_type;
-					
+					 
 					if( shape==0 || shape==1 || shape == 2)
 					{
 						//                        cout << "Shape is oval cylinder" << endl;

@@ -38,7 +38,7 @@
 #define COVARIANT_TRAJECTORY_POLICY_H_
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
-#include "Chomp/chompUtils.hpp"
+#include "planner/TrajectoryOptim/Chomp/chompUtils.hpp"
 #include "policy.hpp"
 
 namespace stomp_motion_planner

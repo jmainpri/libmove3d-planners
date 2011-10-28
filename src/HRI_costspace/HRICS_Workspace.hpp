@@ -19,6 +19,7 @@
 #include "HRICS_Natural.hpp"
 #include "Grid/HRICS_Grid.hpp"
 #include "Grid/HRICS_GridState.hpp"
+#include "Grid/HRICS_AgentGrid.hpp"
 
 /**
  @defgroup HRICS Hri Cost space
@@ -133,6 +134,11 @@ namespace HRICS
 		 */
 		void initGrid();
 		void deleteGrid();
+    
+    void initAgentGrids(double cellsize);
+    void deleteAgentGrids();
+    std::vector<AgentGrid*> getAgentGrids() { return m_HumanGrids; }
+    
 		void initDistance();
 		void initVisibility();
 		void initReachable();
@@ -253,7 +259,7 @@ namespace HRICS
     /**
      * Choses a good transfer point
      */
-        bool chooseBestTransferPoint(Eigen::Vector3d& transfPoint, bool move, unsigned int threshold);
+    bool chooseBestTransferPoint(Eigen::Vector3d& transfPoint, bool move, unsigned int threshold);
 
     /**
      * Compute a transfert point from a loaded grid, without taking into acount a possible colision.
@@ -292,13 +298,14 @@ namespace HRICS
 		
     //! index of the Dof from which the robot holds
     //! the object
-        int mIndexObjectDof;
+    int mIndexObjectDof;
     
     //! OPT (object transfer point)
     Eigen::Vector3d m_OTP;
     
 		//! 3d grid to compute a Workspace path
 		Grid*                   m3DGrid;
+    std::vector<AgentGrid*> m_HumanGrids;
 
 #ifdef HRI_PLANNER
 		HRI_AGENTS*		m_Agents;

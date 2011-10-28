@@ -52,6 +52,7 @@ ChompParameters* m_chompparams=NULL;
 stomp_motion_planner::StompParameters* m_stompparams=NULL;
 
 int m_BaseMLP=0;
+int m_BaseSmMLP=0;
 int m_HeadMLP=0;
 int m_UpBodyMLP=0;
 int m_UpBodySmMLP=0;
@@ -66,11 +67,19 @@ vector<CollisionPoint> m_collision_points;
 
 #ifdef MULTILOCALPATH
 //! set mlp for this robot
-void traj_optim_set_MultiLP()
+bool traj_optim_set_MultiLP()
 {
+  if (!m_robot) {
+    cout << "robot not initialized in file " 
+    << __FILE__ << " ,  " << __func__ << endl;
+    return false;
+  }
+  
   for (int i = 0; m_robot && i < m_robot->getRobotStruct()->mlp->nblpGp; i++) {
     if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "base")) {
       m_BaseMLP = i;
+    } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "baseSm")) {
+      m_BaseSmMLP = i;
     } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "head")) {
       m_HeadMLP = i;
     } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "upBody")) {
@@ -79,17 +88,19 @@ void traj_optim_set_MultiLP()
       m_UpBodySmMLP = i;
     }
   }
+  
+  return true;
 }
 #endif
 
 //! invalidate all constraints
 // --------------------------------------------------------
-void traj_optim_invalidate_cntrts()
+bool traj_optim_invalidate_cntrts()
 {
   if (!m_robot) {
     cout << "robot not initialized in file " 
     << __FILE__ << " ,  " << __func__ << endl;
-    return;
+    return false;
   }
   
   p3d_rob* rob = m_robot->getRobotStruct();
@@ -102,6 +113,128 @@ void traj_optim_invalidate_cntrts()
     ct = rob->cntrt_manager->cntrts[i];
     p3d_desactivateCntrt( rob, ct );
   }
+  
+  return true;
+}
+
+//! Create an initial Move3D trajectory
+//! it generates a straigt line between the two configuration init 
+//! and goal
+// --------------------------------------------------------
+API::Trajectory traj_optim_create_sraight_line_traj()
+{
+  if (!m_robot) {
+    cout << "robot not initialized in file " 
+    << __FILE__ << " ,  " << __func__ << endl;
+  }
+  
+  shared_ptr<Configuration> q_init( m_robot->getInitialPosition() );
+  shared_ptr<Configuration> q_goal( m_robot->getGoTo() );
+  
+  vector< shared_ptr<Configuration> > confs(2);
+  
+  confs[0] = q_init;
+  confs[1] = q_goal;
+  
+  API::Trajectory T( confs );
+  
+  return T;
+}
+
+//****************************************************************
+//* 2D Costmap example
+//****************************************************************
+
+//! Initializes the optimization for a costspace
+// --------------------------------------------------------
+bool traj_optim_costspace_init()
+{
+  if (!m_robot) {
+    cout << "robot not initialized in file " 
+    << __FILE__ << " ,  " << __func__ << endl;
+    return false;
+  }
+  
+  // Set the active joints (links)
+  m_active_joints.clear();
+  m_active_joints.push_back( 1 );
+  
+  // Set the planner joints
+  m_planner_joints.clear();
+  m_planner_joints.push_back( 1 );
+  
+  p3d_set_user_drawnjnt(1);
+  
+  m_coll_space = NULL;
+  
+  bool valid_costspace = global_costSpace->setCost("costMap2D");
+  return valid_costspace;
+}
+
+//! Generate A Soft Motion Trajectory
+// --------------------------------------------------------
+bool traj_optim_generate_softMotion()
+{
+  if ( m_robot == NULL ) 
+    m_robot = global_Project->getActiveScene()->getActiveRobot();
+  
+  if( !traj_optim_set_MultiLP() )
+    return false;
+  
+  API::Trajectory T = m_robot->getCurrentTraj();
+  
+  if( T.isEmpty() )
+  {
+    cout << "The robot has no current traj!!!" << endl;
+    return false;
+  }
+  
+  cout << "m_UpBodyMLP = " << m_UpBodyMLP << endl;
+  
+  //T.cutTrajInSmallLP( 10 );
+  T.replaceP3dTraj();
+  //T.print();
+  
+  MANPIPULATION_TRAJECTORY_CONF_STR confs;
+  SM_TRAJ smTraj;
+  
+  p3d_multiLocalPath_disable_all_groupToPlan(m_robot->getRobotStruct(), FALSE);
+  p3d_multiLocalPath_set_groupToPlan(m_robot->getRobotStruct(), m_UpBodyMLP, 1, FALSE);
+  smTraj.clear();
+  
+//  p3d_traj * trajPt
+//  bool param_write_file
+//  bool approximate
+//  std::vector < int >&lp 
+//  std::vector < std::vector <double > > &positions
+//  SM_TRAJ & smTraj
+  
+  p3d_convert_traj_to_softMotion(m_robot->getRobotStruct()->tcur, 
+                                 true, 
+                                 false, 
+                                 confs.first, confs.second, smTraj);
+  
+  //smTraj.plot();
+  
+  T = m_robot->getCurrentTraj();
+  double delta = T.getRangeMax() / 50 ;
+  
+  p3d_multiLocalPath_disable_all_groupToPlan(m_robot->getRobotStruct(), FALSE);
+  p3d_multiLocalPath_set_groupToPlan(m_robot->getRobotStruct(), m_UpBodyMLP, 1, FALSE);
+  
+  API::Trajectory newT(m_robot);
+  
+  cout << "delta = " << delta << endl;
+  
+//  double param_first = T.
+  
+  for (double t=0; t<=T.getRangeMax(); t += delta ) 
+  {
+    newT.push_back( T.configAtParam(t) );
+  }
+  newT.replaceP3dTraj();
+  
+  return true;
 }
 
 //****************************************************************
@@ -115,8 +248,6 @@ void traj_optim_invalidate_cntrts()
 void traj_optim_shelf_set_localpath_and_cntrts()
 {
   cout << "Set robot, localpath and cntrts" << endl;
-  m_robot = global_Project->getActiveScene()->getActiveRobot();
-
 #ifdef MULTILOCALPATH
   traj_optim_set_MultiLP();
   traj_optim_invalidate_cntrts();
@@ -215,39 +346,8 @@ bool traj_optim_shelf_init_collision_points()
   m_collision_points = sampler->generateRobotCollisionPoints( m_robot, m_active_joints, planner_joints_id );
   
   // Set the collision space as global (drawing)
-  global_CollisionSpace = m_coll_space;
+  global_collisionSpace = m_coll_space;
   return true;
-}
-
-//****************************************************************
-//* 2D Costmap example
-//****************************************************************
-
-//! Initializes the optimization for a costspace
-// --------------------------------------------------------
-bool traj_optim_costspace_init()
-{
-  m_robot = global_Project->getActiveScene()->getActiveRobot();
-  
-  if (m_robot == NULL) 
-  {
-    return false;
-  }
-  
-  // Set the active joints (links)
-  m_active_joints.clear();
-  m_active_joints.push_back( 1 );
-  
-  // Set the planner joints
-  m_planner_joints.clear();
-  m_planner_joints.push_back( 1 );
-  
-  p3d_set_user_drawnjnt(1);
-  
-  m_coll_space = NULL;
-  
-  bool valid_costspace = global_costSpace->setCost("costMap2D");
-  return valid_costspace;
 }
 
 //****************************************************************
@@ -260,13 +360,7 @@ bool traj_optim_costspace_init()
 // --------------------------------------------------------
 void traj_optim_navigation_set_localpath_and_cntrts()
 {
-  cout << "Set robot, localpath and cntrts" << endl;
-  m_robot = global_Project->getActiveScene()->getActiveRobot();
-
-#if defined(MULTILOCALPATH) && defined(LIGHT_PLANNER)
-  traj_optim_set_MultiLP();
-  traj_optim_invalidate_cntrts();
-  
+#ifdef MULTILOCALPATH
   p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
   p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_BaseMLP, 1, false);
   
@@ -276,6 +370,7 @@ void traj_optim_navigation_set_localpath_and_cntrts()
   p3d_set_user_drawnjnt(1);
 }
 
+//! Sets the point on the navigation DoF
 void traj_optim_navigation_generate_points()
 {
   // Set the active joints (links)
@@ -306,29 +401,14 @@ void traj_optim_navigation_generate_points()
     planner_joints_id.push_back( m_planner_joints[i] );
   }
   m_collision_points = sampler->generateRobotCollisionPoints( m_robot, m_active_joints, planner_joints_id );
+  
+//  sampler->generateRobotBoudingCylinder( m_robot, m_robot->getAllJoints() );
+//  m_collision_points = sampler->generateAllRobotCollisionPoints( m_robot );
 }
 
 //****************************************************************
 //* Common functions 
 //****************************************************************
-
-//! Create initial Move3D trajectory
-//! this function creates a straigt trajectory
-// --------------------------------------------------------
-API::Trajectory traj_optim_create_sraight_line_traj()
-{
-  shared_ptr<Configuration> q_init( m_robot->getInitialPosition() );
-  shared_ptr<Configuration> q_goal( m_robot->getGoTo() );
-  
-  vector< shared_ptr<Configuration> > confs(2);
-  
-  confs[0] = q_init;
-  confs[1] = q_goal;
-  
-  API::Trajectory T( confs );
-  
-  return T;
-}
 
 //! Get current robot
 //! Initializes the costspace and multi localpath
@@ -338,48 +418,77 @@ bool traj_optim_init()
   if (m_init == true)
     return true;
   
+  m_robot = global_Project->getActiveScene()->getActiveRobot();
+  
   switch (m_sce) 
   {
     case CostMap:
       
+      cout << "Init CostMap" << endl;
       if( !traj_optim_costspace_init() )
         return false;
       
-      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.2);
+      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.1);
       PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
+      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
+      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.001);
       break;
       
     case Shelf:
       
+      cout << "Init Shelf" << endl;
+      cout << "Set robot, localpath and cntrts with ";
+      cout << m_robot->getName() << endl;
+      
+      traj_optim_set_MultiLP();
+      traj_optim_invalidate_cntrts();
       traj_optim_shelf_set_localpath_and_cntrts();
       
-      if( !global_CollisionSpace ) 
+      if( !global_collisionSpace ) 
       {
         traj_optim_shelf_init_collision_space();
         traj_optim_shelf_init_collision_points();
       }
       else {
-        m_coll_space = global_CollisionSpace;
+        m_coll_space = global_collisionSpace;
       }
       
+//      PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
+//      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,15);
+//      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
+//      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.1);
+      
       PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
-      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,15);
+      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
+      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,30);
+      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.01);
       break;
       
     case Navigation:
       
-      if( !global_CollisionSpace )
+      cout << "Init Navigation" << endl;
+      cout << "Set robot, localpath and cntrts with ";
+      cout << m_robot->getName() << endl;
+      
+      traj_optim_set_MultiLP();
+      traj_optim_invalidate_cntrts();
+      traj_optim_navigation_set_localpath_and_cntrts();
+      
+      if( !global_collisionSpace )
+      {
+        cout << "No Collspace" << endl;
         return false;
+      }
       else
       {
-        m_coll_space = global_CollisionSpace;
-        
-        traj_optim_navigation_set_localpath_and_cntrts();
+        m_coll_space = global_collisionSpace;
         traj_optim_navigation_generate_points();
       }
       
-      PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
-      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,15);
+      PlanEnv->setDouble(PlanParam::trajOptimStdDev,3);
+      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,30);
+      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,20);
+      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.1);
       break;
   }
   
@@ -389,27 +498,25 @@ bool traj_optim_init()
 //! Set the type of scenario
 //! Depending on global variables
 // --------------------------------------------------------
-void traj_set_scenario_type()
-{
-  if( ENV.getBool(Env::isCostSpace) )
+bool traj_optim_set_scenario_type()
+{  
+  if( ENV.getBool(Env::isCostSpace) && 
+     global_costSpace->getSelectedCostName() == "costMap2D")
   {
     m_sce = CostMap;
   }
   else
   {
-    const bool navigation = true;
+    const bool navigation = false;
     
     if( navigation )
-    {
-      m_sce = Shelf;
-    }
-    else
-    {
       m_sce = Navigation;
-    }
+    else
+      m_sce = Shelf;
   }
+  
+  return true;
 }
-
 
 //****************************************************************
 //*   Run Functions 
@@ -421,7 +528,13 @@ bool traj_optim_runChomp()
 {
   if( !m_init )
   {
-    traj_optim_init();
+    traj_optim_set_scenario_type();
+    
+    if(!traj_optim_init()){
+      cout << "Not well initialized" << endl;
+      return false;
+    }
+    
     m_init = true;
   }
   else
@@ -479,7 +592,13 @@ bool traj_optim_runStomp()
 {
   if( !m_init )
   {
-    traj_optim_init();
+    traj_optim_set_scenario_type();
+    
+    if(!traj_optim_init()){
+      cout << "Not well initialized" << endl;
+      return false;
+    }
+    
     m_init = true;
   }
   
@@ -490,17 +609,18 @@ bool traj_optim_runStomp()
   if( PlanEnv->getBool(PlanParam::withCurrentTraj) )
   {
     T = m_robot->getCurrentTraj();
+    PlanEnv->setInt( PlanParam::nb_pointsOnTraj, T.getNbOfViaPoints() );
   }
   else 
   {
     T = traj_optim_create_sraight_line_traj(); 
+    
+    int nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
+    
+    T.cutTrajInSmallLP( nb_points );
+    T.replaceP3dTraj();
+    T.print();
   }
-  
-  int nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
-  
-  T.cutTrajInSmallLP( nb_points );
-  T.replaceP3dTraj();
-  T.print();
   
   g3d_draw_allwin_active();
   

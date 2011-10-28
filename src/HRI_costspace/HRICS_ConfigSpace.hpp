@@ -43,7 +43,7 @@ namespace HRICS
         double getDistanceCost();
         double getVisibilityCost(const Eigen::Vector3d& WSPoint) 
 		{
-			return m_VisibilitySpace->getCost(WSPoint);
+			return m_VisibilitySpace->getWorkspaceCost(WSPoint);
 		}
 
         void computeVisibilityGrid();

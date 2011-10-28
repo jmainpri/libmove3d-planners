@@ -118,6 +118,8 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 	m3DPath.clear();
 	
   m_OTP = Vector3d::Zero();
+  
+  mIndexObjectDof = 0;
 }
 
 Workspace::Workspace(Robot* rob, Graph* graph) :
@@ -137,7 +139,8 @@ HumanAwareMotionPlanner(rob, graph) , mPathExist(false)
 	cout << "Human is " << mHumans[0]->getName() << endl;
 	
 	m3DPath.clear();
-	
+  
+  mIndexObjectDof = 0;
 }
 
 Workspace::~Workspace()
@@ -174,8 +177,38 @@ void Workspace::initGrid()
 	//    std::string str = "g3d_draw_allwin_active";
 	//    write(qt_fl_pipe[1],str.c_str(),str.length()+1);
   // #endif
+}
 
+void Workspace::initAgentGrids(double cellsize)
+{
+  vector<double>  envsize(6);
+//	envsize[0] = XYZ_ENV->box.x1; envsize[1] = XYZ_ENV->box.x2;
+//	envsize[2] = XYZ_ENV->box.y1; envsize[3] = XYZ_ENV->box.y2;
+//	envsize[4] = XYZ_ENV->box.z1; envsize[5] = XYZ_ENV->box.z2;
 
+  envsize[0] = -5; envsize[1] = 5;
+	envsize[2] = -5; envsize[3] = 5;
+	envsize[4] =  0; envsize[5] = 3;
+
+  m_HumanGrids.clear();
+  
+  for (unsigned int i=0; i<mHumans.size(); i++) 
+  {
+    m_HumanGrids.push_back( new AgentGrid( cellsize, envsize,
+                                          mHumans[i],
+                                          m_DistanceSpace,
+                                          m_VisibilitySpace,
+                                          m_ReachableSpace) );
+    
+    m_HumanGrids[i]->computeAllCellCost();
+  }
+  
+  API_activeGrid = m_HumanGrids[0];
+}
+
+void Workspace::deleteAgentGrids()
+{
+  
 }
 
 void Workspace::initDistance()
@@ -1083,7 +1116,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 
         double CostDist = m_DistanceSpace->getWorkspaceCost(point);
         double CostReach = ReachablePoints[i].first;
-        double CostVisib = m_VisibilitySpace->getCost(point);
+        double CostVisib = m_VisibilitySpace->getWorkspaceCost(point);
 
         Vector3d localCosts;
         localCosts[0] = CostDist;
@@ -1321,7 +1354,7 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 
                 double CostDist = m_DistanceSpace->getWorkspaceCost(point);
                 double CostReach = ReachablePoints[i].first;
-                double CostVisib = m_VisibilitySpace->getCost(point);
+                double CostVisib = m_VisibilitySpace->getWorkspaceCost(point);
 
                 Vector3d localCosts;
                 localCosts[0] = CostDist;
@@ -1380,7 +1413,7 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 
         double CostDist = m_DistanceSpace->getWorkspaceCost(point);
         double CostReach = ReachablePoints[i].first;
-        double CostVisib = m_VisibilitySpace->getCost(point);
+        double CostVisib = m_VisibilitySpace->getWorkspaceCost(point);
 
         Vector3d localCosts;
         localCosts[0] = CostDist;
@@ -1794,5 +1827,9 @@ void Workspace::ChangeRobotPos(double value)
     _Robot->setAndUpdate( *m_q );
 
     computePR2GIK(true);
-
 }
+
+//void Workspace::getCostForPr2FromAgentGrids()
+//{
+//  
+//}

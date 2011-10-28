@@ -141,7 +141,6 @@ public:
 	 */
 	std::tr1::shared_ptr<Configuration> shootFreeFlyer(double* box);
 	
-	
 	/**
 	 * place le Robot dans une Configuration
 	 * @param q la Configuration dans laquelle le Robot sera placé

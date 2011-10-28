@@ -104,7 +104,7 @@ double Cell::getCost()
 //				break;
 			case HRICS_Combine :
 				_Cost = ENV.getDouble(Env::Kdistance)*(HRICS_MotionPL->getDistance()->computeBoundingBalls(cellCenter,robot,human));
-				_Cost += ENV.getDouble(Env::Kvisibility)*(HRICS_MotionPL->getVisibility()->getCost(cellCenter));
+				_Cost += ENV.getDouble(Env::Kvisibility)*(HRICS_MotionPL->getVisibility()->getWorkspaceCost(cellCenter));
 				break;
 			default:
 				cout << "Type of Cost undefine in Grid "  << endl;
@@ -136,7 +136,7 @@ double Cell::getCost()
 //			cout << "Cost = " << _Cost << endl;
             break;
         case HRICS_Visibility :
-			_Cost = HRICS_MotionPL->getVisibility()->getCost(cellCenter);
+			_Cost = HRICS_MotionPL->getVisibility()->getWorkspaceCost(cellCenter);
             break;
 		case 2 :
 			break;
@@ -144,7 +144,7 @@ double Cell::getCost()
 			break;
         case HRICS_Combine :
             _Cost = ENV.getDouble(Env::Kdistance)*(HRICS_MotionPL->getDistance()->getDistToZones()[0]);
-            _Cost += ENV.getDouble(Env::Kvisibility)*(HRICS_MotionPL->getVisibility()->getCost(cellCenter));
+            _Cost += ENV.getDouble(Env::Kvisibility)*(HRICS_MotionPL->getVisibility()->getWorkspaceCost(cellCenter));
             break;
         default:
             cout << "Type of Cost undefine in Grid "  << endl;

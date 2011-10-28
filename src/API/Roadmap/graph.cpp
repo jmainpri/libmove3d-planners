@@ -19,13 +19,14 @@
 #include "P3d-pkg.h"
 #include "Util-pkg.h"
 #include "Planner-pkg.h"
-#include "move3d-headless.h"
+#include "Graphic-pkg.h"
+#include "GroundHeight-pkg.h"
 
+#include "move3d-headless.h"
 
 #ifdef LIGHT_PLANNER
 #include "LightPlanner-pkg.h"
 #endif
-
 
 #undef None
 #undef Upper
@@ -35,6 +36,9 @@
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/strong_components.hpp>
 #include <boost/graph/graph_utility.hpp>
+#include <boost/foreach.hpp>
+
+extern void* GroundCostObj;
 
 Graph* API_activeGraph = NULL;
 
@@ -62,6 +66,7 @@ Graph::Graph(Robot* R, p3d_graph* G)
 	m_Graph->rob->GRAPH = m_Graph;
 	m_Traj = NULL;
 	m_graphChanged = true;
+  m_initBGL = false;
 	this->init();
 	this->initBGL();
 }
@@ -90,6 +95,8 @@ Graph::Graph(Robot* R)
 #endif
 	m_Traj = NULL;
 	m_graphChanged = true;
+  m_initBGL = false;
+  
 	this->init();
 	this->initBGL();
 }
@@ -109,6 +116,8 @@ Graph::Graph(p3d_graph* G)
 	m_Robot = global_Project->getActiveScene()->getRobotByName(G->rob->name);
 	m_Traj = NULL;
 	m_graphChanged = true;
+  m_initBGL = false;
+  
 	this->init();
 	this->initBGL();
 }
@@ -129,7 +138,8 @@ Graph::Graph(const Graph& G)
 	m_Goal =  searchConf(*q_goal);
 	
 	m_graphChanged = true;
-	
+	m_initBGL = false;
+  
 	this->init();
 	this->initBGL();
 }
@@ -204,6 +214,8 @@ void Graph::initBGL()
 			EdgeData[e] = m_Edges[i];
 			m_Edges[i]->setDescriptor(e);
 		}
+    
+    m_initBGL = true;
 	}
 	catch (string str) 
 	{
@@ -2831,4 +2843,50 @@ void Graph::initMotionPlanning(Node* start,Node* goal)
 		// WARNING : currently Ng is not considered !!!
 	}
 #endif
+}
+
+void Graph::drawEdge(BGL_Vertex v1, BGL_Vertex v2)
+{
+  int color = 0;
+  
+  p3d_jnt* 	drawnjnt;
+	int indexjnt = p3d_get_user_drawnjnt();
+  if (indexjnt != -1 && indexjnt <= m_Robot->getRobotStruct()->njoints ) 
+  {
+    drawnjnt = m_Robot->getRobotStruct()->joints[indexjnt];
+  }
+  
+  BGL_VertexDataMapT NodeData = boost::get( NodeData_t() , m_BoostGraph );
+  
+  m_Robot->setAndUpdate(*NodeData[v1]->getConfiguration());
+  p3d_vector3 source_pos;
+  p3d_jnt_get_cur_vect_point(drawnjnt, source_pos);
+  
+  m_Robot->setAndUpdate(*NodeData[v2]->getConfiguration());
+  p3d_vector3 target_pos;
+  p3d_jnt_get_cur_vect_point(drawnjnt, target_pos);
+  
+  if(GroundCostObj)
+  {
+    double Cost1(0);
+    GHintersectionVerticalLineWithGround(GroundCostObj, source_pos[0], source_pos[1], &Cost1);
+    double Cost2(0);
+    GHintersectionVerticalLineWithGround(GroundCostObj, target_pos[0], target_pos[1], &Cost2);
+    g3d_drawOneLine(source_pos[0], source_pos[1], Cost1 + 0.5, target_pos[0], target_pos[1], Cost2 + 0.5, color, NULL);
+  }
+  else
+  {
+    g3d_drawOneLine(source_pos[0], source_pos[1], source_pos[2],
+                    target_pos[0], target_pos[1], target_pos[2], color, NULL);
+  }
+}
+
+void Graph::draw()
+{
+  BOOST_FOREACH(BGL_Edge e, boost::edges(m_BoostGraph))
+  {
+    BGL_Vertex v1(boost::source(e, m_BoostGraph));
+    BGL_Vertex v2(boost::target(e, m_BoostGraph));
+    drawEdge(v1, v2);
+  }
 }

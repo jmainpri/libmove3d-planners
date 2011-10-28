@@ -13,5 +13,6 @@ bool traj_optim_runChomp();
 bool traj_optim_runStomp();
 
 void traj_optim_draw_collision_points();
+bool traj_optim_generate_softMotion();
 
 #endif

@@ -151,16 +151,16 @@ namespace stomp_motion_planner
       }
     }
     
-    cout << "1 : " << endl;
-    printParameters();
+    //cout << "1 : " << endl;
+    //printParameters();
     computeLinearControlCosts();
     
-    cout << "2 : " << endl;
-    printParameters();
+    //cout << "2 : " << endl;
+    //printParameters();
     computeMinControlCostParameters();
     
-    cout << "3 : " << endl;
-    printParameters();
+    //cout << "3 : " << endl;
+    //printParameters();
     return true;
   }
   
@@ -280,7 +280,7 @@ namespace stomp_motion_planner
       control_costs_.push_back(cost_free);
       inv_control_costs_.push_back(cost_free.inverse());
       
-      cout << "control_costs["<< d <<"]  = " << endl << control_costs_[d] << endl;
+      //cout << "control_costs["<< d <<"]  = " << endl << control_costs_[d] << endl;
     }
     return true;
   }

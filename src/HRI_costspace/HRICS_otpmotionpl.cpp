@@ -2022,7 +2022,7 @@ void OTPMotionPl::saveAllCostsToFile()
     string home = getenv("HOME_MOVE3D") + fileName;
     myfile.open(home.c_str());
 
-    for (int i = 0; i < maxSize; i++)
+    for (int i = 0; i < int(maxSize); i++)
     {
         for (unsigned int costVectorId=0; costVectorId < m_multipliComputeCostVector.size(); costVectorId++)
         {

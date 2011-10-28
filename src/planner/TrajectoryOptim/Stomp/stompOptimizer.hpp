@@ -39,11 +39,11 @@
 
 #include <boost/shared_ptr.hpp>
 #include "stompParameters.hpp"
-#include "Chomp/chompPlanningGroup.hpp"
-#include "Chomp/chompTrajectory.hpp"
-#include "Chomp/chompCost.hpp"
-#include "Greedy/CollisionSpace.hpp"
-#include "Chomp/chompMultivariateGaussian.hpp"
+#include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
+#include "planner/TrajectoryOptim/Chomp/chompTrajectory.hpp"
+#include "planner/TrajectoryOptim/Chomp/chompCost.hpp"
+#include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
+#include "planner/Greedy/CollisionSpace.hpp"
 #include "task.hpp"
 #include "covariant_trajectory_policy.hpp"
 #include "policy_improvement_loop.hpp"
@@ -83,7 +83,11 @@ public:
   void runDeformation( int nbIteration , int idRun=0 );
   void setSharedPtr(boost::shared_ptr<StompOptimizer>& ptr);
   void resetSharedPtr();
+  
   void testMultiVariateGaussianSampler();
+  void getTrajectoryCost( std::vector<double>& cost, double step );
+  int getJointLimitViolations() { return joint_limits_violation_; }
+  bool getJointLimitViolationSuccess() { return succeded_joint_limits_; }
 
   // stuff derived from Task:
   /**
@@ -144,8 +148,11 @@ private:
   int free_vars_end_;
   int iteration_;
   int collision_free_iteration_;
+  
+  bool succeded_joint_limits_;
+  int joint_limits_violation_;
+  
   ChompTrajectory *full_trajectory_;
-//  const StompRobotModel *robot_model_;
   const ChompPlanningGroup *planning_group_;
   const StompParameters *stomp_parameters_;
   const CollisionSpace *collision_space_;
@@ -244,7 +251,7 @@ private:
   void updateFullTrajectory();
   void debugCost();
   void eigenMapTest();
-  void handleJointLimits();
+  bool handleJointLimits();
   void animatePath();
   void animateEndeffector();
   void visualizeState(int index);

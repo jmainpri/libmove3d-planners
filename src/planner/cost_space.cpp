@@ -22,6 +22,10 @@ extern void* GroundCostObj;
 using namespace std;
 using namespace tr1;
 
+//using std::string;
+//------------------------------------------------------------------------------
+CostSpace* global_costSpace(NULL);
+
 void GlobalCostSpace::initialize()
 {
 	// initialize the cost function object.
@@ -44,10 +48,6 @@ void GlobalCostSpace::initialize()
   
   //ext_compute_localpath_kin_cost = computeLocalpathKinematicCost;
 }
-
-//using std::string;
-//------------------------------------------------------------------------------
-CostSpace* global_costSpace(NULL);
 
 //------------------------------------------------------------------------------
 CostSpace::CostSpace() : mSelectedCostName("No Cost"), m_deltaMethod(cs_integral) 

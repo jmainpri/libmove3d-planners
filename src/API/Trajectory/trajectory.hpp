@@ -105,6 +105,7 @@ namespace API
 		uint					getIdOfPathAt(double param);
 		LocalPath* 		getLocalPathPtrAt(unsigned int id) const;
 		int						getNbOfPaths() const;
+    int						getNbOfViaPoints() const;
 		
 		bool isValid();
 		

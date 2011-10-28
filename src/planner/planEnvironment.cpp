@@ -12,7 +12,6 @@
 #include <iostream>
 //#include "../p3d/env.hpp"
 
-
 //**********************************************************
 //**********************************************************
 
@@ -44,10 +43,28 @@ PlanParam::doubleParameter,
 PlanParam::stringParameter,
 PlanParam::vectorParameter>* PlanEnv = NULL;
 
+#ifdef QT_LIBRARY
+PlanParam* EnumPlannerParameterObject = NULL;
+
+PlanParam::PlanParam()
+{
+  
+}
+
+PlanParam::~PlanParam()
+{
+  
+}
+#endif
+
 // @brief Function that inizializes the 
 // Parameter container
 void initPlannerParameters()
 {
+#ifdef QT_LIBRARY
+  EnumPlannerParameterObject = new PlanParam;
+#endif
+  
 	// Create 5 maps for all types and fill the 5 maps
 	// ------------------------------------------------------------------
   std::map<PlanParam::boolParameter,      boolContainer*>			myBoolMap;
@@ -137,13 +154,13 @@ void initPlannerParameters()
   myDoubleMap.insert( std::make_pair( PlanParam::trajOptimObstacWeight,   new doubleContainer(1.0)));
   
 	// Object TransfertPoint variable
-  myDoubleMap.insert( std::make_pair( PlanParam::env_randomXMinLimit,	new doubleContainer(-3.0)));
+  myDoubleMap.insert( std::make_pair( PlanParam::env_randomXMinLimit,	    new doubleContainer(-3.0)));
   myDoubleMap.insert( std::make_pair( PlanParam::env_randomXMaxLimit,	new doubleContainer(3.0)));
   myDoubleMap.insert( std::make_pair( PlanParam::env_randomYMinLimit,	new doubleContainer(-3.0)));
   myDoubleMap.insert( std::make_pair( PlanParam::env_randomYMaxLimit,	new doubleContainer(3.0)));
-  myDoubleMap.insert( std::make_pair( PlanParam::env_robotSpeed,		new doubleContainer(1.0)));
-  myDoubleMap.insert( std::make_pair( PlanParam::env_humanSpeed,		new doubleContainer(1.0)));
-  myDoubleMap.insert( std::make_pair( PlanParam::env_timeStamp,		new doubleContainer(0.35)));
+  myDoubleMap.insert( std::make_pair( PlanParam::env_robotSpeed,		      new doubleContainer(1.0)));
+  myDoubleMap.insert( std::make_pair( PlanParam::env_humanSpeed,		      new doubleContainer(1.0)));
+  myDoubleMap.insert( std::make_pair( PlanParam::env_timeStamp,		        new doubleContainer(0.35)));
   myDoubleMap.insert( std::make_pair( PlanParam::env_psi,                 new doubleContainer(0.99)));
   myDoubleMap.insert( std::make_pair( PlanParam::env_delta,               new doubleContainer(0.01)));
   myDoubleMap.insert( std::make_pair( PlanParam::env_ksi,                 new doubleContainer(0.43)));
@@ -199,5 +216,4 @@ void initPlannerParameters()
   // Drawing environment
   // -------------------------------------------------------------------
   ENV.setBool(Env::drawMultiColorLocalpath,true);
-  
 }

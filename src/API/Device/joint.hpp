@@ -109,9 +109,14 @@ public:
 	void            setConfigFromDofValues(Configuration& q);
   
   /**
-   * Get Previous joints
+   * Returns the previous joint
    */
-  Joint* getPreviousJoint();
+  Joint*          getPreviousJoint();
+  
+  /**
+   * Returns the array of previous joints
+   */
+  std::vector<Joint*> getAllPrevJoints();
 
 	
 private:

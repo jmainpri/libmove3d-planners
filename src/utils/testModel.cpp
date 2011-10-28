@@ -40,7 +40,7 @@ int TestModel::nbOfVoxelCCPerSeconds()
     for (int i = 0;; i++)
     {
 			robotPt->setAndUpdate(*robotPt->shoot());
-       // global_CollisionSpace->updateRobotOccupationCells(robotPt);
+       // global_collisionSpace->updateRobotOccupationCells(robotPt);
 			cout << "Warning not imlemented" << endl;
 
         ChronoTimes(&tu, &ts);

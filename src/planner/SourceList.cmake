@@ -13,9 +13,9 @@ replanning.cpp
 )
 ENDIF()
 
-#BM3D_QT_GENERATE_MOC(
-#planEnvironment.hpp
-#)
+BM3D_QT_GENERATE_MOC(
+planEnvironment.hpp
+)
 
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Diffusion/SourceList.cmake)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/PRM/SourceList.cmake)

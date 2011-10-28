@@ -510,6 +510,14 @@ int Trajectory::getNbOfPaths() const
 	return m_Courbe.size();
 }
 
+int Trajectory::getNbOfViaPoints() const
+{
+  if ( m_Courbe.empty() )
+    return 0;
+
+	return (m_Courbe.size()+1);
+}
+
 double Trajectory::computeSubPortionRange(vector<LocalPath*> portion)
 {
 	

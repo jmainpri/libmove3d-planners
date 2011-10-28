@@ -146,7 +146,7 @@ const std::vector<Joint*>& Robot::getAllJoints()
 vector<Vector3d> Robot::getObjectBox()
 {
 //	if (m_ObjectBox.empty()) {
-//		cout << "Warning : " << __func__ << " : no Object Box" << endl;
+//    cout << "Warning : " << __func__ << " : no Object Box" << endl;
 //	}
 	
 	vector<Vector3d> box(8);
@@ -167,21 +167,21 @@ vector<Vector3d> Robot::getObjectBox()
 	box[3][1] = 1;		box[7][1] = 1;
 	box[3][2] = -1;		box[7][2] = -1;
 	
-/*	vector<Vector3d> box;
-	box.clear();
-	
-	Transform3d T = getJoint(1)->getMatrixPos();
-	
-	for (unsigned int i=0; i<8; i++) 
-	{
-		box.push_back(m_ObjectBox[i]);
-	}*/
+  /*	vector<Vector3d> box;
+   box.clear();
+   
+   Transform3d T = getJoint(1)->getMatrixPos();
+   
+   for (unsigned int i=0; i<8; i++) 
+   {
+   box.push_back(m_ObjectBox[i]);
+   }*/
 	
 	Matrix3d A = Matrix3d::Zero();
 	
-    A(0,0) = m_ObjectBoxDimentions[0]/2;
-    A(1,1) = m_ObjectBoxDimentions[1]/2;
-    A(2,2) = m_ObjectBoxDimentions[2]/2;
+  A(0,0) = m_ObjectBoxDimentions[0]/2;
+  A(1,1) = m_ObjectBoxDimentions[1]/2;
+  A(2,2) = m_ObjectBoxDimentions[2]/2;
 	
 	for (unsigned int i=0; i<8; i++) 
 	{
@@ -436,8 +436,11 @@ shared_ptr<Configuration> Robot::shootDir(bool samplePassive)
  */
 int Robot::setAndUpdate(Configuration& q)
 {
-    p3d_set_robot_config(_Robot, q.getConfigStruct());
-    return p3d_update_this_robot_pos(_Robot);
+  if(q.getConfigStruct() == NULL)
+    return false;
+    
+  p3d_set_robot_config(_Robot, q.getConfigStruct());
+  return p3d_update_this_robot_pos(_Robot);
 }
 
 bool Robot::setAndUpdateMultiSol(Configuration& q)

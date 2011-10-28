@@ -161,7 +161,7 @@ bool replan_plan_initial_path()
     case LINEAR : {
       cout << "armPlanTask :: Linear " << endl;
       gpGrasp grasp;
-			status = m_manipPlanner->armPlanTask(type, 0, qInit, qGoal, objStart, objGoto, /* m_OBJECT_NAME.c_str() */ "", "", (char*)"", grasp, trajs);
+			status = m_manipPlanner->armPlanTask(type, 0, qInit, qGoal, objStart, objGoto, /* m_OBJECT_NAME.c_str() */ "", "", "", grasp, trajs);
 			
 			if(status == MANIPULATION_TASK_OK ) 
       {
@@ -179,7 +179,7 @@ bool replan_plan_initial_path()
 		case MULTI_LOCALPATH : {
       cout << "armPlanTask :: MultiLocalPath " << endl;
       gpGrasp grasp;
-			status = m_manipPlanner->armPlanTask(type, 0, qInit, qGoal, objStart, objGoto, /*m_OBJECT_NAME.c_str()*/ "", "", (char*)"", grasp, confs, smTrajs);
+			status = m_manipPlanner->armPlanTask(type, 0, qInit, qGoal, objStart, objGoto, /*m_OBJECT_NAME.c_str()*/ "", "", "", grasp, confs, smTrajs);
 			break;
     }
 			

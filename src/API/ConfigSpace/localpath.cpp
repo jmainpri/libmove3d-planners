@@ -360,30 +360,6 @@ shared_ptr<Configuration> LocalPath::configAtParam(double param)
 		return _Begin;
 	}
 
-	/*switch (getType())
-	 {
-	 case HILFLAT://hilare
-	 q = p3d_hilflat_config_at_param(_Robot->getRobotStruct(),
-	 getLocalpathStruct(), param);
-	 break;
-	 case LINEAR://linear
-	 q = p3d_lin_config_at_distance(_Robot->getRobotStruct(),
-	 getLocalpathStruct(), param);
-	 break;
-	 case MANHATTAN://manhatan
-	 q = p3d_manh_config_at_distance(_Robot->getRobotStruct(),
-	 getLocalpathStruct(), param);
-	 break;
-	 case REEDS_SHEPP://R&S
-	 q = p3d_rs_config_at_param(_Robot->getRobotStruct(),
-	 getLocalpathStruct(), param);
-	 break;
-	 case TRAILER:
-	 q = p3d_trailer_config_at_param(_Robot->getRobotStruct(),
-	 getLocalpathStruct(), param);
-	 break;
-	 }*/
-
 	q = getLocalpathStruct()->config_at_param(_Robot->getRobotStruct(),
 			getLocalpathStruct(), param);
 

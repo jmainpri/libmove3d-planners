@@ -256,18 +256,6 @@ double BodySurfaceSampler::generateRobotBoudingCylinder(Robot* robot,const vecto
   return maxRadius;
 }
 
-void BodySurfaceSampler::generateAllRobotsBoundingCylinders()
-{
-  Scene* sc = global_Project->getActiveScene();
-  Robot* rob;
-  
-	for(unsigned int i=0;i<sc->getNumberOfRobots(); i++)
-	{
-    rob = sc->getRobot(i);
- 		generateRobotBoudingCylinder( rob , rob->getAllJoints() );
-	}
-}
-
 //! Generates the collision point for a given link
 //! Stores the segment number (the id of the joint for planning)
 //! Also store the parent joints of the link
@@ -286,9 +274,6 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* j
   double radius = bc->getRadius();
   double length = bc->getLength();
   
-  //  Eigen::Vector3d p(0,0,0);
-  //  Eigen::Vector3d p2;
-  
   Eigen::Vector3d p1 = bc->getPoint1();
   Eigen::Vector3d p2 = bc->getPoint2();
   
@@ -298,28 +283,34 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* j
   int num_points = ceil(length/spacing)+1;
   spacing = length/(num_points-1.0);
   
-  //  cout << "spacing = " << spacing << endl;
-  //  cout << "num_points = " << num_points << endl;
-  
   for (int i=0; i<num_points; ++i) 
   {
-    //    p(2) = -length/2.0 + i*spacing;
-    //    p2 = f*p;
-    
     Eigen::Vector3d p = p1 + ((double)i/(double)num_points)*(p2-p1);
-    
-    //    cout << "Center(" << i << ") :  " << endl << p << endl;
-    
     collision_points.push_back(CollisionPoint(parent_joints, radius, m_collision_clearance_default, segment_number, p));
   }
   
   return collision_points;
 }
 
+//! Computes collision points for all bodies
+void BodySurfaceSampler::generateAllRobotsBoundingCylinders()
+{
+  Scene* sc = global_Project->getActiveScene();
+  Robot* rob;
+  
+	for(unsigned int i=0;i<sc->getNumberOfRobots(); i++)
+	{
+    rob = sc->getRobot(i);
+ 		generateRobotBoudingCylinder( rob , rob->getAllJoints() );
+	}
+}
+
 //! Computes the parent joints, the segment of the joint
 //! and generate the collision point for the joint
 //! supposing that the bounding cylinder has been computed before
-std::vector<CollisionPoint> BodySurfaceSampler::generateJointCollisionPoints(Robot* robot, int id, const std::vector<int>& active_joints, const std::vector<int>& planner_joints)
+std::vector<CollisionPoint> BodySurfaceSampler::generateJointCollisionPoints(Robot* robot, int id, 
+                                                                             const std::vector<int>& active_joints, 
+                                                                             const std::vector<int>& planner_joints)
 {
   const int joint = active_joints[id];
   Joint* jnt = robot->getJoint( joint );
@@ -357,7 +348,37 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateJointCollisionPoints(Rob
 
 //! Generate the collision points for links associated to the active joints
 //! It computes the parent joints of the joint
-std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Robot* robot, const std::vector<int>& active_joints, const std::vector<int>& planner_joints )
+std::vector<CollisionPoint> BodySurfaceSampler::generateAllRobotCollisionPoints(Robot* robot)
+{
+  std::vector<CollisionPoint> all_points;
+  all_points.clear();
+  
+  std::vector<int> active_joints, planner_joints;
+  
+  for (int i=0; i<int(robot->getNumberOfJoints()); i++) 
+  {
+    active_joints.push_back( i );
+    planner_joints.push_back( i );
+  }
+  
+  for (int id=0; id<int(robot->getNumberOfJoints()); id++) 
+  {
+    std::vector<CollisionPoint> points = generateJointCollisionPoints( robot, id, active_joints, planner_joints );
+    
+    for (int i=0; i<int(points.size()); i++) 
+    {
+      all_points.push_back( points[i] );
+    }
+  }
+  
+  return all_points;
+}
+
+//! Generate the collision points for links associated to the active joints
+//! It computes the parent joints of the joint
+std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Robot* robot, 
+                                                                             const std::vector<int>& active_joints, 
+                                                                             const std::vector<int>& planner_joints )
 {
   std::vector<CollisionPoint> all_points;
   all_points.clear();
@@ -387,6 +408,9 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Rob
   return all_points;
 }
 
+//! Draw the sampled points
+//! Sampled points are points on the surface of static obstacles
+//! collision points are computed by bounding cylinders
 void BodySurfaceSampler::draw()
 {
 	for(int i = 0; i < XYZ_ENV->no; i++)

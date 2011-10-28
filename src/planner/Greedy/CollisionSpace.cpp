@@ -18,7 +18,7 @@
 
 #include <Eigen/Core>
 
-CollisionSpace* global_CollisionSpace = NULL;
+CollisionSpace* global_collisionSpace = NULL;
 
 using namespace std;
 using namespace tr1;

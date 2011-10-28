@@ -22,12 +22,13 @@ namespace HRICS
 		 * Sets the Pointer to Human
 		 */
 		Visibility(Robot* R);
-		
-		/**
+    
+    
+    /**
 		 * Gets the Visibiliy cost (distance to gaze direction) of a 
 		 * Workspace point
 		 */
-		double getCost(const Eigen::Vector3d& WSPoint);
+    double getWorkspaceCost(const Eigen::Vector3d& WSPoint);
 		
 		/**
 		 * Copy paste from Akins

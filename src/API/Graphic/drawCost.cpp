@@ -270,8 +270,7 @@ void g3d_draw_grids()
   //-------------------------------------------------------------
 	if( ENV.getBool(Env::drawGrid) && API_activeGrid )
 	{
-    //cout << "API_activeGrid->draw()" << endl;
-    
+    cout << "API_activeGrid->draw()" << endl;
 		API_activeGrid->draw();
 		
 		if (ENV.getBool(Env::drawBox)) 
@@ -287,17 +286,16 @@ void g3d_draw_grids()
 		}
 	}
 	//-------------------------------------------------------------
-	if (ENV.getBool(Env::drawBox)) 
-	{
-		CXX_drawBox = API_activeRobot->getObjectBox();
-		
-		if (!CXX_drawBox.empty()) 
-		{
-			g3d_draw_eigen_box(	CXX_drawBox[0], CXX_drawBox[1], CXX_drawBox[2], CXX_drawBox[3],
-                         CXX_drawBox[4], CXX_drawBox[5], CXX_drawBox[6], CXX_drawBox[7],
-                         Red, 0, 3);
-		}
-	}
+//	if (ENV.getBool(Env::drawBox)) 
+//	{
+//		CXX_drawBox = API_activeRobot->getObjectBox();
+//		
+//		if (!CXX_drawBox.empty()) 
+//		{
+//			g3d_draw_eigen_box(	CXX_drawBox[0], CXX_drawBox[1], CXX_drawBox[2],               CXX_drawBox[3],CXX_drawBox[4], CXX_drawBox[5], CXX_drawBox[6], CXX_drawBox[7],
+//                         Red, 0, 3);
+//		}
+//	}
 	//-------------------------------------------------------------
 	if( HRICS_activeNatu )
 	{
@@ -306,35 +304,35 @@ void g3d_draw_grids()
 
 #endif
   
-  if( global_CollisionSpace && ENV.getBool(Env::drawVectorField) ) 
+  if( global_collisionSpace && ENV.getBool(Env::drawVectorField) ) 
   {
-     global_CollisionSpace->drawGradient();  
+     global_collisionSpace->drawGradient();  
   }
-  if( global_CollisionSpace && PlanEnv->getBool(PlanParam::drawOccupVoxels) )
+  if( global_collisionSpace && PlanEnv->getBool(PlanParam::drawOccupVoxels) )
   {
-    global_CollisionSpace->draw();
-    //global_CollisionSpace->drawGradient();
-  }
-  
-  if( global_CollisionSpace && PlanEnv->getBool(PlanParam::drawStaticVoxels) )
-  {
-    global_CollisionSpace->drawStaticVoxels();
+    global_collisionSpace->draw();
+    //global_collisionSpace->drawGradient();
   }
   
-	if( global_CollisionSpace && PlanEnv->getBool(PlanParam::drawSampledPoints) )
+  if( global_collisionSpace && PlanEnv->getBool(PlanParam::drawStaticVoxels) )
   {
-    global_CollisionSpace->getBodySampler()->draw();
+    global_collisionSpace->drawStaticVoxels();
   }
   
-  if (global_CollisionSpace && PlanEnv->getBool(PlanParam::drawStaticVoxels)) 
+	if( global_collisionSpace && PlanEnv->getBool(PlanParam::drawSampledPoints) )
   {
-    global_CollisionSpace->drawSquaredDist();
+    global_collisionSpace->getBodySampler()->draw();
+  }
+  
+  if (global_collisionSpace && PlanEnv->getBool(PlanParam::drawStaticVoxels)) 
+  {
+    global_collisionSpace->drawSquaredDist();
   }
    
-  if ( PlanEnv->getBool(PlanParam::drawBoundingVolumes) ) 
+  if ( global_collisionSpace && PlanEnv->getBool(PlanParam::drawBoundingVolumes) ) 
   {
     //traj_optim_draw_collision_points();
-    global_CollisionSpace->drawCollisionPoints();
+    global_collisionSpace->drawCollisionPoints();
   }
   
   if ((optimizer.get() != NULL) && ENV.getBool(Env::drawTraj))
@@ -495,7 +493,7 @@ void g3d_draw_hrics(int opengl_context)
 
 	}
 
-	if (PlanEnv->getBool(PlanParam::drawRandomMap))
+	if ( HRICS_MotionPL != NULL && PlanEnv->getBool(PlanParam::drawRandomMap))
 	{
 		double depth = 1.0;
 
@@ -661,11 +659,13 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
     << global_costSpace->cost(q_Cost) << std::endl;
   }
   
-  /*if( global_CollisionSpace )
+  if( global_collisionSpace )
   {
-    int ncol = global_CollisionSpace->isRobotColliding();
+    double dist = numeric_limits<double>::max();
     
-    Robot* robCollSapce = global_CollisionSpace->getRobot();
+    int ncol = global_collisionSpace->isRobotColliding( dist );
+    
+    Robot* robCollSapce = global_collisionSpace->getRobot();
     
     if( ncol )
     {
@@ -680,7 +680,7 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
     {
       g3d_set_custom_color_draw( robCollSapce->getRobotStruct(), false );
     }
-    }*/
+  }
 }
 
 #ifdef HRI_COSTSPACE

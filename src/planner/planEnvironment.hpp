@@ -18,8 +18,25 @@
 
 bool Env_stopUser();
 
-namespace  PlanParam
+#ifdef QT_LIBRARY
+class PlanParam : public QObject
 {
+  Q_OBJECT;
+  Q_ENUMS(boolParameter);
+  Q_ENUMS(intParameter);
+  Q_ENUMS(doubleParameter);
+  Q_ENUMS(stringParameter);
+  Q_ENUMS(vectorParameter);
+  
+public:
+  
+  PlanParam();
+  ~PlanParam();
+  
+#else
+namespace PlanParam
+{
+#endif
 	enum boolParameter 
 	{
 		stopPlanner,
@@ -149,5 +166,9 @@ PlanParam::vectorParameter>* PlanEnv;
 // Functions that initializes the planner
 // Parameters
 void initPlannerParameters();
+  
+#ifdef QT_LIBRARY
+extern PlanParam* EnumPlannerParameterObject;
+#endif
 
 #endif

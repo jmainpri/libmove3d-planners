@@ -562,7 +562,7 @@ public:
 	void				saveBGLGraphToDotFile(const std::string& filename);
 	BGL_Graph&	get_BGL_Graph() { return m_BoostGraph; }
 	void				setAllDescriptorsInvalid();
-	
+  void        draw();
 	
 private:
 	
@@ -571,6 +571,7 @@ private:
 	void freeResources();
 	static bool compareEdges(Edge* E1, Edge* E2);
 	static bool compareNodes(Node* N1, Node* N2);
+  void        drawEdge(BGL_Vertex v1, BGL_Vertex v2);
 	
 private:
 	
@@ -584,6 +585,7 @@ private:
 	// Flag that is set to false 
 	// each time the graph is exported to p3d_graph
 	bool															m_graphChanged;
+  bool                              m_initBGL;
 	
 	// latest trajectory
 	p3d_traj*													m_Traj;

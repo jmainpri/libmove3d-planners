@@ -60,7 +60,7 @@ const bool Old_Achile =false;
  * Get the visibility Cost
  * This function computes an angle beetween a WSPoint and the Human gaze direction
  */
-double Visibility::getCost(const Vector3d& WSPoint)
+double Visibility::getWorkspaceCost(const Vector3d& WSPoint)
 {
 	
 	//return akinVisibilityCost(WSPoint);
