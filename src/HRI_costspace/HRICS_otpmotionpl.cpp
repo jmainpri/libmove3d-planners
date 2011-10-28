@@ -178,6 +178,7 @@ void OTPMotionPl::draw2dPath()
                             m_2DPath[i+1][0],    m_2DPath[i+1][1],    0.4,
                             Blue, NULL);
             glLineWidth(1.);
+            cout << "\n\n cell: \n" << m_2DPath[i] << endl;
         }
     }
 
@@ -1511,8 +1512,8 @@ bool OTPMotionPl::newComputeOTP()
 
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > vectPath = tmpConf.humanTraj;
         vectPath.insert(vectPath.begin(),v);
-        vectPath.insert(vectPath.begin(),v);
-        vectPath.insert(vectPath.begin(),v);
+//        vectPath.insert(vectPath.begin(),v);
+//        vectPath.insert(vectPath.begin(),v);
         tmpConf.humanTraj = vectPath;
         tmpConf.humanTrajExist = true;
 
@@ -1577,10 +1578,11 @@ bool OTPMotionPl::newComputeOTP()
         m_Human->setAndUpdate(*q_human_cur);
         return false;
     }
-    for (unsigned int i = 0; i < m_costVector.size(); i++)
-    {
-        saveCostsTofile(m_costVector.at(i),0);
-    }
+    // this can be reused in order to get more results
+//    for (unsigned int i = 0; i < m_costVector.size(); i++)
+//    {
+//        saveCostsTofile(m_costVector.at(i),0);
+//    }
 
     if (!m_showText)
     {
@@ -1603,18 +1605,27 @@ bool OTPMotionPl::newComputeOTP()
         cout << "the choosed configuration cost is : " << bestConf.cost << endl;
     }
 
+    // trajectory
+
     m_2DHumanPath.clear();
     m_2DPath.clear();
+
     m_2DHumanPath = bestConf.humanTraj;
     m_HumanPathExist = bestConf.humanTrajExist;
+
     m_2DPath = bestConf.robotTraj;
     m_PathExist = bestConf.robotTrajExist;
-    double xf = (*bestConf.humanConf)[firstIndexOfHumanDof + 0];
-    double yf = (*bestConf.humanConf)[firstIndexOfHumanDof + 1];
-    double Rzf = (*bestConf.humanConf)[firstIndexOfHumanDof + 5];
-    setRobotsToConf(bestConf.configNumberInList,bestConf.isStandingInThisConf,xf,yf,Rzf);
+
+
+//    double xf = (*bestConf.humanConf)[firstIndexOfHumanDof + 0];
+//    double yf = (*bestConf.humanConf)[firstIndexOfHumanDof + 1];
+//    double Rzf = (*bestConf.humanConf)[firstIndexOfHumanDof + 5];
+//    setRobotsToConf(bestConf.configNumberInList,bestConf.isStandingInThisConf,xf,yf,Rzf);
+
     createTrajectoryFromOutputConf(bestConf);
+
     clock_t end = clock();
+
     m_time = ((double)end - start) / CLOCKS_PER_SEC;
     double tInitGrid = ((double)gridInit - start) / CLOCKS_PER_SEC;
     double tFirst = ((double)varInit - gridInit) / CLOCKS_PER_SEC;
@@ -1634,7 +1645,6 @@ bool OTPMotionPl::newComputeOTP()
     m_multipleData.push_back(bestConf.cost);
     m_multipleData.push_back(id);
     m_multipleData.push_back(m_confList.size());
-
 
     if (m_showText)
     {
@@ -2104,6 +2114,7 @@ double OTPMotionPl::showConf(unsigned int i)
         {
             m_simpleChair->setAndUpdate(*conf.chairConf);
         }
+
         return conf.cost;
     }
     return -1;
@@ -2358,7 +2369,7 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > robotTraj2D = conf.robotTraj;
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanTraj2D = conf.humanTraj;
 
-    loadInitConf(true,false);
+    loadInitConf(true,true);
     initPR2GiveConf();
 
     shared_ptr<Configuration> q_cur_human(m_Human->getCurrentPos());
@@ -2367,41 +2378,36 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
     int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
 
-    int nbConf = robotTraj2D.size();
-//    robotVectorConf.push_back(q_cur_robot);
-    for(int i =0; i < nbConf - 1; i++)
+    if (robotTraj2D.size() > 1)
     {
-        shared_ptr<Configuration> q_tmp(_Robot->getCurrentPos());
-        double x = robotTraj2D.at (i)[0];
-        double y = robotTraj2D.at(i)[1];
-        (*q_tmp)[firstIndexOfRobotDof + 0] = x;
-        (*q_tmp)[firstIndexOfRobotDof + 1] = y;
-//        (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(Traj2D.at(i+1)[0] - Traj2D.at(i)[0], Traj2D.at(i+1)[1] - Traj2D.at(i)[1]);
+        for(int i =0; i < robotTraj2D.size() - 1; i++)
+        {
+            shared_ptr<Configuration> q_tmp(_Robot->getCurrentPos());
 
-        (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(
-                robotTraj2D.at(i+1)[1] - robotTraj2D.at(i)[1],
-                robotTraj2D.at(i+1)[0] - robotTraj2D.at(i)[0]);
+            (*q_tmp)[firstIndexOfRobotDof + 0] = robotTraj2D.at(i)[0];
+            (*q_tmp)[firstIndexOfRobotDof + 1] = robotTraj2D.at(i)[1];
+            (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(
+                    robotTraj2D.at(i+1)[1] - robotTraj2D.at(i)[1],
+                    robotTraj2D.at(i+1)[0] - robotTraj2D.at(i)[0]);
 
-        robotVectorConf.push_back(q_tmp);
-//        q_tmp->print();
+            robotVectorConf.push_back(q_tmp);
 
+        }
+    }
+    else
+    {
+        robotVectorConf.push_back(q_cur_robot);
     }
 
     robotVectorConf.push_back(conf.robotConf);
 
-    nbConf = humanTraj2D.size();
-//    humanVectorConf.push_back(q_cur_human);
-    if (nbConf> 0)
+    if (humanTraj2D.size() > 1)
     {
-        for(int i =0; i < nbConf - 1; i++)
+        for(int i =0; i < humanTraj2D.size() - 1; i++)
         {
             shared_ptr<Configuration> q_tmp(m_Human->getCurrentPos());
-            double x = humanTraj2D.at (i)[0];
-            double y = humanTraj2D.at(i)[1];
-            (*q_tmp)[firstIndexOfHumanDof + 0] = x;
-            (*q_tmp)[firstIndexOfHumanDof + 1] = y;
-    //        (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(Traj2D.at(i+1)[0] - Traj2D.at(i)[0], Traj2D.at(i+1)[1] - Traj2D.at(i)[1]);
-
+            (*q_tmp)[firstIndexOfHumanDof + 0] = humanTraj2D.at (i)[0];
+            (*q_tmp)[firstIndexOfHumanDof + 1] = humanTraj2D.at(i)[1];
             if (humanTraj2D.at(i+1)[0] != humanTraj2D.at(i)[0])
             {
                 (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(
@@ -2414,16 +2420,15 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
             {
                 standUp();
             }
-
-    //        q_tmp->print();
-
         }
     }
 
     humanVectorConf.push_back(conf.humanConf);
 
 
-    if (robotTraj2D.size() > 2)
+
+
+    if (robotTraj2D.size() > 1)
     {
         p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
         p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPl->getBaseMLP(), 1, false);
@@ -2434,7 +2439,7 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     }
 
 
-    if (humanTraj2D.size() > 2)
+    if (humanTraj2D.size() > 1)
     {
         p3d_multiLocalPath_disable_all_groupToPlan( m_Human->getRobotStruct() , false );
         p3d_multiLocalPath_set_groupToPlan( m_Human->getRobotStruct(), m_ManipPlHum->getBaseMLP(), 1, false);

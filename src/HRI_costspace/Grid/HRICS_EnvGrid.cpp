@@ -355,9 +355,6 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
 
 void EnvGrid::recomputeGridWhenHumanMove(Eigen::Vector3d humanPos)
 {
-
-
-
     initAllTrajs();
     initAllCellState();
 
@@ -382,10 +379,11 @@ void EnvGrid::recomputeGridWhenHumanMove(Eigen::Vector3d humanPos)
     EnvCell* cell = dynamic_cast<EnvCell*>(getCell(pos));
     computeRobotDistances(cell);
 
+    mHuman->setAndUpdate(*q_human_cur);
 
     initAllCellState();
 
-    mHuman->setAndUpdate(*q_human_cur);
+
     pos[0] = humanPos[0];
     pos[1] = humanPos[1];
 
@@ -395,6 +393,8 @@ void EnvGrid::recomputeGridWhenHumanMove(Eigen::Vector3d humanPos)
 
      cell = dynamic_cast<EnvCell*>(getCell(pos));
     computeHumanDistances(cell);
+
+    mRobot->setAndUpdate(*q_robot_cur);
 
 
 }
