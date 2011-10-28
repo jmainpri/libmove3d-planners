@@ -112,23 +112,42 @@ void EnvGrid::init(pair<double,double> minMax)
         cout << "Compute reacheability of each cell by the robot and by the human" << endl;
     }
     initAllReachability();
+
+    Robot* robot = getRobot();
+    shared_ptr<Configuration> q_robot_cur = robot->getCurrentPos();
+    shared_ptr<Configuration> q_robot = robot->getCurrentPos();
+    (*q_robot)[6] = 10;
+    (*q_robot)[7] = 1;
+    robot->setAndUpdate(*q_robot);
+    Robot* human = getHuman();
+    shared_ptr<Configuration> q_human_cur = human->getCurrentPos();
+    shared_ptr<Configuration> q_human = human->getCurrentPos();
+    (*q_human)[6] = 10;
+    (*q_human)[7] = 1;
+    human->setAndUpdate(*q_human);
+
+
     for (unsigned int x =0;x<_nbCellsX;++x)
     {
         for (unsigned int y =0;y<_nbCellsY;++y)
         {
             EnvCell* Cell = dynamic_cast<EnvCell*>(getCell(x,y));
 
-            Cell->computeReach();
+            Cell->computeHumanReach();
             if (Cell->isHumAccessible())
             {
                 m_HumanAccessible.push_back(Cell);
             }
+            Cell->computeRobotReach();
             if (Cell->isRobAccessible())
             {
                 m_RobotAccessible.push_back(Cell);
             }
         }
     }
+
+    human->setAndUpdate(*q_human_cur);
+    robot->setAndUpdate(*q_robot_cur);
 
     if (showText)
     {
@@ -187,7 +206,7 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
     robot->setAndUpdate(*q_robot);
     for (unsigned int i = 0; i < m_HumanAccessible.size(); i++)
     {
-        m_HumanAccessible.at(i)->computeReach();
+        m_HumanAccessible.at(i)->computeHumanReach();
     }
     robot->setAndUpdate(*q_robot_cur);
 
@@ -200,7 +219,7 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
     human->setAndUpdate(*q_human);
     for (unsigned int i = 0; i < m_RobotAccessible.size(); i++)
     {
-        m_RobotAccessible.at(i)->computeReach();
+        m_RobotAccessible.at(i)->computeRobotReach();
     }
     human->setAndUpdate(*q_human_cur);
 
@@ -1095,15 +1114,10 @@ EnvCell::EnvCell(int i, Vector2i coord, Vector2d corner, EnvGrid* grid) :
 }
 
 
-void EnvCell::computeReach()
+void EnvCell::computeHumanReach()
 {
-    if (m_reachComputed)
-    {
-        return;
-    }
-    Robot* humCyl = dynamic_cast<EnvGrid*>(_grid)->getHumanCylinder();
-    Robot* robotCyl = dynamic_cast<EnvGrid*>(_grid)->getRobotCylinder();
 
+    Robot* humCyl = dynamic_cast<EnvGrid*>(_grid)->getHumanCylinder();
 
     //human detection of collision
     Robot* human = dynamic_cast<EnvGrid*>(_grid)->getHuman();
@@ -1128,6 +1142,15 @@ void EnvCell::computeReach()
     humCyl->setAndUpdate(*q);
     human->setAndUpdate(*q_human_cur);
 
+
+
+}
+
+void EnvCell::computeRobotReach()
+{
+//    Robot* humCyl = dynamic_cast<EnvGrid*>(_grid)->getHumanCylinder();
+    Robot* robotCyl = dynamic_cast<EnvGrid*>(_grid)->getRobotCylinder();
+
     //robot detection of collision
     Robot* rob = dynamic_cast<EnvGrid*>(_grid)->getRobot();
     shared_ptr<Configuration> q_rob_cur = rob->getCurrentPos();
@@ -1136,7 +1159,7 @@ void EnvCell::computeReach()
     (*q_rob)[7] = 1;
     rob->setAndUpdate(*q_rob);
 
-    q = robotCyl->getCurrentPos();
+    shared_ptr<Configuration> q = robotCyl->getCurrentPos();
     (*q)[6] = this->getCenter()[0];
     (*q)[7] = this->getCenter()[1];
     robotCyl->setAndUpdate(*q);
@@ -1151,9 +1174,8 @@ void EnvCell::computeReach()
     robotCyl->setAndUpdate(*q);
     rob->setAndUpdate(*q_rob_cur);
 
-    m_reachComputed = true;
-}
 
+}
 
 double EnvCell::computeCost()
 {

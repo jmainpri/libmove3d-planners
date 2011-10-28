@@ -259,9 +259,14 @@ namespace HRICS
                 //#######################
 
                 /**
-                  * test if there is a collision with a BB (the cylinders) for both human and the robot
+                  * test if there is a collision with a BB (the cylinders) for the human
                   */
-		void computeReach();
+                void computeHumanReach();
+
+                /**
+                  * test if there is a collision with a BB (the cylinders) for the robot
+                  */
+                void computeRobotReach();
 
                 /**
                   * compute partial cost
