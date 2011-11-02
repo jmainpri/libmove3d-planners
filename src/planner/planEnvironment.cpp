@@ -179,12 +179,8 @@ void initPlannerParameters()
         myDoubleMap.insert( std::make_pair( PlanParam::env_delta,                new doubleContainer(0.01)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_ksi,                  new doubleContainer(0.43)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_rho,                  new doubleContainer(0.57)));
-<<<<<<< HEAD
-        myDoubleMap.insert( std::make_pair( PlanParam::env_objectNessecity,      new doubleContainer(0.5)));
-
-=======
         myDoubleMap.insert( std::make_pair( PlanParam::env_objectNessecity,      new doubleContainer(0.9)));
->>>>>>> Make MovingHuman independant
+
         myDoubleMap.insert( std::make_pair( PlanParam::env_sittingOffset,        new doubleContainer(0.2)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_limitRot,             new doubleContainer(M_PI/3)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_Cellsize,             new doubleContainer(0.2)));
