@@ -214,6 +214,8 @@ void HRICS_loadGrid(std::string docname)
 //----------------------------------------------------------------------
 void HRICS_init(HRI_AGENTS* agents)
 {  
+  cout << "HRICS_init" << endl;
+  
   // When loaded with the cost space turned off
   // This function create and initizialises the global_costSpace object
   GlobalCostSpace::initialize();
@@ -285,7 +287,7 @@ void HRICS_init(HRI_AGENTS* agents)
   
   if (agents == NULL) 
   {
-    agents = hri_create_agents();
+    GLOBAL_AGENTS = agents = hri_create_agents();
   }
   
 	HRICS_MotionPL = new HRICS::Workspace;

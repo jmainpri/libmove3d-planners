@@ -102,6 +102,12 @@ public:
 	 * @return la pointeur sur la ConfigPt
 	 */
 	double* getConfigStruct();
+  
+  /**
+	 * obtient le pointeur sur la ConfigPt
+	 * @return la pointeur sur la ConfigPt
+	 */
+	double* getConfigStructCopy();
 	
 	/**
 	 * modifie la structure configPt stockée

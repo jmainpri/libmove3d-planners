@@ -152,6 +152,11 @@ configPt Configuration::getConfigStruct()
   return _Configuration;
 }
 
+configPt Configuration::getConfigStructCopy()
+{
+  return p3d_copy_config(_Robot->getRobotStruct(),_Configuration);
+}
+
 void Configuration::setConfiguration(configPt C)
 {
   _Configuration = C;

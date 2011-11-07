@@ -61,6 +61,7 @@ Graph::Graph(Robot* R, p3d_graph* G)
 	else
 	{
 		m_Graph = p3d_create_graph(R->getRobotStruct());
+    cout << "Allocate graph : " << m_Graph << endl;
 	}
 	
 	m_Graph->rob->GRAPH = m_Graph;
@@ -2851,9 +2852,13 @@ void Graph::drawEdge(BGL_Vertex v1, BGL_Vertex v2)
   
   p3d_jnt* 	drawnjnt;
 	int indexjnt = p3d_get_user_drawnjnt();
-  if (indexjnt != -1 && indexjnt <= m_Robot->getRobotStruct()->njoints ) 
+  if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= m_Robot->getRobotStruct()->njoints ) 
   {
     drawnjnt = m_Robot->getRobotStruct()->joints[indexjnt];
+  }
+  
+  if (drawnjnt == NULL) {
+    return;
   }
   
   BGL_VertexDataMapT NodeData = boost::get( NodeData_t() , m_BoostGraph );
@@ -2883,10 +2888,14 @@ void Graph::drawEdge(BGL_Vertex v1, BGL_Vertex v2)
 
 void Graph::draw()
 {
+  shared_ptr<Configuration> q = m_Robot->getCurrentPos();
+  
   BOOST_FOREACH(BGL_Edge e, boost::edges(m_BoostGraph))
   {
     BGL_Vertex v1(boost::source(e, m_BoostGraph));
     BGL_Vertex v2(boost::target(e, m_BoostGraph));
     drawEdge(v1, v2);
   }
+  
+  m_Robot->setAndUpdate(*q);
 }
