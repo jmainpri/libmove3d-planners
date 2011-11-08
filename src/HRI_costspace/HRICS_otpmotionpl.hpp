@@ -432,6 +432,12 @@ namespace HRICS
         /**
           * function to be called from codels
           */
+        bool getOtp(std::string humanName, Eigen::Vector3d &dockPos, std::vector<SM_TRAJ>& smTraj, configPt& handConf,bool isStanding, double objectNessecity);
+
+
+        /**
+          * function to be called from codels
+          */
         bool getOtp(std::string humanName, Eigen::Vector3d &dockPos, std::vector<std::pair<double,double> >& traj, configPt& handConf,bool isStanding, double objectNessecity);
 
         /**
@@ -566,6 +572,11 @@ namespace HRICS
           * The cost vector
           */
         std::vector<double> m_costVector;
+
+        /**
+          * a vector for softmotions trajectories
+          */
+        std::vector<SM_TRAJ> m_smTrajs;
 
         /**
           * inputs for computing OTP

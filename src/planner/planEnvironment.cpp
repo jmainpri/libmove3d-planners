@@ -132,6 +132,8 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::env_realTime,               new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::useSelectedDuration,        new boolContainer(false))); 
         myBoolMap.insert( std::make_pair( PlanParam::env_drawHumanModel,         new boolContainer(false)));
+
+        myBoolMap.insert( std::make_pair( PlanParam::env_softMotionTraj,         new boolContainer(false)));
   
         // Int
         // ------------------------------------------------------------------

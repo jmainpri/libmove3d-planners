@@ -88,7 +88,8 @@ namespace PlanParam
             env_isInit,
             env_showText,
             env_realTime,
-            env_drawHumanModel
+            env_drawHumanModel,
+            env_softMotionTraj
         };
 
         enum intParameter

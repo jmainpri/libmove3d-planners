@@ -21,6 +21,7 @@
 
 #ifdef LIGHT_PLANNER
 #include "LightPlanner-pkg.h"
+#include "lightPlanner/proto/ManipulationViaConfPlanner.hpp"
 #endif
 
 using namespace std;
@@ -178,7 +179,7 @@ void OTPMotionPl::draw2dPath()
                             m_2DPath[i+1][0],    m_2DPath[i+1][1],    0.4,
                             Blue, NULL);
             glLineWidth(1.);
-            cout << "\n\n cell: \n" << m_2DPath[i] << endl;
+//            cout << "\n\n cell: \n" << m_2DPath[i] << endl;
         }
     }
 
@@ -319,7 +320,7 @@ void OTPMotionPl::initPR2GiveConf()
    q[17] = 37.00*M_PI/180;
    q[18] = -29.00*M_PI/180;
    q[19] = -133.00*M_PI/180;
-   q[20] = -187.00*M_PI/180;
+   q[20] = 173.00*M_PI/180;
    q[21] = -75.00*M_PI/180;
    q[22] = 180.00*M_PI/180;
    q[23] = 0;
@@ -611,6 +612,8 @@ std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
     vector<ConfigHR> vectConfs;
     ConfigHR::index = 0;
 
+    shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+
     int nbNode = 0;
 
     xmlDocPtr doc;
@@ -698,6 +701,11 @@ std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
 			q_hum[firstIndexOfHumanDof + 1] = 0;
 //			q_hum[firstIndexOfHumanDof + 2] = 1.07;
 			q_hum[firstIndexOfHumanDof + 5] = 0;
+
+//                        if (p3d_set_and_update_this_robot_conf_multisol(_Robot->getRobotStruct(), q_rob, NULL, 0, NULL) != TRUE)
+//                        {
+//                            cout << "ERROR: loading bad conf" << endl;
+//                        }
 
 			chr.setHumanConf(m_Human, q_hum);
 			chr.setRobotConf(_Robot, q_rob);
@@ -2367,7 +2375,7 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     vector<shared_ptr<Configuration> > humanVectorConf;
 
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > robotTraj2D = conf.robotTraj;
-    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanTraj2D = conf.humanTraj;
+//    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanTraj2D = conf.humanTraj;
 
     loadInitConf(true,true);
     initPR2GiveConf();
@@ -2376,21 +2384,66 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     shared_ptr<Configuration> q_cur_robot(_Robot->getCurrentPos());
 
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
-    int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+//    int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+
+    string name( "Config_" );
+
+    int nbConf = _Robot->getRobotStruct()->nconf;
+
+    for(int i=0 ; i<nbConf; i++)
+    {
+            p3d_del_config(_Robot->getRobotStruct(), _Robot->getRobotStruct()->conf[0]);
+    }
+
+    int id =0;
 
     if (robotTraj2D.size() > 1)
     {
-        for(int i =0; i < robotTraj2D.size() - 1; i++)
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmpRobotTraj2D;
+
+        //elimination des points etape inutile
+
+        for(unsigned int i =0; i < robotTraj2D.size() - 1; i++)
         {
+            double angle = atan2(
+                    robotTraj2D.at(i+1)[1] - robotTraj2D.at(i)[1],
+                    robotTraj2D.at(i+1)[0] - robotTraj2D.at(i)[0]);
+            if (i>0)
+            {
+                double m =  (robotTraj2D.at(i+1)[1] - robotTraj2D.at(i-1)[1])/(robotTraj2D.at(i+1)[0] - robotTraj2D.at(i-1)[0]);
+                double c = robotTraj2D.at(i+1)[1] - m*robotTraj2D.at(i+1)[0];
+                if (robotTraj2D.at(i)[1] == m*robotTraj2D.at(i)[0] +c)
+                {
+                    continue;
+                }
+//                double oldAngle = atan2(
+//                        robotTraj2D.at(i)[1] - robotTraj2D.at(i-1)[1],
+//                        robotTraj2D.at(i)[0] - robotTraj2D.at(i-1)[0]);
+//                if (angle==oldAngle)
+//                {
+//                    continue;
+//                }
+            }
+
             shared_ptr<Configuration> q_tmp(_Robot->getCurrentPos());
 
             (*q_tmp)[firstIndexOfRobotDof + 0] = robotTraj2D.at(i)[0];
             (*q_tmp)[firstIndexOfRobotDof + 1] = robotTraj2D.at(i)[1];
-            (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(
-                    robotTraj2D.at(i+1)[1] - robotTraj2D.at(i)[1],
-                    robotTraj2D.at(i+1)[0] - robotTraj2D.at(i)[0]);
+            (*q_tmp)[firstIndexOfRobotDof + 5] = angle;
 
             robotVectorConf.push_back(q_tmp);
+
+            config_namePt config;
+            string num;
+            stringstream out;
+            out << id++;
+            num = out.str();
+
+//            p3d_rob* robot = p3d_get_robot_by_name(global_ActiveRobotName.c_str());
+//            configPt q = p3d_get_robot_config( robot );
+            configPt q = q_tmp->getConfigStruct();
+
+            p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
 
         }
     }
@@ -2398,65 +2451,87 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     {
         robotVectorConf.push_back(q_cur_robot);
     }
-
+    config_namePt config;
     robotVectorConf.push_back(conf.robotConf);
+    string num;
+    stringstream out;
+    out << id;
+    num = out.str();
 
-    if (humanTraj2D.size() > 1)
-    {
-        for(int i =0; i < humanTraj2D.size() - 1; i++)
-        {
-            shared_ptr<Configuration> q_tmp(m_Human->getCurrentPos());
-            (*q_tmp)[firstIndexOfHumanDof + 0] = humanTraj2D.at (i)[0];
-            (*q_tmp)[firstIndexOfHumanDof + 1] = humanTraj2D.at(i)[1];
-            if (humanTraj2D.at(i+1)[0] != humanTraj2D.at(i)[0])
-            {
-                (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(
-                        humanTraj2D.at(i+1)[1] - humanTraj2D.at(i)[1],
-                        humanTraj2D.at(i+1)[0] - humanTraj2D.at(i)[0]);
-            }
+    p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
 
-            humanVectorConf.push_back(q_tmp);
-            if (conf.isStandingInThisConf && m_humanCanStand)
-            {
-                standUp();
-            }
-        }
-    }
 
-    humanVectorConf.push_back(conf.humanConf);
+    // this part is for moving human.
+//    if (humanTraj2D.size() > 1)
+//    {
+//        for(unsigned int i =0; i < humanTraj2D.size() - 1; i++)
+//        {
+//            shared_ptr<Configuration> q_tmp(m_Human->getCurrentPos());
+//            (*q_tmp)[firstIndexOfHumanDof + 0] = humanTraj2D.at (i)[0];
+//            (*q_tmp)[firstIndexOfHumanDof + 1] = humanTraj2D.at(i)[1];
+//            if (humanTraj2D.at(i+1)[0] != humanTraj2D.at(i)[0])
+//            {
+//                (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(
+//                        humanTraj2D.at(i+1)[1] - humanTraj2D.at(i)[1],
+//                        humanTraj2D.at(i+1)[0] - humanTraj2D.at(i)[0]);
+//            }
+//
+//            humanVectorConf.push_back(q_tmp);
+//            if (conf.isStandingInThisConf && m_humanCanStand)
+//            {
+//                standUp();
+//            }
+//        }
+//    }
+
+//    humanVectorConf.push_back(conf.humanConf);
+
 
 
 
 
     if (robotTraj2D.size() > 1)
     {
-        p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
-        p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPl->getBaseMLP(), 1, false);
+//        p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
+//        p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPl->getBaseMLP(), 1, false);
+//
+//        //////////////////
+//        API::Trajectory base_traj(robotVectorConf);
+//        base_traj.replaceP3dTraj();
 
-        //////////////////
-        API::Trajectory base_traj(robotVectorConf);
-        base_traj.replaceP3dTraj();
+
+          std::vector<SM_TRAJ> smTrajs;
+
+        p3d_rob * robotPt =  _Robot->getRobotStruct();
+        ManipulationViaConfPlanner m_viaConfPlan(robotPt);
+
+        m_viaConfPlan.planTrajFromConfigArrayInRobotTheForm(smTrajs);
+        m_smTrajs = smTrajs;
+
+
+//        m_smtraj[0].plot();
+
     }
 
-
-    if (humanTraj2D.size() > 1)
-    {
-        p3d_multiLocalPath_disable_all_groupToPlan( m_Human->getRobotStruct() , false );
-        p3d_multiLocalPath_set_groupToPlan( m_Human->getRobotStruct(), m_ManipPlHum->getBaseMLP(), 1, false);
-
-        //////////////////
-        API::Trajectory base_hum_traj(humanVectorConf);
-//        if (m_Human->getTrajStruct()->)
-        base_hum_traj.replaceHumanP3dTraj(m_Human, m_Human->getTrajStruct());
-    }
-    else
-    {
-        if ( m_Human->getTrajStruct())
-        {
-            destroy_list_localpath(m_Human->getRobotStruct(), m_Human->getTrajStruct()->courbePt);
-            m_Human->getRobotStruct()->tcur = NULL;
-        }
-    }
+    // this part is for moving human.
+//    if (humanTraj2D.size() > 1)
+//    {
+//        p3d_multiLocalPath_disable_all_groupToPlan( m_Human->getRobotStruct() , false );
+//        p3d_multiLocalPath_set_groupToPlan( m_Human->getRobotStruct(), m_ManipPlHum->getBaseMLP(), 1, false);
+//
+//        //////////////////
+//        API::Trajectory base_hum_traj(humanVectorConf);
+////        if (m_Human->getTrajStruct()->)
+//        base_hum_traj.replaceHumanP3dTraj(m_Human, m_Human->getTrajStruct());
+//    }
+//    else
+//    {
+//        if ( m_Human->getTrajStruct())
+//        {
+//            destroy_list_localpath(m_Human->getRobotStruct(), m_Human->getTrajStruct()->courbePt);
+//            m_Human->getRobotStruct()->tcur = NULL;
+//        }
+//    }
 
 //    cout << base_traj.getRangeMax() << endl;
 //    cout << base_traj.getNbOfPaths() << endl;
@@ -2910,6 +2985,16 @@ bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 //    newComputeOTP();
 	ENV.setBool(Env::drawGrid,false);
 	return true;
+}
+
+bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
+                         std::vector<SM_TRAJ>& smTraj,
+                         configPt& handConf,bool isStanding, double objectNessecity)
+{
+    std::vector<pair<double,double> > traj;
+    bool result = getOtp(humanName,dockPos,traj,handConf,isStanding,objectNessecity);
+    smTraj = m_smTrajs;
+    return result;
 }
 
 bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
