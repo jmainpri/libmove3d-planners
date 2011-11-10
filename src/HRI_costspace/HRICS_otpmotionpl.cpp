@@ -16,6 +16,7 @@
 #include "Planner-pkg.h"
 
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
+#include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 #include "planEnvironment.hpp"
 #include "time.h"
 
@@ -2399,31 +2400,35 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
     if (robotTraj2D.size() > 1)
     {
-        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmpRobotTraj2D;
+//        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmpRobotTraj2D;
 
         //elimination des points etape inutile
-
+        robotTraj2D = SmoothTrajectory(robotTraj2D);
         for(unsigned int i =0; i < robotTraj2D.size() - 1; i++)
         {
             double angle = atan2(
                     robotTraj2D.at(i+1)[1] - robotTraj2D.at(i)[1],
                     robotTraj2D.at(i+1)[0] - robotTraj2D.at(i)[0]);
-            if (i>0)
-            {
-                double m =  (robotTraj2D.at(i+1)[1] - robotTraj2D.at(i-1)[1])/(robotTraj2D.at(i+1)[0] - robotTraj2D.at(i-1)[0]);
-                double c = robotTraj2D.at(i+1)[1] - m*robotTraj2D.at(i+1)[0];
-                if (robotTraj2D.at(i)[1] == m*robotTraj2D.at(i)[0] +c)
-                {
-                    continue;
-                }
-//                double oldAngle = atan2(
-//                        robotTraj2D.at(i)[1] - robotTraj2D.at(i-1)[1],
-//                        robotTraj2D.at(i)[0] - robotTraj2D.at(i-1)[0]);
-//                if (angle==oldAngle)
+//            if (i>0)
+//            {
+//                double pente =  (robotTraj2D.at(i+1)[1] - robotTraj2D.at(i-1)[1])/(robotTraj2D.at(i+1)[0] - robotTraj2D.at(i-1)[0]);
+//                double cst = robotTraj2D.at(i+1)[1] - pente*robotTraj2D.at(i+1)[0];
+//                double threshold = 0.02;
+//                if (fabs(robotTraj2D.at(i)[1] - pente*robotTraj2D.at(i)[0] - cst) < threshold)
 //                {
+//                    cout << "\n   cell not to be used :\n" << robotTraj2D.at(i) << endl <<endl;
 //                    continue;
 //                }
-            }
+////                double oldAngle = atan2(
+////                        robotTraj2D.at(i)[1] - robotTraj2D.at(i-1)[1],
+////                        robotTraj2D.at(i)[0] - robotTraj2D.at(i-1)[0]);
+////                if (angle==oldAngle)
+////                {
+////                    continue;
+////                }
+//            }
+
+//            cout << "cell to be used :\n" << robotTraj2D.at(i) << endl;
 
             shared_ptr<Configuration> q_tmp(_Robot->getCurrentPos());
 
@@ -2572,6 +2577,34 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
 //    return base_traj;
 }
+
+
+std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotionPl::SmoothTrajectory(
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > trajectory)
+{
+    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > result;
+    for(unsigned int i =0; i < trajectory.size() - 1; i++)
+    {
+        if (i>0)
+        {
+            double pente =  (trajectory.at(i+1)[1] - trajectory.at(i-1)[1])/(trajectory.at(i+1)[0] - trajectory.at(i-1)[0]);
+            double cst = trajectory.at(i+1)[1] - pente*trajectory.at(i+1)[0];
+            double threshold = 0.02;
+            if (fabs(trajectory.at(i)[1] - pente*trajectory.at(i)[0] - cst) > threshold)
+            {
+                result.push_back(trajectory.at(i));
+                cout << "cell to be keeped \n" << trajectory.at(i) << endl;
+            }
+        }
+        else
+        {
+            result.push_back(trajectory.at(i));
+        }
+    }
+    return result;
+}
+
+
 
 bool OTPMotionPl::computeArmMotion(double* qInit, double* qGoal, API::Trajectory& traj)
 {
@@ -3001,6 +3034,7 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
     std::vector<pair<double,double> > traj;
     bool result = getOtp(humanName,dockPos,traj,handConf,isStanding,objectNessecity);
     smTraj = m_smTrajs;
+//    smTraj[0].plot();
     return result;
 }
 

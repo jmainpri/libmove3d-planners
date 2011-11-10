@@ -371,6 +371,12 @@ namespace HRICS
           */
         bool computeArmMotion(double* qInit, double* qGoal, API::Trajectory& traj);
 
+        /**
+          * generate a smoothed 2D traj
+          */
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > SmoothTrajectory(
+                std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > trajectory);
+
         // results functions
         /**
           * save the costs to a file
