@@ -1403,6 +1403,7 @@ bool OTPMotionPl::newComputeOTP()
 //    m_2DGrid->initGrid(m_humanPos);
     if (!PlanEnv->getBool(PlanParam::env_normalRand) && ! PlanEnv->getBool(PlanParam::env_useAllGrid))
     {
+        m_2DGrid->initGrid(m_humanPos);
         m_2DGrid->recomputeGridWhenHumanMove(m_humanPos);
     }
 //    m_2DGrid->setCellsToblankCost();
@@ -2407,14 +2408,15 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 //        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmpRobotTraj2D;
 
         //elimination des points etape inutile
-       // robotTraj2D = SmoothTrajectory(robotTraj2D);
+        robotTraj2D = SmoothTrajectory(robotTraj2D);
         for(unsigned int i =0; i < robotTraj2D.size(); i++)
         {
+            cout << "cell of the traj :\n" << robotTraj2D.at(i) << endl;
             double angle = 0;
             if ((i+1) < robotTraj2D.size())
             {
         
-                double angle = atan2(
+                angle = atan2(
                 robotTraj2D.at(i+1)[1] - robotTraj2D.at(i)[1],
                 robotTraj2D.at(i+1)[0] - robotTraj2D.at(i)[0]);
             }
@@ -2620,6 +2622,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
             result.push_back(trajectory.at(i));
         }
     }
+    result.push_back(trajectory.at(trajectory.size()-1));
     return result;
 }
 
@@ -3062,6 +3065,7 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
                          configPt& handConf,bool isStanding, double objectNessecity)
 {
 
+    getInputs();
     PlanEnv->setBool(PlanParam::env_isStanding,isStanding);
     PlanEnv->setDouble(PlanParam::env_objectNessecity,objectNessecity);
     //InitMhpObjectTransfert();
