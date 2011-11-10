@@ -392,7 +392,7 @@ bool OTPMotionPl::placeRobot()
 	HumanPos[0] = (*q_cur)[firstIndexOfHumanDof + 0];
 	HumanPos[1] = (*q_cur)[firstIndexOfHumanDof + 1];
 
-	double gaze = (*q_cur)[firstIndexOfHumanDof + 5];
+        double gaze = angle_limit_PI((*q_cur)[firstIndexOfHumanDof + 5]);
 	double refAngle = std::atan2(current_WSPoint[1] - HumanPos[1], current_WSPoint[0] - HumanPos[0]) - gaze;
 
 	shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
@@ -409,7 +409,7 @@ bool OTPMotionPl::placeRobot()
 
 	Vector2d gazeDirect = HumanPos - point;
 
-	(*q_robot_cur)[firstIndexOfDof + 5] = atan2(gazeDirect.y(),gazeDirect.x());
+        (*q_robot_cur)[firstIndexOfDof + 5] = angle_limit_PI(atan2(gazeDirect.y(),gazeDirect.x()));
 
 	if (PlanEnv->getBool(PlanParam::env_isStanding))
 	{
@@ -491,7 +491,7 @@ std::vector<ConfigHR> OTPMotionPl::addConfToList()
 
 	(*q_robot_cur)[firstIndexOfRobotDof + 0] = (*q_robot_cur)[firstIndexOfRobotDof + 0] - (*q_human_cur)[firstIndexOfHumanDof + 0];
 	(*q_robot_cur)[firstIndexOfRobotDof + 1] = (*q_robot_cur)[firstIndexOfRobotDof + 1] - (*q_human_cur)[firstIndexOfHumanDof + 1];
-	(*q_robot_cur)[firstIndexOfRobotDof + 5] = (*q_robot_cur)[firstIndexOfRobotDof + 5] - (*q_human_cur)[firstIndexOfHumanDof + 5];
+        (*q_robot_cur)[firstIndexOfRobotDof + 5] = angle_limit_PI((*q_robot_cur)[firstIndexOfRobotDof + 5] - (*q_human_cur)[firstIndexOfHumanDof + 5]);
 	(*q_human_cur)[firstIndexOfHumanDof + 0] = 0;
 	(*q_human_cur)[firstIndexOfHumanDof + 1] = 0;
 	(*q_human_cur)[firstIndexOfHumanDof + 2] = 1.07;
@@ -697,7 +697,7 @@ std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
 
 			q_rob[firstIndexOfRobotDof + 0] = q_rob[firstIndexOfRobotDof + 0] - q_hum[firstIndexOfHumanDof + 0];
 			q_rob[firstIndexOfRobotDof + 1] = q_rob[firstIndexOfRobotDof + 1] - q_hum[firstIndexOfHumanDof + 1];
-			q_rob[firstIndexOfRobotDof + 5] = q_rob[firstIndexOfRobotDof + 5] - q_hum[firstIndexOfHumanDof + 5];
+                        q_rob[firstIndexOfRobotDof + 5] = angle_limit_PI(q_rob[firstIndexOfRobotDof + 5] - q_hum[firstIndexOfHumanDof + 5]);
 			q_hum[firstIndexOfHumanDof + 0] = 0;
 			q_hum[firstIndexOfHumanDof + 1] = 0;
 //			q_hum[firstIndexOfHumanDof + 2] = 1.07;
@@ -766,12 +766,12 @@ pair<shared_ptr<Configuration>,shared_ptr<Configuration> > OTPMotionPl::setRobot
 			shared_ptr<Configuration> ptrQ_human(new Configuration(m_Human,vectConfs.at(i).getHumanConf()));
 			(*ptrQ_human)[firstIndexOfHumanDof + 0] = (*q_human_cur)[firstIndexOfHumanDof + 0];
 			(*ptrQ_human)[firstIndexOfHumanDof + 1] = (*q_human_cur)[firstIndexOfHumanDof + 1];
-			(*ptrQ_human)[firstIndexOfHumanDof + 5] = (*q_human_cur)[firstIndexOfHumanDof + 5];
+                        (*ptrQ_human)[firstIndexOfHumanDof + 5] = angle_limit_PI((*q_human_cur)[firstIndexOfHumanDof + 5]);
 			m_Human->setAndUpdate(*ptrQ_human);
 			resConf.first = ptrQ_human;
 
 			shared_ptr<Configuration> ptrQ_robot(new Configuration(_Robot,vectConfs.at(i).getRobotConf()));
-			(*ptrQ_robot)[firstIndexOfRobotDof + 5] += (*q_human_cur)[firstIndexOfHumanDof + 5];
+                        (*ptrQ_robot)[firstIndexOfRobotDof + 5] = angle_limit_PI((*ptrQ_robot)[firstIndexOfRobotDof + 5] + (*q_human_cur)[firstIndexOfHumanDof + 5]);
 			double dist = sqrt(pow( (*ptrQ_robot)[firstIndexOfRobotDof + 0], 2) + pow( (*ptrQ_robot)[firstIndexOfRobotDof + 1], 2));
 			(*ptrQ_robot)[firstIndexOfRobotDof + 0] = -cos((*ptrQ_robot)[firstIndexOfRobotDof + 5])*dist + (*ptrQ_human)[firstIndexOfHumanDof + 0];
 			(*ptrQ_robot)[firstIndexOfRobotDof + 1] = -sin((*ptrQ_robot)[firstIndexOfRobotDof + 5])*dist + (*ptrQ_human)[firstIndexOfHumanDof + 1];
@@ -792,7 +792,7 @@ pair<shared_ptr<Configuration>,shared_ptr<Configuration> > OTPMotionPl::setRobot
 	shared_ptr<Configuration> ptrQ_human = m_Human->getCurrentPos();
 	(*ptrQ_human)[firstIndexOfHumanDof + 0] = x;
 	(*ptrQ_human)[firstIndexOfHumanDof + 1] = y;
-	(*ptrQ_human)[firstIndexOfHumanDof + 5] = Rz;
+        (*ptrQ_human)[firstIndexOfHumanDof + 5] = angle_limit_PI(Rz);
 	m_Human->setAndUpdate(*ptrQ_human);
 
 	return setRobotsToConf(id, isStanding);
@@ -859,7 +859,7 @@ void OTPMotionPl::sortConfigList(double nbNode, bool isStanding, bool isSlice)
 		m_Human->setAndUpdate(*ptrQ_human);
 		double xHum = (*ptrQ_human)[firstIndexOfHumanDof + 0];
 		double yHum = (*ptrQ_human)[firstIndexOfHumanDof + 1];
-		double rzHum = (*ptrQ_human)[firstIndexOfHumanDof + 5];
+                double rzHum = angle_limit_PI((*ptrQ_human)[firstIndexOfHumanDof + 5]);
 
 		double reachCost = m_ReachableSpace->getConfigCost() * reachFactor;
 		double distCost = (1 - sqrt(pow(xRob-xHum,2) + pow(yRob-yHum,2))/maxDist) * distFactor;
@@ -1027,7 +1027,7 @@ void OTPMotionPl::getInputs()
         Robot* visball = global_Project->getActiveScene()->getRobotByNameContaining("VISBALL");
         (*q_human_cur)[firstIndexOfHumanDof + 0] = (*visball->getCurrentPos())[6];
         (*q_human_cur)[firstIndexOfHumanDof + 1] = (*visball->getCurrentPos())[7];
-        (*q_human_cur)[firstIndexOfHumanDof + 5] = (*visball->getCurrentPos())[11];
+        (*q_human_cur)[firstIndexOfHumanDof + 5] = angle_limit_PI((*visball->getCurrentPos())[11]);
         m_Human->setAndUpdate(*q_human_cur);
         saveInitConf();
     }
@@ -1035,13 +1035,13 @@ void OTPMotionPl::getInputs()
 
     m_humanPos[0] = (*q_human_cur)[firstIndexOfHumanDof + 0];
     m_humanPos[1] = (*q_human_cur)[firstIndexOfHumanDof + 1];
-    m_humanPos[2] = (*q_human_cur)[firstIndexOfHumanDof + 5];
+    m_humanPos[2] = angle_limit_PI((*q_human_cur)[firstIndexOfHumanDof + 5]);
 
     shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
     m_robotPos[0] = (*q_robot_cur)[firstIndexOfRobotDof + 0];
     m_robotPos[1] = (*q_robot_cur)[firstIndexOfRobotDof + 1];
-    m_robotPos[2] = (*q_robot_cur)[firstIndexOfRobotDof + 5];
+    m_robotPos[2] = angle_limit_PI((*q_robot_cur)[firstIndexOfRobotDof + 5]);
 
 
     m_isStanding = PlanEnv->getBool(PlanParam::env_isStanding);
@@ -1054,7 +1054,7 @@ void OTPMotionPl::setRobotPos()
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
     m_robotPos[0] = (*q_robot_cur)[firstIndexOfRobotDof + 0];
     m_robotPos[1] = (*q_robot_cur)[firstIndexOfRobotDof + 1];
-    m_robotPos[2] = (*q_robot_cur)[firstIndexOfRobotDof + 5];
+    m_robotPos[2] = angle_limit_PI((*q_robot_cur)[firstIndexOfRobotDof + 5]);
 }
 
 bool OTPMotionPl::isTheRealNearThePredicted(double threshold)
@@ -1553,7 +1553,7 @@ bool OTPMotionPl::newComputeOTP()
             {
                 double xf = (*bestConf.humanConf)[firstIndexOfHumanDof + 0];
                 double yf = (*bestConf.humanConf)[firstIndexOfHumanDof + 1];
-                double Rzf = (*bestConf.humanConf)[firstIndexOfHumanDof + 5];
+                double Rzf = angle_limit_PI((*bestConf.humanConf)[firstIndexOfHumanDof + 5]);
                 setRobotsToConf(bestConf.configNumberInList,bestConf.isStandingInThisConf,xf,yf,Rzf);
                 g3d_draw_allwin_active();
                 usleep(time);
@@ -1784,7 +1784,7 @@ OutputConf OTPMotionPl::lookForBestLocalConf(double x, double y, double Rz, doub
     }
 
     int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
-    double hRot = (*bestLocalConf.humanConf)[firstIndexOfHumanDof + 5] - m_humanPos[2];
+    double hRot = angle_limit_PI((*bestLocalConf.humanConf)[firstIndexOfHumanDof + 5] - m_humanPos[2]);
 
     double mvCost = (psi*hDist + delta*fabs(hRot) )/(psi+delta);
 
@@ -2119,7 +2119,7 @@ double OTPMotionPl::showConf(unsigned int i)
         m_PathExist = conf.robotTrajExist;
         double xf = (*conf.humanConf)[firstIndexOfHumanDof + 0];
         double yf = (*conf.humanConf)[firstIndexOfHumanDof + 1];
-        double Rzf = (*conf.humanConf)[firstIndexOfHumanDof + 5];
+        double Rzf = angle_limit_PI((*conf.humanConf)[firstIndexOfHumanDof + 5]);
         m_2DHumanPath = conf.humanTraj;
         m_HumanPathExist = conf.humanTrajExist;
         setRobotsToConf(conf.configNumberInList,conf.isStandingInThisConf,xf,yf,Rzf);
@@ -2438,7 +2438,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
             (*q_tmp)[firstIndexOfRobotDof + 0] = robotTraj2D.at(i)[0];
             (*q_tmp)[firstIndexOfRobotDof + 1] = robotTraj2D.at(i)[1];
-            (*q_tmp)[firstIndexOfRobotDof + 5] = angle;
+            (*q_tmp)[firstIndexOfRobotDof + 5] = angle_limit_PI(angle);
 
             robotVectorConf.push_back(q_tmp);
 
@@ -2796,12 +2796,12 @@ bool OTPMotionPl::standUp()
     shared_ptr<Configuration> q_human = m_Human->getCurrentPos();
     double x = (*q_human)[firstIndexOfHumanDof + 0];
     double y = (*q_human)[firstIndexOfHumanDof + 1];
-    double Rz = (*q_human)[firstIndexOfHumanDof + 5];
+    double Rz = angle_limit_PI((*q_human)[firstIndexOfHumanDof + 5]);
 
     shared_ptr<Configuration> q_chair_cur = chair->getCurrentPos();
     double xC = (*q_chair_cur)[firstIndexOfHumanDof + 0];
     double yC = (*q_chair_cur)[firstIndexOfHumanDof + 1];
-    double RzC = (*q_chair_cur)[firstIndexOfHumanDof + 5];
+    double RzC = angle_limit_PI((*q_chair_cur)[firstIndexOfHumanDof + 5]);
 
 
     (*q_human)[firstIndexOfHumanDof + 0] = -3;
@@ -3205,7 +3205,7 @@ Eigen::Vector3d OTPMotionPl::getHumanActualPos()
     int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
     pos[0] = (*q_human_cur)[firstIndexOfHumanDof + 0];
     pos[1] = (*q_human_cur)[firstIndexOfHumanDof + 1];
-    pos[2] = (*q_human_cur)[firstIndexOfHumanDof + 5];
+    pos[2] = angle_limit_PI((*q_human_cur)[firstIndexOfHumanDof + 5]);
 
     return pos;
 }
@@ -3217,7 +3217,7 @@ Eigen::Vector3d OTPMotionPl::getRobotActualPos()
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
     pos[0] = (*q_robot_cur)[firstIndexOfRobotDof + 0];
     pos[1] = (*q_robot_cur)[firstIndexOfRobotDof + 1];
-    pos[2] = (*q_robot_cur)[firstIndexOfRobotDof + 5];
+    pos[2] = angle_limit_PI((*q_robot_cur)[firstIndexOfRobotDof + 5]);
 
     return pos;
 }
