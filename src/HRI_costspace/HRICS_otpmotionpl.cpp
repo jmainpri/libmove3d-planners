@@ -2408,11 +2408,20 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
         //elimination des points etape inutile
        // robotTraj2D = SmoothTrajectory(robotTraj2D);
-        for(unsigned int i =0; i < robotTraj2D.size() - 1; i++)
+        for(unsigned int i =0; i < robotTraj2D.size(); i++)
         {
-            double angle = atan2(
-                    robotTraj2D.at(i+1)[1] - robotTraj2D.at(i)[1],
-                    robotTraj2D.at(i+1)[0] - robotTraj2D.at(i)[0]);
+            double angle = 0;
+            if ((i+1) < robotTraj2D.size())
+            {
+        
+                double angle = atan2(
+                robotTraj2D.at(i+1)[1] - robotTraj2D.at(i)[1],
+                robotTraj2D.at(i+1)[0] - robotTraj2D.at(i)[0]);
+            }
+            else
+            {
+                angle = (*conf.robotConf)[11];
+            }
 //            if (i>0)
 //            {
 //                double pente =  (robotTraj2D.at(i+1)[1] - robotTraj2D.at(i-1)[1])/(robotTraj2D.at(i+1)[0] - robotTraj2D.at(i-1)[0]);
@@ -2467,7 +2476,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     out << id;
     num = out.str();
 
-    p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
+    //p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
 
 
     // this part is for moving human.
@@ -3059,7 +3068,13 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 
     dumpVar();
-    newComputeOTP();
+    bool res = newComputeOTP();
+
+    if (!res)
+    {
+        cout << "No otp found" << endl;
+        return false;
+    }
 
     if (m_confList.empty())
     {
