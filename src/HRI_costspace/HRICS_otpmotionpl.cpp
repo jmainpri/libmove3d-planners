@@ -2471,12 +2471,12 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     {
         robotVectorConf.push_back(q_cur_robot);
     }
-    config_namePt config;
+//    config_namePt config;
     robotVectorConf.push_back(conf.robotConf);
-    string num;
-    stringstream out;
-    out << id;
-    num = out.str();
+//    string num;
+//    stringstream out;
+//    out << id;
+//    num = out.str();
 
     //p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
 
@@ -2620,6 +2620,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
         else
         {
             result.push_back(trajectory.at(i));
+            cout << "cell to be keeped \n" << trajectory.at(i) << endl;
         }
     }
     result.push_back(trajectory.at(trajectory.size()-1));
@@ -3053,6 +3054,7 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
                          std::vector<SM_TRAJ>& smTraj,
                          configPt& handConf,bool isStanding, double objectNessecity)
 {
+    getInputs();
     std::vector<pair<double,double> > traj;
     bool result = getOtp(humanName,dockPos,traj,handConf,isStanding,objectNessecity);
     smTraj = m_smTrajs;
