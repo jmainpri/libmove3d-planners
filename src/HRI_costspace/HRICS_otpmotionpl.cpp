@@ -1631,7 +1631,11 @@ bool OTPMotionPl::newComputeOTP()
 //    double Rzf = (*bestConf.humanConf)[firstIndexOfHumanDof + 5];
 //    setRobotsToConf(bestConf.configNumberInList,bestConf.isStandingInThisConf,xf,yf,Rzf);
 
-    createTrajectoryFromOutputConf(bestConf);
+    if (!createTrajectoryFromOutputConf(bestConf))
+    {
+      cout << "No trajectory computed" << endl;
+      return false;
+    }
 
     clock_t end = clock();
 
@@ -2370,7 +2374,7 @@ std::vector<ConfigHR> OTPMotionPl::getConfList()
     }
 }
 
-void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
+bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 {
     vector<shared_ptr<Configuration> > robotVectorConf;
     vector<shared_ptr<Configuration> > humanVectorConf;
@@ -2403,7 +2407,7 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 //        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmpRobotTraj2D;
 
         //elimination des points etape inutile
-        robotTraj2D = SmoothTrajectory(robotTraj2D);
+       // robotTraj2D = SmoothTrajectory(robotTraj2D);
         for(unsigned int i =0; i < robotTraj2D.size() - 1; i++)
         {
             double angle = atan2(
@@ -2510,14 +2514,19 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
         p3d_rob * robotPt =  _Robot->getRobotStruct();
         ManipulationViaConfPlanner m_viaConfPlan(robotPt);
 
-        m_viaConfPlan.planTrajFromConfigArrayInRobotTheForm(smTrajs);
+        MANIPULATION_TASK_MESSAGE msg = m_viaConfPlan.planTrajFromConfigArrayInRobotTheForm(smTrajs);
+        if (msg !=  MANIPULATION_TASK_OK)
+        {
+            cout << "ERROR: manipulation planner failed" << endl;
+            return false;
+        }
         m_smTrajs.clear();
         m_smTrajs = smTrajs;
 
 
-        API::CostOptimization optimTrj(_Robot->getCurrentTraj());
-        optimTrj.runDeformation(30);
-        optimTrj.replaceP3dTraj();
+        //API::CostOptimization optimTrj(_Robot->getCurrentTraj());
+        //optimTrj.runDeformation(30);
+        //optimTrj.replaceP3dTraj();
 
 
 
@@ -2576,6 +2585,7 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 //	base_traj.replaceP3dTraj();
 
 //    return base_traj;
+   return true;
 }
 
 
@@ -3076,24 +3086,24 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
         return false;
     }
 
-    Vector2d pos;
-    if (conf.robotTraj.size() > 0)
-    {
-        pos = conf.robotTraj.at(conf.robotTraj.size()-1);
-    }
-    else
-    {
-        return false;
-        pos[0] = (*conf.robotConf)[firstIndexOfRobotDof + 0];
-        pos[1] = (*conf.robotConf)[firstIndexOfRobotDof + 1];
-    }
+    //Vector2d pos;
+    //if (conf.robotTraj.size() > 0)
+    //{
+    //    pos = conf.robotTraj.at(conf.robotTraj.size()-1);
+    //}
+    //else
+    //{
+    //    return false;
+    //    pos[0] = (*conf.robotConf)[firstIndexOfRobotDof + 0];
+    //    pos[1] = (*conf.robotConf)[firstIndexOfRobotDof + 1];
+    //}
 
     double rot = angle_limit_PI((*conf.robotConf)[firstIndexOfRobotDof + 5]);
 
 
-    dockPos[0] = pos[0]-( dockingDist * cos(rot));
-    dockPos[1] = pos[1]-( dockingDist * sin(rot));
-    dockPos[2] = rot;
+    //dockPos[0] = pos[0]-( dockingDist * cos(rot));
+    //dockPos[1] = pos[1]-( dockingDist * sin(rot));
+    //dockPos[2] = rot;
 
 
     for (unsigned int i = 0; i < conf.robotTraj.size();i++)

@@ -364,7 +364,7 @@ namespace HRICS
         /**
           * create a trajectory from a configuration
           */
-        void createTrajectoryFromOutputConf(OutputConf conf);
+        bool createTrajectoryFromOutputConf(OutputConf conf);
 
         /**
           * generate a trajectory for the Arm
