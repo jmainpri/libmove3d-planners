@@ -1319,7 +1319,7 @@ std::vector<EnvCell*> EnvCell::getCrown(double min, double max)
     double maxEndX = getCoord()[0] + idMaxDist;
     if (maxEndX >= dynamic_cast<EnvGrid*>(_grid)->getNbCellX())
     {
-        maxEndX = dynamic_cast<EnvGrid*>(_grid)->getNbCellX();
+        maxEndX = dynamic_cast<EnvGrid*>(_grid)->getNbCellX()-1;
     }
 
     double maxEndY = getCoord()[1] + idMaxDist;
