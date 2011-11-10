@@ -2384,7 +2384,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 //    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanTraj2D = conf.humanTraj;
 
     loadInitConf(true,true);
-    initPR2GiveConf();
+//    initPR2GiveConf();
 
     shared_ptr<Configuration> q_cur_human(m_Human->getCurrentPos());
     shared_ptr<Configuration> q_cur_robot(_Robot->getCurrentPos());
@@ -2409,7 +2409,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
         //elimination des points etape inutile
         robotTraj2D = SmoothTrajectory(robotTraj2D);
-        for(unsigned int i =0; i < robotTraj2D.size(); i++)
+        for(unsigned int i =0; i < robotTraj2D.size() - 1 ; i++)
         {
             cout << "cell of the traj :\n" << robotTraj2D.at(i) << endl;
             double angle = 0;
@@ -2445,7 +2445,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
 //            cout << "cell to be used :\n" << robotTraj2D.at(i) << endl;
 
-            shared_ptr<Configuration> q_tmp(_Robot->getCurrentPos());
+            shared_ptr<Configuration> q_tmp(_Robot->getInitialPosition());
 
             (*q_tmp)[firstIndexOfRobotDof + 0] = robotTraj2D.at(i)[0];
             (*q_tmp)[firstIndexOfRobotDof + 1] = robotTraj2D.at(i)[1];
@@ -2471,14 +2471,14 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     {
         robotVectorConf.push_back(q_cur_robot);
     }
-//    config_namePt config;
+    config_namePt config;
     robotVectorConf.push_back(conf.robotConf);
-//    string num;
-//    stringstream out;
-//    out << id;
-//    num = out.str();
+    string num;
+    stringstream out;
+    out << id;
+    num = out.str();
 
-    //p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
+    p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
 
 
     // this part is for moving human.
@@ -2623,7 +2623,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
             cout << "cell to be keeped \n" << trajectory.at(i) << endl;
         }
     }
-    result.push_back(trajectory.at(trajectory.size()-1));
+    //result.push_back(trajectory.at(trajectory.size()-1));
     return result;
 }
 
