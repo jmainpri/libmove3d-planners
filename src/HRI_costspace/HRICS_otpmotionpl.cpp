@@ -2506,7 +2506,14 @@ void OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
         ManipulationViaConfPlanner m_viaConfPlan(robotPt);
 
         m_viaConfPlan.planTrajFromConfigArrayInRobotTheForm(smTrajs);
+        m_smTrajs.clear();
         m_smTrajs = smTrajs;
+
+
+        API::CostOptimization optimTrj(_Robot->getCurrentTraj());
+        optimTrj.runDeformation(30);
+        optimTrj.replaceP3dTraj();
+
 
 
 //        m_smtraj[0].plot();
