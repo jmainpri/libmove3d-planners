@@ -2490,7 +2490,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     out << id;
     num = out.str();
 
-    p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
+//    p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
 
 
     // this part is for moving human.
@@ -2532,11 +2532,13 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 //        base_traj.replaceP3dTraj();
 
 
+//        m_ManipPl->planNavigation(rob->ROBOT_POS, rob->ROBOT_GOTO, false ,confs, smTrajs);
+
           std::vector<SM_TRAJ> smTrajs;
 
         p3d_rob * robotPt =  _Robot->getRobotStruct();
         ManipulationViaConfPlanner m_viaConfPlan(robotPt);
-
+//
         MANIPULATION_TASK_MESSAGE msg = m_viaConfPlan.planTrajFromConfigArrayInRobotTheForm(smTrajs);
         if (msg !=  MANIPULATION_TASK_OK)
         {
@@ -2747,9 +2749,10 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
         int j = 0;
         while (t)
         {
-            if (tmp.size()-2 > 1)
+            int limitUp = tmp.size() -2;
+            if (limitUp > 1)
             {
-                int i = p3d_random_integer(1,tmp.size() - 2);
+                int i = p3d_random_integer(1,limitUp);
                 int j = p3d_random_integer(i+1,tmp.size() - 1);
                 Vector2d p1 = getRandomPointInSegment(tmp.at(i-1),tmp.at(i),errorT);
                 Vector2d p2 = getRandomPointInSegment(tmp.at(j-1),tmp.at(j),errorT);
