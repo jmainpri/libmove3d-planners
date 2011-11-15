@@ -2668,9 +2668,35 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > RemoveUn
     return tmp;
 }
 
+
+bool robotCanDoTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Robot* r,double dist)
+{
+    shared_ptr<Configuration> q_cur (r->getCurrentPos());
+    shared_ptr<Configuration> q (r->getCurrentPos());
+
+//    for (unsigned int i = 0; i < )
+
+
+    r->setAndUpdate(*q_cur);
+    return true;
+}
+
+
 std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotionPl::SmoothTrajectory(
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > trajectory)
 {
+
+    Robot* humCyl;
+    for (int i=0; i<XYZ_ENV->nr; i++)
+    {
+        string name(XYZ_ENV->robot[i]->name);
+        if(name.find("HUMCYLINDER") != string::npos )
+        {
+            humCyl = new Robot(XYZ_ENV->robot[i]);
+            break;
+        }
+    }
+
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmp;
     for (int m = 0; m < 100; m++)
     {
@@ -2754,7 +2780,11 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
                             }
                         }
                     }
-                    tmp =oldTmp;
+                    if (robotCanDoTraj(oldTmp,humCyl,m_2DGrid->getCellSize()[0]))
+                    {
+                        tmp =oldTmp;
+                    }
+
     //                tmp.at(i) = p1;
     //                std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >::iterator it;
     //                it = tmp.begin();
