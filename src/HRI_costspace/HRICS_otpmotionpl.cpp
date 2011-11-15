@@ -2758,12 +2758,12 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
                 double oldDist = computeDistFromTraj(tmp,i,j);
                 double newDist = sqrt(pow(tmp.at(i-1)[1]-p1[1],2) + pow(tmp.at(i-1)[0]-p1[0],2)) +
                                  sqrt(pow(p2[1]-p1[1],2) + pow(p2[0]-p1[0],2)) +
-                                 sqrt(pow(p2[1]-tmp.at(i+1)[1],2) + pow(p2[0]-tmp.at(i+1)[0],2));
+                                 sqrt(pow(p2[1]-tmp.at(j)[1],2) + pow(p2[0]-tmp.at(j)[0],2));
                 if (oldDist > newDist)
                 {
                     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > oldTmp;
                     bool first=true;
-                    for (unsigned int k = 0; k < tmp.size();k++)
+                    for (unsigned int k = 0; k < tmp.size() -1;k++)
                     {
 
                         if (k < i || k>= j)
