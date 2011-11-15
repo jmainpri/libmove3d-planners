@@ -2664,10 +2664,6 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > RemoveUn
 //            cout << "cell to be keeped \n" << trajectory.at(i) << endl;
         }
     }
-<<<<<<< Updated upstream
-    //result.push_back(trajectory.at(trajectory.size()-1));
-    return result;
-=======
 //    tmp.push_back(trajectory.at(trajectory.size()-1));
     return tmp;
 }
@@ -2811,7 +2807,6 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
 
 
     return tmp;
->>>>>>> Stashed changes
 }
 
 
