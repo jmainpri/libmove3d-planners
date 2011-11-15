@@ -117,6 +117,9 @@ namespace HRICS
         Eigen::Vector3d getHumanPos(){return m_humanPos;}
         Eigen::Vector3d getRobotPos(){return m_robotPos;}
 
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > getRobotTraj(){return m_2DPath;}
+        void setRobotTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj){m_2DPath = traj;}
+
         /**
           * Draws the 3D path as a yellow line for robot and green one for human
           */
@@ -376,6 +379,11 @@ namespace HRICS
           */
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > SmoothTrajectory(
                 std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > trajectory);
+        /**
+          * Generate a random point between 2 others. the errorT parameter is here
+          * to fuse 2 point if the distance between them is less then its value
+          */
+        Eigen::Vector2d getRandomPointInSegment(Eigen::Vector2d p1, Eigen::Vector2d p2, double errorT);
 
         // results functions
         /**

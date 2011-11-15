@@ -180,6 +180,20 @@ void OTPMotionPl::draw2dPath()
                             m_2DPath[i+1][0],    m_2DPath[i+1][1],    0.4,
                             Blue, NULL);
             glLineWidth(1.);
+
+            double colorvector[4];
+            colorvector[0] = 0.0;       //red
+            colorvector[1] = 0.0;       //green
+            colorvector[2] = 1.0;       //blue
+            colorvector[3] = 1;       //transparency
+
+    //        glEnable(GL_BLEND);
+            g3d_set_color(Any,colorvector);
+
+            g3d_draw_solid_sphere(m_2DPath[i][0],
+                                  m_2DPath[i][1],
+                                  0.4,
+                                  0.05, 20);
 //            cout << "\n\n cell: \n" << m_2DPath[i] << endl;
         }
     }
@@ -1671,7 +1685,7 @@ bool OTPMotionPl::newComputeOTP()
         cout << "----------" << endl << "Total time = " << m_time << " s"<< endl;
         cout << "==========" << endl;
     }
-    showBestConf();
+//    showBestConf();
     m_costVector.clear();
     return true;
 }
@@ -2409,20 +2423,18 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
         //elimination des points etape inutile
         robotTraj2D = SmoothTrajectory(robotTraj2D);
-        for(unsigned int i =0; i < robotTraj2D.size() - 1 ; i++)
+        m_2DPath = robotTraj2D;
+        conf.robotTraj = robotTraj2D;
+        for(unsigned int i =0; i < robotTraj2D.size(); i++)
         {
-            cout << "cell of the traj :\n" << robotTraj2D.at(i) << endl;
-            double angle = 0;
+//            cout << "cell of the traj :\n" << robotTraj2D.at(i) << endl;
+            double angle = (*conf.robotConf)[11];
             if ((i+1) < robotTraj2D.size())
             {
         
                 angle = atan2(
                 robotTraj2D.at(i+1)[1] - robotTraj2D.at(i)[1],
                 robotTraj2D.at(i+1)[0] - robotTraj2D.at(i)[0]);
-            }
-            else
-            {
-                angle = (*conf.robotConf)[11];
             }
 //            if (i>0)
 //            {
@@ -2599,35 +2611,243 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
    return true;
 }
 
-
-std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotionPl::SmoothTrajectory(
-        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > trajectory)
+double computeDistFromTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, int begin, int end)
 {
-    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > result;
+
+    if (end < (int)traj.size() && begin < (int)traj.size() && begin < end)
+    {
+        double dist=0;
+        for (int i = begin; i < end;i++)
+        {
+            dist += sqrt(pow(traj.at(i)[1]-traj.at(i+1)[1],2) + pow(traj.at(i)[0]-traj.at(i+1)[0],2));
+        }
+        return dist;
+    }
+    return -1;
+}
+
+std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > RemoveUnnecessaryPoint(
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > trajectory, double threshold)
+{
+    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmp;
+
+
+    tmp.clear();
     for(unsigned int i =0; i < trajectory.size() - 1; i++)
     {
         if (i>0)
         {
-            double pente =  (trajectory.at(i+1)[1] - trajectory.at(i-1)[1])/(trajectory.at(i+1)[0] - trajectory.at(i-1)[0]);
-            double cst = trajectory.at(i+1)[1] - pente*trajectory.at(i+1)[0];
-            double threshold = 0.02;
-            if (fabs(trajectory.at(i)[1] - pente*trajectory.at(i)[0] - cst) > threshold)
+            double threshold = 0.03;
+            if (trajectory.at(i+1)[0] - trajectory.at(i-1)[0] != 0)
             {
-                result.push_back(trajectory.at(i));
-                cout << "cell to be keeped \n" << trajectory.at(i) << endl;
+                double pente =  (trajectory.at(i+1)[1] - trajectory.at(i-1)[1])/(trajectory.at(i+1)[0] - trajectory.at(i-1)[0]);
+                double cst = trajectory.at(i+1)[1] - pente*trajectory.at(i+1)[0];
+
+                if (fabs(trajectory.at(i)[1] - pente*trajectory.at(i)[0] - cst) > threshold)
+                {
+                    tmp.push_back(trajectory.at(i));
+//                    cout << "cell to be keeped \n" << trajectory.at(i) << endl;
+                }
+            }
+            else
+            {
+                if (trajectory.at(i+1)[0] - trajectory.at(i)[0] > threshold)
+                {
+                    tmp.push_back(trajectory.at(i));
+//                    cout << "cell to be keeped \n" << trajectory.at(i) << endl;
+                }
             }
         }
         else
         {
-            result.push_back(trajectory.at(i));
-            cout << "cell to be keeped \n" << trajectory.at(i) << endl;
+            tmp.push_back(trajectory.at(i));
+//            cout << "cell to be keeped \n" << trajectory.at(i) << endl;
         }
     }
+<<<<<<< Updated upstream
     //result.push_back(trajectory.at(trajectory.size()-1));
     return result;
+=======
+//    tmp.push_back(trajectory.at(trajectory.size()-1));
+    return tmp;
+}
+
+std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotionPl::SmoothTrajectory(
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > trajectory)
+{
+    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmp;
+    for (int m = 0; m < 100; m++)
+    {
+
+
+        tmp.clear();
+        tmp = RemoveUnnecessaryPoint(trajectory,0.03);
+//        for(unsigned int i =0; i < trajectory.size() - 1; i++)
+//        {
+//            if (i>0)
+//            {
+//                double threshold = 0.03;
+//                if (trajectory.at(i+1)[0] - trajectory.at(i-1)[0] != 0)
+//                {
+//                    double pente =  (trajectory.at(i+1)[1] - trajectory.at(i-1)[1])/(trajectory.at(i+1)[0] - trajectory.at(i-1)[0]);
+//                    double cst = trajectory.at(i+1)[1] - pente*trajectory.at(i+1)[0];
+//
+//                    if (fabs(trajectory.at(i)[1] - pente*trajectory.at(i)[0] - cst) > threshold)
+//                    {
+//                        tmp.push_back(trajectory.at(i));
+//                        cout << "cell to be keeped \n" << trajectory.at(i) << endl;
+//                    }
+//                }
+//                else
+//                {
+//                    if (trajectory.at(i+1)[0] - trajectory.at(i)[0] > threshold)
+//                    {
+//                        tmp.push_back(trajectory.at(i));
+//                        cout << "cell to be keeped \n" << trajectory.at(i) << endl;
+//                    }
+//                }
+//            }
+//            else
+//            {
+//                tmp.push_back(trajectory.at(i));
+//                cout << "cell to be keeped \n" << trajectory.at(i) << endl;
+//            }
+//        }
+        //result.push_back(trajectory.at(trajectory.size()-1));
+
+    //
+
+
+        double errorT = 0.05;
+    //    for(unsigned int i =1; i < tmp.size() - 1; i++)
+    //    {
+        bool t = true;
+        int j = 0;
+        while (t)
+        {
+            if (tmp.size()-2 > 1)
+            {
+                int i = p3d_random_integer(1,tmp.size() - 2);
+                int j = p3d_random_integer(i+1,tmp.size() - 1);
+                Vector2d p1 = getRandomPointInSegment(tmp.at(i-1),tmp.at(i),errorT);
+                Vector2d p2 = getRandomPointInSegment(tmp.at(j-1),tmp.at(j),errorT);
+    //            double oldDist = sqrt(pow(tmp.at(i-1)[1]-tmp.at(i)[1],2) + pow(tmp.at(i-1)[0]-tmp.at(i)[0],2)) +
+    //                             sqrt(pow(tmp.at(i)[1]-tmp.at(i+1)[1],2) + pow(tmp.at(i)[0]-tmp.at(i+1)[0],2));
+                double oldDist = computeDistFromTraj(tmp,i,j);
+                double newDist = sqrt(pow(tmp.at(i-1)[1]-p1[1],2) + pow(tmp.at(i-1)[0]-p1[0],2)) +
+                                 sqrt(pow(p2[1]-p1[1],2) + pow(p2[0]-p1[0],2)) +
+                                 sqrt(pow(p2[1]-tmp.at(i+1)[1],2) + pow(p2[0]-tmp.at(i+1)[0],2));
+                if (oldDist > newDist)
+                {
+                    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > oldTmp;
+                    bool first=true;
+                    for (unsigned int k = 0; k < tmp.size();k++)
+                    {
+
+                        if (k < i || k>= j)
+                        {
+                            oldTmp.push_back(tmp.at(k));
+                        }
+                        else
+                        {
+                            if (first)
+                            {
+                                first= false;
+                                oldTmp.push_back(p1);
+                                oldTmp.push_back(p2);
+                            }
+                        }
+                    }
+                    tmp =oldTmp;
+    //                tmp.at(i) = p1;
+    //                std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >::iterator it;
+    //                it = tmp.begin();
+    //                tmp.insert(it+i+1,p2);
+                }
+            }
+            j++;
+            if (j > 100 || tmp.size() <= 3)
+            {
+                t = false;
+            }
+        }
+        tmp.push_back(trajectory.at(trajectory.size()-1));
+    }
+
+//    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > result;
+//
+//    for(unsigned int i =0; i < tmp.size() - 1; i++)
+//    {
+//        if (i>0)
+//        {
+//            double threshold = 0.05;
+//            if (tmp.at(i+1)[0] - tmp.at(i-1)[0] != 0)
+//            {
+//                double pente =  (tmp.at(i+1)[1] - tmp.at(i-1)[1])/(tmp.at(i+1)[0] - tmp.at(i-1)[0]);
+//                double cst = tmp.at(i+1)[1] - pente*tmp.at(i+1)[0];
+//
+//                if (fabs(tmp.at(i)[1] - pente*tmp.at(i)[0] - cst) > threshold)
+//                {
+//                    result.push_back(tmp.at(i));
+//                    cout << "cell to be keeped \n" << tmp.at(i) << endl;
+//                }
+//            }
+//            else
+//            {
+//                if (tmp.at(i+1)[0] - tmp.at(i)[0] > threshold)
+//                {
+//                    result.push_back(tmp.at(i));
+//                    cout << "cell to be keeped \n" << tmp.at(i) << endl;
+//                }
+//            }
+//        }
+//        else
+//        {
+//            result.push_back(tmp.at(i));
+//            cout << "cell to be keeped \n" << tmp.at(i) << endl;
+//        }
+//    }
+
+
+
+    return tmp;
+>>>>>>> Stashed changes
 }
 
 
+
+Eigen::Vector2d OTPMotionPl::getRandomPointInSegment(Eigen::Vector2d p1, Eigen::Vector2d p2, double errorT)
+{
+    double pente =  (p2[1] - p1[1])/(p2[0] - p1[0]);
+    double cst = p2[1] - pente*p2[0];
+//    double dist = sqrt(pow(p2[1]-p1[1],2) + pow(p2[0]-p1[0],2));
+    double xDist = fabs(p2[0] - p1[0]);
+    double xRand = p3d_random(0, xDist);
+    Eigen::Vector2d res;
+    double xMin = p1[0];
+    if (p2[0]<p1[0])
+    {
+        xMin = p2[0];
+    }
+    res[0] = xRand + xMin;
+    res[1] = pente*res[0] + cst;
+//    cout << "randCell:\n" << res << endl;
+
+    double dist = sqrt(pow(res[1]-p1[1],2) + pow(res[0]-p1[0],2));
+    if (dist < errorT)
+    {
+        res = p1;
+    }
+    dist = sqrt(pow(res[1]-p2[1],2) + pow(res[0]-p2[0],2));
+    if (dist < errorT)
+    {
+        res = p2;
+    }
+
+    return res;
+
+
+}
 
 bool OTPMotionPl::computeArmMotion(double* qInit, double* qGoal, API::Trajectory& traj)
 {
@@ -2950,9 +3170,9 @@ void OTPMotionPl::setVar()
 	PlanEnv->setDouble(PlanParam::env_rho,0.57);
 	PlanEnv->setDouble(PlanParam::env_sittingOffset,0.2);
 
-    ENV.setDouble(Env::Kdistance,10.0);
-    ENV.setDouble(Env::Kvisibility,35.0);
-    ENV.setDouble(Env::Kreachable,50.0);
+        ENV.setDouble(Env::Kdistance,40.0);
+        ENV.setDouble(Env::Kvisibility,35.0);
+        ENV.setDouble(Env::Kreachable,50.0);
 
 	ENV.setDouble(Env::coeffJoint,0.5);
 	ENV.setDouble(Env::coeffEnerg,1);
@@ -3071,7 +3291,7 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
     PlanEnv->setBool(PlanParam::env_isStanding,isStanding);
     PlanEnv->setDouble(PlanParam::env_objectNessecity,objectNessecity);
     //InitMhpObjectTransfert();
-    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+//    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 
     dumpVar();
     bool res = newComputeOTP();
@@ -3099,7 +3319,7 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
 
 
 
-    double dockingDist = 0.5;
+//    double dockingDist = 0.5;
     OutputConf conf = m_confList.at(id);
     if (!conf.humanConf && !conf.robotConf && conf.cost < numeric_limits<double>::max( ))
     {
@@ -3119,7 +3339,7 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
     //    pos[1] = (*conf.robotConf)[firstIndexOfRobotDof + 1];
     //}
 
-    double rot = angle_limit_PI((*conf.robotConf)[firstIndexOfRobotDof + 5]);
+//    double rot = angle_limit_PI((*conf.robotConf)[firstIndexOfRobotDof + 5]);
 
 
     //dockPos[0] = pos[0]-( dockingDist * cos(rot));
