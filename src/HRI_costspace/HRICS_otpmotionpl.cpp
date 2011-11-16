@@ -717,6 +717,11 @@ std::vector<ConfigHR> OTPMotionPl::loadFromXml(string filename)
 //			q_hum[firstIndexOfHumanDof + 2] = 1.07;
 			q_hum[firstIndexOfHumanDof + 5] = 0;
 
+                        for (unsigned int k = firstIndexOfHumanDof + 6; k < _Robot->getNumberOfActiveDoF(); k++)
+                        {
+                            q_rob[k] = angle_limit_PI(q_rob[k]);
+                        }
+
 //                        if (p3d_set_and_update_this_robot_conf_multisol(_Robot->getRobotStruct(), q_rob, NULL, 0, NULL) != TRUE)
 //                        {
 //                            cout << "ERROR: loading bad conf" << endl;
@@ -2421,6 +2426,16 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     {
             p3d_del_config(_Robot->getRobotStruct(), _Robot->getRobotStruct()->conf[0]);
     }
+
+#ifdef P3D_PLANNER
+    if( !p3d_del_graph(XYZ_GRAPH) )
+    {
+            cerr << "XYZ_GRAPH allready deleted" << endl;
+    }
+
+    cerr <<  "XYZ_GRAPH = " << XYZ_GRAPH << endl;
+
+#endif
 
     int id =0;
 
