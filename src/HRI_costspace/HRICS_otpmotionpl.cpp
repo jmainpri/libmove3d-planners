@@ -142,7 +142,7 @@ void OTPMotionPl::initAll()
     shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
     m_Human->setInitialPosition(*q_human_cur);
 
-    // Init Manipulation Planner
+//    // Init Manipulation Planner
     m_ManipPl = new ManipulationPlanner( _Robot->getRobotStruct() );
     m_ManipPlHum = new ManipulationPlanner( m_Human->getRobotStruct() );
 
@@ -1646,10 +1646,15 @@ bool OTPMotionPl::newComputeOTP()
 //    double Rzf = (*bestConf.humanConf)[firstIndexOfHumanDof + 5];
 //    setRobotsToConf(bestConf.configNumberInList,bestConf.isStandingInThisConf,xf,yf,Rzf);
 
-    if (!createTrajectoryFromOutputConf(bestConf))
+
+
+    if (PlanEnv->getBool(PlanParam::env_createTrajs))
     {
-      cout << "No trajectory computed" << endl;
-      return false;
+        if (!createTrajectoryFromOutputConf(bestConf))
+        {
+          cout << "No trajectory computed" << endl;
+          return false;
+        }
     }
 
     clock_t end = clock();
@@ -2391,6 +2396,8 @@ std::vector<ConfigHR> OTPMotionPl::getConfList()
 
 bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 {
+
+    ENV.setBool(Env::isCostSpace,false);
     vector<shared_ptr<Configuration> > robotVectorConf;
     vector<shared_ptr<Configuration> > humanVectorConf;
 
@@ -2399,7 +2406,6 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
     loadInitConf(true,true);
 //    initPR2GiveConf();
-
     shared_ptr<Configuration> q_cur_human(m_Human->getCurrentPos());
     shared_ptr<Configuration> q_cur_robot(_Robot->getCurrentPos());
 
@@ -2410,12 +2416,14 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
     int nbConf = _Robot->getRobotStruct()->nconf;
 
+
     for(int i=0 ; i<nbConf; i++)
     {
             p3d_del_config(_Robot->getRobotStruct(), _Robot->getRobotStruct()->conf[0]);
     }
 
     int id =0;
+
 
     if (robotTraj2D.size() > 1)
     {
@@ -2425,6 +2433,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
         robotTraj2D = SmoothTrajectory(robotTraj2D);
         m_2DPath = robotTraj2D;
         conf.robotTraj = robotTraj2D;
+
         for(unsigned int i =0; i < robotTraj2D.size(); i++)
         {
 //            cout << "cell of the traj :\n" << robotTraj2D.at(i) << endl;
@@ -2475,6 +2484,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 //            configPt q = p3d_get_robot_config( robot );
             configPt q = q_tmp->getConfigStruct();
 
+
             p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
 
         }
@@ -2490,7 +2500,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     out << id;
     num = out.str();
 
-//    p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
+    p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
 
 
     // this part is for moving human.
@@ -2538,6 +2548,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
         p3d_rob * robotPt =  _Robot->getRobotStruct();
         ManipulationViaConfPlanner m_viaConfPlan(robotPt);
+
 //
         MANIPULATION_TASK_MESSAGE msg = m_viaConfPlan.planTrajFromConfigArrayInRobotTheForm(smTrajs);
         if (msg !=  MANIPULATION_TASK_OK)
@@ -2610,6 +2621,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 //	base_traj.replaceP3dTraj();
 
 //    return base_traj;
+    ENV.setBool(Env::isCostSpace,true);
    return true;
 }
 
@@ -2671,14 +2683,44 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > RemoveUn
 }
 
 
-bool robotCanDoTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Robot* r,double dist)
+bool robotCanDoTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Robot* r, Robot* cur_r, double dist)
 {
+    shared_ptr<Configuration> q_cur_robot (cur_r->getCurrentPos());
+    shared_ptr<Configuration> q_robot (cur_r->getCurrentPos());
+    (*q_robot)[6] = 0;
+    (*q_robot)[7] = 0;
+    cur_r->setAndUpdate(*q_robot);
+
     shared_ptr<Configuration> q_cur (r->getCurrentPos());
     shared_ptr<Configuration> q (r->getCurrentPos());
 
-//    for (unsigned int i = 0; i < )
+    for (unsigned int i = 0; i < traj.size() -1; i++)\
+    {
+        double x1 = traj.at(i)[0];
+        double y1 = traj.at(i)[1];
+        double x2 = traj.at(i+1)[0];
+        double y2 = traj.at(i+1)[1];
 
+        double angle = atan2(y2-y1,x2-x1);
+        double segment = sqrt(pow(x1-x2,2) + pow(y1-y2,2));
 
+        for(double d = 0; d < segment; d += dist)
+        {
+            double xr = x1 + cos(angle)*d;
+            double yr = y1 + sin(angle)*d;
+            (*q)[6] = xr;
+            (*q)[7] = yr;
+            r->setAndUpdate(*q);
+            if (r->isInCollisionWithOthersAndEnv())
+            {
+                r->setAndUpdate(*q_cur);
+                cur_r->setAndUpdate(*q_cur_robot);
+                return false;
+            }
+        }
+    }
+
+    cur_r->setAndUpdate(*q_cur_robot);
     r->setAndUpdate(*q_cur);
     return true;
 }
@@ -2692,7 +2734,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
     for (int i=0; i<XYZ_ENV->nr; i++)
     {
         string name(XYZ_ENV->robot[i]->name);
-        if(name.find("HUMCYLINDER") != string::npos )
+        if(name.find("PR_2CYLINDER") != string::npos )
         {
             humCyl = new Robot(XYZ_ENV->robot[i]);
             break;
@@ -2758,7 +2800,12 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
                 Vector2d p2 = getRandomPointInSegment(tmp.at(j-1),tmp.at(j),errorT);
     //            double oldDist = sqrt(pow(tmp.at(i-1)[1]-tmp.at(i)[1],2) + pow(tmp.at(i-1)[0]-tmp.at(i)[0],2)) +
     //                             sqrt(pow(tmp.at(i)[1]-tmp.at(i+1)[1],2) + pow(tmp.at(i)[0]-tmp.at(i+1)[0],2));
-                double oldDist = computeDistFromTraj(tmp,i,j);
+                double oldDist = computeDistFromTraj(tmp,i-1,j);
+
+//                double a1 = sqrt(pow(tmp.at(i-1)[1]-p1[1],2) + pow(tmp.at(i-1)[0]-p1[0],2));
+//                double a2 = sqrt(pow(p2[1]-p1[1],2) + pow(p2[0]-p1[0],2));
+//                double a3 = sqrt(pow(p2[1]-tmp.at(j)[1],2) + pow(p2[0]-tmp.at(j)[0],2));
+//                double newDist = a1 + a2 +a3;
                 double newDist = sqrt(pow(tmp.at(i-1)[1]-p1[1],2) + pow(tmp.at(i-1)[0]-p1[0],2)) +
                                  sqrt(pow(p2[1]-p1[1],2) + pow(p2[0]-p1[0],2)) +
                                  sqrt(pow(p2[1]-tmp.at(j)[1],2) + pow(p2[0]-tmp.at(j)[0],2));
@@ -2783,7 +2830,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
                             }
                         }
                     }
-                    if (robotCanDoTraj(oldTmp,humCyl,m_2DGrid->getCellSize()[0]))
+                    if (robotCanDoTraj(oldTmp,_Robot,_Robot,m_2DGrid->getCellSize()[0]))
                     {
                         tmp =oldTmp;
                     }
@@ -2846,34 +2893,50 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
 
 Eigen::Vector2d OTPMotionPl::getRandomPointInSegment(Eigen::Vector2d p1, Eigen::Vector2d p2, double errorT)
 {
-    double pente =  (p2[1] - p1[1])/(p2[0] - p1[0]);
-    double cst = p2[1] - pente*p2[0];
-//    double dist = sqrt(pow(p2[1]-p1[1],2) + pow(p2[0]-p1[0],2));
-    double xDist = fabs(p2[0] - p1[0]);
-    double xRand = p3d_random(0, xDist);
-    Eigen::Vector2d res;
-    double xMin = p1[0];
-    if (p2[0]<p1[0])
+    if ((p2[0] - p1[0]) != 0)
     {
-        xMin = p2[0];
-    }
-    res[0] = xRand + xMin;
-    res[1] = pente*res[0] + cst;
-//    cout << "randCell:\n" << res << endl;
+        double pente =  (p2[1] - p1[1])/(p2[0] - p1[0]);
+        double cst = p2[1] - pente*p2[0];
+    //    double dist = sqrt(pow(p2[1]-p1[1],2) + pow(p2[0]-p1[0],2));
+        double xDist = fabs(p2[0] - p1[0]);
+        double xRand = p3d_random(0, xDist);
+        Eigen::Vector2d res;
+        double xMin = p1[0];
+        if (p2[0]<p1[0])
+        {
+            xMin = p2[0];
+        }
+        res[0] = xRand + xMin;
+        res[1] = pente*res[0] + cst;
+    //    cout << "randCell:\n" << res << endl;
 
-    double dist = sqrt(pow(res[1]-p1[1],2) + pow(res[0]-p1[0],2));
-    if (dist < errorT)
+        double dist = sqrt(pow(res[1]-p1[1],2) + pow(res[0]-p1[0],2));
+        if (dist < errorT)
+        {
+            res = p1;
+        }
+        dist = sqrt(pow(res[1]-p2[1],2) + pow(res[0]-p2[0],2));
+        if (dist < errorT)
+        {
+            res = p2;
+        }
+
+        return res;
+    }
+    else
     {
-        res = p1;
+        Eigen::Vector2d res;
+        res[0] = p1[0];
+        if(p2[1] > p1[1])
+        {
+            res[1] = p3d_random(p1[1],p2[1]);
+        }
+        else
+        {
+            res[1] = p3d_random(p2[1],p1[1]);
+        }
+        return res;
     }
-    dist = sqrt(pow(res[1]-p2[1],2) + pow(res[0]-p2[0],2));
-    if (dist < errorT)
-    {
-        res = p2;
-    }
-
-    return res;
-
 
 }
 
@@ -3304,7 +3367,9 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
 {
     getInputs();
     std::vector<pair<double,double> > traj;
+    PlanEnv->setBool(PlanParam::env_createTrajs,true);
     bool result = getOtp(humanName,dockPos,traj,handConf,isStanding,objectNessecity);
+    PlanEnv->setBool(PlanParam::env_createTrajs,false);
     smTraj = m_smTrajs;
 //    smTraj[0].plot();
     return result;
