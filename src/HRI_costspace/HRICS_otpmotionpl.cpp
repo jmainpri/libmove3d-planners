@@ -1415,7 +1415,7 @@ Vector3d OTPMotionPl::getRandomPoints(double id)
 bool OTPMotionPl::newComputeOTP()
 {
     clock_t start = clock();
-//    getInputs();
+    getInputs();
 //    m_2DGrid->init(computeHumanRobotDist());
 //    m_2DGrid->initGrid(m_humanPos);
     if (!PlanEnv->getBool(PlanParam::env_normalRand) && ! PlanEnv->getBool(PlanParam::env_useAllGrid))
@@ -1428,8 +1428,10 @@ bool OTPMotionPl::newComputeOTP()
     m_costVector.clear();
     clock_t gridInit = clock();
 
-    bool isStanding = m_isStanding;
-    double objectNecessity = m_mobility;
+    //bool isStanding = m_isStanding;
+    //double objectNecessity = m_mobility;
+    bool isStanding = PlanEnv->getBool(PlanParam::env_isStanding);
+    double objectNecessity = PlanEnv->getDouble(PlanParam::env_objectNessecity);
     bool m_showText = PlanEnv->getBool(PlanParam::env_showText);
     double timeLimitation = PlanEnv->getDouble(PlanParam::env_timeLimitation);
     double dumpTime = PlanEnv->getDouble(PlanParam::env_timeToDump);
