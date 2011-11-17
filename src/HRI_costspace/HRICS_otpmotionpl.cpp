@@ -1047,8 +1047,6 @@ void OTPMotionPl::getInputs()
         (*q_human_cur)[firstIndexOfHumanDof + 0] = (*visball->getCurrentPos())[6];
         (*q_human_cur)[firstIndexOfHumanDof + 1] = (*visball->getCurrentPos())[7];
         (*q_human_cur)[firstIndexOfHumanDof + 5] = angle_limit_PI((*visball->getCurrentPos())[11]);
-        m_Human->setAndUpdate(*q_human_cur);
-        saveInitConf();
     }
 
 
@@ -2845,7 +2843,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
                             }
                         }
                     }
-                    if (robotCanDoTraj(oldTmp,_Robot,_Robot,m_2DGrid->getCellSize()[0]))
+                    if (robotCanDoTraj(oldTmp,humCyl,_Robot,m_2DGrid->getCellSize()[0]))
                     {
                         tmp =oldTmp;
                     }
@@ -2865,6 +2863,10 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
         tmp.push_back(trajectory.at(trajectory.size()-1));
     }
 
+    for (unsigned int m = 0; m < tmp.size(); m++)
+    {
+        cout << "cells :\n" << tmp.at(m) << endl;
+    } 
 //    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > result;
 //
 //    for(unsigned int i =0; i < tmp.size() - 1; i++)
@@ -3466,7 +3468,7 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
 
     handConf = conf.robotConf->getConfigStruct();
     handConf[11] = angle_limit_PI(handConf[11]);
-
+    ENV.setBool(Env::isCostSpace,false);
     return true;
 
 
