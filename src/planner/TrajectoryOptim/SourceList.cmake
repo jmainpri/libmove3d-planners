@@ -7,6 +7,8 @@ IF(MULTILOCALPATH)
 BM3D_SRC_SUBDIR_PROCESS(trajectoryOptim.cpp)
 ENDIF()
 
+BM3D_SRC_SUBDIR_PROCESS(plannarTrajectorySmoothing.cpp)
+
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Classic/SourceList.cmake)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Chomp/SourceList.cmake)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Stomp/SourceList.cmake)

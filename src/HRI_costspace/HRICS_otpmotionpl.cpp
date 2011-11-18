@@ -2809,8 +2809,8 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > OTPMotio
             int limitUp = tmp.size() -2;
             if (limitUp > 1)
             {
-                int i = p3d_random_integer(1,limitUp);
-                int j = p3d_random_integer(i+1,tmp.size() - 1);
+                unsigned int i = p3d_random_integer(1,limitUp);
+                unsigned int j = p3d_random_integer(i+1,tmp.size() - 1);
                 Vector2d p1 = getRandomPointInSegment(tmp.at(i-1),tmp.at(i),errorT);
                 Vector2d p2 = getRandomPointInSegment(tmp.at(j-1),tmp.at(j),errorT);
     //            double oldDist = sqrt(pow(tmp.at(i-1)[1]-tmp.at(i)[1],2) + pow(tmp.at(i-1)[0]-tmp.at(i)[0],2)) +
