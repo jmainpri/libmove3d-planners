@@ -478,10 +478,16 @@ void CollisionSpace::addAllPointsToField()
           mov_obst->getName().find( "HUMAN" ) == string::npos ) 
     {
       Joint* jnt = mov_obst->getJoint(1);
+      
+      if( jnt->getJointStruct()->o == NULL)
+        continue;
+      
       PointCloud& cloud = m_sampler->getPointCloud( jnt->getJointStruct()->o );
       
-      for (unsigned int j=0; j<cloud.size(); j++) 
-      { points.push_back( jnt->getMatrixPos()*cloud[j] ); }
+      for ( int j=0; j<int(cloud.size()); j++) 
+      { 
+        points.push_back( jnt->getMatrixPos()*cloud[j] ); 
+      }
     }
   }
   
@@ -628,7 +634,7 @@ bool CollisionSpace::isRobotColliding(double& dist) const
         points[j].m_is_colliding = true;
         
         // Hack!!!
-        //if ( points[j].getSegmentNumber() > 1 ) 
+        if ( points[j].getSegmentNumber() > 1 ) 
         {
           isRobotColliding = true;
         }
