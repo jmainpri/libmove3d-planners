@@ -159,7 +159,8 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
   // Removes graph if it exists
   delete_graph( GraphPt );
     
-  Graph* graph = 	API_activeGraph =  new Graph(rob,GraphPt);
+  // Creates a new graph
+  Graph* graph = 	API_activeGraph =  new Graph(rob,NULL);
   
   // Allocate RRT
   RRT* rrt = allocate_RRT(rob,graph);
@@ -258,13 +259,19 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
     robotPt->tcur = result;
     char trajName[] = "Specific";
 		g3d_add_traj( trajName , runNum ,robotPt , robotPt->tcur );
+    
+    // Prevent segfault if p3d graph deleted outside
     delete traj;
+    
     return result;
   }
   else 
   {
+    cout << __FILE__ << " , " << __func__ << " : No traj found" << endl;
     rob->getRobotStruct()->tcur = NULL;
-		cout << __FILE__ << " , " << __func__ << " : No traj found" << endl;
+    if( graph == API_activeGraph ) API_activeGraph = NULL;
+    delete graph;
+    
     return NULL;
   }
 }
