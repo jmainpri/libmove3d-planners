@@ -631,7 +631,8 @@ void g3d_draw_hrics(int opengl_context)
 
     if (PlanEnv->getBool(PlanParam::env_drawHumanModel))
     {
-        Eigen::Vector3d humanPos = dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getHumanPos();
+
+        std::vector<double> humanPos = dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getHumanPos();
 
         double height = 2;
 

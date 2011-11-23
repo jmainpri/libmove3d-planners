@@ -20,7 +20,11 @@
 #include "Grid/HRICS_TwoDGrid.hpp"
 
 #include "LightPlanner-pkg.h"
+#include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
 
+
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+#include <Eigen/Core>
 #include <Eigen/StdVector>
 
 extern void g3d_show_tcur_both_rob(p3d_rob *robotPt, int (*fct)(p3d_rob* robot, p3d_localpath* curLp),
@@ -96,6 +100,9 @@ namespace HRICS
     {
 
     public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+
         OTPMotionPl();
         OTPMotionPl(Robot* R, Robot* H);
 
@@ -114,7 +121,7 @@ namespace HRICS
 
         void clearOTPList() { m_OTPList.clear(); }
 
-        Eigen::Vector3d getHumanPos(){return m_humanPos;}
+        std::vector<double> getHumanPos(){return m_humanPos;}
         Eigen::Vector3d getRobotPos(){return m_robotPos;}
 
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > getRobotTraj(){return m_2DPath;}
@@ -377,13 +384,28 @@ namespace HRICS
         /**
           * generate a smoothed 2D traj
           */
-        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > SmoothTrajectory(
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > smoothTrajectory(
                 std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > trajectory);
+
         /**
-          * Generate a random point between 2 others. the errorT parameter is here
-          * to fuse 2 point if the distance between them is less then its value
+          * test if current traj is feasable
           */
-        Eigen::Vector2d getRandomPointInSegment(Eigen::Vector2d p1, Eigen::Vector2d p2, double errorT);
+        bool testCurrentTraj();
+
+        /**
+          * init the class to begin testing
+          */
+        void initTrajTest();
+
+        /**
+          * planning using planNavigation
+          */
+        void navigate();
+
+        /**
+          * go to the next position of the cylinder
+          */
+        void goToNextStep();
 
         // results functions
         /**
@@ -593,9 +615,15 @@ namespace HRICS
         std::vector<SM_TRAJ> m_smTrajs;
 
         /**
+          * an object to compute 2d trajectory
+          */
+        PlannarTrajectorySmoothing* m_pts;
+
+        /**
           * inputs for computing OTP
           */
-        Eigen::Vector3d m_humanPos;
+//        Eigen::Vector3d m_humanPos;
+        std::vector<double> m_humanPos;
         Eigen::Vector3d m_robotPos;
         bool m_isStanding;
         double m_mobility;

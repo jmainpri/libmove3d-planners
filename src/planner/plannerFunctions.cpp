@@ -60,14 +60,26 @@ void delete_graph( p3d_graph* &G )
 {
   if (API_activeGraph) 
   {
+    p3d_graph* graph =  API_activeGraph->getRobot()->getRobotStruct()->GRAPH;
+
     delete API_activeGraph;
     API_activeGraph = NULL;
     cerr << "Delete C++ API Graph" << endl;
+
+    if(graph!=G)
+    {
+        if(!p3d_del_graph(G))
+        {
+            cerr << "Graph allready deleded" << endl;
+        }
+    }
   }
-  
-  if( !p3d_del_graph(G) ) 
+  else
   {
-    cerr << "Graph allready deleded" << endl;
+      if(!p3d_del_graph(G))
+      {
+          cerr << "Graph allready deleded" << endl;
+      }
   }
   
   G = NULL;
@@ -160,7 +172,8 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
   delete_graph( GraphPt );
     
   // Creates a new graph
-  Graph* graph = 	API_activeGraph =  new Graph(rob,NULL);
+  //Graph* graph = 	API_activeGraph =  new Graph(rob,NULL);
+  Graph* graph = API_activeGraph =  new Graph(rob,GraphPt);
   
   // Allocate RRT
   RRT* rrt = allocate_RRT(rob,graph);
