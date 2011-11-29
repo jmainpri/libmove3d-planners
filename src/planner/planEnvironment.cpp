@@ -142,15 +142,15 @@ void initPlannerParameters()
         myIntMap.insert(std::make_pair( PlanParam::nb_pointsOnTraj,              new intContainer(15)));
   
         // Object TransfertPoint variable
-        myIntMap.insert(std::make_pair( PlanParam::env_maxIter,                  new intContainer(100)));
+        myIntMap.insert(std::make_pair( PlanParam::env_maxIter,                  new intContainer(400)));
         myIntMap.insert(std::make_pair( PlanParam::env_nbRandomRotOnly,          new intContainer(10)));
         myIntMap.insert(std::make_pair( PlanParam::env_nbSittingRotation,        new intContainer(500)));
-        myIntMap.insert(std::make_pair( PlanParam::env_totMaxIter,               new intContainer(400)));
+        myIntMap.insert(std::make_pair( PlanParam::env_totMaxIter,               new intContainer(2000)));
 
         myIntMap.insert(std::make_pair( PlanParam::env_xToDraw,                  new intContainer(-1)));
         myIntMap.insert(std::make_pair( PlanParam::env_yToDraw,                  new intContainer(-1)));
         myIntMap.insert(std::make_pair( PlanParam::env_timeShow,                 new intContainer(2)));
-        myIntMap.insert(std::make_pair( PlanParam::env_pow,                      new intContainer(2)));
+        myIntMap.insert(std::make_pair( PlanParam::env_pow,                      new intContainer(4)));
         myIntMap.insert(std::make_pair( PlanParam::env_MOTP,                     new intContainer(20)));
 
         // Double
@@ -179,18 +179,18 @@ void initPlannerParameters()
         myDoubleMap.insert( std::make_pair( PlanParam::env_timeStamp,            new doubleContainer(0.35)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_psi,                  new doubleContainer(0.99)));
 
-        myDoubleMap.insert( std::make_pair( PlanParam::env_delta,                new doubleContainer(0.01)));
-        myDoubleMap.insert( std::make_pair( PlanParam::env_ksi,                  new doubleContainer(0.43)));
+        myDoubleMap.insert( std::make_pair( PlanParam::env_delta,                new doubleContainer(0.21)));
+        myDoubleMap.insert( std::make_pair( PlanParam::env_ksi,                  new doubleContainer(0.73)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_rho,                  new doubleContainer(0.57)));
-        myDoubleMap.insert( std::make_pair( PlanParam::env_objectNessecity,      new doubleContainer(0.9)));
+        myDoubleMap.insert( std::make_pair( PlanParam::env_objectNessecity,      new doubleContainer(0.1)));
 
         myDoubleMap.insert( std::make_pair( PlanParam::env_sittingOffset,        new doubleContainer(0.2)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_limitRot,             new doubleContainer(M_PI/3)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_Cellsize,             new doubleContainer(0.2)));
-        myDoubleMap.insert( std::make_pair( PlanParam::env_timeLimitation,       new doubleContainer(0.5)));
+        myDoubleMap.insert( std::make_pair( PlanParam::env_timeLimitation,       new doubleContainer(1.0)));
 
         myDoubleMap.insert( std::make_pair( PlanParam::env_sitTimeLimitation,    new doubleContainer(0.2)));
-        myDoubleMap.insert( std::make_pair( PlanParam::env_timeToDump,           new doubleContainer(0.002)));
+        myDoubleMap.insert( std::make_pair( PlanParam::env_timeToDump,           new doubleContainer(0)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_futurX,               new doubleContainer(0)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_futurY,               new doubleContainer(0)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_futurRZ,              new doubleContainer(0)));

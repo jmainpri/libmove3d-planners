@@ -208,8 +208,8 @@ bool traj_optim_generate_softMotion()
 //  std::vector < int >&lp 
 //  std::vector < std::vector <double > > &positions
 //  SM_TRAJ & smTraj
-  
   p3d_convert_traj_to_softMotion(m_robot->getRobotStruct()->tcur, 
+                                 ENV.getBool(Env::smoothSoftMotionTraj),
                                  true, 
                                  false, 
                                  confs.first, confs.second, smTraj);

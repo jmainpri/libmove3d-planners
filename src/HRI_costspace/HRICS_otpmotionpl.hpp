@@ -377,11 +377,6 @@ namespace HRICS
         bool createTrajectoryFromOutputConf(OutputConf conf);
 
         /**
-          * generate a trajectory for the Arm
-          */
-        bool computeArmMotion(double* qInit, double* qGoal, API::Trajectory& traj);
-
-        /**
           * generate a smoothed 2D traj
           */
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > smoothTrajectory(

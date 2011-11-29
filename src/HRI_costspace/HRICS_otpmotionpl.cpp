@@ -1638,22 +1638,15 @@ bool OTPMotionPl::newComputeOTP()
     {
         m_multipliComputeCostVector.push_back(m_costVector);
     }
+    else
+    {
+                cout << "--------------------------------------" << endl << "End of OTP search" << endl << "--------------------------------------" << endl;
+
+    }
 
 
     sort(m_confList.begin(),m_confList.end(),OutputConfSortObj);
-    if (m_showText)
-    {
-        cout.clear(ios_base::goodbit);
-        cout.flush();
-        cout << "--------------------------------------" << endl << "End of OTP search" << endl << "--------------------------------------" << endl;
-        cout << "Number of tested configuration = " << id << endl;
-        cout << "Number of solutions found = " << m_confList.size() << endl;
-        cout << "Success rate = " << (double)m_confList.size() / (double)id << endl;
-    //    bestConf.humanConf->print();
-    //    bestConf.robotConf->print();
-    //    cout << "the choosed conf id is : " << bestConf.id << endl;
-        cout << "the choosed configuration cost is : " << bestConf.cost << endl;
-    }
+
 
     // trajectory
 
@@ -1705,14 +1698,22 @@ bool OTPMotionPl::newComputeOTP()
     m_multipleData.push_back(id);
     m_multipleData.push_back(m_confList.size());
 
+
     if (m_showText)
     {
-        cout << "==========" << endl <<"time elapsed to : " << endl;
+        cout.clear(ios_base::goodbit);
+        cout.flush();
+        cout << "==========" << endl;
+        cout << "Number of tested configuration = " << id << endl;
+        cout << "Number of solutions found = " << m_confList.size() << endl;
+        cout << "Success rate = " << (double)m_confList.size() / (double)id << endl;
+        cout << "the choosed configuration cost is : " << bestConf.cost << endl;
+        cout << "----------" << endl <<"time elapsed to : " << endl;
         cout << "init grid = " << tInitGrid << " s"<< endl;
         cout << "init variable = " << tFirst << " s"<< endl;
         cout << "look for the first conf = " << tFirst << " s"<< endl;
         cout << "pass the loop = " << ((double)endLoop - firstConfs) / CLOCKS_PER_SEC << " s"<< endl;
-        cout << "end the function = " << ((double)end - endLoop) / CLOCKS_PER_SEC << " s"<< endl;
+        cout << "computing trajectory = " << ((double)end - endLoop) / CLOCKS_PER_SEC << " s"<< endl;
         cout << "----------" << endl << "Total time = " << m_time << " s"<< endl;
         cout << "==========" << endl;
     }
@@ -2435,18 +2436,20 @@ std::vector<ConfigHR> OTPMotionPl::getConfList()
 bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 {
 
+    clock_t start = clock();
+
+
+
     ENV.setBool(Env::isCostSpace,false);
 
     m_ManipPl->setNavigationPlanner();
     ENV.setInt(Env::NbTry,2);
-    vector<shared_ptr<Configuration> > robotVectorConf;
 //    vector<shared_ptr<Configuration> > humanVectorConf;
 
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > robotTraj2D = conf.robotTraj;
 //    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanTraj2D = conf.humanTraj;
 
     loadInitConf(true,true);
-//    initPR2GiveConf();
 //    shared_ptr<Configuration> q_cur_human(m_Human->getCurrentPos());
     shared_ptr<Configuration> q_cur_robot(_Robot->getCurrentPos());
 
@@ -2475,59 +2478,29 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
     int id =0;
 
-
+    clock_t beginCreate = clock();
     if (robotTraj2D.size() > 1)
     {
 //        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmpRobotTraj2D;
 
-        //elimination des points etape inutile
+
         robotTraj2D = m_pts->smoothTrajectory(_Robot,robotTraj2D);
         std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > robotTraj3D = m_pts->add3Dim(robotTraj2D,_Robot,0.05);
         m_2DPath = robotTraj2D;
         conf.robotTraj = robotTraj2D;
 
-        cout << "############### traj cells #############" << endl;
+
         for(unsigned int i =0; i < robotTraj3D.size(); i++)
         {
-//            cout << "cell of the traj :\n" << robotTraj2D.at(i) << endl;
-//            double angle = (*conf.robotConf)[11];
-//            if ((i+1) < robotTraj2D.size())
-//            {
-//
-//                angle = atan2(
-//                robotTraj2D.at(i+1)[1] - robotTraj2D.at(i)[1],
-//                robotTraj2D.at(i+1)[0] - robotTraj2D.at(i)[0]);
-//            }
-//            if (i>0)
-//            {
-//                double pente =  (robotTraj2D.at(i+1)[1] - robotTraj2D.at(i-1)[1])/(robotTraj2D.at(i+1)[0] - robotTraj2D.at(i-1)[0]);
-//                double cst = robotTraj2D.at(i+1)[1] - pente*robotTraj2D.at(i+1)[0];
-//                double threshold = 0.02;
-//                if (fabs(robotTraj2D.at(i)[1] - pente*robotTraj2D.at(i)[0] - cst) < threshold)
-//                {
-//                    cout << "\n   cell not to be used :\n" << robotTraj2D.at(i) << endl <<endl;
-//                    continue;
-//                }
-////                double oldAngle = atan2(
-////                        robotTraj2D.at(i)[1] - robotTraj2D.at(i-1)[1],
-////                        robotTraj2D.at(i)[0] - robotTraj2D.at(i-1)[0]);
-////                if (angle==oldAngle)
-////                {
-////                    continue;
-////                }
-//            }
-
-//            cout << "cell to be used :\n" << robotTraj2D.at(i) << endl;
 
             shared_ptr<Configuration> q_tmp(_Robot->getInitialPosition());
+            shared_ptr<Configuration> q_cur(_Robot->getInitialPosition());
 
-            cout << "cell nb: " << i << " coord =\n"<< robotTraj3D.at(i) << endl;
+//            cout << "cell nb: " << i << " coord =\n"<< robotTraj3D.at(i) << endl;
 
             (*q_tmp)[firstIndexOfRobotDof + 0] = robotTraj3D.at(i)[0];
             (*q_tmp)[firstIndexOfRobotDof + 1] = robotTraj3D.at(i)[1];
             (*q_tmp)[firstIndexOfRobotDof + 5] = angle_limit_PI(robotTraj3D.at(i)[2]);
-
-            robotVectorConf.push_back(q_tmp);
 
             config_namePt config;
             string num;
@@ -2535,28 +2508,42 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
             out << id++;
             num = out.str();
 
-//            p3d_rob* robot = p3d_get_robot_by_name(global_ActiveRobotName.c_str());
-//            configPt q = p3d_get_robot_config( robot );
-            configPt q = q_tmp->getConfigStruct();
+            if (i == robotTraj3D.size()-1)
+            {
+//                (*q_tmp)[firstIndexOfRobotDof + 0] = conf.robotConf->getConfigStruct()[firstIndexOfRobotDof + 0];
+//                (*q_tmp)[firstIndexOfRobotDof + 1] = conf.robotConf->getConfigStruct()[firstIndexOfRobotDof + 1];
+//                configPt q = q_tmp->getConfigStruct();
+//                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
+//                out << id++;
+//                num = out.str();
+                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
+            }
+            else if (i == 0)
+            {
+                configPt q = m_savedConf.robotConf->getConfigStruct();
+                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
+                out << id++;
+                num = out.str();
+                q = q_tmp->getConfigStruct();
+                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
+            }
+            else
+            {
+                configPt q = q_tmp->getConfigStruct();
+                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
+            }
 
-
-            p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
 
         }
-        cout << "############### end traj cells #############" << endl;
     }
-    else
-    {
-        robotVectorConf.push_back(q_cur_robot);
-    }
-    config_namePt config;
-    robotVectorConf.push_back(conf.robotConf);
-    string num;
-    stringstream out;
-    out << id;
-    num = out.str();
-
-    p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
+    clock_t endAddingConfs = clock();
+//    config_namePt config;
+//    string num;
+//    stringstream out;
+//    out << id;
+//    num = out.str();
+//
+//    p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
 
 
     // this part is for moving human.
@@ -2587,20 +2574,9 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
 
 
-
+    clock_t beginSoftmotion = clock();
     if (robotTraj2D.size() > 1)
     {
-//        p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
-//        p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPl->getBaseMLP(), 1, false);
-//
-//        //////////////////
-//        API::Trajectory base_traj(robotVectorConf);
-//        base_traj.replaceP3dTraj();
-
-
-//        m_ManipPl->planNavigation(rob->ROBOT_POS, rob->ROBOT_GOTO, false ,confs, smTrajs);
-
-        clock_t start = clock();
         vector<SM_TRAJ> smTrajs;
 
         p3d_rob * robotPt =  _Robot->getRobotStruct();
@@ -2620,20 +2596,25 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
         m_smTrajs.clear();
         m_smTrajs = smTrajs;
 
-        clock_t end = clock();
-
-        cout << "time of via conf planner : "<<((double)end - start) / CLOCKS_PER_SEC << " s" << endl;
 
 
-        //API::CostOptimization optimTrj(_Robot->getCurrentTraj());
-        //optimTrj.runDeformation(30);
-        //optimTrj.replaceP3dTraj();
-
-
-
-//        m_smtraj[0].plot();
 
     }
+    clock_t end = clock();
+
+    double initCreateTrajTime = ((double)beginCreate - start) / CLOCKS_PER_SEC;
+    double smoothCreateTrajTime = ((double)endAddingConfs - beginCreate) / CLOCKS_PER_SEC;
+    double softMotionCreateTrajTime = ((double)end - beginSoftmotion) / CLOCKS_PER_SEC;
+
+    if (PlanEnv->getBool(PlanParam::env_showText))
+    {
+        cout << "----------" << endl <<"time elapsed to : " << endl;
+        cout << "init create traj = " << initCreateTrajTime << " s"<< endl;
+        cout << "smooth 2D traj = " << smoothCreateTrajTime << " s"<< endl;
+        cout << "create traj with rrt, concatenete them and use softmotion = " << softMotionCreateTrajTime << " s"<< endl;
+        cout << "----------" << endl;
+    }
+
 
     // this part is for moving human.
 //    if (humanTraj2D.size() > 1)
@@ -2675,17 +2656,14 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 //    q_cur->print();
 //    qGoal->print();
 
-//    if( this->computeArmMotion(   q_cur->getConfigStruct(),
-//                                  qGoal->getConfigStruct(),
-//                                  arm_traj ) )
-//    {
-//        cout << "Concat traj ..." << endl;
-//       base_traj.concat( arm_traj );
-//    }
+
 
 //	base_traj.replaceP3dTraj();
 
 //    return base_traj;
+
+
+
     ENV.setBool(Env::isCostSpace,true);
    return true;
 }
@@ -2772,91 +2750,6 @@ void OTPMotionPl::initTrajTest()
 void OTPMotionPl::goToNextStep()
 {
     m_pts->goToNextStep();
-}
-
-
-bool OTPMotionPl::computeArmMotion(double* qInit, double* qGoal, API::Trajectory& traj)
-{
-	MANIPULATION_TASK_TYPE_STR type = ARM_FREE;
-
-	bool succeed = false;
-
-	std::vector <MANPIPULATION_TRAJECTORY_CONF_STR> confs;
-	std::vector <SM_TRAJ> smTrajs;
-	std::vector <p3d_traj*> trajs;
-
-	string OBJECT_NAME = "GREY_TAPE";
-
-	vector<double> objGoto,objStart;
-
-	objGoto.resize(6);
-//    m_objGoto[0] = 4.23;
-//    m_objGoto[1] = -2.22;
-//    m_objGoto[2] = 1.00;
-
-    objGoto[0] = P3D_HUGE;
-    objGoto[1] = P3D_HUGE;
-    objGoto[2] = P3D_HUGE;
-
-    objGoto[3] = P3D_HUGE;
-    objGoto[4] = P3D_HUGE;
-    objGoto[5] = P3D_HUGE;
-
-	cout << "Manipulation planning for " << OBJECT_NAME << endl;
-	MANIPULATION_TASK_MESSAGE status;
-	string str = m_ManipPl->robot()->name;
-
-	if( str == "PR2_ROBOT" )
-	{
-		fixAllJointsWithoutArm(m_ManipPl->robot(),0);
-	}
-
-	switch ( (unsigned int) m_ManipPl->robot()->lpl_type )
-	{
-	case LINEAR :
-		{
-			gpGrasp grasp;
-			status = m_ManipPl->armPlanTask(type,0,qInit,qGoal, objStart, objGoto,
-												 /* m_OBJECT_NAME.c_str() */ "", "", (char*)"", grasp, trajs);
-
-			if(status == MANIPULATION_TASK_OK )
-			{
-				m_ManipPl->robot()->tcur = p3d_create_traj_by_copy(trajs[0]);
-
-				for(unsigned int i = 1; i < trajs.size(); i++){
-					p3d_concat_traj(m_ManipPl->robot()->tcur, trajs[i]);
-				}
-
-				//m_manipulation->setRobotPath(m_manipulation->robot()->tcur);
-			}
-			break;
-		}
-
-	case MULTI_LOCALPATH : {
-			gpGrasp grasp;
-			status = m_ManipPl->armPlanTask(type,0,qInit,qGoal, objStart, objGoto,
-							 /*m_OBJECT_NAME.c_str()*/ "", "", (char*)"", grasp, confs, smTrajs);
-			break;
-		}
-
-	case SOFT_MOTION:{
-			cout << "Manipulation : localpath softmotion should not be called" << endl;
-			succeed = false;
-			break;
-		}
-	}
-
-	if (status != MANIPULATION_TASK_OK )
-	{ succeed = false; }
-	else
-	{ succeed = true; }
-
-	if( succeed )
-	{
-		traj = API::Trajectory( _Robot, m_ManipPl->robot()->tcur );
-	}
-
-	return succeed;
 }
 
 std::pair<double,double> OTPMotionPl::computeHumanRobotDist()
@@ -3045,6 +2938,7 @@ void OTPMotionPl::dumpVar()
 	cout << " sleeping time  = " << PlanEnv->getInt(PlanParam::env_timeShow) << endl;
 	cout << " maxIter = " << PlanEnv->getInt(PlanParam::env_maxIter)<< endl;
 	cout << " totMaxIter = " <<PlanEnv->getInt(PlanParam::env_totMaxIter) << endl;
+        cout << " timeMax = " <<PlanEnv->getDouble(PlanParam::env_timeLimitation) << endl;
 	cout << " nbRotation = " <<PlanEnv->getInt(PlanParam::env_nbRandomRotOnly) << endl;
 	cout << " nb sitting Rotation = " <<PlanEnv->getInt(PlanParam::env_nbSittingRotation) << endl;
 	cout << " robotSpeed = " << PlanEnv->getDouble(PlanParam::env_robotSpeed)<< endl;
@@ -3080,10 +2974,11 @@ void OTPMotionPl::setVar()
     PlanEnv->setDouble(PlanParam::env_Cellsize,0.20);
     PlanEnv->setInt(PlanParam::env_nbSittingRotation,300);
 
-    PlanEnv->setInt(PlanParam::env_pow,2);
+    PlanEnv->setInt(PlanParam::env_pow,4);
     PlanEnv->setInt(PlanParam::env_timeShow,0);
-    PlanEnv->setInt(PlanParam::env_maxIter,100);
-    PlanEnv->setInt(PlanParam::env_totMaxIter,400);
+    PlanEnv->setInt(PlanParam::env_maxIter,400);
+    PlanEnv->setInt(PlanParam::env_totMaxIter,2000);
+    PlanEnv->setDouble(PlanParam::env_timeLimitation,1.0);
     PlanEnv->setInt(PlanParam::env_nbRandomRotOnly,50);
     PlanEnv->setInt(PlanParam::env_nbSittingRotation,300);
     PlanEnv->setDouble(PlanParam::env_robotSpeed,1.0);
@@ -3091,8 +2986,8 @@ void OTPMotionPl::setVar()
     PlanEnv->setDouble(PlanParam::env_timeStamp,0.35);
 
     PlanEnv->setDouble(PlanParam::env_psi,0.99);
-    PlanEnv->setDouble(PlanParam::env_delta,0.01);
-    PlanEnv->setDouble(PlanParam::env_ksi,0.43);
+    PlanEnv->setDouble(PlanParam::env_delta,0.21);
+    PlanEnv->setDouble(PlanParam::env_ksi,0.73);
     PlanEnv->setDouble(PlanParam::env_rho,0.57);
     PlanEnv->setDouble(PlanParam::env_sittingOffset,0.2);
 
