@@ -701,8 +701,8 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
     Robot* r_Cost( global_Project->getActiveScene()->getRobotByName(costRobot->name) );
     Configuration	q_Cost(r_Cost,cost_q);
     
-    std::cout << "Cost for " << r_Cost->getName() << " = " 
-    << global_costSpace->cost(q_Cost) << std::endl;
+//    std::cout << "Cost for " << r_Cost->getName() << " = "
+//    << global_costSpace->cost(q_Cost) << std::endl;
   }
   
   if( global_collisionSpace )
