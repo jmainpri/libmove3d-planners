@@ -6,6 +6,7 @@ BM3D_SRC_SUBDIR_PROCESS(
 
 testModel.cpp
 SaveContext.cpp
+ConfGenerator.cpp
 
 )
 
