@@ -251,8 +251,8 @@ namespace stomp_motion_planner
           differentiation_matrices_[d](i,index) = multiplier * DIFF_RULES[d][j+DIFF_RULE_LENGTH/2];
         }
       }
-      //cout << "differentiation_matrices_["<<d<<"] = " << endl 
-      //<< differentiation_matrices_[d] << endl ;
+      cout << "differentiation_matrices_["<<d<<"] = " << endl 
+      << differentiation_matrices_[d] << endl ;
     }
   }
   

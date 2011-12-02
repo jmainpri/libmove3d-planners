@@ -305,6 +305,8 @@ void Graph::saveBGLGraphToDotFile(const std::string& filename)
 //----------------------------------------------
 Graph::~Graph()
 {
+  API_activeGraph = NULL;
+  
 	if( graph_debug_import_export )
 	{
 		cout << "Graph::~Graph() => Deleting graph" << endl;

@@ -78,6 +78,11 @@ public:
 	 */
 	void            setJointDof(int ithDoF, double value);
   
+  /** 
+   * Set ff from Eigen::Transform
+   */
+  bool            setFreeFlyerFromMatrix( const Eigen::Transform3d& T );
+  
   /**
 	 * True if Joint Dof is user
 	 */

@@ -434,12 +434,16 @@ shared_ptr<Configuration> Robot::shootDir(bool samplePassive)
  * Returns false if does not respect the 
  * constraints
  */
-int Robot::setAndUpdate(Configuration& q)
+int Robot::setAndUpdate(Configuration& q, bool withoutFreeFlyers)
 {
   if(q.getConfigStruct() == NULL)
     return false;
     
-  p3d_set_robot_config(_Robot, q.getConfigStruct());
+  if (!withoutFreeFlyers) {
+    p3d_set_robot_config(_Robot, q.getConfigStruct());
+  }else {
+    p3d_set_robot_config_without_free_flyers(_Robot, q.getConfigStruct());
+  }
   return p3d_update_this_robot_pos(_Robot);
 }
 

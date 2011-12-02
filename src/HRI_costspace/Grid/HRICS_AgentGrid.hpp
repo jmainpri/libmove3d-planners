@@ -37,10 +37,12 @@ namespace HRICS
     double getDistance() { return m_Distance; }
     double getVisibility() { return m_Visiblity; }
     double getReachability() { return m_Reachability; }
+    double getCombined() { return m_Combined; }
 
     void computeDistance();
     void computeVisibility();
 		void computeReachability();
+    void computeCombined();
 
 		void resetReachable();
 		bool getIsLeftArmReachable();
@@ -77,6 +79,8 @@ namespace HRICS
 		void setClosed() { m_Closed = true; }
 		
 	private:
+    
+    double radius;
 		
     Eigen::Vector3d m_Center;
 		Eigen::Vector3i m_Coord;
@@ -97,6 +101,7 @@ namespace HRICS
     double m_Distance;
     double m_Visiblity;
     double m_Reachability;
+    double m_Combined;
     
 		unsigned int m_NbDirections;
 		
@@ -113,7 +118,7 @@ namespace HRICS
 	class AgentGrid : public API::ThreeDGrid
 	{
 	public:
-		AgentGrid();
+    AgentGrid();
 		AgentGrid( std::vector<int> size );
 		AgentGrid(double pace, std::vector<double> envSize,
               Robot* robot, Distance* distCostSpace,Visibility* VisiCostSpace, Natural* NatuCostSpace);
@@ -166,7 +171,11 @@ namespace HRICS
 		bool loadFromXmlFile(std::string docname);
     
 	private:
+    void computeRadius();
+    
     Robot*                            m_Robot;
+    
+    double                            m_Radius;
     
     Distance*                         m_DistanceCostSpace;
     Visibility*                       m_VisibilityCostSpace;
@@ -175,11 +184,13 @@ namespace HRICS
     std::vector<AgentCell*>           m_DangerCells;
     std::vector<AgentCell*>           m_VisibilityCells;
     std::vector<AgentCell*>           m_ReachableCells;
+    std::vector<AgentCell*>           m_CombinedCells;
     
-		bool															m_firstDisplay;
+		bool                                m_firstDisplay;
 		std::tr1::shared_ptr<Configuration> m_ActualConfig;
     std::tr1::shared_ptr<Configuration> m_LastConfig;
-		Eigen::Transform3d								m_RobotOriginPos;
+		Eigen::Transform3d                  m_RobotOriginPos;
+      
 	};
 }
 

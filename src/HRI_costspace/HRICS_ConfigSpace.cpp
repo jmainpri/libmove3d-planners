@@ -20,7 +20,6 @@
 #include "move3d-headless.h"
 #include "Planner-pkg.h"
 
-
 using namespace std;
 using namespace tr1;
 using namespace HRICS;

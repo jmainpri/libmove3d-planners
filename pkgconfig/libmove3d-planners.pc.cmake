@@ -11,4 +11,4 @@ Name: libmove3d-planners
 Description: Motion Planning Platform - Headless library
 Version: @BIOMOVE3D_VERSION@
 Libs: ${MPLibsFlags} -L${libdir} -lmove3d-planners
-Cflags: -I${includedir}/libmove3d/planners ${MPLibsIncludes} ${MPLibsFlags}
+Cflags: -I${includedir}/libmove3d/planners ${MPLibsIncludes} ${MPLibsFlags} 

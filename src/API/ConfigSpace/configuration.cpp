@@ -372,6 +372,16 @@ bool Configuration::isOutOfBounds()
 	return(p3d_isOutOfBounds(_Robot->getRobotStruct(), _Configuration ));
 }
 
+void Configuration::adaptCircularJointsLimits()
+{
+  configPt q = p3d_alloc_config( _Robot->getRobotStruct() );
+  
+  p3d_adaptConfigsForCircularDofs( _Robot->getRobotStruct(), &_Configuration, &q );
+  p3d_copy_config_into( _Robot->getRobotStruct(), q, &_Configuration );
+  
+  p3d_destroy_config( _Robot->getRobotStruct(), q );
+}
+
 void Configuration::setAsNotTested()
 {
 	_CollisionTested = false;

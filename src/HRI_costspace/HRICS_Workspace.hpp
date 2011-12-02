@@ -151,6 +151,7 @@ namespace HRICS
 		 * Get Robot and Human
 		 */
 		Robot* getHuman(){ return mHumans[0]; }
+    std::vector<Robot*> getHumans(){ return mHumans; }
 		Robot* getRobot(){ return _Robot; }
     Eigen::Vector3d getVisball();
     

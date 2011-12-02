@@ -212,21 +212,25 @@ void AgentCell::draw(bool transform)
   if( ENV.getInt(Env::hriCostType) == HRICS_Distance )
   {
     Cost = m_Distance;
-    
     GroundColorMixGreenToRed(colorvector,ENV.getDouble(Env::colorThreshold1)*Cost);
     //colorvector[3] = 0.20*ENV.getDouble(Env::colorThreshold2)*Cost; //+0.01;
-    
      diagonal = 0.04; 
   }
   
   if( ENV.getInt(Env::hriCostType) == HRICS_Visibility )
   {
     Cost = m_Visiblity;
-    
     GroundColorMixGreenToRed(colorvector,ENV.getDouble(Env::colorThreshold1)*Cost);
     //colorvector[3] = ENV.getDouble(Env::colorThreshold2)*1/Cost; 
-    
      diagonal = 0.04;
+  }
+  
+  if( ENV.getInt(Env::hriCostType) == HRICS_Combine )
+  {
+    Cost = m_Combined;
+    GroundColorMixGreenToRed(colorvector,ENV.getDouble(Env::colorThreshold1)*Cost);
+    //colorvector[3] = 0.20*ENV.getDouble(Env::colorThreshold2)*Cost; //+0.01;
+    diagonal = 0.04; 
   }
   
   if ( ENV.getInt(Env::hriCostType) == HRICS_Reachability ) 
@@ -236,7 +240,6 @@ void AgentCell::draw(bool transform)
     if ( Cost != 0.0 )
     {
       GroundColorMixGreenToRed(colorvector,Cost);
-      
       //glCallList(m_list);
       diagonal = getCellSize().minCoeff();    
     }
@@ -311,64 +314,76 @@ void AgentCell::computeReachability()
 //	}
 }
 
+void AgentCell::computeCombined()
+{
+  m_Combined = m_Distance + m_Visiblity / 2;
+}
+
 
 //!
 //!compute cost depending on right/left hand
 //!
 double AgentCell::getCost()
 {
-	if (!m_IsCostComputed) 
-	{
-		m_Cost = 0.0;
-		
-		if(m_IsReachable)
-		{
-			double rightArmPref = 1.0;
-			double leftArmPref = 1.0;
-			//cout << "Computing cost of cell number ( " << _index << " )" << endl;
-			//Vector3d center = getCenter();
-      
-			double pref = ENV.getDouble(Env::coeffArmPr);
-			if (pref >= 0.0)
-			{
-				rightArmPref -= pref;
-			}
-			else
-			{
-				leftArmPref += pref;
-			}
-      
-			if (m_IsReachWithLeftArm && !m_IsReachWithRightArm)
-			{
-				m_Cost = getCost(true) * leftArmPref;
-			}
-			else if (!m_IsReachWithLeftArm && m_IsReachWithRightArm)
-			{
-				m_Cost = getCost(false) * rightArmPref;
-			}
-			else if (m_IsReachWithLeftArm && m_IsReachWithRightArm)
-			{
-				double left_cost = getCost(true) * leftArmPref;
-				double right_cost = getCost(false) * rightArmPref;
-        
-				if (left_cost<right_cost)
-				{
-					m_IsReachWithRightArm = false;
-					m_Cost = left_cost;
-				}
-				else
-				{
-					m_IsReachWithLeftArm = false;
-					m_Cost = right_cost;
-				}
-			}
-      
-		}
-		
-		m_IsCostComputed = true;
-	}
-	
-	return m_Cost;
+//  cout << "m_Distance : " << m_Distance << endl;
+//  cout << "m_Visiblity : " << m_Visiblity << endl;
+//  cout << "m_Reachability : " << m_Reachability << endl;
+  
+  return m_Combined;
+  
+//	if (!m_IsCostComputed) 
+//	{
+//		m_Cost = 0.0;
+//		
+//		if(m_IsReachable)
+//		{
+//			double rightArmPref = 1.0;
+//			double leftArmPref = 1.0;
+//			//cout << "Computing cost of cell number ( " << _index << " )" << endl;
+//			//Vector3d center = getCenter();
+//      
+//			double pref = ENV.getDouble(Env::coeffArmPr);
+//			if (pref >= 0.0)
+//			{
+//				rightArmPref -= pref;
+//			}
+//			else
+//			{
+//				leftArmPref += pref;
+//			}
+//      
+//			if (m_IsReachWithLeftArm && !m_IsReachWithRightArm)
+//			{
+//				m_Cost = getCost(true) * leftArmPref;
+//			}
+//			else if (!m_IsReachWithLeftArm && m_IsReachWithRightArm)
+//			{
+//				m_Cost = getCost(false) * rightArmPref;
+//			}
+//			else if (m_IsReachWithLeftArm && m_IsReachWithRightArm)
+//			{
+//				double left_cost = getCost(true) * leftArmPref;
+//				double right_cost = getCost(false) * rightArmPref;
+//        
+//				if (left_cost<right_cost)
+//				{
+//					m_IsReachWithRightArm = false;
+//					m_Cost = left_cost;
+//				}
+//				else
+//				{
+//					m_IsReachWithLeftArm = false;
+//					m_Cost = right_cost;
+//				}
+//			}
+//      
+//		}
+//		
+//		m_IsCostComputed = true;
+//	}
+//	
+//	return m_Cost;
+  return NULL;
 }
 
 /*
@@ -574,13 +589,13 @@ AgentGrid::AgentGrid() :
 API::ThreeDGrid(),
 m_firstDisplay(true)
 {
-	//setGridOrigin();	
+
 }
 
 AgentGrid::AgentGrid(vector<int> size) :
 m_firstDisplay(true)
 {
-	//setGridOrigin();
+
 }
 
 AgentGrid::AgentGrid(double pace, vector<double> envSize, 
@@ -599,6 +614,8 @@ m_firstDisplay(true)
   createAllCells();
   
   cout << "Number total of cells = " << _nbCellsX*_nbCellsY*_nbCellsZ << endl;
+  
+  computeRadius();
 }
 
 AgentGrid::AgentGrid(const AgentGrid& grid) :
@@ -620,10 +637,13 @@ m_firstDisplay(true)
 		
 		_cells[i] = newCell;
 	}
+  
+  computeRadius();
 }
 
 AgentGrid::~AgentGrid()
 {
+  
 }
 
 Robot* AgentGrid::getRobot()
@@ -646,10 +666,14 @@ Natural* AgentGrid::getNatural()
 	return m_NaturalCostSpace; 
 }
 
+void AgentGrid::computeRadius()
+{  
+  m_Radius = _nbCellsX*_cellSize[0]/2;
+}
+
 void AgentGrid::setGridOrigin()
 {
 	//m_RobotOriginPos = getNatural()->getGridOriginMatrix();
-
   m_RobotOriginPos = Transform3d::Identity();
 	
 	Vector3d trans;
@@ -708,31 +732,27 @@ void AgentGrid::computeAllCellCost()
   m_DangerCells.clear();
   m_VisibilityCells.clear();
   m_ReachableCells.clear();
+  m_CombinedCells.clear();
   
   for (unsigned int i=0; i < _cells.size() ; i++) 
   {
     AgentCell* cell = static_cast<AgentCell*>(_cells[i]);
     
     cell->computeDistance();
-    
-    if ( cell->getDistance() > 0.2 /* && cell->getDistance() < 2.0 */ ) 
-    {
+    if ( cell->getDistance() > 0.2  ) 
       m_DangerCells.push_back( cell );
-    }
     
     cell->computeVisibility();
-    
-    if ( cell->getVisibility() > 0.0 && cell->getVisibility() < 0.3 ) 
-    {
+    if ( cell->getVisibility() > 0.2 ) 
       m_VisibilityCells.push_back( cell );
-    }
     
     cell->computeReachability();
-    
     if ( cell->getReachability() > 0 ) 
-    {
       m_ReachableCells.push_back( cell );
-    }
+    
+    cell->computeCombined();
+    if ( cell->getCombined() > 0.2 ) 
+      m_CombinedCells.push_back( cell );
     
 //    cout << "Cost ( " << i << " ) =  ";
 //    cout << "( " << cell->getDistance() << " , ";
@@ -1097,13 +1117,23 @@ bool AgentGrid::isReachableWithLA(const Eigen::Vector3d& WSPoint)
 }
 
 /*!
- * Get the cell containing WSPoint and 
- * returns the cost
+ * Get the cell containing WSPoint and returns the cost
  */
 double AgentGrid::getCellCostAt(const Vector3d& WSPoint)
 {
-	Vector3d inGridPoint( getTranformedToRobotFrame(WSPoint) );
-	return dynamic_cast<AgentCell*>(getCell(inGridPoint))->getCost();
+  Vector3d pointInGrid = getTranformedToRobotFrame(WSPoint);
+  
+  AgentCell* cell = dynamic_cast<AgentCell*>(getCell(pointInGrid));
+  
+  if(cell != NULL)
+  {
+    return cell->getCost();
+  }
+  else
+  {
+    // cout << "No cell at : " << endl << pointInGrid << endl;
+    return NULL;
+  }
 }
 
 vector<Vector3d> AgentGrid::getBox()
@@ -1140,7 +1170,6 @@ vector<Vector3d> AgentGrid::getBox()
 void AgentGrid::draw()
 {
   cout << "AgentGrid::draw()" << endl;
-  
 	m_ActualConfig = m_Robot->getCurrentPos();
 	
 	/*if (m_firstDisplay) 
@@ -1170,12 +1199,16 @@ void AgentGrid::draw()
   {
     size = m_ReachableCells.size();
   }
+  else if ( type == HRICS_Combine ) 
+  {
+    size = m_CombinedCells.size();
+  }
   else {
     cout << "No cells to draw" << endl;
     return;
   }
 	
-  cout << "drawCells.size() = " << size << endl;
+//  cout << "drawCells.size() = " << size << endl;
   
   bool configChanged = true;
   
@@ -1188,28 +1221,76 @@ void AgentGrid::draw()
 //    m_firstDisplay = false;
 //  }
   
+  Transform3d T = getTransformFromRobotPos();
+  
+  int d = ENV.getInt(Env::lineToShow);
+  int l = ENV.getInt(Env::hriShownGridLine);
+  
+  // Draws all cells
   for( int i=0; i<size; i++)
-  {
+  {    
+    AgentCell* cell = NULL;
+    
     if( type == HRICS_Distance )
     {
-      m_DangerCells[i]->draw(configChanged);
+      cell = m_DangerCells[i];
     }
     else if( type == HRICS_Visibility )
     {
-      m_VisibilityCells[i]->draw(configChanged);
+      cell = m_VisibilityCells[i];
     }
     else if ( type == HRICS_Reachability ) 
     {
-      m_ReachableCells[i]->draw(configChanged);
+      cell = m_ReachableCells[i];
+    }
+    else if ( type == HRICS_Combine ) 
+    {
+      cell = m_CombinedCells[i];
     }
     else {
       cout << "No cells to draw" << endl;
       return;
     }
+    
+    // Only draws cells inside a ball
+    // and that are over the floor
+    Vector3d center = cell->getCenter();
+    
+    if((center.norm() > m_Radius)||(center[2] < 0))
+      continue;
+    
+    // Case only one line
+    if (ENV.getBool(Env::drawOnlyOneLine)) 
+		{
+      if( getCellCoord(cell)[d] != l )
+        continue;
+    }
+
+    // Draw the cell
+    cell->draw(configChanged);
   }
   
   m_LastConfig = m_ActualConfig;
-	
+  
+  // Get the center of the sphere
+  Vector3d c(Vector3d::Zero());
+  c = T*c;
+//  cout << "Radius" << m_Radius << endl;
+  
+  GLdouble color_vect[4];
+  color_vect[0] = 0.1;
+  color_vect[1] = 0.1;
+  color_vect[2] = 0.1;
+  color_vect[3] = 0.1;
+  
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  
+  g3d_set_color(Any,color_vect);
+  g3d_draw_solid_sphere(c[0],c[1],c[2],m_Radius,20);
+  
+  glDisable(GL_BLEND);
+  
 	//getRobot()->setAndUpdate(*m_ActualConfig);
 }
 

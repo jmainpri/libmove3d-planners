@@ -69,6 +69,9 @@ namespace stomp_motion_planner
     bool out_of_bounds_; /**< Wether the rollout is violating dof limits */
     
     double getCost();   /**< Gets the rollout cost = state cost + control costs per dimension */
+    
+    void printCost();
+    void printProbabilities();
   };
   
   class PolicyImprovement

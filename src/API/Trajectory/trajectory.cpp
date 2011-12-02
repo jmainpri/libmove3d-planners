@@ -408,6 +408,20 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
         //	print()
 }
 
+std::tr1::shared_ptr<Configuration> Trajectory::operator [] ( const int &i ) const
+{
+  if(m_Courbe.empty() || (i>int(m_Courbe.size())))
+  {
+    return std::tr1::shared_ptr<Configuration>(new Configuration(m_Robot));
+  }
+  
+  if(i == int(m_Courbe.size()))
+  {
+    return m_Courbe[i-1]->getEnd();
+  }
+  
+  return m_Courbe[i]->getBegin();
+}
 
 shared_ptr<Configuration> Trajectory::configAtParam(double param)
 {

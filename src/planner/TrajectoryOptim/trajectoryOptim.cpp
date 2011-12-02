@@ -23,6 +23,8 @@
 #include "Stomp/stompOptimizer.hpp"
 #include "Stomp/stompParameters.hpp"
 
+#include "HRI_costspace/HRICS_costspace.hpp"
+
 #ifdef LIGHT_PLANNER
 #include "LightPlanner-pkg.h"
 #endif
@@ -40,7 +42,7 @@ bool m_add_human = true;
 
 static Robot* m_robot = NULL;
 
-enum ScenarioType { CostMap, Shelf, Navigation };
+enum ScenarioType { CostMap, Shelf, Navigation , HumanAware };
 static ScenarioType m_sce;
 
 CollisionSpace* m_coll_space=NULL;
@@ -60,6 +62,8 @@ int m_UpBodySmMLP=0;
 vector<int> m_active_joints;
 vector<int> m_planner_joints;
 vector<CollisionPoint> m_collision_points;
+
+vector< vector <double> > traj_optim_to_plot;
 
 //--------------------------------------------------------
 // General method
@@ -130,6 +134,12 @@ API::Trajectory traj_optim_create_sraight_line_traj()
   
   shared_ptr<Configuration> q_init( m_robot->getInitialPosition() );
   shared_ptr<Configuration> q_goal( m_robot->getGoTo() );
+  
+  if( q_init->equal( *q_goal ) )
+  {
+    cout << "init equal q_goal in file "
+    << __FILE__ << " ,  " << __func__ << endl; 
+  }
   
   vector< shared_ptr<Configuration> > confs(2);
   
@@ -202,6 +212,8 @@ bool traj_optim_generate_softMotion()
   p3d_multiLocalPath_set_groupToPlan(m_robot->getRobotStruct(), m_UpBodyMLP, 1, FALSE);
   smTraj.clear();
   
+  API::Trajectory TSaved = T;
+  
 //  p3d_traj * trajPt
 //  bool param_write_file
 //  bool approximate
@@ -234,6 +246,45 @@ bool traj_optim_generate_softMotion()
   }
   newT.replaceP3dTraj();
   
+  // Set to plot
+  traj_optim_to_plot.clear();
+  vector<double> x,y;
+  x.resize(100);
+  y.resize(100);
+
+  // SoftMotion
+  int i=0;
+  delta = T.getRangeMax()/100;
+
+  for (double t=0; t<=T.getRangeMax(); t += delta ) 
+  {
+    shared_ptr<Configuration> q = T.configAtParam(t);
+    x[i] = (*q)[6];
+    y[i] = (*q)[7];
+    i++;
+    
+    if (i >= int(x.size()) || i >= int(y.size()))
+      break;
+  }
+  traj_optim_to_plot.push_back( x );
+  traj_optim_to_plot.push_back( y );
+  
+  // Initial traj
+  i=0;
+  delta = TSaved.getRangeMax()/100;
+  
+  for (double t=0; t<=TSaved.getRangeMax(); t += delta ) 
+  {
+    shared_ptr<Configuration> q = TSaved.configAtParam(t);
+    x[i] = (*q)[6];
+    y[i] = (*q)[7];
+    i++;
+    
+    if (i >= int(x.size()) || i >= int(y.size()))
+      break;
+  }
+  traj_optim_to_plot.push_back( x );
+  traj_optim_to_plot.push_back( y );
   return true;
 }
 
@@ -282,7 +333,7 @@ void traj_optim_shelf_init_collision_space()
   
   // Set the planner joints
   m_planner_joints.clear();
-  //  m_planner_joints.push_back( 5 );
+  //m_planner_joints.push_back( 5 );
   m_planner_joints.push_back( 6 );
   m_planner_joints.push_back( 7 );
   m_planner_joints.push_back( 8 );
@@ -407,6 +458,63 @@ void traj_optim_navigation_generate_points()
 }
 
 //****************************************************************
+//* HRICS example
+//****************************************************************
+
+//! Sets the robot and the local method to be used
+//! Also sets the constraints and fixes the joints
+//! which are not used durring the planning/optimization phaze
+// --------------------------------------------------------
+void traj_optim_hrics_set_localpath_and_cntrts()
+{
+#ifdef MULTILOCALPATH
+  p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
+  p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_BaseMLP, 1, false);
+  
+  fixAllJointsExceptBase( m_robot->getRobotStruct() );
+#endif
+  
+  p3d_set_user_drawnjnt(1);
+}
+
+//! Sets the point on the navigation DoF
+void traj_optim_hrics_generate_points()
+{
+  // Set the active joints (links)
+  m_active_joints.clear();
+  m_active_joints.push_back( 1 );
+  
+  // Set the planner joints
+  m_planner_joints.clear();
+  m_planner_joints.push_back( 1 );
+  
+  // Generate Bounding volumes for active joints
+  BodySurfaceSampler* sampler = m_coll_space->getBodySampler();
+  
+  // Get all joints active in the motion planning
+  // and compute bounding cylinders
+  vector<Joint*> joints;
+  joints.clear();
+  for (unsigned int i=0; i<m_active_joints.size(); i++) 
+  {
+    joints.push_back( m_robot->getJoint( m_active_joints[i] ) );
+  }
+  sampler->generateRobotBoudingCylinder( m_robot, joints );
+  
+  // Get all planner joint and compute collision points
+  vector<int> planner_joints_id;
+  for (unsigned int i=0; i<m_planner_joints.size(); i++) 
+  {
+    planner_joints_id.push_back( m_planner_joints[i] );
+  }
+  m_collision_points = sampler->generateRobotCollisionPoints( m_robot, m_active_joints, planner_joints_id );
+  
+  //  sampler->generateRobotBoudingCylinder( m_robot, m_robot->getAllJoints() );
+  //  m_collision_points = sampler->generateAllRobotCollisionPoints( m_robot );
+}
+
+
+//****************************************************************
 //* Common functions 
 //****************************************************************
 
@@ -428,10 +536,10 @@ bool traj_optim_init()
       if( !traj_optim_costspace_init() )
         return false;
       
-      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.1);
-      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
-      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
-      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.001);
+//      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.1);
+//      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
+//      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
+//      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.001);
       break;
       
     case Shelf:
@@ -458,10 +566,37 @@ bool traj_optim_init()
 //      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
 //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.1);
       
-      PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
-      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
-      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,30);
-      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.01);
+//      PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
+//      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
+//      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,30);
+//      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.01);
+      break;
+      
+    case HumanAware:
+      
+      cout << "Init HumanAware" << endl;
+      cout << "Set robot, localpath and cntrts with ";
+      cout << m_robot->getName() << endl;
+      
+      traj_optim_set_MultiLP();
+      traj_optim_invalidate_cntrts();
+      traj_optim_navigation_set_localpath_and_cntrts();
+      
+      if( !global_humanCostSpace )
+      {
+        cout << "No Collspace" << endl;
+        return false;
+      }
+      else
+      {
+        m_coll_space = global_collisionSpace;
+        traj_optim_navigation_generate_points();
+      }
+      
+      PlanEnv->setDouble(PlanParam::trajOptimStdDev,3);
+      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,30);
+      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,20);
+      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.1);
       break;
       
     case Navigation:
@@ -610,14 +745,15 @@ bool traj_optim_runStomp()
   {
     T = m_robot->getCurrentTraj();
     PlanEnv->setInt( PlanParam::nb_pointsOnTraj, T.getNbOfViaPoints() );
+    
+//    T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
+//    T.replaceP3dTraj();
+//    T.print();
   }
   else 
   {
     T = traj_optim_create_sraight_line_traj(); 
-    
-    int nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
-    
-    T.cutTrajInSmallLP( nb_points );
+    T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
     T.replaceP3dTraj();
     T.print();
   }

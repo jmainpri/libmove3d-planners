@@ -39,6 +39,7 @@ ManipulationPlanner* m_manipPlanner=NULL;
 // ---------------------------------------------------------------------------------
 static bool m_init=false;
 static Robot* m_robot=NULL;
+static Robot* m_simRob=NULL;
 
 static int m_BaseMLP=0;
 static int m_HeadMLP=0;
@@ -106,10 +107,13 @@ bool replann_initialize()
 {
   cout << "Initializes Replanning" << endl;
   
-  m_robot = global_Project->getActiveScene()->getRobotByName( global_ActiveRobotName );
+  Scene* sc = global_Project->getActiveScene();
   
-  m_manipPlanner = new ManipulationPlanner( m_robot->getRobotStruct() );
-  m_manipPlanner->setReplanningMethod( replanning_RRT_Function );
+  m_robot = sc->getRobotByName( global_ActiveRobotName );
+  m_simRob = sc->getRobotByNameContaining( "SIMULATION" );
+  
+  //m_manipPlanner = new ManipulationPlanner( m_robot->getRobotStruct() );
+  //m_manipPlanner->setReplanningMethod( replanning_RRT_Function );
   
   m_init = true;
   
@@ -446,12 +450,40 @@ p3d_traj* replanning_RRT_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 
 // ---------------------------------------------------------------------------------
 // Replanning environment 
 // ---------------------------------------------------------------------------------
-static p3d_rob*     traj_sim_Robot=NULL;
-static p3d_traj*    traj_sim_Traj=NULL;
-static p3d_vector3  traj_sim_End;
-static int          traj_sim_ViaPoint=0;
-static bool         traj_sim_ReplanRunning=false;
+static p3d_rob*             traj_sim_Robot=NULL;
+static API::Trajectory*     traj_sim_Traj=NULL;
+static p3d_vector3          traj_sim_End;
+static int                  traj_sim_ViaPoint=0;
+static bool                 traj_sim_ReplanRunning=false;
 
+//! The replanned trajectory is replaces
+//! the simtraj
+void replan_copyTrajToSimRobot()
+{
+  if( m_robot->getRobotStruct()->tcur != NULL )
+  {
+    API::Trajectory robotTraj( m_robot , m_robot->getRobotStruct()->tcur );
+    API::Trajectory* simTrajectory = new API::Trajectory( m_robot );
+    API::Trajectory* simTrajTmp = NULL;
+    
+    cout << "Initial robotTraj size : " << robotTraj.size() << endl;
+    
+    for (int i=0; i<robotTraj.size(); i++) 
+    {
+      shared_ptr<Configuration> q(new Configuration(m_simRob,robotTraj[i]->getConfigStruct()));
+      simTrajectory->push_back(q);
+    }
+    
+    // Replaces the trajectory if it exists
+    if (traj_sim_Traj != NULL) 
+      simTrajTmp = traj_sim_Traj;
+    
+    traj_sim_Traj = simTrajectory;
+    
+    if (traj_sim_Traj != NULL) 
+      delete traj_sim_Traj;
+  }
+}
 
 //! executes the replanning function for a given
 //! robot, trajectory, end workspace point, traj via point
@@ -468,123 +500,164 @@ void replann_fct_main()
     cout << "The manipulation planner is not initilized" << endl;
   }
   
-  //traj_sim_Traj = (*replann_fct)(traj_sim_Robot, traj_sim_Robot->tcur, traj_sim_End, traj_sim_ViaPoint );
-//  for (unsigned int i=0; i<1000000000; i++) {
-//    int j=0;
-//    j++;
-//  }
+// traj_sim_Traj = (*replann_fct)(traj_sim_Robot, traj_sim_Robot->tcur, traj_sim_End, traj_sim_ViaPoint );
+// for (unsigned int i=0; i<1000000000; i++) {
+//   int j=0;
+//   j++;
+// }
   traj_sim_ReplanRunning = false;
 }
 
-// ---------------------------------------------------------------------------------
-// Execute simulated replanning phase
-// ---------------------------------------------------------------------------------
-int replann_execute_simulation_traj( int (*fct)(p3d_rob* robot, p3d_localpath* curLp) ) 
+//! Before execution
+//! robot, trajectory, end workspace point, traj via point
+bool replann_init_execution()
 {
-  if (!m_init) {
+  if (!m_init) 
+  {
     replann_initialize();
     m_init = true;
   }
   
-  p3d_rob* robotPt = m_robot->getRobotStruct();
-  
-  if (robotPt->tcur == NULL) 
+  if ( m_robot->getRobotStruct()->tcur == NULL) 
   {
     PrintInfo(("execute_simulation_traj : no current trajectory\n"));
     return false;
   }
   
-  p3d_traj* traj = p3d_create_traj_by_copy(robotPt->tcur);
-  
-  pp3d_localpath localpathPt = traj->courbePt;
-  
-  if( localpathPt->type_lp != SOFT_MOTION )
+//  replan_copyTrajToSimRobot();
+//  
+//  if( traj_sim_Traj->getLocalPathPtrAt(0)->getLocalpathStruct()->type_lp != SOFT_MOTION )
+//  {
+//    PrintInfo(("execute_simulation_traj : the trajectory is not a softmotion\n"));
+//    return false;
+//  }
+  return true;
+}
+
+extern SM_TRAJ ManipPlannerLastTraj;
+
+// ---------------------------------------------------------------------------------
+// Execute simulated replanning phase
+// ---------------------------------------------------------------------------------
+int replann_execute_simulation_traj( int (*fct)(p3d_rob* robot, p3d_localpath* localpathPt) ) 
+{
+  if( !replann_init_execution() )
   {
-    PrintInfo(("execute_simulation_traj : the trajectory is not a softmotion\n"));
+    cout << "replann_init_execution did not work!!!" << endl;
     return false;
   }
   
+  p3d_rob* robotPt;
+  p3d_localpath* localpathPt;
+  
   bool RunShowTraj=true;
   
-  configPt q;
+  Configuration q(m_simRob);
+  
   double tu = 0.0, tu_tmp = 0.0; //, ts = 0.0;
-  
-  int end = FALSE;
-  int count = 0;
-  double u = 0.0, du = 0.0; /* parameters along the local path */
-  
-  double umax = p3d_compute_traj_rangeparam(robotPt->tcur);
-  
-  traj_sim_Robot = robotPt;
-  traj_sim_Traj = robotPt->tcur;
+  double umax = 0.0, u = 0.0, du = 0.0 , lastFloor=0.0; /* parameters along the local path */
+
   traj_sim_ViaPoint = 0;
   traj_sim_ReplanRunning = false;
   
   ChronoOn();
   bool isFirstLoop=true;
+  bool StopRun=false;
   
-  while ( (u < umax - EPS6) && RunShowTraj )
+  int count=0;
+  
+  while ( !StopRun )
   {
-    if( !traj_sim_ReplanRunning )
-    {
-      double tau =  u; // in seconds
-      double t_rep = 2.0; // in seconds
-      
-      p3d_getQSwitchIDFromMidCVS(tau, t_rep, &traj_sim_ViaPoint);
-      
-      traj_sim_ReplanRunning = true;
-      boost::thread workerThread( replann_fct_main );
+//    if( !traj_sim_ReplanRunning )
+//    {
+//      double tau =  u; // in seconds
+//      double t_rep = 2.0; // in seconds
+//      
+//      p3d_getQSwitchIDFromMidCVS(tau, t_rep, &traj_sim_ViaPoint);
+//      
+//      traj_sim_ReplanRunning = true;
+//      boost::thread workerThread( replann_fct_main );
 //      workerThread.join();
-    }
+//    }
     
-    /* position of the robot corresponding to parameter u */
-    q = p3d_config_at_param_along_traj(traj,u);
-    p3d_set_and_update_robot_conf(q);
+    // position of the robot corresponding to parameter u
+    //q = traj_sim_Traj->configAtParam(u);
     
+    // get the max parameter on trajectory
+    //umax = traj_sim_Traj->getRangeMax();
+    
+    std::vector<SM_COND> cond;
+    ManipPlannerLastTraj.getMotionCond(u,cond);
+    
+    umax = ManipPlannerLastTraj.getDuration();
+    
+    q = *m_simRob->getCurrentPos();
+    
+    q[6] = cond[0].x;
+    q[7] = cond[1].x;
+    q[11] = cond[5].x;
+    // torso
+    q[12] = cond[6].x;
+    //head
+    q[13] = cond[7].x;
+    q[14] = cond[8].x;
+    //leftarm
+    q[25] = cond[19].x;
+    q[26] = cond[20].x;
+    q[27] = cond[21].x;
+    q[28] = cond[22].x;
+    q[29] = cond[23].x;
+    q[30] = cond[24].x;
+    q[31] = cond[25].x;
+    //rightarm
+    q[16] = cond[10].x;
+    q[17] = cond[11].x;
+    q[18] = cond[12].x;
+    q[19] = cond[13].x;
+    q[20] = cond[14].x;
+    q[21] = cond[15].x;
+    q[22] = cond[16].x;
+    
+    // set and update robot from configuration
+    m_simRob->setAndUpdate(q);
+    
+   if (fct) if (((*fct)(robotPt, localpathPt)) == FALSE) return(count);
+    count++;
     //robotPt->tcur = (*replann_fct)();
-    
-//    /* collision checking */
-//#ifdef P3D_COLLISION_CHECKING
-//    p3d_numcoll = p3d_col_test_all();
-//#endif
-//    m_robot->isInCollision();
 
 	  RunShowTraj = (*fct_stop)();
-    if (fct) if (((*fct)(robotPt, localpathPt)) == FALSE) return (count);
     
-    count++;
+    timeval tim;
+    gettimeofday(&tim, NULL);
+    tu=tim.tv_sec+(tim.tv_usec/1000000.0);
     
-#ifdef MULTILOCALPATH
-    if (localpathPt->type_lp == SOFT_MOTION)
+    if(isFirstLoop)
     {
-      timeval tim;
-      gettimeofday(&tim, NULL);
-      tu=tim.tv_sec+(tim.tv_usec/1000000.0);
-      
-      if(isFirstLoop)
-      {
-        tu_tmp = tu;
-        isFirstLoop =false;
-      }
-      //    ChronoTimes(&tu,&ts);
-      du = tu - tu_tmp;
       tu_tmp = tu;
-      du *= ENV.getDouble(Env::showTrajFPS);
-    } 
-#endif
+      isFirstLoop =false;
+    }
+
+    du = tu - tu_tmp;
+    tu_tmp = tu;
+    du *= ENV.getDouble(Env::showTrajFPS);
     
     u += du;
-    //cout << "u = " << u << endl;
+    
+    if (floor(u) > lastFloor) {
+      cout << "u = " << u << endl;
+      lastFloor = floor(u);
+    }
+
     if (u > umax - EPS6) {
       u = umax;
-      end = TRUE;
+      StopRun = true;
     }
   }
   
   cout << "Final time(sec) on traj : " << umax << endl;
   ChronoPrint("");
   ChronoOff();
-  return count;
+  return 0;
 }
 
 

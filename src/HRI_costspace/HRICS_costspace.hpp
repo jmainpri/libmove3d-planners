@@ -32,6 +32,7 @@ const int HRICS_HUMANj_LHAND=     26; /* or 27 or 28 */
 #include "HRICS_Workspace.hpp"
 #include "HRICS_ConfigSpace.hpp"
 #include "HRICS_otpmotionpl.hpp"
+#include "HRICS_humanCostSpace.hpp"
 
 #ifdef HRI_PLANNER
 #include "HRICS_HAMP.hpp"
@@ -53,6 +54,8 @@ extern HRICS::Distance*		HRICS_activeDist;
 extern HRICS::Visibility*	HRICS_activeVisi;
 extern HRICS::Natural*		HRICS_activeNatu;
 extern HRICS::Natural*		HRICS_activeReac;
+
+extern HRICS::HumanCostSpace* global_humanCostSpace;
 
 /**
  * Active Motion planner framework

@@ -34,7 +34,7 @@ Distance::Distance()
 	cout  << "HRICS::Distance with " << " Robot " << m_Robot->getName() 
         << " and human " << _Humans[0]->getName() << endl;
   
-	_SafeRadius = 0;
+	_SafeRadius = 1.5;
   m_InteractionRadius = 1.5;
 }
 
@@ -51,7 +51,7 @@ _Humans(humans)
 	
 	cout << "HRICS::Distance with " << robName << " as robot and human " 
 	<< _Humans[0]->getName() << endl;
-	_SafeRadius = 0;
+	_SafeRadius = 2.8;
   m_InteractionRadius = 1.5;
 }
 
@@ -113,7 +113,7 @@ void Distance::parseHumans()
   AchileActivePartsName.push_back( "lFemurGhost" );
   
 	//_SafeRadius = 0;
-	ENV.setDouble(Env::zone_size,0.8);
+	//ENV.setDouble(Env::zone_size,0.8);
   
 	_SafetyZonesBodyId.clear();
 	
@@ -201,7 +201,7 @@ void Distance::parseHumans()
 		}
 		_SafetyZonesBodyId.push_back(safetyZonesId);
 	}
-	_SafeRadius = ENV.getDouble(Env::zone_size);
+	//_SafeRadius = ENV.getDouble(Env::zone_size);
 	activateNormalMode();
 }
 
@@ -331,6 +331,7 @@ double  Distance::computeCost(double distance)
 {
 	_PenetrationDist.resize(1);
 	
+  //cout << "_SafeRadius radius : " << _SafeRadius << endl;
 	_PenetrationDist[0] = (_SafeRadius - distance)/_SafeRadius;
 	
 	double Cost = 0.00001;

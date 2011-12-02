@@ -58,6 +58,7 @@ int StarRRT::init()
 bool StarRRT::connectNodeToCompco(Node* node, Node* compNode)
 {
 	bool savedIsMaxDis = PlanEnv->getBool( PlanParam::isMaxDisNeigh );
+  
 	PlanEnv->setBool(PlanParam::isMaxDisNeigh,false);
 	
 	Node* nearestNode = _Graph->nearestWeightNeighbour(compNode,

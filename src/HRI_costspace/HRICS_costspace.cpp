@@ -34,6 +34,19 @@ enum CostSpaceFunction
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
+// Function for the Human cost space
+double HRICS_getConfigHumanGridCost(Configuration& Conf)
+{	
+  if(global_humanCostSpace != NULL)
+  {
+    return global_humanCostSpace->getCost(Conf);
+  }
+  
+  return NULL;
+}
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
 // Main function for the HRI cost space
 double HRICS_getConfigCost(Configuration& Conf)
 {	
@@ -295,7 +308,11 @@ void HRICS_init(HRI_AGENTS* agents)
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initDistance();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initVisibility();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initNatural();
-  dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initAgentGrids( ENV.getDouble(Env::CellSize) );
+  //dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initAgentGrids( ENV.getDouble(Env::CellSize) );
+  
+  global_humanCostSpace = new HRICS::HumanCostSpace(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot(),
+                                                    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHumans(),
+                                                    ENV.getDouble(Env::CellSize));
   
   //dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initOtpPlanner();
   dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
@@ -328,12 +345,15 @@ void HRICS_init(HRI_AGENTS* agents)
     }
 	}
 	
-  API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getAgentGrids()[0];
+  //API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getAgentGrids()[0];
 	ENV.setInt(Env::hriCostType,HRICS_Distance);
   
   std::cout << "Initializing the HRI costmap cost function" << std::endl;
   global_costSpace->addCost("costHRI",boost::bind(HRICS_getConfigCost, _1));
   global_costSpace->setCost("costHRI");
+  
+  global_costSpace->addCost("costHumanGrids",boost::bind(HRICS_getConfigHumanGridCost, _1));
+  global_costSpace->setCost("costHumanGrids");
   cout << "new HRI Workspace" << endl;
   
   //Human->setAndUpdate( *q );

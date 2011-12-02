@@ -890,10 +890,45 @@ namespace stomp_motion_planner
     cost.clear();
     cout << "best_group_trajectory_ = " << best_group_trajectory_ << endl;
     
-//    for( double param=0; param<traj.getRangeMax(); param = param + step)
-//    {
-//      cost.push_back( traj.configAtParam(param)->cost() );
-//    }  
+    group_trajectory_.getTrajectory() = best_group_trajectory_;
+    group_trajectory_.print();
+    
+    updateFullTrajectory();
+    performForwardKinematics();
+    
+    vector<double> collision_cost;
+    
+    // collision costs:
+    double collision_cost_sum = 0.0;
+    for (int i=free_vars_start_; i<=free_vars_end_; i++)
+    {
+      double state_collision_cost = 0.0;
+      
+      if(collision_space_)
+      {
+        for (int j=0; j<num_collision_points_; j++)
+        {
+          state_collision_cost += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
+        }
+      }
+      else
+      {
+        state_collision_cost = pow( general_cost_potential_(i) , hack_tweek );
+      }
+      
+      collision_cost.push_back(state_collision_cost);
+      collision_cost_sum += state_collision_cost;
+    }
+    cout << "Collision cost : " << stomp_parameters_->getObstacleCostWeight() * collision_cost_sum << endl;
+    double vector_steps = (double(collision_cost.size())/100);
+    
+    for (double s = 0; s<=double(collision_cost.size()); s += vector_steps ) 
+    {
+      if( int(s) >= int(collision_cost.size()) )
+        break;
+      
+      cost.push_back( collision_cost[int(s)] );
+    }
   }
   
   void StompOptimizer::eigenMapTest()
@@ -1143,7 +1178,6 @@ namespace stomp_motion_planner
       {
         for (int j=0; j<num_collision_points_; j++)
         {
-          
           cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
           state_collision_cost += cumulative;
         }

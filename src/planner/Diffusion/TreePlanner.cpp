@@ -71,6 +71,12 @@ bool TreePlanner::preConditions()
 //		<< "Warning: Connect expansion strategy is usually unadapted for cost spaces\n"
 //		<< endl;
 //	}
+  if (!_Robot->setAndUpdate(*_Start->getConfiguration()) )
+  {
+    cout << "TreePlanner::preConditions => Start config. does not respect kin. constraints" << endl;
+    return false;
+  }
+  
   if (_Start->getConfiguration()->isOutOfBounds())
 	{
 		cout << "TreePlanner::preConditions => Start is out of bounds" << endl;
@@ -105,12 +111,6 @@ bool TreePlanner::preConditions()
     }
 	}
 	
-	//    if (!(_Start->getConfiguration()->setConstraints()))
-	//    {
-	//        cout << "Start does not respect constraints" << endl;
-	//        return false;
-	//    }
-	
 	if (ENV.getBool(Env::expandToGoal))
 	{
 		if( _Goal->getConfiguration()->isOutOfBounds() )
@@ -119,6 +119,12 @@ bool TreePlanner::preConditions()
 			return false;
 		}
 		
+    if (!_Robot->setAndUpdate( *_Goal->getConfiguration() ) )
+    {
+      cout << "TreePlanner::preConditions => Goal config. does not respect kin. constraints" << endl;
+      return false;
+    }
+  
 		if( _Goal->getConfiguration()->isInCollision() )
 		{
 			cout << "TreePlanner::preConditions => Goal in collision" << endl;
@@ -126,15 +132,6 @@ bool TreePlanner::preConditions()
 			return false;
 		}
 	}
-	
-	//    if (ENV.getBool(Env::expandToGoal)
-	//        && (!(_Goal->getConfiguration()->setConstraints())))
-	//        {
-	//        cout << "Goal in does not respect constraints" << endl;
-	//        return false;
-	//    }
-	
-	//    cout << "Tree Planner precondition: OK" << endl;
 	
 	if(ENV.getBool(Env::drawPoints))
 	{
@@ -158,7 +155,8 @@ bool TreePlanner::checkStopConditions()
 	if (/*ENV.getBool(Env::ligandExitTrajectory)*/false)
 	{
 		double d(_Start->getConfiguration()->dist(
-																							*_Graph->getLastNode()->getConfiguration()));
+        *_Graph->getLastNode()->getConfiguration()));
+    
 		if (d > 12.0)
 		{
 			ENV.setBool(Env::expandToGoal, true);
@@ -309,7 +307,7 @@ unsigned int TreePlanner::run()
 	
 	while ( !checkStopConditions() )
 	{
-		ENV.setInt(Env::progress,(int)(_Graph->getNumberOfNodes()/ENV.getInt(Env::maxNodeCompco)));
+		ENV.setInt(Env::progress,(int)((double)_Graph->getNumberOfNodes()/(double)ENV.getInt(Env::maxNodeCompco)));
 		//                cout << "progress = " << ENV.getInt(Env::progress) << endl;
 		//                cout << (int)(_Graph->getNbNode()/ENV.getInt(Env::maxNodeCompco)) << endl;
 		//		cout << "ENV.getInt(Env::maxNodeCompco) = " << ENV.getInt(Env::maxNodeCompco) << endl;

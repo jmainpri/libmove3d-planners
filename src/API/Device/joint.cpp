@@ -114,6 +114,27 @@ void Joint::setJointDof(int ithDoF, double value)
 	p3d_jnt_set_dof(m_Joint,ithDoF,value);
 }
 
+bool Joint::setFreeFlyerFromMatrix( const Eigen::Transform3d& T )
+{
+  if( m_Joint->type == P3D_FREEFLYER )
+  {
+    Eigen::Vector3d trans = T.translation();
+    p3d_jnt_set_dof(m_Joint,0,trans[0]);
+    p3d_jnt_set_dof(m_Joint,1,trans[1]);
+    p3d_jnt_set_dof(m_Joint,2,trans[2]);
+    
+    cout << "trans : " << endl << trans << endl;
+    
+    Eigen::Vector3d rot = T.linear().eulerAngles(0, 1, 2);
+    p3d_jnt_set_dof(m_Joint,3,rot[0]);
+    p3d_jnt_set_dof(m_Joint,4,rot[1]);
+    p3d_jnt_set_dof(m_Joint,5,rot[2]);
+    return true;
+  }
+  else
+    return false;
+}
+
 bool Joint::isJointDofUser(int ithDoF) const
 {  
   return p3d_jnt_get_dof_is_user(m_Joint,ithDoF);

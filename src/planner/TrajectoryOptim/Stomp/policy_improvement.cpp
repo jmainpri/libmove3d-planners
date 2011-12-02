@@ -70,6 +70,55 @@ namespace stomp_motion_planner
     return cost;
   }
   
+  void Rollout::printCost()
+  {
+    cout << "state_costs_ : ";
+    for (int i=0; i<state_costs_.size(); i++) {
+      cout << state_costs_[i] << " ";
+    }
+    cout << endl;
+    
+//    cout << "control_costs_ : ";
+//    for (int d=0; d<int(control_costs_.size()); ++d) 
+//    {
+//      cout << "( "; 
+//      for (int i=0; i<int(control_costs_[d].size()); i++) 
+//      {
+//        cout <<  control_costs_[d][i] ;
+//        
+//        if(d < int(control_costs_.size()-1))
+//          cout << " , ";
+//      }
+//      cout << ")";
+//    }
+//    cout << endl;
+  }
+  
+  void Rollout::printProbabilities()
+  {
+    cout << "state_costs_ : " << endl;
+    cout <<  state_costs_.transpose() << endl;
+    
+    cout << "control_costs_ : " << endl;
+    for (int d=0; d<int(control_costs_.size()); ++d) 
+    {
+      cout <<  control_costs_[d].transpose() << endl;
+    }
+    
+    cout << "cumulative_cost_ : " << endl;
+    for (int d=0; d<int(probabilities_.size()); ++d) 
+    {
+      cout <<  cumulative_costs_[d].transpose() << endl;
+    }
+    
+    cout << "probabilities_ : " << endl;
+    for (int d=0; d<int(probabilities_.size()); ++d) 
+    {
+      cout <<  probabilities_[d].transpose() << endl;
+    }
+    cout << endl;
+  }
+  
   //----------------------------------------------------------------------
   //----------------------------------------------------------------------
   //----------------------------------------------------------------------
@@ -300,6 +349,11 @@ namespace stomp_motion_planner
       for (int r=0; r<num_rollouts_; ++r)
       {
         double cost = rollouts_[r].getCost();
+        
+        // discard out of bounds rollouts
+        if (rollouts_[r].out_of_bounds_) {
+          cost = std::numeric_limits<double>::max();
+        }
         rollout_cost_sorter_.push_back(std::make_pair(cost,r));
       }
       if (extra_rollouts_added_)
@@ -411,8 +465,8 @@ namespace stomp_motion_planner
         for (int r=0; r<num_rollouts_reused_; ++r)
         {
           reused_rollouts.push_back(rollouts_[num_rollouts_gen_+r].parameters_);
-          cout << "resued rollout (" << r << ")" ;
-          cout << " is out of bounds : " << rollouts_[num_rollouts_gen_+r].out_of_bounds_ << endl;
+//          cout << "resued rollout (" << r << ")" ;
+//          cout << " is out of bounds : " << rollouts_[num_rollouts_gen_+r].out_of_bounds_ << endl;
         }
       }
     }
@@ -452,6 +506,14 @@ namespace stomp_motion_planner
     {
       rollout_costs_total[r] = rollouts_[r].getCost();
     }
+    
+    return true;
+  }
+  
+  bool PolicyImprovement::computeRolloutControlCosts(Rollout& rollout)
+  {
+    policy_->computeControlCosts(control_costs_, rollout.parameters_, rollout.noise_projected_,
+                                 0.5*control_cost_weight_, rollout.control_costs_);
     return true;
   }
   
@@ -530,6 +592,12 @@ namespace stomp_motion_planner
         }
       }
     }
+    
+//    for (int r=0; r<num_rollouts_; ++r)
+//    {
+//      cout << "Rollout nb : " << r << endl;
+//      rollouts_[r].printProbabilities();
+//    }
     return true;
   }
   
@@ -609,13 +677,6 @@ namespace stomp_motion_planner
     {
       rollout.noise_[d] =  rollout.parameters_[d] - parameters_[d];
     }
-    return true;
-  }
-  
-  bool PolicyImprovement::computeRolloutControlCosts(Rollout& rollout)
-  {
-    policy_->computeControlCosts(control_costs_, rollout.parameters_, rollout.noise_projected_,
-                                 0.5*control_cost_weight_, rollout.control_costs_);
     return true;
   }
   

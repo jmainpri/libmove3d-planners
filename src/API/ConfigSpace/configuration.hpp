@@ -172,6 +172,12 @@ public:
 	 * DoFs bounds
 	 */
 	bool isOutOfBounds();
+  
+  /**
+	 * True is the configuration respects 
+	 * DoFs bounds
+	 */
+	void adaptCircularJointsLimits();
 	
 	/**
 	 * Set the configuration as not tested

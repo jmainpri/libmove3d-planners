@@ -92,11 +92,11 @@ namespace API
 		std::vector<double> getCostAlongTrajectory(int nbSample);
 		void resetCostComputed();
 		
-		
 		//---------------------------------------------------------
 		// Basic
     bool isEmpty();
     
+    std::tr1::shared_ptr<Configuration> operator [] ( const int &i ) const;
 		std::tr1::shared_ptr<Configuration> configAtParam(double param);
 		
 		std::vector< std::tr1::shared_ptr<Configuration> > getNConfAtParam(double delta);
@@ -114,7 +114,6 @@ namespace API
 		
 		bool 	replaceP3dTraj();
 		p3d_traj* 	replaceP3dTraj(p3d_traj* trajPt);
-
 		p3d_traj* 	replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt);
 		
 		void draw(int nbKeyFrame);
@@ -145,6 +144,11 @@ namespace API
 		double getRangeMax() const
 		{
 			return range_param;
+		}
+    
+    int size() const
+		{
+			return m_Courbe.size();
 		}
 		
 		std::tr1::shared_ptr<Configuration> getBegin() const

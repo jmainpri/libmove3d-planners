@@ -181,24 +181,18 @@ void Workspace::initGrid()
 
 void Workspace::initAgentGrids(double cellsize)
 {
-  vector<double>  envsize(6);
-//	envsize[0] = XYZ_ENV->box.x1; envsize[1] = XYZ_ENV->box.x2;
-//	envsize[2] = XYZ_ENV->box.y1; envsize[3] = XYZ_ENV->box.y2;
-//	envsize[4] = XYZ_ENV->box.z1; envsize[5] = XYZ_ENV->box.z2;
-
-  envsize[0] = -5; envsize[1] = 5;
-	envsize[2] = -5; envsize[3] = 5;
-	envsize[4] =  0; envsize[5] = 3;
-
-  m_HumanGrids.clear();
+  deleteAgentGrids();
   
-  for (unsigned int i=0; i<mHumans.size(); i++) 
+  vector<double>  envsize(6);
+
+  envsize[0] = -3; envsize[1] = 3;
+  envsize[2] = -3; envsize[3] = 3;
+  envsize[4] = -3; envsize[5] = 3;
+
+  for ( int i=0; i<int(mHumans.size()); i++) 
   {
     m_HumanGrids.push_back( new AgentGrid( cellsize, envsize,
-                                          mHumans[i],
-                                          m_DistanceSpace,
-                                          m_VisibilitySpace,
-                                          m_ReachableSpace) );
+                                          mHumans[i],m_DistanceSpace,m_VisibilitySpace,m_ReachableSpace) );
     
     m_HumanGrids[i]->computeAllCellCost();
   }
@@ -208,7 +202,13 @@ void Workspace::initAgentGrids(double cellsize)
 
 void Workspace::deleteAgentGrids()
 {
+  API_activeGrid = NULL;
   
+  for ( int i=0; i<int(m_HumanGrids.size()); i++) 
+  {
+    delete m_HumanGrids[i];
+  }
+  m_HumanGrids.clear();
 }
 
 void Workspace::initDistance()

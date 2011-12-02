@@ -89,6 +89,7 @@ namespace stomp_motion_planner
     printf("Learning policy with %i dimensions.", num_dimensions_);
     
     use_annealing_ = false;
+    use_cumulative_costs_ = false;
     limits_violations_ = 0;
     K_ = 1.0;
     
@@ -169,7 +170,7 @@ namespace stomp_motion_planner
     noise.resize(num_dimensions_);
     for (int i=0; i<num_dimensions_; ++i)
     {
-      noise[i] = noise_stddev_[i] * K_ * pow(noise_decay_[i], iteration_number-1);
+      noise[i] = noise_stddev_[i] /* K_ * pow(noise_decay_[i], iteration_number-1)*/;
       //cout << "noise_stddev_[" << i << "] = " << noise_stddev_[i] << endl;
       //cout << "noise_stddev = " << noise[i] << endl;
     }

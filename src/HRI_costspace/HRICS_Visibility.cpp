@@ -136,7 +136,9 @@ double Visibility::getWorkspaceCost(const Vector3d& WSPoint)
     Dtheta = theta - HRICS_HRI_EYE_TOLERANCE_TILT/2.;
 	
   m_Cost = (1/0.65)*((Dtheta+Dphi)/(M_2PI-(HRICS_HRI_EYE_TOLERANCE_TILT/2.)-(HRICS_HRI_EYE_TOLERANCE_PAN/2.)));
-	
+  
+  // Add coeff from original formula
+  m_Cost *= 2.;
 	//    cout << "Visib =  "  << cost << endl;
   return m_Cost;
 }
