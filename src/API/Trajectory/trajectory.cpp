@@ -333,79 +333,79 @@ void Trajectory::copyPaths( vector<LocalPath*>& vect )
 
 p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
 {
-	//	print();
+    //	print();
 
-//	Robot* rob =new Robot(p3d_get_robot_by_name(trajPt->rob->name));
-	if(trajPt!=NULL)
-	{
-		destroy_list_localpath(rob->getRobotStruct(), trajPt->courbePt);
-	}
-	else
-	{
-		trajPt = p3d_create_empty_trajectory(rob->getRobotStruct());
-	}
-
-	//	trajPt->name       = strdup(name);
-	//	trajPt->file       = NULL;  // Modification Fabien
-	trajPt->num = 0; //rob->getRobotStruct()->nt;
-	//    trajPt->rob = m_Robot->getRobotStruct();
-
-	//	cout << rob->getRobotStruct() << endl;
-
-	nloc = 0;
-
-	p3d_localpath *localpathPt = NULL;
-	p3d_localpath *localprevPt = NULL;
-
-  bool first = true;
-
-	for (unsigned int i = 0; i < m_Courbe.size(); i++)
-	{
-//    if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() )
-//    {
-//      cout << "null LocalPath in replaceP3dTraj" << endl;
-//      continue;
-//    }
-
-		localprevPt = localpathPt;
-		localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( rob->getRobotStruct(),
-														   m_Courbe[i]->getLocalpathStruct() );
-
-    if( localprevPt )
+    //	Robot* rob =new Robot(p3d_get_robot_by_name(trajPt->rob->name));
+    if(trajPt!=NULL)
     {
-      localprevPt->next_lp = localpathPt;
+        destroy_list_localpath(rob->getRobotStruct(), trajPt->courbePt);
     }
+    else
+    {
+        trajPt = p3d_create_empty_trajectory(rob->getRobotStruct());
+    }
+
+    //	trajPt->name       = strdup(name);
+    //	trajPt->file       = NULL;  // Modification Fabien
+    trajPt->num = 0; //rob->getRobotStruct()->nt;
+    //    trajPt->rob = m_Robot->getRobotStruct();
+
+    //	cout << rob->getRobotStruct() << endl;
+
+    nloc = 0;
+
+    p3d_localpath *localpathPt = NULL;
+    p3d_localpath *localprevPt = NULL;
+
+    bool first = true;
+
+    for (unsigned int i = 0; i < m_Courbe.size(); i++)
+    {
+        //    if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() )
+        //    {
+        //      cout << "null LocalPath in replaceP3dTraj" << endl;
+        //      continue;
+        //    }
+
+        localprevPt = localpathPt;
+        localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( rob->getRobotStruct(),
+                                                               m_Courbe[i]->getLocalpathStruct() );
+
+        if( localprevPt )
+        {
+            localprevPt->next_lp = localpathPt;
+        }
 
         localpathPt->prev_lp = localprevPt;
 
-    if ( first )
-    {
-      trajPt->courbePt = localpathPt;
-      first = false;
-    }
+        if ( first )
+        {
+            trajPt->courbePt = localpathPt;
+            first = false;
+        }
 
 	nloc++;
-	}
+    }
 
-  if (nloc != 0)
-  {
-    localpathPt->next_lp = NULL;
-  }
+    if (nloc != 0)
+    {
+        localpathPt->next_lp = NULL;
+    }
     else
-  {
-    cout << "replaceP3dTraj with empty trajectory" << endl;
-  }
+    {
+        cout << "replaceP3dTraj with empty trajectory" << endl;
+    }
 
     trajPt->nlp = nloc;
 
 #ifdef P3D_PLANNER
-	trajPt->range_param = p3d_compute_traj_rangeparam(trajPt);
+    trajPt->range_param = p3d_compute_traj_rangeparam(trajPt);
 #else
-	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+    printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
 #endif
 
-  return trajPt;
-        //	print()
+    return trajPt;
+    //	print()
 }
 
 std::tr1::shared_ptr<Configuration> Trajectory::operator [] ( const int &i ) const

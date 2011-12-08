@@ -10,6 +10,7 @@
 #include "HRI_costspace/HRICS_costspace.hpp"
 #include "HRI_costspace/HRICS_otpmotionpl.hpp"
 #include "HRI_costspace/HRICS_ConfigSpace.hpp"
+#include "utils/ConfGenerator.h"
 #endif
 
 #include "planner/planEnvironment.hpp"
@@ -270,7 +271,7 @@ void g3d_draw_grids()
   //-------------------------------------------------------------
 	if( ENV.getBool(Env::drawGrid) && API_activeGrid )
 	{
-    cout << "API_activeGrid->draw()" << endl;
+//    cout << "API_activeGrid->draw()" << endl;
 		API_activeGrid->draw();
 		
 		if (ENV.getBool(Env::drawBox)) 
