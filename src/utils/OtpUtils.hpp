@@ -25,6 +25,8 @@ extern void g3d_show_tcur_both_rob(p3d_rob *robotPt, int (*fct)(p3d_rob* robot, 
 namespace HRICS
 {
 
+
+
     class OutputConf
     {
     public:
@@ -75,7 +77,33 @@ namespace HRICS
 
     };
 
+    /**
+     * configuration cost sorter
+     */
+    class ConfigurationCost
+    {
+    public:
 
+        bool operator()(ConfigHR first, ConfigHR second)
+        {
+            return ( first.getCost() < second.getCost() );
+        }
+
+    };
+
+    /**
+     * outputconf sorter
+     */
+    class OutputConfSort
+    {
+    public:
+
+            bool operator()(OutputConf first, OutputConf second)
+            {
+                    return ( first.cost < second.cost );
+            }
+
+    };
 
 }
 

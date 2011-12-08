@@ -19,6 +19,7 @@
 #include "Grid/HRICS_EnvGrid.hpp"
 #include "Grid/HRICS_TwoDGrid.hpp"
 #include "utils/OtpUtils.hpp"
+#include "utils/ConfGenerator.h"
 
 #include "LightPlanner-pkg.h"
 #include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
@@ -29,7 +30,11 @@
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 
+extern string global_ActiveRobotName;
+extern API::TwoDGrid* API_activeRobotGrid;
 
+extern Eigen::Vector3d current_WSPoint;
+extern pair<double,Eigen::Vector3d > current_cost;
 
 /**
  @defgroup HRICS Hri Cost space
@@ -70,11 +75,15 @@ namespace HRICS
 
         void clearOTPList() { m_OTPList.clear(); }
 
+        ConfGenerator* getConfGenerator();
+
         std::vector<double> getHumanPos(){return m_humanPos;}
         Eigen::Vector3d getRobotPos(){return m_robotPos;}
 
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > getRobotTraj(){return m_2DPath;}
         void setRobotTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj){m_2DPath = traj;}
+
+
 
         /**
           * Draws the 3D path as a yellow line for robot and green one for human
@@ -102,58 +111,13 @@ namespace HRICS
         void initPR2GiveConf();
 
         /**
-          * Compute GIK and place robot base
-          */
-        bool placeRobot();
-
-        // about the human
-        /**
           * Compute human GIK
           */
         void placeHuman();
 
 
         // about the OTP list (of point to compute GIK)
-        /**
-          * Adding a 3D point to the OTP list This function is used when loading a set of OTPs in order to test them
-          */
-        void addToList(Eigen::Vector3d WSPoint);
 
-        /**
-          * Change the current OTP. Used when choosing new configurations
-          */
-        void setCurrentOTP(Eigen::Vector3d WSPoint);
-
-        /**
-          * draw the OTP list
-          */
-        void drawOTPList(bool value);
-
-        //about the configuration to store/stored
-        /**
-          * Adding the actual configuration to m_configList
-          */
-        std::vector<ConfigHR> addConfToList();
-
-        /**
-          * removing the last configuration of m_configList
-          */
-        void removeLastConf();
-
-        /**
-          * Clear m_configList;
-          */
-        void clearConfList();
-
-        /**
-          * save what's in m_configList to the filename file.
-          */
-        void saveToXml(std::string filename);
-
-        /**
-          * load and return configs stored in filename
-          */
-        std::vector<ConfigHR> loadFromXml(std::string filename);
 
         /**
           * load configs from filename and put them, either in sitting or standing list in the correct vector.
@@ -572,9 +536,16 @@ namespace HRICS
         bool m_isStanding;
         double m_mobility;
 
+        /**
+          *
+          */
+        ConfGenerator* m_ConfGen;
+
 
 
     };
+
+
 
 }
 

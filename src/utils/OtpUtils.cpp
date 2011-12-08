@@ -11,6 +11,8 @@ using namespace std;
 using namespace tr1;
 using namespace HRICS;
 
+int ConfigHR::index = 0;
+
 /**
  * show trajectory of both robot and human
  */
