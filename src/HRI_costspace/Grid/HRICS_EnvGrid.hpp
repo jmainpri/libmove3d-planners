@@ -39,6 +39,8 @@ namespace HRICS
 
                 std::vector<EnvCell*> getHumanAccessibleCells() {return m_HumanAccessible;}
 
+                void dumpVar();
+
                 /**
                   * initialisation of the grid ( computing distances and taking obstacle into account)
                   */

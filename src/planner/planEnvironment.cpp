@@ -105,6 +105,8 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::drawStaticVoxels,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::drawRandomMap,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::drawBoundingVolumes,        new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::saveVideo,                  new boolContainer(false)));
+
     
         // Object TransfertPoint variable
         myBoolMap.insert( std::make_pair( PlanParam::env_humanGridDraw,          new boolContainer(true )));
@@ -179,7 +181,7 @@ void initPlannerParameters()
         myDoubleMap.insert( std::make_pair( PlanParam::env_timeStamp,            new doubleContainer(0.35)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_psi,                  new doubleContainer(0.99)));
 
-        myDoubleMap.insert( std::make_pair( PlanParam::env_delta,                new doubleContainer(0.21)));
+        myDoubleMap.insert( std::make_pair( PlanParam::env_delta,                new doubleContainer(0.01)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_ksi,                  new doubleContainer(0.73)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_rho,                  new doubleContainer(0.57)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_objectNessecity,      new doubleContainer(0.1)));

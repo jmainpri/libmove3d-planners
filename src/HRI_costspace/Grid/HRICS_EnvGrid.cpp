@@ -75,7 +75,7 @@ void EnvGrid::init(pair<double,double> minMax)
     if (showText)
     {
         cout << "in: EnvGrid::init(pair<double,double> minMax)\n" << endl;
-        cout << "Store position of all robot in the scene (object too); and move them out of the scene" << endl;
+//        cout << "Store position of all robot in the scene (object too); and move them out of the scene" << endl;
     }
     vector<pair<Robot*,shared_ptr<Configuration> > > initConfiguration;
     for (int i=0; i<XYZ_ENV->nr; i++)
@@ -108,7 +108,7 @@ void EnvGrid::init(pair<double,double> minMax)
 
     if (showText)
     {
-        cout << "All Robot moved with success\n" << endl;
+//        cout << "All Robot moved with success\n" << endl;
         cout << "Compute reacheability of each cell by the robot and by the human" << endl;
     }
     initAllReachability();
@@ -156,6 +156,16 @@ void EnvGrid::init(pair<double,double> minMax)
     }
 
     computeHumanRobotReacheability(minMax);
+    std::vector<EnvCell*> tmpVect;
+    for (unsigned int i = 0; i < m_HumanAccessible.size();i++ )
+    {
+        if(m_HumanAccessible.at(i)->isHumAccessible())
+        {
+            tmpVect.push_back(m_HumanAccessible.at(i));
+        }
+    }
+    m_HumanAccessible.clear();
+    m_HumanAccessible = tmpVect;
     if (showText)
     {
         cout << "Robot cells list found\n" << endl;
@@ -204,10 +214,10 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
     (*q_robot)[6] = 10;
     (*q_robot)[7] = 1;
     robot->setAndUpdate(*q_robot);
-    for (unsigned int i = 0; i < m_HumanAccessible.size(); i++)
-    {
-        m_HumanAccessible.at(i)->computeHumanReach();
-    }
+//    for (unsigned int i = 0; i < m_HumanAccessible.size(); i++)
+//    {
+//        m_HumanAccessible.at(i)->computeHumanReach();
+//    }
     robot->setAndUpdate(*q_robot_cur);
 
 
@@ -217,10 +227,10 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
     (*q_human)[6] = 10;
     (*q_human)[7] = 1;
     human->setAndUpdate(*q_human);
-    for (unsigned int i = 0; i < m_RobotAccessible.size(); i++)
-    {
-        m_RobotAccessible.at(i)->computeRobotReach();
-    }
+//    for (unsigned int i = 0; i < m_RobotAccessible.size(); i++)
+//    {
+//        m_RobotAccessible.at(i)->computeRobotReach();
+//    }
     human->setAndUpdate(*q_human_cur);
 
     if (showText)
@@ -326,7 +336,7 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
             vector<EnvCell*> newVect;
             pair<double,EnvCell*> p;
             p.first = numeric_limits<double>::max( );
-             for (unsigned int j = 0; j < cell->getHumanRobotReacheable().size(); j++)
+            for (unsigned int j = 0; j < cell->getHumanRobotReacheable().size(); j++)
             {
                 if (cell->getHumanRobotReacheable().at(j)->isRobAccessible())
                 {
@@ -351,6 +361,7 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
         cout << "End updating\n" << endl;
         cout << "out of: void EnvGrid::initGrid()\n" << endl;
     }
+    gridIsSorted = false;
 }
 
 void EnvGrid::recomputeGridWhenHumanMove(Eigen::Vector3d humanPos)
@@ -396,7 +407,7 @@ void EnvGrid::recomputeGridWhenHumanMove(Eigen::Vector3d humanPos)
 
     mRobot->setAndUpdate(*q_robot_cur);
 
-
+    gridIsSorted = false;
 }
 
 
@@ -416,7 +427,7 @@ std::vector<std::pair<double,EnvCell*> > EnvGrid::getSortedGrid()
         std::vector<std::pair<double,EnvCell*> > vect;
         for (unsigned int i = 0; i < m_HumanAccessible.size() ; i++)
         {
-            if (m_HumanAccessible.at(i)->isHumanDistComputed())
+            if (m_HumanAccessible.at(i)->isHumanDistComputed() && m_HumanAccessible.at(i)->getCurrentHumanRobotReacheable().size() > 0)
             {
                 pair<double,EnvCell*> p;
                 p.second = m_HumanAccessible.at(i);
@@ -1086,6 +1097,39 @@ void  EnvGrid::computeDistances(EnvCell* cell, bool ishuman)
 
 }
 
+void EnvGrid::dumpVar()
+{
+
+    cout << "######### grid variables #########" << endl;
+    cout << "CellSize = \n" << _cellSize << endl;
+    cout << "nb of cells = " << _cells.size() << endl;
+    cout << "humanMaxDist in the grid = " << m_humanMaxDist<< endl;
+    cout << "robotMaxDist in the grid = " << m_robotMaxDist << endl;
+    cout << "nb of human accessible cells = " << m_HumanAccessible.size() << endl;
+    cout << "nb of robot accessible cells = " << m_RobotAccessible.size() << endl;
+    double mean=0;
+    double max = 0;
+    double min = numeric_limits<double>::max();
+    for (unsigned int i = 0; i < m_HumanAccessible.size(); i++)
+    {
+        EnvCell* cell = m_HumanAccessible.at(i);
+        int crownSize = cell->getCurrentHumanRobotReacheable().size();
+        mean+= crownSize;
+        if (crownSize > max)
+        {
+            max = crownSize;
+        }
+        else if (crownSize < min)
+        {
+            min = crownSize;
+        }
+    }
+    cout << "mean of crown cells = " << mean/m_HumanAccessible.size()<< endl;
+    cout << "min of crown cells = " << min << endl;
+    cout << "max of crown cells = " << max << endl;
+    cout << "##################################" << endl;
+}
+
 //---------------------------------------------------------------------------
 // Cell
 //---------------------------------------------------------------------------
@@ -1351,12 +1395,17 @@ std::vector<EnvCell*> EnvCell::getCrown(double min, double max)
             EnvCell* cell = dynamic_cast<EnvCell*>(dynamic_cast<EnvGrid*>(_grid)->getCell(x,y));
             double dist = sqrt( pow( getCenter()[0] - cell->getCenter()[0] , 2) +
                                 pow( getCenter()[1] - cell->getCenter()[1] , 2) );
-            if (fabs(dist) <= max && fabs(dist) >= min)
+            if (fabs(dist) <= max && fabs(dist) >= min && cell->isRobAccessible())
             {
                 crownCells.push_back(cell);
                 initHumanRobotReacheable.push_back(cell);
             }
         }
+    }
+//    cout << "crownCells.size() = " << crownCells.size() <<endl;
+    if (crownCells.size() == 0)
+    {
+        m_isHumanAccessible = false;
     }
 
     return crownCells;

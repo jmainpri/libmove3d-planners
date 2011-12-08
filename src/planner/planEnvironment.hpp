@@ -62,6 +62,7 @@ namespace PlanParam
             doReplanning,
             useSelectedDuration,
 
+
             // Drawing (gl) stuff
             drawColorConfig,
             drawOccupVoxels,
@@ -69,6 +70,7 @@ namespace PlanParam
             drawStaticVoxels,
             drawRandomMap,
             drawBoundingVolumes,
+            saveVideo,
 
             //Object Transfert point variable
             env_humanGridDraw,

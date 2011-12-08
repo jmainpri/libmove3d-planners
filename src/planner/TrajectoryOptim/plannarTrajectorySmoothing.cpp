@@ -174,30 +174,42 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > trajectory)
 {
 
-    Robot* robCyl;
+    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > result;
+    Robot* cyl;
     for (int i=0; i<XYZ_ENV->nr; i++)
     {
         string name(XYZ_ENV->robot[i]->name);
-        if(name.find("PR_2CYLINDER") != string::npos )
+        if (robot->getName().find("ROBOT") != string::npos)
         {
-            robCyl = new Robot(XYZ_ENV->robot[i]);
-            break;
+            if(name.find("PR_2CYLINDER") != string::npos )
+            {
+                cyl = new Robot(XYZ_ENV->robot[i]);
+                break;
+            }
+        }
+        else if (robot->getName().find("HUMAN") != string::npos)
+        {
+            if(name.find("HUMCYLINDER") != string::npos )
+            {
+                cyl = new Robot(XYZ_ENV->robot[i]);
+                break;
+            }
         }
     }
 
 
-
-    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > result;
-
     result.clear();
-    result =removeUnnecessaryPoint(trajectory,0.03);
+    result = trajectory;
+//    result = removeUnnecessaryPoint(trajectory,0.03);
 
-    for (int m = 0; m< 100; m++)
+//    for (int m = 0; m< 100; m++)
+    int am = 0;
+    while (am < 100)
     {
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmp;
 
         tmp = removeUnnecessaryPoint(result,0.03);
-        if (robotCanDoTraj(tmp,robCyl,robot,0.2))
+        if (robotCanDoTraj(tmp,cyl,robot,0.2))
         {
             result = tmp;
         }
@@ -209,7 +221,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
             unsigned int i = p3d_random_integer(1,limitUp-2);
             unsigned int j = p3d_random_integer(i+1,limitUp - 1);
             tmp = findShortCut(result,i,j);
-            bool test = robotCanDoTraj(tmp,robCyl,robot,0.2);
+            bool test = robotCanDoTraj(tmp,cyl,robot,0.2);
             if (test)
             {
                 result = tmp;
@@ -219,6 +231,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
         {
             break;
         }
+        am++;
     }
     return result;
 
@@ -325,6 +338,10 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Robot* robot, double epsilon)
 {
 
+    for (unsigned int j =0; j< traj.size();j++)
+    {
+        cout << "cell nb " << j << " with coord:\n" << traj.at(j) << endl;
+    }
     shared_ptr<Configuration> q_robot (robot->getCurrentPos());
 
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > result;
@@ -333,47 +350,69 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
     tmp[1] = (*q_robot)[7];
     tmp[2] = (*q_robot)[11];
     result.push_back(tmp);
-    for (unsigned int i = 1; i < traj.size();i++)
+    if (traj.size() > 1)
     {
-        double x1 = traj.at(i-1)[0];
-        double y1 = traj.at(i-1)[1];
-        double x2 = traj.at(i)[0];
-        double y2 = traj.at(i)[1];
-
-        if ((x1 - x2) < epsilon && (y1 -y2) < epsilon)
+//        cout << "----------- add3Ddim -------------" << endl;
+        for (unsigned int i = 1; i < traj.size();i++)
         {
-            continue;
-        }
+            double x1 = traj.at(i-1)[0];
+            double y1 = traj.at(i-1)[1];
+            double x2 = traj.at(i)[0];
+            double y2 = traj.at(i)[1];
+//            cout << "loop nb " << i << endl;
+//            cout << "x1 = " << x1 << " x2 = " << x2<<" y1 = " << y1<< " y2 = "<< y2<< endl;
+//            cout << "(x1 - x2) = " << (x1 - x2) << " (y1 -y2) = " << (y1 -y2) << " epsilon = " << epsilon << endl;
 
-        double angle = atan2(y2-y1,x2-x1);
+            if (fabs(x1 - x2) < epsilon && fabs(y1 -y2) < epsilon)
+            {
+                continue;
+            }
 
-        double minDist = 0.3;
-        double segSize = sqrt(pow(x1-x2,2)+pow(y1-y2,2));
-        if (segSize > minDist*2)
-        {
-            tmp[0] = x1+minDist*cos(angle);
-            tmp[1] = y1+minDist*sin(angle);
-            tmp[2] = angle;
-            result.push_back(tmp);
-    //
+            double angle = atan2(y2-y1,x2-x1);
 
-            tmp[0] = x2-minDist*cos(angle);
-            tmp[1] = y2-minDist*sin(angle);
-            tmp[2] = angle;
-            result.push_back(tmp);
+            double minDist = 0.3;
+            double segSize = sqrt(pow(x1-x2,2)+pow(y1-y2,2));
+            if (segSize > minDist*2)
+            {
+                tmp[0] = x1+minDist*cos(angle);
+                tmp[1] = y1+minDist*sin(angle);
+                tmp[2] = angle;
+                result.push_back(tmp);
+        //
+
+                tmp[0] = x2-minDist*cos(angle);
+                tmp[1] = y2-minDist*sin(angle);
+                tmp[2] = angle;
+                result.push_back(tmp);
+            }
+            else
+            {
+                tmp[0] = x1+(segSize/2)*cos(angle);
+                tmp[1] = y1+(segSize/2)*sin(angle);
+                tmp[2] = angle;
+                result.push_back(tmp);
+            }
         }
-        else
-        {
-            tmp[0] = x1+(segSize/2)*cos(angle);
-            tmp[1] = y1+(segSize/2)*sin(angle);
-            tmp[2] = angle;
-            result.push_back(tmp);
-        }
+//        cout << "----------- end add3Ddim -------------" << endl;
+
 
     }
-//    return result;
+    else
+    {
+        tmp[0] = traj.at(0)[0];
+        tmp[1] = traj.at(0)[1];
+        tmp[2] = atan2((*q_robot)[7]-tmp[1],(*q_robot)[6]-tmp[0]);;
+        result.push_back(tmp);
+    }
 
-    return removeSamePoints(result,epsilon);
+
+    result = removeSamePoints(result,epsilon);
+
+    for (unsigned int j =0; j< result.size();j++)
+    {
+        cout << "cell nb " << j << " with coord:\n" << result.at(j) << endl;
+    }
+    return result;
 }
 
 
