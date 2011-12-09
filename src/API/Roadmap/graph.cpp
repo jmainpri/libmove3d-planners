@@ -2852,7 +2852,7 @@ void Graph::drawEdge(BGL_Vertex v1, BGL_Vertex v2)
 {
   int color = 0;
   
-  p3d_jnt* 	drawnjnt;
+  p3d_jnt* 	drawnjnt=NULL;
 	int indexjnt = p3d_get_user_drawnjnt();
   if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= m_Robot->getRobotStruct()->njoints ) 
   {
