@@ -220,8 +220,8 @@ bool replan_init_manipulationPlanner()
   m_currentLine.clear();
   m_lastLine.clear();
   
-  g3d_set_multi_thread_mode( true );
-  ext_g3d_draw_multi_thread = replan_draw;
+  // g3d_set_multi_thread_mode( true );
+  //  ext_g3d_draw_multi_thread = replan_draw;
   
   if( m_init == true )
   {
@@ -634,7 +634,7 @@ int replan_execute_simulation_traj( int (*fct)(p3d_rob* robot, p3d_localpath* lo
       if ( m_planningSucceded ) 
       {
         p3d_getQSwitchIDFromMidCVS( t, t_rep, &m_switch_id );
-        p3d_getMidCVSTimeOnTraj( m_switch_id, t_switch );
+        //p3d_getMidCVSTimeOnTraj( m_switch_id, t_switch );
         
         cout << "q switch id : " << m_switch_id << endl;
         cout << "m_CurrentTraj.geMaxParam() : " << m_CurrentTraj.getRangeMax() << endl;
