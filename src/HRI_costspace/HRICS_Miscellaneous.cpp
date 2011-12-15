@@ -17,6 +17,7 @@
 #include "P3d-pkg.h"
 #include "GraspPlanning-pkg.h"
 #include "LightPlanner-pkg.h"
+#include "Collision-pkg.h"
 
 using namespace HRICS;
 using namespace std;
@@ -32,16 +33,18 @@ void HRICS::setSimulationRobotsTransparent()
 {
   Scene* sc = global_Project->getActiveScene();
   
-  // Get all robots that conain the name placemat
-  for (int i=0; i<int(sc->getNumberOfRobots()); i++) 
+  Robot* rob = sc->getRobotByName("PR2_ROBOT");
+  Robot* sim = sc->getRobotByName("PR2_SIMUL");
+  if( rob == NULL || sim == NULL )
   {
-    Robot* rob = sc->getRobot(i);
-    
-    if( rob->getName().find("SIMULATION") != string::npos )
-    {
-      rob->getRobotStruct()->draw_transparent = true;
-    }
+    return;
   }
+  
+  // Draws the second PR2 transparent
+  sim->getRobotStruct()->draw_transparent = true;
+  
+  // Deactivate robot to simulation robot collision checking
+  p3d_col_deactivate_rob_rob(rob->getRobotStruct(),sim->getRobotStruct());
 }
 
 void HRICS::generateGraspConfigurations()
@@ -279,7 +282,7 @@ bool HRICS::initShelfScenario()
   // Set Planning functions
   planner->setPlanningMethod( planner_Function );
   planner->setSmoothingMethod( smoothing_Function );
-  planner->setReplanningMethod( replanning_Function );
+  //planner->setReplanningMethod( replanning_Function );
   planner->setArmCartesian( 0, false );
   planner->setUseBaseMotion( true );
   
