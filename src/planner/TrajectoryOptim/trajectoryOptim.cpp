@@ -521,7 +521,7 @@ void traj_optim_hrics_generate_points()
 //! Get current robot
 //! Initializes the costspace and multi localpath
 // --------------------------------------------------------
-bool traj_optim_init()
+bool traj_optim_init_collision_spaces()
 {
   if (m_init == true)
     return true;
@@ -665,7 +665,7 @@ bool traj_optim_runChomp()
   {
     traj_optim_set_scenario_type();
     
-    if(!traj_optim_init()){
+    if(!traj_optim_init_collision_spaces()){
       cout << "Not well initialized" << endl;
       return false;
     }
@@ -729,7 +729,7 @@ bool traj_optim_runStomp()
   {
     traj_optim_set_scenario_type();
     
-    if(!traj_optim_init()){
+    if(!traj_optim_init_collision_spaces()){
       cout << "Not well initialized" << endl;
       return false;
     }

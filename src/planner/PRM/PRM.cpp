@@ -120,7 +120,7 @@ void PRM::expandOneStep()
 		m_nbConscutiveFailures = 0;
 		m_nbAddedNode++;
 		
-		if (ENV.getBool(Env::drawGraph))
+		if (ENV.getBool(Env::drawExploration))
 		{
 			cout << "Number of nodes added : " << m_nbAddedNode << endl;
 			(*_draw_func)();

@@ -69,7 +69,7 @@ ACR::~ACR()
 		
 	m_nbAddedNode ++;
 		
-	if (ENV.getBool(Env::drawGraph))
+	if (ENV.getBool(Env::drawExploration))
 	{
 		(*_draw_func)();
 	}
@@ -98,7 +98,7 @@ void ACR::expandOneStep()
 	
 	m_nbAddedNode ++;
 	
-	if (ENV.getBool(Env::drawGraph))
+	if (ENV.getBool(Env::drawExploration))
 	{
 		(*_draw_func)();
 	}

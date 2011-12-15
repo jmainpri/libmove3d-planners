@@ -277,16 +277,16 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 	
 	for (unsigned int i = 0; i < m_Courbe.size(); i++)
 	{
-//    if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() )
-//    {
-//      cout << "null LocalPath in replaceP3dTraj" << endl;
-//      continue;
-//    }
+    //    if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() )
+    //    {
+    //      cout << "null LocalPath in replaceP3dTraj" << endl;
+    //      continue;
+    //    }
     
 		localprevPt = localpathPt;
 		localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( m_Robot->getRobotStruct(), 
-                                                           m_Courbe[i]->getLocalpathStruct() );
-
+                                                          m_Courbe[i]->getLocalpathStruct() );
+    
     if( localprevPt )
     {
       localprevPt->next_lp = localpathPt;
@@ -307,7 +307,7 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
     localpathPt->next_lp = NULL;
 	else 
     cout << "replaceP3dTraj with empty trajectory" << endl;
-
+  
 	trajPt->nlp = nloc;
 	
 #ifdef P3D_PLANNER
@@ -317,7 +317,7 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 #endif
   
   return trajPt;
-		//	print()	
+  //	print()	
 }
 
 void Trajectory::copyPaths( vector<LocalPath*>& vect )
@@ -333,79 +333,79 @@ void Trajectory::copyPaths( vector<LocalPath*>& vect )
 
 p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
 {
-    //	print();
-
-    //	Robot* rob =new Robot(p3d_get_robot_by_name(trajPt->rob->name));
-    if(trajPt!=NULL)
+	//	print();
+  
+  //	Robot* rob =new Robot(p3d_get_robot_by_name(trajPt->rob->name));
+	if(trajPt!=NULL)
+	{
+		destroy_list_localpath(rob->getRobotStruct(), trajPt->courbePt);
+	}
+	else
+	{
+		trajPt = p3d_create_empty_trajectory(rob->getRobotStruct());
+	}
+  
+	//	trajPt->name       = strdup(name);
+	//	trajPt->file       = NULL;  // Modification Fabien
+	trajPt->num = 0; //rob->getRobotStruct()->nt;
+	//    trajPt->rob = m_Robot->getRobotStruct();
+  
+	//	cout << rob->getRobotStruct() << endl;
+  
+	nloc = 0;
+  
+	p3d_localpath *localpathPt = NULL;
+	p3d_localpath *localprevPt = NULL;
+  
+  bool first = true;
+  
+	for (unsigned int i = 0; i < m_Courbe.size(); i++)
+	{
+    //    if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() )
+    //    {
+    //      cout << "null LocalPath in replaceP3dTraj" << endl;
+    //      continue;
+    //    }
+    
+		localprevPt = localpathPt;
+		localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( rob->getRobotStruct(),
+                                                          m_Courbe[i]->getLocalpathStruct() );
+    
+    if( localprevPt )
     {
-        destroy_list_localpath(rob->getRobotStruct(), trajPt->courbePt);
+      localprevPt->next_lp = localpathPt;
     }
-    else
+    
+    localpathPt->prev_lp = localprevPt;
+    
+    if ( first )
     {
-        trajPt = p3d_create_empty_trajectory(rob->getRobotStruct());
+      trajPt->courbePt = localpathPt;
+      first = false;
     }
-
-    //	trajPt->name       = strdup(name);
-    //	trajPt->file       = NULL;  // Modification Fabien
-    trajPt->num = 0; //rob->getRobotStruct()->nt;
-    //    trajPt->rob = m_Robot->getRobotStruct();
-
-    //	cout << rob->getRobotStruct() << endl;
-
-    nloc = 0;
-
-    p3d_localpath *localpathPt = NULL;
-    p3d_localpath *localprevPt = NULL;
-
-    bool first = true;
-
-    for (unsigned int i = 0; i < m_Courbe.size(); i++)
-    {
-        //    if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() )
-        //    {
-        //      cout << "null LocalPath in replaceP3dTraj" << endl;
-        //      continue;
-        //    }
-
-        localprevPt = localpathPt;
-        localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( rob->getRobotStruct(),
-                                                               m_Courbe[i]->getLocalpathStruct() );
-
-        if( localprevPt )
-        {
-            localprevPt->next_lp = localpathPt;
-        }
-
-        localpathPt->prev_lp = localprevPt;
-
-        if ( first )
-        {
-            trajPt->courbePt = localpathPt;
-            first = false;
-        }
-
-	nloc++;
-    }
-
-    if (nloc != 0)
-    {
-        localpathPt->next_lp = NULL;
-    }
-    else
-    {
-        cout << "replaceP3dTraj with empty trajectory" << endl;
-    }
-
-    trajPt->nlp = nloc;
-
+    
+    nloc++;
+	}
+  
+  if (nloc != 0)
+  {
+    localpathPt->next_lp = NULL;
+  }
+  else
+  {
+    cout << "replaceP3dTraj with empty trajectory" << endl;
+  }
+  
+  trajPt->nlp = nloc;
+  
 #ifdef P3D_PLANNER
     trajPt->range_param = p3d_compute_traj_rangeparam(trajPt);
 #else
     printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
 #endif
-
-    return trajPt;
-    //	print()
+  
+  return trajPt;
+  //	print()
 }
 
 std::tr1::shared_ptr<Configuration> Trajectory::operator [] ( const int &i ) const
@@ -528,7 +528,7 @@ int Trajectory::getNbOfViaPoints() const
 {
   if ( m_Courbe.empty() )
     return 0;
-
+  
 	return (m_Courbe.size()+1);
 }
 
@@ -1148,7 +1148,7 @@ vector<LocalPath*> Trajectory::extractSubPortion(double param1, double param2,
 	return paths;
 }
 
-Trajectory Trajectory::extractSubTrajectory(unsigned int id_start, unsigned int id_end)
+Trajectory Trajectory::extractSubTrajectoryOfLocalPaths(unsigned int id_start, unsigned int id_end)
 {
 	vector<LocalPath*> path;
 	
@@ -1158,7 +1158,8 @@ Trajectory Trajectory::extractSubTrajectory(unsigned int id_start, unsigned int 
 	}
 	else
 	{
-    for (unsigned int i=id_start; i<=id_end; i++) {
+    for (unsigned int i=id_start; i<=id_end; i++) 
+    {
       path.push_back(new LocalPath(*m_Courbe[i]));
     }
 	}
@@ -1240,22 +1241,22 @@ void Trajectory::draw(int nbKeyFrame)
 	int val1, val2;
 	double Cost1, Cost2;
 	
-//	p3d_obj* o;
+  //	p3d_obj* o;
   p3d_jnt* 	drawnjnt;
 	
-//	int NumBody = m_Robot->getRobotStruct()->no - 1;
-//	
-//	if ((NumBody >= m_Robot->getRobotStruct()->no) || (NumBody < 0))
-//		return;
-
+  //	int NumBody = m_Robot->getRobotStruct()->no - 1;
+  //	
+  //	if ((NumBody >= m_Robot->getRobotStruct()->no) || (NumBody < 0))
+  //		return;
+  
 	int indexjnt = p3d_get_user_drawnjnt();
   
   if (indexjnt != -1 && indexjnt <= m_Robot->getRobotStruct()->njoints ) {
     drawnjnt = m_Robot->getRobotStruct()->joints[indexjnt];
   }
   
-//	if (!(o = m_Robot->getRobotStruct()->o[NumBody]))
-//		return;
+  //	if (!(o = m_Robot->getRobotStruct()->o[NumBody]))
+  //		return;
 	
 	shared_ptr<Configuration> qSave = m_Robot->getCurrentPos();
 	shared_ptr<Configuration> q = m_Source;
@@ -1486,7 +1487,7 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 	
 	// Compute real number of small LP
 	unsigned int nbOfSmallLP = 0;
-
+  
 	for (unsigned int i = 0; i<portion.size(); i++)
 	{
 		double resol;
@@ -1508,10 +1509,10 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
     
     unsigned int nbOfDMax = floor((portion[i]->getParamMax()/resol)+0.5);
     nbOfSmallLP += nbOfDMax;
-//    cout << "dMax = " << dMax << endl;
-//    cout << "resol = " << resol << endl;
-//    cout << "nbOfDMax = " << nbOfDMax << endl;
-//    cout << "getParamMax() = " << portion[i]->getParamMax() << endl;
+    //    cout << "dMax = " << dMax << endl;
+    //    cout << "resol = " << resol << endl;
+    //    cout << "nbOfDMax = " << nbOfDMax << endl;
+    //    cout << "getParamMax() = " << portion[i]->getParamMax() << endl;
 	}
 	cout << "range = " << range << endl;
   cout << "nbOfSmallLP = " << nbOfSmallLP << endl;
@@ -1642,13 +1643,19 @@ void Trajectory::cutTrajInSmallLP(unsigned int nLP)
 
 bool Trajectory::concat(const Trajectory& traj)
 {
-    for( unsigned int i=0; i<traj.m_Courbe.size(); i++ )
-    {
-        m_Courbe.push_back( new LocalPath( *traj.m_Courbe[i] ));
-    }
-
-    updateRange();
+  if( traj.m_Courbe.size() == 0 )
     return true;
+     
+  if( !m_Courbe.back()->getEnd()->equal(*traj.m_Courbe[0]->getBegin())  )
+    return false;
+  
+  for( int i=0; i<int(traj.m_Courbe.size()); i++ )
+  {
+    m_Courbe.push_back( new LocalPath( *traj.m_Courbe[i] ) );
+  }
+  
+  updateRange();
+  return true;
 }
 
 bool Trajectory::replacePortion(unsigned int id1, unsigned int id2, vector<LocalPath*> paths, bool freeMemory )
@@ -1672,7 +1679,7 @@ bool Trajectory::replacePortion(unsigned int id1, unsigned int id2, vector<Local
     }
   } 
   
-    m_Courbe.erase(m_Courbe.begin() + id1, m_Courbe.begin() + id2);
+  m_Courbe.erase(m_Courbe.begin() + id1, m_Courbe.begin() + id2);
 	m_Courbe.insert(m_Courbe.begin() + id1, paths.begin(), paths.end());
 	
 	updateRange();
@@ -1687,7 +1694,7 @@ bool Trajectory::replacePortion(double param1, double param2,
 	
 	shared_ptr<Configuration> q21;
 	shared_ptr<Configuration> q22;
-
+  
 	if (param1 > param2)
 	{
 		cout
@@ -1891,7 +1898,7 @@ void Trajectory::print()
 	cout << "-------------- Trajectory --------------" << endl;
 	cout << " Number of LP " << nloc << endl;
 	cout << " Range Parameter " << this->range_param << endl;
-	  
+  
   if( nloc > 0 )
   {
     int size1 = nloc+1;
@@ -1926,10 +1933,10 @@ void draw_traj_debug()
       trajToDraw.at(i).draw(500);
       //std::cout << "Drawing traj" << std::endl;
     }
-//    p3d_rob *robotPt = (p3d_rob *) p3d_get_desc_curid(P3D_ROBOT);
-//    if (!robotPt->tcur)
-//    {
-//      trajToDraw.clear();
-//    }
+    //    p3d_rob *robotPt = (p3d_rob *) p3d_get_desc_curid(P3D_ROBOT);
+    //    if (!robotPt->tcur)
+    //    {
+    //      trajToDraw.clear();
+    //    }
   }	
 }

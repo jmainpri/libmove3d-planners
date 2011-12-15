@@ -28,6 +28,10 @@ CostSpace* global_costSpace(NULL);
 
 void GlobalCostSpace::initialize()
 {
+  if (global_costSpace != NULL) {
+    return ;
+  }
+  
 	// initialize the cost function object.
 	global_costSpace = new CostSpace();
   
@@ -38,6 +42,10 @@ void GlobalCostSpace::initialize()
 	std::cout << "Initializing the dist to obst costmap cost function" << std::endl;
 	global_costSpace->addCost("costDistToObst",boost::bind(computeDistanceToObstacles, _1));
 	global_costSpace->setCost("costDistToObst");
+  
+  std::cout << "Initializing the collision costmap cost function" << std::endl;
+	global_costSpace->addCost("costIsInCollision",boost::bind(computeInCollisionCost, _1));
+	global_costSpace->setCost("costIsInCollision");
 	
 	if(GroundCostObj)
 	{
@@ -409,11 +417,27 @@ double computeIntersectionWithGround(Configuration& conf)
 
 double computeDistanceToObstacles(Configuration& conf)
 {
-	Robot* robotPt = conf.getRobot();
-	shared_ptr<Configuration> qActual = robotPt->getCurrentPos();
-	robotPt->setAndUpdate(conf);
-	double cost = p3d_GetMinDistCost(robotPt->getRobotStruct());
-	robotPt->setAndUpdate(*qActual);
+	Robot* robot = conf.getRobot();
+	shared_ptr<Configuration> qActual = robot->getCurrentPos();
+	robot->setAndUpdate(conf);
+	double cost = p3d_GetMinDistCost(robot->getRobotStruct());
+	robot->setAndUpdate(*qActual);
+	return cost;
+}
+
+double computeInCollisionCost(Configuration& conf)
+{
+	Robot* robot = conf.getRobot();
+	shared_ptr<Configuration> qActual = robot->getCurrentPos();
+  
+  double cost = 0.0;
+  
+  if( conf.isInCollision() )
+  {
+    cost = 20.0;
+  }
+  
+	robot->setAndUpdate(*qActual);
 	return cost;
 }
 

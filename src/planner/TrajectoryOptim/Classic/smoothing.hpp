@@ -29,12 +29,52 @@ namespace API
 		Smoothing(Robot* R,traj* t);
 		
 		~Smoothing();
+    
+    /**
+		 * Get the time spent in optimization
+		 */
+		double getTime() { return m_time; }
 		
 		/**
+		 * Set Context name
+		 */
+		void setContextName(std::string name) { m_ContextName = name; } 
+		
+		/**
+		 * Save the optimization to a file
+		 */
+		void saveOptimToFile( std::string str );
+    
+    /**
+		 * Go through all nodes in a deterministic manner
+		 */
+		void removeRedundantNodes();
+    
+    /**
+		 * One loop of the random shortcut
+		 */
+		bool oneLoopShortCut();
+		
+		/**
+		 * One loop of the random shortcut 
+		 * with recomputation of the trajectory cost
+		 */
+		bool oneLoopShortCutRecompute();
+		
+		/**
+		 * Runs the shortcut method for a certain number of iterations
+		 * @param iterations
+		 */
+		void runShortCut(int nbIteration, int idRun = 0);
+
+		
+	protected:
+    
+    /**
 		 * stops the trajectory optimization
 		 */
 		bool checkStopConditions( unsigned int iter );
-			
+    
 		/**
 		 * gets randomly two random configurations
 		 */
@@ -48,16 +88,6 @@ namespace API
 		std::vector< std::tr1::shared_ptr<Configuration> > getConfAtStepAlongTraj( double step , 
 																																							double firstDist, 
 																																							double secondDist );
-		/**
-		 * One loop of the random shortcut
-		 */
-		bool oneLoopShortCut();
-		
-		/**
-		 * One loop of the random shortcut 
-		 * with recomputation of the trajectory cost
-		 */
-		bool oneLoopShortCutRecompute();
 		
 		/**
 		 * PatialShortCut : intependently shortcut each DoFs
@@ -78,23 +108,8 @@ namespace API
 		 * Change the Ith Active Dof on Conf
 		 */
 		void changeIthActiveDofValueOnConf( Configuration& q,
-																				unsigned int ithActiveDoF, 
-																				double value );
-		
-		/**
-		 * Go through all nodes in a deterministic manner
-		 */
-		void removeRedundantNodes();
-		
-		/**
-		 * Get the time spent in optimization
-		 */
-		double getTime() { return m_time; }
-		
-		/**
-		 * Set Context name
-		 */
-		void setContextName(std::string name) { m_ContextName = name; } 
+                                       unsigned int ithActiveDoF, 
+                                       double value );
 		
 		/**
 		 * Show the trajectory while being deformed
@@ -123,19 +138,6 @@ namespace API
 		 * @param last n taken into account iterations
 		 */
 		double gainOfLastIterations( unsigned int n );
-		
-		/**
-		 * Save the optimization to a file
-		 */
-		void saveOptimToFile( std::string str );
-		
-		/**
-		 * Runs the shortcut method for a certain number of iterations
-		 * @param iterations
-		 */
-		void runShortCut(int nbIteration, int idRun = 0);
-		
-	protected:
 		
 		std::string						m_ContextName;
 		std::vector<double>		m_Selected;

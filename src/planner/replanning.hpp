@@ -11,32 +11,26 @@
 
 #include "P3d-pkg.h"
 
+#include "API/Trajectory/trajectory.hpp"
+
+#include <string>
+
 /**
  * Get the replanning robot
  */
-p3d_rob* replann_getRobot();
-
-/**
- * Initializes the replanning environnment
- */
-bool replann_initialize();
-
-/**
- * Replan initial path
- */
-bool replan_plan_initial_path();
-
-/**
- * @ingroup NEW_CPP_MODULE
- * Funtion to replan from a certain via point
- */
-p3d_traj* replanning_Function(p3d_rob* robotPt, p3d_traj* traj, p3d_vector3 target, int deformationViaPoint);
-
+p3d_rob* replan_getRobot();
+void replan_init(std::string robotName);
+void replan_init_for_navigation();
+bool replan_init_execution();
+void replan_create_straightline();
+void replan_optimize_current_traj();
+void replan_store_traj_to_vect(API::Trajectory& traj, double step);
 
 /**
  * @ingroup NEW_CPP_MODULE
  * Execute simulation replanning trajectory
  */
-int replann_execute_simulation_traj( int (*fct)(p3d_rob* robot, p3d_localpath* curLp) );
+int replan_execute_simple_simulation( int (*fct)(p3d_rob* robot, p3d_localpath* localpathPt) );
+int replan_execute_simulation_traj( int (*fct)(p3d_rob* robot, p3d_localpath* curLp) );
 
 #endif

@@ -45,9 +45,10 @@ namespace PlanParam
             isWeightedChoice,
 
             // Smoothing stage
-            partialShortcut,
-            saveTrajCost,
+            trajPartialShortcut,
+            trajSaveCost,
             trajCostRecompute,
+            trajComputeCollision,
             withMaxIteration,
             withGainLimit,
             withTimeLimit,

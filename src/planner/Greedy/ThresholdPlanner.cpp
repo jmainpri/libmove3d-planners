@@ -169,7 +169,7 @@ unsigned int ThresholdPlanner::run()
 		_Graph->setStart(_Start);
 		_Graph->setGoal(_Goal);
 	}
-	if (ENV.getBool(Env::drawGraph))
+	if (ENV.getBool(Env::drawExploration))
 	{
 		(*_draw_func)();
 	}

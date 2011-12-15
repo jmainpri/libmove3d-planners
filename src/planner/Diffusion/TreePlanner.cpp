@@ -329,7 +329,7 @@ unsigned int TreePlanner::run()
 			
 			if (NbCurCreatedNodes > 0)
 			{
-				if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawGraph))
+				if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawExploration))
 				{
 				  _draw_func();
 				}
@@ -366,7 +366,7 @@ unsigned int TreePlanner::run()
 		}
 	}
 	
-	if ( (!ENV.getBool(Env::drawDisabled)) && (ENV.getBool(Env::drawGraph) || ENV.getBool(Env::drawTraj)) )
+	if ( (!ENV.getBool(Env::drawDisabled)) && (ENV.getBool(Env::drawExploration) || ENV.getBool(Env::drawTraj)) )
 	{
 	  _draw_func();
 	}

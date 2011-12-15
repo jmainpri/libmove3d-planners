@@ -29,72 +29,8 @@ namespace API
 		CostOptimization(Robot* R,p3d_traj* t);
 		
 		~CostOptimization();
-		
-		/**
-		 * Returns 3 random configurations along the trajtectory
-		 * @param the step between the 3 configuration
-		 * @return vector of configuration
-		 * @return 
-		 */
-		std::vector< std::tr1::shared_ptr<Configuration> > get3RandSuccesConfAlongTraj(
-                                                                                       double& prevDistPt,
-                                                                                       double& randDistPt,
-                                                                                       double& nextDistPt,
-                                                                                       double step);
-		
-		/**
-		 * Returns the 3 configurations that are the closest to the input configuration
-		 * @param 
-		 */
-		std::vector< std::tr1::shared_ptr<Configuration> > getClosestConfOnTraj(
-                                                                                double& prevDistPt,
-                                                                                double& randDistPt,
-                                                                                double& nextDistPt,
-                                                                                std::tr1::shared_ptr<Configuration> ptrConf,
-                                                                                double step);
-		
-		/**
-		 * Cheat for Justin
-		 */
-		std::tr1::shared_ptr<Configuration> cheat();
-		
-		/**
-		 * One loop of the deformation strategy
-		 * @param step is the distance between 2 configurations
-		 */
-		bool oneLoopDeform();
-		
-		/**
-		 * One loop of the deformation strategy with recomputing 
-		 * of the trajectory portion cost as it might change
-		 * @param step is the distance between 2 configurations
-		 */
-		bool oneLoopDeformRecompute( double step );
-		
-		/**
-		 * Stops at the last descending configuration
-		 * on the cost map
-		 */
-		double getLastDescendingConfParam(LocalPath& directionPath);
-		
-		/**
-		 * Expand the configuration to a ne
-		 */
-		std::tr1::shared_ptr<Configuration> perturbCurrent(std::tr1::shared_ptr<Configuration> qCurrPt,
-                                                           std::tr1::shared_ptr<Configuration> qRandPt);
-		
-		/**
-		 * Get the minimal cost
-		 */
-		double getMinCost() { return m_mincost; }
-		
-		/**
-		 * Create new trajectories to show in debug mode
-		 * also calls the g3d_draw function to plot in the OpenGl display
-		 */
-		void debugShowTraj(double lPrev,double lNext,std::tr1::shared_ptr<Configuration> qNew , int color);
-		
-		/**
+    
+    /**
 		 * Prints debug information
 		 */
 		void printDebugInfo();
@@ -109,11 +45,79 @@ namespace API
 		 * Set the cheat 
 		 */
 		void setCheat() { m_cheat = true; }
+    
+    /**
+		 * Get the minimal cost
+		 */
+		double getMinCost() { return m_mincost; }
+    
+    /**
+		 * One loop of the deformation strategy
+		 * @param step is the distance between 2 configurations
+		 */
+		bool oneLoopDeform();
+		
+		/**
+		 * One loop of the deformation strategy with recomputing 
+		 * of the trajectory portion cost as it might change
+		 * @param step is the distance between 2 configurations
+		 */
+		bool oneLoopDeformRecompute();
 		
 		/**
 		 * 
 		 */
 		void runDeformation( int nbIteration , int idRun=0 );
+    
+
+  protected:
+		
+		/**
+		 * Cheat for Justin
+		 */
+		std::tr1::shared_ptr<Configuration> cheat();
+		
+		/**
+		 * Stops at the last descending configuration
+		 * on the cost map
+		 */
+		double getLastDescendingConfParam(LocalPath& directionPath);
+		
+		/**
+		 * Expand the configuration to a ne
+		 */
+		std::tr1::shared_ptr<Configuration> perturbCurrent(std::tr1::shared_ptr<Configuration> qCurrPt,
+                                                           std::tr1::shared_ptr<Configuration> qRandPt);
+
+		
+		/**
+		 * Create new trajectories to show in debug mode
+		 * also calls the g3d_draw function to plot in the OpenGl display
+		 */
+		void debugShowTraj(double lPrev,double lNext,std::tr1::shared_ptr<Configuration> qNew , int color);
+    
+    /**
+		 * Returns 3 random configurations along the trajtectory
+		 * @param the step between the 3 configuration
+		 * @return vector of configuration
+		 * @return 
+		 */
+		std::vector< std::tr1::shared_ptr<Configuration> > get3RandSuccesConfAlongTraj(
+                                                                                   double& prevDistPt,
+                                                                                   double& randDistPt,
+                                                                                   double& nextDistPt,
+                                                                                   double step);
+		
+		/**
+		 * Returns the 3 configurations that are the closest to the input configuration
+		 * @param 
+		 */
+		std::vector< std::tr1::shared_ptr<Configuration> > getClosestConfOnTraj(
+                                                                            double& prevDistPt,
+                                                                            double& randDistPt,
+                                                                            double& nextDistPt,
+                                                                            std::tr1::shared_ptr<Configuration> ptrConf,
+                                                                            double step);
 		
 		
 	private:

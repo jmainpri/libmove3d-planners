@@ -29,14 +29,13 @@ namespace API
 	class Trajectory 
 	{
 	public:
-		
 		//---------------------------------------------------------
 		// Constructors
 		Trajectory();
 		Trajectory(Robot* R);
-		Trajectory(const Trajectory& T);
 		Trajectory(Robot* R,traj* t);
 		Trajectory(std::vector< std::tr1::shared_ptr<Configuration> >& C);
+    Trajectory(const Trajectory& T);
 		~Trajectory();
 		
 		Trajectory& operator= (const Trajectory& f);
@@ -45,20 +44,12 @@ namespace API
 		// Operations
 		void copyPaths( std::vector<LocalPath*>& vect );
 		
-		std::vector< std::tr1::shared_ptr<Configuration> > getTowConfigurationAtParam(
-                                                                                      double param1, double param2 , uint& lp1, uint& lp2);
+		std::vector< std::tr1::shared_ptr<Configuration> > getTowConfigurationAtParam( double param1, double param2,
+                                                                                  uint& lp1, uint& lp2 );
 		
-		std::vector<LocalPath*> extractSubPortion(
-                                                  double param1,
-                                                  double param2,
-                                                  unsigned int& first,
-                                                  unsigned int& last);
-		
-		Trajectory extractSubTrajectory(unsigned int id_start, unsigned int id_end);
-        
-		Trajectory extractSubTrajectory(
-                                        double param1,
-                                        double param2);
+		std::vector<LocalPath*> extractSubPortion(double param1,double param2,unsigned int& first,unsigned int& last);
+		Trajectory extractSubTrajectoryOfLocalPaths(unsigned int id_start, unsigned int id_end);
+		Trajectory extractSubTrajectory(double param1,double param2);
         
 		bool concat(const Trajectory& traj);
 		
@@ -112,7 +103,7 @@ namespace API
 		void 	updateRange();
 		double computeSubPortionRange(std::vector<LocalPath*> portion);
 		
-		bool 	replaceP3dTraj();
+		bool        replaceP3dTraj();
 		p3d_traj* 	replaceP3dTraj(p3d_traj* trajPt);
 		p3d_traj* 	replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt);
 		

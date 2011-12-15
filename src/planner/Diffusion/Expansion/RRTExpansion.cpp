@@ -266,8 +266,7 @@ int RRTExpansion::expandProcess(Node* expansionNode, shared_ptr<
         if (firstIteration && !failed)
         {
             if (ENV.getBool(Env::expandControl)
-                && !this->expandControl(*directionLocalpath,
-                                        positionAlongDirection, *expansionNode))
+                && !this->expandControl(*directionLocalpath,positionAlongDirection, *expansionNode))
                 {
                 failed = true;
             }

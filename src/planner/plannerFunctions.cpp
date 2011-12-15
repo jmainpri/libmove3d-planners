@@ -172,7 +172,6 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
   delete_graph( GraphPt );
     
   // Creates a new graph
-  //Graph* graph = 	API_activeGraph =  new Graph(rob,NULL);
   Graph* graph = API_activeGraph =  new Graph(rob,GraphPt);
   
   // Allocate RRT

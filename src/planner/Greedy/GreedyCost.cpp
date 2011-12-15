@@ -205,15 +205,12 @@ void GreedyCost::optimizeLinear()
 			optimTrj->setCheat();
 		}
 
-		if(PlanEnv->getBool(PlanParam::trajCostRecompute))
+		if( PlanEnv->getBool(PlanParam::trajCostRecompute) )
 		{
-			isOptimSuccess = optimTrj->oneLoopDeformRecompute(
-				/*p3d_random(minFactor,factor)*/factor);
+			isOptimSuccess = optimTrj->oneLoopDeformRecompute();
 		}
-		else
-		{
-			isOptimSuccess = optimTrj->oneLoopDeform(
-							/*p3d_random(minFactor,factor)*/);
+		else {
+			isOptimSuccess = optimTrj->oneLoopDeform();
 		}
 
 		if (isOptimSuccess == false)

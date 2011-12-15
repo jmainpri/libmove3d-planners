@@ -170,7 +170,7 @@ void Vis_PRM::createOneOrphanLinking(int type, unsigned int & ADDED, int & nb_fa
 	{
 		Node* N = new Node(_Graph,q);
 		
-		if(linkOrphanLinking( N, type, ADDED, nb_fail) && ENV.getBool(Env::drawGraph) )
+		if(linkOrphanLinking( N, type, ADDED, nb_fail) && ENV.getBool(Env::drawExploration) )
 		{
 
 			(*_draw_func)();

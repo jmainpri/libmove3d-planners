@@ -202,7 +202,6 @@ bool BaseExpansion::nextStep(LocalPath& path,
 	else
 	{
 		pathDelta = path.getParamMax() == 0. ? 1. : MIN(1., step() / path.getParamMax());
-		
 		shared_ptr<Configuration> ptrEnd;
 		
 		if(pathDelta == 1. && directionNode)
@@ -213,9 +212,7 @@ bool BaseExpansion::nextStep(LocalPath& path,
 		{
 			ptrEnd = path.configAtParam(pathDelta * path.getLocalpathStruct()->range_param);
 		}
-		
 		ptrEnd->setConstraints();
-		
 		newPath = shared_ptr<LocalPath>(new LocalPath(path.getBegin(),ptrEnd));
 	}
 	

@@ -258,7 +258,7 @@ API::Trajectory* CostmapPlanner::getTrajectoryAndComputeCost()
 	//computeAllEdgeCost();
 	traj->replaceP3dTraj();
 	
-	if (ENV.getBool(Env::drawGraph))
+	if (ENV.getBool(Env::drawExploration))
 	{
 		(*_draw_func)();
 	}

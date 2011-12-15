@@ -661,8 +661,7 @@ vector<shared_ptr<Configuration> > Smoothing::getConfAtStepAlongTraj( double ste
 	return vectConf;
 }
 
-vector<shared_ptr<Configuration> > Smoothing::get2RandomConf(
-																														 double step, double& firstDist, double& secondDist)
+vector<shared_ptr<Configuration> > Smoothing::get2RandomConf(double step, double& firstDist, double& secondDist)
 {	
 	unsigned int id1 = 0;
 	unsigned int id2 = 0;
@@ -679,7 +678,7 @@ vector<shared_ptr<Configuration> > Smoothing::get2RandomConf(
 	{
 		double param;
 		
-		if (m_ShortCutBiased && !PlanEnv->getBool(PlanParam::partialShortcut) )
+		if (m_ShortCutBiased && !PlanEnv->getBool(PlanParam::trajPartialShortcut) )
 		{
 			param = getBiasedParamOnTraj();
 
@@ -909,13 +908,13 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 		
 		try 
 		{
-			if ( PlanEnv->getBool( PlanParam::partialShortcut ) ) 
+			if ( PlanEnv->getBool( PlanParam::trajPartialShortcut ) ) 
 			{
 				partialShortcut();
 			}
 			else 
 			{
-				oneLoopShortCut();
+        oneLoopShortCut();
 			}
 		}
 		catch (string str)
@@ -933,7 +932,7 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 		
 		m_IterationSucceded = ( CurCost > NewCost );
 		
-		if(PlanEnv->getBool(PlanParam::saveTrajCost))
+		if(PlanEnv->getBool(PlanParam::trajSaveCost))
 		{
 			NewCost = cost();
 			
@@ -962,7 +961,7 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 	else
 	{ cout << "Trajectory not valid" << endl;}
 	
-	if(PlanEnv->getBool(PlanParam::saveTrajCost))
+	if(PlanEnv->getBool(PlanParam::trajSaveCost))
 	{
 		ostringstream oss;
 		oss << "ShortCutOptim_"<< m_ContextName << "_" << idRun << "_" ;
