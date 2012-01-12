@@ -93,7 +93,8 @@ namespace PlanParam
             env_realTime,
             env_drawHumanModel,
             env_softMotionTraj,
-            env_createTrajs
+            env_createTrajs,
+            env_fusedGridAndRotRand
         };
 
         enum intParameter
@@ -112,7 +113,8 @@ namespace PlanParam
             env_yToDraw,
             env_timeShow,
             env_pow,
-            env_MOTP
+            env_MOTP,
+            env_anglePow
 
         };
 

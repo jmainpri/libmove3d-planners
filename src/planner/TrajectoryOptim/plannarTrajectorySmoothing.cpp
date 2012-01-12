@@ -245,7 +245,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
         return traj;
     }
 
-    double errorT = 0.05;
+    double errorT = EPS1/2;
     Vector2d p1 = getRandomPointInSegment(traj.at(i-1),traj.at(i),errorT);
     Vector2d p2 = getRandomPointInSegment(traj.at(j-1),traj.at(j),errorT);
 

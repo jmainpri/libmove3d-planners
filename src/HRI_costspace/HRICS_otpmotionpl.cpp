@@ -612,6 +612,7 @@ double OTPMotionPl::multipliComputeOtp(int n)
     cout << "Average cost = " << costSum / nb << endl;
     cout << "Average nb Iteration = " << (double)nbIteration / nb << endl;
     cout << "Average nb solutions = " << (double)nbSolution / nb << endl;
+    cout << "Average rate = " << (double)nbSolution / nbIteration << endl;
     cout << "Formated :" << endl << totalTimeSum / nb << endl << initGridTimeSum / nb << endl << loopTimeSum / nb << endl
                    << costSum / nb << endl << (double)nbIteration / nb << endl << (double)nbSolution / nb << endl << (double)nb/id << endl;
     cout << "-----------------------------" << endl;
@@ -904,6 +905,38 @@ Vector3d OTPMotionPl::getRandomPoints(double id)
             vect[0] = p3d_random(center[0] - cellSize[0]/2, center[0] + cellSize[0]/2);
             vect[1] = p3d_random(center[1] - cellSize[1]/2, center[1] + cellSize[1]/2);
             vect[2] = p3d_random(-M_PI,M_PI);
+        }
+
+    }
+    else if (PlanEnv->getBool(PlanParam::env_fusedGridAndRotRand))
+    {
+        std::vector<std::pair<double,EnvCell*> > sortedCell = m_2DGrid->getSortedGrid();
+        if (sortedCell.empty())
+        {
+            cout << "ERROR: no human placement possible. Might result from human not specified very well. (in multiple human case)" << endl ;
+            vect[0] = 0;
+            vect[1] = 0;
+            vect[2] = 0;
+        }
+        else
+        {
+
+            double rand = p3d_random(0,1);
+            rand = pow(rand,PlanEnv->getInt(PlanParam::env_pow)); // giving a higher probability of getting small numbers
+            int cellNb = floor(rand*(sortedCell.size()-1));
+            EnvCell* cell = sortedCell.at(cellNb).second;
+            Vector2d center = cell->getCenter();
+            EnvCell* robotCell = cell->getRobotBestPos().second;
+            Vector2d robotCellCenter = robotCell->getCenter();
+            double angle = atan2(robotCellCenter[1] - center[1],robotCellCenter[0] - center[0]);
+            double randAngle = pow(p3d_random(-1,1),PlanEnv->getInt(PlanParam::env_pow)*2+1)*M_PI;
+            randAngle=  angle_limit_PI(randAngle + angle);
+
+
+            Vector2d cellSize = sortedCell.at(cellNb).second->getCellSize();
+            vect[0] = p3d_random(center[0] - cellSize[0]/2, center[0] + cellSize[0]/2);
+            vect[1] = p3d_random(center[1] - cellSize[1]/2, center[1] + cellSize[1]/2);
+            vect[2] = randAngle;
         }
 
     }
@@ -2491,6 +2524,7 @@ void OTPMotionPl::dumpVar()
     cout << "------------ OTP variable -----------" <<endl;
 
     cout << "fused grid = "  << PlanEnv->getBool(PlanParam::env_fusedGridRand) << endl;
+    cout << "fused grid and rotation = "  << PlanEnv->getBool(PlanParam::env_fusedGridAndRotRand) << endl;
     cout << "normal rand = "  << PlanEnv->getBool(PlanParam::env_normalRand) << endl;
     cout << "oriented slice = "  << PlanEnv->getBool(PlanParam::env_useOrientedSlice) << endl;
     cout << "slices = "  << PlanEnv->getBool(PlanParam::env_useSlice) << endl;
