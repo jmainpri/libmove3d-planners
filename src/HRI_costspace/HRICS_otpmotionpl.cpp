@@ -929,7 +929,10 @@ Vector3d OTPMotionPl::getRandomPoints(double id)
             EnvCell* robotCell = cell->getRobotBestPos().second;
             Vector2d robotCellCenter = robotCell->getCenter();
             double angle = atan2(robotCellCenter[1] - center[1],robotCellCenter[0] - center[0]);
-            double randAngle = pow(p3d_random(-1,1),PlanEnv->getInt(PlanParam::env_pow)*2+1)*M_PI;
+            int sign = p3d_random_integer(0,1);
+            if (sign = 0){sign = -1;}
+            double randAngle = pow(p3d_random(0,1),PlanEnv->getInt(PlanParam::env_pow))*sign*M_PI;
+//            double randAngle = pow(p3d_random(-1,1),PlanEnv->getInt(PlanParam::env_pow)*2+1)*M_PI;
             randAngle=  angle_limit_PI(randAngle + angle);
 
 
