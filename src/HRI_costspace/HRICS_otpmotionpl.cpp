@@ -1084,6 +1084,7 @@ bool OTPMotionPl::newComputeOTP()
     double timeLimitation = PlanEnv->getDouble(PlanParam::env_timeLimitation);
     double dumpTime = PlanEnv->getDouble(PlanParam::env_timeToDump);
     double currntDumpTime = 0;
+    double epsilon = 0.001;
 
     int maxIter = PlanEnv->getInt(PlanParam::env_maxIter); //300
 
@@ -1198,17 +1199,22 @@ bool OTPMotionPl::newComputeOTP()
         }
 //        saveCostsTofile(bestConf.cost,tmpConf.cost);
 
-        if (tmpConf.cost < bestConf.cost)
+        if (tmpConf.cost < bestConf.cost - epsilon)
         {
             bestConf = tmpConf;
             i = 0;
 
         }
+        else if (tmpConf.cost < bestConf.cost && tmpConf.cost > bestConf.cost - epsilon )
+        {
+            bestConf = tmpConf;
+            i++;
+        }
         else if (tmpConf.cost < numeric_limits<double>::max( )){ i++; }
 
 //        cout << "current id = "<< id << endl;
 //        cout << "current iteration worst than the best one : " << i << endl;
-        if (i > maxIter + beginId || id > PlanEnv->getInt(PlanParam::env_totMaxIter) + beginId) { break; }
+
 
         int time = PlanEnv->getInt(PlanParam::env_timeShow)*1000;
         if (PlanEnv->getBool(PlanParam::env_drawOnlyBest) && (time > 0))
@@ -1229,7 +1235,19 @@ bool OTPMotionPl::newComputeOTP()
         _Robot->setAndUpdate(*q_robot_cur);
         cout.clear(ios_base::goodbit);
         clock_t curTime = clock();
-        if (((double)curTime - firstConfs) / CLOCKS_PER_SEC > timeLimitation) { break;}
+        // STOPING CRITERIA
+//        if (i > maxIter + beginId || id > PlanEnv->getInt(PlanParam::env_totMaxIter) + beginId) { break; }
+//        if (((double)curTime - firstConfs) / CLOCKS_PER_SEC > timeLimitation) { break;}
+//        cout << "i = " << i << " rate = " <<  i/(double)id << " time = " << ((double)curTime - firstConfs) / CLOCKS_PER_SEC << endl;
+        if ( i > maxIter + beginId  || // number of results are sufisiant
+             ((double)curTime - firstConfs) / CLOCKS_PER_SEC > timeLimitation ||  // taking too much time
+             (i > 0 && i/(double)id < EPS2 && ((double)curTime - firstConfs) / CLOCKS_PER_SEC > timeLimitation /10) // taking too much time after finding some solution
+             ){
+
+            break;
+            }
+
+
         if (((double)curTime - firstConfs) / CLOCKS_PER_SEC > dumpTime+currntDumpTime)
         {
             m_costVector.push_back(bestConf.cost);
