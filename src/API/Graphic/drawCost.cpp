@@ -404,7 +404,7 @@ void g3d_draw_hrics(int opengl_context)
                     //dynamic_cast<HRICS::ConfigSpace*>(HRICS_MotionPLConfig)->draw2dPath();
             }
 
-            if( ENV.getBool(Env::drawOTPTraj) )
+            if( ENV.getBool(Env::drawOTPTraj) && dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig))
             {
                     dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->draw2dPath();
             }
