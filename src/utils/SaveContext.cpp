@@ -9,9 +9,9 @@
 #include <iostream>
 #include <iterator>
 
-#ifdef QT_LIBRARY
+//#ifdef QT_LIBRARY
 #include "qtLibrary.hpp"
-#endif
+//#endif
 
 using namespace std;
 

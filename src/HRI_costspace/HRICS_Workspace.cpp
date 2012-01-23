@@ -247,7 +247,7 @@ void Workspace::initOtpPlanner()
 	HRICS_activeDist = HRICS_MotionPL->getDistance();
   
   //	ENV.setBool(Env::HRIPlannerCS,true);
-	ENV.setBool(Env::enableHri,true);
+       ENV.setBool(Env::enableHri,true);
 	ENV.setBool(Env::isCostSpace,true);
   
 	ENV.setBool(Env::useBallDist,false);

@@ -833,9 +833,9 @@ double OTPMotionPl::ComputePlanarDistancesLineToSegment(Eigen::Vector2d p, Eigen
 }
 
 
-Vector3d OTPMotionPl::getRandomPoints(double id)
+bool OTPMotionPl::getRandomPoints(double id, Vector3d& vect)
 {
-    Vector3d vect;
+//    Vector3d vect;
 
     if (PlanEnv->getBool(PlanParam::env_normalRand))
     {
@@ -890,10 +890,11 @@ Vector3d OTPMotionPl::getRandomPoints(double id)
         std::vector<std::pair<double,EnvCell*> > sortedCell = m_2DGrid->getSortedGrid();
         if (sortedCell.empty())
         {
-            cout << "ERROR: no human placement possible. Might result from human not specified very well. (in multiple human case)" << endl ;
+            cout << "the biased grid is empty." << endl ;
             vect[0] = 0;
             vect[1] = 0;
             vect[2] = 0;
+            return false;
         }
         else
         {
@@ -913,10 +914,11 @@ Vector3d OTPMotionPl::getRandomPoints(double id)
         std::vector<std::pair<double,EnvCell*> > sortedCell = m_2DGrid->getSortedGrid();
         if (sortedCell.empty())
         {
-            cout << "ERROR: no human placement possible. Might result from human not specified very well. (in multiple human case)" << endl ;
+            cout << "the biased grid is empty."<< endl ;
             vect[0] = 0;
             vect[1] = 0;
             vect[2] = 0;
+            return false;
         }
         else
         {
@@ -948,10 +950,12 @@ Vector3d OTPMotionPl::getRandomPoints(double id)
         std::vector<std::pair<double,EnvCell*> > sortedCell = m_2DGrid->getSortedGrid();
         if (sortedCell.empty())
         {
-            cout << "ERROR: no human placement possible. Might result from human not specified very well. (in multiple human case)" << endl ;
+            cout << "the biased grid is empty." << endl ;
             vect[0] = 0;
             vect[1] = 0;
             vect[2] = 0;
+
+            return false;
         }
         else
         {
@@ -1049,26 +1053,28 @@ Vector3d OTPMotionPl::getRandomPoints(double id)
         vect[0] = 0;
         vect[1] = 0;
         vect[2] = 0;
+        return false;
     }
 
-    return vect;
+    return true;
 }
 
 bool OTPMotionPl::newComputeOTP()
 {
     clock_t start = clock();
+    bool isStanding = PlanEnv->getBool(PlanParam::env_isStanding);
     if (!PlanEnv->getBool(PlanParam::env_realTime))
     {
         getInputs();
     }
-
+        Eigen::Vector3d humPos;
     if (!PlanEnv->getBool(PlanParam::env_normalRand) && ! PlanEnv->getBool(PlanParam::env_useAllGrid))
     {
-        Eigen::Vector3d humPos;
+//        Eigen::Vector3d humPos;
         humPos[0] = m_humanPos[0];
         humPos[1] = m_humanPos[1];
         humPos[2] = m_humanPos[2];
-        if (!PlanEnv->getBool(PlanParam::env_realTime))
+        if (!PlanEnv->getBool(PlanParam::env_realTime) && isStanding)
         {
             m_2DGrid->initGrid(humPos);
         }
@@ -1081,7 +1087,7 @@ bool OTPMotionPl::newComputeOTP()
 
     //bool isStanding = m_isStanding;
     //double objectNecessity = m_mobility;
-    bool isStanding = PlanEnv->getBool(PlanParam::env_isStanding);
+
     double objectNecessity = PlanEnv->getDouble(PlanParam::env_objectNessecity);
     bool m_showText = PlanEnv->getBool(PlanParam::env_showText);
     double timeLimitation = PlanEnv->getDouble(PlanParam::env_timeLimitation);
@@ -1121,6 +1127,11 @@ bool OTPMotionPl::newComputeOTP()
     clock_t varInit = clock();
     if (isStanding)
     {
+//        if (!PlanEnv->getBool(PlanParam::env_realTime))
+//        {
+//            m_2DGrid->initGrid(humPos);
+//        }
+
         bestConf = lookForBestLocalConf(x,y,Rz,objectNecessity);
         if (m_simpleChair)
         {
@@ -1163,16 +1174,46 @@ bool OTPMotionPl::newComputeOTP()
         finished = false;
     }
 
+    m_testedVectors.clear();
+
     clock_t firstConfs = clock();
     while (finished)
     {
-        id++;
+
 //        cout << "---------------------------------------------------" << endl;
 //        cout << "new section, init pos : x = " << x << " y = " << y << " Rz = " << Rz << endl;
-        Vector3d vect = getRandomPoints(id);
+        Vector3d vect;
+        bool gridIsEmpty = getRandomPoints(id,vect);
+        if (!gridIsEmpty)
+        {
+            break;
+        }
+
+        // STOPING CRITERIA
+//        if (i > maxIter + beginId || id > PlanEnv->getInt(PlanParam::env_totMaxIter) + beginId) { break; }
+//        if (((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation) { break;}
+//        cout << "i = " << i << " rate = " <<  i/(double)id << " time = " << ((double)curTime1 - firstConfs) / CLOCKS_PER_SEC << endl;
+        clock_t curTime1 = clock();
+        if ( i > maxIter + beginId  || // number of results are sufisiant
+             ((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation ||  // taking too much time
+             (i > 0 && i/(double)id < EPS2 && (((double)curTime1 - firstConfs) / CLOCKS_PER_SEC) > (timeLimitation /10)) // taking too much time after finding some solution
+             ){
+            if (i > maxIter + beginId) {cout << "number of results are sufisiant" <<endl; }
+            if (((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation) {cout << "taking too much time" <<endl; }
+            if (i > 0 && i/(double)id < EPS2 && ((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation /10)
+            {cout << "taking too much time after finding some solution" <<endl; }
+            break;
+            }
+
+        if (isAlreadyTested(vect))
+        {
+            continue;
+        }
         double randomX = vect[0];
         double randomY = vect[1];
         double randomRz = vect[2];
+
+        id++;
 //        cout << "random : x = " << randomX << " y = " << randomY << " Rz = " << randomRz << endl;
 
         OutputConf tmpConf = lookForBestLocalConf(randomX,randomY,randomRz,objectNecessity);
@@ -1238,17 +1279,7 @@ bool OTPMotionPl::newComputeOTP()
         _Robot->setAndUpdate(*q_robot_cur);
         cout.clear(ios_base::goodbit);
         clock_t curTime = clock();
-        // STOPING CRITERIA
-//        if (i > maxIter + beginId || id > PlanEnv->getInt(PlanParam::env_totMaxIter) + beginId) { break; }
-//        if (((double)curTime - firstConfs) / CLOCKS_PER_SEC > timeLimitation) { break;}
-//        cout << "i = " << i << " rate = " <<  i/(double)id << " time = " << ((double)curTime - firstConfs) / CLOCKS_PER_SEC << endl;
-        if ( i > maxIter + beginId  || // number of results are sufisiant
-             ((double)curTime - firstConfs) / CLOCKS_PER_SEC > timeLimitation ||  // taking too much time
-             (i > 0 && i/(double)id < EPS2 && ((double)curTime - firstConfs) / CLOCKS_PER_SEC > timeLimitation /10) // taking too much time after finding some solution
-             ){
 
-            break;
-            }
 
 
         if (((double)curTime - firstConfs) / CLOCKS_PER_SEC > dumpTime+currntDumpTime)
@@ -1290,37 +1321,57 @@ bool OTPMotionPl::newComputeOTP()
 
     OutputConfSort OutputConfSortObj;
     sort(m_confList.begin(),m_confList.end(),OutputConfSortObj);
-    OutputConf o = m_confList.at(0);
-    m_confList.erase(m_confList.begin());
-    o.humanTraj = m_pts->smoothTrajectory(m_Human,o.humanTraj);
-    o.robotTraj = m_pts->smoothTrajectory(_Robot,o.robotTraj);
-    m_confList.insert(m_confList.begin(),o);
 
-    // trajectory
-
-    m_2DHumanPath.clear();
-    m_2DPath.clear();
-
-    m_2DHumanPath = o.humanTraj;
-    m_HumanPathExist = o.humanTrajExist;
-
-    m_2DPath = o.robotTraj;
-    m_PathExist = o.robotTrajExist;
-
-
-//    double xf = (*bestConf.humanConf)[firstIndexOfHumanDof + 0];
-//    double yf = (*bestConf.humanConf)[firstIndexOfHumanDof + 1];
-//    double Rzf = (*bestConf.humanConf)[firstIndexOfHumanDof + 5];
-//    setRobotsToConf(bestConf.configNumberInList,bestConf.isStandingInThisConf,xf,yf,Rzf);
-
-
-
-    if (PlanEnv->getBool(PlanParam::env_createTrajs))
+    bool trajFound = false;
+    while (!trajFound)
     {
-        if (!createTrajectoryFromOutputConf(o))
+        OutputConf o = m_confList.at(0);
+        m_confList.erase(m_confList.begin());
+        o.humanTraj = m_pts->smoothTrajectory(m_Human,o.humanTraj);
+        o.robotTraj = m_pts->smoothTrajectory(_Robot,o.robotTraj);
+        m_confList.insert(m_confList.begin(),o);
+
+        // trajectory
+
+        m_2DHumanPath.clear();
+        m_2DPath.clear();
+
+        m_2DHumanPath = o.humanTraj;
+        m_HumanPathExist = o.humanTrajExist;
+
+        m_2DPath = o.robotTraj;
+        m_PathExist = o.robotTrajExist;
+
+
+    //    double xf = (*bestConf.humanConf)[firstIndexOfHumanDof + 0];
+    //    double yf = (*bestConf.humanConf)[firstIndexOfHumanDof + 1];
+    //    double Rzf = (*bestConf.humanConf)[firstIndexOfHumanDof + 5];
+    //    setRobotsToConf(bestConf.configNumberInList,bestConf.isStandingInThisConf,xf,yf,Rzf);
+
+
+
+        if (PlanEnv->getBool(PlanParam::env_createTrajs))
         {
-          cout << "No trajectory computed" << endl;
-          return false;
+            if (!createTrajectoryFromOutputConf(o))
+            {
+              cout << "Computing of trajectory has failed, triing next issue" << endl;
+              m_confList.erase(m_confList.begin());
+
+              if (m_confList.size() <= 0)
+              {
+                  cout << "No trajectory found" << endl;
+                  return false;
+              }
+
+            }
+            else
+            {
+                trajFound = true;
+            }
+        }
+        else
+        {
+            break;
         }
     }
 
@@ -1732,6 +1783,7 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
 
     standUp();
 
+    getInputs();
     Eigen::Vector3d humPos;
     humPos[0] = m_humanPos[0];
     humPos[1] = m_humanPos[1];
@@ -1883,6 +1935,7 @@ void OTPMotionPl::initGrid()
         clock_t start = clock();
         m_2DGrid->init(computeHumanRobotDist());
         clock_t second = clock();
+        getInputs();
         Eigen::Vector3d humPos;
         humPos[0] = m_humanPos[0];
         humPos[1] = m_humanPos[1];
@@ -1894,7 +1947,7 @@ void OTPMotionPl::initGrid()
         chair->setAndUpdate(*q_chair_cur);
         cout << "Human is sitting" << endl;
 
-        cout << "initializing the grid take : " << ((double)second - start) / CLOCKS_PER_SEC << " s"<< endl;
+        cout << "initializing the grid took : " << ((double)second - start) / CLOCKS_PER_SEC << " s"<< endl;
         cout << "initializing the content of the grid take : " << ((double)stop - second) / CLOCKS_PER_SEC << " s"<< endl;
 
 
@@ -2585,7 +2638,8 @@ void OTPMotionPl::dumpVar()
 
 void OTPMotionPl::setVar()
 {
-    PlanEnv->setBool(PlanParam::env_fusedGridRand,true);
+    PlanEnv->setBool(PlanParam::env_fusedGridRand,false);
+    PlanEnv->setBool(PlanParam::env_fusedGridAndRotRand,true);
     PlanEnv->setBool(PlanParam::env_normalRand,false);
     PlanEnv->setBool(PlanParam::env_useOrientedSlice,false);
     PlanEnv->setBool(PlanParam::env_useSlice,false);
@@ -2595,11 +2649,11 @@ void OTPMotionPl::setVar()
     PlanEnv->setDouble(PlanParam::env_Cellsize,0.20);
     PlanEnv->setInt(PlanParam::env_nbSittingRotation,300);
 
-    PlanEnv->setInt(PlanParam::env_pow,4);
+    PlanEnv->setInt(PlanParam::env_pow,2);
     PlanEnv->setInt(PlanParam::env_timeShow,0);
-    PlanEnv->setInt(PlanParam::env_maxIter,400);
+    PlanEnv->setInt(PlanParam::env_maxIter,40);
     PlanEnv->setInt(PlanParam::env_totMaxIter,2000);
-    PlanEnv->setDouble(PlanParam::env_timeLimitation,1.0);
+    PlanEnv->setDouble(PlanParam::env_timeLimitation,10.0);
     PlanEnv->setInt(PlanParam::env_nbRandomRotOnly,50);
     PlanEnv->setInt(PlanParam::env_nbSittingRotation,300);
     PlanEnv->setDouble(PlanParam::env_robotSpeed,1.0);
@@ -2607,7 +2661,7 @@ void OTPMotionPl::setVar()
     PlanEnv->setDouble(PlanParam::env_timeStamp,0.35);
 
     PlanEnv->setDouble(PlanParam::env_psi,0.99);
-    PlanEnv->setDouble(PlanParam::env_delta,0.21);
+    PlanEnv->setDouble(PlanParam::env_delta,0.01);
     PlanEnv->setDouble(PlanParam::env_ksi,0.73);
     PlanEnv->setDouble(PlanParam::env_rho,0.57);
     PlanEnv->setDouble(PlanParam::env_sittingOffset,0.2);
@@ -2644,7 +2698,7 @@ bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
     HRICS_activeDist = HRICS_MotionPL->getDistance();
 
 	ENV.setBool(Env::HRIPlannerCS,true);
-	ENV.setBool(Env::enableHri,true);
+        ENV.setBool(Env::enableHri,true);
 	ENV.setBool(Env::isCostSpace,true);
 
 	ENV.setBool(Env::useBallDist,false);
@@ -2672,7 +2726,7 @@ bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 		fileNameStandSlice = "/statFiles/OtpComputing/confHerakles.xml";
 		fileNameSitSlice = "/statFiles/OtpComputing/confHeraklesSit.xml";
 	}
-	else if (m_Human->getName().find("OLDDUDE")!= string::npos)
+        else if (m_Human->getName().find("OLDDUDE")!= string::npos)
 	{
 		fileNameStand = "/statFiles/OtpComputing/confOldDude.xml";
 		fileNameSit = "/statFiles/OtpComputing/confOldDudeSit.xml";
@@ -2896,5 +2950,18 @@ void OTPMotionPl::addVectorToRealTreajectory(Eigen::Vector2d vect)
 }
 
 
-
+bool OTPMotionPl::isAlreadyTested(Eigen::Vector3d vect)
+{
+    for (unsigned int i = 0; i < m_testedVectors.size();i++)
+    {
+        if (fabs(m_testedVectors.at(i)[0] - vect[0]) < EPS1/2 &&
+            fabs(m_testedVectors.at(i)[1] - vect[1]) < EPS1/2 &&
+            fabs(m_testedVectors.at(i)[2] - vect[2]) < EPS2)
+        {
+            return true;
+        }
+    }
+    m_testedVectors.push_back(vect);
+    return false;
+}
 

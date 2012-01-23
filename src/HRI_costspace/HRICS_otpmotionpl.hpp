@@ -194,10 +194,16 @@ namespace HRICS
           * compute a distance in a planar grid between a point (p) and a segment [p1,p2]
           */
         double ComputePlanarDistancesLineToSegment(Eigen::Vector2d p, Eigen::Vector2d p1, Eigen::Vector2d p2);
+
         /**
           * return the randomly choosed x, y and Rz. the random can be biased or not. the choice is done in the GUI
           */
-        Eigen::Vector3d getRandomPoints(double id);
+        bool getRandomPoints(double id, Vector3d& vect);
+
+        /**
+          * test if the vector has already been computed
+          */
+        bool isAlreadyTested(Eigen::Vector3d p);
 
         /**
           * Compute the OTP using the last algorithme
@@ -526,6 +532,11 @@ namespace HRICS
           * an object to compute 2d trajectory
           */
         PlannarTrajectorySmoothing* m_pts;
+
+        /**
+          * a list of all the tested vectors
+          */
+        std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> >   m_testedVectors;
 
         /**
           * inputs for computing OTP

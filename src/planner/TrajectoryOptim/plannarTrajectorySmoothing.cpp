@@ -212,6 +212,9 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
 
 //    for (int m = 0; m< 100; m++)
     int am = 0;
+    double bm = 0;
+    double dist = computeDistFromTraj(result,0,result.size()-1);
+
     while (am < 100)
     {
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmp;
@@ -239,8 +242,38 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
         {
             break;
         }
+
+        tmp = removeUnnecessaryPoint(result,0.07);
+        if (robotCanDoTraj(tmp,cyl,robot,0.2))
+        {
+            result = tmp;
+        }
+
         am++;
+//        double tmpDist = numeric_limits<double>::max( );
+//        dist = computeDistFromTraj(result,0,result.size()-1);
+//        cout << "distance = " << dist << "for " << am << endl;
+//        if (tmpDist < dist)
+//        {
+//            bm =0;
+//            dist = tmpDist;
+//        }
+//        else
+//        {
+//            bm++;
+//            if (bm> 40)
+//            {
+//                break;
+//            }
+//        }
+
     }
+
+//    for (unsigned int j =0; j< result.size();j++)
+//    {
+//        cout << "cell nb " << j << " with coord:\n" << result.at(j) << endl;
+//    }
+
     return result;
 
 }

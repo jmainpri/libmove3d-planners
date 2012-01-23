@@ -146,7 +146,7 @@ void initPlannerParameters()
         myIntMap.insert(std::make_pair( PlanParam::nb_pointsOnTraj,              new intContainer(15)));
   
         // Object TransfertPoint variable
-        myIntMap.insert(std::make_pair( PlanParam::env_maxIter,                  new intContainer(20)));
+        myIntMap.insert(std::make_pair( PlanParam::env_maxIter,                  new intContainer(40)));
         myIntMap.insert(std::make_pair( PlanParam::env_nbRandomRotOnly,          new intContainer(10)));
         myIntMap.insert(std::make_pair( PlanParam::env_nbSittingRotation,        new intContainer(500)));
         myIntMap.insert(std::make_pair( PlanParam::env_totMaxIter,               new intContainer(2000)));
