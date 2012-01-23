@@ -116,14 +116,14 @@ void EnvGrid::init(pair<double,double> minMax)
     Robot* robot = getRobot();
     shared_ptr<Configuration> q_robot_cur = robot->getCurrentPos();
     shared_ptr<Configuration> q_robot = robot->getCurrentPos();
-    (*q_robot)[6] = 10;
-    (*q_robot)[7] = 1;
+    (*q_robot)[6] = 0;
+    (*q_robot)[7] = 0;
     robot->setAndUpdate(*q_robot);
     Robot* human = getHuman();
     shared_ptr<Configuration> q_human_cur = human->getCurrentPos();
     shared_ptr<Configuration> q_human = human->getCurrentPos();
-    (*q_human)[6] = 10;
-    (*q_human)[7] = 1;
+    (*q_human)[6] = 0;
+    (*q_human)[7] = 0;
     human->setAndUpdate(*q_human);
 
 
@@ -182,13 +182,13 @@ void EnvGrid::init(pair<double,double> minMax)
         cout << "Move the cylinder out of the scenne" << endl;
     }
     shared_ptr<Configuration> q = humCyl->getCurrentPos();
-    (*q)[6] = -3;
-    (*q)[7] = 1;
+    (*q)[6] = 0;
+    (*q)[7] = 0;
     humCyl->setAndUpdate(*q);
 
      q = robotCyl->getCurrentPos();
-    (*q)[6] = -3;
-    (*q)[7] = 1;
+    (*q)[6] = 0;
+    (*q)[7] = 0;
     robotCyl->setAndUpdate(*q);
 
     if (showText)
@@ -378,8 +378,8 @@ void EnvGrid::recomputeGridWhenHumanMove(Eigen::Vector3d humanPos)
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(mRobot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 
 
-    (*q_human)[firstIndexOfHumanDof + 0] = 10;
-    (*q_human)[firstIndexOfHumanDof + 1] = 1;
+    (*q_human)[firstIndexOfHumanDof + 0] = 0;
+    (*q_human)[firstIndexOfHumanDof + 1] = 0;
     mHuman->setAndUpdate(*q_human);
 
 
@@ -398,8 +398,8 @@ void EnvGrid::recomputeGridWhenHumanMove(Eigen::Vector3d humanPos)
     pos[0] = humanPos[0];
     pos[1] = humanPos[1];
 
-    (*q_robot)[firstIndexOfRobotDof + 0] = 10;
-    (*q_robot)[firstIndexOfRobotDof + 1] = 1;
+    (*q_robot)[firstIndexOfRobotDof + 0] = 0;
+    (*q_robot)[firstIndexOfRobotDof + 1] = 0;
     mRobot->setAndUpdate(*q_robot);
 
      cell = dynamic_cast<EnvCell*>(getCell(pos));
@@ -1167,8 +1167,8 @@ void EnvCell::computeHumanReach()
     Robot* human = dynamic_cast<EnvGrid*>(_grid)->getHuman();
     shared_ptr<Configuration> q_human_cur = human->getCurrentPos();
     shared_ptr<Configuration> q_human = human->getCurrentPos();
-    (*q_human)[6] = 10;
-    (*q_human)[7] = 1;
+    (*q_human)[6] = 0;
+    (*q_human)[7] = 0;
     human->setAndUpdate(*q_human);
 
     shared_ptr<Configuration> q = humCyl->getCurrentPos();
@@ -1181,8 +1181,8 @@ void EnvCell::computeHumanReach()
     {
         m_isHumanAccessible = false;
     }
-    (*q)[6] = 10;
-    (*q)[7] = 1;
+    (*q)[6] = 0;
+    (*q)[7] = 0;
     humCyl->setAndUpdate(*q);
     human->setAndUpdate(*q_human_cur);
 
@@ -1199,8 +1199,8 @@ void EnvCell::computeRobotReach()
     Robot* rob = dynamic_cast<EnvGrid*>(_grid)->getRobot();
     shared_ptr<Configuration> q_rob_cur = rob->getCurrentPos();
     shared_ptr<Configuration> q_rob = rob->getCurrentPos();
-    (*q_rob)[6] = 10;
-    (*q_rob)[7] = 1;
+    (*q_rob)[6] = 0;
+    (*q_rob)[7] = 0;
     rob->setAndUpdate(*q_rob);
 
     shared_ptr<Configuration> q = robotCyl->getCurrentPos();
@@ -1213,8 +1213,8 @@ void EnvCell::computeRobotReach()
     {
         m_isRobotAccessible = false;
     }
-    (*q)[6] = 10;
-    (*q)[7] = 1;
+    (*q)[6] = 0;
+    (*q)[7] = 0;
     robotCyl->setAndUpdate(*q);
     rob->setAndUpdate(*q_rob_cur);
 

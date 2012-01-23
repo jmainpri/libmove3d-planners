@@ -175,6 +175,14 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
 {
 
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > result;
+    if (trajectory.empty())
+    {
+        Vector2d v;
+        v[0] = (*robot->getCurrentPos())[6];
+        v[1] = (*robot->getCurrentPos())[7];
+        result.push_back(v);
+        return result;
+    }
     Robot* cyl;
     for (int i=0; i<XYZ_ENV->nr; i++)
     {
@@ -338,10 +346,10 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Robot* robot, double epsilon)
 {
 
-    for (unsigned int j =0; j< traj.size();j++)
-    {
-        cout << "cell nb " << j << " with coord:\n" << traj.at(j) << endl;
-    }
+//    for (unsigned int j =0; j< traj.size();j++)
+//    {
+//        cout << "cell nb " << j << " with coord:\n" << traj.at(j) << endl;
+//    }
     shared_ptr<Configuration> q_robot (robot->getCurrentPos());
 
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > result;
@@ -408,10 +416,10 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
 
     result = removeSamePoints(result,epsilon);
 
-    for (unsigned int j =0; j< result.size();j++)
-    {
-        cout << "cell nb " << j << " with coord:\n" << result.at(j) << endl;
-    }
+//    for (unsigned int j =0; j< result.size();j++)
+//    {
+//        cout << "cell nb " << j << " with coord:\n" << result.at(j) << endl;
+//    }
     return result;
 }
 
