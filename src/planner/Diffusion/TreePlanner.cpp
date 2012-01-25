@@ -144,6 +144,15 @@ bool TreePlanner::preConditions()
  */
 bool TreePlanner::checkStopConditions()
 {
+  if( int(m_nbExpansion) > PlanEnv->getInt(PlanParam::plannerMaxIterations) )
+  {
+    cout
+		<< "Failure: the maximum number of expansion is reached : " 
+    << PlanEnv->getInt(PlanParam::plannerMaxIterations) 
+		<< endl;
+		return (true);
+  }
+  
 	if (ENV.getBool(Env::expandToGoal) && trajFound())
 	{
             #ifdef DEBUG_STATUS
@@ -151,7 +160,8 @@ bool TreePlanner::checkStopConditions()
 #endif
 		return (true);
 	}
-	if (/*ENV.getBool(Env::ligandExitTrajectory)*/false)
+	
+  if (/*ENV.getBool(Env::ligandExitTrajectory)*/false)
 	{
 		double d(_Start->getConfiguration()->dist(
         *_Graph->getLastNode()->getConfiguration()));
@@ -194,7 +204,7 @@ bool TreePlanner::checkStopConditions()
 		return (true);
 	}
 	
-	if ((int)m_nbConscutiveFailures > ENV.getInt(Env::NbTry))
+	if ( int(m_nbConscutiveFailures) > ENV.getInt(Env::NbTry))
 	{
 		cout
 		<< "Failure: the maximum number of consecutive failures (" << m_nbConscutiveFailures 

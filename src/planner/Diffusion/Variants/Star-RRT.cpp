@@ -120,7 +120,8 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
     
 //    if( print_exploration )
 //    {
-      cout << "radius : " << radius << endl;
+//      cout << "radius : " << radius << endl;
+      cout << "radius : " << radius  << " , number of nodes : " << m_Graph->getNumberOfNodes() << endl;
 //    }
 
 		vector<Node*> NodesNear = m_Graph->KNearestWeightNeighbour(NodeNew->getConfiguration(),

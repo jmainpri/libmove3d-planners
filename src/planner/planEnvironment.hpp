@@ -105,6 +105,9 @@ namespace PlanParam
             tata,
             nb_pointsOnTraj,
           
+            // RRT & PRM
+            plannerMaxIterations,
+          
             // Replanning
             plannerType,
             planningAlgorithm,
