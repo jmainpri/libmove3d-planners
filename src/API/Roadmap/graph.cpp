@@ -1378,14 +1378,33 @@ Node* Graph::nearestWeightNeighbour(Node* compco, shared_ptr<Configuration> conf
 	return BestNode;
 }
 
+//-----------------------------------------------------------
+// Connected componnents
+//-----------------------------------------------------------
+
 unsigned int Graph::getNumberOfCompco()
 {
 	return m_Graph->ncomp;
 }
 
-//-----------------------------------------------------------
-// Connected componnents
-//-----------------------------------------------------------
+/**
+ * Updates the list of connected
+ * components from the p3d_graph structure
+ */ 
+void Graph::updateCompcoFromStruct()
+{
+  m_Comp.clear();
+  
+  if (m_Graph->comp)
+  {
+    p3d_compco* l = m_Graph->comp;
+    while (l)
+    {
+      m_Comp.push_back(new ConnectedComponent(this, l));
+      l = l->suiv;
+    }
+  }
+}
 
 /**
  * Merge Component

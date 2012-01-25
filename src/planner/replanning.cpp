@@ -75,6 +75,11 @@ Replanner::Replanner(Robot* r) : m_robot(r) , m_useMLP(false)
   }
 }
 
+Replanner::~Replanner() 
+{
+
+}
+
 void Replanner::setSwitchData( confPtr_t qSwitch, int switch_id, double t_rep, double lp_avera_length, double initial_step )
 {
   m_qSwitch = qSwitch;
@@ -1053,10 +1058,10 @@ int ReplanningSimulator::execute_softmotion_simulation_traj( int (*fct)(p3d_rob*
   
   if (!m_init) 
   {
-    if(init_manipulationPlanner())
-    {
-      m_init = true;
-    }
+//    if(dynamic_cast<SoftmotionReplanner*>(m_replanner)->init_manipulationPlanner())
+//    {
+//      m_init = true;
+//    }
   }
   else 
   {

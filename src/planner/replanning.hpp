@@ -126,6 +126,7 @@ public:
   void run();
   
 private:
+  //bool init_manipulationPlanner();
   bool compute_softmotion(MANPIPULATION_TRAJECTORY_CONF_STR &confs, p3d_traj* traj, SM_TRAJ& smTraj);
   bool compute_softmotion(p3d_traj* traj);
   bool generate_new_trajectory(const std::vector<p3d_traj*>& trajs);
@@ -143,7 +144,7 @@ public:
   
   p3d_rob* getRobot();
   
-  bool init_simple_replanning();
+//  bool init_simple_replanning();
   
   double time_since_last_call(bool& is_first_call, double& t_init);
   void set_multithread_graphical(bool enable);
@@ -153,7 +154,7 @@ public:
   void store_traj_to_draw(const API::Trajectory& traj, double step);
   
   int execute_simple_simulation( int (*fct)(p3d_rob* robot, p3d_localpath* localpathPt) );
-  int execute_softmotion_simulation( int (*fct)(p3d_rob* robot, p3d_localpath* curLp) );
+  int execute_softmotion_simulation( int (*fct)(p3d_rob* robot, p3d_localpath* localpathPt) );
   
   void draw();
   
@@ -163,7 +164,6 @@ private:
   void init(std::string robotName);
   bool init_find_robot_basename( std::string& robotBaseName );
   void init_deactivate_all_cntrts( p3d_rob* rob );
-  bool init_manipulationPlanner();
   bool init_rosim_cntrts_and_collisions();
   
   void optimize_current_traj();
