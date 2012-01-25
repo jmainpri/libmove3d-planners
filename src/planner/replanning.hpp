@@ -173,7 +173,6 @@ private:
   
   void set_executed_traj_to_current(API::Trajectory& traj);
   bool time_switch_and_id(double s, double s_rep, int& id_switch, API::Trajectory& traj, double &s_switch);
-  int execute_softmotion_simulation_traj( int (*fct)(p3d_rob* robot, p3d_localpath* localpathPt) );
   
   //----------------------------------------------------
   //! Local variables

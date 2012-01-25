@@ -1046,7 +1046,7 @@ bool ReplanningSimulator::time_switch_and_id(double s, double s_rep, int& id_swi
 // ---------------------------------------------------------------------------------
 // Execute simulated replanning phase
 // ---------------------------------------------------------------------------------
-int ReplanningSimulator::execute_softmotion_simulation_traj( int (*fct)(p3d_rob* robot, p3d_localpath* localpathPt) ) 
+int ReplanningSimulator::execute_softmotion_simulation( int (*fct)(p3d_rob* robot, p3d_localpath* localpathPt) ) 
 {
   string robotname;
   init_find_robot_basename( robotname );
