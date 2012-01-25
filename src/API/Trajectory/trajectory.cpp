@@ -82,7 +82,6 @@ m_Target(T.m_Target)
 
 Trajectory& Trajectory::operator=(const Trajectory& t)
 {
-	
 	if (nloc > 0)
 	{
 		for (uint i = 0; i < nloc; i++)
@@ -227,12 +226,8 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t)
 
 Trajectory::~Trajectory()
 {
-	
-	//	cout << "Delete Trajectory ("<<nloc<<")" << endl;
-	
-	for (uint i = 0; i < nloc; i++)
+	for (int i = 0; i < int(m_Courbe.size()); i++)
 	{
-		//		cout<<"delete "<<i<<endl;
 		delete m_Courbe.at(i);
 	}
 }
@@ -423,7 +418,7 @@ std::tr1::shared_ptr<Configuration> Trajectory::operator [] ( const int &i ) con
   return m_Courbe[i]->getBegin();
 }
 
-shared_ptr<Configuration> Trajectory::configAtParam(double param)
+shared_ptr<Configuration> Trajectory::configAtParam(double param) const
 {
 	double soFar(0.0);
 	double prevSoFar(0.0);
@@ -514,6 +509,17 @@ bool Trajectory::isEmpty()
   return m_Courbe.empty();
 }
 
+void Trajectory::clear()
+{
+  for (uint i = 0; i < nloc; i++)
+	{
+		delete m_Courbe.at(i);
+	}
+  
+  m_Courbe.clear();
+  updateRange();
+}
+
 LocalPath* Trajectory::getLocalPathPtrAt(unsigned int id) const
 {
 	return m_Courbe.at(id);
@@ -532,9 +538,9 @@ int Trajectory::getNbOfViaPoints() const
 	return (m_Courbe.size()+1);
 }
 
-double Trajectory::computeSubPortionRange(vector<LocalPath*> portion)
+
+double Trajectory::computeSubPortionRange(const vector<LocalPath*>& portion) const
 {
-	
 	double range(0.0);
 	
 	for (unsigned int i = 0; i < portion.size(); i++)
@@ -544,6 +550,7 @@ double Trajectory::computeSubPortionRange(vector<LocalPath*> portion)
 	
 	return range;
 }
+
 
 void Trajectory::updateRange()
 {
@@ -605,7 +612,7 @@ double Trajectory::computeSubPortionCost(vector<LocalPath*>& portion)
 	double sumCost(0.0);
 	double cost(0.0);
 	
-	for (unsigned int i = 0; i < portion.size(); i++)
+	for (int i=0; i<int(portion.size()); i++)
 	{
 		cost = portion[i]->cost();
 		//cout << "Cost["<<i<<"] = "<< cost << endl;
@@ -619,12 +626,14 @@ double Trajectory::ReComputeSubPortionCost(vector<LocalPath*>& portion)
 {
 	double sumCost(0.0);
 	double cost(0.0);
-	
-	for (unsigned int i = 0; i < portion.size(); i++)
+	LocalPath* path(NULL);
+  
+	for (int i=0; i<int(portion.size()); i++)
 	{
-		portion[i]->resetCostComputed();
-		cost = portion[i]->cost();
-		//		cout << "Cost["<<i<<"] = "<< cost << endl;
+    path = portion[i];
+		path->resetCostComputed();
+		cost = path->cost();
+		//cout << "Cost[" << i << "] = " << cost << endl;
 		sumCost += cost;
 	}
 	
@@ -796,6 +805,11 @@ double Trajectory::cost()
 		
 	}
 	return cost;
+}
+
+double Trajectory::costRecomputed()
+{
+	return ReComputeSubPortionCost(m_Courbe);
 }
 
 double Trajectory::costNoRecompute()
@@ -1148,6 +1162,9 @@ vector<LocalPath*> Trajectory::extractSubPortion(double param1, double param2,
 	return paths;
 }
 
+//! Extract sub trajectory
+//! @param start is the id of the first localpath
+//! @param end is the id of the last localpath
 Trajectory Trajectory::extractSubTrajectoryOfLocalPaths(unsigned int id_start, unsigned int id_end)
 {
 	vector<LocalPath*> path;
@@ -1488,7 +1505,7 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 	// Compute real number of small LP
 	unsigned int nbOfSmallLP = 0;
   
-	for (unsigned int i = 0; i<portion.size(); i++)
+	for ( int i = 0; i<int(portion.size()); i++)
 	{
 		double resol;
     double length = portion[i]->getParamMax();
@@ -1509,21 +1526,18 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
     
     unsigned int nbOfDMax = floor((portion[i]->getParamMax()/resol)+0.5);
     nbOfSmallLP += nbOfDMax;
-    //    cout << "dMax = " << dMax << endl;
-    //    cout << "resol = " << resol << endl;
-    //    cout << "nbOfDMax = " << nbOfDMax << endl;
-    //    cout << "getParamMax() = " << portion[i]->getParamMax() << endl;
 	}
 	cout << "range = " << range << endl;
   cout << "nbOfSmallLP = " << nbOfSmallLP << endl;
-	vector<LocalPath*> portionTmp(nbOfSmallLP);
+	vector<LocalPath*> portionTmp;
 	
 	try
 	{
-		unsigned int j = 0;
-		
-		// Loop for every Small LP
-		for (unsigned int i = 0; i<nbOfSmallLP-1; i++)
+		int j=0;
+		bool tooFar=false;
+    
+		// Loop for every small localpath
+		for ( int i=0; i<int(nbOfSmallLP)-1; i++)
 		{
 			double resol;
       double length = portion[j]->getParamMax();
@@ -1543,27 +1557,31 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
       }
       
 			param += resol;
-			//			cout << "nb of smal lp on big lp : " <<  portion[j]->getParamMax()/resol << endl;
-			//			cout << "nb of smal lp on big lp : " <<  floor((portion[j]->getParamMax()/resol)+0.5) << endl;
-			
+
 			// Check to go seek the conf on next big LP
 			while ( param > soFar )
 			{
 				j++;
-				if ( j >= portion.size() ) 
+				if ( j >= int(portion.size()) ) 
 				{
 					cout << "Warning : Went too far on traj" << endl;
 					j = portion.size() - 1;
+          tooFar = true;
 					break;
 				}
 				prevSoFar = soFar;
 				soFar += portion[j]->getParamMax();
 			}
 			
-			// Create small local path
+      if (!tooFar) {
+			// Create small localpath
 			confPtr = portion[j]->configAtParam(param - prevSoFar);
-			portionTmp[i] = new LocalPath(confPtrTmp, confPtr);
+			portionTmp.push_back(new LocalPath(confPtrTmp, confPtr));
 			confPtrTmp = confPtr;
+      }
+      else {
+        break;
+      }
 		}
 	}
 	catch(string str)
@@ -1579,7 +1597,15 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 	}
 	
 	// The last LP is made of the end configuration
-	confPtrTmp = portionTmp[nbOfSmallLP-2]->getEnd();
+  if( portionTmp.size() >= 2 )
+  {
+    confPtrTmp = portionTmp[portionTmp.size()-2]->getEnd();
+  }
+  else 
+  {
+    confPtrTmp = portionTmp.back()->getBegin();
+  }
+  
 	confPtr = portion.back()->getEnd();
 	
 	portionTmp.back() = new LocalPath(confPtrTmp, confPtr);
@@ -1588,7 +1614,7 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 	cout <<  "new range = " << computeSubPortionRange(portionTmp) << endl;
 	
 	// Delete and replace every thing
-	for (unsigned int i = 0; i < portion.size(); i++)
+	for (int i = 0; i<int(portion.size()); i++)
 	{
 		delete portion.at(i);
 	}
@@ -1598,10 +1624,12 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 	
 	if (nLP != portion.size())
 	{
-		cout << "Error: cutPortionInSmallLP" << endl;
+		cout << "Error: cutPortionInSmallLP";
+    cout << " ( nLP = " << nLP ;
+    cout << " , portion.size() = " << portion.size() << " )" << endl;
 	}
 	
-	return nLP;
+	return portion.size();
 }
 
 void Trajectory::cutTrajInSmallLP(unsigned int nLP)
@@ -1658,7 +1686,7 @@ bool Trajectory::concat(const Trajectory& traj)
   return true;
 }
 
-bool Trajectory::replacePortion(unsigned int id1, unsigned int id2, vector<LocalPath*> paths, bool freeMemory )
+bool Trajectory::replacePortionOfLocalPaths(unsigned int id1, unsigned int id2, vector<LocalPath*> paths, bool freeMemory )
 {
 	// WARNING: the ids are ids of nodes and not LocalPaths
 	if (id1 == id2)
@@ -1839,7 +1867,7 @@ bool Trajectory::replacePortion(double param1, double param2,
 	unsigned int id1_erase = id_LP_1;
 	unsigned int id2_erase = id_LP_2 + 1;
 	
-	replacePortion(id1_erase, id2_erase, paths, freeMemory );
+	replacePortionOfLocalPaths(id1_erase, id2_erase, paths, freeMemory );
 	return true;
 }
 
@@ -1891,6 +1919,22 @@ vector<double> Trajectory::getCostAlongTrajectory(int nbSample)
 	cost.resize(nbSample);
 	
 	return cost;
+}
+
+void Trajectory::printAllLocalpathCost()
+{
+  cout <<  "( " ;
+  for ( int i=0; i<int(m_Courbe.size()); i++)
+  {
+    cout <<  m_Courbe[i]->cost();
+    
+    if (i != int(m_Courbe.size()-1)) {
+      cout << " , " ;
+    }
+    else {
+      cout << " )" << endl;
+    }
+  }
 }
 
 void Trajectory::print()

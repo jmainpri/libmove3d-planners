@@ -54,6 +54,9 @@ Planner::~Planner()
 
 bool Planner::trajFound()
 {
+  if( _Goal == NULL )
+    return false;
+  
 	bool inSameCompco  = (_Goal ? _Start->inSameComponent(_Goal) : false);
 	bool isTheSame = _Start->equal(_Goal);
 	
@@ -102,9 +105,7 @@ int Planner::init()
 	return 0;
 }
 
-/*!
- * Set the start and goal configuration
- */
+//! Set the start and goal configuration
 bool Planner::setInit(shared_ptr<Configuration> Cs)
 {
 	bool b = false;
@@ -134,16 +135,15 @@ bool Planner::setInit(shared_ptr<Configuration> Cs)
 	}
 
 	_Graph->getGraphStruct()->search_start = _Start->getNodeStruct();
-	
+	_q_start = Cs;
 	return b;
 }
 
-/*!
- * Set the start and goal configuration
- */
+//! Set the start and goal configuration
 bool Planner::setGoal(shared_ptr<Configuration> Cg)
 {
 	bool b = false;
+  
 	if (ENV.getBool(Env::expandToGoal))
 	{
 		if (!_Init)
@@ -178,6 +178,7 @@ bool Planner::setGoal(shared_ptr<Configuration> Cg)
 		_Goal = NULL;
 	}
 
+  _q_goal = Cg;
 	return b;
 }
 

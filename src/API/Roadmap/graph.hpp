@@ -16,9 +16,6 @@ class ConnectedComponent;
  \brief Classe représentant un Graph pour un Robot
  @author Florian Pilardeau,B90,6349 <fpilarde@jolimont>
  */
-#ifndef _TRAJ_H
-struct traj;
-#endif
 
 #ifndef _ROADMAP_H
 struct node;
@@ -28,104 +25,31 @@ struct list_node;
 struct list_edge;
 #endif
 
-class Graph{
+class Graph {
 	
 public:
+  
 	//contructors and destructor
 	Graph() {}
-	
-	/**
-	 * Constructeur de la classe
-	 * @param G la structure p3d_graph qui sera stockée
-	 * @param R le Robot pour lequel le Graph est créé
-	 */
 	Graph(Robot* R, graph* ptGraph);
-	
-	/**
-	 * Constructeur de classe
-	 * @param R le Robot pour lequel le Graph est créé
-	 */
 	Graph(Robot* R);
-	/**
-	 * Constructeur de la classe
-	 * !!Attention!! ce constructeur n'est à utiliser que si le Robot pour lequel le Graph est créé n'existe pas
-	 * @param G la structure p3d_graph qui sera stockée
-	 */
 	Graph(graph* G);
-	
-	/**
-	 * Graph copy constructor
-	 * @param G the graph
-	 */
 	Graph(const Graph& G);
-	
-	/**
-	 * Destructeur de la classe
-	 */
 	~Graph();
-	
-	/**
-	 * Deletes the graph structures
-	 */
-	void deleteGraphStruct();
-	
-	/**
-	 * import p3d graph struct
-	 */
-	void importGraphStruct(graph* G);
-	
-	/**
-	 * export p3d graph struct
-	 */
-	graph* exportGraphStruct() const;
-	
-	/** 
-	 * copy a node list
-	 * @param the map from old nodes to new nodes
-	 */
-	list_node* copyNodeList(std::map<node*,node*>& NodeMap, list_node* ln, list_node* end = NULL) const;
-	
-	/**
-	 * copy a edge lisyt
-	 * @param the map from old edges to new edges
-	 */
-	list_edge* copyEdgeList(std::map<edge*,edge*>& EdgeMap, list_edge* le, list_edge* end = NULL) const;
-	
-	/**
-	 * return the value of the Change flag
-	 * @return true if the graph has change since last export
-	 */
+  
+	//! return the value of the Change flag
+  //! @return true if the graph has change since last export
 	bool isGraphChanged() { return m_graphChanged; }
 	
-	/**
-	 * export from the Cpp graph to p3d_graph
-	 */
-	graph* exportCppToGraphStruct(bool deleteGraphStruct = false);
-	
-	/**
-	 * create node list
-	 */
-	list_node* createNodeList(std::map<Node*,node*>& NodeMap, const std::vector<Node*>& nodes, list_node* end = NULL) ;
-	
-	
-	/**
-	 * create edge list
-	 */
-	list_edge* createEdgeList(std::map<Edge*,edge*>& EdgeMap, const std::vector<Edge*>& edges, list_edge* end = NULL) ;
-
-	
-	/**
-	 * updates the connected components (Fix this!!!)
-	 */
-	void updateCompcoFromStruct();
-	
+  //! Creates a p3d_graph from Boost Graph
+  //graph* exportCppToGraphStruct(bool deleteGraphStruct = false);
 	
 	//Accessors
 	/**
 	 * obtient la structure p3d_graph stockée
 	 * @return la structure p3d_graph stockée
 	 */
-	graph* getGraphStruct();
+	graph* getGraphStruct() const;
 	
 	/**
 	 * stocke la structure p3d_graph
@@ -137,29 +61,30 @@ public:
 	 * obtient le Robot pour lequel le Graph est créé
 	 * @return le Robot pour lequel le Graph est créé
 	 */
-	Robot* getRobot();
+	Robot* getRobot() const;
 	
 	/**
 	 * sets the Robot of the Graph
 	 */
 	void setRobot(Robot* R);
 	
-	/**
-	 * modifie la trajectoire stockée
-	 * @param Traj la nouvelle trajectoire à stocker
+  /**
+	 * obtient la table des noeuds du Graph
+	 * @return la table des noeuds du Graph
 	 */
-	void setTraj(traj* Traj);
-	/**
-	 * obtient la trajectoire stockée
-	 * @return la trajectoire stockée
-	 */
-	traj* getTrajStruct();
+	std::map<node*, Node*> getNodesTable();
 	
+	/**
+	 * obtient le nombre de Node dans le Graph
+	 * @return le nombre de Node dans le Graph
+	 */
+	unsigned int getNumberOfNodes();
+  
 	/**
 	 * obtient le vecteur des Node du Graph
 	 * @return le vecteut des Node du Graph
 	 */
-	std::vector<Node*> getNodes();
+	std::vector<Node*> getNodes() const;
 	
 	/**
 	 * Get Node ith node in Graph
@@ -176,24 +101,12 @@ public:
 	 * obtient le vecteur des Edge du Graph
 	 * @return le vecteur des Edge du Graph
 	 */
-	std::vector<Edge*> getEdges();
+	std::vector<Edge*> getEdges() const;
 	
 	/**
 	 * Returns the ith edge
 	 */
 	Edge* getEdge(unsigned int i)  { return m_Edges[i]; } 
-	
-	/**
-	 * obtient la table des noeuds du Graph
-	 * @return la table des noeuds du Graph
-	 */
-	std::map<node*, Node*> getNodesTable();
-	
-	/**
-	 * obtient le nombre de Node dans le Graph
-	 * @return le nombre de Node dans le Graph
-	 */
-	unsigned int getNumberOfNodes();
 	
 	/*
 	 * Get the number of compco in the grap
@@ -203,7 +116,7 @@ public:
 	/**
 	 * Get Compcos
 	 */
-	std::vector<ConnectedComponent*>& getConnectedComponents() { return m_Comp; }
+	std::vector<ConnectedComponent*> getConnectedComponents() const;
 	
 	/**
 	 * obtient le Node correspondant au p3d_node
@@ -223,40 +136,17 @@ public:
 	 * @return le nom du Graph
 	 */
 	std::string getName();
-	/**
+	
+  /**
 	 * modifie le nom du Graph; un nom standard est alors mis
 	 */
 	void setName();
+  
 	/**
 	 * modifie le nom du Graph
 	 * @param Name le nouveau nom
 	 */
 	void setName(std::string Name);
-	
-	
-	/**
-	 * Gets Start Node
-	 * @return le nom du Graph
-	 */
-	Node* getStart() {return m_Start;}
-	
-	/**
-	 * Sets Start Node
-	 */
-	void setStart(Node* N) { m_Start=N; }
-	
-	
-	/**
-	 * Gets Start Node
-	 * @return le nom du Graph
-	 */
-	Node* getGoal() {return m_Goal;}
-	
-	/**
-	 * Sets Goal Node
-	 */
-	void setGoal(Node* N) { m_Goal=N; }
-	
 	
 	/**
 	 * teste si deux Graph sont égaux en comparant leur listNode
@@ -264,6 +154,7 @@ public:
 	 * @return les deux Graph sont égaux
 	 */
 	bool equal(Graph* G);
+  
 	/**
 	 * teste si deux Graph ont le même nom
 	 * @param G le Graph à comparer
@@ -369,11 +260,6 @@ public:
 	void removeEdges( Node* N1, Node* N2 );
 	
 	/**
-	 * Removes an edge from the graph
-	 */
-	//void removeEdge(Edge* E);
-	
-	/**
 	 * trie les Node en fonction de leur distance à un Node de référence
 	 * @param N le Node de référence
 	 */
@@ -470,10 +356,10 @@ public:
 	 * @param K the maximal number of neighbors
 	 */
 	std::vector<Node*> KNearestWeightNeighbour(std::tr1::shared_ptr<Configuration> config,
-																							int K,
-																							double radius,
-																							bool weighted, 
-																							int distConfigChoice);
+                                             int K,
+                                             double radius,
+                                             bool weighted, 
+                                             int distConfigChoice);
 	
 	/**
 	 * obtient le plus proche voisin d'une composante connexe
@@ -542,6 +428,11 @@ public:
 	 * Recompute All Edges Valid
 	 */
 	bool checkAllEdgesValid();
+  
+  /**
+   * Extract bes traj from q_init
+   */
+  API::Trajectory* extractBestTrajSoFar( std::tr1::shared_ptr<Configuration> qi, std::tr1::shared_ptr<Configuration> qf );
 	
 	/**
 	 * Extract best traj 
@@ -552,28 +443,34 @@ public:
 	/**
 	 * Init Motion planning problem
 	 */
-	void initMotionPlanning(Node* start,Node* goal);
+	void initMotionPlanning(node* start, node* goal);
 	
-	// BGL functions ----------------------------------------
+	
+  // BGL functions ----------------------------------------
 	// ------------------------------------------------------
-	void				initBGL();
 	BGL_Vertex	findVertexDescriptor(Node* N);
 	BGL_Edge		findEdgeDescriptor(Edge* E);
 	void				saveBGLGraphToDotFile(const std::string& filename);
 	BGL_Graph&	get_BGL_Graph() { return m_BoostGraph; }
-	void				setAllDescriptorsInvalid();
+	
   void        draw();
 	
 private:
+  
+  void        init();
 	
-	void init();
-	
-	void freeResources();
+  // BGL functions ----------------------------------------
+	// ------------------------------------------------------
+	void				initBGL();
+  void				setAllDescriptorsInvalid();
+  void        drawEdge(BGL_Vertex v1, BGL_Vertex v2);
+  
+  void        deleteGraphStruct();
+	void        updateCompcoFromStruct();
+	void        freeResources();
 	static bool compareEdges(Edge* E1, Edge* E2);
 	static bool compareNodes(Node* N1, Node* N2);
-  void        drawEdge(BGL_Vertex v1, BGL_Vertex v2);
-	
-private:
+  
 	
 	// Old p3d graph
 	graph*														m_Graph;
@@ -587,19 +484,12 @@ private:
 	bool															m_graphChanged;
   bool                              m_initBGL;
 	
-	// latest trajectory
-	p3d_traj*													m_Traj;
-	
 	std::vector<Node*>								m_Nodes;
 	std::vector<Edge*>								m_Edges;
 	std::vector<ConnectedComponent*>	m_Comp;
 	
 	// Maps between old and new nodes
 	std::map<node*, Node*>						m_NodesTable;
-	
-	// Start and goal nodes
-	Node*															m_Start;
-	Node*															m_Goal;
 	
 	// Graph name
 	std::string												m_Name;

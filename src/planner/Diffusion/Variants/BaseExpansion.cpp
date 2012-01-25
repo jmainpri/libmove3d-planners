@@ -37,7 +37,7 @@ m_MaxExpandNodeFailure(10),
 m_kNearestPercent(10),
 m_ExpansionDirectionMethod(GLOBAL_CS_EXP),
 m_IsDirSampleWithRlg(false),
-mGraph(ptrGraph),
+m_Graph(ptrGraph),
 m_fromComp(NULL),
 m_toComp(NULL)
 {}
@@ -158,15 +158,15 @@ void BaseExpansion::expansionFailed(Node& node)
 	node.getNodeStruct()->n_fail_extend++;
 	
 	if((ENV.getBool(Env::discardNodes)) &&
-		 (node.getNodeStruct() != mGraph->getGraphStruct()->search_start) &&
-		 (node.getNodeStruct() != mGraph->getGraphStruct()->search_goal) &&
+		 (node.getNodeStruct() != m_Graph->getGraphStruct()->search_start) &&
+		 (node.getNodeStruct() != m_Graph->getGraphStruct()->search_goal) &&
 		 (node.getNodeStruct()->n_fail_extend > m_MaxExpandNodeFailure)) 
 	{
 		node.getNodeStruct()->IsDiscarded = true;
 		update_parent_nfails(node.getNodeStruct());
 		
-		mGraph->getGraphStruct()->n_consec_pb_level ++;
-		mGraph->getGraphStruct()->n_consec_fail_pb_level ++;
+		m_Graph->getGraphStruct()->n_consec_pb_level ++;
+		m_Graph->getGraphStruct()->n_consec_fail_pb_level ++;
 	}
 }
 
@@ -259,13 +259,13 @@ Node* BaseExpansion::addNode(Node* currentNode,
 	if ((pathDelta == 1. && directionNode))
 	{
 		//cout << "MergeComp" << endl;
-		mGraph->linkNodeAndMerge(currentNode,directionNode);
+		m_Graph->linkNodeAndMerge(currentNode,directionNode);
 		return (directionNode);
 	}
 	else
 	{
 		//cout << "insertNode" << endl;
-		Node* newNode = mGraph->insertNode( currentNode, path );
+		Node* newNode = m_Graph->insertNode( currentNode, path );
 		nbCreatedNodes++;
     
 		return (newNode);

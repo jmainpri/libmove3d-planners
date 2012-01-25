@@ -69,7 +69,7 @@ bool GreedyCost::run()
 
 	if (Diffusion->trajFound())
 	{
-		mGraph->setTraj(mRobot->getTrajStruct());
+		//mGraph->setTraj(mRobot->getTrajStruct());
 		cout << "Trajectory exists" << endl;
 		ENV.setBool(Env::drawTraj, true);
 		g3d_draw_allwin_active();

@@ -413,7 +413,7 @@ void g3d_draw_hrics(int opengl_context)
             {
                     if( ENV.getBool(Env::enableHri) )
                     {
-                            if( ENV.getBool(Env::HRIPlannerWS) && ENV.getBool(Env::drawTraj) )
+                            if( ENV.getBool(Env::HRIPlannerWS) && ENV.getBool(Env::drawTraj) && HRICS_MotionPL!= NULL )
                             {
                                     //              printf("Draw 3d path\n");
                                     dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->draw3dPath();
@@ -452,47 +452,44 @@ void g3d_draw_hrics(int opengl_context)
             }
     }
 
-    if ( ENV.getBool(Env::drawGaze) && ( ENV.getBool(Env::HRIPlannerWS) ||  ENV.getBool(Env::HRIPlannerCS) ) )
-    {
-            vector<double> Gaze;
-            Gaze.clear();
-
-            //cout << "Draw Gaze" << endl;
-
-            Gaze = HRICS_MotionPL->getVisibility()->getGaze();
-
-//		glLineWidth(3.);
-//
-//		if( (Gaze.size() == 6))
-//		{
-//			g3d_drawOneLine(Gaze[0], Gaze[1],
-//											Gaze[2], Gaze[3],
-//											Gaze[4], Gaze[5], Blue, NULL);
-//		}
-//
-//		glLineWidth(1.);
+  if ( ENV.getBool(Env::drawGaze) && ( ENV.getBool(Env::HRIPlannerWS) ||  ENV.getBool(Env::HRIPlannerCS) ) )
+  {
+    vector<double> Gaze;
+    Gaze.clear();
     
-            GLdouble GreenColor[4] =   { 0.0, 0.5, 0.0, 0.7 };
-            GLdouble GreenColorT[4] =   { 0.0, 0.5, 0.0, 0.0 };
-//    GLdouble GreyColor[4] =   { 0.5, 0.5, 0.5, 0.5 };
-//    GLdouble GreyColorT[4] =   { 0.5, 0.5, 0.5, 0.0 };
-
-
-            Robot* human = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman();
-            int gazeIndex = 46;
-            if ( human->getName() == "ACHILE_HUMAN1" )
-            {
-                gazeIndex = 42;
-            }
-
-        //    cout << "HUMAN = " << human->getName() << endl;
-            p3d_jnt* eyes = human->getJoint(gazeIndex)->getJointStruct();
-
-            // 46 is for HERAKLES
-            // 42 is for ACHILE
-            g3d_draw_visibility_by_frame(eyes->abs_pos,DTOR(160),DTOR(160*0.75),1, GreenColor, GreenColorT);
-
+    //cout << "Draw Gaze" << endl;
+    Gaze = HRICS_MotionPL->getVisibility()->getGaze();
+    
+    glLineWidth(3.);
+    
+    if( (Gaze.size() == 6))
+    {
+      g3d_drawOneLine(Gaze[0], Gaze[1], Gaze[2], 
+                      Gaze[3], Gaze[4], Gaze[5], Blue, NULL);
     }
+    
+    glLineWidth(1.);
+    
+//    GLdouble GreenColor[4] =   { 0.0, 0.5, 0.0, 0.7 };
+//    GLdouble GreenColorT[4] =   { 0.0, 0.5, 0.0, 0.0 };
+//    //    GLdouble GreyColor[4] =   { 0.5, 0.5, 0.5, 0.5 };
+//    //    GLdouble GreyColorT[4] =   { 0.5, 0.5, 0.5, 0.0 };
+//    
+//    
+//    Robot* human = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman();
+//    int gazeIndex = 46;
+//    if ( human->getName() == "ACHILE_HUMAN1" )
+//    {
+//      gazeIndex = 42;
+//    }
+//    
+//    //    cout << "HUMAN = " << human->getName() << endl;
+//    p3d_jnt* eyes = human->getJoint(gazeIndex)->getJointStruct();
+//    
+//    // 46 is for HERAKLES
+//    // 42 is for ACHILE
+//    g3d_draw_visibility_by_frame(eyes->abs_pos,DTOR(160),DTOR(160*0.75),1, GreenColor, GreenColorT);
+  }
 
 	if ( HRICS_MotionPL != NULL && PlanEnv->getBool(PlanParam::drawRandomMap))
 	{
@@ -632,8 +629,7 @@ void g3d_draw_hrics(int opengl_context)
 
     if (PlanEnv->getBool(PlanParam::env_drawHumanModel))
     {
-
-        std::vector<double> humanPos = dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getHumanPos();
+        //std::vector<double> humanPos = dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getHumanPos();
 
         double height = 2;
 

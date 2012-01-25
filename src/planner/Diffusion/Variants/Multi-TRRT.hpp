@@ -10,7 +10,7 @@
 #ifndef MULTITRANSITIONRRT_HPP_
 #define MULTITRANSITIONRRT_HPP_
 
-#include "planner/Diffusion/RRT-Variants/Multi-RRT.hpp"
+#include "planner/Diffusion/Variants//Multi-RRT.hpp"
 
 /**
  @ingroup Diffusion

@@ -61,6 +61,17 @@ Smoothing::~Smoothing()
 	
 }
 
+void Smoothing::setStep( double step )
+{
+  m_useAutoStep = false;
+  m_step = step;
+}
+
+void Smoothing::resetStep()
+{
+  m_useAutoStep = true;
+}
+
 /*!
  * Checks out if the plannification
  * problem has reach its goals
@@ -214,24 +225,33 @@ bool Smoothing::oneLoopShortCutRecompute()
 	
 	// Take a configuration in a certain direction
 	LocalPath* newPath = new LocalPath(qFirstPt, qSecondPt);
+  
+  bool newPathIsValid = true;
+  
+  if (PlanEnv->getBool(PlanParam::trajComputeCollision))
+  {
+    newPathIsValid = newPath->isValid();
+  }
 	
 	// If the new path is free in CFree
-	if (newPath->isValid())
+	if ( newPathIsValid )
 	{
+    Trajectory newTraj(*this);
+    
 		vector<LocalPath*> paths;
 		paths.push_back(newPath);
 		
-		Trajectory newTraj(*this);
-		newTraj.replacePortion(lFirst, lSecond, paths);
+		newTraj.replacePortion( lFirst, lSecond, paths );
+    
+    double CurrentCost = this->costRecomputed();
 		
-		// If the new path is of lower cost
-		// Replace in trajectory
-		if (newTraj.cost() < this->cost() )
+		// If the new path is of lower cost, replace in current trajectory
+		if (newTraj.costRecomputed() < CurrentCost )
 		{
 			vector<LocalPath*> vect_path;
 			vect_path.push_back(new LocalPath(*newPath));
 			
-			replacePortion(lFirst, lSecond, vect_path);
+			replacePortion( lFirst, lSecond, vect_path );
 			
 			setSortedIndex();
 			
@@ -526,7 +546,7 @@ void Smoothing::removeRedundantNodes()
 				{
 					vector<LocalPath*> path;
 					path.push_back(pathPtr);
-					this->replacePortion(i, j, path);
+					this->replacePortionOfLocalPaths(i, j, path);
 					NbNodes = getNbOfPaths();
 					nbRemoved++;
 					if(!isValid())
@@ -849,6 +869,16 @@ double Smoothing::gainOfLastIterations(unsigned int n)
 	}
 }
 
+void Smoothing::storeCostAndGain( double NewCost, double CurCost )
+{
+  if ( NewCost > CurCost )
+  {
+    cout << "Smoothing::runDeformation : NewCost > CurrentCost"  << endl;
+  }
+  m_OptimCost.push_back( NewCost );
+  m_GainCost.push_back( ( CurCost - NewCost ) / CurCost );
+}
+
 /*!
  * This function saves the 
  * trajectory cost to a file along the smoothing process
@@ -868,7 +898,7 @@ void Smoothing::saveOptimToFile(string fileName)
 	s << "Cost" << ";";
 	s << "Gain" << ";" ;
 	
-	for (unsigned int i = 0; i < m_OptimCost.size(); i++)
+	for (int i=0; i<int(m_OptimCost.size()); i++)
 	{
 		s << m_OptimCost[i] << ";";
 		s << m_GainCost[i] << ";" ;
@@ -890,12 +920,18 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
         cout << "Before Short Cut : Traj cost = " << this->costNoRecompute() << endl;
 #endif
 	double costBeforeDeformation = this->cost();
-	m_OptimCost.clear();
-	m_GainOfIterations.clear();
-	m_MaxNumberOfIterations = nbIteration;
 	
-	// The step
-	m_step = getRangeMax() / PlanEnv->getDouble(PlanParam::MaxFactor) ;
+  m_OptimCost.clear();
+  m_GainCost.clear();
+	m_GainOfIterations.clear();
+	
+  m_MaxNumberOfIterations = nbIteration;
+	
+	// Fix the step
+  if( m_useAutoStep )
+  {
+    m_step = getRangeMax() / PlanEnv->getDouble(PlanParam::MaxFactor) ;
+  }
 	
 	double ts(0.0); m_time = 0.0; ChronoOn();
 	
@@ -939,14 +975,7 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 		
 		if(PlanEnv->getBool(PlanParam::trajSaveCost))
 		{
-			NewCost = cost();
-			
-			if ( NewCost > CurCost )
-			{
-				cout << "Smoothing::runDeformation : NewCost > CurrentCost"  << endl;
-			}
-			m_OptimCost.push_back( NewCost );
-			m_GainCost.push_back( ( CurCost - NewCost ) / CurCost );
+			storeCostAndGain( NewCost, CurCost );
 		}
 		
 		if ( m_IterationSucceded ) 

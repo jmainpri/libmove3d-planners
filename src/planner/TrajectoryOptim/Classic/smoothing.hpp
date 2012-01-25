@@ -31,6 +31,16 @@ namespace API
 		~Smoothing();
     
     /**
+     * Set a fixed deformation step
+     */
+    void setStep( double step );
+    
+    /**
+     * Use automatic step computation
+     */ 
+    void resetStep();
+    
+    /**
 		 * Get the time spent in optimization
 		 */
 		double getTime() { return m_time; }
@@ -138,6 +148,10 @@ namespace API
 		 * @param last n taken into account iterations
 		 */
 		double gainOfLastIterations( unsigned int n );
+    
+    //! Store the cost and gain of the iteration
+    //! in double vectors
+    void storeCostAndGain( double NewCost, double CurCost );
 		
 		std::string						m_ContextName;
 		std::vector<double>		m_Selected;
@@ -146,6 +160,7 @@ namespace API
 		
 		double								m_time;
 		
+    bool                  m_useAutoStep;
 		double								m_step;
 		
 		std::vector<double>		m_OptimCost;

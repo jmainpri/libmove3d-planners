@@ -36,7 +36,7 @@ void HRICS_rrtPlanExpansion::init()
 {
     cout << "Init Box Jido" << endl;
 //    double box[] = {-1.3,1.3,-1.3,1.3,0,1.5};
-    shared_ptr<Configuration> qInit = mGraph->getRobot()->getInitialPosition();
+    shared_ptr<Configuration> qInit = m_Graph->getRobot()->getInitialPosition();
 
 //    _Box = new double[6];
 //
@@ -47,7 +47,7 @@ void HRICS_rrtPlanExpansion::init()
 //    _Box[4] = box[4];
 //    _Box[5] = box[5];
 
-//    mIndexObjectDof = mGraph->getRobot()->getObjectDof();
+//    mIndexObjectDof = m_Graph->getRobot()->getObjectDof();
 
 }
 
@@ -81,11 +81,11 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getExpansionDirection(
     {
 //        if(ENV.getBool(Env::isInverseKinematics))
 //        {
-//            q = mGraph->getRobot()->shootFreeFlyer(_Box);
+//            q = m_Graph->getRobot()->shootFreeFlyer(_Box);
 //        }
 //        else
 //        {
-            q = mGraph->getRobot()->shoot(samplePassive);
+            q = m_Graph->getRobot()->shoot(samplePassive);
 //        }
     }
 
@@ -113,16 +113,17 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getConfigurationInNextCell(Nod
 
     // Get the farthest cell explored depending on
     // the way the tree explores
-    if( CompcoNode->equalCompco( mGraph->getStart() ) )
-    {
-        mForward = true;
-        farthestCell = mLastForward;
-    }
-    else
-    {
-        mForward = false;
-        farthestCell = mLastBackward;
-    }
+  // WARNING BROKEN
+//    if( CompcoNode->equalCompco( m_Graph->getStart() ) )
+//    {
+//        mForward = true;
+//        farthestCell = mLastForward;
+//    }
+//    else
+//    {
+//        mForward = false;
+//        farthestCell = mLastBackward;
+//    }
 
     int cellId;
     // Get Id of Next cell on the 2D Path
@@ -153,13 +154,13 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getConfigurationInNextCell(Nod
         }
     }
 
-//    shared_ptr<Configuration> q = mGraph->getRobot()->shoot(false);
+//    shared_ptr<Configuration> q = m_Graph->getRobot()->shoot(false);
 
     // Get a random config in the cell
 //    randomPoint = _2DCellPath[cellId]->getRandomPoint();
     mBiasedPlanCell = m2DCellPath[cellId];
 
-    shared_ptr<Configuration> q(new Configuration(mGraph->getRobot()));
+    shared_ptr<Configuration> q(new Configuration(m_Graph->getRobot()));
 
 //    Vector2d corner = mBiasedPlanCell->getCorner();
 //    Vector2d cellSize = mBiasedPlanCell->getCellSize();
@@ -168,7 +169,7 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getConfigurationInNextCell(Nod
 //    biasedBox[1] = corner[0] + cellSize[0];
 //    biasedBox[2] = corner[1];
 //    biasedBox[3] = corner[1] + cellSize[1];
-//    p3d_ShootInCell( mGraph->getRobot()->getRobotStruct() , q->getConfigStruct() , biasedBox , 0 );
+//    p3d_ShootInCell( m_Graph->getRobot()->getRobotStruct() , q->getConfigStruct() , biasedBox , 0 );
 
     Vector2d center = mBiasedPlanCell->getCenter();
     double CellCenter[2];
@@ -176,7 +177,7 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getConfigurationInNextCell(Nod
     CellCenter[1] = center[1];
 	
 #ifdef P3D_PLANNER
-    p3d_ShootAroundPoint( mGraph->getRobot()->getRobotStruct() , q->getConfigStruct(), CellCenter , 0);
+    p3d_ShootAroundPoint( m_Graph->getRobot()->getRobotStruct() , q->getConfigStruct(), CellCenter , 0);
 #else
 	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
 #endif
@@ -276,29 +277,30 @@ Node* HRICS_rrtPlanExpansion::addNode(Node* currentNode, LocalPath& path, double
     pos[1] = currentNode->getConfiguration()->at(7);
 
     API::TwoDCell* cell = m2DGrid->getCell(pos);
-
-    if( currentNode->equalCompco( mGraph->getStart() ) )
-    {
-        if(mLastForward != cell)
-        {
-            if( on2DPathAndAfter( cell ) )
-            {
-                mLastForward = cell;
-            }
-        }
-        mForward = true;
-    }
-    else
-    {
-        if(mLastBackward != cell)
-        {
-            if( on2DPathAndAfter( cell ) )
-            {
-                mLastBackward = cell;
-            }
-        }
-        mForward = false;
-    }
+  // WARNING BROKEN
+//
+//    if( currentNode->equalCompco( m_Graph->getStart() ) )
+//    {
+//        if(mLastForward != cell)
+//        {
+//            if( on2DPathAndAfter( cell ) )
+//            {
+//                mLastForward = cell;
+//            }
+//        }
+//        mForward = true;
+//    }
+//    else
+//    {
+//        if(mLastBackward != cell)
+//        {
+//            if( on2DPathAndAfter( cell ) )
+//            {
+//                mLastBackward = cell;
+//            }
+//        }
+//        mForward = false;
+//    }
 
     return newNode;
 }

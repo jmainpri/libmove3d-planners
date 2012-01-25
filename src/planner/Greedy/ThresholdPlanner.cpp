@@ -32,13 +32,8 @@ ThresholdPlanner::~ThresholdPlanner()
 int ThresholdPlanner::init()
 {
 	int added = Planner::init();
-	
 	added += Planner::setInit(_Robot->getInitialPosition());
 	added += Planner::setGoal(_Robot->getGoTo());
-	
-	_Graph->setStart(_Start);
-	_Graph->setGoal(_Goal);
-	
 	return added;
 }
 
@@ -166,8 +161,6 @@ unsigned int ThresholdPlanner::run()
 		delete _Graph;
 		
 		_Graph = new Graph(_Robot);
-		_Graph->setStart(_Start);
-		_Graph->setGoal(_Goal);
 	}
 	if (ENV.getBool(Env::drawExploration))
 	{

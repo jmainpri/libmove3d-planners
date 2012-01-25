@@ -71,7 +71,7 @@ public:
 	 * Returns the ith node of the compco
 	 * @param ith the id of the node in the connected component
 	 */
-//	Node* getNode(unsigned int ith) { return m_Nodes[i]; }
+  //	Node* getNode(unsigned int ith) { return m_Nodes[i]; }
 	
 	/**
 	 * Adds a node to the connected component

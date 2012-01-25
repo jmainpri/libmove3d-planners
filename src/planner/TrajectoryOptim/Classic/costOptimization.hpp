@@ -35,7 +35,6 @@ namespace API
 		 */
 		void printDebugInfo();
 		
-		
 		/**
 		 * Returns true if the new trajectory is in collision
 		 */
@@ -129,6 +128,7 @@ namespace API
 		bool									m_DeformBiased;
 		bool									m_inCollision;
 		bool									m_descent;
+    int                   m_shortcutRatio;
 		
 		//	bool oneLoopShortCut(double step);
 	};

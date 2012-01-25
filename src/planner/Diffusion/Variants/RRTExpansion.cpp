@@ -34,10 +34,10 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
     if (p3d_GetCostMethodChoice() == MONTE_CARLO_SEARCH)
     {
 
-        shared_ptr<Configuration> q = mGraph->getRobot()->shootDir(
+        shared_ptr<Configuration> q = m_Graph->getRobot()->shootDir(
                 samplePassive);
 
-        p3d_addConfig(mGraph->getRobot()->getRobotStruct(),
+        p3d_addConfig(m_Graph->getRobot()->getRobotStruct(),
                       q->getConfigStruct(),
                       expandComp->getConnectedComponent()->getCompcoStruct()->dist_nodes->N->q,
                       q->getConfigStruct());
@@ -61,7 +61,7 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
     if (ENV.getBool(Env::isGoalBiased) && p3d_random(0., 1.) <= ENV.getDouble(Env::Bias))
     {
         // select randomly a node in the goal component as direction of expansion
-        directionNode = mGraph->randomNodeFromComp(goalComp);
+        directionNode = m_Graph->randomNodeFromComp(goalComp);
         q = directionNode->getConfiguration();
     }
     else
@@ -73,10 +73,10 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
                 // (typically close to the current tree)
                 // and  biased to the goal configuration
                 q = shared_ptr<Configuration> (
-                        new Configuration(mGraph->getRobot()));
+                        new Configuration(m_Graph->getRobot()));
 						
 #ifdef P3D_PLANNER
-                p3d_shoot_inside_box(mGraph->getRobot()->getRobotStruct(),
+                p3d_shoot_inside_box(m_Graph->getRobot()->getRobotStruct(),
                                      /*expandComp->getConfiguration()->getConfigStruct(),*/
                                      q->getConfigStruct(), 
 																		 expandComp->getConnectedComponent()->getCompcoStruct()->box_env_small,
@@ -89,10 +89,10 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
 #ifdef LIGHT_PLANNER
 			case NAVIGATION_BEFORE_MANIPULATION:
 			{
-				mGraph->getRobot()->deactivateCcConstraint();
+				m_Graph->getRobot()->deactivateCcConstraint();
 				
-				q = mGraph->getRobot()->shoot();
-				Node* closest = mGraph->nearestWeightNeighbour(expandComp,q,false,ONLY_ROBOT_BASE);
+				q = m_Graph->getRobot()->shoot();
+				Node* closest = m_Graph->nearestWeightNeighbour(expandComp,q,false,ONLY_ROBOT_BASE);
 				
 				LocalPath path(closest->getConfiguration(),q);
 //				cout << "Param max = " << path.getParamMax() << " , step = " << step() << endl;
@@ -101,19 +101,19 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
 //				cout << "1 :" << endl;
 //				q->print();
 				
-				mGraph->getRobot()->setAndUpdate(*q);
-				q = mGraph->getRobot()->shootAllExceptBase();
+				m_Graph->getRobot()->setAndUpdate(*q);
+				q = m_Graph->getRobot()->shootAllExceptBase();
 				q->setConstraintsWithSideEffect();
 				
 //				cout << "2 :" << endl;
 //				q->print();
 				
-//				mGraph->getRobot()->setAndUpdate(*q);
+//				m_Graph->getRobot()->setAndUpdate(*q);
 //				g3d_draw_allwin_active();
 				
-				mGraph->getRobot()->activateCcConstraint();
+				m_Graph->getRobot()->activateCcConstraint();
 //				q->setConstraintsWithSideEffect();
-//				mGraph->getRobot()->setAndUpdate(*q);
+//				m_Graph->getRobot()->setAndUpdate(*q);
 //				g3d_draw_allwin_active();
 			}
 			break;
@@ -121,7 +121,7 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
 			case GLOBAL_CS_EXP:
           default:
             // Selection in the entire CSpace
-            q = mGraph->getRobot()->shoot(samplePassive);
+            q = m_Graph->getRobot()->shoot(samplePassive);
         }
     }
     if (!m_IsDirSampleWithRlg)
@@ -138,7 +138,7 @@ Node* RRTExpansion::getExpansionNode(Node* compNode, shared_ptr<Configuration> d
 
     if (p3d_GetCostMethodChoice() == MONTE_CARLO_SEARCH)
     {
-        return mGraph->getNode(compNode->getConnectedComponent()->getCompcoStruct()->dist_nodes->N);
+        return m_Graph->getNode(compNode->getConnectedComponent()->getCompcoStruct()->dist_nodes->N);
     }
 
     int KNearest = -1;
@@ -149,7 +149,7 @@ Node* RRTExpansion::getExpansionNode(Node* compNode, shared_ptr<Configuration> d
 
     case NEAREST_EXP_NODE_METH:
         /* Choose the nearest node of the componant*/
-        return (mGraph->nearestWeightNeighbour(compNode, direction,
+        return (m_Graph->nearestWeightNeighbour(compNode, direction,
                                                p3d_GetIsWeightedChoice(), distance));
 
     case K_NEAREST_EXP_NODE_METH:
@@ -161,12 +161,12 @@ Node* RRTExpansion::getExpansionNode(Node* compNode, shared_ptr<Configuration> d
         //   ExpansionNodePt = KNearestWeightNeighbor(mG, compNode->mN->comp, direction->mQ,
         // KNearest);
 
-        return (mGraph->nearestWeightNeighbour(compNode, direction,
+        return (m_Graph->nearestWeightNeighbour(compNode, direction,
                                                p3d_GetIsWeightedChoice(), distance));
 
     case BEST_SCORE_EXP_METH:
         /* Select the node which has the best score: weight*dist */
-        return (mGraph->nearestWeightNeighbour(compNode, direction,
+        return (m_Graph->nearestWeightNeighbour(compNode, direction,
                                                p3d_GetIsWeightedChoice(), distance));
 
     case K_BEST_SCORE_EXP_METH:
@@ -175,29 +175,29 @@ Node* RRTExpansion::getExpansionNode(Node* compNode, shared_ptr<Configuration> d
                 = MAX(1,(int)((NearestPercent*(compNode->getConnectedComponent()->getNumberOfNodes()))/100.));
         // TODO : fix
         // ExpansionNodePt = KNearestWeightNeighbor(mG, compNode->mN->comp, direction->mQ, KNearest);
-        return (mGraph->nearestWeightNeighbour(compNode, direction,
+        return (m_Graph->nearestWeightNeighbour(compNode, direction,
                                                p3d_GetIsWeightedChoice(), distance));
 
     case RANDOM_IN_SHELL_METH:
         /* Select randomly among all the nodes inside a given portion of shell */
-        return (mGraph->getNode(hrm_selected_pb_node(mGraph->getGraphStruct(),
+        return (m_Graph->getNode(hrm_selected_pb_node(m_Graph->getGraphStruct(),
                                                      direction->getConfigStruct(), compNode->getNodeStruct()->comp)));
 
     case RANDOM_NODE_METH:
-        return (mGraph->getNode(p3d_RandomNodeFromComp(
+        return (m_Graph->getNode(p3d_RandomNodeFromComp(
                 compNode->getConnectedComponent()->getCompcoStruct())));
 	
 	/*case NAVIGATION_BEFORE_MANIPULATION:
 	{
-		Node* node = mGraph->nearestWeightNeighbour(compNode,direction,p3d_GetIsWeightedChoice(), distance);
+		Node* node = m_Graph->nearestWeightNeighbour(compNode,direction,p3d_GetIsWeightedChoice(), distance);
 			
 		LocalPath path(node->getConfiguration(),direction);
 		double pathDelta = path.getParamMax() <= 0. ? 1. : MIN(1., this->step() / path.getParamMax());
 			
 		shared_ptr<Configuration> newDirection = path.configAtParam(pathDelta);
-		mGraph->getRobot()->shootObjectJoint(*newDirection);
+		m_Graph->getRobot()->shootObjectJoint(*newDirection);
 		
-		int ObjectDof = mGraph->getRobot()->getObjectDof();
+		int ObjectDof = m_Graph->getRobot()->getObjectDof();
 		
 		(*direction)[ObjectDof+0] = (*newDirection)[ObjectDof+0];
 		(*direction)[ObjectDof+1] = (*newDirection)[ObjectDof+1];
@@ -221,7 +221,7 @@ Node* RRTExpansion::getExpansionNode(Node* compNode, shared_ptr<Configuration> d
 
     default:
         /* By default return the nearest node of the componant */
-        return (mGraph->nearestWeightNeighbour(compNode, direction,
+        return (m_Graph->nearestWeightNeighbour(compNode, direction,
                                                p3d_GetIsWeightedChoice(), distance));
     }
 }

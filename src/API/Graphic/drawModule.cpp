@@ -16,6 +16,7 @@
 
 #include "../p3d/env.hpp"
 #include "API/Roadmap/graph.hpp"
+#include "API/Roadmap/graphConverter.hpp"
 #include "API/Trajectory/trajectory.hpp"
 
 #ifdef HRI_PLANNER
@@ -34,7 +35,11 @@ void g3d_export_cpp_graph()
 		{
 			if (API_activeGraph->isGraphChanged()) 
 			{
-				XYZ_GRAPH = API_activeGraph->exportCppToGraphStruct();
+        // Warning broken
+				//XYZ_GRAPH = API_activeGraph->exportCppToGraphStruct();
+        
+        GraphConverter gc;
+        XYZ_GRAPH = gc.convert(*API_activeGraph);
 			}
 		}
 		catch(std::string str)

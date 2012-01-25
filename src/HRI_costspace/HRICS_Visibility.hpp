@@ -29,6 +29,12 @@ namespace HRICS
 		 * Workspace point
 		 */
     double getWorkspaceCost(const Eigen::Vector3d& WSPoint);
+    
+    /**
+		 * Gets the Visibiliy cost (distance to gaze direction) of a 
+		 * Workspace point
+		 */
+    double getOldWorkspaceCost(const Eigen::Vector3d& WSPoint);
 		
 		/**
 		 * Copy paste from Akins

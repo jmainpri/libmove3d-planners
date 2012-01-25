@@ -57,6 +57,7 @@ namespace PlanParam
             withDeformation,
             withDescent,
             trajOptimTestMultiGauss,
+            showExploration,
 
             // Stomp/Chomp
             withCurrentTraj,
@@ -103,6 +104,10 @@ namespace PlanParam
         {
             tata,
             nb_pointsOnTraj,
+          
+            // Replanning
+            plannerType,
+            planningAlgorithm,
 
             // Object TransfertPoint variable
             env_maxIter,
@@ -153,6 +158,7 @@ namespace PlanParam
             env_timeToDump,
             env_futurX,
             env_futurY,
+            env_futurZ,
             env_futurRZ
 
         };

@@ -49,12 +49,7 @@ int TreePlanner::init()
 	Planner::init();
 	m_nbConscutiveFailures = 0;
 	m_nbExpansion = 0;
-	
-	_Graph->setStart(_Start);
-	_Graph->setGoal(_Goal);
-	
 	m_nbInitNodes = _Graph->getNumberOfNodes();
-	
 	return added;
 }
 
@@ -279,10 +274,8 @@ bool TreePlanner::connectionToTheOtherCompco(Node* toNode)
 const int nb_Graph_Saved = 100;
 int ith_Graph_Saved = 0;
 
-/*!
- * Main Function of the Tree Planner,
- * Bi-Directionality is handled here
- */
+//! Main Function of the Tree Planner,
+//! Bi-Directionality is handled here
 unsigned int TreePlanner::run()
 {
 	shared_ptr<Configuration> tmp = _Robot->getCurrentPos();
@@ -301,20 +294,10 @@ unsigned int TreePlanner::run()
 	Node* fromNode = _Start;
 	Node* toNode = _Goal;
 	
-	shared_ptr<Configuration> q_start = _Start->getConfiguration();
-	shared_ptr<Configuration> q_goal;
-	
-	if( ENV.getBool(Env::expandToGoal) )
-	{
-		q_goal = _Goal->getConfiguration();
-	}
-	
 	while ( !checkStopConditions() )
 	{
 		ENV.setInt(Env::progress,(int)((double)_Graph->getNumberOfNodes()/(double)ENV.getInt(Env::maxNodeCompco)));
-		//                cout << "progress = " << ENV.getInt(Env::progress) << endl;
-		//                cout << (int)(_Graph->getNbNode()/ENV.getInt(Env::maxNodeCompco)) << endl;
-		//		cout << "ENV.getInt(Env::maxNodeCompco) = " << ENV.getInt(Env::maxNodeCompco) << endl;
+
 		// Do not expand in the case of a balanced bidirectional expansion,
 		// if the components are unbalanced.
 		if (  !ENV.getBool(Env::expandToGoal) || 
@@ -325,40 +308,29 @@ unsigned int TreePlanner::run()
       
 			// expand one way
 			// one time (Main function of Tree like planners
-			NbCurCreatedNodes = expandOneStep(fromNode,toNode); m_nbExpansion++;
-			
-			//			cout << "Number Of Compco C++ : " << _Graph->getConnectedComponents().size() << endl;
-			//			cout << "Number Of Compco C : " << _Graph->getNumberOfCompco() << endl;
-			//			cout << "--------------------------------------------" << endl;
+			NbCurCreatedNodes = expandOneStep( fromNode, toNode ); m_nbExpansion++;
 			
 			if (NbCurCreatedNodes > 0)
 			{
 				if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawExploration))
 				{
 				  _draw_func();
+          _Graph->extractBestTrajSoFar( _q_start, _q_goal );
 				}
 				
 				NbTotCreatedNodes += NbCurCreatedNodes;
 				
-				//                cout << "NbTotCreatedNodes  = "  << NbTotCreatedNodes << endl;
 				m_nbConscutiveFailures = 0;
 				
 				if (ENV.getBool(Env::expandToGoal))
 				{
-					// If it expands towards a goal
-					// Tries to link with local method
+					// If it expands towards a goal, tries to link with local method
 					if( connectionToTheOtherCompco( toNode ) )
-						//                    int iter=0;
-						//                    while ((!connectNodeToCompco(_Graph->getLastnode(), toNode->randomNodeFromComp())) && (iter < toNode->getCompcoStruct()->nnode ))
 					{
-						//                        iter = iter + 2;
-						//						cout << "nb Comp : " << _Graph->getGraphStruct()->ncomp<< endl;
-            
 						cout << "connected" << endl;
-						//                      return (NbTotCreatedNodes);
 					}
 				}
-			}
+      }
 			else
 			{
 				m_nbConscutiveFailures++;
@@ -366,7 +338,7 @@ unsigned int TreePlanner::run()
 		}
 		if (ENV.getBool(Env::biDir))
 		{
-			swap(fromNode, toNode);
+			swap( fromNode, toNode );
 		}
 	}
 	

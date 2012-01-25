@@ -16,7 +16,8 @@
  *      Author: jmainpri
  */
 
-#include "Expansion/TransitionExpansion.hpp"
+#include "planner/Diffusion/Variants/Transition-RRT.hpp"
+
 #include "Roadmap/node.hpp"
 #include "Roadmap/graph.hpp"
 

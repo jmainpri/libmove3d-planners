@@ -68,11 +68,6 @@ Transform3d Joint::getMatrixPos() const
 	t(2,3) = m_Joint->abs_pos[2][3];
 	t(3,3) = 1.0;
 	
-//	cout << "t of joint " << m_Joint->num << " = " << endl << t.matrix() << endl;
-//	
-//	p3d_mat4Print(m_Joint->abs_pos, "Abs Pos");
-	
-	//cout << "Warning: Joint::getAbsPos() undefined" << endl;
 	return t;
 }
 

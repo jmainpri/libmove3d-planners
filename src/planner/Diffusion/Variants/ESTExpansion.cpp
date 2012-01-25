@@ -94,7 +94,7 @@ shared_ptr<Configuration> ESTExpansion::getExpansionDirection(
 {
 	shared_ptr<Configuration> q;
 
-	q = mGraph->getRobot()->shoot(true);
+	q = m_Graph->getRobot()->shoot(true);
 	return q;
 
 }
@@ -143,7 +143,7 @@ Node* ESTExpansion::expandProcessEST( Node* expansionNode,
 
     Node* ptrToNode(NULL);
 
-    Node* neigh = mGraph->nearestWeightNeighbour(expansionNode,toConfig,false,
+    Node* neigh = m_Graph->nearestWeightNeighbour(expansionNode,toConfig,false,
                                                  ENV.getInt(Env::DistConfigChoice));
 
     if( neigh->getConfiguration()->dist(*toConfig) < 2*step()/3 )

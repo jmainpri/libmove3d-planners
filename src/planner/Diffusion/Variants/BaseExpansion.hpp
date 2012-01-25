@@ -49,12 +49,12 @@ public:
 	/**
 	 * Set the graph that is beeing expanded
 	 */
-	void setGraph(Graph* G) { mGraph = G; }
+	void setGraph(Graph* G) { m_Graph = G; }
 	
 	/**
 	 * Get the graph that is beeing expanded
 	 */
-	Graph* getGraph() { return mGraph; }
+	Graph* getGraph() { return m_Graph; }
 	
 	/**
 	 * Get Node Expansion Method
@@ -185,7 +185,7 @@ protected:
 	//	bool IsGoalBias; //= FALSE;
 	bool m_IsDirSampleWithRlg; //= FALSE;
 	
-	Graph* mGraph;
+	Graph* m_Graph;
 	
 	Node* m_fromComp;
 	Node* m_toComp;

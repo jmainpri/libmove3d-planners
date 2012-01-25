@@ -3,8 +3,9 @@ SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME}/Roadmap)
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})
 BM3D_SRC_SUBDIR_PROCESS(
 edge.cpp 
-graph.cpp 
 node.cpp
 compco.cpp
+graph.cpp 
+graphConverter.cpp 
 )
 SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME_TMP2})

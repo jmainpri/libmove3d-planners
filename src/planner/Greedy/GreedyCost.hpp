@@ -6,7 +6,7 @@
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 
 #include "planner/Diffusion/RRT.hpp"
-#include "planner/Diffusion/RRT-Variants/Transition-RRT.hpp"
+#include "planner/Diffusion/Variants//Transition-RRT.hpp"
 
 /**
   * Planner based on trajectory optimization

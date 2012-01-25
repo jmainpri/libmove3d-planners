@@ -125,13 +125,8 @@ namespace HRICS
 		AgentGrid(const AgentGrid& grid);
 		
     ~AgentGrid();
-    
-		void setGridOrigin();
 		
 		API::ThreeDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z );
-		
-    int robotConfigInCell(int i);
-    void draw();
     
     Robot*      getRobot();
     
@@ -141,10 +136,10 @@ namespace HRICS
     
     void computeAllCellCost();
 		void computeReachability();
-    
 		
 		Eigen::Transform3d getTransformFromRobotPos();
 		Eigen::Vector3d getTranformedToRobotFrame(const Eigen::Vector3d& WSPoint);
+    
 		bool isInReachableGrid(const Eigen::Vector3d& WSPoint);
 		
 		bool isReachable(const Eigen::Vector3d& WSPoint);
@@ -162,13 +157,12 @@ namespace HRICS
 		std::vector<AgentCell*> getAllReachableCells();
 		std::vector<std::pair<double,AgentCell*> > getAllReachableCellsSorted();
 		std::vector<AgentCell*> getAllReachableCells(double CostThreshold);
-		
-		Eigen::Transform3d getRobotOrigin() { return m_RobotOriginPos; }
-		//std::tr1::shared_ptr<Configuration> getActualConfig() { return m_ActualConfig; }
-		
     
 		bool writeToXmlFile(std::string docname);
 		bool loadFromXmlFile(std::string docname);
+    
+    int robotConfigInCell(int i);
+    void draw();
     
 	private:
     void computeRadius();

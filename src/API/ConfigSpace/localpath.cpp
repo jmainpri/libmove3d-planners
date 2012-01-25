@@ -159,8 +159,6 @@ LocalPath::LocalPath(Robot* R, p3d_localpath* lpPtr) :
 
 LocalPath::~LocalPath()
 {
-	//configAtParam(0);
-	
   if (_LocalPath)
   {
     getLocalpathStruct()->destroy(_Robot->getRobotStruct(), getLocalpathStruct());

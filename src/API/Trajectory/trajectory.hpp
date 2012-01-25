@@ -53,14 +53,10 @@ namespace API
         
 		bool concat(const Trajectory& traj);
 		
-		bool replacePortion(
-                            unsigned int id1,
-                            unsigned int id2,
+		bool replacePortionOfLocalPaths(unsigned int id1,unsigned int id2,
                             std::vector<LocalPath*> paths, bool freeMemory = true );
 		
-		bool replacePortion(
-                            double param1,
-                            double param2,
+		bool replacePortion(double param1,double param2,
                             std::vector<LocalPath*> paths , bool freeMemory = true );
 		
 		void cutTrajInSmallLP(unsigned int nLP);
@@ -79,6 +75,7 @@ namespace API
 		double extractCostPortion(double param1, double param2);
 		double cost();
 		double costNoRecompute();
+    double costRecomputed();
 		double costDeltaAlongTraj();
 		std::vector<double> getCostAlongTrajectory(int nbSample);
 		void resetCostComputed();
@@ -87,8 +84,10 @@ namespace API
 		// Basic
     bool isEmpty();
     
+    void clear();
+    
     std::tr1::shared_ptr<Configuration> operator [] ( const int &i ) const;
-		std::tr1::shared_ptr<Configuration> configAtParam(double param);
+		std::tr1::shared_ptr<Configuration> configAtParam(double param) const;
 		
 		std::vector< std::tr1::shared_ptr<Configuration> > getNConfAtParam(double delta);
 		std::vector< std::tr1::shared_ptr<Configuration> > getVectorOfConfiguration();
@@ -101,12 +100,13 @@ namespace API
 		bool isValid();
 		
 		void 	updateRange();
-		double computeSubPortionRange(std::vector<LocalPath*> portion);
+		double computeSubPortionRange(const std::vector<LocalPath*>& portion) const;
 		
 		bool        replaceP3dTraj();
 		p3d_traj* 	replaceP3dTraj(p3d_traj* trajPt);
 		p3d_traj* 	replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt);
 		
+    void printAllLocalpathCost();
 		void draw(int nbKeyFrame);
 		void print();
 		

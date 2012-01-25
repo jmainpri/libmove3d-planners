@@ -57,7 +57,7 @@ public:
 	void setNodeCost(Node* node, Node* parent);
 	
   // Initializes the Cost space motion planning problem
-  void initMotionPlanning(Graph* graph, Node* start, Node* goal);
+  void initMotionPlanning(graph* graph, node* start, node* goal);
 	
   // Set DeltaStepCost
   void setDeltaStepMethod(CostSpaceDeltaStepMethod method) { m_deltaMethod = method; }

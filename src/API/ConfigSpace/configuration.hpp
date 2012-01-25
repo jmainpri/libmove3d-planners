@@ -324,4 +324,6 @@ private:
 	double* _Configuration;/*!< une structure de congitPt contenant les données sur la Configuration*/
 };
 
+typedef std::tr1::shared_ptr<Configuration> confPtr_t;
+
 #endif

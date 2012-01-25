@@ -21,8 +21,11 @@
 #include "replanning.hpp"
 #include "cost_space.hpp"
 
-const bool show_debug_terminal = false;
+#include <iomanip>
+#include <iosfwd>
+#include <sstream>
 
+const bool show_debug_terminal = false;
 
 extern void* GroundCostObj;
 
@@ -258,32 +261,23 @@ bool CostOptimization::oneLoopDeformRecompute()
 	double lPrev = 0., lCurrent = 0., lNext = 0.;
 	bool isOptimSuccess(false);
   
+  // Store current configuration
   shared_ptr<Configuration> qInitPt = getRobot()->getCurrentPos();
-  shared_ptr<Configuration> qRandPt = getRobot()->shootDir();
   
-	// Get 3 configurations at random along the trajectory
-	vector<shared_ptr<Configuration> > vectConf = get3RandSuccesConfAlongTraj(lPrev,lCurrent,lNext,m_step);
-	// vectConf = getClosestConfOnTraj(lPrev, lCurrent, lNext, qRandPtr, step);
+  // Get 3 configurations at random along the trajectory
+	vector< shared_ptr<Configuration> >  vectConf = get3RandSuccesConfAlongTraj(lPrev,lCurrent,lNext,m_step);
 	
 	shared_ptr<Configuration> qPrevPt = vectConf.at(0);
 	shared_ptr<Configuration> qCurrPt = vectConf.at(1);
 	shared_ptr<Configuration> qNextPt = vectConf.at(2);
 	
 	// Take a configuration in a certain direction
-	qRandPt = *qRandPt + *qCurrPt;
-	//	qRandPtr = cheat();
+	shared_ptr<Configuration> qRandPt = getRobot()->shoot();
 	
-	if(m_cheat)
-	{
-		cout << "qRandPtr = cheat() " << endl;
-		qRandPt = cheat();
-		m_cheat = false;
-	}
+	// Direction path for perturbation
+	LocalPath path( qCurrPt, qRandPt );
 	
-	LocalPath path(qCurrPt, qRandPt);
-	
-  // Divide the length of the triangle until qtNewPt is free
-	// Get the New configuration in qtRand dirrenction
+  // Get the New configuration in qtRand dirrenction
 	shared_ptr<Configuration> qNewPt = perturbCurrent(qCurrPt,qRandPt);
 	if ( qNewPt->getConfigStruct() == NULL )
 	{
@@ -292,22 +286,29 @@ bool CostOptimization::oneLoopDeformRecompute()
 	
 	// Set the middle config in the configuration vector
 	vectConf[1] = qNewPt;
+  
+  bool newConfigIsValid = true;
+  
+  if( PlanEnv->getBool(PlanParam::trajComputeCollision) )
+  {
+    newConfigIsValid = !qNewPt->isInCollision();
+  }
 	
 	// If qNew is free, check the triangle localPath
-	if (!qNewPt->isInCollision())
+	if (  newConfigIsValid )
 	{
 		LocalPath* FirstHalf  = new LocalPath(qPrevPt, qNewPt);
 		LocalPath* SecondHalf = new LocalPath(qNewPt,  qNextPt);
     
-    bool pathsNotInCollision = true;
+    bool newPathAreValid = true;
     
     if (PlanEnv->getBool(PlanParam::trajComputeCollision))
     {
-      pathsNotInCollision = FirstHalf->isValid() && SecondHalf->isValid();
+      newPathAreValid = (!FirstHalf->isValid()) || (!SecondHalf->isValid());
     }
 		
 		// If the path is valid, check for cost
-		if ( pathsNotInCollision )
+		if ( newPathAreValid )
 		{
 			Trajectory newTraj(*this);
 			
@@ -316,34 +317,41 @@ bool CostOptimization::oneLoopDeformRecompute()
 			newPortion.push_back(FirstHalf);
 			newPortion.push_back(SecondHalf);
 			
-			newTraj.replacePortion(lPrev, lNext, newPortion);
+			newTraj.replacePortion( lPrev, lNext, newPortion );
+      
+      double CurrentCost = this->costRecomputed();
+      double NewTrajCost = newTraj.costRecomputed();
 			
-			if ( newTraj.cost() < this->cost() )
+			if ( NewTrajCost < CurrentCost )
 			{
 				newPortion.clear();
 				newPortion.push_back(new LocalPath(*FirstHalf));
 				newPortion.push_back(new LocalPath(*SecondHalf));
 				
-				this->replacePortion(lPrev, lNext, newPortion);
+				this->replacePortion( lPrev, lNext, newPortion );
 				
 				setSortedIndex();
 				
-				if (! (*getBegin() == *configAtParam(0)) )
+				if ( *getBegin() != *configAtParam(0) )
 				{
 					cout << "Error in oneLoopDeform : !getBegin()->equal(*configAtParam(0))" << endl;
 				}
 				
-				if (! (*getEnd() == *configAtParam(getRangeMax())) )
+				if ( *getEnd() != *configAtParam(getRangeMax()) )
 				{
-					cout << "------------------------------------------" << endl;
 					cout << "Error in oneLoopDeform : !getEnd()->equal(*configAtParam(getRangeMax()))" << endl;
-					getEnd()->print();
-					configAtParam(getRangeMax())->print();
 				}
 				
 				isOptimSuccess = true;
-				
 			}
+      
+      // Store the trajectory for drawing
+      if (PlanEnv->getBool(PlanParam::showExploration))
+      {
+        cout << "showExploration" << endl;
+        global_rePlanningEnv->store_exploration(*this,lPrev, lNext, qNewPt);
+      }
+      
 			if (ENV.getBool(Env::debugCostOptim))
 			{
 				if (isOptimSuccess)
@@ -355,7 +363,6 @@ bool CostOptimization::oneLoopDeformRecompute()
 					debugShowTraj(lPrev, lNext, qNewPt, 2);
 				}
 			}
-			
 		}
 		else
 		{
@@ -504,6 +511,8 @@ shared_ptr<Configuration> CostOptimization::cheat()
 	ptrConfig->convertToRadian();
 	return ptrConfig;
 }
+
+
 void CostOptimization::debugShowTraj(double lPrev, double lNext, shared_ptr<
                                      Configuration> qNew, int color)
 {
@@ -535,11 +544,9 @@ void CostOptimization::debugShowTraj(double lPrev, double lNext, shared_ptr<
 	trajToDraw.at(1).setColor(2);
 	trajToDraw.at(2).setColor(color);
 	trajToDraw.at(3).setColor(color_base_traj);
-	
-	//			basicTraj.print();
-	//			triangleTraj.print();
-	g3d_draw_allwin_active();
-	usleep(200000);
+
+//	g3d_draw_allwin_active();
+//	usleep(200000);
 	
 	vector<LocalPath*> pathsTmp(2);
 	pathsTmp.at(0) = (new LocalPath(vectConf.at(0), vectConf.at(1)));
@@ -549,10 +556,9 @@ void CostOptimization::debugShowTraj(double lPrev, double lNext, shared_ptr<
 	tmpT.replacePortion(lPrev, lNext, pathsTmp);
 	double newCost = tmpT.cost();
 	
-	if (m_mincost > newCost)
+	if ( m_mincost > newCost )
 	{
 		m_mincost = newCost;
-		
 	}
 	
 	double oldCost = cost();
@@ -577,13 +583,12 @@ void CostOptimization::debugShowTraj(double lPrev, double lNext, shared_ptr<
 		m_Errors.push_back(diff);
 		m_nbErrors++;
 	}
-	
 }
 
 void CostOptimization::printDebugInfo()
 {
 	cout << "Errors : " << endl;
-	for (uint i = 0; i < m_Errors.size(); i++)
+	for (int i=0; i < int(m_Errors.size()); i++)
 	{
 		cout << "Errors[" << i << "] = " << m_Errors.at(i) << endl;
 	}
@@ -598,11 +603,10 @@ void CostOptimization::printDebugInfo()
 	
 	cout << "Selected : " << endl;
 	
-	for (uint i = 0; i < m_Selected.size(); i++)
+	for (int i=0; i < int(m_Selected.size()); i++)
 	{
 		cout << "mSelected[" << i << "] = " << m_Selected.at(i) << endl;
 	}
-	//	cout << "meanSelected =" <<  meanSelected / mSelected.size() << endl;
 	
 	cout << "nbBiased = " << m_nbBiased << endl;
 	cout << "nbReallyBiased = " << m_nbReallyBiased << endl;
@@ -756,6 +760,11 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
     return;
   }
   
+  //m_time = 0.0;
+	double ts(0.0);  //ChronoOn();
+  bool first_iteration = true;
+  m_time = global_rePlanningEnv->time_since_last_call( first_iteration , ts );
+  
 	double costBeforeDeformation = this->cost();
 	double initalRange = getRangeMax();
 	
@@ -765,56 +774,69 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
 	
 	PointsToDraw = new PointCloud;
   
+  m_shortcutRatio = 4; // one out of 4
   m_GainOfIterations.clear();
+  m_GainCost.clear();
 	m_MaxNumberOfIterations = nbIteration;
-  m_descent =  PlanEnv->getBool(PlanParam::withDescent);
-  m_time = 0.0;
-  
-	double ts(0.0);  ChronoOn();
+  m_descent = PlanEnv->getBool(PlanParam::withDescent);
 	
 	int ith_deformation=0;
 	for ( ; !checkStopConditions(ith_deformation); ith_deformation++)
 	{
-    m_step = initalRange/PlanEnv->getDouble(PlanParam::MaxFactor);
-    
-    cout << "iteration : " << ith_deformation << " , m_step = " << m_step << endl;
+    if(m_useAutoStep)
+    {
+      m_step = initalRange/PlanEnv->getDouble(PlanParam::MaxFactor);
+    }
     
     double CurCost = cost();
+    
+    //cout << "iteration : " << ith_deformation << " ";
 		
     // Run one loop of deformation
-    if(PlanEnv->getBool(PlanParam::trajCostRecompute))
-		{
+    if(!PlanEnv->getBool(PlanParam::trajCostRecompute))
+    {
+      //cout << "oneLoopDeform" ;
+      oneLoopDeform();
+    }
+    // When it's not the first iteration (ith_deformation is not a multiple of the shortcut ratio)
+    else if( ith_deformation==0 || (ith_deformation % m_shortcutRatio != 0) ) 
+    {
+      //cout << "oneLoopDeformRecompute" ;
       oneLoopDeformRecompute();
     }
     else {
-      oneLoopDeform();
+      //cout << "oneLoopShortCutRecompute" ;
+      oneLoopShortCutRecompute();
     }
-  
+    //cout << " , m_step = " << m_step << endl;
+    
+    // Then, compute success, gain and save cost to file
+    
 		double NewCost = cost();
-		
+    
 		m_IterationSucceded = ( CurCost > NewCost );
-		
-		if(PlanEnv->getBool(PlanParam::trajSaveCost))
-		{
-			NewCost = cost();
-			
-			if ( NewCost > CurCost )
-				cout << "CostOptimization::runDeformation : NewCost > CurrentCost"  << endl;
-
-			m_OptimCost.push_back( NewCost );
-		}
-		
-		if ( m_IterationSucceded ) 
+    
+    if ( m_IterationSucceded ) 
 		{
 			double Gain = (( CurCost - NewCost ) / CurCost) ;
 			m_GainOfIterations.push_back( Gain );
-      cout << "Gain = " << 100*Gain << " %" << endl;
+      cout << "Gain = " << 100*Gain << " %";
+      cout << "( CurCost : " << CurCost << " , " << " NewCost : " << NewCost << " )" << endl;
 		}
 		
-		ChronoTimes( &m_time , &ts );
+    if(PlanEnv->getBool(PlanParam::trajSaveCost))
+		{
+			storeCostAndGain( NewCost, CurCost );
+		}
+    
+    //replan_store_traj_to_vect(*this,m_step);
+    global_rePlanningEnv->store_traj_to_draw(*this,m_step);
+		
+    m_time += global_rePlanningEnv->time_since_last_call( first_iteration , ts );
+		//ChronoTimes( &m_time , &ts );
 	}
 	
-	ChronoOff();
+	//ChronoOff();
 	
         if ( isValid() )
         {
@@ -827,9 +849,9 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
 	
 	if(PlanEnv->getBool(PlanParam::trajSaveCost))
 	{
-		ostringstream oss;
-		oss << "CostOptim_"<< idRun << "_" ;
-		this->saveOptimToFile(oss.str());
+    stringstream s; 
+    s << "CostOptim_" << setfill('0') << setw(4) << idRun ;
+		this->saveOptimToFile( s.str() );
 	}
 #ifdef DEBUG_STATUS
         cout << "Before : Traj cost = " << costBeforeDeformation << endl;

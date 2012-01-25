@@ -32,6 +32,7 @@ _nbExpan(0),
 m_specificNode(false)
 {
 	m_is_BGL_Descriptor_Valid = false;
+  m_is_leaf = true;
 }
 //Constructor and destructor
 Node::Node(const Node& N) :
@@ -51,6 +52,7 @@ m_specificNode(false)
 	// BGL data
 	m_is_BGL_Descriptor_Valid = false;
 	m_BGL_Descriptor = N.m_BGL_Descriptor;
+  m_is_leaf = true;
 }
 
 //Constructor and destructor
@@ -65,78 +67,27 @@ m_specificNode(false)
 	_Robot = G->getRobot();
 	_Configuration = C;
 	_activ = false;
+  m_is_leaf = true;
   
-	
-	//	_Node = p3d_APInode_make_multisol(G->getGraphStruct(), C->getConfigStruct(), NULL);
-	//	
-	//	if (newCompco) 
-	//	{
-	//		_Graph->createCompco(this);
-	//	}
-	//	
-	//	return;
-	
 	// The node has to be made
 	// without using the old graph struck
 	// this is a copy of the p3d_APInode_make_multisol
-	
   _Node = p3d_create_node( NULL );
   _Node->q = C->getConfigStruct();
 	_Node->num = _Graph->getNumberOfNodes();
 	_Node->parent = NULL;
 	_Node->sumCost = 0.0;
 	
-  /*if(iksol){
-	 p3d_copy_iksol(G->getRobot()->getRobotStruct()->cntrt_manager,iksol,&(nodePt->iksol));
-	 }*/
-	
-  // p3d_set_node_rel_mob_frame(graphPt,nodePt);
-  /*p3d_SetMobFrameToNode replace the
-	 p3d_set_node_rel_mob_frame function
-   */
-	
-  // WARNING : suppose that q has been set and updated
-  //p3d_SetMobFrameToNode(NULL,nodePt);
-	// The node has to be made
-	// without using the old graph struck
-	// this is a copy of the p3d_SetMobFrameToNode
-	
-	p3d_matrix4* RefFramePt=NULL, *MobFramePt=NULL;
-  p3d_matrix4 MobFrameRef;
-  p3d_matrix4 InversedMatRefFrame;
-	
-  // NOTE: The mobile frame is refered to its initial location 
-  //       The inital location corresponts to the root node
-  //       (Currently implemented only for Ns !!!)
-	
-  if(p3d_GetRefAndMobFrames(_Robot->getRobotStruct(), &RefFramePt,&MobFramePt)) 
-	{
-    if(RefFramePt == NULL) 
-		{
-      p3d_mat4Copy(*MobFramePt,_Node->RelMobFrame);
-    }
-    else 
-		{
-      p3d_matInvertXform(*RefFramePt, InversedMatRefFrame);
-      p3d_matMultXform(InversedMatRefFrame,*MobFramePt,MobFrameRef);      
-      p3d_mat4Copy(MobFrameRef,_Node->RelMobFrame);
-    }
-	}
-	
 	int singularityCheck = 0;
   if(singularityCheck){
     _Node->isSingularity = TRUE;
   }
-	//   if(p3d_get_costComputation()){
-	//     nodePt->cost = p3d_GetHriDistCost(graphPt->rob, 1);
-	//   }
-	
+  
 	// Compco are now handled
-	// In the Boost Graph
+	// in the boost graph
 	if (newCompco) 
 	{
 		_Graph->createCompco(this);
-		//p3d_create_compco(G->getGraphStruct(), _Node);
 	}
 }
 
@@ -150,32 +101,13 @@ m_specificNode(false)
 	_Configuration = shared_ptr<Configuration> (new Configuration(_Robot, N->q));
 	_activ = false;
 	_Node = N;
+  m_is_leaf = true;
 	
 	if (_Node->comp == NULL)
 	{
 		_Graph->createCompco(this);
-		// p3d_create_compco(G->getGraphStruct(), _Node);
 	}
 }
-
-/*
- Node::Node(cpp_Graph* G, p3d_node* N) :
- _SelectCost(0.0),
- _nbExpan(0)
- {
- //_Graph = G;
- _Robot = G->getRobot();
- _Configuration
- = shared_ptr<Configuration> (new Configuration(_Robot, N->q));
- _activ = false;
- _Node = N;
- 
- //    if (_Node->comp == NULL)
- //    {
- //        p3d_create_compco(G->getGraphStruct(), _Node);
- //    }
- }
- */
 
 bool Node::operator==(Node& N)
 {
@@ -184,7 +116,6 @@ bool Node::operator==(Node& N)
 
 void Node::deleteNode()
 {
-	//p3d_APInode_desalloc( _Graph->getGraphStruct(), _Node);
 	if (_Node) 
 	{
 		if (_Node->list_closed_flex_sc != NULL) 
@@ -205,7 +136,7 @@ Node::~Node()
   if(m_specificNode)
     
   {
-   // cout << "specific (node) = destroy" << endl; 
+    // cout << "specific (node) = destroy" << endl; 
   }
 	//this->deleteNode();
 }
@@ -250,36 +181,14 @@ void Node::setId(unsigned int id)
  */
 int Node::getNumberOfNeighbors() 
 { 
-	if (ENV.getBool(Env::use_p3d_structures)) 
-	{
-		return _Node->nneighb;
-	}
-	else 
-	{
 		return getNeighbors().size();
-	}
 }
 
-/**
- * Get number of neighbors
- */
+//! Get number of neighbors
 vector<Node*> Node::getNeighbors()
 {
 	vector<Node*> allNeighbors;
 	
-	//	if (ENV.getBool(Env::use_p3d_structures)) 
-	//	{
-	//		p3d_list_node* list = _Node->neighb;
-	//		
-	//		for(int i=0;i<_Node->nneighb;i++)
-	//		{
-	//			p3d_node* ptrNode = list->N;
-	//			allNeighbors.push_back(_Graph->getNodesTable()[ptrNode]);
-	//			list = list->next;
-	//		}
-	//	}
-	//	else 
-	//	{
 	boost::graph_traits<BGL_Graph>::adjacency_iterator ai;
 	boost::graph_traits<BGL_Graph>::adjacency_iterator ai_end;
 	
@@ -288,56 +197,33 @@ vector<Node*> Node::getNeighbors()
 	
 	for (tie(ai, ai_end) = adjacent_vertices(  getDescriptor() , g); ai != ai_end; ++ai)
 	{
-		//BGL_Vertex v = 
 		Node* N = NodeData[*ai] ;
 		allNeighbors.push_back( N );
 	}
-	//}
-	
-	/*cout << "--------------------------------------" << endl;
-	 vector<Node*>::iterator it;
-	 for (it = allNeighbors.begin(); it != allNeighbors.end(); ++it) 
-	 {
-	 cout << "Node num (neigh): " << (*it)->getId() << endl;
-	 }*/
-	
 	return allNeighbors;
 }
 
+void Node::printNeighbors()
+{
+  vector<Node*> allNeighbors = getNeighbors();
+  vector<Node*>::iterator it;
+  cout << "--------------------------------------" << endl;
+  for (it = allNeighbors.begin(); it != allNeighbors.end(); ++it) 
+  {
+    cout << "Node num (neigh): " << (*it)->getId() << endl;
+  }
+}
 
-/**
- * Get Number of Edges
- */
+//! Get Number of Edges
 int Node::getNumberOfEdges() 
 { 
-	if ( ENV.getBool(Env::use_p3d_structures) ) 
-	{
-		return _Node->nedge;
-	}
-	else 
-	{
 		return getEdges().size();
-	}
 }
 
 vector<Edge*> Node::getEdges()
 {
 	vector<Edge*> allEdges; 
 	
-	//	if (ENV.getBool(Env::use_p3d_structures)) 
-	//	{
-	//		vector<p3d_edge*> allEdges;
-	//		p3d_list_edge* list = _Node->edges;
-	//		
-	//		for(int i=0;i<_Node->nedge;i++)
-	//		{
-	//			p3d_edge* ptrEdge = list->E;
-	//			allEdges.push_back(ptrEdge);
-	//			list = list->next;
-	//		}
-	//	}
-	//	else 
-	//	{
 	boost::graph_traits<BGL_Graph>::out_edge_iterator out_i, out_end;
 	BGL_Graph& g = _Graph->get_BGL_Graph();
 	
@@ -346,7 +232,6 @@ vector<Edge*> Node::getEdges()
 	for (tie(out_i, out_end) = boost::out_edges( getDescriptor()  , g ); 
 			 out_i != out_end; ++out_i) 
 	{
-		//BGL_Edge e = *out_i;
 		Edge * E = boost::get( EdgeData , *out_i );
 		allEdges.push_back( E );
 	}
@@ -384,16 +269,6 @@ bool Node::isActiv()
 	return _activ;
 }
 
-//p3d_compco* Node::getCompcoStruct()
-//{
-//    return (_Node->comp);
-//}
-//
-//p3d_compco** Node::getCompcoStructPt()
-//{
-//    return (&(_Node->comp));
-//}
-
 unsigned int Node::getNumberOfNodesInCompco()
 {
 	return _Node->comp->nnode;
@@ -407,7 +282,6 @@ double Node::cost()
 
 double& Node::sumCost()
 {
-	//	_Node->cost = _Configuration->cost();
 	return (_Node->sumCost);
 }
 
@@ -426,8 +300,6 @@ double Node::dist(Node* N)
 bool Node::equal(Node* N)
 {
 	return getConfiguration()->equal(*N->getConfiguration());
-	// return (p3d_equal_config(_Robot->getRobotStruct(), N->getNodeStruct()->q,
-	//                             _Node->q));
 }
 
 void Node::setConnectedComponent(ConnectedComponent* Compco)
@@ -439,26 +311,7 @@ void Node::setConnectedComponent(ConnectedComponent* Compco)
 bool Node::inSameComponent(Node* N)
 {
 	bool isInSameComponent = false;
-	
-	if (ENV.getBool(Env::use_p3d_structures)) 
-	{
-		isInSameComponent = 
-		(_Node->comp->num == N->getNodeStruct()->comp->num);
-		
-		/*if( isInSameComponent )
-		 {
-		 if ( m_Compco != N->getConnectedComponent() )
-		 {
-		 throw string("The nodes are not in the same C++ components");
-		 }
-		 }*/
-	}
-	else 
-	{
-		isInSameComponent =
-		( m_Compco == N->getConnectedComponent() );
-	}
-	
+  isInSameComponent = ( m_Compco == N->getConnectedComponent() );
 	return isInSameComponent;
 }
 
@@ -466,12 +319,6 @@ bool Node::isLinkable(Node* N, double* dist)
 {
 	// Function that is the copy of p3d_APInode_linked
 	// that relies on the old graph
-	
-	//	return p3d_APInode_linked(_Graph->getGraphStruct(), 
-	//														_Node,
-	//														N->getNodeStruct(), 
-	//														dist);
-	
 	p3d_node *N1 = _Node;
 	p3d_node *N2 = N->getNodeStruct();
 	
@@ -479,12 +326,6 @@ bool Node::isLinkable(Node* N, double* dist)
   p3d_localpath *localpathPt;
   int ntest = 0, isNoCol = 0, *ikSol = NULL;
   configPt qsave;
-	
-	//  if(graphPt){
-	//		robotPt = graphPt->rob;
-	//  }else{
-	//    robotPt = XYZ_ROBOT;
-	//  }
 	
   /* current position of robot is saved */
   qsave = p3d_get_robot_config(robotPt);
@@ -508,7 +349,6 @@ bool Node::isLinkable(Node* N, double* dist)
     p3d_destroy_config(robotPt, qsave);
     return(FALSE);
   }
-	
 	
   if (localpathPt->length != NULL)
 		*dist = localpathPt->length(robotPt,localpathPt);
@@ -564,7 +404,7 @@ void Node::checkStopByWeight()
 	if (signStopWeight * (_Node->weight - stopWeight) > 0)
 	{
 		PlanEnv->setBool(PlanParam::stopPlanner,true);
-//		p3d_SetStopValue(true);
+    //		p3d_SetStopValue(true);
 		p3d_SetDiffuStoppedByWeight(true);
 	}
 }
@@ -574,7 +414,6 @@ void Node::deleteCompco()
 {
 	// This is now handled in the Boost Graph
 	_Graph->removeCompco(m_Compco);
-	//p3d_remove_compco(_Graph->getGraphStruct(), _Node->comp);
 }
 
 bool Node::maximumNumberNodes()
@@ -591,10 +430,7 @@ bool Node::connectNodeToCompco(Node* N, double step)
 	}
 	else
 	{
-		//				return (p3d_ConnectNodeToComp(N->getGraph()->getGraphStruct(),
-		//                                      N->getNodeStruct(), _Node->comp));
 		return _Graph->connectNodeToCompco(N,this);
-		//			throw string("Warning : function outated ");
 	}
 }
 
@@ -607,26 +443,7 @@ void Node::merge(Node* compco)
 bool Node::equalCompco(Node* compco)
 {
 	bool equalCompco = false;
-	
-	if (ENV.getBool(Env::use_p3d_structures)) 
-	{
-		equalCompco = 
-		(_Node->comp == compco->getConnectedComponent()->getCompcoStruct() );
-		
-		if( equalCompco )
-		{
-			if ( m_Compco != compco->getConnectedComponent() )
-			{
-				throw string("The nodes are not in the same C++ components");
-			}
-		}
-	}
-	else 
-	{
-		equalCompco =
-		( m_Compco == compco->getConnectedComponent() );
-	}
-	
+  equalCompco = ( m_Compco == compco->getConnectedComponent() );
 	return equalCompco;
 }
 

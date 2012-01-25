@@ -53,8 +53,6 @@ void GlobalCostSpace::initialize()
 		global_costSpace->addCost("costMap2D",boost::bind(computeIntersectionWithGround, _1));
 		global_costSpace->setCost("costMap2D");
 	}
-  
-  //ext_compute_localpath_kin_cost = computeLocalpathKinematicCost;
 }
 
 //------------------------------------------------------------------------------
@@ -155,9 +153,10 @@ double CostSpace::cost(Configuration& conf)
  * Compute the cost of a portion of path */
 double CostSpace::deltaStepCost(double cost1, double cost2, double length)
 {
-	double epsilon = 0.002;
+	const double epsilon = 0.002;
 	//double alpha;
-	double kb = 0.00831, temp = 310.15;
+	const double kb = 0.00831;
+  const double temp = 310.15;
 	
 	//length *= ENV.getDouble(Env::KlengthWeight);
 	double powerOnIntegral = ENV.getDouble(Env::KlengthWeight);
@@ -167,7 +166,7 @@ double CostSpace::deltaStepCost(double cost1, double cost2, double length)
 		switch (m_deltaMethod)
 		{
 			case cs_mechanical_work:
-				
+      {
 				double cost;
 				if (cost2 > cost1)
 				{
@@ -178,13 +177,9 @@ double CostSpace::deltaStepCost(double cost1, double cost2, double length)
 					cost = epsilon * length;
 				}
 				return cost;
-				
-			case cs_integral:
-			case cs_visibility:
-				
-				return pow(((cost1 + cost2)/2),powerOnIntegral)*length;
-				
-				//    case MECHANICAL_WORK:
+      }
+        
+        //    case MECHANICAL_WORK:
 				//
 				//      if(cost2 > cost1)
 				//      {
@@ -194,6 +189,17 @@ double CostSpace::deltaStepCost(double cost1, double cost2, double length)
 				//      {
 				//		  return epsilon*length;
 				//      }
+				
+			case cs_integral:
+			case cs_visibility:
+      {
+        double cost = pow(((cost1 + cost2)/2),powerOnIntegral)*length;
+        
+        // Warning, length added for dynamic shortcut (HRI)
+        cost += epsilon*length;
+        
+        return cost;
+      }
 				
 			case cs_average:
 				return (cost1 + cost2) / 2.;
@@ -218,77 +224,34 @@ double CostSpace::deltaStepCost(double cost1, double cost2, double length)
 //----------------------------------------------------------------------
 void CostSpace::setNodeCost( Node* node, Node* parent )
 {
-	//	p3d_SetNodeCost(this->getActivGraph()->getGraphStruct(), 
-	//									this->getGoal()->getNodeStruct(), 
-	//									this->getGoal()->getConfiguration()->cost());
-	//	double cost = node->getConfiguration()->cost();
-	
   //------------------------------------------------------
-  // Old node cost
+  // New node cost
   //------------------------------------------------------
-	if(ENV.getBool(Env::use_p3d_structures))
-	{
-		p3d_node* NodePt = node->getNodeStruct();
-		
-		NodePt->cost = node->cost();
-		
-		if (node->getNodeStruct()->parent != NULL)
-		{
-			//       NodePt->sumCost = NodePt->parent->sumCost+cost;
-			double cost1 = NodePt->parent->cost;
-			double cost2 = NodePt->cost;
-			double length = p3d_get_env_dmax();
-			
-			NodePt->sumCost = deltaStepCost(cost1, cost2, length) 
-			+ NodePt->parent->sumCost;
-			
-			//		NodePt->sumCost = p3d_ComputeDeltaStepCost(cost1, cost2, length)
-			//		+ NodePt->parent->sumCost;
-		}
-		else
-		{
-			NodePt->sumCost = node->cost();
-		}
+  if ( parent != NULL )
+  {
+    shared_ptr<Configuration> q_tmp = parent->getConfiguration()->copy();
     
-		node->getConnectedComponent()->getCompcoStruct()->minCost 
-		= MIN(node->getConfiguration()->cost(),
-					node->getConnectedComponent()->getCompcoStruct()->minCost );
-		
-		node->getConnectedComponent()->getCompcoStruct()->maxCost 
-		= MAX(node->getConfiguration()->cost(),
-					node->getConnectedComponent()->getCompcoStruct()->maxCost );
-	}
-	else 
-	{
-    //------------------------------------------------------
-    // New node cost
-    //------------------------------------------------------
-		if ( parent != NULL )
-		{
-      shared_ptr<Configuration> q_tmp = parent->getConfiguration()->copy();
-      
-			// Compute the sum of cost of the node
-      // TODO fix task space bug (should remove the copy)
-			LocalPath path(parent->getConfiguration()->copy(),
-										 node->getConfiguration());
-			
-			node->sumCost() = parent->sumCost() + path.cost();
-			
-			// Min and max cost of the compco
-			node->getConnectedComponent()->getCompcoStruct()->minCost 
-			= std::min(node->getConfiguration()->cost(),
-								 node->getConnectedComponent()->getCompcoStruct()->minCost );
-			
-			node->getConnectedComponent()->getCompcoStruct()->maxCost 
-			= std::max(node->getConfiguration()->cost(),
-								 node->getConnectedComponent()->getCompcoStruct()->maxCost );
-      
-      if ( !parent->getConfiguration()->equal(*q_tmp) )
-      {
-        cout << "Configuration was modified" << endl;
-      }
-		}
-	}
+    // Compute the sum of cost of the node
+    // TODO fix task space bug (should remove the copy)
+    LocalPath path(parent->getConfiguration()->copy(),
+                   node->getConfiguration());
+    
+    node->sumCost() = parent->sumCost() + path.cost();
+    
+    // Min and max cost of the compco
+    node->getConnectedComponent()->getCompcoStruct()->minCost 
+    = std::min(node->getConfiguration()->cost(),
+               node->getConnectedComponent()->getCompcoStruct()->minCost );
+    
+    node->getConnectedComponent()->getCompcoStruct()->maxCost 
+    = std::max(node->getConfiguration()->cost(),
+               node->getConnectedComponent()->getCompcoStruct()->maxCost );
+    
+    if ( !parent->getConfiguration()->equal(*q_tmp) )
+    {
+      cout << "Configuration was modified" << endl;
+    }
+  }
 }
 
 
@@ -310,30 +273,29 @@ double CostSpace::cost(LocalPath& path)
   
 	if (ENV.getBool(Env::isCostSpace))
 	{
+    const double DeltaStep = path.getResolution();
+    const int nStep = floor( ( path.getParamMax() / DeltaStep) + 0.5) ;
+    
     double currentCost, prevCost;
+    
     Eigen::Vector3d taskVectorPos;
     Eigen::Vector3d prevTaskVectorPos(0, 0, 0);
     
     double currentParam = 0;
     
-    const double DeltaStep = path.getResolution();
-    const unsigned int nStep = floor( ( path.getParamMax() / DeltaStep) + 0.5) ;
-    
     double CostDistStep = DeltaStep;
-    
-    //	cout << "nStep = " << nStep <<  endl;
-    
+
     shared_ptr<Configuration> confPtr;
     prevCost = path.getBegin()->cost();
-    //	cout << "prevCost = " << prevCost << endl;
-    
+
 #ifdef LIGHT_PLANNER
     // If the value of Env::HRIPlannerWS changes while executing this
     // function, it could lead to the use of the incorrectly initialized 
     // prevTaskPos variable, and this triggers a compiler warning.
     // So, save the value of Env::HRIPlannerWS in a local variable.
-    const bool isHRIPlannerWS = ENV.getBool(Env::HRIPlannerWS);
-    //const bool isHRIPlannerWS = false;
+    //const bool isHRIPlannerWS = ENV.getBool(Env::HRIPlannerWS);
+    const bool isHRIPlannerWS = false;
+    
     if(isHRIPlannerWS)
     {
       if( !q_tmp_begin->equal(*path.getBegin()) )
@@ -351,14 +313,13 @@ double CostSpace::cost(LocalPath& path)
     }
 #endif
     
-    //                cout << "nStep =" << nStep << endl;
-    for (unsigned int i = 0; i < nStep; i++)
+    for (int i=0; i<nStep; i++)
     {
       currentParam += DeltaStep;
       
       confPtr = path.configAtParam(currentParam);
       currentCost = cost(*confPtr);
-      //cout << "CurrentCost = " << currentCost << endl;
+
 #ifdef LIGHT_PLANNER		
       // Case of task space
       if(isHRIPlannerWS)
@@ -367,7 +328,7 @@ double CostSpace::cost(LocalPath& path)
         CostDistStep = ( taskVectorPos - prevTaskVectorPos ).norm();
         prevTaskVectorPos = taskVectorPos;
       }
-#endif		
+#endif   
       Cost += deltaStepCost(prevCost, currentCost, CostDistStep);
       
       prevCost = currentCost;
@@ -455,56 +416,51 @@ double computeLocalpathKinematicCost(p3d_rob* rob, p3d_localpath* LP)
 }
 
 //----------------------------------------------------------------------
-void CostSpace::initMotionPlanning(Graph* graph, Node* start, Node* goal)
+void CostSpace::initMotionPlanning(p3d_graph* graph, p3d_node* start, p3d_node* goal)
 {
-	start->getNodeStruct()->temp = ENV.getDouble(Env::initialTemperature);
-	start->getNodeStruct()->comp->temperature = ENV.getDouble(Env::initialTemperature);
-	start->getNodeStruct()->nbFailedTemp = 0;
+  Robot* robot = global_Project->getActiveScene()->getRobotByName( graph->rob->name );
+	start->temp = ENV.getDouble(Env::initialTemperature);
+	start->comp->temperature = ENV.getDouble(Env::initialTemperature);
+	start->nbFailedTemp = 0;
 	
 	p3d_SetGlobalNumberOfFail(0);
 	
-	//  GlobalNbDown = 0;
-	//  Ns->NbDown = 0;
-	p3d_SetNodeCost(graph->getGraphStruct(),
-									start->getNodeStruct(), 
-									start->getConfiguration()->cost());
-	
-	p3d_SetCostThreshold(start->cost() );
+  Configuration qStart( robot, start->q );
+	p3d_SetNodeCost( graph, start, qStart.cost() );
+	p3d_SetCostThreshold( start->cost );
 	
 #ifdef P3D_PLANNER
-	p3d_SetInitCostThreshold(start->cost() );
+	p3d_SetInitCostThreshold( start->cost );
 #else
 	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
 #endif
 	
 	if ( ENV.getBool(Env::expandToGoal) && (goal != NULL))
 	{
-		goal->getNodeStruct()->temp					= ENV.getDouble(Env::initialTemperature);
-		goal->getNodeStruct()->comp->temperature	= ENV.getDouble(Env::initialTemperature);
-		start->getNodeStruct()->temp				= ENV.getDouble(Env::initialTemperature);
-		goal->getNodeStruct()->nbFailedTemp = 0;
+		goal->temp					= ENV.getDouble(Env::initialTemperature);
+		goal->comp->temperature	= ENV.getDouble(Env::initialTemperature);
+		start->temp				= ENV.getDouble(Env::initialTemperature);
+		goal->nbFailedTemp = 0;
 		//    Ng->NbDown = 0;
-		p3d_SetNodeCost(graph->getGraphStruct(), 
-										goal->getNodeStruct(), 
-										goal->getConfiguration()->cost());
-		
-		p3d_SetCostThreshold(MAX(start->cost() , 
-														 goal->cost() ));
+    
+    Configuration qGoal( robot, goal->q );
+		p3d_SetNodeCost( graph, goal, qGoal.cost());
+		p3d_SetCostThreshold(MAX(qStart.cost(), qGoal.cost() ));
 		
 		//        p3d_SetCostThreshold(MAX(
 		//								p3d_GetNodeCost(this->getStart()->getNodeStruct()), 
 		//								p3d_GetNodeCost(this->getGoal()->getNodeStruct()) ));
 		
 		p3d_SetAverQsQgCost(
-												( graph->getGraphStruct()->search_start->cost
-												 +graph->getGraphStruct()->search_goal->cost) / 2.);
+												( graph->search_start->cost
+												 +graph->search_goal->cost) / 2.);
 	}
 	else
 	{
 #ifdef P3D_PLANNER
-		p3d_SetCostThreshold(start->cost() );
-		p3d_SetInitCostThreshold(start->cost() );
-		p3d_SetAverQsQgCost(graph->getGraphStruct()->search_start->cost);
+		p3d_SetCostThreshold( start->cost );
+		p3d_SetInitCostThreshold(start->cost );
+		p3d_SetAverQsQgCost( graph->search_start->cost );
 #else
 		printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
 #endif

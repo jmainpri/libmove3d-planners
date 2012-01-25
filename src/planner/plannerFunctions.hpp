@@ -39,6 +39,16 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg);
  */
 void smoothing_Function(p3d_rob* p3d_Robot, p3d_traj* traj, int nbSteps, double maxTime);
 
+/**
+ * Set a function that generate IK solutions
+ */ 
+void set_goal_solution_function( configPt (*fct)() );
+
+/**
+ * Generate Goal Configuration Function
+ * This function can be set outside the library
+ */ 
+bool generate_goal_configuration( Configuration& q );
 
 /**
   @ingroup NEW_CPP_MODULE

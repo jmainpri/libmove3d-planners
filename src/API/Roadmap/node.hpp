@@ -23,6 +23,14 @@ class ConnectedComponent;
 
 class Graph;
 
+class NodeData 
+{
+  public :
+  // Constructor & Destructor
+  NodeData();
+  virtual ~NodeData();
+};
+
 /**
  @ingroup ROADMAP
  \brief Classe représentant un Node d'un Graph
@@ -106,6 +114,7 @@ public:
 	 * @param b la nouvelle valeur de activ
 	 */
 	void activ(bool b);
+  
 	/**
 	 * obtient la valeur de activ
 	 * @return la valeur de activ
@@ -127,6 +136,12 @@ public:
 	 * the pointer is editable
 	 */
 	Node*& parent() { return m_parent; }
+  
+  /**
+	 * returns a reference to the if leaf data
+	 * the pointer is editable
+	 */
+	bool& isLeaf() { return m_is_leaf; }
 	
 	/**
 	 * obtient le cout du Node
@@ -294,6 +309,7 @@ public:
 	 * Prints the node to the standard output
 	 */
 	void print();
+  void printNeighbors();
 	
 	//--------------------------------------
 	// BGL
@@ -303,7 +319,9 @@ public:
 	
 private:
 	
+  // Old Node structure
 	node* _Node;
+  NodeData* _specificNodeData;
 	
 	bool m_is_BGL_Descriptor_Valid;
 	BGL_Vertex m_BGL_Descriptor;
@@ -314,6 +332,7 @@ private:
 	
 	// In tree graphs
 	Node* m_parent;
+  bool m_is_leaf;
 	
 	std::tr1::shared_ptr<Configuration> _Configuration;
 	bool _activ;

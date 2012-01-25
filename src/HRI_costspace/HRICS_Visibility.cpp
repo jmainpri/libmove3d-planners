@@ -14,6 +14,9 @@
 
 #include "P3d-pkg.h"
 
+#include <Eigen/Core>
+#include <Eigen/Geometry> 
+
 using namespace std;
 using namespace tr1;
 using namespace HRICS;
@@ -62,14 +65,34 @@ const bool Old_Achile =false;
  */
 double Visibility::getWorkspaceCost(const Vector3d& WSPoint)
 {
-	
-	//return akinVisibilityCost(WSPoint);
-//  p3d_vector3 pos;
-//  pos[0] = WSPoint[0];
-//  pos[1] = WSPoint[1];
-//  pos[2] = WSPoint[2];
-//  
-//  return hri_simple_is_point_visible_by_robot(pos,m_Human->getRobotStruct());
+  Transform3d t = m_Human->getJoint(HRICS_HUMANj_NECK_TILT)->getMatrixPos();
+  
+  Vector3d gazeDir;
+  gazeDir(0) = t(0,0);
+  gazeDir(1) = t(1,0);
+  gazeDir(2) = t(2,0);
+  gazeDir.normalize();
+  
+  Vector3d pointDir;
+  pointDir(0) = WSPoint(0) - t(0,3);
+  pointDir(1) = WSPoint(1) - t(1,3);
+  pointDir(2) = WSPoint(2) - t(2,3);
+  pointDir.normalize();
+  
+  double alpha = gazeDir.dot( pointDir );
+  
+  return (acos(alpha)+1) / 2;
+}
+
+double Visibility::getOldWorkspaceCost(const Vector3d& WSPoint)
+{
+  //return akinVisibilityCost(WSPoint);
+  //  p3d_vector3 pos;
+  //  pos[0] = WSPoint[0];
+  //  pos[1] = WSPoint[1];
+  //  pos[2] = WSPoint[2];
+  //  
+  //  return hri_simple_is_point_visible_by_robot(pos,m_Human->getRobotStruct());
 	
   double phi,theta;
   double Dphi, Dtheta;
@@ -85,7 +108,8 @@ double Visibility::getWorkspaceCost(const Vector3d& WSPoint)
 	{
 		// get the right frame
 		p3d_matrix4 newABS;
-		p3d_matrix4 rotation ={	{1,0,0,0},
+		p3d_matrix4 rotation ={	
+      {1,0,0,0},
       {0,1,0,0},
       {0,0,1,0},
       {0,0,0,1}};
@@ -107,7 +131,7 @@ double Visibility::getWorkspaceCost(const Vector3d& WSPoint)
 		p3d_matvec4Mult(inv, realcoord, newcoord);
 	}
 	
-  // Compute the angle the point make with the
+  // Compute the angle the point makes with the
 	// Angular coord of the vector
   Vector3d newCoordVect;
   newCoordVect[0] = newcoord[0];
@@ -218,28 +242,30 @@ double Visibility::akinVisibilityCost(const Vector3d& WSPoint)
  */
 std::vector<double> Visibility::getGaze()
 {
-  
 	Vector3d point;
 	p3d_vector3 gazeOrigin;
-	p3d_vector3 xAxis;
-	const double length = 1.5;
-	//p3d_vector3 gazeDestin;
-	p3d_jnt_get_cur_vect_point(m_Human->getRobotStruct()->joints[HRICS_HUMANj_NECK_TILT],gazeOrigin);
-	//p3d_mat4Print(m_Human->getRobotStruct()->joints[HUMANj_NECK_TILT]->abs_pos, "HUMANj_NECK_TILT");
 	
+	const double length = 1.5;
+  
+  Transform3d t = m_Human->getJoint(HRICS_HUMANj_NECK_TILT)->getMatrixPos();
+  
+  gazeOrigin[0] = t(0,3);
+  gazeOrigin[1] = t(1,3);
+  gazeOrigin[2] = t(2,3);
+  
+  Vector3d xAxis;
+  xAxis[0] = gazeOrigin[0] + length*t(0,0);
+  xAxis[1] = gazeOrigin[1] + length*t(1,0);
+  xAxis[2] = gazeOrigin[2] + length*t(2,0);
+  
 	m_VectGaze.clear();
 	m_VectGaze.push_back(gazeOrigin[0]);
 	m_VectGaze.push_back(gazeOrigin[1]);
 	m_VectGaze.push_back(gazeOrigin[2]);
-	
-	
-	xAxis[0]=  gazeOrigin[0] + length*m_Human->getRobotStruct()->joints[HRICS_HUMANj_NECK_TILT]->abs_pos[0][0];
-	xAxis[1]=  gazeOrigin[1] + length*m_Human->getRobotStruct()->joints[HRICS_HUMANj_NECK_TILT]->abs_pos[1][0];
-	xAxis[2]=  gazeOrigin[2] + length*m_Human->getRobotStruct()->joints[HRICS_HUMANj_NECK_TILT]->abs_pos[2][0];
-	
-	m_VectGaze.push_back(xAxis[0]);
-	m_VectGaze.push_back(xAxis[1]);
-	m_VectGaze.push_back(xAxis[2]);  
+  
+  m_VectGaze.push_back(xAxis[0]);
+  m_VectGaze.push_back(xAxis[1]);
+  m_VectGaze.push_back(xAxis[2]); 
   
 	return m_VectGaze;
 }

@@ -12,7 +12,7 @@
 #include "Grid/HRICS_GridState.hpp"
 #include "RRT/HRICS_rrt.hpp"
 #include "RRT/HRICS_rrtExpansion.hpp"
-#include "../Diffusion/RRT-Variants/Transition-RRT.hpp"
+#include "../Diffusion/Variants//Transition-RRT.hpp"
 //#include "../../qtWindow/cppToQt.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 
@@ -462,7 +462,7 @@ double Workspace::pathCost()
  */
 void Workspace::draw3dPath()
 {
-	if( mPathExist)
+	if( mPathExist )
 	{
 		for(unsigned int i=0;i<m3DPath.size()-1;i++)
 		{

@@ -4,6 +4,7 @@ BM3D_SRC_SUBDIR_PROCESS(
 configuration.cpp 
 localpath.cpp 
 localPathValidTest.cpp
+cspace.cpp
 )
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})
 SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME_TMP2})

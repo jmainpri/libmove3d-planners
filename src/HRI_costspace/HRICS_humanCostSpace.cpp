@@ -14,7 +14,7 @@
 
 //#include "move3d-headless.h"
 
-#include <sys/time.h>
+#include "Util-pkg.h"
 
 HRICS::HumanCostSpace* global_humanCostSpace = NULL;
 
@@ -27,6 +27,10 @@ HumanCostSpace::HumanCostSpace()
   
 }
 
+//! @brief Initialize tge Human cost space with the list of human in the scene
+//! @param The robot, to which this costspace is for
+//! @param The humans, which will be associated to the costspace
+//! @param The cell size, each human will be associated a grid (the cell size is the resolution of the grid)
 HumanCostSpace::HumanCostSpace(Robot* rob, std::vector<Robot*> humans, double cellSize) 
 : m_Robot(rob) , m_Humans( humans) 
 {
@@ -55,12 +59,17 @@ HumanCostSpace::HumanCostSpace(Robot* rob, std::vector<Robot*> humans, double ce
   }
 }
 
+//! @brief Destructor of the costspace
+//! all grids are deleted
 HumanCostSpace::~HumanCostSpace()
 {
   deleteHumanGrids();
   deleteElementarySpaces();
 }
 
+//! @brief Initializes the elementary costspaces (Distance,Visibility,...)
+//! Each elemetary costspace holds the method used to compute the cost associated
+//! to the propriety of the costspace
 bool HumanCostSpace::initElementarySpaces()
 {
   deleteElementarySpaces();
@@ -77,6 +86,7 @@ bool HumanCostSpace::initElementarySpaces()
   return true;
 }
 
+//! @brief Delete all elementary costspace
 void HumanCostSpace::deleteElementarySpaces()
 {
   if(m_DistanceSpace)
@@ -89,6 +99,10 @@ void HumanCostSpace::deleteElementarySpaces()
     delete m_ReachableSpace;
 }
 
+//! @brief Initialize the Human Grids composed of the different elementary costspace
+//! @param The cell size, the resolution of the grids
+//! The human grid computation relies on the elementary costspaces
+//! Each human is associated one grid containing all propieties
 bool HumanCostSpace::initHumanGrids(double cellsize)
 {
   deleteHumanGrids();
@@ -102,7 +116,10 @@ bool HumanCostSpace::initHumanGrids(double cellsize)
   for ( int i=0; i<int(m_Humans.size()); i++) 
   {
     m_Grids.push_back( new AgentGrid( cellsize, envsize,
-                                          m_Humans[i],m_DistanceSpace,m_VisibilitySpace,m_ReachableSpace) );
+                                     m_Humans[i],
+                                     m_DistanceSpace,
+                                     m_VisibilitySpace,
+                                     m_ReachableSpace) );
     
     m_Grids[i]->computeAllCellCost();
   }
@@ -112,6 +129,7 @@ bool HumanCostSpace::initHumanGrids(double cellsize)
   return true;
 }
 
+//! @brief Deletes all grids
 void HumanCostSpace::deleteHumanGrids()
 {
   API_activeGrid = NULL;
@@ -123,6 +141,7 @@ void HumanCostSpace::deleteHumanGrids()
   m_Grids.clear();
 }
 
+//! @brief Robot specific initializer
 bool HumanCostSpace::initGreyTape()
 {
   m_CostJoints.clear();
@@ -130,6 +149,9 @@ bool HumanCostSpace::initGreyTape()
   return true;
 }
 
+//! @brief Robot specific initializer
+//! For the PR2 a fixed number of points are chosen on the kinematic
+//! structure of the robot to qualify the robot configuration
 bool HumanCostSpace::initPr2()
 {
   m_CostJoints.clear();
@@ -171,6 +193,8 @@ bool HumanCostSpace::initPr2()
   return true;
 }
 
+//! @brief This function tests how many configuration test can be done 
+//! The test uses a real time chrono
 void HumanCostSpace::testCostFunction()
 { 
   shared_ptr<Configuration> q;
@@ -178,21 +202,21 @@ void HumanCostSpace::testCostFunction()
   bool first_loop=true;
   unsigned int iter=0;
   double t=0.0,t_init=0.0;
-
+  
+  ChronoTimeOfDayOn();
+  
   while( (t - t_init) < 10.0 )
   {    
     q = m_Robot->shoot();
     
 //    if( !q->isInCollision() )
 //    {
-      this->getCost(*q);
-//    }
-    
+    this->getCost(*q);
+ //    }
+   
     //g3d_draw_allwin_active();
     
-    timeval tim;
-    gettimeofday(&tim, NULL);
-    t = tim.tv_sec+(tim.tv_usec/1000000.0);
+    ChronoTimeOfDayTimes(&t);
     
     if(first_loop)
     {
@@ -201,10 +225,18 @@ void HumanCostSpace::testCostFunction()
     }
     iter++;
   }
+  
+  ChronoTimeOfDayOff();
+  
   cout << "iter : " << iter << " in " << (t - t_init) << " sec. " << endl;
   cout << "cost per sec : " << double(iter)/(t - t_init) << endl;
 }
 
+//! @brief Cost computation for a given configuration
+//! @param A robot configuration
+//! Sums the cost of each each joint point
+//! The class maintains a vector of joint pointer that are
+//! used in the cost computation
 double HumanCostSpace::getCost(Configuration& q)
 {
   m_Robot->setAndUpdate(q);

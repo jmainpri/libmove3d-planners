@@ -2,7 +2,7 @@
 #define HRICS_RRTEXPANSION_H
 
 #include "API/planningAPI.hpp"
-#include "Diffusion/Expansion/TransitionExpansion.hpp"
+#include "Diffusion/Variants/Transition-RRT.hpp"
 #include "HRI_costspace/Grid/HRICS_Grid.hpp"
 
 /**

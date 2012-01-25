@@ -34,7 +34,7 @@ void HRICS_rrtExpansion::init()
 {
     cout << "Init Box Jido" << endl;
     double box[] = {-1.3,1.3,-1.3,1.3,0,1.5};
-    shared_ptr<Configuration> qInit = mGraph->getRobot()->getInitialPosition();
+    shared_ptr<Configuration> qInit = m_Graph->getRobot()->getInitialPosition();
 
     _Box = new double[6];
 
@@ -46,7 +46,7 @@ void HRICS_rrtExpansion::init()
     _Box[5] = box[5];
 
 #ifdef LIGHT_PLANNER
-    mIndexObjectDof = mGraph->getRobot()->getObjectDof();
+    mIndexObjectDof = m_Graph->getRobot()->getObjectDof();
 #endif
 }
 
@@ -79,11 +79,11 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getExpansionDirection(
     {
 //        if(ENV.getBool(Env::isInverseKinematics))
 //        {
-//            q = mGraph->getRobot()->shootFreeFlyer(_Box);
+//            q = m_Graph->getRobot()->shootFreeFlyer(_Box);
 //        }
 //        else
 //        {
-            q = mGraph->getRobot()->shoot(samplePassive);
+            q = m_Graph->getRobot()->shoot(samplePassive);
 //        }
     }
 
@@ -112,16 +112,17 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* C
 
     // Get the farthest cell explored depending on
     // the way the tree explores
-    if( CompcoNode->equalCompco( mGraph->getStart() ) )
-    {
-        _forward = true;
-        farthestCell = _LastForward;
-    }
-    else
-    {
-        _forward = false;
-        farthestCell = _LastBackward;
-    }
+  //WARNING BROKEN
+//    if( CompcoNode->equalCompco( m_Graph->getStart() ) )
+//    {
+//        _forward = true;
+//        farthestCell = _LastForward;
+//    }
+//    else
+//    {
+//        _forward = false;
+//        farthestCell = _LastBackward;
+//    }
 
     Vector3d randomPoint;
     int cellId;
@@ -154,7 +155,7 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* C
         }
     }
 
-//    shared_ptr<Configuration> q = mGraph->getRobot()->shoot(false);
+//    shared_ptr<Configuration> q = m_Graph->getRobot()->shoot(false);
 
     // Get a random config in the cell
 //    randomPoint = _3DCellPath[cellId]->getRandomPoint();
@@ -171,7 +172,7 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* C
 //    Matrix3d mat = Matrix3d::Identity();
 //    randomPoint =2*mat*randomPoint;
 
-    shared_ptr<Configuration> q(new Configuration(mGraph->getRobot()));
+    shared_ptr<Configuration> q(new Configuration(m_Graph->getRobot()));
 
     Vector3d corner = BiasedCell->getCorner();
     Vector3d cellSize = BiasedCell->getCellSize();
@@ -185,7 +186,7 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* C
     biasedBox[4] = corner[2];
     biasedBox[5] = corner[2] + cellSize[2];
 
-    p3d_FreeFlyerShoot( mGraph->getRobot()->getRobotStruct() , q->getConfigStruct() , biasedBox );
+    p3d_FreeFlyerShoot( m_Graph->getRobot()->getRobotStruct() , q->getConfigStruct() , biasedBox );
 
 //    q->getConfigStruct()[VIRTUAL_OBJECT_DOF+0] = randomPoint[0];
 //    q->getConfigStruct()[VIRTUAL_OBJECT_DOF+1] = randomPoint[1];
@@ -280,28 +281,29 @@ Node* HRICS_rrtExpansion::addNode(Node* currentNode, LocalPath& path, double pat
 
     API::ThreeDCell* cell = _3DGrid->getCell(pos);
 
-    _forward = (currentNode->equal(mGraph->getStart()));
-
-    if( _forward )
-    {
-        if(_LastForward != cell)
-        {
-            if( on3DPathAndAfter( cell ) )
-            {
-                _LastForward = cell;
-            }
-        }
-    }
-    else
-    {
-        if(_LastForward != cell)
-        {
-            if( on3DPathAndAfter( cell ) )
-            {
-                _LastBackward = cell;
-            }
-        }
-    }
+  // WARNING BROKEN
+//    _forward = (currentNode->equal(m_Graph->getStart()));
+//
+//    if( _forward )
+//    {
+//        if(_LastForward != cell)
+//        {
+//            if( on3DPathAndAfter( cell ) )
+//            {
+//                _LastForward = cell;
+//            }
+//        }
+//    }
+//    else
+//    {
+//        if(_LastForward != cell)
+//        {
+//            if( on3DPathAndAfter( cell ) )
+//            {
+//                _LastBackward = cell;
+//            }
+//        }
+//    }
 
     return newNode;
 }

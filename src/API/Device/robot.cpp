@@ -122,6 +122,10 @@ unsigned int Robot::getNumberOfJoints()
 
 Joint* Robot::getJoint(unsigned int i)
 {
+  if (m_Joints.empty() || i > m_Joints.size()-1 ) {
+    return NULL;
+  }
+  
 	return m_Joints[i];
 }
 
@@ -521,29 +525,25 @@ void Robot::setInitialPosition(Configuration& conf)
 
 shared_ptr<Configuration> Robot::getGoTo()
 {
-    return (shared_ptr<Configuration> (new Configuration(this,
-                                                         _Robot->ROBOT_GOTO)));
+    return (shared_ptr<Configuration> (new Configuration(this,_Robot->ROBOT_GOTO)));
 }
 
 void Robot::setGoTo(Configuration& conf)
 {
 	configPt q = _Robot->ROBOT_GOTO;
 	
-	p3d_copy_config_into(_Robot,
-						 conf.getConfigStruct(),
-						 &q);
+	p3d_copy_config_into(_Robot,conf.getConfigStruct(),&q);
 }
 
 shared_ptr<Configuration> Robot::getCurrentPos()
 {
-    return (shared_ptr<Configuration> (new Configuration(this,
-                                                         p3d_get_robot_config(_Robot))));
+  // This creates a memory leak
+  return (shared_ptr<Configuration> (new Configuration(this,p3d_get_robot_config(_Robot),true)));
 }
 
 shared_ptr<Configuration> Robot::getNewConfig()
 {
-    return (shared_ptr<Configuration> (new Configuration(this,
-                                                         p3d_alloc_config(_Robot),true)));
+  return (shared_ptr<Configuration> (new Configuration(this,p3d_alloc_config(_Robot),true)));
 }
 
 Matrix4d Robot::getJointAbsPos(int id)

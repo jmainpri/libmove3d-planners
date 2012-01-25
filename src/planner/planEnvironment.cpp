@@ -95,7 +95,8 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::withDeformation,            new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::withDescent,                new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::doReplanning,               new boolContainer(false)));
-
+        myBoolMap.insert( std::make_pair( PlanParam::showExploration,            new boolContainer(false)));
+  
         // Stomp/Chomp
         myBoolMap.insert( std::make_pair( PlanParam::withCurrentTraj,            new boolContainer(false)));
   
@@ -145,6 +146,10 @@ void initPlannerParameters()
         // ------------------------------------------------------------------
         myIntMap.insert(std::make_pair( PlanParam::tata,                         new intContainer(5)));
         myIntMap.insert(std::make_pair( PlanParam::nb_pointsOnTraj,              new intContainer(15)));
+  
+        // Replanning
+        myIntMap.insert(std::make_pair( PlanParam::plannerType,                  new intContainer(0)));
+        myIntMap.insert(std::make_pair( PlanParam::planningAlgorithm,            new intContainer(0)));
   
         // Object TransfertPoint variable
         myIntMap.insert(std::make_pair( PlanParam::env_maxIter,                  new intContainer(40)));
@@ -199,6 +204,7 @@ void initPlannerParameters()
         myDoubleMap.insert( std::make_pair( PlanParam::env_timeToDump,           new doubleContainer(0)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_futurX,               new doubleContainer(0)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_futurY,               new doubleContainer(0)));
+        myDoubleMap.insert( std::make_pair( PlanParam::env_futurZ,               new doubleContainer(0)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_futurRZ,              new doubleContainer(0)));
 
     //cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble( PlanParam::env_objectNessecity ) << endl;

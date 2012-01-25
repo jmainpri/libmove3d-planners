@@ -13,6 +13,7 @@
 #include "Util-pkg.h"
 
 #include "API/Roadmap/graph.hpp"
+#include "API/Roadmap/graphConverter.hpp"
 #include "API/Trajectory/trajectory.hpp"
 
 #include "planEnvironment.hpp"
@@ -243,8 +244,12 @@ API::Trajectory* CostmapPlanner::getTrajectoryAndComputeCost()
 {
 	cout << "Export the cpp graph to new graph" << endl;
 	
-	Graph graphTraj( _Robot , _Graph->exportCppToGraphStruct() );
+  // Warning broken
+	// Graph graphTraj( _Robot , _Graph->exportCppToGraphStruct() );
 	
+  GraphConverter gc;
+  Graph graphTraj( _Robot , gc.convert(*_Graph) );
+  
 	API::Trajectory* traj = graphTraj.extractBestTraj(_Start->getConfiguration(),
 																										_Goal->getConfiguration());
 	

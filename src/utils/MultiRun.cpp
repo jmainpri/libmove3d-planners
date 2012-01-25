@@ -246,11 +246,6 @@ void MultiRun::runMutliRRT()
 				cout << "Warning : No traj Found : Problem during trajectory extraction"  << endl;
 				cout << "--------------------------------------------------------------"  << endl;
 			}
-			
-			if( ENV.getBool(Env::use_p3d_structures) )
-			{
-				p3d_del_graph(XYZ_GRAPH);
-			}
 		}
 
 		storedContext.addTime( mTime );

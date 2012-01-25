@@ -12,8 +12,8 @@
 #include "plannerFunctions.hpp"
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 
-#include "Diffusion/RRT-Variants/Threshold-RRT.hpp"
-#include "Diffusion/RRT-Variants/Star-RRT.hpp"
+#include "Diffusion/Variants/Threshold-RRT.hpp"
+#include "Diffusion/Variants/Star-RRT.hpp"
 
 #ifdef HRI_COSTSPACE
 #include "HRI_costspace/HRICS_costspace.hpp"
@@ -61,25 +61,25 @@ void delete_graph( p3d_graph* &G )
   if (API_activeGraph) 
   {
     p3d_graph* graph =  API_activeGraph->getRobot()->getRobotStruct()->GRAPH;
-
+    
     delete API_activeGraph;
     API_activeGraph = NULL;
     cerr << "Delete C++ API Graph" << endl;
-
+    
     if(graph!=G)
     {
-        if(!p3d_del_graph(G))
-        {
-            cerr << "Graph allready deleded" << endl;
-        }
+      if(!p3d_del_graph(G))
+      {
+        cerr << "Graph allready deleded" << endl;
+      }
     }
   }
   else
   {
-      if(!p3d_del_graph(G))
-      {
-          cerr << "Graph allready deleded" << endl;
-      }
+    if(!p3d_del_graph(G))
+    {
+      cerr << "Graph allready deleded" << endl;
+    }
   }
   
   G = NULL;
@@ -153,28 +153,19 @@ RRT* allocate_RRT(Robot* rob,Graph* graph)
 // ---------------------------------------------------------------------------------
 p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
 {
-//  fixAllJointsWithoutArm(robotPt,0);
   cout << "* PLANNING ***************" << endl;
+  ChronoTimeOfDayOn();
   
-  double ts;
-  
-  // Gets the robot pointer
+  // Gets the robot pointer and the 2 configurations
   Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-  
-  // Gets the 2 configurations
   shared_ptr<Configuration> q_Source( new Configuration(rob,qs) );
   shared_ptr<Configuration> q_Target( new Configuration(rob,qg) );
   
-  // Allocate the graph if does't exist
+  // Allocate the p3d_graph if does't exist
+  // Removes graph if it exists, creates a new graph , Allocate RRT
   p3d_graph* GraphPt = robotPt->GRAPH;
-  
-  // Removes graph if it exists
   delete_graph( GraphPt );
-    
-  // Creates a new graph
   Graph* graph = API_activeGraph =  new Graph(rob,GraphPt);
-  
-  // Allocate RRT
   RRT* rrt = allocate_RRT(rob,graph);
   
 	// Main Run functions of all RRTs
@@ -183,24 +174,10 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
   
   nb_added_nodes += rrt->setInit(q_Source);
 	nb_added_nodes += rrt->setGoal(q_Target);
-  
 	nb_added_nodes += rrt->init();
-  
   rrt->setInitialized(true);
 	
   nb_added_nodes += rrt->run();
-	
-	// Gets the graph pointer
-	// in case it has been modified by the planner
-	graph = rrt->getActivGraph();
-	
-	ChronoTimes(&(graph->getGraphStruct()->rrtTime), &ts);
-	
-  // Debug
-  cout << "** ** --------------------------" << endl;
-	cout << "TIME ="  << graph->getGraphStruct()->rrtTime << endl;
-	cout << "NB NODES " << (int)graph->getNodes().size() << endl;
-	cout << "** ** --------------------------" << endl;
   
   if ((rrt->getNumberOfExpansion() - rrt->getNumberOfFailedExpansion() + rrt->getNumberOfInitialNodes()) 
       != graph->getNumberOfNodes() ) 
@@ -223,33 +200,20 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
   // Extract it from the graph
   if (rrt->trajFound()) 
   {
-    if( !ENV.getBool(Env::use_p3d_structures) )
+    // Case of direct connection
+    if( nb_added_nodes == 2 )
     {
-      // Export the graph when not using the classical p3d_sctructures
-      // Copies the graph to a p3d_structured graph
-//      cout << "Export the cpp graph to new graph" << endl;
-      XYZ_GRAPH = robotPt->GRAPH = graph->exportCppToGraphStruct();
+      vector < shared_ptr<Configuration> > configs;
       
-      // Case of direct connection
-      if( nb_added_nodes == 2 )
-      {
-        vector < shared_ptr<Configuration> > configs;
-        
-        configs.push_back( q_Source );
-        configs.push_back( q_Target );
-        
-        cout << "Creating trajectory from two confgurations" << endl;
-        traj = new API::Trajectory( configs );
-      }
-      else 
-      {
-        Graph graphTraj( rob, XYZ_GRAPH );
-        cout << "Extract graph to traj" << endl;
-        traj = graphTraj.extractBestTraj(q_Source,q_Target);
-      }
+      configs.push_back( q_Source );
+      configs.push_back( q_Target );
+      
+      cout << "Creating trajectory from two confgurations" << endl;
+      traj = new API::Trajectory( configs );
     }
-    else
+    else 
     {
+      cout << "Extract graph to traj" << endl;
       traj = graph->extractBestTraj(q_Source,q_Target);
     }
   }
@@ -261,10 +225,10 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
   if (traj) 
   {
     p3d_traj* result=NULL; 
-
+    
     result = traj->replaceP3dTraj(result); 
     
-//    cout << "result = " << result << endl;
+    //    cout << "result = " << result << endl;
     cout << "result->nlp = " << result->nlp << endl;
     cout << "result->range_param = " << result->range_param << endl;
     
@@ -275,6 +239,15 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
     // Prevent segfault if p3d graph deleted outside
     delete traj;
     
+    ChronoTimeOfDayTimes(&(graph->getGraphStruct()->rrtTime));
+    
+    // Debug
+    cout << "** ** --------------------------" << endl;
+    cout << "TIME ="  << graph->getGraphStruct()->rrtTime << endl;
+    cout << "NB NODES " << (int)graph->getNodes().size() << endl;
+    cout << "** ** --------------------------" << endl;
+    
+    ChronoTimeOfDayOff();
     return result;
   }
   else 
@@ -284,6 +257,8 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
     if( graph == API_activeGraph ) API_activeGraph = NULL;
     delete graph;
     
+    ChronoTimeOfDayPrint("");
+    ChronoTimeOfDayOff();
     return NULL;
   }
 }
@@ -359,6 +334,35 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
   cout << "Nb of localpaths : " << robotPt->tcur->nlp << endl;
 }
 
+// ---------------------------------------------------------------------------------
+// set IK function
+// ---------------------------------------------------------------------------------
+configPt (*ext_generate_goal_configuration)();
+
+void set_goal_solution_function( configPt (*fct)() )
+{
+  ext_generate_goal_configuration = fct;
+}
+
+// ---------------------------------------------------------------------------------
+// Generate IK function
+// ---------------------------------------------------------------------------------
+bool generate_goal_soution( Configuration& q )
+{
+  if( ext_generate_goal_configuration != NULL )
+  {
+    configPt q_new = ext_generate_goal_configuration();
+    
+    q.Clear();
+    
+    if( q_new != NULL )
+    {
+      q.setConfiguration( q_new );
+      return true;
+    }
+  }
+  return false;
+}
 
 // ---------------------------------------------------------------------------------
 // Tree Planners
@@ -434,14 +438,11 @@ int p3d_run_prm(p3d_graph* GraphPt, int* fail, int (*fct_stop)(void), void (*fct
 	GraphPt = GraphPt ? GraphPt : p3d_create_graph();
 	cout << "Create Robot and Graph " << endl;
 	
-#ifdef LIST_OF_PLANNERS
-	PRM* prm = (PRM*)plannerlist[2];
-#else
 	Robot* _Robot = new Robot(GraphPt->rob);
 	Graph* _Graph = API_activeGraph = new Graph(_Robot,GraphPt);
 	
 	PRM* prm = new PRM(_Robot,_Graph);
-#endif
+
 	cout << "Initializing PRM " << endl;
 	ADDED = prm->init();
 	
@@ -466,14 +467,10 @@ int p3d_run_vis_prm(p3d_graph* GraphPt, int* fail, int (*fct_stop)(void), void (
 	
 	GraphPt = GraphPt ? GraphPt : p3d_create_graph();
 	
-#ifdef LIST_OF_PLANNERS
-	Vis_PRM* vprm = (Vis_PRM*)plannerlist[1];
-#else
 	Robot* _Robot = new Robot(GraphPt->rob);
 	Graph* _Graph = API_activeGraph = new Graph(_Robot,GraphPt);
 	
 	Vis_PRM* vprm = new Vis_PRM(_Robot,_Graph);
-#endif
 	
 	ADDED = vprm->init();
 	
@@ -705,11 +702,11 @@ int p3d_specific_learn_cxx(double *qs, double *qg, int *iksols, int *iksolg,
 	}
 	
 #ifdef P3D_PLANNER
-		p3d_set_planning_type(P3D_NONE);
+  p3d_set_planning_type(P3D_NONE);
 #else
 	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
 #endif
-
+  
 	PrintInfo(("Pour la creation de %d noeuds : ", inode));
 	ChronoPrint("");
 	
