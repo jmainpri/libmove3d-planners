@@ -42,20 +42,20 @@ public:
 	/**
 	 * Get the id of the connected component
 	 */
-	unsigned int getId();
+	unsigned int getId() const;
 	
 	/**
 	 * Returns the number of nodes in
 	 * the connected component
 	 * @return the number of nodes in the Compco
 	 */
-	unsigned int getNumberOfNodes();
+	unsigned int getNumberOfNodes() const;
 	
 	/**
 	 * Returns the nodes in the connected Compco
 	 * @return the nodes
 	 */
-	const std::vector<Node*>& getNodes() const;
+	std::vector<Node*>& getNodes();
 	
 	/**
 	 * Add the compco to the reachable Compco

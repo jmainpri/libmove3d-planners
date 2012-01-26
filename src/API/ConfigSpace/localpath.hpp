@@ -56,7 +56,7 @@ public:
 	 * obtient la structure p3d_localpath stockée
 	 * @return la structure p3d_localpath stockée
 	 */
-	p3d_localpath* getLocalpathStruct();
+	p3d_localpath* getLocalpathStruct(bool multi_sol = false);
 
 	/**
 	 * obtient la configuration initiale
@@ -193,6 +193,11 @@ public:
 	 * When reset the next cost querry will compute it
 	 */
 	void resetCostComputed() { _costEvaluated = false; }
+  
+  /**
+   * Set the ik sol to be used in the localplanner
+   */
+  void setIkSol(int* iksol) { _ikSol = iksol; }
 
 	/**
 	 * Prints the variables
@@ -215,6 +220,8 @@ private:
 	std::tr1::shared_ptr<Configuration> _lastValidConfig;
 	bool _lastValidEvaluated;
 	int _NbColTest;
+  
+  int* _ikSol;
 
 	bool _costEvaluated;
 	double _Cost;

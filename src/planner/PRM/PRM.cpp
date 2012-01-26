@@ -26,10 +26,10 @@ using namespace std;
 using namespace tr1;
 
 PRM::PRM(Robot* R, Graph* G) :
-        Planner(R,G)
+Planner(R,G)
 {
-    cout << " New PRM "  << endl;
-    m_nbConscutiveFailures = 0;
+  cout << " New PRM "  << endl;
+  m_nbConscutiveFailures = 0;
 }
 
 PRM::~PRM()
@@ -39,13 +39,13 @@ PRM::~PRM()
 int PRM::init()
 {
 	int ADDED = 0;
-
+  
 	Planner::init();
 	m_nbConscutiveFailures = 0;
 	ADDED += Planner::setInit(_Robot->getInitialPosition());
 	ADDED += Planner::setGoal(_Robot->getGoTo());
 	_Init = true;
-
+  
 	return ADDED;
 }
 
@@ -58,33 +58,33 @@ bool PRM::checkStopConditions()
 #endif
 		return (true);
 	}
-
+  
 	if (m_nbConscutiveFailures > ENV.getInt(Env::NbTry))
 	{
 		cout
-				<< "Failure: the maximum number of consecutive failures is reached."
-				<< endl;
+    << "Failure: the maximum number of consecutive failures is reached."
+    << endl;
 		PlanEnv->setBool(PlanParam::stopPlanner,true);
 		//p3d_SetStopValue(true);
 		return (true);
 	}
-
+  
 	if (_Graph->getGraphStruct()->nnode >= ENV.getInt(Env::maxNodeCompco))
 	{
 		cout << "Stop: the maximum number of nodes in the graph is reached."
-				<< endl;
+    << endl;
 		return (true);
 	}
-
-        if (_stop_func)
+  
+  if (_stop_func)
 	{
-                if (!(*_stop_func)())
+    if (!(*_stop_func)())
 		{
 			PrintInfo(("basic PRM building canceled\n"));
 			return true;
 		}
 	}
-
+  
 	return false;
 }
 
@@ -94,7 +94,7 @@ bool PRM::checkStopConditions()
 bool PRM::preConditions()
 {
 	if (ENV.getBool(Env::expandToGoal) && 
-		_Start->getConfiguration()->equal(*_Goal->getConfiguration()))
+      _Start->getConfiguration()->equal(*_Goal->getConfiguration()))
 	{
 		cout << "graph creation failed: start and goal are the same" << endl;
 		return false;
@@ -109,9 +109,7 @@ bool PRM::preConditions()
 void PRM::expandOneStep()
 {
 	shared_ptr<Configuration> q = _Robot->shoot();
-	
-	//                newConf->print();
-	
+  
 	if ( q->setConstraintsWithSideEffect() && (!q->isInCollision()) )
 	{
 		Node* N = new Node(_Graph,q);
@@ -140,12 +138,12 @@ unsigned int PRM::run()
 	m_nbAddedNode = 0;
 	
 	shared_ptr<Configuration> tmp = _Robot->getCurrentPos();
-
+  
 	if (!preConditions()) 
 	{
 		return m_nbAddedNode;
 	}
-
+  
 	while (!checkStopConditions())
 	{
 		expandOneStep();

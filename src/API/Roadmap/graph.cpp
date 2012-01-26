@@ -430,7 +430,7 @@ Robot* Graph::getRobot() const
  m_Robot = R;
  }*/
 
-unsigned int Graph::getNumberOfNodes()
+unsigned int Graph::getNumberOfNodes() const
 {
   unsigned int nbNodes = num_vertices(m_BoostGraph);
   
@@ -442,7 +442,7 @@ unsigned int Graph::getNumberOfNodes()
   return nbNodes;
 }
 
-unsigned int Graph::getNumberOfEdges()
+unsigned int Graph::getNumberOfEdges() const
 {
   unsigned int nbEdges = num_edges(m_BoostGraph);
   
@@ -981,20 +981,135 @@ bool Graph::linkNodeWithoutDist(Node* N)
 	}
 	return b;
 }
+  
+
+//! Copy of p3d_link_node_comp_multisol
+bool Graph::linkNodeCompMultisol( Node* N, ConnectedComponent* TargetComp ) 
+{
+  int ValidForward, ValidBackward;
+  double dist = 0.;
+  
+  vector<Node*>& nodes = TargetComp->getNodes();
+  
+  // If the criteria for choosing the best node in the target compco is 
+  // the distance, then node lists must be ordered 
+  if (p3d_get_SORTING() == P3D_DIST_NODE) 
+  {
+    for (int i=0; i<int(nodes.size()); i++) {
+			nodes[i]->distMultisol(N);
+		}
+		sort(nodes.begin(), nodes.end(), &compareNodes);
+  }
+
+  ValidBackward = ValidForward = FALSE;
+  
+  for (int i=0; i<int(nodes.size()); i++) 
+  {
+    Node* Nc = nodes[i];
+    
+    if (p3d_get_SORTING() == P3D_DIST_NODE) {
+      if ((Nc->getNodeStruct()->dist_Nnew > p3d_get_DMAX()) && (p3d_get_DMAX() > 0.)) {
+        return false;
+      }
+    }
+    
+    // Oriented case, forward and backward paths must be separately tested 
+    if (m_Graph->oriented) {
+      if (ValidForward == FALSE) {
+        if ( N->isLinkableMultisol( Nc, &dist) ) {
+          // A forward path is found 
+          addEdge( N, Nc , dist );
+          ValidForward = TRUE;
+        }
+      }
+      
+      if (ValidBackward == FALSE) {
+        if ( Nc->isLinkableMultisol( Nc,&dist)) {
+          // A bacward path is found 
+          addEdge( Nc, N , dist );
+          ValidBackward = TRUE;
+        }
+      }
+      
+      if (ValidBackward && ValidForward) {
+        if ( !N->getConnectedComponent() ) {
+          // A valid forward and backward path exist, and the node is still in none compco 
+          // so the tested compco will now include the new node 
+          TargetComp->addNode(N);
+        } else {
+          // A valid forward and backward path exist, and the node is already included in a compco 
+          // so the tested compco and the compco of the new node must merge 
+          if( TargetComp->getId() > N->getConnectedComponent()->getId() )
+          {
+            TargetComp->mergeWith( N->getConnectedComponent() );
+          }
+          else {
+            N->getConnectedComponent()->mergeWith( TargetComp );
+          }
+        }
+        return true;
+      }
+    }
+    // Non - oriented case, If the forward path is valid, the backward one is also valid. 
+    else 
+    {
+      if ( N->isLinkableMultisol( Nc, &dist) ) 
+      {
+        addEdges( N, Nc, dist);
+        // If the node is still not included in a compco, it will be absorbed in the tested compco
+        if ( N->getConnectedComponent() == NULL) {
+          TargetComp->addNode(N);
+        }
+        // Otherwise compcos merge 
+        else 
+        {
+          if( TargetComp->getId() > N->getConnectedComponent()->getId() )
+          {
+            TargetComp->mergeWith( N->getConnectedComponent() );
+          }
+          else {
+            N->getConnectedComponent()->mergeWith( TargetComp );
+          }
+        }
+        return true;
+      }
+    }
+  }
+  /* Non connexion has been found (in oriented case, arcs may have been created) */
+  return false;
+}
+
+bool Graph::linkNodeAtDist(Node* N)
+{
+  int nof_link = 0;
+  for (int i=0; i<int(m_Comp.size()); i++) 
+  {
+      if( N->getConnectedComponent() != m_Comp[i] ) 
+      {
+        // Try to connect the new node to the already existing compcos 
+        if( linkNodeCompMultisol( N, m_Comp[i] ) )
+        {
+          nof_link++;
+        }
+      }
+  }
+  
+  return(nof_link > 0);
+}
 
 /**
  * Links node at distance
  */
-bool Graph::linkNodeAtDist(Node* N)
-{
-	int nbLinkedComponents = 0;
-	
-	// Warning TODO:  this function does not work with the C++ API
-  nbLinkedComponents = p3d_link_node_graph_multisol(N->getNodeStruct(), m_Graph);
-	
-  this->mergeCheck();
-  return(nbLinkedComponents > 0);
-}
+//bool Graph::linkNodeAtDist(Node* N)
+//{
+//	int nbLinkedComponents = 0;
+//	
+//	// Warning TODO:  this function does not work with the C++ API
+//  nbLinkedComponents = p3d_link_node_graph_multisol(N->getNodeStruct(), m_Graph);
+//	
+//  this->mergeCheck();
+//  return(nbLinkedComponents > 0);
+//}
 
 /**
  * Links Node to all nodes
@@ -1382,9 +1497,10 @@ Node* Graph::nearestWeightNeighbour(Node* compco, shared_ptr<Configuration> conf
 // Connected componnents
 //-----------------------------------------------------------
 
-unsigned int Graph::getNumberOfCompco()
+unsigned int Graph::getNumberOfCompco() const
 {
-	return m_Graph->ncomp;
+  return m_Comp.size();
+	//return m_Graph->ncomp;
 }
 
 /**
@@ -1409,29 +1525,25 @@ void Graph::updateCompcoFromStruct()
 /**
  * Merge Component
  */
-int Graph::mergeComp(Node* CompCo1, Node* CompCo2, double DistNodes)
+int Graph::mergeComp(Node* node1, Node* node2, double dist_nodes)
 {
-	if ((CompCo1 == NULL) || (CompCo2 == NULL))
+	if ((node1 == NULL) || (node2 == NULL))
 	{
 		cerr << "Warning: Try to link two nodes with NULL structures \n";
 		return false;
 	}
-	
-	if (CompCo1->getConnectedComponent()->getId()  > 
-			CompCo2->getConnectedComponent()->getId() )
+  
+  ConnectedComponent* compco1 = node1->getConnectedComponent();
+  ConnectedComponent* compco2 = node2->getConnectedComponent();
+  
+	if( compco1->getId() > compco2->getId() )
 	{
-		std::swap( CompCo1, CompCo2 );
+		std::swap( compco1, compco2 );
+    std::swap( node1, node2 );
 	}
-	
-	//	cout << "Graph::merge compco " 
-	//	<< CompCo1->getConnectedComponent()->getId()  << " with " 
-	//	<< CompCo2->getConnectedComponent()->getId()  << endl;
-	
-	CompCo1->getConnectedComponent()->mergeWith( 
-																							CompCo2->getConnectedComponent() );
-	
-	addEdges(CompCo1, CompCo2, DistNodes);
-	
+  
+	compco1->mergeWith( compco2 );
+  addEdges(node1, node2, dist_nodes);
 	return true;
 }
 

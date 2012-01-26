@@ -89,13 +89,13 @@ public:
 	/**
 	 * Get Node ith node in Graph
 	 */
-	Node* getNode(unsigned int i) { return m_Nodes[i]; } 
+	Node* getNode(unsigned int i) const { return m_Nodes[i]; } 
 	
 	/**
 	 * obtient le nombre de Node dans le Graph
 	 * @return le nombre de Node dans le Graph
 	 */
-	unsigned int getNumberOfEdges();
+	unsigned int getNumberOfEdges() const;
 	
 	/**
 	 * obtient le vecteur des Edge du Graph
@@ -106,12 +106,12 @@ public:
 	/**
 	 * Returns the ith edge
 	 */
-	Edge* getEdge(unsigned int i)  { return m_Edges[i]; } 
+	Edge* getEdge(unsigned int i)  const { return m_Edges[i]; } 
 	
 	/*
 	 * Get the number of compco in the grap
 	 */
-	unsigned int getNumberOfCompco();
+	unsigned int getNumberOfCompco() const;
 	
 	/**
 	 * Get Compcos
@@ -296,6 +296,11 @@ public:
 	 * @return le Node est lié
 	 */
 	bool linkNode(Node* N);
+  
+  /**
+   * Links a node to a compco with multisol
+   */
+  bool linkNodeCompMultisol(Node *N, ConnectedComponent* compPt);
 	
 	/**
 	 * Lie un node au Graph sans prendre en compte la distance max

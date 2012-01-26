@@ -605,11 +605,15 @@ p3d_graph* GraphConverter::convert(const Graph& g, bool deleteGraphStruct) const
 		ln->N->nedge =				(*it)->getNumberOfEdges();
 		//cout << "Number of Edges in node : " << ln->N->nedge << endl;
 		
-		ln->N->parent =				NodeMap[(*it)->getParent()];
-		ln->N->search_from =	NodeMap[(*it)->getSearchFrom()];
-		ln->N->search_to =		NodeMap[(*it)->getSearchTo()];
-		
-		ln->N->edge_from =		EdgeMap[(*it)->getEdgeFrom()];
+    // WARNING this part of the graph is not kept
+//		ln->N->parent =				NodeMap[(*it)->getParent()];
+//		ln->N->search_from =	NodeMap[(*it)->getSearchFrom()];
+//		ln->N->search_to =		NodeMap[(*it)->getSearchTo()];
+//		ln->N->edge_from =		EdgeMap[(*it)->getEdgeFrom()];
+    ln->N->parent =				NULL;
+		ln->N->search_from =	NULL;
+		ln->N->search_to =		NULL;
+		ln->N->edge_from =		NULL;
 		
 		ln->N->comp	=					CompMap[(*it)->getConnectedComponent()];
 		

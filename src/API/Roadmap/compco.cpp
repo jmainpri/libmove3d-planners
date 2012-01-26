@@ -34,13 +34,17 @@ m_Graph(G),
 m_Id(-1)
 {
 #ifdef P3D_PLANNER
-	p3d_create_compco(m_Graph->getGraphStruct(), N->getNodeStruct());
+  m_Compco = MY_ALLOC(p3d_compco, 1);
+  m_Compco->num = G->getNumberOfCompco();
+  
+  // Warning the compco are handled in the boost graph
+	// p3d_create_compco(m_Graph->getGraphStruct(), N->getNodeStruct());
 #else
 	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
 #endif
 	
-	m_Compco = m_Graph->getGraphStruct()->last_comp;
-	//cout << "new compco : " << m_Compco << endl;
+	// m_Compco = m_Graph->getGraphStruct()->last_comp;
+	// cout << "new compco : " << m_Compco << endl;
 	addNode(N);
 	//cerr << "Add Compco for Node " << N->getNodeStruct() << endl;
 }
@@ -57,7 +61,7 @@ p3d_compco* ConnectedComponent::getCompcoStruct()
 	return m_Compco;
 }
 
-unsigned int ConnectedComponent::getId()
+unsigned int ConnectedComponent::getId() const
 {
   return m_Compco->num;
 }
@@ -68,13 +72,13 @@ void ConnectedComponent::addNode(Node* N)
 	N->setConnectedComponent(this);
 }
 
-unsigned int ConnectedComponent::getNumberOfNodes()
+unsigned int ConnectedComponent::getNumberOfNodes() const
 {
 	return m_Nodes.size();
 }
 
 
-const std::vector<Node*>& ConnectedComponent::getNodes() const
+std::vector<Node*>& ConnectedComponent::getNodes()
 {
 	/*cout << "--------------------------------------" << endl;
    vector<Node*>::iterator it;
@@ -92,75 +96,62 @@ void ConnectedComponent::addToReachableList(ConnectedComponent* Comp)
 	m_CanReach.push_back(Comp);
 }
 
-void ConnectedComponent::addToReachableListAndUpdatePredecessors(ConnectedComponent* CAdd)
-{
-	// This function is a copy of
-	// p3d_add_compco_to_reachable_list_and_update_predecessors
-	
-	m_CanReach.push_back(CAdd);
-	
-	vector<ConnectedComponent*> v = m_Graph->getConnectedComponents();
-	vector<ConnectedComponent*>::iterator CompCo;
-	
-	for (CompCo = v.begin(); CompCo!=v.end(); ++CompCo) 
-	{
-		if( (*CompCo)->isLinkedToCompco( this ) )
-		{
-			(*CompCo)->addToReachableList( CAdd );
-		}
-	}
-}
-
+//! This function is a copy of p3d_compco_linked_to_compco
 bool ConnectedComponent::isLinkedToCompco(ConnectedComponent* Comp)
 {
-	// This function is a copy of
-	// p3d_compco_linked_to_compco
-	
 	if( find (m_CanReach.begin(), m_CanReach.end(), Comp ) == m_CanReach.end() )
 		return false;
 	else
 		return true;
 }
 
-void ConnectedComponent::mergeWith(ConnectedComponent* CompcoPt)
+void ConnectedComponent::addToReachableListAndUpdatePredecessors(ConnectedComponent* compco_add)
 {
 	// This function is a copy of
-  // p3d_merge_comp which updates the 
-	// Graph and the connected components
-
-	//int nnode1,nnode2;
-	p3d_list_node *list_node;
-	p3d_list_compco * ListCompcoScan;
-	//nnode1 = c1->nnode;
-	//nnode2 = c2->nnode;
+	// p3d_add_compco_to_reachable_list_and_update_predecessors
 	
-	/* The nodes of C2 are now in C1 */
-	for(unsigned int i=0;i<CompcoPt->m_Nodes.size();i++)
+	m_CanReach.push_back(compco_add);
+	
+	vector<ConnectedComponent*> v = m_Graph->getConnectedComponents();
+	vector<ConnectedComponent*>::iterator compco;
+	
+	for (compco = v.begin(); compco!=v.end(); ++compco) 
 	{
-		Node* tmpNode = CompcoPt->m_Nodes[i];
-		tmpNode->setConnectedComponent( this ); addNode( tmpNode );
+		if( (*compco)->isLinkedToCompco( this ) )
+		{
+			(*compco)->addToReachableList( compco_add );
+		}
+	}
+}
+
+//! This function is a copy of p3d_merge_comp which updates the 
+//! graph and the connected components
+void ConnectedComponent::mergeWith(ConnectedComponent* compco)
+{
+	// The nodes of C2 are now in C1 
+	for(int i=0;i<int(compco->m_Nodes.size());i++)
+	{
+		Node* tmpNode = compco->m_Nodes[i];
+		tmpNode->setConnectedComponent( this ); 
+    addNode( tmpNode );
 	}
 	
-	/* All the compcos that can reach C2 can now reach C1 */
+	// All the compcos that can reach C2 can now reach C1 
 	if (m_Graph->getGraphStruct()->oriented) 
 	{
 		cout << "Oriented" << endl;
-		ListCompcoScan = CompcoPt->getCompcoStruct()->canreach;
+    p3d_list_compco * ListCompcoScan;
+		ListCompcoScan = compco->getCompcoStruct()->canreach;
 		while (ListCompcoScan != NULL) 
 		{
-			p3d_add_compco_to_reachable_list_and_update_predecessors(
-																															 m_Graph->getGraphStruct(), 
-																															 getCompcoStruct(), 
-																															 ListCompcoScan->comp);
-			
+			p3d_add_compco_to_reachable_list_and_update_predecessors(m_Graph->getGraphStruct(), getCompcoStruct(), ListCompcoScan->comp);
 			ListCompcoScan = ListCompcoScan->next;
 		}
 	}
 	
-	/* C2 is deleted from the graph */
-	m_Graph->removeCompco( CompcoPt );
-	
-	// Throw an exception if the p3d and C++ are not the same
+	// C2 is deleted from the graph 
+  // and throw an exception if the p3d and C++ are not the same
+	m_Graph->removeCompco( compco );
 	getNumberOfNodes();
 	
 	if (m_Graph->getGraphStruct()->oriented)
@@ -169,12 +160,10 @@ void ConnectedComponent::mergeWith(ConnectedComponent* CompcoPt)
 	}
 }
 
-Node* ConnectedComponent::nearestWeightNeighbour(shared_ptr<Configuration> q, 
-                                                 bool weighted, 
-                                                 int distConfigChoice)
+Node* ConnectedComponent::nearestWeightNeighbour(shared_ptr<Configuration> q, bool weighted, int distConfigChoice)
 {
-	double CurrentDist, CurrentScore;
-	double BestScore = numeric_limits<double>::max();
+	double current_dist, current_score;
+	double best_score = numeric_limits<double>::max();
 	Node* BestNodePt = NULL;
 	Node* node = NULL;
   
@@ -182,15 +171,15 @@ Node* ConnectedComponent::nearestWeightNeighbour(shared_ptr<Configuration> q,
   {
     node = m_Nodes[i];
     
-		/* We take into account only the nodes undiscarded */
+		// We take into account only the undiscarded nodes  
 		if (!node->getNodeStruct()->IsDiscarded)
 		{
-			CurrentDist = q->dist( *node->getConfiguration(), distConfigChoice );
-			CurrentScore = CurrentDist * (weighted ? p3d_GetNodeWeight(node->getNodeStruct()) : 1.0);
+			current_dist = q->dist( *node->getConfiguration(), distConfigChoice );
+			current_score = current_dist * (weighted ? p3d_GetNodeWeight(node->getNodeStruct()) : 1.0);
 			
-			if (CurrentScore < BestScore)
+			if (current_score < best_score)
 			{
-				BestScore = CurrentScore;
+				best_score = current_score;
 				BestNodePt = node;
 			}
 		}

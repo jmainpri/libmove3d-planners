@@ -166,14 +166,18 @@ LocalPath::~LocalPath()
 }
 
 //Accessors
-p3d_localpath* LocalPath::getLocalpathStruct()
+p3d_localpath* LocalPath::getLocalpathStruct(bool multi_sol)
 {
 	if (!_LocalPath)
 	{
-		_LocalPath = p3d_local_planner(
-																	 _Robot->getRobotStruct(),
-																	 _Begin->getConfigStruct(), 
-																	 _End->getConfigStruct());
+    if( !multi_sol )
+    {
+      _LocalPath = p3d_local_planner(_Robot->getRobotStruct(),_Begin->getConfigStruct(), _End->getConfigStruct());
+    }
+    else
+    {
+      _LocalPath = p3d_local_planner_multisol(_Robot->getRobotStruct(), _Begin->getConfigStruct(), _End->getConfigStruct(), _ikSol);
+    }
 
 		if (_LocalPath)
 		{

@@ -279,9 +279,8 @@ Node* HRICS_rrtExpansion::addNode(Node* currentNode, LocalPath& path, double pat
     pos[1] = currentNode->getNodeStruct()->q[mIndexObjectDof+1];
     pos[2] = currentNode->getNodeStruct()->q[mIndexObjectDof+2];
 
-    API::ThreeDCell* cell = _3DGrid->getCell(pos);
-
-  // WARNING BROKEN
+// TODO WARNING BROKEN
+//  API::ThreeDCell* cell = _3DGrid->getCell(pos);
 //    _forward = (currentNode->equal(m_Graph->getStart()));
 //
 //    if( _forward )

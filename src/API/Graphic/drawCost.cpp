@@ -136,6 +136,8 @@ void g3d_draw_costspace()
 	}
 }
 
+
+
 void g3d_draw_squeleton()
 {
   double boxA[8][3];

@@ -276,8 +276,8 @@ Node* HRICS_rrtPlanExpansion::addNode(Node* currentNode, LocalPath& path, double
     pos[0] = currentNode->getConfiguration()->at(6);
     pos[1] = currentNode->getConfiguration()->at(7);
 
-    API::TwoDCell* cell = m2DGrid->getCell(pos);
-  // WARNING BROKEN
+// TODO WARNING BROKEN
+//    API::TwoDCell* cell = m2DGrid->getCell(pos);
 //
 //    if( currentNode->equalCompco( m_Graph->getStart() ) )
 //    {

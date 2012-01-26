@@ -107,7 +107,7 @@ public:
 	 * obtient la Configuration stockée
 	 * @return la Configuration stockée
 	 */
-	std::tr1::shared_ptr<Configuration> getConfiguration();
+	confPtr_t getConfiguration();
 	
 	/**
 	 * modifie la valeur de activ
@@ -124,7 +124,7 @@ public:
 	/**
 	 * Returns the node id
 	 */
-	unsigned int getId();
+	unsigned int getId() const;
 	
 	/**
 	 * Sets the Id
@@ -171,27 +171,32 @@ public:
 	 * @return la distance au Node courant créé
 	 */
 	double getDist();
+  
+  /**
+   * copy of p3d_APInode_dist_multisol
+   */
+  double distMultisol(Node *node) const;
 	
 	/**
 	 * calcule la distance entre deux Node et stocke la valeur dans DistNew
 	 * @param N le Node à partir duquel on veut calculer la distance
 	 * @return la distance entre les deux Node
 	 */
-	double dist(Node* N);
+	double dist(Node* N) const;
 	
 	/**
 	 * teste si deux Node sont égaux
 	 * @param N le Node à tester
 	 * @return les Node sont égaux
 	 */
-	bool equal(Node* N);
+	bool equal(Node* N) const;
 	
 	/**
 	 * teste si deux Node sont dans la même composante connexe
 	 * @param N le Node à tester
 	 * @return les deux Node sont dans la même composante connexe
 	 */
-	bool inSameComponent(Node* N);
+	bool inSameComponent(Node* N) const;
 	
 	/**
 	 * Get Number of neighbors
@@ -212,26 +217,22 @@ public:
 	 * Get All Edges
 	 */
 	std::vector<Edge*> getEdges();
-
-	/**
-	 * Returns the parent in a tree structure
-	 */
-	Node* getParent() { return NULL; }
 	
 	/**
-	 * To be implemented for retro-compatibility
+	 * @brief Checks if two nodes can be linked
+	 * @param node the node to test
+	 * @param dist the distance between the nodes
+	 * @return true if nodes can be linked
 	 */
-	Node* getSearchFrom() { return NULL; }
-	Node* getSearchTo() { return NULL; }
-	Edge* getEdgeFrom() { return NULL; }
-	
-	/**
-	 * teste si deux Node peuvent être liés
-	 * @param N le Node à tester
-	 * @param dist la distance entre les Node
-	 * @return les Node peuvent être liés
-	 */
-	bool isLinkable(Node* N, double* dist);
+	bool isLinkable(Node* node, double* dist) const;
+  
+  /**
+   * @brief Check if two node are connectable
+   * @param node the node to test
+   * @param dist the distance between the nodes
+   * @return TRUE if connected FALSE otherwise
+   */
+  bool isLinkableMultisol(Node* node, double* dist) const;
 	
 	/**
 	 * vérifie si le poids max du Node a été atteint
@@ -242,13 +243,16 @@ public:
 	 * Gets the number of nodes
 	 * in the connected componnent
 	 */
-	unsigned int getNumberOfNodesInCompco();
+	unsigned int getNumberOfNodesInCompco() const;
 	
 	/**
 	 * obtient la structure de composante connexe à laquelle appartient le Node
 	 * @return la structure de composante connexe à laquelle appartient le Node
 	 */
-	ConnectedComponent* getConnectedComponent() { return m_Compco; }
+	ConnectedComponent* getConnectedComponent() const
+  { 
+    return m_Compco; 
+  }
 	
 	/**
 	 * Sets the compco of the node
@@ -285,13 +289,13 @@ public:
 	 * @param compco la composante connexe à tester
 	 * @return les deux composantes sont égales
 	 */
-	bool equalCompco(Node* compco);
+	bool equalCompco(Node* compco) const;
 	
 	/**
 	 * tire un Node aléatoirement dans la composante connexe
 	 * @return le Node tiré
 	 */
-	Node* randomNodeFromComp();
+	Node* randomNodeFromComp() const;
 	
 	/**
 	 * Method for EST
@@ -308,7 +312,7 @@ public:
 	/**
 	 * Prints the node to the standard output
 	 */
-	void print();
+	void print() const;
   void printNeighbors();
 	
 	//--------------------------------------
@@ -320,21 +324,21 @@ public:
 private:
 	
   // Old Node structure
-	node* _Node;
+	node* m_Node;
   NodeData* _specificNodeData;
 	
 	bool m_is_BGL_Descriptor_Valid;
 	BGL_Vertex m_BGL_Descriptor;
 	
-	Graph* _Graph;
-	Robot* _Robot;
+	Graph* m_Graph;
+	Robot* m_Robot;
 	ConnectedComponent* m_Compco;
 	
 	// In tree graphs
 	Node* m_parent;
   bool m_is_leaf;
 	
-	std::tr1::shared_ptr<Configuration> _Configuration;
+	std::tr1::shared_ptr<Configuration> m_Configuration;
 	bool _activ;
 	
 	double _SelectCost;

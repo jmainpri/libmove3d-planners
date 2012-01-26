@@ -91,6 +91,41 @@ int StarExpansion::connectExpandProcess(Node* expansionNode,
 	return 0;
 }
 
+void StarExpansion::rewireGraph(Node* new_node, Node* min_node, const vector<Node*>& neigh_nodes)
+{
+  confPtr_t q_new = new_node->getConfiguration();
+  
+  // Rewire the graph 
+  for ( int i=0; i<int(neigh_nodes.size()); i++) 
+  {
+    // min node is already wired to new node
+    if ( neigh_nodes[i] == min_node ) continue;
+    
+    LocalPath path( neigh_nodes[i]->getConfiguration(), q_new );
+    
+    // Compute the cost to get to the new node from each neighbor
+    // and change edge if superior
+    if ( neigh_nodes[i]->sumCost() > new_node->sumCost()+path.cost() )
+    {
+      //cout << "should rewire" << endl;
+      if( neigh_nodes[i] && neigh_nodes[i]->parent() )
+      {
+        m_Graph->removeEdges( neigh_nodes[i], neigh_nodes[i]->parent() );
+        m_Graph->addEdges( neigh_nodes[i], new_node, path.getParamMax() );
+        
+        neigh_nodes[i]->sumCost() = new_node->sumCost() + path.cost();
+        neigh_nodes[i]->parent() = new_node;
+        new_node->isLeaf() = false;
+        
+        if( print_rewiring )
+        {
+          cout << "Rewiring : " << ++m_nb_rewiring << endl;
+        }
+      }
+    }
+  }
+}
+
 /*!
  * Extend expansion method
  *
@@ -108,12 +143,12 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 	// Construct a smaller path from direction path
 	LocalPath extensionLocalpath = getExtensiontPath (expansionNode->getConfiguration(), directionConfig );
 	
-	Node* NodeNew = NULL;
+	Node* node_new = NULL;
 	
 	if ( extensionLocalpath.isValid() )
 	{
 		// Create new node and add it to the graph
-		NodeNew = new Node(m_Graph,extensionLocalpath.getEnd());
+		node_new = new Node(m_Graph,extensionLocalpath.getEnd());
 		nbCreatedNodes++;
     
     double radius = rrgBallRadius() * m_RrgRadiusFactor;
@@ -124,7 +159,7 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
       cout << "radius : " << radius  << " , number of nodes : " << m_Graph->getNumberOfNodes() << endl;
 //    }
 
-		vector<Node*> NodesNear = m_Graph->KNearestWeightNeighbour(NodeNew->getConfiguration(),
+		vector<Node*> near_nodes = m_Graph->KNearestWeightNeighbour(node_new->getConfiguration(),
 																															m_K_Nearest,
 																															radius,
 																															false,
@@ -133,72 +168,53 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
     
     if( print_exploration )
     {
-      cout << "Number of Neighboors : " << NodesNear.size() << endl;
+      cout << "Number of Neighboors : " << near_nodes.size() << endl;
     }
     
 		// The normal RRT procedure
-		Node* NodeMin = expansionNode;
-    confPtr_t q_new = NodeNew->getConfiguration();
+		Node* node_min = expansionNode;
+    confPtr_t q_new = node_new->getConfiguration();
     
 		std::vector<Node*> ValidNodes;
     
 		// Compute the node that minimizes the Sum of Cost
     double min_sum_of_cost=std::numeric_limits<double>::max();
     
-		for (int i=0; i<int(NodesNear.size()); i++) 
+		for (int i=0; i<int(near_nodes.size()); i++) 
 		{
-			//cout << "NodesNear[i] : " << NodesNear[i] <<  " , d : " << NodesNear[i]->dist(NodeNew) << endl;
-			LocalPath path( NodesNear[i]->getConfiguration(), q_new );
+			//cout << "near_nodes[i] : " << near_nodes[i] <<  " , d : " << near_nodes[i]->dist(node_new) << endl;
+			LocalPath path( near_nodes[i]->getConfiguration(), q_new );
 			
-      if ( path.isValid() )
+      bool isValid = true;
+      if( PlanEnv->getBool(PlanParam::trajComputeCollision) )
       {
-        ValidNodes.push_back( NodesNear[i] );
+        isValid = path.isValid();
+      }
+      
+      if ( isValid  )
+      {
+        ValidNodes.push_back( near_nodes[i] );
         
-        double cost_to_node = NodesNear[i]->sumCost()+path.cost();
+        double cost_to_node = near_nodes[i]->sumCost()+path.cost();
         if ( cost_to_node < min_sum_of_cost )
         {
-          NodeMin = NodesNear[i];
+          node_min = near_nodes[i];
           min_sum_of_cost = cost_to_node;
         }
       }
 		}
 		
-    // Add NodeNew to the graph, and add the edge n_min -> n_new
-		m_Graph->addNode(NodeNew);
-		m_Graph->addEdges(NodeMin,NodeNew,NULL,true);
+    // Add node_new to the graph, and add the edge n_min -> n_new
+		m_Graph->addNode( node_new );
+		m_Graph->addEdges( node_min, node_new, NULL, true );
     
     // Merge compco with minNode and set as parent
-		NodeNew->merge(NodeMin);
-		NodeNew->sumCost() = min_sum_of_cost;
-		NodeNew->parent() = NodeMin;
-    NodeMin->isLeaf() = false;
+		node_new->merge( node_min );
+		node_new->sumCost() = min_sum_of_cost;
+		node_new->parent() = node_min;
+    node_min->isLeaf() = false;
     
-		// Rewire the graph 
-		for ( int i=0; i<int(ValidNodes.size()); i++) 
-		{
-			if ( ValidNodes[i] == NodeMin ) continue;
-			
-			LocalPath path( ValidNodes[i]->getConfiguration(), q_new );
-			
-			// Compute the cost to get to the node
-			// by each neighbor to the new node and change edge if superior
-			if ( ValidNodes[i]->sumCost() > NodeNew->sumCost()+path.cost() )
-			{
-        //cout << "should rewire" << endl;
-        if( ValidNodes[i] && ValidNodes[i]->parent() )
-        {
-          m_Graph->removeEdges( ValidNodes[i], ValidNodes[i]->parent() );
-          m_Graph->addEdges( ValidNodes[i], NodeNew, path.getParamMax() );
-          
-          ValidNodes[i]->sumCost() = NodeNew->sumCost() + path.cost();
-          ValidNodes[i]->parent() = NodeNew;
-          NodeNew->isLeaf() = false;
-          
-          if( print_rewiring )
-            cout << "Rewiring : " << ++m_nb_rewiring << endl;
-        }
-			}
-		}
+    rewireGraph( node_new, node_min, near_nodes );
 	}
 	else 
 	{
@@ -209,7 +225,7 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 	if (!failed)
 	{
 		// Components were merged
-		if(( directionNode != NULL )&&( NodeNew == directionNode ))
+		if(( directionNode != NULL )&&( node_new == directionNode ))
 		{
 			cout << "Connected in Transition" << __func__ << endl;
 			return 0;

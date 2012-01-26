@@ -421,10 +421,6 @@ void StarReplanner::run()
 {
   m_isPlanning = true;
   
-  // Set 0.3 seconds to do the concat traj
-  PlanEnv->setBool(PlanParam::withTimeLimit, true );
-  PlanEnv->setDouble(PlanParam::optimTimeLimit, m_t_rep-0.3 );
-  
   cout << "m_t_rep : " << m_t_rep << endl;
   
   // Run deformation from last path id

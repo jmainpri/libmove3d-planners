@@ -68,6 +68,11 @@ public:
    * Get the rgg ball raduis
    */
   double rrgBallRadius();
+  
+  /**
+   *
+   */
+  void rewireGraph(Node* new_node, Node* min_node, const std::vector<Node*>& neigh_nodes);
 	
 	/** 
 	 * expandProcess 
