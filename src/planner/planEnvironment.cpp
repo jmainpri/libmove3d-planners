@@ -107,8 +107,9 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::drawRandomMap,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::drawBoundingVolumes,        new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::saveVideo,                  new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::env_oldCriteria,            new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::env_noRepetition,           new boolContainer(false)));
 
-    
         // Object TransfertPoint variable
         myBoolMap.insert( std::make_pair( PlanParam::env_humanGridDraw,          new boolContainer(true )));
         myBoolMap.insert( std::make_pair( PlanParam::env_robotGridDraw,          new boolContainer(false)));

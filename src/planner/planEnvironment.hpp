@@ -94,7 +94,9 @@ namespace PlanParam
             env_drawHumanModel,
             env_softMotionTraj,
             env_createTrajs,
-            env_fusedGridAndRotRand
+            env_fusedGridAndRotRand,
+            env_oldCriteria,
+            env_noRepetition
         };
 
         enum intParameter

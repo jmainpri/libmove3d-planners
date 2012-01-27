@@ -605,16 +605,18 @@ double OTPMotionPl::multipliComputeOtp(int n)
     }
     cout << "-----------------------------" << endl;
     cout << "Nb of OTP computed = " << nb << endl;
+    cout << "Average First conf computing time = " << firstTimeSum / nb << endl << endl;
     cout << "Average time = " << totalTimeSum / nb << endl;
     cout << "Average init Grid time = " << initGridTimeSum / nb << endl;
-    cout << "Average First conf computing time = " << firstTimeSum / nb << endl;
     cout << "Average loop time = " << loopTimeSum / nb << endl;
     cout << "Average cost = " << costSum / nb << endl;
     cout << "Average nb Iteration = " << (double)nbIteration / nb << endl;
     cout << "Average nb solutions = " << (double)nbSolution / nb << endl;
     cout << "Average rate = " << (double)nbSolution / nbIteration << endl;
+    cout << "rate of successful OTP = " << (double)nb/id << endl;
     cout << "Formated :" << endl << totalTimeSum / nb << endl << initGridTimeSum / nb << endl << loopTimeSum / nb << endl
-                   << costSum / nb << endl << (double)nbIteration / nb << endl << (double)nbSolution / nb << endl << (double)nb/id << endl;
+                   << costSum / nb << endl << (double)nbIteration / nb << endl << (double)nbSolution / nb << endl << (double)nbSolution / nbIteration <<
+                   endl << (double)nb/id << endl;
     cout << "-----------------------------" << endl;
 
     return totalTimeSum / nb;
@@ -1093,7 +1095,9 @@ bool OTPMotionPl::newComputeOTP()
     double timeLimitation = PlanEnv->getDouble(PlanParam::env_timeLimitation);
     double dumpTime = PlanEnv->getDouble(PlanParam::env_timeToDump);
     double currntDumpTime = 0;
-    double epsilon = 0.001;
+    double epsilon = EPS3;
+    bool noRepetition = PlanEnv->getBool(PlanParam::env_noRepetition);
+    bool oldCriteria = PlanEnv->getBool(PlanParam::env_oldCriteria);
 
     int maxIter = PlanEnv->getInt(PlanParam::env_maxIter); //300
 
@@ -1190,22 +1194,28 @@ bool OTPMotionPl::newComputeOTP()
         }
 
         // STOPING CRITERIA
-//        if (i > maxIter + beginId || id > PlanEnv->getInt(PlanParam::env_totMaxIter) + beginId) { break; }
-//        if (((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation) { break;}
-//        cout << "i = " << i << " rate = " <<  i/(double)id << " time = " << ((double)curTime1 - firstConfs) / CLOCKS_PER_SEC << endl;
         clock_t curTime1 = clock();
-        if ( i > maxIter + beginId  || // number of results are sufisiant
-             ((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation ||  // taking too much time
-             (i > 0 && i/(double)id < EPS2 && (((double)curTime1 - firstConfs) / CLOCKS_PER_SEC) > (timeLimitation /10)) // taking too much time after finding some solution
-             ){
-            if (i > maxIter + beginId) {cout << "number of results are sufisiant" <<endl; }
-            if (((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation) {cout << "taking too much time" <<endl; }
-            if (i > 0 && i/(double)id < EPS2 && ((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation /10)
-            {cout << "taking too much time after finding some solution" <<endl; }
-            break;
+        if (oldCriteria)
+        {
+            if (i > maxIter + beginId || id > PlanEnv->getInt(PlanParam::env_totMaxIter) + beginId) { break; }
+            if (((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation /20) { break;}
+            //        cout << "i = " << i << " rate = " <<  i/(double)id << " time = " << ((double)curTime1 - firstConfs) / CLOCKS_PER_SEC << endl;
+        }
+        else
+        {
+            if ( i > maxIter + beginId  || // number of results are sufisiant
+                 ((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation ||  // taking too much time
+                 (i > 0 && (((double)curTime1 - firstConfs) / CLOCKS_PER_SEC) > (timeLimitation /20)) // taking too much time after finding some solution
+                 ){
+                if (i > maxIter + beginId) {cout << "number of results are sufisiant" <<endl; }
+                if (((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation) {cout << "taking too much time" <<endl; }
+                if (i > 0 && ((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation /20)
+                {cout << "taking too much time after finding some solution" <<endl; }
+                break;
             }
+        }
 
-        if (isAlreadyTested(vect))
+        if (isAlreadyTested(vect) && noRepetition)
         {
             continue;
         }
