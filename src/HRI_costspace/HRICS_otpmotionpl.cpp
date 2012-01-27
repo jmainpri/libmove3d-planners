@@ -1333,8 +1333,8 @@ bool OTPMotionPl::newComputeOTP()
     sort(m_confList.begin(),m_confList.end(),OutputConfSortObj);
 
     bool trajFound = false;
-    while (!trajFound)
-    {
+//    while (!trajFound)
+//    {
         OutputConf o = m_confList.at(0);
         m_confList.erase(m_confList.begin());
         o.humanTraj = m_pts->smoothTrajectory(m_Human,o.humanTraj);
@@ -1381,9 +1381,9 @@ bool OTPMotionPl::newComputeOTP()
         }
         else
         {
-            break;
+//            break;
         }
-    }
+//    }
 
     clock_t end = clock();
 
@@ -2614,9 +2614,12 @@ void OTPMotionPl::dumpVar()
     cout << "slices = "  << PlanEnv->getBool(PlanParam::env_useSlice) << endl;
     cout << "all grid = "  << PlanEnv->getBool(PlanParam::env_useAllGrid) << endl << endl;
 
+    cout << " createTrajs = " << PlanEnv->getBool(PlanParam::env_createTrajs) << endl;
+    cout << " no repetition = " << PlanEnv->getBool(PlanParam::env_noRepetition) << endl;
     cout << " isStanding = " << PlanEnv->getBool(PlanParam::env_isStanding) << endl;
     cout << " objectNecessity = " <<PlanEnv->getDouble(PlanParam::env_objectNessecity) << endl;
     cout << " pow for random  = " << PlanEnv->getInt(PlanParam::env_pow) << endl;
+    cout << " pow for rotation random  = " << PlanEnv->getInt(PlanParam::env_anglePow) << endl;
     cout << " sleeping time  = " << PlanEnv->getInt(PlanParam::env_timeShow) << endl;
     cout << " maxIter = " << PlanEnv->getInt(PlanParam::env_maxIter)<< endl;
     cout << " totMaxIter = " <<PlanEnv->getInt(PlanParam::env_totMaxIter) << endl;
@@ -2655,11 +2658,15 @@ void OTPMotionPl::setVar()
     PlanEnv->setBool(PlanParam::env_useSlice,false);
     PlanEnv->setBool(PlanParam::env_useAllGrid,false);
 
+    PlanEnv->setBool(PlanParam::env_createTrajs,true);
+    PlanEnv->setBool(PlanParam::env_noRepetition,false);
+
     PlanEnv->setInt(PlanParam::env_timeShow,0);
     PlanEnv->setDouble(PlanParam::env_Cellsize,0.20);
     PlanEnv->setInt(PlanParam::env_nbSittingRotation,300);
 
     PlanEnv->setInt(PlanParam::env_pow,2);
+    PlanEnv->setInt(PlanParam::env_anglePow,3);
     PlanEnv->setInt(PlanParam::env_timeShow,0);
     PlanEnv->setInt(PlanParam::env_maxIter,40);
     PlanEnv->setInt(PlanParam::env_totMaxIter,2000);
@@ -2784,9 +2791,9 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
 {
     getInputs();
     std::vector<pair<double,double> > traj;
-    PlanEnv->setBool(PlanParam::env_createTrajs,true);
+//    PlanEnv->setBool(PlanParam::env_createTrajs,true);
     bool result = getOtp(humanName,dockPos,traj,handConf,isStanding,objectNessecity);
-    PlanEnv->setBool(PlanParam::env_createTrajs,false);
+//    PlanEnv->setBool(PlanParam::env_createTrajs,false);
     smTraj = m_smTrajs;
 //    smTraj[0].plot();
     return result;
