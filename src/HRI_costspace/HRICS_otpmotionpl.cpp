@@ -1333,8 +1333,8 @@ bool OTPMotionPl::newComputeOTP()
     sort(m_confList.begin(),m_confList.end(),OutputConfSortObj);
 
     bool trajFound = false;
-//    while (!trajFound)
-//    {
+    while (!trajFound)
+    {
         OutputConf o = m_confList.at(0);
         m_confList.erase(m_confList.begin());
         o.humanTraj = m_pts->smoothTrajectory(m_Human,o.humanTraj);
@@ -1381,9 +1381,9 @@ bool OTPMotionPl::newComputeOTP()
         }
         else
         {
-//            break;
+            break;
         }
-//    }
+    }
 
     clock_t end = clock();
 
