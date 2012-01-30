@@ -65,7 +65,9 @@ bool EST::preConditions()
                             this->getInit(),
                             this->getGoal());
         
-				cout << "Direct connection" << endl;
+#ifdef DEBUG_STATUS
+                                cout << "Direct connection" << endl;
+#endif
 				return true;
 			}
 		}

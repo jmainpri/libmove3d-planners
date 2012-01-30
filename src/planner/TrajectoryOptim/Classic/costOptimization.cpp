@@ -816,8 +816,12 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
 	
 	ChronoOff();
 	
-	if ( isValid() )
-		cout << "Trajectory valid" << endl;
+        if ( isValid() )
+        {
+#ifdef DEBUG_STATUS
+                cout << "Trajectory valid" << endl;
+#endif
+        }
 	else
 		cout << "Trajectory not valid" << endl;
 	
@@ -827,7 +831,11 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
 		oss << "CostOptim_"<< idRun << "_" ;
 		this->saveOptimToFile(oss.str());
 	}
-	cout << "Before : Traj cost = " << costBeforeDeformation << endl;
+#ifdef DEBUG_STATUS
+        cout << "Before : Traj cost = " << costBeforeDeformation << endl;
+#endif
 	this->resetCostComputed();
-	cout << "After (" << ith_deformation << ") Deform : Traj cost = " << this->cost() << endl;
+#ifdef DEBUG_STATUS
+        cout << "After (" << ith_deformation << ") Deform : Traj cost = " << this->cost() << endl;
+#endif
 }

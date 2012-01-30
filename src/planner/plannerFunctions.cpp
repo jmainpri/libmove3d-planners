@@ -64,13 +64,17 @@ void delete_graph( p3d_graph* &G )
 
     delete API_activeGraph;
     API_activeGraph = NULL;
+#ifdef DEBUG_STATUS
     cerr << "Delete C++ API Graph" << endl;
+#endif
 
     if(graph!=G)
     {
         if(!p3d_del_graph(G))
         {
+#ifdef DEBUG_STATUS
             cerr << "Graph allready deleded" << endl;
+#endif
         }
     }
   }
@@ -78,7 +82,9 @@ void delete_graph( p3d_graph* &G )
   {
       if(!p3d_del_graph(G))
       {
+#ifdef DEBUG_STATUS
           cerr << "Graph allready deleded" << endl;
+#endif
       }
   }
   
@@ -86,12 +92,15 @@ void delete_graph( p3d_graph* &G )
   
   if( !p3d_del_graph(XYZ_GRAPH) )
   {
+#ifdef DEBUG_STATUS
     cerr << "XYZ_GRAPH allready deleted" << endl;
+#endif
   }
   XYZ_GRAPH = NULL;
-  
+#ifdef DEBUG_STATUS
   cerr << "G = " << G << endl;
   cerr <<  "XYZ_GRAPH = " << XYZ_GRAPH << endl;
+#endif
 }
 
 // ---------------------------------------------------------------------------------
@@ -154,8 +163,10 @@ RRT* allocate_RRT(Robot* rob,Graph* graph)
 p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
 {
 //  fixAllJointsWithoutArm(robotPt,0);
+#ifdef DEBUG_STATUS
   cout << "* PLANNING ***************" << endl;
-  
+#endif
+
   double ts;
   
   // Gets the robot pointer
@@ -197,14 +208,17 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
 	ChronoTimes(&(graph->getGraphStruct()->rrtTime), &ts);
 	
   // Debug
+#ifdef DEBUG_STATUS
   cout << "** ** --------------------------" << endl;
-	cout << "TIME ="  << graph->getGraphStruct()->rrtTime << endl;
-	cout << "NB NODES " << (int)graph->getNodes().size() << endl;
-	cout << "** ** --------------------------" << endl;
+        cout << "TIME ="  << graph->getGraphStruct()->rrtTime << endl;
+        cout << "NB NODES " << (int)graph->getNodes().size() << endl;
+        cout << "** ** --------------------------" << endl;
+#endif
   
   if ((rrt->getNumberOfExpansion() - rrt->getNumberOfFailedExpansion() + rrt->getNumberOfInitialNodes()) 
       != graph->getNumberOfNodes() ) 
   {
+#ifdef DEBUG_STATUS
     cout << "----------------------" << endl;
     cout << "Nb of nodes differ from number of expansion succes " << endl;
     cout << "nb added nodes " << nb_added_nodes << endl;
@@ -213,6 +227,7 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
     cout << " - m_nbInitNodes = " << rrt->getNumberOfInitialNodes() << endl;
     cout << " - m_nbExpansion + m_nbInitNodes - m_nbExpansionFailed  =  " << (rrt->getNumberOfExpansion() + rrt->getNumberOfInitialNodes() - rrt->getNumberOfFailedExpansion() ) << endl;
     cout << " - _Graph->getNumberOfNodes() = " << graph->getNumberOfNodes() << endl;
+#endif
 	}
 	
 	graph->getGraphStruct()->totTime = graph->getGraphStruct()->rrtTime;
@@ -238,13 +253,17 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
         configs.push_back( q_Source );
         configs.push_back( q_Target );
         
+#ifdef DEBUG_STATUS
         cout << "Creating trajectory from two confgurations" << endl;
+#endif
         traj = new API::Trajectory( configs );
       }
       else 
       {
         Graph graphTraj( rob, XYZ_GRAPH );
+#ifdef DEBUG_STATUS
         cout << "Extract graph to traj" << endl;
+#endif
         traj = graphTraj.extractBestTraj(q_Source,q_Target);
       }
     }
@@ -263,11 +282,13 @@ p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg)
     p3d_traj* result=NULL; 
 
     result = traj->replaceP3dTraj(result); 
-    
-//    cout << "result = " << result << endl;
+
+#ifdef DEBUG_STATUS
+    cout << "result = " << result << endl;
     cout << "result->nlp = " << result->nlp << endl;
     cout << "result->range_param = " << result->range_param << endl;
-    
+#endif
+
     robotPt->tcur = result;
     char trajName[] = "Specific";
 		g3d_add_traj( trajName , runNum ,robotPt , robotPt->tcur );
@@ -295,13 +316,16 @@ p3d_traj* pathPt=NULL;
 // ---------------------------------------------------------------------------------
 void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double maxTime)
 {
+#ifdef DEBUG_STATUS
   cout << "* SMOOTHING ***************" << endl;
+#endif
   // Gets the robot pointer
   Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-  
+#ifdef DEBUG_STATUS
   cout << "traj->nlp = " << traj->nlp << endl;
   cout << "traj->range_param = " << traj->range_param << endl;
-  
+#endif
+
   API::CostOptimization optimTrj(rob,traj);
   
 #ifdef QT_LIBRARY
@@ -330,8 +354,10 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
   double dmax = global_Project->getActiveScene()->getDMax();
   double range = optimTrj.getRangeMax();
   
+#ifdef DEBUG_STATUS
   cout << "optimTrj range is : " << range << endl;
-  
+#endif
+
   bool doCutInsmallLP = false;
   
   if (doCutInsmallLP) {
@@ -342,7 +368,10 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
     
     if ( (nLP_toCut<nLP_max) && (nLP_toCut>nLP) && (nLP_toCut>1) )
     {
+#ifdef DEBUG_STATUS
       cout << "Cut the traj in several local paths" << endl;
+#endif
+
       optimTrj.cutTrajInSmallLP( nLP_toCut );
     }
   }
@@ -355,8 +384,10 @@ void smoothing_Function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double ma
   
   //XYZ_GRAPH->totTime += optTime;
   
+#ifdef DEBUG_STATUS
   cout << "After optim rounds cost : " << optimTrj.cost() << endl;
   cout << "Nb of localpaths : " << robotPt->tcur->nlp << endl;
+#endif
 }
 
 
@@ -389,8 +420,9 @@ bool p3d_run_est(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void
 {
 	GraphPt = GraphPt ? GraphPt : p3d_create_graph();
 	
-	
-	printf("------------- Running EST --------------\n");
+#ifdef DEBUG_STATUS
+        printf("------------- Running EST --------------\n");
+#endif
 	
 #ifdef LIST_OF_PLANNERS
 	RRT* rrt = (RRT*)plannerlist[0];

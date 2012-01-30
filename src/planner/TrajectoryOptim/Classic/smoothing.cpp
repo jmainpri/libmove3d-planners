@@ -885,7 +885,10 @@ void Smoothing::saveOptimToFile(string fileName)
  */
 void Smoothing::runShortCut( int nbIteration, int idRun )
 {
-	cout << "Before Short Cut : Traj cost = " << this->costNoRecompute() << endl;
+        this->costNoRecompute();
+#ifdef DEBUG_STATUS
+        cout << "Before Short Cut : Traj cost = " << this->costNoRecompute() << endl;
+#endif
 	double costBeforeDeformation = this->cost();
 	m_OptimCost.clear();
 	m_GainOfIterations.clear();
@@ -900,7 +903,9 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 	{
 		if ( this->getCourbe().size() == 1 ) 
 		{
-			cout << "Smooting has stoped, only one localpath in traj" << endl;
+#ifdef DEBUG_STATUS
+                        cout << "Smooting has stoped, only one localpath in traj" << endl;
+#endif
 			break;
 		}
 		
@@ -957,7 +962,11 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 	ChronoOff();
 	
 	if ( isValid () )
-	{ cout << "Trajectory valid" << endl; }
+        {
+#ifdef DEBUG_STATUS
+            cout << "Trajectory valid" << endl;
+#endif
+        }
 	else
 	{ cout << "Trajectory not valid" << endl;}
 	
@@ -967,6 +976,9 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 		oss << "ShortCutOptim_"<< m_ContextName << "_" << idRun << "_" ;
 		this->saveOptimToFile( oss.str() );
 	}
-	cout << "Before : Traj cost = " << costBeforeDeformation << endl;
-	cout << "After Short Cut : cost = " << this->costNoRecompute() << endl;
+        this->costNoRecompute();
+#ifdef DEBUG_STATUS
+        cout << "Before : Traj cost = " << costBeforeDeformation << endl;
+        cout << "After Short Cut : cost = " << this->costNoRecompute() << endl;
+#endif
 }

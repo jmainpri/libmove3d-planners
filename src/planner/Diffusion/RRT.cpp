@@ -27,7 +27,9 @@ using namespace Eigen;
 RRT::RRT(Robot* R, Graph* G) :
 TreePlanner(R,G)
 {
-	cout << "RRT::RRT(R,G)" << endl;
+    #ifdef DEBUG_STATUS
+        cout << "RRT::RRT(R,G)" << endl;
+#endif
 }
 
 RRT::~RRT()
@@ -68,7 +70,9 @@ bool RRT::preConditions()
 				if (direct.isValid())
 				{
 					connectNodeToCompco(_Start,_Goal);
-					cout << "Direct connection" << endl;
+                                        #ifdef DEBUG_STATUS
+                                        cout << "Direct connection" << endl;
+#endif
 					return true;
 				}
 			}

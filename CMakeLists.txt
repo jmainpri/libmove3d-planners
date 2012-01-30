@@ -161,6 +161,8 @@ Move3DMPLIB_flag(USE_GSL "Compilation with module Hri-planner" ON)
 Move3DMPLIB_flag(HRI_COSTSPACE "With the hri work" ON)
 Move3DMPLIB_flag(HRI_PLANNER "With the hri work done in BioMove3D" ON USE_GSL)
 
+Move3DMPLIB_flag(DEBUG_STATUS "Writting for debugs" ON)
+
 Move3DMPLIB_CheckCompilationFlags()
 
 # ------------------------------------------------------------------------------

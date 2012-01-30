@@ -53,7 +53,9 @@ bool PRM::checkStopConditions()
 {
 	if (ENV.getBool(Env::expandToGoal) && trajFound())
 	{
-		cout << "Success: the start and goal components are connected." << endl;
+#ifdef DEBUG_STATUS
+                cout << "Success: the start and goal components are connected." << endl;
+#endif
 		return (true);
 	}
 

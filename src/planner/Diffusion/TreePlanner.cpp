@@ -30,7 +30,9 @@ m_nbConscutiveFailures(0),
 m_nbExpansion(0),
 m_nbFailedExpansion(0)
 {	
-	cout << "TreePlanner::TreePlanner(R,G)" << endl;
+#ifdef DEBUG_STATUS
+        cout << "TreePlanner::TreePlanner(R,G)" << endl;
+#endif
 }
 
 /*!
@@ -149,7 +151,9 @@ bool TreePlanner::checkStopConditions()
 {
 	if (ENV.getBool(Env::expandToGoal) && trajFound())
 	{
-		cout << "Success: the start and goal components are connected." << endl;
+            #ifdef DEBUG_STATUS
+                cout << "Success: the start and goal components are connected." << endl;
+#endif
 		return (true);
 	}
 	if (/*ENV.getBool(Env::ligandExitTrajectory)*/false)
