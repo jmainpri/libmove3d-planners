@@ -74,8 +74,7 @@ double BaseExpansion::pathDelta(LocalPath& path)
  * Returns the localpath of length
  * equal or inferior to step
  */
-LocalPath BaseExpansion::getExtensiontPath(shared_ptr<Configuration> qi,
-																					 shared_ptr<Configuration> qf )
+LocalPath BaseExpansion::getExtensiontPath( confPtr_t qi, confPtr_t qf )
 {
 	LocalPath directionLocalpath(qi,qf);
 	

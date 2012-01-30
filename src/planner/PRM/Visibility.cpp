@@ -13,6 +13,7 @@
 
 #include "API/Roadmap/node.hpp"
 #include "API/Roadmap/graph.hpp"
+#include "API/Roadmap/compco.hpp"
 
 #include "../p3d/env.hpp"
 
@@ -22,10 +23,10 @@ using namespace tr1;
 #include "Planner-pkg.h"
 
 Vis_PRM::Vis_PRM(Robot* R, Graph* G)
-        : PRM(R,G)
+: PRM(R,G)
 {
 	m_nbOfExpand = 0;
-    cout << " New Visibility PRM "  << endl;
+  cout << " New Visibility PRM "  << endl;
 }
 
 Vis_PRM::~Vis_PRM()
@@ -38,101 +39,88 @@ Vis_PRM::~Vis_PRM()
  */
 vector<Node*> Vis_PRM::isOrphanLinking(Node* N, int & link)
 {
-    vector<Node*> vect;
-    double dist = 0;
-	
-	p3d_list_node* NodeScan = _Graph->getGraphStruct()->nodes;
-	
-	while (NodeScan != NULL) {//update all nodes in the list
-		NodeScan->N->dist_Nnew = p3d_APInode_dist_multisol(
-									_Graph->getGraphStruct(), 
-									N->getNodeStruct(), 
-									NodeScan->N);//compute the distance between N[i] and the node in the list
-		
-//		NodeScan->N->dist_Nnew = p3d_dist_config(_Graph->getRobot()->getRobotStruct(), 
-//												 N->getNodeStruct()->q,
-//												 NodeScan->N->q);
-		
-		NodeScan = NodeScan->next;
-	}
-	p3d_order_node_list(_Graph->getGraphStruct()->nodes);
-	_Graph->sortNodesByDist(N);
-						
-	//cout << "----------------------------------------------" << link << endl;
+  vector<Node*> vect;
+  double dist = 0;
+
+//  for (int i=0; i<int(_Graph->getNumberOfNodes()); i++) {
+//    _Graph->getNode(i)->distMultisol(N);
+//  }
+// sort(nodes.begin(), nodes.end(), &compareNodes);
+  
+	for (int j=0; j<int(_Graph->getNumberOfCompco()); j++)
+  {
+    vector<Node*>& nodes = _Graph->getConnectedComponent(j)->getNodes();
     
-	for (int j=1; j<=_Graph->getGraphStruct()->ncomp; j++)
+    for (int i=0; i<int(nodes.size()); i++)
     {
-        for (unsigned int i=0; i < _Graph->getNumberOfNodes() ; i++)
-        {
-            if (_Graph->getNode(i)->getNodeStruct()->numcomp == j)
-            {
-				//cout << _Graph->getNode(i)->dist(N) << endl;
-                if (_Graph->getNode(i)->isLinkable(N, &dist) /*&& 
-					(dist < ENV.getDouble(Env::dist) || !ENV.getBool(Env::useDist))*/)
-                {
-                    link++;
-                    vect.push_back(_Graph->getNode(i));
-                    break;
-                }
-            }
-        }
+      if( N == nodes[i] ) continue;
+
+      if (nodes[i]->isLinkable(N, &dist) /*&& (dist < ENV.getDouble(Env::dist) || !ENV.getBool(Env::useDist))*/)
+      {
+        link++;
+        vect.push_back( nodes[i] );
+        break;
+      }
     }
-    return vect;
+  }
+  return vect;
 }
 
 
 /**
  * Is Linking Orphan node
  */
-bool Vis_PRM::linkOrphanLinking(Node* N, int type, unsigned int & ADDED, int & nb_fail)
+bool Vis_PRM::linkOrphanLinking(Node* node, int type, unsigned int& ADDED, int& nb_fail)
 {
 	int link = 0;
+	int nodes_added =0;
 	
-	int NodesAdded =0;
-	// All Orphan nodes
-	vector<Node*> vect = this->isOrphanLinking(N,link);
+  // All Orphan nodes
+	vector<Node*> vect = isOrphanLinking(node, link);
 	
-	//	cout << "Size of linked nodes " << vect.size() << endl;
-	//	cout << "Link = " << link << endl;
 	if ((type == 1 || type == 2) && (link > 1))
 	{
 		//_Graph->insertNode(N);
-		_Graph->addNode(N); ADDED++; NodesAdded++;
+		_Graph->addNode(node); ADDED++; nodes_added++;
 		nb_fail = 0;
-		
-		//_Graph->MergeComp(vect[0], N, vect[0]->dist(N));
-		vect[0]->connectNodeToCompco(N, 0);
-		//_Graph->addEdges(N,vect[0],N->dist(vect[0]));
-		for (int k=1; k< int(vect.size()); k++)
+    
+    for (int i=0; i<int(vect.size()); i++)
 		{
-			//N->merge(vect[k]);
-			///_Graph->addEdges(N,,N->dist(vect[k]));
-			//p3d_create_edges(_Graph->getGraphStruct(),
-			//							 vect[k]->getNodeStruct(),
-			//							 N->getNodeStruct(),
-			//							 N->dist(vect[k]));
+			vect[i]->connectNodeToCompco(node, 0);
+		}
+
+		/*
+		//_Graph->MergeComp(vect[0], N, vect[0]->dist(N));
+		vect[0]->connectNodeToCompco(node, 0);
+		//_Graph->addEdges(N,vect[0],N->dist(vect[0]));
+		for (int i=1; i<int(vect.size()); i++)
+		{
+			// N->merge(vect[k]);
+			// _Graph->addEdges(N,,N->dist(vect[k]));
+			// p3d_create_edges(_Graph->getGraphStruct(),vect[k]->getNodeStruct(),N->getNodeStruct(),N->dist(vect[k]));
 			
 			//_Graph->MergeComp(vect[k], N, vect[k]->dist(N));
-			vect[k]->connectNodeToCompco(N, 0);
+			vect[i]->connectNodeToCompco(node, 0);
 		}
+     */
 		return true;
 	}
 	else if ((type == 0 || type == 2) && (link == 0))
 	{
-		_Graph->insertNode(N);
-		ADDED++; NodesAdded++;
+		_Graph->insertNode(node);
+		ADDED++; nodes_added++;
 		nb_fail = 0;
 		return true;
 	}
 	else
 	{
-		if(NodesAdded > 0)
+		if(nodes_added > 0)
 		{
 			throw string("Erases a created node"); 
 		}
 		nb_fail++;
-		N->deleteCompco();
-		delete N->getNodeStruct();
+		node->deleteCompco();
+		delete node->getNodeStruct();
 		return false;
 	}
 }
@@ -163,7 +151,7 @@ int Vis_PRM::createOrphansLinking(unsigned int nb_node, int type)
  */
 void Vis_PRM::createOneOrphanLinking(int type, unsigned int & ADDED, int & nb_fail)
 {
-    shared_ptr<Configuration> q = _Robot->shoot();
+  shared_ptr<Configuration> q = _Robot->shoot();
 	
 	if ( q->setConstraintsWithSideEffect() && !q->isInCollision() ) 
 	{

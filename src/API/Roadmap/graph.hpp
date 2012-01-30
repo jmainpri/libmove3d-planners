@@ -112,6 +112,11 @@ public:
 	 * Get the number of compco in the grap
 	 */
 	unsigned int getNumberOfCompco() const;
+  
+  /**
+	 * Get Compco
+	 */
+	ConnectedComponent* getConnectedComponent(int ith) const;
 	
 	/**
 	 * Get Compcos
@@ -469,6 +474,7 @@ private:
 	void				initBGL();
   void				setAllDescriptorsInvalid();
   void        drawEdge(BGL_Vertex v1, BGL_Vertex v2);
+  void        drawNode(BGL_Vertex v);
   
   void        deleteGraphStruct();
 	void        updateCompcoFromStruct();

@@ -16,6 +16,8 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Roadmap/graph.hpp"
 
+#include "planner/Diffusion/Variants/Star-RRT.hpp"
+
 #include <string>
 #include <tr1/memory>
 
@@ -111,7 +113,7 @@ public:
   void run();
   
 private: 
-  Graph* m_graph;
+  StarRRT* rrt;
 };
 
 //! Softmotion replanner

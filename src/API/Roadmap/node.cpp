@@ -180,7 +180,7 @@ void Node::setId(unsigned int id)
  */
 int Node::getNumberOfNeighbors()
 { 
-		return getNeighbors().size();
+  return getNeighbors().size();
 }
 
 //! Get number of neighbors
@@ -193,11 +193,11 @@ vector<Node*> Node::getNeighbors()
 	
 	BGL_Graph& g = m_Graph->get_BGL_Graph();
 	BGL_VertexDataMapT NodeData = boost::get( NodeData_t() , g );
+  BGL_Vertex u = getDescriptor();
 	
-	for (tie(ai, ai_end) = adjacent_vertices(  getDescriptor() , g); ai != ai_end; ++ai)
+	for (tie(ai, ai_end) = adjacent_vertices(u, g); ai != ai_end; ++ai)
 	{
-		Node* N = NodeData[*ai] ;
-		allNeighbors.push_back( N );
+		allNeighbors.push_back( NodeData[*ai] );
 	}
 	return allNeighbors;
 }
@@ -216,25 +216,37 @@ void Node::printNeighbors()
 //! Get Number of Edges
 int Node::getNumberOfEdges()
 { 
-		return getEdges().size();
+  return getEdges().size();
 }
 
 vector<Edge*> Node::getEdges()
 {
 	vector<Edge*> allEdges; 
 	
-	boost::graph_traits<BGL_Graph>::out_edge_iterator out_i, out_end;
 	BGL_Graph& g = m_Graph->get_BGL_Graph();
-	
 	BGL_EdgeDataMapT EdgeData = boost::get( EdgeData_t() , g );
-	
-	for (tie(out_i, out_end) = boost::out_edges( getDescriptor()  , g ); 
-			 out_i != out_end; ++out_i) 
-	{
-		Edge * E = boost::get( EdgeData , *out_i );
-		allEdges.push_back( E );
-	}
-	
+  BGL_Vertex u = getDescriptor();
+  
+  // Get out edges
+  typedef boost::graph_traits<BGL_Graph>::out_edge_iterator out_edge_iter;
+  out_edge_iter beginOut, endOut;
+  boost::tie(beginOut, endOut) = boost::out_edges( u, g );
+  for( out_edge_iter it = beginOut; it != endOut; ++(it))
+  {
+    allEdges.push_back( EdgeData[*it] );
+    // allEdges.push_back( g[*ep.first] );
+    // allEdges.push_back( boost::get(EdgeData, *out_i) );
+  }
+  
+  // Get in edges
+  typedef boost::graph_traits<BGL_Graph>::in_edge_iterator in_edge_iter;
+  in_edge_iter beginIn, endIn;
+  boost::tie(beginIn, endIn) = boost::in_edges( u, g );
+  for (in_edge_iter it = beginIn; it != endIn; ++(it))
+  {
+    allEdges.push_back( EdgeData[*it] );
+  }
+
 	return allEdges;
 }
 
@@ -322,7 +334,7 @@ bool Node::isLinkable(Node* N, double* dist) const
   }
   
   int isNoCol = 0, *ikSol = NULL;
-
+  
   if(!p3d_compare_iksol(m_Robot->getRobotStruct()->cntrt_manager, m_Node->iksol, N->m_Node->iksol)) {
     return false;
   }

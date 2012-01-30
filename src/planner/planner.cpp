@@ -21,6 +21,8 @@
 using namespace std;
 using namespace tr1;
 
+Planner* global_Move3DPlanner = NULL;
+
 Planner::Planner() :
 		  _stop_func(fct_stop),
 		  _draw_func(ext_g3d_draw_allwin_active),

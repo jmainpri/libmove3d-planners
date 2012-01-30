@@ -17,6 +17,7 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Roadmap/node.hpp"
 #include "API/Roadmap/graph.hpp"
+#include "API/Roadmap/compco.hpp"
 
 #include <iostream>
 
@@ -144,8 +145,14 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 	LocalPath extensionLocalpath = getExtensiontPath (expansionNode->getConfiguration(), directionConfig );
 	
 	Node* node_new = NULL;
-	
-	if ( extensionLocalpath.isValid() )
+  
+  bool isValid = true;
+  if( PlanEnv->getBool(PlanParam::trajComputeCollision) )
+  {
+    isValid = extensionLocalpath.isValid();
+  }
+  
+	if ( isValid )
 	{
 		// Create new node and add it to the graph
 		node_new = new Node(m_Graph,extensionLocalpath.getEnd());
@@ -185,7 +192,7 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 			//cout << "near_nodes[i] : " << near_nodes[i] <<  " , d : " << near_nodes[i]->dist(node_new) << endl;
 			LocalPath path( near_nodes[i]->getConfiguration(), q_new );
 			
-      bool isValid = true;
+      isValid = true;
       if( PlanEnv->getBool(PlanParam::trajComputeCollision) )
       {
         isValid = path.isValid();
@@ -214,6 +221,7 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 		node_new->parent() = node_min;
     node_min->isLeaf() = false;
     
+    // Call to rewire function
     rewireGraph( node_new, node_min, near_nodes );
 	}
 	else 
@@ -224,6 +232,7 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 	// Add node to graph if everything succeeded
 	if (!failed)
 	{
+    cout << "Success" << endl;
 		// Components were merged
 		if(( directionNode != NULL )&&( node_new == directionNode ))
 		{
@@ -233,6 +242,7 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 	}
 	else
 	{
+    cout << "Failed" << endl;
 		expansionFailed(*expansionNode);
 	}
 	
@@ -288,6 +298,36 @@ int StarRRT::init()
 	int added = TreePlanner::init();
 	_expan = new StarExpansion(_Graph);
 	return added;
+}
+
+//! prune tree
+void StarRRT::pruneTreeFromNode(Node* node)
+{
+  //double cost  = _Graph->searchConf(*q)->sumCost();
+  Node* parent = node->parent();
+  
+  if( parent == NULL ) {
+    return;
+  }
+  
+  Node* parent_parent = parent->parent();
+  _Graph->removeNode( parent );
+  
+  if( parent_parent == NULL ) {
+    return;
+  }
+  else  {
+    ConnectedComponent* compco = parent_parent->getConnectedComponent();
+    
+    if( compco != NULL ) {
+      vector<Node*> nodes = compco->getNodes();
+      
+      for (int i=0; i<int(nodes.size()); i++) 
+      {
+        _Graph->removeNode( nodes[i] );
+      }
+    }
+  }
 }
 
 /**

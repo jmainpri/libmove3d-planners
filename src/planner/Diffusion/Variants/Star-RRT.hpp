@@ -121,6 +121,11 @@ public:
 	 * @return the number of node added during the init phase
 	 */
 	virtual int init();
+  
+  /**
+   * This function prunes the tree from the configuration
+   */
+  void pruneTreeFromNode(Node* node); 
 
 	/**
 	 * TODO

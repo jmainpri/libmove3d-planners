@@ -830,7 +830,8 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
 		}
     
     //replan_store_traj_to_vect(*this,m_step);
-    global_rePlanningEnv->store_traj_to_draw(*this,m_step);
+    if( global_rePlanningEnv )
+      global_rePlanningEnv->store_traj_to_draw(*this,m_step);
 		
     m_time += global_rePlanningEnv->time_since_last_call( first_iteration , ts );
 		//ChronoTimes( &m_time , &ts );

@@ -19,25 +19,25 @@ Global std::vector<Planner*> plannerlist;
  * @ingroup NEW_CPP_MODULE
  * Funtion to set multirun Ids
  */
-void p3d_planner_functions_SetRunId( unsigned int idRun );
+void p3d_planner_functions_set_run_id( unsigned int idRun );
 
 /**
  * @ingroup NEW_CPP_MODULE
  * Funtion to get multi-run Ids
  */
-unsigned int p3d_planner_functions_GetRunId();
+unsigned int p3d_planner_functions_get_run_id();
 
 /**
  * @ingroup NEW_CPP_MODULE
  * Funtion for planning (Manip. Module)
  */
-p3d_traj* planner_Function(p3d_rob* robotPt, configPt qs, configPt qg);
+p3d_traj* p3d_planner_function( p3d_rob* robotPt, configPt qs, configPt qg );
 
 /**
  * @ingroup NEW_CPP_MODULE
  * Funtion for smoothing a trajectory (Manip. Module)
  */
-void smoothing_Function(p3d_rob* p3d_Robot, p3d_traj* traj, int nbSteps, double maxTime);
+void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double maxTime );
 
 /**
  * Set a function that generate IK solutions
@@ -48,7 +48,7 @@ void set_goal_solution_function( configPt (*fct)() );
  * Generate Goal Configuration Function
  * This function can be set outside the library
  */ 
-bool generate_goal_configuration( Configuration& q );
+bool p3d_generate_goal_configuration( Configuration& q );
 
 /**
   @ingroup NEW_CPP_MODULE
@@ -60,11 +60,7 @@ bool generate_goal_configuration( Configuration& q );
  * @param (*fct_draw)(void) la fonction d'affichage
  * @return le nombre de Node ajoutés au Graph
  */
-int p3d_run_prm(
-		p3d_graph* Graph_Pt,
-		int* fail,
-		int (*fct_stop)(void),
-		void (*fct_draw)(void));
+int p3d_run_prm(p3d_rob* robotPt);
 
 /**
   @ingroup NEW_CPP_MODULE
@@ -76,11 +72,7 @@ int p3d_run_prm(
  * @param (*fct_draw)(void) la fonction d'affichage
  * @return le nombre de Node ajoutés au Graph
  */
-int p3d_run_acr(
-		p3d_graph* Graph_Pt,
-		int* fail,
-		int (*fct_stop)(void),
-		void (*fct_draw)(void));
+int p3d_run_acr(p3d_rob* robotPt);
 
 /**
   @ingroup NEW_CPP_MODULE
@@ -92,11 +84,7 @@ int p3d_run_acr(
  * @param (*fct_draw)(void) la fonction d'affichage
  * @return le nombre de Node ajoutés au Graph
  */
-int p3d_run_vis_prm(
-		p3d_graph* Graph_Pt,
-		int* fail,
-		int (*fct_stop)(void),
-		void (*fct_draw)(void));
+int p3d_run_vis_prm(p3d_rob* robotPt);
 
 /**
   @ingroup NEW_CPP_MODULE
@@ -107,10 +95,7 @@ int p3d_run_vis_prm(
  * @param (*fct_draw)(void) la fonction d'affichage
  * @return la trajectoire peut être générée
  */
-int p3d_run_rrt(
-		p3d_graph* GraphPt,
-		int (*fct_stop)(void),
-		void (*fct_draw)(void));
+int p3d_run_rrt(p3d_rob* robotPt);
 
 /**
   @ingroup NEW_CPP_MODULE
@@ -121,21 +106,16 @@ int p3d_run_rrt(
  * @param (*fct_draw)(void) displau function
  * @return if there's a trajectory
  */
-bool p3d_run_est(
-		p3d_graph* GraphPt,
-		int (*fct_stop)(void),
-		void (*fct_draw)(void));
+bool p3d_run_est(p3d_rob* robotPt);
 
 /**
  * @ingroup NEW_CPP_MODULE
  * @brief LEARN FUNCTION to use with C++ Planner API
  */
-void p3d_learn_cxx(int NMAX,
-		int (*fct_stop)(void), void (*fct_draw)(void));
+void p3d_learn_cxx(int NMAX, int (*fct_stop)(void), void (*fct_draw)(void));
 
 /**
  * @ingroup NEW_CPP_MODULE
  * @brief SPECIFIC LEARN FUNCTION to use with C++ Planner API
  */
-int p3d_specific_learn_cxx(double *qs, double *qg, int *iksols, int *iksolg,
-		int (*fct_stop)(void), void (*fct_draw)(void));
+int p3d_specific_learn_cxx(double *qs, double *qg, int *iksols, int *iksolg, int (*fct_stop)(void), void (*fct_draw)(void));

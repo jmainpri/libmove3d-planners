@@ -110,8 +110,7 @@ void g3d_draw_eigen_box(	const Eigen::Vector3d& v1, const Eigen::Vector3d& v2, c
 }
 //#endif
 
-/**
- * @ingroup graphics
+/*
  * Draws the things related to cost spaces
  */
 void g3d_draw_costspace()

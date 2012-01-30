@@ -2302,8 +2302,8 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
         ManipulationViaConfPlanner m_viaConfPlan(robotPt);
 
         m_viaConfPlan.setNavigationPlanner();
-        m_viaConfPlan.setPlanningMethod( planner_Function );
-        m_viaConfPlan.setSmoothingMethod( smoothing_Function );
+        m_viaConfPlan.setPlanningMethod( p3d_planner_function );
+        m_viaConfPlan.setSmoothingMethod( p3d_smoothing_function );
 
 
         MANIPULATION_TASK_MESSAGE msg = m_viaConfPlan.planTrajFromConfigArrayInRobotTheForm(smTrajs);

@@ -34,9 +34,14 @@ class Edge;
 typedef boost::property<NodeData_t, Node*>														VertexProperty;
 typedef boost::property<EdgeData_t, Edge*>														EdgeProperty;
 
-// Defaut type of a graph
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
-															VertexProperty,EdgeProperty >						BGL_Graph;
+
+typedef boost::adjacency_list<
+boost::vecS, //  The container used for egdes : here, std::list.
+boost::vecS, //  The container used for vertices: here, std::vector.
+boost::bidirectionalS, //  directed or undirected edges ?.
+VertexProperty, //  The type that describes a Vertex.
+EdgeProperty //  The type that describes an Edge
+>	BGL_Graph;
 
 /// Defaut type of a vertex in a graph
 typedef boost::graph_traits<BGL_Graph>::vertex_descriptor							BGL_Vertex;
@@ -51,3 +56,4 @@ typedef boost::property_map<BGL_Graph, NodeData_t>::type							BGL_VertexDataMap
 typedef boost::property_map<BGL_Graph, EdgeData_t>::type							BGL_EdgeDataMapT;
 
 #endif
+

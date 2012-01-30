@@ -280,8 +280,8 @@ bool HRICS::initShelfScenario()
   planner = global_manipPlanTest->getManipPlanner();
   
   // Set Planning functions
-  planner->setPlanningMethod( planner_Function );
-  planner->setSmoothingMethod( smoothing_Function );
+  planner->setPlanningMethod( p3d_planner_function );
+  planner->setSmoothingMethod( p3d_smoothing_function );
   //planner->setReplanningMethod( replanning_Function );
   planner->setArmCartesian( 0, false );
   planner->setUseBaseMotion( true );

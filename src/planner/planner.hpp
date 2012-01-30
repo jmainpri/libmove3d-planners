@@ -141,4 +141,6 @@ protected:
   bool m_fail;
 };
 
+extern Planner* global_Move3DPlanner;
+
 #endif

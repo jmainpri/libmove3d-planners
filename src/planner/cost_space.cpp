@@ -391,7 +391,7 @@ double computeInCollisionCost(Configuration& conf)
 	Robot* robot = conf.getRobot();
 	shared_ptr<Configuration> qActual = robot->getCurrentPos();
   
-  double cost = 0.0;
+  double cost = 0.1;
   
   if( conf.isInCollision() )
   {

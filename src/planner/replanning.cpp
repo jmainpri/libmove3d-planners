@@ -414,21 +414,43 @@ StarReplanner::~StarReplanner()
 
 bool StarReplanner::init()
 {
-
+  return true;
 }
 
 void StarReplanner::run()
 {
   m_isPlanning = true;
   
-  cout << "m_t_rep : " << m_t_rep << endl;
+  // Set 0.3 seconds to do the concat traj
+  PlanEnv->setBool(PlanParam::withTimeLimit, true );
+  PlanEnv->setDouble(PlanParam::optimTimeLimit, m_t_rep-0.3 );
   
-  // Run deformation from last path id
-  int last_path_id = m_CurrentTraj.getNbOfPaths()-1;
+  confPtr_t qSwitch = m_CurrentTraj[m_switch_id];
   
-  StarRRT* rrt = new StarRRT( m_robot, m_graph );
-
+	API::CostOptimization optimTrj(m_CurrentTraj); // .extractSubTrajectoryOfLocalPaths(m_switch_id,m_last_path_id));
   
+  optimTrj.setStep( m_initial_step );
+	optimTrj.runDeformation(ENV.getInt(Env::nbCostOptimize),m_idRun++);
+	optimTrj.cutTrajInSmallLP( optimTrj.getRangeMax() / m_lp_avera_length );
+  optimTrj.replaceP3dTraj();
+  
+  vector<p3d_traj*> traj(1);
+  traj[0] = optimTrj.replaceP3dTraj(NULL);
+  
+  // Concatanate traj and store it to current traj
+  p3d_traj* lin_traj = concat_to_current_traj(traj);
+  
+  if( lin_traj )
+  {
+    m_CurrentTraj = API::Trajectory( m_robot, lin_traj );
+    m_planningSucceded = true;
+  }
+  else {
+    m_planningSucceded = false;
+  }
+  
+  //store_traj_to_draw( optimTrj 0.0 );
+  cout << "End replanning : " << __func__ << endl;
   m_isPlanning = false;
 }
 
@@ -462,8 +484,8 @@ bool SoftmotionReplanner::init()
   
   m_manipPlanner = new ManipulationPlanner(m_robot->getRobotStruct());
   m_manipPlanner->setUseBaseMotion( true );
-  m_manipPlanner->setPlanningMethod( planner_Function );
-  m_manipPlanner->setSmoothingMethod( smoothing_Function );
+  m_manipPlanner->setPlanningMethod( p3d_planner_function );
+  m_manipPlanner->setSmoothingMethod( p3d_smoothing_function );
   return true;
 }
 
@@ -849,14 +871,22 @@ void ReplanningSimulator::store_traj_to_draw(const API::Trajectory& traj, double
     }
   }
   
-  shared_ptr<Configuration> q_hum(m_human->getCurrentPos());
-  
+  confPtr_t q_hum = m_human->getCurrentPos();
   (*q_hum)[6] =  PlanEnv->getDouble(PlanParam::env_futurX);
   (*q_hum)[7] =  PlanEnv->getDouble(PlanParam::env_futurY);
   (*q_hum)[8] =  PlanEnv->getDouble(PlanParam::env_futurZ);
   (*q_hum)[11] = PlanEnv->getDouble(PlanParam::env_futurRZ);
   
   m_human->setAndUpdate(*q_hum);
+  cout << "PlanEnv->getDouble(PlanParam::env_futurX) = " << PlanEnv->getDouble(PlanParam::env_futurX) << endl;
+  cout << "PlanEnv->getDouble(PlanParam::env_futurY) = " << PlanEnv->getDouble(PlanParam::env_futurY) << endl;
+  cout << "PlanEnv->getDouble(PlanParam::env_futurZ) = " << PlanEnv->getDouble(PlanParam::env_futurZ) << endl;
+  cout << "PlanEnv->getDouble(PlanParam::env_futurRZ) = " << PlanEnv->getDouble(PlanParam::env_futurRZ) <<  endl;
+  
+//  cout << "(*q_hum)[6] = " << (*q_hum)[6] << endl;
+//  cout << "(*q_hum)[7] = " << (*q_hum)[7] << endl;
+//  cout << "(*q_hum)[8] = " << (*q_hum)[8] << endl;
+//  cout << "(*q_hum)[11] = " << (*q_hum)[11] <<  endl;
   
   m_isWritingDisplay = false;
 }
