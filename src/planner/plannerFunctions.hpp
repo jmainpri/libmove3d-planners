@@ -42,7 +42,7 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
 /**
  * Set a function that generate IK solutions
  */ 
-void set_goal_solution_function( configPt (*fct)() );
+void p3d_set_goal_solution_function( configPt (*fct)() );
 
 /**
  * Generate Goal Configuration Function
