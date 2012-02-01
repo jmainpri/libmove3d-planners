@@ -11,6 +11,12 @@
 
 #include <vector>
 
+#include "API/Trajectory/trajectory.hpp"
+
+API::Trajectory traj_optim_create_sraight_line_traj();
+
+bool traj_optim_initScenario();
+bool traj_optim_initStomp();
 bool traj_optim_runChomp();
 bool traj_optim_runStomp();
 

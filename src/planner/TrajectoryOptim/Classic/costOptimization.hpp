@@ -62,6 +62,17 @@ namespace API
 		 * @param step is the distance between 2 configurations
 		 */
 		bool oneLoopDeformRecompute();
+
+    /**
+		 * Stops at the last descending configuration
+		 * on the cost map
+		 */
+		static double getLastDescendingConfParam( LocalPath& directionPath );
+		
+		/**
+		 * Expand the configuration to a ne
+		 */
+		static confPtr_t perturbCurrent( confPtr_t qCurrPt, confPtr_t qRandPt, double step, bool descent );
 		
 		/**
 		 * 
@@ -75,25 +86,13 @@ namespace API
 		 * Cheat for Justin
 		 */
 		std::tr1::shared_ptr<Configuration> cheat();
-		
-		/**
-		 * Stops at the last descending configuration
-		 * on the cost map
-		 */
-		double getLastDescendingConfParam(LocalPath& directionPath);
-		
-		/**
-		 * Expand the configuration to a ne
-		 */
-		std::tr1::shared_ptr<Configuration> perturbCurrent(std::tr1::shared_ptr<Configuration> qCurrPt,
-                                                           std::tr1::shared_ptr<Configuration> qRandPt);
 
 		
 		/**
 		 * Create new trajectories to show in debug mode
 		 * also calls the g3d_draw function to plot in the OpenGl display
 		 */
-		void debugShowTraj(double lPrev,double lNext,std::tr1::shared_ptr<Configuration> qNew , int color);
+		void debugShowTraj(double lPrev,double lNext, confPtr_t qNew , int color);
     
     /**
 		 * Returns 3 random configurations along the trajtectory
@@ -101,7 +100,7 @@ namespace API
 		 * @return vector of configuration
 		 * @return 
 		 */
-		std::vector< std::tr1::shared_ptr<Configuration> > get3RandSuccesConfAlongTraj(
+		std::vector<confPtr_t> get3RandSuccesConfAlongTraj(
                                                                                    double& prevDistPt,
                                                                                    double& randDistPt,
                                                                                    double& nextDistPt,
@@ -111,11 +110,11 @@ namespace API
 		 * Returns the 3 configurations that are the closest to the input configuration
 		 * @param 
 		 */
-		std::vector< std::tr1::shared_ptr<Configuration> > getClosestConfOnTraj(
+		std::vector<confPtr_t> getClosestConfOnTraj(
                                                                             double& prevDistPt,
                                                                             double& randDistPt,
                                                                             double& nextDistPt,
-                                                                            std::tr1::shared_ptr<Configuration> ptrConf,
+                                                                            confPtr_t ptrConf,
                                                                             double step);
 		
 		

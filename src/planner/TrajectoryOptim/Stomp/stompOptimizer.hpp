@@ -80,12 +80,39 @@ public:
   
   virtual ~StompOptimizer();
 
+  /**
+   * Main optimizer function
+   * @param nbIteration max number of iteration
+   * @param idRun
+   * @return
+   */
   void runDeformation( int nbIteration , int idRun=0 );
+  
+  /**
+   * Generate the noisy trajectories
+   * @param num_time_steps
+   */
+  void generateNoisyTrajectory(const API::Trajectory& traj, std::vector< std::vector<confPtr_t> >& noisy_trajectory);
+  
+  /**
+   * Functions to set the shared pointer
+   */
   void setSharedPtr(boost::shared_ptr<StompOptimizer>& ptr);
   void resetSharedPtr();
   
+  /**
+   * Test the noisy trajectory sampler
+   */
   void testMultiVariateGaussianSampler();
+  
+  /**
+   * Get the current trajectory cost profile
+   */
   void getTrajectoryCost( std::vector<double>& cost, double step );
+  
+  /**
+   * Get the current joint violation
+   */
   int getJointLimitViolations() { return joint_limits_violation_; }
   bool getJointLimitViolationSuccess() { return succeded_joint_limits_; }
 
@@ -254,6 +281,7 @@ private:
   bool handleJointLimits();
   void animatePath();
   void animateEndeffector();
+  void setGroupTrajectoryToVectorConfig(std::vector<confPtr_t>& traj);
   void visualizeState(int index);
   double getTrajectoryCost();
   double getSmoothnessCost();

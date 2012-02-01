@@ -8,12 +8,26 @@
 #include "../p3d/env.hpp"
 
 #include "planEnvironment.hpp"
-#include "planners_cxx.hpp"
 #include "plannerFunctions.hpp"
-#include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
+#include "../p3d/env.hpp"
 
-#include "Diffusion/Variants/Threshold-RRT.hpp"
-#include "Diffusion/Variants/Star-RRT.hpp"
+#include "planner/planner.hpp"
+
+#include "planner/PRM/PRM.hpp"
+#include "planner/PRM/Visibility.hpp"
+#include "planner/PRM/ACR.hpp"
+#include "planner/PRM/PerturbationRoadmap.hpp"
+
+#include "planner/Diffusion/RRT.hpp"
+#include "planner/Diffusion/EST.hpp"
+#include "planner/Diffusion/Variants/Transition-RRT.hpp"
+#include "planner/Diffusion/Variants/ManhattanLike-RRT.hpp"
+#include "planner/Diffusion/Variants/Multi-RRT.hpp"
+#include "planner/Diffusion/Variants/Multi-TRRT.hpp"
+#include "planner/Diffusion/Variants/Threshold-RRT.hpp"
+#include "planner/Diffusion/Variants/Star-RRT.hpp"
+
+#include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 
 #ifdef HRI_COSTSPACE
 #include "HRI_costspace/HRICS_costspace.hpp"
@@ -466,6 +480,32 @@ int p3d_run_prm(p3d_rob* robotPt)
 	return nb_added_nodes;
 }
 
+int p3d_run_perturb_prm(p3d_rob* robotPt)
+{
+  // Gets the robot pointer and the 2 configurations
+  Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
+  confPtr_t q_source = rob->getInitialPosition();
+  confPtr_t q_target = rob->getGoTo();
+  
+  // Allocate the p3d_graph if does't exist
+  // Removes graph if it exists, creates a new graph , Allocate RRT
+  p3d_graph* GraphPt = robotPt->GRAPH;
+  p3d_delete_graph( GraphPt );
+  Graph* graph = API_activeGraph =  new Graph(rob,GraphPt);
+	
+	cout << "Initializing PRM " << endl;
+  int nb_added_nodes=0;
+  PerturbationRoadmap* prm = new PerturbationRoadmap(rob, graph);
+	nb_added_nodes = prm->init();
+	nb_added_nodes += prm->run();
+	
+	cout << "nb added nodes " << nb_added_nodes << endl;
+	cout << "nb nodes " << graph->getNumberOfNodes() << endl;
+  
+  p3d_extract_traj( prm->trajFound(), nb_added_nodes, graph, q_source, q_target);
+	delete prm;
+	return nb_added_nodes;
+}
 
 int p3d_run_vis_prm(p3d_rob* robotPt)
 {	

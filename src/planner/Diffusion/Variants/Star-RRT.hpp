@@ -34,9 +34,19 @@ public:
 	StarExpansion(Graph* G);
   
   /**
+   * Set the init and goal
+   */
+  void setInitAndGoal( confPtr_t q_init, confPtr_t q_goal );
+  
+  /**
    * Set the CSpace distance
    */
   void initCSpace();
+  
+  /**
+   * Set the CSpace distance
+   */
+  void initStomp();
 	
 	/**
 	 * Destructor
@@ -49,6 +59,11 @@ public:
 	 */
 	bool expandToGoal(Node* expansionNode, 
 										std::tr1::shared_ptr<Configuration> directionConfig);
+  
+  /**
+   * Get the extepansion direction
+   */
+  confPtr_t getExpansionDirection(Node* expandComp, Node* goalComp, bool samplePassive, Node*& directionNode);
 	
 	/**
 	 * Connect expansion method
@@ -91,13 +106,25 @@ public:
 										Env::expansionMethod method);
 	
 private:
+  bool m_start_bias;
+  int m_Iteration;
+  int m_biasRatio;
+  std::vector<std::vector<confPtr_t> > m_biasTrajectory;
+  int m_ith_on_traj;
+  int m_ith_trajectory;
+  
   int m_nb_rewiring;
 	int m_K_Nearest;
   double m_RrgRadiusFactor;
   double m_step;
+  
   // cspace
   CSpace* m_cspace;
-	
+  
+  
+  // init and goal configurations
+  confPtr_t m_q_init;
+  confPtr_t m_q_goal;
 };
 
 

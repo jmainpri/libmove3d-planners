@@ -38,6 +38,11 @@
 #include <boost/graph/strong_components.hpp>
 #include <boost/graph/graph_utility.hpp>
 #include <boost/foreach.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/astar_search.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/random.hpp>
+#include <boost/random.hpp>
 
 extern void* GroundCostObj;
 
@@ -286,12 +291,12 @@ BGL_Edge Graph::findEdgeDescriptor(Edge* E)
 void Graph::setAllDescriptorsInvalid()
 {
 	// Unset descriptors
-	for(unsigned int i=0; i<m_Nodes.size(); i++ )
+	for(int i=0; i<int(m_Nodes.size()); i++)
 	{
 		m_Nodes[i]->unSetDescriptor();
 	}
 	
-	for(unsigned int i=0; i<m_Edges.size(); i++ )
+	for(int i=0; i<int(m_Edges.size()); i++)
 	{
 		m_Edges[i]->unSetDescriptor();
 	}
@@ -728,8 +733,10 @@ void Graph::sortNodesByDist(Node* N)
 /**
  * Add Edge to Graph
  */
-void Graph::addEdge(Node* source, Node* target, double Length )
+Edge* Graph::addEdge(Node* source, Node* target, double Length )
 {	
+  Edge* E = NULL;
+  
 	if (!this->isEdgeInGraph(source, target))
 	{
 		Edge* E = new Edge(this, source, target, Length);
@@ -752,22 +759,26 @@ void Graph::addEdge(Node* source, Node* target, double Length )
 		
 		m_graphChanged = true;
 	}
+  
+  return E;
 }
 
 /**
  * Add Edges
  * WARNING only in graph API doesn't work yet not to be used
  */
-void Graph::addEdges(Node* N1, Node* N2, double Length , bool computeLength )
+vector<Edge*> Graph::addEdges(Node* N1, Node* N2, double Length , bool computeLength )
 {
 	if (computeLength) 
 	{
 		LocalPath path(N1->getConfiguration(), N2->getConfiguration());
 		Length = path.getParamMax();
 	}
-	
-	addEdge(N1, N2, Length);
-	addEdge(N2, N1, Length);
+    
+  vector<Edge*> edges(2);
+	edges[0] = addEdge(N1, N2, Length);
+	edges[1] = addEdge(N2, N1, Length);
+  return edges;
 }
 
 /**
@@ -876,28 +887,24 @@ void Graph::addNodes(vector<Node*> N, double maxDist)
 	}
 }
 
-const bool print_remove_node = true;
+const bool print_remove_node = false;
 
 /**
  * Remove a node from compco
  * TODO 
  */
-void Graph::removeNode(Node* to_del_node)
+void Graph::removeNode(Node* to_del_node, bool rebuild_compco)
 {	
 	if( !isInGraph( to_del_node ) )
 	{
 		throw string("Node, N is not graph");
 	}
   
-  // All descriptors are now invalid
-	this->setAllDescriptorsInvalid();
-  
-  // Get Edges to remove
+  // Get edges to remove
   vector<Edge*> to_del_edges = to_del_node->getEdges();
   
 	// Removes the node from the BGL graph
 	BGL_Vertex u = to_del_node->getDescriptor();
-	
 	boost::clear_vertex( u, m_BoostGraph );
 	boost::remove_vertex( u, m_BoostGraph );
 	
@@ -907,6 +914,7 @@ void Graph::removeNode(Node* to_del_node)
     cout << "edges to delete size : " << to_del_edges.size() << endl;
   }
 	
+  // Erase from edges vector
 	for( int i=0; i<int(to_del_edges.size()); ++i )
 	{
     m_Edges.erase( find( m_Edges.begin(), m_Edges.end(), to_del_edges[i])); 
@@ -921,12 +929,17 @@ void Graph::removeNode(Node* to_del_node)
 	m_Nodes.erase( find( m_Nodes.begin() , m_Nodes.end() , to_del_node ) );
   delete to_del_node;
 	
-	// Rebuild compco
-	this->rebuildCompcoFromBoostGraph();
+  // Rebuild compco
+  if( rebuild_compco )
+  {
+    rebuildCompcoFromBoostGraph();
+  }
 	
-	// All descriptors are now invalid
-	this->setAllDescriptorsInvalid();
+	// Set all nodes and edges descriptors are invalid now
+	setAllDescriptorsInvalid();
   
+  // Check that the number of verticies and edges are the same
+  // in the vectors and the graph
   if( boost::num_vertices(m_BoostGraph) != m_Nodes.size() ||
       boost::num_edges(m_BoostGraph) != m_Edges.size() )
 	{
@@ -941,7 +954,7 @@ void Graph::removeNode(Node* to_del_node)
   if( print_remove_node )
   {
     cout << "Saving graph" << endl;
-    this->saveBGLGraphToDotFile( "/Users/jmainpri/Desktop/Graph/myGraph.dot" );
+    saveBGLGraphToDotFile( "/Users/jmainpri/Desktop/Graph/myGraph.dot" );
   }
 }
 
@@ -1384,11 +1397,7 @@ bool Graph::connectNodeToCompco(Node* node1, Node* compco)
  * returns the KNearest neighbours of the configuration config
  * in the entire graph within a minimum radius
  */
-vector<Node*> Graph::KNearestWeightNeighbour(shared_ptr<Configuration> q,
-																						 int K,
-																						 double radius,
-																						 bool weighted,
-																						 int distConfigChoice)
+vector<Node*> Graph::KNearestWeightNeighbour(confPtr_t q,int K, double radius, bool weighted, int distConfigChoice)
 {
   // The null node has to be remouved
 	Node* nullNode(NULL);
@@ -1856,35 +1865,225 @@ bool Graph::checkAllEdgesValid()
 	return true;
 }
 
-// This function works for tree type of graphs
-API::Trajectory* Graph::extractBestTrajSoFar( std::tr1::shared_ptr<Configuration> qi, shared_ptr<Configuration> qf )
+//---------------------------------------------------------------------
+//---------------------------------------------------------------------
+// Warning Broken, WIP
+API::Trajectory* Graph::extractDijkstraShortestPathsTraj( confPtr_t qi, confPtr_t qf)
 {
+  boost::property_map<BGL_Graph, boost::edge_weight_t>::type weightmap = boost::get(boost::edge_weight, m_BoostGraph);
+  
+  BGL_EdgeDataMapT EdgeData = boost::get(EdgeData_t(), m_BoostGraph);
+  BOOST_FOREACH(BGL_Edge e, boost::edges(m_BoostGraph))
+  {
+    weightmap[e] = EdgeData[e]->cost();
+  }
+  
+  boost::property_map<BGL_Graph, boost::vertex_distance_t>::type d = boost::get(boost::vertex_distance, m_BoostGraph);
+  boost::property_map<BGL_Graph, boost::vertex_predecessor_t>::type p = boost::get(boost::vertex_predecessor, m_BoostGraph);
+  
+  Node* node_init = searchConf( *qi );
+  if( node_init == NULL )
+  {
+    return NULL;
+  }
+  
+  BGL_Vertex s = node_init->getDescriptor();
+  
+  dijkstra_shortest_paths(m_BoostGraph, s, predecessor_map(p).distance_map(d));
+  
+  std::cout << "distances and parents:" << std::endl;
+  boost::graph_traits<BGL_Graph>::vertex_iterator vi, vend;
+  for (boost::tie(vi, vend) = vertices(m_BoostGraph); vi != vend; ++vi) {
+    //std::cout << "distance(" << name[*vi] << ") = " << d[*vi] << ", ";
+    //std::cout << "parent(" << name[*vi] << ") = " << name[p[*vi]] << std::endl;
+  }
+  std::cout << std::endl;
+  
+  std::ofstream dot_file("figs/dijkstra-eg.dot");
+  dot_file << "digraph D {\n"
+  << "  rankdir=LR\n"
+  << "  size=\"4,3\"\n"
+  << "  ratio=\"fill\"\n"
+  << "  edge[style=\"bold\"]\n" << "  node[shape=\"circle\"]\n";
+  
+  boost::graph_traits<BGL_Graph>::edge_iterator ei, ei_end;
+  for (boost::tie(ei, ei_end) = edges(m_BoostGraph); ei != ei_end; ++ei) {
+    boost::graph_traits<BGL_Graph>::edge_descriptor e = *ei;
+    boost::graph_traits<BGL_Graph>::vertex_descriptor
+    u = source(e, m_BoostGraph), v = target(e, m_BoostGraph);
+    //dot_file << name[u] << " -> " << name[v] << "[label=\"" << get(weightmap, e) << "\"";
+    if (p[v] == u)
+      dot_file << ", color=\"black\"";
+    else
+      dot_file << ", color=\"grey\"";
+    dot_file << "]";
+  }
+  dot_file << "}";
+  
+  return NULL;
+}
+
+//---------------------------------------------------------------------
+//---------------------------------------------------------------------
+
+// euclidean distance heuristic
+template <class TGraph, class CostType, class LocMap>
+class distance_heuristic : public boost::astar_heuristic<TGraph, CostType>
+{
+public:
+  typedef typename boost::graph_traits<TGraph>::vertex_descriptor Vertex;
+  
+  distance_heuristic(LocMap l, Vertex goal) : m_location(l), m_goal(goal) {}
+  
+  CostType operator()(Vertex u)
+  {
+    confPtr_t q1 = m_location[m_goal]->getConfiguration();
+    confPtr_t q2 = m_location[u]->getConfiguration();
+    return q1->dist(*q2);
+  }
+private:
+  LocMap m_location;
+  Vertex m_goal;
+};
+
+
+struct found_goal {}; // exception for termination
+
+// visitor that terminates when we find the goal
+template <class Vertex>
+class astar_goal_visitor : public boost::default_astar_visitor
+{
+public:
+  astar_goal_visitor(Vertex goal) : m_goal(goal) {}
+  template <class Graph>
+  void examine_vertex(Vertex u, Graph& g) {
+    if(u == m_goal)
+      throw found_goal();
+  }
+private:
+  Vertex m_goal;
+};
+
+API::Trajectory* Graph::extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf )
+{
+  Node* node_init = searchConf( *qi );
+  if( node_init == NULL ) {
+    return NULL;
+  }
+  
+  Node* node_goal = nearestWeightNeighbour( node_init, qf, false, ENV.getInt(Env::DistConfigChoice));
+  if( node_goal == NULL ) {
+    return NULL;
+  }
+  
+  if( node_init == node_goal ) {
+    return NULL;
+  }
+  
+  BGL_Vertex start = node_init->getDescriptor();
+  BGL_Vertex goal = node_goal->getDescriptor();
+  
+  boost::property_map<BGL_Graph, boost::edge_weight_t>::type weightmap = boost::get(boost::edge_weight, m_BoostGraph);
+  
+  BGL_VertexDataMapT NodeData = boost::get(NodeData_t(), m_BoostGraph);
+  BGL_EdgeDataMapT EdgeData = boost::get(EdgeData_t(), m_BoostGraph);
+  
+  BOOST_FOREACH(BGL_Edge e, boost::edges(m_BoostGraph)) {
+    weightmap[e] = EdgeData[e]->cost();
+  }
+  
+  typedef double cost;
+  vector<double> d(boost::num_vertices(m_BoostGraph));
+  vector<BGL_Vertex> p(boost::num_vertices(m_BoostGraph));
+
+  try // call astar named parameter interface
+  {
+    astar_search( m_BoostGraph, 
+                 start, 
+                 distance_heuristic<BGL_Graph, cost, BGL_VertexDataMapT >( NodeData, goal),
+                 boost::predecessor_map(&p[0]).distance_map(&d[0]).visitor(astar_goal_visitor<BGL_Vertex>(goal)));
+    
+  } 
+  catch(found_goal fg) // found a path to the goal
+  { 
+    std::list<BGL_Vertex> shortest_path;
+    
+    for(BGL_Vertex v=goal;; v = p[v]) {
+      shortest_path.push_front(v);
+      if(p[v] == v)
+        break;
+    }
+    
+    if( shortest_path.empty() ) {
+      cout << "shortest_path is empty" << endl;
+      return NULL;
+    }
+    
+    // Build the trajectory
+    API::Trajectory* traj = new API::Trajectory(m_Robot);
+    
+    std::list<BGL_Vertex>::iterator spi = shortest_path.begin();
+    for(; spi != shortest_path.end(); ++spi) {
+      traj->push_back( NodeData[*spi]->getConfiguration() );
+    }
+    
+    traj->replaceP3dTraj();
+    return traj;
+  }
+  
+  return NULL;
+}
+
+
+//! This function works for tree type of graphs
+vector<Node*> Graph::extractBestNodePathSoFar( confPtr_t qi, confPtr_t qf )
+{
+  vector<Node*> traj_nodes_reverse;
+  
   // Start needs to be in the graph
   Node* source = searchConf(*qi);
 	if( source == NULL )
   {
     cout << "Start not in graph in " << __func__ << endl;
-    return NULL;
+    return traj_nodes_reverse;
   }
   
   Node* node = nearestWeightNeighbour(source, qf, false, ENV.getInt(Env::DistConfigChoice));
   if( node == NULL ) {
-    return NULL;
+    return traj_nodes_reverse;
   }
   
   // Extract the nodes in reverse order
-  vector<Node*> traj_nodes;
-  traj_nodes.push_back( node );
+  traj_nodes_reverse.push_back( node );
   while ( !node->getConfiguration()->equal(*qi) ) 
   {
     node = node->parent();
-    traj_nodes.push_back( node );
+    traj_nodes_reverse.push_back( node );
     
     if (node == NULL) {
       cout << "Error finding nodes in " << __func__ << endl;
-      return NULL;
+      return traj_nodes_reverse;
     }
   }
+  
+  if( int(traj_nodes_reverse.size()) <= 1 ) {
+    return traj_nodes_reverse;
+  }
+  
+  // inverse traj
+  vector<Node*> traj_nodes;
+  for (int i=int(traj_nodes_reverse.size())-1; i>=0; i--) {
+    traj_nodes.push_back( traj_nodes_reverse[i] );
+  }
+  
+  return traj_nodes;
+}
+
+// This function works for tree type of graphs
+API::Trajectory* Graph::extractBestTrajSoFar( confPtr_t qi, confPtr_t qf )
+{  
+  // Extract the nodes trajectory
+  vector<Node*> traj_nodes = extractBestNodePathSoFar( qi, qf );
   
   if( int(traj_nodes.size()) <= 1 ) {
     return NULL;
@@ -1892,7 +2091,7 @@ API::Trajectory* Graph::extractBestTrajSoFar( std::tr1::shared_ptr<Configuration
   
   // Build the trajectory
   API::Trajectory* traj = new API::Trajectory(m_Robot);
-  for (int i=int(traj_nodes.size())-1; i>=0; i--) {
+  for (int i=0;i<int(traj_nodes.size()); i++) {
     traj->push_back( traj_nodes[i]->getConfiguration() );
   }
   
@@ -1903,8 +2102,7 @@ API::Trajectory* Graph::extractBestTrajSoFar( std::tr1::shared_ptr<Configuration
 
 // This function extracts a trajectory
 // it first converts the grapgh to a p3d_graph
-API::Trajectory* Graph::extractBestTraj(shared_ptr<Configuration> qi,
-																				shared_ptr<Configuration> qf)
+API::Trajectory* Graph::extractBestTraj( confPtr_t qi, confPtr_t qf)
 {  	
 //  cout << "----------------------------------------------" << endl;
 //	cout << "Extracting the trajectory" << endl;

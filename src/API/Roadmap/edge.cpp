@@ -22,6 +22,8 @@
 using namespace std;
 using namespace tr1;
 
+const bool use_localpath_planner = true;
+
 Edge::Edge(Graph* G, unsigned int i, unsigned int j) : 
 	m_is_BGL_Descriptor_Valid(false),
 	m_is_LocalPath_Computed(false)
@@ -62,7 +64,7 @@ Edge::Edge(Graph* G, p3d_edge* E) :
 //    m_Target =		G->getNode(E->Nf);
 //}
 
-Edge::Edge(Graph* G, Node* N1, Node* N2, double Long) :
+Edge::Edge(Graph* G, Node* N1, Node* N2, double Long, bool compute_cost) :
 	m_is_BGL_Descriptor_Valid(false),
 	m_is_LocalPath_Computed(false)
 {
@@ -72,16 +74,19 @@ Edge::Edge(Graph* G, Node* N1, Node* N2, double Long) :
 	
 	m_Edge->Ni = N1->getNodeStruct();
 	m_Edge->Nf = N2->getNodeStruct();
-	
+
 //	m_Edge->num = _Graph->getNumberOfEdges();
-	
-	m_Edge->path = p3d_local_planner_multisol(
-																						G->getRobot()->getRobotStruct(),
-																						N1->getConfiguration()->getConfigStruct(),
-																						N2->getConfiguration()->getConfigStruct(),
-																						ikSol);
-	
-	m_Edge->planner = p3d_local_get_planner();
+  
+  if( use_localpath_planner )
+  {
+    m_Edge->path = p3d_local_planner_multisol(
+                                              G->getRobot()->getRobotStruct(),
+                                              N1->getConfiguration()->getConfigStruct(),
+                                              N2->getConfiguration()->getConfigStruct(),
+                                              ikSol);
+    
+    m_Edge->planner = p3d_local_get_planner();
+  }
 	
 	//voir pour la longueur
 	m_Edge->longueur = Long;
@@ -95,8 +100,12 @@ Edge::Edge(Graph* G, Node* N1, Node* N2, double Long) :
 	m_Robot = G->getRobot();
 //	p3d_SetEdgeCost(m_Robot->getRobotStruct(),m_Edge);	
 //	Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-	LocalPath path(m_Robot,m_Edge->path);
-	m_Edge->cost = path.cost();
+  
+  if( use_localpath_planner && compute_cost )
+  {
+    LocalPath path(m_Robot,m_Edge->path);
+    m_Edge->cost = path.cost();
+  }
 	
 	m_Long = Long;
 	m_Source = N1;
@@ -144,21 +153,28 @@ Node* Edge::getTarget()
 
 double Edge::cost()
 {
-	return getLocalPath()->cost();
+  m_Edge->cost = getLocalPath()->cost();
+	return m_Edge->cost;
 }
 
 shared_ptr<LocalPath> Edge::getLocalPath()
 {
 	if( !m_is_LocalPath_Computed )
 	{
-		shared_ptr<LocalPath> ptrLP(new LocalPath(m_Source->getConfiguration(),
+		shared_ptr<LocalPath> pathPtr(new LocalPath(m_Source->getConfiguration(),
 																							m_Target->getConfiguration()));
-		m_path = ptrLP;
+		m_path = pathPtr;
 		
 		m_is_LocalPath_Computed = true;
 	}
 
 	return m_path;	
+}
+
+void Edge::setLocalPath(shared_ptr<LocalPath> pathPtr)
+{
+  m_path = pathPtr;
+  m_is_LocalPath_Computed = true;
 }
 
 BGL_Edge Edge::getDescriptor()

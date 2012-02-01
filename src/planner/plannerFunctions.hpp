@@ -54,10 +54,7 @@ bool p3d_generate_goal_configuration( Configuration& q );
   @ingroup NEW_CPP_MODULE
  * \fn int p3d_run_prm(p3d_graph* Graph_Pt, int* fail, int (*fct_stop)(void), void (*fct_draw)(void))
  * \brief fonction de lancement de l'algorithme PRM
- * @param Graph_Pt le graphPt affiché
- * @param fail in/out la trajectoire peut être générée
- * @param (*fct_stop)(void) la fonction d'arret
- * @param (*fct_draw)(void) la fonction d'affichage
+ * @param robotPt the robot
  * @return le nombre de Node ajoutés au Graph
  */
 int p3d_run_prm(p3d_rob* robotPt);
@@ -66,10 +63,7 @@ int p3d_run_prm(p3d_rob* robotPt);
   @ingroup NEW_CPP_MODULE
  * \fn int p3d_run_acr(p3d_graph* Graph_Pt, int* fail, int (*fct_stop)(void), void (*fct_draw)(void))
  * \brief fonction de lancement de l'algorithme ACR
- * @param Graph_Pt le graphPt affiché
- * @param fail in/out la trajectoire peut être générée
- * @param (*fct_stop)(void) la fonction d'arret
- * @param (*fct_draw)(void) la fonction d'affichage
+ * @param robotPt the robot
  * @return le nombre de Node ajoutés au Graph
  */
 int p3d_run_acr(p3d_rob* robotPt);
@@ -78,21 +72,25 @@ int p3d_run_acr(p3d_rob* robotPt);
   @ingroup NEW_CPP_MODULE
  * \fn int p3d_run_vis_prm(p3d_graph* Graph_Pt, int* fail, int (*fct_stop)(void), void (*fct_draw)(void))
  * \brief fonction de lancement de l'algorithme Vis_PRM
- * @param Graph_Pt le graphPt affiché
- * @param fail in/out la trajectoire peut être générée
- * @param (*fct_stop)(void) la fonction d'arret
- * @param (*fct_draw)(void) la fonction d'affichage
+ * @param robotPt the robot
  * @return le nombre de Node ajoutés au Graph
  */
 int p3d_run_vis_prm(p3d_rob* robotPt);
 
 /**
+ @ingroup NEW_CPP_MODULE
+ * \fn int p3d_run_perturb_prm
+ * \brief function that starts the perturbation algorithm
+ * @param robotPt the robot
+ * @return le nombre de Node ajoutés au Graph
+ */
+int p3d_run_perturb_prm(p3d_rob* robotPt);
+
+/**
   @ingroup NEW_CPP_MODULE
  * \fn bool p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void));
  * \brief fonction de lancement de l'algorithme RRT
- * @param GraphPt le graphPt affiché
- * @param (*fct_stop)(void) la fonction d'arret
- * @param (*fct_draw)(void) la fonction d'affichage
+ * @param robotPt the robot
  * @return la trajectoire peut être générée
  */
 int p3d_run_rrt(p3d_rob* robotPt);
@@ -101,9 +99,7 @@ int p3d_run_rrt(p3d_rob* robotPt);
   @ingroup NEW_CPP_MODULE
  * \fn bool p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void));
  * \brief function running the EST algorithm
- * @param GraphPt the graph
- * @param (*fct_stop)(void) stop function
- * @param (*fct_draw)(void) displau function
+ * @param robotPt the robot
  * @return if there's a trajectory
  */
 bool p3d_run_est(p3d_rob* robotPt);

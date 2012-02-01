@@ -295,7 +295,7 @@ namespace stomp_motion_planner
     // initialize pi_loop
     //  ros::NodeHandle nh("~");
     PolicyImprovementLoop pi_loop;
-    pi_loop.initialize(/*nh,*/ this_shared_ptr_);
+    pi_loop.initialize(/*nh,*/ this_shared_ptr_, false );
     
     group_trajectory_.print();
     
@@ -432,6 +432,64 @@ namespace stomp_motion_planner
       animatePath();
   }
   
+  //-------------------------------------------------------------------
+  //-------------------------------------------------------------------
+  //-------------------------------------------------------------------
+  //! Generate noisy trajectories
+  void StompOptimizer::generateNoisyTrajectory(const API::Trajectory& traj, vector<vector<confPtr_t> >& noisy_trajectories)
+  {
+    // Set the full and group trajectory
+    if( full_trajectory_ != NULL ) delete full_trajectory_;
+    full_trajectory_ = new ChompTrajectory( traj, DIFF_RULE_LENGTH, *planning_group_ );
+    group_trajectory_ = *full_trajectory_;
+    
+    stomp_statistics_ = boost::shared_ptr<StompStatistics>(new StompStatistics());
+    stomp_statistics_->collision_success_iteration = -1;
+    stomp_statistics_->success_iteration = -1;
+    stomp_statistics_->success = false;
+    stomp_statistics_->costs.clear();
+    
+    ChronoTimeOfDayOn();
+
+    // Initialize
+    initPolicy();
+    
+    PolicyImprovementLoop pi_loop;
+    pi_loop.initialize( this_shared_ptr_, true );
+    
+    //group_trajectory_.print();
+    iteration_ = 0;
+    copyPolicyToGroupTrajectory();
+    handleJointLimits();
+    updateFullTrajectory();
+    performForwardKinematics();
+    //group_trajectory_.print();
+    
+//    if (stomp_parameters_->getAnimateEndeffector())
+//    {
+//      animateEndeffector();
+//    }
+    
+    pi_loop.generateSingleNoisyTrajectory(/*iteration_+1*/);
+    
+    pi_loop.getRollouts( noisy_trajectories );
+    
+//    if (stomp_parameters_->getAnimateEndeffector())
+//    {
+//      animateEndeffector();
+//    }
+    
+    //setGroupTrajectoryToVectorConfig( noisy_trajectory[0] );
+    
+//    updateFullTrajectory();
+//    performForwardKinematics();
+    ChronoTimeOfDayPrint("");
+    ChronoTimeOfDayOff();
+  }
+  
+  //-------------------------------------------------------------------
+  //-------------------------------------------------------------------
+  //-------------------------------------------------------------------
   void StompOptimizer::calculateSmoothnessIncrements()
   {
     for (int i=0; i<num_joints_; i++)
@@ -1011,6 +1069,37 @@ namespace stomp_motion_planner
 
   }
   
+  void StompOptimizer::setGroupTrajectoryToVectorConfig(vector<confPtr_t>& traj)
+  {
+    // calculate the forward kinematics for the fixed states only in the first iteration:
+    int start = free_vars_start_;
+    int end = free_vars_end_;
+    if (iteration_==0) {
+      start = 0;
+      end = num_vars_all_-1;
+    }
+    
+    // Get the joint map
+    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    
+    // Alocate config
+    Configuration q = *robot_model_->getCurrentPos();
+    
+    // for each point in the trajectory
+    for (int i=start; i<=end; ++i)
+    {
+      Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(i).transpose();
+      
+      // Set each planning dof
+      for(int j=0; j<planning_group_->num_joints_;j++) {
+        q[joints[j].move3d_dof_index_] = point[j];
+      }
+      
+      traj.push_back( confPtr_t(new Configuration(q)) );
+    }
+  }
+
+  
   void StompOptimizer::animateEndeffector()
   {
     API::Trajectory T(robot_model_);
@@ -1099,7 +1188,7 @@ namespace stomp_motion_planner
   void StompOptimizer::testMultiVariateGaussianSampler()
   {
     PolicyImprovementLoop pi_loop;
-    pi_loop.initialize(/*nh,*/ this_shared_ptr_);
+    pi_loop.initialize( this_shared_ptr_, false );
     pi_loop.testSampler();
   }
   
@@ -1263,6 +1352,7 @@ namespace stomp_motion_planner
   void StompOptimizer::initPolicy()
   {
     policy_.reset(new CovariantTrajectoryPolicy());
+    policy_->setPrintDebug( false );
     
     std::vector<double> derivative_costs = stomp_parameters_->getSmoothnessCosts();
     
@@ -1308,8 +1398,11 @@ namespace stomp_motion_planner
   void StompOptimizer::copyPolicyToGroupTrajectory()
   {
     policy_->getParameters(policy_parameters_);
+    
     for (int d=0; d<num_joints_; ++d)
     {
+      //cout << "group_trajectory_ : " << endl << group_trajectory_.getFreeJointTrajectoryBlock(d) << endl;
+      //cout << "policy_parameters_ : " << endl << policy_parameters_[d] << endl;
       group_trajectory_.getFreeJointTrajectoryBlock(d) = policy_parameters_[d];
     }
   }

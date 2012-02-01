@@ -17,13 +17,12 @@
 
 #include "../p3d/env.hpp"
 
+#include "Planner-pkg.h"
+
 using namespace std;
 using namespace tr1;
 
-#include "Planner-pkg.h"
-
-Vis_PRM::Vis_PRM(Robot* R, Graph* G)
-: PRM(R,G)
+Vis_PRM::Vis_PRM(Robot* R, Graph* G) : PRM(R,G)
 {
 	m_nbOfExpand = 0;
   cout << " New Visibility PRM "  << endl;

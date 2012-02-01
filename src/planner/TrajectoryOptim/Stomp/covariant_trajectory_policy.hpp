@@ -62,6 +62,7 @@ public:
     bool setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal);
     bool getParametersAll(std::vector<Eigen::VectorXd>& parameters);
     void setFileNameBase(const std::string& file_name_base);
+    void setPrintDebug(bool print_debug) { print_debug_ = print_debug; }
 
     // Functions inherited from Policy:
 
@@ -165,6 +166,7 @@ private:
 //    ros::NodeHandle node_handle_;
 
     std::string file_name_base_;
+    bool print_debug_;
 
     int num_time_steps_;
     int num_vars_free_;

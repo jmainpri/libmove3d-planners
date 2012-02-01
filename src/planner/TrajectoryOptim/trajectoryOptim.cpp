@@ -42,7 +42,7 @@ bool m_add_human = true;
 
 static Robot* m_robot = NULL;
 
-enum ScenarioType { CostMap, Shelf, Navigation , HumanAware };
+enum ScenarioType { CostMap, Simple, Shelf, Navigation , HumanAware };
 static ScenarioType m_sce;
 
 CollisionSpace* m_coll_space=NULL;
@@ -149,6 +149,34 @@ API::Trajectory traj_optim_create_sraight_line_traj()
   API::Trajectory T( confs );
   
   return T;
+}
+
+//****************************************************************
+//* 2D Simple example
+//****************************************************************
+
+//! Initializes the optimization for a costspace
+// --------------------------------------------------------
+bool traj_optim_simple_init()
+{
+  if (!m_robot) {
+    cout << "robot not initialized in file " 
+    << __FILE__ << " ,  " << __func__ << endl;
+    return false;
+  }
+  
+  // Set the active joints (links)
+  m_active_joints.clear();
+  m_active_joints.push_back( 1 );
+  
+  // Set the planner joints
+  m_planner_joints.clear();
+  m_planner_joints.push_back( 1 );
+  
+  p3d_set_user_drawnjnt(1);
+  
+  m_coll_space = NULL;
+  return (global_costSpace != NULL);
 }
 
 //****************************************************************
@@ -542,6 +570,18 @@ bool traj_optim_init_collision_spaces()
 //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.001);
       break;
       
+    case Simple:
+      
+      cout << "Init Simple" << endl;
+      if( !traj_optim_simple_init() )
+        return false;
+      
+      //      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.030000);
+      //      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
+      //      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
+      //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.000005);
+      break;
+      
     case Shelf:
       
       cout << "Init Shelf" << endl;
@@ -635,12 +675,22 @@ bool traj_optim_init_collision_spaces()
 // --------------------------------------------------------
 bool traj_optim_set_scenario_type()
 {  
-  if( ENV.getBool(Env::isCostSpace) && 
+  if( ENV.getBool(Env::isCostSpace) && ( global_costSpace == NULL )){
+    cout << "Cost space not initialized!!!" << endl;
+    return false;
+  }
+  
+  if( ENV.getBool(Env::isCostSpace) &&
      global_costSpace->getSelectedCostName() == "costMap2D")
   {
     m_sce = CostMap;
   }
-  else
+  else if( ENV.getBool(Env::isCostSpace) &&
+     global_costSpace->getSelectedCostName() == "costIsInCollision")
+  {
+    m_sce = Simple;
+  } 
+  else 
   {
     const bool navigation = false;
     
@@ -657,20 +707,29 @@ bool traj_optim_set_scenario_type()
 //*   Run Functions 
 //****************************************************************
 
+bool traj_optim_initScenario()
+{
+  if(!traj_optim_set_scenario_type()) {
+    cout << "Not well initialized" << endl;
+    return false;
+  }
+  
+  if(!traj_optim_init_collision_spaces()){
+    cout << "Not well initialized" << endl;
+    return false;
+  }
+  
+  m_init = true;
+  return true;
+}
+
 //! Chomp
 // --------------------------------------------------------
 bool traj_optim_runChomp()
 {
   if( !m_init )
   {
-    traj_optim_set_scenario_type();
-    
-    if(!traj_optim_init_collision_spaces()){
-      cout << "Not well initialized" << endl;
-      return false;
-    }
-    
-    m_init = true;
+    traj_optim_initScenario();
   }
   else
   {
@@ -723,18 +782,11 @@ bool traj_optim_runChomp()
 //!
 //! Stomp
 // --------------------------------------------------------
-bool traj_optim_runStomp()
+bool traj_optim_initStomp()
 {
   if( !m_init )
   {
-    traj_optim_set_scenario_type();
-    
-    if(!traj_optim_init_collision_spaces()){
-      cout << "Not well initialized" << endl;
-      return false;
-    }
-    
-    m_init = true;
+    traj_optim_initScenario();
   }
   
   // Get Initial trajectory
@@ -746,9 +798,9 @@ bool traj_optim_runStomp()
     T = m_robot->getCurrentTraj();
     PlanEnv->setInt( PlanParam::nb_pointsOnTraj, T.getNbOfViaPoints() );
     
-//    T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
-//    T.replaceP3dTraj();
-//    T.print();
+    //    T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
+    //    T.replaceP3dTraj();
+    //    T.print();
   }
   else 
   {
@@ -778,21 +830,28 @@ bool traj_optim_runStomp()
                                                            m_chompplangroup,
                                                            m_coll_space));
   
+  optimizer->setSharedPtr(optimizer);
   cout << "Optimizer created" << endl;
+  return true;
+}
+
+bool traj_optim_runStomp()
+{
+  if(!traj_optim_initStomp())
+  {
+    return false;
+  }
   
   if(!PlanEnv->getBool(PlanParam::trajOptimTestMultiGauss))
   {
-    optimizer->setSharedPtr(optimizer);
     optimizer->runDeformation(0,0);
-    optimizer->resetSharedPtr();
+    //optimizer->generateNoisyTrajectories();
   }
   else
   {
-    optimizer->setSharedPtr(optimizer);
     optimizer->testMultiVariateGaussianSampler();
-    optimizer->resetSharedPtr();
   }
-  
+  optimizer->resetSharedPtr();
   return true;
 }
 

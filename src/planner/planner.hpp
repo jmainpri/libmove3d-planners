@@ -98,6 +98,16 @@ public:
    */
   Node* getGoal();
   
+  /**
+   * Get init configuration
+   */
+  confPtr_t getInitConf() { return _q_start; }
+  
+  /**
+   * Get goal configuration
+   */
+  confPtr_t getGoalConf() { return _q_goal; }
+  
 	/**
    * test si le Planner est initialisé pour la planification
    * @return le Planner est initialisé
@@ -127,8 +137,8 @@ protected:
   
   // Store configurations for cases where the 
   // goal configuration is not inserted in the graph
-  std::tr1::shared_ptr<Configuration> _q_start;
-  std::tr1::shared_ptr<Configuration> _q_goal;
+  confPtr_t _q_start;
+  confPtr_t _q_goal;
   
   Node* _Start; /*!< Le Node initial de la planification*/
   Node* _Goal; /*!< Le Node final de la planification*/

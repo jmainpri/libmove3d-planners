@@ -324,8 +324,8 @@ unsigned int TreePlanner::run()
 			{
 				if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawExploration))
 				{
-				  _draw_func();
           _Graph->extractBestTrajSoFar( _q_start, _q_goal );
+				  _draw_func();
 				}
 				
 				NbTotCreatedNodes += NbCurCreatedNodes;

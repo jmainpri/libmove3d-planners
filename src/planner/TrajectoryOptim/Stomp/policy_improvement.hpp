@@ -140,11 +140,13 @@ namespace stomp_motion_planner
     
     /**
      * Tests the noise generators
+     * Function added by jim
      */
     void testNoiseGenerators();
     
     /**
      * Set rollout as out of bounds
+     * Function added by jim
      */
     void setRolloutOutOfBounds(int id);
     

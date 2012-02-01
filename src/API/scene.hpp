@@ -2,7 +2,6 @@
 #define ENVIRONNEMENT_HPP
 
 #include "API/Device/robot.hpp"
-#include "API/Roadmap/graph.hpp"
 
 #ifndef _ENVIRONMENT_H
 struct env;
@@ -81,11 +80,6 @@ public:
 	 * Scene
 	 */
 	unsigned int getNumberOfRobots() { return m_Robot.size(); }
-	
-	/**
-	 * Get Active Graph
-	 */
-	Graph* getActiveGraph();
 	
 	/**
 	 * Returns the scene resolution step DMax

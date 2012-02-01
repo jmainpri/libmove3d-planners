@@ -721,7 +721,6 @@ namespace stomp_motion_planner
       cout << "Mean dimension [" << d << "] = " << endl << mean.transpose() << endl;
     }
   }
-  
 };
 
 

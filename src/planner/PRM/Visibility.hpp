@@ -22,7 +22,7 @@ public:
      */
     ~Vis_PRM();
 	
-	/**
+	 /**
      * test si un node est linkable en suivant la visibilité
      * @param N le Node à lier
      * @param link in/out le nombre de composantes connexes auxquelles le node peut être lié

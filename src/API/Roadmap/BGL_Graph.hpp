@@ -31,16 +31,22 @@ struct EdgeData_t {
 class Node;
 class Edge;
 
-typedef boost::property<NodeData_t, Node*>														VertexProperty;
-typedef boost::property<EdgeData_t, Edge*>														EdgeProperty;
+typedef boost::adjacency_list_traits<boost::listS, boost::vecS, boost::bidirectionalS>::vertex_descriptor vertex_descriptor;
 
+//typedef VertexProperty;
+//typedef EdgeProperty;
 
 typedef boost::adjacency_list<
-boost::vecS, //  The container used for egdes : here, std::list.
-boost::vecS, //  The container used for vertices: here, std::vector.
+boost::listS,          //  The container used for egdes : here, std::list.
+boost::vecS,           //  The container used for vertices: here, std::vector.
 boost::bidirectionalS, //  directed or undirected edges ?.
-VertexProperty, //  The type that describes a Vertex.
-EdgeProperty //  The type that describes an Edge
+
+boost::property<NodeData_t, Node*, 
+boost::property<boost::vertex_distance_t, int,
+boost::property<boost::vertex_predecessor_t, vertex_descriptor> > >, // The type that describes a Vertex
+
+boost::property<EdgeData_t, Edge*, 
+boost::property<boost::edge_weight_t, double> > // The type that describes en Edge
 >	BGL_Graph;
 
 /// Defaut type of a vertex in a graph

@@ -45,6 +45,7 @@
 
 #include "task.hpp"
 #include "policy_improvement.hpp"
+#include "API/ConfigSpace/configuration.hpp"
 //#include <policy_improvement_loop/PolicyImprovementStatistics.h>
 
 namespace stomp_motion_planner
@@ -58,10 +59,16 @@ public:
 
 //    bool initializeAndRunTaskByName(/*ros::NodeHandle& node_handle,*/ std::string& task_name);
 
-    bool initialize(/*ros::NodeHandle& node_handle,*/ boost::shared_ptr<Task> task);
+    bool initialize(boost::shared_ptr<Task> task, bool singleRollout);
     bool runSingleIteration(int iteration_number);
+  
+    /**
+     * Functions added by jim
+     */
     void testSampler();
-
+    bool generateSingleNoisyTrajectory();
+    void getRollouts(std::vector<std::vector<confPtr_t> >& traj);
+  
 private:
 
     bool initialized_;
@@ -98,13 +105,17 @@ private:
     Eigen::VectorXd tmp_rollout_cost_;
 
     bool readParameters();
+  
+    // added by jim
+    bool readParametersSingleRollout();
 
     int policy_iteration_counter_;
     bool readPolicy(const int iteration_number);
     bool writePolicy(const int iteration_number, bool is_rollout = false, int rollout_id = 0);
     //bool writePolicyImprovementStatistics(const policy_improvement_loop::PolicyImprovementStatistics& stats_msg);
   
-    void addSingleRolloutsToDraw(std::vector<Eigen::VectorXd>& rollout, int color);
+    void getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<confPtr_t>& traj);
+    void addSingleRolloutsToDraw(const std::vector<Eigen::VectorXd>& rollout, int color);
     void addRolloutsToDraw(bool add_reused);
 
 };

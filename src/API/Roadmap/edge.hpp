@@ -49,7 +49,7 @@ public:
 	 * @param N2 le Node final de l'Edge
 	 * @param Long la longueur de l'Edge
 	 */
-	Edge(Graph* G, Node* N1, Node* N2, double Long);
+	Edge(Graph* G, Node* N1, Node* N2, double Long, bool compute_cost = true);
 	
 	/**
 	 * Destructeur de la classe
@@ -97,12 +97,23 @@ public:
 	 * Computes the edge cost and returns it
 	 */
 	double cost();
+  
+  /**
+	 * Computes the edge cost and returns it
+	 */
 	
 	/**
 	 * Get the LocalPath associated
 	 * with the edge
 	 */
 	std::tr1::shared_ptr<LocalPath> getLocalPath();
+  
+  
+  /**
+	 * Set the LocalPath associated
+	 * with the edge
+	 */
+	 void setLocalPath(std::tr1::shared_ptr<LocalPath> pathPtr);
 	
 	//--------------------------------------
 	// BGL

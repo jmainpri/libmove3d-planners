@@ -15,9 +15,13 @@
 #include "planEnvironment.hpp"
 
 #include "API/ConfigSpace/configuration.hpp"
+#include "API/Trajectory/trajectory.hpp"
 #include "API/Roadmap/node.hpp"
 #include "API/Roadmap/graph.hpp"
 #include "API/Roadmap/compco.hpp"
+
+#include "TrajectoryOptim/Stomp/stompOptimizer.hpp"
+#include "TrajectoryOptim/trajectoryOptim.hpp"
 
 #include <iostream>
 
@@ -38,7 +42,14 @@ StarExpansion::StarExpansion(Graph* G) : RRTExpansion(G)
   m_RrgRadiusFactor = 1.0;
   m_nb_rewiring = 0;
   m_step = step();
+  m_Iteration = 0;
+  m_biasRatio = 5;
+  m_ith_on_traj = -1;
+  m_ith_trajectory = -1;
+  m_start_bias = false;
+  
   initCSpace();
+  initStomp();
 }
 
 /*!
@@ -49,12 +60,23 @@ StarExpansion::~StarExpansion()
 	
 }
 
+void StarExpansion::setInitAndGoal( confPtr_t q_init, confPtr_t q_goal )
+{
+  m_q_init = q_init;
+  m_q_goal = q_goal;
+}
+
 void StarExpansion::initCSpace()
 {
   m_cspace = new CSpaceCostMap2D();
   m_cspace->set_step( m_step );
   m_cspace->set_cost_step( m_step );
   m_cspace->set_robot( m_Graph->getRobot() );
+}
+
+void StarExpansion::initStomp()
+{
+  traj_optim_initStomp();
 }
 
 double StarExpansion::rrgBallRadius()
@@ -90,6 +112,81 @@ int StarExpansion::connectExpandProcess(Node* expansionNode,
 {
 	cout << "StarExpansion::connectExpandProcess Not implemented" << endl;
 	return 0;
+}
+
+confPtr_t StarExpansion::getExpansionDirection(Node* expandComp, Node* goalComp, bool samplePassive, Node*& directionNode)
+{
+  confPtr_t q;
+  
+  m_Iteration++;
+  
+//  if( /*!(m_Iteration % m_biasRatio != 0)*/ false )
+//  {
+    // Selection in the entire CSpace and
+    // biased to the Comp of the goal configuration
+    if ( (!m_start_bias) && (p3d_random(0., 1.) <= 0.25) )
+    {
+      // the goal component as direction of expansion
+      q = m_q_goal;
+    }
+    else {
+      // the entire CSpace
+      q = m_Graph->getRobot()->shoot(samplePassive);
+    }
+//  }
+//  else
+//  {
+  
+    // Generate noisy trajectories 
+    if( m_ith_on_traj == -1 && m_ith_trajectory == -1)
+    {
+      if( m_start_bias == false )
+        m_start_bias = m_Graph->searchConf( *m_q_goal );
+      
+      API::Trajectory* traj = NULL;
+      
+      if( m_start_bias ) { 
+        traj = m_Graph->extractBestTrajSoFar( m_q_init, m_q_goal );
+      }
+      if( traj != NULL ){
+        traj->cutTrajInSmallLPSimple( (PlanEnv->getInt( PlanParam::nb_pointsOnTraj )-1) );
+        
+        if( traj->size() == PlanEnv->getInt( PlanParam::nb_pointsOnTraj )-1 ) 
+        {
+          m_biasTrajectory.clear();
+          optimizer->generateNoisyTrajectory(*traj,m_biasTrajectory);
+          
+          m_ith_on_traj = 1;
+          m_ith_trajectory = 0;
+          
+          return m_biasTrajectory[m_ith_trajectory][m_ith_on_traj];
+        }
+      }
+    }
+    else 
+    {
+      m_ith_trajectory++; // Next trajectories
+      
+      if( m_ith_trajectory < int(m_biasTrajectory.size()) )
+      {
+        if( m_ith_on_traj < int(m_biasTrajectory[m_ith_trajectory].size()-1) )
+        {
+          q = m_biasTrajectory[m_ith_trajectory][m_ith_on_traj];
+          return q;
+        }
+        else { 
+          m_ith_on_traj = -1; // Terminates
+          m_ith_trajectory = -1;
+        }
+      }
+      else {
+        m_ith_on_traj += 5; // All config on the noisy trajectory
+        m_ith_trajectory = 0;
+      }
+    }
+  //  }
+  
+  return (q);
 }
 
 void StarExpansion::rewireGraph(Node* new_node, Node* min_node, const vector<Node*>& neigh_nodes)
@@ -139,11 +236,19 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 	int nbCreatedNodes(0);
 	
 	LocalPath directionLocalpath( expansionNode->getConfiguration(), directionConfig );
+  LocalPath extensionLocalpath = directionLocalpath;
   
-	// Perform extension toward directionConfig
-	// Construct a smaller path from direction path
-	LocalPath extensionLocalpath = getExtensiontPath (expansionNode->getConfiguration(), directionConfig );
-	
+  if( expansionNode->getConfiguration()->equal( *directionConfig ) )
+  {
+    failed=true;
+  }
+  else
+  {
+    // Perform extension toward directionConfig
+    // Construct a smaller path from direction path
+    extensionLocalpath = getExtensiontPath (expansionNode->getConfiguration(), directionConfig );
+	}
+  
 	Node* node_new = NULL;
   
   bool isValid = true;
@@ -152,7 +257,7 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
     isValid = extensionLocalpath.isValid();
   }
   
-	if ( isValid )
+	if ( isValid && !failed )
 	{
 		// Create new node and add it to the graph
 		node_new = new Node(m_Graph,extensionLocalpath.getEnd());
@@ -232,7 +337,7 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 	// Add node to graph if everything succeeded
 	if (!failed)
 	{
-    cout << "Success" << endl;
+    //cout << "Success" << endl;
 		// Components were merged
 		if(( directionNode != NULL )&&( node_new == directionNode ))
 		{
@@ -242,7 +347,7 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 	}
 	else
 	{
-    cout << "Failed" << endl;
+    //cout << "Failed" << endl;
 		expansionFailed(*expansionNode);
 	}
 	
@@ -297,6 +402,7 @@ int StarRRT::init()
 {
 	int added = TreePlanner::init();
 	_expan = new StarExpansion(_Graph);
+  dynamic_cast<StarExpansion*>(_expan)->setInitAndGoal( _q_start, _q_goal );
 	return added;
 }
 
@@ -316,16 +422,17 @@ void StarRRT::pruneTreeFromNode(Node* node)
   if( parent_parent == NULL ) {
     return;
   }
-  else  {
+  else 
+  {
     ConnectedComponent* compco = parent_parent->getConnectedComponent();
-    
-    if( compco != NULL ) {
+    if( compco != NULL ) 
+    {
       vector<Node*> nodes = compco->getNodes();
-      
       for (int i=0; i<int(nodes.size()); i++) 
       {
-        _Graph->removeNode( nodes[i] );
+        _Graph->removeNode( nodes[i], false );
       }
+      _Graph->rebuildCompcoFromBoostGraph();
     }
   }
 }

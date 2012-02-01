@@ -9,6 +9,7 @@
 #include "API/project.hpp"
 #include "API/Device/robot.hpp"
 #include "API/ConfigSpace/configuration.hpp"
+#include "API/ConfigSpace/localpath.hpp"
 
 #include <iostream>
 

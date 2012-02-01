@@ -70,15 +70,20 @@ namespace stomp_motion_planner
   }
   
   
-  bool PolicyImprovementLoop::initialize(/*ros::NodeHandle& node_handle,*/ boost::shared_ptr<stomp_motion_planner::Task> task)
+  bool PolicyImprovementLoop::initialize(boost::shared_ptr<stomp_motion_planner::Task> task, bool singleRollout )
   {
     //node_handle_ = node_handle;
     task->getPolicy(policy_);
     policy_->getNumDimensions(num_dimensions_);
     policy_->getNumTimeSteps(num_time_steps_);
     
-    readParameters();
-    
+    if( !singleRollout )
+    {
+      readParameters();
+    }
+    else {
+      readParametersSingleRollout();
+    }
     task_ = task;
     task_->initialize(/*node_handle_,*/ num_time_steps_);
     task_->getControlCostWeight(control_cost_weight_);
@@ -93,7 +98,7 @@ namespace stomp_motion_planner
     limits_violations_ = 0;
     K_ = 1.0;
     
-    policy_improvement_.initialize(num_rollouts_, num_time_steps_, num_reused_rollouts_, 1, policy_, use_cumulative_costs_);
+    policy_improvement_.initialize( num_rollouts_, num_time_steps_, num_reused_rollouts_, 1, policy_, use_cumulative_costs_);
     
     tmp_rollout_cost_ = Eigen::VectorXd::Zero(num_time_steps_);
     rollout_costs_ = Eigen::MatrixXd::Zero(num_rollouts_, num_time_steps_);
@@ -102,6 +107,22 @@ namespace stomp_motion_planner
     
     policy_iteration_counter_ = 0;
     return (initialized_ = true);
+  }
+  
+  bool PolicyImprovementLoop::readParametersSingleRollout()
+  {
+    num_rollouts_ = 10;
+    num_reused_rollouts_ = 1;
+
+    noise_stddev_.clear();
+    noise_decay_.clear();
+    
+    noise_stddev_.resize(num_dimensions_,PlanEnv->getDouble(PlanParam::trajOptimStdDev));
+    noise_decay_.resize(num_dimensions_,.99);
+    
+    write_to_file_ = false; // defaults are sometimes good!
+    use_cumulative_costs_ =  false;
+    return true;
   }
   
   bool PolicyImprovementLoop::readParameters()
@@ -262,7 +283,87 @@ namespace stomp_motion_planner
     policy_improvement_.testNoiseGenerators();
   }
   
-  void PolicyImprovementLoop::addSingleRolloutsToDraw(std::vector<Eigen::VectorXd>& rollout, int color)
+  bool PolicyImprovementLoop::generateSingleNoisyTrajectory()
+  {
+    int iteration_number = 0;
+    
+    assert(initialized_);
+    policy_iteration_counter_++;
+    
+    // compute appropriate noise values
+    std::vector<double> noise;
+    noise.resize(num_dimensions_);
+    for (int i=0; i<num_dimensions_; ++i)
+    {
+      noise[i] = noise_stddev_[i];
+    }
+    
+    // get rollouts and execute them
+    const bool get_reused_ones = false;
+    assert(policy_improvement_.getRollouts(rollouts_, noise, get_reused_ones, reused_rollouts_));
+    
+    if (ENV.getBool(Env::drawTrajVector)) 
+      addRolloutsToDraw(get_reused_ones);
+    
+    if( use_annealing_ )
+      limits_violations_ = 0;
+    
+    shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
+    
+    for (int r=0; r<int(rollouts_.size()); ++r)
+    {
+      assert(task_->execute(rollouts_[r], tmp_rollout_cost_, iteration_number));
+      rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
+      //printf("Rollout %d, cost = %lf\n", r+1, tmp_rollout_cost_.sum());
+      
+      if( optimizer->getJointLimitViolationSuccess() )
+      {
+        policy_improvement_.setRolloutOutOfBounds(r);
+      }
+    }
+    
+    std::vector<double> all_costs;
+    assert(policy_improvement_.setRolloutCosts(rollout_costs_, control_cost_weight_, all_costs));
+    
+    // improve the policy
+    // get a noise-less rollout to check the cost
+    assert(policy_improvement_.improvePolicy(parameter_updates_));
+    assert(policy_->updateParameters(parameter_updates_));
+    assert(policy_->getParameters(parameters_));
+    
+    // get the trajectory cost
+    assert(task_->execute(parameters_, tmp_rollout_cost_, iteration_number));
+ 
+    // add the noiseless rollout into policy_improvement:
+    std::vector<std::vector<Eigen::VectorXd> > extra_rollout;
+    std::vector<Eigen::VectorXd> extra_rollout_cost;
+    extra_rollout.resize(1);
+    extra_rollout_cost.resize(1);
+    extra_rollout[0] = parameters_;
+    extra_rollout_cost[0] = tmp_rollout_cost_;
+    assert(policy_improvement_.addExtraRollouts(extra_rollout, extra_rollout_cost));
+    return true;
+  }
+  
+  void PolicyImprovementLoop::getRollouts(std::vector<std::vector<confPtr_t> >& traj)
+  {
+    shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
+    
+    traj.clear();
+    traj.resize( rollouts_.size() + reused_rollouts_.size() );
+    
+    for ( int k=0; k<int(rollouts_.size()); ++k) 
+    {
+      getSingleRollout( rollouts_[k], traj[k] );
+    }
+    
+    for ( int k=0; k<int(reused_rollouts_.size()); ++k) 
+    {
+      getSingleRollout( reused_rollouts_[k], traj[k] );
+    }
+  }
+  
+  void PolicyImprovementLoop::getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<confPtr_t>& traj)
   {
     Configuration q = *optimizer->getPlanningGroup()->robot_->getCurrentPos();
     const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
@@ -274,16 +375,27 @@ namespace stomp_motion_planner
     {
       parameters.row(i) = rollout[i].transpose();
     }
-    
-    //cout << "rollout (" << k << ") :" << endl << parameters << endl;
-    
+
+    traj.clear();
     for ( int j=0; j<num_time_steps_; ++j)
     {
       for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
       {  
         q[joints[i].move3d_dof_index_] = parameters(i,j);
       }
-      T.push_back( std::tr1::shared_ptr<Configuration>(new Configuration(q)));
+      traj.push_back( confPtr_t(new Configuration(q)));
+    }
+  }
+  
+  void PolicyImprovementLoop::addSingleRolloutsToDraw(const std::vector<Eigen::VectorXd>& rollout, int color)
+  {
+    vector<confPtr_t> traj;
+    getSingleRollout(rollout, traj);
+    
+    API::Trajectory T(optimizer->getPlanningGroup()->robot_);
+    for ( int i=0; i<int(traj.size()); ++i )
+    {
+      T.push_back( traj[i] );
     }
     //T.print();
     T.setColor(color);

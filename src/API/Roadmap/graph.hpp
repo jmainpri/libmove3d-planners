@@ -239,7 +239,7 @@ public:
 	 * @param N2 le Node final de l'Edge
 	 * @param Long la longueur de l'Edge
 	 */
-	void addEdge(Node* source, Node* target, double Long);
+	Edge* addEdge(Node* source, Node* target, double Long);
 	
 	/**
 	 * ajoute deux Edge au Graph
@@ -247,7 +247,7 @@ public:
 	 * @param N2 l'autre extrémité des Edge
 	 * @param Long la longueur des Edge
 	 */
-	void addEdges(Node* N1, Node* N2, double Length , bool computeLength = false );
+  std::vector<Edge*> addEdges(Node* N1, Node* N2, double Length, bool computeLength = false );
 	
 	/**
 	 * Remove edge
@@ -293,7 +293,7 @@ public:
 	/**
 	 * Remove Node from graph
 	 */
-	void removeNode(Node* N);
+	void removeNode(Node* N, bool rebuild_compco = true);
 	
 	/**
 	 * lie un Node au Graph
@@ -440,15 +440,32 @@ public:
 	bool checkAllEdgesValid();
   
   /**
-   * Extract bes traj from q_init
+   * Extract best vector of nodes from qi that is closest to q_f
    */
-  API::Trajectory* extractBestTrajSoFar( std::tr1::shared_ptr<Configuration> qi, std::tr1::shared_ptr<Configuration> qf );
+  std::vector<Node*> extractBestNodePathSoFar( confPtr_t qi, confPtr_t qf );
+  
+  /**
+   * Extract best traj from qi that is closest to q_f
+   */
+  API::Trajectory* extractBestTrajSoFar( confPtr_t qi, confPtr_t qf );
+  
+  /**
+	 * Extract best traj 
+	 * @param the configuration
+	 */
+	API::Trajectory* extractDijkstraShortestPathsTraj( confPtr_t qi, confPtr_t qf);
+  
+  /**
+	 * Extract best traj 
+	 * @param the configuration
+	 */
+	API::Trajectory* extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf);
 	
 	/**
 	 * Extract best traj 
 	 * @param the configuration
 	 */
-	API::Trajectory* extractBestTraj(std::tr1::shared_ptr<Configuration> qi, std::tr1::shared_ptr<Configuration> qf);
+	API::Trajectory* extractBestTraj( confPtr_t qi, confPtr_t qf);
 	
 	/**
 	 * Init Motion planning problem

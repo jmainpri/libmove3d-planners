@@ -52,7 +52,7 @@ USING_PART_OF_NAMESPACE_EIGEN
 namespace stomp_motion_planner
 {
   
-  CovariantTrajectoryPolicy::CovariantTrajectoryPolicy()
+  CovariantTrajectoryPolicy::CovariantTrajectoryPolicy() : print_debug_(true)
   {
   }
   
@@ -80,6 +80,7 @@ namespace stomp_motion_planner
                                              const std::vector<double>& derivative_costs)
   {
     //node_handle_ = node_handle;
+    //print_debug_ = true;
     
     num_time_steps_ = num_time_steps;
     num_dimensions_ = num_dimensions;
@@ -109,13 +110,16 @@ namespace stomp_motion_planner
     assert(initializeCosts());
     assert(initializeBasisFunctions());
     
-    cout << "--------------------------------- " << endl;
-    cout << "Trajectory duration : " << movement_duration << endl;
-    cout << "--------------------------------- " << endl;
-    
-    cout <<"movement_duration_ : " << movement_duration_ << endl;
-    cout <<"num_time_steps_  : " << num_time_steps_ << endl;
-    cout <<"num_dimensions_  : " << num_dimensions_ << endl;
+    if( print_debug_ )
+    {
+      cout << "--------------------------------- " << endl;
+      cout << "Trajectory duration : " << movement_duration << endl;
+      cout << "--------------------------------- " << endl;
+      
+      cout <<"movement_duration_ : " << movement_duration_ << endl;
+      cout <<"num_time_steps_  : " << num_time_steps_ << endl;
+      cout <<"num_dimensions_  : " << num_dimensions_ << endl;
+    }
     
     return true;
   }
@@ -131,7 +135,10 @@ namespace stomp_motion_planner
     movement_duration_ =  1.0;
     cost_ridge_factor_ =  0.00001;
     
-    cout <<"Movement duration : " << movement_duration_ << endl;
+    if( print_debug_ )
+    {
+      cout <<"Movement duration : " << movement_duration_ << endl;
+    }
     
     //assert(stomp_motion_planner::readDoubleArray(node_handle_, "derivative_costs", derivative_costs_));
     return true;
@@ -234,8 +241,11 @@ namespace stomp_motion_planner
     differentiation_matrices_.resize(NUM_DIFF_RULES, MatrixXd::Zero(num_vars_all_, num_vars_all_));
     for (int d=0; d<NUM_DIFF_RULES; ++d)
     {
-      cout <<"Movement duration : " << movement_duration_ << endl;
-      cout <<"Movement dt : " << movement_dt_ << endl;
+      if( print_debug_ )
+      {
+        cout <<"Movement duration : " << movement_duration_ << endl;
+        cout <<"Movement dt : " << movement_dt_ << endl;
+      }
       multiplier /= movement_dt_;
       //multiplier /= 0.03815;
       
@@ -251,8 +261,10 @@ namespace stomp_motion_planner
           differentiation_matrices_[d](i,index) = multiplier * DIFF_RULES[d][j+DIFF_RULE_LENGTH/2];
         }
       }
-      cout << "differentiation_matrices_["<<d<<"] = " << endl 
-      << differentiation_matrices_[d] << endl ;
+      if( print_debug_ )
+      {
+        cout << "differentiation_matrices_["<<d<<"] = " << endl << differentiation_matrices_[d] << endl ;
+      }
     }
   }
   

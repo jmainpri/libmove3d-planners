@@ -69,7 +69,7 @@ bool PRM::checkStopConditions()
 		return (true);
 	}
   
-	if (_Graph->getGraphStruct()->nnode >= ENV.getInt(Env::maxNodeCompco))
+	if (_Graph->getNumberOfNodes() >= ENV.getInt(Env::maxNodeCompco))
 	{
 		cout << "Stop: the maximum number of nodes in the graph is reached."
     << endl;
@@ -108,7 +108,7 @@ bool PRM::preConditions()
  */
 void PRM::expandOneStep()
 {
-	shared_ptr<Configuration> q = _Robot->shoot();
+	confPtr_t q = _Robot->shoot();
   
 	if ( q->setConstraintsWithSideEffect() && (!q->isInCollision()) )
 	{
@@ -120,14 +120,12 @@ void PRM::expandOneStep()
 		m_nbConscutiveFailures = 0;
 		m_nbAddedNode++;
 		
-		if (ENV.getBool(Env::drawExploration))
-		{
+		if (ENV.getBool(Env::drawExploration)) {
 			cout << "Number of nodes added : " << m_nbAddedNode << endl;
 			(*_draw_func)();
 		}
 	}
-	else
-	{
+	else {
 		m_nbConscutiveFailures++;
 	}
 }

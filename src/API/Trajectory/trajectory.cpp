@@ -1466,6 +1466,60 @@ void Trajectory::push_back(shared_ptr<Configuration> q)
 	}
 }
 
+void Trajectory::cutTrajInSmallLPSimple(unsigned int nLP)
+{
+  double range = computeSubPortionRange(m_Courbe);
+  double nb_path= nLP;
+  double delta = range/nb_path;
+
+	vector<LocalPath*> portion;
+  portion.push_back(new LocalPath(m_Source,configAtParam(delta)));
+  
+  double s;
+  
+  for( s=delta; s<=(range-delta); s+=delta )
+  {
+    confPtr_t q_init = configAtParam(s);
+    confPtr_t q_goal = configAtParam(s+delta);
+    portion.push_back(new LocalPath(q_init,q_goal));
+  }
+  
+  s=range-delta;
+  
+  int error_in_cut_localpath=0;
+  
+  while (portion.size() < nLP ) 
+  {
+    error_in_cut_localpath++;
+    confPtr_t q_init = configAtParam(s);
+    confPtr_t q_goal = configAtParam(s+delta);
+    portion.push_back(new LocalPath(q_init,q_goal));
+    s+=delta;
+  }
+  
+  if (portion.size() > nLP ) 
+  {
+    error_in_cut_localpath--;
+    portion.resize( nLP );
+  }
+  
+  if (portion.size() != nLP ){
+    throw string("Error: int cutTrajInSmallLPSimple");
+  }
+  
+  delete portion[nLP-1];
+  confPtr_t q_init = portion[nLP-2]->getEnd();
+  confPtr_t q_goal = m_Target;
+  portion[nLP-1] = new LocalPath(q_init,q_goal);
+  
+  if( error_in_cut_localpath > 0 )
+  {
+    cout << "Error in cutTrajInSmallLPSimple : " << error_in_cut_localpath << endl;
+  }
+  
+  m_Courbe = portion;
+}
+
 unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsigned int nLP)
 {
 	double range = computeSubPortionRange(portion);
@@ -1505,7 +1559,7 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 	// Compute real number of small LP
 	unsigned int nbOfSmallLP = 0;
   
-	for ( int i = 0; i<int(portion.size()); i++)
+	for ( int i=0; i<int(portion.size()); i++)
 	{
 		double resol;
     double length = portion[i]->getParamMax();

@@ -233,9 +233,9 @@ vector<Edge*> Node::getEdges()
   boost::tie(beginOut, endOut) = boost::out_edges( u, g );
   for( out_edge_iter it = beginOut; it != endOut; ++(it))
   {
-    allEdges.push_back( EdgeData[*it] );
+    // allEdges.push_back( EdgeData[*it] );
     // allEdges.push_back( g[*ep.first] );
-    // allEdges.push_back( boost::get(EdgeData, *out_i) );
+    allEdges.push_back( boost::get(EdgeData, *it) );
   }
   
   // Get in edges
@@ -492,7 +492,7 @@ BGL_Vertex Node::getDescriptor()
 	else 
 	{
 		m_is_BGL_Descriptor_Valid = true;
-		m_BGL_Descriptor  = m_Graph->findVertexDescriptor(this);
+		m_BGL_Descriptor = m_Graph->findVertexDescriptor(this);
 		return m_BGL_Descriptor;
 	}
 }

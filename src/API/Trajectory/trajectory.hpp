@@ -60,6 +60,7 @@ namespace API
                             std::vector<LocalPath*> paths , bool freeMemory = true );
 		
 		void cutTrajInSmallLP(unsigned int nLP);
+    void cutTrajInSmallLPSimple(unsigned int nLP);
 		uint cutPortionInSmallLP(std::vector<LocalPath*>& portion, uint nLP);
 		
 		void push_back(std::tr1::shared_ptr<Configuration> q);

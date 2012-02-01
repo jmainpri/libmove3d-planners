@@ -78,22 +78,20 @@ bool CostOptimization::oneLoopDeform()
   shared_ptr<Configuration> qInitPt = getRobot()->getCurrentPos();
 	
 	//Get 3 configurations at random along the trajectory
-	vector< shared_ptr<Configuration> >  vectConf = get3RandSuccesConfAlongTraj(lPrev,lCurrent,lNext,m_step);
-	
-	shared_ptr<Configuration> qPrevPt = vectConf.at(0);
-	shared_ptr<Configuration> qCurrPt = vectConf.at(1);
-	shared_ptr<Configuration> qNextPt = vectConf.at(2);
+	vector<confPtr_t>  vectConf = get3RandSuccesConfAlongTraj(lPrev,lCurrent,lNext,m_step);
+	confPtr_t qPrevPt = vectConf.at(0);
+	confPtr_t qCurrPt = vectConf.at(1);
+	confPtr_t qNextPt = vectConf.at(2);
 	
 	// Take a configuration in a certain direction
-	shared_ptr<Configuration> qRandPt = getRobot()->shoot();
+	confPtr_t qRandPt = getRobot()->shoot();
 	
 	// Direction path for perturbation
 	LocalPath path( qCurrPt, qRandPt );
 	
   // Get the New configuration in qtRand dirrenction
-	shared_ptr<Configuration> qNewPt = perturbCurrent(qCurrPt,qRandPt);
-	if ( qNewPt->getConfigStruct() == NULL )
-	{
+	confPtr_t qNewPt = perturbCurrent( qCurrPt, qRandPt, m_step, m_descent );
+	if ( qNewPt->getConfigStruct() == NULL ) {
 		return false;
 	}
 	
@@ -163,6 +161,7 @@ bool CostOptimization::oneLoopDeform()
 			{
 				supposedValid = ( FirstHalf->isValid() && SecondHalf->isValid() );
 			}
+      
 			if ( lowerCost && supposedValid )
 			{
 				vector<LocalPath*> newPortion;
@@ -188,14 +187,12 @@ bool CostOptimization::oneLoopDeform()
 				setSortedIndex();
 				
         // Begin and End validity
-				if (! (*getBegin() == *configAtParam(0)) )
-				{
+				if (! (*getBegin() == *configAtParam(0))) {
 					cout << "------------------------------------------" << endl;
 					cout << "Error in oneLoopDeform : !getBegin()->equal(*configAtParam(0))" << endl;
 				}
 				
-				if (! (*getEnd() == *configAtParam(getRangeMax())) )
-				{
+				if (! (*getEnd() == *configAtParam(getRangeMax()))) {
 					cout << "------------------------------------------" << endl;
 					cout << "Error in oneLoopDeform : !getEnd()->equal(*configAtParam(getRangeMax()))" << endl;
 					getEnd()->print();
@@ -204,48 +201,39 @@ bool CostOptimization::oneLoopDeform()
 				
 				isOptimSuccess = true;
 			}
-			if ( ENV.getBool(Env::debugCostOptim) )
-			{
-				if (isOptimSuccess) 
-        {
+			if ( ENV.getBool(Env::debugCostOptim) ){
+				if (isOptimSuccess) {
 					debugShowTraj(lPrev, lNext, qNewPt, 1);
 				}
-				else 
-        {
+				else {
 					debugShowTraj(lPrev, lNext, qNewPt, 2);
 				}
 			}
-			
 		}
 		else
 		{
 			m_inCollision=true;
-			if (ENV.getBool(Env::debugCostOptim))
-			{
+			if (ENV.getBool(Env::debugCostOptim)) {
 				debugShowTraj(lPrev, lNext, qNewPt, 3);
 			}
 		}
 		
-		if (!isOptimSuccess)
-		{
+		if (!isOptimSuccess) {
 			delete FirstHalf;
 			delete SecondHalf;
 		}
 	}
-	else
-	{
+	else {
 		m_inCollision=true;
 	}
   
-  if( ENV.getBool(Env::drawTraj) )
-  {
-    if( isOptimSuccess )
-    {
+  if( ENV.getBool(Env::drawTraj) ) {
+    
+    if( isOptimSuccess ){
       replaceP3dTraj();
     }
     
-    if( ENV.getBool(Env::drawGraph) || isOptimSuccess )
-    {
+    if( ENV.getBool(Env::drawGraph) || isOptimSuccess ) {
       getRobot()->setAndUpdate(*qInitPt);
       g3d_draw_allwin_active();
     }
@@ -262,23 +250,22 @@ bool CostOptimization::oneLoopDeformRecompute()
 	bool isOptimSuccess(false);
   
   // Store current configuration
-  shared_ptr<Configuration> qInitPt = getRobot()->getCurrentPos();
+  confPtr_t qInitPt = getRobot()->getCurrentPos();
   
   // Get 3 configurations at random along the trajectory
-	vector< shared_ptr<Configuration> >  vectConf = get3RandSuccesConfAlongTraj(lPrev,lCurrent,lNext,m_step);
-	
-	shared_ptr<Configuration> qPrevPt = vectConf.at(0);
-	shared_ptr<Configuration> qCurrPt = vectConf.at(1);
-	shared_ptr<Configuration> qNextPt = vectConf.at(2);
+	vector<confPtr_t>  vectConf = get3RandSuccesConfAlongTraj(lPrev,lCurrent,lNext,m_step);
+	confPtr_t qPrevPt = vectConf.at(0);
+	confPtr_t qCurrPt = vectConf.at(1);
+	confPtr_t qNextPt = vectConf.at(2);
 	
 	// Take a configuration in a certain direction
-	shared_ptr<Configuration> qRandPt = getRobot()->shoot();
+	confPtr_t qRandPt = getRobot()->shoot();
 	
 	// Direction path for perturbation
 	LocalPath path( qCurrPt, qRandPt );
 	
   // Get the New configuration in qtRand dirrenction
-	shared_ptr<Configuration> qNewPt = perturbCurrent(qCurrPt,qRandPt);
+	shared_ptr<Configuration> qNewPt = perturbCurrent( qCurrPt, qRandPt, m_step, m_descent );
 	if ( qNewPt->getConfigStruct() == NULL )
 	{
 		return false;
@@ -397,12 +384,11 @@ bool CostOptimization::oneLoopDeformRecompute()
 }
 
 //! Perturb the current configuration
-shared_ptr<Configuration> CostOptimization::perturbCurrent(shared_ptr<Configuration> qCurrPt,
-																													 shared_ptr<Configuration> qRandPt)
+//! Finds a conf between current and random that satifies the joint limits
+confPtr_t CostOptimization::perturbCurrent( confPtr_t qCurrPt, confPtr_t qRandPt, double step, bool descent )
 {
-	LocalPath path(qCurrPt,qRandPt);
-	
-	shared_ptr<Configuration> qNewPt;
+  confPtr_t qNewPt;
+	LocalPath path( qCurrPt, qRandPt );
   
   const double minStep = 2.0; // PlanEnv->getDouble(PlanParam::MinStep)
 	
@@ -414,9 +400,9 @@ shared_ptr<Configuration> CostOptimization::perturbCurrent(shared_ptr<Configurat
 	
 	for (ith_div=0; ith_div<max_div && QIsOutOfBounds; ith_div++) 
 	{
-		if( !m_descent ) 
+		if( !descent ) 
 		{
-			qNewPt = path.configAtParam( divFactor*m_step  );
+			qNewPt = path.configAtParam( divFactor*step  );
 			QIsOutOfBounds = qNewPt->isOutOfBounds();
       divFactor /= 2;
 		}
@@ -435,9 +421,9 @@ double CostOptimization::getLastDescendingConfParam(LocalPath& directionPath)
 	bool failed(false);
 	bool upHill(false);
 	
-	shared_ptr<Configuration> fromConfig = directionPath.getBegin();
+	confPtr_t fromConfig = directionPath.getBegin();
 	
-	double praramAlongDirection( m_Robot->getActiveScene()->getDMax() );
+	double praramAlongDirection( directionPath.getRobot()->getActiveScene()->getDMax() );
 	
 	double extensionCost(0.);
 	double prevCost(0.);
@@ -446,7 +432,7 @@ double CostOptimization::getLastDescendingConfParam(LocalPath& directionPath)
 	{
 		// Take one configuration along the path
 		// then test if the new small portion is valid
-		shared_ptr<Configuration> toConfig = directionPath.configAtParam( praramAlongDirection );
+		confPtr_t toConfig = directionPath.configAtParam( praramAlongDirection );
 		LocalPath extensionLP( fromConfig , toConfig );
 		failed = (!extensionLP.isValid()); 
 		//nbOfExtend++;
@@ -472,7 +458,6 @@ double CostOptimization::getLastDescendingConfParam(LocalPath& directionPath)
 	
 	return praramAlongDirection;
 }
-
 /*!
  * Bias to one specific configuration
  */
@@ -616,8 +601,7 @@ int nb_runs = 0;
 
 
 vector< shared_ptr<Configuration> > CostOptimization::getClosestConfOnTraj(
-																																					double& prevDistPt, double& randDistPt, double& nextDistPt, shared_ptr<
-																																					Configuration> ptrConf, double step)
+																																					double& prevDistPt, double& randDistPt, double& nextDistPt, shared_ptr<Configuration> ptrConf, double step)
 {
 	const int N = 30;
 	double delta = this->getRangeMax() / (double)N;
