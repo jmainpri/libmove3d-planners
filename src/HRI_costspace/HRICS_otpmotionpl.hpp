@@ -84,6 +84,10 @@ namespace HRICS
         void setRobotTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj){m_2DPath = traj;}
 
 
+        /**
+          * to compute traj or not
+          */
+        void compteTraj(bool compute);
 
         /**
           * Draws the 3D path as a yellow line for robot and green one for human

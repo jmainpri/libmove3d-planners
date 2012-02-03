@@ -2169,6 +2169,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
     string name( "Config_" );
 
+
     int nbConf = _Robot->getRobotStruct()->nconf;
 
 
@@ -2190,9 +2191,12 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
 #endif
 
+
     int id =0;
 
     clock_t beginCreate = clock();
+
+
     if (robotTraj2D.size() > 1)
     {
         //        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmpRobotTraj2D;
@@ -2205,7 +2209,6 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
         //        cout << "size of robotTraj3D = " << robotTraj3D.size() << endl;
         m_2DPath = robotTraj2D;
         conf.robotTraj = robotTraj2D;
-
 
         for(unsigned int i =0; i < robotTraj3D.size(); i++)
         {
@@ -2252,6 +2255,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
 
         }
+
     }
     clock_t endAddingConfs = clock();
     //    config_namePt config;
@@ -2292,7 +2296,6 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
 
 
-
     clock_t beginSoftmotion = clock();
     if (robotTraj2D.size() > 1)
     {
@@ -2307,6 +2310,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
 
         MANIPULATION_TASK_MESSAGE msg = m_viaConfPlan.planTrajFromConfigArrayInRobotTheForm(smTrajs);
+
         if (msg !=  MANIPULATION_TASK_OK)
         {
             cout << "ERROR: manipulation planner failed" << endl;
@@ -2664,7 +2668,7 @@ void OTPMotionPl::setVar()
     PlanEnv->setBool(PlanParam::env_useSlice,false);
     PlanEnv->setBool(PlanParam::env_useAllGrid,false);
 
-    PlanEnv->setBool(PlanParam::env_createTrajs,true);
+//    PlanEnv->setBool(PlanParam::env_createTrajs,true);
     PlanEnv->setBool(PlanParam::env_noRepetition,false);
 
     PlanEnv->setInt(PlanParam::env_timeShow,0);
@@ -2970,6 +2974,11 @@ Eigen::Vector3d OTPMotionPl::getRobotActualPos()
 void OTPMotionPl::addVectorToRealTreajectory(Eigen::Vector2d vect)
 {
     m_2DHumanRealPath.push_back(vect);
+}
+
+void OTPMotionPl::compteTraj(bool compute)
+{
+    PlanEnv->setBool(PlanParam::env_createTrajs,compute);
 }
 
 
