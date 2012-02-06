@@ -1909,6 +1909,19 @@ OutputConf OTPMotionPl::showBestConf()
     return m_confList.at(id);
 }
 
+std::tr1::shared_ptr<Configuration> OTPMotionPl::getBestConf()
+{
+    int id = 0;
+    for (unsigned int i = 1; i < m_confList.size(); i++)
+    {
+        if (m_confList.at(i).cost < m_confList.at(id).cost)
+        {
+            id = i;
+        }
+    }
+    return m_confList.at(id).robotConf;
+}
+
 void OTPMotionPl::showBestConfRobOnly()
 {
     shared_ptr<Configuration> ptrQ_human = m_Human->getCurrentPos();
@@ -2147,9 +2160,6 @@ std::vector<ConfigHR> OTPMotionPl::getConfList()
 
 bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 {
-
-
-
     clock_t start = clock();
     ENV.setBool(Env::isCostSpace,false);
 
@@ -2253,7 +2263,6 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
                 p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
             }
 
-
         }
 
     }
@@ -2291,6 +2300,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
             }
         }
     }
+
 
     humanVectorConf.push_back(conf.humanConf);
 

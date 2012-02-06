@@ -288,6 +288,11 @@ namespace HRICS
         OutputConf showBestConf();
 
         /**
+        * get best conf
+        */
+        std::tr1::shared_ptr<Configuration> getBestConf();
+
+        /**
         * show the best computed conf for the robot only
         */
         void showBestConfRobOnly();

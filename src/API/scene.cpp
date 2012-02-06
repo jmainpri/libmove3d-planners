@@ -23,7 +23,7 @@ Scene::Scene(p3d_env* environnement)
 {
 	m_Scene = environnement;
 	
-	m_Name = m_Scene->name;
+        m_Name = m_Scene->name;
 	
 	for (int i=0; i<m_Scene->nr; i++) 
 	{
