@@ -674,7 +674,7 @@ void g3d_draw_hrics(int opengl_context)
 
     bool draw = PlanEnv->getBool(PlanParam::env_drawFinalConf);
     bool isFinal = PlanEnv->getBool(PlanParam::env_isFinalConf);
-    if ( draw && isFinal )
+    if ( draw  )
     {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
