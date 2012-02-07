@@ -1066,6 +1066,7 @@ bool OTPMotionPl::newComputeOTP()
 {
     clock_t start = clock();
     bool isStanding = PlanEnv->getBool(PlanParam::env_isStanding);
+    _Robot->setInitialPosition(*_Robot->getCurrentPos());
     if (!PlanEnv->getBool(PlanParam::env_realTime))
     {
         getInputs();
@@ -1385,6 +1386,9 @@ bool OTPMotionPl::newComputeOTP()
             break;
         }
     }
+    _Robot->setGoTo(*getBestConf());
+//    PlanEnv->setBool(PlanParam::env_drawFinalConf,true);
+    PlanEnv->setBool(PlanParam::env_isFinalConf,true);
 
     clock_t end = clock();
 
