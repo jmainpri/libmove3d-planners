@@ -97,9 +97,7 @@ namespace PlanParam
             env_createTrajs,
             env_fusedGridAndRotRand,
             env_oldCriteria,
-            env_noRepetition,
-            env_drawFinalConf,
-            env_isFinalConf
+            env_noRepetition
         };
 
         enum intParameter
