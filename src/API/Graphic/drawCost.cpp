@@ -672,31 +672,31 @@ void g3d_draw_hrics(int opengl_context)
     }
 
 
-    bool draw = PlanEnv->getBool(PlanParam::env_drawFinalConf);
-    bool isFinal = PlanEnv->getBool(PlanParam::env_isFinalConf);
-    if ( draw  )
-    {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        G3D_Window *win;
-        win = g3d_get_cur_win();
-        Robot* rob = global_Project->getActiveScene()->getActiveRobot();
-        shared_ptr<Configuration> q_cur = rob->getCurrentPos();
-
-//        p3d_set_and_update_robot_conf(rob->getRobotStruct()->ROBOT_POS);
-        /* collision checking */
-        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
-        //g3d_draw_robot(robotPt->num, win);
-        p3d_set_and_update_robot_conf(rob->getRobotStruct()->ROBOT_GOTO);
-        /* collision checking */
-        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
-        g3d_draw_robot(rob->getRobotStruct()->num, win, opengl_context);
-        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
-
-        p3d_set_and_update_robot_conf(q_cur->getConfigStruct());
-//        g3d_draw_trace_all_tcur();
-    }
+//    bool draw = PlanEnv->getBool(PlanParam::env_drawFinalConf);
+//    bool isFinal = PlanEnv->getBool(PlanParam::env_isFinalConf);
+//    if ( draw  )
+//    {
+//        glEnable(GL_BLEND);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//
+//        G3D_Window *win;
+//        win = g3d_get_cur_win();
+//        Robot* rob = global_Project->getActiveScene()->getActiveRobot();
+//        shared_ptr<Configuration> q_cur = rob->getCurrentPos();
+//
+////        p3d_set_and_update_robot_conf(rob->getRobotStruct()->ROBOT_POS);
+//        /* collision checking */
+//        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
+//        //g3d_draw_robot(robotPt->num, win);
+//        p3d_set_and_update_robot_conf(rob->getRobotStruct()->ROBOT_GOTO);
+//        /* collision checking */
+//        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
+//        g3d_draw_robot(rob->getRobotStruct()->num, win, opengl_context);
+//        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
+//
+//        p3d_set_and_update_robot_conf(q_cur->getConfigStruct());
+////        g3d_draw_trace_all_tcur();
+//    }
 
 }
 //#endif
