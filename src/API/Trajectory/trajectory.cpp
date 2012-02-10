@@ -270,45 +270,45 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
   
   bool first = true;
 	
-	for (unsigned int i = 0; i < m_Courbe.size(); i++)
-	{
-    //    if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() )
-    //    {
-    //      cout << "null LocalPath in replaceP3dTraj" << endl;
-    //      continue;
-    //    }
-    
-		localprevPt = localpathPt;
-		localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( m_Robot->getRobotStruct(), 
-                                                          m_Courbe[i]->getLocalpathStruct() );
-    
-    if( localprevPt )
-    {
-      localprevPt->next_lp = localpathPt;
-    }
-    
-		localpathPt->prev_lp = localprevPt;
-    
-    if ( first ) 
-    {
-      trajPt->courbePt = localpathPt;
-      first = false;
-    }
-    
-    nloc++;
-	}
+  for (unsigned int i = 0; i < m_Courbe.size(); i++)
+  {
+      //    if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() )
+      //    {
+      //      cout << "null LocalPath in replaceP3dTraj" << endl;
+      //      continue;
+      //    }
+
+      localprevPt = localpathPt;
+      localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( m_Robot->getRobotStruct(),
+                                                             m_Courbe[i]->getLocalpathStruct() );
+
+      if( localprevPt )
+      {
+          localprevPt->next_lp = localpathPt;
+      }
+
+      localpathPt->prev_lp = localprevPt;
+
+      if ( first )
+      {
+          trajPt->courbePt = localpathPt;
+          first = false;
+      }
+
+      nloc++;
+  }
 	
   if (nloc != 0) 
-    localpathPt->next_lp = NULL;
-	else 
-    cout << "replaceP3dTraj with empty trajectory" << endl;
+      localpathPt->next_lp = NULL;
+  else
+      cout << "replaceP3dTraj with empty trajectory" << endl;
   
-	trajPt->nlp = nloc;
+  trajPt->nlp = nloc;
 	
 #ifdef P3D_PLANNER
 	trajPt->range_param = p3d_compute_traj_rangeparam(trajPt);
 #else
-	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+        printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
 #endif
   
   return trajPt;
@@ -1439,31 +1439,31 @@ double Trajectory::costOfPortion(double param1, double param2)
 
 void Trajectory::push_back(shared_ptr<Configuration> q)
 {
-	if( m_Courbe.empty() )
-	{
-		if( m_Source->getConfigStruct() == NULL )
-		{
-			m_Source = q;
-		}
-		else
-		{
-      if ( !m_Source->equal(*q) ) 
-      {
-        m_Courbe.push_back(new LocalPath(m_Source,q));
-        m_Target = q;
-        updateRange();
-      }
-		}
-	}
-	else
-	{
-    if ( !m_Target->equal(*q) ) 
+    if( m_Courbe.empty() )
     {
-      m_Courbe.push_back(new LocalPath(m_Target,q));
-      m_Target = q;
-      updateRange();
+        if( m_Source->getConfigStruct() == NULL )
+        {
+            m_Source = q;
+        }
+        else
+        {
+            if ( !m_Source->equal(*q) )
+            {
+                m_Courbe.push_back(new LocalPath(m_Source,q));
+                m_Target = q;
+                updateRange();
+            }
+        }
     }
-	}
+    else
+    {
+        if ( !m_Target->equal(*q) )
+        {
+            m_Courbe.push_back(new LocalPath(m_Target,q));
+            m_Target = q;
+            updateRange();
+        }
+    }
 }
 
 void Trajectory::cutTrajInSmallLPSimple(unsigned int nLP)

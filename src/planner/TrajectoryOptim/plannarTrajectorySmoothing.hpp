@@ -37,11 +37,18 @@ public:
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > findShortCut(
             std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, int i, int j);
 
+
+    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > findShortCut(
+            std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, int i, Robot* cyl, Robot* robot);
+
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > add3Dim(
             std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Robot* robot, double epsilon);
 
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > removeSamePoints(
             std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > traj, double epsilon);
+
+    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > get2DtrajFrom3Dtraj(
+            std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > traj);
 
 private:
     int _id;
