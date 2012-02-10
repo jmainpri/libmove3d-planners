@@ -2710,6 +2710,13 @@ void OTPMotionPl::dumpVar()
 
     cout << " createTrajs = " << PlanEnv->getBool(PlanParam::env_createTrajs) << endl;
     cout << " computeTrajForHuman = " << PlanEnv->getBool(PlanParam::env_computeTrajForHuman) << endl;
+#ifdef MULTILOCALPATH
+    cout << " plotSoftMotionCurve = " << ENV.getBool(Env::plotSoftMotionCurve) << endl;
+    cout << " writeSoftMotionFiles = " << ENV.getBool(Env::writeSoftMotionFiles) << endl;
+    cout << " exportSoftMotionTrajAsArrayOfConf = " << ENV.getBool(Env::exportSoftMotionTrajAsArrayOfConf) << endl;
+    cout << " smoothSoftMotionTraj = " << ENV.getBool(Env::smoothSoftMotionTraj) << endl;
+#endif
+
     cout << " no repetition = " << PlanEnv->getBool(PlanParam::env_noRepetition) << endl;
     cout << " isStanding = " << PlanEnv->getBool(PlanParam::env_isStanding) << endl;
     cout << " objectNecessity = " <<PlanEnv->getDouble(PlanParam::env_objectNessecity) << endl;
@@ -2756,6 +2763,13 @@ void OTPMotionPl::setVar()
 //    PlanEnv->setBool(PlanParam::env_createTrajs,true);
     PlanEnv->setBool(PlanParam::env_noRepetition,false);
     PlanEnv->setBool(PlanParam::env_computeTrajForHuman,false);
+
+#ifdef MULTILOCALPATH
+    ENV.setBool(Env::plotSoftMotionCurve,false);
+    ENV.setBool(Env::writeSoftMotionFiles,false);
+    ENV.setBool(Env::exportSoftMotionTrajAsArrayOfConf,false);
+    ENV.setBool(Env::smoothSoftMotionTraj,true);
+#endif
 
     PlanEnv->setInt(PlanParam::env_timeShow,0);
     PlanEnv->setDouble(PlanParam::env_Cellsize,0.20);
