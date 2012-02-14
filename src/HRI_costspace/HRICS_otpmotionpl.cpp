@@ -2328,6 +2328,8 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
 
     clock_t endCreateTraj = clock();
+    int msg;
+    bool trajTest;
     if (robotTraj2D.size() > 1)
     {
 //        vector<SM_TRAJ> smTrajs;
@@ -2356,7 +2358,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
         //////////////////
 //        API::Trajectory base_rob_traj(robotVectorConf);
 //        _Robot->getRobotStruct()->tcur = NULL;
-        p3d_trajectory.replaceP3dTraj(_Robot->getTrajStruct());
+        trajTest = p3d_trajectory.replaceP3dTraj(_Robot->getTrajStruct());
 
         endCreateTraj = clock();
         p3d_rob * robotPt =  _Robot->getRobotStruct();
@@ -2365,10 +2367,9 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
         MANPIPULATION_TRAJECTORY_CONF_STR conf;
         SM_TRAJ smTraj;
 
-        m_p.computeSoftMotion(_Robot->getTrajStruct(), conf, smTraj);
+        msg = m_p.computeSoftMotion(_Robot->getTrajStruct(), conf, smTraj);
+
 //        robotVectorConf.
-
-
     }
     clock_t end = clock();
 
@@ -2388,6 +2389,20 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
         cout << "applying softmotion = " << softMotionCreateTrajTime << " s"<< endl;
         cout << "----------" << endl;
     }
+    if (robotTraj2D.size() > 1)
+    {
+        if (!trajTest)
+        {
+            cout << "Fail: in replaceP3dTraj(), no traj found" <<endl;
+            return false;
+        }
+        else if (msg != 0)
+        {
+            cout << "Fail: in computeSoftMotion(), no traj found" <<endl;
+            return false;
+        }
+    }
+
 
 
     // this part is for moving human.
