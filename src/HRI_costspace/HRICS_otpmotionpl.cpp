@@ -2368,6 +2368,8 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
         SM_TRAJ smTraj;
 
         msg = m_p.computeSoftMotion(_Robot->getTrajStruct(), conf, smTraj);
+        m_smTrajs.clear();
+        m_smTrajs.push_back(smTraj);
 
 //        robotVectorConf.
     }
