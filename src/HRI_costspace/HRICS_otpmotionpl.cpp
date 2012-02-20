@@ -2176,7 +2176,11 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     m_ManipPl->setNavigationPlanner();
     //    ENV.setInt(Env::NbTry,10);
 
-//    vector<shared_ptr<Configuration> > robotVectorConf;
+    vector<shared_ptr<Configuration> > robotVectorConf;
+
+    p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
+    p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPl->getUpBodyMLP(), 1, false);
+
     API::Trajectory p3d_trajectory(_Robot);
     p3d_trajectory.clear();
 
