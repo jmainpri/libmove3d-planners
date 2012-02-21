@@ -1064,6 +1064,7 @@ bool OTPMotionPl::getRandomPoints(double id, Vector3d& vect)
 
 bool OTPMotionPl::newComputeOTP()
 {
+    _Robot->setInitialPosition(*_Robot->getCurrentPos());
     clock_t start = clock();
     bool isStanding = PlanEnv->getBool(PlanParam::env_isStanding);
     if (!PlanEnv->getBool(PlanParam::env_realTime))
@@ -1336,10 +1337,10 @@ bool OTPMotionPl::newComputeOTP()
     {
 
         OutputConf o = m_confList.at(0);
-        m_confList.erase(m_confList.begin());
-        o.humanTraj = m_pts->smoothTrajectory(m_Human,o.humanTraj);
-        o.robotTraj = m_pts->smoothTrajectory(_Robot,o.robotTraj);
-        m_confList.insert(m_confList.begin(),o);
+//        m_confList.erase(m_confList.begin());
+//        o.humanTraj = m_pts->smoothTrajectory(m_Human,o.humanTraj);
+//        o.robotTraj = m_pts->smoothTrajectory(_Robot,o.robotTraj);
+//        m_confList.insert(m_confList.begin(),o);
 
         // trajectory
 
@@ -1385,6 +1386,7 @@ bool OTPMotionPl::newComputeOTP()
             break;
         }
     }
+//    PlanEnv->setBool(PlanParam::env_drawFinalConf,true);
 
     clock_t end = clock();
 
@@ -1458,6 +1460,11 @@ OutputConf OTPMotionPl::lookForBestLocalConf(double x, double y, double Rz, doub
 
     shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
     shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+
+    Vector2d robCurrentPos;
+    robCurrentPos[0] = (*m_savedConf.robotConf)[6];
+    robCurrentPos[1] = (*m_savedConf.robotConf)[7];
+
 
     double configCost = -1;
     vector<ConfigHR> vectConfs;
@@ -1578,7 +1585,10 @@ OutputConf OTPMotionPl::lookForBestLocalConf(double x, double y, double Rz, doub
 
     double rDist = rCell->getRobotDist() / m_2DGrid->getRobotMaxDist();
 
-    bestLocalConf.robotTraj = rCell->getRobotVectorTraj();
+    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmp = rCell->getRobotVectorTraj();
+    tmp.insert(tmp.begin(),robCurrentPos);
+
+    bestLocalConf.robotTraj = tmp;
     bestLocalConf.robotTrajExist = false;
     if (bestLocalConf.robotTraj.size()> 0)
     {
@@ -1909,6 +1919,19 @@ OutputConf OTPMotionPl::showBestConf()
     return m_confList.at(id);
 }
 
+std::tr1::shared_ptr<Configuration> OTPMotionPl::getBestConf()
+{
+    int id = 0;
+    for (unsigned int i = 1; i < m_confList.size(); i++)
+    {
+        if (m_confList.at(i).cost < m_confList.at(id).cost)
+        {
+            id = i;
+        }
+    }
+    return m_confList.at(id).robotConf;
+}
+
 void OTPMotionPl::showBestConfRobOnly()
 {
     shared_ptr<Configuration> ptrQ_human = m_Human->getCurrentPos();
@@ -2147,22 +2170,26 @@ std::vector<ConfigHR> OTPMotionPl::getConfList()
 
 bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 {
-
-
-
     clock_t start = clock();
     ENV.setBool(Env::isCostSpace,false);
 
     m_ManipPl->setNavigationPlanner();
     //    ENV.setInt(Env::NbTry,10);
-    vector<shared_ptr<Configuration> > humanVectorConf;
+
+    vector<shared_ptr<Configuration> > robotVectorConf;
+
+    p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
+    p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPl->getUpBodyMLP(), 1, false);
+
+    API::Trajectory p3d_trajectory(_Robot);
+    p3d_trajectory.clear();
 
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > robotTraj2D = conf.robotTraj;
-    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanTraj2D = conf.humanTraj;
+
 
     loadInitConf(true,true);
     shared_ptr<Configuration> q_cur_human(m_Human->getCurrentPos());
-    shared_ptr<Configuration> q_cur_robot(_Robot->getCurrentPos());
+//    shared_ptr<Configuration> q_cur_robot(_Robot->getCurrentPos());
 
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
     int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
@@ -2196,19 +2223,30 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
     clock_t beginCreate = clock();
 
-
+    clock_t justSmoothing = clock();
     if (robotTraj2D.size() > 1)
     {
-        //        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmpRobotTraj2D;
 
+//        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmpRobotTraj2D;
 
-        //        cout << "size of robotTraj2D before traitement = " << robotTraj2D.size()<< endl;
+//        cout << "size of robotTraj2D before traitement = " << robotTraj2D.size()<< endl;
         robotTraj2D = m_pts->smoothTrajectory(_Robot,robotTraj2D);
-        //        cout << "size of robotTraj2D after smoothing = " << robotTraj2D.size()<< endl;
-        std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > robotTraj3D = m_pts->add3Dim(robotTraj2D,_Robot,0.01);
-        //        cout << "size of robotTraj3D = " << robotTraj3D.size() << endl;
-        m_2DPath = robotTraj2D;
-        conf.robotTraj = robotTraj2D;
+//        cout << "size of robotTraj2D after smoothing = " << robotTraj2D.size()<< endl;
+        std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > robotTraj3D = m_pts->add3Dim(robotTraj2D,_Robot,0.05);
+//                cout << "size of robotTraj3D = " << robotTraj3D.size() << endl;
+
+//        std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > robotTraj3D;
+//        for (int i = 0; i < robotTraj2D.size(); i++)
+//        {
+//            Vector3d t;
+//            t[0] = robotTraj2D.at(i)[0];
+//            t[1] = robotTraj2D.at(i)[1];
+//            t[2] = 0;
+//            robotTraj3D.push_back(t);
+//        }
+        m_2DPath = m_pts->get2DtrajFrom3Dtraj(robotTraj3D);
+        conf.robotTraj = m_2DPath;
+        justSmoothing = clock();
 
         for(unsigned int i =0; i < robotTraj3D.size(); i++)
         {
@@ -2216,13 +2254,13 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
             shared_ptr<Configuration> q_tmp(_Robot->getInitialPosition());
             shared_ptr<Configuration> q_cur(_Robot->getInitialPosition());
 
-            //            cout << "cell nb: " << i << " coord =\n"<< robotTraj3D.at(i) << endl;
+//                        cout << "cell nb: " << i << " coord =\n"<< robotTraj3D.at(i) << endl;
 
             (*q_tmp)[firstIndexOfRobotDof + 0] = robotTraj3D.at(i)[0];
             (*q_tmp)[firstIndexOfRobotDof + 1] = robotTraj3D.at(i)[1];
             (*q_tmp)[firstIndexOfRobotDof + 5] = angle_limit_PI(robotTraj3D.at(i)[2]);
 
-            config_namePt config;
+//            config_namePt config;
             string num;
             stringstream out;
             out << id++;
@@ -2236,23 +2274,45 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
                 //                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
                 //                out << id++;
                 //                num = out.str();
-                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
+//                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str(), conf.robotConf->getConfigStruct(), NULL, config);
+//                double xf = (*conf.robotConf)[firstIndexOfRobotDof + 0];
+//                double yf = (*conf.robotConf)[firstIndexOfRobotDof + 1];
+
+//                if (xf-robotTraj3D.at(i)[0] < EPS2 && yf-robotTraj3D.at(i)[1] < EPS2)
+//                {
+//                    p3d_trajectory.push_back(q_tmp);
+                    (*q_tmp)[firstIndexOfRobotDof + 5] = (*conf.robotConf)[firstIndexOfRobotDof + 5];
+                    p3d_trajectory.push_back(q_tmp);
+                    p3d_trajectory.push_back(conf.robotConf);
+//                    robotVectorConf.push_back(conf.robotConf);
+//                }
+//                else
+//                {
+//                    p3d_trajectory.push_back(q_tmp);
+//                }
+
             }
             else if (i == 0)
             {
-                configPt q = m_savedConf.robotConf->getConfigStruct();
-                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
-                out << id++;
-                num = out.str();
-                q = q_tmp->getConfigStruct();
-                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
+                p3d_trajectory.push_back(q_cur);
+                p3d_trajectory.push_back(q_tmp);
+//                robotVectorConf.push_back(q_cur);
+//                robotVectorConf.push_back(q_cur);
+
+//                configPt q = m_savedConf.robotConf->getConfigStruct();
+//                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
+//                out << id++;
+//                num = out.str();
+//                q = q_tmp->getConfigStruct();
+//                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
             }
             else
             {
-                configPt q = q_tmp->getConfigStruct();
-                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
+//                configPt q = q_tmp->getConfigStruct();
+//                p3d_set_new_robot_config(_Robot->getRobotStruct(), (name + num).c_str() , q, NULL, config);
+                p3d_trajectory.push_back(q_tmp);
+//                robotVectorConf.push_back(q_tmp);
             }
-
 
         }
 
@@ -2268,95 +2328,140 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
 
     // this part is for moving human.
-    humanVectorConf.push_back(q_cur_human);
-    if (humanTraj2D.size() > 1)
-    {
-        humanTraj2D = m_pts->smoothTrajectory(m_Human,humanTraj2D);
-        for(unsigned int i =0; i < humanTraj2D.size() - 1; i++)
-        {
-            shared_ptr<Configuration> q_tmp(m_Human->getCurrentPos());
-            (*q_tmp)[firstIndexOfHumanDof + 0] = humanTraj2D.at (i)[0];
-            (*q_tmp)[firstIndexOfHumanDof + 1] = humanTraj2D.at(i)[1];
-            if (humanTraj2D.at(i+1)[0] != humanTraj2D.at(i)[0])
-            {
-                (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(
-                        humanTraj2D.at(i+1)[1] - humanTraj2D.at(i)[1],
-                        humanTraj2D.at(i+1)[0] - humanTraj2D.at(i)[0]);
-            }
-
-            humanVectorConf.push_back(q_tmp);
-            if (conf.isStandingInThisConf && m_humanCanStand)
-            {
-                standUp();
-            }
-        }
-    }
-
-    humanVectorConf.push_back(conf.humanConf);
 
 
 
-    clock_t beginSoftmotion = clock();
+    clock_t endCreateTraj = clock();
+    int msg;
+    bool trajTest;
     if (robotTraj2D.size() > 1)
     {
-        vector<SM_TRAJ> smTrajs;
+//        vector<SM_TRAJ> smTrajs;
+//
+//        p3d_rob * robotPt =  _Robot->getRobotStruct();
+//        ManipulationViaConfPlanner m_viaConfPlan(robotPt);
+//
+//        m_viaConfPlan.setNavigationPlanner();
+//        m_viaConfPlan.setPlanningMethod( p3d_planner_function );
+//        m_viaConfPlan.setSmoothingMethod( p3d_smoothing_function );
+//
+//
+//        MANIPULATION_TASK_MESSAGE msg = m_viaConfPlan.planTrajFromConfigArrayInRobotTheForm(smTrajs);
+//
+//        if (msg !=  MANIPULATION_TASK_OK)
+//        {
+//            cout << "ERROR: manipulation planner failed" << endl;
+//            return false;
+//        }
+//        m_smTrajs.clear();
+//        m_smTrajs = smTrajs;
 
+//        p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
+//        p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPlHum->getBaseMLP(), 1, false);
+
+        //////////////////
+//        API::Trajectory base_rob_traj(robotVectorConf);
+//        _Robot->getRobotStruct()->tcur = NULL;
+        trajTest = p3d_trajectory.replaceP3dTraj(_Robot->getTrajStruct());
+
+        endCreateTraj = clock();
         p3d_rob * robotPt =  _Robot->getRobotStruct();
-        ManipulationViaConfPlanner m_viaConfPlan(robotPt);
+        ManipulationPlanner m_p(robotPt);
 
-        m_viaConfPlan.setNavigationPlanner();
-        m_viaConfPlan.setPlanningMethod( p3d_planner_function );
-        m_viaConfPlan.setSmoothingMethod( p3d_smoothing_function );
+        MANPIPULATION_TRAJECTORY_CONF_STR conf;
+        SM_TRAJ smTraj;
 
-
-        MANIPULATION_TASK_MESSAGE msg = m_viaConfPlan.planTrajFromConfigArrayInRobotTheForm(smTrajs);
-
-        if (msg !=  MANIPULATION_TASK_OK)
-        {
-            cout << "ERROR: manipulation planner failed" << endl;
-            return false;
-        }
+        msg = m_p.computeSoftMotion(_Robot->getTrajStruct(), conf, smTraj);
         m_smTrajs.clear();
-        m_smTrajs = smTrajs;
+        m_smTrajs.push_back(smTraj);
 
-
-
-
+//        robotVectorConf.
     }
     clock_t end = clock();
 
     double initCreateTrajTime = ((double)beginCreate - start) / CLOCKS_PER_SEC;
-    double smoothCreateTrajTime = ((double)endAddingConfs - beginCreate) / CLOCKS_PER_SEC;
-    double softMotionCreateTrajTime = ((double)end - beginSoftmotion) / CLOCKS_PER_SEC;
+    double justSmooth = ((double)justSmoothing - beginCreate) / CLOCKS_PER_SEC;
+    double smoothCreateTrajTime = ((double)endAddingConfs - justSmoothing) / CLOCKS_PER_SEC;
+    double createTrajectory = ((double)endCreateTraj - endAddingConfs) / CLOCKS_PER_SEC;
+    double softMotionCreateTrajTime = ((double)end - endCreateTraj) / CLOCKS_PER_SEC;
 
     if (PlanEnv->getBool(PlanParam::env_showText))
     {
         cout << "----------" << endl <<"time elapsed to : " << endl;
         cout << "init create traj = " << initCreateTrajTime << " s"<< endl;
-        cout << "smooth 2D traj = " << smoothCreateTrajTime << " s"<< endl;
-        cout << "create traj with rrt, concatenete them and use softmotion = " << softMotionCreateTrajTime << " s"<< endl;
+        cout << "just smoothing traj = " << justSmooth << " s"<< endl;
+        cout << "adding conf to traj = " << smoothCreateTrajTime << " s"<< endl;
+        cout << "creating traj = " << createTrajectory << " s"<< endl;
+        cout << "applying softmotion = " << softMotionCreateTrajTime << " s"<< endl;
         cout << "----------" << endl;
     }
+    if (robotTraj2D.size() > 1)
+    {
+        if (!trajTest)
+        {
+            cout << "Fail: in replaceP3dTraj(), no traj found" <<endl;
+            return false;
+        }
+        else if (msg != 0)
+        {
+            cout << "Fail: in computeSoftMotion(), no traj found" <<endl;
+            return false;
+        }
+    }
+
 
 
     // this part is for moving human.
-    if (humanVectorConf.size() > 1)
-    {
-        p3d_multiLocalPath_disable_all_groupToPlan( m_Human->getRobotStruct() , false );
-        p3d_multiLocalPath_set_groupToPlan( m_Human->getRobotStruct(), m_ManipPlHum->getBaseMLP(), 1, false);
 
-        //////////////////
-        API::Trajectory base_hum_traj(humanVectorConf);
-        base_hum_traj.replaceHumanP3dTraj(m_Human, m_Human->getTrajStruct());
-    }
-    else
+
+    if (PlanEnv->getBool(PlanParam::env_computeTrajForHuman))
     {
-        if ( m_Human->getTrajStruct())
+        vector<shared_ptr<Configuration> > humanVectorConf;
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanTraj2D = conf.humanTraj;
+        humanVectorConf.push_back(q_cur_human);
+        if (humanTraj2D.size() > 1)
         {
-            destroy_list_localpath(m_Human->getRobotStruct(), m_Human->getTrajStruct()->courbePt);
-            m_Human->getRobotStruct()->tcur = NULL;
+            humanTraj2D = m_pts->smoothTrajectory(m_Human,humanTraj2D);
+            for(unsigned int i =0; i < humanTraj2D.size() - 1; i++)
+            {
+                shared_ptr<Configuration> q_tmp(m_Human->getCurrentPos());
+                (*q_tmp)[firstIndexOfHumanDof + 0] = humanTraj2D.at (i)[0];
+                (*q_tmp)[firstIndexOfHumanDof + 1] = humanTraj2D.at(i)[1];
+                if (humanTraj2D.at(i+1)[0] != humanTraj2D.at(i)[0])
+                {
+                    (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(
+                            humanTraj2D.at(i+1)[1] - humanTraj2D.at(i)[1],
+                            humanTraj2D.at(i+1)[0] - humanTraj2D.at(i)[0]);
+                }
+
+                humanVectorConf.push_back(q_tmp);
+                if (conf.isStandingInThisConf && m_humanCanStand)
+                {
+                    standUp();
+                }
+            }
+        }
+        humanVectorConf.push_back(conf.humanConf);
+
+        if (humanVectorConf.size() > 1)
+        {
+            p3d_multiLocalPath_disable_all_groupToPlan( m_Human->getRobotStruct() , false );
+            p3d_multiLocalPath_set_groupToPlan( m_Human->getRobotStruct(), m_ManipPlHum->getBaseMLP(), 1, false);
+
+            //////////////////
+            API::Trajectory base_hum_traj(humanVectorConf);
+            base_hum_traj.replaceHumanP3dTraj(m_Human, m_Human->getTrajStruct());
+        }
+        else
+        {
+            if ( m_Human->getTrajStruct())
+            {
+                destroy_list_localpath(m_Human->getRobotStruct(), m_Human->getTrajStruct()->courbePt);
+                m_Human->getRobotStruct()->tcur = NULL;
+            }
         }
     }
+
 
     ENV.setBool(Env::isCostSpace,true);
     return true;
@@ -2625,6 +2730,14 @@ void OTPMotionPl::dumpVar()
     cout << "all grid = "  << PlanEnv->getBool(PlanParam::env_useAllGrid) << endl << endl;
 
     cout << " createTrajs = " << PlanEnv->getBool(PlanParam::env_createTrajs) << endl;
+    cout << " computeTrajForHuman = " << PlanEnv->getBool(PlanParam::env_computeTrajForHuman) << endl;
+#ifdef MULTILOCALPATH
+    cout << " plotSoftMotionCurve = " << ENV.getBool(Env::plotSoftMotionCurve) << endl;
+    cout << " writeSoftMotionFiles = " << ENV.getBool(Env::writeSoftMotionFiles) << endl;
+    cout << " exportSoftMotionTrajAsArrayOfConf = " << ENV.getBool(Env::exportSoftMotionTrajAsArrayOfConf) << endl;
+    cout << " smoothSoftMotionTraj = " << ENV.getBool(Env::smoothSoftMotionTraj) << endl;
+#endif
+
     cout << " no repetition = " << PlanEnv->getBool(PlanParam::env_noRepetition) << endl;
     cout << " isStanding = " << PlanEnv->getBool(PlanParam::env_isStanding) << endl;
     cout << " objectNecessity = " <<PlanEnv->getDouble(PlanParam::env_objectNessecity) << endl;
@@ -2670,6 +2783,14 @@ void OTPMotionPl::setVar()
 
 //    PlanEnv->setBool(PlanParam::env_createTrajs,true);
     PlanEnv->setBool(PlanParam::env_noRepetition,false);
+    PlanEnv->setBool(PlanParam::env_computeTrajForHuman,false);
+
+#ifdef MULTILOCALPATH
+    ENV.setBool(Env::plotSoftMotionCurve,false);
+    ENV.setBool(Env::writeSoftMotionFiles,false);
+    ENV.setBool(Env::exportSoftMotionTrajAsArrayOfConf,false);
+    ENV.setBool(Env::smoothSoftMotionTraj,true);
+#endif
 
     PlanEnv->setInt(PlanParam::env_timeShow,0);
     PlanEnv->setDouble(PlanParam::env_Cellsize,0.20);
@@ -2815,6 +2936,7 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
 {
 
     getInputs();
+    saveInitConf();
     PlanEnv->setBool(PlanParam::env_isStanding,isStanding);
     PlanEnv->setDouble(PlanParam::env_objectNessecity,objectNessecity);
     //InitMhpObjectTransfert();

@@ -393,7 +393,7 @@ void drawSlice(int opengl_context);
  * @ingroup graphics
  * Draws the thing related to HRI_COSTSPACE
  */
-#ifdef HRI_COSTSPACE
+//#ifdef HRI_COSTSPACE
 void g3d_draw_hrics(int opengl_context)
 {
     int OTPListSize = OTPList.size();
@@ -587,8 +587,8 @@ void g3d_draw_hrics(int opengl_context)
             //    drawGauge(2, current_cost.second[1]);
             //    drawGauge(3, current_cost.second[2]);
 
-            shared_ptr<Configuration> q_rob = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot()->getCurrentPos();
-            shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
+//            shared_ptr<Configuration> q_rob = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot()->getCurrentPos();
+//            shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
 
             //    glLineWidth(3.);
             //    g3d_drawOneLine((*q_hum)[indexFirstDof + 0],   (*q_hum)[indexFirstDof + 1],    current_WSPoint[2],
@@ -672,8 +672,34 @@ void g3d_draw_hrics(int opengl_context)
     }
 
 
+//    bool draw = PlanEnv->getBool(PlanParam::env_drawFinalConf);
+//    bool isFinal = PlanEnv->getBool(PlanParam::env_isFinalConf);
+//    if ( draw  )
+//    {
+//        glEnable(GL_BLEND);
+//        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//
+//        G3D_Window *win;
+//        win = g3d_get_cur_win();
+//        Robot* rob = global_Project->getActiveScene()->getActiveRobot();
+//        shared_ptr<Configuration> q_cur = rob->getCurrentPos();
+//
+////        p3d_set_and_update_robot_conf(rob->getRobotStruct()->ROBOT_POS);
+//        /* collision checking */
+//        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
+//        //g3d_draw_robot(robotPt->num, win);
+//        p3d_set_and_update_robot_conf(rob->getRobotStruct()->ROBOT_GOTO);
+//        /* collision checking */
+//        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
+//        g3d_draw_robot(rob->getRobotStruct()->num, win, opengl_context);
+//        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
+//
+//        p3d_set_and_update_robot_conf(q_cur->getConfigStruct());
+////        g3d_draw_trace_all_tcur();
+//    }
+
 }
-#endif
+//#endif
 
 
 void computeConfigCostOnTraj(p3d_rob* rob,configPt q)

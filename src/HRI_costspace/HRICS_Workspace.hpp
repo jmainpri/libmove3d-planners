@@ -144,8 +144,9 @@ namespace HRICS
 		void initReachable();
 		void initNatural();
     void initOtpPlanner();
-    
+#ifdef HRI_PLANNER
     void setAgents( HRI_AGENTS* agents ) { m_Agents = agents; }
+#endif
 		
 		/**
 		 * Get Robot and Human

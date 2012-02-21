@@ -143,6 +143,7 @@ void initPlannerParameters()
 
         myBoolMap.insert( std::make_pair( PlanParam::env_softMotionTraj,         new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::env_createTrajs,            new boolContainer(true)));
+        myBoolMap.insert( std::make_pair( PlanParam::env_computeTrajForHuman,    new boolContainer(true)));
   
         // Int
         // ------------------------------------------------------------------
