@@ -973,10 +973,13 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 		}
 		
     // Push back the gain of iteration that have succeded
-		if ( m_IterationSucceded ) 
+		if ( m_IterationSucceded  ) 
 		{
 			double Gain = (( CurCost - NewCost ) / CurCost) ;
-			cout << "Gain = " << 100*Gain <<  " %" << endl;
+      
+      if( PlanEnv->getBool( PlanParam::trajPrintGain ) ) {
+        cout << "Gain = " << 100*Gain <<  " %" << endl;
+      }
 			m_GainOfIterations.push_back( Gain );
 		}
 		

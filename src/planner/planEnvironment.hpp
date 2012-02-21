@@ -44,8 +44,10 @@ namespace PlanParam
             isMaxDisNeigh,
             isWeightedChoice,
             nextIterWaitForGui,
+            rrtExtractShortestPath,
 
             // Smoothing stage
+            trajPrintGain,
             trajPartialShortcut,
             trajSaveCost,
             trajCostRecompute,

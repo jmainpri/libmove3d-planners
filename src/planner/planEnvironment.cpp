@@ -82,8 +82,10 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::isMaxDisNeigh,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::isWeightedChoice,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::nextIterWaitForGui,         new boolContainer(true)));
+        myBoolMap.insert( std::make_pair( PlanParam::rrtExtractShortestPath,     new boolContainer(false)));
   
         // Smoothing stage
+        myBoolMap.insert( std::make_pair( PlanParam::trajPrintGain,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajPartialShortcut,        new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajSaveCost,               new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajCostRecompute,          new boolContainer(false)));
