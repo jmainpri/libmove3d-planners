@@ -1,10 +1,11 @@
-
 #include "cost_space.hpp"
 #include <iostream>
 
-#include "API/planningAPI.hpp"
+#include "API/project.hpp"
+#include "API/Roadmap/compco.hpp"
 
-#include "Roadmap/compco.hpp"
+#include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
+#include "planEnvironment.hpp"
 
 #include "P3d-pkg.h"
 #include "Localpath-pkg.h"
@@ -314,6 +315,7 @@ double CostSpace::cost(LocalPath& path)
     }
 #endif
     
+    //cout << "nStep : " << nStep << endl;
     for (int i=0; i<nStep; i++)
     {
       currentParam += DeltaStep;
@@ -379,11 +381,13 @@ double computeIntersectionWithGround(Configuration& conf)
 
 double computeDistanceToObstacles(Configuration& conf)
 {
+  if( conf.isInCollision() )
+  {
+    return 10000;
+  }
 	Robot* robot = conf.getRobot();
-	shared_ptr<Configuration> qActual = robot->getCurrentPos();
 	robot->setAndUpdate(conf);
 	double cost = p3d_GetMinDistCost(robot->getRobotStruct());
-	robot->setAndUpdate(*qActual);
 	return cost;
 }
 
@@ -400,6 +404,15 @@ double computeInCollisionCost(Configuration& conf)
   }
   
 	robot->setAndUpdate(*qActual);
+	return cost;
+}
+
+double computeCollisionSpaceCost(Configuration& conf)
+{
+  double cost = 0.1;
+  if( optimizer.get() != NULL ) {
+    cost = PlanEnv->getDouble(PlanParam::trajOptimObstacWeight)*optimizer->getCollisionSpaceCost( conf );
+  }
 	return cost;
 }
 

@@ -47,9 +47,20 @@ StarExpansion::StarExpansion(Graph* G) : RRTExpansion(G)
   m_ith_on_traj = -1;
   m_ith_trajectory = -1;
   m_start_bias = false;
+  m_tube_bias =false;
+  m_cspace = NULL;
   
-  initCSpace();
-  initStomp();
+  if( m_Graph->getRobot()->getRobotStruct()->njoints == 1 &&
+      m_Graph->getRobot()->getRobotStruct()->joints[1]->type == P3D_PLAN ) 
+  {
+    initCSpace();
+  }
+  
+  
+  if( m_tube_bias )
+  {
+    initStomp();
+  }
 }
 
 /*!
@@ -81,7 +92,11 @@ void StarExpansion::initStomp()
 
 double StarExpansion::rrgBallRadius()
 {
-  if(m_cspace->get_connection_radius_flag())
+  if( m_cspace == NULL ) {
+    return 5*step();
+  }
+  
+  if(m_cspace->get_connection_radius_flag() )
   {
     double inv_d = 1.0 / m_cspace->dimension();
     double gamma_rrg = 2 * pow(1.0 + inv_d, inv_d) * pow(m_cspace->volume() / m_cspace->unit_sphere(), inv_d);
@@ -90,7 +105,7 @@ double StarExpansion::rrgBallRadius()
   }
   else
   {
-    return(m_cspace->get_step());
+    return( m_cspace->get_step() );
   }
 }
 
@@ -137,6 +152,8 @@ confPtr_t StarExpansion::getExpansionDirection(Node* expandComp, Node* goalComp,
 //  else
 //  {
   
+  if( m_tube_bias )
+  {
     // Generate noisy trajectories 
     if( m_ith_on_traj == -1 && m_ith_trajectory == -1)
     {
@@ -184,6 +201,7 @@ confPtr_t StarExpansion::getExpansionDirection(Node* expandComp, Node* goalComp,
         m_ith_trajectory = 0;
       }
     }
+  }
   //  }
   
   return (q);
@@ -197,28 +215,25 @@ void StarExpansion::rewireGraph(Node* new_node, Node* min_node, const vector<Nod
   for ( int i=0; i<int(neigh_nodes.size()); i++) 
   {
     // min node is already wired to new node
-    if ( neigh_nodes[i] == min_node ) continue;
+    if ( neigh_nodes[i] == min_node || neigh_nodes[i]->parent() == NULL ) { 
+      continue;
+    }
     
-    LocalPath path( neigh_nodes[i]->getConfiguration(), q_new );
+    LocalPath path( q_new, neigh_nodes[i]->getConfiguration() );
     
     // Compute the cost to get to the new node from each neighbor
     // and change edge if superior
-    if ( neigh_nodes[i]->sumCost() > new_node->sumCost()+path.cost() )
+    if ( neigh_nodes[i]->sumCost() > (new_node->sumCost()+path.cost()) )
     {
-      //cout << "should rewire" << endl;
-      if( neigh_nodes[i] && neigh_nodes[i]->parent() )
+      m_Graph->removeEdges( neigh_nodes[i], neigh_nodes[i]->parent() );
+      m_Graph->addEdges( neigh_nodes[i], new_node, false, path.getParamMax(), false, path.cost() );
+      
+      neigh_nodes[i]->parent() = new_node;
+      new_node->isLeaf() = false;
+      
+      if( print_rewiring )
       {
-        m_Graph->removeEdges( neigh_nodes[i], neigh_nodes[i]->parent() );
-        m_Graph->addEdges( neigh_nodes[i], new_node, path.getParamMax() );
-        
-        neigh_nodes[i]->sumCost() = new_node->sumCost() + path.cost();
-        neigh_nodes[i]->parent() = new_node;
-        new_node->isLeaf() = false;
-        
-        if( print_rewiring )
-        {
-          cout << "Rewiring : " << ++m_nb_rewiring << endl;
-        }
+        cout << "Rewiring : " << ++m_nb_rewiring << endl;
       }
     }
   }
@@ -260,23 +275,22 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 	if ( isValid && !failed )
 	{
 		// Create new node and add it to the graph
-		node_new = new Node(m_Graph,extensionLocalpath.getEnd());
+		node_new = new Node( m_Graph, extensionLocalpath.getEnd() );
 		nbCreatedNodes++;
     
     double radius = rrgBallRadius() * m_RrgRadiusFactor;
     
 //    if( print_exploration )
 //    {
-//      cout << "radius : " << radius << endl;
-      cout << "radius : " << radius  << " , number of nodes : " << m_Graph->getNumberOfNodes() << endl;
+//      cout << "radius : " << radius  << " , number of nodes : " << m_Graph->getNumberOfNodes() << endl;
 //    }
+    
+    double K = m_Graph->getNumberOfNodes();
+    //K = m_K_Nearest;
 
 		vector<Node*> near_nodes = m_Graph->KNearestWeightNeighbour(node_new->getConfiguration(),
-																															m_K_Nearest,
-																															radius,
-																															false,
+																															K, radius, false,
 																															ENV.getInt(Env::DistConfigChoice));
-    
     
     if( print_exploration )
     {
@@ -290,7 +304,9 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 		std::vector<Node*> ValidNodes;
     
 		// Compute the node that minimizes the Sum of Cost
-    double min_sum_of_cost=std::numeric_limits<double>::max();
+    double min_path_cost = extensionLocalpath.cost();
+    double min_path_dist = extensionLocalpath.getParamMax();
+    double min_sum_of_cost = expansionNode->sumCost()+extensionLocalpath.cost();
     
 		for (int i=0; i<int(near_nodes.size()); i++) 
 		{
@@ -307,18 +323,20 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
       {
         ValidNodes.push_back( near_nodes[i] );
         
-        double cost_to_node = near_nodes[i]->sumCost()+path.cost();
+        double cost_to_node = near_nodes[i]->sumCost(true)+path.cost();
         if ( cost_to_node < min_sum_of_cost )
         {
           node_min = near_nodes[i];
           min_sum_of_cost = cost_to_node;
+          min_path_cost = path.cost();
+          min_path_dist = path.getParamMax();
         }
       }
 		}
 		
     // Add node_new to the graph, and add the edge n_min -> n_new
 		m_Graph->addNode( node_new );
-		m_Graph->addEdges( node_min, node_new, NULL, true );
+		m_Graph->addEdges( node_min, node_new, false, min_path_dist, false, min_path_cost );
     
     // Merge compco with minNode and set as parent
 		node_new->merge( node_min );

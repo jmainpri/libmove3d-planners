@@ -187,3 +187,15 @@ Node* ConnectedComponent::nearestWeightNeighbour(shared_ptr<Configuration> q, bo
 	
 	return BestNodePt;
 }
+
+Node* ConnectedComponent::searchConf(Configuration& q) {
+  
+  for(int i=0;i<int(m_Nodes.size());i++)
+  {
+    if(m_Nodes[i]->getConfiguration()->equal(q))
+    {
+      return m_Nodes[i];
+    }
+  }
+  return NULL;
+}

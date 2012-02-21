@@ -94,6 +94,11 @@ public:
 	 * Nearest weithed Neigboor
 	 */
 	Node* nearestWeightNeighbour(std::tr1::shared_ptr<Configuration> q, bool weighted, int distConfigChoice);
+  
+  /**
+   * Search configuration in connected compco
+   */
+  Node* searchConf(Configuration& q);
 	
 	
 private:

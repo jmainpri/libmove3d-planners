@@ -1226,7 +1226,7 @@ double Natural::getCost(const Vector3d& WSPoint, bool useLeftvsRightArm , bool w
 /*!
  * Cost of a workspace point
  */
-double Natural::getCostInGrid(const Eigen::Vector3d& WSPoint)
+double Natural::getWorkspaceCost(const Eigen::Vector3d& WSPoint)
 {
 	if ( m_Grid->isReachable(WSPoint) ) 
 	{
@@ -1234,6 +1234,14 @@ double Natural::getCostInGrid(const Eigen::Vector3d& WSPoint)
 	}
 	
 	return 1.5;
+}
+
+/*!
+ * Is point reachable in workspace
+ */
+bool Natural::getWorkspaceIsReachable(const Eigen::Vector3d& WSPoint)
+{
+  return m_Grid->isReachable(WSPoint);
 }
 
 /*!

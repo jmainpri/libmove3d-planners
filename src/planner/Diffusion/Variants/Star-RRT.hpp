@@ -107,6 +107,7 @@ public:
 	
 private:
   bool m_start_bias;
+  bool m_tube_bias;
   int m_Iteration;
   int m_biasRatio;
   std::vector<std::vector<confPtr_t> > m_biasTrajectory;

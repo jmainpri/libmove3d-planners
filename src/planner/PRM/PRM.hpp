@@ -64,6 +64,7 @@ protected:
 	 */
 	unsigned int m_nbAddedNode;
 	int m_nbConscutiveFailures; /*!< nombre d'échecs consécutifs*/	
+  int m_nbExpansions;
 };
 
 #endif

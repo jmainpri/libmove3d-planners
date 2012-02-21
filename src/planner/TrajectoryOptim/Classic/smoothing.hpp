@@ -61,6 +61,16 @@ namespace API
 		void removeRedundantNodes();
     
     /**
+		 * Set the sorted indexes by cost
+		 */
+		void setSortedIndex();
+    
+    /**
+     * Get a random confiruation along the trajectroy that can be biased
+     */
+    confPtr_t getRandConfAlongTraj(double& randDist, bool use_bias);
+    
+    /**
 		 * One loop of the random shortcut
 		 */
 		bool oneLoopShortCut();
@@ -88,16 +98,12 @@ namespace API
 		/**
 		 * gets randomly two random configurations
 		 */
-		std::vector< std::tr1::shared_ptr<Configuration> > get2RandomConf( double step,
-																																			double& secondDist,
-																																			double& firstDist);
+		std::vector<confPtr_t> get2RandomConf( double step, double& secondDist, double& firstDist);
 		
 		/**
 		 * gets randomly n configurations on the traj between firstDist and secondDist
 		 */
-		std::vector< std::tr1::shared_ptr<Configuration> > getConfAtStepAlongTraj( double step , 
-																																							double firstDist, 
-																																							double secondDist );
+		std::vector<confPtr_t> getConfAtStepAlongTraj( double step, double firstDist, double secondDist );
 		
 		/**
 		 * PatialShortCut : intependently shortcut each DoFs
@@ -117,19 +123,13 @@ namespace API
 		/**
 		 * Change the Ith Active Dof on Conf
 		 */
-		void changeIthActiveDofValueOnConf( Configuration& q,
-                                       unsigned int ithActiveDoF, 
-                                       double value );
+		void changeIthActiveDofValueOnConf( Configuration& q, unsigned int ithActiveDoF, double value );
 		
 		/**
 		 * Show the trajectory while being deformed
 		 */
 		void debugShowTraj(double lPrev,double lNext);
 		
-		/**
-		 * Set the sorted indexes by cost
-		 */
-		void setSortedIndex();
 		
 		/**
 		 * Get a parameter on the trajectory

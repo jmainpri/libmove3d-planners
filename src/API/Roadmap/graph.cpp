@@ -9,21 +9,32 @@
 // Copyright: See COPYING file that comes with this distribution
 //
 //
+#include <boost/foreach.hpp>
+#include <boost/config.hpp>
+#include <boost/random.hpp>
+#include <boost/graph/graphviz.hpp>
+#include <boost/graph/strong_components.hpp>
+#include <boost/graph/graph_utility.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/astar_search.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/random.hpp>
+
+#include "API/project.hpp"
 #include "API/Roadmap/graph.hpp"
 #include "API/Roadmap/compco.hpp"
-#include "API/project.hpp"
 #include "API/Roadmap/graphConverter.hpp"
 
-#include "planEnvironment.hpp"
-#include "cost_space.hpp"
+#include "planner/planEnvironment.hpp"
+#include "planner/cost_space.hpp"
+
+#include "move3d-headless.h"
 
 #include "P3d-pkg.h"
 #include "Util-pkg.h"
 #include "Planner-pkg.h"
 #include "Graphic-pkg.h"
 #include "GroundHeight-pkg.h"
-
-#include "move3d-headless.h"
 
 #ifdef LIGHT_PLANNER
 #include "LightPlanner-pkg.h"
@@ -32,17 +43,6 @@
 #undef None
 #undef Upper
 #undef Lower
-
-#include <boost/config.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <boost/graph/strong_components.hpp>
-#include <boost/graph/graph_utility.hpp>
-#include <boost/foreach.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-#include <boost/graph/astar_search.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/random.hpp>
-#include <boost/random.hpp>
 
 extern void* GroundCostObj;
 
@@ -682,36 +682,34 @@ bool Graph::compareEdges(Edge* E1, Edge* E2)
 /**
  * Compare Nodes
  */
-bool Graph::compareNodes(Node* N1, Node* N2)
+bool Graph::compareNodes(Node* node_1, Node* node_2)
 {
-	return (N1->getNodeStruct()->dist_Nnew < N2->getNodeStruct()->dist_Nnew);
+	return (node_1->getNodeStruct()->dist_Nnew < node_2->getNodeStruct()->dist_Nnew);
 	//double dist = N1->dist(N2);
 	//return dist;
 }
 
+
 /**
- * Is Edge in graph
+ * Compare Nodes
  */
-Edge* Graph::isEdgeInGraph(Node* N1, Node* N2)
+bool compareNodesInverse(Node* node_1, Node* node_2)
 {
-	for ( int i=0; i<int(m_Edges.size()); i++)
-	{
-    if((m_Edges[i]->getSource()==N1 )&&( m_Edges[i]->getTarget()==N2))
-    {
-      return m_Edges[i];
-    }
-	}
-	return NULL;
+	return (node_1->getNodeStruct()->dist_Nnew > node_2->getNodeStruct()->dist_Nnew);
 }
 
 /**
- * Sort Edges
+ * Sort Nodes
  */
-void Graph::sortEdges()
+void Graph::sortNodesByDist(std::vector<Node*>& nodes, confPtr_t q)
 {
-	if (m_Edges.size() > 0)
+  if (nodes.size() > 1)
 	{
-		sort(m_Edges.begin(), m_Edges.end(), &compareEdges);
+		for (int i=0; i<int(nodes.size()); i++)
+		{
+			nodes[i]->dist(q);
+		}
+		sort(nodes.begin(), nodes.end(), &compareNodes);
 	}
 }
 
@@ -731,15 +729,42 @@ void Graph::sortNodesByDist(Node* N)
 }
 
 /**
+ * Sort Edges
+ */
+void Graph::sortEdges()
+{
+	if (m_Edges.size() > 0)
+	{
+		sort(m_Edges.begin(), m_Edges.end(), &compareEdges);
+	}
+}
+
+/**
+ * Is Edge in graph
+ */
+Edge* Graph::isEdgeInGraph(Node* N1, Node* N2)
+{
+	for ( int i=0; i<int(m_Edges.size()); i++)
+	{
+    if((m_Edges[i]->getSource()==N1 )&&( m_Edges[i]->getTarget()==N2))
+    {
+      return m_Edges[i];
+    }
+	}
+	return NULL;
+}
+
+/**
  * Add Edge to Graph
  */
-Edge* Graph::addEdge(Node* source, Node* target, double Length )
+Edge* Graph::addEdge( Node* source, Node* target, bool compute_length, double length , bool compute_cost,  double cost )
 {	
-  Edge* E = NULL;
+  Edge* E = isEdgeInGraph(source, target);
   
-	if (!this->isEdgeInGraph(source, target))
+  // Edge is not in the graph
+	if ( E == NULL )
 	{
-		Edge* E = new Edge(this, source, target, Length);
+		E = new Edge(this, source, target, compute_length, length , compute_cost, cost );
 		m_Edges.push_back(E);
 		
 		//cout << "new edge : " << E << endl;
@@ -767,17 +792,11 @@ Edge* Graph::addEdge(Node* source, Node* target, double Length )
  * Add Edges
  * WARNING only in graph API doesn't work yet not to be used
  */
-vector<Edge*> Graph::addEdges(Node* N1, Node* N2, double Length , bool computeLength )
+vector<Edge*> Graph::addEdges(Node* N1, Node* N2, bool compute_length, double length , bool compute_cost,  double cost )
 {
-	if (computeLength) 
-	{
-		LocalPath path(N1->getConfiguration(), N2->getConfiguration());
-		Length = path.getParamMax();
-	}
-    
   vector<Edge*> edges(2);
-	edges[0] = addEdge(N1, N2, Length);
-	edges[1] = addEdge(N2, N1, Length);
+	edges[0] = addEdge(N1, N2, compute_length, length, compute_cost, cost );
+	edges[1] = addEdge(N2, N1, false, length, false, edges[0]->cost() );
   return edges;
 }
 
@@ -868,7 +887,7 @@ void Graph::addNode(Node* N, double maxDist)
 			
 			if ( path.isValid() )
 			{
-				this->addEdges(m_Nodes[i], N, d);
+				this->addEdges( m_Nodes[i], N, false, d, true, 0.0 );
 			}
 		}
 	}
@@ -1052,7 +1071,7 @@ bool Graph::linkNodeCompMultisol( Node* N, ConnectedComponent* TargetComp )
       if (ValidForward == FALSE) {
         if ( N->isLinkableMultisol( Nc, &dist) ) {
           // A forward path is found 
-          addEdge( N, Nc , dist );
+          addEdge( N, Nc , false, dist, true, 0.0 );
           ValidForward = TRUE;
         }
       }
@@ -1060,7 +1079,7 @@ bool Graph::linkNodeCompMultisol( Node* N, ConnectedComponent* TargetComp )
       if (ValidBackward == FALSE) {
         if ( Nc->isLinkableMultisol( Nc,&dist)) {
           // A bacward path is found 
-          addEdge( Nc, N , dist );
+          addEdge( Nc, N , false, dist, true, 0.0 );
           ValidBackward = TRUE;
         }
       }
@@ -1089,7 +1108,7 @@ bool Graph::linkNodeCompMultisol( Node* N, ConnectedComponent* TargetComp )
     {
       if ( N->isLinkableMultisol( Nc, &dist) ) 
       {
-        addEdges( N, Nc, dist);
+        addEdges( N, Nc, false, dist, true, 0.0);
         // If the node is still not included in a compco, it will be absorbed in the tested compco
         if ( N->getConnectedComponent() == NULL) {
           TargetComp->addNode(N);
@@ -1397,7 +1416,7 @@ bool Graph::connectNodeToCompco(Node* node1, Node* compco)
  * returns the KNearest neighbours of the configuration config
  * in the entire graph within a minimum radius
  */
-vector<Node*> Graph::KNearestWeightNeighbour(confPtr_t q,int K, double radius, bool weighted, int distConfigChoice)
+vector<Node*> Graph::KNearestWeightNeighbour(confPtr_t q, int K, double radius, bool weighted, int distConfigChoice)
 {
   // The null node has to be remouved
 	Node* nullNode(NULL);
@@ -1407,9 +1426,9 @@ vector<Node*> Graph::KNearestWeightNeighbour(confPtr_t q,int K, double radius, b
 	vector< pair<double,Node*> > nearNodesQueue;
 	nearNodesQueue.push_back( make_pair(numeric_limits<double>::max(),nullNode) );
 	
-	//cout << "Number of nodes in the graph : " << m_Nodes.size() << endl;
-	
-	for (vector<Node*>::iterator it = m_Nodes.begin();it != m_Nodes.end() ; ++it)
+  // For all nodes in the graph
+	for (vector<Node*>::iterator it = m_Nodes.begin();
+       it != m_Nodes.end() ; ++it)
 	{
     // Compute the distance for all nodes
     CurrentScore = q->dist(*(*it)->getConfiguration(),distConfigChoice);
@@ -1426,6 +1445,7 @@ vector<Node*> Graph::KNearestWeightNeighbour(confPtr_t q,int K, double radius, b
         nearNodesQueue.clear(); firstNode = false;
       }
       nearNodesQueue.push_back( make_pair( CurrentScore, *it ) );
+      
       sort( nearNodesQueue.begin(), nearNodesQueue.end() );
       
       if( int(nearNodesQueue.size()) > K )
@@ -1572,7 +1592,7 @@ int Graph::mergeComp(Node* node1, Node* node2, double dist_nodes)
 	}
   
 	compco1->mergeWith( compco2 );
-  addEdges(node1, node2, dist_nodes);
+  addEdges(node1, node2, false, dist_nodes, true, 0.0 );
 	return true;
 }
 
@@ -1808,7 +1828,7 @@ void Graph::addCycles(Node* node, double step)
 					 this->getNode(listDistNodePt->N), step)*/)
 				
 			{
-				addEdges(node, m_NodesTable[listDistNodePt->N], LP->length() );
+				addEdges(node, m_NodesTable[listDistNodePt->N], false, LP->length(), true, 0.0 );
 				//                p3d_create_edges(m_Graph, node->getNodeStruct(),
 				//                                 listDistNodePt->N, LP->length());
 				
@@ -1964,20 +1984,23 @@ private:
   Vertex m_goal;
 };
 
-API::Trajectory* Graph::extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf )
+std::vector<Node*> Graph::extractAStarShortestNodePaths( confPtr_t qi, confPtr_t qf )
 {
+  std::vector<Node*> nodes;
+  
   Node* node_init = searchConf( *qi );
   if( node_init == NULL ) {
-    return NULL;
+    return nodes;
   }
   
-  Node* node_goal = nearestWeightNeighbour( node_init, qf, false, ENV.getInt(Env::DistConfigChoice));
+  Node* node_goal = node_init->getConnectedComponent()->searchConf( *qf );
+  //Node* node_goal = nearestWeightNeighbour( node_init, qf, false, ENV.getInt(Env::DistConfigChoice));
   if( node_goal == NULL ) {
-    return NULL;
+    return nodes;
   }
   
   if( node_init == node_goal ) {
-    return NULL;
+    return nodes;
   }
   
   BGL_Vertex start = node_init->getDescriptor();
@@ -1988,19 +2011,20 @@ API::Trajectory* Graph::extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t q
   BGL_VertexDataMapT NodeData = boost::get(NodeData_t(), m_BoostGraph);
   BGL_EdgeDataMapT EdgeData = boost::get(EdgeData_t(), m_BoostGraph);
   
+  int i=0;
   BOOST_FOREACH(BGL_Edge e, boost::edges(m_BoostGraph)) {
     weightmap[e] = EdgeData[e]->cost();
+    //cout << "weightmap["<<i++<<"] : " << weightmap[e] << endl;
   }
   
   typedef double cost;
   vector<double> d(boost::num_vertices(m_BoostGraph));
   vector<BGL_Vertex> p(boost::num_vertices(m_BoostGraph));
-
+  
   try // call astar named parameter interface
   {
-    astar_search( m_BoostGraph, 
-                 start, 
-                 distance_heuristic<BGL_Graph, cost, BGL_VertexDataMapT >( NodeData, goal),
+    astar_search( m_BoostGraph, start, 
+                 distance_heuristic<BGL_Graph, cost, BGL_VertexDataMapT>( NodeData, goal),
                  boost::predecessor_map(&p[0]).distance_map(&d[0]).visitor(astar_goal_visitor<BGL_Vertex>(goal)));
     
   } 
@@ -2016,22 +2040,38 @@ API::Trajectory* Graph::extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t q
     
     if( shortest_path.empty() ) {
       cout << "shortest_path is empty" << endl;
-      return NULL;
+      return nodes;
     }
-    
-    // Build the trajectory
-    API::Trajectory* traj = new API::Trajectory(m_Robot);
     
     std::list<BGL_Vertex>::iterator spi = shortest_path.begin();
     for(; spi != shortest_path.end(); ++spi) {
-      traj->push_back( NodeData[*spi]->getConfiguration() );
+      nodes.push_back( NodeData[*spi] );
     }
-    
-    traj->replaceP3dTraj();
-    return traj;
   }
   
-  return NULL;
+   return nodes;
+}
+
+API::Trajectory* Graph::extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf )
+{
+  vector<Node*> nodes = extractAStarShortestNodePaths( qi, qf );
+  if( nodes.size() < 2 ) {
+    return NULL;
+  }
+  
+  // Build the trajectory
+  API::Trajectory* traj = new API::Trajectory(m_Robot);
+  
+  for(int i=1; i<int(nodes.size()); i++) {
+    Edge* edge = isEdgeInGraph(nodes[i-1], nodes[i]);
+    if( edge == NULL ) {
+      return NULL;
+    }
+    traj->push_back( edge->getLocalPath() );
+  }
+  
+  traj->replaceP3dTraj();
+  return traj;
 }
 
 
@@ -2281,14 +2321,27 @@ void Graph::drawNode(BGL_Vertex v)
   }
   
   double ray, x1, x2, y1, y2, z1, z2;
-  p3d_get_box_obj(drawnjnt->o, &x1, &x2, &y1, &y2, &z1, &z2); //get the object bounding box
-  ray = sqrt(SQR(x2 - x1) + SQR(y2 - y1) + SQR(z2 - z1)) / 20.;
+  
+  if( drawnjnt->o != NULL ) {
+    p3d_get_box_obj(drawnjnt->o, &x1, &x2, &y1, &y2, &z1, &z2); //get the object bounding box
+    ray = sqrt(SQR(x2 - x1) + SQR(y2 - y1) + SQR(z2 - z1)) / 20.;
+  }
+  else {
+    ray = 0.05;
+  }
   
   BGL_VertexDataMapT NodeData = boost::get( NodeData_t() , m_BoostGraph );
   
   m_Robot->setAndUpdate(*NodeData[v]->getConfiguration());
   p3d_vector3 pos;
   p3d_jnt_get_cur_vect_point(drawnjnt, pos);
+  
+  if(GroundCostObj) {
+    double cost(0);
+    GHintersectionVerticalLineWithGround(GroundCostObj, pos[0], pos[1], &cost);
+    pos[2] = cost+0.5;
+    ray = 0.5;
+  }
   
   double color_array[4];
   g3d_set_color(NodeData[v]->getConnectedComponent()->getId(), color_array);

@@ -522,27 +522,26 @@ bool ThreeDGrid::writeToXmlFile(string docname)
  */
 bool ThreeDGrid::loadFromXmlFile(string docname)
 {
-    //Creating the file Variable version 1.0
-    xmlDocPtr doc;
-    xmlNodePtr cur;
+  //Creating the file Variable version 1.0
+  xmlDocPtr doc;
+  xmlNodePtr cur;
 	
-    doc = xmlParseFile(docname.c_str());
+  doc = xmlParseFile(docname.c_str());
 	
-    if(doc==NULL)
-    {
-        cout << "Document not parsed successfully (doc==NULL)" << endl;
-        return false;
-    }
+  if(doc==NULL)
+  {
+    cout << "Document not parsed successfully (doc==NULL)" << endl;
+    return false;
+  }
 	
-    cur = xmlDocGetRootElement(doc);
+  cur = xmlDocGetRootElement(doc);
 	
-    if (cur == NULL)
-    {
-        cout << "Document not parsed successfully" << endl;
-        xmlFreeDoc(doc);
-        return false;
+  if (cur == NULL)
+  {
+    cout << "Document not parsed successfully" << endl;
+    xmlFreeDoc(doc);
+    return false;
 	}
-	
 	
 	if (xmlStrcmp(cur->name, xmlCharStrdup("Grid"))) 
 	{
@@ -790,7 +789,7 @@ bool ThreeDGrid::loadFromXmlFile(string docname)
 		cur = cur->next;
 	}
 	
-    cout << "Reading Grid : " << docname << endl;
-    xmlFreeDoc(doc);
-    return true;
+  cout << "Reading Grid : " << docname << endl;
+  xmlFreeDoc(doc);
+  return true;
 }

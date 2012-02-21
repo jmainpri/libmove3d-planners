@@ -21,13 +21,18 @@ namespace HRICS
 	{
 	public:
 		HumanCostSpace();
-		HumanCostSpace( Robot* rob, std::vector<Robot*> humans, double cellSize );
+		HumanCostSpace( Robot* rob, std::vector<Robot*> humans, Natural* costspace, double cellSize );
 
 		~HumanCostSpace();
     
     double getCost(Configuration& q);
 		
+    void computeAllCellCost();
+    void computeCostCombination();
     void testCostFunction();
+    
+    void saveAgentGrids();
+    void loadAgentGrids();
     
 	private:
     bool initElementarySpaces();

@@ -81,12 +81,14 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::stopPlanner,                new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::isMaxDisNeigh,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::isWeightedChoice,           new boolContainer(false)));
-
+        myBoolMap.insert( std::make_pair( PlanParam::nextIterWaitForGui,         new boolContainer(true)));
+  
         // Smoothing stage
         myBoolMap.insert( std::make_pair( PlanParam::trajPartialShortcut,        new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajSaveCost,               new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajCostRecompute,          new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajComputeCollision,       new boolContainer(true)));
+        myBoolMap.insert( std::make_pair( PlanParam::trajBiasOptim,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::withMaxIteration,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::withGainLimit,              new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::withTimeLimit,              new boolContainer(true)));
@@ -170,7 +172,7 @@ void initPlannerParameters()
         // Double
         // ------------------------------------------------------------------
         // Post-processing phaze
-        myDoubleMap.insert( std::make_pair( PlanParam::optimTimeLimit,           new doubleContainer(1.0)));
+        myDoubleMap.insert( std::make_pair( PlanParam::optimTimeLimit,           new doubleContainer(10.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::MaxFactor,                new doubleContainer(3.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::MinStep,                  new doubleContainer(2.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::costTraj,                 new doubleContainer(1.0)));
@@ -179,7 +181,6 @@ void initPlannerParameters()
         myDoubleMap.insert( std::make_pair( PlanParam::trajDuration,             new doubleContainer(5.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::trajOptimStdDev,          new doubleContainer(2.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::trajOptimSmoothWeight,    new doubleContainer(0.1)));
-
         myDoubleMap.insert( std::make_pair( PlanParam::trajOptimObstacWeight,    new doubleContainer(1.0)));
   
         // Object TransfertPoint variable

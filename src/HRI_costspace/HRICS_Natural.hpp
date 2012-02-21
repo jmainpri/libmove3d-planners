@@ -54,11 +54,15 @@ namespace HRICS
 		/**
 		 * Get the cost of the current configuration
 		 */
-		
 		double getConfigCost();
 		double getCost(const Eigen::Vector3d& WSPoint, bool useLeftvsRightArm, bool withEffect = false);
-		double getCostInGrid(const Eigen::Vector3d& WSPoint);
 		
+    /**
+     * Get the cost of a point in the grid
+     */
+    double getWorkspaceCost(const Eigen::Vector3d& WSPoint);
+    bool getWorkspaceIsReachable(const Eigen::Vector3d& WSPoint);
+    
 		/**
 		 * Get the 3 component of natural
 		 * cost space
@@ -106,18 +110,15 @@ namespace HRICS
 		 */ 
 		Eigen::Transform3d getGridOriginMatrix();
 
-                /**
-                 * compute a NaturalGrid (calling class NaturalGrid)
-                 * by using Env variable.
-                 */
+    /**
+     * compute a NaturalGrid (calling class NaturalGrid)
+     * by using Env variable.
+     */
 		NaturalGrid* computeNaturalGrid();
 		void computeAllCellCost();
 		void computeAllReachableCellCost();
 		std::vector< Eigen::Vector3d > getSortedReachableWSPoint();
 		std::vector< std::pair<double,Eigen::Vector3d> > getReachableWSPoint();
-	
-
-
 		
 		/**
 		 * Basic accesors
@@ -126,7 +127,6 @@ namespace HRICS
 		bool IsHuman() { return m_IsHuman; }
 		NaturalGrid* getGrid() { return m_Grid; }
 		Robot* getRobot() { return m_Robot; }
-		
 		
 		/**
 		 * Basic setters

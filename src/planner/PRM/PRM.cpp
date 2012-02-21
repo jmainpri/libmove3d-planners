@@ -69,7 +69,7 @@ bool PRM::checkStopConditions()
 		return (true);
 	}
   
-	if (_Graph->getNumberOfNodes() >= ENV.getInt(Env::maxNodeCompco))
+	if (int(_Graph->getNumberOfNodes()) >= ENV.getInt(Env::maxNodeCompco))
 	{
 		cout << "Stop: the maximum number of nodes in the graph is reached."
     << endl;
@@ -134,7 +134,8 @@ void PRM::expandOneStep()
 unsigned int PRM::run()
 {
 	m_nbAddedNode = 0;
-	
+	m_nbExpansions = 0;
+  
 	shared_ptr<Configuration> tmp = _Robot->getCurrentPos();
   
 	if (!preConditions()) 
@@ -144,7 +145,7 @@ unsigned int PRM::run()
   
 	while (!checkStopConditions())
 	{
-		expandOneStep();
+		expandOneStep(); m_nbExpansions++;
 	}
 	
 	_Robot->setAndUpdate(*tmp);

@@ -124,7 +124,10 @@ public:
 	 */
 	bool unvalidLocalpathTest(Robot* R, int* ntest);
 
-	/*test le localpath*/
+	/**
+   * Test the localpath using the classic method as opposed to dichotomic test
+   * @return true if the localpath is valid
+   */
 	bool classicTest();
 
 	/**
@@ -134,10 +137,10 @@ public:
 	double length();
 
 	/**
-	 *
+	 * Equivalent to the length when using linear interpolation
 	 */
 	double getParamMax();
-
+  
 	/**
 	 * obtient une Configuration se trouvant à une distance donnée du début du LocalPath
 	 * @param R le Robot pour lequel le LocalPath est créé
@@ -188,6 +191,11 @@ public:
 	 * Gets the LocalPath cost
 	 */
 	double cost();
+  
+  /**
+	 * Set the cost as computed and set the value (suposed to be tested outside
+	 */
+	void setCost(double cost) { _Cost = cost; _costEvaluated = true; }
 
 	/**
 	 * When reset the next cost querry will compute it

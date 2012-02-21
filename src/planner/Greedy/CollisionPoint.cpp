@@ -71,6 +71,7 @@ void CollisionPoint::draw(const Eigen::Transform3d& T, bool yellow) const
 {
   Eigen::Vector3d point = T*m_position; 
 
+  // yellow
   double colorvector[4];
   colorvector[0] = 1.0;
   colorvector[1] = 1.0;
@@ -85,10 +86,7 @@ void CollisionPoint::draw(const Eigen::Transform3d& T, bool yellow) const
     glColor4dv(colorvector);
   }
   
-  g3d_draw_solid_sphere(point[0], 
-                        point[1],
-                        point[2], m_radius, 20);
-  
+  g3d_draw_solid_sphere( point[0], point[1], point[2], m_radius, 20 );
   glDisable(GL_BLEND);
 }
 

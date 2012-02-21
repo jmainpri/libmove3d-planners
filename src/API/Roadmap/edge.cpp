@@ -22,7 +22,7 @@
 using namespace std;
 using namespace tr1;
 
-const bool use_localpath_planner = true;
+const bool use_localpath_planner = false;
 
 Edge::Edge(Graph* G, unsigned int i, unsigned int j) : 
 	m_is_BGL_Descriptor_Valid(false),
@@ -36,8 +36,12 @@ Edge::Edge(Graph* G, unsigned int i, unsigned int j) :
 	
 	m_Long = m_Source->dist(m_Target);
 	
-	Edge* tmpEdge = new Edge(m_Graph,m_Source,m_Target,m_Long);
-	m_Edge = tmpEdge->m_Edge;
+  double cost = m_Long;
+  double length = 0.0;
+  
+	Edge* tmpEdge = new Edge( m_Graph, m_Source, m_Target, false, cost, true, length );
+	
+  m_Edge = tmpEdge->m_Edge;
 }
 
 //constructor and destructor
@@ -53,70 +57,70 @@ Edge::Edge(Graph* G, p3d_edge* E) :
     m_Target = m_Graph->getNode(E->Nf);
 }
 
-//constructor and destructor
-//Edge::Edge(cppm_Graph* G, p3d_edge* E)
-//{
-//    m_Edge = E;
-//    //m_Graph = G;
-//    m_Robot = G->getRobot();
-//    m_Long = m_Edge->longueur;
-//    m_Source =	G->getNode(E->Ni);
-//    m_Target =		G->getNode(E->Nf);
-//}
-
-Edge::Edge(Graph* G, Node* N1, Node* N2, double Long, bool compute_cost) :
-	m_is_BGL_Descriptor_Valid(false),
+//! Builds an edge from two nodes
+//! when cost or length are not set to be computed
+//! the value given as argument are set to the localpath structure
+Edge::Edge(Graph* G, Node* N1, Node* N2, bool compute_length, double& length, bool compute_cost, double& cost) : 
+  m_Source( N1 ),
+  m_Target( N2 ),
+  m_Long( length ),
+  m_is_BGL_Descriptor_Valid(false),
 	m_is_LocalPath_Computed(false)
-{
+{  
+  m_Graph = G;
+	m_Robot = G->getRobot();
+  
 	int *ikSol = NULL;
-	
-	m_Edge = new p3d_edge;
+  
+  m_Edge = new p3d_edge;
 	
 	m_Edge->Ni = N1->getNodeStruct();
 	m_Edge->Nf = N2->getNodeStruct();
-
+  
+  // See how it's done for the connected componnents
 //	m_Edge->num = _Graph->getNumberOfEdges();
+  m_Edge->path = NULL;
   
   if( use_localpath_planner )
   {
-    m_Edge->path = p3d_local_planner_multisol(
-                                              G->getRobot()->getRobotStruct(),
-                                              N1->getConfiguration()->getConfigStruct(),
-                                              N2->getConfiguration()->getConfigStruct(),
-                                              ikSol);
+    m_Edge->path = p3d_local_planner_multisol( G->getRobot()->getRobotStruct(),
+                                               N1->getConfiguration()->getConfigStruct(),
+                                               N2->getConfiguration()->getConfigStruct(),
+                                               ikSol);
     
     m_Edge->planner = p3d_local_get_planner();
   }
+  
+  // Compute the length from the associated localpath
+  if( compute_length ) {
+    m_Long = getLocalPath()->getParamMax();
+    length = m_Long;
+  }
+  
+  // Compute the cost from the associated localpath
+  if( compute_cost ){
+    m_Edge->cost = getLocalPath()->cost();
+    cost = m_Edge->cost;
+  }
+  else {
+    getLocalPath()->setCost( cost );
+    m_Edge->cost = cost;
+  }
 	
 	//voir pour la longueur
-	m_Edge->longueur = Long;
+	m_Edge->longueur = m_Long;
 	m_Edge->sens_edge = 1;
 	m_Edge->visible = 0;
 	m_Edge->unvalid = 0;
 	m_Edge->for_cycle = 0;
-	
-	
-	m_Graph = G;
-	m_Robot = G->getRobot();
-//	p3d_SetEdgeCost(m_Robot->getRobotStruct(),m_Edge);	
-//	Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-  
-  if( use_localpath_planner && compute_cost )
-  {
-    LocalPath path(m_Robot,m_Edge->path);
-    m_Edge->cost = path.cost();
-  }
-	
-	m_Long = Long;
-	m_Source = N1;
-	m_Target = N2;
-	
-	m_is_BGL_Descriptor_Valid = false;
 }
 
 Edge::~Edge()
 {
+  if( m_Edge->path ) {
 	m_Edge->path->destroy(m_Robot->getRobotStruct(), m_Edge->path );
+  }
+  
 	delete m_Edge;
 }
 
@@ -161,8 +165,7 @@ shared_ptr<LocalPath> Edge::getLocalPath()
 {
 	if( !m_is_LocalPath_Computed )
 	{
-		shared_ptr<LocalPath> pathPtr(new LocalPath(m_Source->getConfiguration(),
-																							m_Target->getConfiguration()));
+		shared_ptr<LocalPath> pathPtr(new LocalPath(m_Source->getConfiguration(), m_Target->getConfiguration()));
 		m_path = pathPtr;
 		
 		m_is_LocalPath_Computed = true;

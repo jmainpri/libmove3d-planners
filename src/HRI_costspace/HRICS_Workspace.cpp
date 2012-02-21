@@ -94,11 +94,11 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
         cout << "Warning: Lihght Planner not compiled" << endl;
 #endif
 	
-#ifdef P3D_PLANNER
-	p3d_del_graph(XYZ_GRAPH);
-#endif
-	
-	XYZ_GRAPH = NULL;
+//#ifdef P3D_PLANNER
+//	p3d_del_graph(XYZ_GRAPH);
+//#endif
+//	
+//	XYZ_GRAPH = NULL;
 	
 	if(_Robot)
 	{

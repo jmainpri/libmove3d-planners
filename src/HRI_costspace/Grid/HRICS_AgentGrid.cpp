@@ -211,29 +211,37 @@ void AgentCell::computeVisibility()
 //! Compute the cell reachbility
 void AgentCell::computeReachability()
 {
-	Natural* NatSpace = dynamic_cast<AgentGrid*> (_grid)->getNatural();
+	Natural* CostSpace = dynamic_cast<AgentGrid*> (_grid)->getNatural();
   
-  if ( NatSpace == NULL )
+  if ( CostSpace == NULL )
     return;
   
-	resetReachable();
+	m_IsReachable = CostSpace->getWorkspaceIsReachable( getWorkspacePoint() );
   
-//	if ( NatSpace->computeIsReachableOnly(getWorkspacePoint(),true) )
-//	{
-//		m_IsReachable = true;
-//		m_IsReachWithLeftArm = true;
-//	}
-//  
-//	if ( NatSpace->computeIsReachableOnly(getWorkspacePoint(),false) )
-//	{
-//		m_IsReachable = true;
-//		m_IsReachWithRightArm = true;
-//	}
+  if( m_IsReachable ) {
+     m_Reachability = CostSpace->getWorkspaceCost( getWorkspacePoint() );
+  }
+  else {
+    m_Reachability = numeric_limits<double>::max();
+  }
 }
 
 void AgentCell::computeCombined()
 {
-  m_Combined = m_Distance + m_Visiblity / 2;
+  m_Combined = 0.0;
+  
+  m_Combined += m_Distance*ENV.getDouble(Env::Kdistance);
+	m_Combined += m_Visiblity*ENV.getDouble(Env::Kvisibility);
+  
+  if( m_IsReachable ) 
+  {
+    m_Combined += m_Reachability*ENV.getDouble(Env::Kreachable);
+  }
+  else {
+    m_Combined += (2.0)*ENV.getDouble(Env::Kreachable);
+  }
+  
+  m_Combined /= (ENV.getDouble(Env::Kdistance)+ENV.getDouble(Env::Kvisibility)+ENV.getDouble(Env::Kreachable));
 }
 
 
@@ -247,138 +255,27 @@ double AgentCell::getCost()
 //  cout << "m_Reachability : " << m_Reachability << endl;
   
   return m_Combined;
-  
-//	if (!m_IsCostComputed) 
-//	{
-//		m_Cost = 0.0;
-//		
-//		if(m_IsReachable)
-//		{
-//			double rightArmPref = 1.0;
-//			double leftArmPref = 1.0;
-//			//cout << "Computing cost of cell number ( " << _index << " )" << endl;
-//			//Vector3d center = getCenter();
-//      
-//			double pref = ENV.getDouble(Env::coeffArmPr);
-//			if (pref >= 0.0)
-//			{
-//				rightArmPref -= pref;
-//			}
-//			else
-//			{
-//				leftArmPref += pref;
-//			}
-//      
-//			if (m_IsReachWithLeftArm && !m_IsReachWithRightArm)
-//			{
-//				m_Cost = getCost(true) * leftArmPref;
-//			}
-//			else if (!m_IsReachWithLeftArm && m_IsReachWithRightArm)
-//			{
-//				m_Cost = getCost(false) * rightArmPref;
-//			}
-//			else if (m_IsReachWithLeftArm && m_IsReachWithRightArm)
-//			{
-//				double left_cost = getCost(true) * leftArmPref;
-//				double right_cost = getCost(false) * rightArmPref;
-//        
-//				if (left_cost<right_cost)
-//				{
-//					m_IsReachWithRightArm = false;
-//					m_Cost = left_cost;
-//				}
-//				else
-//				{
-//					m_IsReachWithLeftArm = false;
-//					m_Cost = right_cost;
-//				}
-//			}
-//      
-//		}
-//		
-//		m_IsCostComputed = true;
-//	}
-//	
-//	return m_Cost;
-  return NULL;
 }
 
-/*
- shouldn't be called alone : see upside.
- */
-double AgentCell::getCost(bool leftArm)
-{
-  
-	// Get the cost of the Workspace point associated to the cell
-	Natural* NatSpace = dynamic_cast<AgentGrid*>(_grid)->getNatural();
-	shared_ptr<Configuration> q_actual = NatSpace->getRobot()->getCurrentPos();
-  
-	HRI_GIK_TASK_TYPE task;
-	task = GIK_RATREACH;
-	if ( leftArm )
-	{
-		task = GIK_LATREACH;
-	}
-  
-  p3d_vector3 Tcoord;
-  Vector3d center = getWorkspacePoint();
-  Tcoord[0] = center[0];
-  Tcoord[1] = center[1];
-  Tcoord[2] = center[2];
-  
-  configPt q;
-  HRI_AGENTS * agents = hri_create_agents();
-  
-	q = p3d_get_robot_config(agents->humans[0]->robotPt);
-  
-	bool IKSucceded;
-	double distance_tolerance = 0.02;
-	IKSucceded = hri_agent_single_task_manip_move(agents->humans[0], task, &Tcoord, distance_tolerance, &q);
-  
-	shared_ptr<Configuration> ptrQ(new Configuration(NatSpace->getRobot(),q));
-  
-	if (IKSucceded)
-	{
-		if( !ptrQ->isInCollision())
-		{
-			NatSpace->getRobot()->setAndUpdate(*ptrQ);
-			m_Cost = NatSpace->getCost(getWorkspacePoint(),leftArm);
-			if (m_Cost < 0.0)
-			{
-				resetReachable();
-			}
-		}
-		else
-		{
-			resetReachable();
-		}
-	}
-	else
-	{
-		resetReachable();
-	}
-  
-	NatSpace->getRobot()->setAndUpdate(*q_actual);
-  
-	return m_Cost;
-}
-
-bool  AgentCell::writeToXml(xmlNodePtr cur)
+bool AgentCell::writeToXml(xmlNodePtr cur)
 {
 	stringstream ss;
 	string str; 
 	
-	str.clear(); ss << getCost(); ss >> str; ss.clear();
-	xmlNewProp (cur, xmlCharStrdup("Cost"), xmlCharStrdup(str.c_str()));
+	str.clear(); ss << m_Combined; ss >> str; ss.clear();
+	xmlNewProp (cur, xmlCharStrdup("Combine"), xmlCharStrdup(str.c_str()));
+  
+  str.clear(); ss << m_Distance; ss >> str; ss.clear();
+	xmlNewProp (cur, xmlCharStrdup("Distance"), xmlCharStrdup(str.c_str()));
+  
+  str.clear(); ss << m_Visiblity; ss >> str; ss.clear();
+	xmlNewProp (cur, xmlCharStrdup("Visibility"), xmlCharStrdup(str.c_str()));
+  
+  str.clear(); ss << m_Reachability; ss >> str; ss.clear();
+	xmlNewProp (cur, xmlCharStrdup("Rechability"), xmlCharStrdup(str.c_str()));
 	
 	str.clear(); ss << ((int)m_IsReachable); ss >> str; ss.clear();
-	xmlNewProp (cur, xmlCharStrdup("Reach"), xmlCharStrdup(str.c_str()));
-	
-	str.clear(); ss << ((int)m_IsReachWithLeftArm); ss >> str; ss.clear();
-	xmlNewProp (cur, xmlCharStrdup("RWLA"), xmlCharStrdup(str.c_str()));
-	
-	str.clear(); ss << ((int)m_IsReachWithRightArm); ss >> str; ss.clear();
-	xmlNewProp (cur, xmlCharStrdup("RWRA"), xmlCharStrdup(str.c_str()));
+	xmlNewProp (cur, xmlCharStrdup("is_Reachable"), xmlCharStrdup(str.c_str()));
 	
 	str.clear(); ss << _corner[0] ; ss >> str; ss.clear();
 	xmlNewProp (cur, xmlCharStrdup("CornerX"), xmlCharStrdup(str.c_str()));
@@ -397,12 +294,50 @@ bool AgentCell::readCellFromXml(xmlNodePtr cur)
 {	
 	xmlChar* tmp;
 	
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("Cost"))) != NULL)
+	if ((tmp = xmlGetProp(cur, xmlCharStrdup("Combine"))) != NULL)
 	{
 		float cost;
 		sscanf((char *) tmp, "%f", &(cost));
-		m_IsCostComputed = true ;
-		m_Cost = cost;
+		m_Combined = cost;
+	}
+	else 
+	{
+		cout << "Document error in reading Cost"<< endl;
+		return false;
+	}
+	xmlFree(tmp);
+  
+  if ((tmp = xmlGetProp(cur, xmlCharStrdup("Distance"))) != NULL)
+	{
+		float cost;
+		sscanf((char *) tmp, "%f", &(cost));
+		m_Distance = cost;
+	}
+	else 
+	{
+		cout << "Document error in reading Cost"<< endl;
+		return false;
+	}
+	xmlFree(tmp);
+  
+  if ((tmp = xmlGetProp(cur, xmlCharStrdup("Visibility"))) != NULL)
+	{
+		float cost;
+		sscanf((char *) tmp, "%f", &(cost));
+		m_Visiblity = cost;
+	}
+	else 
+	{
+		cout << "Document error in reading Cost"<< endl;
+		return false;
+	}
+	xmlFree(tmp);
+  
+  if ((tmp = xmlGetProp(cur, xmlCharStrdup("Rechability"))) != NULL)
+	{
+		float cost;
+		sscanf((char *) tmp, "%f", &(cost));
+		m_Reachability = cost;
 	}
 	else 
 	{
@@ -411,39 +346,11 @@ bool AgentCell::readCellFromXml(xmlNodePtr cur)
 	}
 	xmlFree(tmp);
 	
-	//m_IsCostComputed = false;
-	m_IsCostComputed = true;
-	
-	int Reach=0;
-	
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("Reach"))) != NULL)
+	if ((tmp = xmlGetProp(cur, xmlCharStrdup("is_Reachable"))) != NULL)
 	{
+    int Reach=0;
 		sscanf((char *) tmp, "%d", &Reach );
 		m_IsReachable = Reach; 
-	}
-	else 
-	{
-		cout << "Document error in reading Reach"<< endl;
-		return false;
-	}
-	xmlFree(tmp);
-	
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("RWLA"))) != NULL)
-	{
-		sscanf((char *) tmp, "%d", &Reach );
-		m_IsReachWithLeftArm = Reach; 
-	}
-	else 
-	{
-		cout << "Document error in reading Reach"<< endl;
-		return false;
-	}
-	xmlFree(tmp);
-	
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("RWRA"))) != NULL)
-	{
-		sscanf((char *) tmp, "%d", &Reach );
-		m_IsReachWithRightArm = Reach; 
 	}
 	else 
 	{
@@ -513,26 +420,6 @@ void AgentCell::draw(bool transform)
     m_Center = getWorkspacePoint();
   }
   
-  
-  //	if (!m_IsReachable)
-  //	{
-  //		if (ENV.getBool(Env::drawEntireGrid))
-  //		{
-  //			Vector3d center = getWorkspacePoint();
-  //			double colorvector[4];
-  //      
-  //			colorvector[0] = 0.5;       //red
-  //			colorvector[1] = 0.5;       //green
-  //			colorvector[2] = 0.5;       //blue
-  //			colorvector[3] = 0.01;       //transparency
-  //			double diagonal = getCellSize().minCoeff();
-  //			g3d_set_color(Any,colorvector);
-  //			g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/6, 10);
-  //		}
-  //    
-  //		return;
-  //	}
-  
   if( ENV.getInt(Env::hriCostType) == HRICS_Distance )
   {
     Cost = m_Distance;
@@ -547,29 +434,22 @@ void AgentCell::draw(bool transform)
     //colorvector[3] = ENV.getDouble(Env::colorThreshold2)*1/Cost; 
   }
   
+  if ( ENV.getInt(Env::hriCostType) == HRICS_Reachability ) 
+  {
+    if ( (Cost == numeric_limits<double>::max()) && !m_IsReachable )
+    {
+      return;
+    }
+    
+    Cost = m_Reachability;
+    GroundColorMixGreenToRed(colorvector,ENV.getDouble(Env::colorThreshold1)*Cost);
+  }
+  
   if( ENV.getInt(Env::hriCostType) == HRICS_Combine )
   {
     Cost = m_Combined;
     GroundColorMixGreenToRed(colorvector,ENV.getDouble(Env::colorThreshold1)*Cost);
     //colorvector[3] = 0.20*ENV.getDouble(Env::colorThreshold2)*Cost; //+0.01;
-  }
-  
-  if ( ENV.getInt(Env::hriCostType) == HRICS_Reachability ) 
-  {
-    Cost = m_Reachability;
-    
-    if ( Cost != 0.0 )
-    {
-      GroundColorMixGreenToRed(colorvector,Cost);
-      //glCallList(m_list);
-      diagonal = getCellSize().minCoeff();    
-    }
-    
-    if ( (Cost == 0.0) && m_IsReachable )
-    {
-      //glCallList(m_list);
-      diagonal = getCellSize().minCoeff();
-    }
   }
   
   g3d_set_color(Any,colorvector);
@@ -587,6 +467,17 @@ API::ThreeDGrid(),
 m_firstDisplay(true)
 {
 
+}
+
+AgentGrid::AgentGrid( Robot* robot, Distance* distCostSpace, Visibility* VisiCostSpace, Natural* NatuCostSpace ) : 
+API::ThreeDGrid(),
+m_Robot(robot),
+m_DistanceCostSpace(distCostSpace),
+m_VisibilityCostSpace(VisiCostSpace),
+m_NaturalCostSpace(NatuCostSpace),
+m_firstDisplay(true)
+{
+  
 }
 
 AgentGrid::AgentGrid(vector<int> size) :
@@ -682,12 +573,6 @@ Natural* AgentGrid::getNatural()
 	return m_NaturalCostSpace; 
 }
 
-void AgentGrid::computeRadius()
-{  
-  m_Radius = _nbCellsX*_cellSize[0]/2;
-  cout << "Radius of grid : " << m_Radius << endl;
-}
-
 //! @brief Get the transform matrix between the origin and the robot current position
 //! All grid points are stored relative to the agent first joint
 //! To get points in the global frame points must be transformed by this matrix
@@ -741,50 +626,6 @@ vector<Vector3d> AgentGrid::getBox()
 	return box;
 }
 
-//! @brief Returns wether a point is reachable in the natural grid
-//! @param A point in the global frame
-bool AgentGrid::isReachable(const Vector3d& WSPoint)
-{
-	Vector3d inGridPoint( getTranformedToRobotFrame(WSPoint) );
-	
-	if (isInReachableGrid(inGridPoint)) 
-	{
-		if( dynamic_cast<AgentCell*>(getCell(inGridPoint))->isReachable() )
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-bool AgentGrid::isReachableWithRA(const Eigen::Vector3d& WSPoint)
-{
-	Vector3d inGridPoint( getTranformedToRobotFrame(WSPoint) );
-	
-	if (isInReachableGrid(inGridPoint)) 
-	{
-		if( dynamic_cast<AgentCell*>(getCell(inGridPoint))->isReachableWithRA() )
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-bool AgentGrid::isReachableWithLA(const Eigen::Vector3d& WSPoint)
-{
-	Vector3d inGridPoint( getTranformedToRobotFrame(WSPoint) );
-	
-	if (isInReachableGrid(inGridPoint)) 
-	{
-		if( dynamic_cast<AgentCell*>(getCell(inGridPoint))->isReachableWithLA() )
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
 //! @brief Get the cell containing WSPoint and returns the cost
 double AgentGrid::getCellCostAt(const Vector3d& WSPoint)
 {
@@ -815,114 +656,6 @@ void AgentGrid::resetCellCost()
   }
 }
 
-//! @brief Reset Grid Reachability
-void AgentGrid::resetReachability()
-{
-  unsigned int nbCells = this->getNumberOfCells();
-	
-  for(unsigned int i=0; i<nbCells; i++)
-  {
-    dynamic_cast<AgentCell*>( _cells[i] )->resetReachable();
-  }
-}
-
-//! @brief Compute Grid Accecibility whith right and left hand !
-void AgentGrid::computeReachability()
-{
-	int nbCells = this->getNumberOfCells();
-  //	m_NaturalCostSpace->setRobotToConfortPosture();
-	shared_ptr<Configuration> robotConf = m_Robot->getInitialPosition();
-	
-	for(int i=0; i<nbCells; i++)
-  {
-    cout <<  "Computing Reachability of Cell : " << i << endl;
-    dynamic_cast<AgentCell*>( BaseGrid::getCell(i) )->computeReachability();
-    m_Robot->setAndUpdate(*robotConf);
-    //        m_NaturalCostSpace->setRobotToConfortPosture();
-  }
-  
-  API_activeGrid = this;
-}
-
-//! @brief Init Reach
-void AgentGrid::initReachable()
-{
-  int nbCells = this->getNumberOfCells();
-	
-  for( int i=0; i<nbCells; i++)
-  {
-    AgentCell* cell = dynamic_cast<AgentCell*>( _cells[i] );
-		double Cost = cell->getCost();
-		if (Cost > 0) 
-		{
-			cell->setIsReachable(true);
-			
-			if (Cost == 100) 
-			{
-				cell->setIsReachableWithLA(true);
-				//cell->setIsReachableWithRA(true);
-			}
-		}
-  }
-}
-
-//! @brief Fusion Grid
-AgentGrid* AgentGrid::mergeWith(AgentGrid* otherGrid)
-{
-	if (otherGrid->getNumberOfCells() != getNumberOfCells() ) 
-	{
-		cout << "Error in AgentGrid::fusionWith" << endl;
-		return NULL;
-	}
-	
-	AgentGrid* grid = new AgentGrid(*this);
-	
-	for ( int x=0; x<int(_nbCellsX); x++) 
-	{
-		for ( int y=0; y<int(_nbCellsY); y++) 
-		{
-			for ( int z=0; z<int(_nbCellsZ); z++) 
-			{	
-				AgentCell* cell = dynamic_cast<AgentCell*>( grid->getCell(x,y,z) );
-				AgentCell* otherCell = dynamic_cast<AgentCell*>( otherGrid->getCell(x,y,z) );
-				
-				if ( otherCell->isReachableWithRA() ) 
-				{
-					cell->setIsReachable(true);
-					cell->setIsReachableWithRA(true);
-				}
-				
-				cell->setCost( 0.0 );
-			}
-		}
-	}
-	
-	cout << "Merge Done" << endl;
-	return grid;
-}
-
-//! @brief Reachable Cells
-vector<AgentCell*> AgentGrid::getAllReachableCells()
-{
-	vector<AgentCell*> ReachableCells;
-	
-	ReachableCells.clear();
-	
-	int nbCells = this->getNumberOfCells();
-	
-  for(int i=0; i<nbCells; i++)
-  {
-    AgentCell* cell = dynamic_cast<AgentCell*>( _cells[i] );
-		
-		if ( cell->isReachable() ) 
-		{
-			ReachableCells.push_back( cell );
-		}
-  }
-  
-	return ReachableCells;
-}
-
 //! @brief Natural cell comparator
 class AgentCellComp
 {
@@ -935,83 +668,52 @@ public:
   
 } AgentCellCompObj;
 
-
-//! @brief Reachable cells sorted
-//! Returns the reachable cells sorted by cost
-vector<pair<double,AgentCell*> > AgentGrid::getAllReachableCellsSorted()
-{
-	vector<pair<double,AgentCell*> > ReachableCells;
-  
-	ReachableCells.clear();
-  
-	int nbCells = this->getNumberOfCells();
-  
-  for(int i=0; i<nbCells; i++)
-  {
-    AgentCell* cell = dynamic_cast<AgentCell*>( _cells[i] );
-    
-		if ( cell->isReachable() )
-		{
-			pair<double, AgentCell*> costCell;
-			costCell.second = cell;
-			costCell.first = cell->getCost();
-			ReachableCells.push_back( costCell );
-		}
-	}
-	sort(ReachableCells.begin(),ReachableCells.end(),AgentCellCompObj);
-  
-	return ReachableCells;
-}
-
-//! @brief Get all reachable bellow some threshold cost
-vector<AgentCell*> AgentGrid::getAllReachableCells(double CostThreshold)
-{
-	vector<AgentCell*> ReachableCells;
-	
-	ReachableCells.clear();
-	
-	int nbCells = this->getNumberOfCells();
-	
-  for(int i=0; i<nbCells; i++)
-  {
-    AgentCell* cell = dynamic_cast<AgentCell*>( _cells[i] );
-		
-		if ( cell->isReachable() && (cell->getCost() < CostThreshold ) )
-		{
-			ReachableCells.push_back( cell );
-		}
-  }
-	cout << "Number of Reachable bellow " << CostThreshold << " is :  " << ReachableCells.size() <<  endl;
-	return ReachableCells;
-}
-
 //! @brief get config
 int AgentGrid::robotConfigInCell(int i)
 {
 	return dynamic_cast<AgentCell*>( _cells[i] )->setRobotToStoredConfig();
 }
 
-//! @brief Return true if the point is in the grid
-//! @param 3D point in the eucledan space
-bool AgentGrid::isInReachableGrid(const Eigen::Vector3d& WSPoint)
-{	
-	Vector3d gridSize;
-	gridSize[0] = _nbCellsX*_cellSize[0];
-	gridSize[1] = _nbCellsY*_cellSize[1];
-	gridSize[2] = _nbCellsZ*_cellSize[2];
-	
-	// Hack
-	Vector3d topCorner = _originCorner+gridSize;
-	
-	for (int i=0; i<3; i++)
-	{
-		if( (WSPoint[i] > topCorner[i]) || (WSPoint[i] < _originCorner[i]))
-		{
-      return false;
-		}
-	}
-	
-	return true;
+void AgentGrid::computeRadius()
+{  
+  m_Radius = _nbCellsX*_cellSize[0]/2;
+  cout << "AgentGrid::computeRadius: " << m_Radius << endl;
+}
+
+void AgentGrid::computeCostCombination()
+{
+  shared_ptr<Configuration> q = m_Robot->getCurrentPos();
+  
+  for (unsigned int i=0; i<_cells.size(); i++) 
+  {
+    static_cast<AgentCell*>(_cells[i])->computeCombined();
+  }
+  m_Robot->setAndUpdate(*q);
+}
+
+//! @brief Compute Grid Cost
+void AgentGrid::computeCellVectors()
+{
+	shared_ptr<Configuration> q = m_Robot->getCurrentPos();
+  
+  m_DangerCells.clear();
+  m_VisibilityCells.clear();
+  m_ReachableCells.clear();
+  m_CombinedCells.clear();
+  
+  for (unsigned int i=0; i<_cells.size(); i++) 
+  {
+    AgentCell* cell = static_cast<AgentCell*>(_cells[i]);
+    
+    m_DangerCells.push_back( cell );
+    m_VisibilityCells.push_back( cell );
+    
+    if( cell->isReachable() )
+      m_ReachableCells.push_back( cell );
+    
+    m_CombinedCells.push_back( cell );
+  }
+  m_Robot->setAndUpdate(*q);
 }
 
 //! @brief Compute Grid Cost
@@ -1039,464 +741,17 @@ void AgentGrid::computeAllCellCost()
     //if ( cell->getVisibility() > 0.2 ) 
       m_VisibilityCells.push_back( cell );
     
+    
     cell->computeReachability();
-    //if ( cell->getReachability() > 0 ) 
+    
+    if( cell->isReachable() )
       m_ReachableCells.push_back( cell );
     
     cell->computeCombined();
-    //if ( cell->getCombined() > 0.2 ) 
-      m_CombinedCells.push_back( cell );
+    m_CombinedCells.push_back( cell );
   }
   m_Robot->setAndUpdate(*q);
   API_activeGrid = this;
-}
-
-
-bool AgentGrid::writeToXmlFile(string docname)
-{
-  stringstream ss;
-  string str;
-  
-  //Creating the file Variable version 1.0
-  xmlDocPtr doc = xmlNewDoc(xmlCharStrdup("1.0"));
-  
-  //Writing the root node
-  xmlNodePtr root = xmlNewNode (NULL, xmlCharStrdup("Grid"));
-  
-  xmlNewProp (root, xmlCharStrdup("Type"), xmlCharStrdup("3D"));
-  
-	//Writing the first Node
-	xmlNodePtr cur = xmlNewChild (root, NULL, xmlCharStrdup("OriginCorner"), NULL);
-  
-  str.clear(); ss << _originCorner[0]; ss >> str; ss.clear();
-  xmlNewProp (cur, xmlCharStrdup("X"), xmlCharStrdup(str.c_str()));
-  
-  str.clear(); ss << _originCorner[1]; ss >> str; ss.clear();
-  xmlNewProp (cur, xmlCharStrdup("Y"), xmlCharStrdup(str.c_str()));
-  
-  str.clear(); ss << _originCorner[2]; ss >> str; ss.clear();
-  xmlNewProp (cur, xmlCharStrdup("Z"), xmlCharStrdup(str.c_str()));
-  
-	//Writing cell size
-	cur = xmlNewChild (cur, NULL, xmlCharStrdup("CellSize"), NULL);
-  
-  str.clear(); ss << _cellSize[0]; ss >> str; ss.clear();
-  xmlNewProp (cur, xmlCharStrdup("X"), xmlCharStrdup(str.c_str()));
-  
-  str.clear(); ss << _cellSize[1]; ss >> str; ss.clear();
-  xmlNewProp (cur, xmlCharStrdup("Y"), xmlCharStrdup(str.c_str()));
-  
-  str.clear(); ss << _cellSize[2]; ss >> str; ss.clear();
-  xmlNewProp (cur, xmlCharStrdup("Z"), xmlCharStrdup(str.c_str()));
-  
-  //Writing the cells
-  cur = xmlNewChild (cur, NULL, xmlCharStrdup("Cells"), NULL);
-  
-  str.clear(); ss << getNumberOfCells(); ss >> str; ss.clear();
-  xmlNewProp (cur, xmlCharStrdup("NbOfCells"), xmlCharStrdup(str.c_str()));
-  
-  str.clear(); ss << _nbCellsX; ss >> str; ss.clear();
-  xmlNewProp (cur, xmlCharStrdup("NbOnX"), xmlCharStrdup(str.c_str()));
-  
-  str.clear(); ss << _nbCellsY; ss >> str; ss.clear();
-  xmlNewProp (cur, xmlCharStrdup("NbOnY"), xmlCharStrdup(str.c_str()));
-  
-  str.clear(); ss << _nbCellsZ; ss >> str; ss.clear();
-  xmlNewProp (cur, xmlCharStrdup("NbOnZ"), xmlCharStrdup(str.c_str()));
-  
-  for (unsigned int i=0; i<getNumberOfCells(); i++)
-  {
-    xmlNodePtr _XmlCellNode_ = xmlNewChild(cur,
-                                           NULL,
-                                           xmlCharStrdup("Cell"), NULL);
-    
-    _cells[i]->writeToXml(_XmlCellNode_);
-  }
-  
-  ////Writing the second Node (coef prop)
-  xmlNodePtr coef = xmlNewChild (root, NULL, xmlCharStrdup("EnvCoeff"), NULL);
-  
-  str.clear(); ss << ENV.getDouble(Env::coeffJoint);; ss >> str; ss.clear();
-  xmlNewProp (coef, xmlCharStrdup("coeffJoint"), xmlCharStrdup(str.c_str()));
-  
-  str.clear(); ss << ENV.getDouble(Env::coeffEnerg);; ss >> str; ss.clear();
-  xmlNewProp (coef, xmlCharStrdup("coeffEnerg"), xmlCharStrdup(str.c_str()));
-  
-  str.clear(); ss << ENV.getDouble(Env::coeffConfo);; ss >> str; ss.clear();
-  xmlNewProp (coef, xmlCharStrdup("coeffConfo"), xmlCharStrdup(str.c_str()));
-  
-  str.clear(); ss << ENV.getDouble(Env::coeffArmPr);; ss >> str; ss.clear();
-  xmlNewProp (coef, xmlCharStrdup("coeffArmPr"), xmlCharStrdup(str.c_str()));
-  
-  xmlDocSetRootElement(doc, root);
-  //	writeRootNode(graph, root);
-  //	writeSpeGraph(graph, file, root);
-  
-  //Writing the file on HD
-  xmlSaveFormatFile (docname.c_str(), doc, 1);
-  xmlFreeDoc(doc);
-  
-  cout << "Writing Grid to : " << docname << endl;
-  return true;
-}
-
-/*!
- * \brief Reads the grid
- * from an xml file
- */
-bool AgentGrid::loadFromXmlFile(string docname)
-{
-  //Creating the file Variable version 1.0
-  xmlDocPtr doc;
-  xmlNodePtr cur;
-  xmlNodePtr root;
-  
-  doc = xmlParseFile(docname.c_str());
-  
-  if(doc==NULL)
-  {
-    cout << "Document not parsed successfully (doc==NULL)" << endl;
-    return false;
-  }
-  
-  root = xmlDocGetRootElement(doc);
-  
-  if (root == NULL)
-  {
-    cout << "Document not parsed successfully" << endl;
-    xmlFreeDoc(doc);
-    return false;
-  }
-  
-  
-	if (xmlStrcmp(root->name, xmlCharStrdup("Grid")))
-	{
-		cout << "Document of the wrong type root node not Grid" << endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-  
-  
-	xmlChar* tmp;
-  
-	tmp = xmlGetProp(root, xmlCharStrdup("Type"));
-	if (xmlStrcmp(tmp, xmlCharStrdup("3D")))
-	{
-		cout << "Doccument not a 3D grid"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-	xmlFree(tmp);
-  
-	/***************************************/
-	// NODE OriginCorner
-  
-	cur = root->xmlChildrenNode->next;
-	root = cur;
-  
-	float originCorner[3];
-  
-	if (xmlStrcmp(cur->name, xmlCharStrdup("OriginCorner")))
-	{
-		cout << "Document second node is not OriginCorner ( " << cur->name << " )"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-  
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("X"))) != NULL)
-	{
-		sscanf((char *) tmp, "%f", originCorner+0 );
-	}
-	else
-	{
-		xmlFree(tmp);
-		cout << "Document error origin X"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-	xmlFree(tmp);
-  
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("Y"))) != NULL)
-	{
-		sscanf((char *) tmp, "%f", originCorner+1 );
-	}
-	else
-	{
-		xmlFree(tmp);
-		cout << "Document error origin Y"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-	xmlFree(tmp);
-  
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("Z"))) != NULL)
-	{
-		sscanf((char *) tmp, "%f", originCorner+2 );
-	}
-	else
-	{
-		xmlFree(tmp);
-		cout << "Document error NbOnZ"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-	xmlFree(tmp);
-  
-	_originCorner[0] = originCorner[0];
-	_originCorner[1] = originCorner[1];
-	_originCorner[2] = originCorner[2];
-  
-	cout << "_originCorner = " << endl <<_originCorner << endl;
-  
-	/***************************************/
-	// NODE CellSize
-  
-	cur = cur->xmlChildrenNode->next;
-  
-	float cellSize[3];
-  
-	if (xmlStrcmp(cur->name, xmlCharStrdup("CellSize")))
-	{
-		cout << "Document second node is not CellSize ( " << cur->name << " )"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-  
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("X"))) != NULL)
-	{
-		sscanf((char *) tmp, "%f", cellSize+0);
-	}
-	else
-	{
-		xmlFree(tmp);
-		cout << "Document error origin X"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-	xmlFree(tmp);
-  
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("Y"))) != NULL)
-	{
-		sscanf((char *) tmp, "%f", cellSize+1);
-	}
-	else
-	{
-		xmlFree(tmp);
-		cout << "Document error origin Y"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-	xmlFree(tmp);
-  
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("Z"))) != NULL)
-	{
-		sscanf((char *) tmp, "%f", cellSize+2);
-	}
-	else
-	{
-		xmlFree(tmp);
-		cout << "Document error NbOnZ"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-	xmlFree(tmp);
-  
-	_cellSize[0] = cellSize[0];
-	_cellSize[1] = cellSize[1];
-	_cellSize[2] = cellSize[2];
-  
-	cout << "_cellSize = " << endl <<_cellSize << endl;
-  
-	/***************************************/
-	// NODE Cells
-  
-	cur = cur->xmlChildrenNode->next;
-  
-	if (xmlStrcmp(cur->name, xmlCharStrdup("Cells")))
-	{
-		cout << "Document second node is not Cells ( " << cur->name << " )"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-  
-	unsigned int NbOfCells;
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("NbOfCells"))) != NULL)
-	{
-		sscanf((char *) tmp, "%d", &(NbOfCells));
-	}
-	else
-	{
-		xmlFree(tmp);
-		cout << "Document not a 3D grid"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-	xmlFree(tmp);
-  
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("NbOnX"))) != NULL)
-	{
-		sscanf((char *) tmp, "%d", &(_nbCellsX));
-	}
-	else
-	{
-		xmlFree(tmp);
-		cout << "Document error NbOnX"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-	xmlFree(tmp);
-  
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("NbOnY"))) != NULL)
-	{
-		sscanf((char *) tmp, "%d", &(_nbCellsY));
-	}
-	else
-	{
-		xmlFree(tmp);
-		cout << "Doccument error NbOnY"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-	xmlFree(tmp);
-  
-	if ((tmp = xmlGetProp(cur, xmlCharStrdup("NbOnZ"))) != NULL)
-	{
-		sscanf((char *) tmp, "%d", &(_nbCellsZ));
-	}
-	else
-	{
-		xmlFree(tmp);
-		cout << "Doccument error NbOnZ"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-	xmlFree(tmp);
-  
-	if( _nbCellsX*_nbCellsY*_nbCellsZ != NbOfCells )
-	{
-		cout << "Doccument error _nbCellsX*_nbCellsY*_nbCellsZ != NbOfCells"<< endl;
-		xmlFreeDoc(doc);
-		return false;
-	}
-  
-	/***************************************/
-	//  Reads the Cells
-  
-	_cells.resize(NbOfCells);
-  
-	cur = cur->xmlChildrenNode;
-  
-	for (unsigned int i=0; i<NbOfCells; i++)
-	{
-    
-		cur = cur->next;
-    
-		if (cur == NULL)
-		{
-			cout << "Document error on the number of Cell" << endl;
-			break;
-		}
-    
-		_cells[i] = createNewCell(i,0,0,0);
-    
-		if (xmlStrcmp(cur->name, xmlCharStrdup("Cell")))
-		{
-			cout << "Document node is not Cell ( " << cur->name << " )"<< endl;
-			xmlFreeDoc(doc);
-			return false;
-		}
-    
-		if ( ! _cells[i]->readCellFromXml(cur) )
-		{
-			cout << "Document error while reading cell"<< endl;
-			xmlFreeDoc(doc);
-			return false;
-		}
-    
-		cur = cur->next;
-	}
-  
-	/***************************************/
-	//  Reads the EnvCoeff
-	cur = root->next->next;
-	if (cur)
-	{
-		double result = 0;
-		std::stringstream ss;
-		if (!xmlStrcmp(cur->name, xmlCharStrdup("EnvCoeff")))
-		{
-			if ((tmp = xmlGetProp(cur, xmlCharStrdup("coeffJoint"))) == NULL)
-			{
-				xmlFree(tmp);
-				cout << "Document error coeffJoint"<< endl;
-				xmlFreeDoc(doc);
-				return false;
-			}
-			else
-			{
-        
-				ss << (char *) tmp;
-				ss >> result;
-				ENV.setDouble(Env::coeffJoint,result);
-				xmlFree(tmp);
-				result = 0;
-			}
-      
-			if ((tmp = xmlGetProp(cur, xmlCharStrdup("coeffEnerg"))) == NULL)
-			{
-				xmlFree(tmp);
-				cout << "Document error coeffEnerg"<< endl;
-				xmlFreeDoc(doc);
-				return false;
-			}
-			else
-			{
-				ss.clear();
-				ss << (char *) tmp;
-				ss >> result;
-				ENV.setDouble(Env::coeffEnerg,result);
-				xmlFree(tmp);
-				result = 0;
-			}
-      
-			if ((tmp = xmlGetProp(cur, xmlCharStrdup("coeffConfo"))) == NULL)
-			{
-				xmlFree(tmp);
-				cout << "Document error coeffConfo"<< endl;
-				xmlFreeDoc(doc);
-				return false;
-			}
-			else
-			{
-				ss.clear();
-				ss << (char *) tmp;
-				ss >> result;
-				ENV.setDouble(Env::coeffConfo,result);
-				xmlFree(tmp);
-				result = 0;
-			}
-      
-			if ((tmp = xmlGetProp(cur, xmlCharStrdup("coeffArmPr"))) == NULL)
-			{
-				xmlFree(tmp);
-				cout << "Document error coeffArmPr"<< endl;
-				xmlFreeDoc(doc);
-				return false;
-			}
-			else
-			{
-				ss.clear();
-				ss << (char *) tmp;
-				ss >> result;
-				ENV.setDouble(Env::coeffArmPr,result);
-				xmlFree(tmp);
-			}
-		}
-	}
-  
-  cout << "Reading Grid : " << docname << endl;
-  xmlFreeDoc(doc);
-  return true;
 }
 
 void AgentGrid::draw()
@@ -1629,3 +884,4 @@ void AgentGrid::draw()
   
 	//getRobot()->setAndUpdate(*m_ActualConfig);
 }
+

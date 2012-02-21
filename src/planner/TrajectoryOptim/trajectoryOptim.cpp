@@ -31,6 +31,9 @@
 #include "Graphic-pkg.h"
 #include "move3d-headless.h"
 
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+
 using namespace std;
 using namespace tr1;
 
@@ -69,7 +72,6 @@ vector< vector <double> > traj_optim_to_plot;
 // General method
 //--------------------------------------------------------
 
-#ifdef MULTILOCALPATH
 //! set mlp for this robot
 bool traj_optim_set_MultiLP()
 {
@@ -95,7 +97,6 @@ bool traj_optim_set_MultiLP()
   
   return true;
 }
-#endif
 
 //! invalidate all constraints
 // --------------------------------------------------------
@@ -116,6 +117,96 @@ bool traj_optim_invalidate_cntrts()
     // get constraint from the cntrts manager
     ct = rob->cntrt_manager->cntrts[i];
     p3d_desactivateCntrt( rob, ct );
+  }
+  
+  return true;
+}
+
+//! Virtual object
+// --------------------------------------------------------
+bool traj_optim_set_cartesian_mode() {
+
+  p3d_rob* object = NULL;
+  p3d_rob* robot = m_robot->getRobotStruct();
+
+  configPt q = p3d_get_robot_config(robot);
+  
+  // For Each Arm
+  for (int i=0; i < int((*robot->armManipulationData).size()); i++) 
+  {
+    ArmManipulationData& armData  = (*robot->armManipulationData)[i];
+    
+    desactivateTwoJointsFixCntrt(robot,armData.getManipulationJnt(), 
+                                 armData.getCcCntrt()->pasjnts[ armData.getCcCntrt()->npasjnts-1 ]);
+    
+    if (armData.getCartesian()) {
+      cout << "Arm Data " << i <<  " is set cartesian" << endl;
+      // Uptdate the Virual object for inverse kinematics 
+      // Be carfull the Arm will be unfixed 
+      p3d_update_virtual_object_config_for_arm_ik_constraint(robot, i, q);
+      activateCcCntrts(robot, i, false);
+      ManipulationUtils::unfixManipulationJoints(robot, i);
+      if(object){
+        armData.getManipulationJnt()->dist = object->joints[1]->dist;
+      }
+    } else {
+      deactivateCcCntrts(robot, i);
+      p3d_update_virtual_object_config_for_arm_ik_constraint(robot, i, q);
+      p3d_set_and_update_this_robot_conf(robot, q);
+      setAndActivateTwoJointsFixCntrt(robot,armData.getManipulationJnt(),
+                                      armData.getCcCntrt()->pasjnts[ armData.getCcCntrt()->npasjnts-1 ]);
+    }
+  }
+  p3d_set_and_update_this_robot_conf(robot, q);
+  p3d_get_robot_config_into(robot, &q);
+  p3d_destroy_config(robot, q);
+  return true;
+}
+
+//--------------------------------------------------------
+// Main function to fix pr2 joints
+//--------------------------------------------------------
+bool traj_optim_init_mlp_cntrts_and_fix_joints()
+{
+  m_robot = global_Project->getActiveScene()->getActiveRobot();
+  
+  cout << "Initialize robot : " << m_robot->getName() << endl;
+  
+  if( !traj_optim_set_MultiLP() ) {
+    return false;
+  }
+  
+  if( !traj_optim_invalidate_cntrts() ) {
+    return false;
+  }
+  
+  if( !traj_optim_set_cartesian_mode() ) {
+    return false;
+  }
+  
+  switch( PlanEnv->getInt(PlanParam::plannerType) )
+  {
+    case 0 : // Navigation
+      cout << "Set navigation parameters" << endl;
+      p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
+      p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_BaseMLP, 1, false);
+      fixAllJointsExceptBase( m_robot->getRobotStruct() );
+      break;
+      
+    case 1 : // Manipulation
+      cout << "Set manipulation parameters" << endl;
+      p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
+      p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
+      fixAllJointsWithoutArm( m_robot->getRobotStruct() , 0 );
+      break;
+      
+    case 2 : // Mobile Manipulation
+      cout << "Set mobile-manipulation parameters" << endl;
+      p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
+      p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
+      fixAllJointsWithoutArm( m_robot->getRobotStruct() , 0 );
+      unFixJoint(m_robot->getRobotStruct(), m_robot->getRobotStruct()->baseJnt);
+      break;
   }
   
   return true;
@@ -370,8 +461,7 @@ void traj_optim_shelf_init_collision_space()
   m_planner_joints.push_back( 11 );
   m_planner_joints.push_back( 12 );
   
-  for (unsigned int joint_id=0; 
-       joint_id<m_robot->getNumberOfJoints(); joint_id++) 
+  for (unsigned int joint_id=0; joint_id<m_robot->getNumberOfJoints(); joint_id++) 
   {
     if ( find (m_active_joints.begin(), m_active_joints.end(), joint_id ) 
         == m_active_joints.end() ) 
@@ -410,6 +500,7 @@ bool traj_optim_shelf_init_collision_points()
   // and compute bounding cylinders
   vector<Joint*> joints;
   joints.clear();
+  
   for (unsigned int i=0; i<m_active_joints.size(); i++) 
   {
     joints.push_back( m_robot->getJoint( m_active_joints[i] ) );
@@ -622,7 +713,7 @@ bool traj_optim_init_collision_spaces()
       traj_optim_invalidate_cntrts();
       traj_optim_navigation_set_localpath_and_cntrts();
       
-      if( !global_humanCostSpace )
+      if( !HRICS_humanCostMaps )
       {
         cout << "No Collspace" << endl;
         return false;
@@ -686,7 +777,8 @@ bool traj_optim_set_scenario_type()
     m_sce = CostMap;
   }
   else if( ENV.getBool(Env::isCostSpace) &&
-     global_costSpace->getSelectedCostName() == "costIsInCollision")
+     ( global_costSpace->getSelectedCostName() == "costIsInCollision" || 
+       global_costSpace->getSelectedCostName() == "costDistToObst"))
   {
     m_sce = Simple;
   } 
@@ -832,6 +924,12 @@ bool traj_optim_initStomp()
   
   optimizer->setSharedPtr(optimizer);
   cout << "Optimizer created" << endl;
+  
+  GlobalCostSpace::initialize();
+  std::cout << "Initializing the collision space function" << std::endl;
+  global_costSpace->addCost("CollisionSpace",boost::bind(computeCollisionSpaceCost, _1));
+  global_costSpace->setCost("CollisionSpace");
+    
   return true;
 }
 

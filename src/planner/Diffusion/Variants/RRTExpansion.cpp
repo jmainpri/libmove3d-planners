@@ -233,8 +233,7 @@ bool RRTExpansion::expandToGoal(Node* expansionNode,
 }
 
 
-int RRTExpansion::expandProcess(Node* expansionNode, shared_ptr<
-                                Configuration> directionConfig, Node* directionNode,
+int RRTExpansion::expandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode,
                                 Env::expansionMethod method)
 {
     bool extensionSucceeded(false);
@@ -288,8 +287,8 @@ int RRTExpansion::expandProcess(Node* expansionNode, shared_ptr<
             fromNode = extensionNode;
         }
         firstIteration = false;
-
+//
     }
-    directionNode = extensionNode;
+
     return nbCreatedNodes;
 }

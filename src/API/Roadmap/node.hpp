@@ -152,7 +152,7 @@ public:
 	/**
 	 * Returns the Sum of cost along the path
 	 */
-	double& sumCost();
+	double& sumCost(bool recompute=false);
 	
 	/**
 	 * obtient la temperature du Node
@@ -183,6 +183,13 @@ public:
 	 * @return la distance entre les deux Node
 	 */
 	double dist(Node* N) const;
+  
+  /**
+	 * Compute the distance between the node and a configuration q and store it to DistNew
+	 * @param q the configuration
+	 * @return the distance
+	 */
+	double dist(confPtr_t q) const;
 	
 	/**
 	 * teste si deux Node sont égaux

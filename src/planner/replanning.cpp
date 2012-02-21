@@ -486,6 +486,7 @@ bool SoftmotionReplanner::init()
   m_manipPlanner->setUseBaseMotion( true );
   m_manipPlanner->setPlanningMethod( p3d_planner_function );
   m_manipPlanner->setSmoothingMethod( p3d_smoothing_function );
+  m_manipPlanner->setCleanningRoadmaps( false );
   return true;
 }
 

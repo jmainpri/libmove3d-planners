@@ -153,10 +153,10 @@ bool TreePlanner::checkStopConditions()
 		return (true);
   }
   
-	if (ENV.getBool(Env::expandToGoal) && trajFound())
+	if ( ENV.getBool(Env::expandToGoal) && trajFound())
 	{
-            #ifdef DEBUG_STATUS
-                cout << "Success: the start and goal components are connected." << endl;
+#ifdef DEBUG_STATUS
+     cout << "Success: the start and goal components are connected." << endl;
 #endif
 		return (true);
 	}
@@ -322,9 +322,22 @@ unsigned int TreePlanner::run()
 			
 			if (NbCurCreatedNodes > 0)
 			{
+        API::Trajectory* traj1 = _Graph->extractAStarShortestPathsTraj( _q_start, _q_goal );
+//        API::Trajectory* traj2 = _Graph->extractBestTrajSoFar( _q_start, _q_goal );
+//        vector<Node*> path = _Graph->extractAStarShortestNodePaths( _q_start, _q_goal );
+        
+        if( traj1 ) {
+          cout << "traj1 cost : " << traj1->cost() << endl;
+//          cout << "traj2 cost : " << traj2->cost() << endl;
+//          cout << "traj3 cost : " << path.back()->sumCost(true) << endl;
+        }
+        else {
+          cout << "no traj" << endl;
+        }
+        
 				if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawExploration))
 				{
-          _Graph->extractBestTrajSoFar( _q_start, _q_goal );
+          //_Graph->extractBestTrajSoFar( _q_start, _q_goal );
 				  _draw_func();
 				}
 				

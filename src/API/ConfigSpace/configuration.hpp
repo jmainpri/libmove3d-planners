@@ -320,7 +320,7 @@ private:
 	bool _CostTested;
 	double _Cost;
 	
-	Robot* _Robot;/*!< Le Robot pour lequel la Configuration est créée*/
+	Robot* _Robot; /*!< Le Robot pour lequel la Configuration est créée*/
 	double* _Configuration;/*!< une structure de congitPt contenant les données sur la Configuration*/
 };
 

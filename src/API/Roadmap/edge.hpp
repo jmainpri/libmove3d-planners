@@ -49,7 +49,7 @@ public:
 	 * @param N2 le Node final de l'Edge
 	 * @param Long la longueur de l'Edge
 	 */
-	Edge(Graph* G, Node* N1, Node* N2, double Long, bool compute_cost = true);
+	Edge(Graph* G, Node* N1, Node* N2, bool compute_length, double& length, bool compute_cost, double& cost );
 	
 	/**
 	 * Destructeur de la classe
@@ -133,9 +133,6 @@ public:
 private:
 	edge*			m_Edge;
 	
-	bool m_is_BGL_Descriptor_Valid;
-	BGL_Edge m_BGL_Descriptor;
-	
 	Node*			m_Source;
 	Node*			m_Target;
 	
@@ -143,6 +140,9 @@ private:
 	Robot*		m_Robot;
 	
 	double		m_Long;
+  
+  bool m_is_BGL_Descriptor_Valid;
+	BGL_Edge m_BGL_Descriptor;
 	
 	bool														m_is_LocalPath_Computed;
 	std::tr1::shared_ptr<LocalPath> m_path;

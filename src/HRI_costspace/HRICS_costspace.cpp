@@ -37,9 +37,9 @@ enum CostSpaceFunction
 // Function for the Human cost space
 double HRICS_getConfigHumanGridCost(Configuration& Conf)
 {	
-  if(global_humanCostSpace != NULL)
+  if(HRICS_humanCostMaps != NULL)
   {
-    return global_humanCostSpace->getCost(Conf);
+    return HRICS_humanCostMaps->getCost(Conf);
   }
   
   return NULL;
@@ -143,8 +143,7 @@ double HRICS_getConfigCost(Configuration& Conf)
 					WSPoint[1] = Conf[object+1];
 					WSPoint[2] = Conf[object+2];
 					
-
-					double ReachCost = ENV.getDouble(Env::Kreachable)*(HRICS_MotionPL->getReachability()->getCostInGrid(WSPoint));
+					double ReachCost = ENV.getDouble(Env::Kreachable)*(HRICS_MotionPL->getReachability()->getWorkspaceCost(WSPoint));
 					Cost += ReachCost;
 
 					
@@ -281,9 +280,9 @@ void HRICS_init(HRI_AGENTS* agents)
     ENV.setBool(Env::useBallDist,true);
     ENV.setDouble(Env::zone_size,0.80);
     
-    ENV.setDouble( Env::Kdistance,   80 );
-    ENV.setDouble( Env::Kvisibility, 60 );
-    ENV.setDouble( Env::Kreachable,  10 );
+//    ENV.setDouble( Env::Kdistance,   80 );
+//    ENV.setDouble( Env::Kvisibility, 60 );
+//    ENV.setDouble( Env::Kreachable,  10 );
     
     ENV.setDouble(Env::extensionStep,1.5);
     ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
@@ -309,11 +308,6 @@ void HRICS_init(HRI_AGENTS* agents)
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initVisibility();
 	dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initNatural();
   //dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initAgentGrids( ENV.getDouble(Env::CellSize) );
-  
-  global_humanCostSpace = new HRICS::HumanCostSpace(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot(),
-                                                    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHumans(),
-                                                    ENV.getDouble(Env::CellSize));
-  
   //dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initOtpPlanner();
   dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
   
@@ -336,6 +330,7 @@ void HRICS_init(HRI_AGENTS* agents)
 		  // Reads the grid from XML and sets it ti the HRICS_MotionPL
 		  HRICS_loadGrid(fileName);
 		  HRICS_activeNatu->setGrid(dynamic_cast<HRICS::NaturalGrid*>(API_activeGrid));
+      
 		  ENV.setBool(Env::drawGrid,false);
 		}
 		else
@@ -344,6 +339,14 @@ void HRICS_init(HRI_AGENTS* agents)
 			cout << "HOME_MOVE3D is : " << getenv("HOME_MOVE3D") << endl;
     }
 	}
+  
+  // ------------------------------------------
+  // Init global human costspace
+  // ------------------------------------------
+  HRICS_humanCostMaps = new HRICS::HumanCostSpace(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot(),
+                                                  dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHumans(),
+                                                  HRICS_activeNatu,
+                                                  ENV.getDouble(Env::CellSize));
 	
   //API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getAgentGrids()[0];
 	ENV.setInt(Env::hriCostType,HRICS_Distance);

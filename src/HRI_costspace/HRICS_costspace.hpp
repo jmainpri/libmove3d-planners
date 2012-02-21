@@ -55,7 +55,7 @@ extern HRICS::Visibility*	HRICS_activeVisi;
 extern HRICS::Natural*		HRICS_activeNatu;
 extern HRICS::Natural*		HRICS_activeReac;
 
-extern HRICS::HumanCostSpace* global_humanCostSpace;
+extern HRICS::HumanCostSpace* HRICS_humanCostMaps;
 
 /**
  * Active Motion planner framework

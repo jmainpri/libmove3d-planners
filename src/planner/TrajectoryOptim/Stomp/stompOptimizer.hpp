@@ -106,6 +106,11 @@ public:
   void testMultiVariateGaussianSampler();
   
   /**
+   * Get the current configuration collision cost
+   */
+  double getCollisionSpaceCost( Configuration& q );
+  
+  /**
    * Get the current trajectory cost profile
    */
   void getTrajectoryCost( std::vector<double>& cost, double step );

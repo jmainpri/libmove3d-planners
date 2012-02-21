@@ -30,7 +30,6 @@ namespace HRICS
 		~AgentCell();
 		
 		double getCost();
-		double getCost(bool leftHand);
 		void setCost(double Cost) { m_Cost = Cost; }
 		void setBlankCost();
     
@@ -58,15 +57,12 @@ namespace HRICS
 		bool isReachableWithRA() { return m_IsReachWithRightArm; }
     
     void resetExplorationStatus();
-		
 		void createDisplaylist();
-		
 		void draw(bool transform);
-		
-		bool writeToXml(xmlNodePtr cur);
-		bool readCellFromXml(xmlNodePtr cur);
-		
 		int setRobotToStoredConfig();
+    
+    bool writeToXml(xmlNodePtr cur);
+    bool readCellFromXml(xmlNodePtr cur);
     
   protected:
 		
@@ -119,32 +115,26 @@ namespace HRICS
 	{
 	public:
     AgentGrid();
+    AgentGrid( Robot* robot, Distance* distCostSpace,Visibility* VisiCostSpace, Natural* NatuCostSpace );
 		AgentGrid( std::vector<int> size );
-		AgentGrid(double pace, std::vector<double> envSize,
-              Robot* robot, Distance* distCostSpace,Visibility* VisiCostSpace, Natural* NatuCostSpace);
-		AgentGrid(const AgentGrid& grid);
+		AgentGrid( double pace, std::vector<double> envSize,
+               Robot* robot, Distance* distCostSpace,Visibility* VisiCostSpace, Natural* NatuCostSpace);
+		AgentGrid( const AgentGrid& grid );
 		
     ~AgentGrid();
 		
 		API::ThreeDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z );
     
-    Robot*      getRobot();
+    Robot*        getRobot();
     
     Distance*     getDistance();
     Visibility*   getVisibility();
     Natural*      getNatural();
-    
-    void computeAllCellCost();
-		void computeReachability();
 		
-		Eigen::Transform3d getTransformFromRobotPos();
-		Eigen::Vector3d getTranformedToRobotFrame(const Eigen::Vector3d& WSPoint);
-    
-		bool isInReachableGrid(const Eigen::Vector3d& WSPoint);
+		Eigen::Transform3d    getTransformFromRobotPos();
+		Eigen::Vector3d       getTranformedToRobotFrame(const Eigen::Vector3d& WSPoint);
 		
 		bool isReachable(const Eigen::Vector3d& WSPoint);
-		bool isReachableWithRA(const Eigen::Vector3d& WSPoint);
-		bool isReachableWithLA(const Eigen::Vector3d& WSPoint);
 		
 		double getCellCostAt(const Eigen::Vector3d& WSPoint);
 		
@@ -152,20 +142,18 @@ namespace HRICS
 		void resetCellCost();
 		void resetReachability();
 		void initReachable();
-		
-		AgentGrid* mergeWith(AgentGrid* otherGrid);
-		std::vector<AgentCell*> getAllReachableCells();
-		std::vector<std::pair<double,AgentCell*> > getAllReachableCellsSorted();
-		std::vector<AgentCell*> getAllReachableCells(double CostThreshold);
-    
-		bool writeToXmlFile(std::string docname);
-		bool loadFromXmlFile(std::string docname);
     
     int robotConfigInCell(int i);
+    
+    void computeReachability();
+    void computeAllCellCost();
+    void computeCellVectors();
+    void computeRadius();
+    void computeCostCombination();
+    
     void draw();
     
 	private:
-    void computeRadius();
     
     Robot*                            m_Robot;
     

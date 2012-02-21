@@ -9,6 +9,8 @@
 // Copyright: See COPYING file that comes with this distribution
 //
 //
+#include "API/ConfigSpace/configuration.hpp"
+
 #include "API/Roadmap/node.hpp"
 #include "API/Roadmap/compco.hpp"
 #include "API/Roadmap/graph.hpp"
@@ -34,6 +36,7 @@ m_specificNode(false)
 	m_is_BGL_Descriptor_Valid = false;
   m_is_leaf = true;
 }
+
 //Constructor and destructor
 Node::Node(const Node& N) :
 m_Graph(N.m_Graph),
@@ -98,6 +101,7 @@ m_specificNode(false)
 	m_Graph = G;
 	m_Robot = G->getRobot();
 	m_Configuration = shared_ptr<Configuration> (new Configuration(m_Robot, N->q));
+  
 	_activ = false;
 	m_Node = N;
   m_is_leaf = true;
@@ -286,14 +290,46 @@ double Node::cost()
 	return (m_Node->cost);
 }
 
-double& Node::sumCost()
+//! When using a tree structure compute the sum of cost
+//! to this node
+double& Node::sumCost(bool recompute)
 {
+  if( recompute ) 
+  {
+    double sum_cost(0);
+    Node* node = this;
+    
+    while(node->parent() != NULL) {
+      
+      Edge* edge = NULL;
+      vector<Edge*> edges = node->getEdges();
+
+      for (int i=0; i<int(edges.size()); i++) {
+
+        if((edges[i]->getTarget() == node) && (edges[i]->getSource() == node->parent())) {
+          edge = edges[i];
+          break;
+        }
+      }
+      sum_cost += edge->cost();
+      node = node->parent();
+    }
+    m_Node->sumCost = sum_cost;
+  }
+  
 	return (m_Node->sumCost);
 }
 
 double Node::dist(Node* node) const
 {
 	double d = m_Configuration->dist(*node->m_Configuration);
+	m_Node->dist_Nnew = d;
+	return d;
+}
+
+double Node::dist(confPtr_t q) const
+{
+	double d = m_Configuration->dist(*q);
 	m_Node->dist_Nnew = d;
 	return d;
 }

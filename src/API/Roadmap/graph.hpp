@@ -239,7 +239,7 @@ public:
 	 * @param N2 le Node final de l'Edge
 	 * @param Long la longueur de l'Edge
 	 */
-	Edge* addEdge(Node* source, Node* target, double Long);
+	Edge* addEdge(Node* source, Node* target, bool compute_length, double length , bool compute_cost,  double cost );
 	
 	/**
 	 * ajoute deux Edge au Graph
@@ -247,7 +247,7 @@ public:
 	 * @param N2 l'autre extrémité des Edge
 	 * @param Long la longueur des Edge
 	 */
-  std::vector<Edge*> addEdges(Node* N1, Node* N2, double Length, bool computeLength = false );
+  std::vector<Edge*> addEdges(Node* N1, Node* N2, bool compute_length, double length , bool compute_cost,  double cost );
 	
 	/**
 	 * Remove edge
@@ -360,16 +360,19 @@ public:
 	 * a node to a given connected component
 	 */
 	bool connectNodeToCompco(Node* node, Node* compco);
+  
+  
+  /**
+	 * Compute the K nearest nodes
+	 * @param K the maximal number of neighbors
+	 */
+  static void sortNodesByDist(std::vector<Node*>& nodes, confPtr_t config);
 	
 	/**
 	 * Compute the K nearest nodes
 	 * @param K the maximal number of neighbors
 	 */
-	std::vector<Node*> KNearestWeightNeighbour(std::tr1::shared_ptr<Configuration> config,
-                                             int K,
-                                             double radius,
-                                             bool weighted, 
-                                             int distConfigChoice);
+	std::vector<Node*> KNearestWeightNeighbour(confPtr_t config, int K, double radius, bool weighted, int distConfigChoice);
 	
 	/**
 	 * obtient le plus proche voisin d'une composante connexe
@@ -379,7 +382,7 @@ public:
 	 * @param distConfigChoice le type de calcul de distance
 	 * @return le Node le plus proche de la Configuration appartenant à la composante connexe
 	 */
-	Node* nearestWeightNeighbour(Node* compco, std::tr1::shared_ptr<Configuration> C, bool weighted, int distConfigChoice);
+	Node* nearestWeightNeighbour(Node* compco, confPtr_t C, bool weighted, int distConfigChoice);
 	
 	/**
 	 * Get Ith Compco
@@ -454,6 +457,12 @@ public:
 	 * @param the configuration
 	 */
 	API::Trajectory* extractDijkstraShortestPathsTraj( confPtr_t qi, confPtr_t qf);
+  
+  /**
+	 * Extract best traj 
+	 * @param the configuration
+	 */
+  std::vector<Node*> extractAStarShortestNodePaths( confPtr_t qi, confPtr_t qf );
   
   /**
 	 * Extract best traj 

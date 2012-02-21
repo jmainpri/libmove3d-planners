@@ -418,32 +418,39 @@ std::tr1::shared_ptr<Configuration> Trajectory::operator [] ( const int &i ) con
   return m_Courbe[i]->getBegin();
 }
 
-shared_ptr<Configuration> Trajectory::configAtParam(double param) const
+shared_ptr<Configuration> Trajectory::configAtParam(double param, unsigned int* id_localpath) const
 {
 	double soFar(0.0);
 	double prevSoFar(0.0);
-	
-	for (uint i = 0; i < nloc; i++)
+	unsigned int i=0;
+  
+	for ( ; i<nloc; i++)
 	{
-		
 		soFar = soFar + m_Courbe.at(i)->getParamMax();
 		
 		// Parameter lies in the previous local path
 		// return configuration inside previous LP
 		if (param < soFar)
 		{
-			
 			if (param < prevSoFar)
 			{
 				cout
 				<< "Error: getting Configuration at parameter in trajectory"
 				<< endl;
 			}
+      
+      if( id_localpath != NULL ) {
+        *id_localpath = i;
+      }
 			
 			return m_Courbe.at(i)->configAtParam(param - prevSoFar);
 		}
 		prevSoFar = soFar;
 	}
+  
+  if( id_localpath != NULL ) {
+    *id_localpath = nloc-1;
+  }
 	return m_Courbe.back()->configAtParam(param);
 }
 
@@ -821,8 +828,10 @@ double Trajectory::costDeltaAlongTraj()
 {
 	cout << "Sum of LP cost = " << computeSubPortionCost(m_Courbe) << endl;
 	Trajectory tmp(*this);
-	cout << "Recomputed Sum of LocalPaths = "  << tmp.ReComputeSubPortionCost(tmp.m_Courbe) << endl;
-	return computeSubPortionIntergralCost(m_Courbe);
+	cout << "Sum of LP cost (Recomputed) = "  << tmp.ReComputeSubPortionCost(tmp.m_Courbe) << endl;
+  double cost = computeSubPortionIntergralCost(m_Courbe);
+  cout << "Intergral along traj = " << cost << endl;
+	return cost;
 }
 
 vector<shared_ptr<Configuration> > Trajectory::getTowConfigurationAtParam(
@@ -1436,6 +1445,32 @@ double Trajectory::costOfPortion(double param1, double param2)
 //
 //	return cost;
 //}
+
+bool Trajectory::push_back(shared_ptr<LocalPath> path)
+{
+	if( m_Courbe.empty() )
+	{
+    m_Source = path->getBegin();
+    m_Target = path->getEnd();
+    
+    m_Courbe.push_back(new LocalPath(*path));
+    updateRange();
+	}
+	else
+	{
+    if ( m_Target->equal(*path->getBegin()) ) 
+    {
+      m_Courbe.push_back(new LocalPath(*path));
+      m_Target = path->getEnd();
+      updateRange();
+    }
+    else {
+      return false;
+    }
+	}
+  
+  return true;
+}
 
 void Trajectory::push_back(shared_ptr<Configuration> q)
 {

@@ -696,29 +696,19 @@ vector< shared_ptr<Configuration> > CostOptimization::getClosestConfOnTraj(
 //! the selection is biased depending on an internal parameter
 //! The process is as follows, first a configuration is sampled (the one in the middle)
 //! then the two others are selected at a parameter prevDist, and nextDist away from the sampled configuration
-vector<shared_ptr<Configuration> > CostOptimization::get3RandSuccesConfAlongTraj(double& prevDist, double& randDist, double& nextDist, double step)
+vector<confPtr_t> CostOptimization::get3RandSuccesConfAlongTraj(double& prevDist, double& randDist, double& nextDist, double step)
 {
-	vector< shared_ptr<Configuration> > vectConf(3);
-	
-	// Computes the distances along the 
-	// trajectories from which to select the random configuration
-	if (m_DeformBiased)
-	{
-		randDist = getBiasedParamOnTraj();
-	}
-	else
-	{
-		randDist = p3d_random(0, getRangeMax());
-	}
+	vector<confPtr_t> vectConf(3);
+  
+	vectConf[1] = getRandConfAlongTraj( randDist, m_DeformBiased );
 	
   // The other configuration are selected at a given
   // step before and after the random configuration
-	prevDist = MAX(0, randDist - step/2 );
-  nextDist = MIN(getRangeMax(), randDist + step/2);
-	
-	vectConf.at(0) = configAtParam(prevDist);
-	vectConf.at(1) = configAtParam(randDist);
-	vectConf.at(2) = configAtParam(nextDist);
+	prevDist = std::max( 0.0, randDist - step/2 );
+  nextDist = std::min( getRangeMax(), randDist + step/2);
+  
+	vectConf[0] = configAtParam(prevDist);
+	vectConf[2] = configAtParam(nextDist);
 	
 	if (prevDist > nextDist)
 	{
@@ -763,6 +753,8 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
   m_GainCost.clear();
 	m_MaxNumberOfIterations = nbIteration;
   m_descent = PlanEnv->getBool(PlanParam::withDescent);
+  
+  setSortedIndex();
 	
 	int ith_deformation=0;
 	for ( ; !checkStopConditions(ith_deformation); ith_deformation++)

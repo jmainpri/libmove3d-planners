@@ -22,6 +22,8 @@ using namespace tr1;
 
 using namespace API;
 
+#define DEBUG_STATUS 1
+
 Smoothing::Smoothing() :
 m_ContextName("Context"),
 m_nbBiased(0), 
@@ -39,7 +41,9 @@ m_nbReallyBiased(0),
 m_step(0.0),
 m_ShortCutBiased(true)
 {
-	setSortedIndex();
+  if( PlanEnv->getBool(PlanParam::trajBiasOptim) ) {
+    setSortedIndex();
+  }
 	m_Selected.resize(0);
 }
 
@@ -50,15 +54,15 @@ m_nbReallyBiased(0),
 m_step(0.0),
 m_ShortCutBiased(true)
 {
-	setSortedIndex();
+  if( PlanEnv->getBool(PlanParam::trajBiasOptim) ) {
+    setSortedIndex();
+  }
 	m_Selected.resize(0);
 }
 
 Smoothing::~Smoothing()
 {
-	
-	//	cout << "Delete Smoothing" << endl;
-	
+	//	cout << "Delete Smoothing" << endl;	
 }
 
 void Smoothing::setStep( double step )
@@ -70,54 +74,6 @@ void Smoothing::setStep( double step )
 void Smoothing::resetStep()
 {
   m_useAutoStep = true;
-}
-
-/*!
- * Checks out if the plannification
- * problem has reach its goals
- */
-bool Smoothing::checkStopConditions(unsigned int iteration)
-{	
-	if ( Env_stopUser() )
-	{
-		PlanEnv->setBool(PlanParam::stopPlanner,true);
-	}
-	
-	if ( PlanEnv->getBool(PlanParam::stopPlanner) )
-	{
-		cout << "Smoothin cancelled by user" << endl;
-		return true;
-	}
-	
-	if ( PlanEnv->getBool(PlanParam::withMaxIteration) ) 
-	{
-		if ( iteration > m_MaxNumberOfIterations ) 
-		{
-			cout << "Smoothing has reached max number of iteration ( " << m_MaxNumberOfIterations << " ) " << endl;
-			return true;
-		}
-	}
-	
-	if( PlanEnv->getBool(PlanParam::withTimeLimit) )
-	{
-		if ( m_time > PlanEnv->getDouble(PlanParam::optimTimeLimit) ) 
-		{
-			cout << "Smoothin has reached time limit ( " << m_time << " ) " << endl;
-			return true;
-		}
-	}
-	
-	if ( PlanEnv->getBool(PlanParam::withGainLimit) ) 
-	{
-		const int n = 10; 
-		if ( gainOfLastIterations( n ) < 0.005 )
-		{
-			cout << "Smooting has reached maximal gain ( " << gainOfLastIterations( n ) << " ) " << endl;
-			return true;
-		}
-	}
-	
-	return false;
 }
 
 /*!
@@ -133,18 +89,13 @@ bool Smoothing::oneLoopShortCut( )
 	if (!(getNbOfPaths() > 1))
 		return false;
 	
-	vector<shared_ptr<Configuration> > vectConf;
+	vector<confPtr_t> vectConf = get2RandomConf( m_step, lFirst, lSecond );
 	
-	vectConf = get2RandomConf(m_step,lFirst, lSecond);
-	
-	shared_ptr<Configuration> qFirstPt = vectConf.at(0);
-	shared_ptr<Configuration> qSecondPt = vectConf.at(1);
-	
-	LocalPath* newPath = new LocalPath( qFirstPt, qSecondPt );
+	LocalPath* newPath = new LocalPath( vectConf[0], vectConf[1] );
 	
 	bool supposedValid = true;
-	// If the path is valid
-	// Check for cost
+  
+	// If the path is valid, check for cost
 	if ( !ENV.getBool(Env::costBeforeColl) )
 	{
 		supposedValid = newPath->isValid();
@@ -153,7 +104,9 @@ bool Smoothing::oneLoopShortCut( )
 	{
 		if (ENV.getBool(Env::debugCostOptim))
 		{
-			if( getIdOfPathAt(lFirst)==getHighestCostId() || getIdOfPathAt(lSecond)==getHighestCostId() ){
+			if( getIdOfPathAt(lFirst)==getHighestCostId() || 
+         getIdOfPathAt(lSecond)==getHighestCostId() )
+      {
 				debugShowTraj(lFirst,lSecond);
 				m_nbReallyBiased++;
 			}
@@ -166,9 +119,10 @@ bool Smoothing::oneLoopShortCut( )
 			supposedValid = newPath->isValid();
 		}
 		
-		vector<LocalPath*> portion; portion.push_back( newPath );
+		vector<LocalPath*> portion; 
+    portion.push_back( newPath );
 		
-		if ( isLowerCostLargePortion(lFirst,lSecond,portion) && supposedValid )
+		if ( supposedValid && isLowerCostLargePortion( lFirst, lSecond, portion ) )
 		{
 			/**
 			 * Replace
@@ -177,21 +131,21 @@ bool Smoothing::oneLoopShortCut( )
 			vect_path.push_back(newPath);
 			
 			replacePortion(lFirst, lSecond, vect_path);
-			setSortedIndex();
+      
+      if( PlanEnv->getBool(PlanParam::trajBiasOptim) ) {
+        setSortedIndex();
+      }
 			
-			if ( !getBegin()->equal( *configAtParam(0) ) )
-			{
+			if ( !getBegin()->equal( *configAtParam(0) ) ) {
 				cout << "ERROR" << endl;
 			}
 			
-			if (!getEnd()->equal(*configAtParam(getRangeMax())))
-			{
+			if (!getEnd()->equal(*configAtParam(getRangeMax()))) {
 				cout << "ERROR" << endl;
 			}
 			
 			isOptimSuccess = true;
 		}
-		
 	}
 	
 	if (isOptimSuccess == false)
@@ -379,16 +333,13 @@ bool Smoothing::partialShortcut()
  */
 bool Smoothing::isLowerCostLargePortion( double lFirst, double lSecond , vector<LocalPath*>& newPaths)
 {
-	
 	vector<LocalPath*> paths;
 	unsigned int first,last;
 	
-	vector< shared_ptr<Configuration> >  confs =
-	getTowConfigurationAtParam(lFirst,lSecond,first,last);
+	vector<confPtr_t> confs = getTowConfigurationAtParam( lFirst, lSecond, first, last );
 	
-	for(unsigned int i=first;i<=last;i++)
-	{
-		paths.push_back(getLocalPathPtrAt(i));
+	for(unsigned int i=first;i<=last;i++) {
+		paths.push_back( getLocalPathPtrAt(i) );
 	}
 	
 	double costOfPortion = computeSubPortionCost(paths);
@@ -402,15 +353,12 @@ bool Smoothing::isLowerCostLargePortion( double lFirst, double lSecond , vector<
 	paths = newPaths;
 	
 	LocalPath* LP1 = new LocalPath(getLocalPathPtrAt(first)->getBegin(),confs[0]);
-	if(LP1->getParamMax()>0)
-	{
+	if(LP1->getParamMax()>0) {
 		paths.insert(paths.begin(),LP1);
 	}
 	
-	
 	LocalPath* LP2 = new LocalPath(confs.back(),getLocalPathPtrAt(last)->getEnd());
-	if(LP2->getParamMax()>0)
-	{
+	if(LP2->getParamMax()>0) {
 		paths.push_back(LP2);
 	}
 	
@@ -688,37 +636,39 @@ vector<shared_ptr<Configuration> > Smoothing::get2RandomConf(double step, double
 	
 	if (getNbOfPaths() == 1)
 	{
-		vector<shared_ptr<Configuration> > vect(0);
+		vector<confPtr_t> vect(0);
 		return vect;
 	}
 	
-	vector<shared_ptr<Configuration> > vectConf(2);
+	vector<confPtr_t> vectConf(2);
 	
+  // While two configuration have not been selected on different localpath
+  // keep on sampling parameters along the trajectory
 	while (id1 == id2)
 	{
 		double param;
 		
-		if (m_ShortCutBiased && !PlanEnv->getBool(PlanParam::trajPartialShortcut) )
+		if (PlanEnv->getBool(PlanParam::trajBiasOptim) && !PlanEnv->getBool(PlanParam::trajPartialShortcut) )
 		{
 			param = getBiasedParamOnTraj();
-
+      
 			if ( step > 0.0 ) 
 			{
 				firstDist		= param - step/2;
 				secondDist	= param + step/2;
 				
-				if ( firstDist < 0.0 )
-				{
+				if ( firstDist < 0.0 ) {
 					firstDist = 0.0;
 				}
-				if ( secondDist > getRangeMax() )
-				{
+				if ( secondDist > getRangeMax() ) {
 					secondDist = getRangeMax();
 				}
 			}
 			else 
 			{
-				// Param is closer to the end of the traj
+				// If param is closer to the end of the traj
+        // then choose the first dist between the start and the random param
+        // else choose the second dist between tne end and the random param
 				if (fabs(param - getRangeMax()) < fabs(param))
 				{
 					secondDist = param;
@@ -767,7 +717,6 @@ public:
 
 void Smoothing::setSortedIndex()
 {
-	
 	myCompObject.ptrOptim = this;
 	
 	m_IdSorted.resize(getNbOfPaths());
@@ -776,8 +725,7 @@ void Smoothing::setSortedIndex()
     return;
   }
 	
-	for (int i = 0; i < getNbOfPaths(); i++)
-	{
+	for (int i=0; i<getNbOfPaths(); i++) {
 		m_IdSorted.at(i) = i;
 	}
 	
@@ -794,39 +742,95 @@ void Smoothing::setSortedIndex()
 	}
 }
 
-/*!
- * 
- */
+//!
+//!
 double Smoothing::getBiasedParamOnTraj()
 {
 	double x = (double) (pow(p3d_random(0, 1), 3));
-	
 	uint id = (uint) (x * (getNbOfPaths() - 1));
-	
+  
 	double randDist = 0;
 	
-	//	cout <<"mIdSorted[id] = "<<  mIdSorted[id] << endl;
-	//	cout <<"getNbOfPaths()"<< getNbOfPaths() << endl;
-	
-	for (uint i = 0; i < m_IdSorted[id]; i++)
-	{
+  
+	for (uint i=0; i<m_IdSorted[id]; i++) {
 		randDist += getLocalPathPtrAt(i)->getParamMax();
 	}
 	
 	randDist += p3d_random(0, getLocalPathPtrAt(m_IdSorted[id])->getParamMax());
 	
-	if (getIdOfPathAt(randDist) == HighestCostId)
-	{
+	if (getIdOfPathAt(randDist) == HighestCostId) {
 		m_nbBiased++;
 	}
 	
 	//	double percent = (double)id/(double)(mIdSorted.size());
-	if (ENV.getBool(Env::debugCostOptim))
-	{
+	if (ENV.getBool(Env::debugCostOptim)) {
 		m_Selected.push_back(id);
 	}
 	
 	return randDist;
+}
+
+confPtr_t Smoothing::getRandConfAlongTraj(double& randDist, bool use_bias)
+{
+	// Computes the distances along the 
+	// trajectories from which to select the random configuration
+	if ( use_bias ) 
+  {
+		randDist = getBiasedParamOnTraj();
+	}
+	else {
+		randDist = p3d_random(0, getRangeMax());
+	}
+	
+	return configAtParam(randDist);
+}
+
+/*!
+ * Checks out if the plannification
+ * problem has reach its goals
+ */
+bool Smoothing::checkStopConditions(unsigned int iteration)
+{	
+	if ( Env_stopUser() )
+	{
+		PlanEnv->setBool(PlanParam::stopPlanner,true);
+	}
+	
+	if ( PlanEnv->getBool(PlanParam::stopPlanner) )
+	{
+		cout << "Smoothin cancelled by user" << endl;
+		return true;
+	}
+	
+	if ( PlanEnv->getBool(PlanParam::withMaxIteration) ) 
+	{
+		if ( iteration > m_MaxNumberOfIterations ) 
+		{
+			cout << "Smoothing has reached max number of iteration ( " << m_MaxNumberOfIterations << " ) " << endl;
+			return true;
+		}
+	}
+	
+	if( PlanEnv->getBool(PlanParam::withTimeLimit) )
+	{
+		if ( m_time > PlanEnv->getDouble(PlanParam::optimTimeLimit) ) 
+		{
+			cout << "Smoothin has reached time limit ( " << m_time << " ) " << endl;
+			return true;
+		}
+	}
+	
+	if ( PlanEnv->getBool(PlanParam::withGainLimit) ) 
+	{
+		const int n = 30;
+		if ( gainOfLastIterations( n ) < /*0.005*/ 0.01 )
+		{
+			cout << "Smooting has reached maximal gain ( " << gainOfLastIterations( n ) << " ) " << endl;
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 /*!
@@ -835,37 +839,27 @@ double Smoothing::getBiasedParamOnTraj()
  */
 double Smoothing::gainOfLastIterations(unsigned int n)
 {
-	if ( /*m_GainOfIterations.empty()*/ m_GainOfIterations.size() < n ) 
+	if ( m_GainOfIterations.size() < n ) 
 	{
+    // if the gain history is infierior to n in size 
+    // return an avearage gain of 1.0, to continue the optimization process
 		return 1.0;
 	}
 	else 
-	{
-		//cout << " gainOfLastIterations --------------------" << endl;
-		
-		unsigned int start=0;
-		
-		//		if ( n < m_GainOfIterations.size() ) 
-		//		{
-		start = m_GainOfIterations.size() - n;
-		//		}
-		
-		//		cout << "n = " << n << endl;
-		//		cout << "start = " << start << endl;
-		//		cout << "m_GainOfIterations.size() = " << m_GainOfIterations.size() << endl;
-		
-		double gain(0.0);
-		
-		for ( unsigned int i = start ; 
-				 i< m_GainOfIterations.size(); i++ ) 
-		{
-			gain += m_GainOfIterations[i];
-			//cout << "gain[" << i << "] = " << m_GainOfIterations[i] << endl;
-		}
-		
-		gain /= ((double)( m_GainOfIterations.size() - start ));
-		//cout << "average gain = " << gain << endl;
-		return gain;
+	{    
+//		int start=0;
+//    double gain(0.0);
+
+//		start = m_GainOfIterations.size() - n;
+//		
+//		for ( int i=start; i<int(m_GainOfIterations.size()); i++ ) 
+//		{
+//			gain += m_GainOfIterations[i];
+//		}
+//		
+//		gain /= double(n);
+//    return gain;
+		return *max_element(m_GainOfIterations.end()-20,m_GainOfIterations.end());
 	}
 }
 
@@ -915,9 +909,9 @@ void Smoothing::saveOptimToFile(string fileName)
  */
 void Smoothing::runShortCut( int nbIteration, int idRun )
 {
-        this->costNoRecompute();
+  this->costNoRecompute();
 #ifdef DEBUG_STATUS
-        cout << "Before Short Cut : Traj cost = " << this->costNoRecompute() << endl;
+  cout << "Before Short Cut : Traj cost = " << this->costNoRecompute() << endl;
 #endif
 	double costBeforeDeformation = this->cost();
 	
@@ -935,12 +929,12 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 	
 	double ts(0.0); m_time = 0.0; ChronoOn();
 	
-	for (int i = 0; !checkStopConditions(i); i++)
+	for (int i=0; !checkStopConditions(i); i++)
 	{
 		if ( this->getCourbe().size() == 1 ) 
 		{
 #ifdef DEBUG_STATUS
-                        cout << "Smooting has stoped, only one localpath in traj" << endl;
+      cout << "Smooting has stoped, only one localpath in traj" << endl;
 #endif
 			break;
 		}
@@ -978,10 +972,11 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 			storeCostAndGain( NewCost, CurCost );
 		}
 		
+    // Push back the gain of iteration that have succeded
 		if ( m_IterationSucceded ) 
 		{
 			double Gain = (( CurCost - NewCost ) / CurCost) ;
-			//cout << "Gain = " << 100*Gain <<  " %" << endl;
+			cout << "Gain = " << 100*Gain <<  " %" << endl;
 			m_GainOfIterations.push_back( Gain );
 		}
 		
@@ -991,11 +986,11 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 	ChronoOff();
 	
 	if ( isValid () )
-        {
+  {
 #ifdef DEBUG_STATUS
-            cout << "Trajectory valid" << endl;
+    cout << "Trajectory valid" << endl;
 #endif
-        }
+  }
 	else
 	{ cout << "Trajectory not valid" << endl;}
 	
@@ -1005,9 +1000,9 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 		oss << "ShortCutOptim_"<< m_ContextName << "_" << idRun << "_" ;
 		this->saveOptimToFile( oss.str() );
 	}
-        this->costNoRecompute();
+  this->costNoRecompute();
 #ifdef DEBUG_STATUS
-        cout << "Before : Traj cost = " << costBeforeDeformation << endl;
-        cout << "After Short Cut : cost = " << this->costNoRecompute() << endl;
+  cout << "Before : Traj cost = " << costBeforeDeformation << endl;
+  cout << "After Short Cut : cost = " << this->costNoRecompute() << endl;
 #endif
 }

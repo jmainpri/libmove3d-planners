@@ -761,15 +761,39 @@ namespace stomp_motion_planner
     return succes_joint_limits;
   }
   
+  double StompOptimizer::getCollisionSpaceCost( Configuration& q )
+  {
+    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    
+    // Get the configuration dof values in the joint array
+    Eigen::VectorXd joint_array(planning_group_->num_joints_);
+    
+    for(int j=0; j<planning_group_->num_joints_;j++)
+    {
+      joint_array[j] = q[ joints[j].move3d_dof_index_ ];
+    }
+    
+    getFrames( free_vars_start_, joint_array, q );
+    
+    double state_collision_cost=0.0;
+    
+    // Calculate the 3d position of every collision point
+    for (int j=0; j<num_collision_points_; j++)
+    {
+      /* bool colliding = */ getConfigObstacleCost( free_vars_start_, j, q );
+      state_collision_cost += collision_point_potential_( free_vars_start_, j ); // * collision_point_vel_mag_( free_vars_start_, j );
+    }
+    
+    return state_collision_cost;
+  }
+  
   void StompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array, Configuration& q )
   {
-    //std::vector< Eigen::Vector3d > null_vect;
-    //null_vect.push_back( Eigen::Vector3d::Zero() );
-    
     q = *robot_model_->getCurrentPos();
     
     const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
     
+    // Set the configuration to the joint array value
     for(int j=0; j<planning_group_->num_joints_;j++)
     {
       int dof = joints[j].move3d_dof_index_;
@@ -786,14 +810,13 @@ namespace stomp_motion_planner
     
     robot_model_->setAndUpdate( q );
     
+    // Get the collision point position
     for(int j=0; j<planning_group_->num_joints_;j++)
     {
       Eigen::Transform3d t = joints[j].move3d_joint_->getMatrixPos();
       
       std::vector<double> vect;
       eigenTransformToStdVector(t,vect);
-      
-      //cout << "segment_frames_.size() = " << segment_frames_.size() << endl;
       
       segment_frames_[segment][j]  = vect;
       joint_pos_eigen_[segment][j] = t.translation();
@@ -819,6 +842,8 @@ namespace stomp_motion_planner
       
       planning_group_->collision_points_[j].getTransformedPosition(segment_frames_[i], collision_point_pos_eigen_[i][j]);
       
+      // To fix in collision space 
+      // The joint 1 is allways colliding
       colliding = collision_space_->getCollisionPointPotentialGradient(planning_group_->collision_points_[j],
                                                                        collision_point_pos_eigen_[i][j],
                                                                        distance,

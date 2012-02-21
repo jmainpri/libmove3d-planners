@@ -85,7 +85,7 @@ namespace API
 		/**
 		 * Cheat for Justin
 		 */
-		std::tr1::shared_ptr<Configuration> cheat();
+		confPtr_t cheat();
 
 		
 		/**

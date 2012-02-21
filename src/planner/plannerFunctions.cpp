@@ -143,6 +143,7 @@ p3d_traj* p3d_extract_traj(bool is_traj_found, int nb_added_nodes, Graph* graph,
   if (traj) 
   {
     p3d_traj* result = traj->replaceP3dTraj(NULL); 
+    g3d_draw_allwin_active();
     cout << "result->nlp = " << result->nlp << endl;
     cout << "result->range_param = " << result->range_param << endl;
     
@@ -167,7 +168,7 @@ p3d_traj* p3d_extract_traj(bool is_traj_found, int nb_added_nodes, Graph* graph,
   else 
   {
     cout << __FILE__ << " , " << __func__ << " : No traj found" << endl;
-    rob->getRobotStruct()->tcur = NULL;
+    //rob->getRobotStruct()->tcur = NULL;
     //if( graph == API_activeGraph ) API_activeGraph = NULL;
     //delete graph;
     
@@ -482,6 +483,19 @@ int p3d_run_prm(p3d_rob* robotPt)
 
 int p3d_run_perturb_prm(p3d_rob* robotPt)
 {
+  if( !PlanEnv->getBool(PlanParam::withCurrentTraj) )
+  {
+    ENV.setBool(Env::isCostSpace,false);
+    ENV.setBool(Env::expandToGoal,true);
+    ENV.setBool(Env::biDir,true);
+    
+    p3d_run_rrt( robotPt );
+    
+    ENV.setBool(Env::biDir,false);
+    ENV.setBool(Env::isCostSpace,true);
+    ENV.setBool(Env::expandToGoal,false);
+  }
+  
   // Gets the robot pointer and the 2 configurations
   Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
   confPtr_t q_source = rob->getInitialPosition();
@@ -498,7 +512,7 @@ int p3d_run_perturb_prm(p3d_rob* robotPt)
   PerturbationRoadmap* prm = new PerturbationRoadmap(rob, graph);
 	nb_added_nodes = prm->init();
 	nb_added_nodes += prm->run();
-	
+  
 	cout << "nb added nodes " << nb_added_nodes << endl;
 	cout << "nb nodes " << graph->getNumberOfNodes() << endl;
   

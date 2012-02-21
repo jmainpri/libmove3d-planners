@@ -43,12 +43,14 @@ namespace PlanParam
             stopPlanner,
             isMaxDisNeigh,
             isWeightedChoice,
+            nextIterWaitForGui,
 
             // Smoothing stage
             trajPartialShortcut,
             trajSaveCost,
             trajCostRecompute,
             trajComputeCollision,
+            trajBiasOptim,
             withMaxIteration,
             withGainLimit,
             withTimeLimit,
@@ -59,7 +61,7 @@ namespace PlanParam
             trajOptimTestMultiGauss,
             showExploration,
 
-            // Stomp/Chomp
+            // Stomp/Chomp & trajectory optim
             withCurrentTraj,
             doReplanning,
             useSelectedDuration,

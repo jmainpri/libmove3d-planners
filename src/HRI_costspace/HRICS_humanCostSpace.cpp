@@ -16,7 +16,7 @@
 
 #include "Util-pkg.h"
 
-HRICS::HumanCostSpace* global_humanCostSpace = NULL;
+HRICS::HumanCostSpace* HRICS_humanCostMaps = NULL;
 
 using namespace HRICS;
 using namespace std;
@@ -31,7 +31,7 @@ HumanCostSpace::HumanCostSpace()
 //! @param The robot, to which this costspace is for
 //! @param The humans, which will be associated to the costspace
 //! @param The cell size, each human will be associated a grid (the cell size is the resolution of the grid)
-HumanCostSpace::HumanCostSpace(Robot* rob, std::vector<Robot*> humans, double cellSize) 
+HumanCostSpace::HumanCostSpace(Robot* rob, std::vector<Robot*> humans, Natural* costspace, double cellSize) 
 : m_Robot(rob) , m_Humans( humans) 
 {
   m_DistanceSpace = NULL;
@@ -39,7 +39,11 @@ HumanCostSpace::HumanCostSpace(Robot* rob, std::vector<Robot*> humans, double ce
   m_ReachableSpace = NULL;
   
   initElementarySpaces();
-  initHumanGrids(cellSize);
+  
+  m_ReachableSpace = costspace;
+  
+  // The grid are initialized and the cost is computed for each cell
+  //initHumanGrids(cellSize);
   
   if (rob->getName() == "PR2_ROBOT") 
   {
@@ -95,8 +99,17 @@ void HumanCostSpace::deleteElementarySpaces()
   if(m_VisibilitySpace)
     delete m_VisibilitySpace;
   
-  if(m_ReachableSpace)
-    delete m_ReachableSpace;
+//  if(m_ReachableSpace)
+//    delete m_ReachableSpace;
+}
+
+//! @brief (Re) compute the cell cost of all grids
+void HumanCostSpace::computeAllCellCost()
+{
+  for ( int i=0; i<int(m_Grids.size()); i++) 
+  {
+    m_Grids[i]->computeAllCellCost();
+  }
 }
 
 //! @brief Initialize the Human Grids composed of the different elementary costspace
@@ -115,15 +128,10 @@ bool HumanCostSpace::initHumanGrids(double cellsize)
   
   for ( int i=0; i<int(m_Humans.size()); i++) 
   {
-    m_Grids.push_back( new AgentGrid( cellsize, envsize,
-                                     m_Humans[i],
-                                     m_DistanceSpace,
-                                     m_VisibilitySpace,
-                                     m_ReachableSpace) );
-    
-    m_Grids[i]->computeAllCellCost();
+    m_Grids.push_back( new AgentGrid( cellsize, envsize, m_Humans[i], m_DistanceSpace, m_VisibilitySpace, m_ReachableSpace) );
   }
   
+  computeAllCellCost();
   API_activeGrid = m_Grids[0];
   
   return true;
@@ -175,14 +183,17 @@ bool HumanCostSpace::initPr2()
   {
     string name = m_Robot->getJoint(i)->getName();
     
-    if(name == "platformJoint" || name == "Torso" || name == "pan_cam" || 
-       name == "right-Arm1" || 
-       name == "right-Arm2" || 
-       name == "right-Arm3" || 
+    if(//name == "platformJoint" || 
+       //name == "Torso" || 
+       //name == "pan_cam" || 
+       //name == "right-Arm3" || 
        name == "right-Arm4" || 
        name == "right-Arm5" || 
        name == "right-Arm6" || 
-       name == "right-Arm7" )
+       name == "right-Arm7"  
+       //name == "left-Arm6"  || 
+       //name == "left-Arm7" 
+       )
     {
       m_CostJoints.push_back( m_Robot->getJoint(i) );
       cout << "Add joint : " << m_CostJoints.back()->getName() << endl;
@@ -191,6 +202,55 @@ bool HumanCostSpace::initPr2()
   
   cout << m_CostJoints.size() << " nb of cost joints" << endl;
   return true;
+}
+
+void HumanCostSpace::computeCostCombination()
+{
+  for (unsigned int i=0; i<m_Grids.size(); i++) 
+  {
+    m_Grids[i]->computeCostCombination();
+  }
+}
+
+void HumanCostSpace::saveAgentGrids()
+{
+  for (unsigned int i=0; i<m_Grids.size(); i++) 
+  {
+    std::ostringstream oss; oss << i;
+    
+    std::string home(getenv("HOME_MOVE3D"));
+    std::string filename = "/statFiles/Cost3DGrids/human_grids_" + oss.str() + ".grid";
+    
+    filename = home + filename;
+    
+    m_Grids[i]->writeToXmlFile( filename );
+  }
+}
+
+void HumanCostSpace::loadAgentGrids()
+{
+  m_Grids.clear();
+  
+  std::string home(getenv("HOME_MOVE3D"));
+  std::string filename = "/statFiles/Cost3DGrids/human_grids_0.grid";
+  
+  filename = home + filename;
+  
+  AgentGrid* agentGrid = new AgentGrid( m_Humans[0], m_DistanceSpace, m_VisibilitySpace, m_ReachableSpace );
+  
+  bool reading_OK=false;
+  
+  for (int i=0; (i<5)&&(!reading_OK) ; i++) 
+  {
+    cout << "Reading grid at : " << filename << endl;
+    reading_OK = agentGrid->loadFromXmlFile( filename );
+  }
+  
+  m_Grids.push_back( agentGrid );
+  API_activeGrid = agentGrid;
+  
+  agentGrid->computeCellVectors();
+  agentGrid->computeRadius();
 }
 
 //! @brief This function tests how many configuration test can be done 
@@ -250,6 +310,6 @@ double HumanCostSpace::getCost(Configuration& q)
       cost += m_Grids[i]->getCellCostAt( m_CostJoints[j]->getVectorPos() );
     }
   }
-  return cost;
+  return 100*(cost*cost)/(m_CostJoints.size());
 }
 

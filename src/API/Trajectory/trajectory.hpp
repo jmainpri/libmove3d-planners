@@ -64,6 +64,7 @@ namespace API
 		uint cutPortionInSmallLP(std::vector<LocalPath*>& portion, uint nLP);
 		
 		void push_back(std::tr1::shared_ptr<Configuration> q);
+    bool push_back(std::tr1::shared_ptr<LocalPath> path);
 		
 		//---------------------------------------------------------
 		// Cost
@@ -88,7 +89,7 @@ namespace API
     void clear();
     
     std::tr1::shared_ptr<Configuration> operator [] ( const int &i ) const;
-		std::tr1::shared_ptr<Configuration> configAtParam(double param) const;
+		std::tr1::shared_ptr<Configuration> configAtParam(double param, unsigned int* id_localpath=NULL) const;
 		
 		std::vector< std::tr1::shared_ptr<Configuration> > getNConfAtParam(double delta);
 		std::vector< std::tr1::shared_ptr<Configuration> > getVectorOfConfiguration();
