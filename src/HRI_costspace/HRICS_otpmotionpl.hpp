@@ -404,6 +404,11 @@ namespace HRICS
           */
         bool InitMhpObjectTransfert(std::string humanName);
 
+        /**
+          * test pr2Softmotion
+          */
+        bool testTrajectories(bool fullbody);
+
     private:
 
         /**
