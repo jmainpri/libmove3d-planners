@@ -3121,3 +3121,139 @@ bool OTPMotionPl::isAlreadyTested(Eigen::Vector3d vect)
     return false;
 }
 
+bool OTPMotionPl::testTrajectories(bool fullbody)
+{
+
+    ENV.setBool(Env::isCostSpace,false);
+
+    m_ManipPl->setNavigationPlanner();
+
+    p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
+    p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPl->getUpBodyMLP(), 1, false);
+
+    API::Trajectory p3d_trajectory(_Robot);
+    p3d_trajectory.clear();
+
+
+    shared_ptr<Configuration> q1(new Configuration(_Robot));
+    //base
+    (*q1)[6] = 5.957;
+    (*q1)[7] = -1.533;
+    (*q1)[11] = -94.007*M_PI/180;
+    //torso
+    (*q1)[12] = 0.150*M_PI/180;
+    //hear
+    (*q1)[13] = -0.007*M_PI/180;
+    (*q1)[14] = -0.696*M_PI/180;
+    //rarm
+    (*q1)[16] = 7.515*M_PI/180;
+    (*q1)[17] = 39.404*M_PI/180;
+    (*q1)[18] = -26.539*M_PI/180;
+    (*q1)[19] = -112.598*M_PI/180;
+    (*q1)[20] = -24.585*M_PI/180;
+    (*q1)[21] = -100.717*M_PI/180;
+    (*q1)[22] = -115.448*M_PI/180;
+    //larm
+    (*q1)[25] = 0.410*M_PI/180;
+    (*q1)[26] = 74.067*M_PI/180;
+    (*q1)[27] = 85.201*M_PI/180;
+    (*q1)[28] = -85.549*M_PI/180;
+    (*q1)[29] = 0.012*M_PI/180;
+    (*q1)[30] = -4.943*M_PI/180;
+    (*q1)[31] = 90.278*M_PI/180;
+
+
+    shared_ptr<Configuration> q2(new Configuration(_Robot));
+    //base
+    (*q2)[6] = 5.957;
+    (*q2)[7] = -4.362;
+    (*q2)[11] = 90.000*M_PI/180;
+    //torso
+    (*q2)[12] = 0.150*M_PI/180;
+    //hear
+    (*q2)[13] = -0.007*M_PI/180;
+    (*q2)[14] = -0.696*M_PI/180;
+    //rarm
+    (*q2)[16] = 7.515*M_PI/180;
+    (*q2)[17] = 39.404*M_PI/180;
+    (*q2)[18] = -26.539*M_PI/180;
+    (*q2)[19] = -112.598*M_PI/180;
+    (*q2)[20] = -24.585*M_PI/180;
+    (*q2)[21] = -100.717*M_PI/180;
+    (*q2)[22] = -115.448*M_PI/180;
+    //larm
+    (*q2)[25] = 0.410*M_PI/180;
+    (*q2)[26] = 74.067*M_PI/180;
+    (*q2)[27] = 85.201*M_PI/180;
+    (*q2)[28] = -85.549*M_PI/180;
+    (*q2)[29] = 0.012*M_PI/180;
+    (*q2)[30] = -4.943*M_PI/180;
+    (*q2)[31] = 90.278*M_PI/180;
+
+    shared_ptr<Configuration> q3(new Configuration(_Robot));
+    //base
+    (*q3)[6] = 5.086;
+    (*q3)[7] = -3.534;
+    (*q3)[11] = -178.452*M_PI/180;
+    //torso
+    (*q3)[12] = 0.150*M_PI/180;
+    //h3ear
+    (*q3)[13] = -0.007*M_PI/180;
+    (*q3)[14] = -0.696*M_PI/180;
+    //rarm
+    (*q3)[16] = -82.806*M_PI/180;
+    (*q3)[17] = 52.973*M_PI/180;
+    (*q3)[18] = -1.203*M_PI/180;
+    (*q3)[19] = -49.303*M_PI/180;
+    (*q3)[20] = -85.356*M_PI/180;
+    (*q3)[21] = -33.344*M_PI/180;
+    (*q3)[22] = -115.448*M_PI/180;
+    //larm
+    (*q3)[25] = 0.410*M_PI/180;
+    (*q3)[26] = 74.067*M_PI/180;
+    (*q3)[27] = 85.201*M_PI/180;
+    (*q3)[28] = -85.549*M_PI/180;
+    (*q3)[29] = 0.012*M_PI/180;
+    (*q3)[30] = -4.943*M_PI/180;
+    (*q3)[31] = 90.278*M_PI/180;
+
+
+    if (fullbody)
+    {
+        p3d_trajectory.push_back(q2);
+        p3d_trajectory.push_back(q3);
+        p3d_trajectory.push_back(q1);
+    }else
+    {
+        p3d_trajectory.push_back(q1);
+        p3d_trajectory.push_back(q2);
+    }
+
+    bool trajTest = p3d_trajectory.replaceP3dTraj(_Robot->getTrajStruct());
+
+
+    p3d_rob * robotPt =  _Robot->getRobotStruct();
+    ManipulationPlanner m_p(robotPt);
+
+    MANPIPULATION_TRAJECTORY_CONF_STR conf;
+    SM_TRAJ smTraj;
+
+    int msg = m_p.computeSoftMotion(_Robot->getTrajStruct(), conf, smTraj);
+    m_smTrajs.clear();
+    m_smTrajs.push_back(smTraj);
+
+    if (!trajTest)
+    {
+        cout << "Fail: in replaceP3dTraj(), no traj found" <<endl;
+        return false;
+    }
+    else if (msg != 0)
+    {
+        cout << "Fail: in computeSoftMotion(), no traj found" <<endl;
+        return false;
+    }
+//    delete q1;delete q2; delete q3;
+
+    ENV.setBool(Env::isCostSpace,true);
+    return true;
+}
