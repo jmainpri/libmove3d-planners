@@ -62,6 +62,9 @@ namespace PlanParam
             withDescent,
             trajOptimTestMultiGauss,
             showExploration,
+          
+            // HRICS
+            hriSetColorFromConfig,
 
             // Stomp/Chomp & trajectory optim
             withCurrentTraj,

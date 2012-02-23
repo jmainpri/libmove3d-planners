@@ -104,6 +104,9 @@ void initPlannerParameters()
         // Stomp/Chomp
         myBoolMap.insert( std::make_pair( PlanParam::withCurrentTraj,            new boolContainer(false)));
   
+        // HRICS
+        myBoolMap.insert( std::make_pair( PlanParam::hriSetColorFromConfig,      new boolContainer(false)));
+  
         // Drawing (gl) stuff
         myBoolMap.insert( std::make_pair( PlanParam::drawColorConfig,            new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::drawOccupVoxels,            new boolContainer(false)));
