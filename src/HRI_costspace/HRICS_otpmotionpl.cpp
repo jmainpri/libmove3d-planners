@@ -2734,8 +2734,9 @@ void OTPMotionPl::dumpVar()
 #ifdef MULTILOCALPATH
     cout << " plotSoftMotionCurve = " << ENV.getBool(Env::plotSoftMotionCurve) << endl;
     cout << " writeSoftMotionFiles = " << ENV.getBool(Env::writeSoftMotionFiles) << endl;
-    cout << " exportSoftMotionTrajAsArrayOfConf = " << ENV.getBool(Env::exportSoftMotionTrajAsArrayOfConf) << endl;
-    cout << " smoothSoftMotionTraj = " << ENV.getBool(Env::smoothSoftMotionTraj) << endl;
+    // WARNING REVERT XAVIER
+    //cout << " exportSoftMotionTrajAsArrayOfConf = " << ENV.getBool(Env::exportSoftMotionTrajAsArrayOfConf) << endl;
+    //cout << " smoothSoftMotionTraj = " << ENV.getBool(Env::smoothSoftMotionTraj) << endl;
 #endif
 
     cout << " no repetition = " << PlanEnv->getBool(PlanParam::env_noRepetition) << endl;
@@ -2787,8 +2788,9 @@ void OTPMotionPl::setVar()
 
 #ifdef MULTILOCALPATH
     ENV.setBool(Env::plotSoftMotionCurve,false);
-    ENV.setBool(Env::writeSoftMotionFiles,false);
-    ENV.setBool(Env::exportSoftMotionTrajAsArrayOfConf,false);
+    // WARNING REVERT XAVIER
+    //ENV.setBool(Env::writeSoftMotionFiles,false);
+    //ENV.setBool(Env::exportSoftMotionTrajAsArrayOfConf,false);
     ENV.setBool(Env::smoothSoftMotionTraj,true);
 #endif
 
