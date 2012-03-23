@@ -211,7 +211,7 @@ void initPlannerParameters()
         myDoubleMap.insert( std::make_pair( PlanParam::env_timeLimitation,       new doubleContainer(10.0)));
 
         myDoubleMap.insert( std::make_pair( PlanParam::env_sitTimeLimitation,    new doubleContainer(0.2)));
-        myDoubleMap.insert( std::make_pair( PlanParam::env_timeToDump,           new doubleContainer(0)));
+        myDoubleMap.insert( std::make_pair( PlanParam::env_timeToDump,           new doubleContainer(0.01)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_futurX,               new doubleContainer(0)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_futurY,               new doubleContainer(0)));
         myDoubleMap.insert( std::make_pair( PlanParam::env_futurZ,               new doubleContainer(0)));

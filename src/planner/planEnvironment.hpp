@@ -106,6 +106,7 @@ namespace PlanParam
             env_oldCriteria,
             env_noRepetition,
             env_computeTrajForHuman
+
         };
 
         enum intParameter

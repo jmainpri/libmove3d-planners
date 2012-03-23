@@ -83,6 +83,8 @@ namespace HRICS
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > getRobotTraj(){return m_2DPath;}
         void setRobotTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj){m_2DPath = traj;}
 
+        std::vector<double> getMultipleData(){return m_multipleData;}
+
 
         /**
           * to compute traj or not
@@ -342,6 +344,11 @@ namespace HRICS
         void saveAllCostsToFile();
 
         /**
+          * save all the times computed in multipli conpute OTP in a file
+          */
+        void saveAlltimesToFile();
+
+        /**
           * save the costs to a file (take string as entry)
           */
         void saveCostsTofile(std::string cost);
@@ -533,9 +540,19 @@ namespace HRICS
         std::vector<std::vector<double> > m_multipliComputeCostVector;
 
         /**
+          * a vector of all the time coresponding to costs computed when computing a bunch of OTPs
+          */
+        std::vector<std::vector<double> > m_multipliComputeTimeVector;
+
+        /**
           * The cost vector
           */
         std::vector<double> m_costVector;
+
+        /**
+          * The time cost vector
+          */
+        std::vector<double> m_timeVector;
 
         /**
           * a vector for softmotions trajectories

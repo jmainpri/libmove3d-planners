@@ -555,6 +555,7 @@ double OTPMotionPl::multipliComputeOtp(int n)
     myfile.close();
 
     m_multipliComputeCostVector.clear();
+    m_multipliComputeTimeVector.clear();
     for (int i = 0; i < n; i++)
     {
         m_multipleData.clear();
@@ -585,8 +586,23 @@ double OTPMotionPl::multipliComputeOtp(int n)
         }
         loadInitConf(true,true);
     }
+
+    m_multipleData.clear();
+    m_multipleData.push_back((double)totalTimeSum/ nb);
+    m_multipleData.push_back((double)initGridTimeSum/ nb);
+    m_multipleData.push_back((double)firstTimeSum/ nb);
+    m_multipleData.push_back((double)loopTimeSum/ nb);
+    m_multipleData.push_back((double)costSum/ nb);
+    m_multipleData.push_back((double)nbIteration/ nb);
+    m_multipleData.push_back((double)nbSolution/ nb);
+    m_multipleData.push_back((double)nbSolution / nbIteration);
+    m_multipleData.push_back((double)nb);
+
+
     saveAllCostsToFile();
+    saveAlltimesToFile();
     m_multipliComputeCostVector.clear();
+    m_multipliComputeTimeVector.clear();
     PlanEnv->setBool(PlanParam::env_showText,true);
 
     m_confList.clear();
@@ -935,7 +951,7 @@ bool OTPMotionPl::getRandomPoints(double id, Vector3d& vect)
             Vector2d robotCellCenter = robotCell->getCenter();
             double angle = atan2(robotCellCenter[1] - center[1],robotCellCenter[0] - center[0]);
             int sign = p3d_random_integer(0,1);
-            if (sign = 0){sign = -1;}
+            if (sign == 0){sign = -1;}
             double randAngle = pow(p3d_random(0,1),PlanEnv->getInt(PlanParam::env_pow))*sign*M_PI;
             //            double randAngle = pow(p3d_random(-1,1),PlanEnv->getInt(PlanParam::env_pow)*2+1)*M_PI;
             randAngle=  angle_limit_PI(randAngle + angle);
@@ -1087,6 +1103,7 @@ bool OTPMotionPl::newComputeOTP()
     //    m_2DGrid->setCellsToblankCost();
 
     m_costVector.clear();
+    m_timeVector.clear();
     clock_t gridInit = clock();
 
     //bool isStanding = m_isStanding;
@@ -1205,20 +1222,23 @@ bool OTPMotionPl::newComputeOTP()
         {
             if ( i > maxIter + beginId  || // number of results are sufisiant
                  ((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation ||  // taking too much time
+                 id > PlanEnv->getInt(PlanParam::env_totMaxIter) ||
                  (i > 0 && (((double)curTime1 - firstConfs) / CLOCKS_PER_SEC) > (timeLimitation /20)) // taking too much time after finding some solution
                  ){
-                if (i > maxIter + beginId) {cout << "number of results are sufisiant" <<endl; }
-                if (((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation) {cout << "taking too much time" <<endl; }
-                if (i > 0 && ((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation /20)
-                {cout << "taking too much time after finding some solution" <<endl; }
+                if (m_showText){
+                    if (i > maxIter + beginId) {cout << "number of results are sufisiant" <<endl; }
+                    if (((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation) {cout << "taking too much time" <<endl; }
+                    if (i > 0 && ((double)curTime1 - firstConfs) / CLOCKS_PER_SEC > timeLimitation /20)
+                    {cout << "taking too much time after finding some solution" <<endl; }
+                }
                 break;
             }
         }
 
-        if (isAlreadyTested(vect) && noRepetition)
-        {
-            continue;
-        }
+//        if (isAlreadyTested(vect) && noRepetition)
+//        {
+//            continue;
+//        }
         double randomX = vect[0];
         double randomY = vect[1];
         double randomRz = vect[2];
@@ -1296,6 +1316,7 @@ bool OTPMotionPl::newComputeOTP()
         {
             m_costVector.push_back(bestConf.cost);
             currntDumpTime += dumpTime;
+            m_timeVector.push_back(((double)curTime - firstConfs) / (CLOCKS_PER_SEC /1000));
         }
     }
 
@@ -1322,6 +1343,7 @@ bool OTPMotionPl::newComputeOTP()
     if (!m_showText)
     {
         m_multipliComputeCostVector.push_back(m_costVector);
+        m_multipliComputeTimeVector.push_back(m_timeVector);
     }
     else
     {
@@ -1361,7 +1383,7 @@ bool OTPMotionPl::newComputeOTP()
 
 
 
-        cout << "time between and loop and before createTraj " << ((double)clock() - endLoop) / CLOCKS_PER_SEC << endl;
+//        cout << "time between and loop and before createTraj " << ((double)clock() - endLoop) / CLOCKS_PER_SEC << endl;
         if (PlanEnv->getBool(PlanParam::env_createTrajs))
         {
             if (!createTrajectoryFromOutputConf(o))
@@ -1670,7 +1692,7 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
 
     m_2DGrid->setAsNotSorted();
 
-    double elapsedTime;
+    double elapsedTime = NULL;
     clock_t beginLoop = clock();
     for (int j = 0; j < nbSittingRot; j ++)
     {
@@ -1948,7 +1970,7 @@ void OTPMotionPl::initGrid()
     if(!PlanEnv->getBool(PlanParam::env_isStanding))
     {
         cout << "case: human is sitting\n" << endl;
-        Robot* chair;
+        Robot* chair = NULL;
         for (int i=0; i<XYZ_ENV->nr; i++)
         {
             string name(XYZ_ENV->robot[i]->name);
@@ -2067,8 +2089,25 @@ void OTPMotionPl::saveAllCostsToFile()
     myfile.open(home.c_str());
 
 
+//    for (unsigned int i = 0; i < maxSize; i++)
+//    {
+//        for (unsigned int costVectorId=0; costVectorId < m_multipliComputeCostVector.size(); costVectorId++)
+//        {
+//            double cost = m_multipliComputeCostVector.at(costVectorId).at(i);
+//            if (cost > 10)
+//            {
+//                cost = 2;
+//            }
+//            myfile << cost << " ";
+//        }
+//        myfile << endl;
+//    }
+//    myfile.close();
+
+    double tmpCost = 0;
     for (unsigned int i = 0; i < maxSize; i++)
     {
+        tmpCost = 0;
         for (unsigned int costVectorId=0; costVectorId < m_multipliComputeCostVector.size(); costVectorId++)
         {
             double cost = m_multipliComputeCostVector.at(costVectorId).at(i);
@@ -2076,7 +2115,54 @@ void OTPMotionPl::saveAllCostsToFile()
             {
                 cost = 2;
             }
-            myfile << cost << " ";
+            tmpCost += cost;
+        }
+        tmpCost = tmpCost / m_multipliComputeCostVector.size();
+        myfile << tmpCost << endl;
+    }
+    myfile.close();
+}
+
+void OTPMotionPl::saveAlltimesToFile()
+{
+    double dumpTime = PlanEnv->getDouble(PlanParam::env_timeToDump) *1000;
+    unsigned int maxSize = 0;
+    for (unsigned int timeVectorId=0; timeVectorId < m_multipliComputeTimeVector.size(); timeVectorId++)
+    {
+        if (m_multipliComputeTimeVector.at(timeVectorId).size() > maxSize)
+        {
+            maxSize = m_multipliComputeTimeVector.at(timeVectorId).size();
+        }
+    }
+
+    for (unsigned int timeVectorId=0; timeVectorId < m_multipliComputeTimeVector.size(); timeVectorId++)
+    {
+        vector<double> tmpCostVctor = m_multipliComputeTimeVector.at(timeVectorId);
+        if (tmpCostVctor.size() < maxSize)
+        {
+            double lastCost = tmpCostVctor.at(tmpCostVctor.size() - 1);
+            int tmpIter = maxSize - tmpCostVctor.size();
+            for (int i = 0; i < tmpIter; i++)
+            {
+                lastCost+=10;
+                tmpCostVctor.push_back(lastCost);
+            }
+            m_multipliComputeTimeVector[timeVectorId] = tmpCostVctor;
+        }
+    }
+
+    ofstream myfile;
+    string fileName = "/statFiles/OtpComputing/configTime.lst";
+    string home = getenv("HOME_MOVE3D") + fileName;
+    myfile.open(home.c_str());
+
+
+    for (unsigned int i = 0; i < maxSize; i++)
+    {
+        for (unsigned int timeVectorId=0; timeVectorId < m_multipliComputeTimeVector.size(); timeVectorId++)
+        {
+            double time = m_multipliComputeTimeVector.at(timeVectorId).at(i);
+            myfile << time << " ";
         }
         myfile << endl;
     }
@@ -2332,8 +2418,8 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
 
     clock_t endCreateTraj = clock();
-    int msg;
-    bool trajTest;
+    int msg = NULL;
+    bool trajTest = NULL;
     if (robotTraj2D.size() > 1)
     {
 //        vector<SM_TRAJ> smTrajs;
@@ -2364,6 +2450,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 //        _Robot->getRobotStruct()->tcur = NULL;
         trajTest = p3d_trajectory.replaceP3dTraj(_Robot->getTrajStruct());
 
+//        p3d_trajectory.print();
         endCreateTraj = clock();
         p3d_rob * robotPt =  _Robot->getRobotStruct();
         ManipulationPlanner m_p(robotPt);
@@ -2422,17 +2509,18 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
         if (humanTraj2D.size() > 1)
         {
             humanTraj2D = m_pts->smoothTrajectory(m_Human,humanTraj2D);
+            m_2DHumanPath = humanTraj2D;
             for(unsigned int i =0; i < humanTraj2D.size() - 1; i++)
             {
                 shared_ptr<Configuration> q_tmp(m_Human->getCurrentPos());
                 (*q_tmp)[firstIndexOfHumanDof + 0] = humanTraj2D.at (i)[0];
                 (*q_tmp)[firstIndexOfHumanDof + 1] = humanTraj2D.at(i)[1];
-                if (humanTraj2D.at(i+1)[0] != humanTraj2D.at(i)[0])
-                {
+//                if (humanTraj2D.at(i+1)[0] != humanTraj2D.at(i)[0])
+//                {
                     (*q_tmp)[firstIndexOfRobotDof + 5] = atan2(
                             humanTraj2D.at(i+1)[1] - humanTraj2D.at(i)[1],
                             humanTraj2D.at(i+1)[0] - humanTraj2D.at(i)[0]);
-                }
+//                }
 
                 humanVectorConf.push_back(q_tmp);
                 if (conf.isStandingInThisConf && m_humanCanStand)
@@ -2509,7 +2597,7 @@ void OTPMotionPl::navigate()
 
 bool OTPMotionPl::testCurrentTraj()
 {
-    Robot* robCyl;
+    Robot* robCyl = NULL;
     for (int i=0; i<XYZ_ENV->nr; i++)
     {
         string name(XYZ_ENV->robot[i]->name);
@@ -2529,7 +2617,7 @@ void OTPMotionPl::initTrajTest()
         m_pts = new PlannarTrajectorySmoothing(_Robot);
     }
 
-    Robot* robCyl;
+    Robot* robCyl = NULL;
     for (int i=0; i<XYZ_ENV->nr; i++)
     {
         string name(XYZ_ENV->robot[i]->name);
@@ -2613,8 +2701,8 @@ bool OTPMotionPl::standUp()
     int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
 
 
-    Robot* humCyl;
-    Robot* chair;
+    Robot* humCyl = NULL;
+    Robot* chair = NULL;
     for (int i=0; i<XYZ_ENV->nr; i++)
     {
         string name(XYZ_ENV->robot[i]->name);
@@ -2853,6 +2941,8 @@ bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 
     ENV.setBool(Env::useBallDist,false);
     ENV.setBool(Env::useBoxDist,true);
+
+    bool gridDrawing = ENV.getBool(Env::drawGrid);
     if(ENV.getBool(Env::HRIPlannerCS))
     {
         ENV.setBool(Env::drawGrid,true);
@@ -2914,7 +3004,7 @@ bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 
     API_activeGrid = getPlanGrid();
     //    newComputeOTP();
-    ENV.setBool(Env::drawGrid,false);
+    ENV.setBool(Env::drawGrid,gridDrawing);
     return true;
 }
 
@@ -2927,7 +3017,12 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
     //    PlanEnv->setBool(PlanParam::env_createTrajs,true);
     bool result = getOtp(humanName,dockPos,traj,handConf,isStanding,objectNessecity);
     //    PlanEnv->setBool(PlanParam::env_createTrajs,false);
+
     smTraj = m_smTrajs;
+    if (smTraj.size() > 0)
+    {
+        smTraj.at(0).print();
+    }
     //    smTraj[0].plot();
     return result;
 }
@@ -3047,7 +3142,7 @@ bool OTPMotionPl::changeHumanByName(std::string humanName)
         }
         else
         {
-            Robot* newHum;
+            Robot* newHum = NULL;
             for (int i=0; i<XYZ_ENV->nr; i++)
             {
                 string name(XYZ_ENV->robot[i]->name);
