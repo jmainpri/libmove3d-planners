@@ -2412,6 +2412,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
             endingPos[1] = (*conf.robotConf)[firstIndexOfRobotDof + 1];
             endingPos[2] = (*conf.robotConf)[firstIndexOfRobotDof + 5];
             m_2DPath = m_pts->get2DtrajFrom3Dtraj(robotTraj3D);
+            m_robotTraj3D = robotTraj3D;
             conf.robotTraj = m_2DPath;
 
         }
@@ -3041,6 +3042,70 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
         pair<double,double> p;
         p.first = conf.robotTraj.at(i)[0];
         p.second = conf.robotTraj.at(i)[1];
+        traj.push_back(p);
+    }
+
+
+    handConf = conf.robotConf->getConfigStruct();
+    handConf[11] = angle_limit_PI(handConf[11]);
+    ENV.setBool(Env::isCostSpace,false);
+    return true;
+
+
+}
+
+bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
+                         std::vector<std::vector<double> >& traj,
+                         configPt& handConf,bool isStanding, double objectNessecity)
+{
+
+    getInputs();
+    saveInitConf();
+    PlanEnv->setBool(PlanParam::env_isStanding,isStanding);
+    PlanEnv->setDouble(PlanParam::env_objectNessecity,objectNessecity);
+    //InitMhpObjectTransfert();
+    //    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+
+    dumpVar();
+    bool res = newComputeOTP();
+
+    if (!res)
+    {
+        cout << "No otp found" << endl;
+        return false;
+    }
+
+    if (m_confList.empty())
+    {
+        cout << "no result found" << endl;
+        return false;
+    }
+
+    int id = 0;
+    for (unsigned int i = 1; i < m_confList.size(); i++)
+    {
+        if (m_confList.at(i).cost < m_confList.at(id).cost)
+        {
+            id = i;
+        }
+    }
+
+
+
+    //    double dockingDist = 0.5;
+    OutputConf conf = m_confList.at(id);
+    if (!conf.humanConf && !conf.robotConf && conf.cost < numeric_limits<double>::max( ))
+    {
+        cout << "ERROR: configuration problems" << endl;
+        return false;
+    }
+
+    for (unsigned int i = 0; i < m_robotTraj3D.size();i++)
+    {
+        std::vector<double> p;
+        p.push_back(m_robotTraj3D.at(i)[0]);
+        p.push_back(m_robotTraj3D.at(i)[1]);
+        p.push_back(m_robotTraj3D.at(i)[2]);
         traj.push_back(p);
     }
 

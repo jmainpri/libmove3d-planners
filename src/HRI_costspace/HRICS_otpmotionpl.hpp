@@ -399,7 +399,7 @@ namespace HRICS
         void setVar();
 
         /**
-          * function to be called from codels
+          * function to be called from codels for softmotion usage
           */
         bool getOtp(std::string humanName, Eigen::Vector3d &dockPos, std::vector<SM_TRAJ>& smTraj, configPt& handConf,bool isStanding, double objectNessecity);
 
@@ -408,6 +408,12 @@ namespace HRICS
           * function to be called from codels
           */
         bool getOtp(std::string humanName, Eigen::Vector3d &dockPos, std::vector<std::pair<double,double> >& traj, configPt& handConf,bool isStanding, double objectNessecity);
+
+        /**
+          * function to be called from codels for ros usage
+          */
+        bool getOtp(std::string humanName, Eigen::Vector3d &dockPos, std::vector<std::vector<double> >& traj, configPt& handConf,bool isStanding, double objectNessecity);
+
 
         /**
           * initialisation of OTP computing for usage in mhp
@@ -435,6 +441,11 @@ namespace HRICS
           * robot path to be draw
           */
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m_2DPath;
+
+        /**
+          * robot 3d path for Ros
+          */
+        std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > m_robotTraj3D;
 
         /**
           * human path to be draw
