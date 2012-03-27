@@ -528,6 +528,54 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
     return result;
 }
 
+std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarTrajectorySmoothing::add3DimwithoutTrajChange(
+        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Robot* robot, double epsilon)
+{
+
+//    for (unsigned int j =0; j< traj.size();j++)
+//    {
+//        cout << "cell nb " << j << " with coord:\n" << traj.at(j) << endl;
+//    }
+    shared_ptr<Configuration> q_robot (robot->getCurrentPos());
+
+    std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > result;
+    result.clear();
+    Vector3d tmp;
+    tmp[0] = traj.at(0)[0];
+    tmp[1] = traj.at(0)[1];
+    tmp[2] = atan2(-(*q_robot)[7]+traj.at(1)[1],-(*q_robot)[6]+traj.at(1)[0]);
+    result.push_back(tmp);
+    if (traj.size() > 1)
+    {
+        for (unsigned int i = 1; i < traj.size();i++)
+        {
+            double x1 = traj.at(i-1)[0];
+            double y1 = traj.at(i-1)[1];
+            double x2 = traj.at(i)[0];
+            double y2 = traj.at(i)[1];
+
+            if (fabs(x1 - x2) < epsilon && fabs(y1 -y2) < epsilon)
+            {
+                continue;
+            }
+
+            tmp[0] = x1;
+            tmp[1] = y1;
+            tmp[2] = atan2(y2-y1,x2-x1);;
+            result.push_back(tmp);
+
+            if (i == traj.size() - 1)
+            {
+                tmp[0] = x2;
+                tmp[1] = y2;
+                tmp[2] = atan2(y2-y1,x2-x1);;
+                result.push_back(tmp);
+            }
+        }
+    }
+    return result;
+}
+
 
 
 std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarTrajectorySmoothing::removeSamePoints(

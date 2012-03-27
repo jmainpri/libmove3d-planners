@@ -85,6 +85,9 @@ namespace HRICS
 
         std::vector<double> getMultipleData(){return m_multipleData;}
 
+        double getInitTime() {return initTime;}
+        void setInitTime(double d) {initTime = d;}
+
 
         /**
           * to compute traj or not
@@ -582,6 +585,11 @@ namespace HRICS
           *
           */
         ConfGenerator* m_ConfGen;
+
+        /**
+          * initialisation time
+          */
+        double initTime;
 
 
 

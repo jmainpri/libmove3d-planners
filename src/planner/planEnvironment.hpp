@@ -105,7 +105,10 @@ namespace PlanParam
             env_fusedGridAndRotRand,
             env_oldCriteria,
             env_noRepetition,
-            env_computeTrajForHuman
+            env_computeTrajForHuman,
+            env_trajNormal,
+            env_trajSoftMotion,
+            env_trajRos
 
         };
 

@@ -44,6 +44,9 @@ public:
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > add3Dim(
             std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Robot* robot, double epsilon);
 
+    std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > add3DimwithoutTrajChange(
+            std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Robot* robot, double epsilon);
+
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > removeSamePoints(
             std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > traj, double epsilon);
 
