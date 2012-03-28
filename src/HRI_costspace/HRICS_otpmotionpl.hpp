@@ -412,7 +412,7 @@ namespace HRICS
         /**
           * function to be called from codels for ros usage
           */
-        bool getOtp(std::string humanName, Eigen::Vector3d &dockPos, std::vector<std::vector<double> >& traj, configPt& handConf,bool isStanding, double objectNessecity);
+        bool getOtp(std::string humanName, std::vector<std::vector<double> >& traj, configPt& handConf,bool isStanding, double objectNessecity);
 
 
         /**

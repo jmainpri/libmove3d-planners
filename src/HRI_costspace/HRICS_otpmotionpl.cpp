@@ -2995,6 +2995,10 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
                          configPt& handConf,bool isStanding, double objectNessecity)
 {
 
+    if (m_Human->getName().find(humanName) == string::npos)
+    {
+        changeHumanByName(humanName);
+    }
     PlanEnv->setBool(PlanParam::env_trajNormal,false);
     PlanEnv->setBool(PlanParam::env_trajSoftMotion,true);
     PlanEnv->setBool(PlanParam::env_trajRos,false);
@@ -3057,11 +3061,15 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
 
 }
 
-bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
+bool OTPMotionPl::getOtp(std::string humanName,
                          std::vector<std::vector<double> >& traj,
                          configPt& handConf,bool isStanding, double objectNessecity)
 {
 
+    if (m_Human->getName().find(humanName) == string::npos)
+    {
+        changeHumanByName(humanName);
+    }
     PlanEnv->setBool(PlanParam::env_trajNormal,false);
     PlanEnv->setBool(PlanParam::env_trajSoftMotion,false);
     PlanEnv->setBool(PlanParam::env_trajRos,true);
