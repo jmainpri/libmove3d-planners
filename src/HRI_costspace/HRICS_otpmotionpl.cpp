@@ -2995,6 +2995,9 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
                          configPt& handConf,bool isStanding, double objectNessecity)
 {
 
+    PlanEnv->setBool(PlanParam::env_trajNormal,false);
+    PlanEnv->setBool(PlanParam::env_trajSoftMotion,true);
+    PlanEnv->setBool(PlanParam::env_trajRos,false);
     getInputs();
     saveInitConf();
     PlanEnv->setBool(PlanParam::env_isStanding,isStanding);
@@ -3059,6 +3062,9 @@ bool OTPMotionPl::getOtp(std::string humanName, Eigen::Vector3d &dockPos,
                          configPt& handConf,bool isStanding, double objectNessecity)
 {
 
+    PlanEnv->setBool(PlanParam::env_trajNormal,false);
+    PlanEnv->setBool(PlanParam::env_trajSoftMotion,false);
+    PlanEnv->setBool(PlanParam::env_trajRos,true);
     getInputs();
     saveInitConf();
     PlanEnv->setBool(PlanParam::env_isStanding,isStanding);
