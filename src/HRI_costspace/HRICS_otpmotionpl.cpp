@@ -2089,26 +2089,28 @@ void OTPMotionPl::saveAllCostsToFile()
     string home = getenv("HOME_MOVE3D") + fileName;
     myfile.open(home.c_str());
 
+    ofstream fileVariance;
+    fileName = "/statFiles/OtpComputing/costsVariance.lst";
+    home = getenv("HOME_MOVE3D") + fileName;
+    fileVariance.open(home.c_str());
 
-//    for (unsigned int i = 0; i < maxSize; i++)
-//    {
-//        for (unsigned int costVectorId=0; costVectorId < m_multipliComputeCostVector.size(); costVectorId++)
-//        {
-//            double cost = m_multipliComputeCostVector.at(costVectorId).at(i);
-//            if (cost > 10)
-//            {
-//                cost = 2;
-//            }
-//            myfile << cost << " ";
-//        }
-//        myfile << endl;
-//    }
-//    myfile.close();
+    ofstream fileMin;
+    fileName = "/statFiles/OtpComputing/costsMin.lst";
+    home = getenv("HOME_MOVE3D") + fileName;
+    fileMin.open(home.c_str());
 
-    double tmpCost = 0;
+    ofstream fileMax;
+    fileName = "/statFiles/OtpComputing/CostsMax.lst";
+    home = getenv("HOME_MOVE3D") + fileName;
+    fileMax.open(home.c_str());
+
+
+    double meanCost = 0;
     for (unsigned int i = 0; i < maxSize; i++)
     {
-        tmpCost = 0;
+        meanCost = 0;
+        double minCost = numeric_limits<double>::max( );;
+        double maxCost = 0;
         for (unsigned int costVectorId=0; costVectorId < m_multipliComputeCostVector.size(); costVectorId++)
         {
             double cost = m_multipliComputeCostVector.at(costVectorId).at(i);
@@ -2116,12 +2118,38 @@ void OTPMotionPl::saveAllCostsToFile()
             {
                 cost = 2;
             }
-            tmpCost += cost;
+            meanCost += cost;
+            if (cost > maxCost)
+            {
+                maxCost = cost;
+            }
+            if (cost < minCost)
+            {
+                minCost = cost;
+            }
         }
-        tmpCost = tmpCost / m_multipliComputeCostVector.size();
-        myfile << tmpCost << endl;
+        meanCost = meanCost / m_multipliComputeCostVector.size();
+        myfile << meanCost << endl;
+        fileMin << minCost <<endl;
+        fileMax << maxCost <<endl;
+
+        double variance = 0;
+        for (unsigned int costVectorId=0; costVectorId < m_multipliComputeCostVector.size(); costVectorId++)
+        {
+            double cost = m_multipliComputeCostVector.at(costVectorId).at(i);
+            if (cost > 10)
+            {
+                cost = 2;
+            }
+            variance += pow(cost - meanCost,2);
+        }
+        variance = variance/ m_multipliComputeCostVector.size();
+        fileVariance << variance << endl;
     }
     myfile.close();
+    fileVariance.close();
+    fileMin.close();
+    fileMax.close();
 }
 
 void OTPMotionPl::saveAlltimesToFile()
