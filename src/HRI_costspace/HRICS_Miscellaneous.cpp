@@ -18,6 +18,8 @@
 #include "LightPlanner-pkg.h"
 #include "Collision-pkg.h"
 
+#include <algorithm>
+
 using namespace HRICS;
 using namespace std;
 using namespace tr1;
@@ -92,7 +94,7 @@ void HRICS::generateGraspConfigurations()
     }
   }
   
-  sort(configs.begin(),configs.end());
+  std::sort(configs.begin(),configs.end());
   
   for (vector<pair<double,configPt> >::iterator iter = configs.begin(); 
        iter != configs.end(); iter++)
