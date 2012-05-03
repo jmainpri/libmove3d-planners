@@ -195,7 +195,7 @@ namespace stomp_motion_planner
     
     // get rollouts and execute them
     const bool get_reused_ones = false;
-    assert(policy_improvement_.getRollouts(rollouts_, noise, get_reused_ones, reused_rollouts_));
+    policy_improvement_.getRollouts(rollouts_, noise, get_reused_ones, reused_rollouts_);
     
     if (ENV.getBool(Env::drawTrajVector)) 
       addRolloutsToDraw(get_reused_ones);
@@ -207,7 +207,7 @@ namespace stomp_motion_planner
     
     for (int r=0; r<int(rollouts_.size()); ++r)
     {
-      assert(task_->execute(rollouts_[r], tmp_rollout_cost_, iteration_number));
+      task_->execute(rollouts_[r], tmp_rollout_cost_, iteration_number);
       rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
       //printf("Rollout %d, cost = %lf\n", r+1, tmp_rollout_cost_.sum());
       
@@ -218,13 +218,13 @@ namespace stomp_motion_planner
     }
     
     std::vector<double> all_costs;
-    assert(policy_improvement_.setRolloutCosts(rollout_costs_, control_cost_weight_, all_costs));
+    policy_improvement_.setRolloutCosts(rollout_costs_, control_cost_weight_, all_costs);
     
     // improve the policy
     // get a noise-less rollout to check the cost
-    assert(policy_improvement_.improvePolicy(parameter_updates_));
-    assert(policy_->updateParameters(parameter_updates_));
-    assert(policy_->getParameters(parameters_));
+    policy_improvement_.improvePolicy(parameter_updates_);
+    policy_->updateParameters(parameter_updates_);
+    policy_->getParameters(parameters_);
     
     // get the trajectory cost
     assert(task_->execute(parameters_, tmp_rollout_cost_, iteration_number));
@@ -236,7 +236,7 @@ namespace stomp_motion_planner
     extra_rollout_cost.resize(1);
     extra_rollout[0] = parameters_;
     extra_rollout_cost[0] = tmp_rollout_cost_;
-    assert(policy_improvement_.addExtraRollouts(extra_rollout, extra_rollout_cost));
+    policy_improvement_.addExtraRollouts(extra_rollout, extra_rollout_cost);
     return true;
   }
 
@@ -250,7 +250,7 @@ namespace stomp_motion_planner
     if (write_to_file_)
     {
       // load new policy if neccessary
-      assert(readPolicy(iteration_number));
+      readPolicy(iteration_number);
     }
     
     // compute appropriate noise values
@@ -265,7 +265,7 @@ namespace stomp_motion_planner
     
     // get rollouts and execute them
     bool get_reused_ones = true;
-    assert(policy_improvement_.getRollouts(rollouts_, noise, get_reused_ones, reused_rollouts_));
+    policy_improvement_.getRollouts(rollouts_, noise, get_reused_ones, reused_rollouts_);
     
     if (ENV.getBool(Env::drawTrajVector)) 
       addRolloutsToDraw(get_reused_ones);
@@ -277,7 +277,7 @@ namespace stomp_motion_planner
     
     for (int r=0; r<int(rollouts_.size()); ++r)
     {
-      assert(task_->execute(rollouts_[r], tmp_rollout_cost_, iteration_number));
+      task_->execute(rollouts_[r], tmp_rollout_cost_, iteration_number);
       rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
       //printf("Rollout %d, cost = %lf\n", r+1, tmp_rollout_cost_.sum());
       
@@ -305,10 +305,10 @@ namespace stomp_motion_planner
     
     // TODO: fix this std::vector<>
     std::vector<double> all_costs;
-    assert(policy_improvement_.setRolloutCosts(rollout_costs_, control_cost_weight_, all_costs));
+    policy_improvement_.setRolloutCosts(rollout_costs_, control_cost_weight_, all_costs);
     
     // improve the policy
-    assert(policy_improvement_.improvePolicy(parameter_updates_));
+    policy_improvement_.improvePolicy(parameter_updates_);
 
     // Draw parameters_updates_
 //    std::vector<Eigen::VectorXd> rollout;
@@ -316,7 +316,7 @@ namespace stomp_motion_planner
 //    parametersToVector(rollout);
 //    addSingleRolloutsToDraw(rollout, 0);
     
-    assert(policy_->updateParameters(parameter_updates_));
+    policy_->updateParameters(parameter_updates_);
     
     // Draw parameters_updates_
 //    parametersToVector(rollout);
@@ -324,7 +324,7 @@ namespace stomp_motion_planner
 
     
     // get a noise-less rollout to check the cost
-    assert(policy_->getParameters(parameters_));
+  policy_->getParameters(parameters_);
     
     // Draw parameters_
 //    addSingleRolloutsToDraw(parameters_, 2);
@@ -334,13 +334,13 @@ namespace stomp_motion_planner
     //addSingleRolloutsToDraw(parameters_, 0);
   
     // Get the trajectory cost
-    assert(task_->execute(parameters_, tmp_rollout_cost_, iteration_number, true));
+    task_->execute(parameters_, tmp_rollout_cost_, iteration_number, true);
     //printf("Noiseless cost = %lf\n", stats_msg.noiseless_cost);
     
     // Only set parameters for the changed chase
     if( set_parameters_in_policy_ )
     {
-      assert(policy_->setParameters(parameters_));
+      policy_->setParameters(parameters_);
     }
     
     // add the noiseless rollout into policy_improvement:
@@ -350,7 +350,7 @@ namespace stomp_motion_planner
     extra_rollout_cost.resize(1);
     extra_rollout[0] = parameters_;
     extra_rollout_cost[0] = tmp_rollout_cost_;
-    assert(policy_improvement_.addExtraRollouts(extra_rollout, extra_rollout_cost));
+    policy_improvement_.addExtraRollouts(extra_rollout, extra_rollout_cost);
     
     //cout << "rollout_cost_ = " << tmp_rollout_cost_.sum() << endl;
     

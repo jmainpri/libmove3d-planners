@@ -40,8 +40,8 @@ using namespace tr1;
 //--------------------------------------------------------
 // Variables
 //--------------------------------------------------------
-bool m_init = false;
-bool m_add_human = true;
+static bool m_init = false;
+static bool m_add_human = true;
 
 static Robot* m_robot = NULL;
 
@@ -51,24 +51,24 @@ static ScenarioType m_sce;
 enum PlanningType { NAVIGATION = 0, MANIPULATION = 1, MOBILE_MANIP = 2 };
 static PlanningType m_planning_type; 
 
-CollisionSpace* global_collSpace=NULL;
-CollisionSpace* m_coll_space=NULL;
+static CollisionSpace* global_collSpace=NULL;
+static CollisionSpace* m_coll_space=NULL;
 
-ChompPlanningGroup* m_chompplangroup= NULL;
-ChompTrajectory* m_chomptraj=NULL;
-ChompParameters* m_chompparams=NULL;
+static ChompPlanningGroup* m_chompplangroup= NULL;
+static ChompTrajectory* m_chomptraj=NULL;
+static ChompParameters* m_chompparams=NULL;
 
 stomp_motion_planner::StompParameters* m_stompparams=NULL;
 
-int m_BaseMLP=0;
-int m_BaseSmMLP=0;
-int m_HeadMLP=0;
-int m_UpBodyMLP=0;
-int m_UpBodySmMLP=0;
+static int m_BaseMLP=0;
+static int m_BaseSmMLP=0;
+static int m_HeadMLP=0;
+static int m_UpBodyMLP=0;
+static int m_UpBodySmMLP=0;
 
-vector<int> m_active_joints;
-vector<int> m_planner_joints;
-vector<CollisionPoint> m_collision_points;
+static vector<int> m_active_joints;
+static vector<int> m_planner_joints;
+static vector<CollisionPoint> m_collision_points;
 
 vector< vector <double> > traj_optim_to_plot;
 
@@ -721,7 +721,13 @@ bool traj_optim_init_collision_spaces()
   if (m_init == true)
     return true;
   
-  m_robot = global_Project->getActiveScene()->getActiveRobot();
+  //m_robot = global_Project->getActiveScene()->getActiveRobot();
+  m_robot = global_Project->getActiveScene()->getRobotByNameContaining("ROBOT");
+
+  cout << "Robot is : " << m_robot->getName() << " in " << __func__ << endl;
+
+  if( m_robot == NULL )
+    return false;
   
   switch (m_sce) 
   {
@@ -1021,7 +1027,10 @@ bool traj_optim_initStomp()
 {
   if( !m_init )
   {
-    traj_optim_initScenario();
+    if(!traj_optim_initScenario())
+      {
+	return false;
+      }
   }
   
   // Get Initial trajectory

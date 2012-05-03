@@ -161,11 +161,16 @@ namespace stomp_motion_planner
     policy_->getBasisFunctions(basis_functions_);
     policy_->getParameters(parameters_);
     
-    assert(preAllocateMultivariateGaussianSampler());
-    assert(setNumRollouts(num_rollouts, num_reused_rollouts, num_extra_rollouts));
-    assert(preAllocateTempVariables());
-    assert(preComputeProjectionMatrices());
-    
+    //assert(preAllocateMultivariateGaussianSampler());
+    //assert(setNumRollouts(num_rollouts, num_reused_rollouts, num_extra_rollouts));
+    //assert(preAllocateTempVariables());
+    //assert(preComputeProjectionMatrices());
+
+    preAllocateMultivariateGaussianSampler();
+    setNumRollouts(num_rollouts, num_reused_rollouts, num_extra_rollouts);
+    preAllocateTempVariables();
+    preComputeProjectionMatrices();
+
     return (initialized_ = true);
   }
   
@@ -340,7 +345,7 @@ namespace stomp_motion_planner
     assert(static_cast<int>(noise_stddev.size()) == num_dimensions_);
     
     // save the latest policy parameters:
-    assert(copyParametersFromPolicy());
+    copyParametersFromPolicy();
     
     // we assume here that rollout_parameters_ and rollout_noise_ have already been allocated
     num_rollouts_gen_ = num_rollouts_ - num_rollouts_reused_;
@@ -706,7 +711,7 @@ namespace stomp_motion_planner
     assert(int(rollouts.size()) == num_rollouts_extra_);
     
     // update our parameter values, so that the computed noise is correct:
-    assert(copyParametersFromPolicy());
+    copyParametersFromPolicy();
     
     for (int r=0; r<num_rollouts_extra_; ++r)
     {

@@ -97,18 +97,17 @@ namespace stomp_motion_planner
     //movement_duration_ = 5.0;
     //  movement_duration_ = movement_duration*7.716;
     //  movement_duration_ = movement_duration*1.5432;
-    //
     
     cost_ridge_factor_ = cost_ridge_factor;
     derivative_costs_ = derivative_costs;
     
-    //  initializeVariables();
-    //  initializeCosts();
-    //  initializeBasisFunctions();
+    initializeVariables();
+    initializeCosts();
+    initializeBasisFunctions();
     
-    assert(initializeVariables());
-    assert(initializeCosts());
-    assert(initializeBasisFunctions());
+    //assert(initializeVariables());
+    //assert(initializeCosts());
+    //assert(initializeBasisFunctions());
     
     if( print_debug_ )
     {
@@ -148,25 +147,31 @@ namespace stomp_motion_planner
   //! given a start and goal state
   bool CovariantTrajectoryPolicy::setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal)
   {
+    cerr << "0 : " << endl;
+
     for (int d=0; d<num_dimensions_; ++d)
     {
       // set the start and end of the trajectory
       for (int i=0; i<DIFF_RULE_LENGTH-1; ++i)
-      {
+      { 
+	cerr << "start : " << start << endl;
+	cerr << "goal : " << goal << endl;
+	cerr << "parameters_all_ : " << parameters_all_[d] << endl;
+	cerr << "parameters_all_ (" << d << " , " << i << ")" << endl;
         parameters_all_[d](i) = start(d);
         parameters_all_[d](num_vars_all_-1-i) = goal(d);
       }
     }
     
-    //cout << "1 : " << endl;
+    cerr << "1 : " << endl;
     //printParameters();
     computeLinearControlCosts();
     
-    //cout << "2 : " << endl;
+    cerr << "2 : " << endl;
     //printParameters();
     computeMinControlCostParameters();
     
-    //cout << "3 : " << endl;
+    cerr << "3 : " << endl;
     //printParameters();
     return true;
   }
@@ -204,7 +209,8 @@ namespace stomp_motion_planner
   {
     for (int d=0; d<num_dimensions_; ++d)
     {
-      parameters_all_[d].segment(free_vars_start_index_, num_vars_free_) = -0.5 * inv_control_costs_[d] * linear_control_costs_[d];
+      parameters_all_[d].segment(free_vars_start_index_, num_vars_free_) 
+	= -0.5 * inv_control_costs_[d] * linear_control_costs_[d];
     }
     //    for (int d=0; d<num_dimensions_; ++d)
     //    {
@@ -228,6 +234,8 @@ namespace stomp_motion_planner
     for (int d=0; d<num_dimensions_; ++d)
       num_parameters_.push_back(num_time_steps_);
     
+    cerr << "parameters_all_.resize : num_dimensions_ : " << num_dimensions_ << endl;
+    cerr << "parameters_all_.resize : num_vars_all_ : " << num_vars_all_ << endl;
     parameters_all_.resize(num_dimensions_, Eigen::VectorXd::Zero(num_vars_all_));
     
     return true;
