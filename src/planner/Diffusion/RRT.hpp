@@ -68,8 +68,7 @@ public:
 	 * @param qCurrent la Configuration limitant la distance
 	 * @return la Configuration tirée
 	 */
-	std::tr1::shared_ptr<Configuration> diffuseOneConf(std::tr1::shared_ptr<
-													   Configuration> qCurrent)
+	confPtr_t diffuseOneConf(confPtr_t qCurrent)
 	{
 		std::tr1::shared_ptr<LocalPath> path = std::tr1::shared_ptr<LocalPath> (new LocalPath(
 																							  qCurrent, _Robot->shoot()));

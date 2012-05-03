@@ -1,12 +1,14 @@
 //
-//  replanning.cpp
+//  replanningSimulator.cpp
 //  libmove3d-motion
 //
-//  Created by Jim Mainprice on 19/07/11.
-//  Copyright 2011 LAAS/CNRS. All rights reserved.
+//  Created by Jim Mainprice on 23/04/12.
+//  Copyright (c) 2012 LAAS-CNRS. All rights reserved.
 //
 
-#include "replanning.hpp"
+#include <iostream>
+
+#include "replanningSimulators.hpp"
 
 #include "API/project.hpp"
 
@@ -14,7 +16,6 @@
 #include "planner/plannerFunctions.hpp"
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 #include "planner/cost_space.hpp"
-#include "planner/Diffusion/Variants/Star-RRT.hpp"
 
 #include "LightPlanner-pkg.h"
 #include "Graphic-pkg.h"
@@ -28,430 +29,20 @@
 using namespace std;
 using namespace tr1;
 
-//! Extern variables
+//! Soft motion trajectory for planner
+SM_TRAJ ManipPlannerLastTraj;
 
-extern SM_TRAJ ManipPlannerLastTraj;
-
+//! Replanning simulator pointer
 ReplanningSimulator* global_rePlanningEnv=NULL;
 
-// The replanner drawing function
+//! Replanning graph
+Graph* global_rePlanningGraph=NULL;
+
+// Replanning drawing function
 void replan_current_draw()
 {
   if( global_rePlanningEnv )
     global_rePlanningEnv->draw();
-}
-
-//! Deactivate all kinematic constraints
-void p3d_deactivate_all_cntrts( Robot* r )
-{
-  p3d_rob* rob = r->getRobotStruct();
-  
-  int nb_cntrts = rob->cntrt_manager->ncntrts;
-  p3d_cntrt** cntrts = rob->cntrt_manager->cntrts;
-  
-	for(int i=0; i<nb_cntrts; i++) 
-    p3d_desactivateCntrt( rob , cntrts[i] );
-}
-
-//-----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------
-
-//! Initialize replanner by setting the robot, the multi-localpaths available
-//! and calling the init function
-Replanner::Replanner(Robot* r) : m_robot(r) , m_useMLP(false)
-{
-  cout << "new base replanner" << endl;
-  
-  // Check if allready initialized
-  if( !m_init )
-  {
-    if( !init_mlp() )
-    {
-      cout << "Error initializing multi-localpahts in " << __FILE__ << " at " << __func__ << endl;
-    }
-  }
-}
-
-Replanner::~Replanner() 
-{
-
-}
-
-void Replanner::setSwitchData( confPtr_t qSwitch, int switch_id, double t_rep, double lp_avera_length, double initial_step )
-{
-  m_qSwitch = qSwitch;
-  m_switch_id = switch_id;
-  m_t_rep = t_rep;
-  m_lp_avera_length = lp_avera_length;
-  m_initial_step = initial_step;
-}
-
-//! Initialize the robot multilocal path
-//! disable the display of the main robot
-bool Replanner::init_mlp()
-{
-  m_useMLP = false;
-  
-  if (m_robot == NULL)
-    return false;
-  
-  for (int i=0; i<m_robot->getRobotStruct()->mlp->nblpGp; i++) 
-  {
-    if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "base")) {
-      m_BaseMLP = i;
-      m_useMLP = true;
-    } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "baseSm")) {
-      m_BaseSmMLP = i;
-      m_useMLP = true;
-    } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "head")) {
-      m_HeadMLP = i;
-      m_useMLP = true;
-    } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "upBody")) {
-      m_UpBodyMLP = i;
-      m_useMLP = true;
-    } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "upBodySm")) {
-      m_UpBodySmMLP = i;
-      m_useMLP = true;
-    }
-  }
-  
-  cout << "Replanner::robot : " << m_robot->getName() << endl;
-  cout << "Replanner::m_useMLP : " << m_useMLP << endl;
-  m_init = true;
-  return true;
-}
-
-//! Concat the new portion of the trajectory which is going to be used 
-//! The concatanation happens at swith id which has to be computed before
-p3d_traj* Replanner::concat_to_current_traj(const vector<p3d_traj*>& trajs)
-{
-  if ( m_robot==NULL ) {
-    cout <<  "concat_to_current_traj: robot is NULL.\n";
-    return NULL;
-  }
-  if ( trajs.empty() || !trajs[0] ) {
-    cout <<  "concat_to_current_traj: the trajectory vector is empty.\n" ;
-    return NULL;
-  }
-  
-  // if the CurrentTraj is not empty
-  // concat the allready executed part begore m_switch_id to the new trajectory
-  int init_id;
-  p3d_traj* concatTraj;
-  if ( !m_CurrentTraj.isEmpty() ) {
-    concatTraj = m_CurrentTraj.extractSubTrajectoryOfLocalPaths(0,m_switch_id-1).replaceP3dTraj(NULL);
-    init_id = 0; 
-  }
-  else {
-    concatTraj = trajs[0];
-    init_id = 1; 
-  }
-  
-  for (int i=init_id; i<int(trajs.size()); i++) {
-    if(trajs[i]) {
-      if (p3d_concat_traj( concatTraj, trajs[i]) == TRUE) {
-        cout << "Concat traj fails" << endl;  
-        return NULL;
-      }
-    }
-  }
-  
-  return concatTraj;
-}
-//-----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------
-SimpleReplanner::SimpleReplanner(Robot* r) : Replanner(r)
-{
-  cout << "new simple replanner" << endl;
-  
-  // Call to the virtual function
-  if( !init() )
-  {
-    cout << "Error initializing virtual function of the replanner in " << __FILE__ << " at " << __func__ << endl;
-  }
-}
-
-SimpleReplanner::~SimpleReplanner()
-{
-  
-}
-
-//! Before simple (no softmotion) replanning execution this function initilizes the replanner data
-//! First 
-bool SimpleReplanner::init()
-{
-  m_isPlanning = false;
-  
-  set_planner_type( PlanEnv->getInt(PlanParam::plannerType) );
-  init_planner_type();
-  
-  // Store initial and final configurations
-  m_qSwitch = m_robot->getCurrentPos();
-  m_qGoal   = m_robot->getGoTo();
-  
-  m_idRun = 0;
-  
-  if( !init_create_straightline() )
-  {
-    cout << "Error : could not create straightline" << endl;
-    return false;
-  }
-
-  return true;
-}
-
-//! Creates a straight line trajectory
-//! uses the main robot of the simulator or uses the current
-//! robot if not initialized
-bool SimpleReplanner::init_create_straightline()
-{
-  Robot* rob=NULL;
-  
-  if( m_robot != NULL ) {
-    rob = m_robot;
-  }
-  else {
-    rob = global_Project->getActiveScene()->getActiveRobot();
-  }
-  
-  if (!rob) {
-    cout << "Robot not initialized in file " << __FILE__ << " ,  " << __func__ << endl;
-    return false;
-  }
-  
-  shared_ptr<Configuration> q_init( rob->getInitialPosition() );
-  shared_ptr<Configuration> q_goal( rob->getGoTo() );
-  
-  if( q_init->equal( *q_goal ) )
-  {
-    cout << "Init equal q_goal in file " << __FILE__ << " ,  " << __func__ << endl; 
-    cout << "for robot : " << rob->getName() << endl;
-    q_init->print();
-    q_goal->print();
-    return false;
-  }
-  
-  vector< shared_ptr<Configuration> > confs(2);
-  
-  confs[0] = q_init;
-  confs[1] = q_goal;
-  
-  m_CurrentTraj = API::Trajectory( confs );
-  m_CurrentTraj.replaceP3dTraj();
-  return true;
-}
-
-void SimpleReplanner::init_for_manipuation()
-{
-  if( m_useMLP )
-  {
-    cout << "Set upbody MLP" << endl;
-#ifdef MULTILOCALPATH
-    p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-    p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
-#endif
-    
-    // Fix all the joints but unfixes the arm 0
-    fixAllJointsWithoutArm( m_robot->getRobotStruct(), 0 );
-  }
-  
-  // Deactivate all kinematic constraints
-  p3d_deactivate_all_cntrts( m_robot );
-}
-
-void SimpleReplanner::init_for_mobile_manip()
-{
-  if( m_useMLP )
-  {
-    cout << "Set upbody MLP" << endl;
-#ifdef MULTILOCALPATH
-    p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-    p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
-#endif
-  }
-  
-  // Fix all the joints but unfixes the arm 0
-  fixAllJointsWithoutArm( m_robot->getRobotStruct(), 0 );
-  
-  // Unfix base joint for planning
-  unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->baseJnt );
-  
-  // Deactivate all kinematic constraints
-  p3d_deactivate_all_cntrts( m_robot );
-}
-
-//! Set the DoFs active/passive of the robot for navigation
-void SimpleReplanner::init_for_navigation()
-{  
-  if( m_useMLP )
-  {
-    cout << "Set base MLP" << endl;
-#ifdef MULTILOCALPATH
-    p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-    p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_BaseMLP, 1, false);
-#endif
-    
-    // Fix all joints for planner
-    // This only works with manipulation planner
-    fixAllJointsExceptBase( m_robot->getRobotStruct() );
-  }
-  
-  // Deactivate all kinematic constraints
-  p3d_deactivate_all_cntrts( m_robot );
-  
-  // Set base to joint to draw
-  // p3d_set_user_drawnjnt(1);
-}
-
-//! Choose what part of the robot are active in the planning phase
-//! Three type of planning to chose from
-//! Navigation, Manipulation, Mobile-anipulation
-void SimpleReplanner::set_planner_type(int type)
-{
-  switch (type) 
-  {
-    case 0:
-      m_ReplanningType = NAVIGATION;
-      break;
-      
-    case 1:
-      m_ReplanningType = MANIPULATION;
-      break;
-      
-    case 2:
-      m_ReplanningType = MOBILE_MANIP;
-      break;
-      
-    default:
-      cout << "Planner type not implemented" << endl;
-      break;
-  }
-}
-
-void SimpleReplanner::init_planner_type()
-{
-  // Block specific joint sampling
-  // also activate localpaths
-  switch (m_ReplanningType) 
-  {
-    case NAVIGATION:
-      cout << "Init for Navigation" << endl;
-      init_for_navigation();
-      break;
-      
-    case MANIPULATION:
-      cout << "Init for Manipulation" << endl;
-      init_for_manipuation();
-      break;
-      
-    case MOBILE_MANIP:
-      cout << "Init for Mobile-manipulation" << endl;
-      init_for_mobile_manip();
-      break;
-  }
-}
-
-void SimpleReplanner::run()
-{
-  m_isPlanning = true;
-  
-  // Set 0.3 seconds to do the concat traj
-  PlanEnv->setBool(PlanParam::withTimeLimit, true );
-  PlanEnv->setDouble(PlanParam::optimTimeLimit, m_t_rep-0.3 );
-  
-  cout << "m_t_rep : " << m_t_rep << endl;
-  
-  // Run deformation from last path id
-  int last_path_id = m_CurrentTraj.getNbOfPaths()-1;
-  
-	API::CostOptimization optimTrj(m_CurrentTraj.extractSubTrajectoryOfLocalPaths(m_switch_id,last_path_id));
-  
-  optimTrj.setStep( m_initial_step );
-	optimTrj.runDeformation(ENV.getInt(Env::nbCostOptimize),m_idRun++);
-	optimTrj.cutTrajInSmallLP( optimTrj.getRangeMax() / m_lp_avera_length );
-  optimTrj.replaceP3dTraj();
-  
-  vector<p3d_traj*> traj(1);
-  traj[0] = optimTrj.replaceP3dTraj(NULL);
-  
-  // Concatanate traj and store it to current traj
-  p3d_traj* lin_traj = concat_to_current_traj(traj);
-  
-  if( lin_traj )
-  {
-    m_CurrentTraj = API::Trajectory( m_robot, lin_traj );
-    m_planningSucceded = true;
-  }
-  else {
-    m_planningSucceded = false;
-  }
-  
-  //store_traj_to_draw( optimTrj 0.0 );
-  cout << "End replanning : " << __func__ << endl;
-  m_isPlanning = false;
-}
-
-//-----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------
-StarReplanner::StarReplanner(Robot* r) : SimpleReplanner(r)
-{
-  cout << "new star replanner" << endl;
-}
-
-StarReplanner::~StarReplanner()
-{
-
-}
-
-bool StarReplanner::init()
-{
-  return true;
-}
-
-void StarReplanner::run()
-{
-  m_isPlanning = true;
-  
-  // Set 0.3 seconds to do the concat traj
-  PlanEnv->setBool(PlanParam::withTimeLimit, true );
-  PlanEnv->setDouble(PlanParam::optimTimeLimit, m_t_rep-0.3 );
-  
-  confPtr_t qSwitch = m_CurrentTraj[m_switch_id];
-  
-	API::CostOptimization optimTrj(m_CurrentTraj); // .extractSubTrajectoryOfLocalPaths(m_switch_id,m_last_path_id));
-  
-  optimTrj.setStep( m_initial_step );
-	optimTrj.runDeformation(ENV.getInt(Env::nbCostOptimize),m_idRun++);
-	optimTrj.cutTrajInSmallLP( optimTrj.getRangeMax() / m_lp_avera_length );
-  optimTrj.replaceP3dTraj();
-  
-  vector<p3d_traj*> traj(1);
-  traj[0] = optimTrj.replaceP3dTraj(NULL);
-  
-  // Concatanate traj and store it to current traj
-  p3d_traj* lin_traj = concat_to_current_traj(traj);
-  
-  if( lin_traj )
-  {
-    m_CurrentTraj = API::Trajectory( m_robot, lin_traj );
-    m_planningSucceded = true;
-  }
-  else {
-    m_planningSucceded = false;
-  }
-  
-  //store_traj_to_draw( optimTrj 0.0 );
-  cout << "End replanning : " << __func__ << endl;
-  m_isPlanning = false;
 }
 
 //-----------------------------------------------------------------------------------
@@ -669,14 +260,18 @@ bool ReplanningSimulator::init_simulator()
     return false;
   }
   
-  int replanner_type = 0;
-  
-  switch ( replanner_type )
+  switch ( PlanEnv->getInt( PlanParam::replanningAlgorithm ) )
   {
     case 0:
       m_replanner = new SimpleReplanner( m_robot ); break;
     case 1:
       m_replanner = new SoftmotionReplanner( m_robot ); break;
+    case 2:
+      m_replanner = new RRTReplanner( m_robot ); break;
+    case 3:
+      m_replanner = new HandoverReplanner( m_robot ); break;
+    case 4:
+      m_replanner = new AStarReplanner( m_robot ); break;
     default :
       cout << "No replanner selected" << endl;
   }
@@ -708,7 +303,7 @@ bool ReplanningSimulator::init_find_robot_basename( string& robotBaseName )
   if( rob == NULL ) {
     return false; 
   }
-
+  
   size_t found = rob->getName().find("_ROBOT");
   if (found!=string::npos)
   {
@@ -741,7 +336,7 @@ bool ReplanningSimulator::init_rosim_cntrts_and_collisions()
     cout << "Error : the robots are not initialized in "  << __FILE__ << " at " << __LINE__ << endl;
     return false;
   }
-
+  
   // Deactivate robot to simulation robot collision checking
   p3d_col_deactivate_rob_rob( m_robot->getRobotStruct(), m_rosim->getRobotStruct() );
   
@@ -798,6 +393,31 @@ void ReplanningSimulator::store_traj_to_vect(SM_TRAJ& smTraj, double current, do
   }
 }
 
+void print_point( const vector<double>& p )
+{
+  cout << "p = ( "<<p[0]<<" , "<<p[1]<<" , "<<p[2]<<" )"<< endl;
+}
+
+void ReplanningSimulator::store_human_pos()
+{
+  confPtr_t q_hum = m_human->getCurrentPos();
+  (*q_hum)[6] =  PlanEnv->getDouble(PlanParam::env_futurX);
+  (*q_hum)[7] =  PlanEnv->getDouble(PlanParam::env_futurY);
+  (*q_hum)[8] =  PlanEnv->getDouble(PlanParam::env_futurZ);
+  (*q_hum)[11] = PlanEnv->getDouble(PlanParam::env_futurRZ);
+  
+  m_human->setAndUpdate(*q_hum);
+  //  cout << "PlanEnv->getDouble(PlanParam::env_futurX) = " << PlanEnv->getDouble(PlanParam::env_futurX) << endl;
+  //  cout << "PlanEnv->getDouble(PlanParam::env_futurY) = " << PlanEnv->getDouble(PlanParam::env_futurY) << endl;
+  //  cout << "PlanEnv->getDouble(PlanParam::env_futurZ) = " << PlanEnv->getDouble(PlanParam::env_futurZ) << endl;
+  //  cout << "PlanEnv->getDouble(PlanParam::env_futurRZ) = " << PlanEnv->getDouble(PlanParam::env_futurRZ) <<  endl;
+  
+  //  cout << "(*q_hum)[6] = " << (*q_hum)[6] << endl;
+  //  cout << "(*q_hum)[7] = " << (*q_hum)[7] << endl;
+  //  cout << "(*q_hum)[8] = " << (*q_hum)[8] << endl;
+  //  cout << "(*q_hum)[11] = " << (*q_hum)[11] <<  endl;
+}
+
 //! Stores the trajectory in a vector
 void ReplanningSimulator::store_traj_to_vect(API::Trajectory& traj, double step)
 {
@@ -814,6 +434,8 @@ void ReplanningSimulator::store_traj_to_vect(API::Trajectory& traj, double step)
   point[1] = q[7];
   point[2] = 0.20;
   
+  //  print_point( point );
+  
   m_currentLine.push_back( point );
   
   step = traj.getRangeMax()/20;
@@ -825,6 +447,8 @@ void ReplanningSimulator::store_traj_to_vect(API::Trajectory& traj, double step)
     point[1] = q[7];
     point[2] = 0.20;
     
+    //    print_point( point );
+    
     m_currentLine.push_back( point );
   }
   
@@ -832,6 +456,8 @@ void ReplanningSimulator::store_traj_to_vect(API::Trajectory& traj, double step)
   point[0] = q[6];
   point[1] = q[7];
   point[2] = 0.20;
+  
+  //  print_point( point );
   
   m_currentLine.push_back( point );
 }
@@ -853,8 +479,8 @@ void ReplanningSimulator::store_traj_to_draw(const API::Trajectory& traj, double
   
   Joint* drawJoint = m_robot->getJoint( p3d_get_user_drawnjnt() );
   
-//  cout << "user_drawnjnt : " << p3d_get_user_drawnjnt() << endl;
-//  cout << "drawJoint : " << drawJoint << endl;
+  //  cout << "user_drawnjnt : " << p3d_get_user_drawnjnt() << endl;
+  //  cout << "drawJoint : " << drawJoint << endl;
   
   if( drawJoint != NULL )
   {
@@ -872,29 +498,32 @@ void ReplanningSimulator::store_traj_to_draw(const API::Trajectory& traj, double
     }
   }
   
-  confPtr_t q_hum = m_human->getCurrentPos();
-  (*q_hum)[6] =  PlanEnv->getDouble(PlanParam::env_futurX);
-  (*q_hum)[7] =  PlanEnv->getDouble(PlanParam::env_futurY);
-  (*q_hum)[8] =  PlanEnv->getDouble(PlanParam::env_futurZ);
-  (*q_hum)[11] = PlanEnv->getDouble(PlanParam::env_futurRZ);
+  // Store also human position
+  store_human_pos();
   
-  m_human->setAndUpdate(*q_hum);
-  cout << "PlanEnv->getDouble(PlanParam::env_futurX) = " << PlanEnv->getDouble(PlanParam::env_futurX) << endl;
-  cout << "PlanEnv->getDouble(PlanParam::env_futurY) = " << PlanEnv->getDouble(PlanParam::env_futurY) << endl;
-  cout << "PlanEnv->getDouble(PlanParam::env_futurZ) = " << PlanEnv->getDouble(PlanParam::env_futurZ) << endl;
-  cout << "PlanEnv->getDouble(PlanParam::env_futurRZ) = " << PlanEnv->getDouble(PlanParam::env_futurRZ) <<  endl;
+  m_isWritingDisplay = false;
+}
+
+//! Stores the graph to a local graph
+void ReplanningSimulator::store_graph_to_draw(const Graph& graph)
+{
+  m_isWritingDisplay = true;
   
-//  cout << "(*q_hum)[6] = " << (*q_hum)[6] << endl;
-//  cout << "(*q_hum)[7] = " << (*q_hum)[7] << endl;
-//  cout << "(*q_hum)[8] = " << (*q_hum)[8] << endl;
-//  cout << "(*q_hum)[11] = " << (*q_hum)[11] <<  endl;
+  while (m_isReadingDisplay);
+  
+  cout << "Copy graph" << endl;
+  delete global_rePlanningGraph;
+  global_rePlanningGraph = new Graph(graph);
+  
+  // Store also human position
+  store_human_pos();
   
   m_isWritingDisplay = false;
 }
 
 //! Stores the trajectory to a current trajectory
 void ReplanningSimulator::store_exploration(const API::Trajectory& traj, double lPrev, double lNext, shared_ptr<
-                              Configuration> qNew)
+                                            Configuration> qNew)
 {
   if( !m_init )
     return;
@@ -932,7 +561,10 @@ void ReplanningSimulator::store_exploration(const API::Trajectory& traj, double 
     }
   }
   
-   m_isWritingDisplay = false;
+  // Store also human position
+  store_human_pos();
+  
+  m_isWritingDisplay = false;
 }
 
 //! Set current traj as executed
@@ -942,7 +574,7 @@ void ReplanningSimulator::set_executed_traj_to_current(API::Trajectory& traj)
   
   for( int i=0; i<traj.getNbOfViaPoints(); i++ )
   {
-    shared_ptr<Configuration> q(new Configuration(m_rosim,traj[i]->getConfigStruct()));
+    confPtr_t q(new Configuration( m_rosim, traj[i]->getConfigStruct() ));
     m_ExecuteTraj.push_back( q );
   }
 }
@@ -964,6 +596,10 @@ void ReplanningSimulator::draw()
     
     for( int i=0; i<int(m_currentLine.size()-1); i++)
     {
+      //      cout <<"m_currentLine["<<i<<"][0]="<<m_currentLine[i][0]<<endl;
+      //      cout <<"m_currentLine["<<i<<"][1]="<<m_currentLine[i][1]<<endl;
+      //      cout <<"m_currentLine["<<i<<"][2]="<<m_currentLine[i][1]<<endl;
+      
       g3d_drawSphere(m_currentLine[i+0][0],m_currentLine[i+0][1],m_currentLine[i+0][2],0.05);
       
       g3d_drawOneLine(m_currentLine[i+0][0],m_currentLine[i+0][1],m_currentLine[i+0][2],
@@ -1018,6 +654,12 @@ void ReplanningSimulator::draw()
         g3d_drawSphere(m_deviateLine[i+1][0],m_deviateLine[i+1][1],m_deviateLine[i+1][2],0.02);
       }
     }
+  }
+  
+  if (ENV.getBool(Env::drawGraph) && global_rePlanningGraph) 
+  {
+    global_rePlanningGraph->setRobot( m_rosim );
+    global_rePlanningGraph->draw();
   }
   
   if (ext_g3d_traj_debug) {
@@ -1085,10 +727,10 @@ int ReplanningSimulator::execute_softmotion_simulation( int (*fct)(p3d_rob* robo
   
   if (!m_init) 
   {
-//    if(dynamic_cast<SoftmotionReplanner*>(m_replanner)->init_manipulationPlanner())
-//    {
-//      m_init = true;
-//    }
+    //    if(dynamic_cast<SoftmotionReplanner*>(m_replanner)->init_manipulationPlanner())
+    //    {
+    //      m_init = true;
+    //    }
   }
   else 
   {
@@ -1295,10 +937,13 @@ int ReplanningSimulator::execute_simple_simulation( int (*fct)(p3d_rob* robot, p
     return false;
   }
   
+  // If HERAKLES exists in the sceen, set it
+  m_replanner->setHuman( m_human );
+  
   if( global_costSpace == NULL )
   {
     cout << "Error : costspace not initialized in " << __FILE__ << " at " << __LINE__ << endl;
-    return false;
+    //return false;
   }
   
   bool RunShowTraj=true;
@@ -1342,8 +987,8 @@ int ReplanningSimulator::execute_simple_simulation( int (*fct)(p3d_rob* robot, p
   s_rep = t_rep * paramFactor;
   s_max = CurrentTraj.getRangeMax();
   
-  // this function keep track of the time and
-  // the switch id
+  // this function keeps track of
+  // time and switch id
   time_switch_and_id( s, s_rep, m_switch_id, CurrentTraj, s_switch );
   cout << "q switch id : " << m_switch_id << endl;
   cout << "s_max : " << s_max << endl;
@@ -1357,7 +1002,9 @@ int ReplanningSimulator::execute_simple_simulation( int (*fct)(p3d_rob* robot, p
   
   while ( !StopRun )
   { 
-     // Switch to new trajectory
+    //cout << (s>s_switch) << (!m_replanner->isPlanning()) << m_replanner->getPlanSucceeded() << endl;
+    
+    // Switch to new trajectory
     if( (s>s_switch) && (!m_replanner->isPlanning()) && m_replanner->getPlanSucceeded() )
     {
       set_executed_traj_to_current(CurrentTraj);
@@ -1405,8 +1052,11 @@ int ReplanningSimulator::execute_simple_simulation( int (*fct)(p3d_rob* robot, p
     //cout << "count : " << count << endl;
     m_rosim->setAndUpdate( *m_ExecuteTraj.configAtParam(s) );
     
+    // Set and update human pos
+    store_human_pos();
+    
     // Timer using real time
-    t += time_since_last_call( isFirstLoop, t_init);
+    t += time_since_last_call( isFirstLoop, t_init );
     
     // s is the parameter on the path
     s = t*paramFactor;

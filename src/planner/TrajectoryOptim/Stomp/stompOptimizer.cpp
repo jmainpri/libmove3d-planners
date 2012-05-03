@@ -50,10 +50,12 @@
 
 #include "move3d-headless.h"
 
+#include <boost/shared_ptr.hpp>
+
 using namespace std;
 USING_PART_OF_NAMESPACE_EIGEN
 
-const double hack_tweek = 2;
+const double hack_tweek = 1;
 
 //--------------------------------------------------------
 // External
@@ -317,6 +319,9 @@ namespace stomp_motion_planner
       animatePath();
     }
     
+    source_ = getSource();
+    target_ = getTarget();
+    
     // iterate
     for (iteration_=0; 
          iteration_<stomp_parameters_->getMaxIterations()&& 
@@ -336,6 +341,11 @@ namespace stomp_motion_planner
       else
       {
         doChompOptimization();
+      }
+      
+      if (stomp_parameters_->getAnimateEndeffector())
+      {
+        animateEndeffector();
       }
       
       if (last_trajectory_collision_free_ && last_trajectory_constraints_satisfied_)
@@ -387,11 +397,6 @@ namespace stomp_motion_planner
       {
         iteration_++;
         break;
-      }
-      
-      if (stomp_parameters_->getAnimateEndeffector())
-      {
-        animateEndeffector();
       }
       
       //    if (stomp_parameters_->getAnimatePath() && iteration_%1 == 0)
@@ -680,6 +685,17 @@ namespace stomp_motion_planner
     {
       if (!planning_group_->chomp_joints_[joint].has_joint_limits_)
         continue;
+     
+      // Added by jim for pr2 free flyer
+      if( planning_group_->robot_->getName() == "PR2_ROBOT" ) 
+      {
+        int index = planning_group_->chomp_joints_[joint].move3d_dof_index_;
+        
+        if( index == 8 || index == 9 || index == 10 ) {
+          group_trajectory_.getFreeJointTrajectoryBlock(joint) = Eigen::VectorXd::Zero(num_vars_free_);
+          continue;
+        }
+      }
       
       double joint_max = planning_group_->chomp_joints_[joint].joint_limit_max_;
       double joint_min = planning_group_->chomp_joints_[joint].joint_limit_min_;
@@ -1123,7 +1139,6 @@ namespace stomp_motion_planner
       traj.push_back( confPtr_t(new Configuration(q)) );
     }
   }
-
   
   void StompOptimizer::animateEndeffector()
   {
@@ -1138,11 +1153,11 @@ namespace stomp_motion_planner
       end = num_vars_all_-1;
     }
     
-    Configuration q = *robot_model_->getCurrentPos();
+    confPtr_t q = robot_model_->getCurrentPos();
     
-    //  cout << "animateEndeffector()" << endl;
-    //  cout << "group_trajectory : " << endl;
-    //  cout << group_trajectory_.getTrajectory() << endl;
+    // cout << "animateEndeffector()" << endl;
+    // cout << "group_trajectory : " << endl;
+    // cout << group_trajectory_.getTrajectory() << endl;
     
     const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
     
@@ -1153,19 +1168,21 @@ namespace stomp_motion_planner
       
       for(int j=0; j<planning_group_->num_joints_;j++)
       {
-        q[joints[j].move3d_dof_index_] = point[j];
+        (*q)[joints[j].move3d_dof_index_] = point[j];
       }
       
       //q.print();
       
-      T.push_back( std::tr1::shared_ptr<Configuration>(new Configuration(q)) );
+      T.push_back( std::tr1::shared_ptr<Configuration>(new Configuration(*q)) );
     }
     
-//    if( T.isValid() )
-//    {
-//      cout << "T is valid" << endl;
-//      //PlanEnv->setBool(PlanParam::stopPlanner, true);
-//    }
+    cout << "Move3D Trajectory Cost : " << T.cost() ;
+    if( T.isValid() ) {
+      cout << " and is valid" << endl;
+    }
+    else {
+      cout << " and is NOT valid" << endl;
+    }
     
     if(!ENV.getBool(Env::drawTrajVector))
     {
@@ -1184,10 +1201,10 @@ namespace stomp_motion_planner
     
     for(int j=0; j<planning_group_->num_joints_;j++)
     {
-      q[joints[j].move3d_dof_index_] = point[j];
+      (*q)[joints[j].move3d_dof_index_] = point[j];
     }
     
-    robot_model_->setAndUpdate( q );
+    robot_model_->setAndUpdate( *q );
     g3d_draw_allwin_active();
   }
   
@@ -1255,21 +1272,120 @@ namespace stomp_motion_planner
    }
    */
   
-  bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number )
+  //------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------
+  
+  confPtr_t StompOptimizer::getSource()
+  {
+    return getConfigurationOnGroupTraj(free_vars_start_);
+  }
+  
+  confPtr_t StompOptimizer::getTarget()
+  {
+    return getConfigurationOnGroupTraj(free_vars_end_);
+  }
+  
+  confPtr_t StompOptimizer::getConfigurationOnGroupTraj(int ith)
+  {
+    confPtr_t q = planning_group_->robot_->getCurrentPos();
+    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(ith).transpose();
+    
+    for(int j=0; j<planning_group_->num_joints_;j++)
+    {
+      (*q)[joints[j].move3d_dof_index_] = point[j];
+    }
+    return q;
+  }
+  
+  void StompOptimizer::resampleParameters(std::vector<Eigen::VectorXd>& parameters)
+  {
+    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    API::Smoothing traj(planning_group_->robot_);
+    Eigen::MatrixXd parameters_tmp(num_joints_,num_vars_free_);
+    
+    for ( int i=0; i<num_joints_; ++i) {
+      parameters_tmp.row(i) = parameters[i].transpose();
+    }
+
+    traj.clear();
+    for (int j=0; j<=num_vars_free_-1; ++j)
+    {
+      // Set the configuration from the stored source and target
+      confPtr_t q;
+      
+      if( j==0 ) {
+        q = source_;
+      }
+      else if( j == num_vars_free_-1 ) {
+        q = target_;
+      }
+      else
+      {
+        q = planning_group_->robot_->getCurrentPos();
+        
+        for ( int i=0; i<planning_group_->num_joints_; ++i)
+        {  
+          (*q)[joints[i].move3d_dof_index_] = parameters_tmp(i,j);
+        } 
+      }
+      
+      traj.push_back(q);
+    }
+    
+    PlanEnv->setBool(PlanParam::trajStompComputeColl, false );
+    
+    traj.runShortCut(15);
+    
+    PlanEnv->setBool(PlanParam::trajStompComputeColl, true );
+    
+    // calculate the forward kinematics for the fixed states only in the first iteration:
+    double step = traj.getRangeMax() / (num_vars_free_-1);
+    double param = step;
+    for (int j=0; j<=num_vars_free_-1; ++j)
+    {
+      confPtr_t q = traj.configAtParam(param);
+      
+      for ( int i=0; i<this->getPlanningGroup()->num_joints_; ++i )
+      {  
+        parameters_tmp(i,j) = (*q)[joints[i].move3d_dof_index_];
+      }
+      param += step;
+    }
+    
+    for ( int i=0; i<num_joints_; ++i) {
+      parameters[i].transpose() = parameters_tmp.row(i);
+    }
+  }
+  
+  bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool resample )
   {
     //  ros::WallTime start_time = ros::WallTime::now();
     
     // copy the parameters into group_trajectory_:
-    for (int d=0; d<num_joints_; ++d)
-    {
+    for (int d=0; d<num_joints_; ++d) {
       group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
     }
-    
     //cout << "group_trajectory_ = " << endl << group_trajectory_.getTrajectory() << endl;
     
     // respect joint limits:
     succeded_joint_limits_ = handleJointLimits();
     //cout << "Violation number : " << joint_limits_violation_ << endl;
+    
+    if( resample ) 
+    {
+      // copy the parameters into group_trajectory_:
+      for (int d=0; d<num_joints_; ++d) {
+        parameters[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
+      }
+      //Resample
+      resampleParameters( parameters );
+      
+      for (int d=0; d<num_joints_; ++d) {
+        group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
+      }
+    }
+    
     // copy to full traj:
     updateFullTrajectory();
     

@@ -9,17 +9,22 @@
 #ifndef REPLANNING_HPP
 #define REPLANNING_HPP
 
-#include "P3d-pkg.h"
-#include "LightPlanner-pkg.h"
-
 #include "API/Trajectory/trajectory.hpp"
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Roadmap/graph.hpp"
 
-#include "planner/Diffusion/Variants/Star-RRT.hpp"
+#include "HRI_costspace/HRICS_Navigation.hpp"
+
+#include "P3d-pkg.h"
+#include "LightPlanner-pkg.h"
+
+//#include "planner/Diffusion/Variants/Star-RRT.hpp"
 
 #include <string>
 #include <tr1/memory>
+
+//! Function to cancel all kinematic constraints
+void p3d_deactivate_all_cntrts( Robot* r );
 
 //! Base replanner
 //!
@@ -28,6 +33,8 @@ class Replanner
 public:
   Replanner(Robot* r);
   ~Replanner();
+  
+  void setHuman(Robot* hum);
   
   bool getPlanSucceeded() const { return m_planningSucceded; }
   
@@ -48,6 +55,7 @@ protected:
   p3d_traj* concat_to_current_traj(const std::vector<p3d_traj*>& trajs);
   
   Robot* m_robot;
+  Robot* m_human;
   
   confPtr_t m_qSwitch;
   confPtr_t m_qGoal;
@@ -84,9 +92,8 @@ public:
   void run();
   
 protected:
-  
-  void set_planner_type(int type);
-  void init_planner_type();
+  void set_active_joints(int set);
+  void init_active_joints();
   void init_for_navigation();
   void init_for_manipuation();
   void init_for_mobile_manip();
@@ -101,19 +108,50 @@ protected:
   m_ReplanningType; 
 };
 
-//! Star replanner
+//! Handover replanner
 //!
-class StarReplanner : public SimpleReplanner
+class HandoverReplanner : public SimpleReplanner
 {   
 public:
-  StarReplanner(Robot* r);
-  ~StarReplanner();
+  HandoverReplanner(Robot* r);
+  ~HandoverReplanner();
   
   bool init();
   void run();
   
-private: 
-  StarRRT* rrt;
+private:
+  std::pair<bool,confPtr_t> newGoal();
+  bool m_first_run;
+  Robot* m_human;
+};
+
+//! AStar replanner
+//!
+class AStarReplanner : public SimpleReplanner
+{   
+public:
+  AStarReplanner(Robot* r);
+  ~AStarReplanner();
+  
+  bool init();
+  void run();
+  
+private:
+  bool m_first_run;
+  Robot* m_human;
+  HRICS::Navigation* m_navigation;
+};
+
+//! T-RRT replanner
+//!
+class RRTReplanner : public SimpleReplanner
+{   
+public:
+  RRTReplanner(Robot* r);
+  ~RRTReplanner();
+  
+  bool init();
+  void run();
 };
 
 //! Softmotion replanner
@@ -136,68 +174,6 @@ private:
   ManipulationPlanner* m_manipPlanner;
 };
 
-//! Class for implementing a replanning simulator
-//!
-class ReplanningSimulator 
-{   
-public:
-  ReplanningSimulator();
-  ~ReplanningSimulator();
-  
-  p3d_rob* getRobot();
-  
-//  bool init_simple_replanning();
-  
-  double time_since_last_call(bool& is_first_call, double& t_init);
-  void set_multithread_graphical(bool enable);
-  
-  void store_traj_to_vect(API::Trajectory& traj, double step);
-  void store_exploration(const API::Trajectory& traj, double lPrev, double lNext, std::tr1::shared_ptr<Configuration> qNew);
-  void store_traj_to_draw(const API::Trajectory& traj, double step);
-  
-  int execute_simple_simulation( int (*fct)(p3d_rob* robot, p3d_localpath* localpathPt) );
-  int execute_softmotion_simulation( int (*fct)(p3d_rob* robot, p3d_localpath* localpathPt) );
-  
-  void draw();
-  
-private:
-  
-  bool init_simulator();
-  void init(std::string robotName);
-  bool init_find_robot_basename( std::string& robotBaseName );
-  void init_deactivate_all_cntrts( p3d_rob* rob );
-  bool init_rosim_cntrts_and_collisions();
-  
-  void optimize_current_traj();
-  
-  void store_traj_to_vect(SM_TRAJ& smTraj, double current, double step);
-  void store_shortcut(const API::Trajectory& traj, double lPrev, double lNext);
-  
-  void set_executed_traj_to_current(API::Trajectory& traj);
-  bool time_switch_and_id(double s, double s_rep, int& id_switch, API::Trajectory& traj, double &s_switch);
-  
-  //----------------------------------------------------
-  //! Local variables
-  bool m_init;
-  
-  Replanner* m_replanner;
-  
-  int m_switch_id;
-  
-  Robot* m_robot;
-  Robot* m_rosim;
-  Robot* m_human;
-  
-  API::Trajectory m_ExecuteTraj;
-  
-  bool m_isWritingDisplay;
-  bool m_isReadingDisplay;
-  
-  std::vector< std::vector<double> > m_currentLine;
-  std::vector< std::vector<double> > m_lastLine;
-  std::vector< std::vector<double> > m_deviateLine;
-};
 
-extern ReplanningSimulator* global_rePlanningEnv;
 
 #endif

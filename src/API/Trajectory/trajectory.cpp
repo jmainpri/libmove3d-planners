@@ -38,9 +38,7 @@ HighestCostId(0),
 isHighestCostIdSet(false),
 name(""),
 file(""),
-nloc(0),
 mColor(0),
-range_param(0),
 m_Source(new Configuration(m_Robot,NULL))
 {
   
@@ -52,9 +50,7 @@ HighestCostId(0),
 isHighestCostIdSet(false),
 name(""),
 file(""),
-nloc(0),
 mColor(0),
-range_param(0),
 m_Source(new Configuration(m_Robot,NULL))
 {
   
@@ -66,81 +62,73 @@ HighestCostId(T.HighestCostId),
 isHighestCostIdSet(T.isHighestCostIdSet),
 name(T.name), 
 file(T.file),
-nloc(T.nloc), 
 mColor(T.mColor),
-range_param(T.range_param), 
 m_Source(T.m_Source), 
 m_Target(T.m_Target)
 {
 	
-	for (uint i = 0; i < nloc; i++)
+	for (uint i = 0; i < T.m_Courbe.size(); i++)
 	{
 		m_Courbe.push_back(new LocalPath(*(T.m_Courbe.at(i))));
 	}
 	//	cout << "Copy Trajectory" << endl;
 }
 
-Trajectory& Trajectory::operator=(const Trajectory& t)
+Trajectory& Trajectory::operator=(const Trajectory& T)
 {
-	if (nloc > 0)
+	if (m_Courbe.size() > 0)
 	{
-		for (uint i = 0; i < nloc; i++)
+		for (uint i = 0; i <m_Courbe.size(); i++)
 		{
-			delete m_Courbe.at(i);
+			delete m_Courbe[i];
 		}
 	}
 	
 	m_Courbe.clear();
 	
 	// TODO Name of file and robot
-	name = t.name;
-	file = t.file;
+	name = T.name;
+	file = T.file;
 	
-	m_Robot = t.m_Robot;
+	m_Robot = T.m_Robot;
 	
-	/* Number of localpath */
-	nloc = t.nloc;
-	range_param = t.range_param;
-	
-	for (uint i = 0; i < nloc; i++)
+	for (uint i = 0; i <T.m_Courbe.size(); i++)
 	{
-		m_Courbe.push_back(new LocalPath(*(t.m_Courbe.at(i))));
+		m_Courbe.push_back(new LocalPath(*(T.m_Courbe[i])));
 	}
 	
 	//	cout << "Copy in operator= Trajtecory" << endl;
 	
-	m_Source = t.m_Source;
-	m_Target = t.m_Target;
-	mColor = t.mColor;
-	HighestCostId = t.HighestCostId;
-	isHighestCostIdSet = t.isHighestCostIdSet;
+	m_Source = T.m_Source;
+	m_Target = T.m_Target;
+	mColor = T.mColor;
+	HighestCostId = T.HighestCostId;
+	isHighestCostIdSet = T.isHighestCostIdSet;
 	
 	return *this;
 }
 
 Trajectory::Trajectory( vector< shared_ptr<Configuration> >& configs) :
-HighestCostId(0), isHighestCostIdSet(false)
+HighestCostId(0), 
+isHighestCostIdSet(false)
 {
 	if ( !configs.empty() )
 	{
 		name = "";
 		file = "";
-		
-		nloc = configs.size()-1; /* Number of localpath */
+
 		m_Robot	= configs[0]->getRobot();
 		
 		m_Source = configs[0];
-		m_Target = configs[nloc];
+		m_Target = configs.back();
 		
-		range_param = 0;
 		m_Courbe.clear();
 		
-		for (unsigned int i = 0; i < nloc; i++)
+		for (unsigned int i=0; i<configs.size()-1; i++)
 		{
 			if ( !configs[i]->equal( *configs[i+1]) ) 
 			{
 				LocalPath* path = new LocalPath( configs[i], configs[i+1] );
-				range_param += path->getParamMax();
 				m_Courbe.push_back(path);
 			}
 			else 
@@ -148,8 +136,6 @@ HighestCostId(0), isHighestCostIdSet(false)
 				cout << "two configuration are the same in traj constructor" << endl;
 			}
 		}
-		
-		nloc = m_Courbe.size();
 	}
 	else
 	{
@@ -171,9 +157,7 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t)
 	
 	// TODO Name and file (string based)
 	m_Robot = R;
-	
-	nloc = t->nlp;
-	
+
 	p3d_localpath* localpathPt = t->courbePt;
 	
 	while (localpathPt != NULL)
@@ -185,28 +169,17 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t)
 		localpathPt = localpathPt->next_lp;
 	}
 	
-#ifdef P3D_PLANNER
-	range_param = p3d_compute_traj_rangeparam(t);
-#else
-	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
-#endif
-	
-	m_Source = shared_ptr<Configuration> (new Configuration(m_Robot,
-																													p3d_config_at_param_along_traj(t, 0)));
-	
+	m_Source = confPtr_t (new Configuration(m_Robot,p3d_config_at_param_along_traj(t, 0)));
 	m_Source->setConstraints();
 	
 	//	cout << "m_Source:" << endl;
 	//	m_Source->print();
 	
-	m_Target = shared_ptr<Configuration> (new Configuration(m_Robot,
-																													p3d_config_at_param_along_traj(t, range_param)));
-	
+	m_Target = confPtr_t (new Configuration(m_Robot,p3d_config_at_param_along_traj(t, getRangeMax())));
 	m_Target->setConstraints();
 	//	cout << "m_Target:" << endl;
 	//	m_Target->print();
 	
-	updateRange();
 	//	cout << "range_param = " << range_param << endl;
 	mColor = 0;
 	
@@ -256,60 +229,43 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
 		trajPt = p3d_create_empty_trajectory(m_Robot->getRobotStruct());
 	}
 	
-	//	trajPt->name       = strdup(name);
-	//	trajPt->file       = NULL;  // Modification Fabien
+	// trajPt->name = strdup(name);
+	// trajPt->file = NULL;  // Modification Fabien
 	trajPt->num = 0; //m_Robot->getRobotStruct()->nt;
-	//    trajPt->rob = m_Robot->getRobotStruct();
-	
-	//	cout << m_Robot->getRobotStruct() << endl;
-	
-	nloc = 0;
-	
+	// trajPt->rob = m_Robot->getRobotStruct();
+
 	p3d_localpath *localpathPt = NULL;
 	p3d_localpath *localprevPt = NULL;
   
   bool first = true;
 	
-  for (unsigned int i = 0; i < m_Courbe.size(); i++)
+  for (int i=0; i<int(m_Courbe.size()); i++)
   {
-      //    if ( *m_Courbe[i]->getBegin() ==  *m_Courbe[i]->getEnd() )
-      //    {
-      //      cout << "null LocalPath in replaceP3dTraj" << endl;
-      //      continue;
-      //    }
-
-      localprevPt = localpathPt;
-      localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( m_Robot->getRobotStruct(),
-                                                             m_Courbe[i]->getLocalpathStruct() );
-
-      if( localprevPt )
-      {
-          localprevPt->next_lp = localpathPt;
-      }
-
-      localpathPt->prev_lp = localprevPt;
-
-      if ( first )
-      {
-          trajPt->courbePt = localpathPt;
-          first = false;
-      }
-
-      nloc++;
+    localprevPt = localpathPt;
+    localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( m_Robot->getRobotStruct(),
+                                                           m_Courbe[i]->getLocalpathStruct() );
+    
+    if( localprevPt )
+    {
+      localprevPt->next_lp = localpathPt;
+    }
+    
+    localpathPt->prev_lp = localprevPt;
+    
+    if ( first )
+    {
+      trajPt->courbePt = localpathPt;
+      first = false;
+    }
   }
 	
-  if (nloc != 0) 
-      localpathPt->next_lp = NULL;
-  else
-      cout << "replaceP3dTraj with empty trajectory" << endl;
+  trajPt->range_param = p3d_compute_traj_rangeparam(trajPt);
+  trajPt->nlp = m_Courbe.size();
   
-  trajPt->nlp = nloc;
-	
-#ifdef P3D_PLANNER
-	trajPt->range_param = p3d_compute_traj_rangeparam(trajPt);
-#else
-        printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
-#endif
+  if (m_Courbe.size() != 0) 
+    localpathPt->next_lp = NULL;
+  else
+    cout << "replaceP3dTraj with empty trajectory" << endl;
   
   return trajPt;
   //	print()	
@@ -347,8 +303,6 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
   
 	//	cout << rob->getRobotStruct() << endl;
   
-	nloc = 0;
-  
 	p3d_localpath *localpathPt = NULL;
 	p3d_localpath *localprevPt = NULL;
   
@@ -378,11 +332,9 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
       trajPt->courbePt = localpathPt;
       first = false;
     }
-    
-    nloc++;
 	}
   
-  if (nloc != 0)
+  if (m_Courbe.size() != 0)
   {
     localpathPt->next_lp = NULL;
   }
@@ -391,12 +343,12 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
     cout << "replaceP3dTraj with empty trajectory" << endl;
   }
   
-  trajPt->nlp = nloc;
+  trajPt->nlp = m_Courbe.size();
   
 #ifdef P3D_PLANNER
-    trajPt->range_param = p3d_compute_traj_rangeparam(trajPt);
+  trajPt->range_param = p3d_compute_traj_rangeparam(trajPt);
 #else
-    printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+  printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
 #endif
   
   return trajPt;
@@ -424,7 +376,7 @@ shared_ptr<Configuration> Trajectory::configAtParam(double param, unsigned int* 
 	double prevSoFar(0.0);
 	unsigned int i=0;
   
-	for ( ; i<nloc; i++)
+	for ( ; i<m_Courbe.size(); i++)
 	{
 		soFar = soFar + m_Courbe.at(i)->getParamMax();
 		
@@ -449,7 +401,7 @@ shared_ptr<Configuration> Trajectory::configAtParam(double param, unsigned int* 
 	}
   
   if( id_localpath != NULL ) {
-    *id_localpath = nloc-1;
+    *id_localpath = m_Courbe.size()-1;
   }
 	return m_Courbe.back()->configAtParam(param);
 }
@@ -478,7 +430,7 @@ vector<shared_ptr<Configuration> > Trajectory::getNConfAtParam(double delta)
 	double soFar(0.0);
 	double prevSoFar(0.0);
 	
-	for (uint i = 0; i < nloc; i++)
+	for (uint i = 0; i < m_Courbe.size(); i++)
 	{
 		
 		soFar = soFar + m_Courbe.at(i)->getParamMax();
@@ -499,13 +451,13 @@ vector<shared_ptr<Configuration> > Trajectory::getNConfAtParam(double delta)
 			param += delta;
 		}
 		// TODO watch out
-		if (i < nloc - 1)
+		if (i < m_Courbe.size() - 1)
 		{
 			prevSoFar = soFar;
 		}
 	}
 	
-	tmpVector.push_back(m_Courbe.at(nloc - 1)->configAtParam(param - prevSoFar));
+	tmpVector.push_back(m_Courbe.at(m_Courbe.size() - 1)->configAtParam(param - prevSoFar));
 	
 	return tmpVector;
 	
@@ -518,13 +470,12 @@ bool Trajectory::isEmpty()
 
 void Trajectory::clear()
 {
-  for (uint i = 0; i < nloc; i++)
+  for (uint i = 0; i < m_Courbe.size(); i++)
 	{
 		delete m_Courbe.at(i);
 	}
   
   m_Courbe.clear();
-  updateRange();
 }
 
 LocalPath* Trajectory::getLocalPathPtrAt(unsigned int id) const
@@ -550,41 +501,42 @@ double Trajectory::computeSubPortionRange(const vector<LocalPath*>& portion) con
 {
 	double range(0.0);
 	
-	for (unsigned int i = 0; i < portion.size(); i++)
+	for (int i=0; i<int(portion.size()); i++)
 	{
+// portion[i]->getBegin()->print();
+// portion[i]->getEnd()->print();
+    
 		range += portion[i]->getParamMax();
 	}
 	
 	return range;
 }
 
-
-void Trajectory::updateRange()
-{
-	
-	nloc = m_Courbe.size();
-	range_param = computeSubPortionRange(m_Courbe);
-}
+//void Trajectory::updateRange()
+//{
+//	nloc = m_Courbe.size();
+//	range_param = computeSubPortionRange(m_Courbe);
+//}
 
 bool Trajectory::isValid()
 {
-	for (unsigned int i = 0; i < m_Courbe.size(); i++)
+	for (int i=0; i<int(m_Courbe.size()); i++)
 	{
 		if (!m_Courbe[i]->isValid())
 		{
 			return false;
 		}
-		//                cout <<"LocalPath["<<i<<"] = "<< m_Courbe[i]->getNbColTest() << endl;
+// cout <<"LocalPath["<<i<<"] = "<< m_Courbe[i]->getNbColTest() << endl;
 	}
 	
 	return true;
 }
 
-void Trajectory::resetCostComputed()
+void Trajectory::resetIsValid()
 {
-	for (unsigned int i = 0; i < m_Courbe.size(); i++)
+	for (int i=0; i<int(m_Courbe.size()); i++)
 	{
-		m_Courbe[i]->resetCostComputed();
+		m_Courbe[i]->setLocalpathAsNotTested();
 	}
 }
 
@@ -796,8 +748,24 @@ double Trajectory::computeSubPortionCostVisib( vector<LocalPath*>& portion )
 	return cost;
 }
 
+double Trajectory::collisionCost() 
+{  
+  if (isValid()) 
+  {
+    return 0.0;
+  }
+  else {
+    return 1000.0;
+  }
+}
+
 double Trajectory::cost()
 {
+  if( !ENV.getBool(Env::isCostSpace)) 
+  {
+    return collisionCost();
+  }
+  
 	double cost(0.0);
 	
 	if( p3d_GetDeltaCostChoice() == VISIBILITY )
@@ -807,25 +775,39 @@ double Trajectory::cost()
 	else
 	{
 		cost = computeSubPortionCost(m_Courbe);
-		//            cost =  computeSubPortionIntergralCost(m_Courbe);
-		//        cost = ReComputeSubPortionCost(m_Courbe);
-		
+		// cost =  computeSubPortionIntergralCost(m_Courbe);
+		// cost = ReComputeSubPortionCost(m_Courbe);
 	}
 	return cost;
 }
 
 double Trajectory::costRecomputed()
 {
+  if( !ENV.getBool(Env::isCostSpace)) 
+  {
+    return collisionCost();
+  }
+  
 	return ReComputeSubPortionCost(m_Courbe);
 }
 
 double Trajectory::costNoRecompute()
 {
+  if(!ENV.getBool(Env::isCostSpace)) 
+  {
+    return collisionCost();
+  }
+  
 	return computeSubPortionCost(m_Courbe);
 }
 
 double Trajectory::costDeltaAlongTraj()
 {
+  if(!ENV.getBool(Env::isCostSpace)) 
+  {
+    return collisionCost();
+  }
+  
 	cout << "Sum of LP cost = " << computeSubPortionCost(m_Courbe) << endl;
 	Trajectory tmp(*this);
 	cout << "Sum of LP cost (Recomputed) = "  << tmp.ReComputeSubPortionCost(tmp.m_Courbe) << endl;
@@ -834,16 +816,23 @@ double Trajectory::costDeltaAlongTraj()
 	return cost;
 }
 
-vector<shared_ptr<Configuration> > Trajectory::getTowConfigurationAtParam(
-																																					double param1, double param2, uint& lp1, uint& lp2)
+void Trajectory::resetCostComputed()
 {
-	vector<shared_ptr<Configuration> > conf;
+	for (unsigned int i = 0; i < m_Courbe.size(); i++)
+	{
+		m_Courbe[i]->resetCostComputed();
+	}
+}
+
+vector<confPtr_t> Trajectory::getTowConfigurationAtParam(double param1, double param2, uint& lp1, uint& lp2)
+{
+	vector<confPtr_t> conf;
 	
 	if (param1 < 0)
 	{
 		cout << "Error: the parameter is out of band" << endl;
 	}
-	if (param2 > this->range_param)
+	if (param2 > getRangeMax() )
 	{
 		cout << "Error: the parameter is out of band" << endl;
 	}
@@ -877,7 +866,7 @@ vector<shared_ptr<Configuration> > Trajectory::getTowConfigurationAtParam(
 			break;
 		}
 		prevSoFar = soFar;
-		if (i == (nloc - 1))
+		if (i == (m_Courbe.size() - 1))
 		{
 			q1 = m_Courbe.at(i)->getEnd();
 			lp1 = i;
@@ -903,9 +892,9 @@ vector<shared_ptr<Configuration> > Trajectory::getTowConfigurationAtParam(
 		}
 		prevSoFar = soFar;
 		
-		if (i == (nloc - 1))
+		if (i == (m_Courbe.size() - 1))
 		{
-			q2 = m_Courbe.at(nloc - 1)->getEnd();
+			q2 = m_Courbe.at(m_Courbe.size() - 1)->getEnd();
 			lp2 = i;
 		}
 	}
@@ -1193,19 +1182,16 @@ Trajectory Trajectory::extractSubTrajectoryOfLocalPaths(unsigned int id_start, u
 	Trajectory newTraj(m_Robot);
 	
 	newTraj.m_Courbe = path;
-	newTraj.nloc = path.size();
 	
 	if (path.size() == 0)
 	{
 		newTraj.m_Source = m_Courbe[id_start]->getBegin();
 		newTraj.m_Target = m_Courbe[id_end]->getEnd();
-		newTraj.range_param = 0;
 	}
 	else
 	{
 		newTraj.m_Source = path.at(0)->getBegin();
 		newTraj.m_Target = path.back()->getEnd();
-		newTraj.range_param = computeSubPortionRange(path);
 	}
 	
 	return newTraj;
@@ -1213,7 +1199,6 @@ Trajectory Trajectory::extractSubTrajectoryOfLocalPaths(unsigned int id_start, u
 
 Trajectory Trajectory::extractSubTrajectory(double param1, double param2)
 {
-	
 	uint first(0);
 	uint last(0);
 	
@@ -1231,19 +1216,16 @@ Trajectory Trajectory::extractSubTrajectory(double param1, double param2)
 	Trajectory newTraj(m_Robot);
 	
 	newTraj.m_Courbe = path;
-	newTraj.nloc = path.size();
 	
 	if (path.size() == 0)
 	{
 		newTraj.m_Source = configAtParam(param1);
 		newTraj.m_Target = newTraj.m_Source;
-		newTraj.range_param = 0;
 	}
 	else
 	{
 		newTraj.m_Source = path.at(0)->getBegin();
 		newTraj.m_Target = path.back()->getEnd();
-		newTraj.range_param = computeSubPortionRange(path);
 	}
 	
 	return newTraj;
@@ -1261,7 +1243,7 @@ extern void* GroundCostObj;
 
 void Trajectory::draw(int nbKeyFrame)
 {
-	double du = range_param / nbKeyFrame;
+	double du = getRangeMax() / nbKeyFrame;
 	double u = du;
 	
 	int val1, val2;
@@ -1293,8 +1275,10 @@ void Trajectory::draw(int nbKeyFrame)
 	
 	int saveColor;
 	bool red = false;
+  
+  double range_max = getRangeMax();
 	
-	while (u < range_param)
+	while (u < range_max)
 	{
 		/* position of the robot corresponding to parameter u */
 		q = configAtParam(u);
@@ -1454,7 +1438,6 @@ bool Trajectory::push_back(shared_ptr<LocalPath> path)
     m_Target = path->getEnd();
     
     m_Courbe.push_back(new LocalPath(*path));
-    updateRange();
 	}
 	else
 	{
@@ -1462,7 +1445,6 @@ bool Trajectory::push_back(shared_ptr<LocalPath> path)
     {
       m_Courbe.push_back(new LocalPath(*path));
       m_Target = path->getEnd();
-      updateRange();
     }
     else {
       return false;
@@ -1474,31 +1456,29 @@ bool Trajectory::push_back(shared_ptr<LocalPath> path)
 
 void Trajectory::push_back(shared_ptr<Configuration> q)
 {
-    if( m_Courbe.empty() )
+  if( m_Courbe.empty() )
+  {
+    if( m_Source->getConfigStruct() == NULL )
     {
-        if( m_Source->getConfigStruct() == NULL )
-        {
-            m_Source = q;
-        }
-        else
-        {
-            if ( !m_Source->equal(*q) )
-            {
-                m_Courbe.push_back(new LocalPath(m_Source,q));
-                m_Target = q;
-                updateRange();
-            }
-        }
+      m_Source = q;
     }
     else
     {
-        if ( !m_Target->equal(*q) )
-        {
-            m_Courbe.push_back(new LocalPath(m_Target,q));
-            m_Target = q;
-            updateRange();
-        }
+      if ( !m_Source->equal(*q) )
+      {
+        m_Courbe.push_back(new LocalPath(m_Source,q));
+        m_Target = q;
+      }
     }
+  }
+  else
+  {
+    if ( !m_Target->equal(*q) )
+    {
+      m_Courbe.push_back(new LocalPath(m_Target,q));
+      m_Target = q;
+    }
+  }
 }
 
 void Trajectory::cutTrajInSmallLPSimple(unsigned int nLP)
@@ -1506,7 +1486,7 @@ void Trajectory::cutTrajInSmallLPSimple(unsigned int nLP)
   double range = computeSubPortionRange(m_Courbe);
   double nb_path= nLP;
   double delta = range/nb_path;
-
+  
 	vector<LocalPath*> portion;
   portion.push_back(new LocalPath(m_Source,configAtParam(delta)));
   
@@ -1578,6 +1558,12 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
     cout << "Can not cut an empty portion" << endl;
     return 0;
   }
+  
+  if( range == 0.0 )
+  {
+    cout << "Can not cut a zero range trajectory" << endl;
+    return 0;
+  }
 	
 	cout << "NB Of LP = " << portion.size() << endl;
 	cout << "NB Of LP = " << nLP << endl;
@@ -1599,16 +1585,13 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 		double resol;
     double length = portion[i]->getParamMax();
     
-    if ( length < dMax )
-		{
+    if ( length < dMax ) {
 			resol = length;
 		}
-		else if ( floor(length/dMax) == length/dMax ) 
-		{
+		else if ( floor(length/dMax) == length/dMax ) {
 			resol = dMax;
 		}
-		else 
-		{
+		else {
 			double n = floor(length/dMax); // minimal number of segment
 			resol = length / n;
 		}
@@ -1626,7 +1609,7 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 		bool tooFar=false;
     
 		// Loop for every small localpath
-		for ( int i=0; i<int(nbOfSmallLP)-1; i++)
+		for ( int i=0; i<int(nbOfSmallLP); i++)
 		{
 			double resol;
       double length = portion[j]->getParamMax();
@@ -1646,7 +1629,7 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
       }
       
 			param += resol;
-
+      
 			// Check to go seek the conf on next big LP
 			while ( param > soFar )
 			{
@@ -1663,10 +1646,10 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 			}
 			
       if (!tooFar) {
-			// Create small localpath
-			confPtr = portion[j]->configAtParam(param - prevSoFar);
-			portionTmp.push_back(new LocalPath(confPtrTmp, confPtr));
-			confPtrTmp = confPtr;
+        // Create small localpath
+        confPtr = portion[j]->configAtParam(param - prevSoFar);
+        portionTmp.push_back(new LocalPath(confPtrTmp, confPtr));
+        confPtrTmp = confPtr;
       }
       else {
         break;
@@ -1686,21 +1669,22 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 	}
 	
 	// The last LP is made of the end configuration
-  if( portionTmp.size() >= 2 )
-  {
+  if( portionTmp.size() >= 2 ) {
     confPtrTmp = portionTmp[portionTmp.size()-2]->getEnd();
   }
-  else 
-  {
+  else {
+    //portionTmp.back
     confPtrTmp = portionTmp.back()->getBegin();
   }
   
 	confPtr = portion.back()->getEnd();
 	
+  delete portionTmp.back();
 	portionTmp.back() = new LocalPath(confPtrTmp, confPtr);
 	
 	cout <<  "old range = " << range << endl;
 	cout <<  "new range = " << computeSubPortionRange(portionTmp) << endl;
+  cout << "portionTmp.size() : " << portionTmp.size() << endl;
 	
 	// Delete and replace every thing
 	for (int i = 0; i<int(portion.size()); i++)
@@ -1713,9 +1697,7 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 	
 	if (nLP != portion.size())
 	{
-		cout << "Error: cutPortionInSmallLP";
-    cout << " ( nLP = " << nLP ;
-    cout << " , portion.size() = " << portion.size() << " )" << endl;
+		cout << "Error: cutPortionInSmallLP ( nLP = " << nLP << " , portion.size() = " << portion.size() << " )" << endl;
 	}
 	
 	return portion.size();
@@ -1739,10 +1721,8 @@ void Trajectory::cutTrajInSmallLP(unsigned int nLP)
 		return;
 	}
 	
-	updateRange();
-	
 	cout << "Cutting into " << nLP << " local paths" << endl;
-	cout << "Traj Size = " << nloc << endl;
+	cout << "Traj Size = " << m_Courbe.size() << endl;
 	cout << "Cost Of trajectory :" << this->cost() << endl;
 	
 	if (!m_Source->equal(*configAtParam(0)))
@@ -1750,10 +1730,10 @@ void Trajectory::cutTrajInSmallLP(unsigned int nLP)
 		cout << "Error" << endl;
 	}
 	
-	if (!m_Target->equal(*configAtParam(range_param)))
+	if (!m_Target->equal(*configAtParam(getRangeMax())))
 	{
 		m_Target->print();
-		configAtParam(range_param)->print();
+		configAtParam( getRangeMax() )->print();
 		cout << "Error" << endl;
 	}
 }
@@ -1762,7 +1742,7 @@ bool Trajectory::concat(const Trajectory& traj)
 {
   if( traj.m_Courbe.size() == 0 )
     return true;
-     
+  
   if( !m_Courbe.back()->getEnd()->equal(*traj.m_Courbe[0]->getBegin())  )
     return false;
   
@@ -1770,8 +1750,6 @@ bool Trajectory::concat(const Trajectory& traj)
   {
     m_Courbe.push_back( new LocalPath( *traj.m_Courbe[i] ) );
   }
-  
-  updateRange();
   return true;
 }
 
@@ -1798,19 +1776,17 @@ bool Trajectory::replacePortionOfLocalPaths(unsigned int id1, unsigned int id2, 
   
   m_Courbe.erase(m_Courbe.begin() + id1, m_Courbe.begin() + id2);
 	m_Courbe.insert(m_Courbe.begin() + id1, paths.begin(), paths.end());
-	
-	updateRange();
   return true;
 }
 
 bool Trajectory::replacePortion(double param1, double param2,
 																vector<LocalPath*> paths , bool freeMemory )
 {
-	shared_ptr<Configuration> q11 = paths.at(0)->getBegin();
-	shared_ptr<Configuration> q12 = paths.back()->getEnd();
+	confPtr_t q11 = paths.at(0)->getBegin();
+	confPtr_t q12 = paths.back()->getEnd();
 	
-	shared_ptr<Configuration> q21;
-	shared_ptr<Configuration> q22;
+	confPtr_t q21;
+	confPtr_t q22;
   
 	if (param1 > param2)
 	{
@@ -1833,7 +1809,7 @@ bool Trajectory::replacePortion(double param1, double param2,
 	unsigned int id_LP_1(0);
 	unsigned int id_LP_2(0);
 	
-	for (unsigned int i = 0; i < nloc; i++)
+	for (unsigned int i = 0; i < m_Courbe.size(); i++)
 	{
 		soFar = soFar + m_Courbe[i]->getParamMax();
 		
@@ -1847,7 +1823,7 @@ bool Trajectory::replacePortion(double param1, double param2,
 			break;
 		}
 		prevSoFar = soFar;
-		if (i == (nloc - 1))
+		if (i == (getRangeMax() - 1))
 		{
 			cout << "Warning: first parameter not found on trajectory" << endl;
 			//			return;
@@ -1856,7 +1832,7 @@ bool Trajectory::replacePortion(double param1, double param2,
 	
 	soFar = prevSoFar;
 	
-	for (unsigned int i = id_LP_1; i < nloc; i++)
+	for (unsigned int i = id_LP_1; i < m_Courbe.size(); i++)
 	{
 		soFar = soFar + m_Courbe[i]->getParamMax();
 		
@@ -1871,9 +1847,9 @@ bool Trajectory::replacePortion(double param1, double param2,
 		}
 		prevSoFar = soFar;
 		
-		if (i == (nloc - 1))
+		if (i == (m_Courbe.size() - 1))
 		{
-			q22 = m_Courbe.at(nloc - 1)->getEnd();
+			q22 = m_Courbe.at(m_Courbe.size() - 1)->getEnd();
 			id_LP_2 = i;
 			param_end = soFar;
 		}
@@ -1960,11 +1936,49 @@ bool Trajectory::replacePortion(double param1, double param2,
 	return true;
 }
 
+bool Trajectory::replaceBegin( double param, const vector<LocalPath*>& paths )
+{
+//  Trajectory traj1( extractSubTrajectory( 0.0, param ) );
+//  Trajectory traj2( m_Robot );
+//  traj2.push_back( paths );
+//  traj1.concat( traj2 );
+//  
+//  m_Courbe = traj1.m_Courbe;
+//  m_Source = traj1.m_Source;
+//  m_Target = traj1.m_Target;
+//  
+//  for (int i=0; i<int(m_Courbe.size()); i++) 
+//  {
+//    m_Courbe[i] = new LocalPath(*m_Courbe[i]);
+//  }
+  cout << "Function : " << __func__ << " is TODO" << endl;
+  return false;
+}
+
+bool Trajectory::replaceEnd( double param, const vector<LocalPath*>& paths )
+{
+  uint first(0); uint last(0);
+	vector<LocalPath*> new_courbe = extractSubPortion(0.0, param, first, last);
+	
+	for (int i=0; i<int(paths.size()); i++) {
+    new_courbe.push_back( paths[i] );
+  }
+  
+  for (int i=0; i<int(m_Courbe.size()); i++) {
+    delete m_Courbe[i];
+  }
+	
+	m_Courbe = new_courbe;
+  m_Source = new_courbe.at(0)->getBegin();
+	m_Target = new_courbe.back()->getEnd();
+	return true;
+}
+
 unsigned int Trajectory::getIdOfPathAt(double param)
 {
 	double soFar(0.0);
 	
-	for (unsigned int i = 0; i < nloc; i++)
+	for (unsigned int i = 0; i < m_Courbe.size(); i++)
 	{
 		soFar = soFar + m_Courbe.at(i)->getParamMax();
 		
@@ -1973,7 +1987,7 @@ unsigned int Trajectory::getIdOfPathAt(double param)
 			return i;
 		}
 	}
-	return nloc - 1;
+	return m_Courbe.size() - 1;
 }
 
 int Trajectory::meanCollTest()
@@ -2029,26 +2043,26 @@ void Trajectory::printAllLocalpathCost()
 void Trajectory::print()
 {
 	cout << "-------------- Trajectory --------------" << endl;
-	cout << " Number of LP " << nloc << endl;
-	cout << " Range Parameter " << this->range_param << endl;
+	cout << " Number of LP " << m_Courbe.size() << endl;
+	cout << " Range Parameter " << this->getRangeMax() << endl;
   
-  if( nloc > 0 )
+  if( m_Courbe.size() > 0 )
   {
-    int size1 = nloc+1;
+    int size1 = m_Courbe.size()+1;
     int size2 = m_Courbe.at(0)->getBegin()->getEigenVector().size();
     
     // size1 = nRow
     // size2 = nCol
     Eigen::MatrixXd mat(size1,size2);
     //Eigen::VectorXd vect
-    for (unsigned int j=0; j<nloc; j++)
+    for (unsigned int j=0; j<m_Courbe.size(); j++)
     {
       mat.row(j) = m_Courbe.at(j)->getBegin()->getEigenVector();
     }
     
-    if( nloc-1 >= 0 )
+    if( m_Courbe.size()-1 >= 0 )
     {
-      mat.row(nloc) = m_Courbe.at(nloc-1)->getEnd()->getEigenVector();
+      mat.row(m_Courbe.size()) = m_Courbe.at(m_Courbe.size()-1)->getEnd()->getEigenVector();
     }
     
     cout << mat << endl;

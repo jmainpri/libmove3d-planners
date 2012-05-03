@@ -15,6 +15,7 @@
 
 #include "../p3d/env.hpp"
 #include "planEnvironment.hpp"
+#include "replanningSimulators.hpp"
 
 #include "Planner-pkg.h"
 
@@ -31,7 +32,7 @@ m_nbExpansion(0),
 m_nbFailedExpansion(0)
 {	
 #ifdef DEBUG_STATUS
-        cout << "TreePlanner::TreePlanner(R,G)" << endl;
+  cout << "TreePlanner::TreePlanner(R,G)" << endl;
 #endif
 }
 
@@ -61,13 +62,13 @@ bool TreePlanner::preConditions()
 {
 	//    cout << "Entering preCondition" << endl;
 	
-//	if (ENV.getBool(Env::isCostSpace) && (ENV.getExpansionMethod()
-//																				== Env::Connect))
-//	{
-//		cout
-//		<< "Warning: Connect expansion strategy is usually unadapted for cost spaces\n"
-//		<< endl;
-//	}
+  //	if (ENV.getBool(Env::isCostSpace) && (ENV.getExpansionMethod()
+  //																				== Env::Connect))
+  //	{
+  //		cout
+  //		<< "Warning: Connect expansion strategy is usually unadapted for cost spaces\n"
+  //		<< endl;
+  //	}
   if (!_Robot->setAndUpdate(*_Start->getConfiguration()) )
   {
     cout << "TreePlanner::preConditions => Start config. does not respect kin. constraints" << endl;
@@ -95,13 +96,13 @@ bool TreePlanner::preConditions()
       return false;
     }
     
-    if (!_Graph->searchConf(*_Robot->getInitialPosition())) 
+    if (!_Graph->searchConf(*_Start->getConfiguration())) 
     {
       cout << "TreePlanner::preConditions => Config. start not in graph" << endl;
       return false;
     }
     
-    if (!_Graph->searchConf(*_Robot->getGoTo())) 
+    if (!_Graph->searchConf(*_Goal->getConfiguration())) 
     {
       cout << "TreePlanner::preConditions => Config. goal not in graph" << endl;
       return false;
@@ -121,7 +122,7 @@ bool TreePlanner::preConditions()
       cout << "TreePlanner::preConditions => Goal config. does not respect kin. constraints" << endl;
       return false;
     }
-  
+    
 		if( _Goal->getConfiguration()->isInCollision() )
 		{
 			cout << "TreePlanner::preConditions => Goal in collision" << endl;
@@ -156,7 +157,7 @@ bool TreePlanner::checkStopConditions()
 	if ( ENV.getBool(Env::expandToGoal) && trajFound())
 	{
 #ifdef DEBUG_STATUS
-     cout << "Success: the start and goal components are connected." << endl;
+    cout << "Success: the start and goal components are connected." << endl;
 #endif
 		return (true);
 	}
@@ -164,7 +165,7 @@ bool TreePlanner::checkStopConditions()
   if (/*ENV.getBool(Env::ligandExitTrajectory)*/false)
 	{
 		double d(_Start->getConfiguration()->dist(
-        *_Graph->getLastNode()->getConfiguration()));
+                                              *_Graph->getLastNode()->getConfiguration()));
     
 		if (d > 12.0)
 		{
@@ -223,6 +224,15 @@ bool TreePlanner::checkStopConditions()
 	{
 		cout << "Tree expansion cancelled by user." << endl;
 		return (true);
+	}
+  
+  if( PlanEnv->getBool(PlanParam::planWithTimeLimit) )
+	{
+		if ( m_time > PlanEnv->getDouble(PlanParam::timeLimitPlanning) ) 
+		{
+			cout << "Tree expansion has reached time limit ( " << m_time << " ) " << endl;
+			return (true);
+		}
 	}
 	
 	return (false);
@@ -303,11 +313,23 @@ unsigned int TreePlanner::run()
 	
 	Node* fromNode = _Start;
 	Node* toNode = _Goal;
-	
+  
+  double ts(0.0); 
+  bool first_iteration(true);
+  
+  if( !global_rePlanningEnv ) 
+  {
+    m_time = 0.0; ChronoOn();
+  }
+  else {
+    // Stores the init time in ts on first call
+    m_time = global_rePlanningEnv->time_since_last_call( first_iteration , ts );
+  }
+  
 	while ( !checkStopConditions() )
 	{
 		ENV.setInt(Env::progress,(int)((double)_Graph->getNumberOfNodes()/(double)ENV.getInt(Env::maxNodeCompco)));
-
+    
 		// Do not expand in the case of a balanced bidirectional expansion,
 		// if the components are unbalanced.
 		if (  !ENV.getBool(Env::expandToGoal) || 
@@ -365,7 +387,19 @@ unsigned int TreePlanner::run()
 		{
 			swap( fromNode, toNode );
 		}
+    
+    if( global_rePlanningEnv ) 
+    {
+      m_time += global_rePlanningEnv->time_since_last_call( first_iteration , ts );
+    }
+    else {
+      ChronoTimes( &m_time , &ts );
+    }
 	}
+  
+  if( !global_rePlanningEnv ) {
+    ChronoOff();
+  }
 	
 	if ( (!ENV.getBool(Env::drawDisabled)) && (ENV.getBool(Env::drawExploration) || ENV.getBool(Env::drawTraj)) )
 	{

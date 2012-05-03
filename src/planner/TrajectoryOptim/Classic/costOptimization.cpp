@@ -18,7 +18,7 @@
 #include "API/scene.hpp"
 
 #include "planEnvironment.hpp"
-#include "replanning.hpp"
+#include "replanningSimulators.hpp"
 #include "cost_space.hpp"
 
 #include <iomanip>
@@ -117,7 +117,7 @@ bool CostOptimization::oneLoopDeform()
 		{
       // Computes the subportion of the CURRENT trajectory
 			unsigned int first,last;
-			vector< shared_ptr<Configuration> > confs = getTowConfigurationAtParam(lPrev,lNext,first,last);
+			vector<confPtr_t> confs = getTowConfigurationAtParam(lPrev,lNext,first,last);
 			
       vector<LocalPath*> paths;
 			for(unsigned int i=first;i<=last;i++)
@@ -238,7 +238,7 @@ bool CostOptimization::oneLoopDeform()
       g3d_draw_allwin_active();
     }
   }
-     
+  
 	return isOptimSuccess;
 }
 
@@ -265,7 +265,7 @@ bool CostOptimization::oneLoopDeformRecompute()
 	LocalPath path( qCurrPt, qRandPt );
 	
   // Get the New configuration in qtRand dirrenction
-	shared_ptr<Configuration> qNewPt = perturbCurrent( qCurrPt, qRandPt, m_step, m_descent );
+	confPtr_t qNewPt = perturbCurrent( qCurrPt, qRandPt, m_step, m_descent );
 	if ( qNewPt->getConfigStruct() == NULL )
 	{
 		return false;
@@ -529,9 +529,9 @@ void CostOptimization::debugShowTraj(double lPrev, double lNext, shared_ptr<
 	trajToDraw.at(1).setColor(2);
 	trajToDraw.at(2).setColor(color);
 	trajToDraw.at(3).setColor(color_base_traj);
-
-//	g3d_draw_allwin_active();
-//	usleep(200000);
+  
+  //	g3d_draw_allwin_active();
+  //	usleep(200000);
 	
 	vector<LocalPath*> pathsTmp(2);
 	pathsTmp.at(0) = (new LocalPath(vectConf.at(0), vectConf.at(1)));
@@ -601,7 +601,7 @@ int nb_runs = 0;
 
 
 vector< shared_ptr<Configuration> > CostOptimization::getClosestConfOnTraj(
-																																					double& prevDistPt, double& randDistPt, double& nextDistPt, shared_ptr<Configuration> ptrConf, double step)
+                                                                           double& prevDistPt, double& randDistPt, double& nextDistPt, shared_ptr<Configuration> ptrConf, double step)
 {
 	const int N = 30;
 	double delta = this->getRangeMax() / (double)N;
@@ -718,6 +718,33 @@ vector<confPtr_t> CostOptimization::get3RandSuccesConfAlongTraj(double& prevDist
 	return vectConf;
 }
 
+//! Connects a configuration to the trajectory
+//! it starts at the end of the trajectory
+bool CostOptimization::connectConfiguration( confPtr_t q, double step )
+{
+  double param=step;
+  double range_max = getRangeMax();
+  vector<LocalPath*> portion;
+  
+  do  
+  {
+    confPtr_t q_connect = configAtParam( range_max-param );
+    
+    LocalPath* path =new LocalPath( q_connect, q );
+    
+    if( path->isValid() )
+    {
+      portion.push_back( path );
+      replaceEnd( range_max-param, portion );
+      return true;
+    }
+    delete path;
+    param += step;
+  }
+  while( param < range_max );
+  return false;
+}
+
 //! This is the main function to deform a trajectory
 //! it iterativly modifies the current trajectory, with random perturbations
 //! this function consisiton of n deformation rounds which sample a configuration
@@ -725,7 +752,7 @@ vector<confPtr_t> CostOptimization::get3RandSuccesConfAlongTraj(double& prevDist
 //! keep the best trajectory out of the current and newly created trajectory
 //! @param nbIteration the number of iteration to go for
 //! @param idRun the id of the run
-void CostOptimization::runDeformation(int nbIteration, int idRun )
+void CostOptimization::runDeformation( int nbIteration, int idRun )
 {
 	//cout << "Before Deform : Traj cost = " << this->cost() << endl;
   if( global_costSpace == NULL )
@@ -734,10 +761,17 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
     return;
   }
   
-  //m_time = 0.0;
-	double ts(0.0);  //ChronoOn();
+	double ts(0.0);  
   bool first_iteration = true;
-  m_time = global_rePlanningEnv->time_since_last_call( first_iteration , ts );
+  
+  if( !global_rePlanningEnv ) 
+  {
+    m_time = 0.0; ChronoOn();
+  }
+  else {
+    // Stores the init time in ts on first call
+    m_time = global_rePlanningEnv->time_since_last_call( first_iteration , ts );
+  }
   
 	double costBeforeDeformation = this->cost();
 	double initalRange = getRangeMax();
@@ -764,6 +798,10 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
       m_step = initalRange/PlanEnv->getDouble(PlanParam::MaxFactor);
     }
     
+    if( !ENV.getBool(Env::isCostSpace) ) {
+      resetIsValid();
+    }
+    
     double CurCost = cost();
     
     //cout << "iteration : " << ith_deformation << " ";
@@ -787,7 +825,6 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
     //cout << " , m_step = " << m_step << endl;
     
     // Then, compute success, gain and save cost to file
-    
 		double NewCost = cost();
     
 		m_IterationSucceded = ( CurCost > NewCost );
@@ -805,22 +842,27 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
 			storeCostAndGain( NewCost, CurCost );
 		}
     
-    //replan_store_traj_to_vect(*this,m_step);
-    if( global_rePlanningEnv )
+    if( global_rePlanningEnv ) 
+    {
+      //replan_store_traj_to_vect(*this,m_step);
       global_rePlanningEnv->store_traj_to_draw(*this,m_step);
-		
-    m_time += global_rePlanningEnv->time_since_last_call( first_iteration , ts );
-		//ChronoTimes( &m_time , &ts );
+      m_time += global_rePlanningEnv->time_since_last_call( first_iteration , ts );
+    }
+    else {
+      ChronoTimes( &m_time , &ts );
+    }
 	}
 	
-	//ChronoOff();
+  if( !global_rePlanningEnv ) {
+    ChronoOff();
+  }
 	
-        if ( isValid() )
-        {
+  if ( isValid() )
+  {
 #ifdef DEBUG_STATUS
-                cout << "Trajectory valid" << endl;
+    cout << "Trajectory valid" << endl;
 #endif
-        }
+  }
 	else
 		cout << "Trajectory not valid" << endl;
 	
@@ -831,10 +873,10 @@ void CostOptimization::runDeformation(int nbIteration, int idRun )
 		this->saveOptimToFile( s.str() );
 	}
 #ifdef DEBUG_STATUS
-        cout << "Before : Traj cost = " << costBeforeDeformation << endl;
+  cout << "Before : Traj cost = " << costBeforeDeformation << endl;
 #endif
 	this->resetCostComputed();
 #ifdef DEBUG_STATUS
-        cout << "After (" << ith_deformation << ") Deform : Traj cost = " << this->cost() << endl;
+  cout << "After (" << ith_deformation << ") Deform : Traj cost = " << this->cost() << endl;
 #endif
 }

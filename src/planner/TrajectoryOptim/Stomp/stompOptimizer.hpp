@@ -43,6 +43,7 @@
 #include "planner/TrajectoryOptim/Chomp/chompTrajectory.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompCost.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
+#include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 #include "planner/Greedy/CollisionSpace.hpp"
 #include "task.hpp"
 #include "covariant_trajectory_policy.hpp"
@@ -135,7 +136,7 @@ public:
    * @param costs Vector of num_time_steps, state space cost per timestep (do not include control costs)
    * @return
    */
-  bool execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number);
+  bool execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool resample =false);
 
   /**
    * Get the Policy object of this Task
@@ -164,9 +165,20 @@ public:
   const ChompPlanningGroup* getPlanningGroup() const { return planning_group_; } 
   
   /**
+   * Get the robot
+   */
+  Robot* getRobot() { return robot_model_; }
+  
+  /**
    * Draw function to be called outside
    */
   void draw();
+  
+  /**
+   * Retreive source and target
+   */
+  confPtr_t getSource();
+  confPtr_t getTarget();
 
 
 private:
@@ -261,6 +273,9 @@ private:
   Eigen::VectorXd joint_state_accelerations_;
   Eigen::VectorXd full_joint_state_velocities_;
   Eigen::VectorXd full_joint_state_accelerations_;
+  
+  confPtr_t source_;
+  confPtr_t target_;
 
 //  ros::Publisher vis_marker_array_pub_;
 //  ros::Publisher vis_marker_pub_;
@@ -303,6 +318,8 @@ private:
   void copyGroupTrajectoryToPolicy();
 
   void clearAnimations();
+  void resampleParameters(std::vector<Eigen::VectorXd>& parameters);
+  confPtr_t getConfigurationOnGroupTraj(int ith);
 
 //  void getTorques(int index, std::vector<double>& torques, const std::vector<KDL::Wrench>& wrenches);
 };

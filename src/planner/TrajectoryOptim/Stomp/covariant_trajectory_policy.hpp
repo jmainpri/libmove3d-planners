@@ -161,6 +161,7 @@ public:
     bool writeToDisc(const std::string abs_file_name);
     std::string getFileName(const int trial_id);
 
+    double movement_dt_;
 
 private:
 //    ros::NodeHandle node_handle_;
@@ -175,7 +176,6 @@ private:
     int free_vars_end_index_;
     int num_dimensions_;
     double movement_duration_;
-    double movement_dt_;
     double cost_ridge_factor_;
     std::vector<double> derivative_costs_;
 

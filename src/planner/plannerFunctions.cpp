@@ -9,6 +9,7 @@
 
 #include "planEnvironment.hpp"
 #include "plannerFunctions.hpp"
+#include "replanningSimulators.hpp"
 #include "../p3d/env.hpp"
 
 #include "planner/planner.hpp"
@@ -68,47 +69,6 @@ unsigned int p3d_planner_functions_get_run_id()
 
 
 // ---------------------------------------------------------------------------------
-// Delete graph if it exists
-// ---------------------------------------------------------------------------------
-void p3d_delete_graph( p3d_graph* &G )
-{
-  if (API_activeGraph) 
-  {
-    p3d_graph* graph =  API_activeGraph->getRobot()->getRobotStruct()->GRAPH;
-    
-    delete API_activeGraph;
-    API_activeGraph = NULL;
-    cerr << "Delete C++ API Graph" << endl;
-    
-    if(graph!=G)
-    {
-      if(!p3d_del_graph(G))
-      {
-        cerr << "Graph allready deleded" << endl;
-      }
-    }
-  }
-  else
-  {
-    if(!p3d_del_graph(G))
-    {
-      cerr << "Graph allready deleded" << endl;
-    }
-  }
-  
-  G = NULL;
-  
-  if( !p3d_del_graph(XYZ_GRAPH) )
-  {
-    cerr << "XYZ_GRAPH allready deleted" << endl;
-  }
-  XYZ_GRAPH = NULL;
-  
-  cerr << "G = " << G << endl;
-  cerr <<  "XYZ_GRAPH = " << XYZ_GRAPH << endl;
-}
-
-// ---------------------------------------------------------------------------------
 // Extract Traj
 // ---------------------------------------------------------------------------------
 p3d_traj* p3d_extract_traj(bool is_traj_found, int nb_added_nodes, Graph* graph, confPtr_t q_source, confPtr_t q_target) 
@@ -133,7 +93,8 @@ p3d_traj* p3d_extract_traj(bool is_traj_found, int nb_added_nodes, Graph* graph,
     else 
     {
       cout << "Extract graph to traj" << endl;
-      traj = graph->extractBestTraj( q_source, q_target );
+      //traj = graph->extractBestTraj( q_source, q_target ); // Old extract
+      traj = graph->extractAStarShortestPathsTraj( q_source, q_target );
     }
   }
 
@@ -247,9 +208,8 @@ p3d_traj* p3d_planner_function(p3d_rob* robotPt, configPt qs, configPt qg)
   
   // Allocate the p3d_graph if does't exist
   // Delete graph if it exists, creates a new graph , Allocate RRT
-  p3d_graph* GraphPt = robotPt->GRAPH;
-  p3d_delete_graph( GraphPt );
-  Graph* graph = API_activeGraph =  new Graph(rob,GraphPt);
+  delete API_activeGraph;
+  Graph* graph = API_activeGraph = new Graph(rob);
   
   // Delete last global planner 
   if( global_Move3DPlanner ) delete global_Move3DPlanner;
@@ -281,6 +241,11 @@ p3d_traj* p3d_planner_function(p3d_rob* robotPt, configPt qs, configPt qg)
 	
 	graph->getGraphStruct()->totTime = graph->getGraphStruct()->rrtTime;
   
+  if( ENV.getBool(Env::drawGraph) && global_rePlanningEnv ) 
+  {
+    global_rePlanningEnv->store_graph_to_draw(*graph);
+  }
+  
   // Extracj the trajectory if one exists, else return NULL
   p3d_traj* traj = p3d_extract_traj(rrt->trajFound(), nb_added_nodes, graph, q_source, q_target);
   return traj;
@@ -291,7 +256,7 @@ p3d_traj* pathPt=NULL;
 // ---------------------------------------------------------------------------------
 // Smoothing function (Shortcut) for connection with Manipulation planner
 // ---------------------------------------------------------------------------------
-void p3d_smoothing_function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double maxTime)
+void p3d_smoothing_function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double maxTime )
 {
   cout << "* SMOOTHING ***************" << endl;
   // Gets the robot pointer
@@ -316,8 +281,6 @@ void p3d_smoothing_function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doubl
   }
   
   optimTrj.resetCostComputed();
-  
-  //XYZ_GRAPH->rrtCost2 = optimTrj.cost();
   
   if(PlanEnv->getBool(PlanParam::withShortCut))
   {
@@ -350,11 +313,6 @@ void p3d_smoothing_function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doubl
   optimTrj.resetCostComputed();
   
   pathPt = robotPt->tcur;
-  
-  //XYZ_GRAPH->totTime += optTime;
-  
-  cout << "After optim rounds cost : " << optimTrj.cost() << endl;
-  cout << "Nb of localpaths : " << robotPt->tcur->nlp << endl;
 }
 
 // ---------------------------------------------------------------------------------
@@ -419,9 +377,7 @@ bool p3d_run_est(p3d_rob* robotPt)
   
   // Allocate the p3d_graph if does't exist
   // Removes graph if it exists, creates a new graph , Allocate RRT
-  p3d_graph* GraphPt = robotPt->GRAPH;
-  p3d_delete_graph( GraphPt );
-  Graph* graph = API_activeGraph =  new Graph(rob,GraphPt);
+  Graph* graph = API_activeGraph =  new Graph(rob);
 	
 	printf("------------- Running EST --------------\n");
 #ifdef LIST_OF_PLANNERS
@@ -463,9 +419,7 @@ int p3d_run_prm(p3d_rob* robotPt)
   
   // Allocate the p3d_graph if does't exist
   // Removes graph if it exists, creates a new graph , Allocate RRT
-  p3d_graph* GraphPt = robotPt->GRAPH;
-  p3d_delete_graph( GraphPt );
-  Graph* graph = API_activeGraph =  new Graph(rob,GraphPt);
+  Graph* graph = API_activeGraph =  new Graph(rob);
 	
 	cout << "Initializing PRM " << endl;
   int nb_added_nodes=0;
@@ -503,9 +457,7 @@ int p3d_run_perturb_prm(p3d_rob* robotPt)
   
   // Allocate the p3d_graph if does't exist
   // Removes graph if it exists, creates a new graph , Allocate RRT
-  p3d_graph* GraphPt = robotPt->GRAPH;
-  p3d_delete_graph( GraphPt );
-  Graph* graph = API_activeGraph =  new Graph(rob,GraphPt);
+  Graph* graph = API_activeGraph =  new Graph(rob);
 	
 	cout << "Initializing PRM " << endl;
   int nb_added_nodes=0;
@@ -530,9 +482,7 @@ int p3d_run_vis_prm(p3d_rob* robotPt)
   
   // Allocate the p3d_graph if does't exist
   // Removes graph if it exists, creates a new graph , Allocate RRT
-  p3d_graph* GraphPt = robotPt->GRAPH;
-  p3d_delete_graph( GraphPt );
-  Graph* graph = API_activeGraph =  new Graph(rob,GraphPt);
+  Graph* graph = API_activeGraph =  new Graph(rob);
 	
   int nb_added_nodes=0;
 	Vis_PRM* vprm = new Vis_PRM(rob,graph);
@@ -556,9 +506,7 @@ int p3d_run_acr(p3d_rob* robotPt)
   
   // Allocate the p3d_graph if does't exist
   // Removes graph if it exists, creates a new graph 
-  p3d_graph* GraphPt = robotPt->GRAPH;
-  p3d_delete_graph( GraphPt );
-  Graph* graph = API_activeGraph =  new Graph(rob,GraphPt);
+  Graph* graph = API_activeGraph =  new Graph(rob);
 	
   int nb_added_nodes=0;
 	ACR* acr = new ACR(rob, graph);
@@ -572,7 +520,6 @@ int p3d_run_acr(p3d_rob* robotPt)
 	delete acr;
 	return nb_added_nodes;
 }
-
 
 /**
  * Function To replace p3d_Learn in Case of C++ API Use

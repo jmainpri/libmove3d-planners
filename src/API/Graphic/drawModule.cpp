@@ -29,6 +29,7 @@
 void g3d_export_cpp_graph()
 {
 	//std::cout << "API_activeGraph : " << API_activeGraph << std::endl;
+  /**
 	if (ENV.getBool(Env::drawGraph) && (!ENV.getBool(Env::use_p3d_structures)) && API_activeGraph ) 
 	{
 		try
@@ -48,6 +49,7 @@ void g3d_export_cpp_graph()
 			std::cout << str << std::endl;
 		}
 	}
+   */
 }
 
 void g3d_draw_boost_graph()

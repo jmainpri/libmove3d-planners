@@ -81,6 +81,7 @@ private:
 
     bool write_to_file_;
     bool use_cumulative_costs_;
+    bool set_parameters_in_policy_;
   
     bool use_annealing_;
     int limits_violations_;
@@ -90,7 +91,7 @@ private:
     boost::shared_ptr<Policy> policy_;
 
     PolicyImprovement policy_improvement_;
-
+  
     std::vector<std::vector<Eigen::VectorXd> > rollouts_; /**< [num_rollouts][num_dimensions] num_parameters */
     std::vector<std::vector<Eigen::VectorXd> > reused_rollouts_;
   
@@ -108,12 +109,14 @@ private:
   
     // added by jim
     bool readParametersSingleRollout();
+    void resampleParameters();
 
     int policy_iteration_counter_;
     bool readPolicy(const int iteration_number);
     bool writePolicy(const int iteration_number, bool is_rollout = false, int rollout_id = 0);
     //bool writePolicyImprovementStatistics(const policy_improvement_loop::PolicyImprovementStatistics& stats_msg);
   
+    void parametersToVector(std::vector<Eigen::VectorXd>& rollout);
     void getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<confPtr_t>& traj);
     void addSingleRolloutsToDraw(const std::vector<Eigen::VectorXd>& rollout, int color);
     void addRolloutsToDraw(bool add_reused);

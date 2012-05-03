@@ -29,7 +29,14 @@ public:
     /**
       * Compute
       */
-    bool computeRobotGikForGrabing( configPt& q);
+    bool computeRobotGikForGrabing( configPt& q );
+  
+    /**
+      * Compute a configuration for handing over an object for the arm Dofs
+      * @point the point in the workspace
+      * @q the configuration of the robot
+      */
+    bool computeRobotGikForGrabing( configPt& q, const Eigen::Vector3d& point );
 
     /**
       * Adding a 3D point to the OTP list This function is used when loading a set of OTPs in order to test them

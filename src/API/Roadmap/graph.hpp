@@ -265,10 +265,16 @@ public:
 	void removeEdges( Node* N1, Node* N2 );
 	
 	/**
-	 * trie les Node en fonction de leur distance à un Node de référence
+	 * Sort nodes against one given node
 	 * @param N le Node de référence
 	 */
 	void sortNodesByDist(Node* N);
+  
+  /**
+	 * Sort nodes against one given configuration
+	 * @param N le Node de référence
+	 */
+  void sortNodesByDist(confPtr_t q);
 	
 	/**
 	 * Adds a node to the node list and the other structures
@@ -457,6 +463,12 @@ public:
 	 * @param the configuration
 	 */
 	API::Trajectory* extractDijkstraShortestPathsTraj( confPtr_t qi, confPtr_t qf);
+  
+  /**
+	 * Extract best traj 
+	 * @param the configuration
+	 */
+  std::vector<Node*> extractAStarShortestNodePaths( Node* node1, Node* node2 );
   
   /**
 	 * Extract best traj 

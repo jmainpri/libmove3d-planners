@@ -68,6 +68,12 @@ namespace API
 		 * on the cost map
 		 */
 		static double getLastDescendingConfParam( LocalPath& directionPath );
+    
+    /**
+     * Adds a configuration to the trajectory by starting from
+     * the end of the trajectory
+     */ 
+    bool connectConfiguration( confPtr_t q, double step );
 		
 		/**
 		 * Expand the configuration to a ne

@@ -121,7 +121,8 @@ protected:
 	unsigned int m_nbExpansion;
 	unsigned int m_nbFailedExpansion;
 	unsigned int m_nbInitNodes;
-
+  
+  double m_time;
 };
 
 #endif /* TREEPLANNER_HPP_ */

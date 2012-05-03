@@ -15,7 +15,7 @@
 #include "HRI_costspace/Grid/HRICS_NaturalGrid.hpp"
 #include "HRI_costspace/Grid/HRICS_NaturalCell.hpp"
 
-#include "HRI_costspace/Grid/HRICS_TwoDGrid.hpp"
+//#include "HRI_costspace/Grid/HRICS_TwoDGrid.hpp"
 
 
 #ifdef HRI_PLANNER

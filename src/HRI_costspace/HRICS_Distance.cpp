@@ -34,8 +34,8 @@ Distance::Distance()
 	cout  << "HRICS::Distance with " << " Robot " << m_Robot->getName() 
         << " and human " << _Humans[0]->getName() << endl;
   
-	_SafeRadius = 1.5;
-  m_InteractionRadius = 1.5;
+//	_SafeRadius = 1.0;
+//  m_InteractionRadius = 2.8;
 }
 
 
@@ -51,8 +51,9 @@ _Humans(humans)
 	
 	cout << "HRICS::Distance with " << robName << " as robot and human " 
 	<< _Humans[0]->getName() << endl;
-	_SafeRadius = 2.8;
-  m_InteractionRadius = 1.5;
+  
+	_SafeRadius = 0.5;
+  m_InteractionRadius = 2.8;
 }
 
 /*!
@@ -333,15 +334,32 @@ double  Distance::computeCost(double distance)
 	
   //cout << "_SafeRadius radius : " << _SafeRadius << endl;
 	_PenetrationDist[0] = (_SafeRadius - distance)/_SafeRadius;
-	
-	double Cost = 0.00001;
-	// Compute of the hri cost function
-	if ( _PenetrationDist[0] > 0 )
-	{
-		Cost += (exp(_PenetrationDist[0]-1) - exp(-1) ) / ( 1 - exp(-1) );
-		//            Cost += _PenetrationDist[k];
-	}
-	
+	double PenetrationInteraction = (m_InteractionRadius - distance)/m_InteractionRadius;
+  
+	double Cost = 0.0;
+  
+  // COST between 0 and ...
+  if ( _PenetrationDist[0] > 0 ) 
+  {
+    // PENETRATION OF 80 percent
+    if( _PenetrationDist[0] > 0.79999 ) {
+      Cost = 100000;
+    }
+    else {
+      Cost += 1/(0.8-_PenetrationDist[0]);
+      Cost += 1;
+    }
+  }
+  else if ( PenetrationInteraction > 0 ) {
+    Cost += pow(PenetrationInteraction,2);
+  }
+  
+// OLD COST Compute of the hri cost function
+//	if ( _PenetrationDist[0] > 0 )
+//	{
+//		Cost += (exp(_PenetrationDist[0]-1) - exp(-1) ) / ( 1 - exp(-1) );
+//	}
+
 	return Cost;
 }
 
@@ -353,7 +371,7 @@ double Distance::getWorkspaceCost(const Eigen::Vector3d& WSPoint)
 	p3d_vector3 body;
 	p3d_vector3 other;
 	
-	double distance = computeBoundingBalls(WSPoint,body, other);
+	double distance = computeBoundingBalls( WSPoint, body, other );
 	
 	return computeCost(distance);
 }

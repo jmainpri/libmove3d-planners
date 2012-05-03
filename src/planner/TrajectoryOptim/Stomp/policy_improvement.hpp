@@ -44,6 +44,8 @@
 
 // local includes
 #include "policy.hpp"
+#include "task.hpp"
+
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
 
 #include <boost/shared_ptr.hpp>
@@ -96,7 +98,9 @@ namespace stomp_motion_planner
      * @return true on success, false on failure
      */
     bool initialize(const int num_rollouts, const int num_time_steps, const int num_reused_rollouts,
-                    const int num_extra_rollouts, boost::shared_ptr<stomp_motion_planner::Policy> policy,
+                    const int num_extra_rollouts, 
+                    boost::shared_ptr<stomp_motion_planner::Policy> policy,
+                    boost::shared_ptr<stomp_motion_planner::Task>   task,
                     bool use_cumulative_costs=true);
     
     /**
@@ -150,6 +154,8 @@ namespace stomp_motion_planner
      */
     void setRolloutOutOfBounds(int id);
     
+    std::vector<Eigen::MatrixXd> projection_matrix_;                        /**< [num_dimensions] num_parameters x num_parameters */
+    
   private:
     
     bool initialized_;
@@ -166,13 +172,14 @@ namespace stomp_motion_planner
     bool extra_rollouts_added_;                                             /**< Have the "extra rollouts" been added for use in the next iteration? */
     int num_rollouts_gen_;                                                  /**< How many new rollouts have been generated in this iteration? */
     
+    bool use_multiplication_by_m_;
     bool use_cumulative_costs_;                                             /**< Use cumulative costs or state costs? */
     
     boost::shared_ptr<stomp_motion_planner::Policy> policy_;
+    boost::shared_ptr<stomp_motion_planner::Task>   task_;
     
     std::vector<Eigen::MatrixXd> control_costs_;                            /**< [num_dimensions] num_parameters x num_parameters */
     std::vector<Eigen::MatrixXd> inv_control_costs_;                        /**< [num_dimensions] num_parameters x num_parameters */
-    std::vector<Eigen::MatrixXd> projection_matrix_;                        /**< [num_dimensions] num_parameters x num_parameters */
     double control_cost_weight_;
     
     std::vector<Eigen::MatrixXd> basis_functions_;                          /**< [num_dimensions] num_time_steps x num_parameters */
@@ -199,6 +206,7 @@ namespace stomp_motion_planner
     bool preAllocateTempVariables();
     bool preComputeProjectionMatrices();
     
+    void resampleUpdates();
     bool computeProjectedNoise();
     bool computeRolloutControlCosts();
     bool computeRolloutCumulativeCosts();

@@ -29,8 +29,6 @@ API::ThreeDGrid(pace,envSize)
   cout << "Number total of cells = " << _nbCellsX*_nbCellsY*_nbCellsZ << endl;
 }
 
-
-
 /*!
  * \brief Virtual function that creates a new Cell
  *

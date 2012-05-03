@@ -83,16 +83,11 @@ Graph::Graph(Robot* R, p3d_graph* G)
 Graph::Graph(Robot* R)
 {
 	m_Robot = R;
+  
 	m_Graph = p3d_allocinit_graph();
-	
 	m_Graph->env = (p3d_env *) p3d_get_desc_curid(P3D_ENV);
 	m_Graph->rob = m_Robot->getRobotStruct();
-	if (m_Robot->getRobotStruct() != NULL)
-	{
-		m_Robot->getRobotStruct()->GRAPH = m_Graph;
-		XYZ_GRAPH = m_Graph;
-	}
-
+  
 	if (STAT)
 	{
 		m_Graph->stat = createStat();
@@ -101,7 +96,7 @@ Graph::Graph(Robot* R)
 	{
 		m_Graph->stat = NULL;
 	}
-
+  
 	m_graphChanged = true;
   m_initBGL = false;
   
@@ -136,20 +131,77 @@ Graph::Graph(p3d_graph* G)
 //! @param G the graph
 Graph::Graph(const Graph& G)
 {
-  cout << "Copy constructor broken" << endl;
-  return;
-  
-	//m_Graph = G.exportGraphStruct();
-  GraphConverter gc;
-  m_Graph = gc.exportGraphStruct( G );
+  //	//m_Graph = G.exportGraphStruct();
+  //  GraphConverter gc;
+  //  m_Graph = gc.exportGraphStruct( G );
   
 	m_Robot = G.m_Robot;
-	
-	m_graphChanged = true;
-	m_initBGL = false;
+  m_Graph = p3d_create_graph(G.m_Robot->getRobotStruct());
+  m_Name = G.m_Name;
   
-	this->init();
-	this->initBGL();
+  m_graphChanged = true;
+  m_initBGL = false;
+  
+  try {	
+    // Copy all Nodes
+    for(int i=0; i<int(G.m_Nodes.size()); i++) 
+    {
+      Node* node = G.m_Nodes[i];
+      m_Nodes.push_back( new Node( this, node->getConfiguration(), false ) );
+    }
+    
+    // Make new Edges
+    for(int i=0; i<int(G.m_Edges.size()); i++) 
+    {
+      Node* Source = searchConf( *G.m_Edges[i]->getSource()->getConfiguration() );
+      Node* Target = searchConf( *G.m_Edges[i]->getTarget()->getConfiguration() );
+      
+      addEdges( Source, Target, true, 0.0 , true, 0.0 );
+    }
+    
+    int k=0;
+    
+    m_Comp.clear();
+    
+    // Make new Compco
+    for(int i=0; i<int(G.m_Comp.size()); i++) 
+    {
+      for(int j=0; j<int(G.m_Comp[i]->getNumberOfNodes()); j++)
+      {
+        Node* new_node = searchConf( *G.m_Comp[i]->getNode(j)->getConfiguration() );
+        
+        if( j == 0 ) {
+          m_Comp.push_back( new ConnectedComponent( this, new_node ) );
+        }
+        else {
+          m_Comp[i]->addNode( new_node );
+        }
+        
+        k++;
+      }
+    } 
+    
+    if( k != int(G.m_Nodes.size()) ) {
+      cout << "Error in copying compco" << endl;
+    }
+  } 
+  catch (string str) {
+    cout << str << endl;
+  }
+  catch (...) {
+    cout << "Exeption in Graph copy "  << endl;
+  }
+  
+//  for(int i=0; i<int(m_Nodes.size()); i++) 
+//  {
+//    cout << G.m_Nodes[i]->getConnectedComponent()->getId() << endl;
+//  }
+  
+  this->initBGL();
+}
+
+void Graph::setRobot(Robot* robot) {
+  m_Robot = robot;
 }
 
 /**
@@ -205,7 +257,7 @@ void Graph::initBGL()
 		{
 			// TODO add vertex does'nt need to find vertex
 			//BGL_Vertex s = findVertexDescriptor(m_Edges[i]->getSource());
-      //			BGL_Vertex t = findVertexDescriptor(m_Edges[i]->getTarget());
+      //BGL_Vertex t = findVertexDescriptor(m_Edges[i]->getTarget());
 			
 			BGL_Vertex s = m_Edges[i]->getSource()->getDescriptor();
 			BGL_Vertex t = m_Edges[i]->getTarget()->getDescriptor();
@@ -234,10 +286,9 @@ void Graph::initBGL()
 	{
 		cerr << "Unkomwn error building BGL Graph" << endl;
 		return;
-	}
-	
-	saveBGLGraphToDotFile("/Users/jmainpri/Desktop/Graph/myGraph.dot");
-	cout << "Building BGL_Graph OK!!!" << endl;
+	}	
+  //	saveBGLGraphToDotFile("/Users/jmainpri/Desktop/Graph/myGraph.dot");
+  //	cout << "Building BGL_Graph OK!!!" << endl;
 }
 
 BGL_Vertex Graph::findVertexDescriptor(Node* N)
@@ -312,22 +363,22 @@ void Graph::saveBGLGraphToDotFile(const std::string& filename)
 //----------------------------------------------
 Graph::~Graph()
 {
-  API_activeGraph = NULL;
+//  API_activeGraph = NULL;
   
 	if( graph_debug_import_export )
 	{
 		cout << "Graph::~Graph() => Deleting graph" << endl;
+    cout << "Mark the XYZ_GRAPH as deleted" << endl;
+    cout << "XYZ_GRAPH = " << XYZ_GRAPH << endl;
 	}
 	
 	// Deletes the old graph
-  cout << "Mark the XYZ_GRAPH as deleted" << endl;
-  m_Robot->getRobotStruct()->GRAPH = XYZ_GRAPH = NULL;
+  
+//  m_Robot->getRobotStruct()->GRAPH = XYZ_GRAPH = NULL;
   delete m_Graph;
 	
 	// The configuration arrays have been deleted in the old API
 	freeResources();
-	
-	cout << "XYZ_GRAPH = " << XYZ_GRAPH << endl;
 }
 
 void Graph::deleteGraphStruct()
@@ -376,7 +427,7 @@ void Graph::deleteGraphStruct()
 		{
 			m_Graph->rob->GRAPH = NULL;
 		}
-
+    
 		cout << "m_Graph = " << m_Graph << endl;
 		cout << "XYZ_GRAPH = " << XYZ_GRAPH << endl;
 		
@@ -437,26 +488,36 @@ Robot* Graph::getRobot() const
 
 unsigned int Graph::getNumberOfNodes()
 {
-  unsigned int nbNodes = num_vertices(m_BoostGraph);
-  
-  if ( nbNodes != m_Nodes.size() ) 
-  {
-    throw string("Verticies in boost graph don't reflect the C++ graph");
+  if( m_initBGL ) {
+    
+    unsigned int nbNodes = num_vertices(m_BoostGraph);
+    
+    if ( nbNodes != m_Nodes.size() ) 
+    {
+      throw string("Verticies in boost graph don't reflect the C++ graph");
+    }
+    return nbNodes;
   }
-  
-  return nbNodes;
+  else {
+    return m_Nodes.size();
+  }
 }
 
 unsigned int Graph::getNumberOfEdges() const
 {
-  unsigned int nbEdges = num_edges(m_BoostGraph);
-  
-  if ( nbEdges != m_Edges.size() ) 
-  {
-    throw string("Edges in the boost graph don't reflect the C++ graph");
+  if( m_initBGL ) {
+    
+    unsigned int nbEdges = num_edges(m_BoostGraph);
+    
+    if ( nbEdges != m_Edges.size() ) 
+    {
+      throw string("Edges in the boost graph don't reflect the C++ graph");
+    }
+    return nbEdges;
   }
-  
-  return nbEdges;
+  else {
+    return m_Edges.size();
+  }
 }
 
 vector<Node*> Graph::getNodes() const
@@ -716,6 +777,21 @@ void Graph::sortNodesByDist(std::vector<Node*>& nodes, confPtr_t q)
 /**
  * Sort Node by distance
  */
+void Graph::sortNodesByDist(confPtr_t q)
+{
+	if (m_Nodes.size() > 1)
+	{
+		for (int i=0; i<int(m_Nodes.size()); i++)
+		{
+			m_Nodes[i]->dist(q);
+		}
+		sort(m_Nodes.begin(), m_Nodes.end(), &compareNodes);
+	}
+}
+
+/**
+ * Sort Node by distance
+ */
 void Graph::sortNodesByDist(Node* N)
 {
 	if (m_Nodes.size() > 1)
@@ -767,21 +843,21 @@ Edge* Graph::addEdge( Node* source, Node* target, bool compute_length, double le
 		E = new Edge(this, source, target, compute_length, length , compute_cost, cost );
 		m_Edges.push_back(E);
 		
-		//cout << "new edge : " << E << endl;
-		
-		BGL_EdgeDataMapT EdgeData = boost::get( EdgeData_t() , m_BoostGraph );
-		BGL_Edge e; bool found;
-		
-		boost::tie(e, found) = boost::add_edge( source->getDescriptor(), 
-																					  target->getDescriptor(), m_BoostGraph);
-		
-		if (found) 
-		{
-			//cout << "descriptor	: " << e << endl;
-			EdgeData[e] = E;
-			E->setDescriptor(e);
+		if (m_initBGL) {
+            
+      BGL_EdgeDataMapT EdgeData = boost::get( EdgeData_t() , m_BoostGraph );
+      BGL_Edge e; bool found;
+      
+      boost::tie(e, found) = boost::add_edge( source->getDescriptor(), 
+                                             target->getDescriptor(), m_BoostGraph);
+      
+      if (found) 
+      {
+        //cout << "descriptor	: " << e << endl;
+        EdgeData[e] = E;
+        E->setDescriptor(e);
+      }
 		}
-		
 		m_graphChanged = true;
 	}
   
@@ -797,6 +873,7 @@ vector<Edge*> Graph::addEdges(Node* N1, Node* N2, bool compute_length, double le
   vector<Edge*> edges(2);
 	edges[0] = addEdge(N1, N2, compute_length, length, compute_cost, cost );
 	edges[1] = addEdge(N2, N1, false, length, false, edges[0]->cost() );
+  //cout << "Edge cost : " << edges[0]->cost() << endl;
   return edges;
 }
 
@@ -941,7 +1018,7 @@ void Graph::removeNode(Node* to_del_node, bool rebuild_compco)
 	}
   
   if( print_remove_node ) {
-   cout << "nb of edges in graph : " << m_Edges.size() << endl;
+    cout << "nb of edges in graph : " << m_Edges.size() << endl;
   }
 	
 	// Erase from node vector
@@ -960,7 +1037,7 @@ void Graph::removeNode(Node* to_del_node, bool rebuild_compco)
   // Check that the number of verticies and edges are the same
   // in the vectors and the graph
   if( boost::num_vertices(m_BoostGraph) != m_Nodes.size() ||
-      boost::num_edges(m_BoostGraph) != m_Edges.size() )
+     boost::num_edges(m_BoostGraph) != m_Edges.size() )
 	{
     cout << "boost::num_vertices(m_BoostGraph) : " << boost::num_vertices(m_BoostGraph) ;
     cout << ", m_Nodes.size() : " << m_Nodes.size() << endl;
@@ -1034,7 +1111,7 @@ bool Graph::linkNodeWithoutDist(Node* N)
 	}
 	return b;
 }
-  
+
 
 //! Copy of p3d_link_node_comp_multisol
 bool Graph::linkNodeCompMultisol( Node* N, ConnectedComponent* TargetComp ) 
@@ -1053,7 +1130,7 @@ bool Graph::linkNodeCompMultisol( Node* N, ConnectedComponent* TargetComp )
 		}
 		sort(nodes.begin(), nodes.end(), &compareNodes);
   }
-
+  
   ValidBackward = ValidForward = FALSE;
   
   for (int i=0; i<int(nodes.size()); i++) 
@@ -1137,14 +1214,14 @@ bool Graph::linkNodeAtDist(Node* N)
   int nof_link = 0;
   for (int i=0; i<int(m_Comp.size()); i++) 
   {
-      if( N->getConnectedComponent() != m_Comp[i] ) 
+    if( N->getConnectedComponent() != m_Comp[i] ) 
+    {
+      // Try to connect the new node to the already existing compcos 
+      if( linkNodeCompMultisol( N, m_Comp[i] ) )
       {
-        // Try to connect the new node to the already existing compcos 
-        if( linkNodeCompMultisol( N, m_Comp[i] ) )
-        {
-          nof_link++;
-        }
+        nof_link++;
       }
+    }
   }
   
   return(nof_link > 0);
@@ -1433,7 +1510,7 @@ vector<Node*> Graph::KNearestWeightNeighbour(confPtr_t q, int K, double radius, 
     // Compute the distance for all nodes
     CurrentScore = q->dist(*(*it)->getConfiguration(),distConfigChoice);
     //*(weighted ? p3d_GetNodeWeight((*it)->getNodeStruct()) : 1.0);
-
+    
     // Do not add the nodes outside of radius
     if ( CurrentScore > radius) continue;
     
@@ -1479,9 +1556,9 @@ Node* Graph::nearestWeightNeighbour(Node* compco, shared_ptr<Configuration> conf
                                     bool weighted, int distConfigChoice)
 {
 	p3d_node* BestNodePt = NULL;
-//	double BestScore = P3D_HUGE;
-//	double CurrentDist = -1.;
-//	double CurrentScore = -1.;
+  //	double BestScore = P3D_HUGE;
+  //	double CurrentDist = -1.;
+  //	double CurrentScore = -1.;
 	double DistOfBestNode = -1.;
 	p3d_matrix4 *RefFramePt = NULL, *MobFramePt = NULL;
 	p3d_matrix4 MobFrameRef, invT;
@@ -1651,7 +1728,7 @@ void Graph::rebuildCompcoFromBoostGraph()
 	}
 	
   /*int num =*/ boost::strong_components(m_BoostGraph, &component[0], boost::root_map(&root[0]).
-																		 color_map(&color[0]).discover_time_map(&discover_time[0])); 
+                                         color_map(&color[0]).discover_time_map(&discover_time[0])); 
 	
   //cout << "Total number of components: " << num << endl;
 	
@@ -1984,22 +2061,17 @@ private:
   Vertex m_goal;
 };
 
-std::vector<Node*> Graph::extractAStarShortestNodePaths( confPtr_t qi, confPtr_t qf )
+// Extarct a shortes path between two nodes 
+// of the same connected component
+std::vector<Node*> Graph::extractAStarShortestNodePaths( Node* node_init, Node* node_goal )
 {
   std::vector<Node*> nodes;
   
-  Node* node_init = searchConf( *qi );
-  if( node_init == NULL ) {
-    return nodes;
-  }
-  
-  Node* node_goal = node_init->getConnectedComponent()->searchConf( *qf );
-  //Node* node_goal = nearestWeightNeighbour( node_init, qf, false, ENV.getInt(Env::DistConfigChoice));
-  if( node_goal == NULL ) {
-    return nodes;
-  }
-  
   if( node_init == node_goal ) {
+    return nodes;
+  }
+  
+  if( node_init->getConnectedComponent() != node_goal->getConnectedComponent() ) {
     return nodes;
   }
   
@@ -2011,7 +2083,6 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( confPtr_t qi, confPtr_t
   BGL_VertexDataMapT NodeData = boost::get(NodeData_t(), m_BoostGraph);
   BGL_EdgeDataMapT EdgeData = boost::get(EdgeData_t(), m_BoostGraph);
   
-  int i=0;
   BOOST_FOREACH(BGL_Edge e, boost::edges(m_BoostGraph)) {
     weightmap[e] = EdgeData[e]->cost();
     //cout << "weightmap["<<i++<<"] : " << weightmap[e] << endl;
@@ -2049,9 +2120,31 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( confPtr_t qi, confPtr_t
     }
   }
   
-   return nodes;
+  return nodes;
 }
 
+// Searches for the shortest path 
+// bewteen the configuration qi and qf which has to be in the same connected component
+std::vector<Node*> Graph::extractAStarShortestNodePaths( confPtr_t qi, confPtr_t qf )
+{
+  std::vector<Node*> nodes;
+  
+  Node* node_init = searchConf( *qi );
+  if( node_init == NULL ) {
+    return nodes;
+  }
+  
+  Node* node_goal = node_init->getConnectedComponent()->searchConf( *qf );
+  //Node* node_goal = nearestWeightNeighbour( node_init, qf, false, ENV.getInt(Env::DistConfigChoice));
+  if( node_goal == NULL ) {
+    return nodes;
+  }
+  
+  return extractAStarShortestNodePaths( node_init, node_goal );
+}
+
+// Searches for the shortest path 
+// bewteen the configuration qi and qf which has to be in the same connected component
 API::Trajectory* Graph::extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf )
 {
   vector<Node*> nodes = extractAStarShortestNodePaths( qi, qf );
@@ -2144,8 +2237,8 @@ API::Trajectory* Graph::extractBestTrajSoFar( confPtr_t qi, confPtr_t qf )
 // it first converts the grapgh to a p3d_graph
 API::Trajectory* Graph::extractBestTraj( confPtr_t qi, confPtr_t qf)
 {  	
-//  cout << "----------------------------------------------" << endl;
-//	cout << "Extracting the trajectory" << endl;
+  //  cout << "----------------------------------------------" << endl;
+  //	cout << "Extracting the trajectory" << endl;
 	
 	Node  *Ns=NULL,*Ng=NULL;
 	p3d_traj* trajPt = NULL;
@@ -2201,7 +2294,7 @@ API::Trajectory* Graph::extractBestTraj( confPtr_t qi, confPtr_t qf)
     cout << "Error in " << __func__ << endl;
     return NULL;
   }
-
+  
 	// Set the graph variables for a motion planning querry
 	initMotionPlanning(Ns_,Ng_);
 	
@@ -2391,7 +2484,7 @@ void Graph::drawEdge(BGL_Vertex v1, BGL_Vertex v2)
 void Graph::draw() 
 {
   //cout << "Draw BGL Graph , nb of nodes : " << m_Nodes.size() << endl;
-  shared_ptr<Configuration> q = m_Robot->getCurrentPos();
+  confPtr_t q = m_Robot->getCurrentPos();
   
   BOOST_FOREACH(BGL_Vertex v, boost::vertices(m_BoostGraph))
   {

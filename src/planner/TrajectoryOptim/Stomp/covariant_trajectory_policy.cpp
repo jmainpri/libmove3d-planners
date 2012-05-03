@@ -204,8 +204,7 @@ namespace stomp_motion_planner
   {
     for (int d=0; d<num_dimensions_; ++d)
     {
-      parameters_all_[d].segment(free_vars_start_index_, num_vars_free_) =
-      -0.5 * inv_control_costs_[d] * linear_control_costs_[d];
+      parameters_all_[d].segment(free_vars_start_index_, num_vars_free_) = -0.5 * inv_control_costs_[d] * linear_control_costs_[d];
     }
     //    for (int d=0; d<num_dimensions_; ++d)
     //    {
@@ -307,8 +306,10 @@ namespace stomp_motion_planner
     return true;
   }
   
-  bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices, const std::vector<Eigen::VectorXd>& parameters,
-                                                      const std::vector<Eigen::VectorXd>& noise, const double weight, std::vector<Eigen::VectorXd>& control_costs)
+  bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices, 
+                                                      const std::vector<Eigen::VectorXd>& parameters,
+                                                      const std::vector<Eigen::VectorXd>& noise, 
+                                                      const double weight, std::vector<Eigen::VectorXd>& control_costs)
   {
     // this measures the accelerations and squares them
     for (int d=0; d<num_dimensions_; ++d)
@@ -336,7 +337,8 @@ namespace stomp_motion_planner
   }
   
   
-  bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices, const std::vector<std::vector<Eigen::VectorXd> >& parameters,
+  bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices, 
+                                                      const std::vector<std::vector<Eigen::VectorXd> >& parameters,
                                                       const double weight, std::vector<Eigen::VectorXd>& control_costs)
   {
     //Policy::computeControlCosts(control_cost_matrices, parameters, weight, control_costs);
@@ -398,8 +400,7 @@ namespace stomp_motion_planner
     double divisor = 1.0;
     for (int d=0; d<num_dimensions_; ++d)
     {
-      parameters_all_[d].segment(free_vars_start_index_, num_vars_free_).transpose() +=
-      divisor * updates[d].row(0);
+      parameters_all_[d].segment(free_vars_start_index_, num_vars_free_).transpose() += divisor * updates[d].row(0);
       
       //      cout << "parameters_all_[" << d << "] = " << endl << parameters_all_[d] << endl;
     }

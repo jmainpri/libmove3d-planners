@@ -43,10 +43,7 @@ m_Id(-1)
 	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
 #endif
 	
-	// m_Compco = m_Graph->getGraphStruct()->last_comp;
-	// cout << "new compco : " << m_Compco << endl;
 	addNode(N);
-	//cerr << "Add Compco for Node " << N->getNodeStruct() << endl;
 }
 
 ConnectedComponent::~ConnectedComponent()

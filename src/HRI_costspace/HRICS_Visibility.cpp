@@ -81,7 +81,7 @@ double Visibility::getWorkspaceCost(const Vector3d& WSPoint)
   
   double alpha = gazeDir.dot( pointDir );
   
-  return (acos(alpha)+1) / 2;
+  return (acos(alpha)+1)/2;
 }
 
 double Visibility::getOldWorkspaceCost(const Vector3d& WSPoint)

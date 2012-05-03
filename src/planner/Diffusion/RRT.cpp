@@ -114,7 +114,7 @@ int RRT::expandOneStep(Node* fromComp, Node* toComp)
 	
 	Node* directionNode(NULL);
 	Node* expansionNode(NULL);
-	shared_ptr<Configuration> directionConfig;
+	confPtr_t directionConfig;
   
 	
 	// get direction

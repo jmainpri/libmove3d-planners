@@ -34,7 +34,7 @@ namespace API
 		Trajectory();
 		Trajectory(Robot* R);
 		Trajectory(Robot* R,traj* t);
-		Trajectory(std::vector< std::tr1::shared_ptr<Configuration> >& C);
+		Trajectory(std::vector<confPtr_t>& C);
     Trajectory(const Trajectory& T);
 		~Trajectory();
 		
@@ -53,21 +53,23 @@ namespace API
         
 		bool concat(const Trajectory& traj);
 		
-		bool replacePortionOfLocalPaths(unsigned int id1,unsigned int id2,
-                            std::vector<LocalPath*> paths, bool freeMemory = true );
-		
-		bool replacePortion(double param1,double param2,
-                            std::vector<LocalPath*> paths , bool freeMemory = true );
+		bool replacePortionOfLocalPaths(unsigned int id1,unsigned int id2,std::vector<LocalPath*> paths, bool freeMemory = true );
+		bool replacePortion(double param1,double param2,std::vector<LocalPath*> paths , bool freeMemory = true );
+    
+    bool replaceBegin(double param, const std::vector<LocalPath*>& paths ); 
+    bool replaceEnd(double param, const std::vector<LocalPath*>& paths ); 
 		
 		void cutTrajInSmallLP(unsigned int nLP);
     void cutTrajInSmallLPSimple(unsigned int nLP);
 		uint cutPortionInSmallLP(std::vector<LocalPath*>& portion, uint nLP);
 		
-		void push_back(std::tr1::shared_ptr<Configuration> q);
+		void push_back(confPtr_t q);
     bool push_back(std::tr1::shared_ptr<LocalPath> path);
 		
 		//---------------------------------------------------------
 		// Cost
+    double collisionCost();
+    
 		std::vector< std::pair<double,double > > getCostProfile();
 		double computeSubPortionIntergralCost(std::vector<LocalPath*>& portion);
 		double computeSubPortionCost(std::vector<LocalPath*>& portion);
@@ -75,10 +77,12 @@ namespace API
 		double computeSubPortionCostVisib( std::vector<LocalPath*>& portion );
 		double costOfPortion(double param1,double param2);
 		double extractCostPortion(double param1, double param2);
-		double cost();
+		
+    double cost();
 		double costNoRecompute();
     double costRecomputed();
 		double costDeltaAlongTraj();
+    
 		std::vector<double> getCostAlongTrajectory(int nbSample);
 		void resetCostComputed();
 		
@@ -88,11 +92,11 @@ namespace API
     
     void clear();
     
-    std::tr1::shared_ptr<Configuration> operator [] ( const int &i ) const;
-		std::tr1::shared_ptr<Configuration> configAtParam(double param, unsigned int* id_localpath=NULL) const;
+    confPtr_t operator [] ( const int &i ) const;
+		confPtr_t configAtParam(double param, unsigned int* id_localpath=NULL) const;
 		
-		std::vector< std::tr1::shared_ptr<Configuration> > getNConfAtParam(double delta);
-		std::vector< std::tr1::shared_ptr<Configuration> > getVectorOfConfiguration();
+		std::vector<confPtr_t> getNConfAtParam(double delta);
+		std::vector<confPtr_t> getVectorOfConfiguration();
 		
 		uint					getIdOfPathAt(double param);
 		LocalPath* 		getLocalPathPtrAt(unsigned int id) const;
@@ -100,6 +104,7 @@ namespace API
     int						getNbOfViaPoints() const;
 		
 		bool isValid();
+    void resetIsValid();
 		
 		void 	updateRange();
 		double computeSubPortionRange(const std::vector<LocalPath*>& portion) const;
@@ -133,23 +138,18 @@ namespace API
 		{
 			return m_Robot;
 		}
-		
-		double getRangeMax() const
-		{
-			return range_param;
-		}
     
     int size() const
 		{
 			return m_Courbe.size();
 		}
 		
-		std::tr1::shared_ptr<Configuration> getBegin() const
+		confPtr_t getBegin() const
 		{
 			return m_Source;
 		}
 		
-		std::tr1::shared_ptr<Configuration> getEnd() const
+		confPtr_t getEnd() const
 		{
 			return m_Target;
 		}
@@ -158,6 +158,10 @@ namespace API
 		{	
 			return m_Courbe;
 		}
+    
+    double getRangeMax() const { 
+      return computeSubPortionRange(m_Courbe);
+    }
 		
 		//---------------------------------------------------------
 		// Members
@@ -177,17 +181,11 @@ namespace API
 		/* Name of the file */
 		std::string file;
 		
-		/* Number of localpath */
-		uint		nloc;
-		
 		int mColor;
 		
-		/* Maximum range of parameter along the trajectory (length)*/
-		double    	range_param;
-		
 		/* Start and Goal (should never change) */
-		std::tr1::shared_ptr<Configuration> m_Source;
-		std::tr1::shared_ptr<Configuration> m_Target;
+		confPtr_t m_Source;
+		confPtr_t m_Target;
 	};
 }
 

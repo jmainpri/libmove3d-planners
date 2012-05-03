@@ -12,7 +12,6 @@
 #include "API/ConfigSpace/configuration.hpp"
 
 #include "plannerFunctions.hpp"
-#include "replanning.hpp"
 
 #include "P3d-pkg.h"
 #include "GraspPlanning-pkg.h"

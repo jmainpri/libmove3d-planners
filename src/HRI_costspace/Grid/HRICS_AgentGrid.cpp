@@ -130,7 +130,7 @@ void AgentCell::resetReachable()
  */
 Vector3d AgentCell::getWorkspacePoint()
 {
-  //	shared_ptr<Configuration> q_actual = dynamic_cast<AgentGrid*>(_grid)->getRobot()->getCurrentPos();
+  //	confPtr_t q_actual = dynamic_cast<AgentGrid*>(_grid)->getRobot()->getCurrentPos();
   //	
   //	Transform3d actual(Transform3d::Identity());
   //	
@@ -682,7 +682,7 @@ void AgentGrid::computeRadius()
 
 void AgentGrid::computeCostCombination()
 {
-  shared_ptr<Configuration> q = m_Robot->getCurrentPos();
+  confPtr_t q = m_Robot->getCurrentPos();
   
   for (unsigned int i=0; i<_cells.size(); i++) 
   {
@@ -694,7 +694,7 @@ void AgentGrid::computeCostCombination()
 //! @brief Compute Grid Cost
 void AgentGrid::computeCellVectors()
 {
-	shared_ptr<Configuration> q = m_Robot->getCurrentPos();
+	confPtr_t q = m_Robot->getCurrentPos();
   
   m_DangerCells.clear();
   m_VisibilityCells.clear();
@@ -722,14 +722,14 @@ void AgentGrid::computeAllCellCost()
 	cout << "AgentGrid::computeAllCellCost" << endl;
   //	vector<HRICS::AgentCell*> cells = getAllReachableCells();
   
-	shared_ptr<Configuration> q = m_Robot->getCurrentPos();
+	confPtr_t q = m_Robot->getCurrentPos();
   
   m_DangerCells.clear();
   m_VisibilityCells.clear();
   m_ReachableCells.clear();
   m_CombinedCells.clear();
   
-  for (unsigned int i=0; i < _cells.size() ; i++) 
+  for ( int i=0; i<int(_cells.size()) ; i++) 
   {
     AgentCell* cell = static_cast<AgentCell*>(_cells[i]);
     
@@ -740,7 +740,6 @@ void AgentGrid::computeAllCellCost()
     cell->computeVisibility();
     //if ( cell->getVisibility() > 0.2 ) 
       m_VisibilityCells.push_back( cell );
-    
     
     cell->computeReachability();
     

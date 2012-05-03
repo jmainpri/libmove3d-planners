@@ -12,6 +12,9 @@
 #include "HRICS_Visibility.hpp"
 #include "HRICS_Natural.hpp"
 
+#include "API/Grids/gridsAPI.hpp"
+#include "planner/planEnvironment.hpp"
+
 //#include "move3d-headless.h"
 
 #include "Util-pkg.h"
@@ -179,37 +182,86 @@ bool HumanCostSpace::initPr2()
 //    cout << "Add joint : " << m_CostJoints.back()->getName() << endl;
 //  }
   
-  for (int i=0; i<int(m_Robot->getNumberOfJoints()); i++) 
+  switch ( PlanEnv->getInt(PlanParam::setOfActiveJoints) ) {
+    case 0:
+      m_planning_type = NAVIGATION;
+      break;
+    case 1:
+      m_planning_type = MANIPULATION;
+      break;
+    case 2:
+      m_planning_type = MOBILE_MANIP;
+      break;
+    default:
+      cout << "Planner type not implemented" << endl;
+      break;
+  }
+  
+  if( m_planning_type == MANIPULATION )
   {
-    string name = m_Robot->getJoint(i)->getName();
-    
-    if(//name == "platformJoint" || 
-       //name == "Torso" || 
-       //name == "pan_cam" || 
-       //name == "right-Arm3" || 
-       name == "right-Arm4" || 
-       name == "right-Arm5" || 
-       name == "right-Arm6" || 
-       name == "right-Arm7"  
-       //name == "left-Arm6"  || 
-       //name == "left-Arm7" 
-       )
+    for (int i=0; i<int(m_Robot->getNumberOfJoints()); i++) 
     {
-      m_CostJoints.push_back( m_Robot->getJoint(i) );
-      cout << "Add joint : " << m_CostJoints.back()->getName() << endl;
+      string name = m_Robot->getJoint(i)->getName();
+      
+      if(name == "right-Arm4" || 
+         name == "right-Arm5" || 
+         name == "right-Arm6" || 
+         name == "right-Arm7" || 
+         name == "fingerJointGripper_0")
+      {
+        m_CostJoints.push_back( m_Robot->getJoint(i) );
+        cout << "Add joint : " << m_CostJoints.back()->getName() << endl;
+      }
     }
   }
   
+  if(  m_planning_type == MOBILE_MANIP )
+  {
+    for (int i=0; i<int(m_Robot->getNumberOfJoints()); i++) 
+    {
+      string name = m_Robot->getJoint(i)->getName();
+      
+      if(name == "platformJoint" || 
+         name == "Torso" || 
+         //name == "pan_cam" || 
+         //name == "right-Arm3" || 
+         name == "right-Arm4" || 
+         name == "right-Arm5" || 
+         name == "right-Arm6" || 
+         name == "right-Arm7" || 
+         name == "fingerJointGripper_0" ||
+         name == "left-Arm6"  || 
+         name == "left-Arm7" )
+      {
+        m_CostJoints.push_back( m_Robot->getJoint(i) );
+        cout << "Add joint : " << m_CostJoints.back()->getName() << endl;
+      }
+    }
+  }
   cout << m_CostJoints.size() << " nb of cost joints" << endl;
   return true;
 }
 
-void HumanCostSpace::computeCostCombination()
+double HumanCostSpace::groupingCost()
 {
-  for (unsigned int i=0; i<m_Grids.size(); i++) 
+  double cost = 0.0;
+  
+  Eigen::Vector3d pos3d = m_Robot->getJoint("platformJoint")->getVectorPos();
+  Eigen::Vector2d pos2d;
+  pos2d[0] = pos3d[0];
+  pos2d[1] = pos3d[1];
+  
+  for (int i=0; i<int(m_CostJoints.size()); i++) 
   {
-    m_Grids[i]->computeCostCombination();
+    Eigen::Vector3d posjnt3d = m_CostJoints[i]->getVectorPos();
+    Eigen::Vector2d posjnt2d;
+    posjnt2d[0] = posjnt3d[0];
+    posjnt2d[1] = posjnt3d[1];
+    
+    cost += (( posjnt2d - pos2d ).norm()/0.8);
   }
+  
+  return cost;
 }
 
 void HumanCostSpace::saveAgentGrids()
@@ -310,6 +362,9 @@ double HumanCostSpace::getCost(Configuration& q)
       cost += m_Grids[i]->getCellCostAt( m_CostJoints[j]->getVectorPos() );
     }
   }
-  return 100*(cost*cost)/(m_CostJoints.size());
+  cost = 10*(cost*cost)/double(m_CostJoints.size());
+  cost += groupingCost();
+  
+  return cost;
 }
 

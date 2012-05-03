@@ -84,16 +84,21 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::nextIterWaitForGui,         new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::rrtExtractShortestPath,     new boolContainer(false)));
   
+        // Time
+        myBoolMap.insert( std::make_pair( PlanParam::planWithTimeLimit,          new boolContainer(true)));
+        myBoolMap.insert( std::make_pair( PlanParam::trajWithTimeLimit,          new boolContainer(true)));
+  
         // Smoothing stage
         myBoolMap.insert( std::make_pair( PlanParam::trajPrintGain,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajPartialShortcut,        new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajSaveCost,               new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajCostRecompute,          new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajComputeCollision,       new boolContainer(true)));
+        myBoolMap.insert( std::make_pair( PlanParam::trajStompComputeColl,       new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::trajBiasOptim,              new boolContainer(false)));
+  
         myBoolMap.insert( std::make_pair( PlanParam::withMaxIteration,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::withGainLimit,              new boolContainer(true)));
-        myBoolMap.insert( std::make_pair( PlanParam::withTimeLimit,              new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::withSmoothing,              new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::withShortCut,               new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::withDeformation,            new boolContainer(false)));
@@ -163,8 +168,8 @@ void initPlannerParameters()
         myIntMap.insert(std::make_pair( PlanParam::plannerMaxIterations,         new intContainer(1000000)));
   
         // Replanning
-        myIntMap.insert(std::make_pair( PlanParam::plannerType,                  new intContainer(0)));
-        myIntMap.insert(std::make_pair( PlanParam::planningAlgorithm,            new intContainer(0)));
+        myIntMap.insert(std::make_pair( PlanParam::setOfActiveJoints,            new intContainer(0)));
+        myIntMap.insert(std::make_pair( PlanParam::replanningAlgorithm,            new intContainer(0)));
   
         // Object TransfertPoint variable
         myIntMap.insert(std::make_pair( PlanParam::env_maxIter,                  new intContainer(40)));
@@ -181,8 +186,9 @@ void initPlannerParameters()
 
         // Double
         // ------------------------------------------------------------------
+        myDoubleMap.insert( std::make_pair( PlanParam::timeLimitPlanning,        new doubleContainer(10.0)));
+        myDoubleMap.insert( std::make_pair( PlanParam::timeLimitSmoothing,       new doubleContainer(10.0)));
         // Post-processing phaze
-        myDoubleMap.insert( std::make_pair( PlanParam::optimTimeLimit,           new doubleContainer(10.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::MaxFactor,                new doubleContainer(3.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::MinStep,                  new doubleContainer(2.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::costTraj,                 new doubleContainer(1.0)));

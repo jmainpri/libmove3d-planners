@@ -13,20 +13,16 @@ namespace HRICS
 	class PlanGrid : public API::TwoDGrid
 	{
 	public:
-		PlanGrid();
-		PlanGrid(double pace, std::vector<double> envSize);
+		PlanGrid(Robot* R, double pace, std::vector<double> envSize);
 		
-		void setRobot(Robot* R) { mRobot = R; }
-		Robot* getRobot() { return mRobot; }
-		
+    API::TwoDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y );
+    
 		void writeToOBPlane();
-		
-		
-		API::TwoDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y );
-		
 		void draw();
-		
 		void setRobotToStoredConfig();
+    void reset();
+  
+		Robot* getRobot() { return mRobot; }
 		
 	private:
 		Robot* mRobot;
@@ -40,38 +36,38 @@ namespace HRICS
 	{
 		
 	public:
-		PlanCell();
 		PlanCell(int i, Eigen::Vector2i coord, Eigen::Vector2d corner, PlanGrid* grid);
 		
 		~PlanCell() { }
 		
+    Eigen::Vector2i getCoord() { return _Coord; }
+    
 		double getCost(); /* { std::cout << " Warning not implemented"  << std::endl; }*/
-		
-		void setBlankCost() { mCostIsComputed = false; }
-		
-		Eigen::Vector2i getCoord() { return _Coord; }
+    void resetCost() { mCostIsComputed = false; }
 		
 		bool getOpen() { return _Open; }
 		void setOpen() { _Open = true; }
-		
 		bool getClosed() { return _Closed; }
 		void setClosed() { _Closed = true; }
-		
 		void resetExplorationStatus() { _Open = false; _Closed = false; }
-		//        void draw();
-		
+    
+    bool isValid();
+		void resetIsValid() { mIsCellTested = false; }
+    
 	private:
+    
+    confPtr_t setRobotAtCenter();
 		
 		Eigen::Vector2i _Coord;
-		//        double* _v0; double* _v1; double* _v2; double* _v3;
-		//        double* _v4; double* _v5; double* _v6; double* _v7;
 		
 		bool _Open;
 		bool _Closed;
 		
 		bool mCostIsComputed;
 		double mCost;
-		
+    
+    bool mIsCellTested;
+    bool mIsValid;
 	};
 	
 	/**
@@ -89,15 +85,15 @@ namespace HRICS
 		
 		bool isLeaf();		/* leaf control for an admissible heuristic function; the test of h==0*/
 		bool equal(API::State* other);
+    bool isValid();
 		
 		void setClosed(std::vector<PlanState*>& closedStates,std::vector<PlanState*>& openStates);
 		bool isColsed(std::vector<PlanState*>& closedStates);
 		
 		void setOpen(std::vector<PlanState*>& openStates);
 		bool isOpen(std::vector<PlanState*>& openStates);
-		
+
 		void reset();
-		
 		void print();
 		
 		PlanCell* getCell() { return _Cell; }
@@ -109,6 +105,7 @@ namespace HRICS
 	private:
 		PlanGrid* _Grid;
 		PlanCell* _Cell;
+    PlanCell* _PreviousCell;
 	};
 }
 

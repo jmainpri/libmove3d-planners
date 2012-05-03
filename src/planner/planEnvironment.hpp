@@ -45,17 +45,22 @@ namespace PlanParam
             isWeightedChoice,
             nextIterWaitForGui,
             rrtExtractShortestPath,
-
+          
+            // Time
+            trajWithTimeLimit,
+            planWithTimeLimit,
+          
             // Smoothing stage
             trajPrintGain,
             trajPartialShortcut,
             trajSaveCost,
             trajCostRecompute,
             trajComputeCollision,
+            trajStompComputeColl,
             trajBiasOptim,
+          
             withMaxIteration,
             withGainLimit,
-            withTimeLimit,
             withSmoothing,
             withShortCut,
             withDeformation,
@@ -121,8 +126,8 @@ namespace PlanParam
             plannerMaxIterations,
           
             // Replanning
-            plannerType,
-            planningAlgorithm,
+            setOfActiveJoints,
+            replanningAlgorithm,
 
             // Object TransfertPoint variable
             env_maxIter,
@@ -142,8 +147,11 @@ namespace PlanParam
 
         enum doubleParameter
         {
+            // Time
+            timeLimitSmoothing,
+            timeLimitPlanning,
+            
             // Optimization Variables
-            optimTimeLimit,
             MaxFactor,
             MinStep,
             costTraj,
@@ -152,6 +160,7 @@ namespace PlanParam
             trajOptimStdDev,
             trajOptimSmoothWeight,
             trajOptimObstacWeight,
+            
             // Object TransfertPoint variable
             env_randomXMinLimit,
             env_randomXMaxLimit,

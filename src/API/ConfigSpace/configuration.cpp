@@ -491,8 +491,7 @@ bool Configuration::equal(Configuration& Conf)
     }
   }
 	
-  return (p3d_equal_config(_Robot->getRobotStruct(), _Configuration,
-                           Conf.getConfigStruct()));
+  return (p3d_equal_config(_Robot->getRobotStruct(), _Configuration, Conf.getConfigStruct()));
 }
 
 //copie la Configuration courante dans une nouvelle Configuration
@@ -557,7 +556,7 @@ Configuration& Configuration::mult(double coeff)
 
 Eigen::VectorXd Configuration::getEigenVector()
 {
-	unsigned int nbDof=0;
+	unsigned int nbDof= 0;
 	unsigned int njnt = _Robot->getNumberOfJoints();
   
 	// Get  number of Dofs of all joints

@@ -12,7 +12,6 @@
 using namespace std;
 using namespace tr1;
 
-
 //using namespace HRICS;
 
 // import most common Eigen types
@@ -30,10 +29,14 @@ ConfGenerator::ConfGenerator(Robot* rob,Robot* human):_robot(rob),_human(human)
 {
 }
 
-bool ConfGenerator::computeRobotGikForGrabing(configPt &q)
+bool ConfGenerator::computeRobotGikForGrabing( configPt& q )
+{
+  return computeRobotGikForGrabing( q, current_WSPoint );
+}
+
+bool ConfGenerator::computeRobotGikForGrabing( configPt &q, const Eigen::Vector3d& point)
 {
     shared_ptr<Configuration> q_robot_cur = _robot->getCurrentPos();
-
 
     int armId = 0;
     ArmManipulationData& armData = (*_robot->getRobotStruct()->armManipulationData)[armId];
@@ -44,9 +47,10 @@ bool ConfGenerator::computeRobotGikForGrabing(configPt &q)
     vector<vector<double> > vect;
 
     vector<double> target(6);
-    target.at(0) = current_WSPoint(0);
-    target.at(1) = current_WSPoint(1);
-    target.at(2) = current_WSPoint(2);
+    target.at(0) = point(0);
+    target.at(1) = point(1);
+    target.at(2) = point(2);
+  
     target.at(3) = M_PI/2;
     target.at(4) = (*q_robot_cur)[11] - 7*M_PI/8 + M_PI;
     target.at(5) = 0;

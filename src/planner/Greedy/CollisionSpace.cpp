@@ -634,8 +634,8 @@ bool CollisionSpace::isRobotColliding(double& dist) const
 //        if ( j > 5 ) 
 //        {
         points[j].m_is_colliding = true;
-        cout << "point : " << j << " with segment number : " << points[j].getSegmentNumber() ;
-        cout << " in collision" << endl;
+//        cout << "point : " << j << " with segment number : " << points[j].getSegmentNumber() ;
+//        cout << " in collision" << endl;
 //        }
 //        else {
 //          points[j].m_is_colliding = false;

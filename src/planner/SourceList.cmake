@@ -9,7 +9,8 @@ cost_space.cpp
 
 IF(MULTILOCALPATH AND LIGHT_PLANNER)
 BM3D_SRC_SUBDIR_PROCESS(
-replanning.cpp
+replanningAlgorithms.cpp
+replanningSimulators.cpp
 )
 ENDIF()
 

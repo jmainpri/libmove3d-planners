@@ -46,6 +46,7 @@ public:
 	 * Constructeur de la classe
 	 * @param G le Graph pour lequel le Node est créé
 	 * @param C la Configuration stockée dans le Node
+   * @param id the number in the graph (Graph->getNumberOfNodes)
 	 */
 	Node(Graph* G, std::tr1::shared_ptr<Configuration> C, bool newCompco=true);
 	
@@ -55,18 +56,6 @@ public:
 	 * @param N la structure de p3d_node qui sera stockée
 	 */
 	Node(Graph* G, node* N);
-	
-	/**
-	 * Constructeur de la classe
-	 * @param G le Graph pour lequelle Node est créé
-	 * @param N la structure de p3d_node qui sera stockée
-	 */
-	//Node(cpp_Graph* G, p3d_node* N);
-	
-	/**
-	 * Copy the node
-	 */
-	Node(const Node& N);
 	
 	/**
 	 * destructeur de la classe

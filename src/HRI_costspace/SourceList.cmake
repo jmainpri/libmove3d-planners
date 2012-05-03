@@ -12,6 +12,7 @@ HRICS_Miscellaneous.cpp
 HRICS_old.cpp
 HRICS_otpmotionpl.cpp
 HRICS_humanCostSpace.cpp
+HRICS_Navigation.cpp
 )
 
 IF(HRI_PLANNER)

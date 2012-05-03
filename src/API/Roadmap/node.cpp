@@ -38,27 +38,6 @@ m_specificNode(false)
 }
 
 //Constructor and destructor
-Node::Node(const Node& N) :
-m_Graph(N.m_Graph),
-m_Robot(N.m_Robot),
-m_parent(NULL),
-m_Configuration(N.m_Configuration),
-_activ(false),
-_SelectCost(0.0),
-_nbExpan(0),
-m_specificNode(false)
-{
-	throw string("Copy constructor has to be removed");
-	
-	m_Node = new p3d_node(*N.m_Node);
-	
-	// BGL data
-	m_is_BGL_Descriptor_Valid = false;
-	m_BGL_Descriptor = N.m_BGL_Descriptor;
-  m_is_leaf = true;
-}
-
-//Constructor and destructor
 Node::Node(Graph* G, shared_ptr<Configuration> C, bool newCompco) :
 m_parent(NULL),
 _SelectCost(0.0),

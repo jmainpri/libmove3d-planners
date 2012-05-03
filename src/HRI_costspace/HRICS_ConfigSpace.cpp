@@ -107,8 +107,7 @@ void ConfigSpace::initCostSpace()
     m3DGrid->setRobot(_Robot);
 
     mEnvSize.resize(4);
-    m2DGrid = new PlanGrid(ENV.getDouble(Env::PlanCellSize),mEnvSize);
-    m2DGrid->setRobot(_Robot);
+    m2DGrid = new PlanGrid(_Robot,ENV.getDouble(Env::PlanCellSize),mEnvSize);
 //    API_activeGrid = m2DGrid;
 //    API_EnvGrid = m2DGrid;
 }

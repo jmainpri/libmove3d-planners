@@ -35,9 +35,16 @@ public:
 	 * @return le number of nodes added to the graph
 	 */
 	virtual int init();
+  
+protected:
+  
+  /**
+   * Compute the translation bounds of the robot
+   */
+  void getTranslationBounds();
 	
   /**
-   * adds a trajectory
+   * Adds a trajectory
    */
   void addTrajectory(const API::Trajectory& T);
   
@@ -45,6 +52,11 @@ public:
    * Test if the perturbation is valid
    */
   bool testPerturb( confPtr_t q_new, std::vector<Node*>& vect_conf );
+  
+  /**
+   * Find the best cycle in the graph
+   */
+  bool findBestCycle( confPtr_t q_new, double dist, std::vector<Node*>& vect_conf );
   
   /**
    * Add a perturbation to the graph
@@ -82,7 +94,7 @@ public:
 	 */
 	virtual void expandOneStep();
 	
-protected:
+private:
 	/**
 	 * Members
 	 */
@@ -98,6 +110,7 @@ protected:
   double m_std_dev_rot;
   double m_radian_steps;
   double m_transl_steps;
+  double m_transl_max;
   
   confPtr_t m_qi;
   confPtr_t m_qf;

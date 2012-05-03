@@ -95,26 +95,25 @@ bool Smoothing::oneLoopShortCut( )
 	
 	bool supposedValid = true;
   
-	// If the path is valid, check for cost
-	if ( !ENV.getBool(Env::costBeforeColl) )
+	if ( !ENV.getBool(Env::costBeforeColl) && PlanEnv->getBool(PlanParam::trajComputeCollision) )
 	{
 		supposedValid = newPath->isValid();
 	}
+  
+  // If the path is valid, check for cost
 	if ( supposedValid )
 	{
-		if (ENV.getBool(Env::debugCostOptim))
+		if (false /*ENV.getBool(Env::debugCostOptim)*/)
 		{
-			if( getIdOfPathAt(lFirst)==getHighestCostId() || 
-         getIdOfPathAt(lSecond)==getHighestCostId() )
+			if( getIdOfPathAt(lFirst)==getHighestCostId() || getIdOfPathAt(lSecond)==getHighestCostId() )
       {
 				debugShowTraj(lFirst,lSecond);
 				m_nbReallyBiased++;
 			}
 		}
 		
-		// If the new path is of lower cost
-		// Replace in trajectory
-		if(ENV.getBool(Env::costBeforeColl))
+		// If the new path is of lower cost, replace in trajectory
+		if(ENV.getBool(Env::costBeforeColl) && PlanEnv->getBool(PlanParam::trajComputeCollision) )
 		{
 			supposedValid = newPath->isValid();
 		}
@@ -130,7 +129,7 @@ bool Smoothing::oneLoopShortCut( )
 			vector<LocalPath*> vect_path;
 			vect_path.push_back(newPath);
 			
-			replacePortion(lFirst, lSecond, vect_path);
+			replacePortion( lFirst, lSecond, vect_path );
       
       if( PlanEnv->getBool(PlanParam::trajBiasOptim) ) {
         setSortedIndex();
@@ -170,12 +169,12 @@ bool Smoothing::oneLoopShortCutRecompute()
 	if (!(getNbOfPaths() > 1))
 		return false;
 	
-	vector<shared_ptr<Configuration> > vectConf;
+	vector<confPtr_t> vectConf;
 	
 	vectConf = get2RandomConf(0.0,lFirst,lSecond);
 	
-	shared_ptr<Configuration> qFirstPt = vectConf.at(0);
-	shared_ptr<Configuration> qSecondPt = vectConf.at(1);
+	confPtr_t qFirstPt = vectConf.at(0);
+	confPtr_t qSecondPt = vectConf.at(1);
 	
 	// Take a configuration in a certain direction
 	LocalPath* newPath = new LocalPath(qFirstPt, qSecondPt);
@@ -352,12 +351,12 @@ bool Smoothing::isLowerCostLargePortion( double lFirst, double lSecond , vector<
 	paths.clear();
 	paths = newPaths;
 	
-	LocalPath* LP1 = new LocalPath(getLocalPathPtrAt(first)->getBegin(),confs[0]);
+	LocalPath* LP1 = new LocalPath( getLocalPathPtrAt(first)->getBegin(), confs[0] );
 	if(LP1->getParamMax()>0) {
 		paths.insert(paths.begin(),LP1);
 	}
 	
-	LocalPath* LP2 = new LocalPath(confs.back(),getLocalPathPtrAt(last)->getEnd());
+	LocalPath* LP2 = new LocalPath( confs.back(), getLocalPathPtrAt(last)->getEnd() );
 	if(LP2->getParamMax()>0) {
 		paths.push_back(LP2);
 	}
@@ -447,7 +446,6 @@ void Smoothing::changeIthActiveDofValueOnConf( Configuration& q,
 	}
 }
 
-
 void Smoothing::removeRedundantNodes()
 {
 	if(!isValid())
@@ -467,12 +465,12 @@ void Smoothing::removeRedundantNodes()
 	uint initNbNodes = NbNodes;
 	uint nbRemoved(0);
 	
-	for (uint i = 0; i < NbNodes - 2; i++)
+	for (uint i = 0; i < NbNodes-2; i++)
 	{
 		for (uint j = i + 2; j < NbNodes; j++)
 		{
-			shared_ptr<Configuration> start = getLocalPathPtrAt(i)->getBegin();
-			shared_ptr<Configuration> end = getLocalPathPtrAt(j)->getBegin();
+			confPtr_t start = getLocalPathPtrAt(i)->getBegin();
+			confPtr_t end   = getLocalPathPtrAt(j)->getBegin();
 			
 			LocalPath* pathPtr = new LocalPath(start, end);
 			
@@ -811,9 +809,9 @@ bool Smoothing::checkStopConditions(unsigned int iteration)
 		}
 	}
 	
-	if( PlanEnv->getBool(PlanParam::withTimeLimit) )
+	if( PlanEnv->getBool(PlanParam::trajWithTimeLimit) )
 	{
-		if ( m_time > PlanEnv->getDouble(PlanParam::optimTimeLimit) ) 
+		if ( m_time > PlanEnv->getDouble(PlanParam::timeLimitSmoothing) ) 
 		{
 			cout << "Smoothin has reached time limit ( " << m_time << " ) " << endl;
 			return true;
@@ -847,18 +845,18 @@ double Smoothing::gainOfLastIterations(unsigned int n)
 	}
 	else 
 	{    
-//		int start=0;
-//    double gain(0.0);
-
-//		start = m_GainOfIterations.size() - n;
-//		
-//		for ( int i=start; i<int(m_GainOfIterations.size()); i++ ) 
-//		{
-//			gain += m_GainOfIterations[i];
-//		}
-//		
-//		gain /= double(n);
-//    return gain;
+    //		int start=0;
+    //    double gain(0.0);
+    
+    //		start = m_GainOfIterations.size() - n;
+    //		
+    //		for ( int i=start; i<int(m_GainOfIterations.size()); i++ ) 
+    //		{
+    //			gain += m_GainOfIterations[i];
+    //		}
+    //		
+    //		gain /= double(n);
+    //    return gain;
 		return *max_element(m_GainOfIterations.end()-20,m_GainOfIterations.end());
 	}
 }
@@ -909,10 +907,10 @@ void Smoothing::saveOptimToFile(string fileName)
  */
 void Smoothing::runShortCut( int nbIteration, int idRun )
 {
-  this->costNoRecompute();
-#ifdef DEBUG_STATUS
-  cout << "Before Short Cut : Traj cost = " << this->costNoRecompute() << endl;
-#endif
+  //  this->costNoRecompute();
+  //#ifdef DEBUG_STATUS
+  //  cout << "Before Short Cut : Traj cost = " << this->costNoRecompute() << endl;
+  //#endif
 	double costBeforeDeformation = this->cost();
 	
   m_OptimCost.clear();
@@ -988,24 +986,26 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 	
 	ChronoOff();
 	
-	if ( isValid () )
+  if( PlanEnv->getBool(PlanParam::trajComputeCollision ) )
   {
+    if ( isValid() ) {
 #ifdef DEBUG_STATUS
-    cout << "Trajectory valid" << endl;
+      cout << "Trajectory valid" << endl;
 #endif
+    }
+    else { 
+      cout << "Trajectory not valid" << endl;
+    }
   }
-	else
-	{ cout << "Trajectory not valid" << endl;}
-	
-	if(PlanEnv->getBool(PlanParam::trajSaveCost))
-	{
-		ostringstream oss;
-		oss << "ShortCutOptim_"<< m_ContextName << "_" << idRun << "_" ;
-		this->saveOptimToFile( oss.str() );
-	}
-  this->costNoRecompute();
+  
+  if(PlanEnv->getBool(PlanParam::trajSaveCost))
+  {
+    ostringstream oss;
+    oss << "ShortCutOptim_"<< m_ContextName << "_" << idRun << "_" ;
+    this->saveOptimToFile( oss.str() );
+  }
 #ifdef DEBUG_STATUS
-  cout << "Before : Traj cost = " << costBeforeDeformation << endl;
-  cout << "After Short Cut : cost = " << this->costNoRecompute() << endl;
+  cout << "Before : cost = " << costBeforeDeformation << endl;
+  cout << "After : cost = " << this->costNoRecompute() << endl;
 #endif
 }

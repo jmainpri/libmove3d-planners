@@ -9,7 +9,7 @@
 #ifndef HUMAN_COSTSPACE_HPP
 #define HUMAN_COSTSPACE_HPP
 
-#include "API/planningAPI.hpp"
+#include "API/Device/robot.hpp"
 #include "Grid/HRICS_AgentGrid.hpp"
 
 /**
@@ -28,7 +28,6 @@ namespace HRICS
     double getCost(Configuration& q);
 		
     void computeAllCellCost();
-    void computeCostCombination();
     void testCostFunction();
     
     void saveAgentGrids();
@@ -44,10 +43,14 @@ namespace HRICS
     bool initPr2();
     bool initGreyTape();
     
+    double groupingCost();
+    
 		Robot*                        m_Robot;
     std::vector<Joint*>           m_CostJoints;
     std::vector<Robot*>           m_Humans;
     std::vector<AgentGrid*>       m_Grids;
+    
+    enum PlanningType { NAVIGATION = 0, MANIPULATION = 1, MOBILE_MANIP = 2 } m_planning_type;
     
     Distance*			m_DistanceSpace;
 		Visibility*		m_VisibilitySpace;

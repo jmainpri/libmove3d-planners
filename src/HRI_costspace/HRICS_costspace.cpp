@@ -35,14 +35,23 @@ enum CostSpaceFunction
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 // Function for the Human cost space
-double HRICS_getConfigHumanGridCost(Configuration& Conf)
+double HRICS_getConfigHumanGridCost(Configuration& q)
 {	
+  double cost = 0.0;
+  
   if(HRICS_humanCostMaps != NULL)
   {
-    return HRICS_humanCostMaps->getCost(Conf);
+    cost = HRICS_humanCostMaps->getCost(q);
+    
+    if( PlanEnv->getBool(PlanParam::trajStompComputeColl )) 
+    {
+      if (q.isInCollision()) {
+        cost += 1000;
+      }
+    }
   }
   
-  return NULL;
+  return cost;
 }
 
 //----------------------------------------------------------------------
