@@ -338,21 +338,21 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
             p.first = numeric_limits<double>::max( );
             for (unsigned int j = 0; j < cell->getHumanRobotReacheable().size(); j++)
             {
-                if (cell->getHumanRobotReacheable().at(j)->isRobAccessible())
-                {
-                    newVect.push_back(cell->getHumanRobotReacheable().at(j));
+//                if (cell->getHumanRobotReacheable().at(j)->isRobAccessible())
+//                {
+//                    newVect.push_back(cell->getHumanRobotReacheable().at(j));
                     if (cell->getHumanRobotReacheable().at(j)->getRobotDist() < p.first)
                     {
                         p.first = cell->getHumanRobotReacheable().at(j)->getRobotDist();
                         p.second = cell->getHumanRobotReacheable().at(j);
                     }
 
-                }
+//                }
             }
     //        p.first = max((p.second->getRobotDist()/ m_robotMaxDist)*PlanEnv->getDouble(PlanParam::env_objectNessecity) ,(cell->getHumanDist()/m_humanMaxDist));
     //        p.first = 0;
             cell->clearCurrentHumanRobotReacheable();
-            cell->setCurrentHumanRobotReacheable(newVect);
+            cell->setCurrentHumanRobotReacheable(cell->getHumanRobotReacheable());
             cell->setRobotBestPos(p);
         }
     }
