@@ -183,6 +183,7 @@ public:
 
 private:
   Robot* robot_model_;
+  Robot* human_model_;
   
   int num_joints_;
   int num_vars_free_;
@@ -195,6 +196,8 @@ private:
   
   bool succeded_joint_limits_;
   int joint_limits_violation_;
+  
+  bool use_handover_conf_generator_;
   
   ChompTrajectory *full_trajectory_;
   const ChompPlanningGroup *planning_group_;
@@ -276,6 +279,7 @@ private:
   
   confPtr_t source_;
   confPtr_t target_;
+  confPtr_t target_new_;
 
 //  ros::Publisher vis_marker_array_pub_;
 //  ros::Publisher vis_marker_pub_;
@@ -301,7 +305,6 @@ private:
   bool handleJointLimits();
   void animatePath();
   void animateEndeffector();
-  void setGroupTrajectoryToVectorConfig(std::vector<confPtr_t>& traj);
   void visualizeState(int index);
   double getTrajectoryCost();
   double getSmoothnessCost();
@@ -316,8 +319,16 @@ private:
 
   void copyPolicyToGroupTrajectory();
   void copyGroupTrajectoryToPolicy();
-
   void clearAnimations();
+  
+  //----------------------------------------------------------------------------
+  // Jim functions
+  //----------------------------------------------------------------------------
+  void setGroupTrajectoryToVectorConfig(std::vector<confPtr_t>& traj);
+  void setGroupTrajectoryFromVectorConfig(const std::vector<confPtr_t>& traj);
+  
+  bool replaceEndWithNewConfiguration();
+  bool getNewTargetFromHandOver();
   void resampleParameters(std::vector<Eigen::VectorXd>& parameters);
   confPtr_t getConfigurationOnGroupTraj(int ith);
 

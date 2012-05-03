@@ -43,6 +43,11 @@
 
 #include "planner/planEnvironment.hpp"
 #include "planner/cost_space.hpp"
+#include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
+
+#include "API/project.hpp"
+
+#include "utils/ConfGenerator.h"
 
 #include "Graphic-pkg.h"
 #include "P3d-pkg.h"
@@ -79,7 +84,12 @@ namespace stomp_motion_planner
   
   void StompOptimizer::initialize()
   {
+    Scene* sce = global_Project->getActiveScene();
+    
     robot_model_ = group_trajectory_.getRobot();
+    human_model_ = sce->getRobotByNameContaining("HERAKLES");
+    
+    use_handover_conf_generator_ = true;
     
     //clearAnimations();
     
@@ -284,8 +294,6 @@ namespace stomp_motion_planner
   //void StompOptimizer::optimize()
   void StompOptimizer::runDeformation( int nbIteration , int idRun )
   {
-    //  ros::WallTime start_time = ros::WallTime::now();
-    
     stomp_statistics_ = boost::shared_ptr<StompStatistics>(new StompStatistics());
     
     stomp_statistics_->collision_success_iteration = -1;
@@ -294,20 +302,18 @@ namespace stomp_motion_planner
     stomp_statistics_->costs.clear();
     
     ChronoOn();
-    // initialize pi_loop
-    //  ros::NodeHandle nh("~");
+
     PolicyImprovementLoop pi_loop;
     pi_loop.initialize(/*nh,*/ this_shared_ptr_, false );
     
-    group_trajectory_.print();
+    //group_trajectory_.print();
     
     iteration_ = 0;
     copyPolicyToGroupTrajectory();
     handleJointLimits();
     updateFullTrajectory();
     performForwardKinematics();
-    
-    group_trajectory_.print();
+    //group_trajectory_.print();
     
     if (stomp_parameters_->getAnimateEndeffector())
     {
@@ -327,9 +333,12 @@ namespace stomp_motion_planner
          iteration_<stomp_parameters_->getMaxIterations()&& 
          !PlanEnv->getBool(PlanParam::stopPlanner); 
          iteration_++)
-    {
-      //    if (!ros::ok())
-      //      break;
+    {      
+      if( use_handover_conf_generator_ ) 
+      {
+        replaceEndWithNewConfiguration();
+        copyGroupTrajectoryToPolicy();
+      }
       
       if (!stomp_parameters_->getUseChomp())
       {
@@ -342,7 +351,7 @@ namespace stomp_motion_planner
       {
         doChompOptimization();
       }
-      
+            
       if (stomp_parameters_->getAnimateEndeffector())
       {
         animateEndeffector();
@@ -1110,9 +1119,8 @@ namespace stomp_motion_planner
 
   }
   
-  void StompOptimizer::setGroupTrajectoryToVectorConfig(vector<confPtr_t>& traj)
+  void StompOptimizer::setGroupTrajectoryFromVectorConfig(const vector<confPtr_t>& traj)
   {
-    // calculate the forward kinematics for the fixed states only in the first iteration:
     int start = free_vars_start_;
     int end = free_vars_end_;
     if (iteration_==0) {
@@ -1120,23 +1128,40 @@ namespace stomp_motion_planner
       end = num_vars_all_-1;
     }
     
-    // Get the joint map
+    // Get the map from move3d index to group trajectory
     const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+
+    for (int i=start; i<=end; ++i)
+    { 
+      for(int j=0; j<planning_group_->num_joints_;j++) 
+      {
+        group_trajectory_.getTrajectoryPoint(i).transpose()[j] = (*traj[i])[joints[j].move3d_dof_index_];
+      }
+    }
+  }
+  
+  void StompOptimizer::setGroupTrajectoryToVectorConfig(vector<confPtr_t>& traj)
+  {
+    int start = free_vars_start_;
+    int end = free_vars_end_;
+    if (iteration_==0) {
+      start = 0;
+      end = num_vars_all_-1;
+    }
     
-    // Alocate config
-    Configuration q = *robot_model_->getCurrentPos();
+    // Get the map fro move3d index to group trajectory
+    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+   
+    confPtr_t q = robot_model_->getCurrentPos();
     
-    // for each point in the trajectory
     for (int i=start; i<=end; ++i)
     {
       Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(i).transpose();
-      
-      // Set each planning dof
+
       for(int j=0; j<planning_group_->num_joints_;j++) {
-        q[joints[j].move3d_dof_index_] = point[j];
+        (*q)[joints[j].move3d_dof_index_] = point[j];
       }
-      
-      traj.push_back( confPtr_t(new Configuration(q)) );
+      traj.push_back( confPtr_t(new Configuration(*q)) );
     }
   }
   
@@ -1173,7 +1198,7 @@ namespace stomp_motion_planner
       
       //q.print();
       
-      T.push_back( std::tr1::shared_ptr<Configuration>(new Configuration(*q)) );
+      T.push_back( confPtr_t(new Configuration(*q)) );
     }
     
     cout << "Move3D Trajectory Cost : " << T.cost() ;
@@ -1206,6 +1231,100 @@ namespace stomp_motion_planner
     
     robot_model_->setAndUpdate( *q );
     g3d_draw_allwin_active();
+  }
+  
+  bool StompOptimizer::replaceEndWithNewConfiguration()
+  {
+    // Retrieve a new configuration
+    if( !getNewTargetFromHandOver() ) {
+      return false;
+    }
+    
+    // Calculate the forward kinematics for the fixed states only in the first iteration:
+    int start = free_vars_start_;
+    int end = free_vars_end_;
+    if (iteration_==0)
+    {
+      start = 0;
+      end = num_vars_all_-1;
+    }
+    
+    // Generate trajectory
+    confPtr_t q = robot_model_->getCurrentPos();
+    API::CostOptimization T( robot_model_ );
+    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+
+    for (int i=start; i<=end; ++i)
+    {
+      Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(i).transpose();
+      
+      for(int j=0; j<planning_group_->num_joints_;j++) {
+        (*q)[joints[j].move3d_dof_index_] = point[j];
+      }
+      
+      T.push_back( confPtr_t(new Configuration(*q)) );
+    }
+    
+    // Try connection
+    double step = T.getRangeMax() / 10;
+    if( T.connectConfiguration( target_new_, step ) )
+    {
+      target_ = target_new_;
+      
+      double param = 0.0;
+      double step = T.getRangeMax()/(num_vars_all_-1);
+  
+      vector<confPtr_t> vect(num_vars_all_);
+      for (int i=0; i<num_vars_all_; i++) 
+      {
+        vect[i] = T.configAtParam( param );
+        param += step;
+      }
+      setGroupTrajectoryFromVectorConfig( vect );
+      return true;
+    }
+    else {
+      cout << "Fail to connect to handover configuration" << endl;
+      return false;
+    }
+  }
+  
+  bool StompOptimizer::getNewTargetFromHandOver()
+  {
+    if( human_model_ == NULL ) {
+      return false;
+    }
+    
+    confPtr_t q_hum = human_model_->getCurrentPos();
+    (*q_hum)[6] =  PlanEnv->getDouble(PlanParam::env_futurX);
+    (*q_hum)[7] =  PlanEnv->getDouble(PlanParam::env_futurY);
+    (*q_hum)[8] =  PlanEnv->getDouble(PlanParam::env_futurZ);
+    (*q_hum)[11] = PlanEnv->getDouble(PlanParam::env_futurRZ);
+    
+    human_model_->setAndUpdate(*q_hum);
+    
+    ConfGenerator generator( robot_model_, human_model_ );
+    
+    Eigen::Vector3d point = human_model_->getJoint("rPalm")->getVectorPos();
+    point[2] += 0.10;
+    
+    // Compute IK
+    configPt q;
+    bool found_ik = generator.computeRobotGikForGrabing( q, point );
+    
+    // Disable cntrts
+    p3d_cntrt* ct;
+    p3d_rob* rob = robot_model_->getRobotStruct();
+    for(int i=0; i<rob->cntrt_manager->ncntrts; i++) {
+      ct = rob->cntrt_manager->cntrts[i];
+      p3d_desactivateCntrt( rob, ct );
+    }
+    
+    if( found_ik ) {
+      target_new_ = confPtr_t(new Configuration( robot_model_, q ));
+    }
+    
+    return found_ik;
   }
   
   void StompOptimizer::draw()
