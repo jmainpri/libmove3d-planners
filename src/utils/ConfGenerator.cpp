@@ -8,6 +8,7 @@
 
 #include "planEnvironment.hpp"
 #include "plannerFunctions.hpp"
+#include "OtpUtils.hpp"
 
 using namespace std;
 using namespace tr1;
@@ -29,14 +30,14 @@ ConfGenerator::ConfGenerator(Robot* rob,Robot* human):_robot(rob),_human(human)
 {
 }
 
-bool ConfGenerator::computeRobotGikForGrabing( configPt& q )
+bool ConfGenerator::computeRobotIkForGrabing( configPt& q )
 {
-  return computeRobotGikForGrabing( q, current_WSPoint );
+  return computeRobotIkForGrabing( q, current_WSPoint );
 }
 
-bool ConfGenerator::computeRobotGikForGrabing( configPt &q, const Eigen::Vector3d& point)
+bool ConfGenerator::computeRobotIkForGrabing( configPt &q, const Eigen::Vector3d& point)
 {
-    shared_ptr<Configuration> q_robot_cur = _robot->getCurrentPos();
+    confPtr_t q_robot_cur = _robot->getCurrentPos();
 
     int armId = 0;
     ArmManipulationData& armData = (*_robot->getRobotStruct()->armManipulationData)[armId];
@@ -94,7 +95,7 @@ bool ConfGenerator::computeRobotGikForGrabing( configPt &q, const Eigen::Vector3
     _robot->activateCcConstraint();
     if (q != NULL)
     {
-        //        shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
+        //        confPtr_t m_q = confPtr_t(
         //                                              new Configuration(rob,p3d_copy_config(rob->getRobotStruct(),q)));
         //        rob->setAndUpdate( *m_q );
 
@@ -126,7 +127,7 @@ Eigen::Vector3d ConfGenerator::setCurOTP( Eigen::Vector3d WSPoint)
 
     //        r->setAndUpdate(*r->getInitialPosition());
     int firstIndexOfHumanDof = _robot->getJoint(1)->getIndexOfFirstDof();
-    shared_ptr<Configuration> q_cur = _robot->getCurrentPos();
+    confPtr_t q_cur = _robot->getCurrentPos();
 
     Eigen::Vector3d vec;
     current_WSPoint[0] = WSPoint[0] + (*q_cur)[firstIndexOfHumanDof + 0];
@@ -150,8 +151,8 @@ void ConfGenerator::drawOTPList(bool value)
 bool ConfGenerator::placeRobot()
 {
     int firstIndexOfHumanDof = _human->getJoint(1)->getIndexOfFirstDof();
-    shared_ptr<Configuration> q_cur = _human->getCurrentPos();
-    //        shared_ptr<Configuration> q_tmp = human->getCurrentPos();
+    confPtr_t q_cur = _human->getCurrentPos();
+    //        confPtr_t q_tmp = human->getCurrentPos();
 
     Vector2d HumanPos;
 
@@ -161,8 +162,8 @@ bool ConfGenerator::placeRobot()
     double gaze = angle_limit_PI((*q_cur)[firstIndexOfHumanDof + 5]);
     double refAngle = std::atan2(current_WSPoint[1] - HumanPos[1], current_WSPoint[0] - HumanPos[0]) - gaze;
 
-    shared_ptr<Configuration> q_robot = _robot->getCurrentPos();
-    shared_ptr<Configuration> q_robot_cur = _robot->getCurrentPos();
+    confPtr_t q_robot = _robot->getCurrentPos();
+    confPtr_t q_robot_cur = _robot->getCurrentPos();
     int firstIndexOfDof = dynamic_cast<p3d_jnt*>(_robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 
     double dist = sqrt(pow(HumanPos[0] - current_WSPoint[0], 2) + pow(HumanPos[1] - current_WSPoint[1], 2));
@@ -198,13 +199,13 @@ bool ConfGenerator::placeRobot()
 
     _robot->setAndUpdate(*q_robot_cur);
     configPt q;
-    if (!computeRobotGikForGrabing(q))
+    if (!computeRobotIkForGrabing(q))
     {
         _robot->setAndUpdate(*q_robot);
         return false;
     }
 
-    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
+    confPtr_t m_q = confPtr_t(
             new Configuration(_robot,p3d_copy_config(_robot->getRobotStruct(),q)));
     _robot->setAndUpdate( *m_q );
     return true;
@@ -216,8 +217,8 @@ std::vector<HRICS::ConfigHR> ConfGenerator::addConfToList()
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 
 
-    shared_ptr<Configuration> q_robot_cur = _robot->getCurrentPos();
-    shared_ptr<Configuration> q_human_cur = _human->getCurrentPos();
+    confPtr_t q_robot_cur = _robot->getCurrentPos();
+    confPtr_t q_human_cur = _human->getCurrentPos();
 
     (*q_robot_cur)[firstIndexOfRobotDof + 0] = (*q_robot_cur)[firstIndexOfRobotDof + 0] - (*q_human_cur)[firstIndexOfHumanDof + 0];
     (*q_robot_cur)[firstIndexOfRobotDof + 1] = (*q_robot_cur)[firstIndexOfRobotDof + 1] - (*q_human_cur)[firstIndexOfHumanDof + 1];
@@ -301,7 +302,7 @@ std::vector<HRICS::ConfigHR> ConfGenerator::loadFromXml(string filename)
     vector<HRICS::ConfigHR> vectConfs;
     HRICS::ConfigHR::index = 0;
 
-//    shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
+//    confPtr_t q_robot_cur = _Robot->getCurrentPos();
 
     int nbNode = 0;
 
@@ -417,6 +418,73 @@ std::vector<HRICS::ConfigHR> ConfGenerator::loadFromXml(string filename)
 
 
     //	configPt readXmlConfig(p3d_rob *robot, xmlNodePtr cur)
+
+}
+
+bool ConfGenerator::sortConfig(std::vector<HRICS::ConfigHR>& vectConfs, double nbNode, bool isStanding, bool isSlice, HRICS::Natural* reachableSpace)
+{
+
+    confPtr_t q_robot_cur = _robot->getCurrentPos();
+    confPtr_t q_human_cur = _human->getCurrentPos();
+
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+    int firstIndexOfHumanDof = _human->getJoint("Pelvis")->getIndexOfFirstDof();
+
+    double reachFactor = ENV.getDouble(Env::Kreachable);
+    double distFactor = ENV.getDouble(Env::Kdistance);
+    double visFactor = ENV.getDouble(Env::Kvisibility);
+
+
+    double maxDist = 0;
+    for (int i = 0; i < nbNode; i++)
+    {
+        confPtr_t ptrQ_robot(new Configuration(_robot,vectConfs.at(i).getRobotConf()));
+        confPtr_t ptrQ_human(new Configuration(_human,vectConfs.at(i).getHumanConf()));
+        double tmpDist = sqrt(pow((*ptrQ_robot)[firstIndexOfRobotDof + 0]-(*ptrQ_human)[firstIndexOfHumanDof + 0],2) +
+                              pow((*ptrQ_robot)[firstIndexOfRobotDof + 1]-(*ptrQ_human)[firstIndexOfHumanDof + 1],2));
+        if (tmpDist > maxDist)
+        {
+            maxDist = tmpDist;
+        }
+    }
+
+
+    for (int i = 0; i < nbNode; i++)
+    {
+        confPtr_t ptrQ_robot(new Configuration(_robot,vectConfs.at(i).getRobotConf()));
+        _robot->setAndUpdate(*ptrQ_robot);
+        double xRob = (*ptrQ_robot)[firstIndexOfRobotDof + 0];
+        double yRob = (*ptrQ_robot)[firstIndexOfRobotDof + 1];
+
+        confPtr_t ptrQ_human(new Configuration(_human,vectConfs.at(i).getHumanConf()));
+        _human->setAndUpdate(*ptrQ_human);
+        double xHum = (*ptrQ_human)[firstIndexOfHumanDof + 0];
+        double yHum = (*ptrQ_human)[firstIndexOfHumanDof + 1];
+        double rzHum = angle_limit_PI((*ptrQ_human)[firstIndexOfHumanDof + 5]);
+
+        double reachCost = reachableSpace->getConfigCost() * reachFactor;
+        double distCost = (1 - sqrt(pow(xRob-xHum,2) + pow(yRob-yHum,2))/maxDist) * distFactor;
+        double visCost = rzHum - atan2(yRob-yHum,xRob-xHum);
+        if (visCost < -M_PI)
+        {
+            visCost += 2 * M_PI;
+        }
+        visCost = fabs(visCost/M_PI) * visFactor;
+        double cost = (reachCost + distCost + visCost) / (reachFactor + distFactor + visFactor);
+        vectConfs.at(i).setCost(cost);
+    }
+    _robot->setAndUpdate(*q_robot_cur);
+    _human->setAndUpdate(*q_human_cur);
+
+    HRICS::ConfigurationCost ConfigurationCostCompObject;
+    sort(vectConfs.begin(),vectConfs.end(),ConfigurationCostCompObject);
+
+    for (int i = 0; i < nbNode; i++)
+    {
+        vectConfs.at(i).setId(i);
+    }
+    return true;
+
 
 }
 

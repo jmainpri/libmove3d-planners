@@ -1,10 +1,7 @@
 #ifndef CONFGENERATOR_H
 #define CONFGENERATOR_H
 
-
-#include "API/planningAPI.hpp"
-
-#include "API/Trajectory/trajectory.hpp"
+#include "API/Device/robot.hpp"
 #include "planner/planner.hpp"
 
 #include "utils/OtpUtils.hpp"
@@ -12,6 +9,7 @@
 
 #include "LightPlanner-pkg.h"
 #include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
+#include "HRI_costspace/HRICS_Natural.hpp"
 
 
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
@@ -29,14 +27,14 @@ public:
     /**
       * Compute
       */
-    bool computeRobotGikForGrabing( configPt& q );
+    bool computeRobotIkForGrabing( configPt& q );
   
     /**
       * Compute a configuration for handing over an object for the arm Dofs
       * @point the point in the workspace
       * @q the configuration of the robot
       */
-    bool computeRobotGikForGrabing( configPt& q, const Eigen::Vector3d& point );
+    bool computeRobotIkForGrabing( configPt& q, const Eigen::Vector3d& point );
 
     /**
       * Adding a 3D point to the OTP list This function is used when loading a set of OTPs in order to test them
@@ -82,6 +80,13 @@ public:
       * load and return configs stored in filename
       */
     std::vector<HRICS::ConfigHR> loadFromXml(std::string filename);
+
+
+    /**
+      * load and return configs stored in filename
+      */
+    bool sortConfig(std::vector<HRICS::ConfigHR>& configList, double nbNode, bool isStanding, bool isSlice, HRICS::Natural* reachableSpace);
+
 
 private:
 

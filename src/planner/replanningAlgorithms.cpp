@@ -517,7 +517,7 @@ std::pair<bool,confPtr_t> HandoverReplanner::newGoal()
   point[2] += 0.10;
   
   // if the generator finds a configuration, return it otherwise return null configuration
-  if( generator.computeRobotGikForGrabing( q, point ) )
+  if( generator.computeRobotIkForGrabing( q, point ) )
   {
     gettimeofday(&tim, NULL); double dt = tim.tv_sec+(tim.tv_usec/1000000.0) - t_init;
     cout << "Valid robotIk computed in : " << dt << " sec" << endl;
@@ -634,7 +634,7 @@ void AStarReplanner::run()
   m_navigation->reset();
   
   int last_path_id = m_CurrentTraj.getNbOfPaths()-1;
-	API::Trajectory traj( m_CurrentTraj.extractSubTrajectoryOfLocalPaths( m_switch_id, last_path_id ) );
+  API::Trajectory traj( m_CurrentTraj.extractSubTrajectoryOfLocalPaths( m_switch_id, last_path_id ) );
   
   m_idRun++;
   

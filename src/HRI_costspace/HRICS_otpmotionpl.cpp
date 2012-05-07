@@ -225,7 +225,7 @@ bool OTPMotionPl::ComputePR2Gik()
     cout << "OTPMotionPl::computePR2GIK()" << endl;
 
     configPt q;
-    bool res = m_ConfGen->computeRobotGikForGrabing(q);
+    bool res = m_ConfGen->computeRobotIkForGrabing(q);
     if (res)
     {
         shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
@@ -415,6 +415,30 @@ pair<shared_ptr<Configuration>,shared_ptr<Configuration> > OTPMotionPl::setRobot
 
 void OTPMotionPl::sortConfigList(double nbNode, bool isStanding, bool isSlice)
 {
+    if (isSlice)
+    {
+        if (isStanding)
+        {
+            getConfGenerator()->sortConfig(m_configListSlice,nbNode,isStanding,isSlice,m_ReachableSpace);
+        }
+        else
+        {
+            getConfGenerator()->sortConfig(m_sittingConfigListSlice,nbNode,isStanding,isSlice,m_ReachableSpace);
+        }
+    }
+    else
+    {
+        if (isStanding)
+        {
+            getConfGenerator()->sortConfig(m_configList,nbNode,isStanding,isSlice,m_ReachableSpace);
+        }
+        else
+        {
+            getConfGenerator()->sortConfig(m_sittingConfigList,nbNode,isStanding,isSlice,m_ReachableSpace);
+        }
+    }
+
+    /*
     shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
     shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
 
@@ -521,7 +545,7 @@ void OTPMotionPl::sortConfigList(double nbNode, bool isStanding, bool isSlice)
         }
     }
 
-
+*/
 
 }
 
