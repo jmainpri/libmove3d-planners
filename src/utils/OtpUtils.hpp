@@ -57,16 +57,16 @@ namespace HRICS
         static int index;
         ConfigHR() { id = index++; cost = 1.; }
 
-        configPt getHumanConf(){ return q_hum; }
+        configPt getHumanConf() const { return q_hum; }
         void setHumanConf(Robot* human, configPt q);
 
-        configPt getRobotConf(){ return q_rob; }
+        configPt getRobotConf() const { return q_rob; }
         void setRobotConf(Robot* robot, configPt q);
 
-        int getId(){ return id; }
+        int getId() const { return id; }
         void setId(int value) { id = value; }
 
-        double getCost() { return cost; }
+        double getCost() const { return cost; }
         void setCost(double value) { cost = value; }
 
     private:
