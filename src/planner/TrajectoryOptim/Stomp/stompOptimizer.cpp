@@ -1310,7 +1310,7 @@ namespace stomp_motion_planner
     
     // Compute IK
     configPt q;
-    bool found_ik = generator.computeRobotGikForGrabing( q, point );
+    bool found_ik = generator.computeRobotIkForGrabing( q, point );
     
     // Disable cntrts
     p3d_cntrt* ct;
