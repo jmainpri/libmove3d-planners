@@ -275,7 +275,7 @@ void p3d_smoothing_function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doubl
   if(PlanEnv->getBool(PlanParam::withDeformation))
   {
     //ENV.setBool(Env::FKShoot,true);
-    optimTrj.runDeformation( ENV.getInt(Env::nbCostOptimize) , runId );
+    optimTrj.runDeformation( nbSteps , runId );
     //ENV.setBool(Env::FKShoot,false);
     optTime += optimTrj.getTime();
   }
@@ -284,7 +284,7 @@ void p3d_smoothing_function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doubl
   
   if(PlanEnv->getBool(PlanParam::withShortCut))
   {
-    optimTrj.runShortCut( ENV.getInt(Env::nbCostOptimize) , runId );
+    optimTrj.runShortCut( nbSteps, runId );
     optTime += optimTrj.getTime();
   }
   
