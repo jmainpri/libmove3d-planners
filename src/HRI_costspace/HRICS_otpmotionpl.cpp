@@ -2935,7 +2935,8 @@ bool OTPMotionPl::InitMhpObjectTransfert(std::string humanName)
 {
     if (PlanEnv->getBool(PlanParam::env_isInit))
     {
-        cout << "The function is already initialized" << endl;
+        cout << "The function is already initialized. Init only the grid" << endl;
+        initGrid();
         return true;
     }
     PlanEnv->setBool(PlanParam::env_isInit,true);
