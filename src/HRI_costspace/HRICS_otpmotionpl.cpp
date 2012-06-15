@@ -2464,6 +2464,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
             endingPos[1] = (*conf.robotConf)[firstIndexOfRobotDof + 1];
             endingPos[2] = (*conf.robotConf)[firstIndexOfRobotDof + 5];
             m_2DPath = m_pts->get2DtrajFrom3Dtraj(robotTraj3D);
+            robotTraj3D.push_back(endingPos);
             m_robotTraj3D = robotTraj3D;
             conf.robotTraj = m_2DPath;
 

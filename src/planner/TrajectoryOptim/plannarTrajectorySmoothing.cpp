@@ -541,10 +541,10 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > result;
     result.clear();
     Vector3d tmp;
-    tmp[0] = traj.at(0)[0];
-    tmp[1] = traj.at(0)[1];
-    tmp[2] = atan2(-(*q_robot)[7]+traj.at(1)[1],-(*q_robot)[6]+traj.at(1)[0]);
-    result.push_back(tmp);
+//    tmp[0] = traj.at(0)[0];
+//    tmp[1] = traj.at(0)[1];
+//    tmp[2] = atan2(-(*q_robot)[7]+traj.at(1)[1],-(*q_robot)[6]+traj.at(1)[0]);
+//    result.push_back(tmp);
     if (traj.size() > 1)
     {
         for (unsigned int i = 1; i < traj.size();i++)
