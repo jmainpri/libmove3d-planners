@@ -136,6 +136,36 @@ void g3d_draw_costspace()
 }
 
 
+void g3d_draw_bounding_box(Robot* robot)
+{
+    double box[8][3];
+    Eigen::Vector3d p1;
+
+    Joint* jnt = robot->getJoint(1);
+    p3d_obj* object = jnt->getJointStruct()->o;
+
+    if( object )
+    {
+        if ( pqp_get_OBB_first_level( object, box ) )
+        {
+
+            for(int j=0; j<8; j++)
+            {
+                p1[0] = box[j][0];
+                p1[1] = box[j][1];
+                p1[2] = box[j][2];
+
+                p1 = jnt->getMatrixPos()*p1;
+
+                box[j][0] = p1[0];
+                box[j][1] = p1[1];
+                box[j][2] = p1[2];
+            }
+
+//            g3d_draw_complex_black_box( box );
+        }
+    }
+}
 
 void g3d_draw_squeleton()
 {
@@ -262,6 +292,7 @@ void g3d_draw_grids()
   //double xmin, xmax, ymin, ymax, zmin, zmax;
   //p3d_matrix4 mat;
 
+//    g3d_draw_bounding_box( global_Project->getActiveScene()->getRobotByName("SOFA"));
     
 #ifdef HRI_COSTSPACE
   
