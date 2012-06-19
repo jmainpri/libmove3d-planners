@@ -22,6 +22,8 @@
 extern void g3d_show_tcur_both_rob(p3d_rob *robotPt, int (*fct)(p3d_rob* robot, p3d_localpath* curLp),
                                    p3d_rob *hum_robotPt, int (*hum_fct)(p3d_rob* hum_robot, p3d_localpath* hum_curLp));
 
+extern bool detectSittingFurniture(Robot* human, double threshold, Robot** furniture);
+
 namespace HRICS
 {
 

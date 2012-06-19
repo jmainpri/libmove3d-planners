@@ -114,6 +114,69 @@ void g3d_show_tcur_both_rob(p3d_rob *robotPt, int (*fct)(p3d_rob* robot, p3d_loc
 
 
 
+bool detectSittingFurniture(Robot* human, double threshold, Robot** furniture)
+{
+    int firstIndexOfHumanDof = human->getJoint("Pelvis")->getIndexOfFirstDof();
+    double x = (*human->getCurrentPos())[firstIndexOfHumanDof + 0];
+    double y = (*human->getCurrentPos())[firstIndexOfHumanDof + 1];
+    double dist = numeric_limits<double>::max( );
+    for (int i=0; i<XYZ_ENV->nr; i++)
+    {
+        if (human->getName().find(XYZ_ENV->robot[i]->name) != string::npos)
+        {
+            continue;
+        }
+
+        double xR =  XYZ_ENV->robot[i]->joints[1]->dof_data[0].v;
+        double yR =  XYZ_ENV->robot[i]->joints[1]->dof_data[1].v;
+
+        double d = sqrt(pow(x-xR,2) + pow(y-yR,2));
+        if (d < dist)
+        {
+            dist = d;
+            cout << "changing robot" <<endl;
+            *furniture = new Robot(XYZ_ENV->robot[i]);
+        }
+    }
+
+//    cout << "nearest robot = " << *furniture->getName() << endl;
+    (*furniture)->getObjectBox();
+    if (dist > threshold)
+    {
+        cout << "the nearest robot is too far to let the human sit on it" <<endl;
+        return false;
+    }
+    
+    //p3d_col_deactivate_rob_rob(p3d_rob *rob1, p3d_rob *rob2)
+
+//    double box[8][3];
+//    Eigen::Vector3d p1;
+//
+//    Joint* jnt = robot->getJoint(1);
+//    p3d_obj* object = jnt->getJointStruct()->o;
+//
+//    if( object )
+//    {
+//        if ( pqp_get_OBB_first_level( object, box ) )
+//        {
+//            for(int j=0; j<8; j++)
+//            {
+//                p1[0] = box[j][0];
+//                p1[1] = box[j][1];
+//                p1[2] = box[j][2];
+//
+//                p1 = jnt->getMatrixPos()*p1;
+//
+//                box[j][0] = p1[0];
+//                box[j][1] = p1[1];
+//                box[j][2] = p1[2];
+//            }
+//        }
+
+
+    return true;
+}
+
 void ConfigHR::setHumanConf(Robot* human, configPt q)
 {
         q_hum = p3d_copy_config(human->getRobotStruct(),q);
