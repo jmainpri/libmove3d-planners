@@ -75,7 +75,7 @@ void g3d_draw_cost_features()
 {
 #ifdef HRI_COSTSPACE
 	g3d_draw_costspace();
-  g3d_draw_hrics(0);
+        g3d_draw_hrics(0);
 #endif
   //std::cout << "Draw cost features" << std::endl;
 	g3d_draw_grids();

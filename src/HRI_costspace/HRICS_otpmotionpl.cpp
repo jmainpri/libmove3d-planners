@@ -14,7 +14,7 @@
 #include "P3d-pkg.h"
 #include "move3d-headless.h"
 #include "Planner-pkg.h"
-
+#include "Collision-pkg.h"
 
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
@@ -1125,7 +1125,6 @@ bool OTPMotionPl::newComputeOTP()
         m_2DGrid->recomputeGridWhenHumanMove(humPos);
     }
     //    m_2DGrid->setCellsToblankCost();
-
     m_costVector.clear();
     m_timeVector.clear();
     clock_t gridInit = clock();
@@ -1694,6 +1693,14 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
     int nbRandomRotOnly = PlanEnv->getInt(PlanParam::env_nbRandomRotOnly);//10
 
 
+    Robot* furniture = NULL;
+    detectSittingFurniture(m_Human,1,&furniture);
+    if (furniture!= NULL)
+    {
+        p3d_col_deactivate_robot_robot(m_Human->getRobotStruct(), furniture->getRobotStruct());
+    }
+
+
     //    cout << "sitting test" << endl;
     double configCost = 0;
     int id = 0;
@@ -1720,7 +1727,11 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
     clock_t beginLoop = clock();
     for (int j = 0; j < nbSittingRot; j ++)
     {
-        (*q_hum)[firstIndexOfHumanDof + 5] =  p3d_random(- M_PI , M_PI);
+        if (j!= 0)
+        {
+            (*q_hum)[firstIndexOfHumanDof + 5] =  p3d_random(- M_PI , M_PI);
+        }
+
         m_Human->setAndUpdate(*q_hum);
         for(unsigned int i = 0; i < vectConfs.size(); i++)
         {
@@ -1857,6 +1868,10 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
     humPos[2] = m_humanPos[2];
     m_2DGrid->initGrid(humPos);
 
+    if (furniture!= NULL)
+    {
+        p3d_col_activate_robot_robot(m_Human->getRobotStruct(), furniture->getRobotStruct());
+    }
 
     return bestConf;
 
@@ -2124,7 +2139,7 @@ void OTPMotionPl::saveAllCostsToFile()
     fileMin.open(home.c_str());
 
     ofstream fileMax;
-    fileName = "/statFiles/OtpComputing/CostsMax.lst";
+    fileName = "/statFiles/OtpComputing/costsMax.lst";
     home = getenv("HOME_MOVE3D") + fileName;
     fileMax.open(home.c_str());
 
@@ -2900,7 +2915,7 @@ void OTPMotionPl::setVar()
 
     PlanEnv->setInt(PlanParam::env_timeShow,0);
     PlanEnv->setDouble(PlanParam::env_Cellsize,0.20);
-    PlanEnv->setInt(PlanParam::env_nbSittingRotation,300);
+    PlanEnv->setInt(PlanParam::env_nbSittingRotation,1);
 
     PlanEnv->setInt(PlanParam::env_pow,2);
     PlanEnv->setInt(PlanParam::env_anglePow,3);
@@ -2909,7 +2924,7 @@ void OTPMotionPl::setVar()
     PlanEnv->setInt(PlanParam::env_totMaxIter,2000);
     PlanEnv->setDouble(PlanParam::env_timeLimitation,10.0);
     PlanEnv->setInt(PlanParam::env_nbRandomRotOnly,50);
-    PlanEnv->setInt(PlanParam::env_nbSittingRotation,300);
+    PlanEnv->setInt(PlanParam::env_nbSittingRotation,1);
     PlanEnv->setDouble(PlanParam::env_robotSpeed,1.0);
     PlanEnv->setDouble(PlanParam::env_humanSpeed,1);
     PlanEnv->setDouble(PlanParam::env_timeStamp,0.35);
