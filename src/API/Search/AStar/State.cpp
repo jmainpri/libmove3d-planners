@@ -46,7 +46,7 @@ double State::f() const {return _f;}
 double State::g() const {return _g;}
 double State::h() const {return _h;}
 
-vector<State*> State::getSuccessors()
+vector<State*> State::getSuccessors(State* s)
 {
     vector<State*> successors;
     cout << "State::getSuccessors() Not implemented" << endl;

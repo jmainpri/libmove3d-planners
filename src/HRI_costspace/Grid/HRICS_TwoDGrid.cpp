@@ -211,6 +211,8 @@ confPtr_t PlanCell::setRobotAtCenter()
 //----------------------------------------
 double PlanCell::getCost()
 {
+  if (ENV.getBool(Env::isCostSpace))
+  {
   if(mCostIsComputed /*&& (!ENV.getBool(Env::RecomputeCellCost))*/)
   {
     return mCost;
@@ -220,6 +222,11 @@ double PlanCell::getCost()
   mCost = q->cost();
   mCostIsComputed = true;
   return mCost;
+  }
+  else
+  {
+      return 1;
+  }
 }
 
 //----------------------------------------
@@ -252,18 +259,49 @@ _Cell(cell)
   
 }
 
-vector<API::State*> PlanState::getSuccessors()
+vector<API::State*> PlanState::getSuccessors(API::State* s)
 {
-  vector<API::State*> newStates;
-  // newStates.reserve(26);
-  
-  for(int i=0;i<8;i++)
-  {
-    PlanCell* neigh = dynamic_cast<PlanCell*>(_Grid->getNeighbour(_Cell->getCoord(),i));
-    if( neigh != NULL )
+    vector<API::State*> newStates;
+    // newStates.reserve(26);
+
+    vector<int> remove(3);
+    remove[0]=-1; remove[1]=-1; remove[2]=-1;
+
+    Vector2i coord2 = _Cell->getCoord();
+
+    if(s)
     {
-      newStates.push_back(new PlanState(neigh,_Grid));
+        Vector2i coord1 = dynamic_cast<PlanState*>(s)->_Cell->getCoord();
+
+        Vector2i coord = coord1 - coord2;
+
+        int dir = (coord[0]+1) + (coord[1]+1)*3;
+
+        switch (dir)
+        {
+        case 0: remove[0]=0; remove[1]=1; remove[2]=3; break;
+        case 1: remove[0]=1; remove[1]=0; remove[2]=2; break;
+        case 2: remove[0]=2; remove[1]=1; remove[2]=5; break;
+        case 3: remove[0]=3; remove[1]=6; remove[2]=0; break;
+        case 4: remove[0]=4; remove[1]=4; remove[2]=4; break;
+        case 5: remove[0]=5; remove[1]=8; remove[2]=2; break;
+        case 6: remove[0]=6; remove[1]=3; remove[2]=7; break;
+        case 7: remove[0]=7; remove[1]=6; remove[2]=8; break;
+        case 8: remove[0]=8; remove[1]=7; remove[2]=5; break;
+        };
     }
+
+    for(int i=0;i<8;i++)
+    {
+        if( i == remove[0] || i == remove[1] || i == remove[2]  ){
+            continue;
+        }
+
+      PlanCell* neigh = dynamic_cast<PlanCell*>(_Grid->getNeighbour(coord2,i));
+      if( neigh != NULL )
+      {
+          newStates.push_back(new PlanState(neigh,_Grid));
+      }
   }
   
   return newStates;

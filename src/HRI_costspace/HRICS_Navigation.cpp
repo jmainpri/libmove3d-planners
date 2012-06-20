@@ -11,8 +11,13 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "Grid/HRICS_Grid.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
+#include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
 
 #include "Graphic-pkg.h"
+#include "P3d-pkg.h"
+#include "Collision-pkg.h"
+
+std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   path_to_draw;
 
 using namespace std;
 using namespace tr1;
@@ -29,6 +34,7 @@ Navigation::Navigation(Robot* R) : m_robot(R)
 
 Navigation::~Navigation()
 {
+  p3d_col_activate_rob_rob(m_robot->getRobotStruct(),m_cyl->getRobotStruct());
   delete m_2DGrid;
 }
 
@@ -41,9 +47,28 @@ bool Navigation::init()
   m_envSize.resize(4);
   
   double diagonal = std::sqrt( std::pow(m_envSize[1]-m_envSize[0], 2 ) + std::pow(m_envSize[3]-m_envSize[2] , 2 ) );
-  cout << "Diagonal/50 : " << diagonal/50 << endl;
-  
-  m_2DGrid = new PlanGrid( m_robot,/*ENV.getDouble(Env::PlanCellSize)*/ diagonal/50, m_envSize );
+  double pace = 0.20;
+  cout << "pace : " << pace << " meters" << endl;
+
+  for (int i=0; i<XYZ_ENV->nr; i++)
+  {
+      string name(XYZ_ENV->robot[i]->name);
+      if (m_robot->getName().find("ROBOT") != string::npos)
+      {
+          if(name.find("PR_2CYLINDER") != string::npos )
+          {
+              m_cyl = new Robot(XYZ_ENV->robot[i]);
+              break;
+          }
+      }
+  }
+  if (m_cyl == NULL)
+  {
+      cout<< "ERROR: no cylinder found" <<endl;
+      return false;
+  }
+  p3d_col_deactivate_rob_rob(m_robot->getRobotStruct(),m_cyl->getRobotStruct());
+  m_2DGrid = new PlanGrid( m_cyl,/*ENV.getDouble(Env::PlanCellSize)*/ pace, m_envSize );
   API_activeGrid = m_2DGrid;
   
   return true;
@@ -59,6 +84,10 @@ void Navigation::reset()
  */
 API::Trajectory* Navigation::computeRobotTrajectory( confPtr_t source, confPtr_t target )
 {
+  confPtr_t q = m_cyl->getCurrentPos();
+  (*q)[6] =0;
+  (*q)[7] =0;
+
   Vector2d x1,x2;
   
   x1[0]=(*source)[6];
@@ -82,10 +111,12 @@ API::Trajectory* Navigation::computeRobotTrajectory( confPtr_t source, confPtr_t
       traj->push_back( q );
     }
     traj->replaceP3dTraj();
+    m_cyl->setAndUpdate(*q);
     return traj;
   }
   else
   {
+    m_cyl->setAndUpdate(*q);
     return NULL;
   }
 }
@@ -204,4 +235,63 @@ void Navigation::draw()
                     Yellow, NULL);
     glLineWidth(1.);
   }
+}
+
+bool Navigation::getSimplePath(std::vector<double> goal, std::vector<std::vector<double> >& path)
+{
+    bool c_tmp = ENV.getBool(Env::isCostSpace);
+    ENV.setBool(Env::isCostSpace,true);
+    confPtr_t i = m_robot->getCurrentPos();
+    confPtr_t g = m_robot->getCurrentPos();
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(m_robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+    (*g)[firstIndexOfRobotDof + 0] = goal[0];
+    (*g)[firstIndexOfRobotDof + 1] = goal[1];
+    (*g)[firstIndexOfRobotDof + 5] = goal[2];
+
+    if (!computeRobotTrajectory(i,g))
+    {
+        m_robot->setAndUpdate(*i);
+        ENV.setBool(Env::isCostSpace,c_tmp);
+        return false;
+    }
+    std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > robotTraj3D;
+    PlannarTrajectorySmoothing PTS(m_robot);
+    Eigen::Vector2d b;
+    b[0] = goal[0];
+    b[1] = goal[1];
+    m_2DPath.push_back(b);
+    m_2DPath = PTS.smoothTrajectory(m_robot,m_2DPath);
+    robotTraj3D = PTS.add3DimwithoutTrajChange(m_2DPath,m_robot,0.05);
+
+    Eigen::Vector3d v;
+    v[0] = goal[0];
+    v[1] = goal[1];
+    v[2] = goal[2];
+
+    robotTraj3D.push_back(v);
+    API::Trajectory t(m_robot);
+
+
+    for (unsigned int i = 0; i < robotTraj3D.size();i++)
+    {
+        std::vector<double> p;
+        p.push_back(robotTraj3D.at(i)[0]);
+        p.push_back(robotTraj3D.at(i)[1]);
+        p.push_back(robotTraj3D.at(i)[2]);
+        path.push_back(p);
+
+        confPtr_t q = m_robot->getCurrentPos();
+        (*q)[firstIndexOfRobotDof + 0] = p[0];
+        (*q)[firstIndexOfRobotDof + 1] = p[1];
+        (*q)[firstIndexOfRobotDof + 5] = p[2];
+        t.push_back(q);
+    }
+
+    t.replaceP3dTraj();
+
+    path_to_draw = PTS.get2DtrajFrom3Dtraj(robotTraj3D);
+
+    m_robot->setAndUpdate(*i);
+    ENV.setBool(Env::isCostSpace,c_tmp);
+    return true;
 }

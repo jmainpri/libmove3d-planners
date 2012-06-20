@@ -81,11 +81,11 @@ namespace HRICS
 		PlanState( Eigen::Vector2i cell, PlanGrid* grid);
 		PlanState( PlanCell* cell , PlanGrid* grid);
 		
-		std::vector<API::State*> getSuccessors();
+                std::vector<API::State*> getSuccessors(API::State* s);
 		
 		bool isLeaf();		/* leaf control for an admissible heuristic function; the test of h==0*/
 		bool equal(API::State* other);
-    bool isValid();
+                bool isValid();
 		
 		void setClosed(std::vector<PlanState*>& closedStates,std::vector<PlanState*>& openStates);
 		bool isColsed(std::vector<PlanState*>& closedStates);
