@@ -30,6 +30,104 @@ extern string global_ActiveRobotName;
 extern ManipulationTestFunctions* global_manipPlanTest;
 #endif
 
+void HRICS::printPr2Config()
+{
+  Scene* sc = global_Project->getActiveScene();
+  
+  Robot* rob = sc->getRobotByName("PR2_ROBOT");
+  
+  if( rob == NULL ) 
+  {
+    cout << "No robot named PR2_ROBOT in env" << endl;
+  }
+  
+  confPtr_t q = rob->getCurrentPos();
+  
+  Joint* jnt = rob->getJoint("platformJoint");
+  double base_tx = (*q)[jnt->getJointStruct()->index_dof+0];
+  double base_ty = (*q)[jnt->getJointStruct()->index_dof+1];
+  double base_tz = (*q)[jnt->getJointStruct()->index_dof+2];
+  double base_rx = (*q)[jnt->getJointStruct()->index_dof+3];
+  double base_ry = (*q)[jnt->getJointStruct()->index_dof+4];
+  double base_rz = (*q)[jnt->getJointStruct()->index_dof+5];
+  
+  jnt = rob->getJoint("Torso");
+  double torso = (*q)[jnt->getJointStruct()->index_dof+0];
+  
+  jnt = rob->getJoint("pan_cam");
+  double head_pan = (*q)[jnt->getJointStruct()->index_dof+0]; 
+  
+  jnt = rob->getJoint("tilt_cam");
+  double head_tilt = (*q)[jnt->getJointStruct()->index_dof+0];
+  
+  jnt = rob->getJoint("laser-jnt");
+  double laser_tilt = (*q)[jnt->getJointStruct()->index_dof+0];
+  
+  jnt = rob->getJoint("right-Arm1");
+  double r_shoulder_pan     = (*q)[jnt->getJointStruct()->index_dof+0]; 
+  double r_shoulder_lift    = (*q)[jnt->getJointStruct()->index_dof+1];
+  double r_upper_arm_roll   = (*q)[jnt->getJointStruct()->index_dof+2];
+  double r_elbow_flex       = (*q)[jnt->getJointStruct()->index_dof+3];
+  double r_forearm_roll     = (*q)[jnt->getJointStruct()->index_dof+4];
+  double r_wrist_flex       = (*q)[jnt->getJointStruct()->index_dof+5];
+  double r_writ_roll        = (*q)[jnt->getJointStruct()->index_dof+6];
+  
+  jnt = rob->getJoint("fingerJointGripper_0");
+  double r_gripper = (*q)[jnt->getJointStruct()->index_dof+0]; 
+  
+  jnt = rob->getJoint("right-grip2");
+  double r_gripper_false = (*q)[jnt->getJointStruct()->index_dof+0]; 
+  
+  jnt = rob->getJoint("left-Arm1");
+  double l_shoulder_pan     = (*q)[jnt->getJointStruct()->index_dof+0];
+  double l_shoulder_lift    = (*q)[jnt->getJointStruct()->index_dof+1];
+  double l_upper_arm_roll   = (*q)[jnt->getJointStruct()->index_dof+2];
+  double l_elbow_flex       = (*q)[jnt->getJointStruct()->index_dof+3];
+  double l_forearm_roll     = (*q)[jnt->getJointStruct()->index_dof+4];
+  double l_wrist_flex       = (*q)[jnt->getJointStruct()->index_dof+5];
+  double l_wrist_roll       = (*q)[jnt->getJointStruct()->index_dof+6];
+  
+  jnt = rob->getJoint("fingerJointGripper_1");
+  double l_gripper = (*q)[jnt->getJointStruct()->index_dof+0]; 
+  
+  jnt = rob->getJoint("left-grip2");
+  double l_gripper_false = (*q)[jnt->getJointStruct()->index_dof+0]; 
+  
+  cout << "CONFIG FOR PR2 SOFTMOTION" << endl;
+  cout << base_tx << " ";
+  cout << base_ty << " ";
+  cout << base_tz << " ";
+  cout << base_rx << " ";
+  cout << base_ry << " ";
+  cout << base_rz << " ";
+  
+  cout << torso << " ";
+  cout << head_pan << " ";
+  cout << head_tilt << " ";
+  cout << laser_tilt << " ";
+  
+  cout << r_shoulder_pan  << " ";   
+  cout << r_shoulder_lift  << " ";
+  cout << r_upper_arm_roll << " ";  
+  cout << r_elbow_flex << " "; 
+  cout << r_forearm_roll  << " ";
+  cout << r_wrist_flex   << " "; 
+  cout << r_writ_roll   << " "; 
+  cout << r_gripper << " ";
+  cout << r_gripper_false << " ";
+  
+  cout << l_shoulder_pan  << " ";
+  cout << l_shoulder_lift  << " "; 
+  cout << l_upper_arm_roll << " "; 
+  cout << l_elbow_flex  << " ";  
+  cout << l_forearm_roll << " ";  
+  cout << l_wrist_flex << " ";  
+  cout << l_wrist_roll << " ";  
+  cout << l_gripper << " ";
+  cout << l_gripper_false << " ";
+  cout << endl;  
+}
+
 void HRICS::setSimulationRobotsTransparent()
 {
   Scene* sc = global_Project->getActiveScene();
@@ -271,8 +369,8 @@ bool HRICS::initShelfScenario()
   global_manipPlanTest = new ManipulationTestFunctions( global_ActiveRobotName  );
   
   // Set init and goal config
-  shared_ptr<Configuration> qInit = rob->getCurrentPos();
-  shared_ptr<Configuration> qGoal = rob->getGoTo();
+  confPtr_t qInit = rob->getCurrentPos();
+  confPtr_t qGoal = rob->getGoTo();
   global_manipPlanTest->setGoalConfiguration(qInit->getConfigStructCopy());
   global_manipPlanTest->setGoalConfiguration(qGoal->getConfigStructCopy());
   
@@ -283,7 +381,8 @@ bool HRICS::initShelfScenario()
   // Set Planning functions
   planner->setPlanningMethod( p3d_planner_function );
   planner->setSmoothingMethod( p3d_smoothing_function );
-  //planner->setReplanningMethod( replanning_Function );
+//  planner->setReplanningMethod( replanning_Function );
+
   planner->setArmCartesian( 0, false );
   planner->setUseBaseMotion( true );
   
@@ -320,22 +419,17 @@ bool HRICS::execShelfScenario()
     return false;
   }
   
-  shared_ptr<Configuration> qCur = rob->getCurrentPos();
-  shared_ptr<Configuration> qObj;
+  confPtr_t qCur = rob->getCurrentPos();
+  confPtr_t qObj;
   Robot* object;
-  
-  // Point where the trashbin is
-  vector<double> trashbinPoint(6,P3D_HUGE);
-  trashbinPoint[0] = 0.14;
-  trashbinPoint[1] = 1.00;
-  trashbinPoint[2] = 1.15;
   
   // Get the grey tape
   global_manipPlanTest->resetToPoint();
   global_manipPlanTest->setObject( "GREY_TAPE" );
   global_manipPlanTest->setInitConfiguration(qCur->getConfigStructCopy());
-  if(!global_manipPlanTest->runTest(2))
+  if(!global_manipPlanTest->runTest(2)) {
     return false;
+  }
   
   g3d_show_tcur_rob( planner->robot(), default_drawtraj );
   qCur = rob->getCurrentPos();
@@ -348,6 +442,11 @@ bool HRICS::execShelfScenario()
   global_manipPlanTest->setInitConfiguration(qCur->getConfigStructCopy());
   
   // Bring it to the trashbin
+  // Point where the trashbin is
+  vector<double> trashbinPoint(6,P3D_HUGE);
+  trashbinPoint[0] = 0.14;
+  trashbinPoint[1] = 1.00;
+  trashbinPoint[2] = 1.15;
   global_manipPlanTest->setToPoint( trashbinPoint );
   if(!global_manipPlanTest->runTest(3))
     return false;
@@ -496,8 +595,8 @@ bool HRICS::simpShelfScenario()
     return false;
   }
   
-  shared_ptr<Configuration> qCur = rob->getCurrentPos();
-  shared_ptr<Configuration> qObj;
+  confPtr_t qCur = rob->getCurrentPos();
+  confPtr_t qObj;
   
   // Point where the trashbin is
   vector<double> trashbinPoint(6,P3D_HUGE);

@@ -8,6 +8,7 @@
 
 namespace HRICS
 {
+  void printPr2Config();
   void setSimulationRobotsTransparent();
   void generateGraspConfigurations();
   void setThePlacemateInIkeaShelf();
