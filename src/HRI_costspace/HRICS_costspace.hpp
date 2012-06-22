@@ -33,6 +33,7 @@ const int HRICS_HUMANj_LHAND=     26; /* or 27 or 28 */
 #include "HRICS_ConfigSpace.hpp"
 #include "HRICS_otpmotionpl.hpp"
 #include "HRICS_humanCostSpace.hpp"
+#include "HRICS_Navigation.hpp"
 
 #ifdef HRI_PLANNER
 #include "HRICS_HAMP.hpp"
