@@ -211,22 +211,22 @@ confPtr_t PlanCell::setRobotAtCenter()
 //----------------------------------------
 double PlanCell::getCost()
 {
-  if (ENV.getBool(Env::isCostSpace))
-  {
-  if(mCostIsComputed /*&& (!ENV.getBool(Env::RecomputeCellCost))*/)
-  {
-    return mCost;
-  }
-  
-  confPtr_t q = setRobotAtCenter();
-  mCost = q->cost();
-  mCostIsComputed = true;
-  return mCost;
-  }
-  else
-  {
-      return 1;
-  }
+    if (ENV.getBool(Env::isCostSpace))
+    {
+        if(mCostIsComputed /*&& (!ENV.getBool(Env::RecomputeCellCost))*/)
+        {
+            return mCost;
+        }
+
+        confPtr_t q = setRobotAtCenter();
+        mCost = q->cost();
+        mCostIsComputed = true;
+        return mCost;
+    }
+    else
+    {
+        return 1;
+    }
 }
 
 //----------------------------------------
@@ -378,7 +378,7 @@ double PlanState::computeLength(API::State *parent)
   
   //    double cost1 = preced->_Cell->getCost();
   double cost2 = _Cell->getCost();
-  double g = preced->g() + /*cost1 +*/ cost2 * dist;
+  double g = preced->g() + /*cost1 + cost2 */ dist;
   
   //    cout << "dist = " << dist << endl;
   //    cout << "g = " << g << endl;

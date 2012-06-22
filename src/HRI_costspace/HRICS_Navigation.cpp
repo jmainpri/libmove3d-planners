@@ -12,6 +12,7 @@
 #include "Grid/HRICS_Grid.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 #include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
+#include "planEnvironment.hpp"
 
 #include "Graphic-pkg.h"
 #include "P3d-pkg.h"
@@ -242,6 +243,7 @@ bool Navigation::getSimplePath(std::vector<double> goal, std::vector<std::vector
     bool c_tmp = ENV.getBool(Env::isCostSpace);
     ENV.setBool(Env::isCostSpace,true);
     confPtr_t i = m_robot->getCurrentPos();
+//    confPtr_t q = m_robot->getCurrentPos();
     confPtr_t g = m_robot->getCurrentPos();
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(m_robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
     (*g)[firstIndexOfRobotDof + 0] = goal[0];
@@ -260,7 +262,11 @@ bool Navigation::getSimplePath(std::vector<double> goal, std::vector<std::vector
     b[0] = goal[0];
     b[1] = goal[1];
     m_2DPath.push_back(b);
-    m_2DPath = PTS.smoothTrajectory(m_robot,m_2DPath);
+    bool tmp = PlanEnv->getBool(PlanParam::env_createTrajs);
+    if (tmp)
+    {
+       m_2DPath = PTS.smoothTrajectory(m_robot,m_2DPath);
+    }
     robotTraj3D = PTS.add3DimwithoutTrajChange(m_2DPath,m_robot,0.05);
 
     Eigen::Vector3d v;
@@ -272,15 +278,15 @@ bool Navigation::getSimplePath(std::vector<double> goal, std::vector<std::vector
     API::Trajectory t(m_robot);
 
 
-    for (unsigned int i = 0; i < robotTraj3D.size();i++)
+    for (unsigned int j = 0; j < robotTraj3D.size();j++)
     {
         std::vector<double> p;
-        p.push_back(robotTraj3D.at(i)[0]);
-        p.push_back(robotTraj3D.at(i)[1]);
-        p.push_back(robotTraj3D.at(i)[2]);
+        p.push_back(robotTraj3D.at(j)[0]);
+        p.push_back(robotTraj3D.at(j)[1]);
+        p.push_back(robotTraj3D.at(j)[2]);
         path.push_back(p);
 
-        confPtr_t q = m_robot->getCurrentPos();
+        confPtr_t q = m_robot->getInitialPosition();
         (*q)[firstIndexOfRobotDof + 0] = p[0];
         (*q)[firstIndexOfRobotDof + 1] = p[1];
         (*q)[firstIndexOfRobotDof + 5] = p[2];
@@ -294,4 +300,9 @@ bool Navigation::getSimplePath(std::vector<double> goal, std::vector<std::vector
     m_robot->setAndUpdate(*i);
     ENV.setBool(Env::isCostSpace,c_tmp);
     return true;
+}
+
+void Navigation::allow_smoothing(bool state)
+{
+    PlanEnv->setBool(PlanParam::env_createTrajs,state);
 }

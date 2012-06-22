@@ -37,7 +37,7 @@ namespace HRICS
     void reset();
     void draw();
     double pathCost();
-
+    void allow_smoothing(bool state);
     
   private:
     bool init();

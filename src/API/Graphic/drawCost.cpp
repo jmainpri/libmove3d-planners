@@ -10,6 +10,7 @@
 #include "HRI_costspace/HRICS_costspace.hpp"
 #include "HRI_costspace/HRICS_otpmotionpl.hpp"
 #include "HRI_costspace/HRICS_ConfigSpace.hpp"
+#include "HRI_costspace/HRICS_Navigation.hpp"
 #include "utils/ConfGenerator.h"
 #endif
 
@@ -52,6 +53,7 @@ extern std::string hri_text_to_display;
 
 extern std::vector<Eigen::Vector3d> OTPList;
 
+extern std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > path_to_draw;
 
 // TODO callback OOMOVE3D
 //#if defined( CXX_PLANNER )
@@ -452,6 +454,36 @@ void g3d_draw_hrics(int opengl_context)
                             }
                     }
             }
+    }
+
+    if (ENV.getBool(Env::drawTraj))
+    {
+        if (!path_to_draw.empty())
+        {
+            for(unsigned int i=0;i<path_to_draw.size()-1;i++)
+            {
+                glLineWidth(3.);
+                g3d_drawOneLine(path_to_draw[i][0],      path_to_draw[i][1],      0.4,
+                                path_to_draw[i+1][0],    path_to_draw[i+1][1],    0.4,
+                                Blue, NULL);
+                glLineWidth(1.);
+
+                double colorvector[4];
+                colorvector[0] = 0.0;       //red
+                colorvector[1] = 0.0;       //green
+                colorvector[2] = 1.0;       //blue
+                colorvector[3] = 1;       //transparency
+
+                //        glEnable(GL_BLEND);
+                g3d_set_color(Any,colorvector);
+
+                g3d_draw_solid_sphere(path_to_draw[i+1][0],
+                                      path_to_draw[i+1][1],
+                                      0.4,
+                                      0.05, 20);
+                //            cout << "\n\n cell: \n" << m_2DPath[i] << endl;
+            }
+        }
     }
   
 //  if( HRICS_activeDist )
