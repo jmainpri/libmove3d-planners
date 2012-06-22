@@ -16,6 +16,8 @@
 
 #include <Eigen/StdVector>
 
+
+
 /**
  @defgroup HRICS Hri Cost space
  @ingroup HRICS
@@ -31,19 +33,22 @@ namespace HRICS
     Robot* getRobot() { return m_robot; }
     
     API::Trajectory* computeRobotTrajectory( confPtr_t source, confPtr_t target );
-    
+    bool getSimplePath(std::vector<double> goal, std::vector<std::vector<double> >& path);
     void reset();
     void draw();
     double pathCost();
+
     
   private:
     bool init();
     bool computeAStarIn2DGrid( Eigen::Vector2d source, Eigen::Vector2d target );
     bool solveAStar(PlanState* start,PlanState* goal);
+
     
     std::vector<double> m_envSize;
     
     Robot* m_robot;
+    Robot* m_cyl;
     
     double m_maxRadius;
     

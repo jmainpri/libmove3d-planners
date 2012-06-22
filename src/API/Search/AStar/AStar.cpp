@@ -115,15 +115,18 @@ vector<State*> AStar::solve(State* initialState)
       cout << "Number of explored states = " << _Explored.size() << endl;
       return getSolution(q_tmp);
     }
-    
-    vector<State*> branchedStates = currentState->getSuccessors();
+
+    TreeNode* parent = q_tmp.getTreeNode()->getParent();
+    State* parent_state = NULL;
+    if(parent != NULL) {
+        parent_state = parent->getState();
+    }
+    vector<State*> branchedStates = currentState->getSuccessors(parent_state);
     
     for(unsigned i=0; i<branchedStates.size(); i++)
     {
       if((branchedStates[i] != NULL) && (branchedStates[i]->isValid()))
       {
-        TreeNode* parent = q_tmp.getTreeNode()->getParent();
-        
         if(!((parent != NULL) && (parent->getState()->isValid()) && (parent->getState()->equal(branchedStates[i]))))
         {
           if(!(branchedStates[i]->isColsed(closedSet)))

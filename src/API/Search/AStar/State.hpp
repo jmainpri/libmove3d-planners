@@ -32,7 +32,7 @@ namespace API
     
     /* states after branching is returned and the number of
      non-NULL states in the returned array is saved in the variable nodes_n */
-    virtual std::vector<State*> getSuccessors();
+    virtual std::vector<State*> getSuccessors(State* s);
     virtual bool isLeaf();		/* leaf control for an admissible heuristic function; the test of h==0*/
     virtual bool equal(State* other);
     
