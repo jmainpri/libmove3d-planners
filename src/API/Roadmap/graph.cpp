@@ -1377,7 +1377,10 @@ void Graph::createRandConfs(int NMAX)
  */
 Node* Graph::randomNodeFromComp(Node* comp)
 {
-	return (this->getNode(p3d_RandomNodeFromComp(comp->getConnectedComponent()->getCompcoStruct())));
+//	return (this->getNode(p3d_RandomNodeFromComp(comp->getConnectedComponent()->getCompcoStruct())));
+  
+  int RandNodeNum = (int)floor(p3d_random(0.0, (double)comp->getConnectedComponent()->getNumberOfNodes() - EPS6));
+  return  comp->getConnectedComponent()->getNode(RandNodeNum);
 }
 
 /**
