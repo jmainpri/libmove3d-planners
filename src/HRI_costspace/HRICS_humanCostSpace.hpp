@@ -30,8 +30,8 @@ namespace HRICS
     void computeAllCellCost();
     void testCostFunction();
     
+    void loadAgentGrids(const std::string& filename);
     void saveAgentGrids();
-    void loadAgentGrids();
     
 	private:
     bool initElementarySpaces();

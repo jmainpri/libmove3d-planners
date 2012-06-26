@@ -182,7 +182,8 @@ bool HumanCostSpace::initPr2()
 //    cout << "Add joint : " << m_CostJoints.back()->getName() << endl;
 //  }
   
-  switch ( PlanEnv->getInt(PlanParam::setOfActiveJoints) ) {
+  switch ( PlanEnv->getInt(PlanParam::setOfActiveJoints) ) 
+  {
     case 0:
       m_planning_type = NAVIGATION;
       break;
@@ -195,6 +196,21 @@ bool HumanCostSpace::initPr2()
     default:
       cout << "Planner type not implemented" << endl;
       break;
+  }
+  
+  if( m_planning_type == NAVIGATION )
+  {
+    for (int i=0; i<int(m_Robot->getNumberOfJoints()); i++) 
+    {
+      string name = m_Robot->getJoint(i)->getName();
+      
+      if(name == "platformJoint" || 
+         name == "Torso")
+      {
+        m_CostJoints.push_back( m_Robot->getJoint(i) );
+        cout << "Add joint : " << m_CostJoints.back()->getName() << endl;
+      }
+    }
   }
   
   if( m_planning_type == MANIPULATION )
@@ -279,14 +295,9 @@ void HumanCostSpace::saveAgentGrids()
   }
 }
 
-void HumanCostSpace::loadAgentGrids()
+void HumanCostSpace::loadAgentGrids(const std::string& filename)
 {
   m_Grids.clear();
-  
-  std::string home(getenv("HOME_MOVE3D"));
-  std::string filename = "/statFiles/Cost3DGrids/human_grids_0.grid";
-  
-  filename = home + filename;
   
   AgentGrid* agentGrid = new AgentGrid( m_Humans[0], m_DistanceSpace, m_VisibilitySpace, m_ReachableSpace );
   
