@@ -10,19 +10,22 @@
 #include "../p3d/env.hpp"
 #include "planEnvironment.hpp"
 
-#include <fstream>
-#include <algorithm>
-
 #include "Util-pkg.h"
 #include "Graphic-pkg.h"
 #include "Planner-pkg.h"
+
+#include <fstream>
+#include <algorithm>
+#include <sys/time.h>
 
 using namespace std;
 using namespace tr1;
 
 using namespace API;
 
-#define DEBUG_STATUS 1
+std::vector< std::pair<double,double> > traj_convergence_with_time;
+
+//#define DEBUG_STATUS_SHORTCUT 0
 
 Smoothing::Smoothing() :
 m_ContextName("Context"),
@@ -136,11 +139,11 @@ bool Smoothing::oneLoopShortCut( )
       }
 			
 			if ( !getBegin()->equal( *configAtParam(0) ) ) {
-				cout << "ERROR" << endl;
+				cout << "ERROR in " << __func__ << endl;
 			}
 			
 			if (!getEnd()->equal(*configAtParam(getRangeMax()))) {
-				cout << "ERROR" << endl;
+				cout << "ERROR in " << __func__<< endl;
 			}
 			
 			isOptimSuccess = true;
@@ -196,29 +199,49 @@ bool Smoothing::oneLoopShortCutRecompute()
 		
 		newTraj.replacePortion( lFirst, lSecond, paths );
     
-    double CurrentCost = this->costRecomputed();
-		
-		// If the new path is of lower cost, replace in current trajectory
-		if (newTraj.costRecomputed() < CurrentCost )
-		{
-			vector<LocalPath*> vect_path;
-			vect_path.push_back(new LocalPath(*newPath));
-			
-			replacePortion( lFirst, lSecond, vect_path );
-			
-			setSortedIndex();
-			
-			if (!getBegin()->equal(*configAtParam(0)))
-			{
-				cout << "ERROR" << endl;
-			}
-			
-			if (!getEnd()->equal(*configAtParam(getRangeMax())))
-			{
-				cout << "ERROR" << endl;
-			}
-			isOptimSuccess = true;
-		}
+    if( newTraj.isValid() )
+    {
+      double CurrentCost = 0.0;
+      double NewTrajCost = 0.0;
+      
+      if( PlanEnv->getBool( PlanParam::trajNPoints ) )
+      {
+        CurrentCost = m_currentCost; 
+        NewTrajCost = newTraj.costNPoints( PlanEnv->getInt(PlanParam::nb_pointsOnTraj) );
+      }
+      else
+      {
+        CurrentCost = this->costRecomputed();
+        NewTrajCost = newTraj.costRecomputed(); 
+      }
+      
+      // If the new path is of lower cost, replace in current trajectory
+      if ( NewTrajCost < CurrentCost )
+      {
+        vector<LocalPath*> vect_path;
+        vect_path.push_back(new LocalPath(*newPath));
+        
+        replacePortion( lFirst, lSecond, vect_path );
+        
+        setSortedIndex();
+        
+        if( PlanEnv->getBool( PlanParam::trajNPoints ) )
+        {
+          m_currentCost = NewTrajCost;
+        }
+        
+        if (!getBegin()->equal(*configAtParam(0)))
+        {
+          cout << "ERROR" << endl;
+        }
+        
+        if (!getEnd()->equal(*configAtParam(getRangeMax())))
+        {
+          cout << "ERROR" << endl;
+        }
+        isOptimSuccess = true;
+      }
+    }
 	}
 	
 	return isOptimSuccess;
@@ -804,7 +827,9 @@ bool Smoothing::checkStopConditions(unsigned int iteration)
 	{
 		if ( iteration > m_MaxNumberOfIterations ) 
 		{
+#ifdef DEBUG_STATUS_SHORTCUT
 			cout << "Smoothing has reached max number of iteration ( " << m_MaxNumberOfIterations << " ) " << endl;
+#endif
 			return true;
 		}
 	}
@@ -813,11 +838,14 @@ bool Smoothing::checkStopConditions(unsigned int iteration)
 	{
 		if ( m_time > PlanEnv->getDouble(PlanParam::timeLimitSmoothing) ) 
 		{
+#ifdef DEBUG_STATUS_SHORTCUT
 			cout << "Smoothin has reached time limit ( " << m_time << " ) " << endl;
+#endif
 			return true;
 		}
 	}
 	
+#ifdef DEBUG_STATUS_SHORTCUT
 	if ( PlanEnv->getBool(PlanParam::withGainLimit) ) 
 	{
 		const int n = 30;
@@ -827,7 +855,7 @@ bool Smoothing::checkStopConditions(unsigned int iteration)
 			return true;
 		}
 	}
-	
+#endif
 	return false;
 }
 
@@ -877,15 +905,17 @@ void Smoothing::storeCostAndGain( double NewCost, double CurCost )
  */
 void Smoothing::saveOptimToFile(string fileName)
 {
+  std::string home(getenv("HOME_MOVE3D"));
+  
 	std::ostringstream oss;
 	oss << "statFiles/"<< fileName << ".csv";
-	
-	const char *res = oss.str().c_str();
+
+	const char *path = (home+oss.str()).c_str();
 	
 	std::ofstream s;
-	s.open(res);
+	s.open(path);
 	
-	cout << "Opening save file : " << res << endl;
+	cout << "Opening save file : " << path << endl;
 	
 	s << "Cost" << ";";
 	s << "Gain" << ";" ;
@@ -898,7 +928,6 @@ void Smoothing::saveOptimToFile(string fileName)
 	}
 	
 	cout << "Closing save file" << endl;
-	
 	s.close();
 }
 
@@ -908,14 +937,18 @@ void Smoothing::saveOptimToFile(string fileName)
 void Smoothing::runShortCut( int nbIteration, int idRun )
 {
   //  this->costNoRecompute();
-  //#ifdef DEBUG_STATUS
+  //#ifdef DEBUG_STATUS_SHORTCUT
   //  cout << "Before Short Cut : Traj cost = " << this->costNoRecompute() << endl;
   //#endif
-	double costBeforeDeformation = this->cost();
+#ifdef DEBUG_STATUS_SHORTCUT
+	double costBeforeDeformation = cost();
+#endif
 	
   m_OptimCost.clear();
   m_GainCost.clear();
 	m_GainOfIterations.clear();
+  
+  //traj_convergence_with_time.clear();
 	
   m_MaxNumberOfIterations = nbIteration;
 	
@@ -925,21 +958,27 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
     m_step = getRangeMax() / PlanEnv->getDouble(PlanParam::MaxFactor) ;
   }
 	
-	double ts(0.0); m_time = 0.0; ChronoOn();
-	
-	for (int i=0; !checkStopConditions(i); i++)
+//	double ts(0.0); m_time = 0.0; ChronoOn();
+  timeval tim;
+	gettimeofday(&tim, NULL);
+  double ts = tim.tv_sec+(tim.tv_usec/1000000.0);
+  m_time = 0.0; 
+  
+	for (int m_Iteration=0; !checkStopConditions(m_Iteration); m_Iteration++)
 	{
 		if ( this->getCourbe().size() == 1 ) 
 		{
-#ifdef DEBUG_STATUS
+#ifdef DEBUG_STATUS_SHORTCUT
       cout << "Smooting has stoped, only one localpath in traj" << endl;
 #endif
 			break;
 		}
 		
+#ifdef DEBUG_STATUS_SHORTCUT
 		double CurCost = cost();
-		
-		try 
+#endif
+	
+    try 
 		{
 			if ( PlanEnv->getBool( PlanParam::trajPartialShortcut ) ) 
 			{
@@ -961,6 +1000,7 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 		//			break;
 		//		}
 		
+#ifdef DEBUG_STATUS_SHORTCUT
 		double NewCost = cost();
 		
 		m_IterationSucceded = ( CurCost > NewCost );
@@ -975,36 +1015,42 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 		{
 			double Gain = (( CurCost - NewCost ) / CurCost) ;
       
-      if( PlanEnv->getBool( PlanParam::trajPrintGain ) ) {
+      if( PlanEnv->getBool( PlanParam::trajPrintGain ) ) 
+      {
         cout << "Gain = " << 100*Gain <<  " %" << endl;
       }
 			m_GainOfIterations.push_back( Gain );
 		}
-		
-		ChronoTimes( &m_time , &ts );
+#endif
+
+//		ChronoTimes( &m_time , &ts );
+    gettimeofday(&tim, NULL);
+    m_time = tim.tv_sec+(tim.tv_usec/1000000.0) - ts;
 	}
 	
-	ChronoOff();
+//	ChronoOff();
 	
+#ifdef DEBUG_STATUS_SHORTCUT
   if( PlanEnv->getBool(PlanParam::trajComputeCollision ) )
   {
+
     if ( isValid() ) {
-#ifdef DEBUG_STATUS
+
       cout << "Trajectory valid" << endl;
-#endif
     }
     else { 
       cout << "Trajectory not valid" << endl;
     }
   }
+#endif
   
   if(PlanEnv->getBool(PlanParam::trajSaveCost))
   {
     ostringstream oss;
     oss << "ShortCutOptim_"<< m_ContextName << "_" << idRun << "_" ;
-    this->saveOptimToFile( oss.str() );
+    saveOptimToFile( oss.str() );
   }
-#ifdef DEBUG_STATUS
+#ifdef DEBUG_STATUS_SHORTCUT
   cout << "Before : cost = " << costBeforeDeformation << endl;
   cout << "After : cost = " << this->costNoRecompute() << endl;
 #endif

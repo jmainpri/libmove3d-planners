@@ -12,6 +12,8 @@
 
 #include "API/Trajectory/trajectory.hpp"
 
+extern std::vector< std::pair<double,double> > traj_convergence_with_time;
+
 /**
  * @ingroup Trajectory
  * @brief Basic optimization of a trajectory
@@ -44,6 +46,11 @@ namespace API
 		 * Get the time spent in optimization
 		 */
 		double getTime() { return m_time; }
+    
+    /**
+     * Get iteration
+     */
+    int getIteration() { return m_Iteration; }
 		
 		/**
 		 * Set Context name
@@ -157,6 +164,8 @@ namespace API
 		std::vector<double>		m_Selected;
 		int										m_nbBiased;
 		int										m_nbReallyBiased;
+    
+    double                m_currentCost;
 		
 		double								m_time;
 		
@@ -166,6 +175,7 @@ namespace API
 		std::vector<double>		m_OptimCost;
 		std::vector<double>		m_GainCost;
 		
+    int                   m_Iteration;
 		bool									m_IterationSucceded;
 		std::vector<double>		m_GainOfIterations;
 		unsigned int					m_MaxNumberOfIterations;
