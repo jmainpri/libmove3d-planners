@@ -47,7 +47,7 @@ namespace API
 		std::vector< std::tr1::shared_ptr<Configuration> > getTowConfigurationAtParam( double param1, double param2,
                                                                                   uint& lp1, uint& lp2 );
 		
-		std::vector<LocalPath*> extractSubPortion(double param1,double param2,unsigned int& first,unsigned int& last);
+    std::pair<bool,std::vector<LocalPath*> > extractSubPortion(double param1,double param2,unsigned int& first,unsigned int& last, bool check_for_coll = true);
 		Trajectory extractSubTrajectoryOfLocalPaths(unsigned int id_start, unsigned int id_end);
 		Trajectory extractSubTrajectory(double param1,double param2);
         
@@ -82,6 +82,7 @@ namespace API
 		double costNoRecompute();
     double costRecomputed();
 		double costDeltaAlongTraj();
+    double costNPoints(const int n_points);
     
 		std::vector<double> getCostAlongTrajectory(int nbSample);
 		void resetCostComputed();

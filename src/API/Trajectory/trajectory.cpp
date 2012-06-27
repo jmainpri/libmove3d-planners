@@ -783,7 +783,7 @@ double Trajectory::cost()
 
 double Trajectory::costRecomputed()
 {
-  if( !ENV.getBool(Env::isCostSpace)) 
+  if( !ENV.getBool(Env::isCostSpace) ) 
   {
     return collisionCost();
   }
@@ -793,7 +793,7 @@ double Trajectory::costRecomputed()
 
 double Trajectory::costNoRecompute()
 {
-  if(!ENV.getBool(Env::isCostSpace)) 
+  if( !ENV.getBool(Env::isCostSpace) ) 
   {
     return collisionCost();
   }
@@ -803,7 +803,7 @@ double Trajectory::costNoRecompute()
 
 double Trajectory::costDeltaAlongTraj()
 {
-  if(!ENV.getBool(Env::isCostSpace)) 
+  if( !ENV.getBool(Env::isCostSpace) ) 
   {
     return collisionCost();
   }
@@ -815,6 +815,125 @@ double Trajectory::costDeltaAlongTraj()
   cout << "Intergral along traj = " << cost << endl;
 	return cost;
 }
+
+double Trajectory::costNPoints(const int n_points)
+{
+  double s = 0.0;
+  double cost = 0.0;
+  
+  double length = getRangeMax();
+  double delta = length/double(n_points-1);
+  
+  for (int i=0; i<n_points; i++) 
+  {
+    cost += configAtParam(s)->cost();
+    s += delta;
+  }
+  
+  return cost;
+}
+
+double Trajectory::costOfPortion(double param1, double param2)
+{
+	
+	uint first(0);
+	uint last(0);
+	vector<LocalPath*> path;
+  
+  pair<bool, vector<LocalPath*> > valid_portion = extractSubPortion(param1, param2, first, last);
+	
+  if( valid_portion.first ) 
+  {
+    path = valid_portion.second;
+  }
+  else {
+    cout << "Error: inconsistant query in costOfPortion" << endl;
+  }
+  
+	double Cost = computeSubPortionCost(path);
+	
+	for (unsigned int i = 0; i < path.size(); i++)
+	{
+		delete path.at(i);
+	}
+	return Cost;
+	
+}
+//double Trajectory::costOfPortion(double param1,double param2){
+//
+//	double soFar(0.0);
+//	double prevSoFar(0.0);
+//	uint id_start;
+//	uint id_end;
+//	shared_ptr<Configuration> confPtrStart;
+//	shared_ptr<Configuration> confPtrEnd;
+//
+//	// TODO change that function
+//
+//	if( param1 > param2 ){
+//		cout << "Error: in Trajectory::costofPortion() " << endl;
+//		return 0;
+//	}
+//
+//	for(uint i=0;i<nloc;i++){
+//
+//		soFar = soFar + m_Courbe.at(i)->getParamMax();
+//
+//		// Parameter lies in the previous local path
+//		// return configuration inside previous LP
+//		if(param1 < soFar){
+//
+//			if(param1 < prevSoFar)
+//				cout << "Error getting Conf at param" << endl;
+//
+//			confPtrStart = m_Courbe.at(i)->configAtParam(param1-prevSoFar);
+//			id_start = i;
+//			break;
+//		}
+//		if(i==nloc-1){
+//			confPtrStart = m_Courbe.at(i)->configAtParam(param1-prevSoFar);
+//			id_start = i;
+//		}
+//		prevSoFar = soFar;
+//	}
+//
+//	soFar = prevSoFar;
+//
+//	for(uint i=id_start;i<nloc;i++){
+//
+//		soFar = soFar + m_Courbe.at(i)->getParamMax();
+//
+//		// Paramameter lies in the previous local path
+//		// return configuration inside previous LP
+//		if(param2 < soFar){
+//
+//			if(param2 < prevSoFar)
+//				cout << "Error getting Conf at param" << endl;
+//
+//			confPtrEnd = m_Courbe.at(i)->configAtParam(param2-prevSoFar);
+//			id_end = i;
+//			break;
+//		}
+//		if(i==nloc-1){
+//			confPtrEnd = m_Courbe.at(i)->getEnd();
+//			id_end = i;
+//		}
+//		prevSoFar = soFar;
+//	}
+//
+//	LocalPath pathStart(confPtrStart, m_Courbe.at(id_start)->getEnd());
+//	LocalPath pathEnd(m_Courbe.at(id_end)->getBegin(),confPtrEnd);
+//
+//	double cost =0.0;
+//
+//	cost += pathStart.cost() + pathEnd.cost();
+//
+//	for(uint i=id_start+1;i<id_end;i++){
+//		cost+=m_Courbe.at(i)->cost();
+//	}
+//
+//	return cost;
+//}
 
 void Trajectory::resetCostComputed()
 {
@@ -1036,21 +1155,21 @@ double Trajectory::extractCostPortion(double param1, double param2)
 	return totalCost;
 }
 
-vector<LocalPath*> Trajectory::extractSubPortion(double param1, double param2,
-																								 unsigned int& first, unsigned int& last)
+pair<bool, vector<LocalPath*> > Trajectory::extractSubPortion(double param1, double param2,
+																								 unsigned int& first, unsigned int& last, bool check_for_coll)
 {
 	vector<LocalPath*> paths;
-	vector<shared_ptr<Configuration> > conf;
+	vector<confPtr_t> conf;
 	
 	conf = getTowConfigurationAtParam(param1, param2, first, last);
 	
-	shared_ptr<Configuration> q1 = conf.at(0);
-	shared_ptr<Configuration> q2 = conf.at(1);
+	confPtr_t q1 = conf.at(0);
+	confPtr_t q2 = conf.at(1);
 	
 	if (first > last)
 	{
 		cout << "Error: inconsistent query for subpath extraction" << endl;
-		return paths;
+		return make_pair(false,paths);
 	}
 	
 	// Case where they lie in the same path
@@ -1062,14 +1181,14 @@ vector<LocalPath*> Trajectory::extractSubPortion(double param1, double param2,
 			paths.resize(0);
 			cout << "Error: q1 and q2 are the same in subportion extraction"
 			<< endl;
-			return paths;
+			return make_pair(false,paths);
 		}
 		paths.push_back(new LocalPath(q1, q2));
-		return paths;
+		return make_pair(true,paths);
 	}
 	
-	shared_ptr<Configuration> start = m_Courbe.at(first)->getBegin();
-	shared_ptr<Configuration> end = m_Courbe.at(last)->getEnd();
+	confPtr_t start = m_Courbe.at(first)->getBegin();
+	confPtr_t end = m_Courbe.at(last)->getEnd();
 	
 	// Adds the modified first local path to subpaths
 	// Verifies that the configuration is not starting the local path
@@ -1077,17 +1196,16 @@ vector<LocalPath*> Trajectory::extractSubPortion(double param1, double param2,
 	{
 		if (!m_Courbe.at(first)->getEnd()->equal(*q1))
 		{
-			LocalPath* startNew =
-			new LocalPath(q1, m_Courbe.at(first)->getEnd());
+			LocalPath* startNew = new LocalPath(q1, m_Courbe.at(first)->getEnd());
 			
-			if (startNew->isValid())
+			if ( check_for_coll && startNew->isValid() || !check_for_coll )
 			{
 				paths.push_back(startNew);
 			}
 			else
 			{
 				cout << "Error: portion of path not valid" << endl;
-				return paths;
+				return make_pair(false,paths);
 			}
 		}
 	}
@@ -1095,14 +1213,14 @@ vector<LocalPath*> Trajectory::extractSubPortion(double param1, double param2,
 	{
 		LocalPath* startNew = new LocalPath(*m_Courbe.at(first));
 		
-		if (startNew->isValid())
+		if ( check_for_coll && startNew->isValid() || !check_for_coll )
 		{
 			paths.push_back(startNew);
 		}
 		else
 		{
 			cout << "Error: portion of path not valid" << endl;
-			return paths;
+			return make_pair(false,paths);
 		}
 	}
 	
@@ -1120,14 +1238,14 @@ vector<LocalPath*> Trajectory::extractSubPortion(double param1, double param2,
 		{
 			LocalPath* endNew = new LocalPath(m_Courbe.at(last)->getBegin(), q2);
 			
-			if (endNew->isValid())
+			if( check_for_coll && endNew->isValid() || !check_for_coll )
 			{
 				paths.push_back(endNew);
 			}
 			else
 			{
 				cout << "Error: portion of path not valid" << endl;
-				return paths;
+				return make_pair(false,paths);
 			}
 		}
 	}
@@ -1135,14 +1253,14 @@ vector<LocalPath*> Trajectory::extractSubPortion(double param1, double param2,
 	{
 		LocalPath* endNew = new LocalPath(*m_Courbe.at(last));
 		
-		if (endNew->isValid())
+		if( check_for_coll && endNew->isValid() || !check_for_coll )
 		{
 			paths.push_back(endNew);
 		}
 		else
 		{
 			cout << "Error: portion of path not valid" << endl;
-			return paths;
+			return make_pair(false,paths);
 		}
 	}
 	
@@ -1157,7 +1275,7 @@ vector<LocalPath*> Trajectory::extractSubPortion(double param1, double param2,
 		cout << "Error: in extract sub portion integrity" << endl;
 	}
 	
-	return paths;
+	return make_pair(true,paths);
 }
 
 //! Extract sub trajectory
@@ -1210,7 +1328,15 @@ Trajectory Trajectory::extractSubTrajectory(double param1, double param2)
 	}
 	else
 	{
-		path = extractSubPortion(param1, param2, first, last);
+    pair<bool, vector<LocalPath*> > valid_portion = extractSubPortion(param1, param2, first, last);
+    
+    if( valid_portion.first ) 
+    {
+      path = valid_portion.second;
+    }
+    else {
+      cout << "Error: inconsistant query in extractSubTrajectory" << endl;
+    }
 	}
 	
 	Trajectory newTraj(m_Robot);
@@ -1336,99 +1462,6 @@ void Trajectory::draw(int nbKeyFrame)
 	
 	m_Robot->setAndUpdate(*qSave);
 }
-
-double Trajectory::costOfPortion(double param1, double param2)
-{
-	
-	uint first(0);
-	uint last(0);
-	
-	vector<LocalPath*> path = extractSubPortion(param1, param2, first, last);
-	
-	double Cost = computeSubPortionCost(path);
-	
-	for (unsigned int i = 0; i < path.size(); i++)
-	{
-		delete path.at(i);
-	}
-	return Cost;
-	
-}
-//double Trajectory::costOfPortion(double param1,double param2){
-//
-//	double soFar(0.0);
-//	double prevSoFar(0.0);
-//	uint id_start;
-//	uint id_end;
-//	shared_ptr<Configuration> confPtrStart;
-//	shared_ptr<Configuration> confPtrEnd;
-//
-//	// TODO change that function
-//
-//	if( param1 > param2 ){
-//		cout << "Error: in Trajectory::costofPortion() " << endl;
-//		return 0;
-//	}
-//
-//	for(uint i=0;i<nloc;i++){
-//
-//		soFar = soFar + m_Courbe.at(i)->getParamMax();
-//
-//		// Parameter lies in the previous local path
-//		// return configuration inside previous LP
-//		if(param1 < soFar){
-//
-//			if(param1 < prevSoFar)
-//				cout << "Error getting Conf at param" << endl;
-//
-//			confPtrStart = m_Courbe.at(i)->configAtParam(param1-prevSoFar);
-//			id_start = i;
-//			break;
-//		}
-//		if(i==nloc-1){
-//			confPtrStart = m_Courbe.at(i)->configAtParam(param1-prevSoFar);
-//			id_start = i;
-//		}
-//		prevSoFar = soFar;
-//	}
-//
-//	soFar = prevSoFar;
-//
-//	for(uint i=id_start;i<nloc;i++){
-//
-//		soFar = soFar + m_Courbe.at(i)->getParamMax();
-//
-//		// Paramameter lies in the previous local path
-//		// return configuration inside previous LP
-//		if(param2 < soFar){
-//
-//			if(param2 < prevSoFar)
-//				cout << "Error getting Conf at param" << endl;
-//
-//			confPtrEnd = m_Courbe.at(i)->configAtParam(param2-prevSoFar);
-//			id_end = i;
-//			break;
-//		}
-//		if(i==nloc-1){
-//			confPtrEnd = m_Courbe.at(i)->getEnd();
-//			id_end = i;
-//		}
-//		prevSoFar = soFar;
-//	}
-//
-//	LocalPath pathStart(confPtrStart, m_Courbe.at(id_start)->getEnd());
-//	LocalPath pathEnd(m_Courbe.at(id_end)->getBegin(),confPtrEnd);
-//
-//	double cost =0.0;
-//
-//	cost += pathStart.cost() + pathEnd.cost();
-//
-//	for(uint i=id_start+1;i<id_end;i++){
-//		cost+=m_Courbe.at(i)->cost();
-//	}
-//
-//	return cost;
-//}
 
 bool Trajectory::push_back(shared_ptr<LocalPath> path)
 {
@@ -1770,7 +1803,7 @@ bool Trajectory::replacePortionOfLocalPaths(unsigned int id1, unsigned int id2, 
   {
     for (uint i = id1; i < id2; i++)
     {
-      delete m_Courbe.at(i);
+      delete m_Courbe[i];
     }
   } 
   
@@ -1779,8 +1812,7 @@ bool Trajectory::replacePortionOfLocalPaths(unsigned int id1, unsigned int id2, 
   return true;
 }
 
-bool Trajectory::replacePortion(double param1, double param2,
-																vector<LocalPath*> paths , bool freeMemory )
+bool Trajectory::replacePortion( double param1, double param2, vector<LocalPath*> paths , bool freeMemory )
 {
 	confPtr_t q11 = paths.at(0)->getBegin();
 	confPtr_t q12 = paths.back()->getEnd();
@@ -1817,7 +1849,7 @@ bool Trajectory::replacePortion(double param1, double param2,
 		if (param1 < soFar)
 		{
 			// get configuration in local path i
-			q21 = m_Courbe.at(i)->configAtParam(param1 - prevSoFar);
+			q21 = m_Courbe[i]->configAtParam(param1 - prevSoFar);
 			param_start = param1 - prevSoFar;
 			id_LP_1 = i;
 			break;
@@ -1878,8 +1910,8 @@ bool Trajectory::replacePortion(double param1, double param2,
 	
 	// Adds to paths the portion of local path (At begin and End of the portion)
 	//----------------------------------------------------------------------------
-	shared_ptr<Configuration> start = m_Courbe.at(id_LP_1)->getBegin();
-	shared_ptr<Configuration> end = m_Courbe.at(id_LP_2)->getEnd();
+	confPtr_t start = m_Courbe[id_LP_1]->getBegin();
+	confPtr_t end =   m_Courbe[id_LP_2]->getEnd();
 	
 	/*cout << "Start and End" << endl;
 	 start->print(); end->print();
@@ -1932,7 +1964,7 @@ bool Trajectory::replacePortion(double param1, double param2,
 	unsigned int id1_erase = id_LP_1;
 	unsigned int id2_erase = id_LP_2 + 1;
 	
-	replacePortionOfLocalPaths(id1_erase, id2_erase, paths, freeMemory );
+	replacePortionOfLocalPaths( id1_erase, id2_erase, paths, freeMemory );
 	return true;
 }
 
@@ -1958,8 +1990,19 @@ bool Trajectory::replaceBegin( double param, const vector<LocalPath*>& paths )
 bool Trajectory::replaceEnd( double param, const vector<LocalPath*>& paths )
 {
   uint first(0); uint last(0);
-	vector<LocalPath*> new_courbe = extractSubPortion(0.0, param, first, last);
-	
+  vector<LocalPath*> new_courbe;
+  
+  pair<bool, vector<LocalPath*> > valid_portion = extractSubPortion(0.0, param, first, last, false);
+
+  if( valid_portion.first ) 
+  {
+    new_courbe = valid_portion.second;
+  }
+  else {
+    cout << "Error: inconsistant query in replaceEnd" << endl;
+    return false;
+  }
+  
 	for (int i=0; i<int(paths.size()); i++) {
     new_courbe.push_back( paths[i] );
   }
