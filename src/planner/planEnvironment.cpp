@@ -95,7 +95,11 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::trajCostRecompute,          new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajComputeCollision,       new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::trajStompComputeColl,       new boolContainer(true)));
+        myBoolMap.insert( std::make_pair( PlanParam::trajStompWithTimeLimit,     new boolContainer(true)));
+        myBoolMap.insert( std::make_pair( PlanParam::trajStompMultiplyM,         new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::trajBiasOptim,              new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::trajUseOtp,                 new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::trajNPoints,                new boolContainer(true)));
   
         myBoolMap.insert( std::make_pair( PlanParam::withMaxIteration,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::withGainLimit,              new boolContainer(true)));
@@ -103,6 +107,7 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::withShortCut,               new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::withDeformation,            new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::withDescent,                new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::withStomp,                  new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::doReplanning,               new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::showExploration,            new boolContainer(false)));
   
@@ -169,7 +174,7 @@ void initPlannerParameters()
   
         // Replanning
         myIntMap.insert(std::make_pair( PlanParam::setOfActiveJoints,            new intContainer(0)));
-        myIntMap.insert(std::make_pair( PlanParam::replanningAlgorithm,            new intContainer(0)));
+        myIntMap.insert(std::make_pair( PlanParam::replanningAlgorithm,          new intContainer(0)));
   
         // Object TransfertPoint variable
         myIntMap.insert(std::make_pair( PlanParam::env_maxIter,                  new intContainer(40)));
@@ -194,6 +199,7 @@ void initPlannerParameters()
         myDoubleMap.insert( std::make_pair( PlanParam::costTraj,                 new doubleContainer(1.0)));
 
         myDoubleMap.insert( std::make_pair( PlanParam::distMinToDraw,            new doubleContainer(0.3)));
+        myDoubleMap.insert( std::make_pair( PlanParam::trajStompTimeLimit,       new doubleContainer(7.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::trajDuration,             new doubleContainer(5.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::trajOptimStdDev,          new doubleContainer(2.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::trajOptimSmoothWeight,    new doubleContainer(0.1)));

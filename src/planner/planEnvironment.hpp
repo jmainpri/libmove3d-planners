@@ -57,13 +57,18 @@ namespace PlanParam
             trajCostRecompute,
             trajComputeCollision,
             trajStompComputeColl,
+            trajStompWithTimeLimit,
+            trajStompMultiplyM,
             trajBiasOptim,
+            trajUseOtp,
+            trajNPoints,
           
             withMaxIteration,
             withGainLimit,
             withSmoothing,
             withShortCut,
             withDeformation,
+            withStomp,
             withDescent,
             trajOptimTestMultiGauss,
             showExploration,
@@ -156,10 +161,12 @@ namespace PlanParam
             MinStep,
             costTraj,
             distMinToDraw,
+            trajStompTimeLimit,
             trajDuration,
             trajOptimStdDev,
             trajOptimSmoothWeight,
             trajOptimObstacWeight,
+            
             
             // Object TransfertPoint variable
             env_randomXMinLimit,
