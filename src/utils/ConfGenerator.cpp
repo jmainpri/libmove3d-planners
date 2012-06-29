@@ -127,7 +127,7 @@ Eigen::Vector3d ConfGenerator::setCurOTP( Eigen::Vector3d WSPoint)
   
   //        r->setAndUpdate(*r->getInitialPosition());
   int firstIndexOfHumanDof = _robot->getJoint(1)->getIndexOfFirstDof();
-  confPtr_t q_cur = _robot->getCurrentPos();
+  confPtr_t q_cur = _human->getCurrentPos();
   
   Eigen::Vector3d vec;
   current_WSPoint[0] = WSPoint[0] + (*q_cur)[firstIndexOfHumanDof + 0];

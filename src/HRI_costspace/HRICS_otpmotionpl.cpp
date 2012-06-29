@@ -1200,6 +1200,8 @@ bool OTPMotionPl::newComputeOTP()
     else
     {
         bestConf = findBestPosForHumanSitConf(objectNecessity);
+        m_confList.push_back(bestConf);
+        saveCostsTofile(bestConf.cost,bestConf.cost);
         m_isInitSiting = true;
     }
 
@@ -1693,12 +1695,28 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
     int nbRandomRotOnly = PlanEnv->getInt(PlanParam::env_nbRandomRotOnly);//10
 
 
-    Robot* furniture = NULL;
-    detectSittingFurniture(m_Human,1,&furniture);
-    if (furniture!= NULL)
+//    Robot* furniture = NULL;
+//    detectSittingFurniture(m_Human,1,&furniture);
+
+    vector<p3d_rob*> furnitures;
+    for (int i=0; i<XYZ_ENV->nr; i++)
     {
-        p3d_col_deactivate_robot_robot(m_Human->getRobotStruct(), furniture->getRobotStruct());
+        string name(XYZ_ENV->robot[i]->name);
+        if (p3d_col_test_robot_other(m_Human->getRobotStruct(),XYZ_ENV->robot[i],1) == 1)
+        {
+            cout << "robot : " << name << " is in : "<< p3d_col_test_robot_other(m_Human->getRobotStruct(),XYZ_ENV->robot[i],1) << " with the human " << endl;
+
+            furnitures.push_back(XYZ_ENV->robot[i]);
+            p3d_col_deactivate_robot_robot(m_Human->getRobotStruct(), XYZ_ENV->robot[i]);
+        }
+
+
     }
+
+//    if (furniture!= NULL)
+//    {
+//        p3d_col_deactivate_robot_robot(m_Human->getRobotStruct(), furniture->getRobotStruct());
+//    }
 
 
     //    cout << "sitting test" << endl;
@@ -1867,10 +1885,14 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
     humPos[1] = m_humanPos[1];
     humPos[2] = m_humanPos[2];
     m_2DGrid->initGrid(humPos);
-
-    if (furniture!= NULL)
+//
+//    if (furniture!= NULL)
+//    {
+//        p3d_col_activate_robot_robot(m_Human->getRobotStruct(), furniture->getRobotStruct());
+//    }
+    for (unsigned int j =0; j < furnitures.size(); j++)
     {
-        p3d_col_activate_robot_robot(m_Human->getRobotStruct(), furniture->getRobotStruct());
+        p3d_col_activate_robot_robot(m_Human->getRobotStruct(), furnitures.at(j));
     }
 
     return bestConf;
