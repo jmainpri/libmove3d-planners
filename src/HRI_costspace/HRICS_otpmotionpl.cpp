@@ -1818,7 +1818,7 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
                     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > vect;
                     vect.clear();
                     vect.push_back(v);
-                    vect.push_back(v);
+//                    vect.push_back(v);
                     localConf.humanTraj = vect;
                     localConf.humanTrajExist = true;
 
@@ -1884,7 +1884,9 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
     humPos[0] = m_humanPos[0];
     humPos[1] = m_humanPos[1];
     humPos[2] = m_humanPos[2];
+    PlanEnv->setBool(PlanParam::env_isStanding, true);
     m_2DGrid->initGrid(humPos);
+    PlanEnv->setBool(PlanParam::env_isStanding, false);
 //
 //    if (furniture!= NULL)
 //    {
@@ -2804,7 +2806,7 @@ bool OTPMotionPl::standUp()
 
     double chairDist = 0;
     double standingDist = 0;
-    double maxStandingDist = 0.7;
+    double maxStandingDist = 1;
     double discr = 0.1;
     while (humCyl->isInCollisionWithOthersAndEnv() && chairDist < maxStandingDist)
     {
@@ -2942,7 +2944,7 @@ void OTPMotionPl::setVar()
     PlanEnv->setInt(PlanParam::env_pow,2);
     PlanEnv->setInt(PlanParam::env_anglePow,3);
     PlanEnv->setInt(PlanParam::env_timeShow,0);
-    PlanEnv->setInt(PlanParam::env_maxIter,40);
+    PlanEnv->setInt(PlanParam::env_maxIter,200);
     PlanEnv->setInt(PlanParam::env_totMaxIter,2000);
     PlanEnv->setDouble(PlanParam::env_timeLimitation,10.0);
     PlanEnv->setInt(PlanParam::env_nbRandomRotOnly,50);
