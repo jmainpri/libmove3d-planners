@@ -30,29 +30,6 @@ extern string global_ActiveRobotName;
 extern ManipulationTestFunctions* global_manipPlanTest;
 #endif
 
-void HRICS::printHumanConfig()
-{
-  Scene* sc = global_Project->getActiveScene();
-  
-  //Robot* rob = sc->getRobotByName("HERAKLES_HUMAN1");
-  Robot* rob = sc->getRobotByName("PR2_ROBOT");
-  
-  if( rob == NULL ) 
-  {
-    cout << "No robot named HERAKLES_HUMAN1 in env" << endl;
-  }
-  
-  for( int i=0; i<rob->getNumberOfJoints(); i++)
-  {
-    Joint* jnt = rob->getJoint(i);
-    
-    for( int j=0; j<jnt->getNumberOfDof(); j++)
-    {
-      cout << "jnt->getName() : " << jnt->getName() << "(" <<i<< ")" , index_dof : " << jnt->getIndexOfFirstDof()+j << endl;
-    }
-  }
-}
-
 void HRICS::printPr2Config()
 {
   Scene* sc = global_Project->getActiveScene();
