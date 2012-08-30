@@ -48,12 +48,12 @@ using namespace std;
 using namespace tr1;
 
 // ---------------------------------------------------------------------------------
-// Run number that is counting planner run
+// Exctracted trajectory Id (used for UI)
 // ---------------------------------------------------------------------------------
-unsigned int runNum = 0;
+unsigned int trajId = 0;
 
 // ---------------------------------------------------------------------------------
-// Run Id that is used in multiRun
+// Run Id (used for multi-run)
 // ---------------------------------------------------------------------------------
 unsigned int runId = 0;
 
@@ -67,6 +67,20 @@ unsigned int p3d_planner_functions_get_run_id()
   return runId;
 }
 
+// ---------------------------------------------------------------------------------
+// RRT statistcis
+// ---------------------------------------------------------------------------------
+RRTStatistics rrt_statistics;
+
+void p3d_get_rrt_statistics( RRTStatistics& stat )
+{
+  stat.runId        = rrt_statistics.runId;
+  stat.succeeded    = rrt_statistics.succeeded;
+  stat.time         = rrt_statistics.time;
+  stat.cost         = rrt_statistics.cost;
+  stat.nbNodes      = rrt_statistics.nbNodes; 
+  stat.nbExpansions = rrt_statistics.nbExpansions; 
+};
 
 // ---------------------------------------------------------------------------------
 // Extract Traj
@@ -98,43 +112,43 @@ p3d_traj* p3d_extract_traj(bool is_traj_found, int nb_added_nodes, Graph* graph,
     }
   }
 
-  runNum++;
+  trajId++;
   
   // Return trajectory or NULL if falses
   if (traj) 
   {
+    traj->costDeltaAlongTraj();
+    
     p3d_traj* result = traj->replaceP3dTraj(NULL); 
-    g3d_draw_allwin_active();
+    rob->getRobotStruct()->tcur = result;
+    
+    if( ENV.getBool(Env::drawTraj) )
+    {
+      g3d_draw_allwin_active();
+    }
+    
     cout << "result->nlp = " << result->nlp << endl;
     cout << "result->range_param = " << result->range_param << endl;
     
-    rob->getRobotStruct()->tcur = result;
     char trajName[] = "Specific";
-		g3d_add_traj( trajName, runNum, rob->getRobotStruct(), rob->getRobotStruct()->tcur );
+		g3d_add_traj( trajName, trajId, rob->getRobotStruct(), rob->getRobotStruct()->tcur );
+    
+    bool is_cost_space = ENV.getBool(Env::isCostSpace);
+    ENV.setBool(Env::isCostSpace, true);
+    traj->resetCostComputed();
+    
+    // Compute traj cost
+    rrt_statistics.cost = traj->cost();
+    cout << "is_cost_space : " << ENV.getBool(Env::isCostSpace) << " , traj_cost : " << rrt_statistics.cost << endl ;
+    ENV.setBool(Env::isCostSpace, is_cost_space);
     
     // Prevent segfault if p3d graph deleted outside
     delete traj;
-    
-    ChronoTimeOfDayTimes(&(graph->getGraphStruct()->rrtTime));
-    
-    // Debug
-    cout << "** ** --------------------------" << endl;
-    cout << "TIME ="  << graph->getGraphStruct()->rrtTime << endl;
-    cout << "NB NODES " << (int)graph->getNodes().size() << endl;
-    cout << "** ** --------------------------" << endl;
-    
-    ChronoTimeOfDayOff();
     return result;
   }
   else 
   {
     cout << __FILE__ << " , " << __func__ << " : No traj found" << endl;
-    //rob->getRobotStruct()->tcur = NULL;
-    //if( graph == API_activeGraph ) API_activeGraph = NULL;
-    //delete graph;
-    
-    ChronoTimeOfDayPrint("");
-    ChronoTimeOfDayOff();
     return NULL;
   }
 }
@@ -172,7 +186,7 @@ RRT* p3d_allocate_rrt(Robot* rob,Graph* graph)
 	{
 		rrt = new ThresholdRRT(rob,graph);
 	}
-	else if(ENV.getBool(Env::isCostSpace) && ENV.getBool(Env::costStarRRT) )
+	else if(ENV.getBool(Env::isCostSpace) && PlanEnv->getBool(PlanParam::starRRT) )
 	{
 		rrt = new StarRRT(rob,graph);
 	}
@@ -202,7 +216,7 @@ p3d_traj* p3d_planner_function(p3d_rob* robotPt, configPt qs, configPt qg)
   ChronoTimeOfDayOn();
   
   // Gets the robot pointer and the 2 configurations
-  Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
+  Robot* rob = global_Project->getActiveScene()->getRobotByName( robotPt->name );
   confPtr_t q_source( new Configuration(rob,qs) );
   confPtr_t q_target( new Configuration(rob,qg) );
   
@@ -223,6 +237,7 @@ p3d_traj* p3d_planner_function(p3d_rob* robotPt, configPt qs, configPt qg)
 	nb_added_nodes += rrt->setGoal(q_target);
 	nb_added_nodes += rrt->init();
   rrt->setInitialized(true);
+  rrt->setRunId( runId );
 	
   nb_added_nodes += rrt->run();
   
@@ -248,6 +263,33 @@ p3d_traj* p3d_planner_function(p3d_rob* robotPt, configPt qs, configPt qg)
   
   // Extracj the trajectory if one exists, else return NULL
   p3d_traj* traj = p3d_extract_traj(rrt->trajFound(), nb_added_nodes, graph, q_source, q_target);
+  
+  double time;
+  
+  ChronoTimeOfDayTimes(&time);
+  ChronoTimeOfDayOff();
+  
+  cout << "** ** --------------------------" << endl; 
+  
+  if( traj ) { 
+    cout << "Success" << endl;
+  }
+  else {
+    cout << "Fail" << endl;
+  }
+  
+  cout << "TIME ="  << time << " sec." << endl;
+  cout << "NB NODES " << graph->getNumberOfNodes() << endl;
+  cout << "NB EXPANSION " << rrt->getNumberOfExpansion() << endl;
+  cout << "** ** --------------------------" << endl;
+  
+  rrt_statistics.runId = rrt->getRunId();
+  rrt_statistics.succeeded = (traj!=NULL);
+  rrt_statistics.time = time;
+  //rrt_statistics.cost = 0.0;
+  rrt_statistics.nbNodes = graph->getNumberOfNodes();
+  rrt_statistics.nbExpansions = rrt->getNumberOfExpansion();
+  
   return traj;
 }
 

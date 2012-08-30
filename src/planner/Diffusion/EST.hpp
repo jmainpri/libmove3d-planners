@@ -72,11 +72,11 @@ public:
 	* Returns number of consecutive failure
 	* during plannification
 	*/
-
-        ESTExpansion* getExpansion()
-		{
-			return _Expan;
-		};
+  
+  ESTExpansion* getExpansion()
+  {
+    return _Expan;
+  };
 
 protected:
         ESTExpansion* _Expan;

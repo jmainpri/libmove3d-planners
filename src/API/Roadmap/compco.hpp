@@ -100,6 +100,11 @@ public:
 	Node* nearestWeightNeighbour(std::tr1::shared_ptr<Configuration> q, bool weighted, int distConfigChoice);
   
   /**
+   * KNearest Weight Neighbours
+   */
+  std::vector<Node*> KNearestWeightNeighbour(confPtr_t config, int K, double radius, bool weighted, int distConfigChoice);
+  
+  /**
    * Search configuration in connected compco
    */
   Node* searchConf(Configuration& q);

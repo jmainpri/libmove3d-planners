@@ -346,8 +346,14 @@ bool Configuration::isInCollision()
 {
   if(!_CollisionTested)
   {
-    this->getRobot()->setAndUpdate(*this);
     _CollisionTested = true;
+    
+    if( !_Robot->setAndUpdate(*this) ) 
+    {
+      _InCollision = true;
+      return _InCollision;
+    }
+    
     //_InCollision = p3d_col_test();      
     if( global_collisionSpace )
     {

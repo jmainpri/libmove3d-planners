@@ -93,7 +93,6 @@ namespace API
 		 */
 		confPtr_t cheat();
 
-		
 		/**
 		 * Create new trajectories to show in debug mode
 		 * also calls the g3d_draw function to plot in the OpenGl display

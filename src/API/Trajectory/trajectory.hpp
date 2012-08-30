@@ -38,8 +38,11 @@ namespace API
     Trajectory(const Trajectory& T);
 		~Trajectory();
 		
-		Trajectory& operator= (const Trajectory& f);
-		
+		Trajectory& operator= (const Trajectory& t);
+
+    bool operator == ( const Trajectory& t ) const;
+    bool operator != ( const Trajectory& t ) const;
+    
 		//---------------------------------------------------------
 		// Operations
 		void copyPaths( std::vector<LocalPath*>& vect );
@@ -83,6 +86,7 @@ namespace API
     double costRecomputed();
 		double costDeltaAlongTraj();
     double costNPoints(const int n_points);
+    double costSum();
     
 		std::vector<double> getCostAlongTrajectory(int nbSample);
 		void resetCostComputed();

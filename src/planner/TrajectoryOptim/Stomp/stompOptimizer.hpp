@@ -37,18 +37,23 @@
 #ifndef STOMP_OPTIMIZER_H_
 #define STOMP_OPTIMIZER_H_
 
-#include <boost/shared_ptr.hpp>
 #include "stompParameters.hpp"
+
 #include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompTrajectory.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompCost.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 #include "planner/Greedy/CollisionSpace.hpp"
+
+#include <boost/shared_ptr.hpp>
+
 #include "task.hpp"
 #include "covariant_trajectory_policy.hpp"
 #include "policy_improvement_loop.hpp"
 #include "stompStatistics.hpp"
+
+class ConfGenerator;
 
 //#include <motion_planning_msgs/Constraints.h>
 //#include "constraint_evaluator.hpp"
@@ -88,6 +93,17 @@ public:
    * @return
    */
   void runDeformation( int nbIteration , int idRun=0 );
+  
+  /**
+   * Set the maximal time for optimization in second
+   * @param Time in second
+   */
+  void setTimeLimit(double time) { use_time_limit_ = true; time_limit_ = time; }
+  
+  /**
+   * Set the passive Dofs
+   */
+  void setPassiveDofs( std::vector<confPtr_t> passive_dofs ) { passive_dofs_ = passive_dofs; }
   
   /**
    * Generate the noisy trajectories
@@ -197,7 +213,17 @@ private:
   bool succeded_joint_limits_;
   int joint_limits_violation_;
   
-  bool use_handover_conf_generator_;
+  bool use_human_sliders_;
+  bool use_handover_config_generator_;
+  bool use_handover_config_list_;
+  ConfGenerator* handoverGenerator_;
+  
+  double last_move3d_cost_;
+  
+  bool use_time_limit_;
+  double time_limit_;
+  
+  std::vector<confPtr_t> passive_dofs_;
   
   ChompTrajectory *full_trajectory_;
   const ChompPlanningGroup *planning_group_;
@@ -277,6 +303,10 @@ private:
   Eigen::VectorXd full_joint_state_velocities_;
   Eigen::VectorXd full_joint_state_accelerations_;
   
+  bool human_has_moved_;
+  std::vector<double> last_human_pos_;
+  bool reset_reused_rollouts_;
+  
   confPtr_t source_;
   confPtr_t target_;
   confPtr_t target_new_;
@@ -304,7 +334,8 @@ private:
   void eigenMapTest();
   bool handleJointLimits();
   void animatePath();
-  void animateEndeffector();
+  void animateEndeffector(bool print_cost = false);
+  void animateTrajectoryPolicy();
   void visualizeState(int index);
   double getTrajectoryCost();
   double getSmoothnessCost();
@@ -326,11 +357,18 @@ private:
   //----------------------------------------------------------------------------
   void setGroupTrajectoryToVectorConfig(std::vector<confPtr_t>& traj);
   void setGroupTrajectoryFromVectorConfig(const std::vector<confPtr_t>& traj);
+  void setGroupTrajectoryToApiTraj(API::Trajectory& traj);
   
   bool replaceEndWithNewConfiguration();
+  bool getManipulationHandOver();
+  bool getMobileManipHandOver();
+  bool humanHasMoved();
   bool getNewTargetFromHandOver();
-  void resampleParameters(std::vector<Eigen::VectorXd>& parameters);
+  double resampleParameters(std::vector<Eigen::VectorXd>& parameters);
+  double computeMove3DCost();
   confPtr_t getConfigurationOnGroupTraj(int ith);
+  
+  void saveOptimToFile(std::string fileName);
 
 //  void getTorques(int index, std::vector<double>& torques, const std::vector<KDL::Wrench>& wrenches);
 };

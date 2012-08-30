@@ -24,14 +24,18 @@
 #include "TrajectoryOptim/trajectoryOptim.hpp"
 
 #include <iostream>
+#include <iomanip>
+#include <fstream>
 
 #include "Planner-pkg.h"
+#include "Graphic-pkg.h"
 
 using namespace std;
 using namespace tr1;
 
 const bool print_exploration = false;
-const bool print_rewiring = false;
+const bool print_rewiring = true;
+const bool print_lower_connect = true;
 
 /*!
  * Constructors with default values
@@ -47,6 +51,7 @@ StarExpansion::StarExpansion(Graph* G) : RRTExpansion(G)
   m_ith_on_traj = -1;
   m_ith_trajectory = -1;
   m_start_bias = false;
+  m_goal_bias = false;
   m_tube_bias =false;
   m_cspace = NULL;
   
@@ -109,6 +114,14 @@ double StarExpansion::rrgBallRadius()
   }
 }
 
+/**
+ * Compco
+ */
+void StarExpansion::setInitialCompco( ConnectedComponent* compco )
+{
+  m_compco = compco;
+}
+
 /*!
  * Expand the localpath
  */
@@ -129,6 +142,61 @@ int StarExpansion::connectExpandProcess(Node* expansionNode,
 	return 0;
 }
 
+confPtr_t StarExpansion::sampleInTube()
+{
+  confPtr_t q;
+  
+  // Generate noisy trajectories 
+  if( m_ith_on_traj == -1 && m_ith_trajectory == -1)
+  {
+    if( m_start_bias == false )
+      m_start_bias = m_Graph->searchConf( *m_q_goal );
+    
+    API::Trajectory* traj = NULL;
+    
+    if( m_start_bias ) { 
+      traj = m_Graph->extractBestTrajSoFar( m_q_init, m_q_goal );
+    }
+    if( traj != NULL ){
+      traj->cutTrajInSmallLPSimple( (PlanEnv->getInt( PlanParam::nb_pointsOnTraj )-1) );
+      
+      if( traj->size() == PlanEnv->getInt( PlanParam::nb_pointsOnTraj )-1 ) 
+      {
+        m_biasTrajectory.clear();
+        optimizer->generateNoisyTrajectory(*traj,m_biasTrajectory);
+        
+        m_ith_on_traj = 1;
+        m_ith_trajectory = 0;
+        
+        return m_biasTrajectory[m_ith_trajectory][m_ith_on_traj];
+      }
+    }
+  }
+  else 
+  {
+    m_ith_trajectory++; // Next trajectories
+    
+    if( m_ith_trajectory < int(m_biasTrajectory.size()) )
+    {
+      if( m_ith_on_traj < int(m_biasTrajectory[m_ith_trajectory].size()-1) )
+      {
+        q = m_biasTrajectory[m_ith_trajectory][m_ith_on_traj];
+        return q;
+      }
+      else { 
+        m_ith_on_traj = -1; // Terminates
+        m_ith_trajectory = -1;
+      }
+    }
+    else {
+      m_ith_on_traj += 5; // All config on the noisy trajectory
+      m_ith_trajectory = 0;
+    }
+  }
+  
+  return q;
+}
+
 confPtr_t StarExpansion::getExpansionDirection(Node* expandComp, Node* goalComp, bool samplePassive, Node*& directionNode)
 {
   confPtr_t q;
@@ -139,7 +207,7 @@ confPtr_t StarExpansion::getExpansionDirection(Node* expandComp, Node* goalComp,
 //  {
     // Selection in the entire CSpace and
     // biased to the Comp of the goal configuration
-    if ( (!m_start_bias) && (p3d_random(0., 1.) <= 0.25) )
+    if ( m_goal_bias && (p3d_random(0., 1.) <= 0.25) )
     {
       // the goal component as direction of expansion
       q = m_q_goal;
@@ -154,53 +222,7 @@ confPtr_t StarExpansion::getExpansionDirection(Node* expandComp, Node* goalComp,
   
   if( m_tube_bias )
   {
-    // Generate noisy trajectories 
-    if( m_ith_on_traj == -1 && m_ith_trajectory == -1)
-    {
-      if( m_start_bias == false )
-        m_start_bias = m_Graph->searchConf( *m_q_goal );
-      
-      API::Trajectory* traj = NULL;
-      
-      if( m_start_bias ) { 
-        traj = m_Graph->extractBestTrajSoFar( m_q_init, m_q_goal );
-      }
-      if( traj != NULL ){
-        traj->cutTrajInSmallLPSimple( (PlanEnv->getInt( PlanParam::nb_pointsOnTraj )-1) );
-        
-        if( traj->size() == PlanEnv->getInt( PlanParam::nb_pointsOnTraj )-1 ) 
-        {
-          m_biasTrajectory.clear();
-          optimizer->generateNoisyTrajectory(*traj,m_biasTrajectory);
-          
-          m_ith_on_traj = 1;
-          m_ith_trajectory = 0;
-          
-          return m_biasTrajectory[m_ith_trajectory][m_ith_on_traj];
-        }
-      }
-    }
-    else 
-    {
-      m_ith_trajectory++; // Next trajectories
-      
-      if( m_ith_trajectory < int(m_biasTrajectory.size()) )
-      {
-        if( m_ith_on_traj < int(m_biasTrajectory[m_ith_trajectory].size()-1) )
-        {
-          q = m_biasTrajectory[m_ith_trajectory][m_ith_on_traj];
-          return q;
-        }
-        else { 
-          m_ith_on_traj = -1; // Terminates
-          m_ith_trajectory = -1;
-        }
-      }
-      else {
-        m_ith_on_traj += 5; // All config on the noisy trajectory
-        m_ith_trajectory = 0;
-      }
-    }
+    q = sampleInTube();
   }
   //  }
   
@@ -219,11 +241,26 @@ void StarExpansion::rewireGraph(Node* new_node, Node* min_node, const vector<Nod
       continue;
     }
     
+//    cout << "****************************" << endl;
+//    if( min_node->parent() )
+//      cout << "min_node->parent()->getId() : " << min_node->parent()->getId() << endl;
+//    cout << "min_node->getId() : " << min_node->getId() << endl;
+//    cout << "new_node->getId() : " << new_node->getId() << endl;
+//    cout << "neigh_nodes[i]->getId() : " << neigh_nodes[i]->getId() << endl;
+//    cout << "neigh_nodes[i]->parent()->getId() : " << neigh_nodes[i]->parent()->getId() << endl;
+    
     LocalPath path( q_new, neigh_nodes[i]->getConfiguration() );
     
     // Compute the cost to get to the new node from each neighbor
     // and change edge if superior
-    if ( neigh_nodes[i]->sumCost() > (new_node->sumCost()+path.cost()) )
+    double neigh_sum_cost = neigh_nodes[i]->sumCost();
+    double new_sum_cost = new_node->sumCost();
+    double path_cost = path.cost();
+//    cout << "neigh_sum_cost : " << neigh_sum_cost << endl;
+//    cout << "new_sum_cost : " << new_sum_cost << endl;
+//    cout << "path_cost : " << path_cost << endl;
+    
+    if ( neigh_sum_cost > (new_sum_cost+path_cost) )
     {
       m_Graph->removeEdges( neigh_nodes[i], neigh_nodes[i]->parent() );
       m_Graph->addEdges( neigh_nodes[i], new_node, false, path.getParamMax(), false, path.cost() );
@@ -245,7 +282,7 @@ void StarExpansion::rewireGraph(Node* new_node, Node* min_node, const vector<Nod
  * The expansion node is the node from the 
  * graph that has been selected by the voronoi bias
  */
-int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode)
+int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t directionConfig, Node* directionNode )
 {
 	bool failed(false);
 	int nbCreatedNodes(0);
@@ -262,35 +299,35 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
     // Perform extension toward directionConfig
     // Construct a smaller path from direction path
     extensionLocalpath = getExtensiontPath (expansionNode->getConfiguration(), directionConfig );
-	}
+  }
   
 	Node* node_new = NULL;
   
-  bool isValid = true;
+  bool is_valid = true;
   if( PlanEnv->getBool(PlanParam::trajComputeCollision) )
   {
-    isValid = extensionLocalpath.isValid();
+    is_valid = extensionLocalpath.isValid();
   }
   
-	if ( isValid && !failed )
+	if ( is_valid && !failed )
 	{
 		// Create new node and add it to the graph
 		node_new = new Node( m_Graph, extensionLocalpath.getEnd() );
 		nbCreatedNodes++;
     
-    double radius = rrgBallRadius() * m_RrgRadiusFactor;
+//    double radius = rrgBallRadius() * m_RrgRadiusFactor;
+    double radius = rrgBallRadius() * PlanEnv->getDouble( PlanParam::starRadius );
     
 //    if( print_exploration )
 //    {
 //      cout << "radius : " << radius  << " , number of nodes : " << m_Graph->getNumberOfNodes() << endl;
 //    }
     
-    double K = m_Graph->getNumberOfNodes();
-    //K = m_K_Nearest;
+    //int K = m_Graph->getNumberOfNodes();
+    int K = m_K_Nearest;
 
-		vector<Node*> near_nodes = m_Graph->KNearestWeightNeighbour(node_new->getConfiguration(),
-																															K, radius, false,
-																															ENV.getInt(Env::DistConfigChoice));
+		vector<Node*> near_nodes = m_compco->KNearestWeightNeighbour(node_new->getConfiguration(), 
+                                                                 K, radius, false, ENV.getInt(Env::DistConfigChoice));
     
     if( print_exploration )
     {
@@ -301,29 +338,29 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 		Node* node_min = expansionNode;
     confPtr_t q_new = node_new->getConfiguration();
     
-		std::vector<Node*> ValidNodes;
+		std::vector<Node*> valid_nodes;
     
 		// Compute the node that minimizes the Sum of Cost
     double min_path_cost = extensionLocalpath.cost();
     double min_path_dist = extensionLocalpath.getParamMax();
-    double min_sum_of_cost = expansionNode->sumCost()+extensionLocalpath.cost();
+    double min_sum_of_cost = expansionNode->sumCost(true)+extensionLocalpath.cost();
     
 		for (int i=0; i<int(near_nodes.size()); i++) 
 		{
-			//cout << "near_nodes[i] : " << near_nodes[i] <<  " , d : " << near_nodes[i]->dist(node_new) << endl;
 			LocalPath path( near_nodes[i]->getConfiguration(), q_new );
 			
-      isValid = true;
+      is_valid = true;
       if( PlanEnv->getBool(PlanParam::trajComputeCollision) )
       {
-        isValid = path.isValid();
+        is_valid = path.isValid();
       }
       
-      if ( isValid  )
+      if ( is_valid  )
       {
-        ValidNodes.push_back( near_nodes[i] );
+        valid_nodes.push_back( near_nodes[i] );
         
         double cost_to_node = near_nodes[i]->sumCost(true)+path.cost();
+        
         if ( cost_to_node < min_sum_of_cost )
         {
           node_min = near_nodes[i];
@@ -333,8 +370,14 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
         }
       }
 		}
-		
+    
+    if ( print_lower_connect && (expansionNode != node_min ))
+    {
+      cout << "Lower cost connect" << endl;
+    }
+    
     // Add node_new to the graph, and add the edge n_min -> n_new
+    m_last_added_node = node_new;
 		m_Graph->addNode( node_new );
 		m_Graph->addEdges( node_min, node_new, false, min_path_dist, false, min_path_cost );
     
@@ -345,7 +388,10 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
     node_min->isLeaf() = false;
     
     // Call to rewire function
-    rewireGraph( node_new, node_min, near_nodes );
+    if( PlanEnv->getBool(PlanParam::starRewire) ) 
+    {
+      rewireGraph( node_new, node_min, near_nodes );
+    }
 	}
 	else 
 	{
@@ -355,7 +401,6 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 	// Add node to graph if everything succeeded
 	if (!failed)
 	{
-    //cout << "Success" << endl;
 		// Components were merged
 		if(( directionNode != NULL )&&( node_new == directionNode ))
 		{
@@ -365,7 +410,6 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
 	}
 	else
 	{
-    //cout << "Failed" << endl;
 		expansionFailed(*expansionNode);
 	}
 	
@@ -376,14 +420,14 @@ int StarExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionC
  * expandProcess
  */
 int StarExpansion::expandProcess(Node* expansionNode,
-																 shared_ptr<Configuration> directionConfig,
+																 confPtr_t directionConfig,
 																 Node* directionNode,
 																 Env::expansionMethod method)
 {
 	switch (method) 
 	{
-		case Env::Connect:
-			return connectExpandProcess( expansionNode, directionConfig, directionNode );
+//		case Env::Connect:
+//			return connectExpandProcess( expansionNode, directionConfig, directionNode );
 			
 		case Env::Extend:
 			return extendExpandProcess(expansionNode, directionConfig, directionNode);
@@ -409,7 +453,7 @@ StarRRT::StarRRT(Robot* R, Graph* G) : RRT(R,G)
  */
 StarRRT::~StarRRT()
 {
-	
+	saveConvergenceToFile();
 }
 
 /**
@@ -421,6 +465,9 @@ int StarRRT::init()
 	int added = TreePlanner::init();
 	_expan = new StarExpansion(_Graph);
   dynamic_cast<StarExpansion*>(_expan)->setInitAndGoal( _q_start, _q_goal );
+//  _expan = _expan = new RRTExpansion(_Graph);
+  dynamic_cast<StarExpansion*>(_expan)->setInitialCompco( _Start->getConnectedComponent() );
+  
 	return added;
 }
 
@@ -443,9 +490,11 @@ void StarRRT::pruneTreeFromNode(Node* node)
   else 
   {
     ConnectedComponent* compco = parent_parent->getConnectedComponent();
+    
     if( compco != NULL ) 
     {
       vector<Node*> nodes = compco->getNodes();
+      
       for (int i=0; i<int(nodes.size()); i++) 
       {
         _Graph->removeNode( nodes[i], false );
@@ -458,39 +507,35 @@ void StarRRT::pruneTreeFromNode(Node* node)
 /**
  *
  */
-bool StarRRT::connectNodeToCompco(Node* node, Node* compNode)
+bool StarRRT::connectNodeToCompco( Node* node, Node* compNode )
 {
-	bool savedIsMaxDis = PlanEnv->getBool( PlanParam::isMaxDisNeigh );
-  
-	PlanEnv->setBool(PlanParam::isMaxDisNeigh,false);
-	
-	Node* nearestNode = _Graph->nearestWeightNeighbour(compNode,
-																				 node->getConfiguration(),
-																				 false,
-																				 ENV.getInt(Env::DistConfigChoice));
-	
-	PlanEnv->setBool( PlanParam::isMaxDisNeigh , savedIsMaxDis );
-	
+	Node* nearestNode = _Graph->nearestWeightNeighbour( compNode, node->getConfiguration(),
+                                                     false, ENV.getInt(Env::DistConfigChoice) );
+
 	LocalPath path( node->getConfiguration(), nearestNode->getConfiguration() );
 	
-	if( path.getParamMax() <= _expan->step() )
+	if( path.getParamMax() <= PlanEnv->getDouble(PlanParam::starFinish)*_expan->step() )
 	{
-		if ( path.getParamMax() == 0.0 && print_exploration ) {
+		if ( path.getParamMax() == 0.0 && print_exploration ) 
+    {
       cout << "path.getParamMax() == 0.0 in " << __func__ << endl;
 			node->print();
 			nearestNode->print();
 		}
 		
-		int nbCreatedNodes=0;
-		
-		if( path.isValid() )
-		{
-			_expan->addNode(node,path,1.0,nearestNode,nbCreatedNodes);
+		if( path.isValid() ) 
+    {
+			//_expan->addNode( node, path, 1.0, nearestNode, nbCreatedNodes );
+      //m_Graph->addEdges( node, nearestNode, false, path.getParamMax(), false, path.cost() );
+      _Graph->linkNodeAndMerge( node, nearestNode );
+      
+      nearestNode->parent() = node;
+      nearestNode->isLeaf() = true;
+      
 			cout << "Path Valid Connected" << endl;
 			return true;
 		}
-		else
-		{
+		else {
 			return false;
 		}
 	}
@@ -498,3 +543,51 @@ bool StarRRT::connectNodeToCompco(Node* node, Node* compNode)
 	return false;
 }
 
+void StarRRT::saveConvergenceToFile()
+{
+  std::ostringstream oss;
+  std::ofstream s;
+  
+	oss << "statFiles/convergence_rrt_star_" << std::setfill('0') << std::setw(4) << m_runId << ".csv";
+  
+	const char *res = oss.str().c_str();
+	
+	s.open(res);
+	cout << "Opening save file : " << res << endl;
+	
+	for (int i=0; i<int(m_convergence_rate.size()); i++)
+	{
+    s << m_convergence_rate[i].first << ";";
+    s << m_convergence_rate[i].second << ";";
+    s << endl;
+	}
+  
+  s.close();
+  cout << "Closing save file" << endl;
+}
+
+void StarRRT::extractTrajectory()
+{
+  API::Trajectory* traj = _Graph->extractAStarShortestPathsTraj( _q_start, _q_goal );
+  
+  if( traj ) 
+  {
+    double cost = traj->cost();
+    
+    cout << "traj cost : " << cost << endl;
+//    traj->costDeltaAlongTraj();
+//    traj->replaceP3dTraj(); 
+    
+    //m_convergence_rate.push_back( cost );
+    
+    if( ENV.getBool(Env::drawTraj) )
+    {
+      g3d_draw_allwin_active();
+    }
+  }
+  else {
+    cout << "no traj" << endl;
+  }
+  
+  delete traj;
+}

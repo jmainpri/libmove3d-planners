@@ -7,6 +7,8 @@
 
 #include "API/Trajectory/trajectory.hpp"
 
+#include "planEnvironment.hpp"
+
 #include "P3d-pkg.h"
 #include "Graphic-pkg.h"
 #include "Localpath-pkg.h"
@@ -195,6 +197,42 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t)
 		getEnd()->print();
 		configAtParam(getRangeMax())->print();
 	}
+}
+
+bool Trajectory::operator==( const Trajectory& t ) const
+{
+  if( m_Courbe.size() != t.m_Courbe.size()) 
+  {
+    return false;
+  }
+  
+  if( getRangeMax() != t.getRangeMax()) 
+  {
+    return false;
+  }
+  
+  for (int i=0; i< int(m_Courbe.size()); i++)
+	{
+		if( (*m_Courbe[i]->getBegin()) != (*t.m_Courbe[i]->getBegin()) )
+    {
+      return false;
+    }
+    if( (*m_Courbe[i]->getEnd()) != (*t.m_Courbe[i]->getEnd()) )
+    {
+      return false;
+    }
+    if( m_Courbe[i]->getParamMax() != t.m_Courbe[i]->getParamMax() )
+    {
+      return false;
+    }
+	}
+  
+  return true;
+}
+
+bool Trajectory::operator!=( const Trajectory& t ) const
+{
+  return !( *this == t );
 }
 
 Trajectory::~Trajectory()
@@ -569,12 +607,15 @@ vector< pair<double,double > > Trajectory::getCostProfile()
 double Trajectory::computeSubPortionCost(vector<LocalPath*>& portion)
 {
 	double sumCost(0.0);
-	double cost(0.0);
 	
 	for (int i=0; i<int(portion.size()); i++)
 	{
-		cost = portion[i]->cost();
-		//cout << "Cost["<<i<<"] = "<< cost << endl;
+		double cost = portion[i]->cost();
+    
+//    cout << "cost[" << i << "] = " << cost << endl;
+//    cout << "resolution[" << i << "] = " << portion[i]->getResolution() ;
+//    cout << " , length["  << i << "] = " << portion[i]->getParamMax() ;
+//		cout << ", cost[" << i << "] = " << cost << endl;
 		sumCost += cost;
 	}
 	
@@ -584,15 +625,16 @@ double Trajectory::computeSubPortionCost(vector<LocalPath*>& portion)
 double Trajectory::ReComputeSubPortionCost(vector<LocalPath*>& portion)
 {
 	double sumCost(0.0);
-	double cost(0.0);
-	LocalPath* path(NULL);
   
 	for (int i=0; i<int(portion.size()); i++)
 	{
-    path = portion[i];
-		path->resetCostComputed();
-		cost = path->cost();
-		//cout << "Cost[" << i << "] = " << cost << endl;
+    portion[i]->resetCostComputed();
+		double cost =  portion[i]->cost();
+
+//    cout << "cost[" << i << "] = " << cost << endl;
+//    cout << "resolution[" << i << "] = " << portion[i]->getResolution() ;
+//    cout << " , length["  << i << "] = " << portion[i]->getParamMax() ;
+//		cout << ", cost[" << i << "] = " << cost << endl;
 		sumCost += cost;
 	}
 	
@@ -602,67 +644,31 @@ double Trajectory::ReComputeSubPortionCost(vector<LocalPath*>& portion)
 double Trajectory::computeSubPortionIntergralCost(vector<LocalPath*>& portion)
 {
 	double cost(0.0);
-	//	double dmax = p3d_get_env_dmax()/2;
-	double dmax = 0;
-	
-	//	cout << "Computing resolution" << endl;
-	
-	for( unsigned int i=0; i<m_Courbe.size();i++)
-	{
-		double resol = m_Courbe[i]->getResolution();
-		//		cout << "resol["<< i <<"] = "<< resol << endl;
-		dmax += resol;
-	}
-	
-	dmax /= (double)m_Courbe.size();
-	
-	double currentParam(0.0);
-	
-	double currentCost, prevCost;
-	
-#ifdef LIGHT_PLANNER
-	Vector3d taskPos, prevTaskPos;
-	
-	prevCost = portion[0]->getBegin()->cost();
-	if( ENV.getBool(Env::HRIPlannerWS) )
-	{
-		prevTaskPos = portion[0]->getBegin()->getTaskPos();
-	}
-#endif
-	
+	double step = p3d_get_env_dmax()*PlanEnv->getDouble(PlanParam::costResolution);
+	double currentParam, currentCost, prevCost;
 	double range = computeSubPortionRange(portion);
-	double distStep = dmax;
-	shared_ptr<Configuration> confPtr;
+	int n_step = int(range/step);
+  
+	confPtr_t q = configAtParam(0.0);
+  prevCost = q->cost();
+  
+  cout << "--------- Integral ----------------" << endl;
+  cout << "Range = " << range << endl;
+  cout << "step = " << step << endl;
+  cout << "n_step = " << n_step << endl;
 	
-	int nbStep =0;
-	
-	while (currentParam <= range)
+	for (int i=0; i<n_step;i++ )
 	{
-		currentParam += dmax;
-		confPtr = configAtParam(currentParam);
-		currentCost = confPtr->cost();
+		currentParam += step;
+    
+		q = configAtParam(currentParam);
+		currentCost = q->cost();
+
+		double delta_cost = global_costSpace->deltaStepCost( prevCost, currentCost, step );
 		
-#ifdef LIGHT_PLANNER
-		// Case of task space
-		if( ENV.getBool(Env::HRIPlannerWS) )
-		{
-			taskPos = confPtr->getTaskPos();
-			distStep = ( taskPos - prevTaskPos ).norm();
-			prevTaskPos = taskPos;
-		}
-#endif
-		//the cost associated to a small portion of curve
-		double step_cost =
-		//p3d_ComputeDeltaStepCost(prevCost, currentCost, distStep);
-		global_costSpace->deltaStepCost(prevCost,currentCost,distStep);
-		
-		cost += step_cost;
+		cost += delta_cost;
 		prevCost = currentCost;
-		nbStep++;
 	}
-	cout << "Nb Step = " << nbStep << endl;
-	//        cout << "range/p3d_get_env_dmax() = " << range/p3d_get_env_dmax() << endl;
-	
 	return cost;
 }
 
@@ -761,23 +767,15 @@ double Trajectory::collisionCost()
 
 double Trajectory::cost()
 {
-  if( !ENV.getBool(Env::isCostSpace)) 
+  if( !ENV.getBool(Env::isCostSpace) ) 
   {
     return collisionCost();
   }
   
 	double cost(0.0);
-	
-	if( p3d_GetDeltaCostChoice() == VISIBILITY )
-	{
-		cost = computeSubPortionCostVisib(m_Courbe);
-	}
-	else
-	{
-		cost = computeSubPortionCost(m_Courbe);
-		// cost =  computeSubPortionIntergralCost(m_Courbe);
-		// cost = ReComputeSubPortionCost(m_Courbe);
-	}
+	cost = computeSubPortionCost(m_Courbe);
+  // cost =  computeSubPortionIntergralCost(m_Courbe);
+	// cost = ReComputeSubPortionCost(m_Courbe);
 	return cost;
 }
 
@@ -810,7 +808,10 @@ double Trajectory::costDeltaAlongTraj()
   
 	cout << "Sum of LP cost = " << computeSubPortionCost(m_Courbe) << endl;
 	Trajectory tmp(*this);
-	cout << "Sum of LP cost (Recomputed) = "  << tmp.ReComputeSubPortionCost(tmp.m_Courbe) << endl;
+  if( tmp != (*this) ){
+    cout << "Trajectory not the same" << endl;
+  }
+	cout << "Sum of LP cost (Recomputed) = "  << ReComputeSubPortionCost(tmp.m_Courbe) << endl;
   double cost = computeSubPortionIntergralCost(m_Courbe);
   cout << "Intergral along traj = " << cost << endl;
 	return cost;
@@ -820,16 +821,30 @@ double Trajectory::costNPoints(const int n_points)
 {
   double s = 0.0;
   double cost = 0.0;
-  
-  double length = getRangeMax();
-  double delta = length/double(n_points-1);
+  double delta = getRangeMax()/double(n_points-1);
   
   for (int i=0; i<n_points; i++) 
   {
     cost += configAtParam(s)->cost();
+    //cout << "delta_cost["<<i<<"] = " << configAtParam(s)->cost() << endl;
     s += delta;
   }
+  //cout << "cost : " << cost << endl;
+  return cost;
+}
+
+double Trajectory::costSum()
+{
+  double cost = 0.0;
+  int i=0;
   
+  for (i=0; i<int(m_Courbe.size()); i++) 
+  {
+    cost += m_Courbe[i]->getBegin()->cost();
+    //cout << "delta_cost["<<i<<"] = " << m_Courbe[i]->getBegin()->cost() << endl;
+  }
+  cost += m_Courbe[i-1]->getEnd()->cost();
+  //cout << "delta_cost["<<i-1<<"] = " << m_Courbe[i-1]->getEnd()->cost() << endl;
   return cost;
 }
 

@@ -200,12 +200,12 @@ int EST::expandOneStep(Node* fromComp, Node* toComp)
   else
   {
     expansionNode->setExpandFailed();
+    m_last_node = _Expan->getLasAddedNode();
   }
   
   return nbOfNodesAdded;
   //	}
 }
-
 
 /**
  * costConnectNodeToComp

@@ -87,6 +87,7 @@ public:
 	
 	
 protected:
+  
 	RRTExpansion* _expan;
 	
 };

@@ -421,7 +421,7 @@ public:
 	 * Rebuild the connected component
 	 * using the strongly connected component algo from the BGL
 	 */
-	void rebuildCompcoFromBoostGraph();
+	int rebuildCompcoFromBoostGraph();
 	
 	/**
 	 * teste si des composantes connexes doivent être merger et le fait le cas échéant
@@ -451,7 +451,7 @@ public:
   /**
    * Extract best vector of nodes from qi that is closest to q_f
    */
-  std::vector<Node*> extractBestNodePathSoFar( confPtr_t qi, confPtr_t qf );
+  std::pair<bool, std::vector<Node*> > extractBestNodePathSoFar( confPtr_t qi, confPtr_t qf );
   
   /**
    * Extract best traj from qi that is closest to q_f
@@ -480,7 +480,13 @@ public:
 	 * Extract best traj 
 	 * @param the configuration
 	 */
-	API::Trajectory* extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf);
+	API::Trajectory* extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf );
+  
+  /**
+	 * Extract best traj 
+	 * @param the configuration
+	 */
+  API::Trajectory* extractBestAStarPathSoFar( confPtr_t qi, confPtr_t qf );
 	
 	/**
 	 * Extract best traj 

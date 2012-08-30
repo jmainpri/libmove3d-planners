@@ -27,6 +27,7 @@ using namespace tr1;
  */
 TreePlanner::TreePlanner(Robot* R, Graph* G) :
 Planner(R,G),
+m_runId(-1),
 m_nbConscutiveFailures(0),
 m_nbExpansion(0),
 m_nbFailedExpansion(0)
@@ -154,7 +155,7 @@ bool TreePlanner::checkStopConditions()
 		return (true);
   }
   
-	if ( ENV.getBool(Env::expandToGoal) && trajFound())
+	if ( ENV.getBool(Env::expandToGoal) && trajFound() && (!PlanEnv->getBool(PlanParam::rrtExtractShortestPath)))
 	{
 #ifdef DEBUG_STATUS
     cout << "Success: the start and goal components are connected." << endl;
@@ -214,11 +215,11 @@ bool TreePlanner::checkStopConditions()
 		return (true);
 	}
 	
-	if ( Env_stopUser() )
-	{
-		PlanEnv->setBool(PlanParam::stopPlanner,true);
-		//p3d_SetStopValue(true);
-	}
+//	if ( Env_stopUser() )
+//	{
+//		PlanEnv->setBool(PlanParam::stopPlanner,true);
+//		//p3d_SetStopValue(true);
+//	}
 	
 	if ( PlanEnv->getBool(PlanParam::stopPlanner) )
 	{
@@ -250,11 +251,12 @@ bool TreePlanner::connectNodeToCompco(Node* N, Node* Compco)
 	return _Graph->connectNodeToCompco(N,Compco);
 }
 
+
 /*!
  * Main function to connect 
  * to the other component
  */
-bool TreePlanner::connectionToTheOtherCompco(Node* toNode)
+bool TreePlanner::connectionToTheOtherCompco( Node* toNode )
 {
 	bool isConnectedToOtherTree(false);
 	
@@ -263,11 +265,8 @@ bool TreePlanner::connectionToTheOtherCompco(Node* toNode)
 		bool WeigtedRot = ENV.getBool(Env::isWeightedRotation);
 		ENV.setBool(Env::isWeightedRotation,false);
 		
-		Node* closestNode = _Graph->nearestWeightNeighbour(
-																											 toNode,
-																											 _Graph->getLastNode()->getConfiguration(),
-																											 false,
-																											 ENV.getInt(Env::DistConfigChoice));
+		Node* closestNode = _Graph->nearestWeightNeighbour(toNode,_Graph->getLastNode()->getConfiguration(),
+																											 false, ENV.getInt(Env::DistConfigChoice));
 		
 		ENV.setBool(Env::isWeightedRotation,WeigtedRot);
 		
@@ -281,7 +280,7 @@ bool TreePlanner::connectionToTheOtherCompco(Node* toNode)
 	
 	if(ENV.getBool(Env::randomConnectionToGoal))
 	{
-		isConnectedToOtherTree = connectNodeToCompco(_Graph->getLastNode(), toNode->randomNodeFromComp());
+		isConnectedToOtherTree = connectNodeToCompco( _Graph->getLastNode(), toNode->randomNodeFromComp());
 	}
 	else
 	{
@@ -314,8 +313,11 @@ unsigned int TreePlanner::run()
 	Node* fromNode = _Start;
 	Node* toNode = _Goal;
   
+  confPtr_t goal_extract;
+  
   double ts(0.0); 
   bool first_iteration(true);
+  bool connected(false);
   
   if( !global_rePlanningEnv ) 
   {
@@ -342,26 +344,11 @@ unsigned int TreePlanner::run()
 			// one time (Main function of Tree like planners
 			NbCurCreatedNodes = expandOneStep( fromNode, toNode ); m_nbExpansion++;
 			
-			if (NbCurCreatedNodes > 0)
+			if ( NbCurCreatedNodes > 0 )
 			{
-        if( PlanEnv->getBool( PlanParam::rrtExtractShortestPath ) ) 
-        {
-          API::Trajectory* traj1 = _Graph->extractAStarShortestPathsTraj( _q_start, _q_goal );
-          //        API::Trajectory* traj2 = _Graph->extractBestTrajSoFar( _q_start, _q_goal );
-          //        vector<Node*> path = _Graph->extractAStarShortestNodePaths( _q_start, _q_goal );
-          if( traj1 ) {
-            cout << "traj1 cost : " << traj1->cost() << endl;
-            //          cout << "traj2 cost : " << traj2->cost() << endl;
-            //          cout << "traj3 cost : " << path.back()->sumCost(true) << endl;
-          }
-          else {
-            cout << "no traj" << endl;
-          }
-        }
         
 				if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawExploration))
 				{
-          //_Graph->extractBestTrajSoFar( _q_start, _q_goal );
 				  _draw_func();
 				}
 				
@@ -372,9 +359,15 @@ unsigned int TreePlanner::run()
 				if (ENV.getBool(Env::expandToGoal))
 				{
 					// If it expands towards a goal, tries to link with local method
-					if( connectionToTheOtherCompco( toNode ) )
+					if( connected || connectionToTheOtherCompco( toNode )  )
 					{
-						cout << "connected" << endl;
+            connected = true;
+            cout << "connected" << endl;
+            
+            if( PlanEnv->getBool( PlanParam::rrtExtractShortestPath ) ) 
+            {
+              extractTrajectory();
+            }
 					}
 				}
       }

@@ -34,15 +34,14 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
     if (p3d_GetCostMethodChoice() == MONTE_CARLO_SEARCH)
     {
 
-        shared_ptr<Configuration> q = m_Graph->getRobot()->shootDir(
-                samplePassive);
+        confPtr_t q = m_Graph->getRobot()->shootDir(samplePassive);
 
         p3d_addConfig(m_Graph->getRobot()->getRobotStruct(),
                       q->getConfigStruct(),
                       expandComp->getConnectedComponent()->getCompcoStruct()->dist_nodes->N->q,
                       q->getConfigStruct());
 
-        return (q);
+        return q;
 
     }
 
@@ -119,6 +118,7 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
 			break;
 #endif
 			case GLOBAL_CS_EXP:
+            
           default:
             // Selection in the entire CSpace
             q = m_Graph->getRobot()->shoot(samplePassive);
@@ -265,7 +265,7 @@ int RRTExpansion::expandProcess(Node* expansionNode, confPtr_t directionConfig, 
         if (firstIteration && !failed)
         {
             if (ENV.getBool(Env::expandControl)
-                && !this->expandControl(*directionLocalpath,positionAlongDirection, *expansionNode))
+                && !this->expandControl (*directionLocalpath, *expansionNode ))
                 {
                 failed = true;
             }
@@ -276,12 +276,13 @@ int RRTExpansion::expandProcess(Node* expansionNode, confPtr_t directionConfig, 
             extensionNode = addNode( fromNode, *extensionLocalpath,
                                     positionAlongDirection, directionNode,
                                     nbCreatedNodes);
+          
+            m_last_added_node = extensionNode;
         }
         if (firstIteration && failed)
         {
             expansionFailed(*expansionNode);
         }
-
         if (!failed)
         {
             fromNode = extensionNode;

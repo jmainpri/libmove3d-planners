@@ -154,6 +154,11 @@ namespace stomp_motion_planner
      */
     void setRolloutOutOfBounds(int id);
     
+    /**
+     * Reset extra rollouts
+     */
+    bool resetReusedRollouts();
+    
     std::vector<Eigen::MatrixXd> projection_matrix_;                        /**< [num_dimensions] num_parameters x num_parameters */
     
   private:

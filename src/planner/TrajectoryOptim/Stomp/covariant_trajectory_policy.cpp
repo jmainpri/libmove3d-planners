@@ -147,31 +147,30 @@ namespace stomp_motion_planner
   //! given a start and goal state
   bool CovariantTrajectoryPolicy::setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal)
   {
-    cerr << "0 : " << endl;
-
+    //cerr << "0 : " << endl;
     for (int d=0; d<num_dimensions_; ++d)
     {
       // set the start and end of the trajectory
       for (int i=0; i<DIFF_RULE_LENGTH-1; ++i)
       { 
-	cerr << "start : " << start << endl;
-	cerr << "goal : " << goal << endl;
-	cerr << "parameters_all_ : " << parameters_all_[d] << endl;
-	cerr << "parameters_all_ (" << d << " , " << i << ")" << endl;
+//        cerr << "start : " << start << endl;
+//        cerr << "goal : " << goal << endl;
+//        cerr << "parameters_all_ : " << parameters_all_[d] << endl;
+//        cerr << "parameters_all_ (" << d << " , " << i << ")" << endl;
         parameters_all_[d](i) = start(d);
         parameters_all_[d](num_vars_all_-1-i) = goal(d);
       }
     }
     
-    cerr << "1 : " << endl;
+    //cerr << "1 : " << endl;
     //printParameters();
     computeLinearControlCosts();
     
-    cerr << "2 : " << endl;
+    //cerr << "2 : " << endl;
     //printParameters();
     computeMinControlCostParameters();
     
-    cerr << "3 : " << endl;
+    //cerr << "3 : " << endl;
     //printParameters();
     return true;
   }
@@ -209,8 +208,7 @@ namespace stomp_motion_planner
   {
     for (int d=0; d<num_dimensions_; ++d)
     {
-      parameters_all_[d].segment(free_vars_start_index_, num_vars_free_) 
-	= -0.5 * inv_control_costs_[d] * linear_control_costs_[d];
+      parameters_all_[d].segment(free_vars_start_index_, num_vars_free_) = -0.5 * inv_control_costs_[d] * linear_control_costs_[d];
     }
     //    for (int d=0; d<num_dimensions_; ++d)
     //    {
@@ -253,7 +251,7 @@ namespace stomp_motion_planner
         cout <<"Movement duration : " << movement_duration_ << endl;
         cout <<"Movement dt : " << movement_dt_ << endl;
       }
-      multiplier /= movement_dt_;
+      //multiplier /= movement_dt_;
       //multiplier /= 0.03815;
       
       for (int i=0; i<num_vars_all_; i++)
@@ -284,18 +282,20 @@ namespace stomp_motion_planner
     inv_control_costs_.clear();
     for (int d=0; d<num_dimensions_; ++d)
     {
-      // construct the quadratic cost matrices (for all variables)
+      // Construct the quadratic cost matrices (for all variables)
       MatrixXd cost_all = MatrixXd::Identity(num_vars_all_, num_vars_all_) * cost_ridge_factor_;
+      
       for (int i=0; i<NUM_DIFF_RULES; ++i)
       {
         cost_all += derivative_costs_[i] * (differentiation_matrices_[i].transpose() * differentiation_matrices_[i]);
       }
       control_costs_all_.push_back(cost_all);
       
-      // extract the quadratic cost just for the free variables:
+      // Extract the quadratic cost just for the free variables:
       MatrixXd cost_free = cost_all.block(DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_, num_vars_free_);
       
       //cout << "cost_free("<<d<<") = " << cost_free << endl;
+      
       control_costs_.push_back(cost_free);
       inv_control_costs_.push_back(cost_free.inverse());
       
@@ -410,7 +410,7 @@ namespace stomp_motion_planner
     {
       parameters_all_[d].segment(free_vars_start_index_, num_vars_free_).transpose() += divisor * updates[d].row(0);
       
-      //      cout << "parameters_all_[" << d << "] = " << endl << parameters_all_[d] << endl;
+      // cout << "parameters_all_[" << d << "] = " << endl << parameters_all_[d] << endl;
     }
     
     // this weights updates by number of time-steps remaining:

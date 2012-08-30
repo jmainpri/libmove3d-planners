@@ -51,7 +51,6 @@ static ScenarioType m_sce;
 enum PlanningType { NAVIGATION = 0, MANIPULATION = 1, MOBILE_MANIP = 2 };
 static PlanningType m_planning_type; 
 
-static CollisionSpace* global_collSpace=NULL;
 static CollisionSpace* m_coll_space=NULL;
 
 static ChompPlanningGroup* m_chompplangroup= NULL;
@@ -70,7 +69,23 @@ static vector<int> m_active_joints;
 static vector<int> m_planner_joints;
 static vector<CollisionPoint> m_collision_points;
 
+// External variable
 vector< vector <double> > traj_optim_to_plot;
+vector< vector <double> > traj_optim_convergence;
+CollisionSpace* global_collSpace=NULL;
+
+//--------------------------------------------------------
+// External init method
+//--------------------------------------------------------
+void set_robot_active_joints()
+{    
+  if( PlanEnv->getBool(PlanParam::setActiveDofs) ) 
+  {
+    // This function sets 
+    // the type of dof that are going to be active
+    traj_optim_init_mlp_cntrts_and_fix_joints();
+  }
+}
 
 //--------------------------------------------------------
 // General method
@@ -129,10 +144,10 @@ bool traj_optim_invalidate_cntrts()
 //! Virtual object
 // --------------------------------------------------------
 bool traj_optim_set_cartesian_mode() {
-
+  
   p3d_rob* object = NULL;
   p3d_rob* robot = m_robot->getRobotStruct();
-
+  
   configPt q = p3d_get_robot_config(robot);
   
   // For Each Arm
@@ -180,12 +195,15 @@ bool traj_optim_init_mlp_cntrts_and_fix_joints()
     return false;
   }
   
-  if( !traj_optim_invalidate_cntrts() ) {
-    return false;
-  }
-  
-  if( !traj_optim_set_cartesian_mode() ) {
-    return false;
+  if( m_robot->getName() != "JUSTIN_ROBOT" ) 
+  {
+    if( !traj_optim_invalidate_cntrts() ) {
+      return false;
+    }
+    
+    if( !traj_optim_set_cartesian_mode() ) {
+      return false;
+    }
   }
   
   switch( PlanEnv->getInt(PlanParam::setOfActiveJoints) )
@@ -198,10 +216,25 @@ bool traj_optim_init_mlp_cntrts_and_fix_joints()
       break;
       
     case 1 : // Manipulation
+    {
       cout << "Set manipulation parameters" << endl;
       p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
       p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
-      fixAllJointsWithoutArm( m_robot->getRobotStruct() , 0 );
+      
+      int arm_id = 0;
+      if( m_robot->getName() == "JUSTIN_ROBOT" ) arm_id = 1;
+      fixAllJointsWithoutArm( m_robot->getRobotStruct() , arm_id );
+
+      if( m_robot->getName() == "JUSTIN_ROBOT" )
+      {
+        unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[2] );
+        unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[3] );
+        unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[4] );
+        unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[5] );
+        // Unfix virtual joint
+        unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[30] );
+      }
+    }
       break;
       
     case 2 : // Mobile Manipulation
@@ -337,12 +370,12 @@ bool traj_optim_generate_softMotion()
   
   API::Trajectory TSaved = T;
   
-//  p3d_traj * trajPt
-//  bool param_write_file
-//  bool approximate
-//  std::vector < int >&lp 
-//  std::vector < std::vector <double > > &positions
-//  SM_TRAJ & smTraj
+  //  p3d_traj * trajPt
+  //  bool param_write_file
+  //  bool approximate
+  //  std::vector < int >&lp 
+  //  std::vector < std::vector <double > > &positions
+  //  SM_TRAJ & smTraj
   p3d_convert_traj_to_softMotion(m_robot->getRobotStruct()->tcur, 
                                  ENV.getBool(Env::smoothSoftMotionTraj),
                                  true, 
@@ -361,7 +394,7 @@ bool traj_optim_generate_softMotion()
   
   cout << "delta = " << delta << endl;
   
-//  double param_first = T.
+  //  double param_first = T.
   
   for (double t=0; t<=T.getRangeMax(); t += delta ) 
   {
@@ -374,11 +407,11 @@ bool traj_optim_generate_softMotion()
   vector<double> x,y;
   x.resize(100);
   y.resize(100);
-
+  
   // SoftMotion
   int i=0;
   delta = T.getRangeMax()/100;
-
+  
   for (double t=0; t<=T.getRangeMax(); t += delta ) 
   {
     shared_ptr<Configuration> q = T.configAtParam(t);
@@ -540,7 +573,7 @@ void traj_optim_navigation_set_localpath_and_cntrts()
   
   fixAllJointsExceptBase( m_robot->getRobotStruct() );
 #endif
-
+  
   p3d_set_user_drawnjnt(1);
 }
 
@@ -576,8 +609,8 @@ void traj_optim_navigation_generate_points()
   }
   m_collision_points = sampler->generateRobotCollisionPoints( m_robot, m_active_joints, planner_joints_id );
   
-//  sampler->generateRobotBoudingCylinder( m_robot, m_robot->getAllJoints() );
-//  m_collision_points = sampler->generateAllRobotCollisionPoints( m_robot );
+  //  sampler->generateRobotBoudingCylinder( m_robot, m_robot->getAllJoints() );
+  //  m_collision_points = sampler->generateAllRobotCollisionPoints( m_robot );
 }
 
 //****************************************************************
@@ -640,28 +673,66 @@ void traj_optim_hrics_generate_points()
 // --------------------------------------------------------
 void traj_optim_hrics_manip_init_joints()
 {
-  // Set the active joints (links)
-  m_active_joints.clear();
-  m_active_joints.push_back( 6 );
-  m_active_joints.push_back( 7 );
-  m_active_joints.push_back( 8 );
-  m_active_joints.push_back( 9 );
-  m_active_joints.push_back( 10 );
-  m_active_joints.push_back( 11 );
-  m_active_joints.push_back( 12 );
+  if( m_robot->getName() == "PR2_ROBOT" ) {
+    // Set the active joints (links)
+    m_active_joints.clear();
+    m_active_joints.push_back( 6 );
+    m_active_joints.push_back( 7 );
+    m_active_joints.push_back( 8 );
+    m_active_joints.push_back( 9 );
+    m_active_joints.push_back( 10 );
+    m_active_joints.push_back( 11 );
+    m_active_joints.push_back( 12 );
+    
+    m_active_joints.push_back( 14 );
+    m_active_joints.push_back( 15 );
+    
+    // Set the planner joints
+    m_planner_joints.clear();
+    m_planner_joints.push_back( 6 );
+    m_planner_joints.push_back( 7 );
+    m_planner_joints.push_back( 8 );
+    m_planner_joints.push_back( 9 );
+    m_planner_joints.push_back( 10 );
+    m_planner_joints.push_back( 11 );
+    m_planner_joints.push_back( 12 );
+  }
   
-  m_active_joints.push_back( 14 );
-  m_active_joints.push_back( 15 );
-  
-  // Set the planner joints
-  m_planner_joints.clear();
-  m_planner_joints.push_back( 6 );
-  m_planner_joints.push_back( 7 );
-  m_planner_joints.push_back( 8 );
-  m_planner_joints.push_back( 9 );
-  m_planner_joints.push_back( 10 );
-  m_planner_joints.push_back( 11 );
-  m_planner_joints.push_back( 12 );
+  if( m_robot->getName() == "JUSTIN_ROBOT" ) {
+    // Set the active joints (links)
+    m_active_joints.clear();
+    m_active_joints.push_back( 2 );
+    m_active_joints.push_back( 3 );
+    m_active_joints.push_back( 4 );
+    m_active_joints.push_back( 5 );
+    m_active_joints.push_back( 17 );
+    m_active_joints.push_back( 18 );
+    m_active_joints.push_back( 19 );
+    m_active_joints.push_back( 20 );
+    m_active_joints.push_back( 21 );
+    m_active_joints.push_back( 22 );
+    
+    m_active_joints.push_back( 23 );
+    
+    // Set the planner joints
+//    m_planner_joints.clear();
+//    m_planner_joints.push_back( 2 );
+//    m_planner_joints.push_back( 3 );
+//    m_planner_joints.push_back( 4 );
+//    m_planner_joints.push_back( 5 );
+//    m_planner_joints.push_back( 18 );
+//    m_planner_joints.push_back( 19 );
+//    m_planner_joints.push_back( 20 );
+//    m_planner_joints.push_back( 21 );
+//    m_planner_joints.push_back( 22 );
+//    m_planner_joints.push_back( 23 );
+//    m_planner_joints.push_back( 24 );
+    m_planner_joints.clear();
+    m_planner_joints.push_back( 2 );
+    m_planner_joints.push_back( 3 );
+    m_planner_joints.push_back( 4 );
+    m_planner_joints.push_back( 30 );
+  }
   
   m_coll_space = NULL;
 }
@@ -721,11 +792,11 @@ bool traj_optim_init_collision_spaces()
   if (m_init == true)
     return true;
   
-  //m_robot = global_Project->getActiveScene()->getActiveRobot();
-  m_robot = global_Project->getActiveScene()->getRobotByNameContaining("ROBOT");
-
+  m_robot = global_Project->getActiveScene()->getActiveRobot();
+  //m_robot = global_Project->getActiveScene()->getRobotByNameContaining("ROBOT");
+  
   cout << "Robot is : " << m_robot->getName() << " in " << __func__ << endl;
-
+  
   if( m_robot == NULL )
     return false;
   
@@ -737,10 +808,10 @@ bool traj_optim_init_collision_spaces()
       if( !traj_optim_costspace_init() )
         return false;
       
-//      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.1);
-//      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
-//      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
-//      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.001);
+      //      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.1);
+      //      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
+      //      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
+      //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.001);
       break;
       
     case Simple:
@@ -773,15 +844,15 @@ bool traj_optim_init_collision_spaces()
         m_coll_space = global_collisionSpace;
       }
       
-//      PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
-//      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,15);
-//      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
-//      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.1);
+      //      PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
+      //      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,15);
+      //      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
+      //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.1);
       
-//      PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
-//      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
-//      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,30);
-//      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.01);
+      //      PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
+      //      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
+      //      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,30);
+      //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.01);
       break;
       
     case HumanAwareNav:
@@ -814,8 +885,15 @@ bool traj_optim_init_collision_spaces()
       cout << m_robot->getName() << endl;
       
       traj_optim_set_MultiLP();
-      traj_optim_invalidate_cntrts();
-      traj_optim_shelf_set_localpath_and_cntrts();
+      
+      if( m_robot->getName() == "PR2_ROBOT" ) 
+      {
+        traj_optim_invalidate_cntrts();
+        traj_optim_shelf_set_localpath_and_cntrts();
+      }
+      else {
+        traj_optim_init_mlp_cntrts_and_fix_joints();
+      }
       traj_optim_hrics_manip_init_joints();
       
       // PlanEnv->setDouble(PlanParam::trajOptimStdDev,3);
@@ -825,7 +903,6 @@ bool traj_optim_init_collision_spaces()
       break;
       
     case HumanAwareMobileManip:
-      
       cout << "Init HumanAwareMobileManip" << endl;
       cout << "Set robot, localpath and cntrts with ";
       cout << m_robot->getName() << endl;
@@ -837,7 +914,6 @@ bool traj_optim_init_collision_spaces()
       break;
       
     case Navigation:
-      
       cout << "Init Navigation" << endl;
       cout << "Set robot, localpath and cntrts with ";
       cout << m_robot->getName() << endl;
@@ -883,8 +959,8 @@ bool traj_optim_set_scenario_type()
     m_sce = CostMap;
   }
   else if( ENV.getBool(Env::isCostSpace) &&
-     ( global_costSpace->getSelectedCostName() == "costIsInCollision" || 
-       global_costSpace->getSelectedCostName() == "costDistToObst"  ))
+          ( global_costSpace->getSelectedCostName() == "costIsInCollision" || 
+           global_costSpace->getSelectedCostName() == "costDistToObst"  ))
   {
     m_sce = Simple;
   } 
@@ -1028,9 +1104,9 @@ bool traj_optim_initStomp()
   if( !m_init )
   {
     if(!traj_optim_initScenario())
-      {
-	return false;
-      }
+    {
+      return false;
+    }
   }
   
   // Get Initial trajectory
@@ -1040,31 +1116,51 @@ bool traj_optim_initStomp()
   if( PlanEnv->getBool(PlanParam::withCurrentTraj) )
   {
     T = m_robot->getCurrentTraj();
-//    PlanEnv->setInt( PlanParam::nb_pointsOnTraj, T.getNbOfViaPoints() );
+    
+    if( T.getNbOfPaths() == 0 ) {
+      return false;
+    }
+    //    PlanEnv->setInt( PlanParam::nb_pointsOnTraj, T.getNbOfViaPoints() );
     T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
     T.replaceP3dTraj();
-    T.print();
+//    cout << "T.getRangeMax() : " << T.getRangeMax() << endl;
+//    cout << "T.getNbOfPaths() : " << T.getNbOfPaths() << endl;
+//    cout << "T.cost() : " << T.cost() << endl;
+//    T.print();
   }
   else 
   {
     T = traj_optim_create_sraight_line_traj(); 
     T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
     T.replaceP3dTraj();
-    T.print();
+    //T.print();
   }
   
-  g3d_draw_allwin_active();
+  // Save passive dof to generate the Move3D trajectory
+  std::vector<confPtr_t> passive_dofs = T.getVectorOfConfiguration();
+  
+  if( ENV.getBool(Env::drawTraj) ) 
+  {
+    g3d_draw_allwin_active();
+  }
+     
+  delete m_stompparams;
+  delete m_chompplangroup;
+  delete m_chomptraj;
   
   // Create Optimizer
   // ----------------
   m_stompparams = new stomp_motion_planner::StompParameters;
   m_stompparams->init();
   
+//  for (int i=0; i<m_planner_joints.size(); i++) {
+//    cout << planner_joints[i] << endl;
+//  }
   m_chompplangroup = new ChompPlanningGroup( m_robot, m_planner_joints );
   m_chompplangroup->collision_points_ = m_collision_points;
   
   m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup );
-  m_chomptraj->print();
+  //m_chomptraj->print();
   cout << "Chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
   
   cout << "Initialize optimizer" << endl;
@@ -1074,13 +1170,20 @@ bool traj_optim_initStomp()
                                                            m_coll_space));
   
   optimizer->setSharedPtr(optimizer);
+  optimizer->setPassiveDofs(passive_dofs);
+  
+  if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
+  {
+    optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
+  }
+  
   cout << "Optimizer created" << endl;
   
   GlobalCostSpace::initialize();
-//  std::cout << "Initializing the collision space function" << std::endl;
-//  global_costSpace->addCost("CollisionSpace",boost::bind(computeCollisionSpaceCost, _1));
-//  global_costSpace->setCost("CollisionSpace");
-    
+  // std::cout << "Initializing the collision space function" << std::endl;
+  // global_costSpace->addCost("CollisionSpace",boost::bind(computeCollisionSpaceCost, _1));
+  // global_costSpace->setCost("CollisionSpace");
+  
   return true;
 }
 
@@ -1088,6 +1191,7 @@ bool traj_optim_runStomp()
 {
   if(!traj_optim_initStomp())
   {
+    cout << "Could not init stomp in : " << __func__ << endl;
     return false;
   }
   

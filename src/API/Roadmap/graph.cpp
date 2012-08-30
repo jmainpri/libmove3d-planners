@@ -1500,31 +1500,30 @@ vector<Node*> Graph::KNearestWeightNeighbour(confPtr_t q, int K, double radius, 
 {
   // The null node has to be remouved
 	Node* nullNode(NULL);
-	double CurrentScore;
+	double current_cost;
   bool firstNode = true;
   
 	vector< pair<double,Node*> > nearNodesQueue;
 	nearNodesQueue.push_back( make_pair(numeric_limits<double>::max(),nullNode) );
 	
   // For all nodes in the graph
-	for (vector<Node*>::iterator it = m_Nodes.begin();
-       it != m_Nodes.end() ; ++it)
+	for (vector<Node*>::iterator it = m_Nodes.begin(); it != m_Nodes.end() ; ++it)
 	{
     // Compute the distance for all nodes
-    CurrentScore = q->dist(*(*it)->getConfiguration(),distConfigChoice);
+    current_cost = q->dist(*(*it)->getConfiguration(),distConfigChoice);
     //*(weighted ? p3d_GetNodeWeight((*it)->getNodeStruct()) : 1.0);
     
     // Do not add the nodes outside of radius
-    if ( CurrentScore > radius) continue;
+    if ( current_cost > radius) continue;
     
     // If better than last node of the Queue add to the Queue (rewrite better code)
-    if (CurrentScore < nearNodesQueue.back().first)
+    if (current_cost < nearNodesQueue.back().first)
     {
       if ( firstNode ) 
       {
         nearNodesQueue.clear(); firstNode = false;
       }
-      nearNodesQueue.push_back( make_pair( CurrentScore, *it ) );
+      nearNodesQueue.push_back( make_pair( current_cost, *it ) );
       
       sort( nearNodesQueue.begin(), nearNodesQueue.end() );
       
@@ -1558,13 +1557,13 @@ vector<Node*> Graph::KNearestWeightNeighbour(confPtr_t q, int K, double radius, 
 Node* Graph::nearestWeightNeighbour(Node* compco, shared_ptr<Configuration> config,
                                     bool weighted, int distConfigChoice)
 {
-	p3d_node* BestNodePt = NULL;
-  //	double BestScore = P3D_HUGE;
-  //	double CurrentDist = -1.;
-  //	double CurrentScore = -1.;
-	double DistOfBestNode = -1.;
-	p3d_matrix4 *RefFramePt = NULL, *MobFramePt = NULL;
-	p3d_matrix4 MobFrameRef, invT;
+//	p3d_node* BestNodePt = NULL;
+//  //	double BestScore = P3D_HUGE;
+//  //	double CurrentDist = -1.;
+//  //	double CurrentScore = -1.;
+//	double DistOfBestNode = -1.;
+//	p3d_matrix4 *RefFramePt = NULL, *MobFramePt = NULL;
+//	p3d_matrix4 MobFrameRef, invT;
 	
 	Node* BestNode = NULL;
 	
@@ -1575,49 +1574,49 @@ Node* Graph::nearestWeightNeighbour(Node* compco, shared_ptr<Configuration> conf
 	}
 	
 	//computation of the mobFrameRef of the Config
-	if (distConfigChoice == MOBILE_FRAME_DIST && p3d_GetRefAndMobFrames( m_Graph->rob, &RefFramePt, &MobFramePt))
-	{
-		p3d_set_robot_config(m_Graph->rob, config->getConfigStruct());
-		p3d_update_this_robot_pos_without_cntrt_and_obj(m_Graph->rob);
-		p3d_GetRefAndMobFrames(m_Graph->rob, &RefFramePt, &MobFramePt);
-		if (RefFramePt == NULL)
-		{
-			p3d_mat4Copy(*MobFramePt, MobFrameRef);
-		}
-		else
-		{
-			p3d_matInvertXform(*RefFramePt, invT);
-			p3d_matMultXform(invT, *MobFramePt, MobFrameRef);
-		}
-	}
+//	if (distConfigChoice == MOBILE_FRAME_DIST && p3d_GetRefAndMobFrames( m_Graph->rob, &RefFramePt, &MobFramePt))
+//	{
+//		p3d_set_robot_config(m_Graph->rob, config->getConfigStruct());
+//		p3d_update_this_robot_pos_without_cntrt_and_obj(m_Graph->rob);
+//		p3d_GetRefAndMobFrames(m_Graph->rob, &RefFramePt, &MobFramePt);
+//		if (RefFramePt == NULL)
+//		{
+//			p3d_mat4Copy(*MobFramePt, MobFrameRef);
+//		}
+//		else
+//		{
+//			p3d_matInvertXform(*RefFramePt, invT);
+//			p3d_matMultXform(invT, *MobFramePt, MobFrameRef);
+//		}
+//	}
 	
-#ifdef LIGHT_PLANNER
-	if(ENV.getBool(Env::FKDistance))
-	{
-		if( ! config->setConstraints() )
-		{
-			cout << "Graph CPP API :: FK Constraint could not be satistfied"  << endl;
-		}
-		
-		activateCcCntrts(m_Robot->getRobotStruct(),-1,true);
-	}
-#endif
+//#ifdef LIGHT_PLANNER
+//	if(ENV.getBool(Env::FKDistance))
+//	{
+//		if( ! config->setConstraints() )
+//		{
+//			cout << "Graph CPP API :: FK Constraint could not be satistfied"  << endl;
+//		}
+//		
+//		activateCcCntrts(m_Robot->getRobotStruct(),-1,true);
+//	}
+//#endif
 	
   BestNode = compco->getConnectedComponent()->nearestWeightNeighbour( config, weighted, distConfigChoice );
 	
-#ifdef LIGHT_PLANNER
-	if(ENV.getBool(Env::FKDistance))
-	{
-		deactivateCcCntrts(m_Robot->getRobotStruct(),-1);
-	}
-#endif
+//#ifdef LIGHT_PLANNER
+//	if(ENV.getBool(Env::FKDistance))
+//	{
+//		deactivateCcCntrts(m_Robot->getRobotStruct(),-1);
+//	}
+//#endif
 	
-	if ((p3d_GetIsMaxDistNeighbor() == TRUE) && (BestNodePt->boundary == TRUE)
-			&& (BestNodePt->radius < DistOfBestNode))
-	{
-		/* There is a maximal distance allowed to get a node as neighbor */
-		return NULL;
-	}
+//	if ((p3d_GetIsMaxDistNeighbor() == TRUE) && (BestNodePt->boundary == TRUE)
+//			&& (BestNodePt->radius < DistOfBestNode))
+//	{
+//		/* There is a maximal distance allowed to get a node as neighbor */
+//		return NULL;
+//	}
 	
 	return BestNode;
 }
@@ -1716,7 +1715,7 @@ std::vector<Node*> Graph::getNodesInTheCompCo(Node* node)
 	return Nodes;
 }
 
-void Graph::rebuildCompcoFromBoostGraph()
+int Graph::rebuildCompcoFromBoostGraph()
 {
 	// Find new compco with the BGL strongly connected components
 	vector<int>		component(			boost::num_vertices(m_BoostGraph) );
@@ -1725,15 +1724,16 @@ void Graph::rebuildCompcoFromBoostGraph()
 	vector<boost::default_color_type> color(boost::num_vertices(m_BoostGraph));
 	vector<BGL_Vertex> root(boost::num_vertices(m_BoostGraph));
 	
-	if (m_Nodes.size() != component.size()) 
+	if ( m_Nodes.size() != component.size() ) 
 	{
 		throw string("Error in the component size() before the strongly connected algo");
 	}
 	
-  /*int num =*/ boost::strong_components(m_BoostGraph, &component[0], boost::root_map(&root[0]).
-                                         color_map(&color[0]).discover_time_map(&discover_time[0])); 
-	
-  //cout << "Total number of components: " << num << endl;
+  int num = boost::strong_components( m_BoostGraph, &component[0], boost::root_map(&root[0]).
+                                     color_map(&color[0]).discover_time_map(&discover_time[0])); 
+  
+//  std::cout << "Total number of components: " << num << std::endl;
+//  return num;
 	
 	BGL_VertexDataMapT NodeData = boost::get( NodeData_t() , m_BoostGraph );
 	
@@ -1752,8 +1752,7 @@ void Graph::rebuildCompcoFromBoostGraph()
 		v = vertex(i,m_BoostGraph);
 		
 		//cout	<< "Node id : "			<< NodeData[ v ]->getId() << " , Comp id : "	<< component[i] << endl;
-		if( find( newComponents.begin(), newComponents.end(), component[i] ) 
-			 != newComponents.end() )
+		if( find( newComponents.begin(), newComponents.end(), component[i] ) != newComponents.end() )
 		{
 			m_Comp[ component[i] ]->addNode( NodeData[ v ] );
 		}
@@ -1766,6 +1765,7 @@ void Graph::rebuildCompcoFromBoostGraph()
 	
 	// The graph has changed
 	m_graphChanged = true;
+  return num;
 }
 
 /**
@@ -1968,7 +1968,7 @@ bool Graph::checkAllEdgesValid()
 //---------------------------------------------------------------------
 //---------------------------------------------------------------------
 // Warning Broken, WIP
-API::Trajectory* Graph::extractDijkstraShortestPathsTraj( confPtr_t qi, confPtr_t qf)
+API::Trajectory* Graph::extractDijkstraShortestPathsTraj( confPtr_t qi, confPtr_t qf )
 {
   boost::property_map<BGL_Graph, boost::edge_weight_t>::type weightmap = boost::get(boost::edge_weight, m_BoostGraph);
   
@@ -2070,58 +2070,33 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( Node* node_init, Node* 
 {
   std::vector<Node*> nodes;
   
-  if( node_init == node_goal ) {
+  if (node_init == node_goal) {
     return nodes;
   }
   
-  if( node_init->getConnectedComponent() != node_goal->getConnectedComponent() ) {
+  if (node_init->getConnectedComponent() != node_goal->getConnectedComponent()) {
     return nodes;
   }
   
   BGL_Vertex start = node_init->getDescriptor();
   BGL_Vertex goal = node_goal->getDescriptor();
   
-  boost::property_map<BGL_Graph, boost::edge_weight_t>::type weightmap = boost::get(boost::edge_weight, m_BoostGraph);
-  
   BGL_VertexDataMapT NodeData = boost::get(NodeData_t(), m_BoostGraph);
-  BGL_EdgeDataMapT EdgeData = boost::get(EdgeData_t(), m_BoostGraph);
-  
-  BOOST_FOREACH(BGL_Edge e, boost::edges(m_BoostGraph)) {
-    weightmap[e] = EdgeData[e]->cost();
-    //cout << "weightmap["<<i++<<"] : " << weightmap[e] << endl;
-  }
-  
-  typedef double cost;
-  vector<double> d(boost::num_vertices(m_BoostGraph));
   vector<BGL_Vertex> p(boost::num_vertices(m_BoostGraph));
   
-  try // call astar named parameter interface
-  {
-    astar_search( m_BoostGraph, start, 
-                 distance_heuristic<BGL_Graph, cost, BGL_VertexDataMapT>( NodeData, goal),
-                 boost::predecessor_map(&p[0]).distance_map(&d[0]).visitor(astar_goal_visitor<BGL_Vertex>(goal)));
-    
-  } 
-  catch(found_goal fg) // found a path to the goal
-  { 
-    std::list<BGL_Vertex> shortest_path;
-    
-    for(BGL_Vertex v=goal;; v = p[v]) {
-      shortest_path.push_front(v);
-      if(p[v] == v)
-        break;
-    }
-    
-    if( shortest_path.empty() ) {
-      cout << "shortest_path is empty" << endl;
-      return nodes;
-    }
-    
-    std::list<BGL_Vertex>::iterator spi = shortest_path.begin();
-    for(; spi != shortest_path.end(); ++spi) {
-      nodes.push_back( NodeData[*spi] );
-    }
+  astar_search(m_BoostGraph, start,
+               distance_heuristic<BGL_Graph, double, BGL_VertexDataMapT> (NodeData, goal),
+               boost::predecessor_map(&p[0]));
+  
+  std::list<BGL_Vertex> shortest_path;
+  for (BGL_Vertex v = goal;; v = p[v]) {
+    shortest_path.push_front(v);
+    if (p[v] == v)
+      break;
   }
+  
+  for (std::list<BGL_Vertex>::iterator spi = shortest_path.begin(); spi != shortest_path.end(); ++spi)
+    nodes.push_back(NodeData[*spi]);
   
   return nodes;
 }
@@ -2134,16 +2109,34 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( confPtr_t qi, confPtr_t
   
   Node* node_init = searchConf( *qi );
   if( node_init == NULL ) {
+    cout << " node_init not found" << endl;
     return nodes;
   }
   
   Node* node_goal = node_init->getConnectedComponent()->searchConf( *qf );
   //Node* node_goal = nearestWeightNeighbour( node_init, qf, false, ENV.getInt(Env::DistConfigChoice));
   if( node_goal == NULL ) {
+    cout << " node_goal not found" << endl;
+    return nodes;
+  }
+  
+  if( node_init == node_goal ) {
+    cout << "node_init == node_goal" << endl;
     return nodes;
   }
   
   return extractAStarShortestNodePaths( node_init, node_goal );
+}
+
+void getArmConfiguration( Eigen::VectorXd& x, confPtr_t q )
+{ 
+  x[0] = (*q)[16];
+  x[1] = (*q)[17];
+  x[2] = (*q)[18];
+  x[3] = (*q)[19];
+  x[4] = (*q)[20];
+  x[5] = (*q)[21];
+  x[6] = (*q)[22];
 }
 
 // Searches for the shortest path 
@@ -2152,41 +2145,76 @@ API::Trajectory* Graph::extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t q
 {
   vector<Node*> nodes = extractAStarShortestNodePaths( qi, qf );
   if( nodes.size() < 2 ) {
+    cout << "extractAStarShortestNodePaths in " << __func__ << endl;
     return NULL;
   }
   
   // Build the trajectory
-  API::Trajectory* traj = new API::Trajectory(m_Robot);
+  API::Trajectory* traj = new API::Trajectory( m_Robot );
   
-  for(int i=1; i<int(nodes.size()); i++) {
-    Edge* edge = isEdgeInGraph(nodes[i-1], nodes[i]);
+  for(int i=1; i<int(nodes.size()); i++) 
+  {
+    Edge* edge = isEdgeInGraph( nodes[i-1], nodes[i] );
+    
     if( edge == NULL ) {
+      cout << "Edge is not in graph in " << __func__ << endl;
       return NULL;
     }
     traj->push_back( edge->getLocalPath() );
+    
+//    Eigen::VectorXd a( Eigen::VectorXd::Zero(7) );
+//    Eigen::VectorXd b( Eigen::VectorXd::Zero(7) );
+//    
+//    getArmConfiguration( a, edge->getLocalPath()->getBegin() );
+//    getArmConfiguration( b, edge->getLocalPath()->getEnd() );
+//    cout << "a : " << endl << a << endl;
+//    cout << "b : " << endl << b << endl;
   }
+//  
+//  cout <<"------------------------"<< endl;
   
   traj->replaceP3dTraj();
   return traj;
 }
 
-
 //! This function works for tree type of graphs
-vector<Node*> Graph::extractBestNodePathSoFar( confPtr_t qi, confPtr_t qf )
+API::Trajectory* Graph::extractBestAStarPathSoFar( confPtr_t qi, confPtr_t qf )
 {
   vector<Node*> traj_nodes_reverse;
   
   // Start needs to be in the graph
   Node* source = searchConf(*qi);
-	if( source == NULL )
-  {
+	if( source == NULL ) {
     cout << "Start not in graph in " << __func__ << endl;
-    return traj_nodes_reverse;
+    return NULL;
+  }
+  
+  Node* node = nearestWeightNeighbour( source, qf, false, ENV.getInt(Env::DistConfigChoice));
+  if( node == NULL ) {
+    cout << "No goal nearest neihbour in graph in " << __func__ << endl;
+    return NULL;
+  }
+  
+  return extractAStarShortestPathsTraj( source->getConfiguration(), node->getConfiguration() );
+}
+
+
+//! This function works for tree type of graphs
+pair<bool, vector<Node*> > Graph::extractBestNodePathSoFar( confPtr_t qi, confPtr_t qf )
+{
+  vector<Node*> traj_nodes_reverse;
+  
+  // Start needs to be in the graph
+  Node* source = searchConf(*qi);
+	if( source == NULL ) {
+    cout << "Start not in graph in " << __func__ << endl;
+    return make_pair(false,traj_nodes_reverse) ;
   }
   
   Node* node = nearestWeightNeighbour(source, qf, false, ENV.getInt(Env::DistConfigChoice));
   if( node == NULL ) {
-    return traj_nodes_reverse;
+    cout << "No goal nearest neihbour in graph in " << __func__ << endl;
+    return make_pair(false,traj_nodes_reverse);
   }
   
   // Extract the nodes in reverse order
@@ -2198,12 +2226,12 @@ vector<Node*> Graph::extractBestNodePathSoFar( confPtr_t qi, confPtr_t qf )
     
     if (node == NULL) {
       cout << "Error finding nodes in " << __func__ << endl;
-      return traj_nodes_reverse;
+      return make_pair(false,traj_nodes_reverse);
     }
   }
   
   if( int(traj_nodes_reverse.size()) <= 1 ) {
-    return traj_nodes_reverse;
+    return make_pair(true,traj_nodes_reverse);
   }
   
   // inverse traj
@@ -2212,23 +2240,28 @@ vector<Node*> Graph::extractBestNodePathSoFar( confPtr_t qi, confPtr_t qf )
     traj_nodes.push_back( traj_nodes_reverse[i] );
   }
   
-  return traj_nodes;
+  return make_pair(true,traj_nodes_reverse);
 }
 
 // This function works for tree type of graphs
 API::Trajectory* Graph::extractBestTrajSoFar( confPtr_t qi, confPtr_t qf )
 {  
   // Extract the nodes trajectory
-  vector<Node*> traj_nodes = extractBestNodePathSoFar( qi, qf );
+  pair<bool,vector<Node*> > traj_nodes = extractBestNodePathSoFar( qi, qf );
   
-  if( int(traj_nodes.size()) <= 1 ) {
+  if( traj_nodes.first == false ) {
+    return NULL;
+  }
+  
+  if( int(traj_nodes.second.size()) <= 1 ) {
     return NULL;
   }
   
   // Build the trajectory
   API::Trajectory* traj = new API::Trajectory(m_Robot);
-  for (int i=0;i<int(traj_nodes.size()); i++) {
-    traj->push_back( traj_nodes[i]->getConfiguration() );
+  
+  for (int i=0;i<int(traj_nodes.second.size()); i++) {
+    traj->push_back( traj_nodes.second[i]->getConfiguration() );
   }
   
   traj->replaceP3dTraj();

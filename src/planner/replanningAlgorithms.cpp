@@ -621,7 +621,7 @@ AStarReplanner::~AStarReplanner()
 
 bool AStarReplanner::init()
 {
-  m_navigation = new HRICS::Navigation(m_robot);
+  m_navigation = new HRICS::Navigation( m_robot );
   return true;
 }
 

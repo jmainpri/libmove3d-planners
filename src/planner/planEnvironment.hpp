@@ -45,6 +45,7 @@ namespace PlanParam
             isWeightedChoice,
             nextIterWaitForGui,
             rrtExtractShortestPath,
+            setActiveDofs,  
           
             // Time
             trajWithTimeLimit,
@@ -60,6 +61,7 @@ namespace PlanParam
             trajStompWithTimeLimit,
             trajStompMultiplyM,
             trajBiasOptim,
+            trajMoveHuman,
             trajUseOtp,
             trajNPoints,
           
@@ -72,6 +74,10 @@ namespace PlanParam
             withDescent,
             trajOptimTestMultiGauss,
             showExploration,
+          
+            // RRT*
+            starRRT,
+            starRewire,
           
             // HRICS
             hriSetColorFromConfig,
@@ -160,13 +166,18 @@ namespace PlanParam
             MaxFactor,
             MinStep,
             costTraj,
+            costResolution,
             distMinToDraw,
             trajStompTimeLimit,
             trajDuration,
             trajOptimStdDev,
             trajOptimSmoothWeight,
             trajOptimObstacWeight,
-            
+          
+          
+            // RRT*
+            starRadius,
+            starFinish,
             
             // Object TransfertPoint variable
             env_randomXMinLimit,

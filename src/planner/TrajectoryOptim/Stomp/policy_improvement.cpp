@@ -51,6 +51,9 @@
 #include <iostream>
 
 #include "API/Trajectory/trajectory.hpp"
+#include "planner/planEnvironment.hpp"
+#include "Graphic-pkg.h"
+
 #include "stompOptimizer.hpp"
 
 std::vector<double> global_noiseTrajectory1;
@@ -150,7 +153,7 @@ namespace stomp_motion_planner
   {
     num_time_steps_ = num_time_steps;
     use_cumulative_costs_ = use_cumulative_costs;
-    use_multiplication_by_m_ = false;
+    use_multiplication_by_m_ = PlanEnv->getBool(PlanParam::trajStompMultiplyM);
     policy_ = policy;
     task_ = task;
     
@@ -286,6 +289,8 @@ namespace stomp_motion_planner
     {
       projection_matrix_[d] = inv_control_costs_[d];
       
+      //cout << "Inv control Matrix = " << endl << inv_control_costs_[d] << endl;
+      
       for (int p=0; p<num_parameters_[d]; ++p)
       {
         double column_max = inv_control_costs_[d](0,p);
@@ -315,6 +320,27 @@ namespace stomp_motion_planner
       //        ROS_ERROR("Failed to get policy parametertes.");
       return false;
     }
+    
+//    // draw traj
+//    const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
+//    Robot* robot = optimizer->getPlanningGroup()->robot_;
+//    API::Trajectory traj(robot);
+//    
+//    for ( int j=0; j<num_time_steps_; ++j)
+//    {
+//      confPtr_t q = robot->getCurrentPos();
+//      
+//      for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+//      {  
+//        (*q)[joints[i].move3d_dof_index_] = parameters_[i][j];
+//      }
+//      traj.push_back(q);
+//    }
+//    traj.replaceP3dTraj();
+//    //    traj.print();
+//    g3d_draw_allwin_active();
+//    cout << "num_time_steps_ : " << num_time_steps_ << endl;
+    
     return true;
   }
   
@@ -339,6 +365,12 @@ namespace stomp_motion_planner
     return true;
   }
   
+  bool PolicyImprovement::resetReusedRollouts()
+  {
+    rollouts_reused_next_ = false;
+    return true;
+  }
+  
   bool PolicyImprovement::generateRollouts(const std::vector<double>& noise_stddev)
   {
     assert(initialized_);
@@ -349,6 +381,8 @@ namespace stomp_motion_planner
     
     // we assume here that rollout_parameters_ and rollout_noise_ have already been allocated
     num_rollouts_gen_ = num_rollouts_ - num_rollouts_reused_;
+    
+    // The rollouts of the run are not used
     if (!rollouts_reused_next_)
     {
       num_rollouts_gen_ = num_rollouts_;
@@ -356,6 +390,8 @@ namespace stomp_motion_planner
       {
         rollouts_reused_next_ = true;
       }
+      
+      rollouts_reused_ = false;
     }
     else
     {
@@ -364,6 +400,8 @@ namespace stomp_motion_planner
       for (int r=0; r<num_rollouts_; ++r)
       {
         double cost = rollouts_[r].getCost();
+        
+        //cout << "rollouts_(" << r << ") cost : " << rollouts_[r].getCost() << endl;
         
         // discard out of bounds rollouts
         if (rollouts_[r].out_of_bounds_) {
@@ -377,11 +415,17 @@ namespace stomp_motion_planner
         {
           double cost = extra_rollouts_[r].getCost();
           rollout_cost_sorter_.push_back(std::make_pair(cost,-r-1));
+          // cout << "cost : " << cost << endl;
           // index is -ve if rollout is taken from extra_rollouts
         }
         extra_rollouts_added_ = false;
       }
       std::sort(rollout_cost_sorter_.begin(), rollout_cost_sorter_.end());
+      
+//      for (int r=0; r<num_rollouts_reused_; r++) 
+//      {
+//        cout << "reused_rollouts_(" << r << ") cost : " << reused_rollouts_[r].getCost() << endl;
+//      }
       
       // use the best ones: (copy them into reused_rollouts)
       for (int r=0; r<num_rollouts_reused_; ++r)
@@ -389,7 +433,7 @@ namespace stomp_motion_planner
         double reuse_index = rollout_cost_sorter_[r].second;
         //double reuse_cost = rollout_cost_sorter_[r].first;
         
-        //ROS_INFO("Reuse %d, cost = %lf", r, reuse_cost);
+        //printf( "Reuse %d, cost = %lf\n", r, reuse_cost);
         
         if (reuse_index >=0)
           reused_rollouts_[r] = rollouts_[reuse_index];
@@ -399,6 +443,7 @@ namespace stomp_motion_planner
           reused_rollouts_[r] = extra_rollouts_[-reuse_index-1];
         }
       }
+      
       // copy them back from reused_rollouts_ into rollouts_
       for (int r=0; r<num_rollouts_reused_; ++r)
       {
@@ -413,12 +458,13 @@ namespace stomp_motion_planner
       rollouts_reused_ = true;
     }
     
-    // generate new rollouts
+    // Generate new rollouts
     for (int d=0; d<num_dimensions_; ++d)
     {
       for (int r=0; r<num_rollouts_gen_; ++r)
       {
         noise_generators_[d].sample(tmp_noise_[d]);
+        
         rollouts_[r].noise_[d] = noise_stddev[d]*tmp_noise_[d];
         rollouts_[r].parameters_[d] = parameters_[d] + rollouts_[r].noise_[d];
         
@@ -438,6 +484,7 @@ namespace stomp_motion_planner
         {          
           global_noiseTrajectory2.clear();
           
+          //cout << "rollouts_[r].parameters_[d].size() : " << rollouts_[r].parameters_[d].size() << endl;
           for (int i=0; i<rollouts_[r].parameters_[d].size(); i++) 
           {
             global_noiseTrajectory2.push_back(rollouts_[r].noise_[d][i]);
@@ -448,7 +495,6 @@ namespace stomp_motion_planner
         //cout << "rollouts_[" << r << "].parameters_[" << d << "] = "<< rollouts_[r].parameters_[d].transpose() << endl;
       }
     }
-    
     return true;
   }
   
@@ -480,6 +526,7 @@ namespace stomp_motion_planner
         for (int r=0; r<num_rollouts_reused_; ++r)
         {
           reused_rollouts.push_back(rollouts_[num_rollouts_gen_+r].parameters_);
+//          cout << "reused_rollouts["<< r << "] cost : " << rollouts_[num_rollouts_gen_+r].getCost() << endl;
 //          cout << "resued rollout (" << r << ")" ;
 //          cout << " is out of bounds : " << rollouts_[num_rollouts_gen_+r].out_of_bounds_ << endl;
         }
@@ -508,6 +555,7 @@ namespace stomp_motion_planner
     assert(initialized_);
     
     control_cost_weight_ = control_cost_weight;
+    
     // set control costs
     computeRolloutControlCosts();
     
@@ -528,8 +576,11 @@ namespace stomp_motion_planner
   
   bool PolicyImprovement::computeRolloutControlCosts(Rollout& rollout)
   {
-    policy_->computeControlCosts(control_costs_, rollout.parameters_, rollout.noise_projected_,
-                                 0.5*control_cost_weight_, rollout.control_costs_);
+    policy_->computeControlCosts(control_costs_, 
+                                 rollout.parameters_, 
+                                 rollout.noise_projected_,
+                                 0.5*control_cost_weight_, 
+                                 rollout.control_costs_);
     return true;
   }
   
@@ -549,11 +600,12 @@ namespace stomp_motion_planner
     {
       for (int d=0; d<num_dimensions_; ++d)
       {
-        //cout << "rollouts_[r].total_costs_[d] = " << endl << rollouts_[r].total_costs_[d] << endl;
-        //cout << "rollouts_["<<r<<"].state_costs = " << endl << rollouts_[r].state_costs_ << endl;
-        //cout << "rollouts_["<<r<<"].control_costs_[d] = " << endl << rollouts_[r].control_costs_[d] << endl;        
         rollouts_[r].total_costs_[d] = rollouts_[r].state_costs_ + rollouts_[r].control_costs_[d];
         rollouts_[r].cumulative_costs_[d] = rollouts_[r].total_costs_[d];
+//        cout << "------------------------------------------------------------" << endl;
+//        cout << "rollouts_["<<r<<"].state_costs       = " << rollouts_[r].state_costs_.transpose() << endl;
+//        cout << "rollouts_["<<r<<"].control_costs_["<<d<<"] = " << rollouts_[r].control_costs_[d].transpose() << endl;  
+//        cout << "rollouts_["<<r<<"].total_costs_["<<d<<"]   = " << rollouts_[r].total_costs_[d].transpose() << endl;
         
         if (use_cumulative_costs_)
         {
@@ -571,10 +623,10 @@ namespace stomp_motion_planner
   {
     for (int d=0; d<num_dimensions_; ++d)
     {
-      //      cout  << "dimension " << d << ", Cumulative costs " << rollouts_[0].cumulative_costs_[d] << endl;
-      //              tmp_min_cost_ = rollout_cumulative_costs_[d].colwise().minCoeff().transpose();
-      //              tmp_max_cost_ = rollout_cumulative_costs_[d].colwise().maxCoeff().transpose();
-      //              tmp_max_minus_min_cost_ = tmp_max_cost_ - tmp_min_cost_;
+      // cout  << "dimension " << d << ", Cumulative costs " << rollouts_[0].cumulative_costs_[d] << endl;
+      // tmp_min_cost_ = rollout_cumulative_costs_[d].colwise().minCoeff().transpose();
+      // tmp_max_cost_ = rollout_cumulative_costs_[d].colwise().maxCoeff().transpose();
+      // tmp_max_minus_min_cost_ = tmp_max_cost_ - tmp_min_cost_;
       
       for (int t=0; t<num_time_steps_; t++)
       {

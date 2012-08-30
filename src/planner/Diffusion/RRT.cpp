@@ -153,6 +153,9 @@ int RRT::expandOneStep(Node* fromComp, Node* toComp)
 	{
 		m_nbFailedExpansion++;
 	}
+  else {
+    m_last_node = _expan->getLasAddedNode();
+  }
 	
 	return nbNodeCreated;
 	//	}

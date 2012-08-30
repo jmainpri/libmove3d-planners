@@ -83,6 +83,7 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::isWeightedChoice,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::nextIterWaitForGui,         new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::rrtExtractShortestPath,     new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::setActiveDofs,               new boolContainer(false)));
   
         // Time
         myBoolMap.insert( std::make_pair( PlanParam::planWithTimeLimit,          new boolContainer(true)));
@@ -98,6 +99,7 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::trajStompWithTimeLimit,     new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::trajStompMultiplyM,         new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::trajBiasOptim,              new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::trajMoveHuman,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajUseOtp,                 new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajNPoints,                new boolContainer(true)));
   
@@ -110,6 +112,10 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::withStomp,                  new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::doReplanning,               new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::showExploration,            new boolContainer(false)));
+  
+        // RRT*
+        myBoolMap.insert( std::make_pair( PlanParam::starRRT,            new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::starRewire,            new boolContainer(false)));
   
         // Stomp/Chomp
         myBoolMap.insert( std::make_pair( PlanParam::withCurrentTraj,            new boolContainer(false)));
@@ -197,6 +203,7 @@ void initPlannerParameters()
         myDoubleMap.insert( std::make_pair( PlanParam::MaxFactor,                new doubleContainer(3.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::MinStep,                  new doubleContainer(2.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::costTraj,                 new doubleContainer(1.0)));
+        myDoubleMap.insert( std::make_pair( PlanParam::costResolution,            new doubleContainer(0.5)));
 
         myDoubleMap.insert( std::make_pair( PlanParam::distMinToDraw,            new doubleContainer(0.3)));
         myDoubleMap.insert( std::make_pair( PlanParam::trajStompTimeLimit,       new doubleContainer(7.0)));
@@ -204,6 +211,10 @@ void initPlannerParameters()
         myDoubleMap.insert( std::make_pair( PlanParam::trajOptimStdDev,          new doubleContainer(2.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::trajOptimSmoothWeight,    new doubleContainer(0.1)));
         myDoubleMap.insert( std::make_pair( PlanParam::trajOptimObstacWeight,    new doubleContainer(1.0)));
+  
+        // RRT*
+        myDoubleMap.insert( std::make_pair( PlanParam::starRadius,                new doubleContainer(1.0)));
+        myDoubleMap.insert( std::make_pair( PlanParam::starFinish,                new doubleContainer(3.0)));
   
         // Object TransfertPoint variable
         myDoubleMap.insert( std::make_pair( PlanParam::env_randomXMinLimit,      new doubleContainer(-3.0)));

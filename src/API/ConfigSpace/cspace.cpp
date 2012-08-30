@@ -75,6 +75,49 @@ unsigned CSpaceCostMap2D::dimension()
     return(2);
 }
 
+//-----------------------------------------------------------
+//-----------------------------------------------------------
+Pr2CSpace::Pr2CSpace()
+{
+  m_connection_radius_flag = true;
+}
+
+Pr2CSpace::~Pr2CSpace()
+{
+}
+
+double Pr2CSpace::q_cost(confPtr_t q)
+{
+  return(computeIntersectionWithGround(*q));
+}
+
+double Pr2CSpace::lp_cost(confPtr_t q1, confPtr_t q2)
+{
+  LocalPath p(q1, q2);
+  return global_costSpace->cost(p);
+}
+
+double Pr2CSpace::volume()
+{
+  assert(m_c_robot);
+  // this means that there is 1 joint + the unused(legacy) joint 0
+  
+  return(fabs((m_c_robot->joints[1]->dof_data[0].vmax - m_c_robot->joints[1]->dof_data[0].vmin) * 
+              (m_c_robot->joints[1]->dof_data[1].vmax - m_c_robot->joints[1]->dof_data[1].vmin)));
+}
+
+double Pr2CSpace::unit_sphere()
+{
+  return(2*M_PI);
+}
+
+unsigned Pr2CSpace::dimension()
+{
+  return(7);
+}
+
+//-------------------------------------------------------------
+//-------------------------------------------------------------
 GenericCSpace::GenericCSpace(path_cost_mode mode) :
     m_mode(mode)
 {

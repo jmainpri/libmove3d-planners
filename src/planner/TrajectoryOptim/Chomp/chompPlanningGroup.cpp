@@ -22,14 +22,16 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
   {
     for (unsigned int j=0; j<robot_->getJoint( active_joints[i] )->getNumberOfDof(); j++) 
     {
+      cout << "Joint(" << j << ") : (" << robot_->getJoint( active_joints[i] )->getName() << ")" << endl;
+      
       if( !robot_->getJoint( active_joints[i] )->isJointDofUser(j) )
         continue;
       
       double min,max;
       robot_->getJoint( active_joints[i] )->getDofBounds(j,min,max);
       
-      cout << "Joint(" << j << ") : ";
-      cout << "min = " << min << ", max = " << max << endl;
+      cout << "Is dof user : ";
+      cout << "(min = " << min << ", max = " << max << ")" << endl;
       
       if (min == max)
         continue;
@@ -42,7 +44,8 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
       jnt.chomp_joint_index_ = i;
       jnt.joint_name_ = jnt.move3d_joint_->getName();
       jnt.wrap_around_ = false;
-      jnt.has_joint_limits_ = !p3d_jnt_is_dof_circular(jnt.move3d_joint_->getJointStruct(),j);
+      //jnt.has_joint_limits_ = !p3d_jnt_is_dof_circular(jnt.move3d_joint_->getJointStruct(),j);
+      jnt.has_joint_limits_ = true;
       
       jnt.joint_limit_min_ = min;
       jnt.joint_limit_max_ = max;

@@ -123,21 +123,19 @@ public:
 	 * Function called when a node can not be connected
 	 * @param the node which has not been connected
 	 */
-	void expansionFailed(Node& node);
+	void expansionFailed( Node& node );
 	
 	/**
 	 * Adds a node to a connected component
 	 */
-	virtual Node* addNode(Node* currentNode, LocalPath& path, double pathDelta,
-												Node* directionNode, int& nbCreatedNodes);
+	virtual Node* addNode( Node* currentNode, LocalPath& path, double pathDelta,
+												 Node* directionNode, int& nbCreatedNodes);
 	
 	/**
 	 * Function that balances the ratio of
 	 * Exploration towards refinement
 	 */
-	bool expandControl(LocalPath& path,
-										 double positionAlongDirection,
-										 Node& compNode);
+	bool expandControl( LocalPath& path, Node& compNode );
 	
 	/**
 	 * Returns a valid configuration on the local path
@@ -173,6 +171,11 @@ public:
 	virtual int expandProcess(Node* expansionNode,
 														std::tr1::shared_ptr<Configuration> directionConfig,
 														Node* directionNode, Env::expansionMethod method) = 0;
+  
+  /**
+   * Return last added node
+   */
+  Node* getLasAddedNode() { return m_last_added_node; }
 	
 protected:
 	
@@ -186,6 +189,8 @@ protected:
 	bool m_IsDirSampleWithRlg; //= FALSE;
 	
 	Graph* m_Graph;
+
+  Node* m_last_added_node;
 	
 	Node* m_fromComp;
 	Node* m_toComp;

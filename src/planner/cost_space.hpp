@@ -24,6 +24,15 @@ enum CostSpaceDeltaStepMethod
 };
 
 /*!
+ * Delta step cost method enum
+ */
+enum CostSpaceResolutionMethod
+{
+  cs_classic,
+  cs_pr2_manip
+};
+
+/*!
  * Class thats holding the CostSpace
  */
 class CostSpace
@@ -69,12 +78,16 @@ protected:
   std::string mSelectedCostName;
   boost::function<double(Configuration&)> mSelectedCost;
   std::map<std::string, boost::function<double(Configuration&)> > mFunctions;
+  
+  void getPr2ArmConfiguration( Eigen::VectorXd& x, confPtr_t q );
 	
 private:
 	
   // Delta
   enum CostSpaceDeltaStepMethod m_deltaMethod;
-	
+  enum CostSpaceResolutionMethod m_resolution;
+  
+  double m_dmax;
 };
 
 namespace GlobalCostSpace 

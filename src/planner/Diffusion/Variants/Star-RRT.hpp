@@ -21,7 +21,7 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/ConfigSpace/cspace.hpp"
-
+#include "API/Roadmap/compco.hpp"
 /**
  @ingroup Diffusion
  */
@@ -61,6 +61,11 @@ public:
 										std::tr1::shared_ptr<Configuration> directionConfig);
   
   /**
+   * Sample in tube
+   */
+  confPtr_t sampleInTube();
+  
+  /**
    * Get the extepansion direction
    */
   confPtr_t getExpansionDirection(Node* expandComp, Node* goalComp, bool samplePassive, Node*& directionNode);
@@ -78,6 +83,11 @@ public:
 	int extendExpandProcess(Node* expansionNode, 
 													std::tr1::shared_ptr<Configuration> directionConfig, 
 													Node* directionNode);
+  
+  /**
+   * Set the initial compco
+   */
+  void setInitialCompco( ConnectedComponent* compco );
   
   /**
    * Get the rgg ball raduis
@@ -106,6 +116,8 @@ public:
 										Env::expansionMethod method);
 	
 private:
+  
+  bool m_goal_bias;
   bool m_start_bias;
   bool m_tube_bias;
   int m_Iteration;
@@ -119,6 +131,8 @@ private:
   double m_RrgRadiusFactor;
   double m_step;
   
+  ConnectedComponent* m_compco;
+  
   // cspace
   CSpace* m_cspace;
   
@@ -126,6 +140,7 @@ private:
   // init and goal configurations
   confPtr_t m_q_init;
   confPtr_t m_q_goal;
+  
 };
 
 
@@ -154,11 +169,29 @@ public:
    * This function prunes the tree from the configuration
    */
   void pruneTreeFromNode(Node* node); 
+  
+  /**
+   * Exctracts the trajectory if it exists
+   * this function is called when a connection to goal is found
+   */
+  void extractTrajectory();
+  
+  /**
+   * save convergence to file
+   */
+  void saveConvergenceToFile();
 
 	/**
-	 * TODO
+	 * Connects the two connected components
+   * if the seconed is within a certain reach and there exists
+   * a collision free path
 	 */
 	bool connectNodeToCompco(Node* N, Node* CompNode);
+  
+private:
+  
+  std::vector< std::pair<double,double> > m_convergence_rate;
+
 };
 
 #endif

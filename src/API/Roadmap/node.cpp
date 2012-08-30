@@ -278,6 +278,8 @@ double& Node::sumCost(bool recompute)
     double sum_cost(0);
     Node* node = this;
     
+    //cout << "--------------------" << endl;
+    
     while(node->parent() != NULL) {
       
       Edge* edge = NULL;
@@ -292,6 +294,7 @@ double& Node::sumCost(bool recompute)
       }
       sum_cost += edge->cost();
       node = node->parent();
+      //cout << "edge_cost : " << edge->cost() << endl;
     }
     m_Node->sumCost = sum_cost;
   }

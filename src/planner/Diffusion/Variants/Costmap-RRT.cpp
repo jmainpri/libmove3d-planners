@@ -91,8 +91,7 @@ int CostmapExpansion::connectExpandProcess(Node* expansionNode, std::tr1::shared
 	
 	// Expansion control
 	// Discards potential nodes that are to close to the graph
-	if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath,
-																												delta, *expansionNode))
+	if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath, *expansionNode))
 	{
 		//cout << "Failed expandControl test in " << __func__ << endl;
 		return 0;
@@ -152,8 +151,7 @@ int CostmapExpansion::extendExpandProcess(Node* expansionNode,
 	
 	// Expansion control
 	// Discards potential nodes that are to close to the graph
-	if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath,
-																												delta, *expansionNode))
+	if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath,*expansionNode))
 	{
 		//cout << "Failed expandControl test in " << __func__ << endl;
 		return 0;

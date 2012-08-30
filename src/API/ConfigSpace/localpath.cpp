@@ -10,11 +10,15 @@
 //
 //
 #include "planner/cost_space.hpp"
+#include "planner/planEnvironment.hpp"
+
 #include "API/planningAPI.hpp"
 
 #include "P3d-pkg.h"
 #include "Localpath-pkg.h"
 #include "Planner-pkg.h"
+
+#include "Graphic-pkg.h"
 
 using namespace std;
 using namespace tr1;
@@ -24,7 +28,7 @@ using namespace tr1;
 //USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
 
-LocalPath::LocalPath(shared_ptr<Configuration> B, shared_ptr<Configuration> E) :
+LocalPath::LocalPath(confPtr_t B, confPtr_t E) :
   _Robot(B->getRobot()),
   _Begin(B), _End(E),
   _LocalPath(NULL),
@@ -107,7 +111,7 @@ LocalPath::LocalPath(const LocalPath& path) :
   _lastValidEvaluated(false),
   _NbColTest(path._NbColTest),
   _costEvaluated(path._costEvaluated), _Cost(path._Cost),
-  _ResolEvaluated(path._costEvaluated), _Resolution(path._Resolution),
+  _ResolEvaluated(path._ResolEvaluated), _Resolution(path._Resolution),
   _Type(path._Type)
 {
 }
@@ -129,7 +133,7 @@ LocalPath::LocalPath(Robot* R, p3d_localpath* lpPtr) :
   {
     _LocalPath = lpPtr->copy(_Robot->getRobotStruct(), lpPtr);
     
-    _Begin = shared_ptr<Configuration> (
+    _Begin = confPtr_t (
       new Configuration(_Robot,
 					getLocalpathStruct()->config_at_param(
 					  _Robot->getRobotStruct(), 
@@ -138,7 +142,7 @@ LocalPath::LocalPath(Robot* R, p3d_localpath* lpPtr) :
     
     _Begin->setConstraints();
     
-    _End = shared_ptr<Configuration> (
+    _End = confPtr_t (
       new Configuration(_Robot,
 						getLocalpathStruct()->config_at_param(
 					  _Robot->getRobotStruct(), 
@@ -187,12 +191,12 @@ p3d_localpath* LocalPath::getLocalpathStruct(bool multi_sol)
 	return _LocalPath;
 }
 
-shared_ptr<Configuration> LocalPath::getBegin()
+confPtr_t LocalPath::getBegin()
 {
 	return _Begin;
 }
 
-shared_ptr<Configuration> LocalPath::getEnd()
+confPtr_t LocalPath::getEnd()
 {
 	return _End;
 }
@@ -219,9 +223,9 @@ p3d_localpath_type LocalPath::getType()
 	}
 }
 
-shared_ptr<Configuration> LocalPath::getLastValidConfig(double& p)
+confPtr_t LocalPath::getLastValidConfig(double& p)
 {
-	_lastValidConfig = shared_ptr<Configuration> (new Configuration(_Robot));
+	_lastValidConfig = confPtr_t(new Configuration(_Robot));
 	this->classicTest();
 	p = _lastValidParam;
 	return (_lastValidConfig);
@@ -235,7 +239,7 @@ bool LocalPath::classicTest()
 	{
 		if (_lastValidConfig == NULL)
 		{
-			_lastValidConfig = shared_ptr<Configuration> (new Configuration(_Robot));
+			_lastValidConfig = confPtr_t (new Configuration(_Robot));
 		}
 		configPt q = _lastValidConfig->getConfigStruct();
 		configPt *q_atKpath = &q;
@@ -263,9 +267,12 @@ bool LocalPath::isValid()
 		{
 			if (*_Begin != *_End)
 			{
-				_Valid = !p3d_unvalid_localpath_test(_Robot->getRobotStruct(),
-						this->getLocalpathStruct(), &_NbColTest);
-        //cout << "_NbColTest : " << _NbColTest << endl;
+				_Valid = !p3d_unvalid_localpath_test(_Robot->getRobotStruct(), this->getLocalpathStruct(), &_NbColTest);
+//        if( !_Valid ) 
+//        {
+//          cout << "_NbColTest : " << _NbColTest << endl;
+//          g3d_draw_allwin_active();
+//        }
 			}
 		}
 		_NbColTest++;
@@ -315,40 +322,35 @@ double LocalPath::getParamMax()
 	return this->getLocalpathStruct()->range_param;
 }
 
-shared_ptr<Configuration> LocalPath::configAtDist(double dist)
+confPtr_t LocalPath::configAtDist(double dist)
 {
 	//fonction variable en fonction du type de local path
   configPt q(NULL);
 	switch (getType())
 	{
 	case HILFLAT://hilare
-		q = p3d_hilflat_config_at_distance(_Robot->getRobotStruct(),
-				getLocalpathStruct(), dist);
+		q = p3d_hilflat_config_at_distance(_Robot->getRobotStruct(),getLocalpathStruct(), dist);
 		break;
 	case LINEAR://linear
-		q = p3d_lin_config_at_distance(_Robot->getRobotStruct(),
-				getLocalpathStruct(), dist);
+		q = p3d_lin_config_at_distance(_Robot->getRobotStruct(),getLocalpathStruct(), dist);
 		break;
 	case MANHATTAN://manhatan
-		q = p3d_manh_config_at_distance(_Robot->getRobotStruct(),
-				getLocalpathStruct(), dist);
+		q = p3d_manh_config_at_distance(_Robot->getRobotStruct(),getLocalpathStruct(), dist);
 		break;
 	case REEDS_SHEPP://R&S
-		q = p3d_rs_config_at_distance(_Robot->getRobotStruct(),
-				getLocalpathStruct(), dist);
+		q = p3d_rs_config_at_distance(_Robot->getRobotStruct(),getLocalpathStruct(), dist);
 		break;
 	case TRAILER:
-		q = p3d_trailer_config_at_distance(_Robot->getRobotStruct(),
-				getLocalpathStruct(), dist);
+		q = p3d_trailer_config_at_distance(_Robot->getRobotStruct(),getLocalpathStruct(), dist);
 		break;
 	default:
 	  // TODO : implement those methods !
 	  std::cout << "ERROR : LocalPath::configAtDist : the TRAILER_FORWARD, HILFLAT_FORWARD, and DUBINS localpath types are not implemented." << std::endl;
 	}
-	return shared_ptr<Configuration> (new Configuration(_Robot, q));
+	return confPtr_t(new Configuration(_Robot, q));
 }
 
-shared_ptr<Configuration> LocalPath::configAtParam(double param)
+confPtr_t LocalPath::configAtParam(double param)
 {
 	//fonction variable en fonction du type de local path
 	configPt q;
@@ -370,7 +372,7 @@ shared_ptr<Configuration> LocalPath::configAtParam(double param)
 		throw string("Could not find configuration along path");
 	}
 	
-	shared_ptr<Configuration> ptrQ(new Configuration(_Robot, q , true));
+	confPtr_t ptrQ(new Configuration( _Robot, q, true ));
 	ptrQ->setConstraints();
 	return ptrQ;
 }
@@ -411,23 +413,10 @@ double LocalPath::getResolution(double step)
 		
 		if (step == 0.0) 
 		{
-			step = p3d_get_env_dmax();
+			step = PlanEnv->getDouble(PlanParam::costResolution)*p3d_get_env_dmax();
 		}
-		
-		if ( length < step )
-		{
-			_Resolution = length;
-		}
-		else if ( floor(length/step) == length/step ) 
-		{
-			_Resolution = step;
-		}
-		else 
-		{
-			double n = floor(length/step); // minimal number of segment
-			_Resolution = length / n;
-		}
-		//cout << "_Resolution = " << _Resolution << endl;
+    
+    _Resolution = length/ceil(length/(step));
 		_ResolEvaluated = true;
 	}
 
@@ -440,7 +429,7 @@ double LocalPath::getResolution(double step)
  */
 unsigned int LocalPath::getNumberOfCostSegments()
 {
-	return floor( ( getParamMax() / getResolution()) + 0.5);
+	return round(getParamMax()/getResolution());
 }
 
 
@@ -503,7 +492,7 @@ double LocalPath::whenCostIntegralPasses(double thresh)
 	const double DeltaStep = getResolution();
 	const unsigned int nStep = floor( ( getParamMax() / DeltaStep) + 0.5) ;
 	
-	shared_ptr<Configuration> confPtr;
+	confPtr_t confPtr;
 	
 	prevCost = getBegin()->cost();
 	

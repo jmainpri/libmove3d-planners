@@ -123,8 +123,7 @@ int ThresholdExpansion::extendExpandProcess(Node* expansionNode, std::tr1::share
 	
   // Expansion control
   // Discards potential nodes that are to close to the graph
-  if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath,
-                                                        pathDelta, *expansionNode))
+  if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath,*expansionNode))
   {
 		//		cout << "Failed expandControl test in " << __func__ << endl;
     return 0;

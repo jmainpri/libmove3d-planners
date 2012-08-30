@@ -53,8 +53,6 @@ public:
   void initFromNodeHandle();
   void init();
 
-  double getPlanningTimeLimit() const;
-  void setPlanningTimeLimit(double planning_time_limit);
   int getMaxIterations() const;
   int getMaxIterationsAfterCollisionFree() const;
   double getSmoothnessCostWeight() const;
@@ -80,7 +78,6 @@ public:
   bool getUseChomp() const;
 
 private:
-  double planning_time_limit_;
   int max_iterations_;
   int max_iterations_after_collision_free_;
   double smoothness_cost_weight_;
@@ -107,16 +104,6 @@ private:
 };
 
 /////////////////////// inline functions follow ////////////////////////
-
-inline double StompParameters::getPlanningTimeLimit() const
-{
-  return planning_time_limit_;
-}
-
-inline void StompParameters::setPlanningTimeLimit(double planning_time_limit)
-{
-  planning_time_limit_ = planning_time_limit;
-}
 
 inline int StompParameters::getMaxIterations() const
 {

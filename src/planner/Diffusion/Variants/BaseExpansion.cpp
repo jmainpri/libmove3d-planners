@@ -89,9 +89,7 @@ LocalPath BaseExpansion::getExtensiontPath( confPtr_t qi, confPtr_t qf )
  * Expnasion controls that
  * the exploring the CSpace
  */
-bool BaseExpansion::expandControl(LocalPath& path, 
-																	double positionAlongDirection, 
-																	Node& compNode)
+bool BaseExpansion::expandControl( LocalPath& path, Node& compNode )
 {
 	double radius=0;
 	
@@ -108,36 +106,31 @@ bool BaseExpansion::expandControl(LocalPath& path,
 	}
 	else
 	{
-		radius = ENV.getDouble(Env::refiRadius);
+		radius = ENV.getDouble(Env::refiRadius)*p3d_get_env_dmax();
 	}
+  
+  ConnectedComponent* compco = compNode.getConnectedComponent();
+  
+  double ratio = double(compco->getCompcoStruct()->nbRefinNodes) / double(compco->getNumberOfNodes());
 	
-	if(ENV.getBool(Env::printRadius) ){
+	if( ENV.getBool(Env::printRadius) ){
 		cout << "radius = " << radius << endl;
 		cout << "path.length() = " << path.getParamMax() << endl;
-		//		cout << "TEST?= " << ((path.length() <= radius)&&positionAlongDirection >= 1.) << endl;
-		/**
-		 *
-		 * ATTENTION TODO Refinement radius mean value
-		 *
-		 */
-		//		cout << "Average length = " << compNode.getCompcoStruct()->sumLengthEdges / (compNode.getCompcoStruct()->nnode-1) << endl;
-		double ratio =  (double)compNode.getConnectedComponent()->getCompcoStruct()->nbRefinNodes / 
-		(double)compNode.getConnectedComponent()->getNumberOfNodes();
-		
+    cout << "compco->getCompcoStruct()->nbRefinNodes = " << compco->getCompcoStruct()->nbRefinNodes << endl;
+    cout << "compco->getNumberOfNodes() = " << compco->getNumberOfNodes() << endl;
 		cout << "ratio of RNODES = " << ratio << endl;
 		cout << endl;
 	}
 	
-	if( path.getParamMax() <= radius ) // || extensionLocalpath->length() < 0.01 * path->length(); //extensionLocalpath->length() <= this->step();
+	if( path.getParamMax() <= radius )
 	{
-		if(     compNode.getConnectedComponent()->getCompcoStruct()->nbRefinNodes*2 > 
-			 (int)compNode.getConnectedComponent()->getNumberOfNodes())
+		if( ratio > 0.10 )
 		{
 			return(false);
 		}
 		else
 		{
-			compNode.getConnectedComponent()->getCompcoStruct()->nbRefinNodes++;
+			compco->getCompcoStruct()->nbRefinNodes++;
 		}
 	}
 	return(true);
@@ -258,7 +251,7 @@ Node* BaseExpansion::addNode(Node* currentNode,
 	if ((pathDelta == 1. && directionNode))
 	{
 		//cout << "MergeComp" << endl;
-		m_Graph->linkNodeAndMerge(currentNode,directionNode);
+		m_Graph->linkNodeAndMerge( currentNode, directionNode );
 		return (directionNode);
 	}
 	else

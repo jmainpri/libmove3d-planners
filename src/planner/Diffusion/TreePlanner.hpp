@@ -72,13 +72,34 @@ public:
 	 * @return the number of node created
 	 */
 	virtual int expandOneStep(Node* fromComp, Node* toComp) = 0 ;
-
+  
 	/**
 	 * Main function of the Tree process
 	 * @return the number of Nodes added to the Graph
 	 */
 	virtual unsigned int run();
+  
+  /**
+   * Extract trajectory
+   */
+  virtual void extractTrajectory() { }
 
+  /**
+	 * Get the run Id
+	 */
+	int getRunId()
+	{
+		return m_runId;
+	};
+  
+  /**
+	 * Set the run Id
+	 */
+	void setRunId(int id)
+	{
+		m_runId = id;
+	};
+  
 	/**
 	 * Returns number of consecutive failure
 	 * during plannification
@@ -114,13 +135,25 @@ public:
 	{
 		return m_nbInitNodes;
 	};
+  
+  /**
+	 * Returns the last node added to the graph
+	 */
+  Node* getLastNode()
+  {
+     return m_last_node;
+  };
 
 protected:
 
-	unsigned int m_nbConscutiveFailures;
+  int m_runId;
+	
+  unsigned int m_nbConscutiveFailures;
 	unsigned int m_nbExpansion;
 	unsigned int m_nbFailedExpansion;
 	unsigned int m_nbInitNodes;
+  
+  Node* m_last_node;
   
   double m_time;
 };

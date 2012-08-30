@@ -69,6 +69,9 @@ public:
     bool generateSingleNoisyTrajectory();
     void getRollouts(std::vector<std::vector<confPtr_t> >& traj);
   
+    // Reset all extra rollouts
+    void resetReusedRollouts();
+  
 private:
 
     bool initialized_;

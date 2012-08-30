@@ -189,17 +189,17 @@ ThreeDCell* ThreeDGrid::getCell(unsigned int x, unsigned int y, unsigned int z) 
 {
     if(x<0 || x >= _nbCellsX)
     {
-        //cout << "ThreeDGrid Error : out of bands"<< endl;
+        //cout << "ThreeDGrid Error : out of bounds"<< endl;
         return NULL;
     }
     if(y<0 || y >= _nbCellsY)
     {
-        //cout << "ThreeDGrid Error : out of bands"<< endl;
+        //cout << "ThreeDGrid Error : out of bounds"<< endl;
         return NULL;
     }
     if(z<0 || z >= _nbCellsZ)
     {
-        //cout << "ThreeDGrid Error : out of bands"<< endl;
+        //cout << "ThreeDGrid Error : out of bounds"<< endl;
         return NULL;
     }
 	

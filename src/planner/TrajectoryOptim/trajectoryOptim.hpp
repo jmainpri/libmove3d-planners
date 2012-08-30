@@ -13,6 +13,8 @@
 
 #include "API/Trajectory/trajectory.hpp"
 
+void set_robot_active_joints();
+
 bool traj_optim_init_mlp_cntrts_and_fix_joints();
 
 API::Trajectory traj_optim_create_sraight_line_traj();
@@ -26,5 +28,6 @@ void traj_optim_draw_collision_points();
 bool traj_optim_generate_softMotion();
 
 extern std::vector< std::vector <double> > traj_optim_to_plot;
+extern std::vector< std::vector <double> > traj_optim_convergence;
 
 #endif

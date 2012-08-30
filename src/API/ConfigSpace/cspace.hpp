@@ -56,20 +56,31 @@ class CSpaceCostMap2D : public CSpace
 {
 public:
     CSpaceCostMap2D();
+  
+  virtual ~CSpaceCostMap2D();
+  virtual double q_cost(confPtr_t q);
+  virtual double lp_cost(confPtr_t q1, confPtr_t q2);
+  
+  // Compute the volume of the cspace :
+  // i.e. the area of the 2d costmap.
+  virtual double volume();
+  virtual double unit_sphere();
+  virtual unsigned dimension();
+};
 
-    virtual ~CSpaceCostMap2D();
-
-    virtual double q_cost(confPtr_t q);
-
-    virtual double lp_cost(confPtr_t q1, confPtr_t q2);
-
-    // Compute the volume of the cspace :
-    // i.e. the area of the 2d costmap.
-    virtual double volume();
-
-    virtual double unit_sphere();
-
-    virtual unsigned dimension();
+class Pr2CSpace : public CSpace
+{
+public:
+  Pr2CSpace();
+  ~Pr2CSpace();
+  double q_cost(confPtr_t q);
+  double lp_cost(confPtr_t q1, confPtr_t q2);
+  
+  // Compute the volume of the cspace :
+  // i.e. the area of the 2d costmap.
+  double volume();
+  double unit_sphere();
+  unsigned dimension();
 };
 
 class GenericCSpace : public CSpace
@@ -80,17 +91,13 @@ public:
     GenericCSpace(path_cost_mode mode);
 
     virtual ~GenericCSpace();
-
     virtual double q_cost(confPtr_t q);
-
     virtual double lp_cost(confPtr_t q1, confPtr_t q2);
 
     // Compute the volume of the cspace :
     // the product of all dofs.
     virtual double volume() { return(0.0); };
-
     virtual double unit_sphere() { return(0.0); };
-
     virtual unsigned dimension() { return(0); };
 
 private:

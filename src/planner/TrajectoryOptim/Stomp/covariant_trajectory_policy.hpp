@@ -240,6 +240,7 @@ inline bool CovariantTrajectoryPolicy::setParameters(const std::vector<Eigen::Ve
     {
         parameters_all_[d].segment(free_vars_start_index_, num_vars_free_) = parameters[d];
     }
+    //std::cout << "CovariantTrajectoryPolicy::setParameters => num_vars_free_ : " << num_vars_free_ << std::endl;
     return true;
 }
 

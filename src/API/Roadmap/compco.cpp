@@ -33,16 +33,17 @@ ConnectedComponent::ConnectedComponent(Graph* G, Node* N) :
 m_Graph(G),
 m_Id(-1)
 {
-#ifdef P3D_PLANNER
   m_Compco = MY_ALLOC(p3d_compco, 1);
-  m_Compco->num = G->getNumberOfCompco();
   
+  m_Compco->num = G->getNumberOfCompco();
+  m_Compco->nbRefinNodes = 0;
+  m_Compco->minCost= P3D_HUGE;
+  m_Compco->maxCost= 0.;
+  m_Compco->maxUrmsonCost= 0.;
+//  m_Compco->AnaSuccessTab = MY_ALLOC(int,nbAnaSuccesSamples);
+  m_Compco->nbTests = 0;
   // Warning the compco are handled in the boost graph
 	// p3d_create_compco(m_Graph->getGraphStruct(), N->getNodeStruct());
-#else
-	printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
-#endif
-	
 	addNode(N);
 }
 
@@ -157,7 +158,64 @@ void ConnectedComponent::mergeWith(ConnectedComponent* compco)
 	}
 }
 
-Node* ConnectedComponent::nearestWeightNeighbour(shared_ptr<Configuration> q, bool weighted, int distConfigChoice)
+/**
+ * Nearest Weighted Neighbout in graph
+ *  
+ * returns the KNearest neighbours of the configuration config
+ * in the entire graph within a minimum radius
+ */
+vector<Node*> ConnectedComponent::KNearestWeightNeighbour(confPtr_t q, int K, double radius, bool weighted, int distConfigChoice)
+{
+  // The null node has to be remouved
+	Node* nullNode(NULL);
+	double current_cost;
+  bool firstNode = true;
+  
+	vector< pair<double,Node*> > nearNodesQueue;
+	nearNodesQueue.push_back( make_pair(numeric_limits<double>::max(),nullNode) );
+	
+  // For all nodes in the graph
+	for (vector<Node*>::iterator it = m_Nodes.begin(); it != m_Nodes.end() ; ++it)
+	{
+    // Compute the distance for all nodes
+    current_cost = q->dist(*(*it)->getConfiguration(),distConfigChoice);
+    //*(weighted ? p3d_GetNodeWeight((*it)->getNodeStruct()) : 1.0);
+    
+    // Do not add the nodes outside of radius
+    if ( current_cost > radius) continue;
+    
+    // If better than last node of the Queue add to the Queue (rewrite better code)
+    if (current_cost < nearNodesQueue.back().first)
+    {
+      if ( firstNode ) 
+      {
+        nearNodesQueue.clear(); firstNode = false;
+      }
+      nearNodesQueue.push_back( make_pair( current_cost, *it ) );
+      
+      sort( nearNodesQueue.begin(), nearNodesQueue.end() );
+      
+      if( int(nearNodesQueue.size()) > K )
+      {
+        nearNodesQueue.resize( K );
+      }
+    }
+	}
+	
+	// Put queue in a vector
+	vector<Node*> nearNodes;
+	for( int i=0;i<int(nearNodesQueue.size());i++)
+  {
+    Node* node = nearNodesQueue[i].second;
+    if (node!= NULL) {
+      nearNodes.push_back( node );
+    }
+  }
+	
+	return nearNodes;	
+}
+
+Node* ConnectedComponent::nearestWeightNeighbour(confPtr_t q, bool weighted, int distConfigChoice)
 {
 	double current_dist, current_score;
 	double best_score = numeric_limits<double>::max();

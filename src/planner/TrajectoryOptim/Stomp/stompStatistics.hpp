@@ -18,6 +18,7 @@ public:
   double collision_success_duration;
   int success_iteration;
   bool success;
+  double success_time;
   std::vector<double> costs;
   double best_cost;
   double success_duration;

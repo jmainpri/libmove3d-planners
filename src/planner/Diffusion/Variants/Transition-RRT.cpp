@@ -365,8 +365,7 @@ bool TransitionExpansion::costTestSucceededConf(
 	
 	if (ENV.getBool(Env::printTemp))
 	{
-		cout << temperature << "\t" << previousCost << "\t" << currentCost
-		<< endl;
+		cout << temperature << "\t" << previousCost << "\t" << currentCost << endl;
 		
 	}
 	
@@ -472,7 +471,7 @@ bool TransitionExpansion::expandCostConnect(Node& expansionNode, shared_ptr<
 		if (firstIteration && !failed)
 		{
 			// Expansion Control
-			if ( ENV.getBool(Env::expandControl) && !this->expandControl(directionPath, 1.0, expansionNode) )
+			if ( ENV.getBool(Env::expandControl) && !this->expandControl(directionPath, expansionNode) )
 			{
 				failed = true;
 			}
@@ -684,8 +683,7 @@ int TransitionExpansion::extendExpandProcess(Node* expansionNode,
 	
 	// Expansion control
 	// Discards potential nodes that are to close to the graph
-	if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath,
-																												pathDelta, *expansionNode))
+	if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath,*expansionNode))
 	{
 		//		cout << "Failed expandControl test in " << __func__ << endl;
 		return 0;
@@ -851,7 +849,7 @@ int TransitionRRT::init()
 	{
 		p3d_SetCostThreshold(this->getInit()->cost() );
 		p3d_SetInitCostThreshold( this->getInit()->cost() );
-		p3d_SetAverQsQgCost( this->getActivGraph()->getGraphStruct()->rob->GRAPH->search_start->cost);
+		p3d_SetAverQsQgCost( this->getActivGraph()->getGraphStruct()->search_start->cost);
 	}
 	
 	return added;
@@ -973,3 +971,5 @@ bool TransitionRRT::connectNodeToCompco(Node* node, Node* compNode)
 		return(false);
 	}
 }
+
+

@@ -54,6 +54,8 @@
 
 #include "../p3d/env.hpp"
 
+#include <boost/shared_ptr.hpp>
+
 using namespace std;
 using namespace boost;
 
@@ -91,7 +93,7 @@ namespace stomp_motion_planner
     assert( num_dimensions_ == static_cast<int>(noise_decay_.size()));
     assert( num_dimensions_ == static_cast<int>(noise_stddev_.size()));
     
-    printf("Learning policy with %i dimensions.", num_dimensions_);
+    printf("Learning policy with %i dimensions.\n", num_dimensions_);
     
     use_annealing_ = false;
     use_cumulative_costs_ = false;
@@ -114,7 +116,7 @@ namespace stomp_motion_planner
   bool PolicyImprovementLoop::readParametersSingleRollout()
   {
     num_rollouts_ = 10;
-    num_reused_rollouts_ = 1;
+    num_reused_rollouts_ = 5;
 
     noise_stddev_.clear();
     noise_decay_.clear();
@@ -129,17 +131,17 @@ namespace stomp_motion_planner
   
   bool PolicyImprovementLoop::readParameters()
   {
-    //    assert(stomp_motion_planner::read(node_handle_, std::string("num_rollouts"), num_rollouts_));
-    //    assert(stomp_motion_planner::read(node_handle_, std::string("num_reused_rollouts"), num_reused_rollouts_));
-    //    assert(stomp_motion_planner::read(node_handle_, std::string("num_time_steps"), num_time_steps_));
+    // assert(stomp_motion_planner::read(node_handle_, std::string("num_rollouts"), num_rollouts_));
+    // assert(stomp_motion_planner::read(node_handle_, std::string("num_reused_rollouts"), num_reused_rollouts_));
+    // assert(stomp_motion_planner::read(node_handle_, std::string("num_time_steps"), num_time_steps_));
     //
-    //    assert(stomp_motion_planner::readDoubleArray(node_handle_, "noise_stddev", noise_stddev_));
-    //    assert(stomp_motion_planner::readDoubleArray(node_handle_, "noise_decay", noise_decay_));
-    //node_handle_.param("write_to_file", write_to_file_, true); // defaults are sometimes good!
-    //node_handle_.param("use_cumulative_costs", use_cumulative_costs_, true);
+    // assert(stomp_motion_planner::readDoubleArray(node_handle_, "noise_stddev", noise_stddev_));
+    // assert(stomp_motion_planner::readDoubleArray(node_handle_, "noise_decay", noise_decay_));
+    // node_handle_.param("write_to_file", write_to_file_, true); // defaults are sometimes good!
+    // node_handle_.param("use_cumulative_costs", use_cumulative_costs_, true);
     
     num_rollouts_ = 10;
-    num_reused_rollouts_ = 0;
+    num_reused_rollouts_ = 5;
     //num_time_steps_ = 51;
     
     noise_stddev_.clear();
@@ -150,8 +152,8 @@ namespace stomp_motion_planner
     noise_stddev_.resize(num_dimensions_,PlanEnv->getDouble(PlanParam::trajOptimStdDev));
     noise_decay_.resize(num_dimensions_,.99);
     
-    //    noise_stddev
-    //    noise_decay
+    // noise_stddev
+    // noise_decay
     
     write_to_file_ = false; // defaults are sometimes good!
     use_cumulative_costs_ =  true;
@@ -277,7 +279,7 @@ namespace stomp_motion_planner
     
     for (int r=0; r<int(rollouts_.size()); ++r)
     {
-      task_->execute(rollouts_[r], tmp_rollout_cost_, iteration_number);
+      task_->execute( rollouts_[r], tmp_rollout_cost_, iteration_number);
       rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
       //printf("Rollout %d, cost = %lf\n", r+1, tmp_rollout_cost_.sum());
       
@@ -305,36 +307,17 @@ namespace stomp_motion_planner
     
     // TODO: fix this std::vector<>
     std::vector<double> all_costs;
-    policy_improvement_.setRolloutCosts(rollout_costs_, control_cost_weight_, all_costs);
     
-    // improve the policy
+    // Improve the policy
+    policy_improvement_.setRolloutCosts(rollout_costs_, control_cost_weight_, all_costs);
     policy_improvement_.improvePolicy(parameter_updates_);
 
-    // Draw parameters_updates_
-//    std::vector<Eigen::VectorXd> rollout;
-//    trajToDraw.clear();
-//    parametersToVector(rollout);
-//    addSingleRolloutsToDraw(rollout, 0);
-    
     policy_->updateParameters(parameter_updates_);
-    
-    // Draw parameters_updates_
-//    parametersToVector(rollout);
-//    addSingleRolloutsToDraw(rollout, 1);
-
-    
-    // get a noise-less rollout to check the cost
-  policy_->getParameters(parameters_);
-    
-    // Draw parameters_
-//    addSingleRolloutsToDraw(parameters_, 2);
-    
-    // sample the parameters 
-    //resampleParameters();
-    //addSingleRolloutsToDraw(parameters_, 0);
+    policy_->getParameters(parameters_);
   
     // Get the trajectory cost
-    task_->execute(parameters_, tmp_rollout_cost_, iteration_number, true);
+    bool resample = !PlanEnv->getBool(PlanParam::trajStompMultiplyM);
+    task_->execute(parameters_, tmp_rollout_cost_, iteration_number, resample );
     //printf("Noiseless cost = %lf\n", stats_msg.noiseless_cost);
     
     // Only set parameters for the changed chase
@@ -362,6 +345,11 @@ namespace stomp_motion_planner
     }
     
     return true;
+  }
+  
+  void PolicyImprovementLoop::resetReusedRollouts()
+  {
+    policy_improvement_.resetReusedRollouts();
   }
   
   //------------------------------------------------------------------------------------
@@ -439,7 +427,7 @@ namespace stomp_motion_planner
       traj.push_back(q);
     }
     
-    traj.runShortCut(25);
+    traj.runShortCut(15);
     
     double step = traj.getRangeMax() / num_time_steps_;
     double param = step;
@@ -458,6 +446,7 @@ namespace stomp_motion_planner
       parameters_[i].transpose() = parameters.row(i);
     }
   }
+  
   
   //------------------------------------------------------------------------------------
   //------------------------------------------------------------------------------------
@@ -500,25 +489,25 @@ namespace stomp_motion_planner
   
   void PolicyImprovementLoop::getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<confPtr_t>& traj)
   {
-    Configuration q = *optimizer->getPlanningGroup()->robot_->getCurrentPos();
     const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
+    Robot* robot = optimizer->getPlanningGroup()->robot_;
     
-    API::Trajectory T(optimizer->getPlanningGroup()->robot_);
-    Eigen::MatrixXd parameters(num_dimensions_,num_time_steps_);
-    
-    for ( int i=0; i<num_dimensions_; ++i)
-    {
-      parameters.row(i) = rollout[i].transpose();
-    }
-
     traj.clear();
+    
+//    for ( int d=0; d<int(rollout.size()); ++d)
+//    {
+//      cout << "rollout[" << d << "] : " << rollout[d].transpose() << endl;
+//    }
+    
     for ( int j=0; j<num_time_steps_; ++j)
     {
+      confPtr_t q = robot->getCurrentPos();
+      
       for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
       {  
-        q[joints[i].move3d_dof_index_] = parameters(i,j);
+        (*q)[joints[i].move3d_dof_index_] = rollout[i][j];
       }
-      traj.push_back( confPtr_t(new Configuration(q)));
+      traj.push_back(q);
     }
   }
   

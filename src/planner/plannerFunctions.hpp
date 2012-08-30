@@ -16,6 +16,24 @@
 Global std::vector<Planner*> plannerlist;
 
 /**
+ * RRT statistics
+ */
+struct RRTStatistics
+{
+  int runId;
+  bool succeeded;
+  double time;
+  double cost;
+  int nbNodes;
+  int nbExpansions;
+};
+
+/**
+ * Get last RRT statistics
+ */
+void p3d_get_rrt_statistics( RRTStatistics& stat );
+
+/**
  * @ingroup NEW_CPP_MODULE
  * Funtion to set multirun Ids
  */

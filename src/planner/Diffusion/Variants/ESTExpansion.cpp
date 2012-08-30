@@ -116,8 +116,7 @@ Node* ESTExpansion::expandProcessEST( Node* expansionNode,
 
     // Expansion control
     // Discards potential nodes that are to close to the graph
-    if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath,
-                                                          pathDelta, *expansionNode))
+    if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath,*expansionNode))
     {
         nbCreatedNodes=0;
         return 0;

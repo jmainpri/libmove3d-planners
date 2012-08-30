@@ -21,12 +21,13 @@
 
 extern void* GroundCostObj;
 
+CostSpace* global_costSpace(NULL);
+
 using namespace std;
 using namespace tr1;
 
 //using std::string;
 //------------------------------------------------------------------------------
-CostSpace* global_costSpace(NULL);
 
 void GlobalCostSpace::initialize()
 {
@@ -58,9 +59,11 @@ void GlobalCostSpace::initialize()
 }
 
 //------------------------------------------------------------------------------
-CostSpace::CostSpace() : mSelectedCostName("No Cost"), m_deltaMethod(cs_integral) 
+CostSpace::CostSpace() : mSelectedCostName("No Cost"), m_deltaMethod(cs_integral), m_resolution(cs_classic) 
 {
-
+  m_dmax = p3d_get_env_dmax();
+  
+  m_resolution = cs_pr2_manip;
 }
 
 //------------------------------------------------------------------------------
@@ -160,9 +163,6 @@ double CostSpace::deltaStepCost(double cost1, double cost2, double length)
 	const double kb = 0.00831;
   const double temp = 310.15;
 	
-	//length *= ENV.getDouble(Env::KlengthWeight);
-	double powerOnIntegral = ENV.getDouble(Env::KlengthWeight);
-	
 	if ( ENV.getBool(Env::isCostSpace) )
 	{
 		switch (m_deltaMethod)
@@ -195,6 +195,7 @@ double CostSpace::deltaStepCost(double cost1, double cost2, double length)
 			case cs_integral:
 			case cs_visibility:
       {
+        double powerOnIntegral = 1.0;
         double cost = pow(((cost1 + cost2)/2),powerOnIntegral)*length;
         
         // Warning, length added for dynamic shortcut (HRI)
@@ -214,7 +215,7 @@ double CostSpace::deltaStepCost(double cost1, double cost2, double length)
 				
 				if (cost2 > cost1)
 					return 1;
-				return		1/exp(ENV.getInt(Env::maxCostOptimFailures)*(cost2-cost1)/(kb*temp));
+				return 1/exp(ENV.getInt(Env::maxCostOptimFailures)*(cost2-cost1)/(kb*temp));
 				
 			default:
 				std::cout << "Warning: " << __func__ <<  std::endl;
@@ -265,81 +266,75 @@ void CostSpace::setNodeCost( Node* node, Node* parent )
  node->getConnectedComponent()->getCompcoStruct()->maxUrmsonCost);
  }	*/
 
+void CostSpace::getPr2ArmConfiguration( Eigen::VectorXd& x, confPtr_t q )
+{ 
+  x[0] = (*q)[16];
+  x[1] = (*q)[17];
+  x[2] = (*q)[18];
+  x[3] = (*q)[19];
+  x[4] = angle_limit_PI((*q)[20]);
+  x[5] = (*q)[21];
+  x[6] = angle_limit_PI((*q)[22]);
+}
+
 //----------------------------------------------------------------------
 double CostSpace::cost(LocalPath& path)
 {
-  shared_ptr<Configuration> q_tmp_begin = path.getBegin()->copy();
-  shared_ptr<Configuration> q_tmp_end   = path.getEnd()->copy();
+  confPtr_t q_tmp_begin = path.getBegin()->copy();
+  confPtr_t q_tmp_end   = path.getEnd()->copy();
   
-  double Cost = 0;
+  double cost = 0;
   
 	if (ENV.getBool(Env::isCostSpace))
 	{
-    const double DeltaStep = path.getResolution();
-    const int nStep = floor( ( path.getParamMax() / DeltaStep) + 0.5) ;
+    int nStep;
+    double deltaStep;
+    
+    if( m_resolution == cs_classic )
+    {
+      deltaStep = path.getResolution();
+      nStep = path.getParamMax()/deltaStep; 
+    }
+    
+    if( m_resolution == cs_pr2_manip )
+    {
+      Eigen::VectorXd a( Eigen::VectorXd::Zero(7) );
+      Eigen::VectorXd b( Eigen::VectorXd::Zero(7) );
+      
+      path.getLocalpathStruct();
+      
+      getPr2ArmConfiguration( a, path.getBegin() );
+      getPr2ArmConfiguration( b, path.getEnd() );
+      
+      double param_max = ( a - b ).norm();
+      nStep = ceil(param_max/(PlanEnv->getDouble(PlanParam::costResolution)*m_dmax));
+      deltaStep = param_max/nStep;
+//      cout << "param_max : " << param_max << " , nStep : " << nStep << endl;
+//      cout << "a : " << endl << a << endl;
+//      cout << "b : " << endl << b << endl;
+    }
+    
+    confPtr_t q;
     
     double currentCost, prevCost;
+    double currentParam = 0.0;
     
-    Eigen::Vector3d taskVectorPos;
-    Eigen::Vector3d prevTaskVectorPos(0, 0, 0);
+    prevCost = path.configAtParam(0.0)->cost();
     
-    double currentParam = 0;
-    
-    double CostDistStep = DeltaStep;
-
-    shared_ptr<Configuration> confPtr;
-    prevCost = path.getBegin()->cost();
-
-#ifdef LIGHT_PLANNER
-    // If the value of Env::HRIPlannerWS changes while executing this
-    // function, it could lead to the use of the incorrectly initialized 
-    // prevTaskPos variable, and this triggers a compiler warning.
-    // So, save the value of Env::HRIPlannerWS in a local variable.
-    //const bool isHRIPlannerWS = ENV.getBool(Env::HRIPlannerWS);
-    const bool isHRIPlannerWS = false;
-    
-    if(isHRIPlannerWS)
+    for (int i=0; i<int(nStep); i++)
     {
-      if( !q_tmp_begin->equal(*path.getBegin()) )
-      {
-        cout << "Warning => begin was modified by local path cost computation" << endl;
-      }
+      q = path.configAtParam(currentParam);
+      currentCost = this->cost(*q);
       
-      //!TODO fix task space bug in Configuration class
-      prevTaskVectorPos = path.getBegin()->getTaskPos();
-      
-      if( !q_tmp_begin->equal(*path.getBegin()) )
-      {
-        cout << "Warning => begin was modified by local path cost computation" << endl;
-      }
-    }
-#endif
-    
-    //cout << "nStep : " << nStep << endl;
-    for (int i=0; i<nStep; i++)
-    {
-      currentParam += DeltaStep;
-      
-      confPtr = path.configAtParam(currentParam);
-      currentCost = cost(*confPtr);
-
-#ifdef LIGHT_PLANNER		
-      // Case of task space
-      if(isHRIPlannerWS)
-      {
-        taskVectorPos = confPtr->getTaskPos();
-        CostDistStep = ( taskVectorPos - prevTaskVectorPos ).norm();
-        prevTaskVectorPos = taskVectorPos;
-      }
-#endif   
-      Cost += deltaStepCost(prevCost, currentCost, CostDistStep);
+      cost += deltaStepCost( prevCost, currentCost, deltaStep );
       
       prevCost = currentCost;
+      currentParam += deltaStep;
     }
   }
   else 
   {
-    Cost = path.getParamMax();
+    cost = path.getParamMax();
 	}
   
   if( !q_tmp_begin->equal(*path.getBegin()) )
@@ -351,7 +346,7 @@ double CostSpace::cost(LocalPath& path)
     cout << "Warning => end was modified by local path cost computation" << endl;
   }
 	
-	return Cost;
+	return cost;
 }
 
 //----------------------------------------------------------------------

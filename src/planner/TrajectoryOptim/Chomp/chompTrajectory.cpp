@@ -89,14 +89,12 @@ robot_model_(T.getRobot())
     {
       int source_joint = active_joints_.chomp_joints_[j].move3d_dof_index_;
       
-      shared_ptr<Configuration> q;
+      confPtr_t q;
       
-      if( source_traj_point != (number_inital_points-1) )
-      {
+      if( source_traj_point != (number_inital_points-1) ) {
         q = T.getLocalPathPtrAt( source_traj_point )->getBegin();
       }
-      else
-      {
+      else {
         q = T.getLocalPathPtrAt( source_traj_point-1 )->getEnd();
       }
       
