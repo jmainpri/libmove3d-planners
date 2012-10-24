@@ -425,6 +425,12 @@ namespace HRICS
           */
         bool testTrajectories(bool fullbody);
 
+
+        /**
+          * get a simple path
+          */
+        bool getSimplePath(double x, double y, double theta, vector<vector<double> >& path);
+
     private:
 
         /**

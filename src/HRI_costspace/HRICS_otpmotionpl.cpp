@@ -1903,6 +1903,11 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
 
 bool  OTPMotionPl::testCol(bool isHuman, bool useConf)
 {
+//    int* is_human = new int();
+//    int* agent_idx = new int();
+//    hri_is_robot_an_agent(m_Human->getRobotStruct(), GLOBAL_AGENTS,  is_human, agent_idx);
+//    cout << hri_agent_get_posture(GLOBAL_AGENTS->all_agents[*agent_idx]) << endl;
+
     bool ret = true;
     if (isHuman)
     {
@@ -2561,7 +2566,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
         vector<shared_ptr<Configuration> > humanVectorConf;
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanTraj2D = conf.humanTraj;
         humanVectorConf.push_back(q_cur_human);
-        if (humanTraj2D.size() > 1)
+        if (humanTraj2D.size() > 2)
         {
             humanTraj2D = m_pts->smoothTrajectory(m_Human,humanTraj2D);
             m_2DHumanPath = humanTraj2D;
@@ -3485,4 +3490,34 @@ bool OTPMotionPl::testTrajectories(bool fullbody)
 
     ENV.setBool(Env::isCostSpace,true);
     return true;
+}
+
+bool OTPMotionPl::getSimplePath(double x, double y, double theta, vector<vector<double> >& path)
+{
+    Vector2i pos;
+    pos[0] = x;
+    pos[1] = y;
+    EnvCell* cell = dynamic_cast<EnvCell*>(m_2DGrid->getCell(pos));
+    vector<EnvCell*> cellPath = cell->getRobotTraj();
+    m_2DPath.clear();
+    for (unsigned int j = 0; j < cellPath.size(); j++)
+    {
+        m_2DPath.push_back(cellPath.at(j)->getCenter());
+    }
+    m_2DPath = m_pts->smoothTrajectory(_Robot,m_2DPath);
+    std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > path3d = m_pts->add3DimwithoutTrajChange(m_2DPath,_Robot,0.05);
+    for (unsigned int i = 0; i < path3d.size(); i ++)
+    {
+        vector<double> p;
+        p.push_back(path3d.at(i)[0]);
+        p.push_back(path3d.at(i)[1]);
+        p.push_back(path3d.at(i)[2]);
+        path.push_back(p);
+
+        cout << "points " << i << " is : ( " << p[0] << ", " << p[1] << ", " << p[2] << " )" << endl;
+    }
+
+    m_PathExist =true;
+    ENV.setBool(Env::drawOTPTraj,true);
+
 }
