@@ -321,6 +321,7 @@ void HRICS_init(HRI_AGENTS* agents)
   dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
   
   HRICS_MotionPLConfig = new HRICS::OTPMotionPl;
+  hrics_otp_fct();
   
 	HRICS_activeDist = HRICS_MotionPL->getDistance();
 	//API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid();

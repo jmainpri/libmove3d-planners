@@ -15,12 +15,14 @@
 #include "move3d-headless.h"
 #include "Planner-pkg.h"
 #include "Collision-pkg.h"
+#include <libmove3d/hri/HRI_tasks.h>
 
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 #include "planEnvironment.hpp"
 #include "plannerFunctions.hpp"
 #include "time.h"
+
 
 
 #ifdef LIGHT_PLANNER
@@ -41,6 +43,41 @@ using namespace Eigen;
 
 
 //extern std::vector<Eigen::Vector3d> OTPList;
+
+
+
+bool hrics_init_otp(std::string humanName)
+{
+    if (HRICS_MotionPLConfig == NULL)
+    {
+        cout << "No pointer to HRICS_MotionPLConfig" <<endl;
+        return false;
+    }
+    else
+    {
+        return  dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->InitMhpObjectTransfert(humanName);
+    }
+}
+
+bool hrics_compute_otp(std::string humanName, std::vector<std::vector<double> >& traj, configPt& handConf,bool isStanding, double objectNessecity)
+{
+    if (HRICS_MotionPLConfig == NULL)
+    {
+        cout << "No pointer to HRICS_MotionPLConfig" <<endl;
+        return false;
+    }
+    else
+    {
+        return  dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getOtp(humanName,traj,handConf,isStanding,objectNessecity);
+    }
+}
+
+void hrics_otp_fct()
+{
+    ext_hrics_init_otp= hrics_init_otp;
+    ext_hrics_compute_otp= hrics_compute_otp;
+}
+
 
 
 OTPMotionPl::OTPMotionPl() : HumanAwareMotionPlanner() , m_PathExist(false) , m_HumanPathExist(false) , initTime(10)

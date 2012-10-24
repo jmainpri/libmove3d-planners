@@ -36,6 +36,8 @@ extern API::TwoDGrid* API_activeRobotGrid;
 extern Eigen::Vector3d current_WSPoint;
 extern pair<double,Eigen::Vector3d > current_cost;
 
+
+void hrics_otp_fct();
 /**
  @defgroup HRICS Hri Cost space
  */
