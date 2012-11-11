@@ -80,25 +80,16 @@ public:
 	virtual unsigned int run();
   
   /**
+   * return time in algorithm
+   * this function must be called after ChronoTimeOfDayOn()
+   */
+  double getTime();
+  
+  /**
    * Extract trajectory
    */
   virtual void extractTrajectory() { }
 
-  /**
-	 * Get the run Id
-	 */
-	int getRunId()
-	{
-		return m_runId;
-	};
-  
-  /**
-	 * Set the run Id
-	 */
-	void setRunId(int id)
-	{
-		m_runId = id;
-	};
   
 	/**
 	 * Returns number of consecutive failure
@@ -145,8 +136,6 @@ public:
   };
 
 protected:
-
-  int m_runId;
 	
   unsigned int m_nbConscutiveFailures;
 	unsigned int m_nbExpansion;

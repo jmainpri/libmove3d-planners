@@ -22,6 +22,7 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/ConfigSpace/cspace.hpp"
 #include "API/Roadmap/compco.hpp"
+#include "API/Trajectory/trajectory.hpp"
 /**
  @ingroup Diffusion
  */
@@ -190,7 +191,8 @@ public:
   
 private:
   
-  std::vector< std::pair<double,double> > m_convergence_rate;
+  API::Trajectory* m_current_traj;
+  std::vector< std::pair<double,TrajectoryStatistics> > m_convergence_rate;
 
 };
 

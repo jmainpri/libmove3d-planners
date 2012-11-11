@@ -208,7 +208,7 @@ void HRICS_loadGrid(std::string docname)
 	
 	for (int i=0; (i<5)&&(!reading_OK) ; i++) 
 	{
-		cout << "Reading grid at : " << docname << endl;
+    cout << "Reading Natural Grid" << endl;
 		reading_OK = myGrid->loadFromXmlFile(docname);
 	}
   
@@ -235,7 +235,7 @@ void HRICS_loadGrid(std::string docname)
 //----------------------------------------------------------------------
 void HRICS_init(HRI_AGENTS* agents)
 {  
-  cout << "HRICS_init" << endl;
+  cout << "HRICS_init -------------------------------" << endl;
   
   // When loaded with the cost space turned off
   // This function create and initizialises the global_costSpace object
@@ -293,9 +293,9 @@ void HRICS_init(HRI_AGENTS* agents)
 //    ENV.setDouble( Env::Kvisibility, 60 );
 //    ENV.setDouble( Env::Kreachable,  10 );
     
-    ENV.setDouble(Env::extensionStep,1.5);
-    ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
-    ENV.setDouble(Env::temperatureRate,30);
+//    ENV.setDouble(Env::extensionStep,1.5);
+//    ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
+//    ENV.setDouble(Env::temperatureRate,30);
   }
   else 
   {
@@ -357,8 +357,16 @@ void HRICS_init(HRI_AGENTS* agents)
                                                   dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHumans(),
                                                   HRICS_activeNatu,
                                                   ENV.getDouble(Env::CellSize));
+  
+  std::string home(getenv("HOME_MOVE3D"));
+  std::string filename = "/statFiles/Cost3DGrids/human_grids_0.grid";
+  
+  HRICS_humanCostMaps->loadAgentGrids( home + filename );
 	
-  //API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getAgentGrids()[0];
+  // ------------------------------------------
+  // Set cost type and cost functions
+  // ------------------------------------------
+
 	ENV.setInt(Env::hriCostType,HRICS_Distance);
   
   std::cout << "Initializing the HRI costmap cost function" << std::endl;

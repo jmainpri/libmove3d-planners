@@ -59,11 +59,11 @@ void GlobalCostSpace::initialize()
 }
 
 //------------------------------------------------------------------------------
-CostSpace::CostSpace() : mSelectedCostName("No Cost"), m_deltaMethod(cs_integral), m_resolution(cs_classic) 
+CostSpace::CostSpace() : mSelectedCostName("No Cost"), m_deltaMethod(cs_integral), m_resolution(cs_classic)/* m_resolution(cs_pr2_manip)*/ 
 {
   m_dmax = p3d_get_env_dmax();
   
-  m_resolution = cs_pr2_manip;
+  //m_resolution = cs_pr2_manip;
 }
 
 //------------------------------------------------------------------------------
@@ -180,17 +180,6 @@ double CostSpace::deltaStepCost(double cost1, double cost2, double length)
 				}
 				return cost;
       }
-        
-        //    case MECHANICAL_WORK:
-				//
-				//      if(cost2 > cost1)
-				//      {
-				//    	  return length*(epsilon+ cost2 - cost1);
-				//      }
-				//      else
-				//      {
-				//		  return epsilon*length;
-				//      }
 				
 			case cs_integral:
 			case cs_visibility:
@@ -206,10 +195,9 @@ double CostSpace::deltaStepCost(double cost1, double cost2, double length)
 				
 			case cs_average:
 				return (cost1 + cost2) / 2.;
-				
-				//			case config_cost_and_dist:
-				//				alpha = p3d_GetAlphaValue();
-				//				return alpha * (cost1 + cost2) / 2. + (1. - alpha) * length;
+        
+      case cs_max:
+        return std::max( cost1, cost2 );
 				
 			case cs_boltzman_cost:
 				
@@ -232,14 +220,15 @@ void CostSpace::setNodeCost( Node* node, Node* parent )
   //------------------------------------------------------
   if ( parent != NULL )
   {
-    shared_ptr<Configuration> q_tmp = parent->getConfiguration()->copy();
+    confPtr_t q_tmp = parent->getConfiguration()->copy();
     
     // Compute the sum of cost of the node
     // TODO fix task space bug (should remove the copy)
-    LocalPath path(parent->getConfiguration()->copy(),
-                   node->getConfiguration());
-    
-    node->sumCost() = parent->sumCost() + path.cost();
+//    if( set_sum_cost ) 
+//    {
+//      LocalPath path( parent->getConfiguration()->copy(), node->getConfiguration() );
+//      node->sumCost() = parent->sumCost() + path.cost();
+//    }
     
     // Min and max cost of the compco
     node->getConnectedComponent()->getCompcoStruct()->minCost 
@@ -266,6 +255,21 @@ void CostSpace::setNodeCost( Node* node, Node* parent )
  node->getConnectedComponent()->getCompcoStruct()->maxUrmsonCost);
  }	*/
 
+//jnt->getName() : right-Arm1(6) , index_dof : 16
+//jnt->getName() : right-Arm2(7) , index_dof : 17
+//jnt->getName() : right-Arm3(8) , index_dof : 18
+//jnt->getName() : right-Arm4(9) , index_dof : 19
+//jnt->getName() : right-Arm5(10) , index_dof : 20
+//jnt->getName() : right-Arm6(11) , index_dof : 21
+//jnt->getName() : right-Arm7(12) , index_dof : 22
+
+//jnt->getName() : virtual_object_right(32) , index_dof : 37
+//jnt->getName() : virtual_object_right(32) , index_dof : 38
+//jnt->getName() : virtual_object_right(32) , index_dof : 39
+//jnt->getName() : virtual_object_right(32) , index_dof : 40
+//jnt->getName() : virtual_object_right(32) , index_dof : 41
+//jnt->getName() : virtual_object_right(32) , index_dof : 42
+
 void CostSpace::getPr2ArmConfiguration( Eigen::VectorXd& x, confPtr_t q )
 { 
   x[0] = (*q)[16];
@@ -275,6 +279,57 @@ void CostSpace::getPr2ArmConfiguration( Eigen::VectorXd& x, confPtr_t q )
   x[4] = angle_limit_PI((*q)[20]);
   x[5] = (*q)[21];
   x[6] = angle_limit_PI((*q)[22]);
+  
+  x[7] = (*q)[37];
+  x[8] = (*q)[38];
+  x[9] = (*q)[39];
+  x[10] = angle_limit_PI((*q)[40]);
+  x[11] = angle_limit_PI((*q)[41]);
+  x[12] = angle_limit_PI((*q)[42]);
+}
+
+double CostSpace::getPr2ArmDistance( Robot* robot, Eigen::VectorXd& q_i, Eigen::VectorXd& q_f )
+{
+  p3d_jnt** joints = robot->getRobotStruct()->joints;
+  const int joints_id[] = { 6,7,8,9,10,11,12,32 };
+  double dist=0.0,ljnt=0.0;
+  
+  int k=0;
+  
+  printf("\n");
+  for (int i=0; i<8; i++) 
+  {
+    p3d_jnt* jntPt = joints[joints_id[i]];
+    
+    cout << "jntPt->name : " << jntPt->name << " , " << jntPt->dist << endl;
+    
+    for (int j=0; j<jntPt->dof_equiv_nbr; j++) 
+    {
+      if (p3d_jnt_is_dof_angular(jntPt, j)) 
+      {
+        if (p3d_jnt_is_dof_circular(jntPt, j)) 
+          dist = fabs(jntPt->dist*dist_circle(q_i[k], q_f[k]));
+        else 
+          dist = fabs(jntPt->dist*(q_f[k] - q_i[k]));
+      }
+      else{
+        dist = fabs(q_f[k] - q_i[k]);
+      }
+      
+      if (isnan(dist)) {
+        printf("Distance computation error !!!\n");
+        return P3D_HUGE;
+      }
+      
+      dist = SQR(dist);
+      
+      printf(" dist[%d] = %f\n", jntPt->index_dof + j, dist );
+      
+      ljnt += dist;
+      k++;
+    }
+  }
+  return std::sqrt(ljnt);
 }
 
 //----------------------------------------------------------------------
@@ -283,7 +338,7 @@ double CostSpace::cost(LocalPath& path)
   confPtr_t q_tmp_begin = path.getBegin()->copy();
   confPtr_t q_tmp_end   = path.getEnd()->copy();
   
-  double cost = 0;
+  double cost = 0.0;
   
 	if (ENV.getBool(Env::isCostSpace))
 	{
@@ -298,17 +353,29 @@ double CostSpace::cost(LocalPath& path)
     
     if( m_resolution == cs_pr2_manip )
     {
-      Eigen::VectorXd a( Eigen::VectorXd::Zero(7) );
-      Eigen::VectorXd b( Eigen::VectorXd::Zero(7) );
+      Eigen::VectorXd a( Eigen::VectorXd::Zero(13) );
+      Eigen::VectorXd b( Eigen::VectorXd::Zero(13) );
       
       path.getLocalpathStruct();
       
       getPr2ArmConfiguration( a, path.getBegin() );
       getPr2ArmConfiguration( b, path.getEnd() );
       
-      double param_max = ( a - b ).norm();
+//      cout << "a : " << endl << a << endl;
+//      cout << "b : " << endl << b << endl;
+//      
+//      path.getBegin()->print();
+//      path.getEnd()->print();
+      
+//      double param_max = ( a - b ).norm();
+      double param_max  = getPr2ArmDistance( path.getRobot(), a, b);
       nStep = ceil(param_max/(PlanEnv->getDouble(PlanParam::costResolution)*m_dmax));
       deltaStep = param_max/nStep;
+      
+      cout <<  endl;
+      cout << "param_max : " << param_max << endl;
+      cout << "path.getParamMax() : " << path.getParamMax() << endl;
+      
 //      cout << "param_max : " << param_max << " , nStep : " << nStep << endl;
 //      cout << "a : " << endl << a << endl;
 //      cout << "b : " << endl << b << endl;
@@ -316,7 +383,7 @@ double CostSpace::cost(LocalPath& path)
     
     confPtr_t q;
     
-    double currentCost, prevCost;
+    double currentCost, prevCost, deltaCost;
     double currentParam = 0.0;
     
     prevCost = path.configAtParam(0.0)->cost();
@@ -326,7 +393,17 @@ double CostSpace::cost(LocalPath& path)
       q = path.configAtParam(currentParam);
       currentCost = this->cost(*q);
       
-      cost += deltaStepCost( prevCost, currentCost, deltaStep );
+      deltaCost = deltaStepCost( prevCost, currentCost, deltaStep );
+      
+      if( m_deltaMethod == cs_max )
+      {
+//        cout << "prevCost : " << prevCost << " , currentCost " << currentCost ;
+//        cout << ", deltaCost : " << deltaCost << endl;
+        if( deltaCost > cost ) 
+          cost = deltaCost;
+      }
+      else
+        cost += deltaCost;
       
       prevCost = currentCost;
       currentParam += deltaStep;

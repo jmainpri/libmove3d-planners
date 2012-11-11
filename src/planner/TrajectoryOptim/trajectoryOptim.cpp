@@ -59,6 +59,8 @@ static ChompParameters* m_chompparams=NULL;
 
 stomp_motion_planner::StompParameters* m_stompparams=NULL;
 
+static int m_ArmId=0;
+
 static int m_BaseMLP=0;
 static int m_BaseSmMLP=0;
 static int m_HeadMLP=0;
@@ -72,20 +74,21 @@ static vector<CollisionPoint> m_collision_points;
 // External variable
 vector< vector <double> > traj_optim_to_plot;
 vector< vector <double> > traj_optim_convergence;
+
 CollisionSpace* global_collSpace=NULL;
 
 //--------------------------------------------------------
 // External init method
 //--------------------------------------------------------
-void set_robot_active_joints()
-{    
-  if( PlanEnv->getBool(PlanParam::setActiveDofs) ) 
-  {
-    // This function sets 
-    // the type of dof that are going to be active
-    traj_optim_init_mlp_cntrts_and_fix_joints();
-  }
-}
+//void set_robot_active_joints()
+//{    
+//  if( PlanEnv->getBool(PlanParam::setActiveDofs) ) 
+//  {
+//    // This function sets 
+//    // the type of dof that are going to be active
+//    traj_optim_init_mlp_cntrts_and_fix_joints();
+//  }
+//}
 
 //--------------------------------------------------------
 // General method
@@ -133,6 +136,15 @@ bool traj_optim_invalidate_cntrts()
   // over all constraints
 	for(int i=0; i<rob->cntrt_manager->ncntrts; i++) 
 	{
+    string name = rob->cntrt_manager->cntrts[i]->namecntrt;
+  
+    if ( m_robot->getName() == "JUSTIN_ROBOT" && (name == "p3d_min_max_dofs" || name == "p3d_lin_rel_dofs" ) ) {
+      continue;
+    }
+    
+    if( name == "p3d_fix_jnts_relpos" ){
+      continue;
+    }
     // get constraint from the cntrts manager
     ct = rob->cntrt_manager->cntrts[i];
     p3d_desactivateCntrt( rob, ct );
@@ -141,50 +153,8 @@ bool traj_optim_invalidate_cntrts()
   return true;
 }
 
-//! Virtual object
+//! cntrts and fix
 // --------------------------------------------------------
-bool traj_optim_set_cartesian_mode() {
-  
-  p3d_rob* object = NULL;
-  p3d_rob* robot = m_robot->getRobotStruct();
-  
-  configPt q = p3d_get_robot_config(robot);
-  
-  // For Each Arm
-  for (int i=0; i < int((*robot->armManipulationData).size()); i++) 
-  {
-    ArmManipulationData& armData  = (*robot->armManipulationData)[i];
-    
-    desactivateTwoJointsFixCntrt(robot,armData.getManipulationJnt(), 
-                                 armData.getCcCntrt()->pasjnts[ armData.getCcCntrt()->npasjnts-1 ]);
-    
-    if (armData.getCartesian()) {
-      cout << "Arm Data " << i <<  " is set cartesian" << endl;
-      // Uptdate the Virual object for inverse kinematics 
-      // Be carfull the Arm will be unfixed 
-      p3d_update_virtual_object_config_for_arm_ik_constraint(robot, i, q);
-      activateCcCntrts(robot, i, false);
-      ManipulationUtils::unfixManipulationJoints(robot, i);
-      if(object){
-        armData.getManipulationJnt()->dist = object->joints[1]->dist;
-      }
-    } else {
-      deactivateCcCntrts(robot, i);
-      p3d_update_virtual_object_config_for_arm_ik_constraint(robot, i, q);
-      p3d_set_and_update_this_robot_conf(robot, q);
-      setAndActivateTwoJointsFixCntrt(robot,armData.getManipulationJnt(),
-                                      armData.getCcCntrt()->pasjnts[ armData.getCcCntrt()->npasjnts-1 ]);
-    }
-  }
-  p3d_set_and_update_this_robot_conf(robot, q);
-  p3d_get_robot_config_into(robot, &q);
-  p3d_destroy_config(robot, q);
-  return true;
-}
-
-//--------------------------------------------------------
-// Main function to fix pr2 joints
-//--------------------------------------------------------
 bool traj_optim_init_mlp_cntrts_and_fix_joints()
 {
   m_robot = global_Project->getActiveScene()->getActiveRobot();
@@ -195,18 +165,18 @@ bool traj_optim_init_mlp_cntrts_and_fix_joints()
     return false;
   }
   
-  if( m_robot->getName() != "JUSTIN_ROBOT" ) 
+  if( true /*m_robot->getName() != "JUSTIN_ROBOT"*/ ) 
   {
     if( !traj_optim_invalidate_cntrts() ) {
       return false;
     }
     
-    if( !traj_optim_set_cartesian_mode() ) {
-      return false;
-    }
+    //    if( !traj_optim_switch_cartesian_mode(false) ) {
+    //      return false;
+    //    }
   }
   
-  switch( PlanEnv->getInt(PlanParam::setOfActiveJoints) )
+  switch( ENV.getInt(Env::setOfActiveJoints) )
   {
     case 0 : // Navigation
       cout << "Set navigation parameters" << endl;
@@ -221,10 +191,12 @@ bool traj_optim_init_mlp_cntrts_and_fix_joints()
       p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
       p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
       
-      int arm_id = 0;
-      if( m_robot->getName() == "JUSTIN_ROBOT" ) arm_id = 1;
-      fixAllJointsWithoutArm( m_robot->getRobotStruct() , arm_id );
-
+      m_ArmId = 0;
+      if( m_robot->getName() == "JUSTIN_ROBOT" ) 
+        m_ArmId = 1;
+      
+      fixAllJointsWithoutArm( m_robot->getRobotStruct() , m_ArmId );
+      
       if( m_robot->getName() == "JUSTIN_ROBOT" )
       {
         unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[2] );
@@ -232,7 +204,7 @@ bool traj_optim_init_mlp_cntrts_and_fix_joints()
         unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[4] );
         unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[5] );
         // Unfix virtual joint
-        unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[30] );
+        //unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[30] );
       }
     }
       break;
@@ -246,6 +218,62 @@ bool traj_optim_init_mlp_cntrts_and_fix_joints()
       break;
   }
   
+  return true;
+}
+
+//! Virtual object
+// --------------------------------------------------------
+bool traj_optim_switch_cartesian_mode(bool cartesian) {
+  
+  cout << "Set Cartesian (" << cartesian << ")" << endl;
+  
+  p3d_rob* object = NULL;
+  p3d_rob* robot = m_robot->getRobotStruct();
+  
+  configPt q = p3d_get_robot_config(robot);
+  
+  // For Each Arm
+  for (int i=0; i < int((*robot->armManipulationData).size()); i++) 
+  {
+    if(  m_robot->getName() == "JUSTIN_ROBOT" && m_ArmId != i )
+      continue;
+    
+    ArmManipulationData& armData  = (*robot->armManipulationData)[i];
+    
+    if( cartesian && m_ArmId==i ) 
+      armData.setCartesian( true );
+    else 
+      armData.setCartesian( false );
+    
+    desactivateTwoJointsFixCntrt(robot,armData.getManipulationJnt(), armData.getCcCntrt()->pasjnts[ armData.getCcCntrt()->npasjnts-1 ]);
+    
+    if (armData.getCartesian()) 
+    {
+      cout << "Arm Data " << i <<  " is set cartesian" << endl;
+      // Uptdate the Virual object for inverse kinematics 
+      // Be carfull the Arm will be unfixed 
+      //p3d_update_virtual_object_config_for_arm_ik_constraint(robot, i, q);
+      activateCcCntrts(robot, i, false);
+      ManipulationUtils::unfixManipulationJoints(robot, i);
+      shootTheObjectArroundTheBase(robot, robot->baseJnt, armData.getManipulationJnt(), 2.0);      
+      
+      if(object)
+        armData.getManipulationJnt()->dist = object->joints[1]->dist;
+      else 
+        armData.getManipulationJnt()->dist  = 0.10;
+      
+    } else {
+      deactivateCcCntrts(robot, i);
+      //p3d_update_virtual_object_config_for_arm_ik_constraint(robot, i, q);
+      p3d_set_and_update_this_robot_conf(robot, q);
+      setAndActivateTwoJointsFixCntrt(robot,armData.getManipulationJnt(), armData.getCcCntrt()->pasjnts[ armData.getCcCntrt()->npasjnts-1 ]);
+      ManipulationUtils::fixManipulationJoints(robot, i, q, NULL);
+      shootTheObjectInTheWorld(robot, armData.getManipulationJnt());
+    }
+  }
+  p3d_set_and_update_this_robot_conf(robot, q);
+  p3d_get_robot_config_into(robot, &q);
+  p3d_destroy_config(robot, q);
   return true;
 }
 
@@ -339,6 +367,56 @@ bool traj_optim_costspace_init()
 
 //! Generate A Soft Motion Trajectory
 // --------------------------------------------------------
+bool traj_optim_generate_pointsOnTraj()
+{
+//  if ( m_robot->getName() != traj.getRobot()->getName() ) 
+//  {
+//    cout << "trajectory not for propper robot" << endl;
+//    return false;
+//  }
+  cout << "Generate Points on Vias" << endl;
+  
+  if ( m_robot == NULL ) 
+    m_robot = global_Project->getActiveScene()->getActiveRobot();
+  
+  API::Trajectory traj = m_robot->getCurrentTraj();
+  
+  int nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
+  int nb_via = traj.getNbOfViaPoints()-2;
+  
+  if( nb_via < 1 )
+  {
+    cout << "not enought via" << endl;
+    return false;
+  }
+  
+  int nb_points_per_via = ceil( nb_points/nb_via );
+  
+  API::Trajectory new_traj( m_robot );
+  
+  double param=0.0;
+  double delta = 0.0;
+  double density = 4;
+  double step = traj.getRangeMax()/(nb_points*density);
+  
+  for (int i=0; i<traj.getNbOfPaths(); i++ ) 
+  {
+    param += traj.getLocalPathPtrAt( i )->getParamMax();
+    delta = -step*density;
+    
+    for(int j=0; j<nb_points_per_via; j++ )
+    {
+      new_traj.push_back( traj.configAtParam( param+delta ));
+      delta += step; 
+    }
+  }
+  traj = new_traj;
+  traj.replaceP3dTraj();
+  return true;
+}
+
+//! Generate A Soft Motion Trajectory
+// --------------------------------------------------------
 bool traj_optim_generate_softMotion()
 {
   if ( m_robot == NULL ) 
@@ -357,9 +435,9 @@ bool traj_optim_generate_softMotion()
   
   cout << "m_UpBodyMLP = " << m_UpBodyMLP << endl;
   
-  //T.cutTrajInSmallLP( 10 );
-  T.replaceP3dTraj();
-  //T.print();
+  // T.cutTrajInSmallLP( 10 );
+  // T.replaceP3dTraj();
+  // T.print();
   
   MANPIPULATION_TRAJECTORY_CONF_STR confs;
   SM_TRAJ smTraj;
@@ -385,62 +463,63 @@ bool traj_optim_generate_softMotion()
   //smTraj.plot();
   
   T = m_robot->getCurrentTraj();
-  double delta = T.getRangeMax() / 50 ;
+  double delta = T.getRangeMax() / (100-1) ;
   
   p3d_multiLocalPath_disable_all_groupToPlan(m_robot->getRobotStruct(), FALSE);
   p3d_multiLocalPath_set_groupToPlan(m_robot->getRobotStruct(), m_UpBodyMLP, 1, FALSE);
   
   API::Trajectory newT(m_robot);
-  
   cout << "delta = " << delta << endl;
   
-  //  double param_first = T.
+  double t = 0.0;
   
-  for (double t=0; t<=T.getRangeMax(); t += delta ) 
+  for (int i=0; i<100; i++ ) 
   {
     newT.push_back( T.configAtParam(t) );
+    t += delta;
+    
   }
   newT.replaceP3dTraj();
   
-  // Set to plot
-  traj_optim_to_plot.clear();
-  vector<double> x,y;
-  x.resize(100);
-  y.resize(100);
-  
-  // SoftMotion
-  int i=0;
-  delta = T.getRangeMax()/100;
-  
-  for (double t=0; t<=T.getRangeMax(); t += delta ) 
-  {
-    shared_ptr<Configuration> q = T.configAtParam(t);
-    x[i] = (*q)[6];
-    y[i] = (*q)[7];
-    i++;
-    
-    if (i >= int(x.size()) || i >= int(y.size()))
-      break;
-  }
-  traj_optim_to_plot.push_back( x );
-  traj_optim_to_plot.push_back( y );
-  
-  // Initial traj
-  i=0;
-  delta = TSaved.getRangeMax()/100;
-  
-  for (double t=0; t<=TSaved.getRangeMax(); t += delta ) 
-  {
-    shared_ptr<Configuration> q = TSaved.configAtParam(t);
-    x[i] = (*q)[6];
-    y[i] = (*q)[7];
-    i++;
-    
-    if (i >= int(x.size()) || i >= int(y.size()))
-      break;
-  }
-  traj_optim_to_plot.push_back( x );
-  traj_optim_to_plot.push_back( y );
+//  // Set to plot
+//  traj_optim_to_plot.clear();
+//  vector<double> x,y;
+//  x.resize(100);
+//  y.resize(100);
+//  
+//  // SoftMotion
+//  int i=0;
+//  delta = T.getRangeMax()/100;
+//  
+//  for (double t=0; t<=T.getRangeMax(); t += delta ) 
+//  {
+//    shared_ptr<Configuration> q = T.configAtParam(t);
+//    x[i] = (*q)[6];
+//    y[i] = (*q)[7];
+//    i++;
+//    
+//    if (i >= int(x.size()) || i >= int(y.size()))
+//      break;
+//  }
+//  traj_optim_to_plot.push_back( x );
+//  traj_optim_to_plot.push_back( y );
+//  
+//  // Initial traj
+//  i=0;
+//  delta = TSaved.getRangeMax()/100;
+//  
+//  for (double t=0; t<=TSaved.getRangeMax(); t += delta ) 
+//  {
+//    shared_ptr<Configuration> q = TSaved.configAtParam(t);
+//    x[i] = (*q)[6];
+//    y[i] = (*q)[7];
+//    i++;
+//    
+//    if (i >= int(x.size()) || i >= int(y.size()))
+//      break;
+//  }
+//  traj_optim_to_plot.push_back( x );
+//  traj_optim_to_plot.push_back( y );
   return true;
 }
 
@@ -715,23 +794,23 @@ void traj_optim_hrics_manip_init_joints()
     m_active_joints.push_back( 23 );
     
     // Set the planner joints
-//    m_planner_joints.clear();
-//    m_planner_joints.push_back( 2 );
-//    m_planner_joints.push_back( 3 );
-//    m_planner_joints.push_back( 4 );
-//    m_planner_joints.push_back( 5 );
-//    m_planner_joints.push_back( 18 );
-//    m_planner_joints.push_back( 19 );
-//    m_planner_joints.push_back( 20 );
-//    m_planner_joints.push_back( 21 );
-//    m_planner_joints.push_back( 22 );
-//    m_planner_joints.push_back( 23 );
-//    m_planner_joints.push_back( 24 );
     m_planner_joints.clear();
     m_planner_joints.push_back( 2 );
     m_planner_joints.push_back( 3 );
     m_planner_joints.push_back( 4 );
-    m_planner_joints.push_back( 30 );
+    m_planner_joints.push_back( 5 );
+    m_planner_joints.push_back( 18 );
+    m_planner_joints.push_back( 19 );
+    m_planner_joints.push_back( 20 );
+    m_planner_joints.push_back( 21 );
+    m_planner_joints.push_back( 22 );
+    m_planner_joints.push_back( 23 );
+    m_planner_joints.push_back( 24 );
+//    m_planner_joints.clear();
+//    m_planner_joints.push_back( 2 );
+//    m_planner_joints.push_back( 3 );
+//    m_planner_joints.push_back( 4 );
+//    m_planner_joints.push_back( 30 );
   }
   
   m_coll_space = NULL;
@@ -1024,7 +1103,7 @@ void traj_optim_init_planning_type(int type)
 
 bool traj_optim_initScenario()
 {
-  traj_optim_init_planning_type( PlanEnv->getInt(PlanParam::setOfActiveJoints) );
+  traj_optim_init_planning_type( ENV.getInt(Env::setOfActiveJoints) );
   
   if(!traj_optim_set_scenario_type()) {
     cout << "Not well initialized" << endl;
@@ -1040,33 +1119,53 @@ bool traj_optim_initScenario()
   return true;
 }
 
-//! Chomp
+//!
+//! Get Initial trajectory
 // --------------------------------------------------------
-bool traj_optim_runChomp()
+bool traj_optim_InitTraj(API::Trajectory& T)
 {
   if( !m_init )
   {
-    traj_optim_initScenario();
-  }
-  else
-  {
-    if ( m_coll_space && m_sce == Shelf ) 
+    if(!traj_optim_initScenario())
     {
-      traj_optim_shelf_set_localpath_and_cntrts();
+      return false;
     }
   }
-  
-  // Get Initial trajectory
-  // ----------------------
-  API::Trajectory T;
   
   if( PlanEnv->getBool(PlanParam::withCurrentTraj) )
   {
     T = m_robot->getCurrentTraj();
+    
+    if( T.getNbOfPaths() == 0 ) {
+      return false;
+    }
+    //    PlanEnv->setInt( PlanParam::nb_pointsOnTraj, T.getNbOfViaPoints() );
+    T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
+    T.replaceP3dTraj();
+    //    cout << "T.getRangeMax() : " << T.getRangeMax() << endl;
+    //    cout << "T.getNbOfPaths() : " << T.getNbOfPaths() << endl;
+    //    cout << "T.cost() : " << T.cost() << endl;
+    //    T.print();
   }
   else 
   {
     T = traj_optim_create_sraight_line_traj(); 
+    T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
+    T.replaceP3dTraj();
+    //T.print();
+  }
+  
+  return true;
+}
+
+//! Chomp
+// --------------------------------------------------------
+bool traj_optim_runChomp()
+{
+  API::Trajectory T(m_robot);
+  
+  if( !traj_optim_InitTraj(T) ){
+    return false;
   }
   
   int nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
@@ -1096,54 +1195,28 @@ bool traj_optim_runChomp()
   return true;
 }
 
-//!
-//! Stomp
+//! Init Stomp
 // --------------------------------------------------------
 bool traj_optim_initStomp()
 {
-  if( !m_init )
-  {
-    if(!traj_optim_initScenario())
-    {
-      return false;
-    }
-  }
+  API::Trajectory T(m_robot);
   
-  // Get Initial trajectory
-  // ----------------------
-  API::Trajectory T;
-  
-  if( PlanEnv->getBool(PlanParam::withCurrentTraj) )
+  if( !traj_optim_InitTraj(T) )
   {
-    T = m_robot->getCurrentTraj();
-    
-    if( T.getNbOfPaths() == 0 ) {
-      return false;
-    }
-    //    PlanEnv->setInt( PlanParam::nb_pointsOnTraj, T.getNbOfViaPoints() );
-    T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
-    T.replaceP3dTraj();
-//    cout << "T.getRangeMax() : " << T.getRangeMax() << endl;
-//    cout << "T.getNbOfPaths() : " << T.getNbOfPaths() << endl;
-//    cout << "T.cost() : " << T.cost() << endl;
-//    T.print();
-  }
-  else 
-  {
+    cout << "Init Stomp with straight line!!!" << endl;
     T = traj_optim_create_sraight_line_traj(); 
     T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
     T.replaceP3dTraj();
-    //T.print();
   }
   
   // Save passive dof to generate the Move3D trajectory
   std::vector<confPtr_t> passive_dofs = T.getVectorOfConfiguration();
   
-  if( ENV.getBool(Env::drawTraj) ) 
-  {
-    g3d_draw_allwin_active();
-  }
-     
+  //  if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) ) 
+  //  {
+  //    g3d_draw_allwin_active();
+  //  }
+  
   delete m_stompparams;
   delete m_chompplangroup;
   delete m_chomptraj;
@@ -1153,9 +1226,9 @@ bool traj_optim_initStomp()
   m_stompparams = new stomp_motion_planner::StompParameters;
   m_stompparams->init();
   
-//  for (int i=0; i<m_planner_joints.size(); i++) {
-//    cout << planner_joints[i] << endl;
-//  }
+  //  for (int i=0; i<m_planner_joints.size(); i++) {
+  //    cout << planner_joints[i] << endl;
+  //  }
   m_chompplangroup = new ChompPlanningGroup( m_robot, m_planner_joints );
   m_chompplangroup->collision_points_ = m_collision_points;
   
@@ -1187,7 +1260,9 @@ bool traj_optim_initStomp()
   return true;
 }
 
-bool traj_optim_runStomp()
+//! Run Stomp
+// --------------------------------------------------------
+bool traj_optim_runStomp(int runId)
 {
   if(!traj_optim_initStomp())
   {
@@ -1195,9 +1270,11 @@ bool traj_optim_runStomp()
     return false;
   }
   
+  m_stompparams->init();
+  
   if(!PlanEnv->getBool(PlanParam::trajOptimTestMultiGauss))
   {
-    optimizer->runDeformation(0,0);
+    optimizer->runDeformation( 0, runId );
     //optimizer->generateNoisyTrajectories();
   }
   else
@@ -1206,6 +1283,29 @@ bool traj_optim_runStomp()
   }
   optimizer->resetSharedPtr();
   return true;
+}
+
+bool traj_optim_runStomp(int runId, const API::Trajectory& traj)
+{
+//  if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
+    optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
+
+  optimizer->initializeFromNewTrajectory( traj );
+  optimizer->runDeformation( 0, runId );
+  return true;
+}
+
+bool traj_optim_runStompNoReset(int runId)
+{
+  traj_optim_switch_cartesian_mode(false);
+  
+  API::Trajectory traj( m_robot );
+  
+  if( !traj_optim_InitTraj( traj ) ){
+    return false;
+  }
+  
+  return traj_optim_runStomp( runId, traj );
 }
 
 // --------------------------------------------------------
@@ -1218,5 +1318,3 @@ void traj_optim_draw_collision_points()
     m_chompplangroup->draw();
   } 
 }
-
-

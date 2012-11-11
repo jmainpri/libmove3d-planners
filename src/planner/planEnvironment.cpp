@@ -61,9 +61,6 @@ PlanParam::~PlanParam()
 // Parameter container
 void initPlannerParameters()
 {
-
-
-
 #ifdef QT_LIBRARY
   EnumPlannerParameterObject = new PlanParam;
 #endif
@@ -83,13 +80,13 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::isWeightedChoice,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::nextIterWaitForGui,         new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::rrtExtractShortestPath,     new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( PlanParam::setActiveDofs,               new boolContainer(false)));
   
         // Time
-        myBoolMap.insert( std::make_pair( PlanParam::planWithTimeLimit,          new boolContainer(true)));
+        myBoolMap.insert( std::make_pair( PlanParam::planWithTimeLimit,          new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajWithTimeLimit,          new boolContainer(true)));
   
         // Smoothing stage
+        myBoolMap.insert( std::make_pair( PlanParam::trajUseCost,                new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajPrintGain,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajPartialShortcut,        new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajSaveCost,               new boolContainer(false)));
@@ -98,10 +95,12 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::trajStompComputeColl,       new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::trajStompWithTimeLimit,     new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::trajStompMultiplyM,         new boolContainer(true)));
+        myBoolMap.insert( std::make_pair( PlanParam::trajStompWithRRT,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajBiasOptim,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajMoveHuman,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajUseOtp,                 new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajNPoints,                new boolContainer(true)));
+        myBoolMap.insert( std::make_pair( PlanParam::trajComputeCostAfterPlannif, new boolContainer(false)));
   
         myBoolMap.insert( std::make_pair( PlanParam::withMaxIteration,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::withGainLimit,              new boolContainer(true)));
@@ -177,9 +176,9 @@ void initPlannerParameters()
   
         // RRRT
         myIntMap.insert(std::make_pair( PlanParam::plannerMaxIterations,         new intContainer(1000000)));
+        myIntMap.insert(std::make_pair( PlanParam::smoothMaxIterations,         new intContainer(100)));
   
         // Replanning
-        myIntMap.insert(std::make_pair( PlanParam::setOfActiveJoints,            new intContainer(0)));
         myIntMap.insert(std::make_pair( PlanParam::replanningAlgorithm,          new intContainer(0)));
   
         // Object TransfertPoint variable
@@ -198,7 +197,7 @@ void initPlannerParameters()
         // Double
         // ------------------------------------------------------------------
         myDoubleMap.insert( std::make_pair( PlanParam::timeLimitPlanning,        new doubleContainer(10.0)));
-        myDoubleMap.insert( std::make_pair( PlanParam::timeLimitSmoothing,       new doubleContainer(10.0)));
+        myDoubleMap.insert( std::make_pair( PlanParam::timeLimitSmoothing,       new doubleContainer(2.0)));
         // Post-processing phaze
         myDoubleMap.insert( std::make_pair( PlanParam::MaxFactor,                new doubleContainer(3.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::MinStep,                  new doubleContainer(2.0)));

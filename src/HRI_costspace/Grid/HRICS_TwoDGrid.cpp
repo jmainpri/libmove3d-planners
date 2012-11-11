@@ -192,8 +192,8 @@ _Open(false),
 _Closed(false),
 mCostIsComputed(false),
 mCost(0.0),
-mIsValid(false),
-mIsCellTested(false)
+mIsCellTested(false),
+mIsValid(false)
 {
 }
 
@@ -376,8 +376,8 @@ double PlanState::computeLength(API::State *parent)
   
   double dist = ( pos1 - pos2 ).norm();
   
-  //    double cost1 = preced->_Cell->getCost();
-  double cost2 = _Cell->getCost();
+//  double cost1 = preced->_Cell->getCost();
+//  double cost2 = _Cell->getCost();
   double g = preced->g() + /*cost1 + cost2 */ dist;
   
   //    cout << "dist = " << dist << endl;

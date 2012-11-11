@@ -53,6 +53,7 @@
 #include "API/Trajectory/trajectory.hpp"
 #include "planner/planEnvironment.hpp"
 #include "Graphic-pkg.h"
+#include "P3d-pkg.h"
 
 #include "stompOptimizer.hpp"
 
@@ -145,7 +146,9 @@ namespace stomp_motion_planner
   //! Initialize policy improvment
   //! 1 - Allocates a multivariate gaussian sampler
   //! 2 - Computes the projection matrix
-  bool PolicyImprovement::initialize(const int num_rollouts, const int num_time_steps, const int num_reused_rollouts,
+  bool PolicyImprovement::initialize(const int num_rollouts, 
+                                     const int num_time_steps, 
+                                     const int num_reused_rollouts,
                                      const int num_extra_rollouts, 
                                      boost::shared_ptr<Policy> policy,
                                      boost::shared_ptr<Task>   task,
@@ -371,6 +374,62 @@ namespace stomp_motion_planner
     return true;
   }
   
+  void PolicyImprovement::addStraightLines( std::vector<int> points, Rollout& rollout)
+  {
+    shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
+    shared_ptr<CovariantTrajectoryPolicy> policy = static_pointer_cast<CovariantTrajectoryPolicy>(policy_);
+    
+    const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
+    
+    Eigen::MatrixXd parameters( num_dimensions_, num_time_steps_ );
+    
+    for ( int i=0; i<num_dimensions_; ++i) {
+      parameters.row(i) = rollout.parameters_[i].transpose();
+    }
+    
+    for (int k=0; k<int(points.size()-1); k++) {
+    
+      int init = points[k];
+      int end = points[k+1];
+      if( init == end ) 
+        continue;
+      
+      std::vector<confPtr_t> confs(2);
+      confs[0] = optimizer->getPlanningGroup()->robot_->getCurrentPos();
+      confs[1] = optimizer->getPlanningGroup()->robot_->getCurrentPos();
+      
+      for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+        (*confs[0])[joints[i].move3d_dof_index_] = parameters( i, init );
+      
+      for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+        (*confs[1])[joints[i].move3d_dof_index_] = parameters( i, end );
+      
+      LocalPath path( confs[0], confs[1] );
+      
+      double step = path.getParamMax() / (end-init);
+      double param = step;
+      for ( int j=init; j<=end; ++j)
+      {
+        confPtr_t q = path.configAtParam(param);
+        
+        for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i )
+          parameters(i,j) = (*q)[joints[i].move3d_dof_index_];
+        
+        param += step;
+      }
+    }
+    
+    parameters_.resize( num_dimensions_);
+    
+    for ( int i=0; i<num_dimensions_; ++i) {
+      rollout.parameters_[i] = parameters.row(i);
+    }
+    
+    for (int d=0; d<num_dimensions_; ++d) {
+      rollout.noise_[d] = rollout.parameters_[d] - parameters_[d];
+    }
+  }
+  
   bool PolicyImprovement::generateRollouts(const std::vector<double>& noise_stddev)
   {
     assert(initialized_);
@@ -400,8 +459,7 @@ namespace stomp_motion_planner
       for (int r=0; r<num_rollouts_; ++r)
       {
         double cost = rollouts_[r].getCost();
-        
-        //cout << "rollouts_(" << r << ") cost : " << rollouts_[r].getCost() << endl;
+//        cout << "rollouts_(" << r << ") cost : " << rollouts_[r].getCost() << endl;
         
         // discard out of bounds rollouts
         if (rollouts_[r].out_of_bounds_) {
@@ -409,13 +467,18 @@ namespace stomp_motion_planner
         }
         rollout_cost_sorter_.push_back(std::make_pair(cost,r));
       }
-      if (extra_rollouts_added_)
+      if (/*extra_rollouts_added_*/ false )
       {
         for (int r=0; r<num_rollouts_extra_; ++r)
         {
-          double cost = extra_rollouts_[r].getCost();
+          double cost;
+          if(r==0)
+            cost = 0.0;
+          else
+            cost = extra_rollouts_[r].getCost();
+          
           rollout_cost_sorter_.push_back(std::make_pair(cost,-r-1));
-          // cout << "cost : " << cost << endl;
+//          cout << "extra cost["<< r <<"]: " << cost << endl;
           // index is -ve if rollout is taken from extra_rollouts
         }
         extra_rollouts_added_ = false;
@@ -468,8 +531,49 @@ namespace stomp_motion_planner
         rollouts_[r].noise_[d] = noise_stddev[d]*tmp_noise_[d];
         rollouts_[r].parameters_[d] = parameters_[d] + rollouts_[r].noise_[d];
         
+        bool add_straight_lines = false;
+        
+        if( add_straight_lines ) 
+        {
+//          double size = p3d_random( 0.0, (num_time_steps_-1)/2 );
+//          double center = p3d_random( 0.0, (num_time_steps_-1));
+//          int init = round(center - size/2);
+//          int end = round(center + size/2);
+//          
+//          cout << "center : " << center << " , size : " << size << endl;
+//          cout << "init : " << init << " , end : " << end << endl; 
+//          if (init < 0.0) {
+//            init = 0;
+//          }
+//          if (init > (num_time_steps_-1)) {
+//            init = num_time_steps_-1;
+//          }
+//          if (end < 0.0) {
+//            end = 0;
+//          }
+//          if (end > (num_time_steps_-1)) {
+//            end = num_time_steps_-1;
+//          }
+          
+          vector<int> points;
+          points.resize(7);
+          points[0] = 0;
+          points[1] = num_time_steps_-1;
+          
+          for (int i=2; i<int(points.size()); i++) {
+            points[i] = round(p3d_random( 1.0, (num_time_steps_-2)));
+          }
+          
+          std::sort(points.begin(), points.end());
+          
+//          if( init != end )
+          addStraightLines( points, rollouts_[r] );
+        }
+        
         // Saves the first rollout for first dimenstion
-        if (r == 0 && d == 0) 
+        
+        /**
+         if (r == 0 && d == 0) 
         {          
           global_noiseTrajectory1.clear();
           
@@ -491,6 +595,7 @@ namespace stomp_motion_planner
             //global_noiseTrajectory2.push_back(rollouts_[r].parameters_[d][i]);
           }
         }
+         */
         //cout << "rollouts_[" << r << "].noise_[" << d << "] = "<< rollouts_[r].noise_[d].transpose() << endl;
         //cout << "rollouts_[" << r << "].parameters_[" << d << "] = "<< rollouts_[r].parameters_[d].transpose() << endl;
       }

@@ -12,6 +12,8 @@
 
 #include "planner/Diffusion/Variants//Multi-RRT.hpp"
 
+extern std::vector<confPtr_t> multi_rrt_configs;
+
 /**
  @ingroup Diffusion
  */
@@ -19,24 +21,56 @@ class MultiTRRT : public MultiRRT
 {	
 public:
 	
-    MultiTRRT(Robot* R, Graph* G);
+  MultiTRRT(Robot* R, Graph* G);
 	
-    ~MultiTRRT();
+  ~MultiTRRT();
 	
-    virtual int init();
-	
-	void initalizeRoot(Node* rootNode);
-	
-    /**
-	 * costConnectNodeToComp
-	 * Try to connect a node to a given component
-	 * taking into account the fact that the space
-	 * is a cost space
-	 * @return: TRUE if the node and the componant have
-	 * been connected.
-	 */
-    bool connectNodeToCompco(Node* N, Node* CompNode);
-	
+  virtual int init();
+	void initalizeRoot(Node* rootNode, int tree);
+  Node* closestNeighInTree(Node* N, int tree);	
+  bool connectNodeToCompco(Node* N, Node* CompNode);	
+  bool testAddEdge(Node* source, Node* target);
+  void extractTrajectory();
+  
+  unsigned int run();
+  
+  std::vector< std::vector<Node* > >& getTrees() { return m_trees; }
+  
+private:
+
+  int                                 m_tree_id;
+  std::vector< confPtr_t >            m_seeds;
+  std::vector< double >               m_temperature;
+  std::vector< std::vector<Node* > >  m_trees;
+  API::Trajectory*                    m_current_traj;
 };
+
+/**
+ @ingroup Diffusion
+ */
+class MultiTransitionExpansion : public RRTExpansion {
+  
+public:
+	MultiTransitionExpansion();
+	MultiTransitionExpansion(Graph* G);
+  
+	~MultiTransitionExpansion() { }
+  
+  bool costTestSucceeded(Node* previousNode, double currentCost, double temperature);
+  bool transitionTest(Node& fromNode,LocalPath& extensionLocalpath);
+  void adjustTemperature(bool accepted, Node* node, double& temperature );
+  bool expandToGoal(Node* expansionNode, confPtr_t directionConfig);
+  
+  Node* getExpansionNode( Node* compNode, confPtr_t direction, int distance);
+  
+	int expandProcess(Node* expansionNode, std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode,
+                    Env::expansionMethod method);
+  
+  MultiTRRT* rrt;
+  int m_tree_id;
+  double m_temperature;
+};
+
+
 
 #endif /* MULTITRANSITIONRRT_HPP_ */

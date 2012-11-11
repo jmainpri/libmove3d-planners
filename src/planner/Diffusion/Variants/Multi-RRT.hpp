@@ -29,6 +29,9 @@ public:
 	 */
 	bool addSeed(std::tr1::shared_ptr<Configuration> q);
 	
+  /**
+   * Get random compco for expansion
+   */
 	Node* getRandomCompcoForExpansion(Node* fromNode);
 	
 	/**
@@ -42,8 +45,7 @@ public:
 	Node* getGoalCompco();
 
 	/**
-	 * Main function of
-	 * multi RRT
+	 * Main function of multi RRT
 	 */ 
 	unsigned int run();
 	
@@ -52,7 +54,6 @@ protected:
 	
 	Node* m_initNode;
 	Node* m_goalNode;
-	
 };
 
 #endif /* MULTI_RRT_HPP_ */

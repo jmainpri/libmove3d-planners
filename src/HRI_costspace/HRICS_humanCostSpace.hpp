@@ -25,13 +25,20 @@ namespace HRICS
 
 		~HumanCostSpace();
     
+    Robot* getRobot() { return m_Robot; }
+    
     double getCost(Configuration& q);
-		
+		double getCompleteCost(Configuration& q, std::vector<double>& cost_sum);
+    
     void computeAllCellCost();
     void testCostFunction();
     
     void loadAgentGrids(const std::string& filename);
     void saveAgentGrids();
+    
+    void drawDistances();
+    
+    AgentGrid* getAgentGrid(Robot* agent);
     
 	private:
     bool initElementarySpaces();
@@ -41,6 +48,7 @@ namespace HRICS
     void deleteHumanGrids();
     
     bool initPr2();
+    bool initJustin();
     bool initGreyTape();
     
     double groupingCost();
@@ -49,6 +57,7 @@ namespace HRICS
     std::vector<Joint*>           m_CostJoints;
     std::vector<Robot*>           m_Humans;
     std::vector<AgentGrid*>       m_Grids;
+    Joint*                        m_PlatformJoint;
     
     enum PlanningType { NAVIGATION = 0, MANIPULATION = 1, MOBILE_MANIP = 2 } m_planning_type;
     

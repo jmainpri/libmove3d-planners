@@ -79,7 +79,7 @@ bool CostOptimization::oneLoopDeform()
   shared_ptr<Configuration> qInitPt = getRobot()->getCurrentPos();
 	
 	//Get 3 configurations at random along the trajectory
-	vector<confPtr_t>  vectConf = get3RandSuccesConfAlongTraj(lPrev,lCurrent,lNext,m_step);
+	vector<confPtr_t>  vectConf = get3RandSuccesConfAlongTraj( lPrev, lCurrent, lNext, m_step );
 	confPtr_t qPrevPt = vectConf.at(0);
 	confPtr_t qCurrPt = vectConf.at(1);
 	confPtr_t qNextPt = vectConf.at(2);
@@ -92,9 +92,12 @@ bool CostOptimization::oneLoopDeform()
 	
   // Get the New configuration in qtRand dirrenction
 	confPtr_t qNewPt = perturbCurrent( qCurrPt, qRandPt, m_step, m_descent );
-	if ( qNewPt->getConfigStruct() == NULL ) {
+  
+	if ( qNewPt->getConfigStruct() == NULL )
 		return false;
-	}
+  
+  if( qPrevPt->equal( *qNewPt ) || qNextPt->equal( *qNewPt ) )
+    return false;
 	
 	// Set the middle config in the configuration vector
 	vectConf[1] = qNewPt;
@@ -132,8 +135,7 @@ bool CostOptimization::oneLoopDeform()
 			{
 				cout << "Error in oneLoopDeform" << endl;
 			}
-			
-      // Computes the NEW subportion cost
+      
 			paths.clear();
 			paths.push_back(FirstHalf);
 			paths.push_back(SecondHalf);
@@ -228,7 +230,7 @@ bool CostOptimization::oneLoopDeform()
 		m_inCollision=true;
 	}
   
-  if( ENV.getBool(Env::drawTraj) ) {
+  if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) ) {
     
     if( isOptimSuccess ){
       replaceP3dTraj();
@@ -772,6 +774,9 @@ bool CostOptimization::connectConfiguration( confPtr_t q, double step )
 //! @param idRun the id of the run
 void CostOptimization::runDeformation( int nbIteration, int idRun )
 {
+  m_runId = idRun;
+  m_MaxNumberOfIterations = nbIteration;
+  
 	//cout << "Before Deform : Traj cost = " << this->cost() << endl;
   if( global_costSpace == NULL )
   {
@@ -780,6 +785,7 @@ void CostOptimization::runDeformation( int nbIteration, int idRun )
   }
   
   traj_convergence_with_time.clear();
+  m_convergence_rate.clear();
   
   timeval tim;
 	double ts(0.0);  
@@ -798,24 +804,24 @@ void CostOptimization::runDeformation( int nbIteration, int idRun )
   
 	double costBeforeDeformation = this->cost();
 	double initalRange = getRangeMax();
+  
+  if(PlanEnv->getBool(PlanParam::trajSaveCost))
+    storeCostAndGain( costBeforeDeformation, costBeforeDeformation );
 	
-	if (PointsToDraw != NULL) {
+	if (PointsToDraw != NULL)
 		delete PointsToDraw;
-	}
 	
 	PointsToDraw = new PointCloud;
   
   m_shortcutRatio = 4; // one out of 4
   m_GainOfIterations.clear();
   m_GainCost.clear();
-	m_MaxNumberOfIterations = nbIteration;
+  
   m_descent = PlanEnv->getBool(PlanParam::withDescent);
   m_Iteration=0;
   
   if( PlanEnv->getBool(PlanParam::trajNPoints) )
-  {
     m_currentCost = costNPoints( PlanEnv->getInt(PlanParam::nb_pointsOnTraj) );
-  }
   
   setSortedIndex();
 	
@@ -879,31 +885,25 @@ void CostOptimization::runDeformation( int nbIteration, int idRun )
     traj_convergence_with_time.push_back(  make_pair( m_time, NewCost ) );
     
 		m_IterationSucceded = ( CurCost > NewCost );
-    
-    if ( m_IterationSucceded ) 
+		
+		if( m_IterationSucceded )
 		{
-			double Gain = (( CurCost - NewCost ) / CurCost) ;
-			m_GainOfIterations.push_back( Gain );
-      cout << "Gain = " << 100*Gain << " %";
-      cout << "( CurCost : " << CurCost << " , " << " NewCost : " << NewCost << " )" << endl;
+      cout << "new cost : " << NewCost << endl;
       
-      bool is_valid = isValid();
-      
-      if ( is_valid == false) {
-        cout << "Error" << endl;
+      if(PlanEnv->getBool(PlanParam::trajSaveCost)) 
+      {
+        gettimeofday(&tim, NULL);
+        m_time = tim.tv_sec+(tim.tv_usec/1000000.0) - ts;
+        
+        storeCostAndGain( NewCost, CurCost );
       }
       
-      if( ENV.getBool(Env::drawTraj) )
+      if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) )
       {
-       g3d_draw_allwin_active(); 
+        g3d_draw_allwin_active(); 
       }
 		}
 		
-    if(PlanEnv->getBool(PlanParam::trajSaveCost))
-		{
-			storeCostAndGain( NewCost, CurCost );
-		}
-    
     if( global_rePlanningEnv ) 
     {
       //replan_store_traj_to_vect(*this,m_step);
@@ -921,15 +921,13 @@ void CostOptimization::runDeformation( int nbIteration, int idRun )
 //    ChronoOff();
 //  }
 	
-  if ( isValid() )
-  {
 #ifdef DEBUG_STATUS
+  if ( isValid() )
     cout << "Trajectory valid" << endl;
-#endif
-  }
 	else
 		cout << "Trajectory not valid" << endl;
-	
+#endif
+  
 	if(PlanEnv->getBool(PlanParam::trajSaveCost))
 	{
     stringstream s; 

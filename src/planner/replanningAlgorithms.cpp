@@ -178,7 +178,7 @@ bool SimpleReplanner::init()
 {
   m_isPlanning = false;
   
-  set_active_joints( PlanEnv->getInt(PlanParam::setOfActiveJoints) );
+  set_active_joints( ENV.getInt(Env::setOfActiveJoints) );
   init_active_joints();
   
   // Store initial and final configurations
@@ -364,7 +364,7 @@ void SimpleReplanner::run()
 	API::CostOptimization optimTrj(m_CurrentTraj.extractSubTrajectoryOfLocalPaths(m_switch_id,last_path_id));
   
   optimTrj.setStep( m_initial_step );
-	optimTrj.runDeformation( ENV.getInt(Env::nbCostOptimize), m_idRun++ );
+	optimTrj.runDeformation( PlanEnv->getInt(PlanParam::smoothMaxIterations), m_idRun++ );
 	optimTrj.cutTrajInSmallLP( optimTrj.getRangeMax() / m_lp_avera_length );
   optimTrj.replaceP3dTraj();
   

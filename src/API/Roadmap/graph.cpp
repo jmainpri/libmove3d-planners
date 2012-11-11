@@ -725,7 +725,7 @@ Node* Graph::insertConfigurationAsNode(shared_ptr<Configuration> q, Node* from,d
 	
 	insertNode(node);
 	
-	mergeComp( from, node, step );
+	mergeComp( from, node, step, false );
 	
 	node->getNodeStruct()->rankFromRoot = from->getNodeStruct()->rankFromRoot +1;
 	node->getNodeStruct()->type = LINKING;
@@ -1275,8 +1275,7 @@ bool Graph::areNodesLinked(Node* node1, Node* node2, double & dist)
 		PrintInfo(("Warning: created an edge with a 0 distance: no localpathPt->length \n"));
 		dist = 0;
 	}
-  if((p3d_get_SORTING()==P3D_NB_CONNECT)&&
-     (p3d_get_MOTION_PLANNER()==P3D_BASIC)) 
+  if((p3d_get_SORTING()==P3D_NB_CONNECT)&& (p3d_get_MOTION_PLANNER()==P3D_BASIC)) 
 	{
     if((dist > p3d_get_DMAX())&&(LEQ(0.,p3d_get_DMAX())))
 		{ 
@@ -1307,14 +1306,14 @@ bool Graph::areNodesLinked(Node* node1, Node* node2, double & dist)
 /**
  * Link Node and Merge
  */
-bool Graph::linkNodeAndMerge(Node* node1, Node* node2)
+bool Graph::linkNodeAndMerge(Node* node1, Node* node2, bool compute_cost)
 {
 	double DistNodes = 0.;
 	bool  IsLinkedAndMerged = false;
 	
   if (areNodesLinked(node1, node2, DistNodes)) 
   {
-    mergeComp(node1, node2, DistNodes); 
+    mergeComp(node1, node2, DistNodes, compute_cost ); 
     IsLinkedAndMerged = true;
   }
 	
@@ -1446,7 +1445,7 @@ bool Graph::connectNodeToCompco(Node* node1, Node* compco)
 			/*        ratio*SelectedDistConfig(GraphPt->rob, GraphPt->search_start->q, GraphPt->search_goal->q)){ */
 			/*       return FALSE; */
 			/*     } */
-			IsConnectSuccess = linkNodeAndMerge(node2,node1);
+			IsConnectSuccess = linkNodeAndMerge(node2,node1,false);
 			break;
 			
 		case K_NEAREST_NODE_COMP:
@@ -1485,7 +1484,7 @@ bool Graph::connectNodeToCompco(Node* node1, Node* compco)
 			/*        ratio*SelectedDistConfig(GraphPt->rob, GraphPt->search_start->q, GraphPt->search_goal->q)){ */
 			/*       return FALSE; */
 			/*    } */
-			IsConnectSuccess = linkNodeAndMerge(node2,node1);
+			IsConnectSuccess = linkNodeAndMerge(node2,node1,false);
 	}
 	return IsConnectSuccess;
 }
@@ -1653,7 +1652,7 @@ void Graph::updateCompcoFromStruct()
 /**
  * Merge Component
  */
-int Graph::mergeComp(Node* node1, Node* node2, double dist_nodes)
+int Graph::mergeComp(Node* node1, Node* node2, double dist_nodes, bool compute_edge_cost )
 {
 	if ((node1 == NULL) || (node2 == NULL))
 	{
@@ -1671,7 +1670,8 @@ int Graph::mergeComp(Node* node1, Node* node2, double dist_nodes)
 	}
   
 	compco1->mergeWith( compco2 );
-  addEdges(node1, node2, false, dist_nodes, true, 0.0 );
+  
+  addEdges(node1, node2, false, dist_nodes, compute_edge_cost, 0.0 );
 	return true;
 }
 
@@ -2039,7 +2039,9 @@ public:
   {
     confPtr_t q1 = m_location[m_goal]->getConfiguration();
     confPtr_t q2 = m_location[u]->getConfiguration();
-    return q1->dist(*q2);
+//    return q1->dist(*q2);
+//    return 0.0;
+    return 0.001;
   }
 private:
   LocMap m_location;
@@ -2064,9 +2066,10 @@ private:
   Vertex m_goal;
 };
 
+
 // Extarct a shortes path between two nodes 
 // of the same connected component
-std::vector<Node*> Graph::extractAStarShortestNodePaths( Node* node_init, Node* node_goal )
+std::vector<Node*> Graph::extractAStarShortestNodePaths( Node* node_init, Node* node_goal, bool use_cost )
 {
   std::vector<Node*> nodes;
   
@@ -2083,20 +2086,45 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( Node* node_init, Node* 
   
   BGL_VertexDataMapT NodeData = boost::get(NodeData_t(), m_BoostGraph);
   vector<BGL_Vertex> p(boost::num_vertices(m_BoostGraph));
+  vector<double> d(boost::num_vertices(m_BoostGraph));
   
-  astar_search(m_BoostGraph, start,
-               distance_heuristic<BGL_Graph, double, BGL_VertexDataMapT> (NodeData, goal),
-               boost::predecessor_map(&p[0]));
-  
-  std::list<BGL_Vertex> shortest_path;
-  for (BGL_Vertex v = goal;; v = p[v]) {
-    shortest_path.push_front(v);
-    if (p[v] == v)
-      break;
+  BGL_EdgeDataMapT EdgeData = boost::get(EdgeData_t(), m_BoostGraph);
+  boost::property_map<BGL_Graph, boost::edge_weight_t>::type weightmap = boost::get(boost::edge_weight, m_BoostGraph);
+  BOOST_FOREACH(BGL_Edge e, boost::edges(m_BoostGraph)) {
+    if( use_cost )
+      weightmap[e] = EdgeData[e]->cost();
+    else 
+      weightmap[e] = EPS6;
+//    cout << "weightmap[e] : " << weightmap[e] << endl;
   }
   
-  for (std::list<BGL_Vertex>::iterator spi = shortest_path.begin(); spi != shortest_path.end(); ++spi)
-    nodes.push_back(NodeData[*spi]);
+  typedef double cost;
+  
+  try // call astar named parameter interface
+  {
+   astar_search( m_BoostGraph, 
+                 start, 
+                 distance_heuristic<BGL_Graph, cost, BGL_VertexDataMapT>( NodeData, goal ),
+                 boost::weight_map(weightmap).predecessor_map(&p[0]).distance_map(&d[0]).visitor( astar_goal_visitor<BGL_Vertex>(goal) )
+                 //boost::predecessor_map(&p[0]),
+                 );
+  
+  } 
+  catch( found_goal fg) 
+  {
+    std::list<BGL_Vertex> shortest_path;
+    for (BGL_Vertex v = goal;; v = p[v]) {
+      shortest_path.push_front(v);
+      if (p[v] == v)
+        break;
+    }
+    
+    for (std::list<BGL_Vertex>::iterator spi = shortest_path.begin(); spi != shortest_path.end(); ++spi)
+      nodes.push_back(NodeData[*spi]);
+  }
+//  astar_search( m_BoostGraph, start,
+//                distance_heuristic<BGL_Graph, double, BGL_VertexDataMapT> (NodeData, goal),
+//                boost::predecessor_map(&p[0]));
   
   return nodes;
 }

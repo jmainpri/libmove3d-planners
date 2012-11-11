@@ -469,7 +469,7 @@ bool Node::connectNodeToCompco(Node* node, double step)
 //place la compco dans la CompCo presente
 void Node::merge(Node* compco)
 {
-	m_Graph->mergeComp(this,compco,dist(compco));
+	m_Graph->mergeComp(this,compco,dist(compco),true);
 }
 
 bool Node::equalCompco(Node* compco) const

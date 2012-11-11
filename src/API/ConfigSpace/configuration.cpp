@@ -257,9 +257,7 @@ void Configuration::setConfiguration(Configuration& C)
  */
 double Configuration::dist(Configuration& Conf)
 {
-	return p3d_dist_config(_Robot->getRobotStruct(), 
-												 _Configuration, 
-												 Conf.getConfigStruct());
+	return p3d_dist_config(_Robot->getRobotStruct(), _Configuration, Conf.getConfigStruct());
 	/*
    double ljnt = 0.;
    int njnt = _Robot->getRobotStruct()->njoints;
@@ -717,6 +715,8 @@ void Configuration::print(bool withPassive)
     for(int j=0; j<jntPt->dof_equiv_nbr; j++)
     {
       k = jntPt->index_dof + j;
+//      cout << "p3d_jnt_get_dof_is_user : " << p3d_jnt_get_dof_is_user(jntPt, j) << endl;
+//      cout << "_Robot->getRobotStruct()->cntrt_manager->in_cntrt[" << k << "] = " << _Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] << endl;
       if (withPassive || ( p3d_jnt_get_dof_is_user(jntPt, j)
                           /*&& (p3d_jnt_get_dof_is_active_for_planner(jntPt,j) */
                           && (_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != DOF_PASSIF )))

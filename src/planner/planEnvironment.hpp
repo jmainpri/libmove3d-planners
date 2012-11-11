@@ -45,18 +45,19 @@ namespace PlanParam
             isWeightedChoice,
             nextIterWaitForGui,
             rrtExtractShortestPath,
-            setActiveDofs,  
           
             // Time
             trajWithTimeLimit,
             planWithTimeLimit,
           
             // Smoothing stage
+            trajUseCost,
             trajPrintGain,
             trajPartialShortcut,
             trajSaveCost,
             trajCostRecompute,
             trajComputeCollision,
+            trajStompWithRRT,
             trajStompComputeColl,
             trajStompWithTimeLimit,
             trajStompMultiplyM,
@@ -64,6 +65,7 @@ namespace PlanParam
             trajMoveHuman,
             trajUseOtp,
             trajNPoints,
+            trajComputeCostAfterPlannif,
           
             withMaxIteration,
             withGainLimit,
@@ -135,9 +137,9 @@ namespace PlanParam
           
             // RRT & PRM
             plannerMaxIterations,
+            smoothMaxIterations,
           
             // Replanning
-            setOfActiveJoints,
             replanningAlgorithm,
 
             // Object TransfertPoint variable

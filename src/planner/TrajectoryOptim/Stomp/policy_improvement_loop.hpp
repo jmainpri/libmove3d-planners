@@ -119,6 +119,8 @@ private:
     bool writePolicy(const int iteration_number, bool is_rollout = false, int rollout_id = 0);
     //bool writePolicyImprovementStatistics(const policy_improvement_loop::PolicyImprovementStatistics& stats_msg);
   
+  void addStraightLineRollout(std::vector<std::vector<Eigen::VectorXd> >& extra_rollout,
+                              std::vector<Eigen::VectorXd>& extra_rollout_cost);
     void parametersToVector(std::vector<Eigen::VectorXd>& rollout);
     void getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<confPtr_t>& traj);
     void addSingleRolloutsToDraw(const std::vector<Eigen::VectorXd>& rollout, int color);

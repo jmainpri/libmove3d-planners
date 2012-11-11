@@ -27,7 +27,6 @@ using namespace tr1;
  */
 TreePlanner::TreePlanner(Robot* R, Graph* G) :
 Planner(R,G),
-m_runId(-1),
 m_nbConscutiveFailures(0),
 m_nbExpansion(0),
 m_nbFailedExpansion(0)
@@ -53,6 +52,16 @@ int TreePlanner::init()
 	m_nbExpansion = 0;
 	m_nbInitNodes = _Graph->getNumberOfNodes();
 	return added;
+}
+
+/**
+ * Time of day chrono
+ */
+double TreePlanner::getTime()
+{
+  double time=0.0;
+  ChronoTimeOfDayTimes(&time);
+  return time;
 }
 
 /*!
@@ -245,10 +254,7 @@ bool TreePlanner::checkStopConditions()
  */
 bool TreePlanner::connectNodeToCompco(Node* N, Node* Compco)
 {
-	//    return p3d_ConnectNodeToComp(N->getGraph()->getGraphStruct(),
-	//                                 N->getNodeStruct(), CompNode->getCompcoStruct());
-	
-	return _Graph->connectNodeToCompco(N,Compco);
+    return _Graph->linkNodeAndMerge(N,Compco,false);
 }
 
 
@@ -258,9 +264,9 @@ bool TreePlanner::connectNodeToCompco(Node* N, Node* Compco)
  */
 bool TreePlanner::connectionToTheOtherCompco( Node* toNode )
 {
-	bool isConnectedToOtherTree(false);
+	bool connected(false);
 	
-	if( ENV.getBool(Env::tryClosest))
+	if( ENV.getBool(Env::tryClosest) )
 	{
 		bool WeigtedRot = ENV.getBool(Env::isWeightedRotation);
 		ENV.setBool(Env::isWeightedRotation,false);
@@ -270,24 +276,19 @@ bool TreePlanner::connectionToTheOtherCompco( Node* toNode )
 		
 		ENV.setBool(Env::isWeightedRotation,WeigtedRot);
 		
-		isConnectedToOtherTree = connectNodeToCompco(_Graph->getLastNode(), closestNode );
-		
-		if(isConnectedToOtherTree)
-		{
-			return true;
-		}
+		connected = connectNodeToCompco(_Graph->getLastNode(), closestNode );
 	}
 	
-	if(ENV.getBool(Env::randomConnectionToGoal))
+	else if(ENV.getBool(Env::randomConnectionToGoal))
 	{
-		isConnectedToOtherTree = connectNodeToCompco( _Graph->getLastNode(), toNode->randomNodeFromComp());
+		connected = connectNodeToCompco( _Graph->getLastNode(), toNode->randomNodeFromComp());
 	}
 	else
 	{
-		isConnectedToOtherTree = connectNodeToCompco( _Graph->getLastNode(), toNode );
+		connected = connectNodeToCompco( _Graph->getLastNode(), toNode );
 	}
 	
-	return isConnectedToOtherTree;
+	return connected;
 }
 
 const int nb_Graph_Saved = 100;
@@ -312,6 +313,14 @@ unsigned int TreePlanner::run()
 	
 	Node* fromNode = _Start;
 	Node* toNode = _Goal;
+  
+  _Robot->setAndUpdate(*_Start->getConfiguration());
+  g3d_draw_allwin_active();
+  usleep(500);
+  
+  _Robot->setAndUpdate(*_Goal->getConfiguration());
+  g3d_draw_allwin_active();
+  usleep(500);
   
   confPtr_t goal_extract;
   
@@ -362,7 +371,7 @@ unsigned int TreePlanner::run()
 					if( connected || connectionToTheOtherCompco( toNode )  )
 					{
             connected = true;
-            cout << "connected" << endl;
+            //cout << "connected" << endl;
             
             if( PlanEnv->getBool( PlanParam::rrtExtractShortestPath ) ) 
             {

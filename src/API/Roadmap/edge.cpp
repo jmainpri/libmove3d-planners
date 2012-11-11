@@ -24,7 +24,8 @@ using namespace tr1;
 
 const bool use_localpath_planner = false;
 
-Edge::Edge(Graph* G, unsigned int i, unsigned int j) : 
+Edge::Edge(Graph* G, unsigned int i, unsigned int j) :
+  m_is_cost_computed(false),
 	m_is_BGL_Descriptor_Valid(false),
 	m_is_LocalPath_Computed(false)
 	
@@ -46,6 +47,7 @@ Edge::Edge(Graph* G, unsigned int i, unsigned int j) :
 
 //constructor and destructor
 Edge::Edge(Graph* G, p3d_edge* E) : 
+  m_is_cost_computed(false),
 	m_is_BGL_Descriptor_Valid(false),
 	m_is_LocalPath_Computed(false)
 {
@@ -61,6 +63,7 @@ Edge::Edge(Graph* G, p3d_edge* E) :
 //! when cost or length are not set to be computed
 //! the value given as argument are set to the localpath structure
 Edge::Edge(Graph* G, Node* N1, Node* N2, bool compute_length, double& length, bool compute_cost, double& cost) : 
+  m_is_cost_computed(false),
   m_Source( N1 ),
   m_Target( N2 ),
   m_Long( length ),
@@ -102,11 +105,9 @@ Edge::Edge(Graph* G, Node* N1, Node* N2, bool compute_length, double& length, bo
     m_Edge->cost = getLocalPath()->cost();
     cost = m_Edge->cost;
   }
-  else {
-    getLocalPath()->setCost( cost );
-    m_Edge->cost = cost;
-  }
-	
+    
+  m_Edge->cost = cost;
+
 	//voir pour la longueur
 	m_Edge->longueur = m_Long;
 	m_Edge->sens_edge = 1;
@@ -157,7 +158,13 @@ Node* Edge::getTarget()
 
 double Edge::cost()
 {
-  m_Edge->cost = getLocalPath()->cost();
+  if( !m_is_cost_computed )
+    m_Edge->cost = getLocalPath()->cost();
+  
+  if( m_Edge->cost == 0.0 ) {
+    cout << "cost 0" << endl;
+  }
+  m_is_cost_computed = true;
 	return m_Edge->cost;
 }
 

@@ -140,6 +140,11 @@ public:
 	 * shoots the active free flyer inside a box
 	 */
 	std::tr1::shared_ptr<Configuration> shootFreeFlyer(double* box);
+  
+  /**
+	 * set and update the active free flyer
+	 */
+	int setAndUpdateFreeFlyer(const Eigen::Vector3d& pos);
 	
 	/**
 	 * place le Robot dans une Configuration

@@ -79,6 +79,8 @@ namespace stomp_motion_planner
     policy_->getNumDimensions(num_dimensions_);
     policy_->getNumTimeSteps(num_time_steps_);
     
+    printf("Learning policy with %i dimensions.\n", num_dimensions_);
+    
     if( !singleRollout )
     {
       readParameters();
@@ -88,12 +90,10 @@ namespace stomp_motion_planner
     }
     task_ = task;
     task_->initialize(/*node_handle_,*/ num_time_steps_);
-    task_->getControlCostWeight(control_cost_weight_);
+    task_->getControlCostWeight( control_cost_weight_ );
     
     assert( num_dimensions_ == static_cast<int>(noise_decay_.size()));
     assert( num_dimensions_ == static_cast<int>(noise_stddev_.size()));
-    
-    printf("Learning policy with %i dimensions.\n", num_dimensions_);
     
     use_annealing_ = false;
     use_cumulative_costs_ = false;
@@ -101,7 +101,10 @@ namespace stomp_motion_planner
     limits_violations_ = 0;
     K_ = 1.0;
     
-    policy_improvement_.initialize( num_rollouts_, num_time_steps_, num_reused_rollouts_, 1, policy_, task_, use_cumulative_costs_);
+//    int num_extra_rollouts = 2;
+    int num_extra_rollouts = 1;
+    
+    policy_improvement_.initialize( num_rollouts_, num_time_steps_, num_reused_rollouts_, num_extra_rollouts, policy_, task_, use_cumulative_costs_);
     
     tmp_rollout_cost_ = Eigen::VectorXd::Zero(num_time_steps_);
     rollout_costs_ = Eigen::MatrixXd::Zero(num_rollouts_, num_time_steps_);
@@ -110,6 +113,7 @@ namespace stomp_motion_planner
     
     policy_iteration_counter_ = 0;
     
+    printf("num_rollouts_ : %d, num_reused_rollouts_ : %d\n", num_rollouts_, num_reused_rollouts_);
     return (initialized_ = true);
   }
   
@@ -267,21 +271,22 @@ namespace stomp_motion_planner
     
     // get rollouts and execute them
     bool get_reused_ones = true;
-    policy_improvement_.getRollouts(rollouts_, noise, get_reused_ones, reused_rollouts_);
+    policy_improvement_.getRollouts( rollouts_, noise, get_reused_ones, reused_rollouts_ );
     
-    if (ENV.getBool(Env::drawTrajVector)) 
-      addRolloutsToDraw(get_reused_ones);
-    
-    if( use_annealing_ )
+    if ( use_annealing_ )
       limits_violations_ = 0;
     
     shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
+    
+    if ( ENV.getBool(Env::drawTrajVector) ) 
+      addRolloutsToDraw(get_reused_ones);
     
     for (int r=0; r<int(rollouts_.size()); ++r)
     {
       task_->execute( rollouts_[r], tmp_rollout_cost_, iteration_number);
       rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
       //printf("Rollout %d, cost = %lf\n", r+1, tmp_rollout_cost_.sum());
+//      cout << "Rollout " << r+1 << " , cost = " << tmp_rollout_cost_.transpose() << endl;
       
       if( optimizer->getJointLimitViolationSuccess() )
       {
@@ -309,11 +314,19 @@ namespace stomp_motion_planner
     std::vector<double> all_costs;
     
     // Improve the policy
-    policy_improvement_.setRolloutCosts(rollout_costs_, control_cost_weight_, all_costs);
+    policy_improvement_.setRolloutCosts( rollout_costs_, control_cost_weight_, all_costs );
     policy_improvement_.improvePolicy(parameter_updates_);
 
     policy_->updateParameters(parameter_updates_);
     policy_->getParameters(parameters_);
+    
+    int num_extra_rollouts = 1;
+    std::vector<std::vector<Eigen::VectorXd> > extra_rollout;
+    std::vector<Eigen::VectorXd> extra_rollout_cost;
+    extra_rollout.resize( num_extra_rollouts );
+    extra_rollout_cost.resize( num_extra_rollouts );
+    
+//    addStraightLineRollout( extra_rollout, extra_rollout_cost );
   
     // Get the trajectory cost
     bool resample = !PlanEnv->getBool(PlanParam::trajStompMultiplyM);
@@ -327,13 +340,9 @@ namespace stomp_motion_planner
     }
     
     // add the noiseless rollout into policy_improvement:
-    std::vector<std::vector<Eigen::VectorXd> > extra_rollout;
-    std::vector<Eigen::VectorXd> extra_rollout_cost;
-    extra_rollout.resize(1);
-    extra_rollout_cost.resize(1);
-    extra_rollout[0] = parameters_;
-    extra_rollout_cost[0] = tmp_rollout_cost_;
-    policy_improvement_.addExtraRollouts(extra_rollout, extra_rollout_cost);
+    extra_rollout[num_extra_rollouts-1] = parameters_;
+    extra_rollout_cost[num_extra_rollouts-1] = tmp_rollout_cost_;
+    policy_improvement_.addExtraRollouts( extra_rollout, extra_rollout_cost );
     
     //cout << "rollout_cost_ = " << tmp_rollout_cost_.sum() << endl;
     
@@ -350,6 +359,59 @@ namespace stomp_motion_planner
   void PolicyImprovementLoop::resetReusedRollouts()
   {
     policy_improvement_.resetReusedRollouts();
+  }
+  
+  void PolicyImprovementLoop::addStraightLineRollout(std::vector<std::vector<Eigen::VectorXd> >& extra_rollout,
+                                                     std::vector<Eigen::VectorXd>& extra_rollout_cost)
+  {
+    shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
+    shared_ptr<CovariantTrajectoryPolicy> policy = static_pointer_cast<CovariantTrajectoryPolicy>(policy_);
+    
+    const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
+   
+    Eigen::MatrixXd parameters( num_dimensions_, num_time_steps_ );
+    
+    for ( int i=0; i<num_dimensions_; ++i) {
+      parameters.row(i) = parameters_[i].transpose();
+    }
+    
+    std::vector<confPtr_t> confs(2);
+    confs[0] = optimizer->getPlanningGroup()->robot_->getCurrentPos();
+    confs[1] = optimizer->getPlanningGroup()->robot_->getCurrentPos();
+    
+    for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+      (*confs[0])[joints[i].move3d_dof_index_] = parameters(i,0);
+    
+    
+    for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+      (*confs[1])[joints[i].move3d_dof_index_] = parameters(i,num_time_steps_-1);
+    
+    
+    API::Trajectory traj(confs);
+    
+    double step = traj.getRangeMax() / num_time_steps_;
+    double param = step;
+    for ( int j=1; j<num_time_steps_-1; ++j)
+    {
+      confPtr_t q = traj.configAtParam(param);
+      
+      for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i )
+        parameters(i,j) = (*q)[joints[i].move3d_dof_index_];
+
+      param += step;
+    }
+    
+    extra_rollout[0].resize( num_dimensions_);
+    
+    for ( int i=0; i<num_dimensions_; ++i) {
+      extra_rollout[0][i] = parameters.row(i);
+    }
+    
+    int iteration_number=1;
+    task_->execute(extra_rollout[0], tmp_rollout_cost_, iteration_number, false );
+//    cout << "Cost" << tmp_rollout_cost_[0] << endl;
+    
+    extra_rollout_cost[0] = tmp_rollout_cost_;
   }
   
   //------------------------------------------------------------------------------------

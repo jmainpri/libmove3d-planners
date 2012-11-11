@@ -34,8 +34,8 @@ using namespace std;
 using namespace tr1;
 
 const bool print_exploration = false;
-const bool print_rewiring = true;
-const bool print_lower_connect = true;
+const bool print_rewiring = false;
+const bool print_lower_connect = false;
 
 /*!
  * Constructors with default values
@@ -55,12 +55,20 @@ StarExpansion::StarExpansion(Graph* G) : RRTExpansion(G)
   m_tube_bias =false;
   m_cspace = NULL;
   
-  if( m_Graph->getRobot()->getRobotStruct()->njoints == 1 &&
-      m_Graph->getRobot()->getRobotStruct()->joints[1]->type == P3D_PLAN ) 
+  Robot* rob = m_Graph->getRobot();
+  
+  if( rob->getRobotStruct()->njoints == 1 &&
+      rob->getRobotStruct()->joints[1]->type == P3D_PLAN ) 
   {
+    m_cspace = new CSpaceCostMap2D();
     initCSpace();
   }
   
+  if( rob->getName() == "PR2_ROBOT" ) 
+  {
+    m_cspace = new Pr2CSpace();
+    initCSpace();
+  }
   
   if( m_tube_bias )
   {
@@ -84,7 +92,6 @@ void StarExpansion::setInitAndGoal( confPtr_t q_init, confPtr_t q_goal )
 
 void StarExpansion::initCSpace()
 {
-  m_cspace = new CSpaceCostMap2D();
   m_cspace->set_step( m_step );
   m_cspace->set_cost_step( m_step );
   m_cspace->set_robot( m_Graph->getRobot() );
@@ -106,7 +113,13 @@ double StarExpansion::rrgBallRadius()
     double inv_d = 1.0 / m_cspace->dimension();
     double gamma_rrg = 2 * pow(1.0 + inv_d, inv_d) * pow(m_cspace->volume() / m_cspace->unit_sphere(), inv_d);
     double nb_nodes = m_Graph->getNumberOfNodes();
-    return(std::min(m_cspace->get_step(), gamma_rrg * pow((log(nb_nodes)/nb_nodes), inv_d)));
+    double radius = gamma_rrg * pow((log(nb_nodes)/nb_nodes), inv_d);
+    //double radius = std::min(m_cspace->get_step(), radius );
+    
+    if( print_lower_connect || print_rewiring )
+      cout << "radius : " << radius << endl;
+    
+    return radius;
   }
   else
   {
@@ -323,8 +336,8 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
 //      cout << "radius : " << radius  << " , number of nodes : " << m_Graph->getNumberOfNodes() << endl;
 //    }
     
-    //int K = m_Graph->getNumberOfNodes();
-    int K = m_K_Nearest;
+    int K = m_Graph->getNumberOfNodes();
+    //int K = m_K_Nearest;
 
 		vector<Node*> near_nodes = m_compco->KNearestWeightNeighbour(node_new->getConfiguration(), 
                                                                  K, radius, false, ENV.getInt(Env::DistConfigChoice));
@@ -390,7 +403,7 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
     // Call to rewire function
     if( PlanEnv->getBool(PlanParam::starRewire) ) 
     {
-      rewireGraph( node_new, node_min, near_nodes );
+      rewireGraph( node_new, node_min, valid_nodes );
     }
 	}
 	else 
@@ -446,6 +459,7 @@ int StarExpansion::expandProcess(Node* expansionNode,
 StarRRT::StarRRT(Robot* R, Graph* G) : RRT(R,G)
 {
 	cout << "StarRRT::StarRRT(R,G)" << endl;
+  m_current_traj = NULL;
 }
 
 /** 
@@ -454,6 +468,7 @@ StarRRT::StarRRT(Robot* R, Graph* G) : RRT(R,G)
 StarRRT::~StarRRT()
 {
 	saveConvergenceToFile();
+  delete m_current_traj;
 }
 
 /**
@@ -509,10 +524,7 @@ void StarRRT::pruneTreeFromNode(Node* node)
  */
 bool StarRRT::connectNodeToCompco( Node* node, Node* compNode )
 {
-	Node* nearestNode = _Graph->nearestWeightNeighbour( compNode, node->getConfiguration(),
-                                                     false, ENV.getInt(Env::DistConfigChoice) );
-
-	LocalPath path( node->getConfiguration(), nearestNode->getConfiguration() );
+	LocalPath path( node->getConfiguration(), compNode->getConfiguration() );
 	
 	if( path.getParamMax() <= PlanEnv->getDouble(PlanParam::starFinish)*_expan->step() )
 	{
@@ -520,17 +532,17 @@ bool StarRRT::connectNodeToCompco( Node* node, Node* compNode )
     {
       cout << "path.getParamMax() == 0.0 in " << __func__ << endl;
 			node->print();
-			nearestNode->print();
+			compNode->print();
 		}
 		
 		if( path.isValid() ) 
     {
 			//_expan->addNode( node, path, 1.0, nearestNode, nbCreatedNodes );
       //m_Graph->addEdges( node, nearestNode, false, path.getParamMax(), false, path.cost() );
-      _Graph->linkNodeAndMerge( node, nearestNode );
+      _Graph->linkNodeAndMerge( node, compNode, true );
       
-      nearestNode->parent() = node;
-      nearestNode->isLeaf() = true;
+      compNode->parent() = node;
+      compNode->isLeaf() = true;
       
 			cout << "Path Valid Connected" << endl;
 			return true;
@@ -555,10 +567,22 @@ void StarRRT::saveConvergenceToFile()
 	s.open(res);
 	cout << "Opening save file : " << res << endl;
 	
+  s << "TIME" << ";";
+  s << "LENGTH" << ";";
+  s << "MAX" << ";";
+  s << "AVERAGE" << ";";
+  s << "INTEGRAL" << ";";
+  s << "MECHA WORK" << ";";
+  s << endl;
+  
 	for (int i=0; i<int(m_convergence_rate.size()); i++)
-	{
+	{    
     s << m_convergence_rate[i].first << ";";
-    s << m_convergence_rate[i].second << ";";
+    s << m_convergence_rate[i].second.length << ";";
+    s << m_convergence_rate[i].second.max << ";";
+    s << m_convergence_rate[i].second.average << ";";
+    s << m_convergence_rate[i].second.integral << ";";
+    s << m_convergence_rate[i].second.mecha_work << ";";
     s << endl;
 	}
   
@@ -572,17 +596,26 @@ void StarRRT::extractTrajectory()
   
   if( traj ) 
   {
-    double cost = traj->cost();
-    
-    cout << "traj cost : " << cost << endl;
-//    traj->costDeltaAlongTraj();
-//    traj->replaceP3dTraj(); 
-    
-    //m_convergence_rate.push_back( cost );
-    
-    if( ENV.getBool(Env::drawTraj) )
+    if( m_current_traj == NULL || (*m_current_traj) != (*traj) )
     {
-      g3d_draw_allwin_active();
+      TrajectoryStatistics stat;
+      
+      double cost = traj->costStatistics(stat);
+      
+      cout << "time : " << getTime() << " , traj cost : " << cost << endl;
+      //    traj->costDeltaAlongTraj();
+      //    traj->replaceP3dTraj(); 
+      
+      m_convergence_rate.push_back( std::make_pair( getTime(), stat )  );
+      
+      if( m_current_traj == NULL ) 
+        m_current_traj = new API::Trajectory( _Graph->getRobot() );
+      
+      // replace current trajectory by new trajectory
+      (*m_current_traj) = (*traj);
+      
+      if(  (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) )
+        g3d_draw_allwin_active();
     }
   }
   else {

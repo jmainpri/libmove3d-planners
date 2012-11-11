@@ -47,7 +47,7 @@ bool Navigation::init()
   m_envSize = global_Project->getActiveScene()->getBounds();
   m_envSize.resize(4);
   
-  double diagonal = std::sqrt( std::pow(m_envSize[1]-m_envSize[0], 2 ) + std::pow(m_envSize[3]-m_envSize[2] , 2 ) );
+//  double diagonal = std::sqrt( std::pow(m_envSize[1]-m_envSize[0], 2 ) + std::pow(m_envSize[3]-m_envSize[2] , 2 ) );
   double pace = 0.20;
   cout << "pace : " << pace << " meters" << endl;
 

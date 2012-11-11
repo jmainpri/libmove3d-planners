@@ -33,10 +33,10 @@ namespace HRICS
 		void setCost(double Cost) { m_Cost = Cost; }
 		void setBlankCost();
     
-    double getDistance() { return m_Distance; }
-    double getVisibility() { return m_Visiblity; }
-    double getReachability() { return m_Reachability; }
-    double getCombined() { return m_Combined; }
+    double getDistance();
+    double getVisibility();
+    double getReachability();
+    double getCombined();
 
     void computeDistance();
     void computeVisibility();
@@ -58,6 +58,8 @@ namespace HRICS
     
     void resetExplorationStatus();
 		void createDisplaylist();
+    
+    void drawOnePoint( bool withTransform );
 		void draw(bool transform);
 		int setRobotToStoredConfig();
     
@@ -137,7 +139,8 @@ namespace HRICS
 		bool isReachable(const Eigen::Vector3d& WSPoint);
 		
 		double getCellCostAt(const Eigen::Vector3d& WSPoint);
-		
+		double getCompleteCellCostAt(const Eigen::Vector3d& WSPoint, std::vector<double>& costs);
+    
 		std::vector<Eigen::Vector3d> getBox();
 		void resetCellCost();
 		void resetReachability();

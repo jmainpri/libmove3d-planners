@@ -14,6 +14,8 @@
 #include "API/Roadmap/node.hpp"
 #include "API/Roadmap/graph.hpp"
 
+#include "planner/planEnvironment.hpp"
+
 #include <iostream>
 
 #include "../p3d/env.hpp"
@@ -81,18 +83,34 @@ void ACR::expandOneStep()
 	
 	if ( q->setConstraintsWithSideEffect() && (!q->isInCollision()))
 	{
-		Node* newNode = new Node(_Graph,q,false);
+		Node* node_new = new Node( _Graph, q );
+    _Graph->addNode( node_new );
 		
 		m_nbConscutiveFailures = 0;
-	
-		_Graph->insertNode(newNode);
-		_Graph->linkToAllNodes(newNode);
-		
-		if ( newNode->getNodeStruct()->numcomp == -1 ) 
+    
+    int K = _Graph->getNumberOfNodes();
+    //int K = m_K_Nearest;
+    double radius = ENV.getDouble(Env::extensionStep)*p3d_get_env_dmax();
+    
+		vector<Node*> near_nodes = _Graph->KNearestWeightNeighbour(q, K, radius, false, ENV.getInt(Env::DistConfigChoice));
+    
+    for (int i=0; i<int(near_nodes.size()); i++) 
 		{
-			/* Node have not been included in a compco, create one for it */
-			_Graph->createCompco(newNode);
-			_Graph->mergeCheck();
+			LocalPath path( near_nodes[i]->getConfiguration(), q );
+			
+      bool is_valid = true;
+      if( PlanEnv->getBool(PlanParam::trajComputeCollision) )
+      {
+        is_valid = path.isValid();
+      }
+      
+      if ( is_valid  )
+      {
+        _Graph->addEdges( near_nodes[i], node_new, false, 0.0, false, 0.0 );
+        
+        // Merge compco with minNode and set as parent
+//        node_new->merge( near_nodes[i] );
+      }
 		}
 	}
 	

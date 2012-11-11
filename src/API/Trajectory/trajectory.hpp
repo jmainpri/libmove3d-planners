@@ -20,6 +20,17 @@ struct traj;
  * @defgroup Trajectory
  */
 
+struct TrajectoryStatistics 
+{
+  double length;
+  double max;
+  double sum;
+  double average;
+  double integral;
+  double mecha_work;
+  bool is_valid;
+};
+
 /**
  * @ingroup Trajectory
  * @brief Trajectory witch is a vector of local paths
@@ -76,6 +87,7 @@ namespace API
 		std::vector< std::pair<double,double > > getCostProfile();
 		double computeSubPortionIntergralCost(std::vector<LocalPath*>& portion);
 		double computeSubPortionCost(std::vector<LocalPath*>& portion);
+    double computeSubPortionMaxCost(std::vector<LocalPath*>& portion);
 		double ReComputeSubPortionCost(std::vector<LocalPath*>& portion);
 		double computeSubPortionCostVisib( std::vector<LocalPath*>& portion );
 		double costOfPortion(double param1,double param2);
@@ -84,6 +96,7 @@ namespace API
     double cost();
 		double costNoRecompute();
     double costRecomputed();
+    double costStatistics( TrajectoryStatistics& stat );
 		double costDeltaAlongTraj();
     double costNPoints(const int n_points);
     double costSum();

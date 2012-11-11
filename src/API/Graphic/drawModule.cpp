@@ -75,7 +75,7 @@ void g3d_draw_cost_features()
 {
 #ifdef HRI_COSTSPACE
 	g3d_draw_costspace();
-        g3d_draw_hrics(0);
+  g3d_draw_hrics(0);
 #endif
   //std::cout << "Draw cost features" << std::endl;
 	g3d_draw_grids();
@@ -83,7 +83,6 @@ void g3d_draw_cost_features()
 
 void Graphic::initDrawFunctions()
 {
-  std::cout << "initDrawFunctions" << std::endl;
   ext_g3d_traj_debug = draw_traj_debug;
 	ext_g3d_draw_cost_features = (void (*)())(g3d_draw_cost_features);
 	//ext_g3d_export_cpp_graph = (void (*)())(g3d_export_cpp_graph);

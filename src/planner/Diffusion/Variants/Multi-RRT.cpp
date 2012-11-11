@@ -100,18 +100,12 @@ Node* MultiRRT::getRandomCompcoForExpansion(Node* fromNode)
 	int initNum = fromNode->getConnectedComponent()->getId() ;
 	int randNum = fromNode->getConnectedComponent()->getId() ;
 	
-	//	cout << "Number of Component : " << _Graph->getNumberOfCompco() << endl;
-	//	cout << "Init Component : " << initNum << endl;
-	
 	while ((initNum == randNum ) && (i<50))
 	{
 		double randomNumber = p3d_random(0,_Graph->getNumberOfCompco());
 		unsigned int randId = (unsigned int)randomNumber;
-//		cout << "Rand Number : " << randomNumber << endl;
-//		cout << "Rand Id : " << randId << endl;
 		randomCompco = _Graph->getCompco(randId);
 		randNum = randomCompco->getConnectedComponent()->getCompcoStruct()->num;
-		//		cout << "Rand Component : " << randNum << endl;
 		i++;
 	}
 	

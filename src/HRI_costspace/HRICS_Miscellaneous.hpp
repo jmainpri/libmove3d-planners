@@ -13,6 +13,7 @@ namespace HRICS
   void setSimulationRobotsTransparent();
   void generateGraspConfigurations();
   void setThePlacemateInIkeaShelf();
+  void setTenAccessiblePositions();
   
   bool initShelfScenario();
   bool execShelfScenario();

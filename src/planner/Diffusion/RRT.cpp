@@ -70,8 +70,8 @@ bool RRT::preConditions()
 				if (direct.isValid())
 				{
 					connectNodeToCompco(_Start,_Goal);
-                                        #ifdef DEBUG_STATUS
-                                        cout << "Direct connection" << endl;
+#ifdef DEBUG_STATUS
+          cout << "Direct connection" << endl;
 #endif
 					return true;
 				}
@@ -118,10 +118,7 @@ int RRT::expandOneStep(Node* fromComp, Node* toComp)
   
 	
 	// get direction
-	directionConfig = _expan->getExpansionDirection(fromComp, 
-																									toComp, 
-																									false,
-																									directionNode);
+	directionConfig = _expan->getExpansionDirection( fromComp, toComp, false, directionNode);
   
 #ifdef LIGHT_PLANNER
 	if( ENV.getBool(Env::drawPoints) && PointsToDraw )
@@ -135,19 +132,14 @@ int RRT::expandOneStep(Node* fromComp, Node* toComp)
 	//   directionConfig->print();
 	
 	// get node for expansion
-	expansionNode = _expan->getExpansionNode(fromComp, 
-																					 directionConfig,
-																					 ENV.getInt(Env::DistConfigChoice));
+	expansionNode = _expan->getExpansionNode( fromComp, directionConfig, ENV.getInt(Env::DistConfigChoice));
 	
 	//    cout << "***********************************************************"  << endl;
 	//    cout << "expansionNode->print()"  << endl;
 	//    expansionNode->getConfiguration()->print();
 	
 	// expansion in one direction
-	int nbNodeCreated = _expan->expandProcess(expansionNode, 
-																						directionConfig, 
-																						directionNode,
-																						ENV.getExpansionMethod());
+	int nbNodeCreated = _expan->expandProcess( expansionNode, directionConfig, directionNode, ENV.getExpansionMethod());
 	
 	if ( nbNodeCreated < 1 ) 
 	{

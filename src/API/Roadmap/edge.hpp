@@ -132,6 +132,8 @@ public:
 	
 private:
 	edge*			m_Edge;
+  
+  bool      m_is_cost_computed;
 	
 	Node*			m_Source;
 	Node*			m_Target;

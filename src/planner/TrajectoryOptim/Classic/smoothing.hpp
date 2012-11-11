@@ -33,6 +33,16 @@ namespace API
 		~Smoothing();
     
     /**
+     * Get the run Id
+     */
+    int getRunId() { return m_runId; }
+    
+    /**
+     * Set the run Id
+     */
+    void setRunId(int id) { m_runId = id; }
+    
+    /**
      * Set a fixed deformation step
      */
     void setStep( double step );
@@ -156,10 +166,15 @@ namespace API
 		 */
 		double gainOfLastIterations( unsigned int n );
     
+    //! compute the stats
+    void computeStats();
+    
     //! Store the cost and gain of the iteration
     //! in double vectors
     void storeCostAndGain( double NewCost, double CurCost );
 		
+    int                   m_runId;
+    
 		std::string						m_ContextName;
 		std::vector<double>		m_Selected;
 		int										m_nbBiased;
@@ -172,6 +187,8 @@ namespace API
     bool                  m_useAutoStep;
 		double								m_step;
 		
+    std::vector< std::pair<double,std::vector<confPtr_t> > > m_convergence_trajs;
+    std::vector< std::pair<double,TrajectoryStatistics> > m_convergence_rate;
 		std::vector<double>		m_OptimCost;
 		std::vector<double>		m_GainCost;
 		

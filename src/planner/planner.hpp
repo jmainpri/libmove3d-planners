@@ -130,6 +130,16 @@ public:
    */
   virtual unsigned int run() = 0;
   
+  /**
+   * Get the run Id
+   */
+  int getRunId() { return m_runId; }
+  
+  /**
+   * Set the run Id
+   */
+  void setRunId(int id) { m_runId = id; }
+  
 protected:
   
   int (*_stop_func)();
@@ -149,6 +159,8 @@ protected:
   bool _Init;/*!< Le Planner a été initialisé*/
   
   bool m_fail;
+  
+  int m_runId;
 };
 
 extern Planner* global_Move3DPlanner;

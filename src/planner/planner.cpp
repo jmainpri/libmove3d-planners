@@ -31,7 +31,8 @@ Planner::Planner() :
 		  _Robot(NULL),
 		  _Graph(NULL),
 		  _Init(false),
-          m_fail(false)
+      m_fail(false),
+      m_runId(-1)
 {	
 //  cout << "------------------------------------------------" << endl;
 //  cout << " Planner::Planner() ";
@@ -44,8 +45,9 @@ Planner::Planner(Robot* rob, Graph* graph) :
 		  _Goal(NULL),
 		  _Robot(rob),
 		  _Graph(graph),
-          _Init(false),
-          m_fail(false)
+      _Init(false),
+      m_fail(false),
+      m_runId(-1)
 {
 }
 

@@ -41,6 +41,8 @@ HumanCostSpace::HumanCostSpace(Robot* rob, std::vector<Robot*> humans, Natural* 
   m_VisibilitySpace = NULL;
   m_ReachableSpace = NULL;
   
+  m_PlatformJoint = NULL;
+  
   initElementarySpaces();
   
   m_ReachableSpace = costspace;
@@ -53,6 +55,15 @@ HumanCostSpace::HumanCostSpace(Robot* rob, std::vector<Robot*> humans, Natural* 
     if( !initPr2() )
     {
       cout << "Fail to init pr2 robot in HumanCostSpace" << endl;
+      return;
+    }
+  }
+  
+  if (rob->getName() == "JUSTIN_ROBOT") 
+  {
+    if( !initJustin() )
+    {
+      cout << "Fail to init justin robot in HumanCostSpace" << endl;
       return;
     }
   }
@@ -152,6 +163,16 @@ void HumanCostSpace::deleteHumanGrids()
   m_Grids.clear();
 }
 
+AgentGrid* HumanCostSpace::getAgentGrid(Robot* agent)
+{
+  for ( int i=0; i<int(m_Grids.size()); i++) 
+  {
+    if( m_Grids[i]->getRobot()->getName() == agent->getName() )
+      return m_Grids[i];
+  }
+  return NULL;
+}
+
 //! @brief Robot specific initializer
 bool HumanCostSpace::initGreyTape()
 {
@@ -182,7 +203,7 @@ bool HumanCostSpace::initPr2()
 //    cout << "Add joint : " << m_CostJoints.back()->getName() << endl;
 //  }
   
-  switch ( PlanEnv->getInt(PlanParam::setOfActiveJoints) ) 
+  switch ( ENV.getInt(Env::setOfActiveJoints) ) 
   {
     case 0:
       m_planning_type = NAVIGATION;
@@ -255,6 +276,102 @@ bool HumanCostSpace::initPr2()
     }
   }
   cout << m_CostJoints.size() << " nb of cost joints" << endl;
+  
+  m_PlatformJoint = m_Robot->getJoint("platformJoint");
+  return true;
+}
+
+//! @brief Robot specific initializer
+//! For the JUSTIN a fixed number of points are chosen on the kinematic
+//! structure of the robot to qualify the robot configuration
+bool HumanCostSpace::initJustin()
+{
+  m_CostJoints.clear();
+  
+  switch ( ENV.getInt(Env::setOfActiveJoints) ) 
+  {
+    case 0:
+      m_planning_type = NAVIGATION;
+      break;
+    case 1:
+      m_planning_type = MANIPULATION;
+      break;
+    case 2:
+      m_planning_type = MOBILE_MANIP;
+      break;
+    default:
+      cout << "Planner type not implemented" << endl;
+      break;
+  }
+  
+  if( m_planning_type == NAVIGATION )
+  {
+    for (int i=0; i<int(m_Robot->getNumberOfJoints()); i++) 
+    {
+      string name = m_Robot->getJoint(i)->getName();
+      
+      if(name == "Platform" || 
+         name == "base2")
+      {
+        m_CostJoints.push_back( m_Robot->getJoint(i) );
+        cout << "Add joint : " << m_CostJoints.back()->getName() << endl;
+      }
+    }
+  }
+  
+  if( m_planning_type == MANIPULATION )
+  {
+    for (int i=0; i<int(m_Robot->getNumberOfJoints()); i++) 
+    {
+      string name = m_Robot->getJoint(i)->getName();
+      
+      if(/*name == "RightArm1" || 
+         name == "RightArm2" || 
+         name == "RightArm3" || 
+         name == "RightArm4" || 
+         name == "RightArm5" || 
+         name == "RightArm6" || 
+         name == "RightArm7" || 
+         name == "RightWrist"
+          */
+//         name == "LeftArm1" || 
+//         name == "LeftArm2" || 
+//         name == "LeftArm3" || 
+         name == "LeftArm4" || 
+         name == "LeftArm5" || 
+         name == "LeftArm6" || 
+//         name == "LeftArm7" || 
+         name == "LeftWrist")
+      {
+        m_CostJoints.push_back( m_Robot->getJoint(i) );
+        cout << "Add joint : " << m_CostJoints.back()->getName() << endl;
+      }
+    }
+  }
+  
+  if(  m_planning_type == MOBILE_MANIP )
+  {
+    for (int i=0; i<int(m_Robot->getNumberOfJoints()); i++) 
+    {
+      string name = m_Robot->getJoint(i)->getName();
+      
+      if(name == "Platform" || 
+         name == "base2" || 
+         name == "LeftArm3" || 
+         name == "LeftArm4" || 
+         name == "LeftArm5" || 
+         name == "LeftArm6" || 
+         name == "LeftArm7" || 
+         name == "LeftWrist" )
+      {
+        m_CostJoints.push_back( m_Robot->getJoint(i) );
+        cout << "Add joint : " << m_CostJoints.back()->getName() << endl;
+      }
+    }
+  }
+  cout << m_CostJoints.size() << " nb of cost joints" << endl;
+  
+  m_PlatformJoint = m_Robot->getJoint("Platform");
   return true;
 }
 
@@ -262,7 +379,12 @@ double HumanCostSpace::groupingCost()
 {
   double cost = 0.0;
   
-  Eigen::Vector3d pos3d = m_Robot->getJoint("platformJoint")->getVectorPos();
+  if( m_PlatformJoint == NULL )
+  {
+    return 0.0;
+  }
+  
+  Eigen::Vector3d pos3d = m_PlatformJoint->getVectorPos();
   Eigen::Vector2d pos2d;
   pos2d[0] = pos3d[0];
   pos2d[1] = pos3d[1];
@@ -305,7 +427,7 @@ void HumanCostSpace::loadAgentGrids(const std::string& filename)
   
   for (int i=0; (i<5)&&(!reading_OK) ; i++) 
   {
-    cout << "Reading grid at : " << filename << endl;
+    cout << "Reading agentGrid" << endl;
     reading_OK = agentGrid->loadFromXmlFile( filename );
   }
   
@@ -355,6 +477,28 @@ void HumanCostSpace::testCostFunction()
   cout << "cost per sec : " << double(iter)/(t - t_init) << endl;
 }
 
+void HumanCostSpace::drawDistances()
+{
+  vector<double> costs(4);
+  costs[0] = 0.0;
+  costs[1] = 0.0;
+  costs[2] = 0.0;
+  costs[3] = 0.0;
+  
+  //cout << "-----------------------------------" << endl;
+  for (int i=0; i<int(m_Grids.size()); i++) 
+  {
+    for (int j=0; j<int(m_CostJoints.size()); j++) 
+    {
+      Eigen::Vector3d pos = m_CostJoints[j]->getVectorPos();
+      cout << "Joint name : " << m_CostJoints[j]->getName() << " , " ;
+      m_Grids[i]->getCompleteCellCostAt( pos, costs );
+      
+      g3d_drawSphere( pos(0), pos(1), pos(2), 0.10 );
+    }
+  }
+}
+
 //! @brief Cost computation for a given configuration
 //! @param A robot configuration
 //! Sums the cost of each each joint point
@@ -366,16 +510,60 @@ double HumanCostSpace::getCost(Configuration& q)
   
   double cost=0.0;
   
+  //cout << "Total : " ;
   for (int i=0; i<int(m_Grids.size()); i++) 
   {
     for (int j=0; j<int(m_CostJoints.size()); j++) 
     {
       cost += m_Grids[i]->getCellCostAt( m_CostJoints[j]->getVectorPos() );
+      //cout << " " << cost;
     }
   }
-  cost = 10*(cost*cost)/double(m_CostJoints.size());
-  cost += groupingCost();
+  //cout << endl;
+  cost = 10*cost/double(m_CostJoints.size());
+  cost += ENV.getDouble(Env::Knatural)*groupingCost();
   
   return cost;
+}
+
+//! @brief Complete cost of configuration
+//! @param Configuration of the robot
+double HumanCostSpace::getCompleteCost(Configuration& q, vector<double>& cost_sum)
+{
+  cost_sum.resize(6);
+  cost_sum[0] = 0.0;
+  cost_sum[1] = 0.0;
+  cost_sum[2] = 0.0;
+  cost_sum[3] = 0.0;
+  cost_sum[4] = 0.0;
+  cost_sum[5] = 0.0;
+  
+  m_Robot->setAndUpdate(q);
+  
+  vector<double> costs(4);
+  costs[0] = 0.0;
+  costs[1] = 0.0;
+  costs[2] = 0.0;
+  costs[3] = 0.0;
+  
+  //cout << "Combine : " ;
+  for (int i=0; i<int(m_Grids.size()); i++) 
+  {
+    for (int j=0; j<int(m_CostJoints.size()); j++) 
+    {
+      m_Grids[i]->getCompleteCellCostAt( m_CostJoints[j]->getVectorPos(), costs );
+      
+      cost_sum[0] += costs[0]; // Distance
+      cost_sum[1] += costs[1]; // Visibility
+      cost_sum[2] += costs[2]; // Reachability
+      cost_sum[3] += costs[3]; // Combine
+      //cout << " " << cost_sum[3];
+    }
+  }
+  
+  cost_sum[4] = groupingCost(); // Grouping
+  cost_sum[5] = getCost(q);     // Total
+
+  return cost_sum[5];
 }
 

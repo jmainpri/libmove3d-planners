@@ -334,9 +334,14 @@ double  Distance::computeCost(double distance)
 	
   //cout << "_SafeRadius radius : " << _SafeRadius << endl;
 	_PenetrationDist[0] = (_SafeRadius - distance)/_SafeRadius;
-	double PenetrationInteraction = (m_InteractionRadius - distance)/m_InteractionRadius;
   
-	double Cost = 0.0;
+  double Cost = 0.0;
+  
+  // ADD a cost for intrusion in the interaction zone
+//  double PenetrationInteraction = (m_InteractionRadius - distance)/m_InteractionRadius;
+//    else if ( PenetrationInteraction > 0 ) {
+//      Cost += pow(PenetrationInteraction,2);
+//  }
   
   // COST between 0 and ...
   if ( _PenetrationDist[0] > 0 ) 
@@ -349,9 +354,6 @@ double  Distance::computeCost(double distance)
       Cost += 1/(0.8-_PenetrationDist[0]);
       Cost += 1;
     }
-  }
-  else if ( PenetrationInteraction > 0 ) {
-    Cost += pow(PenetrationInteraction,2);
   }
   
 // OLD COST Compute of the hri cost function

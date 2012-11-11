@@ -176,11 +176,11 @@ p3d_localpath* LocalPath::getLocalpathStruct(bool multi_sol)
 	{
     if( !multi_sol )
     {
-      _LocalPath = p3d_local_planner(_Robot->getRobotStruct(),_Begin->getConfigStruct(), _End->getConfigStruct());
+      _LocalPath = p3d_local_planner( _Robot->getRobotStruct(), _Begin->getConfigStruct(), _End->getConfigStruct() );
     }
     else
     {
-      _LocalPath = p3d_local_planner_multisol(_Robot->getRobotStruct(), _Begin->getConfigStruct(), _End->getConfigStruct(), _ikSol);
+      _LocalPath = p3d_local_planner_multisol( _Robot->getRobotStruct(), _Begin->getConfigStruct(), _End->getConfigStruct(), _ikSol );
     }
 
 		if (_LocalPath)
@@ -276,6 +276,7 @@ bool LocalPath::isValid()
 			}
 		}
 		_NbColTest++;
+//    cout << "_NbColTest : " << _NbColTest << endl;
 		_Evaluated = true;
 	}
 	return _Valid;

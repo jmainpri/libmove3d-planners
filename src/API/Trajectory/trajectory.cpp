@@ -508,7 +508,7 @@ bool Trajectory::isEmpty()
 
 void Trajectory::clear()
 {
-  for (uint i = 0; i < m_Courbe.size(); i++)
+  for (int i=0; i<int(m_Courbe.size()); i++)
 	{
 		delete m_Courbe.at(i);
 	}
@@ -604,12 +604,28 @@ vector< pair<double,double > > Trajectory::getCostProfile()
 	return vectOfCost;
 }
 
+double Trajectory::computeSubPortionMaxCost(vector<LocalPath*>& portion)
+{
+  double maxCost(0.0);
+  
+	for (int i=0; i<int(portion.size()); i++)
+	{
+		double cost =  portion[i]->cost();
+    
+    if( cost > maxCost )
+    {
+      maxCost = cost;
+    }
+  }
+  return maxCost;
+}
+
 double Trajectory::computeSubPortionCost(vector<LocalPath*>& portion)
 {
 	double sumCost(0.0);
 	
 	for (int i=0; i<int(portion.size()); i++)
-	{
+	{    
 		double cost = portion[i]->cost();
     
 //    cout << "cost[" << i << "] = " << cost << endl;
@@ -797,6 +813,46 @@ double Trajectory::costNoRecompute()
   }
   
 	return computeSubPortionCost(m_Courbe);
+}
+
+double Trajectory::costStatistics(TrajectoryStatistics& stat)
+{
+  stat.length = getRangeMax();
+  
+  if( global_costSpace != NULL ) 
+  {
+    stat.is_valid = isValid();
+    
+    CostSpaceDeltaStepMethod method = global_costSpace->getDeltaStepMethod();
+    
+    stat.sum = costNPoints(100);
+    
+    global_costSpace->setDeltaStepMethod( cs_max );
+    ReComputeSubPortionCost( m_Courbe );
+    stat.max = computeSubPortionMaxCost( m_Courbe );
+    
+    global_costSpace->setDeltaStepMethod( cs_average );
+    stat.average = ReComputeSubPortionCost( m_Courbe );
+    
+    global_costSpace->setDeltaStepMethod( cs_integral ); 
+    stat.integral = ReComputeSubPortionCost( m_Courbe );
+    
+    global_costSpace->setDeltaStepMethod( cs_mechanical_work );
+    stat.mecha_work = ReComputeSubPortionCost( m_Courbe );
+    
+    global_costSpace->setDeltaStepMethod( method );
+    
+    resetCostComputed();
+  }
+  else
+  {
+    stat.max = 0.0;
+    stat.average = 0.0;
+    stat.integral = 0.0;
+    stat.mecha_work = 0.0;
+  }
+  
+  return stat.integral;
 }
 
 double Trajectory::costDeltaAlongTraj()

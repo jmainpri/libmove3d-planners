@@ -223,6 +223,7 @@ namespace stomp_motion_planner
     bool computeRolloutControlCosts(Rollout& rollout);
     bool copyParametersFromPolicy();
     
+    void addStraightLines( std::vector<int> points, Rollout& rollouts);
     bool generateRollouts(const std::vector<double>& noise_variance);
   };
   

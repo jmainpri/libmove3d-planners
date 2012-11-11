@@ -243,9 +243,7 @@ void Robot::deactivateCcConstraint()
  */
 int Robot::getObjectDof() 
 {
-  p3d_jnt* jnt = NULL;
-  
-  jnt = (*_Robot->armManipulationData)[0].getManipulationJnt();
+  p3d_jnt* jnt = (*_Robot->armManipulationData)[0].getManipulationJnt();
   
 	if ( jnt ) 
 	{
@@ -432,6 +430,15 @@ shared_ptr<Configuration> Robot::shootDir(bool samplePassive)
 	//	p3d_RandDirShoot(_Robot, q->getConfigStruct(), samplePassive);
 	p3d_RandNShpereDirShoot(_Robot, q->getConfigStruct(), samplePassive);
 	return q;
+}
+
+int Robot::setAndUpdateFreeFlyer(const Eigen::Vector3d& pos)
+{
+  confPtr_t q = this->getCurrentPos();
+  (*q)[6] = pos[0];
+  (*q)[7] = pos[1];
+  (*q)[8] = pos[2];
+  return this->setAndUpdate(*q);
 }
 
 /**

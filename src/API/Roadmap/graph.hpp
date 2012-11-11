@@ -346,7 +346,7 @@ public:
 	/**
 	 * Link 2 nodes and merge them
 	 */
-	bool linkNodeAndMerge(Node* node1, Node* node2);
+	bool linkNodeAndMerge(Node* node1, Node* node2, bool compute_cost);
 	
 	/**
 	 * crée des Node à des Configurations aléatoires
@@ -415,7 +415,7 @@ public:
 	 * @param DistNodes la distance entre les deux composantes connexes
 	 * @return les deux composantes sont mergées
 	 */
-	int mergeComp(Node* CompCo1, Node* CompCo2, double DistNodes);
+	int mergeComp(Node* CompCo1, Node* CompCo2, double DistNodes, bool compute_edge_cost);
 	
 	/**
 	 * Rebuild the connected component
@@ -468,7 +468,7 @@ public:
 	 * Extract best traj 
 	 * @param the configuration
 	 */
-  std::vector<Node*> extractAStarShortestNodePaths( Node* node1, Node* node2 );
+  std::vector<Node*> extractAStarShortestNodePaths( Node* node1, Node* node2, bool use_cost = true );
   
   /**
 	 * Extract best traj 

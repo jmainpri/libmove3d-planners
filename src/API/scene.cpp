@@ -22,12 +22,11 @@ std::string global_ActiveRobotName;
 Scene::Scene(p3d_env* environnement)
 {
 	m_Scene = environnement;
-	
-        m_Name = m_Scene->name;
+  m_Name = m_Scene->name;
 	
 	for (int i=0; i<m_Scene->nr; i++) 
 	{
-		cout << "Add new Robot to Scene : " << m_Scene->robot[i]->name << endl;
+		//cout << "Add new Robot to Scene : " << m_Scene->robot[i]->name << endl;
 		m_Robot.push_back( new Robot( m_Scene->robot[i] ) );
 		m_Robot.back()->setActiveScene( this );
 	}

@@ -40,7 +40,9 @@ m_IsDirSampleWithRlg(false),
 m_Graph(ptrGraph),
 m_fromComp(NULL),
 m_toComp(NULL)
-{}
+{
+  cout << "BaseExpansion::step() = " << step() << endl;
+}
 
 BaseExpansion::~BaseExpansion(){}
 
@@ -170,11 +172,7 @@ void BaseExpansion::expansionFailed(Node& node)
 /**
  * Gives successive co
  */
-bool BaseExpansion::nextStep(LocalPath& path,
-														 Node* directionNode,
-														 double& pathDelta,
-														 shared_ptr<LocalPath>& newPath,
-														 Env::expansionMethod method)
+bool BaseExpansion::nextStep(LocalPath& path, Node* directionNode, double& pathDelta, shared_ptr<LocalPath>& newPath, Env::expansionMethod method)
 {
 	
 	if( method == Env::Connect )
@@ -214,11 +212,7 @@ bool BaseExpansion::nextStep(LocalPath& path,
 /**
  * Gives successive co
  */
-bool BaseExpansion::nextStep(LocalPath& path,
-														 shared_ptr<Configuration>& directionConfig,
-														 double& pathDelta,
-														 shared_ptr<LocalPath>& newPath,
-														 Env::expansionMethod method)
+bool BaseExpansion::nextStep(LocalPath& path, shared_ptr<Configuration>& directionConfig, double& pathDelta, shared_ptr<LocalPath>& newPath, Env::expansionMethod method)
 {
 	
 	if(method == Env::Connect)
@@ -242,16 +236,12 @@ bool BaseExpansion::nextStep(LocalPath& path,
 /**
  * Function that adds a node to the graph
  */
-Node* BaseExpansion::addNode(Node* currentNode, 
-														 LocalPath& path, 
-														 double pathDelta,
-														 Node* directionNode, 
-														 int& nbCreatedNodes)
+Node* BaseExpansion::addNode(Node* currentNode, LocalPath& path, double pathDelta, Node* directionNode, int& nbCreatedNodes)
 {
 	if ((pathDelta == 1. && directionNode))
 	{
 		//cout << "MergeComp" << endl;
-		m_Graph->linkNodeAndMerge( currentNode, directionNode );
+		m_Graph->linkNodeAndMerge( currentNode, directionNode, false );
 		return (directionNode);
 	}
 	else

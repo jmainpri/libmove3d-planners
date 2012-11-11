@@ -6,6 +6,8 @@
 #include "cost_space.hpp"
 #include <cmath>
 
+#include <boost/math/special_functions/factorials.hpp>
+
 double CSpace::traj_cost(p3d_traj* traj)
 {
     double cost(0.);
@@ -67,7 +69,7 @@ double CSpaceCostMap2D::volume()
 
 double CSpaceCostMap2D::unit_sphere()
 {
-    return(2*M_PI);
+    return(M_PI);
 }
 
 unsigned CSpaceCostMap2D::dimension()
@@ -88,7 +90,7 @@ Pr2CSpace::~Pr2CSpace()
 
 double Pr2CSpace::q_cost(confPtr_t q)
 {
-  return(computeIntersectionWithGround(*q));
+  return(global_costSpace->cost(*q));
 }
 
 double Pr2CSpace::lp_cost(confPtr_t q1, confPtr_t q2)
@@ -100,15 +102,29 @@ double Pr2CSpace::lp_cost(confPtr_t q1, confPtr_t q2)
 double Pr2CSpace::volume()
 {
   assert(m_c_robot);
-  // this means that there is 1 joint + the unused(legacy) joint 0
+//  jnt->getName() : right-Arm1(6) , index_dof : 16
+//  jnt->getName() : right-Arm2(7) , index_dof : 17
+//  jnt->getName() : right-Arm3(8) , index_dof : 18
+//  jnt->getName() : right-Arm4(9) , index_dof : 19
+//  jnt->getName() : right-Arm5(10) , index_dof : 20
+//  jnt->getName() : right-Arm6(11) , index_dof : 21
+//  jnt->getName() : right-Arm7(12) , index_dof : 22
+
+  double volume=1.0;
   
-  return(fabs((m_c_robot->joints[1]->dof_data[0].vmax - m_c_robot->joints[1]->dof_data[0].vmin) * 
-              (m_c_robot->joints[1]->dof_data[1].vmax - m_c_robot->joints[1]->dof_data[1].vmin)));
+  for( int i=6; i<=12; i++) 
+  {
+    p3d_jnt* jntPt = m_c_robot->joints[i];
+    volume *= jntPt->dist*fabs(jntPt->dof_data[0].vmax - jntPt->dof_data[0].vmin);
+  }
+  
+  return volume;
 }
 
 double Pr2CSpace::unit_sphere()
 {
-  return(2*M_PI);
+  double n = 7;
+  return pow(2,(n+1)/2)*pow(M_PI,(n-1)/2)/boost::math::double_factorial<double>(7);
 }
 
 unsigned Pr2CSpace::dimension()

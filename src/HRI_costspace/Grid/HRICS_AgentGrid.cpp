@@ -109,6 +109,38 @@ AgentCell::~AgentCell()
   delete m_v4; delete m_v5; delete m_v6; delete m_v7;
 }
 
+double AgentCell::getDistance() 
+{ 
+  //cout << "distance : " << m_Distance <<  endl;
+  return m_Distance; 
+}
+
+double AgentCell::getVisibility() 
+{ 
+  //cout << "visibility : " << m_Visiblity <<  endl;
+  return m_Visiblity; 
+}
+
+double AgentCell::getReachability() 
+{ 
+  //cout << "reachability : " << m_Reachability <<  endl;
+  return m_Reachability; 
+}
+
+double AgentCell::getCombined() 
+{ 
+  //cout << "combined : " << m_Combined <<  endl;
+  return m_Combined; 
+}
+
+//!
+//! compute cost depending on right/left hand
+//!
+double AgentCell::getCost()
+{
+  return m_Combined;
+}
+
 void AgentCell::setBlankCost()
 { 
 	m_IsCostComputed = false;
@@ -194,7 +226,7 @@ void AgentCell::computeDistance()
   if ( CostSpace == NULL )
     return;
   
-  m_Distance = CostSpace->getWorkspaceCost( getWorkspacePoint() );
+  m_Distance = ENV.getDouble(Env::Kdistance)*CostSpace->getWorkspaceCost( getWorkspacePoint() );
 }
 
 //! Compute the visibility of the cell
@@ -205,7 +237,7 @@ void AgentCell::computeVisibility()
   if ( CostSpace == NULL )
     return;
   
-  m_Visiblity = CostSpace->getWorkspaceCost( getWorkspacePoint() );
+  m_Visiblity = ENV.getDouble(Env::Kvisibility)*CostSpace->getWorkspaceCost( getWorkspacePoint() );
 }
 
 //! Compute the cell reachbility
@@ -222,7 +254,8 @@ void AgentCell::computeReachability()
      m_Reachability = CostSpace->getWorkspaceCost( getWorkspacePoint() );
   }
   else {
-    m_Reachability = numeric_limits<double>::max();
+    //m_Reachability = numeric_limits<double>::max();
+    m_Reachability = 90;
   }
 }
 
@@ -230,9 +263,10 @@ void AgentCell::computeCombined()
 {
   m_Combined = 0.0;
   
-  m_Combined += m_Distance*ENV.getDouble(Env::Kdistance);
-	m_Combined += m_Visiblity*ENV.getDouble(Env::Kvisibility);
+  m_Combined += m_Distance;
+	m_Combined += m_Visiblity;
   
+  /**
   if( m_IsReachable ) 
   {
     m_Combined += m_Reachability*ENV.getDouble(Env::Kreachable);
@@ -240,21 +274,9 @@ void AgentCell::computeCombined()
   else {
     m_Combined += (2.0)*ENV.getDouble(Env::Kreachable);
   }
-  
   m_Combined /= (ENV.getDouble(Env::Kdistance)+ENV.getDouble(Env::Kvisibility)+ENV.getDouble(Env::Kreachable));
-}
-
-
-//!
-//!compute cost depending on right/left hand
-//!
-double AgentCell::getCost()
-{
-//  cout << "m_Distance : " << m_Distance << endl;
-//  cout << "m_Visiblity : " << m_Visiblity << endl;
-//  cout << "m_Reachability : " << m_Reachability << endl;
-  
-  return m_Combined;
+   */
+  m_Combined /= 2;
 }
 
 bool AgentCell::writeToXml(xmlNodePtr cur)
@@ -402,6 +424,142 @@ bool AgentCell::readCellFromXml(xmlNodePtr cur)
 	_corner[2] = Corner[2];
 	
 	return true;
+}
+
+void AgentCell::drawOnePoint( bool withTransform )
+{
+  double _corner[3];
+  double colorvector[4];
+	
+  colorvector[0] = 0.0;   // red
+  colorvector[1] = 0.0;   // green
+  colorvector[2] = 0.0;   // blue
+  colorvector[3] = 0.01;  // transparency
+  
+  if (withTransform) 
+  {
+    m_Center = getWorkspacePoint();
+  }
+  
+  _corner[0] = m_Center[0];
+  _corner[1] = m_Center[1];
+  _corner[2] = m_Center[2];
+  
+  double Cost;
+  
+  if( ENV.getInt(Env::hriCostType) == HRICS_Distance )
+  {
+    Cost = m_Distance;
+    GroundColorMixGreenToRed(colorvector,ENV.getDouble(Env::colorThreshold1)*Cost);
+    //colorvector[3] = 0.20*ENV.getDouble(Env::colorThreshold2)*Cost; //+0.01;
+  }
+  
+  if( ENV.getInt(Env::hriCostType) == HRICS_Visibility )
+  {
+    Cost = m_Visiblity;
+    GroundColorMixGreenToRed(colorvector,ENV.getDouble(Env::colorThreshold1)*Cost);
+    //colorvector[3] = ENV.getDouble(Env::colorThreshold2)*1/Cost; 
+  }
+  
+  if ( ENV.getInt(Env::hriCostType) == HRICS_Reachability ) 
+  {
+    if ( (Cost == numeric_limits<double>::max()) && !m_IsReachable )
+    {
+      return;
+    }
+    
+    Cost = m_Reachability;
+    GroundColorMixGreenToRed(colorvector,ENV.getDouble(Env::colorThreshold1)*Cost);
+  }
+  
+  if( ENV.getInt(Env::hriCostType) == HRICS_Combine )
+  {
+    Cost = m_Combined;
+    GroundColorMixGreenToRed(colorvector,ENV.getDouble(Env::colorThreshold1)*Cost);
+    //colorvector[3] = 0.20*ENV.getDouble(Env::colorThreshold2)*Cost; //+0.01;
+  }
+  
+  Eigen::Vector3d m_CubeSize;
+  
+  m_CubeSize[0] = 0.05;
+  m_CubeSize[1] = 0.05;
+  m_CubeSize[2] = 0.05;
+  
+  double _v0[3]; double _v1[3]; double _v2[3]; double _v3[3];
+  double _v4[3]; double _v5[3]; double _v6[3]; double _v7[3];
+  
+  g3d_set_color(Any,colorvector);
+  
+  //  _v0 = new double[3]; _v1 = new double[3]; _v2 = new double[3]; _v3 = new double[3];
+  //  _v4 = new double[3]; _v5 = new double[3]; _v6 = new double[3]; _v7 = new double[3];
+  
+  _v0[0] = _corner[0] + m_CubeSize[0];
+  _v0[1] = _corner[1] + m_CubeSize[1];
+  _v0[2] = _corner[2] + m_CubeSize[2];
+  
+  _v1[0] = _corner[0] ;
+  _v1[1] = _corner[1] + m_CubeSize[1];
+  _v1[2] = _corner[2] + m_CubeSize[2];
+  
+  _v2[0] = _corner[0] ;
+  _v2[1] = _corner[1] ;
+  _v2[2] = _corner[2] + m_CubeSize[2];
+  
+  _v3[0] = _corner[0] + m_CubeSize[0];
+  _v3[1] = _corner[1] ;
+  _v3[2] = _corner[2] + m_CubeSize[2];
+  
+  _v4[0] = _corner[0] + m_CubeSize[0];
+  _v4[1] = _corner[1] ;
+  _v4[2] = _corner[2] ;
+  
+  _v5[0] = _corner[0] + m_CubeSize[0];
+  _v5[1] = _corner[1] + m_CubeSize[1];
+  _v5[2] = _corner[2] ;
+  
+  _v6[0] = _corner[0] ;
+  _v6[1] = _corner[1] + m_CubeSize[1];
+  _v6[2] = _corner[2] ;
+  
+  _v7[0] = _corner[0] ;
+  _v7[1] = _corner[1] ;
+  _v7[2] = _corner[2] ;
+  
+  glNormal3f(0,0,1);
+  glVertex3dv(_v0);    // front face
+  glVertex3dv(_v1);
+  glVertex3dv(_v2);
+  glVertex3dv(_v3);
+  
+  glNormal3f(1,0,0);
+  glVertex3dv(_v0);    // right face
+  glVertex3dv(_v3);
+  glVertex3dv(_v4);
+  glVertex3dv(_v5);
+  
+  glNormal3f(0,1,0);
+  glVertex3dv(_v0);    // up face
+  glVertex3dv(_v5);
+  glVertex3dv(_v6);
+  glVertex3dv(_v1);
+  
+  glNormal3f(-1,0,0);
+  glVertex3dv(_v1);
+  glVertex3dv(_v6);
+  glVertex3dv(_v7);
+  glVertex3dv(_v2);
+  
+  glNormal3f(0,0,-1);
+  glVertex3dv(_v4);
+  glVertex3dv(_v7);
+  glVertex3dv(_v6);
+  glVertex3dv(_v5);
+  
+  glNormal3f(0,-1,0);
+  glVertex3dv(_v7);
+  glVertex3dv(_v4);
+  glVertex3dv(_v3);
+  glVertex3dv(_v2);
 }
 
 void AgentCell::draw(bool transform)
@@ -627,6 +785,33 @@ vector<Vector3d> AgentGrid::getBox()
 }
 
 //! @brief Get the cell containing WSPoint and returns the cost
+double AgentGrid::getCompleteCellCostAt(const Vector3d& WSPoint, vector<double>& costs)
+{
+  Vector3d pointInGrid = getTranformedToRobotFrame(WSPoint);
+  
+  AgentCell* cell = dynamic_cast<AgentCell*>(getCell(pointInGrid));
+  
+  if(cell != NULL)
+  {
+    costs[0] = cell->getDistance();
+    costs[1] = cell->getVisibility();
+    costs[2] = cell->getReachability();
+    costs[3] = cell->getCombined();
+    
+    cout << "distance : " << costs[0];
+    cout << " , visibility : " << costs[1];
+    cout << " , reachability : " << costs[2];
+    cout << " , combined : " << costs[3] << endl;
+    //double cost = costs[3]
+    return 0.0;
+  }
+  else {
+    // cout << "No cell at : " << endl << pointInGrid << endl;
+    return 0.0;
+  }
+}
+
+//! @brief Get the cell containing WSPoint and returns the cost
 double AgentGrid::getCellCostAt(const Vector3d& WSPoint)
 {
   Vector3d pointInGrid = getTranformedToRobotFrame(WSPoint);
@@ -637,10 +822,9 @@ double AgentGrid::getCellCostAt(const Vector3d& WSPoint)
   {
     return cell->getCost();
   }
-  else
-  {
+  else {
     // cout << "No cell at : " << endl << pointInGrid << endl;
-    return NULL;
+    return 0.0;
   }
 }
 
@@ -859,6 +1043,7 @@ void AgentGrid::draw()
     
     // Draw the cell
     cell->draw(configChanged);
+    //cell->drawOnePoint(configChanged);
   }
   
   m_LastConfig = m_ActualConfig;

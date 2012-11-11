@@ -12,6 +12,7 @@
 /*object global permettant d'acceder aux planner dans tous les fichiers de Move3d*/
 
 #include "planner/planner.hpp"
+#include "API/Trajectory/trajectory.hpp"
 
 Global std::vector<Planner*> plannerlist;
 
@@ -32,6 +33,11 @@ struct RRTStatistics
  * Get last RRT statistics
  */
 void p3d_get_rrt_statistics( RRTStatistics& stat );
+
+/**
+ * Get last Trajectory statistics
+ */
+void p3d_get_traj_statistics( TrajectoryStatistics& stat );
 
 /**
  * @ingroup NEW_CPP_MODULE

@@ -14,6 +14,7 @@
 #include "Graphic-pkg.h"
 #include "Planner-pkg.h"
 
+#include <iomanip>
 #include <fstream>
 #include <algorithm>
 #include <sys/time.h>
@@ -90,7 +91,7 @@ bool Smoothing::oneLoopShortCut( )
 	double lSecond(0.0);
 	
 	if (!(getNbOfPaths() > 1))
-		return false;
+		return isOptimSuccess;
 	
 	vector<confPtr_t> vectConf = get2RandomConf( m_step, lFirst, lSecond );
 	
@@ -126,9 +127,7 @@ bool Smoothing::oneLoopShortCut( )
 		
 		if ( supposedValid && isLowerCostLargePortion( lFirst, lSecond, portion ) )
 		{
-			/**
-			 * Replace
-			 */
+			/// Replace
 			vector<LocalPath*> vect_path;
 			vect_path.push_back(newPath);
 			
@@ -827,9 +826,9 @@ bool Smoothing::checkStopConditions(unsigned int iteration)
 	{
 		if ( iteration > m_MaxNumberOfIterations ) 
 		{
-#ifdef DEBUG_STATUS_SHORTCUT
+//#ifdef DEBUG_STATUS_SHORTCUT
 			cout << "Smoothing has reached max number of iteration ( " << m_MaxNumberOfIterations << " ) " << endl;
-#endif
+//#endif
 			return true;
 		}
 	}
@@ -838,9 +837,9 @@ bool Smoothing::checkStopConditions(unsigned int iteration)
 	{
 		if ( m_time > PlanEnv->getDouble(PlanParam::timeLimitSmoothing) ) 
 		{
-#ifdef DEBUG_STATUS_SHORTCUT
+//#ifdef DEBUG_STATUS_SHORTCUT
 			cout << "Smoothin has reached time limit ( " << m_time << " ) " << endl;
-#endif
+//#endif
 			return true;
 		}
 	}
@@ -889,14 +888,40 @@ double Smoothing::gainOfLastIterations(unsigned int n)
 	}
 }
 
-void Smoothing::storeCostAndGain( double NewCost, double CurCost )
+void Smoothing::computeStats()
 {
-  if ( NewCost > CurCost )
+  m_convergence_rate.clear();
+  
+  for (int i=0; i<int(m_convergence_trajs.size()); i++) 
   {
-    cout << "Smoothing::runDeformation : NewCost > CurrentCost"  << endl;
+    double time = m_convergence_trajs[i].first;
+    API::Trajectory traj( m_convergence_trajs[i].second );
+    
+    TrajectoryStatistics stat;
+    traj.costStatistics( stat );
+    m_convergence_rate.push_back( make_pair(time,stat) );
   }
+}
+
+void Smoothing::storeCostAndGain( double NewCost, double CurrCost )
+{
+  double Gain=0.0;
+  
+  if(NewCost != CurrCost )
+    Gain = ( CurrCost - NewCost ) / CurrCost;
+  
   m_OptimCost.push_back( NewCost );
-  m_GainCost.push_back( ( CurCost - NewCost ) / CurCost );
+  m_GainCost.push_back( Gain );
+  
+  if( PlanEnv->getBool( PlanParam::trajPrintGain ) ) 
+    cout << "Gain = " << 100*Gain <<  " %" << endl;
+  
+  vector<confPtr_t> traj;
+  for (int i=0; i<getNbOfViaPoints(); i++) 
+  {
+    traj.push_back( (*this)[i]->copy() );
+  }
+  m_convergence_trajs.push_back( make_pair(m_time,traj) );
 }
 
 /*!
@@ -905,30 +930,39 @@ void Smoothing::storeCostAndGain( double NewCost, double CurCost )
  */
 void Smoothing::saveOptimToFile(string fileName)
 {
-  std::string home(getenv("HOME_MOVE3D"));
+  std::ostringstream oss;
+  std::ofstream s;
   
-	std::ostringstream oss;
-	oss << "statFiles/"<< fileName << ".csv";
-
-	const char *path = (home+oss.str()).c_str();
+	oss << "statFiles/convergence_traj_smooth_" << std::setfill('0') << std::setw(4) << m_runId << ".csv";
+  
+	const char *res = oss.str().c_str();
 	
-	std::ofstream s;
-	s.open(path);
+	s.open(res);
+	cout << "Opening save file : " << res << endl;
 	
-	cout << "Opening save file : " << path << endl;
-	
-	s << "Cost" << ";";
-	s << "Gain" << ";" ;
-	
-	for (int i=0; i<int(m_OptimCost.size()); i++)
-	{
-		s << m_OptimCost[i] << ";";
-		s << m_GainCost[i] << ";" ;
-		s << endl;
+  s << "TIME" << ";";
+  s << "LENGTH" << ";";
+  s << "MAX" << ";";
+  s << "AVERAGE" << ";";
+  s << "INTEGRAL" << ";";
+  s << "MECHA WORK" << ";";
+  s << "SUM" << ";";
+  s << endl;
+  
+	for (int i=0; i<int(m_convergence_rate.size()); i++)
+	{    
+    s << m_convergence_rate[i].first << ";";
+    s << m_convergence_rate[i].second.length << ";";
+    s << m_convergence_rate[i].second.max << ";";
+    s << m_convergence_rate[i].second.average << ";";
+    s << m_convergence_rate[i].second.integral << ";";
+    s << m_convergence_rate[i].second.mecha_work << ";";
+    s << m_convergence_rate[i].second.sum << ";";
+    s << endl;
 	}
-	
-	cout << "Closing save file" << endl;
-	s.close();
+  
+  s.close();
+  cout << "Closing save file" << endl;
 }
 
 /*!
@@ -936,10 +970,9 @@ void Smoothing::saveOptimToFile(string fileName)
  */
 void Smoothing::runShortCut( int nbIteration, int idRun )
 {
-  //  this->costNoRecompute();
-  //#ifdef DEBUG_STATUS_SHORTCUT
-  //  cout << "Before Short Cut : Traj cost = " << this->costNoRecompute() << endl;
-  //#endif
+  m_runId = idRun;
+  m_MaxNumberOfIterations = nbIteration;
+  
 #ifdef DEBUG_STATUS_SHORTCUT
 	double costBeforeDeformation = cost();
 #endif
@@ -947,22 +980,22 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
   m_OptimCost.clear();
   m_GainCost.clear();
 	m_GainOfIterations.clear();
+	m_convergence_rate.clear();
+	m_convergence_trajs.clear();
   
-  //traj_convergence_with_time.clear();
-	
-  m_MaxNumberOfIterations = nbIteration;
-	
 	// Fix the step
   if( m_useAutoStep )
   {
     m_step = getRangeMax() / PlanEnv->getDouble(PlanParam::MaxFactor) ;
   }
 	
-//	double ts(0.0); m_time = 0.0; ChronoOn();
   timeval tim;
 	gettimeofday(&tim, NULL);
   double ts = tim.tv_sec+(tim.tv_usec/1000000.0);
   m_time = 0.0; 
+  
+  if(PlanEnv->getBool(PlanParam::trajSaveCost))
+    storeCostAndGain( cost(), cost() );
   
 	for (int m_Iteration=0; !checkStopConditions(m_Iteration); m_Iteration++)
 	{
@@ -974,9 +1007,7 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 			break;
 		}
 		
-#ifdef DEBUG_STATUS_SHORTCUT
-		double CurCost = cost();
-#endif
+		double CurrCost = cost();
 	
     try 
 		{
@@ -994,53 +1025,30 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 			cout << "Exeption in shortcut loop : " << str << endl;
 			break;
 		}
-		//		catch (...) 
-		//		{
-		//			cout << "Exeption in shortcut loop" << endl;
-		//			break;
-		//		}
 		
-#ifdef DEBUG_STATUS_SHORTCUT
 		double NewCost = cost();
 		
-		m_IterationSucceded = ( CurCost > NewCost );
+		m_IterationSucceded = ( CurrCost > NewCost );
 		
-		if(PlanEnv->getBool(PlanParam::trajSaveCost))
+		if( m_IterationSucceded && PlanEnv->getBool(PlanParam::trajSaveCost))
 		{
-			storeCostAndGain( NewCost, CurCost );
-		}
-		
-    // Push back the gain of iteration that have succeded
-		if ( m_IterationSucceded  ) 
-		{
-			double Gain = (( CurCost - NewCost ) / CurCost) ;
+      gettimeofday(&tim, NULL);
+      m_time = tim.tv_sec+(tim.tv_usec/1000000.0) - ts;
       
-      if( PlanEnv->getBool( PlanParam::trajPrintGain ) ) 
-      {
-        cout << "Gain = " << 100*Gain <<  " %" << endl;
-      }
-			m_GainOfIterations.push_back( Gain );
+			storeCostAndGain( NewCost, CurrCost );
 		}
-#endif
-
-//		ChronoTimes( &m_time , &ts );
+    
     gettimeofday(&tim, NULL);
     m_time = tim.tv_sec+(tim.tv_usec/1000000.0) - ts;
 	}
 	
-//	ChronoOff();
-	
 #ifdef DEBUG_STATUS_SHORTCUT
   if( PlanEnv->getBool(PlanParam::trajComputeCollision ) )
   {
-
-    if ( isValid() ) {
-
+    if ( isValid() )
       cout << "Trajectory valid" << endl;
-    }
-    else { 
+    else 
       cout << "Trajectory not valid" << endl;
-    }
   }
 #endif
   
@@ -1048,6 +1056,7 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
   {
     ostringstream oss;
     oss << "ShortCutOptim_"<< m_ContextName << "_" << idRun << "_" ;
+    computeStats();
     saveOptimToFile( oss.str() );
   }
 #ifdef DEBUG_STATUS_SHORTCUT

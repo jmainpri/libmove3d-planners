@@ -20,7 +20,8 @@ enum CostSpaceDeltaStepMethod
 	cs_visibility,
 	cs_average,
 	cs_config_cost_and_dist,
-	cs_boltzman_cost
+	cs_boltzman_cost,
+  cs_max
 };
 
 /*!
@@ -67,9 +68,15 @@ public:
 	
   // Initializes the Cost space motion planning problem
   void initMotionPlanning(graph* graph, node* start, node* goal);
+  
+  // Set DeltaStepCost
+  void setDistanceMethod(CostSpaceResolutionMethod method) { m_resolution = method; }
 	
   // Set DeltaStepCost
   void setDeltaStepMethod(CostSpaceDeltaStepMethod method) { m_deltaMethod = method; }
+  
+  // Get DeltaStepCost
+  CostSpaceDeltaStepMethod getDeltaStepMethod() { return m_deltaMethod; }
 	
 	// Compute the delta step cost
   double deltaStepCost(double cost1, double cost2, double length);
@@ -80,7 +87,7 @@ protected:
   std::map<std::string, boost::function<double(Configuration&)> > mFunctions;
   
   void getPr2ArmConfiguration( Eigen::VectorXd& x, confPtr_t q );
-	
+	double getPr2ArmDistance( Robot* robot, Eigen::VectorXd& q_i, Eigen::VectorXd& q_f );
 private:
 	
   // Delta

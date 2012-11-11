@@ -13,19 +13,19 @@
 
 #include "API/Trajectory/trajectory.hpp"
 
-void set_robot_active_joints();
-
 bool traj_optim_init_mlp_cntrts_and_fix_joints();
+bool traj_optim_switch_cartesian_mode(bool cartesian);
 
 API::Trajectory traj_optim_create_sraight_line_traj();
 
-bool traj_optim_initScenario();
 bool traj_optim_initStomp();
 bool traj_optim_runChomp();
-bool traj_optim_runStomp();
+bool traj_optim_runStomp(int runId);
+bool traj_optim_runStompNoReset(int runId);
 
 void traj_optim_draw_collision_points();
 bool traj_optim_generate_softMotion();
+bool traj_optim_generate_pointsOnTraj();
 
 extern std::vector< std::vector <double> > traj_optim_to_plot;
 extern std::vector< std::vector <double> > traj_optim_convergence;

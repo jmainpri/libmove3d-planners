@@ -125,14 +125,13 @@ namespace HRICS
 		 */
 		int getObjectDof() { return m_IndexObjectDof; }
 		bool IsHuman() { return m_IsHuman; }
+    Robot* getRobot() { return m_Robot; }
 		NaturalGrid* getGrid() { return m_Grid; }
-		Robot* getRobot() { return m_Robot; }
 		
 		/**
 		 * Basic setters
 		 */
 		void setGrid(NaturalGrid* grid) { m_Grid = grid; }
-		
 		
 	private:
 		bool                m_debug;

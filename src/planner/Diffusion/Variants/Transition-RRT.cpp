@@ -372,22 +372,18 @@ bool TransitionExpansion::costTestSucceededConf(
 	return success;
 }
 
-bool TransitionExpansion::expandToGoal(Node* expansionNode, shared_ptr<
-                                       Configuration> directionConfig)
+bool TransitionExpansion::expandToGoal(Node* expansionNode, confPtr_t directionConfig)
 {
-	
-	//    cout << "expandToGoal" << endl;
-  
 	bool extensionSucceeded(true);
-	
 	double param(0);
 	//double temperature = expansionNode->getCompcoStruct()->temperature;
 	double extensionCost(0.);
 	
-	shared_ptr<Configuration> fromConfig = expansionNode->getConfiguration();
-	shared_ptr<Configuration> toConfig;
+	confPtr_t fromConfig = expansionNode->getConfiguration();
+	confPtr_t toConfig;
 	
-	LocalPath directionLocalPath(fromConfig, directionConfig);
+	LocalPath directionLocalPath( fromConfig, directionConfig );
+  
 	double expansionCost = fromConfig->cost();
 	
 	double paramMax = directionLocalPath.getParamMax();
@@ -396,31 +392,23 @@ bool TransitionExpansion::expandToGoal(Node* expansionNode, shared_ptr<
 	// Additional nodes creation in the nExtend case, but without checking for expansion control
 	for (int i = 1; param < paramMax; i++)
 	{
-		
 		param = ((double) i) * step();
 		
 		if (param > paramMax)
-		{
 			toConfig = directionConfig;
-		}
 		else
-		{
 			toConfig = directionLocalPath.configAtParam(param);
-		}
 		
 		if (ENV.getBool(Env::isCostSpace))
 		{
 			extensionCost = toConfig->cost();
 			
 			if (!(expansionCost >= extensionCost))
-			{
 				return false;
-			}
 		}
 		else
-		{
 			return true;
-		}
+
 		expansionCost = extensionCost;
 		fromConfig = toConfig;
 	}
@@ -554,19 +542,11 @@ bool TransitionExpansion::expandCostConnect(Node& expansionNode, shared_ptr<
 		
 		if ( toGoal ) 
 		{
-			this->addNode(&expansionNode, 
-										directionPath, 
-										posAlongDirection,
-										directionNode, 
-										nbCreatedNodes);
+			this->addNode(&expansionNode,  directionPath,  posAlongDirection, directionNode,  nbCreatedNodes);
 		}
 		else 
 		{
-			this->addNode(&expansionNode, 
-										extentionPath, 
-										0,
-										NULL, 
-										nbCreatedNodes);
+			this->addNode(&expansionNode,  extentionPath,  0, NULL,  nbCreatedNodes);
 		}
 	}
 	
@@ -872,25 +852,12 @@ void TransitionRRT::setNodeCost(Node* node)
  */
 bool TransitionRRT::connectNodeToCompco(Node* node, Node* compNode)
 {
-	int SavedIsMaxDis = FALSE;
-	Node* node2(NULL);
-	
-	SavedIsMaxDis =  PlanEnv->getBool(PlanParam::isMaxDisNeigh);
-//	p3d_SetIsMaxDistNeighbor(FALSE);
-	PlanEnv->setBool(PlanParam::isMaxDisNeigh,false);
-	
-	node2 = _Graph->nearestWeightNeighbour(compNode,
-																				 node->getConfiguration(),
-																				 false,
-																				 ENV.getInt(Env::DistConfigChoice));
-	
-	PlanEnv->setBool(PlanParam::isMaxDisNeigh,SavedIsMaxDis);
-//	p3d_SetIsMaxDistNeighbor(SavedIsMaxDis);
-	
-	double minumFinalCostGap = ENV.getDouble(Env::minimalFinalExpansionGap);
-	
-	LocalPath path(node->getConfiguration(),
-								 node2->getConfiguration());
+  double minumFinalCostGap = ENV.getDouble(Env::minimalFinalExpansionGap);
+  
+//	int SavedIsMaxDis = FALSE;
+	int nbCreatedNodes=0;
+  
+	LocalPath path( node->getConfiguration(), compNode->getConfiguration() );
 	
 	if(!ENV.getBool(Env::costBeforeColl))
 	{
@@ -900,21 +867,20 @@ bool TransitionRRT::connectNodeToCompco(Node* node, Node* compNode)
 			{
 				int nbCreatedNodes=0;
 				
-				_expan->addNode(node,path,1.0,node2,nbCreatedNodes);
+				_expan->addNode(node,path,1.0,compNode,nbCreatedNodes);
 				cout << "Path Valid Connected" << endl;
 				return true;
 			}
 			
 			if( ENV.getBool(Env::costExpandToGoal) &&
 				 (path.getParamMax() <= (minumFinalCostGap*_expan->step())) &&
-				 _expan->expandToGoal(
-															node,
-															node2->getConfiguration()))
+				 _expan->expandToGoal( node, compNode->getConfiguration() ))
 			{
 				int nbCreatedNodes=0;
 				
-				_expan->addNode(node,path,1.0,node2,nbCreatedNodes);
-				cout << "attempting connect " << node->getConfiguration()->cost() << " to " << node2->getConfiguration()->cost() << endl;
+				_expan->addNode(node,path,1.0,compNode,nbCreatedNodes);
+				cout << "attempting connect " << node->getConfiguration()->cost() << 
+        " to " << compNode->getConfiguration()->cost() << endl;
 				return true;
 			}
 		}
@@ -930,14 +896,12 @@ bool TransitionRRT::connectNodeToCompco(Node* node, Node* compNode)
 			
 			if ( path.getParamMax() == 0.0 ) {
 				node->print();
-				node2->print();
+				compNode->print();
 			}
-			
-			int nbCreatedNodes=0;
 			
 			if( path.isValid() )
 			{
-				_expan->addNode(node,path,1.0,node2,nbCreatedNodes);
+				_expan->addNode(node,path,1.0,compNode,nbCreatedNodes);
 				cout << "Path Valid Connected" << endl;
 				return true;
 			}
@@ -952,15 +916,12 @@ bool TransitionRRT::connectNodeToCompco(Node* node, Node* compNode)
 		// multiple of the expansion step
 		if( ENV.getBool(Env::costExpandToGoal) &&
 			 (path.getParamMax() <= (minumFinalCostGap*_expan->step())) &&
-			 _expan->expandToGoal(
-														node,
-														node2->getConfiguration() ))
+			 _expan->expandToGoal(node,compNode->getConfiguration() ))
 		{
 			if( path.isValid() )
 			{
-				int nbCreatedNodes=0;
-				_expan->addNode(node,path,1.0,node2,nbCreatedNodes);
-				cout << "attempting connect " << node->getConfiguration()->cost() << " to " << node2->getConfiguration()->cost() << endl;
+				_expan->addNode(node,path,1.0,compNode,nbCreatedNodes);
+				cout << "attempting connect " << node->getConfiguration()->cost() << " to " << compNode->getConfiguration()->cost() << endl;
 				return true;
 			}
 			else

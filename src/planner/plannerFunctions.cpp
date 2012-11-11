@@ -28,6 +28,7 @@
 #include "planner/Diffusion/Variants/Threshold-RRT.hpp"
 #include "planner/Diffusion/Variants/Star-RRT.hpp"
 
+#include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 
 #ifdef HRI_COSTSPACE
@@ -74,19 +75,30 @@ RRTStatistics rrt_statistics;
 
 void p3d_get_rrt_statistics( RRTStatistics& stat )
 {
-  stat.runId        = rrt_statistics.runId;
-  stat.succeeded    = rrt_statistics.succeeded;
-  stat.time         = rrt_statistics.time;
-  stat.cost         = rrt_statistics.cost;
-  stat.nbNodes      = rrt_statistics.nbNodes; 
-  stat.nbExpansions = rrt_statistics.nbExpansions; 
-};
+  stat = rrt_statistics;
+}
+
+// ---------------------------------------------------------------------------------
+// Trajectory statistcis
+// ---------------------------------------------------------------------------------
+TrajectoryStatistics traj_statistics;
+
+void p3d_get_traj_statistics( TrajectoryStatistics& stat )
+{
+  stat = traj_statistics;
+}
+
+// ---------------------------------------------------------------------------------
+// Set back costspace after RRT
+// ---------------------------------------------------------------------------------
+static bool set_costspace=false;
 
 // ---------------------------------------------------------------------------------
 // Extract Traj
 // ---------------------------------------------------------------------------------
 p3d_traj* p3d_extract_traj(bool is_traj_found, int nb_added_nodes, Graph* graph, confPtr_t q_source, confPtr_t q_target) 
 {
+  cout << "--- p3d_extract_traj ---------------------------" << endl;
   API::Trajectory* traj = NULL;
   Robot* rob = graph->getRobot();
   
@@ -106,7 +118,6 @@ p3d_traj* p3d_extract_traj(bool is_traj_found, int nb_added_nodes, Graph* graph,
     }
     else 
     {
-      cout << "Extract graph to traj" << endl;
       //traj = graph->extractBestTraj( q_source, q_target ); // Old extract
       traj = graph->extractAStarShortestPathsTraj( q_source, q_target );
     }
@@ -114,15 +125,38 @@ p3d_traj* p3d_extract_traj(bool is_traj_found, int nb_added_nodes, Graph* graph,
 
   trajId++;
   
+  cout << "compute traj cost" << endl;
+  
   // Return trajectory or NULL if falses
   if (traj) 
   {
-    traj->costDeltaAlongTraj();
+    //traj->costDeltaAlongTraj();
+    if( PlanEnv->getBool(PlanParam::trajComputeCostAfterPlannif) )
+    {
+      bool is_cost_space = ENV.getBool(Env::isCostSpace);
+      ENV.setBool(Env::isCostSpace, true);
+      
+      traj->resetCostComputed();
+      traj->costStatistics( traj_statistics );
+      
+      cout << "--- stats on traj ---" << endl;
+      cout << " length = " << traj_statistics.length << endl;
+      cout << " max = " << traj_statistics.max << endl;
+      cout << " average = " << traj_statistics.average << endl;
+      cout << " integral = " << traj_statistics.integral << endl;
+      cout << " mecha_work = " << traj_statistics.mecha_work << endl;
+      cout << "---------------------" << endl;
+      
+      // Compute traj cost
+      rrt_statistics.cost = traj->cost();
+      cout << "is_cost_space : " << ENV.getBool(Env::isCostSpace) << " , traj_cost : " << rrt_statistics.cost << endl ;
+      ENV.setBool(Env::isCostSpace, is_cost_space);
+    }
     
     p3d_traj* result = traj->replaceP3dTraj(NULL); 
     rob->getRobotStruct()->tcur = result;
     
-    if( ENV.getBool(Env::drawTraj) )
+    if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) )
     {
       g3d_draw_allwin_active();
     }
@@ -132,15 +166,6 @@ p3d_traj* p3d_extract_traj(bool is_traj_found, int nb_added_nodes, Graph* graph,
     
     char trajName[] = "Specific";
 		g3d_add_traj( trajName, trajId, rob->getRobotStruct(), rob->getRobotStruct()->tcur );
-    
-    bool is_cost_space = ENV.getBool(Env::isCostSpace);
-    ENV.setBool(Env::isCostSpace, true);
-    traj->resetCostComputed();
-    
-    // Compute traj cost
-    rrt_statistics.cost = traj->cost();
-    cout << "is_cost_space : " << ENV.getBool(Env::isCostSpace) << " , traj_cost : " << rrt_statistics.cost << endl ;
-    ENV.setBool(Env::isCostSpace, is_cost_space);
     
     // Prevent segfault if p3d graph deleted outside
     delete traj;
@@ -199,6 +224,7 @@ RRT* p3d_allocate_rrt(Robot* rob,Graph* graph)
 		if( ENV.getBool(Env::isCostSpace) && (!ENV.getBool(Env::useTRRT)) )
 		{
 			ENV.setBool(Env::isCostSpace,false);
+      set_costspace = true;
 		}
 		
 		rrt = new RRT(rob,graph);
@@ -290,6 +316,9 @@ p3d_traj* p3d_planner_function(p3d_rob* robotPt, configPt qs, configPt qg)
   rrt_statistics.nbNodes = graph->getNumberOfNodes();
   rrt_statistics.nbExpansions = rrt->getNumberOfExpansion();
   
+  if( set_costspace )
+    ENV.setBool(Env::isCostSpace,true);
+  
   return traj;
 }
 
@@ -298,61 +327,85 @@ p3d_traj* pathPt=NULL;
 // ---------------------------------------------------------------------------------
 // Smoothing function (Shortcut) for connection with Manipulation planner
 // ---------------------------------------------------------------------------------
-void p3d_smoothing_function(p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double maxTime )
+void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, double maxTime )
 {
-  cout << "* SMOOTHING ***************" << endl;
-  // Gets the robot pointer
-  Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
+  cout << "** SMOOTHING ***************" << endl;
   
-  cout << "traj->nlp = " << traj->nlp << endl;
-  cout << "traj->range_param = " << traj->range_param << endl;
-  
-  API::CostOptimization optimTrj(rob,traj);
-  
-#ifdef QT_LIBRARY
-  optimTrj.setContextName( ENV.getString(Env::nameOfFile).toStdString() );
-#endif
-  
-  double optTime = 0.0;
-  if(PlanEnv->getBool(PlanParam::withDeformation))
+  if( robotPt == NULL )
   {
-    //ENV.setBool(Env::FKShoot,true);
-    optimTrj.runDeformation( nbSteps , runId );
-    //ENV.setBool(Env::FKShoot,false);
-    optTime += optimTrj.getTime();
+    cout << "robot not defined in " << __func__ << endl;
+    return;
   }
+
+  Robot* rob = global_Project->getActiveScene()->getRobotByName( robotPt->name );  
+
+  API::Trajectory t;
   
-  optimTrj.resetCostComputed();
-  
-  if(PlanEnv->getBool(PlanParam::withShortCut))
+  if(PlanEnv->getBool(PlanParam::withDeformation) || PlanEnv->getBool(PlanParam::withShortCut) )
   {
-    optimTrj.runShortCut( nbSteps, runId );
-    optTime += optimTrj.getTime();
-  }
-  
-  double dmax = global_Project->getActiveScene()->getDMax();
-  double range = optimTrj.getRangeMax();
-  
-  cout << "optimTrj range is : " << range << endl;
-  
-  bool doCutInsmallLP = false;
-  
-  if (doCutInsmallLP) {
-    // Cut localpaths in small localpaths
-    const unsigned int nLP_max = 20; 
-    unsigned int nLP = optimTrj.getNbOfPaths();
-    unsigned int nLP_toCut = floor( range / (8*dmax));
+    double optTime = 0.0;
     
-    if ( (nLP_toCut<nLP_max) && (nLP_toCut>nLP) && (nLP_toCut>1) )
+    if( traj == NULL ) {
+      cout << "trajectory NULL in " << __func__ << endl;
+      return;
+    }
+    cout << "traj->nlp = " << traj->nlp << endl;
+    cout << "traj->range_param = " << traj->range_param << endl;
+    
+    API::CostOptimization optimTrj( rob, traj );
+    
+    optimTrj.setRunId( runId );
+#ifdef QT_LIBRARY
+    optimTrj.setContextName( ENV.getString(Env::nameOfFile).toStdString() );
+#endif
+    
+    if(PlanEnv->getBool(PlanParam::withDeformation))
     {
-      cout << "Cut the traj in several local paths" << endl;
-      optimTrj.cutTrajInSmallLP( nLP_toCut );
+      optimTrj.resetCostComputed();
+      optimTrj.runDeformation( nbSteps , runId );
+      optTime += optimTrj.getTime();
+    }
+    
+    if(PlanEnv->getBool(PlanParam::withShortCut))
+    {
+      optimTrj.resetCostComputed();
+      optimTrj.runShortCut( nbSteps, runId );
+      optTime += optimTrj.getTime();
+    }
+    
+    optimTrj.replaceP3dTraj();
+    optimTrj.resetCostComputed();
+    
+    if( PlanEnv->getBool(PlanParam::trajComputeCostAfterPlannif) )
+    {
+      optimTrj.costStatistics( traj_statistics );
+      
+      cout << "--- stats on traj ---" << endl;
+      cout << " length = " << traj_statistics.length << endl;
+      cout << " max = " << traj_statistics.max << endl;
+      cout << " average = " << traj_statistics.average << endl;
+      cout << " integral = " << traj_statistics.integral << endl;
+      cout << " mecha_work = " << traj_statistics.mecha_work << endl;
+      cout << "---------------------" << endl;
     }
   }
   
-  // Replace current trajectory
-  optimTrj.replaceP3dTraj();
-  optimTrj.resetCostComputed();
+  if( PlanEnv->getBool( PlanParam::withStomp ) )
+  {
+    traj_optim_runStompNoReset( runId );
+    
+    t = API::Trajectory( rob, rob->getRobotStruct()->tcur );
+    t.resetCostComputed();
+    t.costStatistics( traj_statistics );
+    
+    cout << "--- stats on traj ---" << endl;
+    cout << " length = " << traj_statistics.length << endl;
+    cout << " max = " << traj_statistics.max << endl;
+    cout << " average = " << traj_statistics.average << endl;
+    cout << " integral = " << traj_statistics.integral << endl;
+    cout << " mecha_work = " << traj_statistics.mecha_work << endl;
+    cout << "---------------------" << endl;
+  }
   
   pathPt = robotPt->tcur;
 }
@@ -403,7 +456,7 @@ int p3d_run_rrt(p3d_rob* robotPt)
      !PlanEnv->getBool(PlanParam::stopPlanner) && 
      PlanEnv->getBool(PlanParam::withSmoothing) )
   {
-    p3d_smoothing_function(rob->getRobotStruct(), path, 100, 4.0);
+    p3d_smoothing_function(rob->getRobotStruct(), path, PlanEnv->getInt(PlanParam::smoothMaxIterations), 4.0);
   }
   
   return true;

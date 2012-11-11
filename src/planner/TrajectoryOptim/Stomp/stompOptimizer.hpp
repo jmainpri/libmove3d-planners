@@ -145,6 +145,11 @@ public:
    * @return
    */
   bool initialize(/*ros::NodeHandle& node_handle,*/ int num_time_steps);
+  
+  /**
+   * Initializes from a new trajectory
+   */
+  bool initializeFromNewTrajectory(const API::Trajectory& traj);
 
   /**
    * Executes the task for the given policy parameters, and returns the costs per timestep
@@ -200,6 +205,10 @@ public:
 private:
   Robot* robot_model_;
   Robot* human_model_;
+  
+  double time_;
+  
+  API::Trajectory move3d_traj_;
   
   int num_joints_;
   int num_vars_free_;
@@ -355,8 +364,8 @@ private:
   //----------------------------------------------------------------------------
   // Jim functions
   //----------------------------------------------------------------------------
-  void setGroupTrajectoryToVectorConfig(std::vector<confPtr_t>& traj);
   void setGroupTrajectoryFromVectorConfig(const std::vector<confPtr_t>& traj);
+  void setGroupTrajectoryToVectorConfig(std::vector<confPtr_t>& traj);
   void setGroupTrajectoryToApiTraj(API::Trajectory& traj);
   
   bool replaceEndWithNewConfiguration();
@@ -368,6 +377,8 @@ private:
   double computeMove3DCost();
   confPtr_t getConfigurationOnGroupTraj(int ith);
   
+  void saveTrajectoryCostStats();
+  void saveCostFromConvergenceTraj();
   void saveOptimToFile(std::string fileName);
 
 //  void getTorques(int index, std::vector<double>& torques, const std::vector<KDL::Wrench>& wrenches);
