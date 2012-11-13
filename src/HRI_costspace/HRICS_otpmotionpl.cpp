@@ -74,8 +74,12 @@ bool hrics_compute_otp(std::string humanName, std::vector<std::vector<double> >&
 
 void hrics_otp_fct()
 {
+#ifdef MIGHTABILITY_MAPS
     ext_hrics_init_otp= hrics_init_otp;
     ext_hrics_compute_otp= hrics_compute_otp;
+#else
+    cout<< "Flag MIGHTABILITY_MAPS off" << endl;
+#endif    
 }
 
 
