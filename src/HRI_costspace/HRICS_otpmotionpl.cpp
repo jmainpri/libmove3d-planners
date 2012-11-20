@@ -1146,12 +1146,15 @@ bool OTPMotionPl::getRandomPoints(double id, Vector3d& vect)
 bool OTPMotionPl::newComputeOTP()
 {
     _Robot->setInitialPosition(*_Robot->getCurrentPos());
+
     clock_t start = clock();
     bool isStanding = PlanEnv->getBool(PlanParam::env_isStanding);
+
     if (!PlanEnv->getBool(PlanParam::env_realTime))
     {
         getInputs();
     }
+
     Eigen::Vector3d humPos;
     if (!PlanEnv->getBool(PlanParam::env_normalRand) && ! PlanEnv->getBool(PlanParam::env_useAllGrid))
     {
@@ -1161,9 +1164,9 @@ bool OTPMotionPl::newComputeOTP()
         humPos[2] = m_humanPos[2];
         if (!PlanEnv->getBool(PlanParam::env_realTime) && isStanding)
         {
-            m_2DGrid->initGrid(humPos);
+            m_2DGrid->initGrid(humPos); //0.6
         }
-        m_2DGrid->recomputeGridWhenHumanMove(humPos);
+        m_2DGrid->recomputeGridWhenHumanMove(humPos); //0.5
     }
     //    m_2DGrid->setCellsToblankCost();
     m_costVector.clear();
@@ -1596,10 +1599,10 @@ OutputConf OTPMotionPl::lookForBestLocalConf(double x, double y, double Rz, doub
 
         conf.first->setAsNotTested();
         conf.second->setAsNotTested();
-        //        string humanStr = testCol(true,false)?"is in collision":"is NOT in collision";
-        //        string robotStr = testCol(false,false)?"is in collision":"is NOT in collision";
-        //            cout << "test colision : human " << humanStr << " and robot " << robotStr << endl;
-        if (!testCol(true,false) && !testCol(false,true))
+//                string humanStr = testCol(true,false)?"is in collision":"is NOT in collision";
+//                string robotStr = testCol(false,true)?"is in collision":"is NOT in collision";
+//                    cout << "test colision : human " << humanStr << " and robot " << robotStr << endl;
+        if (!testCol(true,false) && !testCol(false,false))
         {
             bestLocalConf.humanConf = conf.first;
             bestLocalConf.robotConf = conf.second;
@@ -2990,7 +2993,7 @@ void OTPMotionPl::setVar()
     PlanEnv->setInt(PlanParam::env_pow,2);
     PlanEnv->setInt(PlanParam::env_anglePow,3);
     PlanEnv->setInt(PlanParam::env_timeShow,0);
-    PlanEnv->setInt(PlanParam::env_maxIter,200);
+    PlanEnv->setInt(PlanParam::env_maxIter,100);
     PlanEnv->setInt(PlanParam::env_totMaxIter,2000);
     PlanEnv->setDouble(PlanParam::env_timeLimitation,10.0);
     PlanEnv->setInt(PlanParam::env_nbRandomRotOnly,50);
@@ -3218,7 +3221,6 @@ bool OTPMotionPl::getOtp(std::string humanName,
     PlanEnv->setDouble(PlanParam::env_objectNessecity,objectNessecity);
     //InitMhpObjectTransfert();
     //    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
-
     dumpVar();
     bool res = newComputeOTP();
 
