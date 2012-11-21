@@ -394,6 +394,7 @@ confPtr_t PerturbationRoadmap::trajShootConfiguration()
                                 m_std_dev_trans, m_std_dev_rot, false);
   
   _Robot->setAndUpdate( *q2 );
+  g3d_draw_allwin_active();
   return q2;
 }
 
@@ -454,10 +455,10 @@ void PerturbationRoadmap::expandOneStep()
     else {
       cout << "Trajectory not in graph" << endl;
     }
-
-        if (ENV.getBool(Env::drawExploration)) {
-
-            _Robot->setAndUpdate( *m_qf );
+    
+		if (ENV.getBool(Env::drawExploration)) {
+      
+      _Robot->setAndUpdate( *m_qf );
       
 			(*_draw_func)();
       

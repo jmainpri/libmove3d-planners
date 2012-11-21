@@ -85,7 +85,7 @@ bool Vis_PRM::linkOrphanLinking(Node* node, int type, unsigned int& ADDED, int& 
     
     for (int i=0; i<int(vect.size()); i++)
 		{
-            vect[i]->connectNodeToCompco(node);
+			vect[i]->connectNodeToCompco(node, 0);
 		}
 
 		/*

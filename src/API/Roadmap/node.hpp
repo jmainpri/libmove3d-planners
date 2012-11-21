@@ -272,7 +272,7 @@ public:
 	 * @param N le Node à connecter
 	 * @return le Node est connecté
 	 */
-    bool connectNodeToCompco(Node* N);
+	bool connectNodeToCompco(Node* N, double step);
 	
 	/**
 	 * merge deux composantes connexes
