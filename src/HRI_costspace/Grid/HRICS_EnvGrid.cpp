@@ -1413,6 +1413,7 @@ std::vector<EnvCell*> EnvCell::getCrown(double min, double max)
         }
     }
 
+    initHumanRobotReacheableContour.clear();
     for (unsigned int k = 0; k < crownCells.size(); k++)
     {
         EnvCell* cell = initHumanRobotReacheable.at(k);
