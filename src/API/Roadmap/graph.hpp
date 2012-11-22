@@ -383,7 +383,7 @@ public:
   /**
    * Compute the KNearestWeightNeighbour
    */
-  static std::vector<Node*> KNearestWeightNeighbour(std::vector<Node*>& nodes, confPtr_t config, int K, double radius, bool weighted, int distConfigChoice);
+  static std::vector<Node*> KNearestWeightNeighbour(const std::vector<Node*>& nodes, confPtr_t config, int K, double radius, bool weighted, int distConfigChoice);
 	
 	/**
 	 * obtient le plus proche voisin d'une composante connexe

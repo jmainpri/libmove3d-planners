@@ -1518,7 +1518,7 @@ vector<Node*> Graph::KNearestWeightNeighbour(confPtr_t q, int K, double radius, 
  * returns the KNearest neighbours of the configuration config
  * in the entire graph within a minimum radius
  */
-vector<Node*> Graph::KNearestWeightNeighbour(std::vector<Node*>& nodes, confPtr_t q, int K, double radius, bool weighted, int distConfigChoice)
+vector<Node*> Graph::KNearestWeightNeighbour(const std::vector<Node*>& nodes, confPtr_t q, int K, double radius, bool weighted, int distConfigChoice)
 {
   double score;
   vector<pair<double, Node*> > nearNodesQueue;
