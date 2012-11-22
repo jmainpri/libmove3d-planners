@@ -166,52 +166,33 @@ void ConnectedComponent::mergeWith(ConnectedComponent* compco)
  */
 vector<Node*> ConnectedComponent::KNearestWeightNeighbour(confPtr_t q, int K, double radius, bool weighted, int distConfigChoice)
 {
-  // The null node has to be remouved
-	Node* nullNode(NULL);
-	double current_cost;
-  bool firstNode = true;
+  double score;
+  vector<pair<double, Node*> > nearNodesQueue;
+  vector<Node*> nearNodes;
   
-	vector< pair<double,Node*> > nearNodesQueue;
-	nearNodesQueue.push_back( make_pair(numeric_limits<double>::max(),nullNode) );
-	
-  // For all nodes in the graph
-	for (vector<Node*>::iterator it = m_Nodes.begin(); it != m_Nodes.end() ; ++it)
-	{
-    // Compute the distance for all nodes
-    current_cost = q->dist(*(*it)->getConfiguration(),distConfigChoice);
+  // for each node in the graph
+  for (vector<Node*>::iterator it = m_Nodes.begin(); it != m_Nodes.end(); ++it)
+  {
+    // compute its distance to the configuration q
+    score = q->dist(*(*it)->getConfiguration(), distConfigChoice);
     //*(weighted ? p3d_GetNodeWeight((*it)->getNodeStruct()) : 1.0);
     
-    // Do not add the nodes outside of radius
-    if ( current_cost > radius) continue;
-    
-    // If better than last node of the Queue add to the Queue (rewrite better code)
-    if (current_cost < nearNodesQueue.back().first)
-    {
-      if ( firstNode ) 
-      {
-        nearNodesQueue.clear(); firstNode = false;
-      }
-      nearNodesQueue.push_back( make_pair( current_cost, *it ) );
-      
-      sort( nearNodesQueue.begin(), nearNodesQueue.end() );
-      
-      if( int(nearNodesQueue.size()) > K )
-      {
-        nearNodesQueue.resize( K );
-      }
-    }
-	}
-	
-	// Put queue in a vector
-	vector<Node*> nearNodes;
-	for( int i=0;i<int(nearNodesQueue.size());i++)
-  {
-    Node* node = nearNodesQueue[i].second;
-    if (node!= NULL) {
-      nearNodes.push_back( node );
-    }
+    // add it to the queue only if it is within radius
+    if (score <= radius)
+      nearNodesQueue.push_back(make_pair(score, *it));
   }
-	
+  
+  // sort the queue
+  sort(nearNodesQueue.begin(), nearNodesQueue.end());
+  
+  // put the first K nodes of the queue in a vector
+  unsigned bound = MIN(K, nearNodesQueue.size());
+  for (unsigned i = 0; i < bound; ++i) {
+    Node* node = nearNodesQueue[i].second;
+    if (node)
+      nearNodes.push_back(node);
+  }
+
 	return nearNodes;	
 }
 
