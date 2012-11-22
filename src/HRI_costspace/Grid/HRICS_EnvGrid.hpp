@@ -37,8 +37,6 @@ namespace HRICS
 
                 void setAsNotSorted() {gridIsSorted = false;}
 
-                std::pair<double,double> getMinMax() {return m_minMax;}
-
                 std::vector<EnvCell*> getHumanAccessibleCells() {return m_HumanAccessible;}
 
                 void dumpVar();
@@ -168,11 +166,6 @@ namespace HRICS
                   * if the grid is already sorted
                   */
 		bool gridIsSorted;
-
-                /**
-                  * min max of robot pos
-                  */
-                std::pair<double,double> m_minMax;
 	};
 	
 	/**
@@ -239,8 +232,6 @@ namespace HRICS
                 std::vector<EnvCell*> getHumanRobotReacheable() {return initHumanRobotReacheable;}
                 void addToHumanRobotReacheable(EnvCell* cell) {initHumanRobotReacheable.push_back(cell);}
                 void clearHumanRobotReacheable() {initHumanRobotReacheable.clear();}
-
-                std::vector<EnvCell*> getHumanRobotReacheableContour() {return initHumanRobotReacheableContour;}
 
                 void setCurrentHumanRobotReacheable(std::vector<EnvCell*> value) {currentHumanRobotReacheable = value;}
                 std::vector<EnvCell*> getCurrentHumanRobotReacheable() {return currentHumanRobotReacheable;}
@@ -318,22 +309,6 @@ namespace HRICS
                   * return the crown arround the cell taking the min and max value
                   */
                 std::vector<EnvCell*> getCrown(double min, double max);
-
-
-                /**
-                  * return the best cell refering to the robot minimal displacement. return <inf,NULL> if no cell.
-                  */
-                std::pair<double,EnvCell*> computeBestCell();
-
-                /**
-                  * return the best cell refering to the robot minimal displacement using gradiant. return <inf,NULL> if no cell.
-                  */
-                std::pair<double,EnvCell*> computeBestCellUsingGradiant();
-
-                /**
-                  * get a random cell from a vector of numbers from 0 to 7 or less.
-                  */
-                EnvCell* getRandomNeighbor(std::vector<int> &nbs);
 
 	private:
                 /**
@@ -425,11 +400,6 @@ namespace HRICS
                   * the human robot reacheability (crown) initialy initialised
                   */
 		std::vector<EnvCell*> initHumanRobotReacheable;
-
-                /**
-                  * the human robot reacheability (crown) initialy initialised
-                  */
-                std::vector<EnvCell*> initHumanRobotReacheableContour;
 
                 /**
                   * the human robot reacheability (crown) currently used

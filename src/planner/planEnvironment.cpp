@@ -189,7 +189,7 @@ void initPlannerParameters()
 
         myIntMap.insert(std::make_pair( PlanParam::env_xToDraw,                  new intContainer(-1)));
         myIntMap.insert(std::make_pair( PlanParam::env_yToDraw,                  new intContainer(-1)));
-        myIntMap.insert(std::make_pair( PlanParam::env_timeShow,                 new intContainer(0)));
+        myIntMap.insert(std::make_pair( PlanParam::env_timeShow,                 new intContainer(2)));
         myIntMap.insert(std::make_pair( PlanParam::env_pow,                      new intContainer(2)));
         myIntMap.insert(std::make_pair( PlanParam::env_MOTP,                     new intContainer(20)));
         myIntMap.insert(std::make_pair( PlanParam::env_anglePow,                 new intContainer(3)));
