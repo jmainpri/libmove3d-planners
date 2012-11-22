@@ -166,34 +166,7 @@ void ConnectedComponent::mergeWith(ConnectedComponent* compco)
  */
 vector<Node*> ConnectedComponent::KNearestWeightNeighbour(confPtr_t q, int K, double radius, bool weighted, int distConfigChoice)
 {
-  double score;
-  vector<pair<double, Node*> > nearNodesQueue;
-  vector<Node*> nearNodes;
-  
-  // for each node in the graph
-  for (vector<Node*>::iterator it = m_Nodes.begin(); it != m_Nodes.end(); ++it)
-  {
-    // compute its distance to the configuration q
-    score = q->dist(*(*it)->getConfiguration(), distConfigChoice);
-    //*(weighted ? p3d_GetNodeWeight((*it)->getNodeStruct()) : 1.0);
-    
-    // add it to the queue only if it is within radius
-    if (score <= radius)
-      nearNodesQueue.push_back(make_pair(score, *it));
-  }
-  
-  // sort the queue
-  sort(nearNodesQueue.begin(), nearNodesQueue.end());
-  
-  // put the first K nodes of the queue in a vector
-  unsigned bound = MIN(K, nearNodesQueue.size());
-  for (unsigned i = 0; i < bound; ++i) {
-    Node* node = nearNodesQueue[i].second;
-    if (node)
-      nearNodes.push_back(node);
-  }
-
-	return nearNodes;	
+	return Graph::KNearestWeightNeighbour( m_Nodes, q, K, radius, weighted, distConfigChoice );	
 }
 
 Node* ConnectedComponent::nearestWeightNeighbour(confPtr_t q, bool weighted, int distConfigChoice)

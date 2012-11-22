@@ -1497,12 +1497,23 @@ bool Graph::connectNodeToCompco(Node* node1, Node* compco)
  */
 vector<Node*> Graph::KNearestWeightNeighbour(confPtr_t q, int K, double radius, bool weighted, int distConfigChoice)
 {
+  return Graph::KNearestWeightNeighbour( m_Nodes, q, K, radius, weighted, distConfigChoice);
+}
+
+/**
+ * Nearest Weighted Neighbout in graph
+ *  
+ * returns the KNearest neighbours of the configuration config
+ * in the entire graph within a minimum radius
+ */
+vector<Node*> Graph::KNearestWeightNeighbour(std::vector<Node*>& nodes, confPtr_t q, int K, double radius, bool weighted, int distConfigChoice)
+{
   double score;
   vector<pair<double, Node*> > nearNodesQueue;
   vector<Node*> nearNodes;
   
   // for each node in the graph
-  for (vector<Node*>::iterator it = m_Nodes.begin(); it != m_Nodes.end(); ++it)
+  for (vector<Node*>::const_iterator it = nodes.begin(); it != nodes.end(); ++it)
   {
     // compute its distance to the configuration q
     score = q->dist(*(*it)->getConfiguration(), distConfigChoice);
@@ -1517,8 +1528,9 @@ vector<Node*> Graph::KNearestWeightNeighbour(confPtr_t q, int K, double radius, 
   sort(nearNodesQueue.begin(), nearNodesQueue.end());
   
   // put the first K nodes of the queue in a vector
-  unsigned bound = MIN(K, nearNodesQueue.size());
-  for (unsigned i = 0; i < bound; ++i) {
+  int bound = int(MIN(K, nearNodesQueue.size()));
+  
+  for (int i = 0; i < bound; ++i) {
     Node* node = nearNodesQueue[i].second;
     if (node)
       nearNodes.push_back(node);

@@ -375,10 +375,15 @@ public:
   static void sortNodesByDist(std::vector<Node*>& nodes, confPtr_t config);
 	
 	/**
-	 * Compute the K nearest nodes
+	 * Compute the K nearest on the graph nodes
 	 * @param K the maximal number of neighbors
 	 */
 	std::vector<Node*> KNearestWeightNeighbour(confPtr_t config, int K, double radius, bool weighted, int distConfigChoice);
+  
+  /**
+   * Compute the KNearestWeightNeighbour
+   */
+  static std::vector<Node*> KNearestWeightNeighbour(std::vector<Node*>& nodes, confPtr_t config, int K, double radius, bool weighted, int distConfigChoice);
 	
 	/**
 	 * obtient le plus proche voisin d'une composante connexe
