@@ -126,6 +126,8 @@ void ConnectedComponent::addToReachableListAndUpdatePredecessors(ConnectedCompon
 //! graph and the connected components
 void ConnectedComponent::mergeWith(ConnectedComponent* compco)
 {
+    if(this->getId()!=compco->getId())  //in ACR algorithm, this and compco can be the same at a certain point
+    {                                   //and in any the calls to this method the difference is tested!
 	// The nodes of C2 are now in C1 
 	for(int i=0;i<int(compco->m_Nodes.size());i++)
 	{
@@ -145,7 +147,7 @@ void ConnectedComponent::mergeWith(ConnectedComponent* compco)
 			p3d_add_compco_to_reachable_list_and_update_predecessors(m_Graph->getGraphStruct(), getCompcoStruct(), ListCompcoScan->comp);
 			ListCompcoScan = ListCompcoScan->next;
 		}
-	}
+    }
 	
 	// C2 is deleted from the graph 
   // and throw an exception if the p3d and C++ are not the same
@@ -156,6 +158,7 @@ void ConnectedComponent::mergeWith(ConnectedComponent* compco)
 	{
 		m_Graph->mergeCheck();
 	}
+    }
 }
 
 /**

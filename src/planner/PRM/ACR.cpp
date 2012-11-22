@@ -106,12 +106,9 @@ void ACR::expandOneStep()
       
       if ( is_valid  )
       {
-        _Graph->addEdges( near_nodes[i], node_new, false, 0.0, false, 0.0 );
-        
-        // Merge compco with minNode and set as parent
-//        node_new->merge( near_nodes[i] );
+          _Graph->linkNodeAndMerge(near_nodes[i],node_new,true);
       }
-		}
+        }
 	}
 	
 	m_nbAddedNode ++;
