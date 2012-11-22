@@ -394,7 +394,6 @@ confPtr_t PerturbationRoadmap::trajShootConfiguration()
                                 m_std_dev_trans, m_std_dev_rot, false);
   
   _Robot->setAndUpdate( *q2 );
-  g3d_draw_allwin_active();
   return q2;
 }
 

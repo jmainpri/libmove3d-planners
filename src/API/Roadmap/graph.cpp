@@ -234,6 +234,7 @@ void Graph::init()
 		}
 	}
 	this->setName();
+    p3d_calc_DMAX(m_Robot->getRobotStruct());
 }
 
 // BGL Functions
@@ -1074,7 +1075,6 @@ bool Graph::linkNode(Node* N)
 {
 	if (ENV.getBool((Env::useDist)))
 	{
-		// Warning : TODO does not work with the C++ API
 		return this->linkNodeAtDist(N);
 	}
 	else
@@ -1088,28 +1088,30 @@ bool Graph::linkNode(Node* N)
  */
 bool Graph::linkNodeWithoutDist(Node* N)
 {
-	bool b = false;
-	for (int j = 1; j <= m_Graph->ncomp; j = j + 1)
-	{
-		if (N->getNodeStruct()->numcomp != j)
-		{
-			for (unsigned int i = 0; i < m_Nodes.size(); i = i + 1)
-			{
-				if (m_Nodes[i]->getNodeStruct()->numcomp == j)
-				{
-					if (m_Nodes[i]->connectNodeToCompco(N, 0))
-					{
-						N->getNodeStruct()->search_to = N->getNodeStruct()->last_neighb->N;
-						N->getNodeStruct()->last_neighb->N->search_from = N->getNodeStruct();
-						N->getNodeStruct()->last_neighb->N->edge_from = N->getNodeStruct()->last_neighb->N->last_edge->E;
-						b = true;
-					}
-					break;
-				}
-			}
-		}
-	}
-	return b;
+  int nof_link = 0;
+  for (int i=0; i<int(m_Comp.size()); i++)
+  {
+    if( N->getConnectedComponent() != m_Comp[i] )
+    {
+      vector<Node*>& nodes = m_Comp[i]->getNodes();
+
+      for (int j=0; j<int(nodes.size()); j++) {
+        nodes[j]->distMultisol(N);
+      }
+      sort(nodes.begin(), nodes.end(), &compareNodes);
+
+      for (int k=0; k<int(nodes.size()); k++)
+      {
+        if (linkNodeAndMerge(nodes[k],N,true))
+        {
+          nof_link++;
+          break;
+        }
+      }
+    }
+  }
+
+  return(nof_link > 0);
 }
 
 
@@ -1216,10 +1218,20 @@ bool Graph::linkNodeAtDist(Node* N)
   {
     if( N->getConnectedComponent() != m_Comp[i] ) 
     {
-      // Try to connect the new node to the already existing compcos 
-      if( linkNodeCompMultisol( N, m_Comp[i] ) )
+      vector<Node*>& nodes = m_Comp[i]->getNodes();
+
+      for (int j=0; j<int(nodes.size()); j++) {
+        nodes[j]->distMultisol(N);
+      }
+      sort(nodes.begin(), nodes.end(), &compareNodes);
+
+      for (int k=0; k<int(nodes.size()); k++)
       {
-        nof_link++;
+        if ((nodes[k]->getNodeStruct()->dist_Nnew < p3d_get_DMAX()) && (p3d_get_DMAX() > 0.) && linkNodeAndMerge(nodes[k],N,true))
+        {
+          nof_link++;
+          break;
+        }
       }
     }
   }
