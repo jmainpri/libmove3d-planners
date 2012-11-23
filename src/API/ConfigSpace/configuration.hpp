@@ -171,7 +171,7 @@ public:
 	 * True is the configuration respects 
 	 * DoFs bounds
 	 */
-	bool isOutOfBounds();
+	bool isOutOfBounds(bool print = false);
   
   /**
 	 * True is the configuration respects 

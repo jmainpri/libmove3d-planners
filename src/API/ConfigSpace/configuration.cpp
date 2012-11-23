@@ -371,9 +371,9 @@ bool Configuration::isInCollision()
   return _InCollision;
 }
 
-bool Configuration::isOutOfBounds()
+bool Configuration::isOutOfBounds(bool print)
 {
-	return(p3d_isOutOfBounds(_Robot->getRobotStruct(), _Configuration, false));
+	return(p3d_isOutOfBounds(_Robot->getRobotStruct(), _Configuration, print));
 }
 
 void Configuration::adaptCircularJointsLimits()
