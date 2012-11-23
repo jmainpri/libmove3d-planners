@@ -270,14 +270,8 @@ p3d_traj* p3d_planner_function(p3d_rob* robotPt, configPt qs, configPt qg)
   if ((rrt->getNumberOfExpansion() - rrt->getNumberOfFailedExpansion() + rrt->getNumberOfInitialNodes()) 
       != graph->getNumberOfNodes() ) 
   {
-    cout << "----------------------" << endl;
-    cout << "Nb of nodes differ from number of expansion succes " << endl;
-    cout << "nb added nodes " << nb_added_nodes << endl;
-    cout << "nb nodes " << graph->getGraphStruct()->nnode << endl;
-    cout << " - m_nbExpansion = " << rrt->getNumberOfExpansion() << endl;
-    cout << " - m_nbInitNodes = " << rrt->getNumberOfInitialNodes() << endl;
-    cout << " - m_nbExpansion + m_nbInitNodes - m_nbExpansionFailed  =  " << (rrt->getNumberOfExpansion() + rrt->getNumberOfInitialNodes() - rrt->getNumberOfFailedExpansion() ) << endl;
-    cout << " - _Graph->getNumberOfNodes() = " << graph->getNumberOfNodes() << endl;
+    cout << "Error in RRT nb of expansion ";
+    cout << "compared to initial nb of nodes in graph total nb of nodes in the graph" << endl;
 	}
 	
 	graph->getGraphStruct()->totTime = graph->getGraphStruct()->rrtTime;
@@ -287,10 +281,12 @@ p3d_traj* p3d_planner_function(p3d_rob* robotPt, configPt qs, configPt qg)
     global_rePlanningEnv->store_graph_to_draw(*graph);
   }
   
-  // Extracj the trajectory if one exists, else return NULL
-  p3d_traj* traj = p3d_extract_traj(rrt->trajFound(), nb_added_nodes, graph, q_source, q_target);
-  
   double time;
+  ChronoTimeOfDayTimes(&time);
+  cout << "Time before trajectory extraction :"  << time << " sec." << endl;
+  
+  // Extract the trajectory if one exists, else return NULL
+  p3d_traj* traj = p3d_extract_traj(rrt->trajFound(), nb_added_nodes, graph, q_source, q_target);
   
   ChronoTimeOfDayTimes(&time);
   ChronoTimeOfDayOff();
@@ -336,6 +332,9 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
     cout << "robot not defined in " << __func__ << endl;
     return;
   }
+  
+  if( maxTime != -1 )
+    PlanEnv->setDouble( PlanParam::timeLimitSmoothing, maxTime );
 
   Robot* rob = global_Project->getActiveScene()->getRobotByName( robotPt->name );  
 
@@ -456,7 +455,10 @@ int p3d_run_rrt(p3d_rob* robotPt)
      !PlanEnv->getBool(PlanParam::stopPlanner) && 
      PlanEnv->getBool(PlanParam::withSmoothing) )
   {
-    p3d_smoothing_function(rob->getRobotStruct(), path, PlanEnv->getInt(PlanParam::smoothMaxIterations), 4.0);
+    double max_iteration = PlanEnv->getInt(PlanParam::smoothMaxIterations);
+    double max_time = PlanEnv->getDouble( PlanParam::timeLimitSmoothing );
+    
+    p3d_smoothing_function(rob->getRobotStruct(), path, max_iteration, max_time);
   }
   
   return true;
