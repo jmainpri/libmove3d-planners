@@ -1,3 +1,4 @@
+
 //
 //  trajectoryOptim.cpp
 //  libmove3d-motion
@@ -45,10 +46,10 @@ static bool m_add_human = true;
 
 static Robot* m_robot = NULL;
 
-enum ScenarioType { CostMap, Simple, Shelf, Navigation , HumanAwareNav, HumanAwareManip, HumanAwareMobileManip };
+enum ScenarioType { Default, CostMap, Simple, Shelf, Navigation , HumanAwareNav, HumanAwareManip, HumanAwareMobileManip };
 static ScenarioType m_sce;
 
-enum PlanningType { NAVIGATION = 0, MANIPULATION = 1, MOBILE_MANIP = 2 };
+enum PlanningType { DEFAULT = -1, NAVIGATION = 0, MANIPULATION = 1, MOBILE_MANIP = 2 };
 static PlanningType m_planning_type; 
 
 static CollisionSpace* m_coll_space=NULL;
@@ -225,6 +226,11 @@ bool traj_optim_init_mlp_cntrts_and_fix_joints()
 // --------------------------------------------------------
 bool traj_optim_switch_cartesian_mode(bool cartesian) {
   
+  if( m_robot == NULL ) {
+    cout << "m_robot == NULL : traj_optim not initilized" << endl;
+    return false;
+  }
+  
   cout << "Set Cartesian (" << cartesian << ")" << endl;
   
   p3d_rob* object = NULL;
@@ -308,6 +314,35 @@ API::Trajectory traj_optim_create_sraight_line_traj()
 }
 
 //****************************************************************
+//* Default example
+//****************************************************************
+
+bool traj_optim_default_init()
+{
+  if (!m_robot) {
+    cout << "robot not initialized in file " 
+    << __FILE__ << " ,  " << __func__ << endl;
+    return false;
+  }
+  
+  m_active_joints.clear();
+  m_planner_joints.clear();
+  
+  for (int i=1; i<int(m_robot->getNumberOfJoints()); i++) 
+  {
+    // Set the active joints (links)
+    m_active_joints.push_back( i );
+    
+    // Set the planner joints
+    m_planner_joints.push_back( i );
+  }
+  
+  m_coll_space = NULL;
+  return (global_costSpace != NULL);
+}
+
+
+//****************************************************************
 //* 2D Simple example
 //****************************************************************
 
@@ -341,7 +376,7 @@ bool traj_optim_simple_init()
 
 //! Initializes the optimization for a costspace
 // --------------------------------------------------------
-bool traj_optim_costspace_init()
+bool traj_optim_costmap_init()
 {
   if (!m_robot) {
     cout << "robot not initialized in file " 
@@ -881,10 +916,16 @@ bool traj_optim_init_collision_spaces()
   
   switch (m_sce) 
   {
+    case Default:
+      cout << "Init with default parameters" << endl;
+      if( !traj_optim_default_init() )
+        return false;
+      break;
+      
     case CostMap:
       
-      cout << "Init CostMap" << endl;
-      if( !traj_optim_costspace_init() )
+      cout << "Init with 2D costmap" << endl;
+      if( !traj_optim_costmap_init() )
         return false;
       
       //      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.1);
@@ -895,7 +936,7 @@ bool traj_optim_init_collision_spaces()
       
     case Simple:
       
-      cout << "Init Simple" << endl;
+      cout << "Init Simple Nav" << endl;
       if( !traj_optim_simple_init() )
         return false;
       
@@ -1032,20 +1073,25 @@ bool traj_optim_set_scenario_type()
     return false;
   }
   
-  if( ENV.getBool(Env::isCostSpace) &&
-     global_costSpace->getSelectedCostName() == "costMap2D")
+  if( m_planning_type == DEFAULT ) 
   {
-    m_sce = CostMap;
+    if( ENV.getBool(Env::isCostSpace) && global_costSpace->getSelectedCostName() == "costMap2D")
+    {
+      m_sce = CostMap;
+    }
+//    else if( ENV.getBool(Env::isCostSpace) &&
+//            ( global_costSpace->getSelectedCostName() == "costIsInCollision" || 
+//             global_costSpace->getSelectedCostName() == "costDistToObst"  ))
+//    {
+//      m_sce = Simple;
+//    }
+    else
+    {
+      m_sce = Default;
+    }
   }
-  else if( ENV.getBool(Env::isCostSpace) &&
-          ( global_costSpace->getSelectedCostName() == "costIsInCollision" || 
-           global_costSpace->getSelectedCostName() == "costDistToObst"  ))
+  else if( ENV.getBool(Env::isCostSpace) && global_costSpace->getSelectedCostName() == "costHumanGrids" ) 
   {
-    m_sce = Simple;
-  } 
-  else if( ENV.getBool(Env::isCostSpace) &&
-          global_costSpace->getSelectedCostName() == "costHumanGrids" ) {
-    
     if( m_planning_type == NAVIGATION )
     {
       m_sce = HumanAwareNav;
@@ -1092,7 +1138,8 @@ void traj_optim_init_planning_type(int type)
       break;
       
     default:
-      cout << "Planner type not implemented" << endl;
+      m_planning_type = DEFAULT;
+      cout << "Default planner type" << endl;
       break;
   }
 }
@@ -1201,8 +1248,7 @@ bool traj_optim_initStomp()
 {
   API::Trajectory T(m_robot);
   
-  if( !traj_optim_InitTraj(T) )
-  {
+  if( !traj_optim_InitTraj(T) ){
     cout << "Init Stomp with straight line!!!" << endl;
     T = traj_optim_create_sraight_line_traj(); 
     T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
@@ -1287,9 +1333,16 @@ bool traj_optim_runStomp(int runId)
 
 bool traj_optim_runStomp(int runId, const API::Trajectory& traj)
 {
-//  if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
+  if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )  
+  {
+    optimizer->setUseTimeLimit( true );
     optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
+  }
+  else {
+    optimizer->setUseTimeLimit( false );
+  }
 
+  optimizer->setUseOtp( PlanEnv->getBool(PlanParam::trajUseOtp) );
   optimizer->initializeFromNewTrajectory( traj );
   optimizer->runDeformation( 0, runId );
   return true;
@@ -1305,6 +1358,7 @@ bool traj_optim_runStompNoReset(int runId)
     return false;
   }
   
+//  return true;
   return traj_optim_runStomp( runId, traj );
 }
 
