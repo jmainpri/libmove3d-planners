@@ -109,21 +109,7 @@ namespace stomp_motion_planner
     
     if( use_handover_config_generator_ ) 
     {
-      const char* home = getenv("HOME_MOVE3D");
-      if( home == NULL ) {
-        cout << "ERROR home is not defined for config generator in " << __func__ << endl;
-      }
-      
-      string dir(home);
-      string file("/statFiles/OtpComputing/confHerakles.xml");
-      
-      handoverGenerator_ = new ConfGenerator( robot_model_, human_model_ );
-      handoverGenerator_->initialize( dir+file, HRICS_activeNatu );
-      
-      if( ENV.getInt(Env::setOfActiveJoints) == 2 )
-      {
-        use_handover_config_list_ = true;
-      }
+      initHandover();
     }
     
     //clearAnimations();
@@ -297,7 +283,33 @@ namespace stomp_motion_planner
     policy_->setToMinControlCost(start, end);
     policy_->setParameters( parameters );
     
+    if( use_handover_config_generator_ ) 
+    {
+      initHandover();
+    }
+    
     return true;
+  }
+  
+  void StompOptimizer::initHandover()
+  {
+    use_human_sliders_ = PlanEnv->getBool(PlanParam::trajMoveHuman);
+    
+    const char* home = getenv("HOME_MOVE3D");
+    if( home == NULL ) {
+      cout << "ERROR home is not defined for config generator in " << __func__ << endl;
+    }
+    
+    string dir(home);
+    string file("/statFiles/OtpComputing/confHerakles.xml");
+    
+    handoverGenerator_ = new ConfGenerator( robot_model_, human_model_ );
+    handoverGenerator_->initialize( dir+file, HRICS_activeNatu );
+    
+    if( ENV.getInt(Env::setOfActiveJoints) == 2 )
+    {
+      use_handover_config_list_ = true;
+    }
   }
   
   StompOptimizer::~StompOptimizer()

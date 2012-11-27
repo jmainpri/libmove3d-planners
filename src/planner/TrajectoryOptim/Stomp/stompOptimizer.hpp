@@ -95,10 +95,21 @@ public:
   void runDeformation( int nbIteration , int idRun=0 );
   
   /**
+   * Set compute handover position
+   */
+  void setUseOtp(bool use_otp) { use_handover_config_generator_= use_otp; }
+  
+  /**
+   * Set the use of a time limit
+   * @param Time in second
+   */
+  void setUseTimeLimit(bool use_limit) { use_time_limit_ = use_limit; }
+  
+  /**
    * Set the maximal time for optimization in second
    * @param Time in second
    */
-  void setTimeLimit(double time) { use_time_limit_ = true; time_limit_ = time; }
+  void setTimeLimit(double time) { time_limit_ = time; }
   
   /**
    * Set the passive Dofs
@@ -150,6 +161,11 @@ public:
    * Initializes from a new trajectory
    */
   bool initializeFromNewTrajectory(const API::Trajectory& traj);
+  
+  /**
+   * Initializes the handover generator
+   */
+  void initHandover();
 
   /**
    * Executes the task for the given policy parameters, and returns the costs per timestep
