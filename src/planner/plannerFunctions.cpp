@@ -395,15 +395,19 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
     
     t = API::Trajectory( rob, rob->getRobotStruct()->tcur );
     t.resetCostComputed();
-    t.costStatistics( traj_statistics );
     
-    cout << "--- stats on traj ---" << endl;
-    cout << " length = " << traj_statistics.length << endl;
-    cout << " max = " << traj_statistics.max << endl;
-    cout << " average = " << traj_statistics.average << endl;
-    cout << " integral = " << traj_statistics.integral << endl;
-    cout << " mecha_work = " << traj_statistics.mecha_work << endl;
-    cout << "---------------------" << endl;
+    if( PlanEnv->getBool(PlanParam::trajComputeCostAfterPlannif) )
+    {
+      t.costStatistics( traj_statistics );
+      
+      cout << "--- stats on traj ---" << endl;
+      cout << " length = " << traj_statistics.length << endl;
+      cout << " max = " << traj_statistics.max << endl;
+      cout << " average = " << traj_statistics.average << endl;
+      cout << " integral = " << traj_statistics.integral << endl;
+      cout << " mecha_work = " << traj_statistics.mecha_work << endl;
+      cout << "---------------------" << endl;
+    }
   }
   
   pathPt = robotPt->tcur;
