@@ -18,6 +18,7 @@
 #include "replanningSimulators.hpp"
 
 #include "Planner-pkg.h"
+#include "Collision-pkg.h"
 
 using namespace std;
 using namespace tr1;
@@ -88,13 +89,14 @@ bool TreePlanner::preConditions()
   if (_Start->getConfiguration()->isOutOfBounds())
 	{
 		cout << "TreePlanner::preConditions => Start is out of bounds" << endl;
+    _Start->getConfiguration()->isOutOfBounds(true);
 		return false;
 	}
 	
 	if (_Start->getConfiguration()->isInCollision())
 	{
 		cout << "TreePlanner::preConditions => Start in collision" << endl;
-		// TODO print out collision status!!! See FORMenv print call
+		p3d_print_col_pair();
 		return false;
 	}
   
@@ -313,14 +315,6 @@ unsigned int TreePlanner::run()
 	
 	Node* fromNode = _Start;
 	Node* toNode = _Goal;
-  
-  _Robot->setAndUpdate(*_Start->getConfiguration());
-  g3d_draw_allwin_active();
-  usleep(500);
-  
-  _Robot->setAndUpdate(*_Goal->getConfiguration());
-  g3d_draw_allwin_active();
-  usleep(500);
   
   confPtr_t goal_extract;
   
