@@ -3560,5 +3560,5 @@ bool OTPMotionPl::getSimplePath(double x, double y, double theta, vector<vector<
 
     m_PathExist =true;
     ENV.setBool(Env::drawOTPTraj,true);
-
+    return true;
 }

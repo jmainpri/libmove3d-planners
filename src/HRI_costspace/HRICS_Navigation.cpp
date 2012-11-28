@@ -35,7 +35,7 @@ Navigation::Navigation(Robot* R) : m_robot(R)
 
 Navigation::~Navigation()
 {
-  p3d_col_activate_rob_rob(m_robot->getRobotStruct(),m_cyl->getRobotStruct());
+  p3d_col_activate_rob_rob( m_robot->getRobotStruct(), m_cyl->getRobotStruct() );
   delete m_2DGrid;
 }
 
@@ -68,7 +68,8 @@ bool Navigation::init()
       cout<< "ERROR: no cylinder found" <<endl;
       return false;
   }
-  p3d_col_deactivate_rob_rob(m_robot->getRobotStruct(),m_cyl->getRobotStruct());
+  p3d_col_deactivate_rob_rob( m_robot->getRobotStruct(), m_cyl->getRobotStruct() );
+  
   m_2DGrid = new PlanGrid( m_cyl,/*ENV.getDouble(Env::PlanCellSize)*/ pace, m_envSize );
   API_activeGrid = m_2DGrid;
   
@@ -78,6 +79,19 @@ bool Navigation::init()
 void Navigation::reset()
 {
   m_2DGrid->reset();
+}
+
+void Navigation::deactivateCynlinderWithAll()
+{
+  if( m_cyl == NULL ){
+    return;
+  }
+  p3d_col_deactivate_rob_env( m_cyl->getRobotStruct() );
+  
+  Scene* sce = global_Project->getActiveScene();
+  for (int i=0; i<int(sce->getNumberOfRobots()); i++) {
+    p3d_col_deactivate_rob_rob( m_cyl->getRobotStruct(), sce->getRobot(i)->getRobotStruct() );
+  }
 }
 
 /**
@@ -103,6 +117,8 @@ API::Trajectory* Navigation::computeRobotTrajectory( confPtr_t source, confPtr_t
   {
     API::Trajectory* traj = new API::Trajectory(m_robot);
     
+    traj->push_back( source );
+    
     for(int i=0;i<int(m_2DPath.size());i++)
     {
       confPtr_t q = m_robot->getCurrentPos();
@@ -111,6 +127,8 @@ API::Trajectory* Navigation::computeRobotTrajectory( confPtr_t source, confPtr_t
       
       traj->push_back( q );
     }
+    traj->push_back( target );
+    
     traj->replaceP3dTraj();
     m_cyl->setAndUpdate(*q);
     return traj;
@@ -238,12 +256,9 @@ void Navigation::draw()
   }
 }
 
-bool Navigation::getSimplePath(std::vector<double> goal, std::vector<std::vector<double> >& path)
+API::Trajectory* Navigation::getSimplePath(std::vector<double> goal, std::vector<std::vector<double> >& path)
 {
-    bool c_tmp = ENV.getBool(Env::isCostSpace);
-    ENV.setBool(Env::isCostSpace,true);
     confPtr_t i = m_robot->getCurrentPos();
-//    confPtr_t q = m_robot->getCurrentPos();
     confPtr_t g = m_robot->getCurrentPos();
     int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(m_robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
     (*g)[firstIndexOfRobotDof + 0] = goal[0];
@@ -253,8 +268,7 @@ bool Navigation::getSimplePath(std::vector<double> goal, std::vector<std::vector
     if (!computeRobotTrajectory(i,g))
     {
         m_robot->setAndUpdate(*i);
-        ENV.setBool(Env::isCostSpace,c_tmp);
-        return false;
+        return NULL;
     }
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > robotTraj3D;
     PlannarTrajectorySmoothing PTS(m_robot);
@@ -275,10 +289,10 @@ bool Navigation::getSimplePath(std::vector<double> goal, std::vector<std::vector
     v[2] = goal[2];
 
     robotTraj3D.push_back(v);
-    API::Trajectory t(m_robot);
+  
+    API::Trajectory* t = new API::Trajectory(m_robot);
 
-
-    for (unsigned int j = 0; j < robotTraj3D.size();j++)
+    for (unsigned int j = 0; j<robotTraj3D.size();j++)
     {
         std::vector<double> p;
         p.push_back(robotTraj3D.at(j)[0]);
@@ -290,16 +304,15 @@ bool Navigation::getSimplePath(std::vector<double> goal, std::vector<std::vector
         (*q)[firstIndexOfRobotDof + 0] = p[0];
         (*q)[firstIndexOfRobotDof + 1] = p[1];
         (*q)[firstIndexOfRobotDof + 5] = p[2];
-        t.push_back(q);
+        t->push_back(q);
     }
 
-    t.replaceP3dTraj();
+    t->replaceP3dTraj();
 
     path_to_draw = PTS.get2DtrajFrom3Dtraj(robotTraj3D);
 
     m_robot->setAndUpdate(*i);
-    ENV.setBool(Env::isCostSpace,c_tmp);
-    return true;
+    return t;
 }
 
 void Navigation::allow_smoothing(bool state)
