@@ -17,6 +17,7 @@
 #include "P3d-pkg.h"
 #include "move3d-headless.h"
 #include "Graphic-pkg.h" 
+#include "Util-pkg.h"
 
 using namespace std;
 using namespace tr1;
@@ -107,6 +108,16 @@ int Planner::init()
 	_stop_func = fct_stop;
 
 	return 0;
+}
+
+/**
+ * Time of day chrono
+ */
+double Planner::getTime()
+{
+  double time=0.0;
+  ChronoTimeOfDayTimes(&time);
+  return time;
 }
 
 //! Set the start and goal configuration

@@ -55,16 +55,6 @@ int TreePlanner::init()
 	return added;
 }
 
-/**
- * Time of day chrono
- */
-double TreePlanner::getTime()
-{
-  double time=0.0;
-  ChronoTimeOfDayTimes(&time);
-  return time;
-}
-
 /*!
  * Checks out that the plannification
  * problem fits such requirement
@@ -125,7 +115,8 @@ bool TreePlanner::preConditions()
 	{
 		if( _Goal->getConfiguration()->isOutOfBounds() )
 		{
-			cout << "TreePlanner::preConditions => Goal in out of bounds" << endl;
+			cout << "TreePlanner::preConditions => Goal is out of bounds" << endl;
+      _Goal->getConfiguration()->isOutOfBounds(true);
 			return false;
 		}
 		
@@ -138,7 +129,7 @@ bool TreePlanner::preConditions()
 		if( _Goal->getConfiguration()->isInCollision() )
 		{
 			cout << "TreePlanner::preConditions => Goal in collision" << endl;
-			// TODO print out collision status!!! See FORMenv print call
+			p3d_print_col_pair();
 			return false;
 		}
 	}
@@ -225,12 +216,6 @@ bool TreePlanner::checkStopConditions()
 		<< endl;
 		return (true);
 	}
-	
-//	if ( Env_stopUser() )
-//	{
-//		PlanEnv->setBool(PlanParam::stopPlanner,true);
-//		//p3d_SetStopValue(true);
-//	}
 	
 	if ( PlanEnv->getBool(PlanParam::stopPlanner) )
 	{

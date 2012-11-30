@@ -76,12 +76,18 @@ bool PRM::checkStopConditions()
 		return (true);
 	}
   
-  if (_stop_func)
+  if ( PlanEnv->getBool(PlanParam::stopPlanner) )
 	{
-    if (!(*_stop_func)())
+		cout << "PRM expansion cancelled by user." << endl;
+		return (true);
+	}
+  
+  if( PlanEnv->getBool(PlanParam::planWithTimeLimit) )
+	{
+		if ( m_time > PlanEnv->getDouble(PlanParam::timeLimitPlanning) ) 
 		{
-			PrintInfo(("basic PRM building canceled\n"));
-			return true;
+			cout << "PRM expansion has reached time limit ( " << m_time << " ) " << endl;
+			return (true);
 		}
 	}
   
@@ -100,7 +106,7 @@ bool PRM::preConditions()
 		return false;
 	}
 	
-    if(!ENV.getBool(Env::isCostSpace))
+  if(!ENV.getBool(Env::isCostSpace) && ENV.getBool(Env::expandToGoal) )
     {
         LocalPath direct(_Start->getConfiguration(), _Goal->getConfiguration());
         if (direct.isValid())
@@ -145,9 +151,11 @@ void PRM::expandOneStep()
 /* Main function of the PRM algorithm*/
 unsigned int PRM::run()
 {
+  m_time = 0.0;  double ts(0.0); ChronoOn();
+  
 	m_nbAddedNode = 0;
 	m_nbExpansions = 0;
-  
+
 	shared_ptr<Configuration> tmp = _Robot->getCurrentPos();
   
 	if (!preConditions()) 
@@ -158,10 +166,12 @@ unsigned int PRM::run()
 	while (!checkStopConditions())
 	{
 		expandOneStep(); m_nbExpansions++;
+    ChronoTimes( &m_time , &ts );
 	}
 	
+  ChronoOff();
 	_Robot->setAndUpdate(*tmp);
-	
+  
 	return m_nbAddedNode;
 }
 

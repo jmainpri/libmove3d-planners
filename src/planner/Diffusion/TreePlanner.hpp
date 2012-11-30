@@ -80,12 +80,6 @@ public:
 	virtual unsigned int run();
   
   /**
-   * return time in algorithm
-   * this function must be called after ChronoTimeOfDayOn()
-   */
-  double getTime();
-  
-  /**
    * Extract trajectory
    */
   virtual void extractTrajectory() { }
@@ -143,8 +137,6 @@ protected:
 	unsigned int m_nbInitNodes;
   
   Node* m_last_node;
-  
-  double m_time;
 };
 
 #endif /* TREEPLANNER_HPP_ */

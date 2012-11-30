@@ -140,6 +140,12 @@ public:
    */
   void setRunId(int id) { m_runId = id; }
   
+  /**
+   * return time in algorithm
+   * this function must be called after ChronoTimeOfDayOn()
+   */
+  double getTime();
+  
 protected:
   
   int (*_stop_func)();
@@ -161,6 +167,8 @@ protected:
   bool m_fail;
   
   int m_runId;
+  
+  double m_time;
 };
 
 extern Planner* global_Move3DPlanner;
