@@ -422,6 +422,11 @@ IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
    SET(CMAKE_INSTALL_PREFIX "$ENV{ROBOTPKG_BASE}" CACHE PATH "Move3DMPLIB install prefix" FORCE)
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
+ADD_EXECUTABLE(move3dplannerstest ${CMAKE_SOURCE_DIR}/src/test/main.cpp)
+SET_TARGET_PROPERTIES(move3dplannerstest PROPERTIES LINKER_LANGUAGE CXX)
+TARGET_LINK_LIBRARIES(move3dplannerstest move3d-planners)
+
+
 INSTALL(TARGETS move3d-planners
         RUNTIME DESTINATION bin CONFIGURATIONS ${CMAKE_BUILD_TYPE}
         LIBRARY DESTINATION lib CONFIGURATIONS ${CMAKE_BUILD_TYPE})
@@ -430,4 +435,12 @@ INSTALL(
 	DIRECTORY ${Move3DMPLIB_SOURCE_DIRECTORIES}/ 
 	DESTINATION include/libmove3d/planners 
 	FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+# -------------------------------------------------------------
+# --- Testing -------------------------------------------------
+# -------------------------------------------------------------
+ENABLE_TESTING()
+
+MESSAGE("CMAKE_BINARY_DIR = " ${CMAKE_BINARY_DIR})
+
+ADD_TEST(NAME basic COMMAND move3dplannerstest)
 

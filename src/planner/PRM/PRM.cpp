@@ -100,6 +100,18 @@ bool PRM::preConditions()
 		return false;
 	}
 	
+    if(!ENV.getBool(Env::isCostSpace))
+    {
+        LocalPath direct(_Start->getConfiguration(), _Goal->getConfiguration());
+        if (direct.isValid())
+        {
+            _Graph->linkNodeAndMerge(_Start,_Goal,false);
+#ifdef DEBUG_STATUS
+  cout << "Direct connection" << endl;
+#endif
+            return true;
+        }
+    }
 	return true;
 }
 

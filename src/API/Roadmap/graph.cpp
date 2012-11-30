@@ -356,8 +356,8 @@ void Graph::setAllDescriptorsInvalid()
 
 void Graph::saveBGLGraphToDotFile(const std::string& filename)
 {
-	std::ofstream out(filename.c_str());
-	boost::write_graphviz(out,m_BoostGraph);
+    std::ofstream out(filename.c_str());
+    boost::write_graphviz(out,m_BoostGraph);
 }
 
 // Destructors
@@ -810,7 +810,7 @@ void Graph::sortNodesByDist(Node* N)
  */
 void Graph::sortEdges()
 {
-	if (m_Edges.size() > 0)
+    if (m_Edges.size() > 1)
 	{
 		sort(m_Edges.begin(), m_Edges.end(), &compareEdges);
 	}
@@ -947,7 +947,7 @@ void Graph::addNode(Node* N)
 	NodeData[v]									= N;
 	N->setDescriptor(v);
 	
-	m_graphChanged							= true;
+    m_graphChanged							= true;
 }
 
 
@@ -1675,8 +1675,13 @@ int Graph::mergeComp(Node* node1, Node* node2, double dist_nodes, bool compute_e
 	}
   
 	compco1->mergeWith( compco2 );
-  
+  if (m_Graph->oriented) {
+  addEdge(node1, node2, false, dist_nodes, compute_edge_cost, 0.0 );
+  }
+  else
+  {
   addEdges(node1, node2, false, dist_nodes, compute_edge_cost, 0.0 );
+  }
 	return true;
 }
 

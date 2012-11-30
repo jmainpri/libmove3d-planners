@@ -54,7 +54,7 @@ vector<Node*> Vis_PRM::isOrphanLinking(Node* N, int & link)
     {
       if( N == nodes[i] ) continue;
 
-      if (nodes[i]->isLinkable(N, &dist) /*&& (dist < ENV.getDouble(Env::dist) || !ENV.getBool(Env::useDist))*/)
+      if (_Graph->areNodesLinked(nodes[i], N, dist) /*&& (dist < ENV.getDouble(Env::dist) || !ENV.getBool(Env::useDist))*/)
       {
         link++;
         vect.push_back( nodes[i] );
@@ -85,7 +85,7 @@ bool Vis_PRM::linkOrphanLinking(Node* node, int type, unsigned int& ADDED, int& 
     
     for (int i=0; i<int(vect.size()); i++)
 		{
-            _Graph->connectNodeToCompco(node,vect[i]);
+            _Graph->linkNodeAndMerge(vect[i],node,ENV.getBool(Env::isCostSpace));
 		}
 
 		/*
@@ -157,7 +157,7 @@ void Vis_PRM::createOneOrphanLinking(int type, unsigned int & ADDED, int & nb_fa
 		Node* N = new Node(_Graph,q);
 		
 		if(linkOrphanLinking( N, type, ADDED, nb_fail) && ENV.getBool(Env::drawExploration) )
-		{
+        {
 			(*_draw_func)();
 		}
 	}
@@ -169,6 +169,5 @@ void Vis_PRM::createOneOrphanLinking(int type, unsigned int & ADDED, int & nb_fa
  */
 void Vis_PRM::expandOneStep()
 {
-	createOneOrphanLinking(2,m_nbAddedNode, m_nbConscutiveFailures);
-	//cout << _nbConscutiveFailures << endl;
+    createOneOrphanLinking(2,m_nbAddedNode, m_nbConscutiveFailures);
 }
