@@ -486,7 +486,8 @@ bool p3d_run_est(p3d_rob* robotPt)
 #else
 	EST* est = new EST(rob,graph);
 #endif
-	
+    est->setInit(q_source);
+    est->setGoal(q_target);
 	int nb_added_nodes = est->init();
 	
 	graph = est->getActivGraph();

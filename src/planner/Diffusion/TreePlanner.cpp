@@ -268,7 +268,7 @@ bool TreePlanner::connectionToTheOtherCompco( Node* toNode )
 	
 	else if(ENV.getBool(Env::randomConnectionToGoal))
 	{
-		connected = connectNodeToCompco( _Graph->getLastNode(), toNode->randomNodeFromComp());
+        connected = connectNodeToCompco( _Graph->getLastNode(), _Graph->randomNodeFromComp(toNode));
 	}
 	else
 	{
