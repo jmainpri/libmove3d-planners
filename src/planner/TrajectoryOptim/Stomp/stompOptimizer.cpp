@@ -515,7 +515,7 @@ namespace stomp_motion_planner
       }
       else
       {
-        if (cost < best_group_trajectory_cost_ )
+        if (cost < best_group_trajectory_cost_ && is_collision_free_)
         {
           if( print_cost )
             cout << "New best" << endl;
@@ -1126,6 +1126,20 @@ namespace stomp_motion_planner
       }
     }
     
+    if(is_collision_free_) //2nd turn of verification : test of paths between configurations
+    {
+        API::Trajectory T(robot_model_);
+
+
+        // for each point in the trajectory
+        for (int i=free_vars_start_; i<=free_vars_end_; ++i)
+        {
+          T.push_back(getConfigurationOnGroupTraj(i));
+        }
+
+        is_collision_free_=T.isValid();
+
+    }
     // now, get the vel and acc for each collision point (using finite differencing)
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
