@@ -45,6 +45,7 @@ namespace PlanParam
             isWeightedChoice,
             nextIterWaitForGui,
             rrtExtractShortestPath,
+            orientedGraph,
           
             // Time
             trajWithTimeLimit,

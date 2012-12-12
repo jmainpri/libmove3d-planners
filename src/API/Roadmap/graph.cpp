@@ -1675,7 +1675,7 @@ int Graph::mergeComp(Node* node1, Node* node2, double dist_nodes, bool compute_e
 	}
   
 	compco1->mergeWith( compco2 );
-  if (m_Graph->oriented) {
+  if (PlanEnv->getBool(PlanParam::orientedGraph)) {
   addEdge(node1, node2, false, dist_nodes, compute_edge_cost, 0.0 );
   }
   else

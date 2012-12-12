@@ -80,6 +80,7 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::isWeightedChoice,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::nextIterWaitForGui,         new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::rrtExtractShortestPath,     new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::orientedGraph,              new boolContainer(false)));
   
         // Time
         myBoolMap.insert( std::make_pair( PlanParam::planWithTimeLimit,          new boolContainer(false)));
