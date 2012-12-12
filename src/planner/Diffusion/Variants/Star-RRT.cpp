@@ -560,7 +560,7 @@ void StarRRT::saveConvergenceToFile()
   std::ostringstream oss;
   std::ofstream s;
   
-	oss << "statFiles/convergence_rrt_star_" << std::setfill('0') << std::setw(4) << m_runId << ".csv";
+    oss << getenv("HOME_MOVE3D") << "/statFiles/convergence_rrt_star_" << std::setfill('0') << std::setw(4) << m_runId << ".csv";
   
 	const char *res = oss.str().c_str();
 	

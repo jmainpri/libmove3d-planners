@@ -933,7 +933,7 @@ void Smoothing::saveOptimToFile(string fileName)
   std::ostringstream oss;
   std::ofstream s;
   
-	oss << "statFiles/convergence_traj_smooth_" << std::setfill('0') << std::setw(4) << m_runId << ".csv";
+    oss << getenv("HOME_MOVE3D") << "/statFiles/convergence_traj_smooth_" << std::setfill('0') << std::setw(4) << m_runId << ".csv";
   
 	const char *res = oss.str().c_str();
 	

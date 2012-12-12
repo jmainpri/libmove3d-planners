@@ -561,7 +561,7 @@ namespace stomp_motion_planner
       {
         if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) ) 
         {
-          printf("%3d, time: %3f, cost: %f (s=%f, c=%f), move3d cost: %f\n", iteration_, time_, cost, 
+          printf("%3d, time: %3f, cost: %f (s=%f, c=%f), move3d cost: %f\n", iteration_, time_, cost,
                  getSmoothnessCost(), getCollisionCost(), move3d_cost );
         }
         else {
@@ -1085,7 +1085,7 @@ namespace stomp_motion_planner
     Eigen::VectorXd joint_array;
     
     Configuration q(robot_model_);
-    
+
     // for each point in the trajectory
     for (int i=start; i<=end; ++i)
     {
@@ -2065,7 +2065,7 @@ namespace stomp_motion_planner
     std::ofstream s;
     
     //----------------------------------------------------
-    oss << "statFiles/convergence_traj_stomp_" << std::setfill('0') << std::setw(4) << stomp_statistics_->run_id << ".csv";
+    oss << getenv("HOME_MOVE3D") << "/statFiles/convergence_traj_stomp_" << std::setfill('0') << std::setw(4) << stomp_statistics_->run_id << ".csv";
     
     const char *res = oss.str().c_str();
     
@@ -2101,7 +2101,7 @@ namespace stomp_motion_planner
     //----------------------------------------------------
     std::ostringstream oss2;
     oss2.clear();
-    oss2 << "statFiles/costsum_traj_stomp_" << std::setfill('0') << std::setw(4) << stomp_statistics_->run_id << ".csv";
+    oss2 << getenv("HOME_MOVE3D") << "/statFiles/costsum_traj_stomp_" << std::setfill('0') << std::setw(4) << stomp_statistics_->run_id << ".csv";
     
     const char *res2 = oss2.str().c_str();
     
