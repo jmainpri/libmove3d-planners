@@ -290,6 +290,7 @@ private:
   bool last_trajectory_collision_free_;
   bool last_trajectory_constraints_satisfied_;
   int last_improvement_iteration_;
+  int best_iteration_;
 
   // HMC stuff:
   Eigen::MatrixXd momentum_;

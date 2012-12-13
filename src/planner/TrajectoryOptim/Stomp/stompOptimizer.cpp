@@ -353,11 +353,7 @@ namespace stomp_motion_planner
       performForwardKinematics();
       double new_cost = getTrajectoryCost();
       
-      if (new_cost < original_cost)
-      {
-        //printf("Random jump improved cost from %.10f to %.10f!\n", original_cost, new_cost);
-      }
-      else
+      if (new_cost > original_cost)
       {
         //printf("Random jump worsened cost from %.10f to %.10f!\n", original_cost, new_cost);
         group_trajectory_.getTrajectory() = group_trajectory_backup_;
@@ -365,20 +361,109 @@ namespace stomp_motion_planner
       }
     }
     
-    double cost = 0.0;
+//    double cost = 0.0;
+//    for (int i=free_vars_start_; i<=free_vars_end_; i++)
+//    {
+//      double state_collision_cost = 0.0;
+//      double cumulative = 0.0;
+//      for (int j=0; j<num_collision_points_; j++)
+//      {
+//        cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
+//        //state_collision_cost += collision_point_potential_[i][j] * collision_point_vel_mag_[i][j];
+//        state_collision_cost += cumulative;
+//      }
+//      cost += state_collision_cost * stomp_parameters_->getObstacleCostWeight();
+//    }
+//    last_trajectory_cost_ = cost;
+    int num_time_steps_ = 51;
+    Eigen::VectorXd costs = Eigen::VectorXd::Zero(num_time_steps_);
+    double constraint_cost = 0.0;
+    double obstacle_cost = 0.0;
+    double torque_cost = 0.0;
+
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
-      double state_collision_cost = 0.0;
-      double cumulative = 0.0;
-      for (int j=0; j<num_collision_points_; j++)
-      {
-        cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
-        //state_collision_cost += collision_point_potential_[i][j] * collision_point_vel_mag_[i][j];
-        state_collision_cost += cumulative;
-      }
-      cost += state_collision_cost * stomp_parameters_->getObstacleCostWeight();
+        double state_collision_cost = 0.0;
+        double cumulative = 0.0;
+
+        if (collision_space_)
+        {
+            for (int j=0; j<num_collision_points_; j++)
+            {
+                cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
+                state_collision_cost += cumulative;
+            }
+        }
+        else
+        {
+            Eigen::VectorXd q_i,q_f;
+
+            int id1 = i;
+            int id2 = i+1;
+
+            if (i == free_vars_end_) {
+                id1--;
+                id2--;
+            }
+
+            int index_i = group_trajectory_.getFullTrajectoryIndex(id1);
+            int index_f = group_trajectory_.getFullTrajectoryIndex(id2);
+
+            full_trajectory_->getTrajectoryPointP3d(index_i, q_i);
+            full_trajectory_->getTrajectoryPointP3d(index_f, q_f);
+
+            state_collision_cost += ( pow( general_cost_potential_(i) , hack_tweek ) /* ( q_f - q_i ).norm() */) ;
+        }
+
+        // evaluate the constraints:
+        double state_constraint_cost = 0.0;
+        //    for (int j=0; j<int(constraint_evaluators_.size()); ++j)
+        //    {
+        //      double cost;
+        //      if (!constraint_evaluators_[j]->getCost(segment_frames_[i], full_trajectory_->getTrajectoryPoint(i), cost))
+        //        last_trajectory_constraints_satisfied_ = false;
+        //      state_constraint_cost += cost;
+        //    }
+
+        // evaluate inverse dynamics:
+        double state_torque_cost = 0.0;
+
+        //    if (stomp_parameters_->getTorqueCostWeight() > 1e-9)
+        //    {
+        //      full_trajectory_->getTrajectoryPointKDL(i, kdl_joint_array_);
+        //      full_trajectory_->getJointVelocities(i, full_joint_state_velocities_);
+        //      full_trajectory_->getJointAccelerations(i, full_joint_state_velocities_);
+        //      for (int j=0; j<num_joints_; ++j)
+        //      {
+        //        int full_joint_num = planning_group_->stomp_joints_[j].kdl_joint_index_;
+        //        kdl_group_joint_array_(j) = kdl_joint_array_(full_joint_num);
+        //        kdl_group_vel_joint_array_(j) = full_joint_state_velocities_(full_joint_num);
+        //        kdl_group_acc_joint_array_(j) = full_joint_state_accelerations_(full_joint_num);
+        //      }
+        //      planning_group_->id_solver_->CartToJnt(kdl_group_joint_array_,
+        //                                             kdl_group_vel_joint_array_,
+        //                                             kdl_group_acc_joint_array_,
+        //                                             wrenches,
+        //                                             kdl_group_torque_joint_array_);
+        //      getTorques(i, torques, wrenches);
+        //      for (int j=0; j<num_joints_; ++j)
+        //      {
+        //        state_torque_cost += fabs(torques[j]);
+        //      }
+        //    }
+
+        obstacle_cost += stomp_parameters_->getObstacleCostWeight() * state_collision_cost;
+        constraint_cost += stomp_parameters_->getConstraintCostWeight() * state_constraint_cost;
+        torque_cost += stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
+
+        costs(i-free_vars_start_) =
+                stomp_parameters_->getObstacleCostWeight() * state_collision_cost +
+                stomp_parameters_->getConstraintCostWeight() * state_constraint_cost +
+                stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
     }
-    last_trajectory_cost_ = cost;
+
+    //    cout << "costs = " << costs << endl;
+    last_trajectory_cost_ = costs.sum();
   }
   
   //void StompOptimizer::optimize()
@@ -432,7 +517,7 @@ namespace stomp_motion_planner
     
     source_ = getSource();
     target_ = getTarget();
-    
+    best_iteration_=0;
     // iterate
     for (iteration_=0; 
          iteration_<stomp_parameters_->getMaxIterations()&& 
@@ -461,15 +546,14 @@ namespace stomp_motion_planner
       }
       
       // Policy improvement loop
-      pi_loop.runSingleIteration(iteration_+1);
-//      if (!stomp_parameters_->getUseChomp())
-//      {
-//        pi_loop.runSingleIteration(iteration_+1);
-//      }
-//      else
-//      {
-//        doChompOptimization();
-//      }
+      if (!stomp_parameters_->getUseChomp())
+      {
+        pi_loop.runSingleIteration(iteration_+1);
+      }
+      else
+      {
+        doChompOptimization();
+      }
             
       if ( do_draw && (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && 
           stomp_parameters_->getAnimateEndeffector() )
@@ -523,6 +607,7 @@ namespace stomp_motion_planner
           best_group_trajectory_ = group_trajectory_.getTrajectory();
           best_group_trajectory_cost_ = cost;
           last_improvement_iteration_ = iteration_;
+          best_iteration_++;
         }
       }
       
@@ -586,7 +671,11 @@ namespace stomp_motion_planner
         iteration_++;
         break;
       }
-      
+      else if (best_iteration_ >= stomp_parameters_->getMaxBestIterations())
+      {
+        iteration_++;
+        break;
+      }
 //      if (is_collision_free_)
 //      {
 //        break;

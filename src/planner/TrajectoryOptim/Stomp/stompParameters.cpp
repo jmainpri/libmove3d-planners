@@ -55,7 +55,8 @@ void StompParameters::init()
 {
   max_iterations_ = 1000;
   //max_iterations_after_collision_free_ = 100;
-  max_iterations_after_collision_free_ = 10;
+  max_iterations_after_collision_free_ = 100;
+  max_best_iterations_=1000;
   
   //smoothness_cost_weight_ = 0.1;
 //  smoothness_cost_weight_ = 0.05;
@@ -75,7 +76,7 @@ void StompParameters::init()
   smoothness_cost_acceleration_ = 1.0;
   smoothness_cost_jerk_ = 0.0;
   
-  use_hamiltonian_monte_carlo_ = false;
+  use_hamiltonian_monte_carlo_ = true;
   hmc_discretization_ = 0.01;
   hmc_stochasticity_ = 0.01;
   hmc_annealing_factor_ = 0.99;
@@ -86,7 +87,7 @@ void StompParameters::init()
   
   animate_endeffector_ = true; // ENV.getBool(Env::drawTraj);
   animate_endeffector_segment_ = "r_gripper_tool_frame";
-  use_chomp_ = false;
+  use_chomp_ = true;
 }
   
 bool StompParameters::getAnimateEndeffector() const

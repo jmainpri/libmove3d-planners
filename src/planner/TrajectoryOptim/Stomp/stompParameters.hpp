@@ -55,6 +55,7 @@ public:
 
   int getMaxIterations() const;
   int getMaxIterationsAfterCollisionFree() const;
+  int getMaxBestIterations() const;
   double getSmoothnessCostWeight() const;
   double getObstacleCostWeight() const;
   double getConstraintCostWeight() const;
@@ -80,6 +81,7 @@ public:
 private:
   int max_iterations_;
   int max_iterations_after_collision_free_;
+  int max_best_iterations_;
   double smoothness_cost_weight_;
   double obstacle_cost_weight_;
   double constraint_cost_weight_;
@@ -113,6 +115,11 @@ inline int StompParameters::getMaxIterations() const
 inline int StompParameters::getMaxIterationsAfterCollisionFree() const
 {
   return max_iterations_after_collision_free_;
+}
+
+inline int StompParameters::getMaxBestIterations() const
+{
+  return max_best_iterations_;
 }
 
 inline double StompParameters::getSmoothnessCostWeight() const
