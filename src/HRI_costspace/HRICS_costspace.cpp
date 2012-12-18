@@ -259,7 +259,7 @@ void HRICS_init(HRI_AGENTS* agents)
     
     ENV.setDouble(Env::extensionStep,14.0);
     ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
-    ENV.setDouble(Env::temperatureRate,30);
+    ENV.setDouble(Env::temperatureRate, 0.1);
     
     PlanEnv->setDouble(PlanParam::MaxFactor,5.0);
     PlanEnv->setDouble(PlanParam::MinStep,2);
@@ -277,7 +277,7 @@ void HRICS_init(HRI_AGENTS* agents)
     
     ENV.setDouble(Env::extensionStep,1.5);
     ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
-    ENV.setDouble(Env::temperatureRate,30);
+    ENV.setDouble(Env::temperatureRate, 0.1);
     
     PlanEnv->setDouble(PlanParam::MaxFactor,1.5);
     PlanEnv->setDouble(PlanParam::MinStep,2);
@@ -295,7 +295,7 @@ void HRICS_init(HRI_AGENTS* agents)
     
 //    ENV.setDouble(Env::extensionStep,1.5);
 //    ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
-//    ENV.setDouble(Env::temperatureRate,30);
+//    ENV.setDouble(Env::temperatureRate, 0.1);
   }
   else 
   {
