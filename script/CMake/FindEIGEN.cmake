@@ -10,7 +10,6 @@
 ## Check for the header files
 
 find_package(PkgConfig)
-pkg_check_modules(PC_EIGEN QUIET eigen3)
 
 find_path (Eigen_INCLUDE_DIR Eigen/Cholesky
  PATHS $ENV{ROBOTPKG_BASE}/include /usr/local/include /usr/include /sw/include /opt/local/include ${PC_EIGEN_INCLUDEDIR} ${PC_EIGEN_INCLUDE_DIRS}
