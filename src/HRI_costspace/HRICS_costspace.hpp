@@ -17,6 +17,7 @@
 
 // Main cost function
 extern double HRICS_getConfigCost(Configuration& Conf);
+extern double HRICS_getPlanarHumanGridCost(Configuration& q);
 extern   void HRICS_init(HRI_AGENTS* agents = NULL);
 
 // Human kinematics

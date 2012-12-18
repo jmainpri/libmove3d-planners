@@ -266,16 +266,15 @@ void AgentCell::computeCombined()
   m_Combined += m_Distance;
 	m_Combined += m_Visiblity;
   
-  /**
-  if( m_IsReachable ) 
-  {
-    m_Combined += m_Reachability*ENV.getDouble(Env::Kreachable);
-  }
-  else {
-    m_Combined += (2.0)*ENV.getDouble(Env::Kreachable);
-  }
-  m_Combined /= (ENV.getDouble(Env::Kdistance)+ENV.getDouble(Env::Kvisibility)+ENV.getDouble(Env::Kreachable));
-   */
+//  if( m_IsReachable ) 
+//  {
+//    m_Combined += m_Reachability*ENV.getDouble(Env::Kreachable);
+//  }
+//  else {
+//    m_Combined += (2.0)*ENV.getDouble(Env::Kreachable);
+//  }
+//  m_Combined /= (ENV.getDouble(Env::Kdistance)+ENV.getDouble(Env::Kvisibility)+ENV.getDouble(Env::Kreachable));
+  
   m_Combined /= 2;
 }
 

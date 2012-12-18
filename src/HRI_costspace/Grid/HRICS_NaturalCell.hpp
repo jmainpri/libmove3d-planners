@@ -11,9 +11,7 @@
 #define HRICS_NATURALCELL_H_
 
 #include "API/planningAPI.hpp"
-
 #include "Graphic-pkg.h"
-
 #include "HRICS_NaturalGrid.hpp"
 
 namespace HRICS
@@ -56,6 +54,9 @@ namespace HRICS
 		
 		bool getClosed() { return m_Closed; }
 		void setClosed() { m_Closed = true; }
+    
+    void setUseExternalCost(bool use) { m_use_external_cost=use;  }
+    void setExternalCost(double cost) { m_external_cost=cost; }
 		
 		void resetExplorationStatus();
 		
@@ -85,6 +86,8 @@ namespace HRICS
 		bool m_IsReachWithLeftArm;
 		bool m_IsReachWithRightArm;
 		
+    bool m_use_external_cost;
+    double m_external_cost;
 		
 		unsigned int m_NbDirections;
 		

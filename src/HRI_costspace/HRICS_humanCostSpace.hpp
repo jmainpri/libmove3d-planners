@@ -11,6 +11,7 @@
 
 #include "API/Device/robot.hpp"
 #include "Grid/HRICS_AgentGrid.hpp"
+#include "Grid/HRICS_NaturalCell.hpp"
 
 /**
  @ingroup HRICS
@@ -29,6 +30,9 @@ namespace HRICS
     
     double getCost(Configuration& q);
 		double getCompleteCost(Configuration& q, std::vector<double>& cost_sum);
+    double getPointCost(Configuration& q);
+    
+    bool getHandoverPointList(std::vector<Eigen::Vector3d>& points, bool recompute_cells, int arm_type);
     
     void computeAllCellCost();
     void testCostFunction();
@@ -37,6 +41,7 @@ namespace HRICS
     void saveAgentGrids();
     
     void drawDistances();
+    void drawReachableGrid();
     
     AgentGrid* getAgentGrid(Robot* agent);
     
@@ -58,6 +63,7 @@ namespace HRICS
     std::vector<Robot*>           m_Humans;
     std::vector<AgentGrid*>       m_Grids;
     Joint*                        m_PlatformJoint;
+    std::vector< std::pair<double,NaturalCell*> > m_ReachableCells;
     
     enum PlanningType { NAVIGATION = 0, MANIPULATION = 1, MOBILE_MANIP = 2 } m_planning_type;
     

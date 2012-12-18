@@ -56,6 +56,21 @@ double HRICS_getConfigHumanGridCost(Configuration& q)
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
+// Function for the Human cost space
+double HRICS_getPlanarHumanGridCost(Configuration& q)
+{	
+  double cost = 0.0;
+  
+  if( HRICS_humanCostMaps != NULL )
+  {
+    cost = HRICS_humanCostMaps->getPointCost( q );
+  }
+  
+  return cost;
+}
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
 // Main function for the HRI cost space
 double HRICS_getConfigCost(Configuration& Conf)
 {	
@@ -375,7 +390,8 @@ void HRICS_init(HRI_AGENTS* agents)
   
   global_costSpace->addCost("costHumanGrids",boost::bind(HRICS_getConfigHumanGridCost, _1));
   global_costSpace->setCost("costHumanGrids");
-  cout << "new HRI Workspace" << endl;
   
+  global_costSpace->addCost("costHumanPlanarGrids",boost::bind(HRICS_getPlanarHumanGridCost, _1));
+  global_costSpace->setCost("costHumanPlanarGrids");  
   //Human->setAndUpdate( *q );
 }

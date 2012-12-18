@@ -30,6 +30,7 @@ m_Cost(-1),
 m_IsReachable(false),
 m_IsReachWithLeftArm(false),
 m_IsReachWithRightArm(false),
+m_use_external_cost(false),
 m_NbDirections(1.0),
 m_list(NULL)
 {
@@ -45,6 +46,7 @@ m_Cost(-1),
 m_IsReachable(false),
 m_IsReachWithLeftArm(false),
 m_IsReachWithRightArm(false),
+m_use_external_cost(false),
 m_NbDirections(1.0)
 {
     m_Coord = coord;
@@ -172,7 +174,7 @@ void NaturalCell::draw()
 		{
 			Vector3d center = getWorkspacePoint();
 			double colorvector[4];
-
+      
 			colorvector[0] = 0.5;       //red
 			colorvector[1] = 0.5;       //green
 			colorvector[2] = 0.5;       //blue
@@ -181,42 +183,47 @@ void NaturalCell::draw()
 			g3d_set_color(Any,colorvector);
 			g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/6, 10);
 		}
-
+    
 		return;
 	}
 	
-    double colorvector[4];
+  double colorvector[4];
 	
-    colorvector[0] = 0.0;       //red
-    colorvector[1] = 0.0;       //green
-    colorvector[2] = 0.0;       //blue
-    colorvector[3] = 0.01;       //transparency
-	
-	double Cost = this->getCost();
+  colorvector[0] = 0.0;       //red
+  colorvector[1] = 0.0;       //green
+  colorvector[2] = 0.0;       //blue
+  colorvector[3] = 0.01;       //transparency
+  
+  double Cost;
+  
+  if( m_use_external_cost ) 
+  {
+    Cost = m_external_cost;
+  }
+	else {
+    Cost = this->getCost();
+  }
 	//double Cost = 10.0;
 	//Cost = m_Cost;
 	
 	//if ( m_IsReachWithLeftArm && m_IsReachWithRightArm )
-//	{
-//		Cost = 20.0;
-//	}
+  //	{
+  //		Cost = 20.0;
+  //	}
 	
 	Vector3d center = getWorkspacePoint();
-
+  
 	if ( Cost != 0.0 )
 	{
 		GroundColorMixGreenToRed(colorvector,Cost);
 		g3d_set_color(Any,colorvector);
-		//glCallList(m_list);
 		double diagonal = getCellSize().minCoeff();
 		g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/6, 10);
-		//cout << "Robot : " << dynamic_cast<NaturalGrid*>(_grid)->getRobot()->getName() << "Draw Sphere, Cost = " << Cost << endl;
 	}
-
+  
 	if ( (Cost == 0.0) && m_IsReachable )
 	{
 		g3d_set_color(Any,colorvector);
-		//glCallList(m_list);
 		double diagonal = getCellSize().minCoeff();
 		g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/3, 10);
 	}
@@ -228,7 +235,6 @@ int NaturalCell::setRobotToStoredConfig()
 	
 	if(this->getCost() != 0.0)
 	{
-		//m_QStored->print();
 		return grid->getRobot()->setAndUpdateMultiSol(*m_QStored);
 	}
 	
@@ -252,14 +258,11 @@ double NaturalCell::getCost()
 			//Vector3d center = getCenter();
 
 			double pref = ENV.getDouble(Env::coeffArmPr);
+      
 			if (pref >= 0.0)
-			{
 				rightArmPref -= pref;
-			}
 			else
-			{
 				leftArmPref += pref;
-			}
 
 			if (m_IsReachWithLeftArm && !m_IsReachWithRightArm)
 			{
@@ -285,7 +288,6 @@ double NaturalCell::getCost()
 					m_Cost = right_cost;
 				}
 			}
-
 		}
 		
 		m_IsCostComputed = true;
