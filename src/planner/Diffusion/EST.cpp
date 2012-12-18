@@ -92,7 +92,7 @@ bool EST::preConditions()
 /**
  * Initializes an RRT Planner
  */
-int  EST::init()
+unsigned  EST::init()
 {
   
 	int added = TreePlanner::init();

@@ -34,7 +34,7 @@ public:
 	 * initialize the Planner
 	 * @return le number of nodes added to the graph
 	 */
-	virtual int init();
+	virtual unsigned init();
   
 protected:
   

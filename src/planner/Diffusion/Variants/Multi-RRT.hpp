@@ -22,7 +22,7 @@ public:
     MultiRRT(Robot* R, Graph* G);
     ~MultiRRT();
 	
-	int init();
+	unsigned init();
 	
 	/**
 	 * Adds a Seed to the algorithm

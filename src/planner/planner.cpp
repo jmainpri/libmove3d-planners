@@ -98,7 +98,7 @@ Node* Planner::getGoal()
 	return _Goal;
 }
 
-int Planner::init()
+unsigned Planner::init()
 {
 	if( _Robot == NULL || _Graph == NULL )
 	{

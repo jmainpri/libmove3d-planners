@@ -45,7 +45,7 @@ TreePlanner::~TreePlanner()
 	
 }
 
-int TreePlanner::init()
+unsigned TreePlanner::init()
 {
 	int added = 0;
 	Planner::init();

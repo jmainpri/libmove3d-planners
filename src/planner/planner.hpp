@@ -123,7 +123,7 @@ public:
   /**
    * Méthode d'initialisation du Planner
    */
-  virtual int init();
+  virtual unsigned init();
 	
   /**
    * Run function

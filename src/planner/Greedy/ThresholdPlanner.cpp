@@ -29,7 +29,7 @@ ThresholdPlanner::~ThresholdPlanner()
 /**
  * Initializes the planner
  */
-int ThresholdPlanner::init()
+unsigned ThresholdPlanner::init()
 {
 	int added = Planner::init();
 	added += Planner::setInit(_Robot->getInitialPosition());

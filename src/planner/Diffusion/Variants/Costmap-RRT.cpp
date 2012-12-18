@@ -223,7 +223,7 @@ int CostmapExpansion::extendExpandProcess(Node* expansionNode,
 /*!
  * expandProcess
  */
-int CostmapExpansion::expandProcess(Node* expansionNode,
+unsigned CostmapExpansion::expandProcess(Node* expansionNode,
                                     shared_ptr<Configuration> directionConfig,
                                     Node* directionNode,
                                     Env::expansionMethod method)
@@ -269,7 +269,7 @@ CostmapRRT::~CostmapRRT()
  * Initialzation of the plannificator
  * @return the number of node added during the init phase
  */
-int CostmapRRT::init()
+unsigned CostmapRRT::init()
 {
 	int added = TreePlanner::init();
 	_expan = new CostmapExpansion(_Graph);

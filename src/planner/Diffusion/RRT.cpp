@@ -88,7 +88,7 @@ bool RRT::preConditions()
 /**
  * Initializes an RRT Planner
  */
-int  RRT::init()
+unsigned  RRT::init()
 {
 	int added = TreePlanner::init();
 	_expan = new RRTExpansion(_Graph);

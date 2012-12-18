@@ -168,7 +168,7 @@ public:
 	 *
 	 * @return the number of nodes created
 	 */
-	virtual int expandProcess(Node* expansionNode,
+	virtual unsigned expandProcess(Node* expansionNode,
 														std::tr1::shared_ptr<Configuration> directionConfig,
 														Node* directionNode, Env::expansionMethod method) = 0;
   

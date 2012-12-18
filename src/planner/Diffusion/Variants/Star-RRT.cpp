@@ -432,7 +432,7 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
 /*!
  * expandProcess
  */
-int StarExpansion::expandProcess(Node* expansionNode,
+unsigned StarExpansion::expandProcess(Node* expansionNode,
 																 confPtr_t directionConfig,
 																 Node* directionNode,
 																 Env::expansionMethod method)
@@ -475,7 +475,7 @@ StarRRT::~StarRRT()
  * Initialzation of the plannificator
  * @return the number of node added during the init phase
  */
-int StarRRT::init()
+unsigned StarRRT::init()
 {
 	int added = TreePlanner::init();
 	_expan = new StarExpansion(_Graph);

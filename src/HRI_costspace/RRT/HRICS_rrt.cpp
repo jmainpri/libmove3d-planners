@@ -27,7 +27,7 @@ HRICS_RRT::HRICS_RRT(Robot* R, Graph* G) : RRT(R,G)
 /**
  * Initializes an RRT Planner
  */
-int  HRICS_RRT::init()
+unsigned  HRICS_RRT::init()
 {
     int added = TreePlanner::init();
 

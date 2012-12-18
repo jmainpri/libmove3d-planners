@@ -32,7 +32,7 @@ public:
 	 * initialise le Planner
 	 * @return le nombre de Node ajoutés lors de l'initialisation
 	 */
-	virtual int init();
+	virtual unsigned init();
 	
 	/**
 	 * test les conditions d'arret
