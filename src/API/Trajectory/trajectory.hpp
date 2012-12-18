@@ -63,7 +63,7 @@ namespace API
 		
     std::pair<bool,std::vector<LocalPath*> > extractSubPortion(double param1,double param2,unsigned int& first,unsigned int& last, bool check_for_coll = true);
 		Trajectory extractSubTrajectoryOfLocalPaths(unsigned int id_start, unsigned int id_end);
-		Trajectory extractSubTrajectory(double param1,double param2);
+		Trajectory extractSubTrajectory(double param1,double param2, bool check_for_coll = true);
         
 		bool concat(const Trajectory& traj);
 		
@@ -73,8 +73,8 @@ namespace API
     bool replaceBegin(double param, const std::vector<LocalPath*>& paths ); 
     bool replaceEnd(double param, const std::vector<LocalPath*>& paths ); 
 		
-		void cutTrajInSmallLP(unsigned int nLP);
-    void cutTrajInSmallLPSimple(unsigned int nLP);
+		bool cutTrajInSmallLP(unsigned int nLP);
+    bool cutTrajInSmallLPSimple(unsigned int nLP);
 		uint cutPortionInSmallLP(std::vector<LocalPath*>& portion, uint nLP);
 		
 		void push_back(confPtr_t q);
@@ -88,7 +88,7 @@ namespace API
 		double computeSubPortionIntergralCost(std::vector<LocalPath*>& portion);
 		double computeSubPortionCost(std::vector<LocalPath*>& portion);
     double computeSubPortionMaxCost(std::vector<LocalPath*>& portion);
-		double ReComputeSubPortionCost(std::vector<LocalPath*>& portion);
+		double ReComputeSubPortionCost(std::vector<LocalPath*>& portion, int& nb_cost_tests);
 		double computeSubPortionCostVisib( std::vector<LocalPath*>& portion );
 		double costOfPortion(double param1,double param2);
 		double extractCostPortion(double param1, double param2);

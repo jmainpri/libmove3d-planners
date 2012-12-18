@@ -395,7 +395,7 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
 
 std::tr1::shared_ptr<Configuration> Trajectory::operator [] ( const int &i ) const
 {
-  if(m_Courbe.empty() || (i>int(m_Courbe.size())))
+  if( i<0 || m_Courbe.empty() || (i>int(m_Courbe.size())))
   {
     return std::tr1::shared_ptr<Configuration>(new Configuration(m_Robot));
   }
@@ -408,8 +408,12 @@ std::tr1::shared_ptr<Configuration> Trajectory::operator [] ( const int &i ) con
   return m_Courbe[i]->getBegin();
 }
 
-shared_ptr<Configuration> Trajectory::configAtParam(double param, unsigned int* id_localpath) const
+confPtr_t Trajectory::configAtParam(double param, unsigned int* id_localpath) const
 {
+  if(m_Courbe.empty()) {
+    return confPtr_t(new Configuration(m_Robot,NULL));
+  }
+  
 	double soFar(0.0);
 	double prevSoFar(0.0);
 	unsigned int i=0;
@@ -508,6 +512,8 @@ bool Trajectory::isEmpty()
 
 void Trajectory::clear()
 {
+  m_Source = confPtr_t(new Configuration(m_Robot,NULL));
+  
   for (int i=0; i<int(m_Courbe.size()); i++)
 	{
 		delete m_Courbe.at(i);
@@ -638,15 +644,18 @@ double Trajectory::computeSubPortionCost(vector<LocalPath*>& portion)
 	return sumCost;
 }
 
-double Trajectory::ReComputeSubPortionCost(vector<LocalPath*>& portion)
+double Trajectory::ReComputeSubPortionCost(vector<LocalPath*>& portion, int& nb_cost_tests)
 {
 	double sumCost(0.0);
+  
+  nb_cost_tests = 0;
   
 	for (int i=0; i<int(portion.size()); i++)
 	{
     portion[i]->resetCostComputed();
 		double cost =  portion[i]->cost();
 
+    nb_cost_tests += portion[i]->getNbCostTest();
 //    cout << "cost[" << i << "] = " << cost << endl;
 //    cout << "resolution[" << i << "] = " << portion[i]->getResolution() ;
 //    cout << " , length["  << i << "] = " << portion[i]->getParamMax() ;
@@ -787,11 +796,11 @@ double Trajectory::cost()
   {
     return collisionCost();
   }
-  
+
 	double cost(0.0);
 	cost = computeSubPortionCost(m_Courbe);
   // cost =  computeSubPortionIntergralCost(m_Courbe);
-	// cost = ReComputeSubPortionCost(m_Courbe);
+	// cost = ReComputeSubPortionCost(m_Courbe,nb_cost_tests);
 	return cost;
 }
 
@@ -802,7 +811,8 @@ double Trajectory::costRecomputed()
     return collisionCost();
   }
   
-	return ReComputeSubPortionCost(m_Courbe);
+  int nb_test=0;
+	return ReComputeSubPortionCost(m_Courbe,nb_test);
 }
 
 double Trajectory::costNoRecompute()
@@ -817,6 +827,8 @@ double Trajectory::costNoRecompute()
 
 double Trajectory::costStatistics(TrajectoryStatistics& stat)
 {
+  int nb_cost_tests=0; int total_cost_tests=0;
+  
   stat.length = getRangeMax();
   
   if( global_costSpace != NULL ) 
@@ -828,17 +840,18 @@ double Trajectory::costStatistics(TrajectoryStatistics& stat)
     stat.sum = costNPoints(100);
     
     global_costSpace->setDeltaStepMethod( cs_max );
-    ReComputeSubPortionCost( m_Courbe );
+    ReComputeSubPortionCost( m_Courbe, nb_cost_tests );
     stat.max = computeSubPortionMaxCost( m_Courbe );
+    total_cost_tests += nb_cost_tests;
     
     global_costSpace->setDeltaStepMethod( cs_average );
-    stat.average = ReComputeSubPortionCost( m_Courbe );
+    stat.average = ReComputeSubPortionCost( m_Courbe, nb_cost_tests );
     
     global_costSpace->setDeltaStepMethod( cs_integral ); 
-    stat.integral = ReComputeSubPortionCost( m_Courbe );
+    stat.integral = ReComputeSubPortionCost( m_Courbe, nb_cost_tests );
     
     global_costSpace->setDeltaStepMethod( cs_mechanical_work );
-    stat.mecha_work = ReComputeSubPortionCost( m_Courbe );
+    stat.mecha_work = ReComputeSubPortionCost( m_Courbe, nb_cost_tests );
     
     global_costSpace->setDeltaStepMethod( method );
     
@@ -867,7 +880,8 @@ double Trajectory::costDeltaAlongTraj()
   if( tmp != (*this) ){
     cout << "Trajectory not the same" << endl;
   }
-	cout << "Sum of LP cost (Recomputed) = "  << ReComputeSubPortionCost(tmp.m_Courbe) << endl;
+  int nb_cost_tests=0;
+	cout << "Sum of LP cost (Recomputed) = "  << ReComputeSubPortionCost(tmp.m_Courbe, nb_cost_tests) << endl;
   double cost = computeSubPortionIntergralCost(m_Courbe);
   cout << "Intergral along traj = " << cost << endl;
 	return cost;
@@ -1386,10 +1400,10 @@ Trajectory Trajectory::extractSubTrajectoryOfLocalPaths(unsigned int id_start, u
 	return newTraj;
 }
 
-Trajectory Trajectory::extractSubTrajectory(double param1, double param2)
+Trajectory Trajectory::extractSubTrajectory(double param1, double param2, bool check_for_coll)
 {
-	uint first(0);
-	uint last(0);
+	unsigned int first(0);
+	unsigned int last(0);
 	
 	vector<LocalPath*> path;
 	
@@ -1399,14 +1413,20 @@ Trajectory Trajectory::extractSubTrajectory(double param1, double param2)
 	}
 	else
 	{
-    pair<bool, vector<LocalPath*> > valid_portion = extractSubPortion(param1, param2, first, last);
+    pair<bool, vector<LocalPath*> > valid_portion = extractSubPortion( param1, param2, first, last, check_for_coll );
     
-    if( valid_portion.first ) 
+    if( check_for_coll ) 
     {
-      path = valid_portion.second;
+      if( valid_portion.first ) 
+      {
+        path = valid_portion.second;
+      }
+      else {
+        cout << "Error: inconsistant query in extractSubTrajectory" << endl;
+      }
     }
     else {
-      cout << "Error: inconsistant query in extractSubTrajectory" << endl;
+      path = valid_portion.second;
     }
 	}
 	
@@ -1585,58 +1605,40 @@ void Trajectory::push_back(shared_ptr<Configuration> q)
   }
 }
 
-void Trajectory::cutTrajInSmallLPSimple(unsigned int nLP)
+bool Trajectory::cutTrajInSmallLPSimple(unsigned int nLP)
 {
   double range = computeSubPortionRange(m_Courbe);
-  double nb_path= nLP;
-  double delta = range/nb_path;
+  double delta = range/double(nLP);
   
 	vector<LocalPath*> portion;
-  portion.push_back(new LocalPath(m_Source,configAtParam(delta)));
   
-  double s;
+  double s=0.0;
   
-  for( s=delta; s<=(range-delta); s+=delta )
+  for( unsigned int i=0; i<nLP; i++ )
   {
     confPtr_t q_init = configAtParam(s);
     confPtr_t q_goal = configAtParam(s+delta);
     portion.push_back(new LocalPath(q_init,q_goal));
-  }
-  
-  s=range-delta;
-  
-  int error_in_cut_localpath=0;
-  
-  while (portion.size() < nLP ) 
-  {
-    error_in_cut_localpath++;
-    confPtr_t q_init = configAtParam(s);
-    confPtr_t q_goal = configAtParam(s+delta);
-    portion.push_back(new LocalPath(q_init,q_goal));
-    s+=delta;
-  }
-  
-  if (portion.size() > nLP ) 
-  {
-    error_in_cut_localpath--;
-    portion.resize( nLP );
+    
+    if( portion[i]->getParamMax() == 0.0 )
+    {
+      for( int i=0; i<int(portion.size()); i++ )
+      {
+        delete portion[i];
+      }
+      return false;
+    }
+    s += delta;
+//    q_init->print();
+//    q_goal->print();
   }
   
   if (portion.size() != nLP ){
     throw string("Error: int cutTrajInSmallLPSimple");
   }
   
-  delete portion[nLP-1];
-  confPtr_t q_init = portion[nLP-2]->getEnd();
-  confPtr_t q_goal = m_Target;
-  portion[nLP-1] = new LocalPath(q_init,q_goal);
-  
-  if( error_in_cut_localpath > 0 )
-  {
-    cout << "Error in cutTrajInSmallLPSimple : " << error_in_cut_localpath << endl;
-  }
-  
   m_Courbe = portion;
+  return true;
 }
 
 unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsigned int nLP)
@@ -1807,22 +1809,23 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 	return portion.size();
 }
 
-void Trajectory::cutTrajInSmallLP(unsigned int nLP)
+bool Trajectory::cutTrajInSmallLP(unsigned int nLP)
 {
 	try
 	{
-		cutPortionInSmallLP(m_Courbe, nLP);
+//		cutPortionInSmallLP(m_Courbe, nLP);
+    cutTrajInSmallLPSimple(nLP);
 	}
 	catch(string str)
 	{
 		cout << "Exeption in cutTrajInSmallLP" << endl;
 		cout << str << endl;
-		return;
+		return false;
 	}
 	catch (...) 
 	{
 		cout << "Exeption in cutTrajInSmallLP" << endl;
-		return;
+		return false;
 	}
 	
 	cout << "Cutting into " << nLP << " local paths" << endl;
@@ -1832,6 +1835,7 @@ void Trajectory::cutTrajInSmallLP(unsigned int nLP)
 	if (!m_Source->equal(*configAtParam(0)))
 	{
 		cout << "Error" << endl;
+    return false;
 	}
 	
 	if (!m_Target->equal(*configAtParam(getRangeMax())))
@@ -1839,7 +1843,9 @@ void Trajectory::cutTrajInSmallLP(unsigned int nLP)
 		m_Target->print();
 		configAtParam( getRangeMax() )->print();
 		cout << "Error" << endl;
+    return false;
 	}
+  return true;
 }
 
 bool Trajectory::concat(const Trajectory& traj)
@@ -1847,13 +1853,22 @@ bool Trajectory::concat(const Trajectory& traj)
   if( traj.m_Courbe.size() == 0 )
     return true;
   
-  if( !m_Courbe.back()->getEnd()->equal(*traj.m_Courbe[0]->getBegin())  )
+  if( !m_Courbe.back()->getEnd()->equal(*traj.m_Courbe[0]->getBegin())) {
+    m_Courbe.back()->getEnd()->print();
+    traj.m_Courbe[0]->getBegin()->print();
+    m_Courbe.back()->getEnd()->equal(*traj.m_Courbe[0]->getBegin(),true);
     return false;
+  }
+  
+  if( m_Courbe.size() == 0 ) {
+    m_Source = traj.m_Courbe[0]->getBegin();
+  }
   
   for( int i=0; i<int(traj.m_Courbe.size()); i++ )
   {
     m_Courbe.push_back( new LocalPath( *traj.m_Courbe[i] ) );
   }
+  m_Target = traj.m_Courbe.back()->getEnd();
   return true;
 }
 
