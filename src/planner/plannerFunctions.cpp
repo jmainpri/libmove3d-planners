@@ -54,6 +54,16 @@ using namespace tr1;
 unsigned int trajId = 0;
 
 // ---------------------------------------------------------------------------------
+// Last trajectory
+// ---------------------------------------------------------------------------------
+API::Trajectory last_traj;
+
+API::Trajectory p3d_get_last_trajectory()
+{
+  return last_traj;
+}
+
+// ---------------------------------------------------------------------------------
 // Run Id (used for multi-run)
 // ---------------------------------------------------------------------------------
 unsigned int runId = 0;
@@ -152,6 +162,8 @@ p3d_traj* p3d_extract_traj(bool is_traj_found, int nb_added_nodes, Graph* graph,
       cout << "is_cost_space : " << ENV.getBool(Env::isCostSpace) << " , traj_cost : " << rrt_statistics.cost << endl ;
       ENV.setBool(Env::isCostSpace, is_cost_space);
     }
+    
+    last_traj = *traj;
     
     p3d_traj* result = traj->replaceP3dTraj(NULL); 
     rob->getRobotStruct()->tcur = result;
@@ -374,6 +386,7 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
     
     optimTrj.replaceP3dTraj();
     optimTrj.resetCostComputed();
+    cout << "optimTrj.getRangeMax() : " << optimTrj.getRangeMax()  << endl;
     
     if( PlanEnv->getBool(PlanParam::trajComputeCostAfterPlannif) )
     {
@@ -387,6 +400,8 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
       cout << " mecha_work = " << traj_statistics.mecha_work << endl;
       cout << "---------------------" << endl;
     }
+    
+    last_traj = API::Trajectory(optimTrj);
   }
   
   if( PlanEnv->getBool( PlanParam::withStomp ) )
@@ -465,7 +480,7 @@ int p3d_run_rrt(p3d_rob* robotPt)
     p3d_smoothing_function(rob->getRobotStruct(), path, max_iteration, max_time);
   }
   
-  return true;
+  return (path != NULL);
 }
 
 
