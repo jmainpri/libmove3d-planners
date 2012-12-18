@@ -61,7 +61,7 @@ public:
   double cost(Configuration& conf);
 	
   // Compute the cost of
-  double cost(LocalPath& path);
+  double cost(LocalPath& path, int& nb_test);
 	
 	// Set node cost
 	void setNodeCost(Node* node, Node* parent);
