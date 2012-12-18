@@ -55,6 +55,12 @@ public:
 	 */
 	unsigned int getNumberOfNodes() const;
 	
+	//! Get the number of refinement nodes.
+	unsigned getNumberOfRefinementNodes() const;
+
+	//! Add the given number to the current number of refinement nodes.
+	void updateNumberOfRefinementNodes(unsigned nb);
+
 	/**
 	 * Returns the nodes in the connected Compco
 	 * @return the nodes
@@ -108,7 +114,15 @@ public:
    * Search configuration in connected compco
    */
   Node* searchConf(Configuration& q);
-	
+
+  //! Return a node, randomly chosen in the connected component.
+  Node* randomNode();
+
+  //! Get the temperature of the component.
+  double getTemperature();
+
+  //! Set the temperature of the component.
+  void setTemperature(double temp);
 	
 private:
 	compco*			m_Compco;
