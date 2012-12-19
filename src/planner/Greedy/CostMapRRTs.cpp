@@ -39,7 +39,7 @@ CostmapPlanner::~CostmapPlanner()
 /*!
  * Initializes the planner with start and goal configurations
  */
-int CostmapPlanner::init()
+unsigned CostmapPlanner::init()
 {
 	Planner::init();
 	

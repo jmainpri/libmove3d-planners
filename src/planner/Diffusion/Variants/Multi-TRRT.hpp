@@ -25,7 +25,7 @@ public:
 	
   ~MultiTRRT();
 	
-  virtual int init();
+  virtual unsigned init();
 	void initalizeRoot(Node* rootNode, int tree);
   Node* closestNeighInTree(Node* N, int tree);	
   bool connectNodeToCompco(Node* N, Node* CompNode);	
@@ -63,7 +63,7 @@ public:
   
   Node* getExpansionNode( Node* compNode, confPtr_t direction, int distance);
   
-	int expandProcess(Node* expansionNode, std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode,
+	unsigned expandProcess(Node* expansionNode, std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode,
                     Env::expansionMethod method);
   
   MultiTRRT* rrt;

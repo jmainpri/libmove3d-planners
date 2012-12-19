@@ -77,7 +77,7 @@ public:
 	 *
 	 * @return the number of nodes created
 	 */
-	int expandProcess(Node* expansionNode, 
+	unsigned expandProcess(Node* expansionNode,
 										std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode,
 										Env::expansionMethod method);
 	
@@ -126,7 +126,7 @@ public:
 	 * Initialzation of the plannificator
 	 * @return the number of node added during the init phase
 	 */
-	virtual int init();
+	virtual unsigned init();
 	
 	/**
 	 * Function called to set the

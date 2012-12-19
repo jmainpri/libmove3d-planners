@@ -1,149 +1,133 @@
 /*
  * Transition-RRT.hpp
  *
- *  Created on: Aug 31, 2009
- *      Author: jmainpri
+ *  Created on: Nov 20, 2012
+ *      Author: jmainpri, ddevaurs
  */
 
 #ifndef TRANSITIONRRT_HPP_
 #define TRANSITIONRRT_HPP_
 
 #include "planner/Diffusion/RRT.hpp"
-#include "planner/Diffusion/Variants/RRTExpansion.hpp"
+
+class ConnectedComponent;
+
 
 /**
- @ingroup Diffusion
+ * Expansion procedure of the T-RRT algorithm.
+ * @ingroup Diffusion
  */
-class TransitionExpansion : public RRTExpansion {
-  
+class TransitionExpansion : public RRTExpansion
+{
 public:
-	TransitionExpansion();
-	TransitionExpansion(Graph* G);
-  
-	~TransitionExpansion();
-	
-  void setInitAndGoalNodes( Node* init, Node* goal );
-  
-	/**
-	 * Compute the gradient of the 2D cost sapce at a configuration q
-	 */
-	std::tr1::shared_ptr<Configuration> computeGradient(std::tr1::shared_ptr<Configuration> q);
-	
-	/**
-	 * Mix the direction with the gradient 
-	 * direction
-	 */
-	bool mixWithGradient(Node* expansionNode,std::tr1::shared_ptr<Configuration> directionConfig);
-  
-  /**
-   * Shoots a direction (includes the biasing)
-   *
-   * @param Expanding component
-   * @param Goal Component
-   * @param Sampling passive mode
-   * @param Direction node
-   */
-	virtual std::tr1::shared_ptr<Configuration> getExpansionDirection(
-                                                                    Node* expandComp, Node* goalComp, bool samplePassive,
-                                                                    Node*& directionNode);
-  
-  
-	/**
-	 *
-	 */
-	bool costTestSucceeded(Node* previousNode, std::tr1::shared_ptr<
-                         Configuration> currentConfig, double currentCost);
-  
-	/**
-	 *
-	 */
-	bool costTestSucceededConf(
-                             std::tr1::shared_ptr<Configuration>& previousConfig,
-                             std::tr1::shared_ptr<Configuration>& currentConfig);
-  
-	/**
-	 *
-	 */
-	bool transitionTest(Node& fromNode,LocalPath& extensionLocalpath);
-  
-	/**
-	 *
-	 */
-	bool expandToGoal(Node* expansionNode,
-                    std::tr1::shared_ptr<Configuration> directionConfig);
-	/**
-	 *
-	 */
-	void adjustTemperature(bool accepted, Node* node);
-	
-	/**
-	 *
-	 */
-	bool expandCostConnect(Node& expansionNode, std::tr1::shared_ptr<Configuration> directionConfig,
-                         Node* directionNode, bool toGoal);
-	
-	/**
-	 *
-	 */
-	int extendExpandProcess(Node* expansionNode,
-                          std::tr1::shared_ptr<Configuration> directionConfig,
-                          Node* directionNode);
-	
-  
-	/** 
-	 * expandProcess 
-	 *
-	 * checks the validity of the local path in one direction and adds nodes 
-	 * to the trees with a different behaviour depending on the method variable
-	 *
-	 * @param expansionNode
-	 * @param directionConfig
-	 * @param directionNode
-	 * @param method
-	 *
-	 * @return the number of nodes created
-	 */
-	int expandProcess(Node* expansionNode,
-                    std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode,
-                    Env::expansionMethod method);
-  
-private:
-  Node* m_initNode;
-  Node* m_goalNode;
-  
+    //! Constructor.
+	TransitionExpansion() : RRTExpansion() {};
+
+	//! Constructor (with graph).
+    TransitionExpansion(Graph * G) : RRTExpansion(G) {};
+
+    //! Destructor.
+    virtual ~TransitionExpansion() {};
+
+    //! Compare the given cost to the current minimum and maximum costs, and update them if necessary.
+    void updateMinMaxCost(double cost);
+
+    //! Initialize the T-RRT expansion with the given initial and goal nodes.
+    void initialize(Node * init, Node * goal);
+
+    //! Transition test between fromConf and toConf, with temperature tuning in the tempComp component.
+    bool transitionTest(confPtr_t fromConf, confPtr_t toConf, ConnectedComponent * tempComp);
+
+    /**
+     * Sample a direction for the expansion process (taking into account the goal bias, if relevant).
+     * @param directionNode: contains the goal node when relevant
+     * @return the configuration toward which the tree will be expanded
+     */
+    confPtr_t sampleExpansionDirection(Node * directionNode);
+
+    /**
+     * T-RRT Extend.
+     * @param fromNode: node from which the expansion is performed
+     * @param directionConf: configuration toward which the expansion is going
+     * @param directionNode: node toward which the expansion is going (when relevant)
+     * @return the number of created nodes
+     */
+    unsigned extend(Node * fromNode, confPtr_t directionConf, Node * directionNode);
+
+    /**
+     * T-RRT Connect.
+     * @param fromNode: node from which the expansion is performed
+     * @param directionConf: configuration toward which the expansion is going
+     * @param directionNode: node toward which the expansion is going (when relevant)
+     * @return the number of created nodes
+     */
+    unsigned connect(Node * fromNode, confPtr_t directionConf, Node * directionNode);
+
+    /**
+     * T-RRT Expand process: call the appropriate expansion method.
+     * @param fromNode: node from which the expansion is performed
+     * @param directionConf: configuration toward which the expansion is going
+     * @param directionNode: node toward which the expansion is going (when relevant)
+     * @param method: Extend or Connect
+     * @return the number of created nodes
+     */
+    unsigned expandProcess(Node * fromNode, confPtr_t directionConf, Node * directionNode,
+            Env::expansionMethod method);
+
+// private:
+protected:
+    //! initial node
+    Node * initNode;
+
+    //! goal node
+    Node * goalNode;
+
+    //! cost of the highest-cost node in the tree
+    double maxCost;
+
+    //! cost of the lowest-cost node in the tree
+    double minCost;
 };
 
+
 /**
- @ingroup Diffusion
+ * The T-RRT algorithm.
+ * @ingroup Diffusion
  */
-class TransitionRRT : public RRT {
-	
+class TransitionRRT: public RRT
+{
 public:
-	
-	TransitionRRT(Robot* R, Graph* G);
-	
-	~TransitionRRT();
-	
-	/**
-	 * Initialize the Transition RRT variables
-	 */
-	virtual int init();
-	
-	/**
-	 * Set the node cost
-	 */
-	void setNodeCost(Node* node);
-	
-	/**
-	 * costConnectNodeToComp
-	 * Try to connect a node to a given component
-	 * taking into account the fact that the space
-	 * is a cost space
-	 * @return: TRUE if the node and the componant have
-	 * been connected.
-	 */
-	virtual bool connectNodeToCompco(Node* N, Node* CompNode);
-	
+    //! Constructor.
+    TransitionRRT(Robot * R, Graph * G) : RRT(R, G) {
+        std::cout << "Construct the Transition-based RRT" << std::endl;
+    }
+
+    //! Destructor.
+    virtual ~TransitionRRT() {};
+
+    /**
+     * Initialize the T-RRT.
+     * @return the number of nodes added to the graph
+     */
+    unsigned init();
+
+    /**
+     * Perform a single expansion step of T-RRT, growing the connected component containing fromNode.
+     * @return the number of created nodes
+     */
+    unsigned expandOneStep(Node * fromNode);
+
+    /**
+     * Try to connect a given node to a given component.
+     * @return: TRUE if the connection was successful.
+     */
+    bool connectNodeToComp(Node * node, Node * compNode);
+
+    /**
+     * Main function of the T-RRT.
+     * @return the number of nodes added to the graph
+     */
+    unsigned run();
 };
 
 #endif /* TRANSITIONRRT_HPP_ */

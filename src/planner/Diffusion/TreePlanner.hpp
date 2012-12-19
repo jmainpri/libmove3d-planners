@@ -36,7 +36,7 @@ public:
 	/**
 	 * Initializes Planner
 	 */
-	virtual int init();
+	virtual unsigned init();
 
 	/**
 	 * Checks out the Stop condition

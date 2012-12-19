@@ -23,7 +23,7 @@ public:
 	/**
 	 * Initializes the planner
 	 */
-	int init();
+	unsigned init();
 	
 	/**
 	 * stop Conditions

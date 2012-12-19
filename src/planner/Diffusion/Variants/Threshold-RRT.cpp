@@ -187,7 +187,7 @@ int ThresholdExpansion::extendExpandProcess(Node* expansionNode, std::tr1::share
 /*!
  * expandProcess
  */
-int ThresholdExpansion::expandProcess(Node* expansionNode,
+unsigned ThresholdExpansion::expandProcess(Node* expansionNode,
                                       shared_ptr<Configuration> directionConfig,
                                       Node* directionNode,
                                       Env::expansionMethod method)
@@ -233,7 +233,7 @@ ThresholdRRT::~ThresholdRRT()
  * Initialzation of the plannificator
  * @return the number of node added during the init phase
  */
-int ThresholdRRT::init()
+unsigned ThresholdRRT::init()
 {
     int added = TreePlanner::init();
     _expan = new ThresholdExpansion(_Graph);

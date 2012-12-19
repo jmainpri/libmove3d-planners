@@ -39,7 +39,7 @@ public:
 	 * Initialzation of the plannificator
 	 * @return the number of node added during the init phase
 	 */
-	virtual int init();
+	virtual unsigned init();
 	
 	/**
 	 * Checks out the Stop condition

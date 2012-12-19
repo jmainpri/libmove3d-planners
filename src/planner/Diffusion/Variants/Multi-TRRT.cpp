@@ -61,7 +61,7 @@ public:
 } ConfigurationComparatorObject;
 
 
-int MultiTRRT::init()
+unsigned MultiTRRT::init()
 {
   int added = TreePlanner::init();
   
@@ -599,7 +599,7 @@ void MultiTransitionExpansion::adjustTemperature(bool accepted, Node* node, doub
 //	}
 }
 
-int MultiTransitionExpansion::expandProcess(Node* expansionNode, std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode,
+unsigned MultiTransitionExpansion::expandProcess(Node* expansionNode, std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode,
                   Env::expansionMethod method)
 {
   //cout << "Expansion node cost = " <<  expansionNode->cost() << endl;

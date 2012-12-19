@@ -283,7 +283,7 @@ void initPlannerParameters()
   ENV.setDouble(Env::extensionStep,6.0);
   
   ENV.setDouble(Env::minimalFinalExpansionGap,5.0);
-  ENV.setDouble(Env::temperatureRate,30);
+  ENV.setDouble(Env::temperatureRate, 0.1);
   
   PlanEnv->setBool(PlanParam::withSmoothing,true);
   PlanEnv->setBool(PlanParam::withDeformation,false);

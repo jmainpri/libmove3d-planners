@@ -36,7 +36,7 @@ PRM::~PRM()
 {
 }
 
-int PRM::init()
+unsigned PRM::init()
 {
 	int ADDED = 0;
   

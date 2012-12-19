@@ -76,6 +76,23 @@ unsigned int ConnectedComponent::getNumberOfNodes() const
 }
 
 
+/**
+ * Get the number of refinement nodes.
+ */
+unsigned int ConnectedComponent::getNumberOfRefinementNodes() const
+{
+    return m_Compco->nbRefinNodes;
+}
+
+/**
+ * Add the given number to the current number of refinement nodes.
+ */
+void ConnectedComponent::updateNumberOfRefinementNodes(unsigned nb)
+{
+    m_Compco->nbRefinNodes += nb;
+}
+
+
 std::vector<Node*>& ConnectedComponent::getNodes()
 {
 	/*cout << "--------------------------------------" << endl;
@@ -210,4 +227,31 @@ Node* ConnectedComponent::searchConf(Configuration& q) {
     }
   }
   return NULL;
+}
+
+
+/**
+ * Return a node, randomly chosen in the connected component.
+ */
+Node* ConnectedComponent::randomNode()
+{
+    int RandId = (int) floor(p3d_random(0.0, (double) m_Nodes.size() - EPS6));
+    return m_Nodes[RandId];
+}
+
+
+/**
+ * Get the temperature of the component.
+ */
+double ConnectedComponent::getTemperature()
+{
+    return m_Compco->temperature;
+}
+
+/**
+ * Set the temperature of the component.
+ */
+void ConnectedComponent::setTemperature(double temp)
+{
+    m_Compco->temperature = temp;
 }

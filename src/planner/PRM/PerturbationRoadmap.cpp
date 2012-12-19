@@ -65,7 +65,7 @@ void PerturbationRoadmap::getTranslationBounds()
   cout << "m_transl_max : " << m_transl_max << endl;
 }
 
-int PerturbationRoadmap::init()
+unsigned PerturbationRoadmap::init()
 {
   int added = PRM::init();
   

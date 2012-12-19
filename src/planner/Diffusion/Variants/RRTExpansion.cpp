@@ -233,7 +233,7 @@ bool RRTExpansion::expandToGoal(Node* expansionNode,
 }
 
 
-int RRTExpansion::expandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode,
+unsigned RRTExpansion::expandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode,
                                 Env::expansionMethod method)
 {
     bool extensionSucceeded(false);

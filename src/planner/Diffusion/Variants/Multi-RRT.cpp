@@ -31,7 +31,7 @@ MultiRRT::~MultiRRT()
 	
 }
 
-int MultiRRT::init()
+unsigned MultiRRT::init()
 {
 	int added = TreePlanner::init();
 	
