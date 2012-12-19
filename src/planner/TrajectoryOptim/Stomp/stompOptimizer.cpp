@@ -96,6 +96,8 @@ namespace stomp_motion_planner
     use_human_sliders_ = PlanEnv->getBool(PlanParam::trajMoveHuman);
     use_handover_config_generator_ = PlanEnv->getBool(PlanParam::trajUseOtp);
     use_handover_config_list_ = false;
+    use_handover_auto_ = true;
+    recompute_handover_cell_list_ = true;
     handoverGenerator_ = NULL;
     
     human_has_moved_ = false;
@@ -293,6 +295,9 @@ namespace stomp_motion_planner
   
   void StompOptimizer::initHandover()
   {
+    recompute_handover_once_ = true;
+    handover_has_been_recomputed_ = false;
+    
     use_human_sliders_ = PlanEnv->getBool(PlanParam::trajMoveHuman);
     
     const char* home = getenv("HOME_MOVE3D");
@@ -310,6 +315,9 @@ namespace stomp_motion_planner
     {
       use_handover_config_list_ = true;
     }
+    
+    HRI_AGENT* robot = hri_get_agent_by_name( GLOBAL_AGENTS, robot_model_->getName().c_str() );
+    hri_activate_coll_robot_and_all_humans_arms( robot, GLOBAL_AGENTS, false );
   }
   
   StompOptimizer::~StompOptimizer()
@@ -384,6 +392,13 @@ namespace stomp_motion_planner
   //void StompOptimizer::optimize()
   void StompOptimizer::runDeformation( int nbIteration , int idRun )
   {
+    ChronoTimeOfDayOn();
+    
+    timeval tim;
+    gettimeofday(&tim, NULL);
+    double t_init = tim.tv_sec+(tim.tv_usec/1000000.0);
+    time_ = 0.0;
+    
     stomp_statistics_ = boost::shared_ptr<StompStatistics>(new StompStatistics());
     stomp_statistics_->run_id = idRun;
     stomp_statistics_->collision_success_iteration = -1;
@@ -396,13 +411,7 @@ namespace stomp_motion_planner
     move3d_traj_ = API::Trajectory( robot_model_ );
     traj_convergence_with_time.clear();
     
-    timeval tim;
-    gettimeofday(&tim, NULL);
-    double t_init = tim.tv_sec+(tim.tv_usec/1000000.0);
-    time_ = 0.0;
-    
     const bool print_cost=true;
-    const int draw_every_n_iteration = 7;
     int ith_save = 1;
     
     PolicyImprovementLoop pi_loop;
@@ -421,17 +430,24 @@ namespace stomp_motion_planner
 //    printf("%3d, time: %f, cost: %f\n", 0, 0.0, last_move3d_cost_ );
 //    traj_convergence_with_time.push_back( make_pair( 0.0, last_move3d_cost_ ) );
     
-    if ( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && stomp_parameters_->getAnimateEndeffector() )
-      animateEndeffector();
+//    if ( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && stomp_parameters_->getAnimateEndeffector() )
+//      animateEndeffector();
     
     if( PlanEnv->getBool(PlanParam::trajSaveCost) ) {
       saveTrajectoryCostStats();
     }
+    
+    double intitialization_time=0.0;
+    ChronoTimeOfDayTimes(&intitialization_time);
+    ChronoTimeOfDayOff();
+    cout << "Stomp init time : " << intitialization_time << endl;
 
 //    double last_move3d_cost = numeric_limits<double>::max();
     
-    source_ = getSource();
+    //source_ = getSource();
     target_ = getTarget();
+    
+    confPtr_t q_tmp = robot_model_->getCurrentPos();
     
     // iterate
     for (iteration_=0; 
@@ -440,10 +456,11 @@ namespace stomp_motion_planner
          iteration_++)
     {      
       // Compute wether to draw at a certain iteration
-      bool do_draw = (iteration_%draw_every_n_iteration == 0);
-      
-      if( humanHasMoved() )
+      bool do_draw = (iteration_!=0) && (iteration_%PlanEnv->getInt(PlanParam::stompDrawIteration) == 0);
+      reset_reused_rollouts_ = false;
+      if( (!handover_has_been_recomputed_) && humanHasMoved() )
       {
+        cout << "Human has moved" << endl;
         reset_reused_rollouts_ = true;
         
         if( reset_reused_rollouts_ ) {
@@ -455,25 +472,23 @@ namespace stomp_motion_planner
         if( use_handover_config_generator_ ) 
         {
           if( replaceEndWithNewConfiguration() ) {
+            q_tmp = target_new_;
             copyGroupTrajectoryToPolicy();
+            if( recompute_handover_once_ ) {
+              handover_has_been_recomputed_ = true;
+            }
+            cout << "copyGroupTrajectoryToPolicy" << endl;
           }
         }
       }
       
       // Policy improvement loop
       pi_loop.runSingleIteration(iteration_+1);
-//      if (!stomp_parameters_->getUseChomp())
-//      {
-//        pi_loop.runSingleIteration(iteration_+1);
-//      }
-//      else
-//      {
-//        doChompOptimization();
-//      }
             
       if ( do_draw && (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && 
           stomp_parameters_->getAnimateEndeffector() )
       {
+        robot_model_->setAndUpdate(*q_tmp);
         animateEndeffector();
         //animateTrajectoryPolicy();
       }
@@ -482,8 +497,8 @@ namespace stomp_motion_planner
       double cost = last_trajectory_cost_;
       stomp_statistics_->costs.push_back(cost);
       
-      if( reset_reused_rollouts_ ) {
-        
+      if( reset_reused_rollouts_ ) 
+      {
         best_group_trajectory_ = group_trajectory_.getTrajectory();
         best_group_trajectory_cost_ = cost;
         cout << "Change best to actual current trajectory" << endl;
@@ -548,6 +563,7 @@ namespace stomp_motion_planner
           
           if ( stomp_parameters_->getAnimateEndeffector() )
           {
+            robot_model_->setAndUpdate(*q_tmp);
             animateEndeffector();
             //animateTrajectoryPolicy();
           }
@@ -599,13 +615,17 @@ namespace stomp_motion_planner
     group_trajectory_.getTrajectory() = best_group_trajectory_;
     
     //group_trajectory_.print();
-    updateFullTrajectory();
-    performForwardKinematics();
+    //updateFullTrajectory();
+    //performForwardKinematics();
     
     if ( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && stomp_parameters_->getAnimateEndeffector() )
     {
       animateEndeffector(true);
     }
+    
+    best_traj_ = API::Trajectory(robot_model_);
+    setGroupTrajectoryToApiTraj( best_traj_ );
+    //best_traj.replaceP3dTraj();
     
     printf("Collision free success iteration = %d (time : %f)\n",
            stomp_statistics_->collision_success_iteration, stomp_statistics_->success_time);
@@ -1363,6 +1383,9 @@ namespace stomp_motion_planner
     const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
     
     confPtr_t q = robot_model_->getCurrentPos();
+    source_->setConstraints();
+    
+    traj.push_back( source_ );
     
     for (int i=start; i<=end; ++i)
     {
@@ -1371,6 +1394,7 @@ namespace stomp_motion_planner
       for(int j=0; j<planning_group_->num_joints_;j++)
         (*q)[joints[j].move3d_dof_index_] = point[j];
       
+      q->setConstraints();
       traj.push_back( confPtr_t(new Configuration(*q)) );
     }
   }
@@ -1411,7 +1435,8 @@ namespace stomp_motion_planner
       end = num_vars_all_-1;
     }
     
-    confPtr_t q = robot_model_->getCurrentPos();
+    confPtr_t q_tmp = robot_model_->getCurrentPos();
+    confPtr_t q     = robot_model_->getCurrentPos();
     
     // cout << "animateEndeffector()" << endl;
     // cout << "group_trajectory : " << endl;
@@ -1459,7 +1484,7 @@ namespace stomp_motion_planner
     for(int j=0; j<planning_group_->num_joints_;j++)
       (*q)[joints[j].move3d_dof_index_] = point[j];
 
-    robot_model_->setAndUpdate( *q );
+    robot_model_->setAndUpdate( *q_tmp );
     
     if(! ENV.getBool(Env::drawDisabled) )
       g3d_draw_allwin_active();
@@ -1487,12 +1512,27 @@ namespace stomp_motion_planner
   
   bool StompOptimizer::getManipulationHandOver()
   {
-    Eigen::Vector3d point = human_model_->getJoint("rPalm")->getVectorPos();
-    point[2] += 0.10;
+    std::vector<Eigen::Vector3d> points;
+    
+    if( use_handover_auto_ ) {
+      HRICS_humanCostMaps->getHandoverPointList( points, recompute_handover_cell_list_, true );
+      recompute_handover_cell_list_ = false;
+    }
+    else {
+      points.resize(1);
+      points[1] = human_model_->getJoint("rPalm")->getVectorPos();
+      points[1][2] += 0.10;
+    }
     
     // Compute IK
-    configPt q;
-    bool found_ik = handoverGenerator_->computeRobotIkForGrabing( q, point );
+    bool found_ik = false;
+    configPt q = NULL;
+    ChronoTimeOfDayOn(); double time=0.0;
+    for (int i=0; i<int(points.size()) && time<1.0 && found_ik==false; i++) {
+      found_ik = handoverGenerator_->computeRobotIkForGrabing( q, points[i] );
+      ChronoTimeOfDayTimes(&time);
+    }
+    ChronoTimeOfDayOff();
     
     // Disable cntrts
     p3d_cntrt* ct;
@@ -1502,10 +1542,15 @@ namespace stomp_motion_planner
       p3d_desactivateCntrt( rob, ct );
     }
     
+    ArmManipulationData& armData  = (*rob->armManipulationData)[0];
+    
+    deactivateCcCntrts(rob, 0);
+    setAndActivateTwoJointsFixCntrt(rob,armData.getManipulationJnt(), armData.getCcCntrt()->pasjnts[ armData.getCcCntrt()->npasjnts-1 ]);
+    
     if( found_ik ) {
       target_new_ = confPtr_t(new Configuration( robot_model_, q ));
       robot_model_->setAndUpdate( *target_new_ );
-      g3d_draw_allwin_active();
+      //g3d_draw_allwin_active();
     }
     
     return found_ik;
@@ -1545,25 +1590,21 @@ namespace stomp_motion_planner
   
   bool StompOptimizer::getNewTargetFromHandOver()
   {
-    if( handoverGenerator_ == NULL ) {
+    if( handoverGenerator_ == NULL )
       return false;
-    }
     
     reset_reused_rollouts_=human_has_moved_;
     
-    if( !reset_reused_rollouts_ ) {
+    if( !reset_reused_rollouts_ )
       return true;
-    }
     
     bool success = false;
-    if( use_handover_config_list_ ) 
-    {
+    
+    if( use_handover_config_list_ )
       success=getMobileManipHandOver();
-    }
-    else 
-    {
+    else
       success=getManipulationHandOver();
-    }
+
     return success;
   }
   

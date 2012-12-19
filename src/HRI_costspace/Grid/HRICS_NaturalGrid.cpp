@@ -253,27 +253,49 @@ NaturalGrid* NaturalGrid::mergeWith(NaturalGrid* otherGrid)
 	return grid;
 }
 
-/*!
- * @breif Reachable Cells
- */
+//! @breif Reachable Cells
+//! return all reachable cells by the human
 vector<NaturalCell*> NaturalGrid::getAllReachableCells()
 {
 	vector<NaturalCell*> ReachableCells;
-	
 	ReachableCells.clear();
-	
 	unsigned int nbCells = this->getNumberOfCells();
 	
-    for(unsigned int i=0; i<nbCells; i++)
-    {
-        NaturalCell* cell = dynamic_cast<NaturalCell*>( _cells[i] );
+  for(unsigned int i=0; i<nbCells; i++)
+  {
+    NaturalCell* cell = dynamic_cast<NaturalCell*>( _cells[i] );
 		
 		if ( cell->isReachable() ) 
 		{
 			ReachableCells.push_back( cell );
 		}
-    }
+  }
+  
+	return ReachableCells;
+}
 
+//! @breif Reachable Cells
+//! return all reachable by one arm
+std::vector<NaturalCell*> NaturalGrid::getAllReachableCellsOneArm(bool right_arm)
+{
+  vector<NaturalCell*> ReachableCells;
+	ReachableCells.clear();
+	unsigned int nbCells = this->getNumberOfCells();
+	
+  for(unsigned int i=0; i<nbCells; i++)
+  {
+    NaturalCell* cell = dynamic_cast<NaturalCell*>( _cells[i] );
+		
+		if ( right_arm ) {
+      if(cell->isReachableWithRA() ) 
+        ReachableCells.push_back( cell );
+    }
+    else {
+      if(cell->isReachableWithLA() ) 
+        ReachableCells.push_back( cell );
+    }
+  }
+  
 	return ReachableCells;
 }
 
@@ -509,6 +531,20 @@ vector<Vector3d> NaturalGrid::getBox()
 	box.push_back(getTransformFromRobotPos()*v8);
 	
 	return box;
+}
+
+void NaturalGrid::drawVector( const std::vector< std::pair<double,NaturalCell*> >& cells )
+{
+  NaturalCell* cell=NULL;
+  
+  for( int i=0; i<int(cells.size()); i++ )
+  {
+    cell = cells[i].second; 
+    cell->setUseExternalCost(true);
+    cell->setExternalCost( cells[i].first );
+    cell->draw();
+    cell->setUseExternalCost(false);
+  }
 }
 
 void NaturalGrid::draw()

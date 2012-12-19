@@ -230,6 +230,12 @@ bool CostOptimization::oneLoopDeform()
 		m_inCollision=true;
 	}
   
+  // Store the trajectory for drawing
+  if (PlanEnv->getBool(PlanParam::showExploration))
+  {
+    global_rePlanningEnv->store_exploration(*this,lPrev, lNext, qNewPt);
+  }
+  
   if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) ) {
     
     if( isOptimSuccess ){
@@ -356,7 +362,7 @@ bool CostOptimization::oneLoopDeformRecompute()
       // Store the trajectory for drawing
       if (PlanEnv->getBool(PlanParam::showExploration))
       {
-        cout << "showExploration" << endl;
+        //cout << "showExploration" << endl;
         global_rePlanningEnv->store_exploration(*this,lPrev, lNext, qNewPt);
       }
       
@@ -411,7 +417,7 @@ confPtr_t CostOptimization::perturbCurrent( confPtr_t qCurrPt, confPtr_t qRandPt
   confPtr_t qNewPt;
 	LocalPath path( qCurrPt, qRandPt );
   
-  const double minStep = 2.0; // PlanEnv->getDouble(PlanParam::MinStep)
+  const double minStep = 4.0; // PlanEnv->getDouble(PlanParam::MinStep)
 	
 	// Dividing the step n times to stay in the bounds
 	const unsigned int	max_div = 4;
@@ -744,25 +750,36 @@ bool CostOptimization::connectConfiguration( confPtr_t q, double step )
 {
   double param=step;
   double range_max = getRangeMax();
-  vector<LocalPath*> portion;
+  std::pair<double,LocalPath*> best_so_far;
+  best_so_far.first = 0.0;
+  best_so_far.second = NULL;
   
   do  
   {
-    confPtr_t q_connect = configAtParam( range_max-param );
-    
-    LocalPath* path = new LocalPath( q_connect, q );
+    LocalPath* path = new LocalPath( configAtParam( range_max-param ), q );
     
     if( path->isValid() )
     {
-      portion.push_back( path );
-      return replaceEnd( range_max-param, portion );
+      delete best_so_far.second;
+      best_so_far.first = param;
+      best_so_far.second = path;
     }
-    delete path;
+    else {
+      delete path;
+    }
     param += step;
   }
   while( param < range_max );
-  cout << "All paths are invalid" << endl;
-  return false;
+  
+  if( best_so_far.second != NULL ) {
+    vector<LocalPath*> portion;
+    portion.push_back( best_so_far.second );
+    return replaceEnd( range_max-best_so_far.first, portion );
+  }
+  else {
+    cout << "All paths are invalid" << endl;
+    return false;
+  }
 }
 
 //! This is the main function to deform a trajectory
@@ -774,6 +791,11 @@ bool CostOptimization::connectConfiguration( confPtr_t q, double step )
 //! @param idRun the id of the run
 void CostOptimization::runDeformation( int nbIteration, int idRun )
 {
+  if (this->getCourbe().empty()) {
+    cout << "Trajectory is empty" << endl;
+    return;
+  }
+  
   m_runId = idRun;
   m_MaxNumberOfIterations = nbIteration;
   
@@ -827,7 +849,7 @@ void CostOptimization::runDeformation( int nbIteration, int idRun )
 	
 	for ( ; !checkStopConditions(m_Iteration); m_Iteration++)
 	{
-    if(m_useAutoStep)
+    if( m_useAutoStep )
     {
       m_step = initalRange/PlanEnv->getDouble(PlanParam::MaxFactor);
     }
@@ -888,8 +910,7 @@ void CostOptimization::runDeformation( int nbIteration, int idRun )
 		
 		if( m_IterationSucceded )
 		{
-      cout << "new cost : " << NewCost << endl;
-      
+      //cout << "new cost : " << NewCost << endl;
       if(PlanEnv->getBool(PlanParam::trajSaveCost)) 
       {
         gettimeofday(&tim, NULL);

@@ -295,6 +295,19 @@ int LocalPath::getNbColTest()
 	return 0;
 }
 
+int LocalPath::getNbCostTest()
+{
+	if (_costEvaluated)
+	{
+		return _NbCostTest;
+	}
+  else
+  {
+    cout << "LocalPath::Warning => is not evaluated in getNbCostTest" << endl;
+  }
+	return 0;
+}
+
 double LocalPath::length()
 {
 	if (this->getLocalpathStruct())
@@ -522,7 +535,7 @@ double LocalPath::cost()
 {
 	if (!_costEvaluated) 
 	{
-		_Cost = global_costSpace->cost(*this);
+		_Cost = global_costSpace->cost( *this, _NbCostTest );
 		_costEvaluated = true;
 	}
 	

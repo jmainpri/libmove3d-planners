@@ -298,6 +298,16 @@ void g3d_draw_grids()
     
 #ifdef HRI_COSTSPACE
   
+  if( HRICS_humanCostMaps && ENV.getBool(Env::drawDistance) ) 
+  {
+    HRICS_humanCostMaps->drawDistances();
+  }
+  if( HRICS_humanCostMaps && ENV.getBool(Env::drawGrid) )
+  {
+    HRICS_humanCostMaps->drawReachableGrid();
+    API_activeGrid = NULL;
+  }
+  
 	if( ENV.getBool(Env::drawEntireGrid) && API_activeGrid )
 	{
 		ENV.setBool(Env::drawGrid,true);
@@ -338,11 +348,6 @@ void g3d_draw_grids()
 	}
 
 #endif
-  
-  if( HRICS_humanCostMaps && ENV.getBool(Env::drawDistance) ) 
-  {
-    HRICS_humanCostMaps->drawDistances();
-  }
   
   if( global_collisionSpace && ENV.getBool(Env::drawVectorField) ) 
   {

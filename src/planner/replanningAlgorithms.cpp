@@ -13,10 +13,13 @@
 
 #include "planner/planEnvironment.hpp"
 #include "planner/plannerFunctions.hpp"
+#include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
+#include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 #include "planner/cost_space.hpp"
 #include "planner/Diffusion/Variants/Star-RRT.hpp"
-#include "utils/ConfGenerator.h"
+
+#include "HRICS_costspace.hpp"
 
 #include "LightPlanner-pkg.h"
 #include "Graphic-pkg.h"
@@ -70,10 +73,11 @@ void Replanner::setHuman(Robot* hum)
   m_human = hum;
 }
 
-void Replanner::setSwitchData( confPtr_t qSwitch, int switch_id, double t_rep, double lp_avera_length, double initial_step )
+void Replanner::setSwitchData( confPtr_t qSwitch, int switch_id, double s_switch, double t_rep, double lp_avera_length, double initial_step )
 {
   m_qSwitch = qSwitch;
   m_switch_id = switch_id;
+  m_s_switch = s_switch;
   m_t_rep = t_rep;
   m_lp_avera_length = lp_avera_length;
   m_initial_step = initial_step;
@@ -116,6 +120,33 @@ bool Replanner::init_mlp()
 
 //! Concat the new portion of the trajectory which is going to be used 
 //! The concatanation happens at swith id which has to be computed before
+std::pair<bool,API::Trajectory>  Replanner::concat_to_current_traj(const API::Trajectory& newPortion)
+{
+  pair<bool,API::Trajectory> pair;
+  pair.first = false;
+  
+  if ( m_robot==NULL ) {
+    cout <<  "concat_to_current_traj: robot is NULL.\n";
+    return pair;
+  }
+  
+  API::Trajectory concatTraj = m_CurrentTraj.extractSubTrajectory( 0, m_s_switch, false );
+  
+  cout << "concatTraj.getRangeMax() : " << concatTraj.getRangeMax() << endl;
+  cout << "newPortion.getNbOfPaths() : " << newPortion.getNbOfPaths() << endl;
+  cout << "newPortion.getRangeMax() : " << newPortion.getRangeMax() << endl;
+  
+  if( concatTraj.concat( newPortion ) ) {
+    pair.first = true;
+    pair.second = concatTraj;
+  }
+  cout << "concatTraj.getRangeMax() : " << concatTraj.getRangeMax() << endl;
+  return pair;
+}
+
+
+//! Concat the new portion of the trajectory which is going to be used 
+//! The concatanation happens at swith id which has to be computed before
 p3d_traj* Replanner::concat_to_current_traj(const vector<p3d_traj*>& trajs)
 {
   if ( m_robot==NULL ) {
@@ -132,7 +163,7 @@ p3d_traj* Replanner::concat_to_current_traj(const vector<p3d_traj*>& trajs)
   int init_id;
   p3d_traj* concatTraj;
   if ( !m_CurrentTraj.isEmpty() ) {
-    concatTraj = m_CurrentTraj.extractSubTrajectoryOfLocalPaths(0,m_switch_id-1).replaceP3dTraj(NULL);
+    concatTraj = m_CurrentTraj.extractSubTrajectoryOfLocalPaths(0,m_switch_id).replaceP3dTraj(NULL);
     init_id = 0; 
   }
   else {
@@ -158,13 +189,7 @@ p3d_traj* Replanner::concat_to_current_traj(const vector<p3d_traj*>& trajs)
 //-----------------------------------------------------------------------------------
 SimpleReplanner::SimpleReplanner(Robot* r) : Replanner(r)
 {
-  cout << "new simple replanner" << endl;
   
-  // Call to the virtual function
-  if( !init() )
-  {
-    cout << "Error initializing virtual function of the replanner in " << __FILE__ << " at " << __func__ << endl;
-  }
 }
 
 SimpleReplanner::~SimpleReplanner()
@@ -187,12 +212,36 @@ bool SimpleReplanner::init()
   
   m_idRun = 0;
   
-  if( !init_create_straightline() )
+  switch (PlanEnv->getInt(PlanParam::replanningInitMethod)) 
   {
-    cout << "Error : could not create straightline" << endl;
-    return false;
+    case 0: {
+      if( !init_create_straightline() ) {
+        cout << "Error : could not create straightline" << endl;
+        return false;
+      }
+    }
+      break;
+      
+    case 1: {
+      if( !p3d_run_rrt( m_robot->getRobotStruct() ) ){
+        cout << " Error : could initialize with RRT" << endl;
+        return false;
+      }
+      else {
+        m_CurrentTraj = p3d_get_last_trajectory();
+        cout << "m_CurrentTraj.getRangeMax() : " << m_CurrentTraj.getRangeMax() << endl;
+      }
+    }
+      break;
+      
+    default: {
+      cout << "No initializiation" << endl;
+      return false;
+    }
   }
-
+  
+  global_rePlanningEnv->setDrawStep( m_CurrentTraj.getRangeMax()/30 );
+  global_rePlanningEnv->store_traj_to_draw( m_CurrentTraj, 0 );
   return true;
 }
 
@@ -252,7 +301,7 @@ void SimpleReplanner::init_for_manipuation()
   }
   
   // Deactivate all kinematic constraints
-  p3d_deactivate_all_cntrts( m_robot );
+  //p3d_deactivate_all_cntrts( m_robot );
 }
 
 void SimpleReplanner::init_for_mobile_manip()
@@ -273,7 +322,7 @@ void SimpleReplanner::init_for_mobile_manip()
   unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->baseJnt );
   
   // Deactivate all kinematic constraints
-  p3d_deactivate_all_cntrts( m_robot );
+  //p3d_deactivate_all_cntrts( m_robot );
 }
 
 //! Set the DoFs active/passive of the robot for navigation
@@ -293,7 +342,7 @@ void SimpleReplanner::init_for_navigation()
   }
   
   // Deactivate all kinematic constraints
-  p3d_deactivate_all_cntrts( m_robot );
+  //p3d_deactivate_all_cntrts( m_robot );
   
   // Set base to joint to draw
   p3d_set_user_drawnjnt(1);
@@ -355,32 +404,23 @@ void SimpleReplanner::run()
   PlanEnv->setBool( PlanParam::planWithTimeLimit, true );
   PlanEnv->setBool( PlanParam::trajWithTimeLimit, true );
   PlanEnv->setDouble( PlanParam::timeLimitSmoothing, m_t_rep-0.3 );
-  
   cout << "m_t_rep : " << m_t_rep << endl;
+  cout << "m_s_switch : " << m_s_switch << endl;
+  cout << "m_CurrentTraj.getRangeMax() : " << m_CurrentTraj.getRangeMax() << endl;
   
-  // Run deformation from last path id
-  int last_path_id = m_CurrentTraj.getNbOfPaths()-1;
+  API::Trajectory newPortion = m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false);
+  cout << "newPortion.getNbOfPaths() : " << newPortion.getNbOfPaths() << endl;
+  cout << "newPortion.getRangeMax() : " << newPortion.getRangeMax() << endl;
   
-	API::CostOptimization optimTrj(m_CurrentTraj.extractSubTrajectoryOfLocalPaths(m_switch_id,last_path_id));
-  
-  optimTrj.setStep( m_initial_step );
+  API::CostOptimization optimTrj( newPortion );
+  optimTrj.setStep( m_initial_step/PlanEnv->getDouble(PlanParam::PlanParam::MaxFactor) );
 	optimTrj.runDeformation( PlanEnv->getInt(PlanParam::smoothMaxIterations), m_idRun++ );
-	optimTrj.cutTrajInSmallLP( optimTrj.getRangeMax() / m_lp_avera_length );
-  optimTrj.replaceP3dTraj();
   
-  vector<p3d_traj*> traj(1);
-  traj[0] = optimTrj.replaceP3dTraj(NULL);
+  std::pair<bool,API::Trajectory> concated_traj= concat_to_current_traj( optimTrj );
+  m_planningSucceded = concated_traj.first;
   
-  // Concatanate traj and store it to current traj
-  p3d_traj* lin_traj = concat_to_current_traj(traj);
-  
-  if( lin_traj )
-  {
-    m_CurrentTraj = API::Trajectory( m_robot, lin_traj );
-    m_planningSucceded = true;
-  }
-  else {
-    m_planningSucceded = false;
+  if( m_planningSucceded ) {
+    m_CurrentTraj = concated_traj.second;
   }
   
   if( optimTrj.getBegin() != m_qSwitch ) {
@@ -409,21 +449,24 @@ RRTReplanner::~RRTReplanner()
 
 bool RRTReplanner::init()
 {
+  SimpleReplanner::init();
+  
+  ENV.setBool(Env::isCostSpace,false);
+  ENV.setBool(Env::useTRRT,false);
   return true;
 }
 
 void RRTReplanner::run()
 {
   cout << "RRTReplanner::run"<<  endl;
- 
   m_isPlanning = true;
+  m_planningSucceded = false;
   
   // Set 0.3 seconds to do the concat traj
   PlanEnv->setBool( PlanParam::planWithTimeLimit, true );
   PlanEnv->setDouble(PlanParam::timeLimitPlanning, m_t_rep-0.3 );
   
-  int last_path_id = m_CurrentTraj.getNbOfPaths()-1;
-	API::Trajectory traj(m_CurrentTraj.extractSubTrajectoryOfLocalPaths( m_switch_id, last_path_id) );
+	API::Trajectory traj(m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false) );
 
   double t_init = 0.0;
   double time = 0.0;
@@ -449,34 +492,26 @@ void RRTReplanner::run()
      !PlanEnv->getBool(PlanParam::stopPlanner) && 
      PlanEnv->getBool(PlanParam::withSmoothing) )
   {
-    p3d_smoothing_function( m_robot->getRobotStruct(), path, 100, 4.0);
+    p3d_smoothing_function( m_robot->getRobotStruct(), path, 100, -1 );
   }
   
-  p3d_traj* lin_traj = NULL;
+  std::pair<bool,API::Trajectory> concated_traj;
   
   if( path ) {
-    
     // Cutt the new trajectory in lp average piecese
     API::Trajectory path_( m_robot, path );
-    path_.cutTrajInSmallLP( traj.getRangeMax() / m_lp_avera_length );
-    path_.replaceP3dTraj();
-    
-    vector<p3d_traj*> traj(1);
-    traj[0] = path_.replaceP3dTraj(NULL);
-    
-    // Concatanate traj and store it to current traj
-    lin_traj = concat_to_current_traj( traj );
+    path_.cutTrajInSmallLPSimple( traj.getRangeMax() / m_lp_avera_length );
+    concated_traj = concat_to_current_traj( path_ );
+    m_planningSucceded = concated_traj.first;
   }
   
-  if( lin_traj )
-  {
-    m_CurrentTraj = API::Trajectory( m_robot, lin_traj );
-    m_planningSucceded = true;
+  if( m_planningSucceded ) {
+    m_CurrentTraj = concated_traj.second;
   }
   else {
-    m_planningSucceded = false;
+    cout << "Replanning failed" << endl;
   }
-  
+
   //store_traj_to_draw( optimTrj 0.0 );
   cout << "End replanning : " << __func__ << endl;
   m_isPlanning = false;
@@ -499,10 +534,52 @@ HandoverReplanner::~HandoverReplanner()
 
 bool HandoverReplanner::init()
 {
+  SimpleReplanner::init();
+  
+  m_goal_from_list = true;
+  m_human = global_Project->getActiveScene()->getRobotByName("HERAKLES_HUMAN1");
+
+  const char* home = getenv("HOME_MOVE3D");
+  if( home == NULL ) {
+    cout << "ERROR home is not defined for config generator in " << __func__ << endl;
+  }
+  
+  string dir(home);
+  string file("/statFiles/OtpComputing/confHerakles.xml");
+  
+  m_goal_from_list = ( ENV.getInt(Env::setOfActiveJoints) == 2 );
+  
+  handoverGenerator_ = new ConfGenerator( m_robot, m_human );
+  
+  if(  HRICS_activeNatu == NULL ) 
+    return false;
+  else 
+    handoverGenerator_->initialize( dir+file, HRICS_activeNatu );
+  
   return true;
 }
 
-std::pair<bool,confPtr_t> HandoverReplanner::newGoal()
+std::pair<bool,confPtr_t> HandoverReplanner::newGoalFromList()
+{
+  double best_cost=0.0;
+  pair<confPtr_t,confPtr_t> best_handover_conf;
+  std::pair<bool,confPtr_t> result;
+  
+  // Parse list to find
+  // the best feasible hand-over configuration
+  result.first = handoverGenerator_->computeHandoverConfigFromList( best_handover_conf, best_cost ); 
+  
+  if( result.first ) {
+    //human_model_->setAndUpdate( *best_handover_conf.first );
+    //robot_model_->setAndUpdate( *best_handover_conf.second );
+    result.second = best_handover_conf.second;
+    p3d_update_virtual_object_config_for_arm_ik_constraint(m_robot->getRobotStruct(), 0, best_handover_conf.second->getConfigStruct() );
+    //cout << "Hand-over found with cost : " << best_cost << endl;
+  }
+  return result;
+}
+
+std::pair<bool,confPtr_t> HandoverReplanner::newGoalFromIK()
 {  
   configPt q = NULL; 
   double dt = 0.0;
@@ -511,13 +588,11 @@ std::pair<bool,confPtr_t> HandoverReplanner::newGoal()
   gettimeofday(&tim, NULL);
   double t_init = tim.tv_sec+(tim.tv_usec/1000000.0);
   
-  ConfGenerator generator( m_robot, m_human );
-  
   Eigen::Vector3d point = m_human->getJoint("rPalm")->getVectorPos();
   point[2] += 0.10;
   
   // if the generator finds a configuration, return it otherwise return null configuration
-  if( generator.computeRobotIkForGrabing( q, point ) )
+  if( handoverGenerator_->computeRobotIkForGrabing( q, point ) )
   {
     gettimeofday(&tim, NULL); double dt = tim.tv_sec+(tim.tv_usec/1000000.0) - t_init;
     cout << "Valid robotIk computed in : " << dt << " sec" << endl;
@@ -537,69 +612,137 @@ std::pair<bool,confPtr_t> HandoverReplanner::newGoal()
 void HandoverReplanner::run()
 {
   cout << "HandoverReplanner::run"<<  endl;
-  
   m_isPlanning = true;
+  m_planningSucceded = false;
+  double t_init = 0.0;
+  double time = 0.0;
+  timeval tim;
+  gettimeofday(&tim, NULL); t_init=tim.tv_sec+(tim.tv_usec/1000000.0);
+  
+	confPtr_t initConfig = m_CurrentTraj.configAtParam( m_s_switch );
+  confPtr_t goalConfig = m_CurrentTraj.getEnd();
+  
+  m_idRun++;
+  
+  std::pair<bool,confPtr_t> goal;
+  
+  confPtr_t human_conf_tmp = m_human->getCurrentPos();
+  
+  if( m_goal_from_list )
+    goal = newGoalFromList();
+  else
+    goal = newGoalFromIK();
+  
+  m_human->setAndUpdate( *human_conf_tmp );
+  
+  if( goal.first ) {
+    goalConfig = goal.second;
+    cout << "New goal found!!!" << endl;
+  }
   
   // Set 0.3 seconds to do the concat traj
   PlanEnv->setBool( PlanParam::planWithTimeLimit, true );
   PlanEnv->setDouble(PlanParam::timeLimitPlanning, m_t_rep-0.3 );
   
-  int last_path_id = m_CurrentTraj.getNbOfPaths()-1;
-	API::Trajectory traj(m_CurrentTraj.extractSubTrajectoryOfLocalPaths( m_switch_id, last_path_id) );
-  
-  double t_init = 0.0;
-  double time = 0.0;
-  //  bool first_call_to_chrono=true;
-  
-  m_idRun++;
-  
-  // Get the initial time of planning
-  timeval tim;
-  gettimeofday(&tim, NULL); t_init=tim.tv_sec+(tim.tv_usec/1000000.0);
-  
   p3d_traj* path = p3d_planner_function( m_robot->getRobotStruct(), 
-                                        traj.getBegin()->getConfigStruct(), 
-                                        traj.getEnd()->getConfigStruct() );
+                                        initConfig->getConfigStruct(), 
+                                        goalConfig->getConfigStruct() );
   
-  //  // Set the time left for smoothing
-  //  time = global_rePlanningEnv->time_since_last_call( first_call_to_chrono, t_init );
+  //  Set the time left for smoothing
   gettimeofday(&tim, NULL); time=tim.tv_sec+(tim.tv_usec/1000000.0) - t_init;
-  
-  PlanEnv->setDouble( PlanParam::timeLimitSmoothing, m_t_rep-0.3-time );
   
   if( path != NULL && 
      !PlanEnv->getBool(PlanParam::stopPlanner) && 
      PlanEnv->getBool(PlanParam::withSmoothing) )
   {
-    p3d_smoothing_function( m_robot->getRobotStruct(), path, 100, 4.0);
+    p3d_smoothing_function( m_robot->getRobotStruct(), path, 100, m_t_rep-0.3-time);
   }
   
-  p3d_traj* lin_traj = NULL;
-  
-  if( path ) {
-    
-    // Cutt the new trajectory in lp average piecese
-    API::Trajectory path_( m_robot, path );
-    path_.cutTrajInSmallLP( traj.getRangeMax() / m_lp_avera_length );
-    path_.replaceP3dTraj();
-    
-    vector<p3d_traj*> concat_traj(1);
-    concat_traj[0] = path_.replaceP3dTraj(NULL);
-    
-    // Concatanate traj and store it to current traj
-    lin_traj = concat_to_current_traj( concat_traj );
-  }
-  
-  if( lin_traj )
+  if( path )
   {
-    m_CurrentTraj = API::Trajectory( m_robot, lin_traj );
-    m_planningSucceded = true;
+    // Cut the new trajectory in lp average piecese
+    API::Trajectory final_traj( m_robot, path );
+    cout << "final_traj.getRangeMax() : " << final_traj.getRangeMax() << endl;
+
+    std::pair<bool,API::Trajectory> concated_traj = concat_to_current_traj( final_traj );
+    global_rePlanningEnv->store_traj_to_draw( final_traj, 0 );
+    
+    m_planningSucceded = concated_traj.first;
+    if( !m_planningSucceded ) {
+      cout << "Could not concatanate trajectory" << endl;
+    }
+    else {
+      m_CurrentTraj = concated_traj.second;
+    }
+  }
+  
+  if( !m_planningSucceded ) {
+    cout << "Replanning failed" << endl;
+  }
+  cout << "End replanning : " << __func__ << endl;
+  m_isPlanning = false;
+}
+
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+
+StompReplanner::StompReplanner(Robot* r) : SimpleReplanner(r)
+{
+  
+}
+
+StompReplanner::~StompReplanner()
+{
+  
+}
+
+bool StompReplanner::init()
+{
+  return SimpleReplanner::init();
+}
+
+void StompReplanner::run()
+{
+  cout << "StompReplanner::run"<<  endl;
+  m_isPlanning = true;
+  m_planningSucceded = false;
+  
+  m_idRun++;
+    
+  API::Trajectory newPortion = m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false);
+  if( newPortion.getNbOfPaths() != 0 )
+  {
+    // Set 0.3 seconds to do the concat traj
+    PlanEnv->setBool(PlanParam::trajStompWithTimeLimit,true);
+    PlanEnv->setDouble(PlanParam::trajStompTimeLimit, m_t_rep-0.3);
+    
+    optimizer->setSource(newPortion.getBegin());
+    traj_optim_runStompNoInit( m_idRun, newPortion );
+    
+    // Get the new trajectory and store to draw
+    API::Trajectory final_traj = optimizer->getBestTraj();
+    cout << "final_traj.getRangeMax() : " << final_traj.getRangeMax() << endl;
+    global_rePlanningEnv->store_traj_to_draw( final_traj, 0 );
+    
+    std::pair<bool,API::Trajectory> concated_traj = concat_to_current_traj( final_traj );
+    m_planningSucceded = concated_traj.first;
+    if( !m_planningSucceded ) {
+      cout << "Could not concatanate trajectory" << endl;
+    }
+    else {
+      m_CurrentTraj = concated_traj.second;
+    }
   }
   else {
-    m_planningSucceded = false;
+    cout << "newPortion.getNbOfPaths() : 0" << endl;
   }
   
-  //store_traj_to_draw( optimTrj 0.0 );
+  if( !m_planningSucceded ) {
+    cout << "Replanning failed" << endl;
+  }
   cout << "End replanning : " << __func__ << endl;
   m_isPlanning = false;
 }
@@ -621,54 +764,65 @@ AStarReplanner::~AStarReplanner()
 
 bool AStarReplanner::init()
 {
+  SimpleReplanner::init();
+  
   m_navigation = new HRICS::Navigation( m_robot );
+//  m_navigation->deactivateCynlinderWithAll();
   return true;
 }
 
 void AStarReplanner::run()
 {
   cout << "AStarReplanner::run"<<  endl;
-  
   m_isPlanning = true;
-  
-  m_navigation->reset();
-  
-  int last_path_id = m_CurrentTraj.getNbOfPaths()-1;
-  API::Trajectory traj( m_CurrentTraj.extractSubTrajectoryOfLocalPaths( m_switch_id, last_path_id ) );
-  
+  m_planningSucceded = false;
   m_idRun++;
   
+  // Get the initial time of planning
+  timeval tim;
+  gettimeofday(&tim, NULL); double t_init=tim.tv_sec+(tim.tv_usec/1000000.0);
+  
+  API::Trajectory traj( m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false) );
+  m_navigation->reset();
+  
   API::Trajectory* path_ = m_navigation->computeRobotTrajectory( traj.getBegin(), traj.getEnd() );
+//  cout << "path length : " << path_->getRangeMax() << endl;
   
-  p3d_traj* lin_traj = NULL;
+  gettimeofday(&tim, NULL); double time=tim.tv_sec+(tim.tv_usec/1000000.0) - t_init;
   
+  // Set the time left for smoothing
+  PlanEnv->setBool( PlanParam::trajWithTimeLimit, true );
+  PlanEnv->setDouble( PlanParam::timeLimitSmoothing, m_t_rep-0.3-time );
+  
+  if( path_ != NULL && 
+     !PlanEnv->getBool(PlanParam::stopPlanner) && 
+     PlanEnv->getBool(PlanParam::withSmoothing) )
+  {
+    p3d_smoothing_function( m_robot->getRobotStruct(), path_->replaceP3dTraj(NULL), 100, -1 );
+  }
+
   if( path_ ) 
   {
     // Cut the new trajectory in lp average piecese
-    path_->cutTrajInSmallLP( traj.getRangeMax() / m_lp_avera_length );
+    API::Trajectory final_traj = m_robot->getCurrentTraj();
+    final_traj.cutTrajInSmallLPSimple( traj.getRangeMax() / m_lp_avera_length );
+    std::pair<bool,API::Trajectory> concated_traj = concat_to_current_traj( final_traj );
+    cout << "path length : " << concated_traj.second.getRangeMax() << endl;
+    global_rePlanningEnv->store_traj_to_draw( *path_, 0 );
+    delete path_;
     
-    vector<p3d_traj*> concat_traj(1);
-    concat_traj[0] = path_->replaceP3dTraj(NULL);
-    
-    // Concatanate traj and store it to current traj
-    lin_traj = concat_to_current_traj( concat_traj );
+    m_planningSucceded = concated_traj.first;
+    if( !m_planningSucceded ) {
+      cout << "Could not concatanate trajectory" << endl;
+    }
+    else {
+      m_CurrentTraj = concated_traj.second;
+    }
   }
   
-  if( lin_traj )
-  {
-    m_CurrentTraj = API::Trajectory( m_robot, lin_traj );
-    m_planningSucceded = true;
+  if( !m_planningSucceded ) {
+    cout << "Replanning failed" << endl;
   }
-  else {
-    m_planningSucceded = false;
-  }
-  
-  global_rePlanningEnv->store_traj_to_draw( *path_, m_CurrentTraj.getRangeMax()/m_CurrentTraj.getNbOfPaths() );
-  delete path_;
-  
-  //store_traj_to_draw( optimTrj 0.0 );
   cout << "End replanning : " << __func__ << endl;
   m_isPlanning = false;
 }
-
-

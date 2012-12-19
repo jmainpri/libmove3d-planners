@@ -30,6 +30,11 @@ struct RRTStatistics
 };
 
 /**
+ * Return the last trajectory
+ */
+API::Trajectory p3d_get_last_trajectory();
+
+/**
  * Get last RRT statistics
  */
 void p3d_get_rrt_statistics( RRTStatistics& stat );

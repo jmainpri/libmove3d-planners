@@ -123,7 +123,7 @@ vector<State*> AStar::solve(State* initialState)
     }
     vector<State*> branchedStates = currentState->getSuccessors(parent_state);
     
-    for(unsigned i=0; i<branchedStates.size(); i++)
+    for(unsigned int i=0; i<branchedStates.size(); i++)
     {
       if((branchedStates[i] != NULL) && (branchedStates[i]->isValid()))
       {

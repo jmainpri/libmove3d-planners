@@ -36,7 +36,6 @@ namespace HRICS
     API::Trajectory* getSimplePath(std::vector<double> goal, std::vector<std::vector<double> >& path);
     
     void reset();
-    void deactivateCynlinderWithAll();
     void draw();
     double pathCost();
     void allow_smoothing(bool state);

@@ -141,7 +141,11 @@ namespace PlanParam
           
             // Replanning
             replanningAlgorithm,
-
+            replanningInitMethod,
+          
+            // Stomp
+            stompDrawIteration,
+          
             // Object TransfertPoint variable
             env_maxIter,
             env_nbRandomRotOnly,
@@ -175,7 +179,8 @@ namespace PlanParam
             trajOptimStdDev,
             trajOptimSmoothWeight,
             trajOptimObstacWeight,
-          
+            trajReplanningWindow,
+            trajReplanningTotalTime,
           
             // RRT*
             starRadius,
