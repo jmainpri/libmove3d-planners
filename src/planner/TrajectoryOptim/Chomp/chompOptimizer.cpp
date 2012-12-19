@@ -134,7 +134,7 @@ void ChompOptimizer::initialize()
   //  collision_point_pos_.resize(num_vars_all_, std::vector<KDL::Vector>(num_collision_points_));
   //  collision_point_vel_.resize(num_vars_all_, std::vector<KDL::Vector>(num_collision_points_));
   //  collision_point_acc_.resize(num_vars_all_, std::vector<KDL::Vector>(num_collision_points_));
-  
+
   collision_point_potential_ = Eigen::MatrixXd::Zero(num_vars_all_, num_collision_points_);
   collision_point_vel_mag_ = Eigen::MatrixXd::Zero(num_vars_all_, num_collision_points_);
   //collision_point_potential_.resize(num_vars_all_, std::vector<double>(num_collision_points_));
@@ -153,7 +153,7 @@ void ChompOptimizer::initialize()
   collision_point_pos_eigen_.resize(num_vars_all_);
   collision_point_vel_eigen_.resize(num_vars_all_);
   collision_point_acc_eigen_.resize(num_vars_all_);
-  
+
   for(int i=0; i<num_vars_all_;i++)
   {
     joint_axis_eigen_[i].resize(num_collision_points_);
@@ -176,7 +176,7 @@ void ChompOptimizer::initialize()
   is_collision_free_ = false;
   state_is_in_collision_.resize(num_vars_all_);
   point_is_in_collision_.resize(num_vars_all_, std::vector<int>(num_collision_points_));
-  
+
   last_improvement_iteration_ = -1;
   
   // HMC initialization:
@@ -719,7 +719,22 @@ void ChompOptimizer::performForwardKinematics()
       is_collision_free_ = false;
     }
   }
-  
+
+  if(is_collision_free_) //2nd turn of verification : test of paths between configurations
+  {
+      API::Trajectory T(robot_model_);
+
+
+      // for each point in the trajectory
+      for (int i=free_vars_start_; i<=free_vars_end_; ++i)
+      {
+        T.push_back(getConfigurationOnGroupTraj(i));
+      }
+
+      is_collision_free_=T.isValid();
+      cout<<"2nd Turn : "<<is_collision_free_<<endl;
+
+  }
   // now, get the vel and acc for each collision point (using finite differencing)
   for (int i=free_vars_start_; i<=free_vars_end_; i++)
   {
@@ -883,11 +898,25 @@ void ChompOptimizer::animateEndeffector()
   if( T.isValid() )
   {
     cout << "T is valid" << endl;
-    //PlanEnv->setBool(PlanParam::stopPlanner, true);
+    PlanEnv->setBool(PlanParam::stopPlanner, true);
   }
   
   T.replaceP3dTraj();
   g3d_draw_allwin_active();
+}
+
+confPtr_t ChompOptimizer::getConfigurationOnGroupTraj(int ith)
+{
+  confPtr_t q = planning_group_->robot_->getCurrentPos();
+  const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+
+  Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(ith).transpose();
+
+  for(int j=0; j<planning_group_->num_joints_;j++)
+  {
+    (*q)[joints[j].move3d_dof_index_] = point[j];
+  }
+  return q;
 }
 
 //void ChompOptimizer::animatePath()

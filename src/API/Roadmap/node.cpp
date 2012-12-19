@@ -479,7 +479,7 @@ bool Node::equalCompco(Node* compco) const
 
 Node* Node::randomNodeFromComp() const
 {
-	return (m_Graph->getNode(p3d_RandomNodeFromComp(m_Node->comp)));
+    return (m_Graph->getNode(p3d_RandomNodeFromComp(m_Node->comp)));
 }
 
 void Node::print() const

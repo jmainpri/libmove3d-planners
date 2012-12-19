@@ -97,7 +97,7 @@ int  EST::init()
   
 	int added = TreePlanner::init();
   
-	_SortedNodes = _Start->getSortedNodes();
+    _SortedNodes = _Start->getSortedNodes();
 	addNodeToSet(_Start);
 	_Start->setSortedNodes(_SortedNodes);
   

@@ -139,6 +139,7 @@
     void updateMomentum();
     void updatePositionFromMomentum();
     void calculatePseudoInverse();
+    confPtr_t getConfigurationOnGroupTraj(int ith);
   };
 //}
 #endif

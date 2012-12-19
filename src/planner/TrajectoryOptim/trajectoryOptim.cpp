@@ -6,6 +6,11 @@
 //  Created by Jim Mainprice on 01/07/11.
 //  Copyright 2011 LAAS/CNRS. All rights reserved.
 //
+// généraliser chomp => init codé en dur et ne tenant pas entièrement compte de la GUI
+// régler les prob de freeze
+// regarder le collision checker : trajectoire valide mais en collision à l'éxécution
+// cinématique inverse à fond
+// scénario du facteur + costmap
 
 #include "trajectoryOptim.hpp"
 
@@ -952,8 +957,8 @@ bool traj_optim_init_collision_spaces()
       cout << "Init Shelf" << endl;
       cout << "Set robot, localpath and cntrts with " << m_robot->getName() << endl;
       
-      traj_optim_set_MultiLP();
-      traj_optim_invalidate_cntrts();
+//      traj_optim_set_MultiLP();
+//      traj_optim_invalidate_cntrts();
       traj_optim_shelf_set_localpath_and_cntrts();
       
       if( !global_collisionSpace ) 

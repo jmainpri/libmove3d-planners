@@ -175,7 +175,7 @@ public:
 	 */
 	unsigned int saveCurrentEnvToStack()
 	{
-		m_MapBool.push_back(		copyMap(m_ParamEnv->getBoolMap()) );
+        m_MapBool.push_back(		copyMap(m_ParamEnv->getBoolMap()) );
 		m_MapInt.push_back(			copyMap(m_ParamEnv->getIntMap()) );
 		m_MapDouble.push_back(	copyMap(m_ParamEnv->getDoubleMap()) );
 		m_MapString.push_back(	copyMap(m_ParamEnv->getStringMap()) );
