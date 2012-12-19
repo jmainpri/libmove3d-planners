@@ -54,7 +54,8 @@ double CSpaceCostMap2D::lp_cost(confPtr_t q1, confPtr_t q2)
 //        //printf("cost: %f\n", cost);
 //        cost_q_prev = cost_q_next;
 //    }
-    return global_costSpace->cost(p);
+    int nb_test=0;
+    return global_costSpace->cost(p,nb_test);
 }
 
 double CSpaceCostMap2D::volume()
@@ -96,7 +97,8 @@ double Pr2CSpace::q_cost(confPtr_t q)
 double Pr2CSpace::lp_cost(confPtr_t q1, confPtr_t q2)
 {
   LocalPath p(q1, q2);
-  return global_costSpace->cost(p);
+  int nb_test;
+  return global_costSpace->cost(p,nb_test);
 }
 
 double Pr2CSpace::volume()
@@ -177,5 +179,6 @@ double GenericCSpace::lp_cost(confPtr_t q1, confPtr_t q2)
 //    }
 //    default: {}
 //    }
-    return global_costSpace->cost(p);
+    int nb_test;
+    return global_costSpace->cost(p,nb_test);
 }

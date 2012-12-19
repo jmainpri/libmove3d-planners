@@ -333,12 +333,14 @@ double CostSpace::getPr2ArmDistance( Robot* robot, Eigen::VectorXd& q_i, Eigen::
 }
 
 //----------------------------------------------------------------------
-double CostSpace::cost(LocalPath& path)
+double CostSpace::cost(LocalPath& path, int& nb_test)
 {
   confPtr_t q_tmp_begin = path.getBegin()->copy();
   confPtr_t q_tmp_end   = path.getEnd()->copy();
   
   double cost = 0.0;
+  
+  nb_test = 0;
   
 	if (ENV.getBool(Env::isCostSpace))
 	{
@@ -408,6 +410,8 @@ double CostSpace::cost(LocalPath& path)
       prevCost = currentCost;
       currentParam += deltaStep;
     }
+    
+    nb_test = nStep;
   }
   else 
   {

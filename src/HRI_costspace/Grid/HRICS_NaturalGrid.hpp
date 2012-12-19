@@ -49,6 +49,7 @@ namespace HRICS
 		
 		double getCellCostAt(const Eigen::Vector3d& WSPoint);
 		
+    void drawVector( const std::vector< std::pair<double,NaturalCell*> >& cells );
 		void draw();
 		std::vector<Eigen::Vector3d> getBox();
 		void resetCellCost();
@@ -57,6 +58,7 @@ namespace HRICS
 		
 		NaturalGrid* mergeWith(NaturalGrid* otherGrid);
 		std::vector<NaturalCell*> getAllReachableCells();
+    std::vector<NaturalCell*> getAllReachableCellsOneArm(bool right_arm);
 		std::vector<std::pair<double,NaturalCell*> > getAllReachableCellsSorted();
 		std::vector<NaturalCell*> getAllReachableCells(double CostThreshold);
 		

@@ -33,6 +33,7 @@ HumanCostSpace::HumanCostSpace()
 //! @brief Initialize tge Human cost space with the list of human in the scene
 //! @param The robot, to which this costspace is for
 //! @param The humans, which will be associated to the costspace
+//! @param costspace, the natural space which is associated to a human
 //! @param The cell size, each human will be associated a grid (the cell size is the resolution of the grid)
 HumanCostSpace::HumanCostSpace(Robot* rob, std::vector<Robot*> humans, Natural* costspace, double cellSize) 
 : m_Robot(rob) , m_Humans( humans) 
@@ -497,6 +498,79 @@ void HumanCostSpace::drawDistances()
       g3d_drawSphere( pos(0), pos(1), pos(2), 0.10 );
     }
   }
+}
+
+void HumanCostSpace::drawReachableGrid()
+{
+  if( m_ReachableCells.empty() )
+    return;
+  
+  m_ReachableSpace->getGrid()->drawVector( m_ReachableCells );
+}
+
+//! Returns a vector of reachable points for object handovers
+//! the vector is sorted relativly to the HRI constraints
+//! @arm_type 0:noarm, 1:right, 2l:eft
+bool HumanCostSpace::getHandoverPointList(std::vector<Eigen::Vector3d>& points, bool recompute_cells, int arm_type)
+{ 
+  if( recompute_cells )
+  {
+    std::vector<NaturalCell*> reachable_cells;
+    
+    if( arm_type==0) {
+      reachable_cells = m_ReachableSpace->getGrid()->getAllReachableCells();
+    }
+    if( arm_type==1) {
+      reachable_cells = m_ReachableSpace->getGrid()->getAllReachableCellsOneArm(true);
+    }
+    if( arm_type==2) {
+      reachable_cells = m_ReachableSpace->getGrid()->getAllReachableCellsOneArm(false);
+    }
+    
+    double max = ENV.getDouble(Env::Kdistance)+ENV.getDouble(Env::Kvisibility)+ENV.getDouble(Env::Kreachable);
+    
+    m_ReachableCells.clear();
+    for(int i=0;i<int(reachable_cells.size());i++)
+    {
+      Eigen::Vector3d point = reachable_cells[i]->getWorkspacePoint();
+      
+      double d_cost = ENV.getDouble(Env::Kdistance)*m_DistanceSpace->getWorkspaceCost(point);
+      double v_cost = ENV.getDouble(Env::Kvisibility)*m_VisibilitySpace->getWorkspaceCost(point);
+      double r_cost = ENV.getDouble(Env::Kreachable)*m_ReachableSpace->getWorkspaceCost(point);
+      
+      m_ReachableCells.push_back( make_pair( (d_cost+v_cost+r_cost)/max, reachable_cells[i] ) );
+    }
+    
+    sort( m_ReachableCells.begin(), m_ReachableCells.end() );
+  }
+  
+  if( m_ReachableCells.empty() ) {
+    return false;
+  }
+  
+  points.resize(m_ReachableCells.size());
+  for(int i=0;i<int(points.size());i++) {
+    points[i] = m_ReachableCells[i].second->getWorkspacePoint();
+    //cout << "sorted cell[" << i << "] : " << sorted_cells[i].first << endl;
+  }
+  return true;
+}
+
+//! Returns the HRI cost of the point
+//! that on the first joint of the configuration
+double HumanCostSpace::getPointCost(Configuration& q)
+{
+  double cost=0.0;
+  Eigen::Vector3d pos;
+  pos[0] = q[6];
+  pos[1] = q[7];
+  pos[2] = q[8];
+  
+  for (int i=0; i<int(m_Grids.size()); i++) 
+  {
+    cost += m_Grids[i]->getCellCostAt( pos );
+  }
+  return cost;
 }
 
 //! @brief Cost computation for a given configuration

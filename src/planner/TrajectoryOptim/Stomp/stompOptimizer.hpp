@@ -214,9 +214,14 @@ public:
   /**
    * Retreive source and target
    */
+  void setSource(confPtr_t q) { source_ = q; }
   confPtr_t getSource();
   confPtr_t getTarget();
-
+  
+  /**
+   * Retreive best trajectory
+   */
+  API::Trajectory getBestTraj() { return best_traj_; }
 
 private:
   Robot* robot_model_;
@@ -225,6 +230,7 @@ private:
   double time_;
   
   API::Trajectory move3d_traj_;
+  API::Trajectory best_traj_;
   
   int num_joints_;
   int num_vars_free_;
@@ -238,9 +244,13 @@ private:
   bool succeded_joint_limits_;
   int joint_limits_violation_;
   
+  bool recompute_handover_once_;
+  bool handover_has_been_recomputed_;
   bool use_human_sliders_;
   bool use_handover_config_generator_;
   bool use_handover_config_list_;
+  bool use_handover_auto_;
+  bool recompute_handover_cell_list_;
   ConfGenerator* handoverGenerator_;
   
   double last_move3d_cost_;

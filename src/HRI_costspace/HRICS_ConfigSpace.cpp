@@ -101,7 +101,7 @@ void ConfigSpace::initCostSpace()
     m_DistanceSpace = new Distance(/*_Robot,Humans*/);
     m_DistanceSpace->parseHumans();
 	
-	m_VisibilitySpace = new Visibility( mHuman );
+    m_VisibilitySpace = new Visibility( mHuman );
 
     m3DGrid = new Grid(ENV.getDouble(Env::CellSize),mEnvSize);
     m3DGrid->setRobot(_Robot);

@@ -85,6 +85,12 @@ public:
 	 * Colision test done to test the local path
 	 */
 	int getNbColTest();
+  
+  /**
+	 * Returns the number of
+	 * Colision test done to test the local path
+	 */
+  int getNbCostTest();
 
 	/**
 	 * teste si le LocalPath à été évalué
@@ -221,7 +227,9 @@ protected:
 
 
 private:
+  
 	p3d_localpath* _LocalPath;
+  
 	bool _Valid;
 	bool _Evaluated;
 	double _lastValidParam;
@@ -233,6 +241,7 @@ private:
 
 	bool _costEvaluated;
 	double _Cost;
+  int _NbCostTest;
 
 	bool _ResolEvaluated;
 	double _Resolution;

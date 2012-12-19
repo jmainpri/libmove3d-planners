@@ -139,13 +139,16 @@ bool traj_optim_invalidate_cntrts()
 	{
     string name = rob->cntrt_manager->cntrts[i]->namecntrt;
   
-    if ( m_robot->getName() == "JUSTIN_ROBOT" && (name == "p3d_min_max_dofs" || name == "p3d_lin_rel_dofs" ) ) {
+    if ( m_robot->getName() == "JUSTIN_ROBOT" && (name == "p3d_min_max_dofs" || name == "p3d_lin_rel_dofs" || name == "p3d_fixed_jnt" ) ) {
       continue;
     }
     
     if( name == "p3d_fix_jnts_relpos" ){
       continue;
     }
+    
+    cout << "deactivate : " << m_robot->getName() << " , " << name << endl;
+    
     // get constraint from the cntrts manager
     ct = rob->cntrt_manager->cntrts[i];
     p3d_desactivateCntrt( rob, ct );
@@ -927,7 +930,6 @@ bool traj_optim_init_collision_spaces()
       cout << "Init with 2D costmap" << endl;
       if( !traj_optim_costmap_init() )
         return false;
-      
       //      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.1);
       //      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
       //      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
@@ -939,7 +941,6 @@ bool traj_optim_init_collision_spaces()
       cout << "Init Simple Nav" << endl;
       if( !traj_optim_simple_init() )
         return false;
-      
       //      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.030000);
       //      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
       //      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
@@ -1127,19 +1128,22 @@ void traj_optim_init_planning_type(int type)
   {
     case 0:
       m_planning_type = NAVIGATION;
+      cout << "NAVIGATION planner type" << endl;
       break;
       
     case 1:
       m_planning_type = MANIPULATION;
+      cout << "MANIPULATION planner type" << endl;
       break;
       
     case 2:
       m_planning_type = MOBILE_MANIP;
+      cout << "MOBILE_MANIP planner type" << endl;
       break;
       
     default:
       m_planning_type = DEFAULT;
-      cout << "Default planner type" << endl;
+      cout << "DEFAULT planner type" << endl;
       break;
   }
 }
@@ -1287,7 +1291,7 @@ bool traj_optim_initStomp()
                                                            m_stompparams,
                                                            m_chompplangroup,
                                                            m_coll_space));
-  
+  optimizer->setSource( T.getBegin() );
   optimizer->setSharedPtr(optimizer);
   optimizer->setPassiveDofs(passive_dofs);
   
@@ -1302,6 +1306,8 @@ bool traj_optim_initStomp()
   // std::cout << "Initializing the collision space function" << std::endl;
   // global_costSpace->addCost("CollisionSpace",boost::bind(computeCollisionSpaceCost, _1));
   // global_costSpace->setCost("CollisionSpace");
+  
+  m_robot->setAndUpdate( *m_robot->getInitialPosition() );
   
   return true;
 }
@@ -1331,7 +1337,7 @@ bool traj_optim_runStomp(int runId)
   return true;
 }
 
-bool traj_optim_runStomp(int runId, const API::Trajectory& traj)
+bool traj_optim_runStompNoInit(int runId, const API::Trajectory& traj)
 {
   if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )  
   {
@@ -1357,9 +1363,9 @@ bool traj_optim_runStompNoReset(int runId)
   if( !traj_optim_InitTraj( traj ) ){
     return false;
   }
-  
-//  return true;
-  return traj_optim_runStomp( runId, traj );
+
+//  API::Trajectory traj = m_robot->getCurrentTraj();
+  return traj_optim_runStompNoInit( runId, traj );
 }
 
 // --------------------------------------------------------

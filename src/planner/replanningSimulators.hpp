@@ -33,6 +33,8 @@ public:
   
   double time_since_last_call(bool& is_first_call, double& t_init);
   
+  void setDrawStep(double step) { m_draw_step = step; }
+  void resetTrajectoriesToDraw() {   m_currentLine.clear(); m_deviateLine.clear(); m_lastLine.clear(); }
   void draw();
   
 private:
@@ -48,7 +50,7 @@ private:
   void store_shortcut(const API::Trajectory& traj, double lPrev, double lNext);
   void store_human_pos();
   
-  void set_executed_traj_to_current(API::Trajectory& traj);
+  bool set_executed_traj_to_current(API::Trajectory& traj);
   bool time_switch_and_id(double s, double s_rep, int& id_switch, API::Trajectory& traj, double &s_switch);
   
   //----------------------------------------------------
@@ -61,12 +63,18 @@ private:
   
   Robot* m_robot;
   Robot* m_rosim;
+  Robot* m_rocyl;
   Robot* m_human;
+  
+  confPtr_t m_q_end;
   
   API::Trajectory m_ExecuteTraj;
   
   bool m_isWritingDisplay;
   bool m_isReadingDisplay;
+  bool m_draw_final_config;
+  
+  double m_draw_step;
   
   std::vector< std::vector<double> > m_currentLine;
   std::vector< std::vector<double> > m_lastLine;

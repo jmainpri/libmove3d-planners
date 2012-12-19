@@ -255,9 +255,9 @@ void Configuration::setConfiguration(Configuration& C)
  * Computes the distance
  *  between configurations
  */
-double Configuration::dist(Configuration& Conf)
+double Configuration::dist(Configuration& Conf, bool print)
 {
-	return p3d_dist_config(_Robot->getRobotStruct(), _Configuration, Conf.getConfigStruct());
+	return p3d_dist_config(_Robot->getRobotStruct(), _Configuration, Conf.getConfigStruct(),print);
 	/*
    double ljnt = 0.;
    int njnt = _Robot->getRobotStruct()->njoints;
@@ -476,7 +476,7 @@ void Configuration::setActiveDoF(unsigned int ith, double value)
 	}
 }
 
-bool Configuration::equal(Configuration& Conf)
+bool Configuration::equal(Configuration& Conf, bool print)
 {
   if(_Configuration==Conf.getConfigStruct())
   {
@@ -495,7 +495,7 @@ bool Configuration::equal(Configuration& Conf)
     }
   }
 	
-  return (p3d_equal_config(_Robot->getRobotStruct(), _Configuration, Conf.getConfigStruct()));
+  return p3d_equal_config( _Robot->getRobotStruct(), _Configuration, Conf.getConfigStruct(), print);
 }
 
 //copie la Configuration courante dans une nouvelle Configuration

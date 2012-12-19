@@ -151,7 +151,7 @@ public:
 	 * @param Conf la Configuration entrée
 	 * @return la distance
 	 */
-	double dist(Configuration& Conf);
+	double dist(Configuration& Conf, bool print=false);
 	
 	/**
 	 * calcule la distance à une Configuration
@@ -207,7 +207,7 @@ public:
 	 * @param Conf la Configuration entrée
 	 * @return les deux Configurations sont égales
 	 */
-	bool equal(Configuration& Conf);
+	bool equal(Configuration& Conf, bool print=false);
 	
 	/**
 	 * Compare tow configurations

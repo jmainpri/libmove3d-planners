@@ -15,6 +15,8 @@
 
 #include "HRI_costspace/HRICS_Navigation.hpp"
 
+#include "utils/ConfGenerator.h"
+
 #include "P3d-pkg.h"
 #include "LightPlanner-pkg.h"
 
@@ -40,7 +42,7 @@ public:
   
   bool isPlanning() const { return m_isPlanning; }
   
-  void setSwitchData( confPtr_t qSwitch, int switch_id, double t_rep, double lp_avera_length, double initial_step );
+  void setSwitchData( confPtr_t qSwitch, int switch_id, double s_switch, double t_rep, double lp_avera_length, double initial_step );
   
   confPtr_t getQSwitch() { return m_qSwitch; }
   confPtr_t getQGoal() { return m_qGoal; }
@@ -53,6 +55,7 @@ public:
 protected:
   bool init_mlp();
   p3d_traj* concat_to_current_traj(const std::vector<p3d_traj*>& trajs);
+  std::pair<bool,API::Trajectory> concat_to_current_traj(const API::Trajectory& newPortion);
   
   Robot* m_robot;
   Robot* m_human;
@@ -78,6 +81,7 @@ protected:
   double m_t_rep; // 5 seconds for SM
   double m_lp_avera_length;
   double m_initial_step;
+  double m_s_switch;
 };
 
 //! Simple replanner
@@ -120,9 +124,27 @@ public:
   void run();
   
 private:
-  std::pair<bool,confPtr_t> newGoal();
+  std::pair<bool,confPtr_t> newGoalFromIK();
+  std::pair<bool,confPtr_t> newGoalFromList();
   bool m_first_run;
+  bool m_goal_from_list;
   Robot* m_human;
+  ConfGenerator* handoverGenerator_;
+};
+
+//! Stomp replanner
+//!
+class StompReplanner : public SimpleReplanner
+{   
+public:
+  StompReplanner(Robot* r);
+  ~StompReplanner();
+  
+  bool init();
+  void run();
+  
+private:
+  bool m_first_run;
 };
 
 //! AStar replanner

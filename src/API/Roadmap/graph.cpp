@@ -1540,7 +1540,7 @@ vector<Node*> Graph::KNearestWeightNeighbour(const std::vector<Node*>& nodes, co
   sort(nearNodesQueue.begin(), nearNodesQueue.end());
   
   // put the first K nodes of the queue in a vector
-  int bound = int(MIN(K, nearNodesQueue.size()));
+  int bound = MIN(K, int(nearNodesQueue.size()));
   
   for (int i = 0; i < bound; ++i) {
     Node* node = nearNodesQueue[i].second;
@@ -1740,7 +1740,7 @@ int Graph::rebuildCompcoFromBoostGraph()
 	}
 	
   int num = boost::strong_components( m_BoostGraph, &component[0], boost::root_map(&root[0]).
-                                     color_map(&color[0]).discover_time_map(&discover_time[0])); 
+                                      color_map(&color[0]).discover_time_map(&discover_time[0]) ); 
   
 //  std::cout << "Total number of components: " << num << std::endl;
 //  return num;

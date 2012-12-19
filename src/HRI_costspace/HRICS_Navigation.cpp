@@ -81,19 +81,6 @@ void Navigation::reset()
   m_2DGrid->reset();
 }
 
-void Navigation::deactivateCynlinderWithAll()
-{
-  if( m_cyl == NULL ){
-    return;
-  }
-  p3d_col_deactivate_rob_env( m_cyl->getRobotStruct() );
-  
-  Scene* sce = global_Project->getActiveScene();
-  for (int i=0; i<int(sce->getNumberOfRobots()); i++) {
-    p3d_col_deactivate_rob_rob( m_cyl->getRobotStruct(), sce->getRobot(i)->getRobotStruct() );
-  }
-}
-
 /**
  * Computes a trajectory
  */
@@ -267,9 +254,11 @@ API::Trajectory* Navigation::getSimplePath(std::vector<double> goal, std::vector
 
     if (!computeRobotTrajectory(i,g))
     {
+        cout << "No trajectory found in " << __func__ << endl;
         m_robot->setAndUpdate(*i);
         return NULL;
     }
+  
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > robotTraj3D;
     PlannarTrajectorySmoothing PTS(m_robot);
     Eigen::Vector2d b;
@@ -291,6 +280,7 @@ API::Trajectory* Navigation::getSimplePath(std::vector<double> goal, std::vector
     robotTraj3D.push_back(v);
   
     API::Trajectory* t = new API::Trajectory(m_robot);
+    t->push_back(i);
 
     for (unsigned int j = 0; j<robotTraj3D.size();j++)
     {

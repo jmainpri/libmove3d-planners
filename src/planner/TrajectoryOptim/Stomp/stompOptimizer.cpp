@@ -96,6 +96,8 @@ namespace stomp_motion_planner
     use_human_sliders_ = PlanEnv->getBool(PlanParam::trajMoveHuman);
     use_handover_config_generator_ = PlanEnv->getBool(PlanParam::trajUseOtp);
     use_handover_config_list_ = false;
+    use_handover_auto_ = true;
+    recompute_handover_cell_list_ = true;
     handoverGenerator_ = NULL;
     
     human_has_moved_ = false;
@@ -293,6 +295,9 @@ namespace stomp_motion_planner
   
   void StompOptimizer::initHandover()
   {
+    recompute_handover_once_ = true;
+    handover_has_been_recomputed_ = false;
+    
     use_human_sliders_ = PlanEnv->getBool(PlanParam::trajMoveHuman);
     
     const char* home = getenv("HOME_MOVE3D");
@@ -310,6 +315,9 @@ namespace stomp_motion_planner
     {
       use_handover_config_list_ = true;
     }
+    
+    HRI_AGENT* robot = hri_get_agent_by_name( GLOBAL_AGENTS, robot_model_->getName().c_str() );
+    hri_activate_coll_robot_and_all_humans_arms( robot, GLOBAL_AGENTS, false );
   }
   
   StompOptimizer::~StompOptimizer()
@@ -353,7 +361,11 @@ namespace stomp_motion_planner
       performForwardKinematics();
       double new_cost = getTrajectoryCost();
       
-      if (new_cost > original_cost)
+      if (new_cost < original_cost)
+      {
+        //printf("Random jump improved cost from %.10f to %.10f!\n", original_cost, new_cost);
+      }
+      else
       {
         //printf("Random jump worsened cost from %.10f to %.10f!\n", original_cost, new_cost);
         group_trajectory_.getTrajectory() = group_trajectory_backup_;
@@ -361,114 +373,32 @@ namespace stomp_motion_planner
       }
     }
     
-//    double cost = 0.0;
-//    for (int i=free_vars_start_; i<=free_vars_end_; i++)
-//    {
-//      double state_collision_cost = 0.0;
-//      double cumulative = 0.0;
-//      for (int j=0; j<num_collision_points_; j++)
-//      {
-//        cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
-//        //state_collision_cost += collision_point_potential_[i][j] * collision_point_vel_mag_[i][j];
-//        state_collision_cost += cumulative;
-//      }
-//      cost += state_collision_cost * stomp_parameters_->getObstacleCostWeight();
-//    }
-//    last_trajectory_cost_ = cost;
-    int num_time_steps_ = 51;
-    Eigen::VectorXd costs = Eigen::VectorXd::Zero(num_time_steps_);
-    double constraint_cost = 0.0;
-    double obstacle_cost = 0.0;
-    double torque_cost = 0.0;
-
+    double cost = 0.0;
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
-        double state_collision_cost = 0.0;
-        double cumulative = 0.0;
-
-        if (collision_space_)
-        {
-            for (int j=0; j<num_collision_points_; j++)
-            {
-                cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
-                state_collision_cost += cumulative;
-            }
-        }
-        else
-        {
-            Eigen::VectorXd q_i,q_f;
-
-            int id1 = i;
-            int id2 = i+1;
-
-            if (i == free_vars_end_) {
-                id1--;
-                id2--;
-            }
-
-            int index_i = group_trajectory_.getFullTrajectoryIndex(id1);
-            int index_f = group_trajectory_.getFullTrajectoryIndex(id2);
-
-            full_trajectory_->getTrajectoryPointP3d(index_i, q_i);
-            full_trajectory_->getTrajectoryPointP3d(index_f, q_f);
-
-            state_collision_cost += ( pow( general_cost_potential_(i) , hack_tweek ) /* ( q_f - q_i ).norm() */) ;
-        }
-
-        // evaluate the constraints:
-        double state_constraint_cost = 0.0;
-        //    for (int j=0; j<int(constraint_evaluators_.size()); ++j)
-        //    {
-        //      double cost;
-        //      if (!constraint_evaluators_[j]->getCost(segment_frames_[i], full_trajectory_->getTrajectoryPoint(i), cost))
-        //        last_trajectory_constraints_satisfied_ = false;
-        //      state_constraint_cost += cost;
-        //    }
-
-        // evaluate inverse dynamics:
-        double state_torque_cost = 0.0;
-
-        //    if (stomp_parameters_->getTorqueCostWeight() > 1e-9)
-        //    {
-        //      full_trajectory_->getTrajectoryPointKDL(i, kdl_joint_array_);
-        //      full_trajectory_->getJointVelocities(i, full_joint_state_velocities_);
-        //      full_trajectory_->getJointAccelerations(i, full_joint_state_velocities_);
-        //      for (int j=0; j<num_joints_; ++j)
-        //      {
-        //        int full_joint_num = planning_group_->stomp_joints_[j].kdl_joint_index_;
-        //        kdl_group_joint_array_(j) = kdl_joint_array_(full_joint_num);
-        //        kdl_group_vel_joint_array_(j) = full_joint_state_velocities_(full_joint_num);
-        //        kdl_group_acc_joint_array_(j) = full_joint_state_accelerations_(full_joint_num);
-        //      }
-        //      planning_group_->id_solver_->CartToJnt(kdl_group_joint_array_,
-        //                                             kdl_group_vel_joint_array_,
-        //                                             kdl_group_acc_joint_array_,
-        //                                             wrenches,
-        //                                             kdl_group_torque_joint_array_);
-        //      getTorques(i, torques, wrenches);
-        //      for (int j=0; j<num_joints_; ++j)
-        //      {
-        //        state_torque_cost += fabs(torques[j]);
-        //      }
-        //    }
-
-        obstacle_cost += stomp_parameters_->getObstacleCostWeight() * state_collision_cost;
-        constraint_cost += stomp_parameters_->getConstraintCostWeight() * state_constraint_cost;
-        torque_cost += stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
-
-        costs(i-free_vars_start_) =
-                stomp_parameters_->getObstacleCostWeight() * state_collision_cost +
-                stomp_parameters_->getConstraintCostWeight() * state_constraint_cost +
-                stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
+      double state_collision_cost = 0.0;
+      double cumulative = 0.0;
+      for (int j=0; j<num_collision_points_; j++)
+      {
+        cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
+        //state_collision_cost += collision_point_potential_[i][j] * collision_point_vel_mag_[i][j];
+        state_collision_cost += cumulative;
+      }
+      cost += state_collision_cost * stomp_parameters_->getObstacleCostWeight();
     }
-
-    //    cout << "costs = " << costs << endl;
-    last_trajectory_cost_ = costs.sum();
+    last_trajectory_cost_ = cost;
   }
   
   //void StompOptimizer::optimize()
   void StompOptimizer::runDeformation( int nbIteration , int idRun )
   {
+    ChronoTimeOfDayOn();
+    
+    timeval tim;
+    gettimeofday(&tim, NULL);
+    double t_init = tim.tv_sec+(tim.tv_usec/1000000.0);
+    time_ = 0.0;
+    
     stomp_statistics_ = boost::shared_ptr<StompStatistics>(new StompStatistics());
     stomp_statistics_->run_id = idRun;
     stomp_statistics_->collision_success_iteration = -1;
@@ -512,12 +442,19 @@ namespace stomp_motion_planner
     if( PlanEnv->getBool(PlanParam::trajSaveCost) ) {
       saveTrajectoryCostStats();
     }
+    
+    double intitialization_time=0.0;
+    ChronoTimeOfDayTimes(&intitialization_time);
+    ChronoTimeOfDayOff();
+    cout << "Stomp init time : " << intitialization_time << endl;
 
 //    double last_move3d_cost = numeric_limits<double>::max();
     
     source_ = getSource();
     target_ = getTarget();
-    best_iteration_=0;
+    
+    confPtr_t q_tmp = robot_model_->getCurrentPos();
+    
     // iterate
     for (iteration_=0; 
          iteration_<stomp_parameters_->getMaxIterations()&& 
@@ -525,10 +462,11 @@ namespace stomp_motion_planner
          iteration_++)
     {      
       // Compute wether to draw at a certain iteration
-      bool do_draw = (iteration_%draw_every_n_iteration == 0);
-      
-      if( humanHasMoved() )
+      bool do_draw = (iteration_!=0) && (iteration_%PlanEnv->getInt(PlanParam::stompDrawIteration) == 0);
+      reset_reused_rollouts_ = false;
+      if( (!handover_has_been_recomputed_) && humanHasMoved() )
       {
+        cout << "Human has moved" << endl;
         reset_reused_rollouts_ = true;
         
         if( reset_reused_rollouts_ ) {
@@ -540,24 +478,31 @@ namespace stomp_motion_planner
         if( use_handover_config_generator_ ) 
         {
           if( replaceEndWithNewConfiguration() ) {
+            q_tmp = target_new_;
             copyGroupTrajectoryToPolicy();
+            if( recompute_handover_once_ ) {
+              handover_has_been_recomputed_ = true;
+            }
+            cout << "copyGroupTrajectoryToPolicy" << endl;
           }
         }
       }
       
       // Policy improvement loop
-      if (!stomp_parameters_->getUseChomp())
-      {
-        pi_loop.runSingleIteration(iteration_+1);
-      }
-      else
-      {
-        doChompOptimization();
-      }
+      pi_loop.runSingleIteration(iteration_+1);
+//      if (!stomp_parameters_->getUseChomp())
+//      {
+//        pi_loop.runSingleIteration(iteration_+1);
+//      }
+//      else
+//      {
+//        doChompOptimization();
+//      }
             
       if ( do_draw && (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && 
           stomp_parameters_->getAnimateEndeffector() )
       {
+        robot_model_->setAndUpdate(*q_tmp);
         animateEndeffector();
         //animateTrajectoryPolicy();
       }
@@ -599,7 +544,7 @@ namespace stomp_motion_planner
       }
       else
       {
-        if (cost < best_group_trajectory_cost_ && is_collision_free_)
+        if (cost < best_group_trajectory_cost_ )
         {
           if( print_cost )
             cout << "New best" << endl;
@@ -607,7 +552,6 @@ namespace stomp_motion_planner
           best_group_trajectory_ = group_trajectory_.getTrajectory();
           best_group_trajectory_cost_ = cost;
           last_improvement_iteration_ = iteration_;
-          best_iteration_++;
         }
       }
       
@@ -633,6 +577,7 @@ namespace stomp_motion_planner
           
           if ( stomp_parameters_->getAnimateEndeffector() )
           {
+            robot_model_->setAndUpdate(*q_tmp);
             animateEndeffector();
             //animateTrajectoryPolicy();
           }
@@ -646,7 +591,7 @@ namespace stomp_motion_planner
       {
         if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) ) 
         {
-          printf("%3d, time: %3f, cost: %f (s=%f, c=%f), move3d cost: %f\n", iteration_, time_, cost,
+          printf("%3d, time: %3f, cost: %f (s=%f, c=%f), move3d cost: %f\n", iteration_, time_, cost, 
                  getSmoothnessCost(), getCollisionCost(), move3d_cost );
         }
         else {
@@ -671,11 +616,7 @@ namespace stomp_motion_planner
         iteration_++;
         break;
       }
-      else if (best_iteration_ >= stomp_parameters_->getMaxBestIterations())
-      {
-        iteration_++;
-        break;
-      }
+      
 //      if (is_collision_free_)
 //      {
 //        break;
@@ -695,6 +636,10 @@ namespace stomp_motion_planner
     {
       animateEndeffector(true);
     }
+    
+    best_traj_ = API::Trajectory(robot_model_);
+    setGroupTrajectoryToApiTraj( best_traj_ );
+    //best_traj.replaceP3dTraj();
     
     printf("Collision free success iteration = %d (time : %f)\n",
            stomp_statistics_->collision_success_iteration, stomp_statistics_->success_time);
@@ -1174,7 +1119,7 @@ namespace stomp_motion_planner
     Eigen::VectorXd joint_array;
     
     Configuration q(robot_model_);
-
+    
     // for each point in the trajectory
     for (int i=start; i<=end; ++i)
     {
@@ -1215,20 +1160,6 @@ namespace stomp_motion_planner
       }
     }
     
-    if(is_collision_free_) //2nd turn of verification : test of paths between configurations
-    {
-        API::Trajectory T(robot_model_);
-
-
-        // for each point in the trajectory
-        for (int i=free_vars_start_; i<=free_vars_end_; ++i)
-        {
-          T.push_back(getConfigurationOnGroupTraj(i));
-        }
-
-        is_collision_free_=T.isValid();
-
-    }
     // now, get the vel and acc for each collision point (using finite differencing)
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
@@ -1466,6 +1397,9 @@ namespace stomp_motion_planner
     const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
     
     confPtr_t q = robot_model_->getCurrentPos();
+    source_->setConstraints();
+    
+    traj.push_back( source_ );
     
     for (int i=start; i<=end; ++i)
     {
@@ -1474,6 +1408,7 @@ namespace stomp_motion_planner
       for(int j=0; j<planning_group_->num_joints_;j++)
         (*q)[joints[j].move3d_dof_index_] = point[j];
       
+      q->setConstraints();
       traj.push_back( confPtr_t(new Configuration(*q)) );
     }
   }
@@ -1514,7 +1449,8 @@ namespace stomp_motion_planner
       end = num_vars_all_-1;
     }
     
-    confPtr_t q = robot_model_->getCurrentPos();
+    confPtr_t q_tmp = robot_model_->getCurrentPos();
+    confPtr_t q     = robot_model_->getCurrentPos();
     
     // cout << "animateEndeffector()" << endl;
     // cout << "group_trajectory : " << endl;
@@ -1562,7 +1498,7 @@ namespace stomp_motion_planner
     for(int j=0; j<planning_group_->num_joints_;j++)
       (*q)[joints[j].move3d_dof_index_] = point[j];
 
-    robot_model_->setAndUpdate( *q );
+    robot_model_->setAndUpdate( *q_tmp );
     
     if(! ENV.getBool(Env::drawDisabled) )
       g3d_draw_allwin_active();
@@ -1590,12 +1526,27 @@ namespace stomp_motion_planner
   
   bool StompOptimizer::getManipulationHandOver()
   {
-    Eigen::Vector3d point = human_model_->getJoint("rPalm")->getVectorPos();
-    point[2] += 0.10;
+    std::vector<Eigen::Vector3d> points;
+    
+    if( use_handover_auto_ ) {
+      HRICS_humanCostMaps->getHandoverPointList( points, recompute_handover_cell_list_, true );
+      recompute_handover_cell_list_ = false;
+    }
+    else {
+      points.resize(1);
+      points[1] = human_model_->getJoint("rPalm")->getVectorPos();
+      points[1][2] += 0.10;
+    }
     
     // Compute IK
-    configPt q;
-    bool found_ik = handoverGenerator_->computeRobotIkForGrabing( q, point );
+    bool found_ik = false;
+    configPt q = NULL;
+    ChronoTimeOfDayOn(); double time=0.0;
+    for (int i=0; i<int(points.size()) && time<1.0 && found_ik==false; i++) {
+      found_ik = handoverGenerator_->computeRobotIkForGrabing( q, points[i] );
+      ChronoTimeOfDayTimes(&time);
+    }
+    ChronoTimeOfDayOff();
     
     // Disable cntrts
     p3d_cntrt* ct;
@@ -1605,10 +1556,15 @@ namespace stomp_motion_planner
       p3d_desactivateCntrt( rob, ct );
     }
     
+    ArmManipulationData& armData  = (*rob->armManipulationData)[0];
+    
+    deactivateCcCntrts(rob, 0);
+    setAndActivateTwoJointsFixCntrt(rob,armData.getManipulationJnt(), armData.getCcCntrt()->pasjnts[ armData.getCcCntrt()->npasjnts-1 ]);
+    
     if( found_ik ) {
       target_new_ = confPtr_t(new Configuration( robot_model_, q ));
       robot_model_->setAndUpdate( *target_new_ );
-      g3d_draw_allwin_active();
+      //g3d_draw_allwin_active();
     }
     
     return found_ik;
@@ -2168,7 +2124,7 @@ namespace stomp_motion_planner
     std::ofstream s;
     
     //----------------------------------------------------
-    oss << getenv("HOME_MOVE3D") << "/statFiles/convergence_traj_stomp_" << std::setfill('0') << std::setw(4) << stomp_statistics_->run_id << ".csv";
+    oss << "statFiles/convergence_traj_stomp_" << std::setfill('0') << std::setw(4) << stomp_statistics_->run_id << ".csv";
     
     const char *res = oss.str().c_str();
     
@@ -2204,7 +2160,7 @@ namespace stomp_motion_planner
     //----------------------------------------------------
     std::ostringstream oss2;
     oss2.clear();
-    oss2 << getenv("HOME_MOVE3D") << "/statFiles/costsum_traj_stomp_" << std::setfill('0') << std::setw(4) << stomp_statistics_->run_id << ".csv";
+    oss2 << "statFiles/costsum_traj_stomp_" << std::setfill('0') << std::setw(4) << stomp_statistics_->run_id << ".csv";
     
     const char *res2 = oss2.str().c_str();
     
