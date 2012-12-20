@@ -417,8 +417,6 @@ void ConfGenerator::saveToXml(string filename)
   cout << "Writing OTPConfList to : " << filename << endl;
 }
 
-
-
 std::vector<HRICS::ConfigHR> ConfGenerator::loadFromXml(string filename)
 {
   vector<HRICS::ConfigHR> vectConfs;
@@ -537,3 +535,98 @@ std::vector<HRICS::ConfigHR> ConfGenerator::loadFromXml(string filename)
   return vectConfs;
 }
 
+
+//########################################
+//new version :
+//########################################
+
+vector<pair<double,double> > findOverlapingRanges(vector<pair<double,double> > overlapped)
+{
+
+}
+
+
+bool ConfGenerator::addConstraintToList(constrainedLink CL)
+{
+    linkList.push_back(CL);
+
+
+
+    if(linkListFiltred.count(CL.R->getName()) > 0 )
+    {
+        linkListFiltred.at(CL.R->getName());
+    }
+    else
+    {
+
+        linkListFiltred[CL.R->getName()] = CL;
+    }
+
+}
+
+
+bool ConfGenerator::generateConfiguration(int nbConfs)
+{
+    int nbConfsFound = 0;
+
+    Robot* table = global_Project->getActiveScene()->getRobotByNameContaining("TABLE_4");
+
+    vector<vector<double> > rot;
+    vector<double> trans;
+    trans.push_back(0);
+    trans.push_back(0);
+    trans.push_back(0);
+    rot.push_back(trans);
+    rot.push_back(trans);
+    rot.push_back(trans);
+
+
+    constrainedLink CL(table,rot,trans);
+
+    cout << "table->getNumberOfActiveDoF() = " << table->getNumberOfActiveDoF() <<endl;
+
+    pair<int,vector<pair<double,double> > > c;
+    c.first = 0;
+    vector<pair<double,double> > v;
+    pair<double,double> p;
+    p.first = 1;
+    p.second = 2;
+    v.push_back(p);
+    c.second = v;
+    CL.addRange(c);
+    addConstraintToList(CL);
+
+    while (nbConfsFound < nbConfs)
+    {
+        for (unsigned int i; i < linkList.size(); i++)
+        {
+
+            linkList.at(i);
+        }
+        nbConfsFound++;
+    }
+    return true;
+
+}
+
+constrainedLink::constrainedLink()
+{
+
+}
+
+
+constrainedLink::constrainedLink(Robot* Robot, vector<vector<double> > matrixRot, vector<double> vectTrans)
+{
+    R = Robot;
+    matrixRotation = matrixRot;
+    vectTranslation = vectTrans;
+}
+
+constrainedLink::~constrainedLink()
+{
+}
+
+void constrainedLink::addRange(std::pair<int,vector<pair<double,double> > > range)
+{
+    rangeList[range.first] = range.second;
+}
