@@ -11,7 +11,6 @@
 #include "HRI_costspace/HRICS_otpmotionpl.hpp"
 #include "HRI_costspace/HRICS_ConfigSpace.hpp"
 #include "HRI_costspace/HRICS_Navigation.hpp"
-#include "utils/ConfGenerator.h"
 #endif
 
 #include "planner/planEnvironment.hpp"
