@@ -130,6 +130,7 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::drawStaticVoxels,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::drawRandomMap,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::drawBoundingVolumes,        new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::drawReachableGrid,          new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::saveVideo,                  new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::env_oldCriteria,            new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::env_noRepetition,           new boolContainer(false)));

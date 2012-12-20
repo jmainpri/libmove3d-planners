@@ -98,6 +98,7 @@ namespace PlanParam
             drawStaticVoxels,
             drawRandomMap,
             drawBoundingVolumes,
+            drawReachableGrid,
             saveVideo,
 
             //Object Transfert point variable
