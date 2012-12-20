@@ -368,26 +368,9 @@ namespace stomp_motion_planner
         updateFullTrajectory();
       }
     }
-    
-//    double cost = 0.0;
-//    for (int i=free_vars_start_; i<=free_vars_end_; i++)
-//    {
-//      double state_collision_cost = 0.0;
-//      double cumulative = 0.0;
-//      for (int j=0; j<num_collision_points_; j++)
-//      {
-//        cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
-//        //state_collision_cost += collision_point_potential_[i][j] * collision_point_vel_mag_[i][j];
-//        state_collision_cost += cumulative;
-//      }
-//      cost += state_collision_cost * stomp_parameters_->getObstacleCostWeight();
-//    }
-//    last_trajectory_cost_ = cost;
-    int num_time_steps_ = 51;
-    Eigen::VectorXd costs = Eigen::VectorXd::Zero(num_time_steps_);
-    double constraint_cost = 0.0;
-    double obstacle_cost = 0.0;
-    double torque_cost = 0.0;
+
+    //Tajectory cost calculation
+    Eigen::VectorXd costs = Eigen::VectorXd::Zero(free_vars_end_-free_vars_start_+1);
 
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
@@ -422,55 +405,9 @@ namespace stomp_motion_planner
 
             state_collision_cost += ( pow( general_cost_potential_(i) , hack_tweek ) /* ( q_f - q_i ).norm() */) ;
         }
-
-        // evaluate the constraints:
-        double state_constraint_cost = 0.0;
-        //    for (int j=0; j<int(constraint_evaluators_.size()); ++j)
-        //    {
-        //      double cost;
-        //      if (!constraint_evaluators_[j]->getCost(segment_frames_[i], full_trajectory_->getTrajectoryPoint(i), cost))
-        //        last_trajectory_constraints_satisfied_ = false;
-        //      state_constraint_cost += cost;
-        //    }
-
-        // evaluate inverse dynamics:
-        double state_torque_cost = 0.0;
-
-        //    if (stomp_parameters_->getTorqueCostWeight() > 1e-9)
-        //    {
-        //      full_trajectory_->getTrajectoryPointKDL(i, kdl_joint_array_);
-        //      full_trajectory_->getJointVelocities(i, full_joint_state_velocities_);
-        //      full_trajectory_->getJointAccelerations(i, full_joint_state_velocities_);
-        //      for (int j=0; j<num_joints_; ++j)
-        //      {
-        //        int full_joint_num = planning_group_->stomp_joints_[j].kdl_joint_index_;
-        //        kdl_group_joint_array_(j) = kdl_joint_array_(full_joint_num);
-        //        kdl_group_vel_joint_array_(j) = full_joint_state_velocities_(full_joint_num);
-        //        kdl_group_acc_joint_array_(j) = full_joint_state_accelerations_(full_joint_num);
-        //      }
-        //      planning_group_->id_solver_->CartToJnt(kdl_group_joint_array_,
-        //                                             kdl_group_vel_joint_array_,
-        //                                             kdl_group_acc_joint_array_,
-        //                                             wrenches,
-        //                                             kdl_group_torque_joint_array_);
-        //      getTorques(i, torques, wrenches);
-        //      for (int j=0; j<num_joints_; ++j)
-        //      {
-        //        state_torque_cost += fabs(torques[j]);
-        //      }
-        //    }
-
-        obstacle_cost += stomp_parameters_->getObstacleCostWeight() * state_collision_cost;
-        constraint_cost += stomp_parameters_->getConstraintCostWeight() * state_constraint_cost;
-        torque_cost += stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
-
-        costs(i-free_vars_start_) =
-                stomp_parameters_->getObstacleCostWeight() * state_collision_cost +
-                stomp_parameters_->getConstraintCostWeight() * state_constraint_cost +
-                stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
+        costs(i-free_vars_start_) = stomp_parameters_->getObstacleCostWeight() * state_collision_cost;
     }
 
-    //    cout << "costs = " << costs << endl;
     last_trajectory_cost_ = costs.sum();
   }
   
@@ -495,11 +432,6 @@ namespace stomp_motion_planner
     
     move3d_traj_ = API::Trajectory( robot_model_ );
     traj_convergence_with_time.clear();
-    
-    timeval tim;
-    gettimeofday(&tim, NULL);
-    double t_init = tim.tv_sec+(tim.tv_usec/1000000.0);
-    time_ = 0.0;
     
     const bool print_cost=true;
     const int draw_every_n_iteration = 7;
@@ -573,6 +505,7 @@ namespace stomp_motion_planner
       }
       
       // Policy improvement loop
+//      pi_loop.runSingleIteration(iteration_+1);
       if (!stomp_parameters_->getUseChomp())
       {
         pi_loop.runSingleIteration(iteration_+1);
@@ -705,6 +638,7 @@ namespace stomp_motion_planner
         iteration_++;
         break;
       }
+      
 //      if (is_collision_free_)
 //      {
 //        break;
@@ -717,13 +651,13 @@ namespace stomp_motion_planner
     group_trajectory_.getTrajectory() = best_group_trajectory_;
     
     //group_trajectory_.print();
-    updateFullTrajectory();
-    performForwardKinematics();
+    //updateFullTrajectory();
+    //performForwardKinematics();
     
-    if ( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && stomp_parameters_->getAnimateEndeffector() )
-    {
+//    if ( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && stomp_parameters_->getAnimateEndeffector() )
+//    {
       animateEndeffector(true);
-    }
+//    }
     
     best_traj_ = API::Trajectory(robot_model_);
     setGroupTrajectoryToApiTraj( best_traj_ );
@@ -1207,7 +1141,7 @@ namespace stomp_motion_planner
     Eigen::VectorXd joint_array;
     
     Configuration q(robot_model_);
-
+    
     // for each point in the trajectory
     for (int i=start; i<=end; ++i)
     {
@@ -1247,21 +1181,21 @@ namespace stomp_motion_planner
         is_collision_free_ = false;
       }
     }
-    
-    if(is_collision_free_) //2nd turn of verification : test of paths between configurations
+
+    if(is_collision_free_)
     {
-        API::Trajectory T(robot_model_);
-
-
         // for each point in the trajectory
-        for (int i=free_vars_start_; i<=free_vars_end_; ++i)
+        for (int i=free_vars_start_; i<free_vars_end_; i++)
         {
-          T.push_back(getConfigurationOnGroupTraj(i));
+            LocalPath* LP = new LocalPath(getConfigurationOnGroupTraj(i),getConfigurationOnGroupTraj(i+1));
+            if(!LP->isValid())
+            {
+                is_collision_free_=false;
+                break;
+            }
         }
-
-        is_collision_free_=T.isValid();
-
     }
+    
     // now, get the vel and acc for each collision point (using finite differencing)
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
