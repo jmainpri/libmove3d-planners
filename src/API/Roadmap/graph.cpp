@@ -376,7 +376,7 @@ Graph::~Graph()
 	// Deletes the old graph
   
 //  m_Robot->getRobotStruct()->GRAPH = XYZ_GRAPH = NULL;
-  delete m_Graph;
+  deleteGraphStruct();
 	
 	// The configuration arrays have been deleted in the old API
 	freeResources();
