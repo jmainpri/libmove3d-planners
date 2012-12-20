@@ -707,6 +707,47 @@ public:
 const double HRICS_innerRadius = 1.3;
 const double HRICS_outerRadius = 1.6;
 
+
+bool Workspace::findGrapingPosition(std::string robot_name, std::vector<std::string> objects)
+{
+    double innerRadius = 0.4;
+    double outerRadius = 1;
+    int nbOfTests = 20;
+
+    if (objects.size() > 1)
+    {
+        cout << "WARNING: if there is more than one object and the objects are too far one from another, finding" <<
+                "a grasping position might be ipossible" << endl;
+    }
+    Scene* sce = global_Project->getActiveScene();
+    Robot* robot = sce->getRobotByNameContaining(robot_name);
+
+    std::vector<Robot*> objs;
+    for (unsigned int i = 0; i < objects.size(); i++)
+    {
+        for (int j=0; j<XYZ_ENV->nr; j++)
+        {
+            string name(XYZ_ENV->robot[j]->name);
+            if(name.find(objects.at(i)) != string::npos )
+            {
+//                objs.push_back(XYZ_ENV->robot[j]);
+                break;
+            }
+        }
+    }
+
+    cout << "TODO: find how to change hardcoded distances to computed one form real IK" << endl;
+    double center = (innerRadius + outerRadius)/2;
+
+    for (int k = 0 ; k < nbOfTests; k++)
+    {
+
+    }
+
+
+}
+
+
 bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d& WSPoint)
 {
 
@@ -755,86 +796,86 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
         return false;*/
 
 
-        shared_ptr<Configuration> q_cur = _Robot->getCurrentPos(); //store the current configuration
-	
-	unsigned int iterMax = 20;
-	
-	activateOnlyBaseCollision();
-	int radI = 0;
-	int radMaxI = 4;
-	while (radI < radMaxI)
-	{
-		double radius;
-		double rotationAngle;
+    shared_ptr<Configuration> q_cur = _Robot->getCurrentPos(); //store the current configuration
 
-                radI = radMaxI;
-                rotationAngle = 4;
-                radius = HRICS_outerRadius;
+    unsigned int iterMax = 20;
 
-		for (unsigned int i=0; i<iterMax; i++)
-		{
-//			radius = p3d_random(HRICS_innerRadius,HRICS_outerRadius);
+    activateOnlyBaseCollision();
+    int radI = 0;
+    int radMaxI = 4;
+    while (radI < radMaxI)
+    {
+        double radius;
+        double rotationAngle;
 
-			Vector2d gazePoint;
-			if (radius == HRICS_innerRadius){gazePoint = m_VisibilitySpace->get2dPointAlongGaze(HRICS_innerRadius);}
-			else
-			{
-				gazePoint = m_VisibilitySpace->get2dPointAlongGaze(p3d_random(HRICS_innerRadius, radius));
-			}
+        radI = radMaxI;
+        rotationAngle = 4;
+        radius = HRICS_outerRadius;
 
-			// Build the 2d transformation matrix
-			// That rotates a point around the human gaze
-			Transform2d t;
+        for (unsigned int i=0; i<iterMax; i++)
+        {
+            //			radius = p3d_random(HRICS_innerRadius,HRICS_outerRadius);
 
-			Vector2d HumanPos;
+            Vector2d gazePoint;
+            if (radius == HRICS_innerRadius){gazePoint = m_VisibilitySpace->get2dPointAlongGaze(HRICS_innerRadius);}
+            else
+            {
+                gazePoint = m_VisibilitySpace->get2dPointAlongGaze(p3d_random(HRICS_innerRadius, radius));
+            }
 
-			HumanPos[0] = WSPoint[0];
-			HumanPos[1] = WSPoint[1];
+            // Build the 2d transformation matrix
+            // That rotates a point around the human gaze
+            Transform2d t;
 
+            Vector2d HumanPos;
 
-			t.translation() = HumanPos;
-
-			Rotation2Dd	rot( p3d_random(-M_PI/rotationAngle, M_PI/rotationAngle));//p3d_random(-M_PI/4, M_PI/4));
+            HumanPos[0] = WSPoint[0];
+            HumanPos[1] = WSPoint[1];
 
 
-			t.linear() = rot.toRotationMatrix();
-			t(2,0) = 0;
-			t(2,1) = 0;
-			t(2,2) = 1;
+            t.translation() = HumanPos;
 
-			Vector2d point = t * gazePoint;
+            Rotation2Dd	rot( p3d_random(-M_PI/rotationAngle, M_PI/rotationAngle));//p3d_random(-M_PI/4, M_PI/4));
 
-			const int plantformIndexDof = 6;
 
-			(*q_base)[plantformIndexDof + 0]    = point[0];
-			(*q_base)[plantformIndexDof + 1]    = point[1];
-			//(*q_base)[plantformIndexDof + 5]    = p3d_random(-M_PI, M_PI);;
+            t.linear() = rot.toRotationMatrix();
+            t(2,0) = 0;
+            t(2,1) = 0;
+            t(2,2) = 1;
 
-			Vector2d gazeDirect = HumanPos - point;
-			(*q_base)[plantformIndexDof + 5] = atan2(gazeDirect.y(),gazeDirect.x());
-			//cout << "(*q_base)[plantformIndexDof + 5]" << 180*(*q_base)[plantformIndexDof + 5]/M_PI << endl;
+            Vector2d point = t * gazePoint;
 
-			Vector3d CirclePoint;
+            const int plantformIndexDof = 6;
 
-			CirclePoint(0) = point[0];
-					CirclePoint(1) = point[1];
-			CirclePoint(2) = 0.30;
+            (*q_base)[plantformIndexDof + 0]    = point[0];
+            (*q_base)[plantformIndexDof + 1]    = point[1];
+            //(*q_base)[plantformIndexDof + 5]    = p3d_random(-M_PI, M_PI);;
 
-			PointsToDraw->push_back(CirclePoint);
-			//cout << "Add Point to draw" << endl;
+            Vector2d gazeDirect = HumanPos - point;
+            (*q_base)[plantformIndexDof + 5] = atan2(gazeDirect.y(),gazeDirect.x());
+            //cout << "(*q_base)[plantformIndexDof + 5]" << 180*(*q_base)[plantformIndexDof + 5]/M_PI << endl;
 
-			q_base->setAsNotTested();
+            Vector3d CirclePoint;
 
-			if (!q_base->isInCollision())
-			{
-				deactivateOnlyBaseCollision();
-							_Robot->setAndUpdate(*q_cur);
-				return true;
-			}
-		}
-	}
-	deactivateOnlyBaseCollision();
-  _Robot->setAndUpdate(*q_cur);
+            CirclePoint(0) = point[0];
+            CirclePoint(1) = point[1];
+            CirclePoint(2) = 0.30;
+
+            PointsToDraw->push_back(CirclePoint);
+            //cout << "Add Point to draw" << endl;
+
+            q_base->setAsNotTested();
+
+            if (!q_base->isInCollision())
+            {
+                deactivateOnlyBaseCollision();
+                _Robot->setAndUpdate(*q_cur);
+                return true;
+            }
+        }
+    }
+    deactivateOnlyBaseCollision();
+    _Robot->setAndUpdate(*q_cur);
     return false;
 }
 
