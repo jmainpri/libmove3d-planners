@@ -319,7 +319,11 @@ void HRICS_init(HRI_AGENTS* agents)
   
   Robot* Human = global_Project->getActiveScene()->getRobotByNameContaining("HUMAN");
   
-  shared_ptr<Configuration> q = Human->getCurrentPos();
+  if( Human == NULL ) {
+    cout << "ERROR : in HRICS_init : No human" << endl;
+  }
+  
+  confPtr_t q = Human->getCurrentPos();
   
   if (agents == NULL) 
   {

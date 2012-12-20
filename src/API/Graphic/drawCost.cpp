@@ -284,28 +284,18 @@ void g3d_draw_squeleton()
 }
 
 void g3d_draw_grids()
-{
-  //g3d_draw_squeleton();
-  //cout << "g3d_draw_grids" << endl;
-  
-  //pqp_draw_all_OBBs(1);
-  
-  //double tx, ty, tz, ax, ay, az;
-  //double xmin, xmax, ymin, ymax, zmin, zmax;
-  //p3d_matrix4 mat;
-
-//    g3d_draw_bounding_box( global_Project->getActiveScene()->getRobotByName("SOFA"));
-    
+{    
 #ifdef HRI_COSTSPACE
   
   if( HRICS_humanCostMaps && ENV.getBool(Env::drawDistance) ) 
   {
     HRICS_humanCostMaps->drawDistances();
   }
-  if( HRICS_humanCostMaps && ENV.getBool(Env::drawGrid) )
+  
+  if( HRICS_humanCostMaps && PlanEnv->getBool(PlanParam::drawReachableGrid) )
   {
     HRICS_humanCostMaps->drawReachableGrid();
-    API_activeGrid = NULL;
+    ENV.setBool(Env::drawGrid,false);
   }
   
 	if( ENV.getBool(Env::drawEntireGrid) && API_activeGrid )
@@ -337,7 +327,7 @@ void g3d_draw_grids()
 //		
 //		if (!CXX_drawBox.empty()) 
 //		{
-//			g3d_draw_eigen_box(	CXX_drawBox[0], CXX_drawBox[1], CXX_drawBox[2],               CXX_drawBox[3],CXX_drawBox[4], CXX_drawBox[5], CXX_drawBox[6], CXX_drawBox[7],
+//			g3d_draw_eigen_box(	CXX_drawBox[0], CXX_drawBox[1], CXX_drawBox[2], CXX_drawBox[3],CXX_drawBox[4], CXX_drawBox[5], CXX_drawBox[6], CXX_drawBox[7],
 //                         Red, 0, 3);
 //		}
 //	}
