@@ -615,6 +615,8 @@ namespace HRICS
           */
         double initTime;
 
+        bool m_OTPsuceed;
+
 
 
     };

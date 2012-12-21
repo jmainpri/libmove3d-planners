@@ -111,6 +111,10 @@ double computeDist(Vector2d v, Vector2d w, Vector2d p)
 
 double PlannarTrajectorySmoothing::computeDistBetweenTrajAndPoint(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Eigen::Vector2d p)
 {
+    if (traj.size() == 1)
+    {
+        return sqrt(pow(traj.at(0)[0] - p[0],2) + pow(traj.at(0)[1] - p[1],2));
+    }
     /*
       for each pair of point
       compute dist between them and p

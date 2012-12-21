@@ -107,6 +107,7 @@ OTPMotionPl::OTPMotionPl() : HumanAwareMotionPlanner() , m_PathExist(false) , m_
     }
 
     initAll();
+    m_OTPsuceed =false;
 }
 
 OTPMotionPl::OTPMotionPl(Robot* R, Robot* H) : HumanAwareMotionPlanner() , m_Human(H) , m_PathExist(false) , m_HumanPathExist(false), initTime(10)
@@ -1145,6 +1146,7 @@ bool OTPMotionPl::getRandomPoints(double id, Vector3d& vect)
 
 bool OTPMotionPl::newComputeOTP()
 {
+    m_OTPsuceed = false;
     _Robot->setInitialPosition(*_Robot->getCurrentPos());
     clock_t start = clock();
     bool isStanding = PlanEnv->getBool(PlanParam::env_isStanding);
@@ -1519,7 +1521,8 @@ bool OTPMotionPl::newComputeOTP()
     }
     //    showBestConf();
     m_costVector.clear();
-    return true;
+    m_OTPsuceed = true;
+    return m_OTPsuceed;
 }
 
 OutputConf OTPMotionPl::lookForBestLocalConf(double x, double y, double Rz, double objectNecessity)
@@ -3573,11 +3576,30 @@ bool OTPMotionPl::hasHumanMovedAccordingToPlan(double error)
     v[0] = (*q_human_cur)[firstIndexOfHumanDof + 0];
     v[1] = (*q_human_cur)[firstIndexOfHumanDof + 1];
 
-    if (m_pts->computeDistBetweenTrajAndPoint(m_2DHumanPath,v) > error)
+    if (!m_OTPsuceed)
+    {
+        return false;
+    }
+    double dist;
+
+    if (m_2DHumanPath.size() >0)
+    {
+        dist = m_pts->computeDistBetweenTrajAndPoint(m_2DHumanPath,v);
+    }
+    else
+    {
+        Vector2d vF;
+        vF[0] =  (*m_confList.at(0).humanConf)[firstIndexOfHumanDof + 0];
+        vF[1] =  (*m_confList.at(0).humanConf)[firstIndexOfHumanDof + 1];
+        dist = sqrt(pow(vF[0] - v[0],2) + pow(vF[1] - v[1],2));
+    }
+
+    if (dist > error)
     {
         return false;
     }
     return true;
+
 }
 
 
