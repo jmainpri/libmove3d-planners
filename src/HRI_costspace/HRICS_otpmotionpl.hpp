@@ -433,6 +433,11 @@ namespace HRICS
           */
         bool getSimplePath(double x, double y, double theta, vector<vector<double> >& path);
 
+        /**
+          * test if the human has moved according to the plan (3d and sitting)
+          */
+        bool hasHumanMovedAccordingToPlan(double error);
+
     private:
 
         /**

@@ -16,6 +16,38 @@
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 
+
+class constrainedLink
+{
+public:
+    constrainedLink();
+    constrainedLink(Robot* first, std::vector<std::vector<double> > matrixRot, std::vector<double> vectTrans);
+    virtual ~constrainedLink();
+    void addRange(std::pair<int,std::vector<std::pair<double,double> > > range);
+
+
+    string name;
+    Robot* R;
+    std::vector<std::vector<double> > matrixRotation;
+    std::vector<double> vectTranslation;
+
+    std::map<int,std::vector<std::pair<double,double> > > rangeList;
+    int nbDofs;
+};
+
+
+//typedef struct linkStruct
+//{
+//    Robot* first;
+//    Robot* second;
+//    configurationConstraint CC;
+//}linked;
+
+//typedef struct configurationConstraintStruct
+//{
+//
+//}configurationConstraint;
+
 class ConfGenerator
 {
 public:
@@ -96,7 +128,14 @@ public:
    * load and return configs stored in filename
    */
   std::vector<HRICS::ConfigHR> loadFromXml(std::string filename);
+
+  //########################################
+  //new version :
+  //########################################
   
+  bool generateConfiguration(int nbConfs);
+  bool addConstraintToList(constrainedLink CL);
+
   
 private:
   
@@ -119,6 +158,12 @@ private:
   
   Robot* _robot;
   Robot* _human;
+
+  //########################################
+  //new version :
+  //########################################
+  std::vector<constrainedLink> linkList;
+  std::map<std::string,constrainedLink> linkListFiltred;
 };
 
 #endif // CONFGENERATOR_H

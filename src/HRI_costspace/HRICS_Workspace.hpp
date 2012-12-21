@@ -200,6 +200,11 @@ namespace HRICS
      * Test if Jido (Base?) is in collision in this configuration
      */
 		bool sampleRobotBase(std::tr1::shared_ptr<Configuration> q_base, const Eigen::Vector3d& WSPoint);
+
+    /**
+     * find a position where the robot can probably pick the objects on the list
+     */
+                bool findGrapingPosition(std::string robot_name, std::vector<std::string> objects);
     
     /**
      * Test if Jido is in collision in this configuration (?)
