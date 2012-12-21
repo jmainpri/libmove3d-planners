@@ -3562,3 +3562,22 @@ bool OTPMotionPl::getSimplePath(double x, double y, double theta, vector<vector<
     ENV.setBool(Env::drawOTPTraj,true);
     return true;
 }
+
+bool OTPMotionPl::hasHumanMovedAccordingToPlan(double error)
+{
+
+    int firstIndexOfHumanDof = m_Human->getJoint("Pelvis")->getIndexOfFirstDof();
+    shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
+
+    Vector2d v;
+    v[0] = (*q_human_cur)[firstIndexOfHumanDof + 0];
+    v[1] = (*q_human_cur)[firstIndexOfHumanDof + 1];
+
+    if (m_pts->computeDistBetweenTrajAndPoint(m_2DHumanPath,v) > error)
+    {
+        return false;
+    }
+    return true;
+}
+
+

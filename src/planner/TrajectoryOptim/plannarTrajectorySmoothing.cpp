@@ -66,7 +66,7 @@ bool PlannarTrajectorySmoothing::goToNextStep()
     return true;
 }
 
-double PlannarTrajectorySmoothing::computeDistFromTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, int begin, int end)
+double PlannarTrajectorySmoothing::computeDistOfTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, int begin, int end)
 {
 
     if (end < (int)traj.size() && begin < (int)traj.size() && begin < end)
@@ -79,6 +79,55 @@ double PlannarTrajectorySmoothing::computeDistFromTraj(std::vector<Eigen::Vector
         return dist;
     }
     return -1;
+}
+
+
+
+double computeDist(Vector2d v, Vector2d w, Vector2d p)
+{
+    double l2 = pow(v[0] - w[0],2) + pow(v[1] - w[1],2);
+    if (l2 == 0)
+    {
+        return sqrt(pow(v[0] - p[0],2) + pow(v[1] - p[1],2));
+    }
+    double t = (((p[0] - v[0]) * (w[0] -v[0])) + ((p[1] - v[1]) * (w[1] - v[1])))/l2;
+    if (t < 0)
+    {
+        return sqrt(pow(v[0] - p[0],2) + pow(v[1] - p[1],2));
+    }
+    if (t > 1)
+    {
+        return sqrt(pow(w[0] - p[0],2) + pow(w[1] - p[1],2));
+    }
+    Vector2d tmp;
+    tmp[0] = v[0] + (t * (w[0] - v[0]));
+    tmp[1] = v[1] + (t * (w[1] - v[1]));
+
+    return sqrt(pow(tmp[0] - p[0],2) + pow(tmp[1] - p[1],2));
+}
+
+
+
+
+double PlannarTrajectorySmoothing::computeDistBetweenTrajAndPoint(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Eigen::Vector2d p)
+{
+    /*
+      for each pair of point
+      compute dist between them and p
+      return the smallest dist
+      */
+    double dist = numeric_limits<double>::max( );
+
+    for (unsigned int i =0; i < traj.size() - 1; i++)
+    {
+        //compute distance (dtmp) between segment [traj[i],traj[i+1]] and p
+        double dtmp = computeDist(traj.at(i),traj.at(i+1),p);
+        if ( dtmp < dist)
+        {
+            dist = dtmp;
+        }
+    }
+    return dist;
 }
 
 
@@ -245,7 +294,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
 //    for (int m = 0; m< 100; m++)
 //    int am = 0;
 ////    double bm = 0;
-////    double dist = computeDistFromTraj(result,0,result.size()-1);
+////    double dist = computeDistOfTraj(result,0,result.size()-1);
 //
 //
 //    while (am < 100)
@@ -276,7 +325,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
 //
 //        am++;
 ////        double tmpDist = numeric_limits<double>::max( );
-////        dist = computeDistFromTraj(result,0,result.size()-1);
+////        dist = computeDistOfTraj(result,0,result.size()-1);
 ////        cout << "distance = " << dist << "for " << am << endl;
 ////        if (tmpDist < dist)
 ////        {
@@ -327,7 +376,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
         {
             break;
         }
-        if(computeDistFromTraj(tmp,0,tmp.size()) <= computeDistFromTraj(res,0,res.size()))
+        if(computeDistOfTraj(tmp,0,tmp.size()) <= computeDistOfTraj(res,0,res.size()))
         {
             res = tmp;
         }
@@ -358,7 +407,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
     Vector2d p2 = getRandomPointInSegment(traj.at(j-1),traj.at(j),errorT);
 
 
-    double oldDist = computeDistFromTraj(traj,i-1,j);
+    double oldDist = computeDistOfTraj(traj,i-1,j);
     double newDist = sqrt(pow(traj.at(i-1)[1]-p1[1],2) + pow(traj.at(i-1)[0]-p1[0],2)) +
                      sqrt(pow(p2[1]-p1[1],2) + pow(p2[0]-p1[0],2)) +
                      sqrt(pow(p2[1]-traj.at(j)[1],2) + pow(p2[0]-traj.at(j)[0],2));

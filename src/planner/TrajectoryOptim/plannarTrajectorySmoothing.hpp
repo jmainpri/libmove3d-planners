@@ -21,7 +21,9 @@ public:
 
 
     // functions
-    double computeDistFromTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, int begin, int end);
+    double computeDistOfTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, int begin, int end);
+
+    double computeDistBetweenTrajAndPoint(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Eigen::Vector2d p);
 
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > removeUnnecessaryPoint(
             std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > trajectory, double threshold);
@@ -52,6 +54,8 @@ public:
 
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > get2DtrajFrom3Dtraj(
             std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > traj);
+
+
 
 private:
     int _id;
