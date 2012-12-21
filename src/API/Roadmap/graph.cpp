@@ -233,6 +233,25 @@ void Graph::init()
 			l = l->next;
 		}
 	}
+    if (m_Graph->comp)
+    {
+        compco* l=m_Graph->comp;
+        m_Comp.clear();
+        while (l)
+        {
+            p3d_list_node* ln = l->last_node;
+            ConnectedComponent* current=new ConnectedComponent(this,this->getNode(ln->N));
+            while (ln->next)
+            {
+                ln=ln->next;
+                current->addNode(this->getNode(ln->N));
+            }
+            m_Comp.push_back(current);
+            l = l->suiv;
+        }
+
+
+    }
 	this->setName();
     p3d_calc_DMAX(m_Robot->getRobotStruct());
 }

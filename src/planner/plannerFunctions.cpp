@@ -535,9 +535,13 @@ int p3d_run_prm(p3d_rob* robotPt)
   confPtr_t q_target = rob->getGoTo();
   
   // Allocate the p3d_graph if does't exist
-  // Removes graph if it exists, creates a new graph , Allocate RRT
-  Graph* graph = API_activeGraph =  new Graph(rob);
-	
+  Graph* graph;
+  if(!API_activeGraph)
+  {
+    API_activeGraph =  new Graph(rob);
+  }
+  graph = API_activeGraph;
+
 	cout << "Initializing PRM " << endl;
   int nb_added_nodes=0;
   PRM* prm = new PRM(rob, graph);

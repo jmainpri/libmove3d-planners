@@ -373,7 +373,7 @@ confPtr_t LocalPath::configAtParam(double param)
 	{
 		return _End;
 	}
-	if (param < 0)
+    if (param <= 0)
 	{
 		return _Begin;
 	}
