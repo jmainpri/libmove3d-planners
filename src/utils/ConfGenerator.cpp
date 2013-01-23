@@ -478,7 +478,6 @@ std::vector<HRICS::ConfigHR> ConfGenerator::loadFromXml(string filename)
     }
     std::string name(reinterpret_cast<const char*>(cur->name));
     
-    
     if (name.find("node") != string::npos )
     {
       i++;

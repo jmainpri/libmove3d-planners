@@ -8,6 +8,7 @@ testModel.cpp
 #SaveContext.cpp
 ConfGenerator.cpp
 OtpUtils.cpp
+RecordMotion.cpp
 #MultiRun.cpp
 
 )

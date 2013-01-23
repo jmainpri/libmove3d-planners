@@ -101,7 +101,7 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::trajMoveHuman,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajUseOtp,                 new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajNPoints,                new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( PlanParam::trajComputeCostAfterPlannif, new boolContainer(true)));
+        myBoolMap.insert( std::make_pair( PlanParam::trajComputeCostAfterPlannif, new boolContainer(false)));
   
         myBoolMap.insert( std::make_pair( PlanParam::withMaxIteration,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::withGainLimit,              new boolContainer(true)));
