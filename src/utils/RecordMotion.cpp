@@ -10,7 +10,7 @@
 #include <sys/time.h>
 #include <iomanip>
 #include <sstream>
-
+#include <fstream>
 using namespace std;
 
 RecordMotion* global_motionRecorder=NULL;
@@ -71,6 +71,7 @@ void RecordMotion::reset()
 {
     m_time_last_saved = 0.0;
     m_motion.clear();
+    m_stored_motions.clear();
 }
 
 void RecordMotion::saveToXml(const std::string &filename)
@@ -119,6 +120,7 @@ void RecordMotion::saveToXml(const string &filename, const vector< pair<double,c
 motion_t RecordMotion::loadFromXml(const string& filename)
 {
     motion_t vectConfs;
+    vectConfs.clear();
     xmlDocPtr doc;
     xmlNodePtr cur;
     xmlNodePtr root;
@@ -221,8 +223,18 @@ void RecordMotion::loadMotionFromMultipleFiles( const string& baseFilename, int 
         string num;
         ss << std::setw( 5 ) << std::setfill( '0' ) << i; ss >> num; ss.clear();
         partial_motion = loadFromXml( baseFilename + num + ".xml");
-        m_motion.insert( m_motion.end(), partial_motion.begin(), partial_motion.end() );
+        addToCurrentMotion( partial_motion );
     }
+}
+
+void RecordMotion::addToCurrentMotion( const motion_t& motion )
+{
+    m_motion.insert( m_motion.end(), motion.begin(), motion.end() );
+}
+
+void RecordMotion::storeMotion( const motion_t& motion )
+{
+    m_stored_motions.push_back( motion );
 }
 
 bool RecordMotion::setConfiguration(int ith)
@@ -239,11 +251,15 @@ bool RecordMotion::setConfiguration(int ith)
 
 void RecordMotion::showRecordedMotion()
 {
-    showRecordedMotion(m_motion);
+    showRecordedMotion( m_motion );
 }
 
 void RecordMotion::showRecordedMotion( const motion_t& motion )
 {
+    if( motion.empty() ) {
+        return;
+    }
+
     int StopRun = false;
     int i=0;
     double tu_last = 0.0;
@@ -299,4 +315,86 @@ motion_t RecordMotion::extractSubpart( int begin, int end, const motion_t& motio
     vectConfs = motion_t( it_1, it_2 );
 
     return vectConfs;
+}
+
+void RecordMotion::saveStoredToCSV( const std::string &filename )
+{
+    cout << "down sampling" << endl;
+    for (int i=0; i<int(m_stored_motions.size()); i++)
+    {
+        int samples = 100;
+        double inc = double(m_stored_motions[i].size())/double(samples);
+        double k =0; motion_t motion;
+
+        for (int j=0; j<samples; j++)
+        {
+            motion.push_back( m_stored_motions[i][floor(k)] );
+            k += inc;
+        }
+        cout << "m_stored_motions[i].size() : " << m_stored_motions[i].size() << endl;
+        cout << "k : " << k << endl;
+        m_stored_motions[i] = motion;
+    }
+
+    std::ofstream s;
+    s.open( filename.c_str() );
+    //cout << "Opening save file : " << oss.str() << endl;
+
+    Eigen::Vector3d pos;
+
+    for (int i=0; i<int(m_stored_motions.size()); i++)
+    {
+        for (int j=0; j<int(m_stored_motions[i].size()); j++)
+        {
+            m_robot->setAndUpdate( *m_stored_motions[i][j].second );
+
+            Eigen::Transform3d T( m_robot->getJoint("Pelvis")->getMatrixPos().inverse() );
+
+            s << j << ";";
+
+            pos = T*m_robot->getJoint("rWristX")->getVectorPos();
+            for (int k=0; k<int(pos.size()); k++)
+                s << pos[k] << ";";
+
+            pos = T*m_robot->getJoint("rElbowZ")->getVectorPos();
+            for (int k=0; k<int(pos.size()); k++)
+                s << pos[k] << ";";
+
+            s << endl;
+        }
+    }
+
+    s << endl;
+    //cout << "Closing save file" << endl;
+    s.close();
+}
+
+void RecordMotion::saveToCSV( const std::string &filename, const motion_t& motion )
+{
+    std::ofstream s;
+    s.open( filename.c_str() );
+    //cout << "Opening save file : " << oss.str() << endl;
+
+    Eigen::Vector3d pos;
+
+    for (int i=0; i<int(motion.size()); i++)
+    {
+        m_robot->setAndUpdate( *motion[i].second );
+
+        Eigen::Transform3d T( m_robot->getJoint("Pelvis")->getMatrixPos().inverse() );
+
+        pos = T*m_robot->getJoint("rWristX")->getVectorPos();
+        for (int j=0; j<int(pos.size()); j++)
+            s << pos[j] << ";";
+
+        pos = T*m_robot->getJoint("rElbowZ")->getVectorPos();
+        for (int j=0; j<int(pos.size()); j++)
+            s << pos[j] << ";";
+
+        s << endl;
+    }
+
+    s << endl;
+    //cout << "Closing save file" << endl;
+    s.close();
 }

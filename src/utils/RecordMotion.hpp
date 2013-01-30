@@ -22,6 +22,10 @@ public:
 
     motion_t loadFromXml(const std::string &filename);
     void loadMotionFromMultipleFiles( const std::string& baseFilename, int number_of_files );
+    void storeMotion( const motion_t& motion );
+    void addToCurrentMotion( const motion_t& motion );
+    void saveToCSV(const std::string &filename,const motion_t& motion);
+    void saveStoredToCSV( const std::string &filename );
 
     void showRecordedMotion();
     void showRecordedMotion( const motion_t& motion );
@@ -38,7 +42,8 @@ private:
     double m_time_to_record;
     double m_time_last_record;
     int m_file_number;
-    std::vector< std::pair<double,confPtr_t> > m_motion;
+    motion_t m_motion;
+    std::vector<motion_t> m_stored_motions;
 };
 
 extern RecordMotion* global_motionRecorder;
