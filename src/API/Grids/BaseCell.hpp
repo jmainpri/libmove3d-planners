@@ -8,15 +8,17 @@
  */
 namespace API
 {
-  class BaseCell
-  {
-  public:
+class BaseCell
+{
+public:
     BaseCell();
     virtual ~BaseCell();
-		
-		virtual bool writeToXml(xmlNodePtr cur);
-		virtual bool readCellFromXml(xmlNodePtr cur);
-  };
+
+    virtual void draw() = 0;
+
+    virtual bool writeToXml(xmlNodePtr cur);
+    virtual bool readCellFromXml(xmlNodePtr cur);
+};
 }
 
 #endif // BASECELL_HPP

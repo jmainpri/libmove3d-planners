@@ -1,4 +1,4 @@
-#include "RecordMotion.hpp"
+#include "HRICS_RecordMotion.hpp"
 
 #include "API/project.hpp"
 #include "planner/planEnvironment.hpp"
@@ -17,17 +17,15 @@ RecordMotion* global_motionRecorder=NULL;
 
 RecordMotion::RecordMotion()
 {
-    m_file_number = 0;
-    m_is_recording = false;
+    m_id_motion = 0;
     m_robot = NULL;
     reset();
 }
 
 RecordMotion::RecordMotion(const std::string& robotname)
 {
-    m_file_number = 0;
-    m_is_recording = false;
-    m_robot = global_Project->getActiveScene()->getRobotByName( robotname );
+    m_id_motion = 0;
+    setRobot( robotname );
     reset();
 }
 
@@ -41,14 +39,29 @@ void RecordMotion::setRobot(const std::string &robotname)
     cout << "set robot to : " << m_robot << endl;
     cout << "global_Project : " << global_Project << endl;
     m_robot = global_Project->getActiveScene()->getRobotByName( robotname );
+    m_init_q = m_robot->getCurrentPos();
+}
+
+void RecordMotion::saveCurrentToFile()
+{
+    string home(getenv("HOME_MOVE3D"));
+    ostringstream file_name;
+    file_name << "/statFiles/recorded_motion/motion_saved_";
+    file_name << std::setw( 5 ) << std::setfill( '0' ) << m_id_motion << "_";
+    file_name << std::setw( 5 ) << std::setfill( '0' ) << m_id_file++ << ".xml";
+    saveToXml( home+file_name.str() );
+    m_motion.clear();
 }
 
 void RecordMotion::saveCurrentConfig()
 {
     timeval tim;
     gettimeofday(&tim, NULL);
+
     double tu = tim.tv_sec+(tim.tv_usec/1000000.0);
-    double dt = tu - m_time_last_saved;
+    double dt = 0.0;
+    if( m_time_last_saved != 0.0 )
+        dt = tu - m_time_last_saved;
     m_time_last_saved = tu;
 
     confPtr_t q = m_robot->getCurrentPos();
@@ -58,17 +71,14 @@ void RecordMotion::saveCurrentConfig()
 
     if( int(m_motion.size()) >= 100 )
     {
-        string home(getenv("HOME_MOVE3D"));
-        ostringstream file_name;
-        file_name << "/statFiles/recorded_motion/motion_saved_";
-        file_name << std::setw( 5 ) << std::setfill( '0' ) << m_file_number++ << ".xml";
-        saveToXml( home+file_name.str() );
-        m_motion.clear();
+        saveCurrentToFile();
     }
 }
 
 void RecordMotion::reset()
 {
+    m_is_recording = false;
+    m_id_file = 0;
     m_time_last_saved = 0.0;
     m_motion.clear();
     m_stored_motions.clear();
@@ -81,6 +91,11 @@ void RecordMotion::saveToXml(const std::string &filename)
 
 void RecordMotion::saveToXml(const string &filename, const vector< pair<double,confPtr_t> >& motion )
 {
+    if( motion.empty() ) {
+        cout << "No file to save empty vector in " << __func__ << endl;
+        return;
+    }
+
     stringstream ss;
     string str;
 
@@ -277,8 +292,16 @@ void RecordMotion::showRecordedMotion( const motion_t& motion )
         tu_last = tu;
 
         if ( dt>=motion[i].first ) {
+
+//            (*motion[i].second)[6] = (*m_init_q)[6];
+//            (*motion[i].second)[7] = (*m_init_q)[7];
+//            (*motion[i].second)[11] = (*m_init_q)[11];
+//            (*motion[i].second)[12] = (*m_init_q)[12];
+//            (*motion[i].second)[13] = (*m_init_q)[13];
+//            (*motion[i].second)[14] = (*m_init_q)[14];
             m_robot->setAndUpdate( *motion[i].second );
-            cout << "dt : " << dt << " , m_motion[i].first : " << motion[i].first << endl;
+//            cout << "dt : " << dt << " , m_motion[i].first : " << motion[i].first << endl;
+//            motion[i].second->print();
             g3d_draw_allwin_active();
             dt = 0.0;
             i++;

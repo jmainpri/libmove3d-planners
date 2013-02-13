@@ -297,3 +297,8 @@
 /home/jmainpri/workspace/move3d/libmove3d-planners/CMakeLists.txt
 src/utils/RecordMotion.cpp
 src/utils/RecordMotion.hpp
+src/HRI_costspace/Gestures/SourceList.cmake
+src/HRI_costspace/Gestures/HRICS_RecordMotion.hpp
+src/HRI_costspace/Gestures/HRICS_RecordMotion.cpp
+src/HRI_costspace/Gestures/HRICS_WorkspaceOccupancy.cpp
+src/HRI_costspace/Gestures/HRICS_WorkspaceOccupancy.hpp

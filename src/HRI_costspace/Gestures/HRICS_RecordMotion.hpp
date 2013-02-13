@@ -17,6 +17,7 @@ public:
     void setRobot(const std::string& robotname);
     void saveCurrentConfig();
     void reset();
+    void saveCurrentToFile();
     void saveToXml( const std::string& filename );
     void saveToXml( const std::string& filename, const motion_t& motion );
 
@@ -34,14 +35,18 @@ public:
     motion_t extractSubpart(int init, int end );
     motion_t extractSubpart(int init, int end, const motion_t& motion);
 
+    void incrementMotionId() { m_id_motion++; }
+
     bool m_is_recording;
 
 private:
     Robot* m_robot;
+    confPtr_t m_init_q;
     double m_time_last_saved;
     double m_time_to_record;
     double m_time_last_record;
-    int m_file_number;
+    int m_id_file;
+    int m_id_motion;
     motion_t m_motion;
     std::vector<motion_t> m_stored_motions;
 };

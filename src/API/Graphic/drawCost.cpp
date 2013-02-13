@@ -11,6 +11,7 @@
 #include "HRI_costspace/HRICS_otpmotionpl.hpp"
 #include "HRI_costspace/HRICS_ConfigSpace.hpp"
 #include "HRI_costspace/HRICS_Navigation.hpp"
+#include "HRI_costspace/Gestures/HRICS_WorkspaceOccupancy.hpp"
 #endif
 
 #include "planner/planEnvironment.hpp"
@@ -428,6 +429,9 @@ void drawSlice(int opengl_context);
 //#ifdef HRI_COSTSPACE
 void g3d_draw_hrics(int opengl_context)
 {
+    if( workspace_grid )
+        workspace_grid->draw();
+
     int OTPListSize = OTPList.size();
     if( ENV.getBool(Env::enableHri) )
     {
