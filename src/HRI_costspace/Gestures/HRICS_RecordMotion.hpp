@@ -23,13 +23,15 @@ public:
 
     motion_t loadFromXml(const std::string &filename);
     void loadMotionFromMultipleFiles( const std::string& baseFilename, int number_of_files );
-    void storeMotion( const motion_t& motion );
+
+    void storeMotion( const motion_t& motion, bool new_motion = true);
     void addToCurrentMotion( const motion_t& motion );
     void saveToCSV(const std::string &filename,const motion_t& motion);
     void saveStoredToCSV( const std::string &filename );
 
-    void showRecordedMotion();
-    void showRecordedMotion( const motion_t& motion );
+    void showStoredMotion();
+    void showCurrentMotion();
+    void showMotion( const motion_t& motion );
     bool setConfiguration(int ith);
 
     motion_t extractSubpart(int init, int end );

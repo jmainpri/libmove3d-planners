@@ -247,9 +247,20 @@ void RecordMotion::addToCurrentMotion( const motion_t& motion )
     m_motion.insert( m_motion.end(), motion.begin(), motion.end() );
 }
 
-void RecordMotion::storeMotion( const motion_t& motion )
+void RecordMotion::storeMotion( const motion_t& motion, bool new_motion )
 {
-    m_stored_motions.push_back( motion );
+    if( new_motion )
+    {
+        m_stored_motions.push_back( motion );
+    }
+    else
+    {
+        // Store motion at the end of the last motion
+        if( !m_stored_motions.empty() )
+        {
+            m_stored_motions.back().insert( m_stored_motions.back().end(), motion.begin(), motion.end() );
+        }
+    }
 }
 
 bool RecordMotion::setConfiguration(int ith)
@@ -264,12 +275,21 @@ bool RecordMotion::setConfiguration(int ith)
     return true;
 }
 
-void RecordMotion::showRecordedMotion()
+void RecordMotion::showStoredMotion()
 {
-    showRecordedMotion( m_motion );
+    for (int i=0; i<int(m_stored_motions.size()); i++)
+    {
+        cout << "Show motion : " << i << " with " <<  m_stored_motions[i].size() << " frames" << endl;
+        showMotion( m_stored_motions[i] );
+    }
 }
 
-void RecordMotion::showRecordedMotion( const motion_t& motion )
+void RecordMotion::showCurrentMotion()
+{
+    showMotion( m_motion );
+}
+
+void RecordMotion::showMotion( const motion_t& motion )
 {
     if( motion.empty() ) {
         return;
