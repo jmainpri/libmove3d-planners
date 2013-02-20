@@ -3,11 +3,11 @@
 
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 
-#include <Eigen/Core>
-
 #include "API/Grids/BaseCell.hpp"
 
+#include <Eigen/Core>
 #include <libxml/parser.h>
+#include <vector>
 
 /**
  * @ingroup CPP_API
@@ -33,9 +33,9 @@ namespace API
 		
     virtual ~ThreeDCell();
 		
-		virtual double getCost() { return 0; };
+		virtual double getCost() { return 0; }
     
-    bool isInsideCell(Eigen::Vector3d point);
+    void getVerticies(std::vector<Eigen::Vector3d>& verticies);
     
     Eigen::Vector3d getCenter();
     Eigen::Vector3d getCorner() { return _corner; }

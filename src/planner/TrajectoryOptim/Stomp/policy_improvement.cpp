@@ -61,7 +61,7 @@ std::vector<double> global_noiseTrajectory1;
 std::vector<double> global_noiseTrajectory2;
 
 using namespace std;
-//using namespace boost;
+MOVE3D_USING_BOOST_NAMESPACE
 
 USING_PART_OF_NAMESPACE_EIGEN
 

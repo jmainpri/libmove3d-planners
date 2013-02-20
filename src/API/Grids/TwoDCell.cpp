@@ -48,16 +48,6 @@ TwoDCell::~TwoDCell()
 
 }
 
-/*!
- * \brief Function is inside cell
- *
- * \param 3D point vector
- */
-bool TwoDCell::isInsideCell(Vector2d point)
-{
-  return false;
-}
-
 
 /*!
  * \brief Function to get the center of the cell

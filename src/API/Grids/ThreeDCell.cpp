@@ -59,16 +59,6 @@ ThreeDCell::~ThreeDCell()
 
 }
 
-/*!
- * \brief Function is inside cell
- *
- * \param 3D point vector
- */
-bool ThreeDCell::isInsideCell(Vector3d point)
-{
-  return false;
-}
-
 
 /*!
  * \brief Function to get the center of the cell
@@ -119,6 +109,43 @@ Vector3d ThreeDCell::getRandomPoint()
 Vector3d ThreeDCell::getCellSize()
 {
      return _grid->getCellSize();
+}
+
+void ThreeDCell::getVerticies(vector<Eigen::Vector3d>& verticies)
+{
+  Eigen::Vector3d cell_size = _grid->getCellSize();
+  
+  verticies[0][0] = _corner[0] + cell_size[0];
+  verticies[0][1] = _corner[1] + cell_size[1];
+  verticies[0][2] = _corner[2] + cell_size[2];
+  
+  verticies[1][0] = _corner[0] ;
+  verticies[1][1] = _corner[1] + cell_size[1];
+  verticies[1][2] = _corner[2] + cell_size[2];
+  
+  verticies[2][0] = _corner[0] ;
+  verticies[2][1] = _corner[1] ;
+  verticies[2][2] = _corner[2] + cell_size[2];
+  
+  verticies[3][0] = _corner[0] + cell_size[0];
+  verticies[3][1] = _corner[1] ;
+  verticies[3][2] = _corner[2] + cell_size[2];
+  
+  verticies[4][0] = _corner[0] + cell_size[0];
+  verticies[4][1] = _corner[1] ;
+  verticies[4][2] = _corner[2] ;
+  
+  verticies[5][0] = _corner[0] + cell_size[0];
+  verticies[5][1] = _corner[1] + cell_size[1];
+  verticies[5][2] = _corner[2] ;
+  
+  verticies[6][0] = _corner[0] ;
+  verticies[6][1] = _corner[1] + cell_size[1];
+  verticies[6][2] = _corner[2] ;
+  
+  verticies[7][0] = _corner[0] ;
+  verticies[7][1] = _corner[1] ;
+  verticies[7][2] = _corner[2] ;
 }
 
 void ThreeDCell::draw()

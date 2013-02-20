@@ -28,6 +28,7 @@ Robot* API_activeRobot = NULL;
 
 using namespace std;
 
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 //using MOVE3D_PTR_NAMESPACE::shared_ptr;
 
 // import most common Eigen types 

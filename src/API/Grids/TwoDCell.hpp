@@ -25,8 +25,6 @@ namespace API
         TwoDCell(int i, Eigen::Vector2d corner, TwoDGrid* grid);
         virtual ~TwoDCell();
 
-        bool isInsideCell(Eigen::Vector2d point);
-
         Eigen::Vector2d getCenter();
         Eigen::Vector2d getCorner() { return _corner; }
         Eigen::Vector2d getRandomPoint();

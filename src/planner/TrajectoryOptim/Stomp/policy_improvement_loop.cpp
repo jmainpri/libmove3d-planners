@@ -57,7 +57,7 @@
 #include <boost/shared_ptr.hpp>
 
 using namespace std;
-//using namespace boost;
+MOVE3D_USING_BOOST_NAMESPACE
 
 namespace stomp_motion_planner
 {
