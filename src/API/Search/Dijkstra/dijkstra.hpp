@@ -82,7 +82,7 @@ public :
 	/**
 	 * Extract Trajectory beetween two Configurations
 	 */
-	API::Trajectory* extractTrajectory(std::tr1::shared_ptr<Configuration> init, std::tr1::shared_ptr<Configuration> goal);
+	API::Trajectory* extractTrajectory(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> init, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> goal);
 
 	/**
 	 * Extract Trajectory beetween two Nodes

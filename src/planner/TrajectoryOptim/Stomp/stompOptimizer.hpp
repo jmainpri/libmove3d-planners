@@ -125,7 +125,7 @@ public:
   /**
    * Functions to set the shared pointer
    */
-  void setSharedPtr(boost::shared_ptr<StompOptimizer>& ptr);
+  void setSharedPtr(MOVE3D_BOOST_PTR_NAMESPACE<StompOptimizer>& ptr);
   void resetSharedPtr();
   
   /**
@@ -180,14 +180,14 @@ public:
    * @param policy
    * @return
    */
-  bool getPolicy(boost::shared_ptr<stomp_motion_planner::Policy>& policy);
+  bool getPolicy(MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy>& policy);
 
   /**
    * Sets the Policy object of this Task
    * @param policy
    * @return
    */
-  bool setPolicy(const boost::shared_ptr<stomp_motion_planner::Policy> policy);
+  bool setPolicy(const MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy);
 
   /**
    * Gets the weight of the control cost
@@ -267,9 +267,9 @@ private:
   ChompTrajectory group_trajectory_;
   std::vector<ChompCost> joint_costs_;
 
-  boost::shared_ptr<stomp_motion_planner::CovariantTrajectoryPolicy> policy_;
+  MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::CovariantTrajectoryPolicy> policy_;
   std::vector<Eigen::VectorXd> policy_parameters_;
-  boost::shared_ptr<StompOptimizer> this_shared_ptr_;
+  MOVE3D_BOOST_PTR_NAMESPACE<StompOptimizer> this_shared_ptr_;
   
   std::vector<int> planner_p3d_joints_;
   std::vector<int> group_joint_to_move3d_joint_index_;
@@ -353,8 +353,8 @@ private:
   int animate_endeffector_segment_number_;
 
 //  motion_planning_msgs::Constraints constraints_;
-//  std::vector<boost::shared_ptr<ConstraintEvaluator> > constraint_evaluators_;
-  boost::shared_ptr<StompStatistics>  stomp_statistics_;
+//  std::vector<MOVE3D_BOOST_PTR_NAMESPACE<ConstraintEvaluator> > constraint_evaluators_;
+  MOVE3D_BOOST_PTR_NAMESPACE<StompStatistics>  stomp_statistics_;
 
   void initialize();
   void initPolicy();
@@ -413,6 +413,6 @@ private:
 
 }
 
-extern boost::shared_ptr<stomp_motion_planner::StompOptimizer> optimizer;
+extern MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> optimizer;
 
 #endif /* STOMP_OPTIMIZER_H_ */

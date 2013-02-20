@@ -4,20 +4,26 @@
 
 #include "gridsAPI.hpp"
 
+#include <PolyVoxCore/SurfaceMesh.h>
+#include <PolyVoxCore/CubicSurfaceExtractorWithNormals.h>
+#include <PolyVoxCore/MarchingCubesSurfaceExtractor.h>
+#include <PolyVoxCore/SurfaceMesh.h>
+#include <PolyVoxCore/SimpleVolume.h>
+
 //#define GL_GLEXT_PROTOTYPES
 //#include <GL/gl.h>
 //#include <GL/glext.h>
 
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
 
 // import most common Eigen types
 // USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
 
-HRICS::WorkspaceOccupancyGrid* workspace_grid = NULL;
+HRICS::WorkspaceOccupancyGrid* global_workspaceGrid = NULL;
 
 WorkspaceOccupancyCell::WorkspaceOccupancyCell()
 {
@@ -38,7 +44,7 @@ WorkspaceOccupancyCell::~WorkspaceOccupancyCell()
 
 void WorkspaceOccupancyCell::draw()
 {
-    double Cost = 0.0;
+//    double Cost = 0.0;
     double diagonal = 0.07;
     double colorvector[4];
 
@@ -58,7 +64,8 @@ void WorkspaceOccupancyCell::draw()
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-WorkspaceOccupancyGrid::WorkspaceOccupancyGrid(double pace, vector<double> envSize) : API::ThreeDGrid( pace ,envSize ) , m_drawing(false)
+WorkspaceOccupancyGrid::WorkspaceOccupancyGrid(double pace, vector<double> envSize) :
+    API::ThreeDGrid( pace ,envSize ), m_drawing(false)
 {
     cout << "AgentGrid::createAllCells" << endl;
     createAllCells();
@@ -74,7 +81,7 @@ API::ThreeDCell* WorkspaceOccupancyGrid::createNewCell(unsigned int index,unsign
     Vector3i pos;
     pos[0] = x; pos[1] = y; pos[2] = z;
 
-    if (index == 0)
+    if ( index == 0 )
     {
         return new WorkspaceOccupancyCell( 0, pos ,_originCorner , this );
     }
@@ -97,7 +104,7 @@ void WorkspaceOccupancyGrid::init_drawing()
 //    std::vector<Eigen::Vector3d> data;
 
     // Draws all cells
-    for( int i=0; i<_cells.size(); i++)
+    for( int i=0; i<int(_cells.size()); i++)
     {
 
         Eigen::Vector3d center = dynamic_cast<API::ThreeDCell*>(_cells[i])->getCenter();
@@ -113,15 +120,15 @@ void WorkspaceOccupancyGrid::init_drawing()
     //    cout << "data size : " << sizeof(data) << endl;
 
     //Create a new VBO and use the variable id to store the VBO id
-    glGenBuffers(1, &m_triangleVBO);
+    glGenBuffers( 1, &m_triangleVBO );
 
     //Make the new VBO active
-    glBindBuffer(GL_ARRAY_BUFFER, m_triangleVBO);
+    glBindBuffer( GL_ARRAY_BUFFER, m_triangleVBO );
 
     //Upload vertex data to the video device
 //    glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
 //    glBufferData(GL_ARRAY_BUFFER, data.size()*sizeof(Eigen::Vector3d), &data[0], GL_STATIC_DRAW);
-    glBufferData(GL_ARRAY_BUFFER, 3*_cells.size()*sizeof(double), grid_cells, GL_STATIC_DRAW);
+    glBufferData( GL_ARRAY_BUFFER, 3*_cells.size()*sizeof(double), grid_cells, GL_STATIC_DRAW );
 
     //Draw Triangle from VBO - do each time window, view point or data changes
     //Establish its 3 coordinates per vertex with zero stride in this array; necessary here
@@ -132,8 +139,6 @@ void WorkspaceOccupancyGrid::init_drawing()
 
 void WorkspaceOccupancyGrid::draw()
 {
-
-
 //    cout << "data size : " << sizeof(data) << endl;
 //    cout << "vector size : " << sizeof(Eigen::Vector3d) << endl;
 //    cout << "data size : " << data.size() << endl;
@@ -158,53 +163,16 @@ void WorkspaceOccupancyGrid::draw()
     //Force display to be drawn now
     glFlush();
 
+}
 
 
-//    GLuint vboHandle;
-//    glGenBuffers(1, vboHandle);
 
-//    std::vector<double[3]> points;
+void WorkspaceOccupancyGrid::setRegressedMotions(const std::vector<motion_t>& motions)
+{
+    m_motions = motions;
+}
 
-//    // Draws all cells
-//    for( int i=0; i<_cells.size(); i++)
-//    {
-//        Eigen::Vector3d center = _cells[i]->getCenter();
-//        points.push_back(center);
-//    }
-
-//    //-----------------------------------------------
-//    //-----------------------------------------------
-//    glBindBuffer(GL_ARRAY_BUFFER, &vboHandle); // bind (enable) buffer
-//    // Put data in currently bound buffer
-//    glBufferData(GL_ARRAY_BUFFER, numberOfPoints * sizeof(double[3]), &points[0], GL_STATIC_DRAW);
-
-//    //-----------------------------------------------
-//    //-----------------------------------------------
-//    GLuint vaoHandle;
-//    glGenVertexArrays(1, &vaoHandle);
-
-//    glBindVertexArray(vaoHandle); // make our VAO the current bound VAO
-//    glEnableVertexAttribArray(0); // add a new variable for position as location 0 to our VAO
-//    glBindBuffer(GL_ARRAY_BUFFER, vboHandle); // make our VBO the currently bound VBO
-//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte *)NULL); // map memory for the 0th variable that is the size of 3 floats
-
-//    //-----------------------------------------------
-//    //-----------------------------------------------
-//    // enable shader
-//    glUseProgram(ourShaderHandle);
-//    // enable a range of gl rendering options specific to our object
-//    glEnable(GL_DEPTH_TEST); // enable depth-testing
-//    glDepthMask(GL_TRUE); // turn back on
-//    glDepthFunc(GL_LESS);
-//    glEnable(GL_CULL_FACE);
-//    glCullFace(GL_BACK);
-//    glFrontFace(GL_CCW);
-//    // bind VAO
-//    glBindVertexArray(vaoHandle);
-//    // draw
-//    glDrawArrays(GL_TRIANGLES, 0, vertexCount); // draw triangles using VBO points from 0 up to vertexCount
-//    // unbind VAO
-//    glBindVertexArray(0); // '0' is a reserved index in GL meaning "none"
-
+void WorkspaceOccupancyGrid::computeOccpancy()
+{
 
 }

@@ -31,7 +31,7 @@
 #include "Graphic-pkg.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 const bool print_exploration = false;
 const bool print_rewiring = false;
@@ -148,7 +148,7 @@ bool StarExpansion::expandToGoal(Node* expansionNode,
  * Connect expansion method
  */
 int StarExpansion::connectExpandProcess(Node* expansionNode, 
-																				std::tr1::shared_ptr<Configuration> directionConfig, 
+																				MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, 
 																				Node* directionNode)
 {
 	cout << "StarExpansion::connectExpandProcess Not implemented" << endl;

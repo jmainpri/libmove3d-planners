@@ -193,12 +193,12 @@ namespace HRICS
 		/**
 		 * @brief The Confort configuration
 		 */
-		std::tr1::shared_ptr<Configuration> m_q_Confort;
+		MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_q_Confort;
 		
 		/**
 		 * @brief Weights associated to confort
 		 */
-		std::tr1::shared_ptr<Configuration> m_q_ConfortWeigths;
+		MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_q_ConfortWeigths;
 		
 		/**
 		 * Weigth associated to the joints limits function
@@ -217,8 +217,8 @@ namespace HRICS
     std::vector<double>        m_armHeightL;
     std::vector<double>        m_armHeightR;
 		
-		std::tr1::shared_ptr<Configuration> m_q_Init;
-		std::tr1::shared_ptr<Configuration> m_q_Goal;
+		MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_q_Init;
+		MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_q_Goal;
 		
 		/**
 		 * Sorted Cells

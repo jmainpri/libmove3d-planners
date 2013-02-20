@@ -58,7 +58,7 @@ namespace API
 		// Operations
 		void copyPaths( std::vector<LocalPath*>& vect );
 		
-		std::vector< std::tr1::shared_ptr<Configuration> > getTowConfigurationAtParam( double param1, double param2,
+		std::vector< MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> > getTowConfigurationAtParam( double param1, double param2,
                                                                                   uint& lp1, uint& lp2 );
 		
     std::pair<bool,std::vector<LocalPath*> > extractSubPortion(double param1,double param2,unsigned int& first,unsigned int& last, bool check_for_coll = true);
@@ -78,7 +78,7 @@ namespace API
 		uint cutPortionInSmallLP(std::vector<LocalPath*>& portion, uint nLP);
 		
 		void push_back(confPtr_t q);
-    bool push_back(std::tr1::shared_ptr<LocalPath> path);
+    bool push_back(MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> path);
 		
 		//---------------------------------------------------------
 		// Cost

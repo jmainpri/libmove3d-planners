@@ -27,7 +27,7 @@ public:
 	/**
 	 * Adds a Seed to the algorithm
 	 */
-	bool addSeed(std::tr1::shared_ptr<Configuration> q);
+	bool addSeed(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q);
 	
   /**
    * Get random compco for expansion

@@ -21,7 +21,7 @@
 #include "P3d-pkg.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 /*!
  * Constructors with default values
@@ -71,7 +71,7 @@ bool CostmapExpansion::expandToGoal(Node* expansionNode, shared_ptr<Configuratio
 /*!
  * Connect expansion method
  */
-int CostmapExpansion::connectExpandProcess(Node* expansionNode, std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode)
+int CostmapExpansion::connectExpandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode)
 {
 	bool failed(false);
 	int nbCreatedNodes(0);
@@ -123,7 +123,7 @@ int CostmapExpansion::connectExpandProcess(Node* expansionNode, std::tr1::shared
  * Extend expansion method
  */
 int CostmapExpansion::extendExpandProcess(Node* expansionNode, 
-																					std::tr1::shared_ptr<Configuration> directionConfig,
+																					MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
 																					Node* directionNode)
 {
 	bool failed(false);

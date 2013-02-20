@@ -24,7 +24,7 @@
 #include "move3d-headless.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 // import most common Eigen types 
 //USING_PART_OF_NAMESPACE_EIGEN
@@ -393,11 +393,11 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
   //	print()
 }
 
-std::tr1::shared_ptr<Configuration> Trajectory::operator [] ( const int &i ) const
+MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> Trajectory::operator [] ( const int &i ) const
 {
   if( i<0 || m_Courbe.empty() || (i>int(m_Courbe.size())))
   {
-    return std::tr1::shared_ptr<Configuration>(new Configuration(m_Robot));
+    return MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration>(new Configuration(m_Robot));
   }
   
   if(i == int(m_Courbe.size()))

@@ -24,7 +24,7 @@
 #include "Graphic-pkg.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 PerturbationRoadmap::PerturbationRoadmap(Robot* R, Graph* G)  : PRM(R,G)
 {

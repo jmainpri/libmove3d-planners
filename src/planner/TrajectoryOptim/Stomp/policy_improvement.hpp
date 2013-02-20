@@ -99,8 +99,8 @@ namespace stomp_motion_planner
      */
     bool initialize(const int num_rollouts, const int num_time_steps, const int num_reused_rollouts,
                     const int num_extra_rollouts, 
-                    boost::shared_ptr<stomp_motion_planner::Policy> policy,
-                    boost::shared_ptr<stomp_motion_planner::Task>   task,
+                    MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy,
+                    MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Task>   task,
                     bool use_cumulative_costs=true);
     
     /**
@@ -180,8 +180,8 @@ namespace stomp_motion_planner
     bool use_multiplication_by_m_;
     bool use_cumulative_costs_;                                             /**< Use cumulative costs or state costs? */
     
-    boost::shared_ptr<stomp_motion_planner::Policy> policy_;
-    boost::shared_ptr<stomp_motion_planner::Task>   task_;
+    MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy_;
+    MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Task>   task_;
     
     std::vector<Eigen::MatrixXd> control_costs_;                            /**< [num_dimensions] num_parameters x num_parameters */
     std::vector<Eigen::MatrixXd> inv_control_costs_;                        /**< [num_dimensions] num_parameters x num_parameters */

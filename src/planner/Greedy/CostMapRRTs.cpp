@@ -21,7 +21,7 @@
 #include "cost_space.hpp"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 #define FORIT(it, v) for(it = (v).begin(); it != (v).end(); (it)++)
 

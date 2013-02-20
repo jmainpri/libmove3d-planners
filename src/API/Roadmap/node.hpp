@@ -48,7 +48,7 @@ public:
 	 * @param C la Configuration stockée dans le Node
    * @param id the number in the graph (Graph->getNumberOfNodes)
 	 */
-	Node(Graph* G, std::tr1::shared_ptr<Configuration> C, bool newCompco=true);
+    Node(Graph* G, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> C, bool newCompco=true);
 	
 	/**
 	 * Constructeur de la classe
@@ -334,7 +334,7 @@ private:
 	Node* m_parent;
   bool m_is_leaf;
 	
-	std::tr1::shared_ptr<Configuration> m_Configuration;
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_Configuration;
 	bool _activ;
 	
 	double _SelectCost;

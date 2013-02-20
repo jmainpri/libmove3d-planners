@@ -31,7 +31,7 @@
 #endif
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
 
 // import most common Eigen types
@@ -2053,7 +2053,7 @@ OutputConf OTPMotionPl::showBestConf()
     return m_confList.at(id);
 }
 
-std::tr1::shared_ptr<Configuration> OTPMotionPl::getBestConf()
+MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> OTPMotionPl::getBestConf()
 {
     int id = 0;
     for (unsigned int i = 1; i < m_confList.size(); i++)

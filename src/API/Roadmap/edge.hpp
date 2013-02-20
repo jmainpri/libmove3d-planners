@@ -106,14 +106,14 @@ public:
 	 * Get the LocalPath associated
 	 * with the edge
 	 */
-	std::tr1::shared_ptr<LocalPath> getLocalPath();
+	MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> getLocalPath();
   
   
   /**
 	 * Set the LocalPath associated
 	 * with the edge
 	 */
-	 void setLocalPath(std::tr1::shared_ptr<LocalPath> pathPtr);
+	 void setLocalPath(MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> pathPtr);
 	
 	//--------------------------------------
 	// BGL
@@ -147,7 +147,7 @@ private:
 	BGL_Edge m_BGL_Descriptor;
 	
 	bool														m_is_LocalPath_Computed;
-	std::tr1::shared_ptr<LocalPath> m_path;
+	MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> m_path;
 };
 
 #endif

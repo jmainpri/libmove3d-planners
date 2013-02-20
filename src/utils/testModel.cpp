@@ -20,7 +20,7 @@
 //#include "Greedy/CollisionSpace.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 TestModel::TestModel() :
         nbColisionTest(10000000), nbLocalPathTest(1000000)

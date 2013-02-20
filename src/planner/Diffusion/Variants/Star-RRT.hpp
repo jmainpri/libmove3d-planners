@@ -59,7 +59,7 @@ public:
 	 * between epansionNode and directionConfig can expanded in the costspace
 	 */
 	bool expandToGoal(Node* expansionNode, 
-										std::tr1::shared_ptr<Configuration> directionConfig);
+										MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig);
   
   /**
    * Sample in tube
@@ -75,14 +75,14 @@ public:
 	 * Connect expansion method
 	 */
 	int connectExpandProcess(Node* expansionNode, 
-													 std::tr1::shared_ptr<Configuration> directionConfig, 
+													 MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, 
 													 Node* directionNode);
 	
 	/**
 	 * Extend expansion method
 	 */
 	int extendExpandProcess(Node* expansionNode, 
-													std::tr1::shared_ptr<Configuration> directionConfig, 
+													MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, 
 													Node* directionNode);
   
   /**
@@ -113,7 +113,7 @@ public:
 	 *
 	 * @return the number of nodes created
 	 */
-	unsigned expandProcess(Node* expansionNode, std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode,
+	unsigned expandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode,
 										Env::expansionMethod method);
 	
 private:

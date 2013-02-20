@@ -14,10 +14,10 @@
 #include "Collision-pkg.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
-const bool forward = true;
-const bool backward = false;
+const bool forward_s = true;
+const bool backward_s = false;
 
 LocalPathValidTest::LocalPathValidTest(const LocalPath& LP) : 
 	LocalPath(LP),
@@ -173,7 +173,7 @@ bool LocalPathValidTest::testClassic()
 		distances[j] = dist0;
 	}
 	
-	du = this->stayWithInDistance(u,forward,distances);
+    du = this->stayWithInDistance(u,forward_s,distances);
 	
 	u = du;
 	
@@ -236,7 +236,7 @@ bool LocalPathValidTest::testClassic()
 //		{
 //			q_atKpath = _Robot->getCurrentPos();
 //		}
-		du = this->stayWithInDistance(u,forward,distances);
+        du = this->stayWithInDistance(u,forward_s,distances);
 		
 		u += du;
 		

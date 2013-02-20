@@ -14,7 +14,7 @@
 #include "Planner-pkg.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 ThresholdPlanner::ThresholdPlanner(Robot* R, Graph* G) : TreePlanner(R,G)
 {

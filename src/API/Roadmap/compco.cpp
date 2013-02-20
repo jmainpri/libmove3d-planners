@@ -17,7 +17,7 @@
 #include <iterator>
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 ConnectedComponent::ConnectedComponent(Graph* G, p3d_compco* C) :
 m_Compco(C),

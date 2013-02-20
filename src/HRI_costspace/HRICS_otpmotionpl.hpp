@@ -181,13 +181,13 @@ namespace HRICS
           * chamge robot configuration to the one with the specified id in the correct list
           * return a pair of the resulting human and robot configuration
           */
-        std::pair<std::tr1::shared_ptr<Configuration>, std::tr1::shared_ptr<Configuration> > setRobotsToConf(int id, bool isStanding);
+        std::pair<MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration>, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> > setRobotsToConf(int id, bool isStanding);
 
         /**
           * chamge robot configuration to the one with the specified id in the correct list and placing human according to x, y and Rz
           * return a pair of the resulting human and robot configuration
           */
-        std::pair<std::tr1::shared_ptr<Configuration>, std::tr1::shared_ptr<Configuration> > setRobotsToConf(int id, bool isStanding, double x, double y, double Rz);
+        std::pair<MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration>, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> > setRobotsToConf(int id, bool isStanding, double x, double y, double Rz);
 
         // saving and reloading a configuration
         /**
@@ -297,7 +297,7 @@ namespace HRICS
         /**
         * get best conf
         */
-        std::tr1::shared_ptr<Configuration> getBestConf();
+        MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getBestConf();
 
         /**
         * show the best computed conf for the robot only

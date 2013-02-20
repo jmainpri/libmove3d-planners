@@ -31,7 +31,7 @@
 #include <sys/time.h>
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 //! Deactivate all kinematic constraints
 void p3d_deactivate_all_cntrts( Robot* r )

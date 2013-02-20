@@ -10,7 +10,7 @@
 #include "Planner-pkg.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 
 RRTExpansion::RRTExpansion() :
@@ -227,7 +227,7 @@ Node* RRTExpansion::getExpansionNode(Node* compNode, shared_ptr<Configuration> d
 }
 
 bool RRTExpansion::expandToGoal(Node* expansionNode,
-                                std::tr1::shared_ptr<Configuration> directionConfig)
+                                MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig)
 {
     return false;
 }

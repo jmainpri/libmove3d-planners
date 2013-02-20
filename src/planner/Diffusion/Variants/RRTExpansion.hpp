@@ -29,7 +29,7 @@ public:
      * @param Sampling passive mode
      * @param Direction node
      */
-    virtual std::tr1::shared_ptr<Configuration> getExpansionDirection(
+    virtual MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getExpansionDirection(
             Node* expandComp, Node* goalComp, bool samplePassive,Node*& directionNode);
 
     /**
@@ -40,7 +40,7 @@ public:
      * @param Sampling passive mode
      */
     virtual Node* getExpansionNode(
-            Node* compNode, std::tr1::shared_ptr<Configuration> direction, int distance);
+            Node* compNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> direction, int distance);
 	
 	/**
      * Expands towards the goal
@@ -49,7 +49,7 @@ public:
      * @param directionConfig   Direction
      */
     virtual bool expandToGoal(
-			Node* expansionNode,std::tr1::shared_ptr<Configuration> directionConfig);
+			Node* expansionNode,MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig);
 
 	/** 
 	 * expandProcess 
@@ -64,7 +64,7 @@ public:
 	 *
 	 * @return the number of nodes created
 	 */
-    virtual unsigned expandProcess(Node* expansionNode, std::tr1::shared_ptr<Configuration> directionConfig,
+    virtual unsigned expandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
                        Node* directionNode,
                        Env::expansionMethod method);
 

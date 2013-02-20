@@ -40,7 +40,7 @@
 #include <tr1/memory>
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 Eigen::Vector3d global_DrawnSphere;
 vector<Eigen::Vector3d> CXX_drawBox; 
@@ -429,8 +429,8 @@ void drawSlice(int opengl_context);
 //#ifdef HRI_COSTSPACE
 void g3d_draw_hrics(int opengl_context)
 {
-    if( workspace_grid )
-        workspace_grid->draw();
+    if( global_workspaceGrid )
+        global_workspaceGrid->draw();
 
     int OTPListSize = OTPList.size();
     if( ENV.getBool(Env::enableHri) )

@@ -268,6 +268,13 @@ IF(MULTILOCALPATH)
   SET(LIBS ${LIBS} ${SOFTMOTION_LIBRARIES})
 ENDIF(MULTILOCALPATH)
 
+#-------------- PolVox ----------------------------------------------------------
+
+FIND_PACKAGE(PolyVox REQUIRED)
+INCLUDE_directories(${PolyVox_INCLUDE_DIRS})
+SET(INCLUDE_DIRS ${PolyVox_INCLUDE_DIRS})
+SET(LIBS ${LIBS} ${PolyVox_LIBRARIES})
+
 #------------------- PKG_CONFIG ---------------------------
 #----------------------------------------------------------
 
@@ -382,7 +389,7 @@ IF(UNIX)
     ADD_DEFINITIONS(-DMACOSX -x c++)
     SET (CMAKE_SHARED_LINKER_FLAGS "-dynamiclib -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup")
   ELSE(APPLE)
-    ADD_DEFINITIONS(-DLINUX)
+    ADD_DEFINITIONS(-DLINUX -std=gnu++0x)
   ENDIF(APPLE)
 ELSE(UNIX)
  MESSAGE (FATAL_ERROR "Not supported Platform")

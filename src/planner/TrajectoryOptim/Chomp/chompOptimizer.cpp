@@ -602,7 +602,7 @@ void ChompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array)
   {
     int dof = joints[j].move3d_dof_index_;
     
-    if ( !isnan(joint_array[j]) ) 
+    if ( !std::isnan(joint_array[j]) )
     {
       q[dof]= joint_array[j];
     }
@@ -892,7 +892,7 @@ void ChompOptimizer::animateEndeffector()
       q[joints[j].move3d_dof_index_] = point[j];
     }
     
-    T.push_back( std::tr1::shared_ptr<Configuration>(new Configuration(q)) );
+    T.push_back( MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration>(new Configuration(q)) );
   }
   
   if( T.isValid() )

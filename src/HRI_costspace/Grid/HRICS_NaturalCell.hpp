@@ -91,7 +91,7 @@ namespace HRICS
 		
 		unsigned int m_NbDirections;
 		
-		std::tr1::shared_ptr<Configuration> m_QStored;
+		MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_QStored;
 		
 		GLint m_list;
 	};

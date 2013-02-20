@@ -9,6 +9,16 @@
 #include <Eigen/StdVector>
 #include <tr1/memory>
 
+#ifdef LINUX
+#define MOVE3D_USING_SHARED_PTR_NAMESPACE
+#define MOVE3D_PTR_NAMESPACE std
+#endif
+
+#ifdef MACOSX
+#define MOVE3D_USING_SHARED_PTR_NAMESPACE using namespace std::tr1
+#define MOVE3D_PTR_NAMESPACE std::tr1
+#endif
+
 class Robot;
 
 /**
@@ -144,7 +154,7 @@ public:
 	/**
 	 * Get Config in degrees
 	 */
-	std::tr1::shared_ptr<Configuration> getConfigInDegree();
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getConfigInDegree();
 	
 	/**
 	 * calcule la distance à une Configuration
@@ -223,7 +233,7 @@ public:
 	 * copie une Configuration
 	 * @return une copie de la Configuration
 	 */
-	std::tr1::shared_ptr<Configuration> copy();
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> copy();
 	
 	/**
 	 * copie les joints passifs de la Configuration courante dans la Configuration entrée
@@ -264,22 +274,22 @@ public:
 	/**
 	 *
 	 */
-	std::tr1::shared_ptr<Configuration> add(Configuration& C);
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> add(Configuration& C);
 	
 	/**
 	 * Adds tow configurations
 	 */
-	std::tr1::shared_ptr<Configuration> operator+(Configuration& Conf) { return this->add(Conf); }
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> operator+(Configuration& Conf) { return this->add(Conf); }
 	
 	/**
 	 *
 	 */
-	std::tr1::shared_ptr<Configuration> sub(Configuration& C);
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> sub(Configuration& C);
 	
 	/**
 	 * Adds tow configurations
 	 */
-	std::tr1::shared_ptr<Configuration> operator-(Configuration& Conf) { return this->sub(Conf); }
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> operator-(Configuration& Conf) { return this->sub(Conf); }
 	
 	/**
 	 *
@@ -324,6 +334,6 @@ private:
 	double* _Configuration;/*!< une structure de congitPt contenant les données sur la Configuration*/
 };
 
-typedef std::tr1::shared_ptr<Configuration> confPtr_t;
+typedef MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> confPtr_t;
 
 #endif

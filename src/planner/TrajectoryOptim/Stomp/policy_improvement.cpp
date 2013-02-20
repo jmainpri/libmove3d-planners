@@ -61,7 +61,7 @@ std::vector<double> global_noiseTrajectory1;
 std::vector<double> global_noiseTrajectory2;
 
 using namespace std;
-using namespace boost;
+//using namespace boost;
 
 USING_PART_OF_NAMESPACE_EIGEN
 
@@ -150,8 +150,8 @@ namespace stomp_motion_planner
                                      const int num_time_steps, 
                                      const int num_reused_rollouts,
                                      const int num_extra_rollouts, 
-                                     boost::shared_ptr<Policy> policy,
-                                     boost::shared_ptr<Task>   task,
+                                     MOVE3D_BOOST_PTR_NAMESPACE<Policy> policy,
+                                     MOVE3D_BOOST_PTR_NAMESPACE<Task>   task,
                                      bool use_cumulative_costs)
   {
     num_time_steps_ = num_time_steps;

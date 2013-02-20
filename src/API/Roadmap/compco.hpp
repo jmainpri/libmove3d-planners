@@ -103,7 +103,7 @@ public:
 	/**
 	 * Nearest weithed Neigboor
 	 */
-	Node* nearestWeightNeighbour(std::tr1::shared_ptr<Configuration> q, bool weighted, int distConfigChoice);
+	Node* nearestWeightNeighbour(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q, bool weighted, int distConfigChoice);
   
   /**
    * KNearest Weight Neighbours

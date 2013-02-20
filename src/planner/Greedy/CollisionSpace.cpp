@@ -21,7 +21,7 @@
 CollisionSpace* global_collisionSpace = NULL;
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 CollisionSpace::CollisionSpace(Robot* rob) : m_sampler(NULL)
 {

@@ -103,7 +103,7 @@ private:
 
     unsigned int m_NbDirections;
 
-    std::tr1::shared_ptr<Configuration> m_QStored;
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_QStored;
 
     GLint m_list;
 };
@@ -172,8 +172,8 @@ private:
     std::vector<AgentCell*>           m_CombinedCells;
 
     bool                                m_firstDisplay;
-    std::tr1::shared_ptr<Configuration> m_ActualConfig;
-    std::tr1::shared_ptr<Configuration> m_LastConfig;
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_ActualConfig;
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_LastConfig;
     Eigen::Transform3d                  m_RobotOriginPos;
 
 };

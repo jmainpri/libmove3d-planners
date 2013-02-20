@@ -32,7 +32,7 @@
 #include "Planner-pkg.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 vector<confPtr_t> multi_rrt_configs;
 
@@ -599,7 +599,7 @@ void MultiTransitionExpansion::adjustTemperature(bool accepted, Node* node, doub
 //	}
 }
 
-unsigned MultiTransitionExpansion::expandProcess(Node* expansionNode, std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode,
+unsigned MultiTransitionExpansion::expandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode,
                   Env::expansionMethod method)
 {
   //cout << "Expansion node cost = " <<  expansionNode->cost() << endl;

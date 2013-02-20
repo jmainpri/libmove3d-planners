@@ -32,11 +32,11 @@ namespace HRICS
     class OutputConf
     {
     public:
-        std::tr1::shared_ptr<Configuration> humanConf;
+        MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> humanConf;
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanTraj;
         bool humanTrajExist;
 
-        std::tr1::shared_ptr<Configuration> robotConf;
+        MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> robotConf;
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > robotTraj;
         bool robotTrajExist;
 
@@ -47,7 +47,7 @@ namespace HRICS
 
         void clearAll();
 
-        std::tr1::shared_ptr<Configuration> chairConf;
+        MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> chairConf;
 //        OutputConf& operator= (const OutputConf& o);
 
     };

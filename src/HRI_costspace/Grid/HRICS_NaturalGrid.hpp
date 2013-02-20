@@ -65,7 +65,7 @@ namespace HRICS
 		void setNaturalCostSpace(Natural* NCS) { m_NaturalCostSpace = NCS; setGridOrigin(); }
 		Natural* getNaturalCostSpace() { return m_NaturalCostSpace; }
 		Eigen::Transform3d getRobotOrigin() { return m_RobotOriginPos; }
-		//std::tr1::shared_ptr<Configuration> getActualConfig() { return m_ActualConfig; }
+		//MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getActualConfig() { return m_ActualConfig; }
 		
 		Robot* getRobot();
 
@@ -76,7 +76,7 @@ namespace HRICS
 	private:
 		Natural*													m_NaturalCostSpace;
 		bool															m_firstDisplay;
-		std::tr1::shared_ptr<Configuration> m_ActualConfig;
+		MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_ActualConfig;
 		Eigen::Transform3d								m_RobotOriginPos;
 	};
 }

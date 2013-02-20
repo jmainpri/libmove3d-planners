@@ -26,9 +26,9 @@ public:
 
 	virtual ~SamplingAPI();
 
-	virtual std::tr1::shared_ptr<Configuration> sample(bool samplePassive = true);
+    virtual MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> sample(bool samplePassive = true);
 
-	std::tr1::shared_ptr<Configuration> shootCollisionFree();
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> shootCollisionFree();
 };
 
 #endif

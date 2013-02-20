@@ -75,14 +75,14 @@ public:
      * @param policy
      * @return
      */
-    virtual bool getPolicy(boost::shared_ptr<stomp_motion_planner::Policy>& policy) = 0;
+    virtual bool getPolicy(MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy>& policy) = 0;
 
     /**
      * Sets the Policy object of this Task
      * @param policy
      * @return
      */
-    virtual bool setPolicy(const boost::shared_ptr<stomp_motion_planner::Policy> policy) = 0;
+    virtual bool setPolicy(const MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy) = 0;
 
     /**
      * Gets the weight of the control cost

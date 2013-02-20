@@ -1,7 +1,7 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/ConfigSpace/locapath.hpp"
 
-using std::tr1::shared_ptr;
+using MOVE3D_PTR_NAMESPACE::shared_ptr;
 
 LocalpathFactory::LocalpathFactory() {}
 

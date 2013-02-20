@@ -271,7 +271,7 @@ LinearTrajectory* RoboptimFactory::make_Roboptim(API::Trajectory& traj)
 	
 	try
 	{
-		std::tr1::shared_ptr<Configuration> q;
+		MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q;
 		
 		for ( int i=-1; i< traj.getNbOfPaths() ; i++) 
 		{
@@ -329,7 +329,7 @@ API::Trajectory*	RoboptimFactory::make_Move3D(LinearTrajectory& traj)
 		const int outputSize = traj.outputSize ();
 		ublas::vector<double> params = traj.parameters ();
 		
-		std::vector< std::tr1::shared_ptr<Configuration> > vect_conf;
+		std::vector< MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> > vect_conf;
 		
 		//std::cout << "Number of control points : " << traj.getNumberOfControlPoints() << std::endl;
 		//std::cout << "Output Size : " << outputSize << std::endl;
@@ -337,7 +337,7 @@ API::Trajectory*	RoboptimFactory::make_Move3D(LinearTrajectory& traj)
 
 		for ( int i=0; i< (int)(traj.getNumberOfControlPoints()); i++) 
 		{
-			std::tr1::shared_ptr<Configuration> q ( new Configuration(m_Robot) );
+			MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q ( new Configuration(m_Robot) );
 			
 			for ( int j=0; j< (int)outputSize; j++) 
 			{
@@ -369,7 +369,7 @@ Function( R->getNumberOfActiveDoF()*nbControlPoints,1,"CostMapFunction")
 
 void CostMapFunction::impl_compute (result_t& r , const argument_t& a) const throw ()
 {
-	std::vector< std::tr1::shared_ptr< Configuration > > vect_conf;
+	std::vector< MOVE3D_PTR_NAMESPACE::shared_ptr< Configuration > > vect_conf;
 	size_type outputSize = m_Robot->getNumberOfActiveDoF();
 	
 	if ( m_nbControlPoints*outputSize != a.size() ) 
@@ -379,7 +379,7 @@ void CostMapFunction::impl_compute (result_t& r , const argument_t& a) const thr
 	
 	for ( int i=0; i< (int)(m_nbControlPoints); i++) 
 	{
-		std::tr1::shared_ptr<Configuration> q ( new Configuration(m_Robot) );
+		MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q ( new Configuration(m_Robot) );
 		
 		for ( int j=0; j< (int)outputSize; j++) 
 		{
@@ -497,7 +497,7 @@ int RoboptimTrajectory::run_testManipulator()
 
 int RoboptimTrajectory::run_test1 ()
 {
-	using namespace boost;
+    //using namespace boost;
 	using namespace boost::assign;
 	
 	const double finalPos = 200.;

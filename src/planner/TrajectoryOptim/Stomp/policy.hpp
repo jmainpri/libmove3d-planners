@@ -41,6 +41,8 @@
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 
+#define MOVE3D_BOOST_PTR_NAMESPACE std::shared_ptr
+
 namespace stomp_motion_planner
 {
 

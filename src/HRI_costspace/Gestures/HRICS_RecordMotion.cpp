@@ -15,6 +15,33 @@ using namespace std;
 
 RecordMotion* global_motionRecorder=NULL;
 
+template <class T>
+bool convert_text_to_num(T& t,
+                 const std::string& s,
+                 std::ios_base& (*f)(std::ios_base&))
+{
+  std::istringstream iss(s);
+  return !(iss >> f >> t).fail();
+}
+
+std::vector< std::vector<double> > convert_text_matrix_to_double(const std::vector< std::vector< std::string > >& matrix )
+{
+    vector< vector<double> > result(matrix.size());
+
+    for( int i=0; i<int(matrix.size()); i++ )
+    {
+        result[i].resize( matrix[i].size() );
+
+        for( int j=0; j<int(matrix[i].size()); j++ )
+        {
+            std::istringstream convert( matrix[i][j] );
+            convert >> result[i][j];
+        }
+    }
+
+    return result;
+}
+
 RecordMotion::RecordMotion()
 {
     m_id_motion = 0;
@@ -300,7 +327,9 @@ void RecordMotion::showMotion( const motion_t& motion )
     double tu_last = 0.0;
     double dt = 0.0;
 
-    m_robot->setAndUpdate( *motion[0].second );
+    confPtr_t q_cur = motion[0].second;
+
+    m_robot->setAndUpdate( *q_cur );
     g3d_draw_allwin_active();
 
     while ( !StopRun )
@@ -313,15 +342,13 @@ void RecordMotion::showMotion( const motion_t& motion )
 
         if ( dt>=motion[i].first ) {
 
-//            (*motion[i].second)[6] = (*m_init_q)[6];
-//            (*motion[i].second)[7] = (*m_init_q)[7];
-//            (*motion[i].second)[11] = (*m_init_q)[11];
-//            (*motion[i].second)[12] = (*m_init_q)[12];
-//            (*motion[i].second)[13] = (*m_init_q)[13];
-//            (*motion[i].second)[14] = (*m_init_q)[14];
-            m_robot->setAndUpdate( *motion[i].second );
+//            cout << "-------------------------------" << endl;
+//            q_cur->equal( *motion[i].second, true );
+            q_cur = motion[i].second;
+            m_robot->setAndUpdate( *q_cur );
 //            cout << "dt : " << dt << " , m_motion[i].first : " << motion[i].first << endl;
 //            motion[i].second->print();
+//            cout << (*motion[i].second)[11] << endl;
             g3d_draw_allwin_active();
             dt = 0.0;
             i++;
@@ -362,53 +389,93 @@ motion_t RecordMotion::extractSubpart( int begin, int end, const motion_t& motio
 
 void RecordMotion::saveStoredToCSV( const std::string &filename )
 {
-    cout << "down sampling" << endl;
+    if( m_stored_motions.empty() )
+    {
+        cout << "No stored motion in " << __func__ << endl;
+        return;
+    }
+
+    const int samples = 100;
+    cout << "Down sampling to " << samples << " points" << endl;
     for (int i=0; i<int(m_stored_motions.size()); i++)
     {
-        int samples = 100;
         double inc = double(m_stored_motions[i].size())/double(samples);
         double k =0; motion_t motion;
 
         for (int j=0; j<samples; j++)
         {
-            motion.push_back( m_stored_motions[i][floor(k)] );
+            confPtr_t q(new Configuration(*m_stored_motions[i][floor(k)].second));
+            q->adaptCircularJointsLimits();
+            motion.push_back( make_pair(0.02,q) );
             k += inc;
         }
-        cout << "m_stored_motions[i].size() : " << m_stored_motions[i].size() << endl;
-        cout << "k : " << k << endl;
+//        cout << "m_stored_motions[i].size() : " << m_stored_motions[i].size() << endl;
+//        cout << "k : " << k << endl;
         m_stored_motions[i] = motion;
     }
 
     std::ofstream s;
     s.open( filename.c_str() );
-    //cout << "Opening save file : " << oss.str() << endl;
+    cout << "Opening save file : " << filename << endl;
 
     Eigen::Vector3d pos;
+    Eigen::Transform3d T;
+
+    const bool save_cartesian=false;
 
     for (int i=0; i<int(m_stored_motions.size()); i++)
     {
         for (int j=0; j<int(m_stored_motions[i].size()); j++)
         {
-            m_robot->setAndUpdate( *m_stored_motions[i][j].second );
+            s << j << ",";
 
-            Eigen::Transform3d T( m_robot->getJoint("Pelvis")->getMatrixPos().inverse() );
+            if( save_cartesian )
+            {
+                m_robot->setAndUpdate( *m_stored_motions[i][j].second );
 
-            s << j << ";";
+                if( j == 0)
+                {
+                    T = m_robot->getJoint("Pelvis")->getMatrixPos().inverse();
+                }
 
-            pos = T*m_robot->getJoint("rWristX")->getVectorPos();
-            for (int k=0; k<int(pos.size()); k++)
-                s << pos[k] << ";";
+                pos = T*m_robot->getJoint("rWristX")->getVectorPos();
+                for (int k=0; k<int(pos.size()); k++)
+                    s << pos[k] << ",";
 
-            pos = T*m_robot->getJoint("rElbowZ")->getVectorPos();
-            for (int k=0; k<int(pos.size()); k++)
-                s << pos[k] << ";";
+                pos = T*m_robot->getJoint("rElbowZ")->getVectorPos();
+                for (int k=0; k<int(pos.size()); k++)
+                    s << pos[k] << ",";
 
-            s << endl;
+                s << endl;
+            }
+            else
+            {
+                // This is because the data was recorded near limits
+                s << (*m_stored_motions[i][j].second)[6] << ","; // Pelvis
+                s << (*m_stored_motions[i][j].second)[7] << ","; // Pelvis
+                s << (*m_stored_motions[i][j].second)[8] << ","; // Pelvis
+                s << (*m_stored_motions[i][j].second)[11] << ","; // Pelvis
+                s << (*m_stored_motions[i][j].second)[12] << ","; // TorsoX
+                s << (*m_stored_motions[i][j].second)[13] << ","; // TorsoY
+                s << (*m_stored_motions[i][j].second)[14] << ","; // TorsoZ
+
+                s << (*m_stored_motions[i][j].second)[18] << ","; // rShoulderX
+                s << (*m_stored_motions[i][j].second)[19] << ","; // rShoulderZ
+                s << (*m_stored_motions[i][j].second)[20] << ","; // rShoulderY
+                s << (*m_stored_motions[i][j].second)[21] << ","; // rArmTrans
+                s << (*m_stored_motions[i][j].second)[22] << endl; // rElbowZ
+
+//                s << (*m_stored_motions[i][j].second)[27] << ","; // lShoulderX
+//                s << (*m_stored_motions[i][j].second)[28] << ","; // lShoulderZ
+//                s << (*m_stored_motions[i][j].second)[29] << ","; // lShoulderY
+//                s << (*m_stored_motions[i][j].second)[30] << ","; // lArmTrans
+//                s << (*m_stored_motions[i][j].second)[31] << endl; // lElbowZ
+            }
         }
     }
 
     s << endl;
-    //cout << "Closing save file" << endl;
+    cout << "Saved " << m_stored_motions.size() << " stored motions" << endl;
     s.close();
 }
 
@@ -428,11 +495,11 @@ void RecordMotion::saveToCSV( const std::string &filename, const motion_t& motio
 
         pos = T*m_robot->getJoint("rWristX")->getVectorPos();
         for (int j=0; j<int(pos.size()); j++)
-            s << pos[j] << ";";
+            s << pos[j] << ",";
 
         pos = T*m_robot->getJoint("rElbowZ")->getVectorPos();
         for (int j=0; j<int(pos.size()); j++)
-            s << pos[j] << ";";
+            s << pos[j] << ",";
 
         s << endl;
     }
@@ -440,4 +507,79 @@ void RecordMotion::saveToCSV( const std::string &filename, const motion_t& motio
     s << endl;
     //cout << "Closing save file" << endl;
     s.close();
+}
+
+void RecordMotion::loadRegressedFromCSV()
+{
+    string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/regressed_trajectories/joints/";
+
+    m_stored_motions.clear();
+
+    loadFromCSV( foldername + "traj_class_1.csv" );
+    loadFromCSV( foldername + "traj_class_2.csv" );
+    loadFromCSV( foldername + "traj_class_3.csv" );
+    loadFromCSV( foldername + "traj_class_4.csv" );
+}
+
+void RecordMotion::loadFromCSV( const std::string& filename )
+{
+    cout << "Loading from CSV" << endl;
+
+    std::ifstream       file( filename.c_str() );
+    std::vector< std::vector<std::string> >   matrix;
+    std::vector< std::string >   row;
+    std::string                line;
+    std::string                cell;
+
+    while( file )
+    {
+        std::getline(file,line);
+        std::stringstream lineStream(line);
+        row.clear();
+
+        while(std::getline( lineStream, cell, ',' ))
+        {
+            row.push_back( cell );
+        }
+
+        if( !row.empty() )
+            matrix.push_back( row );
+    }
+
+    if( matrix.empty() ) {
+        cout << "no data has been loaded" << endl;
+        return;
+    }
+    cout << "matrix fully loaded" << endl;
+    cout << "size : " << matrix.size() << " , " << matrix[0].size() << endl;
+
+    motion_t motion;
+
+    for (int i=0; i<int(matrix.size()); i++)
+    {
+        confPtr_t q = m_robot->getCurrentPos();
+
+        motion.push_back( make_pair(0.02,q) );
+//        cout << "Add configuration " << i << endl;
+
+        convert_text_to_num<double>( (*q)[6], matrix[i][1], std::dec ); // Pelvis
+        convert_text_to_num<double>( (*q)[7], matrix[i][2], std::dec ); // Pelvis
+        convert_text_to_num<double>( (*q)[8], matrix[i][3], std::dec ); // Pelvis
+        convert_text_to_num<double>( (*q)[11], matrix[i][4], std::dec ); // Pelvis
+        convert_text_to_num<double>( (*q)[12], matrix[i][5], std::dec ); // TorsoX
+        convert_text_to_num<double>( (*q)[13], matrix[i][6], std::dec ); // TorsoY
+        convert_text_to_num<double>( (*q)[14], matrix[i][7], std::dec ); // TorsoZ
+
+        convert_text_to_num<double>( (*q)[18], matrix[i][8], std::dec ); // rShoulderX
+        convert_text_to_num<double>( (*q)[19], matrix[i][9], std::dec ); // rShoulderZ
+        convert_text_to_num<double>( (*q)[20], matrix[i][10], std::dec ); // rShoulderY
+        convert_text_to_num<double>( (*q)[21], matrix[i][11], std::dec ); // rArmTrans
+        convert_text_to_num<double>( (*q)[22], matrix[i][12], std::dec ); // rElbowZ
+
+        // This is because the data was recorded near limits
+        q->adaptCircularJointsLimits();
+//        q->print();
+     }
+
+    m_stored_motions.push_back( motion );
 }

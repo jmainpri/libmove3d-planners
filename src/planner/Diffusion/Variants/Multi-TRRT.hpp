@@ -63,7 +63,7 @@ public:
   
   Node* getExpansionNode( Node* compNode, confPtr_t direction, int distance);
   
-	unsigned expandProcess(Node* expansionNode, std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode,
+	unsigned expandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode,
                     Env::expansionMethod method);
   
   MultiTRRT* rrt;

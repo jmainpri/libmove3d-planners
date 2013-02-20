@@ -35,13 +35,13 @@ public:
     /**
      * EST Special case
      */
-    std::tr1::shared_ptr<Configuration> getExpansionDirection(Node* expansionNode,Node* toComp);
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getExpansionDirection(Node* expansionNode,Node* toComp);
 
     /**
      * EST Special case
      */
     Node* expandProcessEST( Node* expansionNode,
-                            std::tr1::shared_ptr<Configuration> directionConfig,
+                            MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
                             int& nbOfNodesAdded);
 
     /**

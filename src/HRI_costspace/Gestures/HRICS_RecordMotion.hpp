@@ -23,6 +23,8 @@ public:
 
     motion_t loadFromXml(const std::string &filename);
     void loadMotionFromMultipleFiles( const std::string& baseFilename, int number_of_files );
+    void loadRegressedFromCSV();
+    void loadFromCSV( const std::string& filename );
 
     void storeMotion( const motion_t& motion, bool new_motion = true);
     void addToCurrentMotion( const motion_t& motion );
@@ -38,6 +40,8 @@ public:
     motion_t extractSubpart(int init, int end, const motion_t& motion);
 
     void incrementMotionId() { m_id_motion++; }
+
+    std::vector<motion_t> getStoredMotions() { return m_stored_motions; }
 
     bool m_is_recording;
 

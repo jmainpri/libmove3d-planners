@@ -15,7 +15,7 @@
 #include "API/Roadmap/graph.hpp"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 EST::EST(Robot* R,Graph* G) :
 TreePlanner(R,G)

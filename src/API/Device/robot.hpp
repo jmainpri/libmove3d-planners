@@ -127,19 +127,19 @@ public:
 	 * @param samplePassive (default = TRUE) indique si l'on tire les joints passif ou non (ie. FALSE dans le cas de ML-RRT)
 	 * @return la Configuration tirée
 	 */
-	std::tr1::shared_ptr<Configuration> shoot(bool samplePassive = false);
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> shoot(bool samplePassive = false);
 	
 	/**
 	 * obtient une Configuration-Direction aléatoire pour le Robot
 	 * @param samplePassive (default = true) indique si l'on tire les joints passif ou non (ie. FALSE dans le cas de ML-RRT)
 	 * @return la Configuration tirée
 	 */ 
-	std::tr1::shared_ptr<Configuration> shootDir(bool samplePassive = false);
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> shootDir(bool samplePassive = false);
 	
 	/**
 	 * shoots the active free flyer inside a box
 	 */
-	std::tr1::shared_ptr<Configuration> shootFreeFlyer(double* box);
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> shootFreeFlyer(double* box);
   
   /**
 	 * set and update the active free flyer
@@ -175,7 +175,7 @@ public:
 	 * obtient la Configuration current du Robot
 	 * @return la Configuration current du Robot
 	 */
-	std::tr1::shared_ptr<Configuration> getInitialPosition();
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getInitialPosition();
 	
 	/**
 	 * Returns true if the robot is 
@@ -198,7 +198,7 @@ public:
 	 * obtient la Configuration GoTo du Robot
 	 * @return la Configuration GoTo du Robot
 	 */
-	std::tr1::shared_ptr<Configuration> getGoTo();
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getGoTo();
 	
 	/**
 	 * Sets the Goto Position of the Robot
@@ -208,12 +208,12 @@ public:
 	/**
 	 * Returns the Robot current Configuration
 	 */
-	std::tr1::shared_ptr<Configuration> getCurrentPos();
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getCurrentPos();
 	
 	/**
 	 * Returns a new configuration
 	 */
-	std::tr1::shared_ptr<Configuration> getNewConfig();
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getNewConfig();
 	
 	/**
 	 * Get the Robot joint AbsPos
@@ -267,22 +267,22 @@ public:
 	/**
 	 * Shoots a random direction
 	 */
-	std::tr1::shared_ptr<Configuration> shootRandomDirection();
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> shootRandomDirection();
 	
 	/**
 	 * Shoots the base Joint of the robot
 	 */
-	std::tr1::shared_ptr<Configuration> shootBase();
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> shootBase();
 	
 	/**
 	 *
 	 */
-	std::tr1::shared_ptr<Configuration> shootBaseWithoutCC();
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> shootBaseWithoutCC();
 	
 	/**
 	 * Shoots the base Joint of the robot
 	 */
-	std::tr1::shared_ptr<Configuration> shootAllExceptBase();
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> shootAllExceptBase();
 	
 	/**
 	 * Update but not base

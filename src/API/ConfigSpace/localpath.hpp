@@ -25,7 +25,7 @@ public:
 	 * @param B la Configuration initiale du LocalPath
 	 * @param E la Configuration finale du LocalPath
 	 */
-	LocalPath(std::tr1::shared_ptr<Configuration> B, std::tr1::shared_ptr<
+	LocalPath(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> B, MOVE3D_PTR_NAMESPACE::shared_ptr<
 			Configuration> E);
 	
 	/**
@@ -62,12 +62,12 @@ public:
 	 * obtient la configuration initiale
 	 * @return la configuration initiale
 	 */
-	std::tr1::shared_ptr<Configuration> getBegin();
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getBegin();
 	/**
 	 * obtient la configuration finale
 	 * @return la configuration finale
 	 */
-	std::tr1::shared_ptr<Configuration> getEnd();
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getEnd();
 
 	/**
 	 * obtient le Graph pour lequel le LocalPath est créé
@@ -109,7 +109,7 @@ public:
 	 * @param p in/out le paramètre correspondant à la dernière Configauration valide
 	 * @return la dernière Configuration valide le long du LocalPath
 	 */
-	std::tr1::shared_ptr<Configuration> getLastValidConfig(double& p);
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getLastValidConfig(double& p);
 	
 	/**
 	 * Set the localpath as untested
@@ -153,7 +153,7 @@ public:
 	 * @param dist la distance par rapport au début
 	 * @return la Configuration
 	 */
-	std::tr1::shared_ptr<Configuration> configAtDist(double dist);
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> configAtDist(double dist);
 
 	/**
 	 * obtient une Configuration se trouvant sur le LocalPath à un paramètre donnée
@@ -161,7 +161,7 @@ public:
 	 * @param param le paramètre
 	 * @return la Configuration
 	 */
-	std::tr1::shared_ptr<Configuration> configAtParam(double param);
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> configAtParam(double param);
 
 	/**
 	 * Stay within dist
@@ -222,8 +222,8 @@ public:
 protected:
 	Robot* _Robot;	
 	
-	std::tr1::shared_ptr<Configuration> _Begin;
-	std::tr1::shared_ptr<Configuration> _End;
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> _Begin;
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> _End;
 
 
 private:
@@ -233,7 +233,7 @@ private:
 	bool _Valid;
 	bool _Evaluated;
 	double _lastValidParam;
-	std::tr1::shared_ptr<Configuration> _lastValidConfig;
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> _lastValidConfig;
 	bool _lastValidEvaluated;
 	int _NbColTest;
   

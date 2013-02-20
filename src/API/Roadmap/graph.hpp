@@ -226,7 +226,7 @@ public:
 	 * @param from the Node
 	 * @return the linked Node
 	 */
-	Node* insertConfigurationAsNode(std::tr1::shared_ptr<Configuration> q, Node* from, double step );
+	Node* insertConfigurationAsNode(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q, Node* from, double step );
 	
 	/**
 	 * trie les Edges en fonction de leur longueur

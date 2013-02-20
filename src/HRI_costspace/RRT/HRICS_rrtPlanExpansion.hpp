@@ -34,13 +34,13 @@ public:
     /**
       * Direction used in RRT one step
       */
-    std::tr1::shared_ptr<Configuration> getExpansionDirection(
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getExpansionDirection(
             Node* expandComp, Node* goalComp, bool samplePassive, Node*& directionNode);
 
     /**
       * Configuration from the next cell along the 3dPath
       */
-    std::tr1::shared_ptr<Configuration> getConfigurationInNextCell(Node* node);
+    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getConfigurationInNextCell(Node* node);
 
     /**
       * Adds a node to a conected component

@@ -38,7 +38,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 //namespace chomp
 //{
@@ -235,7 +235,7 @@ void ChompTrajectory::getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt
   for (int i=0; i<num_joints_; i++)
   {
     jnt_array(i) = trajectory_(traj_point,i);
-    if ( isnan(jnt_array(i)) ) 
+    if ( std::isnan(jnt_array(i)) )
     {
       jnt_array(i) = 0;
     }

@@ -9,7 +9,7 @@
 
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 GreedyCost::GreedyCost(p3d_graph* G, int(*stop_func)(), void(*draw_func)()) :
 

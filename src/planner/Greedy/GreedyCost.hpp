@@ -23,7 +23,7 @@ public:
 	void createVectorLocalPath();
 
 	int strait(Node& expansionNode,
-			std::tr1::shared_ptr<Configuration> directionConfig,
+			MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
 		     Node* directionNode,
 		     Env::expansionMethod method,
 		     bool toGoal);

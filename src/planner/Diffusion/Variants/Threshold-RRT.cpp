@@ -36,7 +36,7 @@
 #include "Planner-pkg.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 /*!
  * Constructors with default values
@@ -97,7 +97,7 @@ bool ThresholdExpansion::expandToGoal(Node* expansionNode, shared_ptr<Configurat
 /*!
  * Connect expansion method
  */
-int ThresholdExpansion::connectExpandProcess(Node* expansionNode, std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode)
+int ThresholdExpansion::connectExpandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode)
 {
 	cout << "ThresholdExpansion::connectExpandProcess Not implemented" << endl;
 	return 0;
@@ -106,7 +106,7 @@ int ThresholdExpansion::connectExpandProcess(Node* expansionNode, std::tr1::shar
 /*!
  * Extend expansion method
  */
-int ThresholdExpansion::extendExpandProcess(Node* expansionNode, std::tr1::shared_ptr<Configuration> directionConfig, Node* directionNode)
+int ThresholdExpansion::extendExpandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode)
 {
 	bool failed(false);
   int nbCreatedNodes(0);

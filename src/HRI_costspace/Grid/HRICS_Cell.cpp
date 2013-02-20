@@ -11,7 +11,7 @@
 //HRICS::MainPlanner* HRICS_MOPL = NULL;
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
 
 // import most common Eigen types 

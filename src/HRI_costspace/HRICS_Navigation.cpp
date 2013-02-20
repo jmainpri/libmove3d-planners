@@ -21,7 +21,7 @@
 std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   path_to_draw;
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace Eigen;
 using namespace HRICS;
 

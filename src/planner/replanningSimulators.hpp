@@ -24,7 +24,7 @@ public:
   void set_multithread_graphical(bool enable);
   
   void store_traj_to_vect(API::Trajectory& traj, double step);
-  void store_exploration(const API::Trajectory& traj, double lPrev, double lNext, std::tr1::shared_ptr<Configuration> qNew);
+  void store_exploration(const API::Trajectory& traj, double lPrev, double lNext, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> qNew);
   void store_traj_to_draw(const API::Trajectory& traj, double step);
   void store_graph_to_draw(const Graph& graph);
   

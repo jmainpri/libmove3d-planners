@@ -57,7 +57,7 @@
 #include <boost/shared_ptr.hpp>
 
 using namespace std;
-using namespace boost;
+//using namespace boost;
 
 namespace stomp_motion_planner
 {
@@ -72,7 +72,7 @@ namespace stomp_motion_planner
   {
   }
 
-  bool PolicyImprovementLoop::initialize(boost::shared_ptr<stomp_motion_planner::Task> task, bool singleRollout )
+  bool PolicyImprovementLoop::initialize(MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Task> task, bool singleRollout )
   {
     //node_handle_ = node_handle;
     task->getPolicy(policy_);

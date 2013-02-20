@@ -70,7 +70,7 @@ public:
 	 */
 	confPtr_t diffuseOneConf(confPtr_t qCurrent)
 	{
-		std::tr1::shared_ptr<LocalPath> path = std::tr1::shared_ptr<LocalPath> (new LocalPath(
+		MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> path = MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> (new LocalPath(
 																							  qCurrent, _Robot->shoot()));
 		
 		return path->configAtParam(std::min(path->length(), _expan->step()));

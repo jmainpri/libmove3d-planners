@@ -21,8 +21,8 @@ public:
 	virtual ~LocalpathFactory();
 
 	virtual Localpath* create(
-			std::tr1::shared_ptr<Configuration> q1,
-			std::tr1::shared_ptr<Configuration> q2);
+			MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q1,
+			MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q2);
 };
 
 #endif

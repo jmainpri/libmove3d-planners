@@ -24,7 +24,7 @@ extern void* GroundCostObj;
 CostSpace* global_costSpace(NULL);
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 //using std::string;
 //------------------------------------------------------------------------------
@@ -316,7 +316,7 @@ double CostSpace::getPr2ArmDistance( Robot* robot, Eigen::VectorXd& q_i, Eigen::
         dist = fabs(q_f[k] - q_i[k]);
       }
       
-      if (isnan(dist)) {
+      if (std::isnan(dist)) {
         printf("Distance computation error !!!\n");
         return P3D_HUGE;
       }

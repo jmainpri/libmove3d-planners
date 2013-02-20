@@ -199,7 +199,7 @@ namespace HRICS
     /**
      * Test if Jido (Base?) is in collision in this configuration
      */
-		bool sampleRobotBase(std::tr1::shared_ptr<Configuration> q_base, const Eigen::Vector3d& WSPoint);
+		bool sampleRobotBase(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q_base, const Eigen::Vector3d& WSPoint);
 
     /**
      * find a position where the robot can probably pick the objects on the list
@@ -209,8 +209,8 @@ namespace HRICS
     /**
      * Test if Jido is in collision in this configuration (?)
      */
-		bool transPFromBaseConf(std::tr1::shared_ptr<Configuration> q_base, std::vector< Eigen::Vector3d > points );
-		bool baseInSight(std::tr1::shared_ptr<Configuration> q_base);
+		bool transPFromBaseConf(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q_base, std::vector< Eigen::Vector3d > points );
+		bool baseInSight(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q_base);
 		
     /**
      * Set the OTP from given point
@@ -225,7 +225,7 @@ namespace HRICS
     /**
      * testColision for the given configuration
      */
-    bool testCol(std::tr1::shared_ptr<Configuration> q_base);
+    bool testCol(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q_base);
 
     /**
      * set Repo Pose of PR2

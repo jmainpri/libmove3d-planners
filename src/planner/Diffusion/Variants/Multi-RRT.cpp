@@ -18,7 +18,7 @@
 #include "Graphic-pkg.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 MultiRRT::MultiRRT(Robot* R, Graph* G) :
 RRT(R,G)

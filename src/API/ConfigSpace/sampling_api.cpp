@@ -1,7 +1,7 @@
 #include "API/Device/robot.hpp"
 #include "API/ConfigSpace/configuration.hpp"
 
-using std::tr1::shared_ptr;
+using MOVE3D_PTR_NAMESPACE::shared_ptr;
 
 SamplingAPI::~SamplingAPI() {}
 

@@ -48,7 +48,7 @@ public:
 	/**
 	 *
 	 */
-	std::tr1::shared_ptr<Configuration> getLastValidConfiguration();
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getLastValidConfiguration();
 	
 private:
 	
@@ -70,7 +70,7 @@ private:
 	
 	bool mMicrocollisionAvoidance;
 	
-	std::tr1::shared_ptr<Configuration> mLastValidConfiguration;
+	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> mLastValidConfiguration;
 	
 	unsigned int mNbTest;
 

@@ -116,8 +116,8 @@ public:
 	 * Computes a localpath parameter used for expansion
 	 * of at max step() of length
 	 */
-	LocalPath getExtensiontPath(std::tr1::shared_ptr<Configuration> qi,
-															std::tr1::shared_ptr<Configuration> qf );
+	LocalPath getExtensiontPath(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> qi,
+															MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> qf );
 	
 	/**
 	 * Function called when a node can not be connected
@@ -141,9 +141,9 @@ public:
 	 * Returns a valid configuration on the local path
 	 */
 	bool nextStep(LocalPath& path,
-								std::tr1::shared_ptr<Configuration>& directionConfig,
+								MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration>& directionConfig,
 								double& pathDelta,
-								std::tr1::shared_ptr<LocalPath>& newPath,
+								MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath>& newPath,
 								Env::expansionMethod method);
 	
 	/**
@@ -152,7 +152,7 @@ public:
 	bool nextStep(LocalPath& path,
 								Node* directionNode,
 								double& pathDelta,
-								std::tr1::shared_ptr<LocalPath>& newPath,
+								MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath>& newPath,
 								Env::expansionMethod method);
 	
 	/** 
@@ -169,7 +169,7 @@ public:
 	 * @return the number of nodes created
 	 */
 	virtual unsigned expandProcess(Node* expansionNode,
-														std::tr1::shared_ptr<Configuration> directionConfig,
+														MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
 														Node* directionNode, Env::expansionMethod method) = 0;
   
   /**

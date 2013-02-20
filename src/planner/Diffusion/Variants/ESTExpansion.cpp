@@ -13,7 +13,7 @@
 #include "Planner-pkg.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 ESTExpansion::ESTExpansion() :
         RRTExpansion()
@@ -103,7 +103,7 @@ shared_ptr<Configuration> ESTExpansion::getExpansionDirection(
  * EST
  */
 Node* ESTExpansion::expandProcessEST( Node* expansionNode,
-                                             std::tr1::shared_ptr<Configuration> directionConfig,
+                                             MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
                                              int& nbCreatedNodes)
 {
     shared_ptr<Configuration> fromConfig = expansionNode->getConfiguration();

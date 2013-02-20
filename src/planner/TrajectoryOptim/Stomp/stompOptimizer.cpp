@@ -67,7 +67,7 @@ const double hack_tweek = 1;
 //--------------------------------------------------------
 // External
 //--------------------------------------------------------
-boost::shared_ptr<stomp_motion_planner::StompOptimizer> optimizer;
+MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> optimizer;
 
 namespace stomp_motion_planner
 {
@@ -242,7 +242,7 @@ namespace stomp_motion_planner
     // initialize the constraints:
     //  for (int i=0; i<int(constraints_.orientation_constraints.size()); ++i)
     //  {
-    //    boost::shared_ptr<OrientationConstraintEvaluator> eval(new OrientationConstraintEvaluator(
+    //    MOVE3D_BOOST_PTR_NAMESPACE<OrientationConstraintEvaluator> eval(new OrientationConstraintEvaluator(
     //        constraints_.orientation_constraints[i], *robot_model_));
     //    constraint_evaluators_.push_back(eval);
     //  }
@@ -421,7 +421,7 @@ namespace stomp_motion_planner
     double t_init = tim.tv_sec+(tim.tv_usec/1000000.0);
     time_ = 0.0;
     
-    stomp_statistics_ = boost::shared_ptr<StompStatistics>(new StompStatistics());
+    stomp_statistics_ = MOVE3D_BOOST_PTR_NAMESPACE<StompStatistics>(new StompStatistics());
     stomp_statistics_->run_id = idRun;
     stomp_statistics_->collision_success_iteration = -1;
     stomp_statistics_->success_iteration = -1;
@@ -694,7 +694,7 @@ namespace stomp_motion_planner
     full_trajectory_ = new ChompTrajectory( traj, DIFF_RULE_LENGTH, *planning_group_ );
     group_trajectory_ = *full_trajectory_;
     
-    stomp_statistics_ = boost::shared_ptr<StompStatistics>(new StompStatistics());
+    stomp_statistics_ = MOVE3D_BOOST_PTR_NAMESPACE<StompStatistics>(new StompStatistics());
     stomp_statistics_->collision_success_iteration = -1;
     stomp_statistics_->success_iteration = -1;
     stomp_statistics_->success = false;
@@ -1060,7 +1060,7 @@ namespace stomp_motion_planner
     {
       int dof = joints[j].move3d_dof_index_;
       
-      if ( !isnan(joint_array[j]) ) 
+      if ( !std::isnan(joint_array[j]) )
       {
         q[dof]= joint_array[j];
       }
@@ -2049,13 +2049,13 @@ namespace stomp_motion_planner
     policy_->setParameters( parameters );
   }
   
-  bool StompOptimizer::getPolicy(boost::shared_ptr<stomp_motion_planner::Policy>& policy)
+  bool StompOptimizer::getPolicy(MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy>& policy)
   {
     policy = policy_;
     return true;
   }
   
-  bool StompOptimizer::setPolicy(const boost::shared_ptr<stomp_motion_planner::Policy> policy)
+  bool StompOptimizer::setPolicy(const MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy)
   {
     return true;
   }
@@ -2109,7 +2109,7 @@ namespace stomp_motion_planner
     policy_->setParameters(policy_parameters_);
   }
   
-  void StompOptimizer::setSharedPtr(boost::shared_ptr<StompOptimizer>& ptr)
+  void StompOptimizer::setSharedPtr(MOVE3D_BOOST_PTR_NAMESPACE<StompOptimizer>& ptr)
   {
     this_shared_ptr_ = ptr;
   }

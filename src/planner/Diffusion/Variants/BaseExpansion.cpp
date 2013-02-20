@@ -16,7 +16,7 @@
 #include "Planner-pkg.h"
 
 using namespace std;
-using namespace tr1;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 BaseExpansion::BaseExpansion() :
 m_ExpansionNodeMethod(NEAREST_EXP_NODE_METH),

@@ -59,7 +59,7 @@ public:
 
 //    bool initializeAndRunTaskByName(/*ros::NodeHandle& node_handle,*/ std::string& task_name);
 
-    bool initialize(boost::shared_ptr<Task> task, bool singleRollout);
+    bool initialize(MOVE3D_BOOST_PTR_NAMESPACE<Task> task, bool singleRollout);
     bool runSingleIteration(int iteration_number);
   
     /**
@@ -90,8 +90,8 @@ private:
     int limits_violations_;
     double K_;
   
-    boost::shared_ptr<Task> task_;
-    boost::shared_ptr<Policy> policy_;
+    MOVE3D_BOOST_PTR_NAMESPACE<Task> task_;
+    MOVE3D_BOOST_PTR_NAMESPACE<Policy> policy_;
 
     PolicyImprovement policy_improvement_;
   
