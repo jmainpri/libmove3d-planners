@@ -45,6 +45,7 @@ private:
 //    void init_one_cube();
     void init_drawing();
     void transform_cubes();
+    void draw_voxels( const std::vector<int>& indices );
 
     Robot* m_human;
     bool   m_drawing;
