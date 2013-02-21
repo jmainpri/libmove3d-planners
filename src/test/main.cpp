@@ -27,7 +27,6 @@ int main(int argc, char *argv[])
 {
     string home, filename;
 
-
     home =  getenv("HOME_MOVE3D");
     if ( "" == home )
     {

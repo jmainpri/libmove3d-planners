@@ -429,7 +429,8 @@ void drawSlice(int opengl_context);
 //#ifdef HRI_COSTSPACE
 void g3d_draw_hrics(int opengl_context)
 {
-    if( global_workspaceGrid )
+
+    if( ENV.getBool(Env::drawGraph) && global_workspaceGrid )
         global_workspaceGrid->draw();
 
     int OTPListSize = OTPList.size();

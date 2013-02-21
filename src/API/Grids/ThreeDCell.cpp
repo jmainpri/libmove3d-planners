@@ -111,9 +111,17 @@ Vector3d ThreeDCell::getCellSize()
      return _grid->getCellSize();
 }
 
+
+//     V1 -- V0
+//    /      / |     Z  Y
+//   V2 -- V3 V5     |/
+//   |      | /       -- X
+//   V7 -- V4
+//
 void ThreeDCell::getVerticies(vector<Eigen::Vector3d>& verticies)
 {
-  Eigen::Vector3d cell_size = _grid->getCellSize();
+  const Eigen::Vector3d& cell_size_origin = _grid->getCellSize();
+  Eigen::Vector3d cell_size = cell_size_origin / 2;
   
   verticies[0][0] = _corner[0] + cell_size[0];
   verticies[0][1] = _corner[1] + cell_size[1];

@@ -41,11 +41,21 @@ public:
 
 private:
 
+//    void draw_all_cubes();
+//    void init_one_cube();
     void init_drawing();
+    void transform_cubes();
 
-    Robot* m_Human;
+    Robot* m_human;
     bool   m_drawing;
-    GLuint m_triangleVBO;
+
+    GLuint m_trianglebuffer;
+    GLuint m_elementbuffer;
+    std::vector<unsigned int> m_indices;
+    std::vector<GLfloat> m_grid_cells;
+
+    int m_nbframes;
+    double m_lasttime;
 
     std::vector<motion_t> m_motions;
 };

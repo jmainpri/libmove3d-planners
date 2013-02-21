@@ -19,21 +19,21 @@
  */
 namespace API
 {
-  class ThreeDGrid;
-	
-  
-  class ThreeDCell : public BaseCell
-  {
-  public:
+class ThreeDGrid;
+
+
+class ThreeDCell : public BaseCell
+{
+public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		
+
     ThreeDCell();
-		ThreeDCell(int i, ThreeDGrid* grid);
+    ThreeDCell(int i, ThreeDGrid* grid);
     ThreeDCell(int i, Eigen::Vector3d corner, ThreeDGrid* grid);
-		
+
     virtual ~ThreeDCell();
-		
-		virtual double getCost() { return 0; }
+
+    virtual double getCost() { return 0; }
     
     void getVerticies(std::vector<Eigen::Vector3d>& verticies);
     
@@ -44,18 +44,18 @@ namespace API
     
     int getIndex() { return _index; }
     
-		void setCorner(const Eigen::Vector3d& corner) { _corner = corner; }
-		void setGrid( ThreeDGrid* grid ) { _grid = grid; }
-		
+    void setCorner(const Eigen::Vector3d& corner) { _corner = corner; }
+    void setGrid( ThreeDGrid* grid ) { _grid = grid; }
+
     virtual void draw();
     void drawColorGradient( double value, double min, double max , bool inverse = false );
-		
-		bool writeToXml(xmlNodePtr cur);
-		bool readCellFromXml(xmlNodePtr cur);
+
+    bool writeToXml(xmlNodePtr cur);
+    bool readCellFromXml(xmlNodePtr cur);
     
     bool operator==( ThreeDCell otherCell) { return ((otherCell._index) == (this->_index)); }
     
-  protected:
+protected:
     int _index;
     Eigen::Vector3d _corner;
     ThreeDGrid* _grid;

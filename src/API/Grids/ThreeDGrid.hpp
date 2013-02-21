@@ -21,26 +21,26 @@
  */
 namespace API
 {
-  class ThreeDGrid : public BaseGrid
-  {
-		
-  public:
-		EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-		
+class ThreeDGrid : public BaseGrid
+{
+
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     ThreeDGrid();
     ThreeDGrid( Eigen::Vector3i size,    std::vector<double> envSize );
     ThreeDGrid( double samplingRate,     std::vector<double> envSize );
-		ThreeDGrid( const ThreeDGrid& grid );
+    ThreeDGrid( const ThreeDGrid& grid );
     
     virtual ~ThreeDGrid();
     
     void createAllCells();
     
     Eigen::Vector3d getCellSize() { return _cellSize; }
-		
-		unsigned int getXNumberOfCells() const {return _nbCellsX;}
-		unsigned int getYNumberOfCells() const {return _nbCellsY;}
-		unsigned int getZNumberOfCells() const {return _nbCellsZ;}
+
+    unsigned int getXNumberOfCells() const {return _nbCellsX;}
+    unsigned int getYNumberOfCells() const {return _nbCellsY;}
+    unsigned int getZNumberOfCells() const {return _nbCellsZ;}
     
     ThreeDCell* getCell(unsigned int x, unsigned int y, unsigned int z) const;
     ThreeDCell* getCell(Eigen::Vector3i cell)  const;
@@ -50,17 +50,17 @@ namespace API
     Eigen::Vector3i getCellCoord(ThreeDCell* ptrCell) const;
     ThreeDCell* getNeighbour(const Eigen::Vector3i& pos, unsigned int i) const;
     Eigen::Vector3d getCoordinates(ThreeDCell* cell) const;
-		
-		unsigned int getXlineOfCell(unsigned int ith);
-		unsigned int getYlineOfCell(unsigned int ith);
-		unsigned int getZlineOfCell(unsigned int ith);
+
+    unsigned int getXlineOfCell(unsigned int ith);
+    unsigned int getYlineOfCell(unsigned int ith);
+    unsigned int getZlineOfCell(unsigned int ith);
     
     virtual void draw();
-		
-		bool writeToXmlFile(std::string file);
-		bool loadFromXmlFile(std::string file);
+
+    bool writeToXmlFile(std::string file);
+    bool loadFromXmlFile(std::string file);
     
-  protected:
+protected:
     virtual ThreeDCell* createNewCell(unsigned int index, unsigned int x, unsigned int y, unsigned int z );
     Eigen::Vector3d computeCellCorner(unsigned int x, unsigned int y, unsigned int z);
     
@@ -70,7 +70,7 @@ namespace API
     unsigned int _nbCellsX;
     unsigned int _nbCellsY;
     unsigned int _nbCellsZ;
-  };
+};
 }
 
 #endif // GRID_HPP
