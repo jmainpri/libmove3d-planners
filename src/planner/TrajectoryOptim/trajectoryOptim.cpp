@@ -1287,7 +1287,7 @@ bool traj_optim_initStomp()
   m_stompparams = new stomp_motion_planner::StompParameters;
   m_stompparams->init();
   
-  for (int i=0; i<m_planner_joints.size(); i++) {
+  for (int i=0; i<int(m_planner_joints.size()); i++) {
      cout << m_planner_joints[i] << endl;
   }
   m_chompplangroup = new ChompPlanningGroup( m_robot, m_planner_joints );

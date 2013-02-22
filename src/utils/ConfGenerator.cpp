@@ -541,15 +541,13 @@ std::vector<HRICS::ConfigHR> ConfGenerator::loadFromXml(string filename)
 
 vector<pair<double,double> > findOverlapingRanges(vector<pair<double,double> > overlapped)
 {
-
+    return overlapped;
 }
 
 
 bool ConfGenerator::addConstraintToList(constrainedLink CL)
 {
     linkList.push_back(CL);
-
-
 
     if(linkListFiltred.count(CL.R->getName()) > 0 )
     {
@@ -560,7 +558,8 @@ bool ConfGenerator::addConstraintToList(constrainedLink CL)
 
         linkListFiltred[CL.R->getName()] = CL;
     }
-
+    
+    return true;
 }
 
 

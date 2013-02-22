@@ -145,7 +145,7 @@ void BodySurfaceSampler::sampleStaticObjectsSurface()
 void BodySurfaceSampler::sampleRobotBodiesSurface( Robot* robot )
 {
     // PointCloud points;
-    for( int i=0; i<robot->getNumberOfJoints(); i++)
+    for( int i=0; i<int(robot->getNumberOfJoints()); i++)
     {
         p3d_obj* obj = robot->getJoint(i)->getJointStruct()->o;
 
@@ -159,8 +159,8 @@ void BodySurfaceSampler::sampleRobotBodiesSurface( Robot* robot )
 void BodySurfaceSampler::sampleAllRobotsBodiesSurface()
 {
     Scene* sc = global_Project->getActiveScene();
-
-    for( int i=0;i<sc->getNumberOfRobots(); i++)
+    
+    for( int i=0;i<int(sc->getNumberOfRobots()); i++)
     {
         sampleRobotBodiesSurface( sc->getRobot(i) );
     }
