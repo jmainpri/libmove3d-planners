@@ -18,7 +18,7 @@
 #include "cost_space.hpp"
 
 #if defined( HRI_COSTSPACE ) && defined ( HRI_PLANNER )
-#include "HRI_costspace/HRICS_HAMP.hpp"
+#include "hri_costspace/HRICS_HAMP.hpp"
 #endif
 
 #include "move3d-headless.h"

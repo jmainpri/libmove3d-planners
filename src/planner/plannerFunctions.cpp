@@ -32,9 +32,9 @@
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 
 #ifdef HRI_COSTSPACE
-#include "HRI_costspace/HRICS_costspace.hpp"
-#include "HRI_costspace/RRT/HRICS_rrt.hpp"
-#include "HRI_costspace/RRT/HRICS_rrtPlan.hpp"
+#include "hri_costspace/HRICS_costspace.hpp"
+#include "hri_costspace/RRT/HRICS_rrt.hpp"
+#include "hri_costspace/RRT/HRICS_rrtPlan.hpp"
 #endif
 
 #include "Util-pkg.h"

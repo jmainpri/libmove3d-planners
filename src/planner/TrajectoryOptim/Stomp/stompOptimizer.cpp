@@ -48,7 +48,7 @@
 
 #include "API/project.hpp"
 #include "utils/ConfGenerator.h"
-#include "HRI_costspace/HRICS_costspace.hpp"
+#include "hri_costspace/HRICS_costspace.hpp"
 
 #include "Graphic-pkg.h"
 #include "P3d-pkg.h"
@@ -434,7 +434,7 @@ namespace stomp_motion_planner
     traj_convergence_with_time.clear();
     
     const bool print_cost=true;
-    const int draw_every_n_iteration = 7;
+
     int ith_save = 1;
     
     PolicyImprovementLoop pi_loop;
@@ -472,10 +472,7 @@ namespace stomp_motion_planner
     best_iteration_=0;
 	confPtr_t q_tmp = robot_model_->getCurrentPos();
     // iterate
-    for (iteration_=0; 
-         iteration_<stomp_parameters_->getMaxIterations()&& 
-         !PlanEnv->getBool(PlanParam::stopPlanner); 
-         iteration_++)
+    for ( iteration_=0; !PlanEnv->getBool(PlanParam::stopPlanner); iteration_++)
     {      
       // Compute wether to draw at a certain iteration
       bool do_draw = (iteration_!=0) && (iteration_%PlanEnv->getInt(PlanParam::stompDrawIteration) == 0);
@@ -627,22 +624,6 @@ namespace stomp_motion_planner
           break;
         }
       }
-      
-      if (collision_free_iteration_ >= stomp_parameters_->getMaxIterationsAfterCollisionFree())
-      {
-        iteration_++;
-        break;
-      }
-      else if (best_iteration_ >= stomp_parameters_->getMaxBestIterations())
-      {
-        iteration_++;
-        break;
-      }
-      
-//      if (is_collision_free_)
-//      {
-//        break;
-//      }
     }
     
     if (last_improvement_iteration_>-1)

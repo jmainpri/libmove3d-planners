@@ -18,7 +18,7 @@
 #include "API/Device/robot.hpp"
 #include "API/Trajectory/trajectory.hpp"
 
-#include "planner/Greedy/CollisionSpace.hpp"
+#include "collision_space/CollisionSpace.hpp"
 #include "planner/planEnvironment.hpp"
 #include "planner/cost_space.hpp"
 
@@ -29,7 +29,7 @@
 #include "Stomp/stompOptimizer.hpp"
 #include "Stomp/stompParameters.hpp"
 
-#include "HRI_costspace/HRICS_costspace.hpp"
+#include "hri_costspace/HRICS_costspace.hpp"
 
 #ifdef LIGHT_PLANNER
 #include "LightPlanner-pkg.h"
@@ -593,7 +593,13 @@ void traj_optim_shelf_set_localpath_and_cntrts()
 // --------------------------------------------------------
 void traj_optim_shelf_init_collision_space()
 {
-  m_coll_space = new CollisionSpace(m_robot);
+  vector<double> env_size = global_Project->getActiveScene()->getBounds();
+  double pace = env_size[1] - env_size[0];
+  pace = max(env_size[3] - env_size[3], pace);
+  pace = max(env_size[4] - env_size[5], pace);
+  pace /= ENV.getInt(Env::nbCells);
+
+  m_coll_space = new CollisionSpace( m_robot, pace, env_size );
   
   // Set the active joints (links)
   m_active_joints.clear();
@@ -1281,9 +1287,9 @@ bool traj_optim_initStomp()
   m_stompparams = new stomp_motion_planner::StompParameters;
   m_stompparams->init();
   
-  //  for (int i=0; i<m_planner_joints.size(); i++) {
-  //    cout << planner_joints[i] << endl;
-  //  }
+  for (int i=0; i<m_planner_joints.size(); i++) {
+     cout << m_planner_joints[i] << endl;
+  }
   m_chompplangroup = new ChompPlanningGroup( m_robot, m_planner_joints );
   m_chompplangroup->collision_points_ = m_collision_points;
   

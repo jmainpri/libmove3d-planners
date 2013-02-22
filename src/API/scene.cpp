@@ -33,7 +33,7 @@ Scene::Scene( p3d_env* environnement )
 
     // For all HRI planner the robot
     // Will be set here
-    if (m_Scene->active_robot)
+    if ( m_Scene->active_robot )
     {
         global_ActiveRobotName = m_Scene->active_robot->name;
         cout << "The Scene global_ActiveRobotName is : " << global_ActiveRobotName << endl;
@@ -45,7 +45,7 @@ Scene::Scene( p3d_env* environnement )
     }
 
     // Set the robot by name containing ROBOT to active
-    Robot* rob = getRobotByNameContaining(global_ActiveRobotName);
+    Robot* rob = getRobotByNameContaining( global_ActiveRobotName );
 
     if (rob != NULL)
     {

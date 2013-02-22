@@ -159,8 +159,9 @@ ChompTrajectory::~ChompTrajectory()
 void ChompTrajectory::init()
 {
   //trajectory_.resize(num_points_, Eigen::VectorXd(num_joints_));
-  trajectory_ = Eigen::MatrixXd(num_points_, num_joints_);
+  trajectory_ = Eigen::MatrixXd( num_points_, num_joints_ );
 }
+
 
 void ChompTrajectory::updateFromGroupTrajectory(const ChompTrajectory& group_trajectory)
 {

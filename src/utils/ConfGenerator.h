@@ -9,7 +9,7 @@
 
 #include "LightPlanner-pkg.h"
 #include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
-#include "HRI_costspace/HRICS_Natural.hpp"
+#include "hri_costspace/HRICS_Natural.hpp"
 
 
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API

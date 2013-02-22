@@ -278,7 +278,8 @@ namespace stomp_motion_planner
     
     shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
     
-    if ( ENV.getBool(Env::drawTrajVector) ) 
+    //cout << "Run single interation of stomp " << endl;
+    if ( ENV.getBool(Env::drawTrajVector) )
       addRolloutsToDraw(get_reused_ones);
     
     for (int r=0; r<int(rollouts_.size()); ++r)
@@ -346,12 +347,12 @@ namespace stomp_motion_planner
     
     //cout << "rollout_cost_ = " << tmp_rollout_cost_.sum() << endl;
     
-    if (write_to_file_)
-    {
+//    if (write_to_file_)
+//    {
       // store updated policy to disc
       //assert(writePolicy(iteration_number));
       //assert(writePolicyImprovementStatistics(stats_msg));
-    }
+//    }
     
     return true;
   }
@@ -592,16 +593,18 @@ namespace stomp_motion_planner
   {
     trajToDraw.clear();
     shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
+
+    cout << "Add rollouts to draw" << endl;
     
     for ( int k=0; k<int(rollouts_.size()); ++k) 
     {
-      cout << "Add rollout(" << k << ") to draw" << endl;
+      //cout << "Add rollout(" << k << ") to draw" << endl;
       addSingleRolloutsToDraw(rollouts_[k],k);
     }
     
     for ( int k=0; k<int(reused_rollouts_.size()); ++k) 
     {
-      cout << "Add reused rollout(" << k << ") to draw" << endl;
+      //cout << "Add reused rollout(" << k << ") to draw" << endl;
       addSingleRolloutsToDraw(reused_rollouts_[k],k+int(rollouts_.size()));
     }
   }

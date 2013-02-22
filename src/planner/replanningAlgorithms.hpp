@@ -13,7 +13,7 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Roadmap/graph.hpp"
 
-#include "HRI_costspace/HRICS_Navigation.hpp"
+#include "hri_costspace/HRICS_Navigation.hpp"
 
 #include "utils/ConfGenerator.h"
 

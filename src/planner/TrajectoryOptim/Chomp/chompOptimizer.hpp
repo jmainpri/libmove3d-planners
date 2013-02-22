@@ -15,7 +15,7 @@
 #include "chompTrajectory.hpp"
 #include "chompPlanningGroup.hpp"
 
-#include "planner/Greedy/CollisionSpace.hpp"
+#include "collision_space/CollisionSpace.hpp"
 
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>

@@ -12,7 +12,7 @@
 #include "API/Device/joint.hpp"
 #include "API/Device/robot.hpp"
 
-#include "planner/Greedy/CollisionPoint.hpp"
+#include "collision_space/CollisionPoint.hpp"
 
 /**
  * \brief Contains information about a single joint for CHOMP planning

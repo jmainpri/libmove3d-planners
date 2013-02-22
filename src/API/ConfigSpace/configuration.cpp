@@ -18,7 +18,7 @@
 #include "Localpath-pkg.h"
 
 #include "planner/cost_space.hpp"
-#include "planner/Greedy/CollisionSpace.hpp"
+#include "collision_space/CollisionSpace.hpp"
 
 using namespace std;
 MOVE3D_USING_SHARED_PTR_NAMESPACE

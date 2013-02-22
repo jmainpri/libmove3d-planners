@@ -7,21 +7,22 @@
  *
  */
 #ifdef HRI_COSTSPACE
-#include "HRI_costspace/HRICS_costspace.hpp"
-#include "HRI_costspace/HRICS_otpmotionpl.hpp"
-#include "HRI_costspace/HRICS_ConfigSpace.hpp"
-#include "HRI_costspace/HRICS_Navigation.hpp"
-#include "HRI_costspace/Gestures/HRICS_WorkspaceOccupancy.hpp"
+#include "hri_costspace/HRICS_costspace.hpp"
+#include "hri_costspace/HRICS_otpmotionpl.hpp"
+#include "hri_costspace/HRICS_ConfigSpace.hpp"
+#include "hri_costspace/HRICS_Navigation.hpp"
+#include "hri_costspace/Gestures/HRICS_WorkspaceOccupancy.hpp"
 #endif
 
+#include "planner/cost_space.hpp"
 #include "planner/planEnvironment.hpp"
-#include "planner/Greedy/CollisionSpace.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
-#include "API/project.hpp"
-#include "planner/cost_space.hpp"
 
+#include "API/project.hpp"
 #include "API/Grids/gridsAPI.hpp"
+
+#include "collision_space/CollisionSpace.hpp"
 
 #include "P3d-pkg.h"
 #include "Graphic-pkg.h"
@@ -430,8 +431,8 @@ void drawSlice(int opengl_context);
 void g3d_draw_hrics(int opengl_context)
 {
 
-    if( ENV.getBool(Env::drawGraph) && global_workspaceGrid )
-        global_workspaceGrid->draw();
+    if( ENV.getBool(Env::drawGraph) && global_workspaceOccupancy )
+        global_workspaceOccupancy->draw();
 
     int OTPListSize = OTPList.size();
     if( ENV.getBool(Env::enableHri) )

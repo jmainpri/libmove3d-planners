@@ -87,7 +87,7 @@ void StompParameters::init()
   
   animate_endeffector_ = true; // ENV.getBool(Env::drawTraj);
   animate_endeffector_segment_ = "r_gripper_tool_frame";
-  use_chomp_ = true;
+  use_chomp_ = false;
 }
   
 bool StompParameters::getAnimateEndeffector() const

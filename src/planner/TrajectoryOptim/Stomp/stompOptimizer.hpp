@@ -44,7 +44,8 @@
 #include "planner/TrajectoryOptim/Chomp/chompCost.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
-#include "planner/Greedy/CollisionSpace.hpp"
+
+#include "collision_space/CollisionSpace.hpp"
 
 #include <boost/shared_ptr.hpp>
 
