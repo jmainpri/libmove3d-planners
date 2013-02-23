@@ -26,24 +26,13 @@ BodySurfaceSampler::BodySurfaceSampler(double step) :
 BodySurfaceSampler::~BodySurfaceSampler()
 {
     cout << "Delete BodySurfaceSampler" << endl;
+}
 
-    for (std::map<p3d_obj*,PointCloud*>::iterator it = m_objectToPointCloudMap.begin();
-         it != m_objectToPointCloudMap.end();it++)
-    {
-        if ( it->second )
-        {
-            delete it->second;
-        }
-    }
-
-    for (std::map<p3d_obj*,BoundingCylinder*>::iterator it = m_objectToBoCylinderMap.begin();
-         it != m_objectToBoCylinderMap.end();it++)
-    {
-        if ( it->second )
-        {
-            delete it->second;
-        }
-    }
+//! Returns a pointer to the point cloud associated to the given object
+//!
+PointCloud& BodySurfaceSampler::getPointCloud( obj* o )
+{
+    return m_objectToPointCloudMap[o];
 }
 
 //! Sample the surface of an object
@@ -55,7 +44,7 @@ BodySurfaceSampler::~BodySurfaceSampler()
 PointCloud& BodySurfaceSampler::sampleObjectSurface( p3d_obj* obj, bool isRobot )
 {
     //  cout << "Sample Object : " << obj->name << endl;
-    m_objectToPointCloudMap[obj] = new PointCloud( 0.02 );
+    m_objectToPointCloudMap[obj] = PointCloud( 0.02 );
 
     for(int i = 0; i<obj->np; i++)
     {
@@ -112,7 +101,7 @@ PointCloud& BodySurfaceSampler::sampleObjectSurface( p3d_obj* obj, bool isRobot 
                     //					obj->pointCloud[obj->nbPointCloud + k][2] = point(2);
                     if( isRobot || ( isPointInEnvironment( point ) && isPointOverGround( point )) )
                     {
-                        (*m_objectToPointCloudMap[obj]).push_back( point );
+                        m_objectToPointCloudMap[obj].push_back( point );
                     }
                     //          else {
                     //            cout << "Point not in environment, Object : " << obj->name << endl;
@@ -126,7 +115,7 @@ PointCloud& BodySurfaceSampler::sampleObjectSurface( p3d_obj* obj, bool isRobot 
         }
     }
 
-    return *m_objectToPointCloudMap[obj];
+    return m_objectToPointCloudMap[obj];
 }
 
 //! Sample the
@@ -197,7 +186,8 @@ BoundingCylinder* BodySurfaceSampler::generateBoudingCylinder(p3d_obj* obj)
     if(!obj)
     {
         cout << "Problem object is NILL" << endl;
-        return NULL; }
+        return NULL;
+    }
 
     double box[8][3];
     std::vector<Eigen::Vector3d> cuboide(8);
@@ -251,6 +241,12 @@ double BodySurfaceSampler::generateRobotBoudingCylinder(Robot* robot,const vecto
     }
 
     return maxRadius;
+}
+
+
+std::vector<CollisionPoint>& BodySurfaceSampler::getCollisionPoints(Joint* jnt)
+{
+    return m_jointToCollisionPoint[jnt];
 }
 
 //! Generates the collision point for a given link
@@ -412,7 +408,7 @@ void BodySurfaceSampler::draw()
 {
     for(int i = 0; i < XYZ_ENV->no; i++)
     {
-        m_objectToPointCloudMap[XYZ_ENV->o[i]]->drawAllPoints();
+        m_objectToPointCloudMap[XYZ_ENV->o[i]].drawAllPoints();
     }
 
     Joint* jnt;
@@ -439,7 +435,7 @@ void BodySurfaceSampler::draw()
 
             if( obj )
             {
-                m_objectToPointCloudMap[obj]->drawAllPoints( T, NULL );
+                m_objectToPointCloudMap[obj].drawAllPoints( T, NULL );
 
                 if (rob->getName().find("PR2") == string::npos )
                     continue;

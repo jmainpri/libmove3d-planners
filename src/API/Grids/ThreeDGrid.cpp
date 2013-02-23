@@ -407,7 +407,7 @@ void ThreeDGrid::draw()
     colorvector[0] = 1.0;       //red
     colorvector[1] = 0.5;       //green
     colorvector[2] = 0.0;       //blue
-    colorvector[3] = 0.05;       //transparency
+    colorvector[3] = 0.2;       //transparency
 
 
     glEnable(GL_BLEND);

@@ -161,7 +161,6 @@ namespace PlanParam
             env_pow,
             env_MOTP,
             env_anglePow
-
         };
 
         enum doubleParameter

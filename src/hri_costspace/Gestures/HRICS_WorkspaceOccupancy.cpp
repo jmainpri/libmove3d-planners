@@ -34,22 +34,39 @@ double glfwGetTime()
     return tim.tv_sec+(tim.tv_usec/1000000.0);
 }
 
-WorkspaceOccupancyCell::WorkspaceOccupancyCell()
-{
-
-}
-
 WorkspaceOccupancyCell::WorkspaceOccupancyCell(int i, Vector3i coord , Vector3d corner, WorkspaceOccupancyGrid* grid) :
     API::ThreeDCell(i,corner,grid), m_visited(false)
 {
-
+    m_center = getCenter();
 }
-
 
 WorkspaceOccupancyCell::~WorkspaceOccupancyCell()
 {
 
 }
+
+//void WorkspaceOccupancyCell::draw(/*bool transform*/)
+//{
+////    double Cost = 0.0;
+//    double diagonal = 0.05;
+//    double colorvector[4];
+
+//    colorvector[0] = 0.0;       //red
+//    colorvector[1] = 0.0;       //green
+//    colorvector[2] = 0.0;       //blue
+//    colorvector[3] = 0.01;       //transparency
+
+////    Eigen::Vector3d center;
+
+////    if (transform)
+////    {
+////        m_Center = getWorkspacePoint();
+////    }
+
+//    g3d_set_color(Any,colorvector);
+//    g3d_draw_solid_sphere(m_center[0], m_center[1], m_center[2], diagonal, 10);
+//}
+
 
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -67,8 +84,8 @@ WorkspaceOccupancyGrid::WorkspaceOccupancyGrid(double pace, vector<double> envSi
 
     m_sampler = new BodySurfaceSampler( _cellSize[0]*0.25 );
     m_sampler->sampleRobotBodiesSurface( m_human );
-//    m_collision_space = new CollisionSpace( m_human, pace, envSize );
-//    global_collisionSpace = m_collision_space;
+    //    m_collision_space = new CollisionSpace( m_human, pace, envSize );
+    //    global_collisionSpace = m_collision_space;
 }
 
 WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
@@ -103,7 +120,7 @@ API::ThreeDCell* WorkspaceOccupancyGrid::createNewCell(unsigned int index,unsign
 //! Updates the cells occupied by the human
 //! all objects composing the robot are processed
 //! a list of cells for each body is added
-void WorkspaceOccupancyGrid::getCellsOccupiedByHuman( std::vector<WorkspaceOccupancyCell*>& occupied_voxels )
+void WorkspaceOccupancyGrid::getCellsOccupiedByHuman( std::vector<WorkspaceOccupancyCell*>& occupied_voxels, int id_class )
 {
     Eigen::Transform3d T; // Each point is transformed to the human config
 
@@ -124,11 +141,22 @@ void WorkspaceOccupancyGrid::getCellsOccupiedByHuman( std::vector<WorkspaceOccup
                 if( cell == NULL )
                     continue;
 
-                if(!cell->m_visited)
+                if( !cell->m_visited )
                 {
                     cell->m_visited = true;
-                    occupied_voxels.push_back(cell);
-//                    cout << "occupied_voxels index : " << occupied_voxels.back()->getIndex() << endl;
+
+                    if( cell->m_class_occupies.empty() )
+                    {
+                        occupied_voxels.push_back(cell);
+                    }
+                    else
+                    {
+                        if( !cell->m_class_occupies[id_class] )
+                        {
+                            occupied_voxels.push_back(cell);
+                            cell->m_class_occupies[id_class] = true;
+                        }
+                    }
                 }
             }
         }
@@ -152,7 +180,7 @@ void WorkspaceOccupancyGrid::init_drawing()
     for( int i=0; i<int(_cells.size()); i++)
     {
         dynamic_cast<API::ThreeDCell*>(_cells[i])->getVerticies(verticies);
-//        cout << "index : " << dynamic_cast<API::ThreeDCell*>(_cells[i])->getIndex() << endl;
+        //        cout << "index : " << dynamic_cast<API::ThreeDCell*>(_cells[i])->getIndex() << endl;
 
         // 8*3 = 24; 7*3+2 = 23;
 
@@ -253,7 +281,7 @@ void WorkspaceOccupancyGrid::setSortedCellIdsToDraw( const std::vector<Workspace
 {
     m_ids_to_draw.resize( occupied_voxels.size() );
 
-//    cout << " ------------------------------------------------- " <<  endl;
+    //    cout << " ------------------------------------------------- " <<  endl;
     for(int i=0;i<int(occupied_voxels.size());i++)
     {
         m_ids_to_draw[i] = occupied_voxels[i]->getIndex();
@@ -261,16 +289,16 @@ void WorkspaceOccupancyGrid::setSortedCellIdsToDraw( const std::vector<Workspace
 
     std::sort( m_ids_to_draw.begin(), m_ids_to_draw.end() );
 
-//    for(int i=0;i<int(m_ids_to_draw.size());i++)
-//    {
-//        cout << " m_ids_to_draw[i] : " << m_ids_to_draw[i] << endl;
-//    }
+    //    for(int i=0;i<int(m_ids_to_draw.size());i++)
+    //    {
+    //        cout << " m_ids_to_draw[i] : " << m_ids_to_draw[i] << endl;
+    //    }
 }
 
 void WorkspaceOccupancyGrid::draw_voxels( const std::vector<unsigned int>& voxels )
 {
     //cout << "voxel size is " << voxels.size() << endl;
-//    unsigned int voxel_count =0;
+    //    unsigned int voxel_count =0;
     unsigned int init_id=0; unsigned int i=0;
 
     while(i<voxels.size())
@@ -284,20 +312,25 @@ void WorkspaceOccupancyGrid::draw_voxels( const std::vector<unsigned int>& voxel
 
         GLuint start = sizeof(unsigned int)*36*voxels[init_id];
         GLuint end = sizeof(unsigned int)*36*voxels[i];
-        GLuint count = 36*(voxels[i]-voxels[init_id]+1);
+        GLsizei count = 36*(voxels[i]-voxels[init_id]+1);
 
         glDrawRangeElements( GL_TRIANGLES , start, end, count, GL_UNSIGNED_INT, (const GLuint*)(start) );
 
-//        voxel_count += (voxels[i]-voxels[init_id]+1);
+        //        voxel_count += (voxels[i]-voxels[init_id]+1);
         i++;
     }
 
-//    cout << "voxels.size() : " << voxels.size() << endl;
-//    cout << "voxel_count : " << voxel_count << endl;
+    //    cout << "voxels.size() : " << voxels.size() << endl;
+    //    cout << "voxel_count : " << voxel_count << endl;
 }
 
 void WorkspaceOccupancyGrid::draw()
 {
+    if( !m_motions.empty() )
+    {
+        return simple_draw();
+    }
+
     if(!m_drawing) {
         cout << "init drawing" << endl;
         init_drawing();
@@ -321,30 +354,39 @@ void WorkspaceOccupancyGrid::draw()
     glVertexPointer( 3, GL_FLOAT, 0, NULL );
 
     // Draw the triangles with m_indices
-//    glDrawElements( GL_TRIANGLES, GLuint(36*_cells.size()), GL_UNSIGNED_INT, NULL );
+    //    glDrawElements( GL_TRIANGLES, GLuint(36*_cells.size()), GL_UNSIGNED_INT, NULL );
 
-    std::vector<WorkspaceOccupancyCell*> occupied_voxels;
-    getCellsOccupiedByHuman( occupied_voxels );
-    setSortedCellIdsToDraw( occupied_voxels );
+    if( m_motions.empty() )
+    {
+        std::vector<WorkspaceOccupancyCell*> occupied_voxels;
+        getCellsOccupiedByHuman( occupied_voxels, 0 );
+        setSortedCellIdsToDraw( occupied_voxels );
+        draw_voxels( m_ids_to_draw );
+    }
 
-    draw_voxels( m_ids_to_draw );
+    else
+    {
+        std::vector<WorkspaceOccupancyCell*>& occupied_voxels = m_occupied_cells[m_id_class_to_draw];
+        setSortedCellIdsToDraw( occupied_voxels );
+        draw_voxels( m_ids_to_draw );
+    }
 
-//    GLuint start = sizeof(unsigned int)*36*17000;
-//    GLuint end = sizeof(unsigned int)*36*18000;
-//    GLuint count = 36*1000;
-//    glDrawRangeElements( GL_TRIANGLES, start, end, count, GL_UNSIGNED_INT, (const GLuint*)(start));
+    //    GLuint start = sizeof(unsigned int)*36*17000;
+    //    GLuint end = sizeof(unsigned int)*36*18000;
+    //    GLuint count = 36*1000;
+    //    glDrawRangeElements( GL_TRIANGLES, start, end, count, GL_UNSIGNED_INT, (const GLuint*)(start));
 
-//    start = sizeof(unsigned int)*36*9000;
-//    end = sizeof(unsigned int)*36*10000;
-//    count = 36*1000;
-//    glDrawRangeElements( GL_TRIANGLES, start, end, count, GL_UNSIGNED_INT, (const GLuint*)(start));
+    //    start = sizeof(unsigned int)*36*9000;
+    //    end = sizeof(unsigned int)*36*10000;
+    //    count = 36*1000;
+    //    glDrawRangeElements( GL_TRIANGLES, start, end, count, GL_UNSIGNED_INT, (const GLuint*)(start));
 
-//    GLint nb_vertices;
-//    GLint nb_indices;
-//    glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,&nb_vertices);
-//    glGetIntegerv(GL_MAX_ELEMENTS_INDICES,&nb_indices);
-//    cout << int(nb_vertices) << endl;
-//    cout << int(nb_indices) << endl;
+    //    GLint nb_vertices;
+    //    GLint nb_indices;
+    //    glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,&nb_vertices);
+    //    glGetIntegerv(GL_MAX_ELEMENTS_INDICES,&nb_indices);
+    //    cout << int(nb_vertices) << endl;
+    //    cout << int(nb_indices) << endl;
 
     // Disables array contains vertices
     glDisableClientState( GL_VERTEX_ARRAY );
@@ -380,12 +422,132 @@ void WorkspaceOccupancyGrid::draw_sampled_points()
     }
 }
 
+void WorkspaceOccupancyGrid::setClassToDraw(int id_class)
+{
+    if( id_class < 0 || id_class >= m_occupied_cells.size() )
+        return;
+
+    m_id_class_to_draw = id_class;
+    m_human->setAndUpdate(*m_motions[id_class].back().second);
+}
+
+void WorkspaceOccupancyGrid::simple_draw()
+{
+    double colorvector[4];
+
+    colorvector[0] = 1.0;       //red
+    colorvector[1] = 0.5;       //green
+    colorvector[2] = 0.0;       //blue
+    colorvector[3] = 0.2;       //transparency
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+    glDisable(GL_LIGHTING);
+    glDisable(GL_LIGHT0);
+
+    glEnable(GL_CULL_FACE);
+    glBegin(GL_QUADS);
+
+    glColor4dv(colorvector);
+
+    std::vector<WorkspaceOccupancyCell*>& occupied_voxels = m_occupied_cells[m_id_class_to_draw];
+
+    cout << "draw : occupied_voxels.size() : " << occupied_voxels.size() << " voxels!!" << endl;
+
+    for( int i=0;i<int(occupied_voxels.size());i++)
+    {
+        occupied_voxels[i]->draw();
+    }
+
+    glEnd();
+
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+}
+
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+
 void WorkspaceOccupancyGrid::setRegressedMotions(const std::vector<motion_t>& motions)
 {
+    cout << __func__ << endl;
+    m_motions.clear();
+    m_occupied_cells.clear();
+
     m_motions = motions;
+    m_occupied_cells.resize( m_motions.size() );
+
+    for( int i=0;i<int(_cells.size());i++)
+    {
+        WorkspaceOccupancyCell* cell = dynamic_cast<WorkspaceOccupancyCell*>(_cells[i]);
+
+        cell->m_class_occupies.resize( m_motions.size() );
+
+        for( int j=0;j<int(cell->m_class_occupies.size());j++)
+        {
+            cell->m_class_occupies[j]=false;
+        }
+    }
+}
+
+bool WorkspaceOccupancyGrid::areAllCellsBlank(int id)
+{
+    for( int i=0;i<int(_cells.size());i++)
+    {
+        if( static_cast<WorkspaceOccupancyCell*>(_cells[i])->m_class_occupies[id]==true )
+        {
+            return false;
+        }
+
+        if( static_cast<WorkspaceOccupancyCell*>(_cells[i])->m_visited==true )
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void WorkspaceOccupancyGrid::computeOccpancy()
-{
+{           
+    cout << __func__ << endl;
 
+    // For each motion class compute the occupancy
+    for(int i=0;i<int(m_motions.size());i++)
+    {
+        cout << "----------------------------------------" << endl;
+        cout << " Motion : " << i << endl;
+        cout << "----------------------------------------" << endl;
+
+        m_occupied_cells[i].clear();
+
+        if( !areAllCellsBlank(i) )
+        {
+            cout << "ERROR" << endl;
+        }
+
+        for(int j=0;j<int(m_motions[i].size());j++)
+        {
+            // Compute occupied workspace for each configuration in the trajectory
+            m_human->setAndUpdate(*m_motions[i][j].second);
+
+            vector<WorkspaceOccupancyCell*> cells; getCellsOccupiedByHuman( cells, i );
+
+//            cout << " Frame : " << j << endl;
+
+            m_occupied_cells[i].insert(  m_occupied_cells[i].end(), cells.begin(), cells.end() );
+        }
+
+        for( int j=0; j<int(m_occupied_cells[i].size()); j++)
+        {
+            m_occupied_cells[i][j]->m_visited =false;
+        }
+
+        cout << "m_occupied_cells[" << i << "].size() : "  << m_occupied_cells[i].size() << endl;
+    }
+
+    cout << "End : " << __func__ << endl;
 }

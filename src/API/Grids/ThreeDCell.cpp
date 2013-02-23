@@ -196,14 +196,14 @@ void ThreeDCell::draw()
     _v7[1] = _corner[1] ;
     _v7[2] = _corner[2] ;
 
-    double colorvector[4];
+//    double colorvector[4];
 
-    colorvector[0] = 0.0;       //red
-    colorvector[1] = 0.0;       //green
-    colorvector[2] = 0.0;       //blue
-    colorvector[3] = 0.2;       //transparency
+//    colorvector[0] = 0.0;       //red
+//    colorvector[1] = 0.0;       //green
+//    colorvector[2] = 0.0;       //blue
+//    colorvector[3] = 0.2;       //transparency
 
-    glColor4dv(colorvector);
+//    glColor4dv(colorvector);
 
 //    cout << "Drawing cell" << endl;
     glPushAttrib(GL_ENABLE_BIT | GL_LIGHTING_BIT);

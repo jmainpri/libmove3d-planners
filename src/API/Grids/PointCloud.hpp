@@ -38,7 +38,7 @@ public:
     }
 
     /**
-     * Acces the configuration
+     * Access the point
      */
     Eigen::Vector3d& operator [] ( const int &i ) { return m_AllPoints[i]; }
 
