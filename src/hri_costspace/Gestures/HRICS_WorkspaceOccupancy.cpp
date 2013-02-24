@@ -120,7 +120,7 @@ API::ThreeDCell* WorkspaceOccupancyGrid::createNewCell(unsigned int index,unsign
 //! Updates the cells occupied by the human
 //! all objects composing the robot are processed
 //! a list of cells for each body is added
-void WorkspaceOccupancyGrid::getCellsOccupiedByHuman( std::vector<WorkspaceOccupancyCell*>& occupied_voxels, int id_class )
+void WorkspaceOccupancyGrid::get_cells_occupied_by_human( std::vector<WorkspaceOccupancyCell*>& occupied_voxels, int id_class )
 {
     Eigen::Transform3d T; // Each point is transformed to the human config
 
@@ -277,7 +277,7 @@ void WorkspaceOccupancyGrid::transform_cubes()
     glVertexPointer( 3, GL_FLOAT, 0, NULL);
 }
 
-void WorkspaceOccupancyGrid::setSortedCellIdsToDraw( const std::vector<WorkspaceOccupancyCell*>& occupied_voxels )
+void WorkspaceOccupancyGrid::set_sorted_cell_ids_to_draw( const std::vector<WorkspaceOccupancyCell*>& occupied_voxels )
 {
     m_ids_to_draw.resize( occupied_voxels.size() );
 
@@ -359,15 +359,15 @@ void WorkspaceOccupancyGrid::draw()
     if( m_motions.empty() )
     {
         std::vector<WorkspaceOccupancyCell*> occupied_voxels;
-        getCellsOccupiedByHuman( occupied_voxels, 0 );
-        setSortedCellIdsToDraw( occupied_voxels );
+        get_cells_occupied_by_human( occupied_voxels, 0 );
+        set_sorted_cell_ids_to_draw( occupied_voxels );
         draw_voxels( m_ids_to_draw );
     }
 
     else
     {
         std::vector<WorkspaceOccupancyCell*>& occupied_voxels = m_occupied_cells[m_id_class_to_draw];
-        setSortedCellIdsToDraw( occupied_voxels );
+        set_sorted_cell_ids_to_draw( occupied_voxels );
         draw_voxels( m_ids_to_draw );
     }
 
@@ -493,7 +493,7 @@ void WorkspaceOccupancyGrid::setRegressedMotions(const std::vector<motion_t>& mo
     }
 }
 
-bool WorkspaceOccupancyGrid::areAllCellsBlank(int id)
+bool WorkspaceOccupancyGrid::are_all_cells_blank(int id)
 {
     for( int i=0;i<int(_cells.size());i++)
     {
@@ -524,7 +524,7 @@ void WorkspaceOccupancyGrid::computeOccpancy()
 
         m_occupied_cells[i].clear();
 
-        if( !areAllCellsBlank(i) )
+        if( !are_all_cells_blank(i) )
         {
             cout << "ERROR" << endl;
         }
@@ -534,7 +534,7 @@ void WorkspaceOccupancyGrid::computeOccpancy()
             // Compute occupied workspace for each configuration in the trajectory
             m_human->setAndUpdate(*m_motions[i][j].second);
 
-            vector<WorkspaceOccupancyCell*> cells; getCellsOccupiedByHuman( cells, i );
+            vector<WorkspaceOccupancyCell*> cells; get_cells_occupied_by_human( cells, i );
 
 //            cout << " Frame : " << j << endl;
 

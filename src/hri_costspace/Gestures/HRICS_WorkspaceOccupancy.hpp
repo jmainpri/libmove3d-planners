@@ -39,13 +39,14 @@ public:
     void setRegressedMotions(const std::vector<motion_t>& motions);
     void computeOccpancy();
     void setClassToDraw(int id_class);
-    void simple_draw();
     void draw();
 
 private:
 
-    void setSortedCellIdsToDraw( const std::vector<WorkspaceOccupancyCell*>& occupied_voxels );
-    void getCellsOccupiedByHuman( std::vector<WorkspaceOccupancyCell*>& occupied_voxels, int id_class );
+    void simple_draw();
+
+    void set_sorted_cell_ids_to_draw( const std::vector<WorkspaceOccupancyCell*>& occupied_voxels );
+    void get_cells_occupied_by_human( std::vector<WorkspaceOccupancyCell*>& occupied_voxels, int id_class );
 //    void draw_all_cubes();
 //    void init_one_cube();
     void init_drawing();
@@ -53,7 +54,7 @@ private:
     void draw_voxels( const vector<unsigned int>& indices );
     void draw_sampled_points();
 
-    bool areAllCellsBlank(int id);
+    bool are_all_cells_blank(int id);
 
     // OpenGL Drawing
     bool   m_drawing;
