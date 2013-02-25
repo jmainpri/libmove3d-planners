@@ -4,6 +4,9 @@
 #include <GL/glx.h>
 #include <GL/glext.h>
 
+// This breaks Eigen3
+#undef Success
+
 #include "HRICS_WorkspaceOccupancy.hpp"
 #include "planner/planEnvironment.hpp"
 #include "API/Grids/gridsAPI.hpp"
@@ -17,13 +20,9 @@
 //#include <PolyVoxCore/SurfaceMesh.h>
 //#include <PolyVoxCore/SimpleVolume.h>
 
-using namespace std;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
+using namespace std;
 using namespace HRICS;
-
-// import most common Eigen types
-// USING_PART_OF_NAMESPACE_EIGEN
-using namespace Eigen;
 
 HRICS::WorkspaceOccupancyGrid* global_workspaceOccupancy = NULL;
 
@@ -34,7 +33,7 @@ double glfwGetTime()
     return tim.tv_sec+(tim.tv_usec/1000000.0);
 }
 
-WorkspaceOccupancyCell::WorkspaceOccupancyCell(int i, Vector3i coord , Vector3d corner, WorkspaceOccupancyGrid* grid) :
+WorkspaceOccupancyCell::WorkspaceOccupancyCell(int i, Eigen::Vector3i coord , Eigen::Vector3d corner, WorkspaceOccupancyGrid* grid) :
     API::ThreeDCell(i,corner,grid), m_visited(false)
 {
     m_center = getCenter();
@@ -72,20 +71,44 @@ WorkspaceOccupancyCell::~WorkspaceOccupancyCell()
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-WorkspaceOccupancyGrid::WorkspaceOccupancyGrid(double pace, vector<double> envSize) :
-    API::ThreeDGrid( pace , envSize ), m_drawing(false)
+WorkspaceOccupancyGrid::WorkspaceOccupancyGrid( const std::string& human_name, double pace, vector<double> envSize) :
+    API::ThreeDGrid( pace , envSize ), m_drawing(false), m_id_class_to_draw(0)
 {
     cout << "WorkspaceOccupancyGrid::createAllCells" << endl;
     createAllCells();
 
     cout << "_cells.size() : " << _cells.size() << endl;
 
-    m_human = global_Project->getActiveScene()->getRobotByName("HERAKLES_HUMAN1");
+    m_human = global_Project->getActiveScene()->getRobotByName( human_name );
 
-    m_sampler = new BodySurfaceSampler( _cellSize[0]*0.25 );
+    m_sampler = new BodySurfaceSampler( 0.02 );
     m_sampler->sampleRobotBodiesSurface( m_human );
     //    m_collision_space = new CollisionSpace( m_human, pace, envSize );
     //    global_collisionSpace = m_collision_space;
+
+    m_motion_recorder = new RecordMotion( human_name );
+
+    if( m_motion_recorder->loadRegressedFromCSV() )
+    {
+        cout << "Motions loaded successfully" << endl;
+    }
+    else {
+         cout << "Error loading motions" << endl;
+    }
+
+    global_motionRecorder = m_motion_recorder;
+
+    m_classifier = new ClassifyMotion();
+
+    if( m_classifier->load_model() )
+    {
+        cout << "GMMs loaded successfully" << endl;
+    }
+    else {
+         cout << "Error loading GMMs" << endl;
+    }
+
+    global_classifyMotion = m_classifier;
 }
 
 WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
@@ -107,7 +130,7 @@ WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
 //! @param integer z position in the grid
 API::ThreeDCell* WorkspaceOccupancyGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z )
 {
-    Vector3i pos;
+    Eigen::Vector3i pos;
     pos[0] = x; pos[1] = y; pos[2] = z;
 
     if ( index == 0 )
@@ -326,9 +349,17 @@ void WorkspaceOccupancyGrid::draw_voxels( const std::vector<unsigned int>& voxel
 
 void WorkspaceOccupancyGrid::draw()
 {
+    if(PlanEnv->getBool(PlanParam::drawSampledPoints)) {
+        draw_sampled_points();
+    }
+
     if( !m_motions.empty() )
     {
         return simple_draw();
+    }
+    else
+    {
+        return;
     }
 
     if(!m_drawing) {
@@ -400,10 +431,6 @@ void WorkspaceOccupancyGrid::draw()
         m_nbframes = 0;
         m_lasttime += 1.0;
     }
-
-    if(PlanEnv->getBool(PlanParam::drawSampledPoints)) {
-        draw_sampled_points();
-    }
 }
 
 void WorkspaceOccupancyGrid::draw_sampled_points()
@@ -424,7 +451,7 @@ void WorkspaceOccupancyGrid::draw_sampled_points()
 
 void WorkspaceOccupancyGrid::setClassToDraw(int id_class)
 {
-    if( id_class < 0 || id_class >= m_occupied_cells.size() )
+    if( id_class < 0 || id_class >= int(m_occupied_cells.size()) )
         return;
 
     m_id_class_to_draw = id_class;
@@ -534,10 +561,8 @@ void WorkspaceOccupancyGrid::computeOccpancy()
             // Compute occupied workspace for each configuration in the trajectory
             m_human->setAndUpdate(*m_motions[i][j].second);
 
-            vector<WorkspaceOccupancyCell*> cells; get_cells_occupied_by_human( cells, i );
-
-//            cout << " Frame : " << j << endl;
-
+            std::vector<WorkspaceOccupancyCell*> cells; get_cells_occupied_by_human( cells, i );
+            cout << " Frame : " << j << endl;
             m_occupied_cells[i].insert(  m_occupied_cells[i].end(), cells.begin(), cells.end() );
         }
 
@@ -550,4 +575,42 @@ void WorkspaceOccupancyGrid::computeOccpancy()
     }
 
     cout << "End : " << __func__ << endl;
+}
+
+
+void WorkspaceOccupancyGrid::classifyMotion( const motion_t& motions )
+{
+    for (int j=1; j<int(motions.size()); j++)
+    {
+        Eigen::MatrixXd matrix( 13, j );
+
+        for (int i=0; i<j; i++)
+        {
+            confPtr_t q = motions[i].second;
+
+            matrix(0,i) = i;        // Time
+            matrix(1,i) = (*q)[6];  // Pelvis
+            matrix(2,i) = (*q)[7];  // Pelvis
+            matrix(3,i) = (*q)[8];  // Pelvis
+            matrix(4,i) = (*q)[11]; // Pelvis
+            matrix(5,i) = (*q)[12]; // TorsoX
+            matrix(6,i) = (*q)[13]; // TorsoY
+            matrix(7,i) = (*q)[14]; // TorsoZ
+
+            matrix(8,i) = (*q)[18]; // rShoulderX
+            matrix(9,i) = (*q)[19]; // rShoulderZ
+            matrix(10,i) = (*q)[20]; // rShoulderY
+            matrix(11,i) = (*q)[21]; // rArmTrans
+            matrix(12,i) = (*q)[22]; // rElbowZ
+        }
+
+        vector<double> likelihood = m_classifier->classify_motion( matrix );
+
+        cout << j << " : " << max_element(likelihood.begin(),likelihood.end()) - likelihood.begin() << endl;
+    }
+
+//    cout << "likelihood[0] : " << likelihood[0] << endl;
+//    cout << "likelihood[1] : " << likelihood[1] << endl;
+//    cout << "likelihood[2] : " << likelihood[2] << endl;
+//    cout << "likelihood[3] : " << likelihood[3] << endl;
 }

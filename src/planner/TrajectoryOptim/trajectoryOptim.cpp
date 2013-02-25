@@ -930,13 +930,13 @@ bool traj_optim_init_collision_spaces()
   
   switch (m_sce) 
   {
-    case Default:
+    case ScenarioType::Default:
       cout << "Init with default parameters" << endl;
       if( !traj_optim_default_init() )
         return false;
       break;
       
-    case CostMap:
+    case ScenarioType::CostMap:
       
       cout << "Init with 2D costmap" << endl;
       if( !traj_optim_costmap_init() )
@@ -947,7 +947,7 @@ bool traj_optim_init_collision_spaces()
       //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.001);
       break;
       
-    case Simple:
+    case ScenarioType::Simple:
       
       cout << "Init Simple Nav" << endl;
       if( !traj_optim_simple_init() )
@@ -958,7 +958,7 @@ bool traj_optim_init_collision_spaces()
       //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.000005);
       break;
       
-    case Shelf:
+    case ScenarioType::Shelf:
       
       cout << "Init Shelf" << endl;
       cout << "Set robot, localpath and cntrts with " << m_robot->getName() << endl;
@@ -987,7 +987,7 @@ bool traj_optim_init_collision_spaces()
       //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.01);
       break;
       
-    case HumanAwareNav:
+    case ScenarioType::HumanAwareNav:
       cout << "Init HumanAwareNav" << endl;
       cout << "Set robot, localpath and cntrts with ";
       cout << m_robot->getName() << endl;
@@ -1011,7 +1011,7 @@ bool traj_optim_init_collision_spaces()
       PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.1);
       break;
       
-    case HumanAwareManip:
+    case ScenarioType::HumanAwareManip:
       cout << "Init HumanAwareManip" << endl;
       cout << "Set robot, localpath and cntrts with ";
       cout << m_robot->getName() << endl;
@@ -1034,7 +1034,7 @@ bool traj_optim_init_collision_spaces()
       // PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.1);
       break;
       
-    case HumanAwareMobileManip:
+    case ScenarioType::HumanAwareMobileManip:
       cout << "Init HumanAwareMobileManip" << endl;
       cout << "Set robot, localpath and cntrts with ";
       cout << m_robot->getName() << endl;
@@ -1045,7 +1045,7 @@ bool traj_optim_init_collision_spaces()
       traj_optim_hrics_mobile_manip_init_joints();
       break;
       
-    case Navigation:
+    case ScenarioType::Navigation:
       cout << "Init Navigation" << endl;
       cout << "Set robot, localpath and cntrts with ";
       cout << m_robot->getName() << endl;
@@ -1089,7 +1089,7 @@ bool traj_optim_set_scenario_type()
   {
     if( ENV.getBool(Env::isCostSpace) && global_costSpace->getSelectedCostName() == "costMap2D")
     {
-      m_sce = CostMap;
+      m_sce = ScenarioType::CostMap;
     }
 //    else if( ENV.getBool(Env::isCostSpace) &&
 //            ( global_costSpace->getSelectedCostName() == "costIsInCollision" || 
@@ -1099,22 +1099,22 @@ bool traj_optim_set_scenario_type()
 //    }
     else
     {
-      m_sce = Default;
+      m_sce = ScenarioType::Default;
     }
   }
   else if( ENV.getBool(Env::isCostSpace) && global_costSpace->getSelectedCostName() == "costHumanGrids" ) 
   {
     if( m_planning_type == NAVIGATION )
     {
-      m_sce = HumanAwareNav;
+      m_sce = ScenarioType::HumanAwareNav;
     }
     if( m_planning_type == MANIPULATION )
     {
-      m_sce = HumanAwareManip;
+      m_sce = ScenarioType::HumanAwareManip;
     }
     if( m_planning_type == MOBILE_MANIP )
     {
-      m_sce = HumanAwareMobileManip;
+      m_sce = ScenarioType::HumanAwareMobileManip;
     }
   }
   else 
@@ -1122,9 +1122,9 @@ bool traj_optim_set_scenario_type()
     const bool navigation = false;
     
     if( navigation )
-      m_sce = Navigation;
+      m_sce = ScenarioType::Navigation;
     else
-      m_sce = Shelf;
+      m_sce = ScenarioType::Shelf;
   }
   
   return true;

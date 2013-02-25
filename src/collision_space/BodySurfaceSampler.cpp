@@ -44,7 +44,7 @@ PointCloud& BodySurfaceSampler::getPointCloud( obj* o )
 PointCloud& BodySurfaceSampler::sampleObjectSurface( p3d_obj* obj, bool isRobot )
 {
     //  cout << "Sample Object : " << obj->name << endl;
-    m_objectToPointCloudMap[obj] = PointCloud( 0.02 );
+    m_objectToPointCloudMap[obj] = PointCloud( 0.01 );
 
     for(int i = 0; i<obj->np; i++)
     {

@@ -2,6 +2,7 @@ SET(BM3D_MODULE_NAME_TMP2 ${BM3D_MODULE_NAME})
 SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME}/Gestures)
 BM3D_SRC_SUBDIR_PROCESS(
 
+HRICS_ClassifyMotion.cpp
 HRICS_RecordMotion.cpp
 HRICS_WorkspaceOccupancy.cpp
 )

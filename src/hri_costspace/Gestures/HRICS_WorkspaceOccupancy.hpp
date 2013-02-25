@@ -8,6 +8,7 @@
 #include "collision_space/CollisionSpace.hpp"
 
 #include "HRICS_RecordMotion.hpp"
+#include "HRICS_ClassifyMotion.hpp"
 
 #include "Graphic-pkg.h"
 
@@ -31,14 +32,15 @@ public:
 class WorkspaceOccupancyGrid : public API::ThreeDGrid
 {
 public:
-    WorkspaceOccupancyGrid(double pace, std::vector<double> envSize);
+    WorkspaceOccupancyGrid( const std::string& human_name, double pace, std::vector<double> envSize);
     ~WorkspaceOccupancyGrid();
 
     API::ThreeDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z );
 
-    void setRegressedMotions(const std::vector<motion_t>& motions);
+    void setRegressedMotions( const std::vector<motion_t>& motions );
     void computeOccpancy();
-    void setClassToDraw(int id_class);
+    void setClassToDraw( int id_class );
+    void classifyMotion( const motion_t& motions );
     void draw();
 
 private:
@@ -72,6 +74,8 @@ private:
     std::vector<motion_t> m_motions;
     std::vector< std::vector<WorkspaceOccupancyCell*> > m_occupied_cells;
     int m_id_class_to_draw;
+    ClassifyMotion* m_classifier;
+    RecordMotion* m_motion_recorder;
 };
 }
 

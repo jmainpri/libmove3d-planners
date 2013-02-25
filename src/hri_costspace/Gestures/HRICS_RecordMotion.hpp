@@ -7,6 +7,8 @@
 
 typedef std::vector< std::pair<double,confPtr_t> > motion_t;
 
+namespace HRICS
+{
 class RecordMotion {
 
 public:
@@ -23,8 +25,8 @@ public:
 
     motion_t loadFromXml(const std::string &filename);
     void loadMotionFromMultipleFiles( const std::string& baseFilename, int number_of_files );
-    void loadRegressedFromCSV();
-    void loadFromCSV( const std::string& filename );
+    bool loadRegressedFromCSV();
+    bool loadFromCSV( const std::string& filename );
 
     void storeMotion( const motion_t& motion, bool new_motion = true);
     void addToCurrentMotion( const motion_t& motion );
@@ -41,7 +43,7 @@ public:
 
     void incrementMotionId() { m_id_motion++; }
 
-    std::vector<motion_t> getStoredMotions() { return m_stored_motions; }
+    const std::vector<motion_t>& getStoredMotions() { return m_stored_motions; }
 
     bool m_is_recording;
 
@@ -56,7 +58,8 @@ private:
     motion_t m_motion;
     std::vector<motion_t> m_stored_motions;
 };
+}
 
-extern RecordMotion* global_motionRecorder;
+extern HRICS::RecordMotion* global_motionRecorder;
 
 #endif // RECORDMOTION_HPP

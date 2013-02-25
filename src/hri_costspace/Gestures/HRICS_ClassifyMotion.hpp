@@ -1,23 +1,37 @@
 #ifndef HRICS_CLASSIFYMOTION_HPP
 #define HRICS_CLASSIFYMOTION_HPP
 
-#include "HRICS_RecordMotion.hpp"
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+
+#include <Eigen/Core>
+#define EIGEN_USE_NEW_STDVECTOR
+#include <Eigen/Geometry>
+#include <Eigen/StdVector>
 
 namespace HRICS
 {
     class ClassifyMotion
     {
     public:
-        ClassifyMotion() { }
-        ~ClassifyMotion() { }
+        ClassifyMotion();
+        ~ClassifyMotion();
 
-        void load_model();
-        void classify_motion(const std::vector<motion_t>& motion, int end_idx=-1);
+        bool load_model();
+        std::vector<double> classify_motion( const Eigen::MatrixXd& motion, int end_idx=-1);
 
     private:
-        void gauss_pdf(Eigen::Matrix&, int class_id);
+        Eigen::VectorXd gauss_pdf( const Eigen::MatrixXd&, int id_class, int id_state );
+        Eigen::MatrixXd load_from_csv( const std::string& filename );
+        Eigen::MatrixXd convert_to_matrix( const std::vector< std::vector< std::string > >& matrix );
+
+        int m_nb_classes;
+        int m_nb_states;
+        std::vector<Eigen::VectorXd> m_priors;
+        std::vector<Eigen::MatrixXd> m_mu;
+        std::vector< std::vector<Eigen::MatrixXd> > m_sigma;
     };
 }
 
+extern HRICS::ClassifyMotion* global_classifyMotion;
 
 #endif // HRICS_CLASSIFYMOTION_HPP

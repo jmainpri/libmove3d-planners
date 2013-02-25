@@ -11,7 +11,9 @@
 #include <iomanip>
 #include <sstream>
 #include <fstream>
+
 using namespace std;
+using namespace HRICS;
 
 RecordMotion* global_motionRecorder=NULL;
 
@@ -26,7 +28,7 @@ bool convert_text_to_num(T& t,
 
 std::vector< std::vector<double> > convert_text_matrix_to_double(const std::vector< std::vector< std::string > >& matrix )
 {
-    vector< vector<double> > result(matrix.size());
+    std::vector< std::vector<double> > result(matrix.size());
 
     for( int i=0; i<int(matrix.size()); i++ )
     {
@@ -509,19 +511,29 @@ void RecordMotion::saveToCSV( const std::string &filename, const motion_t& motio
     s.close();
 }
 
-void RecordMotion::loadRegressedFromCSV()
+bool  RecordMotion::loadRegressedFromCSV()
 {
     string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/regressed_trajectories/joints/";
 
     m_stored_motions.clear();
 
-    loadFromCSV( foldername + "traj_class_1.csv" );
-    loadFromCSV( foldername + "traj_class_2.csv" );
-    loadFromCSV( foldername + "traj_class_3.csv" );
-    loadFromCSV( foldername + "traj_class_4.csv" );
+
+    if( !loadFromCSV( foldername + "traj_class_1.csv" ) ){
+        return false;
+    }
+    if( !loadFromCSV( foldername + "traj_class_2.csv" ) ){
+        return false;
+    }
+    if( !loadFromCSV( foldername + "traj_class_3.csv" ) ){
+        return false;
+    }
+    if( !loadFromCSV( foldername + "traj_class_4.csv" ) ){
+        return false;
+    }
+    return true;
 }
 
-void RecordMotion::loadFromCSV( const std::string& filename )
+bool RecordMotion::loadFromCSV( const std::string& filename )
 {
     cout << "Loading from CSV" << endl;
 
@@ -548,10 +560,10 @@ void RecordMotion::loadFromCSV( const std::string& filename )
 
     if( matrix.empty() ) {
         cout << "no data has been loaded" << endl;
-        return;
+        return false;
     }
-    cout << "matrix fully loaded" << endl;
-    cout << "size : " << matrix.size() << " , " << matrix[0].size() << endl;
+//    cout << "matrix fully loaded" << endl;
+//    cout << "size : " << matrix.size() << " , " << matrix[0].size() << endl;
 
     motion_t motion;
 
@@ -582,4 +594,5 @@ void RecordMotion::loadFromCSV( const std::string& filename )
      }
 
     m_stored_motions.push_back( motion );
+    return true;
 }

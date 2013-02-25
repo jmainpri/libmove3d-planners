@@ -7,7 +7,7 @@
 #include <Eigen/Core>
 #define EIGEN_USE_NEW_STDVECTOR
 #include <Eigen/StdVector>
-#include <Eigen/Geometry> 
+#include <Eigen/Geometry>
 
 #include "API/Device/joint.hpp"
 #include "API/ConfigSpace/configuration.hpp"

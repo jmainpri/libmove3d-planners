@@ -301,3 +301,5 @@ src/collision_space/BodySurfaceSampler.hpp
 src/collision_space/CollisionSpace.cpp
 src/collision_space/CollisionPoint.cpp
 src/collision_space/BodySurfaceSampler.cpp
+src/hri_costspace/Gestures/HRICS_ClassifyMotion.cpp
+src/hri_costspace/Gestures/HRICS_ClassifyMotion.hpp

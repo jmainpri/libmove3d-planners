@@ -240,9 +240,10 @@ ENDIF()
 
 #-------------- Eigen ----------------------------------------------------------
 
-FIND_PACKAGE(EIGEN REQUIRED)
-INCLUDE_directories(${Eigen_INCLUDE_DIR})
-SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${Eigen_INCLUDE_DIR})
+FIND_PACKAGE(Eigen3 REQUIRED)
+INCLUDE_directories(${EIGEN3_INCLUDE_DIR})
+SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR})
+MESSAGE(Eigen3_INCLUDE_DIR : ${EIGEN3_INCLUDE_DIR})
 
 #-------------- Boost ----------------------------------------------------------
 
@@ -270,10 +271,19 @@ ENDIF(MULTILOCALPATH)
 
 #-------------- PolVox ----------------------------------------------------------
 
-FIND_PACKAGE(PolyVox REQUIRED)
-INCLUDE_directories(${PolyVox_INCLUDE_DIRS})
-SET(INCLUDE_DIRS ${PolyVox_INCLUDE_DIRS})
-SET(LIBS ${LIBS} ${PolyVox_LIBRARIES})
+#FIND_PACKAGE(PolyVox REQUIRED)
+#INCLUDE_directories(${PolyVox_INCLUDE_DIRS})
+#SET(INCLUDE_DIRS ${PolyVox_INCLUDE_DIRS})
+#SET(LIBS ${LIBS} ${PolyVox_LIBRARIES})
+#message(${CMAKE_MODULE_PATH})
+
+#-------------- Matio -----------------------------------------------------------
+#FIND_PACKAGE(MATIO REQUIRED matio)
+#INCLUDE_directories(${MATIO_INCLUDE_DIRS})
+#SET(INCLUDE_DIRS ${MATIO_INCLUDE_DIRS})
+#SET(LIBS ${LIBS} ${MATIO_LIBRARIES})
+#MESSAGE("${MATIO_INCLUDE_DIRS}")
+#MESSAGE("${MATIO_LIBRARIES}")
 
 #------------------- PKG_CONFIG ---------------------------
 #----------------------------------------------------------

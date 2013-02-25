@@ -19,6 +19,11 @@
 #define MOVE3D_PTR_NAMESPACE std::tr1
 #endif
 
+#ifndef MOVE3D_USING_SHARED_PTR_NAMESPACE
+#define MOVE3D_USING_SHARED_PTR_NAMESPACE using namespace std::tr1;
+#define MOVE3D_PTR_NAMESPACE std::tr1
+#endif
+
 class Robot;
 
 /**
