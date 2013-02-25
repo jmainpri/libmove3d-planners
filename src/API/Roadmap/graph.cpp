@@ -12,6 +12,7 @@
 #include <boost/foreach.hpp>
 #include <boost/config.hpp>
 #include <boost/random.hpp>
+#include <boost/graph/vector_as_graph.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/strong_components.hpp>
 #include <boost/graph/graph_utility.hpp>
@@ -20,6 +21,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/random.hpp>
 
+#include "API/ConfigSpace/configuration.hpp"
 #include "API/project.hpp"
 #include "API/Roadmap/graph.hpp"
 #include "API/Roadmap/compco.hpp"
@@ -1747,19 +1749,20 @@ std::vector<Node*> Graph::getNodesInTheCompCo(Node* node)
 int Graph::rebuildCompcoFromBoostGraph()
 {
 	// Find new compco with the BGL strongly connected components
-	vector<int>		component(			boost::num_vertices(m_BoostGraph) );
-	vector<int>		discover_time(	boost::num_vertices(m_BoostGraph) );
+  std::vector<int>		component(			boost::num_vertices(m_BoostGraph) );
+	std::vector<int>		discover_time(	boost::num_vertices(m_BoostGraph) );
 	
-	vector<boost::default_color_type> color(boost::num_vertices(m_BoostGraph));
-	vector<BGL_Vertex> root(boost::num_vertices(m_BoostGraph));
+	std::vector<boost::default_color_type> color(boost::num_vertices(m_BoostGraph));
+	std::vector<BGL_Vertex> root(boost::num_vertices(m_BoostGraph));
 	
 	if ( m_Nodes.size() != component.size() ) 
 	{
 		throw string("Error in the component size() before the strongly connected algo");
 	}
 	
-  int num = boost::strong_components( m_BoostGraph, &component[0], boost::root_map(&root[0]).
-                                      color_map(&color[0]).discover_time_map(&discover_time[0]) ); 
+  // TODO BROKEN!!!
+  int num=0;
+//  int num = boost::strong_components( m_BoostGraph, &component[0], boost::root_map(&root[0]).color_map(&color[0]).discover_time_map(&discover_time[0]) ); 
   
 //  std::cout << "Total number of components: " << num << std::endl;
 //  return num;
