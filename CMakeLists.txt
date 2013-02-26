@@ -275,7 +275,6 @@ ENDIF(MULTILOCALPATH)
 #INCLUDE_directories(${PolyVox_INCLUDE_DIRS})
 #SET(INCLUDE_DIRS ${PolyVox_INCLUDE_DIRS})
 #SET(LIBS ${LIBS} ${PolyVox_LIBRARIES})
-#message(${CMAKE_MODULE_PATH})
 
 #-------------- Matio -----------------------------------------------------------
 #FIND_PACKAGE(MATIO REQUIRED matio)
