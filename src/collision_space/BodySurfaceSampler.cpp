@@ -28,17 +28,36 @@ BodySurfaceSampler::~BodySurfaceSampler()
     cout << "Delete BodySurfaceSampler" << endl;
 }
 
-//! Returns a pointer to the point cloud associated to the given object
-//!
-PointCloud& BodySurfaceSampler::getPointCloud( obj* o )
+bool BodySurfaceSampler::isPointOverGround( const Eigen::Vector3d& point )
 {
-    return m_objectToPointCloudMap[o];
+    if ( point[2] < 0 ) {
+        return false;
+    }
+
+    return true;
+}
+
+bool BodySurfaceSampler::isPointInEnvironment( const Eigen::Vector3d& point )
+{
+    vector<double> bounds = global_Project->getActiveScene()->getBounds();
+
+    if ( (point[0] < bounds[0]) || (point[0] > bounds[1]) ) {
+        return false;
+    }
+    if ( (point[1] < bounds[2]) || (point[1] > bounds[3]) ) {
+        return false;
+    }
+    if ( (point[2] < bounds[4]) || (point[2] > bounds[5]) ) {
+        return false;
+    }
+
+    return true;
 }
 
 //! Sample the surface of an object
 //! 
-//! Discard points of they are not in the evironment box
-//! also dicard points of they are bellow 0 in z (bellow ground)
+//! Discard points if they are not in the environment box
+//! also dicard points if they are bellow 0 in z (bellow ground)
 //! this enables a pading while keeping a ground object for the
 //! calssical collision checker based algorithm
 PointCloud& BodySurfaceSampler::sampleObjectSurface( p3d_obj* obj, bool isRobot )
@@ -60,7 +79,8 @@ PointCloud& BodySurfaceSampler::sampleObjectSurface( p3d_obj* obj, bool isRobot 
                 the_points[j][2] = poly->the_points[j][2];
 
                 if (obj->type == P3D_OBSTACLE)
-                {//real point position
+                {
+                    //real point position
                     p3d_xformPoint(obj->pol[i]->pos0, poly->the_points[j], the_points[j]);
                 }
                 else
@@ -81,41 +101,31 @@ PointCloud& BodySurfaceSampler::sampleObjectSurface( p3d_obj* obj, bool isRobot 
                             the_points[poly->the_faces[j].the_indexs_points[1] - 1],
                             the_points[poly->the_faces[j].the_indexs_points[2] - 1], m_step, &nbPoints);
 
-                //#ifdef DPG
-
-                //				obj->pointCloud = MY_REALLOC(obj->pointCloud,
-                //                                     p3d_vector3,
-                //                                     obj->nbPointCloud,
-                //                                     obj->nbPointCloud + nbPoints);
-
                 for(unsigned int k = 0; k < nbPoints; k++)
                 {
                     Eigen::Vector3d point;
-
                     point(0) = tmp[k][0];
                     point(1) = tmp[k][1];
                     point(2) = tmp[k][2];
 
-                    //					obj->pointCloud[obj->nbPointCloud + k][0] = point(0);
-                    //					obj->pointCloud[obj->nbPointCloud + k][1] = point(1);
-                    //					obj->pointCloud[obj->nbPointCloud + k][2] = point(2);
                     if( isRobot || ( isPointInEnvironment( point ) && isPointOverGround( point )) )
                     {
                         m_objectToPointCloudMap[obj].push_back( point );
                     }
-                    //          else {
-                    //            cout << "Point not in environment, Object : " << obj->name << endl;
-                    //          }
-                    //          cout << point << endl;
                 }
-                //				obj->nbPointCloud += nbPoints;
-                //#endif
                 free(tmp);
             }
         }
     }
 
     return m_objectToPointCloudMap[obj];
+}
+
+//! Returns a pointer to the point cloud associated to the given object
+//!
+PointCloud& BodySurfaceSampler::getPointCloud( obj* o )
+{
+    return m_objectToPointCloudMap[o];
 }
 
 //! Sample the
@@ -153,32 +163,6 @@ void BodySurfaceSampler::sampleAllRobotsBodiesSurface()
     {
         sampleRobotBodiesSurface( sc->getRobot(i) );
     }
-}
-
-bool BodySurfaceSampler::isPointOverGround( const Eigen::Vector3d& point )
-{
-    if ( point[2] < 0 ) {
-        return false;
-    }
-
-    return true;
-}
-
-bool BodySurfaceSampler::isPointInEnvironment( const Eigen::Vector3d& point ) 
-{
-    vector<double> bounds = global_Project->getActiveScene()->getBounds();
-
-    if ( (point[0] < bounds[0]) || (point[0] > bounds[1]) ) {
-        return false;
-    }
-    if ( (point[1] < bounds[2]) || (point[1] > bounds[3]) ) {
-        return false;
-    }
-    if ( (point[2] < bounds[4]) || (point[2] > bounds[5]) ) {
-        return false;
-    }
-
-    return true;
 }
 
 BoundingCylinder* BodySurfaceSampler::generateBoudingCylinder(p3d_obj* obj)

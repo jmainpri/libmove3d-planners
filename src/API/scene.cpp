@@ -66,7 +66,7 @@ string Scene::getName()
     return m_Name;
 }
 
-void Scene::setActiveRobot(string name)
+void Scene::setActiveRobot(const string &name)
 {
     unsigned int id = getRobotId(name);
     p3d_sel_desc_id(P3D_ROBOT,m_Scene->robot[id]);
@@ -77,28 +77,28 @@ Robot* Scene::getActiveRobot()
     return getRobotByName(m_Scene->cur_robot->name);
 }
 
-unsigned int Scene::getRobotId(string str)
+unsigned int Scene::getRobotId(const string& str)
 {
     for (unsigned int i=0; i<m_Robot.size(); i++)
     {
-        if ( m_Robot[i]->getName().compare( str ) == 0 )
+        if ( m_Robot[i]->getName() == str )
         {
             return i;
         }
     }
 
     cout << "Error geting robot id in " << __func__ << endl;
-    return 0;
+    return -1;
 }
 
 /**
  * Get robot by name
  */
-Robot* Scene::getRobotByName(string str)
+Robot* Scene::getRobotByName(const string &str)
 {
     unsigned int id = getRobotId(str);
 
-    if (id < m_Robot.size() )
+    if ( id >= 0 && id < m_Robot.size() )
     {
         return m_Robot[id];
     }
@@ -109,7 +109,7 @@ Robot* Scene::getRobotByName(string str)
 /**
  * Get robot by name containing
  */
-Robot* Scene::getRobotByNameContaining(string str)
+Robot* Scene::getRobotByNameContaining(const string &str)
 {
     for (unsigned int i=0; i<m_Robot.size(); i++)
     {

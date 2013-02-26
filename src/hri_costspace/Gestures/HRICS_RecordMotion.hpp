@@ -23,7 +23,7 @@ public:
     void saveToXml( const std::string& filename );
     void saveToXml( const std::string& filename, const motion_t& motion );
 
-    motion_t loadFromXml(const std::string &filename);
+    motion_t loadFromXml( const std::string &filename );
     void loadMotionFromMultipleFiles( const std::string& baseFilename, int number_of_files );
     bool loadRegressedFromCSV();
     bool loadFromCSV( const std::string& filename );
@@ -32,6 +32,7 @@ public:
     void addToCurrentMotion( const motion_t& motion );
     void saveToCSV(const std::string &filename,const motion_t& motion);
     void saveStoredToCSV( const std::string &filename );
+    motion_t resample(const motion_t& motion, int nb_sample );
 
     void showStoredMotion();
     void showCurrentMotion();

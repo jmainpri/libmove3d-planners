@@ -40,7 +40,7 @@ public:
     void setRegressedMotions( const std::vector<motion_t>& motions );
     void computeOccpancy();
     void setClassToDraw( int id_class );
-    void classifyMotion( const motion_t& motions );
+    int classifyMotion( const motion_t& motions );
     void draw();
 
 private:

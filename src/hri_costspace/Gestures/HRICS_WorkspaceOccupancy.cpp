@@ -422,7 +422,7 @@ void WorkspaceOccupancyGrid::draw()
     // Disables array contains vertices
     glDisableClientState( GL_VERTEX_ARRAY );
 
-    // Force display to be drawn now
+    // Force display to be drawdraw_sampled_pointsn now
     glFlush();
 
     m_nbframes++;
@@ -577,9 +577,11 @@ void WorkspaceOccupancyGrid::computeOccpancy()
     cout << "End : " << __func__ << endl;
 }
 
-
-void WorkspaceOccupancyGrid::classifyMotion( const motion_t& motions )
+int WorkspaceOccupancyGrid::classifyMotion( const motion_t& motions )
 {
+    std::vector<double> likelihood;
+
+    //int j=100;
     for (int j=1; j<int(motions.size()); j++)
     {
         Eigen::MatrixXd matrix( 13, j );
@@ -597,20 +599,17 @@ void WorkspaceOccupancyGrid::classifyMotion( const motion_t& motions )
             matrix(6,i) = (*q)[13]; // TorsoY
             matrix(7,i) = (*q)[14]; // TorsoZ
 
-            matrix(8,i) = (*q)[18]; // rShoulderX
-            matrix(9,i) = (*q)[19]; // rShoulderZ
+            matrix(8,i) = (*q)[18];  // rShoulderX
+            matrix(9,i) = (*q)[19];  // rShoulderZ
             matrix(10,i) = (*q)[20]; // rShoulderY
             matrix(11,i) = (*q)[21]; // rArmTrans
             matrix(12,i) = (*q)[22]; // rElbowZ
         }
 
-        vector<double> likelihood = m_classifier->classify_motion( matrix );
-
-        cout << j << " : " << max_element(likelihood.begin(),likelihood.end()) - likelihood.begin() << endl;
+        likelihood = m_classifier->classify_motion( matrix );
+        cout << std::max_element(likelihood.begin(),likelihood.end()) - likelihood.begin() << " ";
     }
+    cout << endl;
 
-//    cout << "likelihood[0] : " << likelihood[0] << endl;
-//    cout << "likelihood[1] : " << likelihood[1] << endl;
-//    cout << "likelihood[2] : " << likelihood[2] << endl;
-//    cout << "likelihood[3] : " << likelihood[3] << endl;
+    return std::max_element(likelihood.begin(),likelihood.end()) - likelihood.begin();
 }

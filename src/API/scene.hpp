@@ -41,7 +41,7 @@ public:
 	 * modifie le Robot actif
 	 * @param name le nom du nouveau Robot actif
 	 */
-	void setActiveRobot(std::string name);
+    void setActiveRobot(const std::string& name);
 	
 	/**
 	 * obtient le Robot actif
@@ -57,17 +57,17 @@ public:
 	/**
 	 * Returns the robot ID
 	 */
-	unsigned int getRobotId(std::string str);
+    unsigned int getRobotId(const std::string& str);
 	
 	/**
 	 * Get robot by name
 	 */
-	Robot* getRobotByName(std::string name);
+    Robot* getRobotByName(const std::string& name);
 	
 	/**
 	 * Get robot by name containing
 	 */
-	Robot* getRobotByNameContaining(std::string name);
+    Robot* getRobotByNameContaining(const std::string& name);
 	
 	/**
 	 * insert un nouveau Robot au vecteur des Robot

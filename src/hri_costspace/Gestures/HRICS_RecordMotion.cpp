@@ -389,6 +389,30 @@ motion_t RecordMotion::extractSubpart( int begin, int end, const motion_t& motio
     return vectConfs;
 }
 
+motion_t RecordMotion::resample(const motion_t& motion, int nb_sample )
+{
+    motion_t down_sampled_motion;
+
+    if( motion.size() == nb_sample )
+    {
+        down_sampled_motion = motion;
+        return motion;
+    }
+
+    double inc = double(motion.size())/double(nb_sample);
+    double k =0;
+
+    for (int j=0; j<nb_sample; j++)
+    {
+        confPtr_t q(new Configuration(*motion[floor(k)].second));
+        q->adaptCircularJointsLimits();
+        down_sampled_motion.push_back( make_pair(0.02,q) );
+        k += inc;
+    }
+
+    return down_sampled_motion;
+}
+
 void RecordMotion::saveStoredToCSV( const std::string &filename )
 {
     if( m_stored_motions.empty() )
@@ -398,22 +422,12 @@ void RecordMotion::saveStoredToCSV( const std::string &filename )
     }
 
     const int samples = 100;
-    cout << "Down sampling to " << samples << " points" << endl;
+
+    cout << "Down sampling to " << samples << endl;
+
     for (int i=0; i<int(m_stored_motions.size()); i++)
     {
-        double inc = double(m_stored_motions[i].size())/double(samples);
-        double k =0; motion_t motion;
-
-        for (int j=0; j<samples; j++)
-        {
-            confPtr_t q(new Configuration(*m_stored_motions[i][floor(k)].second));
-            q->adaptCircularJointsLimits();
-            motion.push_back( make_pair(0.02,q) );
-            k += inc;
-        }
-//        cout << "m_stored_motions[i].size() : " << m_stored_motions[i].size() << endl;
-//        cout << "k : " << k << endl;
-        m_stored_motions[i] = motion;
+        m_stored_motions[i] = resample( m_stored_motions[i], samples );
     }
 
     std::ofstream s;
