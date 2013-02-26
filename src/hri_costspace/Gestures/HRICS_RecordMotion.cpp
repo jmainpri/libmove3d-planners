@@ -26,6 +26,7 @@ bool convert_text_to_num(T& t,
   return !(iss >> f >> t).fail();
 }
 
+
 std::vector< std::vector<double> > convert_text_matrix_to_double(const std::vector< std::vector< std::string > >& matrix )
 {
     std::vector< std::vector<double> > result(matrix.size());
@@ -393,7 +394,7 @@ motion_t RecordMotion::resample(const motion_t& motion, int nb_sample )
 {
     motion_t down_sampled_motion;
 
-    if( motion.size() == nb_sample )
+    if( int(motion.size()) == nb_sample )
     {
         down_sampled_motion = motion;
         return motion;
