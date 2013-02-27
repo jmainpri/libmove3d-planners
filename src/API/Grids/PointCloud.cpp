@@ -135,9 +135,9 @@ void PointCloud::drawOnePoint(bool withTransform, const Eigen::Transform3d& t, i
         point = t * point;
     }
 
-    _corner[0] = point[0];
-    _corner[1] = point[1];
-    _corner[2] = point[2];
+    _corner[0] = point[0] - m_CubeSize[0] / 2;
+    _corner[1] = point[1] - m_CubeSize[1] / 2;
+    _corner[2] = point[2] - m_CubeSize[2] / 2;
 
     double _v0[3]; double _v1[3]; double _v2[3]; double _v3[3];
     double _v4[3]; double _v5[3]; double _v6[3]; double _v7[3];

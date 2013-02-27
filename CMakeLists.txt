@@ -252,6 +252,9 @@ FIND_PACKAGE(Boost REQUIRED COMPONENTS thread)
 SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${BOOST_INCLUDE_DIRS})
 SET(LIBS ${LIBS} ${Boost_LIBRARIES})
 ADD_DEFINITIONS(-pthread)
+MESSAGE("Boost_VERSION : ${Boost_VERSION}")
+MESSAGE("Boost_INCLUDE_DIRS : ${Boost_INCLUDE_DIRS}")
+MESSAGE("Boost_LIBRARIES : ${Boost_LIBRARIES}")
 
 #-------------- GBM ------------------------------------------------------------
 IF(USE_GBM)

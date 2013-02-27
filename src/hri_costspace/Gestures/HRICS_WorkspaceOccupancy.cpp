@@ -71,44 +71,19 @@ WorkspaceOccupancyCell::~WorkspaceOccupancyCell()
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-WorkspaceOccupancyGrid::WorkspaceOccupancyGrid( const std::string& human_name, double pace, vector<double> envSize) :
-    API::ThreeDGrid( pace , envSize ), m_drawing(false), m_id_class_to_draw(0)
+WorkspaceOccupancyGrid::WorkspaceOccupancyGrid( Robot* human, double pace, vector<double> envSize, ClassifyMotion* classifier ) :
+    API::ThreeDGrid( pace , envSize ),
+    m_human(human),
+    m_drawing(false),
+    m_id_class_to_draw(0),
+    m_classifier(classifier)
 {
     cout << "WorkspaceOccupancyGrid::createAllCells" << endl;
     createAllCells();
-
     cout << "_cells.size() : " << _cells.size() << endl;
-
-    m_human = global_Project->getActiveScene()->getRobotByName( human_name );
 
     m_sampler = new BodySurfaceSampler( 0.02 );
     m_sampler->sampleRobotBodiesSurface( m_human );
-    //    m_collision_space = new CollisionSpace( m_human, pace, envSize );
-    //    global_collisionSpace = m_collision_space;
-
-    m_motion_recorder = new RecordMotion( human_name );
-
-    if( m_motion_recorder->loadRegressedFromCSV() )
-    {
-        cout << "Motions loaded successfully" << endl;
-    }
-    else {
-         cout << "Error loading motions" << endl;
-    }
-
-    global_motionRecorder = m_motion_recorder;
-
-    m_classifier = new ClassifyMotion();
-
-    if( m_classifier->load_model() )
-    {
-        cout << "GMMs loaded successfully" << endl;
-    }
-    else {
-         cout << "Error loading GMMs" << endl;
-    }
-
-    global_classifyMotion = m_classifier;
 }
 
 WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
@@ -455,7 +430,7 @@ void WorkspaceOccupancyGrid::setClassToDraw(int id_class)
         return;
 
     m_id_class_to_draw = id_class;
-    m_human->setAndUpdate(*m_motions[id_class].back().second);
+//    m_human->setAndUpdate(*m_motions[id_class].back().second);
 }
 
 void WorkspaceOccupancyGrid::simple_draw()
@@ -481,7 +456,7 @@ void WorkspaceOccupancyGrid::simple_draw()
 
     std::vector<WorkspaceOccupancyCell*>& occupied_voxels = m_occupied_cells[m_id_class_to_draw];
 
-    cout << "draw : occupied_voxels.size() : " << occupied_voxels.size() << " voxels!!" << endl;
+//    cout << "draw : occupied_voxels.size() : " << occupied_voxels.size() << " voxels!!" << endl;
 
     for( int i=0;i<int(occupied_voxels.size());i++)
     {
@@ -542,6 +517,8 @@ void WorkspaceOccupancyGrid::computeOccpancy()
 {           
     cout << __func__ << endl;
 
+    confPtr_t q = m_human->getCurrentPos();
+
     // For each motion class compute the occupancy
     for(int i=0;i<int(m_motions.size());i++)
     {
@@ -574,7 +551,10 @@ void WorkspaceOccupancyGrid::computeOccpancy()
         cout << "m_occupied_cells[" << i << "].size() : "  << m_occupied_cells[i].size() << endl;
     }
 
+    m_human->setAndUpdate(*q);
+
     cout << "End : " << __func__ << endl;
+
 }
 
 int WorkspaceOccupancyGrid::classifyMotion( const motion_t& motions )
@@ -612,4 +592,15 @@ int WorkspaceOccupancyGrid::classifyMotion( const motion_t& motions )
     cout << endl;
 
     return std::max_element(likelihood.begin(),likelihood.end()) - likelihood.begin();
+}
+
+double WorkspaceOccupancyGrid::getOccupancy(const Eigen::Vector3d &point)
+{
+    if( m_occupied_cells.empty() )
+    {
+        cout << "occpied cells not loaded" << endl;
+        return 0.0;
+    }
+
+    return double(static_cast<WorkspaceOccupancyCell*>(getCell( point ))->m_class_occupies[m_id_class_to_draw]);
 }

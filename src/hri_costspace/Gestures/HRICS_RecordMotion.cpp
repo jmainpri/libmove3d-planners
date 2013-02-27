@@ -52,10 +52,10 @@ RecordMotion::RecordMotion()
     reset();
 }
 
-RecordMotion::RecordMotion(const std::string& robotname)
+RecordMotion::RecordMotion( Robot* robot )
 {
     m_id_motion = 0;
-    setRobot( robotname );
+    m_robot = robot;
     reset();
 }
 

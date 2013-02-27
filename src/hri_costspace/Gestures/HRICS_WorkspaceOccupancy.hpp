@@ -32,7 +32,8 @@ public:
 class WorkspaceOccupancyGrid : public API::ThreeDGrid
 {
 public:
-    WorkspaceOccupancyGrid( const std::string& human_name, double pace, std::vector<double> envSize);
+    WorkspaceOccupancyGrid( Robot* human, double pace, std::vector<double> envSize, ClassifyMotion *classifier );
+
     ~WorkspaceOccupancyGrid();
 
     API::ThreeDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z );
@@ -42,6 +43,7 @@ public:
     void setClassToDraw( int id_class );
     int classifyMotion( const motion_t& motions );
     void draw();
+    double getOccupancy(const Eigen::Vector3d& point);
 
 private:
 

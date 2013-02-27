@@ -13,7 +13,7 @@ class RecordMotion {
 
 public:
     RecordMotion();
-    RecordMotion(const std::string& robotname);
+    RecordMotion( Robot* robot );
     ~RecordMotion();
 
     void setRobot(const std::string& robotname);

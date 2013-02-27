@@ -392,10 +392,10 @@ void HRICS_init(HRI_AGENTS* agents)
     global_costSpace->addCost("costHRI",boost::bind(HRICS_getConfigCost, _1));
     global_costSpace->setCost("costHRI");
 
-    global_costSpace->addCost("costHumanGrids",boost::bind(HRICS_getConfigHumanGridCost, _1));
-    global_costSpace->setCost("costHumanGrids");
-
     global_costSpace->addCost("costHumanPlanarGrids",boost::bind(HRICS_getPlanarHumanGridCost, _1));
     global_costSpace->setCost("costHumanPlanarGrids");
+
+    global_costSpace->addCost("costHumanGrids",boost::bind(HRICS_getConfigHumanGridCost, _1));
+    global_costSpace->setCost("costHumanGrids");
     //Human->setAndUpdate( *q );
 }

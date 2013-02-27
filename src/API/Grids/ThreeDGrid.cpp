@@ -187,6 +187,7 @@ void ThreeDGrid::createAllCells()
  */
 ThreeDCell* ThreeDGrid::getCell(unsigned int x, unsigned int y, unsigned int z) const
 {
+#ifdef THREED_GRID_DEBUG
     if(x<0 || x >= _nbCellsX)
     {
         //cout << "ThreeDGrid Error : out of bounds"<< endl;
@@ -202,6 +203,7 @@ ThreeDCell* ThreeDGrid::getCell(unsigned int x, unsigned int y, unsigned int z) 
         //cout << "ThreeDGrid Error : out of bounds"<< endl;
         return NULL;
     }
+ #endif
 
     return static_cast<ThreeDCell*>(_cells[ x + y*_nbCellsX + z*_nbCellsX*_nbCellsY ]);
 }
@@ -224,6 +226,7 @@ ThreeDCell* ThreeDGrid::getCell(Vector3i cell) const
 const bool DebugCell = false;
 ThreeDCell* ThreeDGrid::getCell(const Vector3d& point) const
 {
+#ifdef THREED_GRID_DEBUG
     if( (point[0]<_originCorner[0]) || (point[0]>(_originCorner[0]+_nbCellsX*_cellSize[0]) ))
     {
         if (DebugCell)
@@ -244,13 +247,12 @@ ThreeDCell* ThreeDGrid::getCell(const Vector3d& point) const
             cout << "Error point not in grid in " << __func__ << endl;
         return 0x00;
     }
-
-    unsigned int x = (unsigned int)floor((point[0]-_originCorner[0])/_cellSize[0]);
-    unsigned int y = (unsigned int)floor((point[1]-_originCorner[1])/_cellSize[1]);
-    unsigned int z = (unsigned int)floor((point[2]-_originCorner[2])/_cellSize[2]);
+#endif
 
     //    cout << "( "<<x<<" , "<<y<<" , "<<z<<" ) "<< endl;
-    return getCell(x,y,z);
+    return getCell(floor((point[0]-_originCorner[0])/_cellSize[0]),
+                   floor((point[1]-_originCorner[1])/_cellSize[1]),
+                   floor((point[2]-_originCorner[2])/_cellSize[2]));
 }
 
 /*!
@@ -298,14 +300,13 @@ Vector3i ThreeDGrid::getCellCoord(ThreeDCell* ptrCell) const
  */
 ThreeDCell* ThreeDGrid::createNewCell(unsigned int index, unsigned int x, unsigned int y, unsigned int z )
 {
-    //cout << " ThreeDCell " << endl;
     if (index == 0)
     {
         return new ThreeDCell( 0, _originCorner , this );
     }
     ThreeDCell* newCell = new ThreeDCell( index, computeCellCorner(x,y,z) , this );
-    Vector3d corner = newCell->getCorner();
-    //cout << " = (" << corner[0] <<"," << corner[1] << "," << corner[2] << ")" << endl;
+// Vector3d corner = newCell->getCorner();
+// cout << " = (" << corner[0] <<"," << corner[1] << "," << corner[2] << ")" << endl;
     return newCell;
 }
 

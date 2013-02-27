@@ -512,16 +512,16 @@ namespace stomp_motion_planner
         doChompOptimization();
       }
             
-      if ( do_draw && (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && 
+      if ( do_draw && (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) &&
           stomp_parameters_->getAnimateEndeffector() )
       {
         robot_model_->setAndUpdate(*q_tmp);
         animateEndeffector();
         //animateTrajectoryPolicy();
       }
-      
-      // double cost = getTrajectoryCost();
-      double cost = last_trajectory_cost_;
+
+      double cost = getTrajectoryCost();
+      //double cost = last_trajectory_cost_;
       stomp_statistics_->costs.push_back(cost);
       
       if( reset_reused_rollouts_ ) 
@@ -609,7 +609,9 @@ namespace stomp_motion_planner
                  getSmoothnessCost(), getCollisionCost(), move3d_cost );
         }
         else {
-          printf("%3d, time: %3f, cost: %f\n", iteration_, time_, cost );
+//          printf("%3d, time: %3f, cost: %f\n", iteration_, time_, cost );
+          printf("%3d, time: %3f, cost: %f (s=%f, c=%f), move3d cost: %f\n", iteration_, time_, cost,
+                 getSmoothnessCost(), getCollisionCost(), move3d_cost );
         }
       }
       //printf( "%3d, time: %f, cost: %f (s=%f, c=%f)\n", iteration_, time, getTrajectoryCost(), getSmoothnessCost(), getCollisionCost());
@@ -1097,7 +1099,8 @@ namespace stomp_motion_planner
     {
       general_cost_potential_[segment] = global_costSpace->cost(q);
 //      cout << "config cost = " << global_costSpace->cost(q) << endl;
-      colliding = q.isInCollision();
+//      colliding = q.isInCollision();
+      colliding = false;
     }
     
     return colliding;
@@ -1136,11 +1139,11 @@ namespace stomp_motion_planner
         // calculate the position of every collision point:
         for (int j=0; j<num_collision_points_; j++)
         {
-          //cout << "coll_point(" << i << " , "  << j << ") = " << endl << collision_point_pos_eigen_[i][j] << endl;
+          // cout << "coll_point(" << i << " , "  << j << ") = " << endl << collision_point_pos_eigen_[i][j] << endl;
           bool colliding = getConfigObstacleCost( i, j, q );
-          //      cout << "collision_point_potential_(" << i << " , "  << j << ") = " << endl << collision_point_potential_(i,j) << endl;
-          //      cout << "collision_point_potential_gradient_(" << i << " , "  << j << ") = " << endl << collision_point_potential_gradient_[i][j] << endl;
-          //        point_is_in_collision_[i][j] = colliding;
+          // cout << "collision_point_potential_(" << i << " , "  << j << ") = " << endl << collision_point_potential_(i,j) << endl;
+          // cout << "collision_point_potential_gradient_(" << i << " , "  << j << ") = " << endl << collision_point_potential_gradient_[i][j] << endl;
+          // point_is_in_collision_[i][j] = colliding;
           if ( colliding )
           {
             // This is the function that discards joints too close to the base
@@ -1163,19 +1166,19 @@ namespace stomp_motion_planner
       }
     }
 
-    if(is_collision_free_)
-    {
-        // for each point in the trajectory
-        for (int i=free_vars_start_; i<free_vars_end_; i++)
-        {
-            LocalPath* LP = new LocalPath(getConfigurationOnGroupTraj(i),getConfigurationOnGroupTraj(i+1));
-            if(!LP->isValid())
-            {
-                is_collision_free_=false;
-                break;
-            }
-        }
-    }
+//    if(is_collision_free_)
+//    {
+//        // for each point in the trajectory
+//        for (int i=free_vars_start_; i<free_vars_end_; i++)
+//        {
+//            LocalPath* LP = new LocalPath(getConfigurationOnGroupTraj(i),getConfigurationOnGroupTraj(i+1));
+//            if(!LP->isValid())
+//            {
+//                is_collision_free_=false;
+//                break;
+//            }
+//        }
+//    }
     
     // now, get the vel and acc for each collision point (using finite differencing)
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
@@ -1925,21 +1928,21 @@ namespace stomp_motion_planner
       }
       else
       {
-        Eigen::VectorXd q_i,q_f;
+//        Eigen::VectorXd q_i,q_f;
         
-        int id1 = i;
-        int id2 = i+1;
+//        int id1 = i;
+//        int id2 = i+1;
         
-        if (i == free_vars_end_) {
-          id1--;
-          id2--;
-        }
+//        if (i == free_vars_end_) {
+//          id1--;
+//          id2--;
+//        }
         
-        int index_i = group_trajectory_.getFullTrajectoryIndex(id1);
-        int index_f = group_trajectory_.getFullTrajectoryIndex(id2);
+//        int index_i = group_trajectory_.getFullTrajectoryIndex(id1);
+//        int index_f = group_trajectory_.getFullTrajectoryIndex(id2);
         
-        full_trajectory_->getTrajectoryPointP3d(index_i, q_i);
-        full_trajectory_->getTrajectoryPointP3d(index_f, q_f);
+//        full_trajectory_->getTrajectoryPointP3d(index_i, q_i);
+//        full_trajectory_->getTrajectoryPointP3d(index_f, q_f);
         
         state_collision_cost += ( pow( general_cost_potential_(i) , hack_tweek ) /* ( q_f - q_i ).norm() */) ;
       }

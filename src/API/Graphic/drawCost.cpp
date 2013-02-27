@@ -434,8 +434,8 @@ void g3d_draw_hrics(int opengl_context)
     if( ENV.getBool(Env::drawGraph) && global_workspaceOccupancy )
         global_workspaceOccupancy->draw();
 
-    if( ENV.getBool(Env::drawGraph) && global_HumanPredictionCostSpace )
-        global_HumanPredictionCostSpace->draw();
+    if( ENV.getBool(Env::drawGraph) && global_humanPredictionCostSpace )
+        global_humanPredictionCostSpace->draw();
 
     int OTPListSize = OTPList.size();
     if( ENV.getBool(Env::enableHri) )
