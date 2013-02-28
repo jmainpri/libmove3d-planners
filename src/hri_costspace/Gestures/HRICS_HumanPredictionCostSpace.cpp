@@ -4,8 +4,6 @@
 #include "planner/planEnvironment.hpp"
 #include "planner/cost_space.hpp"
 
-#include <boost/bind.hpp>
-
 using namespace std;
 using namespace HRICS;
 
@@ -15,79 +13,10 @@ HumanPredictionCostSpace* global_humanPredictionCostSpace = NULL;
 //----------------------------------------------------------------------
 // Cost Function
 
-void HRICS_initOccupancyPredictionFramework()
-{
-    std::vector<double> size = global_Project->getActiveScene()->getBounds();
-
-    Robot* robot = global_Project->getActiveScene()->getRobotByName( "PR2_ROBOT" );
-    Robot* human = global_Project->getActiveScene()->getRobotByName( "HERAKLES_HUMAN1" );
-
-    if( robot == NULL || human == NULL )
-    {
-        cout << "human or robot not defined" << endl;
-        return;
-    }
-
-    RecordMotion* recorder = new RecordMotion( human );
-
-    if( recorder->loadRegressedFromCSV() )
-    {
-        cout << "Motions loaded successfully" << endl;
-    }
-    else {
-         cout << "Error loading motions" << endl;
-         delete recorder;
-         return;
-    }
-
-    ClassifyMotion* classifier = new ClassifyMotion();
-
-    if( classifier->load_model() )
-    {
-        cout << "GMMs loaded successfully" << endl;
-    }
-    else {
-         cout << "Error loading GMMs" << endl;
-         delete recorder;
-         delete classifier;
-         return;
-    }
-
-    WorkspaceOccupancyGrid* occupancyGrid = new WorkspaceOccupancyGrid( human, 0.05, size, classifier );
-    occupancyGrid->setRegressedMotions( recorder->getStoredMotions() );
-    occupancyGrid->computeOccpancy();
-    occupancyGrid->setClassToDraw(1);
-
-    // Create the prediction costspace
-    HumanPredictionCostSpace* predictionSpace = new HumanPredictionCostSpace( robot, occupancyGrid );
-
-    // GUI global variables
-    global_motionRecorder = recorder;
-    global_classifyMotion = classifier;
-    global_workspaceOccupancy = occupancyGrid;
-    global_humanPredictionCostSpace = predictionSpace;
-
-
-    // Define cost functions
-    global_costSpace->addCost( "costHumanPredictionOccupancy" , boost::bind(HRICS_getPredictionOccupancyCost, _1) );
-    global_costSpace->setCost( "costHumanPredictionOccupancy" );
-}
-
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
-
 double HRICS_getPredictionOccupancyCost(Configuration& q)
 {
 //    return global_humanPredictionCostSpace->getCostFromActiveJoints(q);
-    double cost = 0.0;
-    cost = global_humanPredictionCostSpace->getCost(q);
-    if( PlanEnv->getBool(PlanParam::trajStompComputeColl ))
-    {
-        if (q.isInCollision()) {
-            cost += 1000;
-        }
-    }
-    return cost;
+    return global_humanPredictionCostSpace->getCost(q);
 }
 
 //----------------------------------------------------------------------
@@ -97,7 +26,7 @@ HumanPredictionCostSpace::HumanPredictionCostSpace( Robot* robot, WorkspaceOccup
 {
     cout << "Create HumanPredictionCostSpace" << endl;
 
-    m_surface_sampler = new BodySurfaceSampler(0.07);
+    m_surface_sampler = new BodySurfaceSampler(0.50);
 
     sampleRobotPoints();
     setActiveJoints();
@@ -155,7 +84,7 @@ double HumanPredictionCostSpace::getCostFromActiveJoints(Configuration& q)
 
 void HumanPredictionCostSpace::draw()
 {
-    if( PlanEnv->getBool(PlanParam::drawSampledPoints) )
+//    if( PlanEnv->getBool(PlanParam::drawSampledPoints) )
         draw_sampled_points();
 }
 

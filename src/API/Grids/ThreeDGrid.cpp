@@ -72,7 +72,7 @@ ThreeDGrid::ThreeDGrid( double samplingRate, vector<double> envSize )
     }
     cout << endl;
 
-    if(((int)samplingRate) != 0 )
+    if((int(samplingRate)) != 0 )
     {
         if( ( ((int) (envSize.at(1) - envSize.at(0))) % (int)samplingRate ) != 0 )
         {
@@ -187,7 +187,7 @@ void ThreeDGrid::createAllCells()
  */
 ThreeDCell* ThreeDGrid::getCell(unsigned int x, unsigned int y, unsigned int z) const
 {
-#ifdef THREED_GRID_DEBUG
+//#ifdef THREED_GRID_DEBUG
     if(x<0 || x >= _nbCellsX)
     {
         //cout << "ThreeDGrid Error : out of bounds"<< endl;
@@ -203,7 +203,7 @@ ThreeDCell* ThreeDGrid::getCell(unsigned int x, unsigned int y, unsigned int z) 
         //cout << "ThreeDGrid Error : out of bounds"<< endl;
         return NULL;
     }
- #endif
+// #endif
 
     return static_cast<ThreeDCell*>(_cells[ x + y*_nbCellsX + z*_nbCellsX*_nbCellsY ]);
 }

@@ -3,7 +3,6 @@
 
 #include "HRICS_WorkspaceOccupancy.hpp"
 
-void HRICS_initOccupancyPredictionFramework();
 double HRICS_getPredictionOccupancyCost(Configuration& q);
 
 namespace HRICS

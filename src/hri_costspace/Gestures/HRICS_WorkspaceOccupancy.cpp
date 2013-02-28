@@ -84,6 +84,8 @@ WorkspaceOccupancyGrid::WorkspaceOccupancyGrid( Robot* human, double pace, vecto
 
     m_sampler = new BodySurfaceSampler( 0.02 );
     m_sampler->sampleRobotBodiesSurface( m_human );
+
+    m_likelyhood.resize(4,100);
 }
 
 WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
@@ -442,14 +444,14 @@ void WorkspaceOccupancyGrid::simple_draw()
     colorvector[2] = 0.0;       //blue
     colorvector[3] = 0.2;       //transparency
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//    // glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-    glDisable(GL_LIGHTING);
-    glDisable(GL_LIGHT0);
+//    glDisable(GL_LIGHTING);
+//    glDisable(GL_LIGHT0);
 
-    glEnable(GL_CULL_FACE);
+//    glEnable(GL_CULL_FACE);
     glBegin(GL_QUADS);
 
     glColor4dv(colorvector);
@@ -460,13 +462,13 @@ void WorkspaceOccupancyGrid::simple_draw()
 
     for( int i=0;i<int(occupied_voxels.size());i++)
     {
-        occupied_voxels[i]->draw();
+        occupied_voxels[i]->drawColorGradient( 0.0, 0.0, 1.0 );
     }
 
     glEnd();
 
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_BLEND);
+//    glDisable(GL_CULL_FACE);
+//    glDisable(GL_BLEND);
 }
 
 //-----------------------------------------------------------------------
@@ -603,4 +605,31 @@ double WorkspaceOccupancyGrid::getOccupancy(const Eigen::Vector3d &point)
     }
 
     return double(static_cast<WorkspaceOccupancyCell*>(getCell( point ))->m_class_occupies[m_id_class_to_draw]);
+}
+
+
+double WorkspaceOccupancyGrid::getOccupancyComination( const Eigen::Vector3d &point )
+{
+    if( m_occupied_cells.empty() )
+    {
+        cout << "occpied cells not loaded" << endl;
+        return 0.0;
+    }
+
+    WorkspaceOccupancyCell* cell = static_cast<WorkspaceOccupancyCell*>(getCell( point ));
+
+    double occupancy=0.0;
+
+    for(int i=0;i<int(cell->m_class_occupies.size());i++)
+    {
+        occupancy += ( m_likelyhood[i]*cell->m_class_occupies[i] );
+    }
+
+    return occupancy;
+}
+
+
+void WorkspaceOccupancyGrid::setLikelyhood( const std::vector<double>& likelyhood )
+{
+    m_likelyhood = likelyhood;
 }

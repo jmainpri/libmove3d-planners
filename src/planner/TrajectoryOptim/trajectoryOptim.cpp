@@ -596,13 +596,13 @@ void traj_optim_shelf_set_localpath_and_cntrts()
 // --------------------------------------------------------
 void traj_optim_shelf_init_collision_space()
 {
-    vector<double> env_size = global_Project->getActiveScene()->getBounds();
-    double pace = env_size[1] - env_size[0];
-    pace = max( env_size[3] - env_size[3], pace);
-    pace = max( env_size[4] - env_size[5], pace);
-    pace /= ENV.getInt(Env::nbCells);
+//    std::vector<double> env_size = global_Project->getActiveScene()->getBounds();
+//    double pace = env_size[1] - env_size[0];
+//    pace = max( env_size[3] - env_size[3], pace);
+//    pace = max( env_size[4] - env_size[5], pace);
+//    pace /= ENV.getInt(Env::nbCells);
 
-    m_coll_space = new CollisionSpace( m_robot, pace, env_size );
+    m_coll_space = new CollisionSpace( m_robot, double(ENV.getInt(Env::nbCells))/100, global_Project->getActiveScene()->getBounds() );
 
     // Set the active joints (links)
     m_active_joints.clear();
@@ -804,6 +804,8 @@ void traj_optim_hrics_generate_points()
 // --------------------------------------------------------
 void traj_optim_hrics_manip_init_joints()
 {
+    m_coll_space = NULL;
+
     if( m_robot->getName() == "PR2_ROBOT" ) {
         // Set the active joints (links)
         m_active_joints.clear();
@@ -864,8 +866,6 @@ void traj_optim_hrics_manip_init_joints()
         //    m_planner_joints.push_back( 4 );
         //    m_planner_joints.push_back( 30 );
     }
-
-    m_coll_space = NULL;
 }
 
 //! initializes localpaths and cntrts for mobile manip
@@ -1025,11 +1025,21 @@ bool traj_optim_init_collision_spaces()
         {
             traj_optim_invalidate_cntrts();
             traj_optim_shelf_set_localpath_and_cntrts();
+
+            // Init collspace
+            if( !global_collisionSpace )
+            {
+                traj_optim_shelf_init_collision_space();
+                traj_optim_shelf_init_collision_points();
+            }
+            else {
+                m_coll_space = global_collisionSpace;
+            }
         }
         else {
             traj_optim_init_mlp_cntrts_and_fix_joints();
+            traj_optim_hrics_manip_init_joints();
         }
-        traj_optim_hrics_manip_init_joints();
 
         // PlanEnv->setDouble(PlanParam::trajOptimStdDev,3);
         // PlanEnv->setInt(PlanParam::nb_pointsOnTraj,30);
@@ -1106,8 +1116,8 @@ bool traj_optim_set_scenario_type()
         }
     }
     else if( ENV.getBool(Env::isCostSpace) &&
-             global_costSpace->getSelectedCostName() == "costHumanGrids" ||
-             global_costSpace->getSelectedCostName() == "costHumanPredictionOccupancy" )
+             ( global_costSpace->getSelectedCostName() == "costHumanGrids" ||
+               global_costSpace->getSelectedCostName() == "costHumanPredictionOccupancy" ) )
     {
         if( m_planning_type == NAVIGATION )
         {
@@ -1314,6 +1324,11 @@ bool traj_optim_initStomp()
     if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
     {
         optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
+    }
+
+    if( m_sce == traj_optim::HumanAwareManip && m_robot->getName() == "PR2_ROBOT")
+    {
+        optimizer->setUseCostSpace(true);
     }
 
     cout << "Optimizer created" << endl;

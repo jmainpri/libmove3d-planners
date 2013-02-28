@@ -281,8 +281,8 @@ void ThreeDCell::drawColorGradient( double value, double min, double max, bool i
   { alpha = 1 - alpha; }
 	
   colorvector[3] = 0.05; //transparency
-  GroundColorMixGreenToRed(colorvector,alpha);
-  g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/6, 10);
+  GroundColorMixGreenToRed( colorvector, alpha );
+  g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/3, 10);
   glColor4dv(colorvector);
 }
 

@@ -348,11 +348,11 @@ double CostSpace::cost(LocalPath& path, int& nb_test)
         int nStep;
         double deltaStep;
 
-        if( m_resolution == cs_classic )
-        {
+//        if( m_resolution == cs_classic )
+//        {
             deltaStep = path.getResolution();
             nStep = path.getParamMax()/deltaStep;
-        }
+//        }
 
         if( m_resolution == cs_pr2_manip )
         {
@@ -400,14 +400,12 @@ double CostSpace::cost(LocalPath& path, int& nb_test)
 
             if( m_deltaMethod == cs_max )
             {
-                //        cout << "prevCost : " << prevCost << " , currentCost " << currentCost ;
-                //        cout << ", deltaCost : " << deltaCost << endl;
                 if( deltaCost > cost )
                     cost = deltaCost;
             }
-            else
+            else {
                 cost += deltaCost;
-
+            }
             prevCost = currentCost;
             currentParam += deltaStep;
         }

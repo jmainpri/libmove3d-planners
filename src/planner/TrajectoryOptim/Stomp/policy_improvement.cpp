@@ -256,6 +256,8 @@ namespace stomp_motion_planner
     
     rollouts_reused_ = false;
     rollouts_reused_next_ = false;
+//    rollouts_reused_ = true;
+//    rollouts_reused_next_ = true;
     extra_rollouts_added_ = false;
     rollout_cost_sorter_.reserve(num_rollouts_);
     
@@ -459,12 +461,13 @@ namespace stomp_motion_planner
       for (int r=0; r<num_rollouts_; ++r)
       {
         double cost = rollouts_[r].getCost();
-//        cout << "rollouts_(" << r << ") cost : " << rollouts_[r].getCost() << endl;
+        //cout << "rollouts_(" << r << ") cost : " << rollouts_[r].getCost() << endl;
         
         // discard out of bounds rollouts
-        if (rollouts_[r].out_of_bounds_) {
+        if ( rollouts_[r].out_of_bounds_ ) {
           cost = std::numeric_limits<double>::max();
         }
+        // cout << "rollout_cost_sorter_(" << r << ") cost : " << cost << endl;
         rollout_cost_sorter_.push_back(std::make_pair(cost,r));
       }
       if (/*extra_rollouts_added_*/ false )
@@ -494,9 +497,9 @@ namespace stomp_motion_planner
       for (int r=0; r<num_rollouts_reused_; ++r)
       {
         double reuse_index = rollout_cost_sorter_[r].second;
-        //double reuse_cost = rollout_cost_sorter_[r].first;
+        // double reuse_cost = rollout_cost_sorter_[r].first;
         
-        //printf( "Reuse %d, cost = %lf\n", r, reuse_cost);
+        // cout <<  "Reuse "<< r << ", cost = " << rollout_cost_sorter_[r].first << endl;
         
         if (reuse_index >=0)
           reused_rollouts_[r] = rollouts_[reuse_index];
@@ -645,14 +648,14 @@ namespace stomp_motion_planner
   //----------------------------------------------------------------------
   //----------------------------------------------------------------------
   //----------------------------------------------------------------------
-  void PolicyImprovement::setRolloutOutOfBounds(int r)
+  void PolicyImprovement::setRolloutOutOfBounds(int r, bool out_of_bounds)
   {
     assert(initialized_);
     
     if( r<0 || r>=num_rollouts_gen_ )
       return;
     
-    rollouts_[r].out_of_bounds_ = true;
+    rollouts_[r].out_of_bounds_ = out_of_bounds;
   }
   
   bool PolicyImprovement::setRolloutCosts(const Eigen::MatrixXd& costs, const double control_cost_weight, std::vector<double>& rollout_costs_total)

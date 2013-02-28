@@ -174,7 +174,7 @@ void initPlannerParameters()
         // Int
         // ------------------------------------------------------------------
         myIntMap.insert(std::make_pair( PlanParam::tata,                         new intContainer(5)));
-        myIntMap.insert(std::make_pair( PlanParam::nb_pointsOnTraj,              new intContainer(15)));
+        myIntMap.insert(std::make_pair( PlanParam::nb_pointsOnTraj,              new intContainer(100)));
   
         // RRRT
         myIntMap.insert(std::make_pair( PlanParam::plannerMaxIterations,         new intContainer(1000000)));

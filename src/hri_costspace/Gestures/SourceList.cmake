@@ -6,6 +6,7 @@ HRICS_ClassifyMotion.cpp
 HRICS_RecordMotion.cpp
 HRICS_WorkspaceOccupancy.cpp
 HRICS_HumanPredictionCostSpace.cpp
+HRICS_HumanPredictionSimulator.cpp
 )
 
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})

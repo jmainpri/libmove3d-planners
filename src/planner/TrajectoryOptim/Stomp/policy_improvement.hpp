@@ -152,7 +152,7 @@ namespace stomp_motion_planner
      * Set rollout as out of bounds
      * Function added by jim
      */
-    void setRolloutOutOfBounds(int id);
+    void setRolloutOutOfBounds(int id, bool out_of_bounds);
     
     /**
      * Reset extra rollouts
@@ -188,7 +188,7 @@ namespace stomp_motion_planner
     double control_cost_weight_;
     
     std::vector<Eigen::MatrixXd> basis_functions_;                          /**< [num_dimensions] num_time_steps x num_parameters */
-    
+
     std::vector<Eigen::VectorXd> parameters_;                               /**< [num_dimensions] num_parameters */
     
     std::vector<Rollout> rollouts_;

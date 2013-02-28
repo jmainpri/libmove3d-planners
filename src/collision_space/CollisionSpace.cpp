@@ -80,44 +80,6 @@ void CollisionSpaceCell::draw()
 CollisionSpace::CollisionSpace( Robot* rob, double pace, const vector<double>& env_size ) :
     API::ThreeDGrid( pace , env_size ), m_sampler(NULL)
 {
-    //    m_nbMaxCells = ENV.getInt(Env::nbCells);
-
-    //    double cellSize = (XYZ_ENV->box.x2 - XYZ_ENV->box.x1);
-
-    //    cellSize = MAX(XYZ_ENV->box.y2 - XYZ_ENV->box.y1, cellSize);
-    //    cellSize = MAX(XYZ_ENV->box.z2 - XYZ_ENV->box.z1, cellSize);
-    //    cellSize /= m_nbMaxCells;
-
-    //    _originCorner[0] = XYZ_ENV->box.x1;
-    //    _originCorner[1] = XYZ_ENV->box.y1;
-    //    _originCorner[2] = XYZ_ENV->box.z1;
-
-    //    _nbCellsX = (XYZ_ENV->box.x2 - XYZ_ENV->box.x1)/cellSize;
-    //    _nbCellsY = (XYZ_ENV->box.y2 - XYZ_ENV->box.y1)/cellSize;
-    //    _nbCellsZ = (XYZ_ENV->box.z2 - XYZ_ENV->box.z1)/cellSize;
-
-    //    _originCorner[0] = env_size[0];
-    //    _originCorner[1] = env_size[2];
-    //    _originCorner[2] = env_size[4];
-
-    //    Eigen::Vector3d topCorner;
-    //    topCorner[0] = env_size[1];
-    //    topCorner[1] = env_size[3];
-    //    topCorner[2] = env_size[4];
-
-    //    double cellSize = ( topCorner[0] - _originCorner[0] );
-
-    //    cellSize = max( topCorner[1] - _originCorner[1], cellSize );
-    //    cellSize = max( topCorner[2] - _originCorner[2], cellSize );
-    //    cellSize /= m_nbMaxCells;
-
-    //    _nbCellsX = (XYZ_ENV->box.x2 - _originCorner[1])/cellSize;
-    //    _nbCellsY = (XYZ_ENV->box.y2 - _originCorner[1])/cellSize;
-    //    _nbCellsZ = (XYZ_ENV->box.z2 - _originCorner[1])/cellSize;
-
-    //    //_nbCells = _nbCellsX * _nbCellsY * _nbCellsZ;
-    //    _cellSize[0] = _cellSize[1] = _cellSize[2] = cellSize;
-
     this->createAllCells();
 
     //unvalid cells for each robot except current one ?
@@ -141,6 +103,9 @@ CollisionSpace::CollisionSpace( Robot* rob, double pace, const vector<double>& e
     m_Robot = rob;
 
     init();
+
+    cout << "pace : " << pace << endl;
+    cout << "nb cells : " << _cells.size() << endl;
 }
 
 CollisionSpace::~CollisionSpace()
@@ -330,8 +295,8 @@ void CollisionSpace::initNeighborhoods()
 
 double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& points)
 {
-    cout << "Add points to distance field" << endl;
-    cout << "Propagate distance" << endl;
+//    cout << "Add points to distance field" << endl;
+//    cout << "Propagate distance" << endl;
 
     double max_distance_sq = (  _nbCellsX*_nbCellsX
                                 + _nbCellsY*_nbCellsY
@@ -386,7 +351,7 @@ double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& poin
             }
 
             // select the neighborhood list based on the update direction:
-            std::vector<std::vector<int> >* neighborhood = &m_Neighborhoods[D][vptr->m_UpdateDirection];
+            std::vector< std::vector<int> >* neighborhood = &m_Neighborhoods[D][vptr->m_UpdateDirection];
 
             // Look in the neighbouring cells
             // and update distance
@@ -437,7 +402,7 @@ double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& poin
         }
         bucket_queue[i].clear();
     }
-    cout << "All points have been added!!!" << endl;
+//    cout << "All points have been added!!!" << endl;
     return 0.0;
 }
 
