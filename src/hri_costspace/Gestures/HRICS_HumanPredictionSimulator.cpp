@@ -129,7 +129,7 @@ void HumanPredictionSimulator::predictVoxelOccupancy()
 {
     std::vector<double> likelihood;
     likelihood = m_classifier->classify_motion( m_current_traj );
-//    return std::max_element( likelihood.begin(),likelihood.end()) - likelihood.begin();
+    m_occupacy_grid->setLikelyhood( likelihood );
 }
 
 void HumanPredictionSimulator::run()

@@ -3,6 +3,7 @@
 
 #include "HRICS_RecordMotion.hpp"
 #include "HRICS_ClassifyMotion.hpp"
+#include "HRICS_WorkspaceOccupancy.hpp"
 
 void HRICS_initOccupancyPredictionFramework();
 
@@ -24,6 +25,7 @@ private:
     Eigen::MatrixXd m_current_traj;
     int m_increment;
     ClassifyMotion* m_classifier;
+    WorkspaceOccupancyGrid* m_occupacy_grid;
 };
 }
 
