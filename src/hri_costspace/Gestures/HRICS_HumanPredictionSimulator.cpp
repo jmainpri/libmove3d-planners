@@ -63,7 +63,9 @@ void HRICS_initOccupancyPredictionFramework()
     HumanPredictionCostSpace* predictionSpace = new HumanPredictionCostSpace( robot, occupancyGrid );
 
     // Create the simulator
-    HumanPredictionSimulator* simulator = new HumanPredictionSimulator( classifier );
+    HumanPredictionSimulator* simulator = new HumanPredictionSimulator( human, classifier, occupancyGrid );
+    recorder->loadFolder();
+    simulator->loadHumanTrajectory( recorder->getStoredMotions()[15] );
 
     // GUI global variables
     global_motionRecorder = recorder;
@@ -81,18 +83,23 @@ void HRICS_initOccupancyPredictionFramework()
 //----------------------------------------------------------------------
 // Simulator
 
-HumanPredictionSimulator::HumanPredictionSimulator(ClassifyMotion* classifier)
+HumanPredictionSimulator::HumanPredictionSimulator( Robot* human, ClassifyMotion* classifier, WorkspaceOccupancyGrid* occupacy_grid )
 {
+    m_human = human;
     m_classifier = classifier;
+    m_occupacy_grid = occupacy_grid;
+    m_current_traj.resize( 0, 0 );
+    m_increment = 1;
 }
 
-void HumanPredictionSimulator::loadHumanTrajectory(const motion_t& motion)
+void HumanPredictionSimulator::loadHumanTrajectory( const motion_t& motion )
 {
     m_motion = motion;
 }
 
 bool HumanPredictionSimulator::updateMotion()
 {
+    //cout << "updateMotion" << endl;
     int end = m_current_traj.cols() + m_increment;
 
     if( end > int(m_motion.size()) )
@@ -115,21 +122,24 @@ bool HumanPredictionSimulator::updateMotion()
         m_current_traj(6,i) = (*q)[13]; // TorsoY
         m_current_traj(7,i) = (*q)[14]; // TorsoZ
 
-        m_current_traj(8,i) = (*q)[18];  // rShoulderX
-        m_current_traj(9,i) = (*q)[19];  // rShoulderZ
+        m_current_traj(8,i)  = (*q)[18]; // rShoulderX
+        m_current_traj(9,i)  = (*q)[19]; // rShoulderZ
         m_current_traj(10,i) = (*q)[20]; // rShoulderY
         m_current_traj(11,i) = (*q)[21]; // rArmTrans
         m_current_traj(12,i) = (*q)[22]; // rElbowZ
     }
+
+    //cout << cout << m_current_traj << endl;
+
+    m_human->setAndUpdate( *m_motion[m_current_traj.cols()-1].second );
 
     return true;
 }
 
 void HumanPredictionSimulator::predictVoxelOccupancy()
 {
-    std::vector<double> likelihood;
-    likelihood = m_classifier->classify_motion( m_current_traj );
-    m_occupacy_grid->setLikelyhood( likelihood );
+    std::vector<double> likelihood = m_classifier->classify_motion( m_current_traj );
+    m_occupacy_grid->setLikelihood( likelihood );
 }
 
 void HumanPredictionSimulator::run()

@@ -17,7 +17,7 @@ namespace HRICS
         ~ClassifyMotion();
 
         bool load_model();
-        std::vector<double> classify_motion( const Eigen::MatrixXd& motion, int end_idx=-1);
+        std::vector<double> classify_motion( const Eigen::MatrixXd& motion );
 
     private:
         Eigen::VectorXd gauss_pdf( const Eigen::MatrixXd&, int id_class, int id_state );

@@ -256,6 +256,60 @@ motion_t RecordMotion::loadFromXml(const string& filename)
     return vectConfs;
 }
 
+void RecordMotion::loadFolder()
+{
+    std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/recorded_motion/";
+    cout << "Load Folder : " << foldername << endl;
+
+    std::string command = "ls " + foldername;
+    FILE* fp = popen( command.c_str(), "r");
+    if (fp == NULL) {
+        cout << "ERROR in system call" << endl;
+        return;
+    }
+    char path[PATH_MAX]; int max_number_of_motions=0;
+    while ( fgets( path, PATH_MAX, fp) != NULL ) max_number_of_motions++;
+    pclose(fp);
+
+    if( max_number_of_motions == 0) cout << "no file in folder" << endl;
+
+    // Set the motion number you want to load
+    int first_motion = 0;
+    max_number_of_motions = 101;
+    int number_of_motions_loaded = 0;
+    const int max_number_of_files = 500;
+
+    reset();
+
+    for( int i=first_motion; i<(first_motion+max_number_of_motions); i++ )
+    {
+        for( int j=0; j<max_number_of_files; j++ )
+        {
+            std::ostringstream filename;
+            filename << foldername << "motion_saved_";
+            filename << std::setw( 5 ) << std::setfill( '0' ) << i << "_";
+            filename << std::setw( 5 ) << std::setfill( '0' ) << j << ".xml";
+
+            std::ifstream file_exists( filename.str().c_str() );
+
+            if( file_exists )
+            {
+                cout << "Load File : " << filename.str() << endl;
+                motion_t partial_motion = loadFromXml( filename.str() );
+                storeMotion( partial_motion, j == 0 );
+
+                if( j == 0 ) {
+                    number_of_motions_loaded++;
+                }
+            }
+            else {
+                break;
+            }
+        }
+    }
+    cout << "Number of motion loaded : " << number_of_motions_loaded << endl;
+}
+
 void RecordMotion::loadMotionFromMultipleFiles( const string& baseFilename, int number_of_files)
 {
     m_motion.clear();
@@ -532,23 +586,35 @@ bool  RecordMotion::loadRegressedFromCSV()
 
     m_stored_motions.clear();
 
+    motion_t tmp;
 
-    if( !loadFromCSV( foldername + "traj_class_1.csv" ) ){
+    tmp = loadFromCSV( foldername + "traj_class_1.csv" );
+    if( tmp.empty() ){
         return false;
     }
-    if( !loadFromCSV( foldername + "traj_class_2.csv" ) ){
+    m_stored_motions.push_back( tmp );
+
+    tmp = loadFromCSV( foldername + "traj_class_2.csv" );
+    if( tmp.empty() ){
         return false;
     }
-    if( !loadFromCSV( foldername + "traj_class_3.csv" ) ){
+    m_stored_motions.push_back( tmp );
+
+    tmp = loadFromCSV( foldername + "traj_class_3.csv" );
+    if( tmp.empty() ){
         return false;
     }
-    if( !loadFromCSV( foldername + "traj_class_4.csv" ) ){
+    m_stored_motions.push_back( tmp );
+
+    tmp = loadFromCSV( foldername + "traj_class_4.csv" );
+    if( tmp.empty() ){
         return false;
     }
+    m_stored_motions.push_back( tmp );
     return true;
 }
 
-bool RecordMotion::loadFromCSV( const std::string& filename )
+motion_t RecordMotion::loadFromCSV( const std::string& filename )
 {
     cout << "Loading from CSV" << endl;
 
@@ -573,14 +639,14 @@ bool RecordMotion::loadFromCSV( const std::string& filename )
             matrix.push_back( row );
     }
 
+     motion_t motion;
+
     if( matrix.empty() ) {
         cout << "no data has been loaded" << endl;
-        return false;
+        return motion;
     }
 //    cout << "matrix fully loaded" << endl;
 //    cout << "size : " << matrix.size() << " , " << matrix[0].size() << endl;
-
-    motion_t motion;
 
     for (int i=0; i<int(matrix.size()); i++)
     {
@@ -608,6 +674,5 @@ bool RecordMotion::loadFromCSV( const std::string& filename )
 //        q->print();
      }
 
-    m_stored_motions.push_back( motion );
-    return true;
+    return motion;
 }

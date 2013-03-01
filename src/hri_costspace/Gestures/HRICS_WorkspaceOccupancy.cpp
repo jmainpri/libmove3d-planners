@@ -11,6 +11,7 @@
 #include "planner/planEnvironment.hpp"
 #include "API/Grids/gridsAPI.hpp"
 #include "API/project.hpp"
+#include "p3d/env.hpp"
 
 #include <sys/time.h>
 
@@ -62,7 +63,7 @@ m_classifier(classifier)
     m_sampler = new BodySurfaceSampler( 0.02 );
     m_sampler->sampleRobotBodiesSurface( m_human );
     
-    m_likelyhood.resize(4,100);
+    m_likelihood.resize(4,100);
 }
 
 WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
@@ -324,16 +325,60 @@ double WorkspaceOccupancyGrid::getOccupancyCombination( const Eigen::Vector3d &p
     
     for(int i=0;i<int(cell->m_occupies_class.size());i++)
     {
-        occupancy += ( m_likelyhood[i]*cell->m_occupies_class[i] );
+        occupancy += ( m_likelihood[i]*cell->m_occupies_class[i] );
     }
     
     return occupancy;
 }
 
 
-void WorkspaceOccupancyGrid::setLikelyhood( const std::vector<double>& likelyhood )
+void WorkspaceOccupancyGrid::setLikelihood( const std::vector<double>& likelihood )
 {
-    m_likelyhood = likelyhood;
+   m_likelihood = likelihood;
+
+   m_min_likelihood = *std::min_element( m_likelihood.begin(), m_likelihood.end() );
+
+    if( m_min_likelihood<0 )
+    {
+        for( int i=0;i<m_likelihood.size();i++)
+        {
+            m_likelihood[i] += std::abs( m_min_likelihood );
+        }
+    }
+
+    double sum = 0;
+
+    for( int i=0;i<m_likelihood.size();i++)
+        sum += m_likelihood[i];
+
+    for( int i=0;i<m_likelihood.size();i++)
+        m_likelihood[i] /= sum;
+
+    cout << " likelihood : " ;
+    for( int i=0;i<m_likelihood.size();i++)
+    {
+        cout << " , "  << m_likelihood[i] ;
+    }
+    cout << endl;
+
+//    m_max_likelihood = 0.0;
+
+//    for( int i=0;i<m_likelihood.size();i++)
+//    {
+//        m_max_likelihood += m_likelihood[i];
+//    }
+
+//    m_max_likelihood = *std::max_element( m_likelihood.begin(), m_likelihood.end() );
+//    m_min_likelihood = *std::min_element( m_likelihood.begin(), m_likelihood.end() );
+
+    m_max_likelihood = 1;
+    m_min_likelihood = 0;
+
+    m_id_class_to_draw = std::max_element( m_likelihood.begin(), m_likelihood.end() ) - m_likelihood.begin();
+
+//    cout << "m_id_class_to_draw : " << m_id_class_to_draw << endl;
+//    cout << " m_min_likelyhood : " << m_min_likelihood << endl;
+//    cout << " m_max_likelyhood : " << m_max_likelihood << endl;
 }
 
 //-----------------------------------------------------------------------
@@ -366,55 +411,39 @@ void WorkspaceOccupancyGrid::setClassToDraw(int id_class)
 }
 
 void WorkspaceOccupancyGrid::simple_draw_one_class()
-{
-    double colorvector[4];
-    
-    colorvector[0] = 1.0;       //red
-    colorvector[1] = 0.5;       //green
-    colorvector[2] = 0.0;       //blue
-    colorvector[3] = 0.2;       //transparency
-    
-    //    glEnable(GL_BLEND);
-    //    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //    // glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    
-    //    glDisable(GL_LIGHTING);
-    //    glDisable(GL_LIGHT0);
-    
-    //    glEnable(GL_CULL_FACE);
-    glBegin(GL_QUADS);
-    
-    glColor4dv(colorvector);
-    
+{    
     std::vector<WorkspaceOccupancyCell*>& occupied_voxels = m_occupied_cells[m_id_class_to_draw];
-    
-    //    cout << "draw : occupied_voxels.size() : " << occupied_voxels.size() << " voxels!!" << endl;
-    
+
     for( int i=0;i<int(occupied_voxels.size());i++)
     {
-        occupied_voxels[i]->drawColorGradient( 0.0, 0.0, 1.0 );
+        occupied_voxels[i]->drawColorGradient( 0.5, 0.0, 1.0 );
     }
-    
-    glEnd();
-    
-    //    glDisable(GL_CULL_FACE);
-    //    glDisable(GL_BLEND);
 }
 
 void WorkspaceOccupancyGrid::simple_draw_combined()
 {
-    for( int i=0;i<int(m_all_occupied_cells.size());i++)
+    for( int i=0; i<int(m_all_occupied_cells.size()); i++)
     {
-        double occupancy = 0;
-        
-        for (int j=0; j<int(m_likelyhood.size()); j++) 
+        double occupancy = 0.0;
+//        double max = 0.0;
+
+        for (int j=0; j<int(m_likelihood.size()); j++)
         {
-            occupancy += m_likelyhood[j]*m_all_occupied_cells[i]->m_occupies_class[j];
+            occupancy += (m_likelihood[j]*double(m_all_occupied_cells[i]->m_occupies_class[j]));
+
+//            if( m_all_occupied_cells[i]->m_occupies_class[j] )
+//            {
+//                 if( m_likelihood[j] > max )
+//                     max = m_likelihood[j];
+//            }
         }
-        m_all_occupied_cells[i]->drawColorGradient( occupancy, 0.0, 1.0 );
+
+        if( ENV.getBool(Env::drawTraj) || (m_all_occupied_cells[i]->m_occupies_class[m_id_class_to_draw] ))
+        {
+            m_all_occupied_cells[i]->drawColorGradient( occupancy, m_min_likelihood, m_max_likelihood );
+        }
     }
 }
-
 
 void WorkspaceOccupancyGrid::init_drawing()
 {
@@ -574,6 +603,9 @@ void WorkspaceOccupancyGrid::draw_voxels( const std::vector<unsigned int>& voxel
 
 void WorkspaceOccupancyGrid::draw()
 {
+//    return simple_draw_one_class();
+    return simple_draw_combined();
+
     if(PlanEnv->getBool(PlanParam::drawSampledPoints)) {
         draw_sampled_points();
     }

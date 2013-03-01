@@ -42,7 +42,7 @@ public:
     void computeOccpancy();
     void setClassToDraw( int id_class );
     int classifyMotion( const motion_t& motions );
-    void setLikelyhood( const std::vector<double>& likelyhood );
+    void setLikelihood( const std::vector<double>& likelyhood );
     void draw();
     double getOccupancy( const Eigen::Vector3d& point );
     double getOccupancyCombination( const Eigen::Vector3d& point );
@@ -80,7 +80,9 @@ private:
     int m_id_class_to_draw;
     ClassifyMotion* m_classifier;
     RecordMotion* m_motion_recorder;
-    std::vector<double> m_likelyhood;
+    std::vector<double> m_likelihood;
+    double m_min_likelihood;
+    double m_max_likelihood;
     std::vector<WorkspaceOccupancyCell*> m_all_occupied_cells;
 };
 }

@@ -266,24 +266,24 @@ void ThreeDCell::draw()
 //! @inverse set the color gradient to be the inverse of 0 => blue, 1 => red
 void ThreeDCell::drawColorGradient( double value, double min, double max, bool inverse )
 {
-  double colorvector[4];
-  double alpha = (value-min) / (max-min);
-  double diagonal = getCellSize().minCoeff();
-  Vector3d center = getCenter();
-  
-  if (alpha < 0.0) 
-  { alpha = 0.0; }
-  
-  if (alpha > 1.0) 
-  { alpha = 1.0; }
-  
-  if ( inverse ) 
-  { alpha = 1 - alpha; }
-	
-  colorvector[3] = 0.05; //transparency
-  GroundColorMixGreenToRed( colorvector, alpha );
-  g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/3, 10);
-  glColor4dv(colorvector);
+    double colorvector[4];
+    double alpha = (value-min) / (max-min);
+    double diagonal = getCellSize().minCoeff();
+    Vector3d center = getCenter();
+
+    if (alpha < 0.0)
+    { alpha = 0.0; }
+
+    if (alpha > 1.0)
+    { alpha = 1.0; }
+
+    if ( inverse )
+    { alpha = 1 - alpha; }
+
+    colorvector[3] = 0.05; //transparency
+    GroundColorMixGreenToRed( colorvector, alpha );
+    glColor4dv(colorvector);
+    g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/3, 10);
 }
 
 bool ThreeDCell::writeToXml(xmlNodePtr _XmlCellNode_)

@@ -1139,7 +1139,7 @@ bool StompOptimizer::performForwardKinematics()
     // calculate the forward kinematics for the fixed states only in the first iteration:
     int start = free_vars_start_;
     int end = free_vars_end_;
-    if (iteration_==0)
+    if ( iteration_==0)
     {
         start = 0;
         end = num_vars_all_-1;

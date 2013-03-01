@@ -12,7 +12,7 @@ namespace HRICS
 class HumanPredictionSimulator
 {
 public:
-    HumanPredictionSimulator( ClassifyMotion* classifier );
+    HumanPredictionSimulator( Robot* human, ClassifyMotion* classifier, WorkspaceOccupancyGrid* occupacy_grid );
 
     void loadHumanTrajectory( const motion_t& motion );
     void run();
@@ -21,6 +21,7 @@ private:
     bool updateMotion();
     void predictVoxelOccupancy();
 
+    Robot* m_human;
     motion_t m_motion;
     Eigen::MatrixXd m_current_traj;
     int m_increment;

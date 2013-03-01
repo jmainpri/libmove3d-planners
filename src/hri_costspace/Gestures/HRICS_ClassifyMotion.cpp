@@ -22,37 +22,6 @@ ClassifyMotion::~ClassifyMotion()
 
 }
 
-std::vector<double> ClassifyMotion::classify_motion(const Eigen::MatrixXd &motion, int id_end )
-{
-    std::vector<double> result( m_nb_classes );
-    std::vector<Eigen::MatrixXd> Pxi( m_nb_classes );
-    double realmin = numeric_limits<double>::min();
-
-    // Compute probability of each class
-    for(int i=0;i<m_nb_classes;i++)
-    {
-        Pxi[i].setZero( motion.cols(), m_nb_states );
-
-        for(int j=0;j<m_nb_states;j++)
-        {
-            //Compute the new probability p(x|i)
-            Pxi[i].col(j) = gauss_pdf( motion, i, j );
-        }
-
-        // Compute the log likelihood of the class
-        Eigen::VectorXd F = Pxi[i]*m_priors[i];
-
-        for(int k=0;k<F.size();k++)
-            if( F(k) < realmin )
-                F(k) = realmin;
-
-        result[i] = F.cwise().log().sum()/F.size();
-    }
-
-
-    return result;
-}
-
 Eigen::VectorXd ClassifyMotion::gauss_pdf(const Eigen::MatrixXd& motion, int id_class, int id_state )
 {
     double realmin = numeric_limits<double>::min();
@@ -66,6 +35,44 @@ Eigen::VectorXd ClassifyMotion::gauss_pdf(const Eigen::MatrixXd& motion, int id_
     prob = ((Data*(Sigma.inverse())).cwise()*Data).rowwise().sum();
     prob = (-0.5*prob).cwise().exp() / std::sqrt(std::abs((std::pow(2*M_PI,nbVar)*Sigma.determinant()+realmin)));
     return prob;
+}
+
+std::vector<double> ClassifyMotion::classify_motion(const Eigen::MatrixXd &motion )
+{
+    double realmin = numeric_limits<double>::min();
+
+    std::vector<double> result( m_nb_classes );
+    std::vector<Eigen::MatrixXd> Pxi( m_nb_classes );
+
+    // Compute probability of each class
+    for(int i=0;i<m_nb_classes;i++)
+    {
+        Pxi[i].setZero( motion.cols(), m_nb_states );
+
+        for(int j=0;j<m_nb_states;j++)
+        {
+            //Compute the new probability p(x|i)
+            Pxi[i].col(j) = gauss_pdf( motion, i, j );
+        }
+
+//        cout << "Pxi : " << endl << Pxi[i] << endl;
+
+        // Compute the log likelihood of the class
+        Eigen::VectorXd F = Pxi[i].transpose()*m_priors[i];
+
+        for(int k=0;k<F.size();k++)
+            if( F(k) < realmin )
+                F(k) = realmin;
+
+//        for(int k=0;k<F.size();k++)
+//            if( F(k) > 1 )
+//                cout << "F(" << k << ") : " << F(k) << endl;
+
+        result[i] = F.cwise().log().sum()/F.size();
+    }
+
+
+    return result;
 }
 
  Eigen::MatrixXd ClassifyMotion::convert_to_matrix( const std::vector< std::vector< std::string > >& matrix )
