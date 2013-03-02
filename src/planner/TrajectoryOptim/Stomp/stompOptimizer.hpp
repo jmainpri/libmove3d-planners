@@ -101,6 +101,12 @@ public:
     void setUseOtp(bool use_otp) { use_handover_config_generator_= use_otp; }
 
     /**
+   * Set the use of iteration limit
+   * @param Time in second
+   */
+    void setUseIterationLimit(bool use_limit) { use_iteration_limit_ = use_limit; }
+
+    /**
    * Set the use of a time limit
    * @param Time in second
    */
@@ -266,6 +272,7 @@ private:
 
     bool use_time_limit_;
     double time_limit_;
+    bool use_iteration_limit_;
 
     std::vector<confPtr_t> passive_dofs_;
 

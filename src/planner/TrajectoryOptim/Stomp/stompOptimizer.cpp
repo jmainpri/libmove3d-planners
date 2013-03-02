@@ -76,6 +76,7 @@ StompOptimizer::StompOptimizer(ChompTrajectory *trajectory,
                                const ChompPlanningGroup *planning_group,
                                const CollisionSpace *collision_space) :
     use_time_limit_(false),
+    use_iteration_limit_(false),
     full_trajectory_(trajectory),
     planning_group_(planning_group),
     stomp_parameters_(parameters),
@@ -630,10 +631,20 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
                 break;
             }
         }
+
+        if( use_iteration_limit_ )
+        {
+            if( iteration_ >= stomp_parameters_->getMaxIterations() )
+            {
+                cout << "Stopped at iteration (" << iteration_ << ")" << endl;
+                break;
+            }
+        }
     }
-    
+
     if (last_improvement_iteration_>-1)
         cout << "We think the path is collision free: " << is_collision_free_ << endl;
+
     
     group_trajectory_.getTrajectory() = best_group_trajectory_;
     
@@ -1020,13 +1031,13 @@ bool StompOptimizer::handleJointLimits()
         }
         while(violation);
 
-//        if( violation || !succes_joint_limits )
-//        {
-//            cout << "Violation of joint limits (joint) = " << joint << endl;
-//        }
+        //        if( violation || !succes_joint_limits )
+        //        {
+        //            cout << "Violation of joint limits (joint) = " << joint << endl;
+        //        }
     }
 
-//    cout << "succes_joint_limits : " << succes_joint_limits << endl;
+    //    cout << "succes_joint_limits : " << succes_joint_limits << endl;
 
     return succes_joint_limits;
 }
@@ -1543,7 +1554,8 @@ void StompOptimizer::animateEndeffector(bool print_cost)
     for(int j=0; j<planning_group_->num_joints_;j++)
         (*q)[joints[j].move3d_dof_index_] = point[j];
 
-    robot_model_->setAndUpdate( *q_tmp );
+//    robot_model_->setAndUpdate( *q_tmp );
+    robot_model_->setAndUpdate( *source_ );
     
     if(! ENV.getBool(Env::drawDisabled) )
         g3d_draw_allwin_active();

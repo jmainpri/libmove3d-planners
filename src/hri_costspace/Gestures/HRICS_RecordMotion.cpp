@@ -294,7 +294,7 @@ void RecordMotion::loadFolder()
 
             if( file_exists )
             {
-                cout << "Load File : " << filename.str() << endl;
+                //cout << "Load File : " << filename.str() << endl;
                 motion_t partial_motion = loadFromXml( filename.str() );
                 storeMotion( partial_motion, j == 0 );
 

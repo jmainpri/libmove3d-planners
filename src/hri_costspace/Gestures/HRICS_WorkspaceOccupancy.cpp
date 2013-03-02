@@ -200,13 +200,15 @@ void WorkspaceOccupancyGrid::computeOccpancy()
     cout << __func__ << endl;
     
     confPtr_t q = m_human->getCurrentPos();
+
+    cout << "Compute workspace occupancy for " << m_motions.size() << " motions" <<  endl;
     
     // For each motion class compute the occupancy
     for(int i=0;i<int(m_motions.size());i++)
     {
-        cout << "----------------------------------------" << endl;
+        //cout << "----------------------------------------" << endl;
         cout << " Motion : " << i << endl;
-        cout << "----------------------------------------" << endl;
+        //cout << "----------------------------------------" << endl;
         
         m_occupied_cells[i].clear();
         
@@ -221,7 +223,7 @@ void WorkspaceOccupancyGrid::computeOccpancy()
             m_human->setAndUpdate(*m_motions[i][j].second);
             
             std::vector<WorkspaceOccupancyCell*> cells; get_cells_occupied_by_human( cells, i );
-            cout << " Frame : " << j << endl;
+            //cout << " Frame : " << j << endl;
             m_occupied_cells[i].insert(  m_occupied_cells[i].end(), cells.begin(), cells.end() );
         }
         
@@ -340,41 +342,46 @@ void WorkspaceOccupancyGrid::setLikelihood( const std::vector<double>& likelihoo
 
     if( m_min_likelihood<0 )
     {
-        for( int i=0;i<m_likelihood.size();i++)
+        for( int i=0;i<int(m_likelihood.size());i++)
         {
             m_likelihood[i] += std::abs( m_min_likelihood );
         }
     }
 
+//    for( int i=0;i<int(m_likelihood.size());i++)
+//    {
+//        m_likelihood[i] = std::exp(m_likelihood[i]);
+//    }
+
     double sum = 0;
 
-    for( int i=0;i<m_likelihood.size();i++)
+    for( int i=0;i<int(m_likelihood.size());i++)
         sum += m_likelihood[i];
 
-    for( int i=0;i<m_likelihood.size();i++)
+    for( int i=0;i<int(m_likelihood.size());i++)
         m_likelihood[i] /= sum;
 
     cout << " likelihood : " ;
-    for( int i=0;i<m_likelihood.size();i++)
+    for( int i=0;i<int(m_likelihood.size());i++)
     {
         cout << " , "  << m_likelihood[i] ;
     }
     cout << endl;
 
-//    m_max_likelihood = 0.0;
-
-//    for( int i=0;i<m_likelihood.size();i++)
-//    {
-//        m_max_likelihood += m_likelihood[i];
-//    }
-
-//    m_max_likelihood = *std::max_element( m_likelihood.begin(), m_likelihood.end() );
-//    m_min_likelihood = *std::min_element( m_likelihood.begin(), m_likelihood.end() );
-
     m_max_likelihood = 1;
     m_min_likelihood = 0;
 
     m_id_class_to_draw = std::max_element( m_likelihood.begin(), m_likelihood.end() ) - m_likelihood.begin();
+
+    //    m_max_likelihood = 0.0;
+
+    //    for( int i=0;i<m_likelihood.size();i++)
+    //    {
+    //        m_max_likelihood += m_likelihood[i];
+    //    }
+
+    //    m_max_likelihood = *std::max_element( m_likelihood.begin(), m_likelihood.end() );
+    //    m_min_likelihood = *std::min_element( m_likelihood.begin(), m_likelihood.end() );
 
 //    cout << "m_id_class_to_draw : " << m_id_class_to_draw << endl;
 //    cout << " m_min_likelyhood : " << m_min_likelihood << endl;

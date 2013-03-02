@@ -86,15 +86,18 @@ CollisionSpace::CollisionSpace( Robot* rob, double pace, const vector<double>& e
     m_size = max( max(  _cellSize[0]*_nbCellsX , _cellSize[1]*_nbCellsY ), _cellSize[2]*_nbCellsZ  );
 
     //Build the meshes env edges
-    if(XYZ_ENV->o[0]->pol[0]->poly->the_edges == NULL)
+    if( XYZ_ENV->o )
     {
-        for(int i = 0; i < XYZ_ENV->no; i++)
+        if( XYZ_ENV->o[0]->pol[0]->poly->the_edges == NULL )
         {
-            p3d_obj * obj = XYZ_ENV->o[i];
-
-            for(int j = 0; j < obj->np; j++)
+            for(int i = 0; i < XYZ_ENV->no; i++)
             {
-                poly_build_edges(obj->pol[j]->poly);
+                p3d_obj * obj = XYZ_ENV->o[i];
+
+                for(int j = 0; j < obj->np; j++)
+                {
+                    poly_build_edges(obj->pol[j]->poly);
+                }
             }
         }
     }

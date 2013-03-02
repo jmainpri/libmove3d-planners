@@ -58,7 +58,7 @@ std::vector<double> ClassifyMotion::classify_motion(const Eigen::MatrixXd &motio
 //        cout << "Pxi : " << endl << Pxi[i] << endl;
 
         // Compute the log likelihood of the class
-        Eigen::VectorXd F = Pxi[i].transpose()*m_priors[i];
+        Eigen::VectorXd F = Pxi[i]*m_priors[i];
 
         for(int k=0;k<F.size();k++)
             if( F(k) < realmin )

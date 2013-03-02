@@ -12,7 +12,7 @@ namespace HRICS
 class HumanPredictionSimulator
 {
 public:
-    HumanPredictionSimulator( Robot* human, ClassifyMotion* classifier, WorkspaceOccupancyGrid* occupacy_grid );
+    HumanPredictionSimulator( Robot* robot, Robot* human, ClassifyMotion* classifier, WorkspaceOccupancyGrid* occupacy_grid );
 
     void loadHumanTrajectory( const motion_t& motion );
     void run();
@@ -20,13 +20,22 @@ public:
 private:
     bool updateMotion();
     void predictVoxelOccupancy();
+    void loadGoalConfig();
+    void runStomp(confPtr_t q_goal);
+    void executeStomp(const API::Trajectory& path, bool to_end=false);
+    int getBestPathId();
 
+    Robot* m_robot;
     Robot* m_human;
     motion_t m_motion;
     Eigen::MatrixXd m_current_traj;
-    int m_increment;
+    int m_human_increment;
     ClassifyMotion* m_classifier;
     WorkspaceOccupancyGrid* m_occupacy_grid;
+    confPtr_t m_q_start;
+    std::vector<confPtr_t> m_goal_config;
+    std::vector<API::Trajectory> m_paths;
+    int m_max_stomp_iter;
 };
 }
 

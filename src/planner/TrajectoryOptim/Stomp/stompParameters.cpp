@@ -53,7 +53,7 @@ StompParameters::~StompParameters()
   
 void StompParameters::init()
 {
-  max_iterations_ = 1000;
+  max_iterations_ = 15;
   //max_iterations_after_collision_free_ = 100;
   max_iterations_after_collision_free_ = 100;
   max_best_iterations_=1000;

@@ -24,6 +24,7 @@ bool traj_optim_runStomp(int runId);
 bool traj_optim_runStompNoInit(int runId, const API::Trajectory& traj);
 bool traj_optim_runStompNoReset(int runId);
 
+void traj_optim_set_use_iteration_limit(bool use);
 
 void traj_optim_draw_collision_points();
 bool traj_optim_generate_softMotion();

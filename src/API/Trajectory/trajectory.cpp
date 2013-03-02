@@ -243,13 +243,13 @@ Trajectory::~Trajectory()
 	}
 }
 
-bool Trajectory::replaceP3dTraj()
+bool Trajectory::replaceP3dTraj() const
 {
   //cout << "Robot name : " << m_Robot->getRobotStruct()->name << endl;
   return replaceP3dTraj( p3d_get_robot_by_name( m_Robot->getName().c_str() )->tcur );
 }
 
-p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt)
+p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt) const
 {
 	//	print();
 	
@@ -562,7 +562,7 @@ double Trajectory::computeSubPortionRange(const vector<LocalPath*>& portion) con
 //	range_param = computeSubPortionRange(m_Courbe);
 //}
 
-bool Trajectory::isValid()
+bool Trajectory::isValid() const
 {
 	for (int i=0; i<int(m_Courbe.size()); i++)
 	{
@@ -626,7 +626,7 @@ double Trajectory::computeSubPortionMaxCost(vector<LocalPath*>& portion)
   return maxCost;
 }
 
-double Trajectory::computeSubPortionCost(vector<LocalPath*>& portion)
+double Trajectory::computeSubPortionCost(const vector<LocalPath*>& portion) const
 {
 	double sumCost(0.0);
 	
@@ -779,7 +779,7 @@ double Trajectory::computeSubPortionCostVisib( vector<LocalPath*>& portion )
 	return cost;
 }
 
-double Trajectory::collisionCost() 
+double Trajectory::collisionCost() const
 {  
   if (isValid()) 
   {
@@ -790,7 +790,7 @@ double Trajectory::collisionCost()
   }
 }
 
-double Trajectory::cost()
+double Trajectory::cost() const
 {
   if( !ENV.getBool(Env::isCostSpace) ) 
   {

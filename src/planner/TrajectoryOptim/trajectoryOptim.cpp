@@ -1,5 +1,3 @@
-
-//
 //  trajectoryOptim.cpp
 //  libmove3d-motion
 //
@@ -85,6 +83,8 @@ vector< vector <double> > traj_optim_to_plot;
 vector< vector <double> > traj_optim_convergence;
 
 CollisionSpace* global_collSpace=NULL;
+
+static bool m_use_iteration_limit=false;
 
 //--------------------------------------------------------
 // External init method
@@ -1345,6 +1345,12 @@ bool traj_optim_initStomp()
 
 //! Run Stomp
 // --------------------------------------------------------
+
+void traj_optim_set_use_iteration_limit(bool use)
+{
+    m_use_iteration_limit = use;
+}
+
 bool traj_optim_runStomp(int runId)
 {
     if(!traj_optim_initStomp())
@@ -1354,6 +1360,9 @@ bool traj_optim_runStomp(int runId)
     }
 
     m_stompparams->init();
+
+    if( m_use_iteration_limit )
+        optimizer->setUseIterationLimit( true );
 
     if(!PlanEnv->getBool(PlanParam::trajOptimTestMultiGauss))
     {
