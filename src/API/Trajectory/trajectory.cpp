@@ -1028,7 +1028,7 @@ void Trajectory::resetCostComputed()
 	}
 }
 
-vector<confPtr_t> Trajectory::getTowConfigurationAtParam(double param1, double param2, uint& lp1, uint& lp2)
+vector<confPtr_t> Trajectory::getTowConfigurationAtParam(double param1, double param2, uint& lp1, uint& lp2) const
 {
 	vector<confPtr_t> conf;
 	
@@ -1240,13 +1240,12 @@ double Trajectory::extractCostPortion(double param1, double param2)
 	return totalCost;
 }
 
-pair<bool, vector<LocalPath*> > Trajectory::extractSubPortion(double param1, double param2,
-																								 unsigned int& first, unsigned int& last, bool check_for_coll)
+pair<bool, vector<LocalPath*> > Trajectory::extractSubPortion(double param1, double param2, unsigned int& first, unsigned int& last, bool check_for_coll) const
 {
 	vector<LocalPath*> paths;
 	vector<confPtr_t> conf;
 	
-	conf = getTowConfigurationAtParam(param1, param2, first, last);
+    conf = getTowConfigurationAtParam(param1, param2, first, last);
 	
 	confPtr_t q1 = conf.at(0);
 	confPtr_t q2 = conf.at(1);
@@ -1366,7 +1365,7 @@ pair<bool, vector<LocalPath*> > Trajectory::extractSubPortion(double param1, dou
 //! Extract sub trajectory
 //! @param start is the id of the first localpath
 //! @param end is the id of the last localpath
-Trajectory Trajectory::extractSubTrajectoryOfLocalPaths(unsigned int id_start, unsigned int id_end)
+Trajectory Trajectory::extractSubTrajectoryOfLocalPaths(unsigned int id_start, unsigned int id_end) const
 {
 	vector<LocalPath*> path;
 	
@@ -1400,52 +1399,48 @@ Trajectory Trajectory::extractSubTrajectoryOfLocalPaths(unsigned int id_start, u
 	return newTraj;
 }
 
-Trajectory Trajectory::extractSubTrajectory(double param1, double param2, bool check_for_coll)
+Trajectory Trajectory::extractSubTrajectory(double param1, double param2, bool check_for_coll) const
 {
-	unsigned int first(0);
-	unsigned int last(0);
-	
-	vector<LocalPath*> path;
-	
-	if (param1 > param2)
-	{
-		cout << "Warning: inconsistant query in extractSubTrajectory" << endl;
-	}
-	else
-	{
-    pair<bool, vector<LocalPath*> > valid_portion = extractSubPortion( param1, param2, first, last, check_for_coll );
-    
-    if( check_for_coll ) 
+    unsigned int first(0);
+    unsigned int last(0);
+
+    Trajectory newTraj( m_Robot );
+
+    if (param1 > param2)
     {
-      if( valid_portion.first ) 
-      {
-        path = valid_portion.second;
-      }
-      else {
-        cout << "Error: inconsistant query in extractSubTrajectory" << endl;
-      }
+        cout << "Warning: inconsistant query in extractSubTrajectory" << endl;
     }
-    else {
-      path = valid_portion.second;
+    else
+    {
+        pair<bool, vector<LocalPath*> > valid_portion = extractSubPortion( param1, param2, first, last, check_for_coll );
+
+        if( check_for_coll )
+        {
+            if( valid_portion.first )
+            {
+                newTraj.m_Courbe = valid_portion.second;
+            }
+            else {
+                cout << "Error: inconsistant query in extractSubTrajectory" << endl;
+            }
+        }
+        else {
+            newTraj.m_Courbe = valid_portion.second;
+        }
     }
-	}
-	
-	Trajectory newTraj(m_Robot);
-	
-	newTraj.m_Courbe = path;
-	
-	if (path.size() == 0)
-	{
-		newTraj.m_Source = configAtParam(param1);
-		newTraj.m_Target = newTraj.m_Source;
-	}
-	else
-	{
-		newTraj.m_Source = path.at(0)->getBegin();
-		newTraj.m_Target = path.back()->getEnd();
-	}
-	
-	return newTraj;
+
+    if ( newTraj.m_Courbe.size() == 0 )
+    {
+        newTraj.m_Source = configAtParam( param1 );
+        newTraj.m_Target = newTraj.m_Source;
+    }
+    else
+    {
+        newTraj.m_Source = newTraj.m_Courbe[0]->getBegin();
+        newTraj.m_Target = newTraj.m_Courbe.back()->getEnd();
+    }
+
+    return newTraj;
 }
 
 extern double ZminEnv;

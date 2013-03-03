@@ -103,6 +103,7 @@ HumanPredictionSimulator::HumanPredictionSimulator( Robot* robot, Robot* human, 
     m_current_traj.resize( 0, 0 );
     m_human_increment = 20;
     m_max_stomp_iter = 30;
+    m_use_previous_trajectory = true;
 }
 
 void HumanPredictionSimulator::loadHumanTrajectory( const motion_t& motion )
@@ -113,52 +114,52 @@ void HumanPredictionSimulator::loadHumanTrajectory( const motion_t& motion )
 void HumanPredictionSimulator::setHumanConfig( confPtr_t q )
 {
     confPtr_t q_cur = m_human->getCurrentPos();
-    (*q_cur)[6] = (*q)[6];  // Pelvis
-    (*q_cur)[7] = (*q)[7];  // Pelvis
-    (*q_cur)[8]=  (*q)[8];  // Pelvis
+    (*q_cur)[6] =  (*q)[6];  // Pelvis
+    (*q_cur)[7] =  (*q)[7];  // Pelvis
+    (*q_cur)[8]=   (*q)[8];  // Pelvis
     (*q_cur)[11] = (*q)[11]; // Pelvis
     (*q_cur)[12] = (*q)[12]; // TorsoX
     (*q_cur)[13] = (*q)[13]; // TorsoY
     (*q_cur)[14] = (*q)[14]; // TorsoZ
-    (*q_cur)[18] = (*q)[18];  // rShoulderX
-    (*q_cur)[19] = (*q)[19];  // rShoulderZ
+    (*q_cur)[18] = (*q)[18]; // rShoulderX
+    (*q_cur)[19] = (*q)[19]; // rShoulderZ
     (*q_cur)[20] = (*q)[20]; // rShoulderY
     (*q_cur)[21] = (*q)[21]; // rArmTrans
     (*q_cur)[22] = (*q)[22]; // rElbowZ
     m_human->setAndUpdate(*q_cur);
 }
 
-void HumanPredictionSimulator::setMatrixCol(Eigen::MatrixXd& matrix, int i, confPtr_t q)
+void HumanPredictionSimulator::setMatrixCol(Eigen::MatrixXd& matrix, int j, confPtr_t q)
 {
-    matrix(0,i) = i;        // Time
-    matrix(1,i) = (*q)[6];  // Pelvis
-    matrix(2,i) = (*q)[7];  // Pelvis
-    matrix(3,i) = (*q)[8];  // Pelvis
-    matrix(4,i) = (*q)[11]; // Pelvis
-    matrix(5,i) = (*q)[12]; // TorsoX
-    matrix(6,i) = (*q)[13]; // TorsoY
-    matrix(7,i) = (*q)[14]; // TorsoZ
+    matrix(0,j) = j;        // Time
+    matrix(1,j) = (*q)[6];  // Pelvis
+    matrix(2,j) = (*q)[7];  // Pelvis
+    matrix(3,j) = (*q)[8];  // Pelvis
+    matrix(4,j) = (*q)[11]; // Pelvis
+    matrix(5,j) = (*q)[12]; // TorsoX
+    matrix(6,j) = (*q)[13]; // TorsoY
+    matrix(7,j) = (*q)[14]; // TorsoZ
 
-    matrix(8,i) = (*q)[18];  // rShoulderX
-    matrix(9,i) = (*q)[19];  // rShoulderZ
-    matrix(10,i) = (*q)[20]; // rShoulderY
-    matrix(11,i) = (*q)[21]; // rArmTrans
-    matrix(12,i) = (*q)[22]; // rElbowZ
+    matrix(8,j) =  (*q)[18];  // rShoulderX
+    matrix(9,j) =  (*q)[19];  // rShoulderZ
+    matrix(10,j) = (*q)[20]; // rShoulderY
+    matrix(11,j) = (*q)[21]; // rArmTrans
+    matrix(12,j) = (*q)[22]; // rElbowZ
 }
 
 int HumanPredictionSimulator::classifyMotion( const motion_t& motion )
 {
     std::vector<double> likelihood;
 
-    //int j=100;
+    // for all collumns (a configuration per collumn)
     for (int j=1; j<int(motion.size()); j++)
     {
         Eigen::MatrixXd matrix( 13, j );
 
-        for (int i=0; i<j; i++)
+        for (int jn=0; jn<j; jn++)
         {
-            confPtr_t q = motion[i].second;
-            setMatrixCol( matrix, i, q );
+            confPtr_t q = motion[jn].second;
+            setMatrixCol( matrix, jn, q );
         }
 
         likelihood = m_classifier->classify_motion( matrix );
@@ -184,10 +185,10 @@ bool HumanPredictionSimulator::updateMotion()
 
     motion_t motion = m_recorder->invertTranslation( m_motion );
 
-    for (int i=0; i<m_current_traj.cols(); i++)
+    for (int j=0; j<m_current_traj.cols(); j++)
     {
-        confPtr_t q = motion[i].second;
-        setMatrixCol( m_current_traj, i, q );
+        confPtr_t q = motion[j].second;
+        setMatrixCol( m_current_traj, j, q );
     }
     //cout << cout << m_current_traj << endl;
 
@@ -223,20 +224,34 @@ void HumanPredictionSimulator::loadGoalConfig()
     }
 
     m_q_start = m_robot->getInitialPosition();
+
+    m_paths.resize( m_goal_config.size() );
 }
 
-void HumanPredictionSimulator::runStomp( confPtr_t q )
+void HumanPredictionSimulator::runStomp( int iter, int id_goal  )
 {
     PlanEnv->setInt( PlanParam::nb_pointsOnTraj, 100 );
 
     m_robot->setAndUpdate( *m_q_start );
     m_robot->setInitialPosition( *m_q_start );
-    m_robot->setGoTo( *q );
+    m_robot->setGoTo( *m_goal_config[id_goal] );
+
+    if( (iter>0) && (id_goal == m_best_path_id) )
+    {
+        const API::Trajectory& traj = m_paths[id_goal];
+        const double parameter =  m_robot_steps_per_exection*m_robot_step;
+        traj_optim_set_use_extern_trajectory( true );
+        traj_optim_set_extern_trajectory( traj.extractSubTrajectory( parameter, traj.getRangeMax(), false ) );
+    }
+    else
+    {
+        traj_optim_set_use_extern_trajectory( false );
+    }
 
     traj_optim_set_use_iteration_limit(true);
     traj_optim_runStomp(0);
 
-    m_paths.push_back( optimizer->getBestTraj() );
+    m_paths[id_goal] = optimizer->getBestTraj();
 }
 
 int HumanPredictionSimulator::getBestPathId()
@@ -252,32 +267,32 @@ int HumanPredictionSimulator::getBestPathId()
     return id;
 }
 
-void HumanPredictionSimulator::executeStomp(const API::Trajectory& path, bool to_end)
+void HumanPredictionSimulator::execute(const API::Trajectory& path, bool to_end)
 {
-    double s = 0.0; double step = 0.005;
+    double s = 0.0;
 
     path.replaceP3dTraj();
 
     confPtr_t q;
 
-    if(!to_end)
+    if( !to_end )
     {
-        for(int i=0;i<20;i++)
+        for( int i=0; (i<m_robot_steps_per_exection) && (!PlanEnv->getBool(PlanParam::stopPlanner) ); i++ )
         {
             q = path.configAtParam( s );
             m_robot->setAndUpdate(*q);
             g3d_draw_allwin_active();
             usleep(25000);
-            s += step;
+            s += m_robot_step;
         }
     }
     else{
-        while( s<path.getRangeMax() )
+        while( s<path.getRangeMax() && !PlanEnv->getBool(PlanParam::stopPlanner) )
         {
             m_robot->setAndUpdate(*path.configAtParam(s));
             g3d_draw_allwin_active();
             usleep(25000);
-            s += step;
+            s += m_robot_step;
         }
     }
 
@@ -291,30 +306,29 @@ void HumanPredictionSimulator::run()
     ENV.setBool(Env::drawGraph,false);
     ENV.setBool(Env::drawTraj,true);
 
+    m_robot_steps_per_exection = 20;
+    m_robot_step = 0.005;
+
     loadGoalConfig();
 
-    int best_path_id=0;
+    m_best_path_id = -1;
 
-    while( (!StopRun) && updateMotion() )
+    for(int i=0;(!PlanEnv->getBool(PlanParam::stopPlanner)) && updateMotion();i++)
     {
         predictVoxelOccupancy();
         g3d_draw_allwin_active();
 
-        m_paths.clear();
-
-        for(int i=0;i<int(m_goal_config.size());i++)
+        for(int j=0;j<int(m_goal_config.size());j++)
         {
-            runStomp( m_goal_config[i] );
+            runStomp( i, j);
         }
 
-        best_path_id = getBestPathId();
+        m_best_path_id = getBestPathId();
 
-        executeStomp( m_paths[best_path_id] );
-
-        if (PlanEnv->getBool(PlanParam::stopPlanner)) {
-            StopRun = true;
-        }
+        execute( m_paths[m_best_path_id] );
     }
 
-    executeStomp( m_paths[best_path_id], true );
+    const API::Trajectory& traj = m_paths[m_best_path_id];
+    const double parameter =  m_robot_steps_per_exection*m_robot_step;
+    execute( traj.extractSubTrajectory( parameter, traj.getRangeMax(), false ), true );
 }

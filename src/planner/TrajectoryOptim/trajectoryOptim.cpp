@@ -85,6 +85,8 @@ vector< vector <double> > traj_optim_convergence;
 CollisionSpace* global_collSpace=NULL;
 
 static bool m_use_iteration_limit=false;
+static bool m_use_external_trajectory=false;
+static API::Trajectory m_external_trajectory=false;
 
 //--------------------------------------------------------
 // External init method
@@ -1209,28 +1211,24 @@ bool traj_optim_InitTraj(API::Trajectory& T)
         }
     }
 
-    if( PlanEnv->getBool(PlanParam::withCurrentTraj) )
+    if( m_use_external_trajectory )
+    {
+        T = m_external_trajectory;
+    }
+    else if( PlanEnv->getBool(PlanParam::withCurrentTraj) )
     {
         T = m_robot->getCurrentTraj();
-
-        if( T.getNbOfPaths() == 0 ) {
-            return false;
-        }
-        //    PlanEnv->setInt( PlanParam::nb_pointsOnTraj, T.getNbOfViaPoints() );
-        T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
-        T.replaceP3dTraj();
-        //    cout << "T.getRangeMax() : " << T.getRangeMax() << endl;
-        //    cout << "T.getNbOfPaths() : " << T.getNbOfPaths() << endl;
-        //    cout << "T.cost() : " << T.cost() << endl;
-        //    T.print();
     }
     else
     {
         T = traj_optim_create_sraight_line_traj();
-        T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
-        T.replaceP3dTraj();
-        //T.print();
     }
+
+    if( T.getNbOfPaths() == 0 ) {
+        return false;
+    }
+    T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
+    T.replaceP3dTraj();
 
     return true;
 }
@@ -1278,11 +1276,10 @@ bool traj_optim_initStomp()
 {
     API::Trajectory T(m_robot);
 
-    if( !traj_optim_InitTraj(T) ){
-        cout << "Init Stomp with straight line!!!" << endl;
-        T = traj_optim_create_sraight_line_traj();
-        T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
-        T.replaceP3dTraj();
+    if( !traj_optim_InitTraj(T) )
+    {
+        cout << "Error in traj_optim_InitTraj" << endl;
+        return false;
     }
 
     // Save passive dof to generate the Move3D trajectory
@@ -1313,10 +1310,7 @@ bool traj_optim_initStomp()
     cout << "Chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
 
     cout << "Initialize optimizer" << endl;
-    optimizer.reset(new stomp_motion_planner::StompOptimizer(m_chomptraj,
-                                                             m_stompparams,
-                                                             m_chompplangroup,
-                                                             m_coll_space));
+    optimizer.reset(new stomp_motion_planner::StompOptimizer( m_chomptraj, m_stompparams, m_chompplangroup, m_coll_space));
     optimizer->setSource( T.getBegin() );
     optimizer->setSharedPtr(optimizer);
     optimizer->setPassiveDofs(passive_dofs);
@@ -1351,7 +1345,17 @@ void traj_optim_set_use_iteration_limit(bool use)
     m_use_iteration_limit = use;
 }
 
-bool traj_optim_runStomp(int runId)
+void traj_optim_set_use_extern_trajectory( bool use )
+{
+    m_use_external_trajectory = use;
+}
+
+void traj_optim_set_extern_trajectory( const API::Trajectory& traj )
+{
+    m_external_trajectory = traj;
+}
+
+bool traj_optim_runStomp( int runId )
 {
     if(!traj_optim_initStomp())
     {
@@ -1369,15 +1373,15 @@ bool traj_optim_runStomp(int runId)
         optimizer->runDeformation( 0, runId );
         //optimizer->generateNoisyTrajectories();
     }
-    else
-    {
+    else {
         optimizer->testMultiVariateGaussianSampler();
     }
+
     optimizer->resetSharedPtr();
     return true;
 }
 
-bool traj_optim_runStompNoInit(int runId, const API::Trajectory& traj)
+bool traj_optim_runStompNoInit( int runId, const API::Trajectory& traj )
 {
     if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
     {

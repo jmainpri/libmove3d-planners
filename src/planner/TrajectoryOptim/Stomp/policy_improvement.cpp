@@ -608,7 +608,7 @@ namespace stomp_motion_planner
   
   bool PolicyImprovement::getRollouts(std::vector<std::vector<Eigen::VectorXd> >& generated_rollouts, const std::vector<double>& noise_variance, bool get_reused, std::vector<std::vector<Eigen::VectorXd> >& reused_rollouts)
   {
-    if (!generateRollouts(noise_variance))
+    if ( !generateRollouts(noise_variance) )
     {
       cout << "Failed to generate rollouts." << endl;
       return false;
@@ -617,7 +617,7 @@ namespace stomp_motion_planner
     generated_rollouts.clear();
     for (int r=0; r<num_rollouts_gen_; ++r)
     {
-      generated_rollouts.push_back(rollouts_[r].parameters_);
+      generated_rollouts.push_back( rollouts_[r].parameters_ );
       
       //  for (int d=0; d<num_dimensions_; d++) 
       //  {

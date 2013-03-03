@@ -719,7 +719,7 @@ void StompReplanner::run()
         PlanEnv->setBool(PlanParam::trajStompWithTimeLimit,true);
         PlanEnv->setDouble(PlanParam::trajStompTimeLimit, m_t_rep-0.3);
 
-        optimizer->setSource(newPortion.getBegin());
+        optimizer->setSource( newPortion.getBegin() );
         traj_optim_runStompNoInit( m_idRun, newPortion );
 
         // Get the new trajectory and store to draw

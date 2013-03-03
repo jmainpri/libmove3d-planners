@@ -22,10 +22,10 @@ private:
     bool updateMotion();
     void predictVoxelOccupancy();
     void loadGoalConfig();
-    void runStomp(confPtr_t q_goal);
-    void executeStomp(const API::Trajectory& path, bool to_end=false);
+    void runStomp(int iter, int id_goal );
+    void execute(const API::Trajectory& path, bool to_end=false);
     int getBestPathId();
-    void setMatrixCol(Eigen::MatrixXd& mat, int i, confPtr_t q);
+    void setMatrixCol(Eigen::MatrixXd& mat, int j, confPtr_t q);
     void setHumanConfig( confPtr_t q );
 
     Robot* m_robot;
@@ -40,6 +40,11 @@ private:
     std::vector<confPtr_t> m_goal_config;
     std::vector<API::Trajectory> m_paths;
     int m_max_stomp_iter;
+    bool m_use_previous_trajectory;
+
+    int m_best_path_id;
+    int m_robot_steps_per_exection;
+    double m_robot_step;
 };
 }
 
