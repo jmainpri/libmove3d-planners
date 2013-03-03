@@ -9,19 +9,24 @@
 #include <Eigen/StdVector>
 #include <tr1/memory>
 
-#ifdef LINUX
-#define MOVE3D_USING_SHARED_PTR_NAMESPACE
-#define MOVE3D_PTR_NAMESPACE std
-#endif
+//#ifdef LINUX
+//#define MOVE3D_USING_SHARED_PTR_NAMESPACE
+//#define MOVE3D_PTR_NAMESPACE std
+//#define MOVE3D_USING_BOOST_NAMESPACE
+//#define MOVE3D_BOOST_PTR_NAMESPACE std::shared_ptr;
+//#endif
 
 #ifdef MACOSX
 #define MOVE3D_USING_SHARED_PTR_NAMESPACE using namespace std::tr1;
 #define MOVE3D_PTR_NAMESPACE std::tr1
+#define MOVE3D_USING_BOOST_NAMESPACE using namespace boost;
 #endif
 
 #ifndef MOVE3D_USING_SHARED_PTR_NAMESPACE
 #define MOVE3D_USING_SHARED_PTR_NAMESPACE using namespace std::tr1;
 #define MOVE3D_PTR_NAMESPACE std::tr1
+#define MOVE3D_USING_BOOST_NAMESPACE using namespace boost;
+#define MOVE3D_BOOST_PTR_NAMESPACE boost::shared_ptr
 #endif
 
 class Robot;

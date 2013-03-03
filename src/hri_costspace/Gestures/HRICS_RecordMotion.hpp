@@ -26,6 +26,8 @@ public:
     motion_t loadFromXml( const std::string &filename );
     void loadMotionFromMultipleFiles( const std::string& baseFilename, int number_of_files );
     bool loadRegressedFromCSV();
+    void translateStoredMotions();
+    motion_t invertTranslation( const motion_t& motion );
     motion_t loadFromCSV( const std::string& filename );
     void loadFolder();
 

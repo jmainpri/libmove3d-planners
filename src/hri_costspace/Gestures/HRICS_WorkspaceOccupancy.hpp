@@ -32,7 +32,7 @@ public:
 class WorkspaceOccupancyGrid : public API::ThreeDGrid
 {
 public:
-    WorkspaceOccupancyGrid( Robot* human, double pace, std::vector<double> envSize, ClassifyMotion *classifier );
+    WorkspaceOccupancyGrid( Robot* human, double pace, std::vector<double> envSize );
 
     ~WorkspaceOccupancyGrid();
 

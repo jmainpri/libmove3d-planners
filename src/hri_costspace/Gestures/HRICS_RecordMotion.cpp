@@ -47,6 +47,7 @@ std::vector< std::vector<double> > convert_text_matrix_to_double(const std::vect
 
 RecordMotion::RecordMotion()
 {
+    m_is_recording = false;
     m_id_motion = 0;
     m_robot = NULL;
     reset();
@@ -54,6 +55,7 @@ RecordMotion::RecordMotion()
 
 RecordMotion::RecordMotion( Robot* robot )
 {
+    m_is_recording = false;
     m_id_motion = 0;
     m_robot = robot;
     reset();
@@ -274,8 +276,8 @@ void RecordMotion::loadFolder()
     if( max_number_of_motions == 0) cout << "no file in folder" << endl;
 
     // Set the motion number you want to load
+    max_number_of_motions = 200;
     int first_motion = 0;
-    max_number_of_motions = 101;
     int number_of_motions_loaded = 0;
     const int max_number_of_files = 500;
 
@@ -580,9 +582,46 @@ void RecordMotion::saveToCSV( const std::string &filename, const motion_t& motio
     s.close();
 }
 
+static const double transX = 0.10;
+static const double transY = 0.50;
+static const double transZ = 0.15;
+static const double transT = 0.00;
+
+void RecordMotion::translateStoredMotions()
+{
+    for(int i=0;i<int(m_stored_motions.size());i++)
+    {
+        cout << "Translate motions " << i << endl;
+        for(int j=0;j<int(m_stored_motions[i].size());j++)
+        {
+            confPtr_t q = m_stored_motions[i][j].second;
+            (*q)[6]  += transX; // X
+            (*q)[7]  += transY; // Y
+            (*q)[8]  += transZ; // Z
+            (*q)[11] += transT; // theta
+        }
+    }
+}
+
+motion_t RecordMotion::invertTranslation( const motion_t& motion )
+{
+    motion_t motion_trans = motion;
+
+    for(int j=0;j<int(motion_trans.size());j++)
+    {
+        confPtr_t q = motion_trans[j].second->copy();
+        (*q)[6]  -= transX; // X
+        (*q)[7]  -= transY; // Y
+        (*q)[8]  -= transZ; // Z
+        (*q)[11] -= transT; // theta
+        motion_trans[j].second = q;
+    }
+    return motion_trans;
+}
+
 bool  RecordMotion::loadRegressedFromCSV()
 {
-    string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/regressed_trajectories/joints/";
+    string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/regressed_trajectories/joints_8classes/";
 
     m_stored_motions.clear();
 
@@ -611,6 +650,31 @@ bool  RecordMotion::loadRegressedFromCSV()
         return false;
     }
     m_stored_motions.push_back( tmp );
+
+    tmp = loadFromCSV( foldername + "traj_class_5.csv" );
+    if( tmp.empty() ){
+        return false;
+    }
+    m_stored_motions.push_back( tmp );
+
+    tmp = loadFromCSV( foldername + "traj_class_6.csv" );
+    if( tmp.empty() ){
+        return false;
+    }
+    m_stored_motions.push_back( tmp );
+
+    tmp = loadFromCSV( foldername + "traj_class_7.csv" );
+    if( tmp.empty() ){
+        return false;
+    }
+    m_stored_motions.push_back( tmp );
+
+    tmp = loadFromCSV( foldername + "traj_class_8.csv" );
+    if( tmp.empty() ){
+        return false;
+    }
+    m_stored_motions.push_back( tmp );
+
     return true;
 }
 

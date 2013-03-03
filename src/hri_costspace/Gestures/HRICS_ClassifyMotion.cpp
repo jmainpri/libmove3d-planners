@@ -55,8 +55,6 @@ std::vector<double> ClassifyMotion::classify_motion(const Eigen::MatrixXd &motio
             Pxi[i].col(j) = gauss_pdf( motion, i, j );
         }
 
-//        cout << "Pxi : " << endl << Pxi[i] << endl;
-
         // Compute the log likelihood of the class
         Eigen::VectorXd F = Pxi[i]*m_priors[i];
 
@@ -134,9 +132,9 @@ Eigen::MatrixXd ClassifyMotion::load_from_csv( const std::string& filename )
 
 bool ClassifyMotion::load_model()
 {
-    std::string folder("/home/jmainpri/Dropbox/workspace/gesture-recognition/gmm/GMM-GMR-v2.0/gmm_data/");
+    std::string folder("/home/jmainpri/Dropbox/workspace/gesture-recognition/gmm/gmm-gmr-gesture-recognition/gmm_data/");
 
-    m_nb_classes = 4;
+    m_nb_classes = 8;
 
     //------------------------------------------------------
     cout << "Load Priors" << endl;

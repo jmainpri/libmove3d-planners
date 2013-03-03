@@ -58,7 +58,8 @@ double HumanPredictionCostSpace::getCost(Configuration& q)
 
             for(int j=0;j<int(pc.size());j++)
             {
-                cost += m_ws_occupancy->getOccupancy( T*pc[j] );
+                cost += m_ws_occupancy->getOccupancyCombination( T*pc[j] );
+                //cost += m_ws_occupancy->getOccupancy( T*pc[j] );
                 nb_points++;
             }
         }

@@ -49,12 +49,11 @@ WorkspaceOccupancyCell::~WorkspaceOccupancyCell()
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
-WorkspaceOccupancyGrid::WorkspaceOccupancyGrid( Robot* human, double pace, vector<double> envSize, ClassifyMotion* classifier ) :
+WorkspaceOccupancyGrid::WorkspaceOccupancyGrid( Robot* human, double pace, vector<double> envSize ) :
 API::ThreeDGrid( pace , envSize ),
 m_human(human),
 m_drawing(false),
-m_id_class_to_draw(0),
-m_classifier(classifier)
+m_id_class_to_draw(0)
 {
     cout << "WorkspaceOccupancyGrid::createAllCells" << endl;
     createAllCells();
@@ -62,8 +61,6 @@ m_classifier(classifier)
     
     m_sampler = new BodySurfaceSampler( 0.02 );
     m_sampler->sampleRobotBodiesSurface( m_human );
-    
-    m_likelihood.resize(4,100);
 }
 
 WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
@@ -264,46 +261,10 @@ void WorkspaceOccupancyGrid::set_all_occupied_cells()
     }
 }
 
-int WorkspaceOccupancyGrid::classifyMotion( const motion_t& motions )
-{
-    std::vector<double> likelihood;
-    
-    //int j=100;
-    for (int j=1; j<int(motions.size()); j++)
-    {
-        Eigen::MatrixXd matrix( 13, j );
-        
-        for (int i=0; i<j; i++)
-        {
-            confPtr_t q = motions[i].second;
-            
-            matrix(0,i) = i;        // Time
-            matrix(1,i) = (*q)[6];  // Pelvis
-            matrix(2,i) = (*q)[7];  // Pelvis
-            matrix(3,i) = (*q)[8];  // Pelvis
-            matrix(4,i) = (*q)[11]; // Pelvis
-            matrix(5,i) = (*q)[12]; // TorsoX
-            matrix(6,i) = (*q)[13]; // TorsoY
-            matrix(7,i) = (*q)[14]; // TorsoZ
-            
-            matrix(8,i) = (*q)[18];  // rShoulderX
-            matrix(9,i) = (*q)[19];  // rShoulderZ
-            matrix(10,i) = (*q)[20]; // rShoulderY
-            matrix(11,i) = (*q)[21]; // rArmTrans
-            matrix(12,i) = (*q)[22]; // rElbowZ
-        }
-        
-        likelihood = m_classifier->classify_motion( matrix );
-        cout << std::max_element(likelihood.begin(),likelihood.end()) - likelihood.begin() << " ";
-    }
-    cout << endl;
-    
-    return std::max_element(likelihood.begin(),likelihood.end()) - likelihood.begin();
-}
 
 double WorkspaceOccupancyGrid::getOccupancy(const Eigen::Vector3d &point)
 {
-    if( m_occupied_cells.empty() )
+    if( m_all_occupied_cells.empty() )
     {
         cout << "occpied cells not loaded" << endl;
         return 0.0;
@@ -315,7 +276,7 @@ double WorkspaceOccupancyGrid::getOccupancy(const Eigen::Vector3d &point)
 
 double WorkspaceOccupancyGrid::getOccupancyCombination( const Eigen::Vector3d &point )
 {
-    if( m_occupied_cells.empty() )
+    if( m_all_occupied_cells.empty() )
     {
         cout << "occpied cells not loaded" << endl;
         return 0.0;
@@ -340,6 +301,13 @@ void WorkspaceOccupancyGrid::setLikelihood( const std::vector<double>& likelihoo
 
    m_min_likelihood = *std::min_element( m_likelihood.begin(), m_likelihood.end() );
 
+   cout << " likelihood : " ;
+   for( int i=0;i<int(m_likelihood.size());i++)
+   {
+       cout << m_likelihood[i] << " , ";
+   }
+   cout << endl;
+
     if( m_min_likelihood<0 )
     {
         for( int i=0;i<int(m_likelihood.size());i++)
@@ -347,6 +315,13 @@ void WorkspaceOccupancyGrid::setLikelihood( const std::vector<double>& likelihoo
             m_likelihood[i] += std::abs( m_min_likelihood );
         }
     }
+
+    cout << " likelihood : " ;
+    for( int i=0;i<int(m_likelihood.size());i++)
+    {
+        cout << m_likelihood[i] << " , ";
+    }
+    cout << endl;
 
 //    for( int i=0;i<int(m_likelihood.size());i++)
 //    {
@@ -364,7 +339,7 @@ void WorkspaceOccupancyGrid::setLikelihood( const std::vector<double>& likelihoo
     cout << " likelihood : " ;
     for( int i=0;i<int(m_likelihood.size());i++)
     {
-        cout << " , "  << m_likelihood[i] ;
+        cout << m_likelihood[i] << " , ";
     }
     cout << endl;
 
