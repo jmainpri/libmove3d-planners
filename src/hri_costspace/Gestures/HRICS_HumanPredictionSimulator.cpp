@@ -301,8 +301,6 @@ void HumanPredictionSimulator::execute(const API::Trajectory& path, bool to_end)
 
 void HumanPredictionSimulator::run()
 {
-    bool StopRun = false;
-
     ENV.setBool(Env::drawGraph,false);
     ENV.setBool(Env::drawTraj,true);
 
@@ -328,7 +326,10 @@ void HumanPredictionSimulator::run()
         execute( m_paths[m_best_path_id] );
     }
 
-    const API::Trajectory& traj = m_paths[m_best_path_id];
-    const double parameter =  m_robot_steps_per_exection*m_robot_step;
-    execute( traj.extractSubTrajectory( parameter, traj.getRangeMax(), false ), true );
+    if( m_best_path_id != -1 )
+    {
+        const API::Trajectory& traj = m_paths[m_best_path_id];
+        const double parameter =  m_robot_steps_per_exection*m_robot_step;
+        execute( traj.extractSubTrajectory( parameter, traj.getRangeMax(), false ), true );
+    }
 }

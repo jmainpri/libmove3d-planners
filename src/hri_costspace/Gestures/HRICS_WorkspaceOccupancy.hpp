@@ -43,6 +43,7 @@ public:
     void setClassToDraw( int id_class );
     int classifyMotion( const motion_t& motions );
     void setLikelihood( const std::vector<double>& likelyhood );
+    void drawSampledPoints();
     void draw();
     double getOccupancy( const Eigen::Vector3d& point );
     double getOccupancyCombination( const Eigen::Vector3d& point );
@@ -59,7 +60,6 @@ private:
     void init_drawing();
     void transform_cubes();
     void draw_voxels( const vector<unsigned int>& indices );
-    void draw_sampled_points();
     bool are_all_cells_blank(int id);
 
     // OpenGL Drawing

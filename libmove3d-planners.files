@@ -307,3 +307,5 @@ src/hri_costspace/Gestures/HRICS_HumanPredictionCostSpace.hpp
 src/hri_costspace/Gestures/HRICS_HumanPredictionCostSpace.cpp
 src/hri_costspace/Gestures/HRICS_HumanPredictionSimulator.hpp
 src/hri_costspace/Gestures/HRICS_HumanPredictionSimulator.cpp
+src/hri_costspace/Gestures/HRICS_GestParameters.hpp
+src/hri_costspace/Gestures/HRICS_GestParameters.cpp

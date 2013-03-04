@@ -13,6 +13,7 @@
 #include "hri_costspace/HRICS_Navigation.hpp"
 #include "hri_costspace/Gestures/HRICS_WorkspaceOccupancy.hpp"
 #include "hri_costspace/Gestures/HRICS_HumanPredictionCostSpace.hpp"
+#include "hri_costspace/Gestures/HRICS_GestParameters.hpp"
 #endif
 
 #include "planner/cost_space.hpp"
@@ -431,10 +432,13 @@ void drawSlice(int opengl_context);
 //#ifdef HRI_COSTSPACE
 void g3d_draw_hrics(int opengl_context)
 {
-    if( ENV.getBool(Env::drawGraph) && global_workspaceOccupancy )
+    if(GestEnv->getBool(GestParam::draw_human_sampled_points) && global_workspaceOccupancy )
+        global_workspaceOccupancy->drawSampledPoints();
+
+    if( GestEnv->getBool(GestParam::draw_ws_occupancy) && global_workspaceOccupancy )
         global_workspaceOccupancy->draw();
 
-    if( ENV.getBool(Env::drawGraph) && global_humanPredictionCostSpace )
+    if( GestEnv->getBool(GestParam::draw_robot_sampled_points) && global_humanPredictionCostSpace )
         global_humanPredictionCostSpace->draw();
 
     int OTPListSize = OTPList.size();

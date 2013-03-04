@@ -8,9 +8,13 @@
 #undef Success
 
 #include "HRICS_WorkspaceOccupancy.hpp"
+#include "HRICS_GestParameters.hpp"
+
 #include "planner/planEnvironment.hpp"
+
 #include "API/Grids/gridsAPI.hpp"
 #include "API/project.hpp"
+
 #include "p3d/env.hpp"
 
 #include <sys/time.h>
@@ -367,7 +371,7 @@ void WorkspaceOccupancyGrid::setLikelihood( const std::vector<double>& likelihoo
 //-----------------------------------------------------------------------
 //-----------------------------------------------------------------------
 
-void WorkspaceOccupancyGrid::draw_sampled_points()
+void WorkspaceOccupancyGrid::drawSampledPoints()
 {
     for(unsigned int i=0; i<m_human->getNumberOfJoints(); i++)
     {
@@ -585,16 +589,16 @@ void WorkspaceOccupancyGrid::draw_voxels( const std::vector<unsigned int>& voxel
 
 void WorkspaceOccupancyGrid::draw()
 {
-//    return simple_draw_one_class();
-    return simple_draw_combined();
-
-    if(PlanEnv->getBool(PlanParam::drawSampledPoints)) {
-        draw_sampled_points();
-    }
-    
     if( !m_motions.empty() )
     {
-        return simple_draw_one_class();
+        if(GestEnv->getBool(GestParam::draw_single_class))
+        {
+            return simple_draw_one_class();
+        }
+        else
+        {
+            return simple_draw_combined();
+        }
     }
     else
     {
