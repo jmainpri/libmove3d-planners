@@ -133,16 +133,16 @@ void CostSpace::deleteCost(string name)
 //------------------------------------------------------------------------------
 double CostSpace::cost(Configuration& conf)
 {
-    shared_ptr<Configuration> q_tmp = conf.copy();
+//    shared_ptr<Configuration> q_tmp = conf.copy();
 
     if(!mSelectedCost.empty())
     {
         double cost = mSelectedCost(conf);
 
-        if( !conf.equal( *q_tmp ) )
-        {
-            cout << "Cost function modifies the config" << endl;
-        }
+//        if( !conf.equal( *q_tmp ) )
+//        {
+//            cout << "Cost function modifies the config" << endl;
+//        }
         return cost;
     }
     else

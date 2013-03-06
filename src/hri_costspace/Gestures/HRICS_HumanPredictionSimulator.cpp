@@ -101,14 +101,14 @@ HumanPredictionSimulator::HumanPredictionSimulator( Robot* robot, Robot* human, 
     m_classifier = classifier;
     m_occupacy_grid = occupacy_grid;
     m_current_traj.resize( 0, 0 );
-    m_human_increment = 20;
+    m_human_increment = 5;
     m_max_stomp_iter = 30;
     m_use_previous_trajectory = true;
 }
 
 void HumanPredictionSimulator::loadHumanTrajectory( const motion_t& motion )
 {
-    m_motion = motion;
+    m_motion = m_recorder->resample(motion,100);
 }
 
 void HumanPredictionSimulator::setHumanConfig( confPtr_t q )
@@ -185,7 +185,10 @@ bool HumanPredictionSimulator::updateMotion()
 
     motion_t motion = m_recorder->invertTranslation( m_motion );
 
-    for (int j=0; j<m_current_traj.cols(); j++)
+    int init_motion = std::max(0.0,double(m_current_traj.cols()-2*m_human_increment));
+    int end_motion = m_current_traj.cols();
+
+    for (int j=init_motion; j<end_motion; j++)
     {
         confPtr_t q = motion[j].second;
         setMatrixCol( m_current_traj, j, q );
@@ -236,12 +239,23 @@ void HumanPredictionSimulator::runStomp( int iter, int id_goal  )
     m_robot->setInitialPosition( *m_q_start );
     m_robot->setGoTo( *m_goal_config[id_goal] );
 
-    if( (iter>0) && (id_goal == m_best_path_id) )
+    if( (iter>0))
     {
-        const API::Trajectory& traj = m_paths[id_goal];
+        const API::Trajectory& current_traj = m_paths[m_best_path_id];
         const double parameter =  m_robot_steps_per_exection*m_robot_step;
-        traj_optim_set_use_extern_trajectory( true );
-        traj_optim_set_extern_trajectory( traj.extractSubTrajectory( parameter, traj.getRangeMax(), false ) );
+
+        if( id_goal == m_best_path_id )
+        {
+            traj_optim_set_use_extern_trajectory( true );
+            traj_optim_set_extern_trajectory( current_traj.extractSubTrajectory( parameter, current_traj.getRangeMax(), false ) );
+        }
+        else
+        {
+            API::Trajectory backward_traj = current_traj.extractSubTrajectory( 0, parameter, false ).extractReverseTrajectory();
+            backward_traj.concat( m_paths[id_goal] );
+            traj_optim_set_use_extern_trajectory( true );
+            traj_optim_set_extern_trajectory( backward_traj );
+        }
     }
     else
     {
@@ -299,11 +313,30 @@ void HumanPredictionSimulator::execute(const API::Trajectory& path, bool to_end)
     m_q_start = q;
 }
 
+void HumanPredictionSimulator::runVoxelOccupancy()
+{
+    for(int k=0;k<8;k++) // each class
+    {
+        for(int i=0;i<5;i++) // 5 first motion
+        {
+            loadHumanTrajectory( m_recorder->getStoredMotions()[i+25*k] );
+
+            cout << "----------------------------------------------------" << endl;
+            cout << "Motion : " << i << ", size : " << m_motion.size() << endl;
+            m_current_traj.resize( 13, 0 );
+
+            for(int j=0;(!PlanEnv->getBool(PlanParam::stopPlanner)) && updateMotion();j++)
+            {
+                predictVoxelOccupancy();
+
+                g3d_draw_allwin_active(); usleep(200000);
+            }
+        }
+    }
+}
+
 void HumanPredictionSimulator::run()
 {
-    ENV.setBool(Env::drawGraph,false);
-    ENV.setBool(Env::drawTraj,true);
-
     m_robot_steps_per_exection = 20;
     m_robot_step = 0.005;
 
@@ -318,7 +351,7 @@ void HumanPredictionSimulator::run()
 
         for(int j=0;j<int(m_goal_config.size());j++)
         {
-            runStomp( i, j);
+            runStomp( i, j );
         }
 
         m_best_path_id = getBestPathId();

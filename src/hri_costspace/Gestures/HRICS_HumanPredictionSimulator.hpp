@@ -16,6 +16,7 @@ public:
 
     void loadHumanTrajectory( const motion_t& motion );
     int classifyMotion( const motion_t& motion );
+    void runVoxelOccupancy();
     void run();
 
 private:

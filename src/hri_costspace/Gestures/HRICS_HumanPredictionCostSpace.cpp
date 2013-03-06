@@ -15,9 +15,11 @@ HumanPredictionCostSpace* global_humanPredictionCostSpace = NULL;
 
 double HRICS_getPredictionOccupancyCost(Configuration& q)
 {
+//    return 1.0;
 //    return global_humanPredictionCostSpace->getCostFromActiveJoints(q);
     return global_humanPredictionCostSpace->getCost(q);
 }
+
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -39,7 +41,7 @@ HumanPredictionCostSpace::~HumanPredictionCostSpace()
 
 double HumanPredictionCostSpace::getCost(Configuration& q)
 {
-    m_robot->setAndUpdate(q);
+//    m_robot->setAndUpdate(q);
 
     double cost = 0.0;
 
@@ -65,7 +67,7 @@ double HumanPredictionCostSpace::getCost(Configuration& q)
         }
     }
 
-    //cout << "occupancy compueded for " << nb_points << endl;
+    //cout << "occupancy computed for " << nb_points << endl;
     //cout << "HumanPredictionCostSpace cost : " << cost << endl;
 
     return cost;
@@ -73,11 +75,13 @@ double HumanPredictionCostSpace::getCost(Configuration& q)
 
 double HumanPredictionCostSpace::getCostFromActiveJoints(Configuration& q)
 {
+//    m_robot->setAndUpdate(q);
+
     double cost=0.0;
 
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
-        cost += 10*m_ws_occupancy->getOccupancy( m_robot->getJoint( m_active_joints[i] )->getVectorPos() );
+        cost += 10*m_ws_occupancy->getOccupancyCombination( m_robot->getJoint( m_active_joints[i] )->getVectorPos() );
     }
 
     return cost;
@@ -117,6 +121,7 @@ void HumanPredictionCostSpace::setActiveJoints()
         // right arm
 //        m_active_joints.push_back( 6 );
 //        m_active_joints.push_back( 7 );
+
         m_active_joints.push_back( 8 );
         m_active_joints.push_back( 9 );
         m_active_joints.push_back( 10 );

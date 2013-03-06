@@ -249,10 +249,13 @@ ThreeDCell* ThreeDGrid::getCell(const Vector3d& point) const
     }
 #endif
 
-    //    cout << "( "<<x<<" , "<<y<<" , "<<z<<" ) "<< endl;
-    return getCell(floor((point[0]-_originCorner[0])/_cellSize[0]),
-                   floor((point[1]-_originCorner[1])/_cellSize[1]),
-                   floor((point[2]-_originCorner[2])/_cellSize[2]));
+//    return getCell(floor((point[0]-_originCorner[0])/_cellSize[0]),
+//                   floor((point[1]-_originCorner[1])/_cellSize[1]),
+//                   floor((point[2]-_originCorner[2])/_cellSize[2]));
+
+    return static_cast<ThreeDCell*>(_cells[ floor((point[0]-_originCorner[0])/_cellSize[0]) +
+                                            floor((point[1]-_originCorner[1])/_cellSize[1])*_nbCellsX +
+                                            floor((point[2]-_originCorner[2])/_cellSize[2])*_nbCellsX*_nbCellsY]);
 }
 
 /*!

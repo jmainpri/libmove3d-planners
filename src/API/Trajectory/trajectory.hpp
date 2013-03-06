@@ -63,6 +63,7 @@ public:
     std::pair<bool,std::vector<LocalPath*> > extractSubPortion(double param1,double param2,unsigned int& first,unsigned int& last, bool check_for_coll = true) const;
     Trajectory extractSubTrajectoryOfLocalPaths(unsigned int id_start, unsigned int id_end) const;
     Trajectory extractSubTrajectory(double param1,double param2, bool check_for_coll = true) const;
+    Trajectory extractReverseTrajectory() const;
 
     bool concat(const Trajectory& traj);
 

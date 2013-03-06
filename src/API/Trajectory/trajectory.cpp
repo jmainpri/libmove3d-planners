@@ -1443,6 +1443,20 @@ Trajectory Trajectory::extractSubTrajectory(double param1, double param2, bool c
     return newTraj;
 }
 
+Trajectory Trajectory::extractReverseTrajectory() const
+{
+    Trajectory newTraj( m_Robot );
+    newTraj.m_Source = m_Target;
+    newTraj.m_Target = m_Source;
+
+    for(int i=int(m_Courbe.size()-1);i>=0;i--)
+    {
+        newTraj.push_back( m_Courbe[i]->getBegin()->copy() );
+    }
+
+    return newTraj;
+}
+
 extern double ZminEnv;
 extern double ZmaxEnv;
 
@@ -1845,26 +1859,27 @@ bool Trajectory::cutTrajInSmallLP(unsigned int nLP)
 
 bool Trajectory::concat(const Trajectory& traj)
 {
-  if( traj.m_Courbe.size() == 0 )
+    if( traj.m_Courbe.size() == 0 )
+        return true;
+
+    if( !m_Courbe.back()->getEnd()->equal(*traj.m_Courbe[0]->getBegin()))
+    {
+        m_Courbe.back()->getEnd()->print();
+        traj.m_Courbe[0]->getBegin()->print();
+        m_Courbe.back()->getEnd()->equal(*traj.m_Courbe[0]->getBegin(),true);
+        return false;
+    }
+
+    if( m_Courbe.size() == 0 ) {
+        m_Source = traj.m_Courbe[0]->getBegin();
+    }
+
+    for( int i=0; i<int(traj.m_Courbe.size()); i++ )
+    {
+        m_Courbe.push_back( new LocalPath( *traj.m_Courbe[i] ) );
+    }
+    m_Target = traj.m_Courbe.back()->getEnd();
     return true;
-  
-  if( !m_Courbe.back()->getEnd()->equal(*traj.m_Courbe[0]->getBegin())) {
-    m_Courbe.back()->getEnd()->print();
-    traj.m_Courbe[0]->getBegin()->print();
-    m_Courbe.back()->getEnd()->equal(*traj.m_Courbe[0]->getBegin(),true);
-    return false;
-  }
-  
-  if( m_Courbe.size() == 0 ) {
-    m_Source = traj.m_Courbe[0]->getBegin();
-  }
-  
-  for( int i=0; i<int(traj.m_Courbe.size()); i++ )
-  {
-    m_Courbe.push_back( new LocalPath( *traj.m_Courbe[i] ) );
-  }
-  m_Target = traj.m_Courbe.back()->getEnd();
-  return true;
 }
 
 bool Trajectory::replacePortionOfLocalPaths(unsigned int id1, unsigned int id2, vector<LocalPath*> paths, bool freeMemory )

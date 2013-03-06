@@ -685,6 +685,8 @@ bool traj_optim_shelf_init_collision_points()
     }
     m_collision_points = sampler->generateRobotCollisionPoints( m_robot, m_active_joints, planner_joints_id );
 
+    cout << "nb of collision point are " << m_collision_points.size() << endl;
+
     // Set the collision space as global (drawing)
     global_collisionSpace = m_coll_space;
     return true;

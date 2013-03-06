@@ -305,32 +305,32 @@ void WorkspaceOccupancyGrid::setLikelihood( const std::vector<double>& likelihoo
 
    m_min_likelihood = *std::min_element( m_likelihood.begin(), m_likelihood.end() );
 
-   cout << " likelihood : " ;
+   cout << "log-likelihood (" << std::max_element( m_likelihood.begin(), m_likelihood.end() ) - m_likelihood.begin()  << ") : ";
    for( int i=0;i<int(m_likelihood.size());i++)
    {
        cout << m_likelihood[i] << " , ";
    }
    cout << endl;
 
-    if( m_min_likelihood<0 )
-    {
-        for( int i=0;i<int(m_likelihood.size());i++)
-        {
-            m_likelihood[i] += std::abs( m_min_likelihood );
-        }
-    }
+//    if( m_min_likelihood<0 )
+//    {
+//        for( int i=0;i<int(m_likelihood.size());i++)
+//        {
+//            m_likelihood[i] += std::abs( m_min_likelihood );
+//        }
+//    }
 
-    cout << " likelihood : " ;
-    for( int i=0;i<int(m_likelihood.size());i++)
-    {
-        cout << m_likelihood[i] << " , ";
-    }
-    cout << endl;
-
+//    cout << " likelihood : " ;
 //    for( int i=0;i<int(m_likelihood.size());i++)
 //    {
-//        m_likelihood[i] = std::exp(m_likelihood[i]);
+//        cout << m_likelihood[i] << " , ";
 //    }
+//    cout << endl;
+
+    for( int i=0;i<int(m_likelihood.size());i++)
+    {
+        m_likelihood[i] = std::exp(m_likelihood[i]);
+    }
 
     double sum = 0;
 
@@ -340,12 +340,12 @@ void WorkspaceOccupancyGrid::setLikelihood( const std::vector<double>& likelihoo
     for( int i=0;i<int(m_likelihood.size());i++)
         m_likelihood[i] /= sum;
 
-    cout << " likelihood : " ;
-    for( int i=0;i<int(m_likelihood.size());i++)
-    {
-        cout << m_likelihood[i] << " , ";
-    }
-    cout << endl;
+//    cout << " likelihood : " ;
+//    for( int i=0;i<int(m_likelihood.size());i++)
+//    {
+//        cout << m_likelihood[i] << " , ";
+//    }
+//    cout << endl;
 
     m_max_likelihood = 1;
     m_min_likelihood = 0;
@@ -462,7 +462,6 @@ void WorkspaceOccupancyGrid::init_drawing()
         //   V2 -- V3 V5     |/
         //   |      | /       -- X
         //   V7 -- V4
-        //
         
         // clockwise
         // 7 - 2 - 3 | 3 - 4 - 7 | 4 - 3 - 0 | 0 - 5 - 4

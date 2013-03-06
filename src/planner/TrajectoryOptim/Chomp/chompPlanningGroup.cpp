@@ -86,7 +86,7 @@ bool ChompPlanningGroup::addCollisionPoint(CollisionPoint& collision_point)
 
 void ChompPlanningGroup::draw() const
 {
-  //cout << "Number of collision points : " << collision_points_.size() << endl;
+//  cout << "Number of collision points : " << collision_points_.size() << endl;
   for (unsigned int i=0; i<collision_points_.size(); i++) 
   {
 //    if (i>=38) 

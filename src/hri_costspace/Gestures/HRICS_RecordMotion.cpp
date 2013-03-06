@@ -621,7 +621,7 @@ motion_t RecordMotion::invertTranslation( const motion_t& motion )
 
 bool  RecordMotion::loadRegressedFromCSV()
 {
-    string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/regressed_trajectories/joints_8classes/";
+    string foldername = "/home/jmainpri/Dropbox/workspace/gesture-recognition/gmm/gmm-gmr-gesture-recognition/";
 
     m_stored_motions.clear();
 

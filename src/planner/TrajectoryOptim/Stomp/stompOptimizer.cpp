@@ -49,6 +49,7 @@
 #include "API/project.hpp"
 #include "utils/ConfGenerator.h"
 #include "hri_costspace/HRICS_costspace.hpp"
+#include "hri_costspace/Gestures/HRICS_HumanPredictionCostSpace.hpp"
 
 #include "Graphic-pkg.h"
 #include "P3d-pkg.h"
@@ -418,6 +419,8 @@ void StompOptimizer::doChompOptimization()
 //void StompOptimizer::optimize()
 void StompOptimizer::runDeformation( int nbIteration , int idRun )
 {
+//    use_costspace_ = false;
+
     ChronoTimeOfDayOn();
     
     timeval tim;
@@ -1131,13 +1134,6 @@ bool StompOptimizer::getConfigObstacleCost(int segment, int coll_point, Configur
                                                                          collision_point_potential_(i,j),
                                                                          collision_point_potential_gradient_[i][j]);
     }
-    if( use_costspace_ )
-    {
-        general_cost_potential_[segment] = global_costSpace->cost(q);
-        //      cout << "config cost = " << global_costSpace->cost(q) << endl;
-        //      colliding = q.isInCollision();
-        //      colliding = false;
-    }
     
     return colliding;
 }
@@ -1170,16 +1166,20 @@ bool StompOptimizer::performForwardKinematics()
         getFrames( i, joint_array, q );
         state_is_in_collision_[i] = false;
 
+        if( use_costspace_ )
+        {
+            general_cost_potential_[i] = global_costSpace->cost(q);
+    //        general_cost_potential_[segment] = 1.0;
+    //         general_cost_potential_[segment] = HRICS_getPredictionOccupancyCost(q);
+        }
+
         if(collision_space_ )
         {
             // calculate the position of every collision point:
             for (int j=0; j<num_collision_points_; j++)
             {
-                // cout << "coll_point(" << i << " , "  << j << ") = " << endl << collision_point_pos_eigen_[i][j] << endl;
                 bool colliding = getConfigObstacleCost( i, j, q );
-                // cout << "collision_point_potential_(" << i << " , "  << j << ") = " << endl << collision_point_potential_(i,j) << endl;
-                // cout << "collision_point_potential_gradient_(" << i << " , "  << j << ") = " << endl << collision_point_potential_gradient_[i][j] << endl;
-                // point_is_in_collision_[i][j] = colliding;
+
                 if ( colliding )
                 {
                     // This is the function that discards joints too close to the base
@@ -1190,9 +1190,10 @@ bool StompOptimizer::performForwardKinematics()
                 }
             }
         }
-        else
+
+        if( use_costspace_ && (collision_space_==NULL) )
         {
-            state_is_in_collision_[i] = getConfigObstacleCost( i, 0, q );
+            state_is_in_collision_[i] = false;
         }
 
         if ( state_is_in_collision_[i] )

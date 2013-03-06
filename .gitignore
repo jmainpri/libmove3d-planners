@@ -1,1 +1,7 @@
 .DS_Store
+*~
+build/
+build_release/
+*.creator.user
+lib/
+
