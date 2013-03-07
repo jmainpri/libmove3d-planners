@@ -203,6 +203,14 @@ public:
    */
     bool getControlCostWeight(double& control_cost_weight);
 
+
+    /**
+   * Gets the weight of the state cost
+   * @param control_cost_weight
+   * @return
+   */
+    bool getStateCostWeight(double& state_cost_weight);
+
     /**
    * Returns the planning group of the optimizer
    */

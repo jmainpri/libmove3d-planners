@@ -114,6 +114,7 @@ void RecordMotion::reset()
     m_time_last_saved = 0.0;
     m_motion.clear();
     m_stored_motions.clear();
+    m_ith_shown_motion = -1;
 }
 
 void RecordMotion::saveToXml(const std::string &filename)
@@ -247,8 +248,9 @@ motion_t RecordMotion::loadFromXml(const string& filename)
             if( q == NULL ) {
                 cout << "Error : in readXmlConfig" << endl;
             }
-
-            vectConfs.push_back( make_pair(time,confPtr_t(new Configuration(m_robot,q,true))));
+            confPtr_t q_tmp(new Configuration(m_robot,q,true));
+            q_tmp->adaptCircularJointsLimits();
+            vectConfs.push_back( make_pair(time,q_tmp) );
             //vectConfs.back().second->print();
         }
 
@@ -361,12 +363,33 @@ bool RecordMotion::setConfiguration(int ith)
     return true;
 }
 
+bool RecordMotion::setShowMotion(int ith)
+{
+    if( ith == -1) {
+        cout << "disable ith show motion" << endl;
+    }
+    else if( ith < 0 || ith >= int(m_stored_motions.size()) ) {
+        cout << "index out of range in " << __func__ << endl;
+        return false;
+    }
+
+    m_ith_shown_motion = ith;
+    return true;
+}
+
 void RecordMotion::showStoredMotion()
 {
-    for (int i=0; i<int(m_stored_motions.size()); i++)
+    if( m_ith_shown_motion == -1 )
     {
-        cout << "Show motion : " << i << " with " <<  m_stored_motions[i].size() << " frames" << endl;
-        showMotion( m_stored_motions[i] );
+        for (int i=0; i<int(m_stored_motions.size()); i++)
+        {
+            cout << "Show motion : " << i << " with " <<  m_stored_motions[i].size() << " frames" << endl;
+            showMotion( m_stored_motions[i] );
+        }
+    }
+    else
+    {
+        showMotion( m_stored_motions[m_ith_shown_motion] );
     }
 }
 
@@ -407,7 +430,8 @@ void RecordMotion::showMotion( const motion_t& motion )
             m_robot->setAndUpdate( *q_cur );
 //            cout << "dt : " << dt << " , m_motion[i].first : " << motion[i].first << endl;
 //            motion[i].second->print();
-//            cout << (*motion[i].second)[11] << endl;
+//            motion[i].second->adaptCircularJointsLimits();
+            cout << (*motion[i].second)[11] << endl;
             g3d_draw_allwin_active();
             dt = 0.0;
             i++;
@@ -523,11 +547,13 @@ void RecordMotion::saveStoredToCSV( const std::string &filename )
             }
             else
             {
+                m_stored_motions[i][j].second->adaptCircularJointsLimits();
+
                 // This is because the data was recorded near limits
-                s << (*m_stored_motions[i][j].second)[6] << ","; // Pelvis
-                s << (*m_stored_motions[i][j].second)[7] << ","; // Pelvis
-                s << (*m_stored_motions[i][j].second)[8] << ","; // Pelvis
-                s << (*m_stored_motions[i][j].second)[11] << ","; // Pelvis
+                s << (*m_stored_motions[i][j].second)[6] << ","; // PelvisX
+                s << (*m_stored_motions[i][j].second)[7] << ","; // PelvisY
+                s << (*m_stored_motions[i][j].second)[8] << ","; // PelvisZ
+                s << (*m_stored_motions[i][j].second)[11] << ","; // PelvisRX
                 s << (*m_stored_motions[i][j].second)[12] << ","; // TorsoX
                 s << (*m_stored_motions[i][j].second)[13] << ","; // TorsoY
                 s << (*m_stored_motions[i][j].second)[14] << ","; // TorsoZ

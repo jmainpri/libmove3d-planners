@@ -41,7 +41,6 @@ bool PlannarTrajectorySmoothing::goToNextStep()
         return false;
     }
 
-
     double x1 = _traj.at(_id)[0];
     double y1 = _traj.at(_id)[1];
     double x2 = _traj.at(_id+1)[0];

@@ -47,21 +47,19 @@
 
 using namespace std;
 
-USING_PART_OF_NAMESPACE_EIGEN
-
 namespace stomp_motion_planner
 {
-  
-  CovariantTrajectoryPolicy::CovariantTrajectoryPolicy() : print_debug_(true)
-  {
-  }
-  
-  CovariantTrajectoryPolicy::~CovariantTrajectoryPolicy()
-  {
-  }
-  
-  bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle*/)
-  {
+
+CovariantTrajectoryPolicy::CovariantTrajectoryPolicy() : print_debug_(true)
+{
+}
+
+CovariantTrajectoryPolicy::~CovariantTrajectoryPolicy()
+{
+}
+
+bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle*/)
+{
     //node_handle_ = node_handle;
     
     assert(readParameters());
@@ -70,15 +68,15 @@ namespace stomp_motion_planner
     assert(initializeBasisFunctions());
     
     return true;
-  }
-  
-  bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
-                                             const int num_time_steps,
-                                             const int num_dimensions,
-                                             const double movement_duration,
-                                             const double cost_ridge_factor,
-                                             const std::vector<double>& derivative_costs)
-  {
+}
+
+bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
+                                           const int num_time_steps,
+                                           const int num_dimensions,
+                                           const double movement_duration,
+                                           const double cost_ridge_factor,
+                                           const std::vector<double>& derivative_costs)
+{
     //node_handle_ = node_handle;
     //print_debug_ = true;
     
@@ -87,11 +85,11 @@ namespace stomp_motion_planner
     
     if(PlanEnv->getBool(PlanParam::useSelectedDuration))
     {
-      movement_duration_ = PlanEnv->getDouble(PlanParam::trajDuration);
+        movement_duration_ = PlanEnv->getDouble(PlanParam::trajDuration);
     }
     else
     {
-      movement_duration_ = movement_duration;
+        movement_duration_ = movement_duration;
     }
     
     //movement_duration_ = 5.0;
@@ -111,20 +109,20 @@ namespace stomp_motion_planner
     
     if( print_debug_ )
     {
-      cout << "--------------------------------- " << endl;
-      cout << "Trajectory duration : " << movement_duration << endl;
-      cout << "--------------------------------- " << endl;
-      
-      cout <<"movement_duration_ : " << movement_duration_ << endl;
-      cout <<"num_time_steps_  : " << num_time_steps_ << endl;
-      cout <<"num_dimensions_  : " << num_dimensions_ << endl;
+        cout << "--------------------------------- " << endl;
+        cout << "Trajectory duration : " << movement_duration << endl;
+        cout << "--------------------------------- " << endl;
+
+        cout <<"movement_duration_ : " << movement_duration_ << endl;
+        cout <<"num_time_steps_  : " << num_time_steps_ << endl;
+        cout <<"num_dimensions_  : " << num_dimensions_ << endl;
     }
     
     return true;
-  }
-  
-  bool CovariantTrajectoryPolicy::readParameters()
-  {
+}
+
+bool CovariantTrajectoryPolicy::readParameters()
+{
     //    node_handle_.param("num_time_steps", num_time_steps_, 100);
     //    node_handle_.param("num_dimensions", num_dimensions_, 1);
     //    node_handle_.param("movement_duration", movement_duration_, 1.0);
@@ -136,30 +134,30 @@ namespace stomp_motion_planner
     
     if( print_debug_ )
     {
-      cout <<"Movement duration : " << movement_duration_ << endl;
+        cout <<"Movement duration : " << movement_duration_ << endl;
     }
     
     //assert(stomp_motion_planner::readDoubleArray(node_handle_, "derivative_costs", derivative_costs_));
     return true;
-  }
-  
-  //! compute the minmal control costs
-  //! given a start and goal state
-  bool CovariantTrajectoryPolicy::setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal)
-  {
+}
+
+//! compute the minmal control costs
+//! given a start and goal state
+bool CovariantTrajectoryPolicy::setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal)
+{
     //cerr << "0 : " << endl;
     for (int d=0; d<num_dimensions_; ++d)
     {
-      // set the start and end of the trajectory
-      for (int i=0; i<DIFF_RULE_LENGTH-1; ++i)
-      { 
-//        cerr << "start : " << start << endl;
-//        cerr << "goal : " << goal << endl;
-//        cerr << "parameters_all_ : " << parameters_all_[d] << endl;
-//        cerr << "parameters_all_ (" << d << " , " << i << ")" << endl;
-        parameters_all_[d](i) = start(d);
-        parameters_all_[d](num_vars_all_-1-i) = goal(d);
-      }
+        // set the start and end of the trajectory
+        for (int i=0; i<DIFF_RULE_LENGTH-1; ++i)
+        {
+            //        cerr << "start : " << start << endl;
+            //        cerr << "goal : " << goal << endl;
+            //        cerr << "parameters_all_ : " << parameters_all_[d] << endl;
+            //        cerr << "parameters_all_ (" << d << " , " << i << ")" << endl;
+            parameters_all_[d](i) = start(d);
+            parameters_all_[d](num_vars_all_-1-i) = goal(d);
+        }
     }
     
     //cerr << "1 : " << endl;
@@ -173,42 +171,42 @@ namespace stomp_motion_planner
     //cerr << "3 : " << endl;
     //printParameters();
     return true;
-  }
-  
-  bool CovariantTrajectoryPolicy::computeLinearControlCosts()
-  {
+}
+
+bool CovariantTrajectoryPolicy::computeLinearControlCosts()
+{
     linear_control_costs_.clear();
-    linear_control_costs_.resize(num_dimensions_, VectorXd::Zero(num_vars_free_));
+    linear_control_costs_.resize(num_dimensions_, Eigen::VectorXd::Zero(num_vars_free_));
     
     for (int d=0; d<num_dimensions_; ++d)
     {
-      linear_control_costs_[d].transpose() = parameters_all_[d].segment(0, DIFF_RULE_LENGTH-1).transpose() *
-      control_costs_all_[d].block(0, free_vars_start_index_, DIFF_RULE_LENGTH-1, num_vars_free_);
-      
-      linear_control_costs_[d].transpose() += parameters_all_[d].segment(free_vars_end_index_+1, DIFF_RULE_LENGTH-1).transpose() *
-      control_costs_all_[d].block(free_vars_end_index_+1, free_vars_start_index_, DIFF_RULE_LENGTH-1, num_vars_free_);
-      
-      linear_control_costs_[d] *= 2.0;
+        linear_control_costs_[d].transpose() = parameters_all_[d].segment(0, DIFF_RULE_LENGTH-1).transpose() *
+                control_costs_all_[d].block(0, free_vars_start_index_, DIFF_RULE_LENGTH-1, num_vars_free_);
+
+        linear_control_costs_[d].transpose() += parameters_all_[d].segment(free_vars_end_index_+1, DIFF_RULE_LENGTH-1).transpose() *
+                control_costs_all_[d].block(free_vars_end_index_+1, free_vars_start_index_, DIFF_RULE_LENGTH-1, num_vars_free_);
+
+        linear_control_costs_[d] *= 2.0;
     }
     
     //  Eigen::MatrixXd control_costs( num_time_steps_, num_dimensions_ );
-    //  
+    //
     //  for (int d=0; d<num_dimensions_; ++d)
     //  {
     //    control_costs.col(d) = linear_control_costs_[d].segment(free_vars_start_index_, num_vars_free_);
     //  }
-    //  
+    //
     //  cout << "Control Costs : " << endl;
     //  cout << control_costs << endl;
     
     return true;
-  }
-  
-  bool CovariantTrajectoryPolicy::computeMinControlCostParameters()
-  {
+}
+
+bool CovariantTrajectoryPolicy::computeMinControlCostParameters()
+{
     for (int d=0; d<num_dimensions_; ++d)
     {
-      parameters_all_[d].segment(free_vars_start_index_, num_vars_free_) = -0.5 * inv_control_costs_[d] * linear_control_costs_[d];
+        parameters_all_[d].segment(free_vars_start_index_, num_vars_free_) = -0.5 * inv_control_costs_[d] * linear_control_costs_[d];
     }
     //    for (int d=0; d<num_dimensions_; ++d)
     //    {
@@ -217,10 +215,10 @@ namespace stomp_motion_planner
     //                += -0.5 * inv_control_costs_[d] * gradient.segment(free_vars_start_index_, num_vars_free_);
     //    }
     return true;
-  }
-  
-  bool CovariantTrajectoryPolicy::initializeVariables()
-  {
+}
+
+bool CovariantTrajectoryPolicy::initializeVariables()
+{
     movement_dt_ = movement_duration_ / (num_time_steps_ + 1);
     
     num_vars_free_ = num_time_steps_;
@@ -230,51 +228,51 @@ namespace stomp_motion_planner
     
     num_parameters_.clear();
     for (int d=0; d<num_dimensions_; ++d)
-      num_parameters_.push_back(num_time_steps_);
+        num_parameters_.push_back(num_time_steps_);
     
     cerr << "parameters_all_.resize : num_dimensions_ : " << num_dimensions_ << endl;
     cerr << "parameters_all_.resize : num_vars_all_ : " << num_vars_all_ << endl;
     parameters_all_.resize(num_dimensions_, Eigen::VectorXd::Zero(num_vars_all_));
     
     return true;
-  }
-  
-  void CovariantTrajectoryPolicy::createDifferentiationMatrices()
-  {
+}
+
+void CovariantTrajectoryPolicy::createDifferentiationMatrices()
+{
     double multiplier = 1.0;
     differentiation_matrices_.clear();
-    differentiation_matrices_.resize(NUM_DIFF_RULES, MatrixXd::Zero(num_vars_all_, num_vars_all_));
+    differentiation_matrices_.resize(NUM_DIFF_RULES, Eigen::MatrixXd::Zero(num_vars_all_, num_vars_all_));
     for (int d=0; d<NUM_DIFF_RULES; ++d)
     {
-      if( print_debug_ )
-      {
-        cout <<"Movement duration : " << movement_duration_ << endl;
-        cout <<"Movement dt : " << movement_dt_ << endl;
-      }
-      //multiplier /= movement_dt_;
-      //multiplier /= 0.03815;
-      
-      for (int i=0; i<num_vars_all_; i++)
-      {
-        for (int j=-DIFF_RULE_LENGTH/2; j<=DIFF_RULE_LENGTH/2; j++)
+        if( print_debug_ )
         {
-          int index = i+j;
-          if (index < 0)
-            continue;
-          if (index >= num_vars_all_)
-            continue;
-          differentiation_matrices_[d](i,index) = multiplier * DIFF_RULES[d][j+DIFF_RULE_LENGTH/2];
+            cout <<"Movement duration : " << movement_duration_ << endl;
+            cout <<"Movement dt : " << movement_dt_ << endl;
         }
-      }
-      if( print_debug_ )
-      {
-        cout << "differentiation_matrices_["<<d<<"] = " << endl << differentiation_matrices_[d] << endl ;
-      }
+        //multiplier /= movement_dt_;
+        //multiplier /= 0.03815;
+
+        for (int i=0; i<num_vars_all_; i++)
+        {
+            for (int j=-DIFF_RULE_LENGTH/2; j<=DIFF_RULE_LENGTH/2; j++)
+            {
+                int index = i+j;
+                if (index < 0)
+                    continue;
+                if (index >= num_vars_all_)
+                    continue;
+                differentiation_matrices_[d](i,index) = multiplier * DIFF_RULES[d][j+DIFF_RULE_LENGTH/2];
+            }
+        }
+        if( print_debug_ )
+        {
+            cout << "differentiation_matrices_["<<d<<"] = " << endl << differentiation_matrices_[d] << endl ;
+        }
     }
-  }
-  
-  bool CovariantTrajectoryPolicy::initializeCosts()
-  {
+}
+
+bool CovariantTrajectoryPolicy::initializeCosts()
+{
     createDifferentiationMatrices();
     
     control_costs_all_.clear();
@@ -282,73 +280,80 @@ namespace stomp_motion_planner
     inv_control_costs_.clear();
     for (int d=0; d<num_dimensions_; ++d)
     {
-      // Construct the quadratic cost matrices (for all variables)
-      MatrixXd cost_all = MatrixXd::Identity(num_vars_all_, num_vars_all_) * cost_ridge_factor_;
-      
-      for (int i=0; i<NUM_DIFF_RULES; ++i)
-      {
-        cost_all += derivative_costs_[i] * (differentiation_matrices_[i].transpose() * differentiation_matrices_[i]);
-      }
-      control_costs_all_.push_back(cost_all);
-      
-      // Extract the quadratic cost just for the free variables:
-      MatrixXd cost_free = cost_all.block(DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_, num_vars_free_);
-      
-      //cout << "cost_free("<<d<<") = " << cost_free << endl;
-      
-      control_costs_.push_back(cost_free);
-      inv_control_costs_.push_back(cost_free.inverse());
-      
-      //cout << "control_costs["<< d <<"]  = " << endl << control_costs_[d] << endl;
+        // Construct the quadratic cost matrices (for all variables)
+        Eigen::MatrixXd cost_all = Eigen::MatrixXd::Identity(num_vars_all_, num_vars_all_) * cost_ridge_factor_;
+
+        for (int i=0; i<NUM_DIFF_RULES; ++i)
+        {
+            cost_all += derivative_costs_[i] * (differentiation_matrices_[i].transpose() * differentiation_matrices_[i]);
+        }
+        control_costs_all_.push_back(cost_all);
+
+        // Extract the quadratic cost just for the free variables:
+        Eigen::MatrixXd cost_free = cost_all.block(DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_, num_vars_free_);
+
+        //cout << "cost_free("<<d<<") = " << cost_free << endl;
+
+        control_costs_.push_back(cost_free);
+        inv_control_costs_.push_back(cost_free.inverse());
+
+        //cout << "control_costs["<< d <<"]  = " << endl << control_costs_[d] << endl;
     }
     return true;
-  }
-  
-  bool CovariantTrajectoryPolicy::initializeBasisFunctions()
-  {
+}
+
+bool CovariantTrajectoryPolicy::initializeBasisFunctions()
+{
     basis_functions_.clear();
     for (int d=0; d<num_dimensions_; ++d)
     {
-      basis_functions_.push_back(MatrixXd::Identity(num_vars_free_, num_vars_free_));
+        basis_functions_.push_back(Eigen::MatrixXd::Identity(num_vars_free_, num_vars_free_));
     }
     return true;
-  }
-  
-  bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices, 
-                                                      const std::vector<Eigen::VectorXd>& parameters,
-                                                      const std::vector<Eigen::VectorXd>& noise, 
-                                                      const double weight, std::vector<Eigen::VectorXd>& control_costs)
-  {
+}
+
+bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices,
+                                                    const std::vector<Eigen::VectorXd>& parameters,
+                                                    const std::vector<Eigen::VectorXd>& noise,
+                                                    const double weight, std::vector<Eigen::VectorXd>& control_costs)
+{
     // this measures the accelerations and squares them
     for (int d=0; d<num_dimensions_; ++d)
     {
-      VectorXd params_all = parameters_all_[d];
-      VectorXd costs_all = VectorXd::Zero(num_vars_all_);
-      
-      params_all.segment(free_vars_start_index_, num_vars_free_) = parameters[d] + noise[d];
-      VectorXd acc_all = VectorXd::Zero(num_vars_all_);
-      for (int i=0; i<NUM_DIFF_RULES; ++i)
-      {
-        acc_all = differentiation_matrices_[i]*params_all;
-        costs_all += weight * derivative_costs_[i] * (acc_all.cwise()*acc_all);
-      }
-      
-      control_costs[d] = costs_all.segment(free_vars_start_index_, num_vars_free_);
-      for (int i=0; i<free_vars_start_index_; ++i)
-      {
-        control_costs[d](0) += costs_all(i);
-        control_costs[d](num_vars_free_-1) += costs_all(num_vars_all_-(i+1));
-      }
+        Eigen::VectorXd params_all = parameters_all_[d];
+        Eigen::VectorXd costs_all  = Eigen::VectorXd::Zero(num_vars_all_);
+        Eigen::VectorXd acc_all    = Eigen::VectorXd::Zero(num_vars_all_);
+
+        params_all.segment( free_vars_start_index_, num_vars_free_) = parameters[d] + noise[d];
+
+
+        for (int i=0; i<NUM_DIFF_RULES; ++i)
+        {
+            acc_all = differentiation_matrices_[i]*params_all;
+            costs_all += weight * derivative_costs_[i] * (acc_all.cwise()*acc_all);
+        }
+
+        control_costs[d] = costs_all.segment( free_vars_start_index_, num_vars_free_ );
+
+        // TODO Why this???
+        // commented by jim 06/03/2011
+        // The control costs are not computed the same way in
+        // policy improvement and on stomp optimizer
+//        for (int i=0; i<free_vars_start_index_; ++i)
+//        {
+//            control_costs[d](0) += costs_all(i);
+//            control_costs[d](num_vars_free_-1) += costs_all(num_vars_all_-(i+1));
+//        }
     }
     
     return true;
-  }
-  
-  
-  bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices, 
-                                                      const std::vector<std::vector<Eigen::VectorXd> >& parameters,
-                                                      const double weight, std::vector<Eigen::VectorXd>& control_costs)
-  {
+}
+
+
+bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices,
+                                                    const std::vector<std::vector<Eigen::VectorXd> >& parameters,
+                                                    const double weight, std::vector<Eigen::VectorXd>& control_costs)
+{
     //Policy::computeControlCosts(control_cost_matrices, parameters, weight, control_costs);
     
     // we use the locally stored control costs
@@ -370,31 +375,33 @@ namespace stomp_motion_planner
     // this measures the accelerations and squares them
     for (int d=0; d<num_dimensions_; ++d)
     {
-      VectorXd params_all = parameters_all_[d];
-      VectorXd costs_all = VectorXd::Zero(num_vars_all_);
-      for (int t=0; t<num_time_steps_; ++t)
-      {
-        params_all.segment(free_vars_start_index_, num_vars_free_) = parameters[d][t];
-        VectorXd acc_all = VectorXd::Zero(num_vars_all_);
-        for (int i=0; i<NUM_DIFF_RULES; ++i)
+        Eigen::VectorXd params_all = parameters_all_[d];
+        Eigen::VectorXd costs_all = Eigen::VectorXd::Zero(num_vars_all_);
+        for (int t=0; t<num_time_steps_; ++t)
         {
-          acc_all = differentiation_matrices_[i]*params_all;
-          costs_all += weight * derivative_costs_[i] * (acc_all.cwise()*acc_all);
+            params_all.segment(free_vars_start_index_, num_vars_free_) = parameters[d][t];
+            Eigen::VectorXd acc_all = Eigen::VectorXd::Zero(num_vars_all_);
+            for (int i=0; i<NUM_DIFF_RULES; ++i)
+            {
+                acc_all = differentiation_matrices_[i]*params_all;
+                costs_all += weight * derivative_costs_[i] * (acc_all.cwise()*acc_all);
+            }
         }
-      }
-      control_costs[d] = costs_all.segment(free_vars_start_index_, num_vars_free_);
-      for (int i=0; i<free_vars_start_index_; ++i)
-      {
-        control_costs[d](0) += costs_all(i);
-        control_costs[d](num_vars_free_-1) += costs_all(num_vars_all_-(i+1));
-      }
+
+        control_costs[d] = costs_all.segment(free_vars_start_index_, num_vars_free_);
+
+        for (int i=0; i<free_vars_start_index_; ++i)
+        {
+            control_costs[d](0) += costs_all(i);
+            control_costs[d](num_vars_free_-1) += costs_all(num_vars_all_-(i+1));
+        }
     }
     
     return true;
-  }
-  
-  bool CovariantTrajectoryPolicy::updateParameters(const std::vector<Eigen::MatrixXd>& updates)
-  {
+}
+
+bool CovariantTrajectoryPolicy::updateParameters(const std::vector<Eigen::MatrixXd>& updates)
+{
     //ROS_ASSERT(int(updates.size()) == num_dimensions_);
     
     // this takes only the diagonal elements
@@ -408,9 +415,9 @@ namespace stomp_motion_planner
     double divisor = 1.0;
     for (int d=0; d<num_dimensions_; ++d)
     {
-      parameters_all_[d].segment(free_vars_start_index_, num_vars_free_).transpose() += divisor * updates[d].row(0);
-      
-      // cout << "parameters_all_[" << d << "] = " << endl << parameters_all_[d] << endl;
+        parameters_all_[d].segment(free_vars_start_index_, num_vars_free_).transpose() += divisor * updates[d].row(0);
+
+        // cout << "parameters_all_[" << d << "] = " << endl << parameters_all_[d] << endl;
     }
     
     // this weights updates by number of time-steps remaining:
@@ -430,51 +437,51 @@ namespace stomp_motion_planner
     //    }
     
     return true;
-  }
-  
-  bool CovariantTrajectoryPolicy::readFromDisc(const std::string directory_name, const int item_id, const int trial_id)
-  {
+}
+
+bool CovariantTrajectoryPolicy::readFromDisc(const std::string directory_name, const int item_id, const int trial_id)
+{
     // TODO: implement this
     return true;
-  }
-  
-  bool CovariantTrajectoryPolicy::writeToDisc(const int trial_id)
-  {
+}
+
+bool CovariantTrajectoryPolicy::writeToDisc(const int trial_id)
+{
     writeToDisc(getFileName(trial_id));
     return true;
-  }
-  
-  bool CovariantTrajectoryPolicy::readFromDisc(const std::string abs_file_name)
-  {
+}
+
+bool CovariantTrajectoryPolicy::readFromDisc(const std::string abs_file_name)
+{
     // TODO: implement this
     return true;
-  }
-  
-  bool CovariantTrajectoryPolicy::writeToDisc(const std::string abs_file_name)
-  {
+}
+
+bool CovariantTrajectoryPolicy::writeToDisc(const std::string abs_file_name)
+{
     FILE *f;
     f = fopen(abs_file_name.c_str(), "w");
     if (!f)
-      return false;
+        return false;
     
     for (int i=free_vars_start_index_-1; i<=free_vars_end_index_+1; ++i)
     {
-      for (int d=0; d<num_dimensions_; ++d)
-      {
-        fprintf(f,"%f\t", parameters_all_[d](i));
-      }
-      fprintf(f,"\n");
+        for (int d=0; d<num_dimensions_; ++d)
+        {
+            fprintf(f,"%f\t", parameters_all_[d](i));
+        }
+        fprintf(f,"\n");
     }
     
     fclose(f);
     return true;
-  }
-  
-  std::string CovariantTrajectoryPolicy::getFileName(const int trial_id)
-  {
+}
+
+std::string CovariantTrajectoryPolicy::getFileName(const int trial_id)
+{
     std::ostringstream ss;
     ss << file_name_base_ << trial_id << ".txt";
     return ss.str();
-  }
-  
+}
+
 }

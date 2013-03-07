@@ -41,6 +41,7 @@ public:
     void showCurrentMotion();
     void showMotion( const motion_t& motion );
     bool setConfiguration(int ith);
+    bool setShowMotion(int ith);
 
     motion_t extractSubpart(int init, int end );
     motion_t extractSubpart(int init, int end, const motion_t& motion);
@@ -61,6 +62,7 @@ private:
     int m_id_motion;
     motion_t m_motion;
     std::vector<motion_t> m_stored_motions;
+    int m_ith_shown_motion;
 };
 }
 

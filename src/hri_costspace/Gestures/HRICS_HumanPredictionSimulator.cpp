@@ -7,6 +7,7 @@
 #include "planner/planEnvironment.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
+#include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 
 #include "p3d/env.hpp"
 #include "Graphic-pkg.h"
@@ -75,7 +76,9 @@ void HRICS_initOccupancyPredictionFramework()
     recorder->loadFolder();
     // Translate all motions
     recorder->translateStoredMotions();
-    simulator->loadHumanTrajectory( recorder->getStoredMotions()[30] );
+
+    simulator->loadHumanTrajectory( recorder->getStoredMotions()[28] ); // Side by side (class 1) starting in 0
+    //simulator->loadHumanTrajectory( recorder->getStoredMotions()[77] ); // Face to face (class 3)
 
     // GUI global variables
     global_motionRecorder = recorder;
@@ -236,29 +239,35 @@ void HumanPredictionSimulator::runStomp( int iter, int id_goal  )
     PlanEnv->setInt( PlanParam::nb_pointsOnTraj, 100 );
 
     m_robot->setAndUpdate( *m_q_start );
-    m_robot->setInitialPosition( *m_q_start );
-    m_robot->setGoTo( *m_goal_config[id_goal] );
 
     if( (iter>0))
     {
         const API::Trajectory& current_traj = m_paths[m_best_path_id];
-        const double parameter =  m_robot_steps_per_exection*m_robot_step;
+        const double parameter = m_robot_steps_per_exection*m_robot_step;
+        API::Trajectory optimi_traj;
 
         if( id_goal == m_best_path_id )
         {
-            traj_optim_set_use_extern_trajectory( true );
-            traj_optim_set_extern_trajectory( current_traj.extractSubTrajectory( parameter, current_traj.getRangeMax(), false ) );
+            optimi_traj = current_traj.extractSubTrajectory( parameter, current_traj.getRangeMax(), false );
         }
         else
         {
-            API::Trajectory backward_traj = current_traj.extractSubTrajectory( 0, parameter, false ).extractReverseTrajectory();
-            backward_traj.concat( m_paths[id_goal] );
-            traj_optim_set_use_extern_trajectory( true );
-            traj_optim_set_extern_trajectory( backward_traj );
+//            API::Trajectory backward_traj = current_traj.extractSubTrajectory( 0, parameter, false ).extractReverseTrajectory();
+//            backward_traj.concat( m_paths[id_goal] );
+            API::CostOptimization traj( m_paths[id_goal] );
+            traj.connectConfigurationToBegin( current_traj.configAtParam( parameter ), parameter/5, true );
+            optimi_traj = traj;
         }
+
+        traj_optim_set_use_extern_trajectory( true );
+        traj_optim_set_extern_trajectory( optimi_traj );
+
+//        traj_optim_runStompNoInit
     }
     else
     {
+        m_robot->setInitialPosition( *m_q_start );
+        m_robot->setGoTo( *m_goal_config[id_goal] );
         traj_optim_set_use_extern_trajectory( false );
     }
 
@@ -270,15 +279,20 @@ void HumanPredictionSimulator::runStomp( int iter, int id_goal  )
 
 int HumanPredictionSimulator::getBestPathId()
 {
-    int id = std::min_element( m_paths.begin(), m_paths.end() ) - m_paths.begin();
-
-    cout << "best id : " << id << endl;
+    std::vector< std::pair<double,int> > cost_sorter;
 
     for(int i=0;i<int(m_paths.size());i++)
     {
-        cout << "path " << i << " cost : " << m_paths[i].cost() << endl;
+        cost_sorter.push_back( std::make_pair( m_paths[i].cost(), i ) );
     }
-    return id;
+
+    std::sort( cost_sorter.begin(), cost_sorter.end() );
+
+    for(int i=0;i<int(cost_sorter.size());i++)
+    {
+        cout << "path " << cost_sorter[i].second << " cost : " << cost_sorter[i].first << endl;
+    }
+    return cost_sorter[0].second;
 }
 
 void HumanPredictionSimulator::execute(const API::Trajectory& path, bool to_end)
@@ -315,14 +329,15 @@ void HumanPredictionSimulator::execute(const API::Trajectory& path, bool to_end)
 
 void HumanPredictionSimulator::runVoxelOccupancy()
 {
-    for(int k=0;k<8;k++) // each class
-    {
+//    for(int k=0;k<8;k++) // each class
+//    {
+     int k = 3;
         for(int i=0;i<5;i++) // 5 first motion
         {
             loadHumanTrajectory( m_recorder->getStoredMotions()[i+25*k] );
 
             cout << "----------------------------------------------------" << endl;
-            cout << "Motion : " << i << ", size : " << m_motion.size() << endl;
+            cout << "Motion : " << i+25*k << ", size : " << m_motion.size() << endl;
             m_current_traj.resize( 13, 0 );
 
             for(int j=0;(!PlanEnv->getBool(PlanParam::stopPlanner)) && updateMotion();j++)
@@ -332,7 +347,7 @@ void HumanPredictionSimulator::runVoxelOccupancy()
                 g3d_draw_allwin_active(); usleep(200000);
             }
         }
-    }
+//    }
 }
 
 void HumanPredictionSimulator::run()

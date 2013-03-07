@@ -91,6 +91,12 @@ public:
      */
     virtual bool getControlCostWeight(double& control_cost_weight) = 0;
 
+    /**
+     * Gets the weight of the state cost
+     * @param state_cost_weight
+     * @return
+     */
+    virtual bool getStateCostWeight(double& state_cost_weight) = 0;
 };
 
 }

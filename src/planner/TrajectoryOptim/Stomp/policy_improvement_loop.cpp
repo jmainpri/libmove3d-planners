@@ -91,6 +91,7 @@ namespace stomp_motion_planner
         task_ = task;
         task_->initialize(/*node_handle_,*/ num_time_steps_);
         task_->getControlCostWeight( control_cost_weight_ );
+        task_->getStateCostWeight( state_cost_weight_ );
 
         assert( num_dimensions_ == static_cast<int>(noise_decay_.size()));
         assert( num_dimensions_ == static_cast<int>(noise_stddev_.size()));
@@ -222,7 +223,7 @@ namespace stomp_motion_planner
         }
 
         std::vector<double> all_costs;
-        policy_improvement_.setRolloutCosts(rollout_costs_, control_cost_weight_, all_costs);
+        policy_improvement_.setRolloutCosts( rollout_costs_, control_cost_weight_, all_costs );
 
         // improve the policy
         // get a noise-less rollout to check the cost
@@ -309,10 +310,11 @@ namespace stomp_motion_planner
 
         // TODO: fix this std::vector<>
         std::vector<double> all_costs;
+        //cout << "control_cost_weight_ : " << control_cost_weight_ << endl;
 
         // Improve the policy
         policy_improvement_.setRolloutCosts( rollout_costs_, control_cost_weight_, all_costs );
-        policy_improvement_.improvePolicy(parameter_updates_);
+        policy_improvement_.improvePolicy( parameter_updates_ );
 
         policy_->updateParameters(parameter_updates_);
         policy_->getParameters(parameters_);
@@ -327,7 +329,7 @@ namespace stomp_motion_planner
 
         // Get the trajectory cost
         bool resample = !PlanEnv->getBool(PlanParam::trajStompMultiplyM);
-        task_->execute(parameters_, tmp_rollout_cost_, iteration_number, resample );
+        task_->execute( parameters_, tmp_rollout_cost_, iteration_number, resample );
         //printf("Noiseless cost = %lf\n", stats_msg.noiseless_cost);
 
         // Only set parameters for the changed chase

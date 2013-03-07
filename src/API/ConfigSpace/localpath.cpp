@@ -259,7 +259,7 @@ bool LocalPath::isValid()
 {
 	if (!_Evaluated)
 	{
-        if (_End->isInCollision() || _Begin->isInCollision() || _End->isOutOfBounds() || _Begin->isOutOfBounds())
+        if ( _End->isInCollision() || _Begin->isInCollision() || _End->isOutOfBounds() || _Begin->isOutOfBounds() )
 		{
 			_Valid = false;
 		}

@@ -629,10 +629,14 @@ double Trajectory::computeSubPortionMaxCost(vector<LocalPath*>& portion)
 double Trajectory::computeSubPortionCost(const vector<LocalPath*>& portion) const
 {
 	double sumCost(0.0);
+
+//    cout << " cost : " ;
 	
 	for (int i=0; i<int(portion.size()); i++)
 	{    
 		double cost = portion[i]->cost();
+
+//        cout << portion[i]->getBegin()->cost() << "  " ;
     
 //    cout << "cost[" << i << "] = " << cost << endl;
 //    cout << "resolution[" << i << "] = " << portion[i]->getResolution() ;
@@ -640,6 +644,8 @@ double Trajectory::computeSubPortionCost(const vector<LocalPath*>& portion) cons
 //		cout << ", cost[" << i << "] = " << cost << endl;
 		sumCost += cost;
 	}
+
+//    cout << endl;
 	
 	return sumCost;
 }
@@ -792,16 +798,16 @@ double Trajectory::collisionCost() const
 
 double Trajectory::cost() const
 {
-  if( !ENV.getBool(Env::isCostSpace) ) 
-  {
-    return collisionCost();
-  }
+    if( !ENV.getBool(Env::isCostSpace) )
+    {
+        return collisionCost();
+    }
 
-	double cost(0.0);
-	cost = computeSubPortionCost(m_Courbe);
-  // cost =  computeSubPortionIntergralCost(m_Courbe);
-	// cost = ReComputeSubPortionCost(m_Courbe,nb_cost_tests);
-	return cost;
+    double cost(0.0);
+    cost = computeSubPortionCost(m_Courbe);
+    // cost =  computeSubPortionIntergralCost(m_Courbe);
+    // cost = ReComputeSubPortionCost(m_Courbe,nb_cost_tests);
+    return cost;
 }
 
 double Trajectory::costRecomputed()
@@ -1820,41 +1826,41 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
 
 bool Trajectory::cutTrajInSmallLP(unsigned int nLP)
 {
-	try
-	{
-//		cutPortionInSmallLP(m_Courbe, nLP);
-    cutTrajInSmallLPSimple(nLP);
-	}
-	catch(string str)
-	{
-		cout << "Exeption in cutTrajInSmallLP" << endl;
-		cout << str << endl;
-		return false;
-	}
-	catch (...) 
-	{
-		cout << "Exeption in cutTrajInSmallLP" << endl;
-		return false;
-	}
-	
-	cout << "Cutting into " << nLP << " local paths" << endl;
-	cout << "Traj Size = " << m_Courbe.size() << endl;
-	cout << "Cost Of trajectory :" << this->cost() << endl;
-	
-	if (!m_Source->equal(*configAtParam(0)))
-	{
-		cout << "Error" << endl;
-    return false;
-	}
-	
-	if (!m_Target->equal(*configAtParam(getRangeMax())))
-	{
-		m_Target->print();
-		configAtParam( getRangeMax() )->print();
-		cout << "Error" << endl;
-    return false;
-	}
-  return true;
+    try
+    {
+        // cutPortionInSmallLP(m_Courbe, nLP);
+        cutTrajInSmallLPSimple(nLP);
+    }
+    catch(string str)
+    {
+        cout << "Exeption in cutTrajInSmallLP" << endl;
+        cout << str << endl;
+        return false;
+    }
+    catch (...)
+    {
+        cout << "Exeption in cutTrajInSmallLP" << endl;
+        return false;
+    }
+
+    cout << "Cutting into " << nLP << " local paths" << endl;
+    cout << "Traj Size = " << m_Courbe.size() << endl;
+    //cout << "Cost Of trajectory :" << this->cost() << endl;
+
+    if (!m_Source->equal(*configAtParam(0)))
+    {
+        cout << "Error" << endl;
+        return false;
+    }
+
+    if (!m_Target->equal(*configAtParam(getRangeMax())))
+    {
+        m_Target->print();
+        configAtParam( getRangeMax() )->print();
+        cout << "Error" << endl;
+        return false;
+    }
+    return true;
 }
 
 bool Trajectory::concat(const Trajectory& traj)
@@ -2066,51 +2072,63 @@ bool Trajectory::replacePortion( double param1, double param2, vector<LocalPath*
 
 bool Trajectory::replaceBegin( double param, const vector<LocalPath*>& paths )
 {
-//  Trajectory traj1( extractSubTrajectory( 0.0, param ) );
-//  Trajectory traj2( m_Robot );
-//  traj2.push_back( paths );
-//  traj1.concat( traj2 );
-//  
-//  m_Courbe = traj1.m_Courbe;
-//  m_Source = traj1.m_Source;
-//  m_Target = traj1.m_Target;
-//  
-//  for (int i=0; i<int(m_Courbe.size()); i++) 
-//  {
-//    m_Courbe[i] = new LocalPath(*m_Courbe[i]);
-//  }
-  cout << "Function : " << __func__ << " is TODO" << endl;
-  return false;
+    uint first(0); uint last(0);
+    vector<LocalPath*> new_courbe;
+    cout << "Replace begining at " << param << " over (" << getRangeMax() << ")" << endl;
+
+    pair<bool, vector<LocalPath*> > valid_portion = extractSubPortion( param, getRangeMax(), first, last, false );
+
+    if( valid_portion.first )
+    {
+        new_courbe = paths;
+    }
+    else {
+        cout << "Error: inconsistant query in replaceBegin" << endl;
+        return false;
+    }
+
+    for (int i=0; i<int(valid_portion.second.size()); i++) {
+        new_courbe.push_back( valid_portion.second[i] );
+    }
+
+    for (int i=0; i<int(m_Courbe.size()); i++) {
+        delete m_Courbe[i];
+    }
+
+    m_Courbe = new_courbe;
+    m_Source = new_courbe.at(0)->getBegin();
+    m_Target = new_courbe.back()->getEnd();
+    return true;
 }
 
 bool Trajectory::replaceEnd( double param, const vector<LocalPath*>& paths )
 {
-  uint first(0); uint last(0);
-  vector<LocalPath*> new_courbe;
-  
-  pair<bool, vector<LocalPath*> > valid_portion = extractSubPortion(0.0, param, first, last, false);
+    uint first(0); uint last(0);
+    vector<LocalPath*> new_courbe;
 
-  if( valid_portion.first ) 
-  {
-    new_courbe = valid_portion.second;
-  }
-  else {
-    cout << "Error: inconsistant query in replaceEnd" << endl;
-    return false;
-  }
-  
-	for (int i=0; i<int(paths.size()); i++) {
-    new_courbe.push_back( paths[i] );
-  }
-  
-  for (int i=0; i<int(m_Courbe.size()); i++) {
-    delete m_Courbe[i];
-  }
-	
-	m_Courbe = new_courbe;
-  m_Source = new_courbe.at(0)->getBegin();
-	m_Target = new_courbe.back()->getEnd();
-	return true;
+    pair<bool, vector<LocalPath*> > valid_portion = extractSubPortion(0.0, param, first, last, false);
+
+    if( valid_portion.first )
+    {
+        new_courbe = valid_portion.second;
+    }
+    else {
+        cout << "Error: inconsistant query in replaceEnd" << endl;
+        return false;
+    }
+
+    for (int i=0; i<int(paths.size()); i++) {
+        new_courbe.push_back( paths[i] );
+    }
+
+    for (int i=0; i<int(m_Courbe.size()); i++) {
+        delete m_Courbe[i];
+    }
+
+    m_Courbe = new_courbe;
+    m_Source = new_courbe.at(0)->getBegin();
+    m_Target = new_courbe.back()->getEnd();
+    return true;
 }
 
 unsigned int Trajectory::getIdOfPathAt(double param)

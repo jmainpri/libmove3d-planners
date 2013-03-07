@@ -53,7 +53,7 @@ private:
     bool m_Occupied;
 
     Eigen::Vector3d _cellSize;
-    Eigen::Vector3i   m_Location;               /**< Place in the grid */
+    Eigen::Vector3i  m_Location;               /**< Place in the grid */
 };
 
 class CollisionSpace : public API::ThreeDGrid

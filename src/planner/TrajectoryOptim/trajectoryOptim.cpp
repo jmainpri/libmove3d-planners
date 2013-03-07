@@ -1227,11 +1227,12 @@ bool traj_optim_InitTraj(API::Trajectory& T)
     }
 
     if( T.getNbOfPaths() == 0 ) {
+
         return false;
     }
+
     T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
     T.replaceP3dTraj();
-
     return true;
 }
 
@@ -1393,6 +1394,9 @@ bool traj_optim_runStompNoInit( int runId, const API::Trajectory& traj )
     else {
         optimizer->setUseTimeLimit( false );
     }
+
+    if( m_use_iteration_limit )
+        optimizer->setUseIterationLimit( true );
 
     optimizer->setUseOtp( PlanEnv->getBool(PlanParam::trajUseOtp) );
     optimizer->initializeFromNewTrajectory( traj );

@@ -103,7 +103,9 @@ private:
     Eigen::MatrixXd rollout_costs_;
     std::vector<double> noise_stddev_;
     std::vector<double> noise_decay_;
+
     double control_cost_weight_;
+    double state_cost_weight_;
 
     // temporary variables
     Eigen::VectorXd tmp_rollout_cost_;

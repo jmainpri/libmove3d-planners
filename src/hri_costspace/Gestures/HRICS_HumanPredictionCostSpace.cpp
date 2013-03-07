@@ -41,7 +41,7 @@ HumanPredictionCostSpace::~HumanPredictionCostSpace()
 
 double HumanPredictionCostSpace::getCost(Configuration& q)
 {
-//    m_robot->setAndUpdate(q);
+    m_robot->setAndUpdate(q); // TODO remove this when necessary
 
     double cost = 0.0;
 

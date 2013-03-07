@@ -480,26 +480,23 @@ int CollisionSpace::getDirectionNumber(int dx, int dy, int dz) const
     return (dx+1)*9 + (dy+1)*3 + dz+1;
 }
 
-double CollisionSpace::getDistanceFromCell(int x, int y, int z) const
-{
-    return getDistance( static_cast<CollisionSpaceCell*>(getCell(x,y,z)) );
-}
-
 double CollisionSpace::getDistance(CollisionSpaceCell* cell) const
 {
     if ( cell->m_DistanceSquare >= (int)m_SqrtTable.size() )
     {
-        //std::cout << "cell dist is : " << cell->m_DistanceSquare << std::endl;
         return 0;
     }
     return m_SqrtTable[cell->m_DistanceSquare];
+}
 
-    //  return sqrt(cell->m_DistanceSquare)*_cellSize[0];
+double CollisionSpace::getDistanceFromCell(int x, int y, int z) const
+{
+    return getDistance( static_cast<CollisionSpaceCell*>(_cells[ x + y*_nbCellsX + z*_nbCellsX*_nbCellsY ]) );
 }
 
 //! Computes the finiate differenting gradient
 //! 
-double CollisionSpace::getDistanceGradient(const Eigen::Vector3d& point,Eigen::Vector3d& gradient) const
+double CollisionSpace::getDistanceGradient( const Eigen::Vector3d& point, Eigen::Vector3d& gradient ) const
 {
     CollisionSpaceCell* cell = static_cast<CollisionSpaceCell*>( getCell( point ) );
 
@@ -517,8 +514,7 @@ double CollisionSpace::getDistanceGradient(const Eigen::Vector3d& point,Eigen::V
 
     // if out of bounds, return 0 distance, and 0 gradient
     // we need extra padding of 1 to get gradients
-    if (gx<1 || gy<1 || gz<1 ||
-            gx>=getXNumberOfCells()-1 || gy>=getYNumberOfCells()-1 || gz>=getZNumberOfCells()-1)
+    if ( gx<1 || gy<1 || gz<1 || gx>=_nbCellsX-1 || gy>=_nbCellsY-1 || gz>=_nbCellsZ-1 )
     {
         gradient = Eigen::Vector3d::Zero();
         return 0;
@@ -548,10 +544,6 @@ bool CollisionSpace::getCollisionPointPotentialGradient(const CollisionPoint& co
     // Compute the distance gradient and distance to nearest obstacle
     field_distance = this->getDistanceGradient( collision_point_pos, field_gradient );
 
-    //  field_gradient(0) += field_bias_x_;
-    //  field_gradient(1) += field_bias_y_;
-    //  field_gradient(2) += field_bias_z_;
-
     double d = field_distance - collision_point.getRadius();
 
     // three cases below:
@@ -572,10 +564,6 @@ bool CollisionSpace::getCollisionPointPotentialGradient(const CollisionPoint& co
         gradient = field_gradient;
         potential = -d + 0.5 * collision_point.getClearance();
     }
-
-    //  cout << "----------------------------" << endl;
-    //  cout << "field_distance = " << field_distance << endl;
-    //  cout << "collision_point.getRadius() = " << collision_point.getRadius() << endl;
 
     return (field_distance <= collision_point.getRadius()); // true if point is in collision
 }

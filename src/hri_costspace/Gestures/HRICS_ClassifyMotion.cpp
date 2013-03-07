@@ -59,7 +59,7 @@ std::vector<double> ClassifyMotion::classify_motion(const Eigen::MatrixXd &motio
         Eigen::VectorXd F = Pxi[i]*m_priors[i];
 
         for(int k=0;k<F.size();k++)
-            if( F(k) < realmin )
+            if( F(k) < realmin || std::isnan(F(k)) )
                 F(k) = realmin;
 
 //        for(int k=0;k<F.size();k++)

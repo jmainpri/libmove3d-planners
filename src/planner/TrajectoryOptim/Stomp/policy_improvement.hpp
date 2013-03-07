@@ -206,6 +206,7 @@ namespace stomp_motion_planner
     Eigen::VectorXd tmp_max_minus_min_cost_;                /**< num_time_steps */
     Eigen::VectorXd tmp_sum_rollout_probabilities_;         /**< num_time_steps */
     std::vector<std::pair<double, int> > rollout_cost_sorter_;  /**< vector used for sorting rollouts by their cost */
+    std::vector<double> rollout_costs_total_;
     
     bool preAllocateMultivariateGaussianSampler();
     bool preAllocateTempVariables();

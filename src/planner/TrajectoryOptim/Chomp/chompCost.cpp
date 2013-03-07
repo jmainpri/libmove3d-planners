@@ -58,14 +58,12 @@ ChompCost::ChompCost(const ChompTrajectory& trajectory, int joint_number, const 
     //multiplier *= trajectory.getDiscretization();
     multiplier *= 1.0;
     diff_matrix = getDiffMatrix(num_vars_all, &DIFF_RULES[i][0]);
-    quad_cost_full_ += (derivative_costs[i] * multiplier) *
-    (diff_matrix.transpose()*diff_matrix);
+    quad_cost_full_ += (derivative_costs[i] * multiplier) * (diff_matrix.transpose()*diff_matrix);
   }
-  quad_cost_full_ += MatrixXd::Identity(num_vars_all, num_vars_all)*ridge_factor;
+  quad_cost_full_ += MatrixXd::Identity( num_vars_all, num_vars_all )*ridge_factor;
   
   // extract the quad cost just for the free variables:
-  quad_cost_ = quad_cost_full_.block(DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1,
-                                     num_vars_free, num_vars_free);
+  quad_cost_ = quad_cost_full_.block( DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free, num_vars_free );
   
   // invert the matrix:
   quad_cost_inv_ = quad_cost_.inverse();
