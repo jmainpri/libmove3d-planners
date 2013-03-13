@@ -356,7 +356,8 @@ bool Configuration::isInCollision()
     if( global_collisionSpace )
     {
       double dist = numeric_limits<double>::max();
-      _InCollision = global_collisionSpace->isRobotColliding(dist);
+      double potential = numeric_limits<double>::max();
+      _InCollision = global_collisionSpace->isRobotColliding( dist, potential );
     }
     else
     {

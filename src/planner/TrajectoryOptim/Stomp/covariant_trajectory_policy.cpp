@@ -43,6 +43,8 @@
 #include <sstream>
 #include <stdio.h>
 
+#include "Util-pkg.h"
+
 #include "planEnvironment.hpp"
 
 using namespace std;
@@ -75,7 +77,8 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
                                            const int num_dimensions,
                                            const double movement_duration,
                                            const double cost_ridge_factor,
-                                           const std::vector<double>& derivative_costs)
+                                           const std::vector<double>& derivative_costs,
+                                           const ChompPlanningGroup* planning_group)
 {
     //node_handle_ = node_handle;
     //print_debug_ = true;
@@ -98,6 +101,8 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
     
     cost_ridge_factor_ = cost_ridge_factor;
     derivative_costs_ = derivative_costs;
+
+    planning_group_= planning_group;
     
     initializeVariables();
     initializeCosts();
@@ -302,6 +307,7 @@ bool CovariantTrajectoryPolicy::initializeCosts()
     return true;
 }
 
+
 bool CovariantTrajectoryPolicy::initializeBasisFunctions()
 {
     basis_functions_.clear();
@@ -312,6 +318,7 @@ bool CovariantTrajectoryPolicy::initializeBasisFunctions()
     return true;
 }
 
+/**
 bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices,
                                                     const std::vector<Eigen::VectorXd>& parameters,
                                                     const std::vector<Eigen::VectorXd>& noise,
@@ -335,6 +342,8 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
 
         control_costs[d] = costs_all.segment( free_vars_start_index_, num_vars_free_ );
 
+//        cout << control_costs[d].transpose() << endl;
+
         // TODO Why this???
         // commented by jim 06/03/2011
         // The control costs are not computed the same way in
@@ -348,8 +357,64 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
     
     return true;
 }
+**/
 
+bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices,
+                                                    const std::vector<Eigen::VectorXd>& parameters,
+                                                    const std::vector<Eigen::VectorXd>& noise,
+                                                    const double weight, std::vector<Eigen::VectorXd>& control_costs)
+{
+    // this measures the accelerations and squares them
+    for (int d=0; d<num_dimensions_; ++d)
+    {
+        Eigen::VectorXd params_all = parameters_all_[d];
+        Eigen::VectorXd costs_all  = Eigen::VectorXd::Zero( num_vars_all_ );
+        Eigen::VectorXd acc_all    = Eigen::VectorXd::Zero( num_vars_all_ );
 
+        params_all.segment( free_vars_start_index_, num_vars_free_) = parameters[d] + noise[d];
+
+        bool is_circular_joint = planning_group_->chomp_joints_[d].wrap_around_;
+
+        for (int i=0; i<num_vars_all_; i++)
+        {
+            for (int j=-DIFF_RULE_LENGTH/2; j<=DIFF_RULE_LENGTH/2; j++)
+            {
+                int index = i+j;
+
+                if (index < 0)
+                    continue;
+                if (index >= num_vars_all_)
+                    continue;
+
+                if( /*is_circular_joint*/ false )
+                {
+                    acc_all[i] = angle_limit_PI( acc_all[i] + params_all[index]*DIFF_RULES[1][j+DIFF_RULE_LENGTH/2] );
+                }
+                else {
+                    acc_all[i] += (params_all[index]*DIFF_RULES[1][j+DIFF_RULE_LENGTH/2]);
+                }
+            }
+        }
+
+        costs_all = weight * ( acc_all.cwise()*acc_all );
+
+        control_costs[d] = costs_all.segment( free_vars_start_index_, num_vars_free_ );
+//        cout << "params_all.transpose() [" << d <<  "] =" <<  params_all.transpose() << endl;
+//        cout << "acc_all.transpose() [" << d <<  "] =" << acc_all.transpose() << endl;
+//        cout << "control_costs.transpose() [" << d <<  "] =" << control_costs[d].transpose() << endl;
+    }
+
+    return true;
+}
+
+bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices, const std::vector<std::vector<Eigen::VectorXd> >& parameters,
+                                 const double weight, std::vector<Eigen::VectorXd>& control_costs)
+{
+    throw string("error");
+    return true;
+}
+
+/**
 bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices,
                                                     const std::vector<std::vector<Eigen::VectorXd> >& parameters,
                                                     const double weight, std::vector<Eigen::VectorXd>& control_costs)
@@ -359,17 +424,17 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
     // we use the locally stored control costs
     
     // this uses the already squared control cost matrix
-    /*for (int d=0; d<num_dimensions_; ++d)
-     {
-     control_costs[d] = VectorXd::Zero(num_time_steps_);
-     VectorXd params_all = parameters_all_[d];
-     for (int t=0; t<num_time_steps_; ++t)
-     {
-     params_all.segment(free_vars_start_index_, num_vars_free_) = parameters[d][t];
-     VectorXd r_times_u = control_costs_all_[d] * params_all;
-     control_costs[d] += weight * (r_times_u.segment(free_vars_start_index_, num_vars_free_).cwise() * parameters[d][t]);
-     }
-     }*/
+//    for (int d=0; d<num_dimensions_; ++d)
+//     {
+//     control_costs[d] = VectorXd::Zero(num_time_steps_);
+//     VectorXd params_all = parameters_all_[d];
+//     for (int t=0; t<num_time_steps_; ++t)
+//     {
+//     params_all.segment(free_vars_start_index_, num_vars_free_) = parameters[d][t];
+//     VectorXd r_times_u = control_costs_all_[d] * params_all;
+//     control_costs[d] += weight * (r_times_u.segment(free_vars_start_index_, num_vars_free_).cwise() * parameters[d][t]);
+//     }
+//     }
     
     
     // this measures the accelerations and squares them
@@ -399,6 +464,7 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
     
     return true;
 }
+**/
 
 bool CovariantTrajectoryPolicy::updateParameters(const std::vector<Eigen::MatrixXd>& updates)
 {

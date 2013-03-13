@@ -217,11 +217,15 @@ void WorkspaceOccupancyGrid::computeOccpancy()
         {
             cout << "ERROR" << endl;
         }
+
+        // Warning, set to 100 in the normal case
+        //const motion_t& swept_volume_motion = m_motions[i];
+        const motion_t& swept_volume_motion = m_motion_recorder->resample(m_motions[i],10);
         
-        for(int j=0;j<int(m_motions[i].size());j++)
+        for(int j=0;j<int(swept_volume_motion.size());j++)
         {
             // Compute occupied workspace for each configuration in the trajectory
-            m_human->setAndUpdate(*m_motions[i][j].second);
+            m_human->setAndUpdate( *swept_volume_motion[j].second );
             
             std::vector<WorkspaceOccupancyCell*> cells; get_cells_occupied_by_human( cells, i );
             //cout << " Frame : " << j << endl;
@@ -270,7 +274,7 @@ double WorkspaceOccupancyGrid::getOccupancy(const Eigen::Vector3d &point)
 {
     if( m_all_occupied_cells.empty() )
     {
-        cout << "occpied cells not loaded" << endl;
+        cout << "occupied cells not loaded" << endl;
         return 0.0;
     }
     
@@ -282,11 +286,16 @@ double WorkspaceOccupancyGrid::getOccupancyCombination( const Eigen::Vector3d &p
 {
     if( m_all_occupied_cells.empty() )
     {
-        cout << "occpied cells not loaded" << endl;
+        cout << "occupied cells not loaded" << endl;
         return 0.0;
     }
     
     WorkspaceOccupancyCell* cell = static_cast<WorkspaceOccupancyCell*>(getCell( point ));
+
+    if( cell == NULL ) {
+        //return 0.0;
+        cout << "Null cell" << endl;
+    }
     
     double occupancy=0.0;
     
@@ -424,10 +433,13 @@ void WorkspaceOccupancyGrid::simple_draw_combined()
 //            }
         }
 
-        if( ENV.getBool(Env::drawTraj) || (m_all_occupied_cells[i]->m_occupies_class[m_id_class_to_draw] ))
-        {
-            m_all_occupied_cells[i]->drawColorGradient( occupancy, m_min_likelihood, m_max_likelihood );
-        }
+//        if( m_all_occupied_cells[i]->m_occupies_class[m_id_class_to_draw] )
+//        {
+        if( GestEnv->getBool(GestParam::draw_null_cost) || (occupancy-0.05 > 0.0) )
+            {
+                m_all_occupied_cells[i]->drawColorGradient( occupancy, m_min_likelihood, m_max_likelihood );
+            }
+//        }
     }
 }
 

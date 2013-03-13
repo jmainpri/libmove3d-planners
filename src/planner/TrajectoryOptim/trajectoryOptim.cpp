@@ -45,7 +45,7 @@ MOVE3D_USING_SHARED_PTR_NAMESPACE
 // Variables
 //--------------------------------------------------------
 static bool m_init = false;
-static bool m_add_human = true;
+static bool m_add_human = false;
 
 static Robot* m_robot = NULL;
 
@@ -87,6 +87,9 @@ CollisionSpace* global_collSpace=NULL;
 static bool m_use_iteration_limit=false;
 static bool m_use_external_trajectory=false;
 static API::Trajectory m_external_trajectory=false;
+
+static bool m_discretize=false;
+static double m_discretization=0.0;
 
 //--------------------------------------------------------
 // External init method
@@ -598,11 +601,14 @@ void traj_optim_shelf_set_localpath_and_cntrts()
 // --------------------------------------------------------
 void traj_optim_shelf_init_collision_space()
 {
-//    std::vector<double> env_size = global_Project->getActiveScene()->getBounds();
-//    double pace = env_size[1] - env_size[0];
-//    pace = max( env_size[3] - env_size[3], pace);
-//    pace = max( env_size[4] - env_size[5], pace);
-//    pace /= ENV.getInt(Env::nbCells);
+    //    std::vector<double> env_size = global_Project->getActiveScene()->getBounds();
+    //    double pace = env_size[1] - env_size[0];
+    //    pace = max( env_size[3] - env_size[3], pace);
+    //    pace = max( env_size[4] - env_size[5], pace);
+    //    pace /= ENV.getInt(Env::nbCells);
+
+
+//    ChronoTimeOfDayOn();
 
     m_coll_space = new CollisionSpace( m_robot, double(ENV.getInt(Env::nbCells))/100, global_Project->getActiveScene()->getBounds() );
 
@@ -631,6 +637,8 @@ void traj_optim_shelf_init_collision_space()
     m_planner_joints.push_back( 11 );
     m_planner_joints.push_back( 12 );
 
+    m_coll_space->resetPoints();
+
     for (unsigned int joint_id=0; joint_id<m_robot->getNumberOfJoints(); joint_id++)
     {
         if ( find (m_active_joints.begin(), m_active_joints.end(), joint_id )
@@ -655,8 +663,16 @@ void traj_optim_shelf_init_collision_space()
         }
     }
 
+    // Add all moving and static obstacles
+    m_coll_space->addEnvPoints();
+
     // Adds the sampled points to the distance field
-    m_coll_space->addAllPointsToField();
+    m_coll_space->propagateDistance();
+
+//    double time=0.0;
+//    ChronoTimeOfDayTimes(&time);
+//    ChronoTimeOfDayOff();
+//    cout << " collision space computed in : " << time << endl;
 }
 
 //! initializes the collision points
@@ -1226,12 +1242,21 @@ bool traj_optim_InitTraj(API::Trajectory& T)
         T = traj_optim_create_sraight_line_traj();
     }
 
-    if( T.getNbOfPaths() == 0 ) {
-
+    if( T.getNbOfPaths() == 0 )
         return false;
+
+    int nb_points = 0;
+
+    if( m_discretize )
+    {
+        nb_points = floor(T.getRangeMax() / m_discretization );
+    }
+    else
+    {
+        nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
     }
 
-    T.cutTrajInSmallLP( PlanEnv->getInt( PlanParam::nb_pointsOnTraj ) );
+    T.cutTrajInSmallLP( nb_points );
     T.replaceP3dTraj();
     return true;
 }
@@ -1342,7 +1367,6 @@ bool traj_optim_initStomp()
 
 //! Run Stomp
 // --------------------------------------------------------
-
 void traj_optim_set_use_iteration_limit(bool use)
 {
     m_use_iteration_limit = use;
@@ -1356,6 +1380,16 @@ void traj_optim_set_use_extern_trajectory( bool use )
 void traj_optim_set_extern_trajectory( const API::Trajectory& traj )
 {
     m_external_trajectory = traj;
+}
+
+void traj_optim_set_discretize( bool discretize )
+{
+    m_discretize = discretize;
+}
+
+void traj_optim_set_discretization( double discretization )
+{
+    m_discretization = discretization;
 }
 
 bool traj_optim_runStomp( int runId )
@@ -1406,7 +1440,7 @@ bool traj_optim_runStompNoInit( int runId, const API::Trajectory& traj )
 
 bool traj_optim_runStompNoReset(int runId)
 {
-    traj_optim_switch_cartesian_mode(false);
+    traj_optim_switch_cartesian_mode( false );
 
     API::Trajectory traj( m_robot );
 

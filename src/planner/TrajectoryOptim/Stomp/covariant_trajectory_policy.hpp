@@ -38,7 +38,10 @@
 #define COVARIANT_TRAJECTORY_POLICY_H_
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
+
 #include "planner/TrajectoryOptim/Chomp/chompUtils.hpp"
+#include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
+
 #include "policy.hpp"
 
 namespace stomp_motion_planner
@@ -57,7 +60,8 @@ public:
                                                const int num_dimensions,
                                                const double movement_duration,
                                                const double cost_ridge_factor,
-                                               const std::vector<double>& derivative_costs);
+                                               const std::vector<double>& derivative_costs,
+                                               const ChompPlanningGroup* planning_group);
   
     bool setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal);
     bool getParametersAll(std::vector<Eigen::VectorXd>& parameters);
@@ -190,6 +194,9 @@ private:
     std::vector<Eigen::VectorXd> parameters_all_;
 
     std::vector<Eigen::MatrixXd> differentiation_matrices_;
+
+    const ChompPlanningGroup* planning_group_;
+
     void createDifferentiationMatrices();
     bool readParameters();
     bool initializeVariables();

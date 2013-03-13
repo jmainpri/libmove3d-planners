@@ -27,6 +27,8 @@ bool traj_optim_runStompNoReset(int runId);
 void traj_optim_set_use_iteration_limit(bool use);
 void traj_optim_set_use_extern_trajectory( bool use );
 void traj_optim_set_extern_trajectory( const API::Trajectory& traj );
+void traj_optim_set_discretization( double discretization );
+void traj_optim_set_discretize( bool discretize );
 
 void traj_optim_draw_collision_points();
 bool traj_optim_generate_softMotion();

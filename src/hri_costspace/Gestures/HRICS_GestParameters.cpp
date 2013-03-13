@@ -61,11 +61,12 @@ void initGestureParameters()
         myBoolMap.insert( std::make_pair( GestParam::draw_human_sampled_points,        new boolContainer(false)));
         myBoolMap.insert( std::make_pair( GestParam::draw_ws_occupancy,                new boolContainer(false)));
         myBoolMap.insert( std::make_pair( GestParam::draw_single_class,                new boolContainer(false)));
-
+        myBoolMap.insert( std::make_pair( GestParam::draw_null_cost,                   new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( GestParam::draw_recorded_motion,             new boolContainer(false)));
 
         // Int
         // ------------------------------------------------------------------
-        myIntMap.insert(std::make_pair( GestParam::tata,                         new intContainer(5)));
+        myIntMap.insert(std::make_pair( GestParam::human_traj_id,                      new intContainer(-1)));
 
 
         // Double

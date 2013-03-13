@@ -1,5 +1,7 @@
 #include "HRICS_RecordMotion.hpp"
 
+#include "HRICS_GestParameters.hpp"
+
 #include "API/project.hpp"
 #include "planner/planEnvironment.hpp"
 
@@ -447,6 +449,116 @@ void RecordMotion::showMotion( const motion_t& motion )
     }
 }
 
+void RecordMotion::drawMotion( const motion_t& motion )
+{
+    if( motion.empty() ) {
+        return;
+    }
+
+    G3D_Window *win = g3d_get_cur_win();
+
+    m_robot->getRobotStruct()->draw_transparent = false;
+
+    for ( int i=0;i<int(motion.size());i++)
+    {
+        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
+
+        m_robot->setAndUpdate( *motion[i].second );
+
+        p3d_sel_desc_num( P3D_ROBOT, m_robot->getRobotStruct()->num );
+        g3d_draw_robot( m_robot->getRobotStruct()->num, win, 0 );
+        drawHeraklesArms();
+    }
+
+    m_robot->getRobotStruct()->draw_transparent = false;
+}
+
+void RecordMotion::dawColorSkinedCylinder(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2)
+{
+    // Skin color
+    double color[4] = { 0.901961, 0.772549, 0.694118, 0.0 };
+
+    p3d_vector3 pos1,pos2,pos3;
+    pos1[0] = p1[0]; pos1[1] = p1[1]; pos1[2] = p1[2];
+    pos2[0] = p2[0]; pos2[1] = p2[1]; pos2[2] = p2[2];
+
+    // Find point that is still skin colored
+    p3d_vectSub( pos2 , pos1 , pos3 );
+    p3d_vectNormalize( pos3, pos3 );
+    p3d_vectScale( pos3, pos3, 0.15 );
+    p3d_vectAdd( pos1 , pos3, pos3 );
+    g3d_set_color_vect( Any, color);
+    g3d_draw_cylinder( pos3, pos2, 0.050, 100 );
+
+}
+
+void RecordMotion::drawHeraklesArms()
+{
+    bool error = false;
+
+    if( m_robot->getName().find("HERAKLES_HUMAN") != string::npos )
+    {
+        Eigen::Vector3d p1, p2; Joint* jnt = NULL;
+
+        // Bras Droit
+        jnt = m_robot->getJoint( "rShoulderX" );
+        if(!jnt)
+            error = true;
+        else
+            p1 = jnt->getVectorPos();
+
+        jnt = m_robot->getJoint( "rElbowZ" );
+        if(!jnt)
+            error = true;
+        else
+            p2 = jnt->getVectorPos();
+
+        if ( ( p1 - p2 ).norm() > 0.10 )
+        {
+            dawColorSkinedCylinder( p1,  p2 );
+        }
+
+        // Bras Gauche
+        jnt = m_robot->getJoint( "lShoulderX" );
+        if(!jnt)
+            error = true;
+        else
+            p1 = jnt->getVectorPos();
+
+        jnt = m_robot->getJoint( "lElbowZ" );
+        if(!jnt)
+            error = true;
+        else
+            p2 = jnt->getVectorPos();
+
+        if ( ( p1 - p2 ).norm() > 0.10 )
+        {
+            dawColorSkinedCylinder( p1,  p2 );
+        }
+    }
+    else {
+        error = true;
+    }
+
+    if (error) {
+        cout << "Could not find one of the joints in hri_draw_kinect_human_arms" << endl;
+    }
+}
+
+void RecordMotion::draw()
+{
+    drawHeraklesArms();
+
+    if( GestEnv->getBool(GestParam::draw_recorded_motion) )
+    {
+        if( !m_stored_motions.empty()  && (m_ith_shown_motion > -1) )
+        {
+            confPtr_t q = m_robot->getCurrentPos();
+            drawMotion( getArmTorsoMotion( resample( m_stored_motions[m_ith_shown_motion], 10 ), q ) );
+        }
+    }
+}
+
 motion_t RecordMotion::extractSubpart( int begin, int end )
 {
     return extractSubpart( begin, end, m_motion );
@@ -472,11 +584,11 @@ motion_t RecordMotion::extractSubpart( int begin, int end, const motion_t& motio
 
 motion_t RecordMotion::resample(const motion_t& motion, int nb_sample )
 {
-    motion_t down_sampled_motion;
+    motion_t resampled_motion;
 
     if( int(motion.size()) == nb_sample )
     {
-        down_sampled_motion = motion;
+        resampled_motion = motion;
         return motion;
     }
 
@@ -485,13 +597,41 @@ motion_t RecordMotion::resample(const motion_t& motion, int nb_sample )
 
     for (int j=0; j<nb_sample; j++)
     {
-        confPtr_t q(new Configuration(*motion[floor(k)].second));
+        confPtr_t q = motion[floor(k)].second->copy();
         q->adaptCircularJointsLimits();
-        down_sampled_motion.push_back( make_pair(0.02,q) );
+        resampled_motion.push_back( make_pair(0.02,q) );
         k += inc;
     }
 
-    return down_sampled_motion;
+    return resampled_motion;
+}
+
+
+motion_t RecordMotion::getArmTorsoMotion( const motion_t& motion, confPtr_t q )
+{
+    motion_t result( motion.size() );
+
+    for( int i=0; i<int(motion.size()); i++ )
+    {
+        (*q)[6] = (*motion[i].second)[6];  // PelvisX
+        (*q)[7] = (*motion[i].second)[7];  // PelvisY
+        (*q)[8] = (*motion[i].second)[8];  // PelvisZ
+        (*q)[11] =(*motion[i].second)[11]; // PelvisRX
+        (*q)[12] =(*motion[i].second)[12]; // TorsoX
+        (*q)[13] =(*motion[i].second)[13]; // TorsoY
+        (*q)[14] =(*motion[i].second)[14]; // TorsoZ
+
+        (*q)[18] =(*motion[i].second)[18]; // rShoulderX
+        (*q)[19] =(*motion[i].second)[19]; // rShoulderZ
+        (*q)[20] =(*motion[i].second)[20]; // rShoulderY
+        (*q)[21] =(*motion[i].second)[21]; // rArmTrans
+        (*q)[22] =(*motion[i].second)[22]; // rElbowZ
+
+        result[i].first = motion[i].first;
+        result[i].second = q->copy();
+    }
+
+    return result;
 }
 
 void RecordMotion::saveStoredToCSV( const std::string &filename )
@@ -615,9 +755,10 @@ static const double transT = 0.00;
 
 void RecordMotion::translateStoredMotions()
 {
+    cout << "Translate all stored motions" << endl;
+
     for(int i=0;i<int(m_stored_motions.size());i++)
     {
-        cout << "Translate motions " << i << endl;
         for(int j=0;j<int(m_stored_motions[i].size());j++)
         {
             confPtr_t q = m_stored_motions[i][j].second;

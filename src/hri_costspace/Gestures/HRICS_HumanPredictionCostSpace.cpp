@@ -58,7 +58,7 @@ double HumanPredictionCostSpace::getCost(Configuration& q)
             Eigen::Transform3d T = jnt->getMatrixPos();
             PointCloud& pc = m_surface_sampler->getPointCloud( obj );
 
-            for(int j=0;j<int(pc.size());j++)
+            for( int j=0; j<int(pc.size()); j++ )
             {
                 cost += m_ws_occupancy->getOccupancyCombination( T*pc[j] );
                 //cost += m_ws_occupancy->getOccupancy( T*pc[j] );

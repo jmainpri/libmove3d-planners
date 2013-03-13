@@ -37,12 +37,14 @@ namespace GestParam
             draw_robot_sampled_points,
             draw_human_sampled_points,
             draw_ws_occupancy,
-            draw_single_class
+            draw_single_class,
+            draw_null_cost,
+            draw_recorded_motion
         };
 
         enum intParameter
         {
-            tata
+            human_traj_id
         };
 
         enum doubleParameter

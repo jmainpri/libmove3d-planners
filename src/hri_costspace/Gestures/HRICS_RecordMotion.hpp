@@ -36,12 +36,18 @@ public:
     void saveToCSV(const std::string &filename,const motion_t& motion);
     void saveStoredToCSV( const std::string &filename );
     motion_t resample(const motion_t& motion, int nb_sample );
+    motion_t getArmTorsoMotion( const motion_t& motion, confPtr_t q );
 
     void showStoredMotion();
     void showCurrentMotion();
     void showMotion( const motion_t& motion );
     bool setConfiguration(int ith);
     bool setShowMotion(int ith);
+
+    void drawMotion( const motion_t& motion );
+    void dawColorSkinedCylinder(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2);
+    void drawHeraklesArms();
+    void draw();
 
     motion_t extractSubpart(int init, int end );
     motion_t extractSubpart(int init, int end, const motion_t& motion);

@@ -570,7 +570,7 @@ void ReplanningSimulator::store_exploration(const API::Trajectory& traj, double 
 
     m_deviateLine.clear();
 
-    vector< shared_ptr<Configuration> > vectConf(3);
+    vector<confPtr_t> vectConf(3);
     vectConf.at(0) = traj.configAtParam(lPrev);
     vectConf.at(1) = qNew;
     vectConf.at(2) = traj.configAtParam(lNext);

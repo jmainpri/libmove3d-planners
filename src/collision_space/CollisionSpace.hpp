@@ -89,8 +89,9 @@ public:
     // ---------------------------------------------------------------
     void addRobotBody(Joint* jnt);
     void addRobot(Robot* rob);
-    void addAllPointsToField();
-    double addPointsToField(const std::vector<Eigen::Vector3d>& points);
+    void addEnvPoints();
+    void propagateDistance();
+    void resetPoints();
 
     void initNeighborhoods();
     int getDirectionNumber(int dx, int dy, int dz) const;
@@ -102,7 +103,7 @@ public:
                                             double& potential,
                                             Eigen::Vector3d& gradient) const;
 
-    bool isRobotColliding(double& distance) const;
+    bool isRobotColliding(double& distance, double& potential) const;
 
     // ---------------------------------------------------------------
     // OpenGl display
@@ -119,12 +120,17 @@ protected:
 
 private:
 
+    double addPointsToField(const std::vector<Eigen::Vector3d>& points);
+
     double getDistanceFromCell(int x, int y, int z) const;
 
     // The position of the origin of the grid regarding th eorigin of the world
     // int m_nbMaxCells; //the number of cell along the longest axis of the environment
 
     Robot* m_Robot;
+
+    // Call add all point to add this vector
+    std::vector<Eigen::Vector3d>      m_points_to_add;
 
     std::vector<CollisionSpaceCell*>  m_OccupationCells;
 
@@ -142,6 +148,7 @@ private:
     std::vector<double>               m_SqrtTable;
     std::vector<std::vector<std::vector<std::vector<int> > > > m_Neighborhoods;
     std::vector<std::vector<int> > m_DirectionNumberToDirection;
+
 };
 
 extern CollisionSpace* global_collisionSpace;

@@ -372,8 +372,8 @@ double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& poin
                 if (!neighbour)
                     continue;
 
-                //        cout << "loc = " << endl << loc << endl;
-                //        cout << "vptr->m_ClosestPoint = " << endl << vptr->m_ClosestPoint << endl;
+                // cout << "loc = " << endl << loc << endl;
+                // cout << "vptr->m_ClosestPoint = " << endl << vptr->m_ClosestPoint << endl;
 
                 double new_distance_sq_float = ( vptr->m_ClosestPoint - neigh_loc ).squaredNorm();
 
@@ -384,8 +384,8 @@ double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& poin
                     continue;
                 }
 
-                //        cout << "new_distance_sq_float = " << new_distance_sq_float << endl;
-                //        cout << "---------------------------------------" << endl;
+                // cout << "new_distance_sq_float = " << new_distance_sq_float << endl;
+                // cout << "---------------------------------------" << endl;
                 if (new_distance_sq < neighbour->m_DistanceSquare)
                 {
                     //         cout << "loc = " <<  loc << endl;
@@ -409,10 +409,19 @@ double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& poin
     return 0.0;
 }
 
+void CollisionSpace::propagateDistance()
+{
+    addPointsToField( m_points_to_add );
+    resetPoints();
+}
+
+void CollisionSpace::resetPoints()
+{
+    m_points_to_add.clear();
+}
+
 void CollisionSpace::addRobotBody(Joint* jnt)
 {
-    vector<Eigen::Vector3d> points;
-
     p3d_obj* obj = jnt->getJointStruct()->o;
 
     if ( obj == NULL )
@@ -421,9 +430,7 @@ void CollisionSpace::addRobotBody(Joint* jnt)
     PointCloud& cloud = m_sampler->getPointCloud( obj );
 
     for (unsigned int j=0; j<cloud.size(); j++)
-    { points.push_back( jnt->getMatrixPos()*cloud[j] ); }
-
-    addPointsToField(points);
+        m_points_to_add.push_back( jnt->getMatrixPos()*cloud[j] );
 }
 
 void CollisionSpace::addRobot(Robot* rob)
@@ -435,29 +442,30 @@ void CollisionSpace::addRobot(Robot* rob)
     }
 }
 
-void CollisionSpace::addAllPointsToField()
+void CollisionSpace::addEnvPoints()
 {
-    vector<Eigen::Vector3d> points;
-
     // Add Static Obstacles
     for (int i=0; i<XYZ_ENV->no; i++)
     {
-        PointCloud& cloud = m_sampler->getPointCloud(XYZ_ENV->o[i]);
+        PointCloud& cloud = m_sampler->getPointCloud( XYZ_ENV->o[i] );
 
         for (unsigned int j=0; j<cloud.size(); j++)
-        { points.push_back( cloud[j] ); }
+            m_points_to_add.push_back( cloud[j] );
     }
 
     // Add Moving Obstacles
     Scene* sc = global_Project->getActiveScene();
+
     for (unsigned int i=0; i<sc->getNumberOfRobots(); i++)
     {
         Robot* mov_obst = sc->getRobot(i);
 
         // The robot is not a robot or a human
-        if (  mov_obst->getName().find( "ROBOT" ) == string::npos &&
-              mov_obst->getName().find( "HUMAN" ) == string::npos )
+        if ( !( (mov_obst->getName().find( "ROBOT" ) != string::npos) ||
+                (mov_obst->getName().find( "HUMAN" ) != string::npos) ) )
         {
+            cout << "Adding : " << mov_obst->getName() << endl;
+
             Joint* jnt = mov_obst->getJoint(1);
 
             if( jnt->getJointStruct()->o == NULL)
@@ -467,12 +475,10 @@ void CollisionSpace::addAllPointsToField()
 
             for ( int j=0; j<int(cloud.size()); j++)
             {
-                points.push_back( jnt->getMatrixPos()*cloud[j] );
+                m_points_to_add.push_back( jnt->getMatrixPos()*cloud[j] );
             }
         }
     }
-
-    addPointsToField(points);
 }
 
 int CollisionSpace::getDirectionNumber(int dx, int dy, int dz) const
@@ -572,7 +578,7 @@ bool CollisionSpace::getCollisionPointPotentialGradient(const CollisionPoint& co
 //! Goes through all points and computes whether the robot is colliding
 //! Computes the transform of all point from the joint transform
 //! Uses the potential gradient function
-bool CollisionSpace::isRobotColliding(double& dist) const
+bool CollisionSpace::isRobotColliding(double& dist, double &pot) const
 {
     //cout << "Test collision space is robot colliding" << endl;
     bool isRobotColliding = false;
@@ -590,9 +596,8 @@ bool CollisionSpace::isRobotColliding(double& dist) const
         Joint* jnt = m_Robot->getJoint(i);
 
         Eigen::Transform3d T = jnt->getMatrixPos();
-        vector<CollisionPoint>& points = m_sampler->getCollisionPoints(jnt);
 
-        //cout << "Joint(" << i << "), nbCollisionPoints : " << points.size() << endl;
+        vector<CollisionPoint>& points = m_sampler->getCollisionPoints(jnt);
 
         for( unsigned int j=0; j<points.size(); j++ )
         {
@@ -600,15 +605,7 @@ bool CollisionSpace::isRobotColliding(double& dist) const
 
             if( getCollisionPointPotentialGradient( points[j], position, distance, potential, gradient ) )
             {
-                //        if ( j > 5 )
-                //        {
                 points[j].m_is_colliding = true;
-                //        cout << "point : " << j << " with segment number : " << points[j].getSegmentNumber() ;
-                //        cout << " in collision" << endl;
-                //        }
-                //        else {
-                //          points[j].m_is_colliding = false;
-                //        }
 
                 // Hack!!!
                 if ( points[j].getSegmentNumber() > 1 )
@@ -629,6 +626,7 @@ bool CollisionSpace::isRobotColliding(double& dist) const
         }
     }
 
+    pot = max_potential;
     dist = min_distance;
     return isRobotColliding;
 }

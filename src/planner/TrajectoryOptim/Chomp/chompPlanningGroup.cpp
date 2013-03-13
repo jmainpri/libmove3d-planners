@@ -43,8 +43,7 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
       jnt.move3d_dof_index_ = jnt.move3d_joint_->getIndexOfFirstDof() + j;
       jnt.chomp_joint_index_ = i;
       jnt.joint_name_ = jnt.move3d_joint_->getName();
-      jnt.wrap_around_ = false;
-      //jnt.has_joint_limits_ = !p3d_jnt_is_dof_circular(jnt.move3d_joint_->getJointStruct(),j);
+      jnt.wrap_around_ = p3d_jnt_is_dof_circular(jnt.move3d_joint_->getJointStruct(),j);
       jnt.has_joint_limits_ = true;
       
       jnt.joint_limit_min_ = min;

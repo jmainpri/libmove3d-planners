@@ -541,7 +541,7 @@ void CostOptimization::debugShowTraj(double lPrev, double lNext, confPtr_t qNew,
 
     int color_base_traj;
 
-    if(GroundCostObj == NULL)
+    if( GroundCostObj == NULL )
     {
         color_base_traj = 0;
     }
@@ -566,7 +566,7 @@ void CostOptimization::debugShowTraj(double lPrev, double lNext, confPtr_t qNew,
     tmpT.replacePortion(lPrev, lNext, pathsTmp);
     double newCost = tmpT.cost();
 
-    if ( m_mincost > newCost )
+    if( m_mincost > newCost )
     {
         m_mincost = newCost;
     }
@@ -588,7 +588,7 @@ void CostOptimization::debugShowTraj(double lPrev, double lNext, confPtr_t qNew,
 
     double diff = fabs((costOfPortion2 - sumOfCost) - (oldCost - newCost));
 
-    if (diff > 0.001)
+    if( diff > 0.001 )
     {
         m_Errors.push_back(diff);
         m_nbErrors++;

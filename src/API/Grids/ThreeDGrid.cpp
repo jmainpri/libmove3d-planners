@@ -226,7 +226,7 @@ ThreeDCell* ThreeDGrid::getCell(Vector3i cell) const
 const bool DebugCell = false;
 ThreeDCell* ThreeDGrid::getCell(const Vector3d& point) const
 {
-#ifdef THREED_GRID_DEBUG
+//#ifdef THREED_GRID_DEBUG
     if( (point[0]<_originCorner[0]) || (point[0]>(_originCorner[0]+_nbCellsX*_cellSize[0]) ))
     {
         if (DebugCell)
@@ -247,7 +247,7 @@ ThreeDCell* ThreeDGrid::getCell(const Vector3d& point) const
             cout << "Error point not in grid in " << __func__ << endl;
         return 0x00;
     }
-#endif
+//#endif
 
 //    return getCell(floor((point[0]-_originCorner[0])/_cellSize[0]),
 //                   floor((point[1]-_originCorner[1])/_cellSize[1]),

@@ -473,11 +473,15 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
     ChronoTimeOfDayOff();
     cout << "Stomp init time : " << intitialization_time << endl;
 
-    //    double last_move3d_cost = numeric_limits<double>::max();
+    // double last_move3d_cost = numeric_limits<double>::max();
     
     source_ = getSource();
     target_ = getTarget();
+
     best_iteration_=0;
+    best_group_trajectory_cost_ = numeric_limits<double>::max();
+    best_group_trajectory_in_collsion_cost_ = numeric_limits<double>::max();
+
     confPtr_t q_tmp = robot_model_->getCurrentPos();
     // iterate
     for ( iteration_=0; !PlanEnv->getBool(PlanParam::stopPlanner); iteration_++)
@@ -566,15 +570,25 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
         }
         else
         {
-            if (cost < best_group_trajectory_cost_ && is_collision_free_)
+            if( cost < best_group_trajectory_cost_ )
             {
-                if( print_cost )
-                    cout << "New best" << endl;
+                if ( is_collision_free_)
+                {
+                    if( print_cost )
+                        cout << "New best" << endl;
 
-                best_group_trajectory_ = group_trajectory_.getTrajectory();
-                best_group_trajectory_cost_ = cost;
-                last_improvement_iteration_ = iteration_;
-                best_iteration_++;
+                    best_group_trajectory_ = group_trajectory_.getTrajectory();
+                    best_group_trajectory_cost_ = cost;
+                    last_improvement_iteration_ = iteration_;
+                    best_iteration_++;
+                }
+                else
+                {
+                    best_group_trajectory_in_collision_ = group_trajectory_.getTrajectory();
+                    best_group_trajectory_in_collsion_cost_ = cost;
+                    if( print_cost )
+                        cout << "New best in collision" << endl;
+                }
             }
         }
 
@@ -649,8 +663,12 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
     if (last_improvement_iteration_>-1)
         cout << "We think the path is collision free: " << is_collision_free_ << endl;
 
-    
-    group_trajectory_.getTrajectory() = best_group_trajectory_;
+    if( best_group_trajectory_in_collsion_cost_ < best_group_trajectory_cost_ )
+
+        group_trajectory_.getTrajectory() = best_group_trajectory_in_collision_;
+    else
+        group_trajectory_.getTrajectory() = best_group_trajectory_;
+
     
     //group_trajectory_.print();
     //updateFullTrajectory();
@@ -903,8 +921,9 @@ double StompOptimizer::getSmoothnessCost()
     policy_->computeControlCosts(control_cost_matrices, policy_parameters_, noise,
                                  0.5*stomp_parameters_->getSmoothnessCostWeight(), control_costs );
 
-    for (int d=0; d<num_joints_; ++d)
+    for (int d=0; d<control_costs.size(); ++d)
     {
+//        cout << "control_costs[" << d << "] = " << control_costs[d].sum() << endl;
         smoothness_cost += control_costs[d].sum();
     }
 
@@ -963,6 +982,66 @@ double StompOptimizer::getGeneralCost()
 
     return stomp_parameters_->getObstacleCostWeight() * general_cost;
 }
+
+void StompOptimizer::getCostProfiles( vector<double>& smoothness_cost, vector<double>& collision_cost, vector<double>& general_cost )
+{
+//    cout << "perform forward kinematics" << endl;
+    group_trajectory_.getTrajectory() = best_group_trajectory_;
+    performForwardKinematics();
+
+    std::vector<Eigen::MatrixXd> control_cost_matrices;
+    std::vector<Eigen::VectorXd> noise(num_joints_);
+    std::vector<Eigen::VectorXd> control_costs(num_joints_);
+
+    for (int d=0; d<num_joints_; ++d)
+    {
+        //policy_parameters_[d] = group_trajectory_.getFreeTrajectoryBlock();
+        policy_parameters_[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
+        noise[d] = VectorXd::Zero( policy_parameters_[d].size() );
+    }
+
+    policy_->computeControlCosts(control_cost_matrices, policy_parameters_, noise,
+                                 0.5*stomp_parameters_->getSmoothnessCostWeight(), control_costs );
+
+    int state = 0;
+
+    smoothness_cost.resize(free_vars_end_-free_vars_start_,0.0);
+    collision_cost.resize(free_vars_end_-free_vars_start_,0.0);
+    general_cost.resize(free_vars_end_-free_vars_start_,0.0);
+
+    // collision and general costs
+    for (int i=free_vars_start_; i<=free_vars_end_; i++)
+    {
+        double state_smoothness_cost = 0.0;
+        double state_collision_cost = 0.0;
+
+        if( collision_space_ )
+        {
+            // TODO watch out for cumulative case
+            double cumulative = 0.0;
+            for (int j=0; j<num_collision_points_; j++)
+            {
+                cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
+                state_collision_cost += cumulative;
+//                state_collision_cost += collision_point_potential_(i,j);
+            }
+
+            collision_cost[state] = stomp_parameters_->getObstacleCostWeight() * state_collision_cost;
+        }
+
+        general_cost[state] = stomp_parameters_->getObstacleCostWeight() * ( pow( general_cost_potential_(i) , hack_tweek ) );
+
+        for (int d=0; d<num_joints_; ++d)
+        {
+            state_smoothness_cost += control_costs[d][state];
+        }
+
+        smoothness_cost[state] = state_smoothness_cost;
+
+        state++;
+    }
+}
+
 
 bool StompOptimizer::handleJointLimits()
 {
@@ -2059,7 +2138,8 @@ void StompOptimizer::initPolicy()
                         num_joints_,
                         group_trajectory_.getDuration(),
                         stomp_parameters_->getRidgeFactor(),
-                        derivative_costs);
+                        derivative_costs,
+                        planning_group_);
     
     // initialize the policy trajectory
     Eigen::VectorXd start = group_trajectory_.getTrajectoryPoint(free_vars_start_-1).transpose();

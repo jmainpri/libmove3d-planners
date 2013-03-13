@@ -239,6 +239,16 @@ public:
     API::Trajectory getBestTraj() { return best_traj_; }
 
     /**
+      * Get Group traj
+      */
+    void setGroupTrajectoryToApiTraj(API::Trajectory& traj);
+
+    /**
+      * Returns cost profiles
+      */
+    void getCostProfiles( std::vector<double>& smoothness_cost, std::vector<double>& collision_cost, std::vector<double>& general_cost );
+
+    /**
       * Set the use of costspace even when the collision
       * space is created
       */
@@ -319,7 +329,9 @@ private:
     std::vector<std::vector<Eigen::Vector3d> > collision_point_potential_gradient_;
     Eigen::MatrixXd group_trajectory_backup_;
     Eigen::MatrixXd best_group_trajectory_;
+    Eigen::MatrixXd best_group_trajectory_in_collision_;
     double best_group_trajectory_cost_;
+    double best_group_trajectory_in_collsion_cost_;
     double last_trajectory_cost_;
     bool last_trajectory_collision_free_;
     bool last_trajectory_constraints_satisfied_;
@@ -418,7 +430,6 @@ private:
     //----------------------------------------------------------------------------
     void setGroupTrajectoryFromVectorConfig(const std::vector<confPtr_t>& traj);
     void setGroupTrajectoryToVectorConfig(std::vector<confPtr_t>& traj);
-    void setGroupTrajectoryToApiTraj(API::Trajectory& traj);
 
     bool replaceEndWithNewConfiguration();
     bool getManipulationHandOver();

@@ -1,5 +1,6 @@
 #include "HRICS_HumanPredictionSimulator.hpp"
 #include "HRICS_HumanPredictionCostSpace.hpp"
+#include "HRICS_GestParameters.hpp"
 
 #include "API/project.hpp"
 
@@ -24,6 +25,10 @@ HumanPredictionSimulator* global_humanPredictionSimulator = NULL;
 
 void HRICS_initOccupancyPredictionFramework()
 {
+    cout << "---------------------------------------------------------------" << endl;
+    cout << " HRICS_initOccupancyPredictionFramework " << endl;
+    cout << "---------------------------------------------------------------" << endl;
+
     std::vector<double> size = global_Project->getActiveScene()->getBounds();
 
     Robot* robot = global_Project->getActiveScene()->getRobotByName( "PR2_ROBOT" );
@@ -77,8 +82,10 @@ void HRICS_initOccupancyPredictionFramework()
     // Translate all motions
     recorder->translateStoredMotions();
 
-    simulator->loadHumanTrajectory( recorder->getStoredMotions()[28] ); // Side by side (class 1) starting in 0
-    //simulator->loadHumanTrajectory( recorder->getStoredMotions()[77] ); // Face to face (class 3)
+    // 28, Side by side (class 1) starting in 0
+    // 77, Face to face (class 3)
+    cout << "loading trajectory : " << GestEnv->getInt(GestParam::human_traj_id) << endl;
+    simulator->loadHumanTrajectory( recorder->getStoredMotions()[GestEnv->getInt(GestParam::human_traj_id)] );
 
     // GUI global variables
     global_motionRecorder = recorder;
@@ -237,6 +244,8 @@ void HumanPredictionSimulator::loadGoalConfig()
 void HumanPredictionSimulator::runStomp( int iter, int id_goal  )
 {
     PlanEnv->setInt( PlanParam::nb_pointsOnTraj, 100 );
+//    traj_optim_set_discretize( true );
+//    traj_optim_set_discretization( 0.015 );
 
     m_robot->setAndUpdate( *m_q_start );
 
@@ -279,11 +288,11 @@ void HumanPredictionSimulator::runStomp( int iter, int id_goal  )
 
 int HumanPredictionSimulator::getBestPathId()
 {
-    std::vector< std::pair<double,int> > cost_sorter;
+    std::vector< std::pair<double,int> > cost_sorter( m_paths.size() );
 
-    for(int i=0;i<int(m_paths.size());i++)
+    for(int i=0;i<int(cost_sorter.size());i++)
     {
-        cost_sorter.push_back( std::make_pair( m_paths[i].cost(), i ) );
+        cost_sorter[i] = std::make_pair( m_paths[i].cost(), i );
     }
 
     std::sort( cost_sorter.begin(), cost_sorter.end() );
@@ -329,10 +338,11 @@ void HumanPredictionSimulator::execute(const API::Trajectory& path, bool to_end)
 
 void HumanPredictionSimulator::runVoxelOccupancy()
 {
+    m_human_increment = 1;
 //    for(int k=0;k<8;k++) // each class
 //    {
      int k = 3;
-        for(int i=0;i<5;i++) // 5 first motion
+        for(int i=2;i<3;i++) // 5 first motion
         {
             loadHumanTrajectory( m_recorder->getStoredMotions()[i+25*k] );
 
@@ -345,6 +355,7 @@ void HumanPredictionSimulator::runVoxelOccupancy()
                 predictVoxelOccupancy();
 
                 g3d_draw_allwin_active(); usleep(200000);
+
             }
         }
 //    }
@@ -364,20 +375,25 @@ void HumanPredictionSimulator::run()
         predictVoxelOccupancy();
         g3d_draw_allwin_active();
 
-        for(int j=0;j<int(m_goal_config.size());j++)
+        for(int j=0;(!PlanEnv->getBool(PlanParam::stopPlanner)) && j<int(m_goal_config.size());j++)
         {
             runStomp( i, j );
         }
 
-        m_best_path_id = getBestPathId();
-
-        execute( m_paths[m_best_path_id] );
+        if( !PlanEnv->getBool(PlanParam::stopPlanner) )
+        {
+            m_best_path_id = getBestPathId();
+            execute( m_paths[m_best_path_id] );
+        }
     }
 
-    if( m_best_path_id != -1 )
+    if( !PlanEnv->getBool(PlanParam::stopPlanner) )
     {
-        const API::Trajectory& traj = m_paths[m_best_path_id];
-        const double parameter =  m_robot_steps_per_exection*m_robot_step;
-        execute( traj.extractSubTrajectory( parameter, traj.getRangeMax(), false ), true );
+        if( m_best_path_id != -1 )
+        {
+            const API::Trajectory& traj = m_paths[m_best_path_id];
+            const double parameter =  m_robot_steps_per_exection*m_robot_step;
+            execute( traj.extractSubTrajectory( parameter, traj.getRangeMax(), false ), true );
+        }
     }
 }

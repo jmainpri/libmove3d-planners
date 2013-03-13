@@ -441,6 +441,9 @@ void g3d_draw_hrics(int opengl_context)
     if( GestEnv->getBool(GestParam::draw_robot_sampled_points) && global_humanPredictionCostSpace )
         global_humanPredictionCostSpace->draw();
 
+    if( global_motionRecorder )
+        global_motionRecorder->draw();
+
     int OTPListSize = OTPList.size();
     if( ENV.getBool(Env::enableHri) )
     {
@@ -802,15 +805,16 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
         Robot* r_Cost( global_Project->getActiveScene()->getRobotByName(costRobot->name) );
         Configuration	q_Cost(r_Cost,cost_q);
 
-        std::cout << "Cost for " << r_Cost->getName() << " = "
-                  << global_costSpace->cost(q_Cost) << std::endl;
+        std::cout << "Cost for " << r_Cost->getName() << " = " << global_costSpace->cost(q_Cost) << std::endl;
+//        std::cout << "Cost for " << r_Cost->getName() << " = " << HRICS_getPredictionOccupancyCost(q_Cost) << endl;
     }
 
     if( global_collisionSpace )
     {
         double dist = numeric_limits<double>::max();
+        double potential = numeric_limits<double>::max();
 
-        int ncol = global_collisionSpace->isRobotColliding( dist );
+        int ncol = global_collisionSpace->isRobotColliding( dist, potential );
 
         Robot* robCollSapce = global_collisionSpace->getRobot();
 
