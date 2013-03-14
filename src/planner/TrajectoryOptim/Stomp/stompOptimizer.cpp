@@ -68,7 +68,7 @@ const double hack_tweek = 1;
 //--------------------------------------------------------
 // External
 //--------------------------------------------------------
-MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> optimizer;
+MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> global_optimizer;
 
 namespace stomp_motion_planner
 {
@@ -91,7 +91,8 @@ void StompOptimizer::initialize()
 {
     Scene* sce = global_Project->getActiveScene();
     
-    robot_model_ = group_trajectory_.getRobot();
+//    robot_model_ = group_trajectory_.getRobot();
+    robot_model_ = planning_group_->robot_;
     human_model_ = sce->getRobotByNameContaining("HERAKLES");
     
     // Handover end configuration generator
@@ -441,7 +442,8 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
     move3d_traj_ = API::Trajectory( robot_model_ );
     traj_convergence_with_time.clear();
     
-    const bool print_cost=true;
+    // Set this variable to false to cancel printing
+    const bool print_cost=false;
 
     int ith_save = 1;
     
@@ -652,7 +654,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
 
         if( use_iteration_limit_ )
         {
-            if( iteration_ >= stomp_parameters_->getMaxIterations() )
+            if( iteration_ >= stomp_parameters_->max_iterations_ )
             {
                 cout << "Stopped at iteration (" << iteration_ << ")" << endl;
                 break;
@@ -662,6 +664,9 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
 
     if (last_improvement_iteration_>-1)
         cout << "We think the path is collision free: " << is_collision_free_ << endl;
+
+
+    // set the output in the best trajectory
 
     if( best_group_trajectory_in_collsion_cost_ < best_group_trajectory_cost_ )
 
@@ -679,7 +684,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
         animateEndeffector(true);
     }
     
-    best_traj_ = API::Trajectory(robot_model_);
+    best_traj_ = API::Trajectory( robot_model_ );
     setGroupTrajectoryToApiTraj( best_traj_ );
     //best_traj.replaceP3dTraj();
     
@@ -1042,12 +1047,11 @@ void StompOptimizer::getCostProfiles( vector<double>& smoothness_cost, vector<do
     }
 }
 
-
 bool StompOptimizer::handleJointLimits()
 {
     bool succes_joint_limits = true;
     joint_limits_violation_ = 0;
-    
+
     for (int joint=0; joint<num_joints_; joint++)
     {
         if (!planning_group_->chomp_joints_[joint].has_joint_limits_)
@@ -1145,6 +1149,7 @@ bool StompOptimizer::handleJointLimits()
     return succes_joint_limits;
 }
 
+
 double StompOptimizer::getCollisionSpaceCost( Configuration& q )
 {
     const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
@@ -1174,9 +1179,9 @@ double StompOptimizer::getCollisionSpaceCost( Configuration& q )
 void StompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array, Configuration& q )
 {
     q = *robot_model_->getCurrentPos();
-    
+
     const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
-    
+
     // Set the configuration to the joint array value
     for(int j=0; j<planning_group_->num_joints_;j++)
     {
@@ -1191,9 +1196,9 @@ void StompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array, 
             q[dof]= 0;
         }
     }
-    
+
     robot_model_->setAndUpdate( q );
-    
+
     // Get the collision point position
     for(int j=0; j<planning_group_->num_joints_;j++)
     {
@@ -1217,7 +1222,7 @@ void StompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array, 
 bool StompOptimizer::getConfigObstacleCost(int segment, int coll_point, Configuration& q)
 {
     bool colliding = false;
-    
+
     if(collision_space_ /*&& (use_costspace_==false)*/ )
     {
         int i= segment;
@@ -1234,7 +1239,7 @@ bool StompOptimizer::getConfigObstacleCost(int segment, int coll_point, Configur
                                                                          collision_point_potential_(i,j),
                                                                          collision_point_potential_gradient_[i][j]);
     }
-    
+
     return colliding;
 }
 
@@ -1242,7 +1247,7 @@ bool StompOptimizer::performForwardKinematics()
 {
     double invTime = 1.0 / group_trajectory_.getDiscretization();
     double invTimeSq = invTime*invTime;
-    
+
     // calculate the forward kinematics for the fixed states only in the first iteration:
     int start = free_vars_start_;
     int end = free_vars_end_;
@@ -1251,13 +1256,16 @@ bool StompOptimizer::performForwardKinematics()
         start = 0;
         end = num_vars_all_-1;
     }
-    
+
+    bool collision_free = true;
+
+
     is_collision_free_ = true;
-    
+
     Eigen::VectorXd joint_array;
-    
+
     Configuration q(robot_model_);
-    
+
     // for each point in the trajectory
     for (int i=start; i<=end; ++i)
     {
@@ -1313,7 +1321,7 @@ bool StompOptimizer::performForwardKinematics()
     //            }
     //        }
     //    }
-    
+
     // now, get the vel and acc for each collision point (using finite differencing)
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
@@ -1340,7 +1348,7 @@ bool StompOptimizer::performForwardKinematics()
             //      cout << "collision_point_acc_eigen_(" << i << " , "  << j << ") = " << endl << collision_point_acc_eigen_[i][j] << endl;
         }
     }
-    
+
     //  if (is_collision_free_)
     //  {
     //    cout << "-----------------------" << endl;
@@ -1358,8 +1366,127 @@ bool StompOptimizer::performForwardKinematics()
     //    }
     //    cout << "------------------------------------" << endl;
     //  }
-    
+
     return is_collision_free_;
+}
+
+bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool resample )
+{
+    //  ros::WallTime start_time = ros::WallTime::now();
+
+    // copy the parameters into group_trajectory_:
+    for (int d=0; d<num_joints_; ++d) {
+        group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
+    }
+    //cout << "group_trajectory_ = " << endl << group_trajectory_.getTrajectory() << endl;
+
+    // respect joint limits:
+    succeded_joint_limits_ = handleJointLimits();
+    //cout << "Violation number : " << joint_limits_violation_ << endl;
+
+    // copy the parameters into group_trajectory_:
+    for (int d=0; d<num_joints_; ++d) {
+        parameters[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
+    }
+
+    if( resample )
+    {
+        // Resample
+        last_move3d_cost_ = resampleParameters( parameters );
+
+        for (int d=0; d<num_joints_; ++d) {
+            group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
+        }
+    }
+
+    // copy to full traj:
+    updateFullTrajectory();
+
+    // do forward kinematics:
+    last_trajectory_collision_free_ = performForwardKinematics();
+    last_trajectory_constraints_satisfied_ = true;
+
+    double obstacle_cost = 0.0;
+    //    double general_cost=0.0;
+    double constraint_cost = 0.0;
+    double torque_cost = 0.0;
+
+    //    std::vector<double> torques(num_joints_);
+
+    for (int i=free_vars_start_; i<=free_vars_end_; i++)
+    {
+        double state_collision_cost = 0.0;
+        double state_general_cost = 0.0;
+        double cumulative = 0.0;
+
+        if( collision_space_ )
+        {
+            for (int j=0; j<num_collision_points_; j++)
+            {
+                cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
+                state_collision_cost += cumulative;
+            }
+        }
+        if( use_costspace_ )
+        {
+            state_general_cost = ( pow( general_cost_potential_(i) , hack_tweek ) /* ( q_f - q_i ).norm() */) ;
+        }
+
+        // evaluate the constraints:
+        double state_constraint_cost = 0.0;
+        //    for (int j=0; j<int(constraint_evaluators_.size()); ++j)
+        //    {
+        //      double cost;
+        //      if (!constraint_evaluators_[j]->getCost(segment_frames_[i], full_trajectory_->getTrajectoryPoint(i), cost))
+        //        last_trajectory_constraints_satisfied_ = false;
+        //      state_constraint_cost += cost;
+        //    }
+
+        // evaluate inverse dynamics:
+        double state_torque_cost = 0.0;
+
+        //    if (stomp_parameters_->getTorqueCostWeight() > 1e-9)
+        //    {
+        //      full_trajectory_->getTrajectoryPointKDL(i, kdl_joint_array_);
+        //      full_trajectory_->getJointVelocities(i, full_joint_state_velocities_);
+        //      full_trajectory_->getJointAccelerations(i, full_joint_state_velocities_);
+        //      for (int j=0; j<num_joints_; ++j)
+        //      {
+        //        int full_joint_num = planning_group_->stomp_joints_[j].kdl_joint_index_;
+        //        kdl_group_joint_array_(j) = kdl_joint_array_(full_joint_num);
+        //        kdl_group_vel_joint_array_(j) = full_joint_state_velocities_(full_joint_num);
+        //        kdl_group_acc_joint_array_(j) = full_joint_state_accelerations_(full_joint_num);
+        //      }
+        //      planning_group_->id_solver_->CartToJnt(kdl_group_joint_array_,
+        //                                             kdl_group_vel_joint_array_,
+        //                                             kdl_group_acc_joint_array_,
+        //                                             wrenches,
+        //                                             kdl_group_torque_joint_array_);
+        //      getTorques(i, torques, wrenches);
+        //      for (int j=0; j<num_joints_; ++j)
+        //      {
+        //        state_torque_cost += fabs(torques[j]);
+        //      }
+        //    }
+
+//        obstacle_cost += stomp_parameters_->getObstacleCostWeight() * ( state_collision_cost + state_general_cost );
+//        constraint_cost += stomp_parameters_->getConstraintCostWeight() * state_constraint_cost;
+//        torque_cost += stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
+
+        costs(i-free_vars_start_) =
+                stomp_parameters_->getObstacleCostWeight() * ( state_collision_cost + state_general_cost ) +
+                stomp_parameters_->getConstraintCostWeight() * state_constraint_cost +
+                stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
+    }
+
+    //cout << "StompOptimizer::execute::cost => " << costs.sum() << endl;
+    last_trajectory_cost_ = costs.sum();
+    //last_trajectory_constraints_satisfied_ = (constraint_cost < 1e-6);
+
+    //printf("Obstacle cost = %f, constraint cost = %f, torque_cost = %f\n", obstacle_cost, constraint_cost, torque_cost);
+    //animateEndeffector();
+    //ROS_INFO("Rollout took %f seconds, ", (ros::WallTime::now() - start_time).toSec());
+    return true;
 }
 
 void StompOptimizer::getTrajectoryCost( std::vector<double>& cost, double step )
@@ -2007,124 +2134,7 @@ double StompOptimizer::resampleParameters(std::vector<Eigen::VectorXd>& paramete
     return traj.cost();
 }
 
-bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool resample )
-{
-    //  ros::WallTime start_time = ros::WallTime::now();
-    
-    // copy the parameters into group_trajectory_:
-    for (int d=0; d<num_joints_; ++d) {
-        group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
-    }
-    //cout << "group_trajectory_ = " << endl << group_trajectory_.getTrajectory() << endl;
-    
-    // respect joint limits:
-    succeded_joint_limits_ = handleJointLimits();
-    //cout << "Violation number : " << joint_limits_violation_ << endl;
-    
-    // copy the parameters into group_trajectory_:
-    for (int d=0; d<num_joints_; ++d) {
-        parameters[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
-    }
 
-    if( resample )
-    {
-        // Resample
-        last_move3d_cost_ = resampleParameters( parameters );
-
-        for (int d=0; d<num_joints_; ++d) {
-            group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
-        }
-    }
-    
-    // copy to full traj:
-    updateFullTrajectory();
-    
-    // do forward kinematics:
-    last_trajectory_collision_free_ = performForwardKinematics();
-    last_trajectory_constraints_satisfied_ = true;
-    
-    double obstacle_cost = 0.0;
-    //    double general_cost=0.0;
-    double constraint_cost = 0.0;
-    double torque_cost = 0.0;
-    
-    //    std::vector<double> torques(num_joints_);
-    
-    for (int i=free_vars_start_; i<=free_vars_end_; i++)
-    {
-        double state_collision_cost = 0.0;
-        double state_general_cost = 0.0;
-        double cumulative = 0.0;
-
-        if( collision_space_ )
-        {
-            for (int j=0; j<num_collision_points_; j++)
-            {
-                cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
-                state_collision_cost += cumulative;
-            }
-        }
-        if( use_costspace_ )
-        {
-            state_general_cost = ( pow( general_cost_potential_(i) , hack_tweek ) /* ( q_f - q_i ).norm() */) ;
-        }
-
-        // evaluate the constraints:
-        double state_constraint_cost = 0.0;
-        //    for (int j=0; j<int(constraint_evaluators_.size()); ++j)
-        //    {
-        //      double cost;
-        //      if (!constraint_evaluators_[j]->getCost(segment_frames_[i], full_trajectory_->getTrajectoryPoint(i), cost))
-        //        last_trajectory_constraints_satisfied_ = false;
-        //      state_constraint_cost += cost;
-        //    }
-
-        // evaluate inverse dynamics:
-        double state_torque_cost = 0.0;
-
-        //    if (stomp_parameters_->getTorqueCostWeight() > 1e-9)
-        //    {
-        //      full_trajectory_->getTrajectoryPointKDL(i, kdl_joint_array_);
-        //      full_trajectory_->getJointVelocities(i, full_joint_state_velocities_);
-        //      full_trajectory_->getJointAccelerations(i, full_joint_state_velocities_);
-        //      for (int j=0; j<num_joints_; ++j)
-        //      {
-        //        int full_joint_num = planning_group_->stomp_joints_[j].kdl_joint_index_;
-        //        kdl_group_joint_array_(j) = kdl_joint_array_(full_joint_num);
-        //        kdl_group_vel_joint_array_(j) = full_joint_state_velocities_(full_joint_num);
-        //        kdl_group_acc_joint_array_(j) = full_joint_state_accelerations_(full_joint_num);
-        //      }
-        //      planning_group_->id_solver_->CartToJnt(kdl_group_joint_array_,
-        //                                             kdl_group_vel_joint_array_,
-        //                                             kdl_group_acc_joint_array_,
-        //                                             wrenches,
-        //                                             kdl_group_torque_joint_array_);
-        //      getTorques(i, torques, wrenches);
-        //      for (int j=0; j<num_joints_; ++j)
-        //      {
-        //        state_torque_cost += fabs(torques[j]);
-        //      }
-        //    }
-
-        obstacle_cost += stomp_parameters_->getObstacleCostWeight() * ( state_collision_cost + state_general_cost );
-        constraint_cost += stomp_parameters_->getConstraintCostWeight() * state_constraint_cost;
-        torque_cost += stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
-
-        costs(i-free_vars_start_) =
-                stomp_parameters_->getObstacleCostWeight() * ( state_collision_cost + state_general_cost ) +
-                stomp_parameters_->getConstraintCostWeight() * state_constraint_cost +
-                stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
-    }
-    
-    //cout << "StompOptimizer::execute::cost => " << costs.sum() << endl;
-    last_trajectory_cost_ = costs.sum();
-    //last_trajectory_constraints_satisfied_ = (constraint_cost < 1e-6);
-    
-    //printf("Obstacle cost = %f, constraint cost = %f, torque_cost = %f\n", obstacle_cost, constraint_cost, torque_cost);
-    //animateEndeffector();
-    //ROS_INFO("Rollout took %f seconds, ", (ros::WallTime::now() - start_time).toSec());
-    return true;
-}
 
 void StompOptimizer::initPolicy()
 {

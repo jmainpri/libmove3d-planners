@@ -309,3 +309,7 @@ src/hri_costspace/Gestures/HRICS_HumanPredictionSimulator.hpp
 src/hri_costspace/Gestures/HRICS_HumanPredictionSimulator.cpp
 src/hri_costspace/Gestures/HRICS_GestParameters.hpp
 src/hri_costspace/Gestures/HRICS_GestParameters.cpp
+src/planner/TrajectoryOptim/Stomp/cost_computation.hpp
+src/planner/TrajectoryOptim/Stomp/cost_computation.cpp
+src/planner/TrajectoryOptim/Stomp/run_parallel_stomp.hpp
+src/planner/TrajectoryOptim/Stomp/run_parallel_stomp.cpp

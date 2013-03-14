@@ -373,9 +373,9 @@ void g3d_draw_grids()
         global_collisionSpace->drawCollisionPoints();
     }
 
-    if ((optimizer.get() != NULL) && ENV.getBool(Env::drawTraj))
+    if ((global_optimizer.get() != NULL) && ENV.getBool(Env::drawTraj))
     {
-        optimizer->draw();
+        global_optimizer->draw();
     }
 
     if( ENV.getBool(Env::drawPoints) )

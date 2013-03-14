@@ -176,7 +176,7 @@ confPtr_t StarExpansion::sampleInTube()
       if( traj->size() == PlanEnv->getInt( PlanParam::nb_pointsOnTraj )-1 ) 
       {
         m_biasTrajectory.clear();
-        optimizer->generateNoisyTrajectory(*traj,m_biasTrajectory);
+        global_optimizer->generateNoisyTrajectory(*traj,m_biasTrajectory);
         
         m_ith_on_traj = 1;
         m_ith_trajectory = 0;

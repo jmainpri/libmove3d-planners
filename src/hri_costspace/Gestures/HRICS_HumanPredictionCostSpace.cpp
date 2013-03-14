@@ -28,7 +28,7 @@ HumanPredictionCostSpace::HumanPredictionCostSpace( Robot* robot, WorkspaceOccup
 {
     cout << "Create HumanPredictionCostSpace" << endl;
 
-    m_surface_sampler = new BodySurfaceSampler(0.50);
+    m_surface_sampler = new BodySurfaceSampler( 0.50 );
 
     sampleRobotPoints();
     setActiveJoints();

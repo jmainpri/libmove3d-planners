@@ -485,8 +485,8 @@ double computeInCollisionCost(Configuration& conf)
 double computeCollisionSpaceCost(Configuration& conf)
 {
     double cost = 0.1;
-    if( optimizer.get() != NULL ) {
-        cost = PlanEnv->getDouble(PlanParam::trajOptimObstacWeight)*optimizer->getCollisionSpaceCost( conf );
+    if( global_optimizer.get() != NULL ) {
+        cost = PlanEnv->getDouble(PlanParam::trajOptimObstacWeight)*global_optimizer->getCollisionSpaceCost( conf );
     }
     return cost;
 }

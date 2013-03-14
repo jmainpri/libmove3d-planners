@@ -5,6 +5,8 @@
 #include "HRICS_ClassifyMotion.hpp"
 #include "HRICS_WorkspaceOccupancy.hpp"
 
+#include "API/Trajectory/trajectory.hpp"
+
 void HRICS_initOccupancyPredictionFramework();
 
 namespace HRICS
@@ -40,6 +42,7 @@ private:
     confPtr_t m_q_start;
     std::vector<confPtr_t> m_goal_config;
     std::vector<API::Trajectory> m_paths;
+    API::Trajectory m_executed_path;
     int m_max_stomp_iter;
     bool m_use_previous_trajectory;
 

@@ -397,9 +397,6 @@ private:
     void calculateSmoothnessIncrements();
     void calculateCollisionIncrements();
     void calculateTotalIncrements();
-    void getFrames(int segment, const Eigen::VectorXd& joint_array, Configuration& q);
-    bool getConfigObstacleCost(int segment, int dof, Configuration& q);
-    bool performForwardKinematics(); /**< Return true if collision free */
     void addIncrementsToTrajectory();
     void updateFullTrajectory();
     void debugCost();
@@ -418,7 +415,9 @@ private:
     void updateMomentum();
     void updatePositionFromMomentum();
     void calculatePseudoInverse();
-
+    void getFrames(int segment, const Eigen::VectorXd& joint_array, Configuration& q);
+    bool getConfigObstacleCost(int segment, int dof, Configuration& q);
+    bool performForwardKinematics();
     void doChompOptimization();
 
     void copyPolicyToGroupTrajectory();
@@ -449,6 +448,6 @@ private:
 
 }
 
-extern MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> optimizer;
+extern MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> global_optimizer;
 
 #endif /* STOMP_OPTIMIZER_H_ */

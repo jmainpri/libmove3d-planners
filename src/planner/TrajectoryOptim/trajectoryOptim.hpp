@@ -25,10 +25,14 @@ bool traj_optim_runStompNoInit(int runId, const API::Trajectory& traj);
 bool traj_optim_runStompNoReset(int runId);
 
 void traj_optim_set_use_iteration_limit(bool use);
+void traj_optim_set_iteration_limit(double max_iter);
 void traj_optim_set_use_extern_trajectory( bool use );
 void traj_optim_set_extern_trajectory( const API::Trajectory& traj );
 void traj_optim_set_discretization( double discretization );
 void traj_optim_set_discretize( bool discretize );
+
+bool traj_optim_initScenario();
+std::vector<int> traj_optim_get_planner_joints();
 
 void traj_optim_draw_collision_points();
 bool traj_optim_generate_softMotion();

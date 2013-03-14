@@ -34,12 +34,13 @@ namespace GestParam
 #endif
         enum boolParameter
         {
+            init_module_at_start,
             draw_robot_sampled_points,
             draw_human_sampled_points,
             draw_ws_occupancy,
             draw_single_class,
             draw_null_cost,
-            draw_recorded_motion
+            draw_recorded_motion,
         };
 
         enum intParameter

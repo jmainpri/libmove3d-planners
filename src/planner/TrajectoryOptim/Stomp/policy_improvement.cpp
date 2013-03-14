@@ -788,10 +788,12 @@ namespace stomp_motion_planner
 
     void PolicyImprovement::resampleUpdates()
     {
-        const std::vector<ChompJoint>& joints = static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->chomp_joints_;
+        shared_ptr<StompOptimizer> optimizer =  static_pointer_cast<StompOptimizer>(task_);
+
+        const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
 
         // New trajectory and parameters trajectory
-        API::Trajectory traj(optimizer->getPlanningGroup()->robot_);
+        API::Trajectory traj( static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->robot_);
         Eigen::MatrixXd parameters(num_dimensions_,num_time_steps_);
 
         for ( int d=0; d<num_dimensions_; ++d) {

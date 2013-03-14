@@ -410,42 +410,42 @@ MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> Trajectory::operator [] ( const 
 
 confPtr_t Trajectory::configAtParam(double param, unsigned int* id_localpath) const
 {
-  if(m_Courbe.empty()) {
-    return confPtr_t(new Configuration(m_Robot,NULL));
-  }
-  
-	double soFar(0.0);
-	double prevSoFar(0.0);
-	unsigned int i=0;
-  
-	for ( ; i<m_Courbe.size(); i++)
-	{
-		soFar = soFar + m_Courbe.at(i)->getParamMax();
-		
-		// Parameter lies in the previous local path
-		// return configuration inside previous LP
-		if (param < soFar)
-		{
-			if (param < prevSoFar)
-			{
-				cout
-				<< "Error: getting Configuration at parameter in trajectory"
-				<< endl;
-			}
-      
-      if( id_localpath != NULL ) {
-        *id_localpath = i;
-      }
-			
-			return m_Courbe.at(i)->configAtParam(param - prevSoFar);
-		}
-		prevSoFar = soFar;
-	}
-  
-  if( id_localpath != NULL ) {
-    *id_localpath = m_Courbe.size()-1;
-  }
-	return m_Courbe.back()->configAtParam(param);
+    if(m_Courbe.empty()) {
+        return confPtr_t(new Configuration(m_Robot,NULL));
+    }
+
+    double soFar(0.0);
+    double prevSoFar(0.0);
+    unsigned int i=0;
+
+    for ( ; i<m_Courbe.size(); i++)
+    {
+        soFar = soFar + m_Courbe.at(i)->getParamMax();
+
+        // Parameter lies in the previous local path
+        // return configuration inside previous LP
+        if (param < soFar)
+        {
+            if (param < prevSoFar)
+            {
+                cout
+                        << "Error: getting Configuration at parameter in trajectory"
+                        << endl;
+            }
+
+            if( id_localpath != NULL ) {
+                *id_localpath = i;
+            }
+
+            return m_Courbe.at(i)->configAtParam(param - prevSoFar);
+        }
+        prevSoFar = soFar;
+    }
+
+    if( id_localpath != NULL ) {
+        *id_localpath = m_Courbe.size()-1;
+    }
+    return m_Courbe.back()->configAtParam(param);
 }
 
 vector< shared_ptr<Configuration> > Trajectory::getVectorOfConfiguration()

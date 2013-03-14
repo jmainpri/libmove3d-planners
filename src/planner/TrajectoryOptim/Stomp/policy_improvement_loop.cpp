@@ -55,6 +55,7 @@
 #include "../p3d/env.hpp"
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/thread.hpp>
 
 using namespace std;
 MOVE3D_USING_BOOST_NAMESPACE
@@ -247,6 +248,26 @@ namespace stomp_motion_planner
 
     //------------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------
+    void PolicyImprovementLoop::executeRollout(int r, int iteration_number )
+    {
+        shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
+
+        task_->execute( rollouts_[r], tmp_rollout_cost_, iteration_number);
+
+        rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
+        //printf("Rollout %d, cost = %lf\n", r+1, tmp_rollout_cost_.sum());
+        // cout << "Rollout " << r+1 << " , cost = " << tmp_rollout_cost_.transpose() << endl;
+
+        policy_improvement_.setRolloutOutOfBounds( r, !optimizer->getJointLimitViolationSuccess() );
+
+        if( use_annealing_ )
+        {
+            limits_violations_ += optimizer->getJointLimitViolations();
+        }
+    }
+
+    //------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------
     bool PolicyImprovementLoop::runSingleIteration(const int iteration_number)
     {
         assert(initialized_);
@@ -275,26 +296,16 @@ namespace stomp_motion_planner
         if ( use_annealing_ )
             limits_violations_ = 0;
 
-        shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
-
         //cout << "Run single interation of stomp " << endl;
         if ( ENV.getBool(Env::drawTrajVector) )
             addRolloutsToDraw(get_reused_ones);
 
+//        std::vector<boost::thread*> threads;
+
         for (int r=0; r<int(rollouts_.size()); ++r)
         {
-            task_->execute( rollouts_[r], tmp_rollout_cost_, iteration_number);
-
-            rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
-            //printf("Rollout %d, cost = %lf\n", r+1, tmp_rollout_cost_.sum());
-            //      cout << "Rollout " << r+1 << " , cost = " << tmp_rollout_cost_.transpose() << endl;
-
-            policy_improvement_.setRolloutOutOfBounds( r, !optimizer->getJointLimitViolationSuccess() );
-
-            if( use_annealing_ )
-            {
-                limits_violations_ += optimizer->getJointLimitViolations();
-            }
+            executeRollout ( r, iteration_number );
+//            threads.push_back( new boost::thread( &PolicyImprovementLoop::executeRollout, this, r, iteration_number ) );
         }
 
         if( use_annealing_ )
@@ -550,6 +561,7 @@ namespace stomp_motion_planner
 
     void PolicyImprovementLoop::getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<confPtr_t>& traj)
     {
+        shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
         const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
         Robot* robot = optimizer->getPlanningGroup()->robot_;
 
@@ -577,7 +589,7 @@ namespace stomp_motion_planner
         vector<confPtr_t> traj;
         getSingleRollout( rollout, traj );
 
-        API::Trajectory T(optimizer->getPlanningGroup()->robot_);
+        API::Trajectory T(static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->robot_);
         for ( int i=0; i<int(traj.size()); ++i )
         {
             T.push_back( traj[i] );

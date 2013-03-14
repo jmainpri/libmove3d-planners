@@ -53,7 +53,6 @@ public:
   void initFromNodeHandle();
   void init();
 
-  int getMaxIterations() const;
   int getMaxIterationsAfterCollisionFree() const;
   int getMaxBestIterations() const;
   double getSmoothnessCostWeight() const;
@@ -78,8 +77,9 @@ public:
   std::string getAnimateEndeffectorSegment() const;
   bool getUseChomp() const;
 
-private:
   int max_iterations_;
+
+private:
   int max_iterations_after_collision_free_;
   int max_best_iterations_;
   double smoothness_cost_weight_;
@@ -106,11 +106,6 @@ private:
 };
 
 /////////////////////// inline functions follow ////////////////////////
-
-inline int StompParameters::getMaxIterations() const
-{
-  return max_iterations_;
-}
 
 inline int StompParameters::getMaxIterationsAfterCollisionFree() const
 {

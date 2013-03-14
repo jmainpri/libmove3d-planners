@@ -178,7 +178,7 @@ public:
   double getDuration() const;
   
   // Returns the Move3d robot
-  Robot* getRobot() { return robot_model_; }
+//  Robot* getRobot() { return robot_model_; }
   
   // prints the big matrix
   void print();
@@ -187,7 +187,6 @@ private:
   
   void init();                                          /**< \brief Allocates memory for the trajectory */
   
-  Robot* robot_model_;                             /**< Robot Model */
   //  const ChompRobotModel* robot_model_;                  /**< Robot Model */
   //  const ChompRobotModel::ChompPlanningGroup* planning_group_;    /**< Planning group that this trajectory corresponds to, if any */
   int num_points_;                                      /**< Number of points in the trajectory */

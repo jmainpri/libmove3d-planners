@@ -65,8 +65,9 @@ collision_space_(collision_space)
 
 void ChompOptimizer::initialize()
 {
-  robot_model_ = group_trajectory_.getRobot();
-  
+//  robot_model_ = group_trajectory_.getRobot();
+    robot_model_ = planning_group_->robot_;
+
   // init some variables:
   num_vars_free_ = group_trajectory_.getNumFreePoints();
   num_vars_all_ = group_trajectory_.getNumPoints();

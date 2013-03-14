@@ -85,6 +85,8 @@ vector< vector <double> > traj_optim_convergence;
 CollisionSpace* global_collSpace=NULL;
 
 static bool m_use_iteration_limit=false;
+static double m_max_iteration;
+
 static bool m_use_external_trajectory=false;
 static API::Trajectory m_external_trajectory=false;
 
@@ -1338,19 +1340,19 @@ bool traj_optim_initStomp()
     cout << "Chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
 
     cout << "Initialize optimizer" << endl;
-    optimizer.reset(new stomp_motion_planner::StompOptimizer( m_chomptraj, m_stompparams, m_chompplangroup, m_coll_space));
-    optimizer->setSource( T.getBegin() );
-    optimizer->setSharedPtr(optimizer);
-    optimizer->setPassiveDofs(passive_dofs);
+    global_optimizer.reset(new stomp_motion_planner::StompOptimizer( m_chomptraj, m_stompparams, m_chompplangroup, m_coll_space));
+    global_optimizer->setSource( T.getBegin() );
+    global_optimizer->setSharedPtr( global_optimizer );
+    global_optimizer->setPassiveDofs( passive_dofs );
 
     if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
     {
-        optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
+        global_optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
     }
 
     if( m_sce == traj_optim::HumanAwareManip && m_robot->getName() == "PR2_ROBOT")
     {
-        optimizer->setUseCostSpace(true);
+        global_optimizer->setUseCostSpace(true);
     }
 
     cout << "Optimizer created" << endl;
@@ -1365,11 +1367,82 @@ bool traj_optim_initStomp()
     return true;
 }
 
+bool traj_optim_runStomp( int runId )
+{
+    if(!traj_optim_initStomp() )
+    {
+        cout << "Could not init stomp in : " << __func__ << endl;
+        return false;
+    }
+
+    m_stompparams->init();
+
+    if( m_use_iteration_limit )
+    {
+        global_optimizer->setUseIterationLimit( true );
+        m_stompparams->max_iterations_ = m_max_iteration;
+    }
+
+    if(!PlanEnv->getBool(PlanParam::trajOptimTestMultiGauss))
+    {
+        global_optimizer->runDeformation( 0, runId );
+        //optimizer->generateNoisyTrajectories();
+    }
+    else {
+        global_optimizer->testMultiVariateGaussianSampler();
+    }
+
+    global_optimizer->resetSharedPtr();
+    return true;
+}
+
+bool traj_optim_runStompNoInit( int runId, const API::Trajectory& traj )
+{
+    if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
+    {
+        global_optimizer->setUseTimeLimit( true );
+        global_optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
+    }
+    else {
+        global_optimizer->setUseTimeLimit( false );
+    }
+
+    if( m_use_iteration_limit )
+    {
+        global_optimizer->setUseIterationLimit( true );
+        m_stompparams->max_iterations_ = m_max_iteration;
+    }
+
+    global_optimizer->setUseOtp( PlanEnv->getBool(PlanParam::trajUseOtp) );
+    global_optimizer->initializeFromNewTrajectory( traj );
+    global_optimizer->runDeformation( 0, runId );
+    return true;
+}
+
+bool traj_optim_runStompNoReset(int runId)
+{
+    traj_optim_switch_cartesian_mode( false );
+
+    API::Trajectory traj( m_robot );
+
+    if( !traj_optim_InitTraj( traj ) ){
+        return false;
+    }
+
+    //  API::Trajectory traj = m_robot->getCurrentTraj();
+    return traj_optim_runStompNoInit( runId, traj );
+}
+
 //! Run Stomp
 // --------------------------------------------------------
 void traj_optim_set_use_iteration_limit(bool use)
 {
     m_use_iteration_limit = use;
+}
+
+void traj_optim_set_iteration_limit(double max_iter)
+{
+    m_max_iteration = max_iter;
 }
 
 void traj_optim_set_use_extern_trajectory( bool use )
@@ -1392,64 +1465,9 @@ void traj_optim_set_discretization( double discretization )
     m_discretization = discretization;
 }
 
-bool traj_optim_runStomp( int runId )
+std::vector<int> traj_optim_get_planner_joints()
 {
-    if(!traj_optim_initStomp())
-    {
-        cout << "Could not init stomp in : " << __func__ << endl;
-        return false;
-    }
-
-    m_stompparams->init();
-
-    if( m_use_iteration_limit )
-        optimizer->setUseIterationLimit( true );
-
-    if(!PlanEnv->getBool(PlanParam::trajOptimTestMultiGauss))
-    {
-        optimizer->runDeformation( 0, runId );
-        //optimizer->generateNoisyTrajectories();
-    }
-    else {
-        optimizer->testMultiVariateGaussianSampler();
-    }
-
-    optimizer->resetSharedPtr();
-    return true;
-}
-
-bool traj_optim_runStompNoInit( int runId, const API::Trajectory& traj )
-{
-    if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
-    {
-        optimizer->setUseTimeLimit( true );
-        optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
-    }
-    else {
-        optimizer->setUseTimeLimit( false );
-    }
-
-    if( m_use_iteration_limit )
-        optimizer->setUseIterationLimit( true );
-
-    optimizer->setUseOtp( PlanEnv->getBool(PlanParam::trajUseOtp) );
-    optimizer->initializeFromNewTrajectory( traj );
-    optimizer->runDeformation( 0, runId );
-    return true;
-}
-
-bool traj_optim_runStompNoReset(int runId)
-{
-    traj_optim_switch_cartesian_mode( false );
-
-    API::Trajectory traj( m_robot );
-
-    if( !traj_optim_InitTraj( traj ) ){
-        return false;
-    }
-
-    //  API::Trajectory traj = m_robot->getCurrentTraj();
-    return traj_optim_runStompNoInit( runId, traj );
+    return m_planner_joints;
 }
 
 // --------------------------------------------------------

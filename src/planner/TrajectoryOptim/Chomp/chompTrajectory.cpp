@@ -43,10 +43,9 @@ MOVE3D_USING_SHARED_PTR_NAMESPACE
 //namespace chomp
 //{
 
-ChompTrajectory::ChompTrajectory(const API::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_):
-    robot_model_(T.getRobot())
-  //planning_group_(planning_group),
-  //discretization_(source_traj.discretization_)
+ChompTrajectory::ChompTrajectory(const API::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_)
+//planning_group_(planning_group),
+//discretization_(source_traj.discretization_)
 {
     //num_joints_ = robot_model_->getNumberOfJoints();
     num_joints_ = active_joints_.num_joints_;
@@ -103,9 +102,7 @@ ChompTrajectory::ChompTrajectory(const API::Trajectory& T, int diff_rule_length,
     }
 }
 
-ChompTrajectory::ChompTrajectory(const ChompTrajectory& source_traj, 
-                                 int diff_rule_length):
-    robot_model_(source_traj.robot_model_),
+ChompTrajectory::ChompTrajectory(const ChompTrajectory& source_traj,  int diff_rule_length) :
     discretization_(source_traj.discretization_)
 {
     num_joints_ = source_traj.num_joints_;

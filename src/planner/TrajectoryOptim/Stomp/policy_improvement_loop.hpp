@@ -116,6 +116,8 @@ private:
     bool readParametersSingleRollout();
     void resampleParameters();
 
+    void executeRollout(int r, int iteration_number);
+
     int policy_iteration_counter_;
     bool readPolicy(const int iteration_number);
     bool writePolicy(const int iteration_number, bool is_rollout = false, int rollout_id = 0);
@@ -127,7 +129,6 @@ private:
     void getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<confPtr_t>& traj);
     void addSingleRolloutsToDraw(const std::vector<Eigen::VectorXd>& rollout, int color);
     void addRolloutsToDraw(bool add_reused);
-
 };
 
 }

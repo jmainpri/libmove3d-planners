@@ -114,6 +114,7 @@ HumanPredictionSimulator::HumanPredictionSimulator( Robot* robot, Robot* human, 
     m_human_increment = 5;
     m_max_stomp_iter = 30;
     m_use_previous_trajectory = true;
+    m_executed_path = API::Trajectory(m_robot);
 }
 
 void HumanPredictionSimulator::loadHumanTrajectory( const motion_t& motion )
@@ -168,8 +169,7 @@ int HumanPredictionSimulator::classifyMotion( const motion_t& motion )
 
         for (int jn=0; jn<j; jn++)
         {
-            confPtr_t q = motion[jn].second;
-            setMatrixCol( matrix, jn, q );
+            setMatrixCol( matrix, jn, motion[jn].second );
         }
 
         likelihood = m_classifier->classify_motion( matrix );
@@ -281,9 +281,10 @@ void HumanPredictionSimulator::runStomp( int iter, int id_goal  )
     }
 
     traj_optim_set_use_iteration_limit(true);
+    traj_optim_set_iteration_limit( m_max_stomp_iter );
     traj_optim_runStomp(0);
 
-    m_paths[id_goal] = optimizer->getBestTraj();
+    m_paths[id_goal] = global_optimizer->getBestTraj();
 }
 
 int HumanPredictionSimulator::getBestPathId()
@@ -312,25 +313,17 @@ void HumanPredictionSimulator::execute(const API::Trajectory& path, bool to_end)
 
     confPtr_t q;
 
-    if( !to_end )
+    for( int i=0;
+         (!to_end) ?
+         ((i<m_robot_steps_per_exection) && (!PlanEnv->getBool(PlanParam::stopPlanner) )) :
+         (s<path.getRangeMax() && (!PlanEnv->getBool(PlanParam::stopPlanner)));
+         i++ )
     {
-        for( int i=0; (i<m_robot_steps_per_exection) && (!PlanEnv->getBool(PlanParam::stopPlanner) ); i++ )
-        {
-            q = path.configAtParam( s );
-            m_robot->setAndUpdate(*q);
-            g3d_draw_allwin_active();
-            usleep(25000);
-            s += m_robot_step;
-        }
-    }
-    else{
-        while( s<path.getRangeMax() && !PlanEnv->getBool(PlanParam::stopPlanner) )
-        {
-            m_robot->setAndUpdate(*path.configAtParam(s));
-            g3d_draw_allwin_active();
-            usleep(25000);
-            s += m_robot_step;
-        }
+        q = path.configAtParam(s);
+        m_robot->setAndUpdate(*q);
+        g3d_draw_allwin_active();
+        usleep(25000);
+        s += m_robot_step;
     }
 
     m_q_start = q;
@@ -363,12 +356,13 @@ void HumanPredictionSimulator::runVoxelOccupancy()
 
 void HumanPredictionSimulator::run()
 {
+
     m_robot_steps_per_exection = 20;
     m_robot_step = 0.005;
+    m_executed_path.clear();
+    m_best_path_id = -1;
 
     loadGoalConfig();
-
-    m_best_path_id = -1;
 
     for(int i=0;(!PlanEnv->getBool(PlanParam::stopPlanner)) && updateMotion();i++)
     {

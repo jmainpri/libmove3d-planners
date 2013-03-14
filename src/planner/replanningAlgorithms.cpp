@@ -719,11 +719,12 @@ void StompReplanner::run()
         PlanEnv->setBool(PlanParam::trajStompWithTimeLimit,true);
         PlanEnv->setDouble(PlanParam::trajStompTimeLimit, m_t_rep-0.3);
 
-        optimizer->setSource( newPortion.getBegin() );
+        global_optimizer->setSource( newPortion.getBegin() );
+
         traj_optim_runStompNoInit( m_idRun, newPortion );
 
         // Get the new trajectory and store to draw
-        API::Trajectory final_traj = optimizer->getBestTraj();
+        API::Trajectory final_traj = global_optimizer->getBestTraj();
         cout << "final_traj.getRangeMax() : " << final_traj.getRangeMax() << endl;
         global_rePlanningEnv->store_traj_to_draw( final_traj, 0 );
 
