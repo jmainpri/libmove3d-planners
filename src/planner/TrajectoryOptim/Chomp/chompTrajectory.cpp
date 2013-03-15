@@ -242,7 +242,7 @@ void ChompTrajectory::getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt
 
 void ChompTrajectory::print()
 {
-    cout << trajectory_ << endl;
+    cout << trajectory_.transpose() << endl;
 }
 
 // } // namespace chomp

@@ -1,5 +1,7 @@
 #include "run_parallel_stomp.hpp"
 
+#include "p3d/env.hpp"
+
 #include "planner/planEnvironment.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 
@@ -18,11 +20,13 @@ stompContext::stompContext(Robot* robot, const CollisionSpace* coll_space,  cons
     m_planner_joints = planner_joints;
     m_collision_points = collision_points;
 
+    m_parallel_robots.clear();
+
     m_runid = 0;
-    m_use_costspace = true;
+    m_use_costspace = ENV.getBool( Env::isCostSpace );
     m_use_iteration_limit = true;
-    m_max_iterations = 1000;
-    m_nb_points = 100;
+    m_max_iterations = 250;
+    m_nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
 }
 
 stompContext::~stompContext()
@@ -30,6 +34,11 @@ stompContext::~stompContext()
     delete m_chomptraj;
     delete m_chompplangroup;
     delete m_stompparams;
+}
+
+void stompContext::setParallelRobots( const std::vector<Robot*>& robots )
+{
+    m_parallel_robots = robots;
 }
 
 bool stompContext::initRun( API::Trajectory& T )
@@ -82,6 +91,8 @@ bool stompContext::initRun( API::Trajectory& T )
         m_stomp->setUseCostSpace( m_use_costspace );
 //    }
 
+    m_stomp->setRobotPool( m_parallel_robots );
+
     cout << "Optimizer created" << endl;
     return true;
 }
@@ -130,6 +141,27 @@ void stompRun::setPool(const std::vector<Robot*>& robots )
     }
 }
 
+bool stompRun::isRunning() const
+{
+    for( int i=0; i<int(m_is_thread_running.size()); i++ )
+    {
+        if( m_is_thread_running[i] )
+            return true;
+    }
+
+    return false;
+}
+
+void stompRun::setIsRunning( int id )
+{
+    m_is_thread_running[id] = true;
+}
+
+void stompRun::setRobotPool( int id, const std::vector<Robot*>& robots )
+{
+    m_stomps[id]->setParallelRobots( robots );
+}
+
 void stompRun::run( int id, API::Trajectory& T )
 {
     if( id >= int(m_stomps.size()) )
@@ -147,35 +179,16 @@ void stompRun::run( int id, API::Trajectory& T )
     m_is_thread_running[id] = false;
 }
 
-bool stompRun::isRunning() const
-{
-    for( int i=0; i<int(m_is_thread_running.size()); i++ )
-    {
-        if( m_is_thread_running[i] )
-            return true;
-    }
-
-    return false;
-}
-
-void stompRun::setIsRunning(int id)
-{
-    m_is_thread_running[id] = true;
-}
-
 //----------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------
-void srompRun_parallel()
+void srompRun_MultipleParallel()
 {
-//    Robot* robot = global_Project->getActiveScene()->getRobotByName("CylinderRob");
-
     std::vector<Robot*> robots;
-    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob0") );
     robots.push_back( global_Project->getActiveScene()->getRobotByName("rob1") );
     robots.push_back( global_Project->getActiveScene()->getRobotByName("rob2") );
     robots.push_back( global_Project->getActiveScene()->getRobotByName("rob3") );
-//    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob4") );
+    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob4") );
 //    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob5") );
 //    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob6") );
 //    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob7") );
@@ -183,18 +196,19 @@ void srompRun_parallel()
     traj_optim_initScenario();
     std::vector<int> planner_joints = traj_optim_get_planner_joints();
     std::vector<CollisionPoint> collision_points;
+
     stompRun* pool = new stompRun( NULL, planner_joints, collision_points );
     pool->setPool( robots );
 
 //    API::Trajectory T( robots[0] );
 //    T.push_back( robots[0]->getInitialPosition() );
 //    T.push_back( robots[0]->getGoTo() );
-//    pool.run( 0, T );
+//    pool->run( 0, T );
 
     std::vector<API::Trajectory> trajs;
     for( int i=0;i<int(robots.size()); i++)
     {
-        trajs.push_back(API::Trajectory( robots[i] ));
+        trajs.push_back( API::Trajectory( robots[i] ) );
         trajs.back().push_back( robots[i]->getInitialPosition() );
         trajs.back().push_back( robots[i]->getGoTo() );
     }
@@ -211,4 +225,33 @@ void srompRun_parallel()
 
     cout << "Pool of stomps has ended" << endl;
     delete pool;
+}
+
+void srompRun_OneParallel()
+{
+    std::vector<Robot*> robots;
+    robots.push_back( global_Project->getActiveScene()->getRobotByNameContaining("ROBOT") );
+
+    traj_optim_initScenario();
+    std::vector<int> planner_joints = traj_optim_get_planner_joints();
+    const CollisionSpace* coll_space = traj_optim_get_collision_space();
+    std::vector<CollisionPoint> collision_points = traj_get_collision_points();
+
+    stompRun* pool = new stompRun( coll_space, planner_joints, collision_points );
+    pool->setPool( robots );
+
+    robots.clear();
+    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob1") );
+    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob2") );
+    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob3") );
+    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob4") );
+    pool->setRobotPool( 0, robots );
+
+    robots.clear();
+    robots.push_back( global_Project->getActiveScene()->getRobotByNameContaining("ROBOT") );
+
+    API::Trajectory T( robots[0] );
+    T.push_back( robots[0]->getInitialPosition() );
+    T.push_back( robots[0]->getGoTo() );
+    pool->run( 0, T );
 }

@@ -2,8 +2,67 @@
 
 #include "cost_space.hpp"
 
-costComputation::costComputation()
+costComputation::costComputation(Robot* robot,
+                                 const CollisionSpace *collision_space,
+                                 const ChompPlanningGroup* planning_group,
+                                 std::vector< ChompCost > joint_costs,
+                                 ChompTrajectory group_trajectory,
+                                 double obstacle_weight,
+                                 bool use_costspace)
 {
+    robot_model_ = robot;
+
+    cout << "new cost computation with robot : " << robot_model_->getName() << endl;
+
+    collision_space_ = collision_space;
+    planning_group_ = planning_group;
+    joint_costs_ = joint_costs;
+
+    group_trajectory_ = group_trajectory;
+
+    obstacle_weight_ = obstacle_weight;
+    use_costspace_ = use_costspace;
+    hack_tweek_ = 1.0;
+
+    num_vars_free_ = group_trajectory_.getNumFreePoints();
+    num_vars_all_ = group_trajectory_.getNumPoints();
+    num_joints_ = group_trajectory_.getNumJoints();
+    free_vars_start_ = group_trajectory_.getStartIndex();
+    free_vars_end_ = group_trajectory_.getEndIndex();
+    num_collision_points_ = planning_group_->collision_points_.size();
+
+    joint_axis_eigen_.resize(num_vars_all_);
+    joint_pos_eigen_.resize(num_vars_all_);
+    collision_point_pos_eigen_.resize(num_vars_all_);
+    collision_point_vel_eigen_.resize(num_vars_all_);
+    collision_point_acc_eigen_.resize(num_vars_all_);
+
+    segment_frames_.resize( num_vars_all_ );
+
+    state_is_in_collision_.resize(num_vars_all_);
+    general_cost_potential_.resize(num_vars_all_);
+
+    for(int i=0; i<num_vars_all_;i++)
+    {
+        segment_frames_[i].resize(planning_group_->num_joints_);
+        joint_pos_eigen_[i].resize(planning_group_->num_joints_);
+    }
+
+    if (num_collision_points_ > 0)
+    {
+        collision_point_potential_ = Eigen::MatrixXd::Zero(num_vars_all_, num_collision_points_);
+        collision_point_vel_mag_ = Eigen::MatrixXd::Zero(num_vars_all_, num_collision_points_);
+        collision_point_potential_gradient_.resize(num_vars_all_, std::vector<Eigen::Vector3d>(num_collision_points_));
+
+        for(int i=0; i<num_vars_all_;i++)
+        {
+            joint_axis_eigen_[i].resize(num_collision_points_);
+            joint_pos_eigen_[i].resize(num_collision_points_);
+            collision_point_pos_eigen_[i].resize(num_collision_points_);
+            collision_point_vel_eigen_[i].resize(num_collision_points_);
+            collision_point_acc_eigen_[i].resize(num_collision_points_);
+        }
+    }
 }
 
 bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
@@ -96,7 +155,7 @@ bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
     return succes_joint_limits;
 }
 
-void costComputation::getFrames(int segment, const Eigen::VectorXd& joint_array, Configuration& q )
+void costComputation::getFrames( int segment, const Eigen::VectorXd& joint_array, Configuration& q )
 {
     q = *robot_model_->getCurrentPos();
 
@@ -119,19 +178,19 @@ void costComputation::getFrames(int segment, const Eigen::VectorXd& joint_array,
 
     robot_model_->setAndUpdate( q );
 
-    // Get the collision point position
-    for(int j=0; j<planning_group_->num_joints_;j++)
+    if( collision_space_ )
     {
-        Eigen::Transform3d t = joints[j].move3d_joint_->getMatrixPos();
-
-        std::vector<double> vect;
-        eigenTransformToStdVector(t,vect);
-
-        segment_frames_[segment][j]  = vect;
-        joint_pos_eigen_[segment][j] = t.translation();
-
-        if (collision_space_)
+        // Get the collision point position
+        for(int j=0; j<planning_group_->num_joints_;j++)
         {
+            Eigen::Transform3d t = robot_model_->getJoint( joints[j].move3d_joint_->getId() )->getMatrixPos();
+
+            std::vector<double> vect;
+            eigenTransformToStdVector(t,vect);
+
+            segment_frames_[segment][j]  = vect;
+            joint_pos_eigen_[segment][j] = t.translation();
+
             joint_axis_eigen_[segment][j](0) = t(0,2);
             joint_axis_eigen_[segment][j](1) = t(1,2);
             joint_axis_eigen_[segment][j](2) = t(2,2);
@@ -145,9 +204,7 @@ bool costComputation::getConfigObstacleCost(int segment, int coll_point, Configu
 
     if( collision_space_ /*&& (use_costspace_==false)*/ )
     {
-        int i= segment;
-        int j= coll_point;
-        double distance;
+        int i= segment; int j= coll_point; double distance;
 
         planning_group_->collision_points_[j].getTransformedPosition( segment_frames_[i], collision_point_pos_eigen_[i][j] );
 
@@ -181,7 +238,7 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
 
     Eigen::VectorXd joint_array;
 
-    Configuration q(robot_model_);
+    Configuration q( robot_model_ );
 
     // for each point in the trajectory
     for (int i=start; i<=end; ++i)
@@ -195,6 +252,7 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
         if( use_costspace_ )
         {
             general_cost_potential_[i] = global_costSpace->cost(q);
+            // cout << "compute cost : " << general_cost_potential_[i] << endl;
         }
 
         if( collision_space_ )
@@ -226,23 +284,26 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
         }
     }
 
-    // now, get the vel and acc for each collision point (using finite differencing)
-    for (int i=free_vars_start_; i<=free_vars_end_; i++)
+    if( collision_space_ )
     {
-        for (int j=0; j<num_collision_points_; j++)
+        // now, get the vel and acc for each collision point (using finite differencing)
+        for (int i=free_vars_start_; i<=free_vars_end_; i++)
         {
-            collision_point_vel_eigen_[i][j] = Eigen::Vector3d::Zero();
-            collision_point_acc_eigen_[i][j] = Eigen::Vector3d::Zero();
-
-            for (int k=-DIFF_RULE_LENGTH/2; k<=DIFF_RULE_LENGTH/2; k++)
+            for (int j=0; j<num_collision_points_; j++)
             {
-                collision_point_vel_eigen_[i][j] += (invTime * DIFF_RULES[0][k+DIFF_RULE_LENGTH/2]) *
-                        collision_point_pos_eigen_[i+k][j];
-                collision_point_acc_eigen_[i][j] += (invTimeSq * DIFF_RULES[1][k+DIFF_RULE_LENGTH/2]) *
-                        collision_point_pos_eigen_[i+k][j];
+                collision_point_vel_eigen_[i][j] = Eigen::Vector3d::Zero();
+                collision_point_acc_eigen_[i][j] = Eigen::Vector3d::Zero();
+
+                for (int k=-DIFF_RULE_LENGTH/2; k<=DIFF_RULE_LENGTH/2; k++)
+                {
+                    collision_point_vel_eigen_[i][j] += (invTime * DIFF_RULES[0][k+DIFF_RULE_LENGTH/2]) *
+                            collision_point_pos_eigen_[i+k][j];
+                    collision_point_acc_eigen_[i][j] += (invTimeSq * DIFF_RULES[1][k+DIFF_RULE_LENGTH/2]) *
+                            collision_point_pos_eigen_[i+k][j];
+                }
+                // get the norm of the velocity:
+                collision_point_vel_mag_(i,j) = collision_point_vel_eigen_[i][j].norm();
             }
-            // get the norm of the velocity:
-            collision_point_vel_mag_(i,j) = collision_point_vel_eigen_[i][j].norm();
         }
     }
 
@@ -255,13 +316,13 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::V
     for (int d=0; d<num_joints_; ++d) {
         group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
     }
+//    group_trajectory_.print();
 
     // respect joint limits:
-    handleJointLimits( group_trajectory_ );
+    succeded_joint_limits_ = handleJointLimits( group_trajectory_ );
 
     // do forward kinematics:
     performForwardKinematics( group_trajectory_ );
-
 
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
@@ -284,6 +345,8 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::V
 
         costs(i-free_vars_start_) = obstacle_weight_ * ( state_collision_cost + state_general_cost );
     }
+
+    // cout << costs.transpose() << endl;
 
     // copy the parameters into group_trajectory_:
     for (int d=0; d<num_joints_; ++d) {

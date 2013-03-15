@@ -14,9 +14,17 @@
 class costComputation
 {
 public:
-    costComputation();
+    costComputation(Robot* robot,
+                    const CollisionSpace *collision_space,
+                    const ChompPlanningGroup* planning_group,
+                    std::vector< ChompCost > joint_costs,
+                    ChompTrajectory group_trajectory,
+                    double obstacle_weight,
+                    bool use_costspace );
 
     bool getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs );
+
+    bool getJointLimitViolationSuccess() const { return succeded_joint_limits_; }
 
 private:
     Robot* robot_model_;
@@ -31,6 +39,8 @@ private:
     ChompTrajectory group_trajectory_;
 
     bool is_collision_free_;
+    bool succeded_joint_limits_;
+
     bool use_costspace_;
     std::vector<int> state_is_in_collision_;
     std::vector< std::vector<std::vector<double> > > segment_frames_;

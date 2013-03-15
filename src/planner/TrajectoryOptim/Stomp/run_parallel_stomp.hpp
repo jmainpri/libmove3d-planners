@@ -22,6 +22,8 @@ public:
     bool initRun( API::Trajectory& T );
     void run();
 
+    void setParallelRobots( const std::vector<Robot*>& robots );
+
 private:
 
     Robot*                                  m_robot;
@@ -36,6 +38,8 @@ private:
     bool                                    m_use_costspace;
     int                                     m_runid;
 
+    std::vector<Robot*>                     m_parallel_robots;
+
     std::vector<CollisionPoint>             m_collision_points;
     std::vector<int>                        m_planner_joints;
     const CollisionSpace*                   m_coll_space;
@@ -49,8 +53,12 @@ public:
 
     void setPool( const std::vector<Robot*>& robots );
     void run( int id, API::Trajectory &T );
+
     bool isRunning() const;
-    void setIsRunning(int id);
+
+    void setIsRunning( int id );
+    void setRobotPool( int id, const std::vector<Robot*>& robots );
+
 
 private:
 
@@ -64,6 +72,8 @@ private:
     std::vector<CollisionPoint>              m_collision_points;
 };
 
-void srompRun_parallel();
+void srompRun_MultipleParallel();
+
+void srompRun_OneParallel();
 
 #endif // PARALLEL_STOMP_HPP

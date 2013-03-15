@@ -13,6 +13,8 @@
 
 #include "API/Trajectory/trajectory.hpp"
 
+#include "collision_space/CollisionSpace.hpp"
+
 bool traj_optim_init_mlp_cntrts_and_fix_joints();
 bool traj_optim_switch_cartesian_mode(bool cartesian);
 
@@ -33,6 +35,8 @@ void traj_optim_set_discretize( bool discretize );
 
 bool traj_optim_initScenario();
 std::vector<int> traj_optim_get_planner_joints();
+const CollisionSpace* traj_optim_get_collision_space();
+std::vector<CollisionPoint> traj_get_collision_points();
 
 void traj_optim_draw_collision_points();
 bool traj_optim_generate_softMotion();

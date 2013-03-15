@@ -1470,6 +1470,16 @@ std::vector<int> traj_optim_get_planner_joints()
     return m_planner_joints;
 }
 
+const CollisionSpace* traj_optim_get_collision_space()
+{
+    return m_coll_space;
+}
+
+std::vector<CollisionPoint> traj_get_collision_points()
+{
+    return m_collision_points;
+}
+
 // --------------------------------------------------------
 // Draw Functions
 // --------------------------------------------------------

@@ -46,6 +46,8 @@
 #include "task.hpp"
 #include "policy_improvement.hpp"
 #include "API/ConfigSpace/configuration.hpp"
+
+#include <boost/thread/mutex.hpp>
 //#include <policy_improvement_loop/PolicyImprovementStatistics.h>
 
 namespace stomp_motion_planner
@@ -71,6 +73,7 @@ public:
   
     // Reset all extra rollouts
     void resetReusedRollouts();
+
   
 private:
 
@@ -104,6 +107,11 @@ private:
     std::vector<double> noise_stddev_;
     std::vector<double> noise_decay_;
 
+    boost::mutex mtx_end_;
+    boost::mutex mtx_set_end_;
+    std::vector<bool> parrallel_is_rollout_running_;
+    std::vector<Eigen::VectorXd> parallel_cost_;
+
     double control_cost_weight_;
     double state_cost_weight_;
 
@@ -116,6 +124,9 @@ private:
     bool readParametersSingleRollout();
     void resampleParameters();
 
+    bool setParallelRolloutsEnd(int r);
+    void parallelRollout(int i, int iteration_number);
+
     void executeRollout(int r, int iteration_number);
 
     int policy_iteration_counter_;
@@ -123,7 +134,7 @@ private:
     bool writePolicy(const int iteration_number, bool is_rollout = false, int rollout_id = 0);
     //bool writePolicyImprovementStatistics(const policy_improvement_loop::PolicyImprovementStatistics& stats_msg);
   
-  void addStraightLineRollout(std::vector<std::vector<Eigen::VectorXd> >& extra_rollout,
+    void addStraightLineRollout(std::vector<std::vector<Eigen::VectorXd> >& extra_rollout,
                               std::vector<Eigen::VectorXd>& extra_rollout_cost);
     void parametersToVector(std::vector<Eigen::VectorXd>& rollout);
     void getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<confPtr_t>& traj);

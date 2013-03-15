@@ -421,8 +421,6 @@ void StompOptimizer::doChompOptimization()
 //void StompOptimizer::optimize()
 void StompOptimizer::runDeformation( int nbIteration , int idRun )
 {
-//    use_costspace_ = false;
-
     ChronoTimeOfDayOn();
     
     timeval tim;
@@ -443,7 +441,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
     traj_convergence_with_time.clear();
     
     // Set this variable to false to cancel printing
-    const bool print_cost=false;
+    const bool print_cost=true;
 
     int ith_save = 1;
     
@@ -686,7 +684,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
     
     best_traj_ = API::Trajectory( robot_model_ );
     setGroupTrajectoryToApiTraj( best_traj_ );
-    //best_traj.replaceP3dTraj();
+    best_traj_.replaceP3dTraj();
     
     printf("Collision free success iteration = %d (time : %f)\n",
            stomp_statistics_->collision_success_iteration, stomp_statistics_->success_time);
@@ -706,6 +704,31 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
         s << "StompOptim_" << setfill('0') << setw(4) << idRun ;
         saveOptimToFile( s.str() );
     }
+}
+
+//-------------------------------------------------------------------
+//-------------------------------------------------------------------
+//-------------------------------------------------------------------
+
+void StompOptimizer::setRobotPool( const std::vector<Robot*>& robots )
+{
+    m_compute_fk.clear();
+
+    for( int i=0; i<int(robots.size()); i++)
+    {
+        m_compute_fk.push_back(new costComputation(robots[i], collision_space_, planning_group_, joint_costs_,
+                                                   group_trajectory_,
+                                                   stomp_parameters_->getObstacleCostWeight(),
+                                                   use_costspace_));
+    }
+}
+
+/**
+  * get the cost conputer
+  */
+const vector<costComputation*>& StompOptimizer::getCostComputers()
+{
+    return m_compute_fk;
 }
 
 //-------------------------------------------------------------------

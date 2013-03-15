@@ -122,7 +122,7 @@ unsigned int Robot::getNumberOfJoints()
     return m_Joints.size();
 }
 
-Joint* Robot::getJoint(unsigned int i)
+Joint* Robot::getJoint( unsigned int i )
 {
   if (m_Joints.empty() || i > m_Joints.size()-1 ) {
     return NULL;

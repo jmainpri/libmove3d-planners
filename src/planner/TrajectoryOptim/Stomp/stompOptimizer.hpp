@@ -53,6 +53,7 @@
 #include "covariant_trajectory_policy.hpp"
 #include "policy_improvement_loop.hpp"
 #include "stompStatistics.hpp"
+#include "cost_computation.hpp"
 
 class ConfGenerator;
 
@@ -117,6 +118,17 @@ public:
    * @param Time in second
    */
     void setTimeLimit(double time) { time_limit_ = time; }
+
+    /**
+      * set the robots for parallel
+      */
+    void setRobotPool( const std::vector<Robot*>& robots );
+
+    /**
+      * get the cost conputer
+      */
+    const std::vector<costComputation*>& getCostComputers();
+
 
     /**
    * Set the passive Dofs
@@ -293,6 +305,8 @@ private:
     bool use_iteration_limit_;
 
     std::vector<confPtr_t> passive_dofs_;
+
+    std::vector<costComputation*> m_compute_fk;
 
     ChompTrajectory *full_trajectory_;
     const ChompPlanningGroup *planning_group_;

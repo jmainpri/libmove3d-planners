@@ -71,6 +71,7 @@ namespace stomp_motion_planner
 
     PolicyImprovementLoop::~PolicyImprovementLoop()
     {
+
     }
 
     bool PolicyImprovementLoop::initialize(MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Task> task, bool singleRollout )
@@ -109,11 +110,15 @@ namespace stomp_motion_planner
         policy_improvement_.initialize( num_rollouts_, num_time_steps_, num_reused_rollouts_, num_extra_rollouts, policy_, task_, use_cumulative_costs_);
 
         tmp_rollout_cost_ = Eigen::VectorXd::Zero(num_time_steps_);
-        rollout_costs_ = Eigen::MatrixXd::Zero(num_rollouts_, num_time_steps_);
+        rollout_costs_ = Eigen::MatrixXd::Zero( num_rollouts_, num_time_steps_ );
 
         reused_rollouts_.clear();
 
         policy_iteration_counter_ = 0;
+
+        int nb_parallel_rollouts = static_pointer_cast<StompOptimizer>(task_)->getCostComputers().size();
+        parallel_cost_.resize( nb_parallel_rollouts, Eigen::VectorXd::Zero(num_time_steps_) );
+        parrallel_is_rollout_running_.resize( nb_parallel_rollouts );
 
         printf("num_rollouts_ : %d, num_reused_rollouts_ : %d\n", num_rollouts_, num_reused_rollouts_);
         return (initialized_ = true);
@@ -248,21 +253,57 @@ namespace stomp_motion_planner
 
     //------------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------
+    bool PolicyImprovementLoop::setParallelRolloutsEnd(int r)
+    {
+        mtx_set_end_.lock();
+        parrallel_is_rollout_running_[r] = false;
+
+        for( int i=0; i<int(parrallel_is_rollout_running_.size()); i++)
+        {
+            if( parrallel_is_rollout_running_[i] )
+            {
+                mtx_set_end_.unlock();
+                return true;
+            }
+        }
+
+        mtx_end_.unlock();
+        mtx_set_end_.unlock();
+        return false;
+    }
+
+    void PolicyImprovementLoop::parallelRollout(int r, int iteration_number )
+    {
+        costComputation* traj_evaluation  = static_pointer_cast<StompOptimizer>(task_)->getCostComputers()[r];
+
+        traj_evaluation->getCost( rollouts_[r], parallel_cost_[r] );
+        rollout_costs_.row(r) = parallel_cost_[r].transpose();
+        policy_improvement_.setRolloutOutOfBounds( r, !traj_evaluation->getJointLimitViolationSuccess() );
+
+        setParallelRolloutsEnd( r );
+    }
+
     void PolicyImprovementLoop::executeRollout(int r, int iteration_number )
     {
-        shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
 
-        task_->execute( rollouts_[r], tmp_rollout_cost_, iteration_number);
-
-        rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
-        //printf("Rollout %d, cost = %lf\n", r+1, tmp_rollout_cost_.sum());
-        // cout << "Rollout " << r+1 << " , cost = " << tmp_rollout_cost_.transpose() << endl;
-
-        policy_improvement_.setRolloutOutOfBounds( r, !optimizer->getJointLimitViolationSuccess() );
-
-        if( use_annealing_ )
+        if( r < parrallel_is_rollout_running_.size()  )
         {
-            limits_violations_ += optimizer->getJointLimitViolations();
+            parrallel_is_rollout_running_[r] = true;
+            //cout << "spawns thread : " << r << endl;
+            boost::thread( &PolicyImprovementLoop::parallelRollout, this, r, iteration_number );
+        }
+        else
+        {
+            shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
+
+            optimizer->execute( rollouts_[r], tmp_rollout_cost_, iteration_number);
+            rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
+            policy_improvement_.setRolloutOutOfBounds( r, !optimizer->getJointLimitViolationSuccess() );
+
+            if( use_annealing_ )
+            {
+                limits_violations_ += optimizer->getJointLimitViolations();
+            }
         }
     }
 
@@ -273,7 +314,7 @@ namespace stomp_motion_planner
         assert(initialized_);
         policy_iteration_counter_++;
 
-        if (write_to_file_)
+        if( write_to_file_ )
         {
             // load new policy if neccessary
             readPolicy(iteration_number);
@@ -300,12 +341,21 @@ namespace stomp_motion_planner
         if ( ENV.getBool(Env::drawTrajVector) )
             addRolloutsToDraw(get_reused_ones);
 
-//        std::vector<boost::thread*> threads;
+        if( !parrallel_is_rollout_running_.empty() )
+            mtx_end_.lock();
 
         for (int r=0; r<int(rollouts_.size()); ++r)
         {
             executeRollout ( r, iteration_number );
-//            threads.push_back( new boost::thread( &PolicyImprovementLoop::executeRollout, this, r, iteration_number ) );
+        }
+
+        if( !parrallel_is_rollout_running_.empty() )
+        {
+            mtx_end_.lock();
+            mtx_end_.unlock();
+
+            //cout << rollout_costs_ << endl;
+            //cout << "end parallel computing" << endl;
         }
 
         if( use_annealing_ )
