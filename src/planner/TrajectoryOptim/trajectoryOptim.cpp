@@ -1475,7 +1475,7 @@ const CollisionSpace* traj_optim_get_collision_space()
     return m_coll_space;
 }
 
-std::vector<CollisionPoint> traj_get_collision_points()
+std::vector<CollisionPoint> traj_optim_get_collision_points()
 {
     return m_collision_points;
 }

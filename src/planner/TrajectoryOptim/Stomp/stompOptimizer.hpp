@@ -420,6 +420,8 @@ private:
     void animateEndeffector(bool print_cost = false);
     void animateTrajectoryPolicy();
     void visualizeState(int index);
+    void saveEndeffectorTraj();
+
     double getTrajectoryCost();
     double getSmoothnessCost();
     double getCollisionCost();

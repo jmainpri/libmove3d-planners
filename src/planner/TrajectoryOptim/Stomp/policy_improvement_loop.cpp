@@ -119,6 +119,7 @@ namespace stomp_motion_planner
         int nb_parallel_rollouts = static_pointer_cast<StompOptimizer>(task_)->getCostComputers().size();
         parallel_cost_.resize( nb_parallel_rollouts, Eigen::VectorXd::Zero(num_time_steps_) );
         parrallel_is_rollout_running_.resize( nb_parallel_rollouts );
+        threads_.resize( nb_parallel_rollouts );
 
         printf("num_rollouts_ : %d, num_reused_rollouts_ : %d\n", num_rollouts_, num_reused_rollouts_);
         return (initialized_ = true);
@@ -290,7 +291,7 @@ namespace stomp_motion_planner
         {
             parrallel_is_rollout_running_[r] = true;
             //cout << "spawns thread : " << r << endl;
-            boost::thread( &PolicyImprovementLoop::parallelRollout, this, r, iteration_number );
+            threads_[r] = new boost::thread( &PolicyImprovementLoop::parallelRollout, this, r, iteration_number );
         }
         else
         {
@@ -353,6 +354,12 @@ namespace stomp_motion_planner
         {
             mtx_end_.lock();
             mtx_end_.unlock();
+
+            for(int r=0;r<int(threads_.size());r++)
+            {
+                threads_[r]->join();
+                delete threads_[r];
+            }
 
             //cout << rollout_costs_ << endl;
             //cout << "end parallel computing" << endl;

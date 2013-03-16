@@ -20,6 +20,7 @@
 #include "planner/planEnvironment.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
+#include "planner/TrajectoryOptim/Stomp/run_parallel_stomp.hpp"
 
 #include "API/project.hpp"
 #include "API/Grids/gridsAPI.hpp"
@@ -114,6 +115,39 @@ void g3d_draw_eigen_box(	const Eigen::Vector3d& v1, const Eigen::Vector3d& v2, c
     glPopAttrib();
 }
 //#endif
+
+void g3d_draw_multistomp_lines()
+{
+    std::map<Robot*, std::vector<Eigen::Vector3d> >::const_iterator itr;
+//    cout << "draw multiple stomp lines" << endl;
+
+    for(itr = global_MultiStomplinesToDraw.begin(); itr != global_MultiStomplinesToDraw.end(); ++itr)
+    {
+        double color[4];
+        color[0] = 0.8;
+        color[1] = 1.0;
+        color[2] = 0.2;
+        color[3] = 1.0;
+
+        for( int i=0; i<int(itr->second.size()); i++)
+        {
+            Eigen::Vector3d pos = itr->second[i];
+
+            g3d_set_color(Any,color);
+            //g3d_drawSphere(m_lastLine[i+0][0],m_lastLine[i+0][1],m_lastLine[i+0][2],0.01);
+            g3d_draw_solid_sphere(pos[0],pos[1],pos[2],0.02,10);
+
+            //g3d_drawOneLine(m_lastLine[i+0][0],m_lastLine[i+0][1],m_lastLine[i+0][2],
+            //                m_lastLine[i+1][0],m_lastLine[i+1][1],m_lastLine[i+1][2],Any,color);
+
+//            if( i == int(m_lastLine.size()-2))
+//            {
+//                //g3d_drawSphere(m_lastLine[i+1][0],m_lastLine[i+1][1],m_lastLine[i+1][2],0.01);
+//                g3d_draw_solid_sphere(m_lastLine[i+1][0],m_lastLine[i+1][1],m_lastLine[i+1][2],0.01,10);
+//            }
+        }
+    }
+}
 
 /*
  * Draws the things related to cost spaces
@@ -432,6 +466,9 @@ void drawSlice(int opengl_context);
 //#ifdef HRI_COSTSPACE
 void g3d_draw_hrics(int opengl_context)
 {
+    if(PlanEnv->getBool(PlanParam::drawParallelTraj))
+        g3d_draw_multistomp_lines();
+
     if(GestEnv->getBool(GestParam::draw_human_sampled_points) && global_workspaceOccupancy )
         global_workspaceOccupancy->drawSampledPoints();
 

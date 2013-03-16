@@ -47,6 +47,7 @@
 #include "policy_improvement.hpp"
 #include "API/ConfigSpace/configuration.hpp"
 
+#include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 //#include <policy_improvement_loop/PolicyImprovementStatistics.h>
 
@@ -111,6 +112,7 @@ private:
     boost::mutex mtx_set_end_;
     std::vector<bool> parrallel_is_rollout_running_;
     std::vector<Eigen::VectorXd> parallel_cost_;
+    std::vector<boost::thread*> threads_;
 
     double control_cost_weight_;
     double state_cost_weight_;

@@ -61,7 +61,7 @@ public:
     /**
      * Get the p3d abs pos
      */
-    p3d_matrix4*		getAbsPos();
+    pp3d_matrix4		getAbsPos();
 
     /**
      * Random shoot the joint

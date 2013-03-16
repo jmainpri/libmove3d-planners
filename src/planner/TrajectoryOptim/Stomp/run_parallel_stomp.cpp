@@ -9,6 +9,9 @@
 
 #include <boost/thread/thread.hpp>
 
+stompRun* global_stompRun = NULL;
+std::map< Robot*, std::vector<Eigen::Vector3d> > global_MultiStomplinesToDraw;
+
 stompContext::stompContext(Robot* robot, const CollisionSpace* coll_space,  const std::vector<int>& planner_joints, const std::vector<CollisionPoint>& collision_points )
 {
     m_chomptraj = NULL;
@@ -24,8 +27,8 @@ stompContext::stompContext(Robot* robot, const CollisionSpace* coll_space,  cons
 
     m_runid = 0;
     m_use_costspace = ENV.getBool( Env::isCostSpace );
-    m_use_iteration_limit = true;
-    m_max_iterations = 250;
+    m_use_iteration_limit = PlanEnv->getBool( PlanParam::trajStompWithIterLimit );
+    m_max_iterations = PlanEnv->getInt( PlanParam::stompMaxIteration );
     m_nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
 }
 
@@ -49,7 +52,11 @@ bool stompContext::initRun( API::Trajectory& T )
         return false;
     }
 
-    T.cutTrajInSmallLP( m_nb_points );
+    if( !T.cutTrajInSmallLP( m_nb_points ) )
+    {
+        cout << "Error in cutTrajInSmallLP" << endl;
+        return false;
+    }
 
     cout << "m_nb_points : " << m_nb_points << " , nb of paths : " << T.getNbOfPaths() << endl;
 
@@ -141,25 +148,49 @@ void stompRun::setPool(const std::vector<Robot*>& robots )
     }
 }
 
-bool stompRun::isRunning() const
+bool stompRun::setParallelStompEnd(int id)
 {
-    for( int i=0; i<int(m_is_thread_running.size()); i++ )
+    if( m_is_thread_running.size() == 1 )
     {
-        if( m_is_thread_running[i] )
-            return true;
+        return m_is_thread_running[id];
     }
 
+    m_mtx_set_end.lock();
+    m_is_thread_running[id] = false;
+
+    for( int i=0; i<int(m_is_thread_running.size()); i++)
+    {
+        if( m_is_thread_running[i] )
+        {
+            m_mtx_set_end.unlock();
+            return true;
+        }
+    }
+
+    m_mtx_multi_end.unlock();
+    m_mtx_set_end.unlock();
     return false;
 }
 
-void stompRun::setIsRunning( int id )
+void stompRun::start()
 {
-    m_is_thread_running[id] = true;
+    m_mtx_multi_end.lock();
+}
+
+void stompRun::isRunning()
+{
+     m_mtx_multi_end.lock();
+     m_mtx_multi_end.unlock();
 }
 
 void stompRun::setRobotPool( int id, const std::vector<Robot*>& robots )
 {
     m_stomps[id]->setParallelRobots( robots );
+}
+
+API::Trajectory stompRun::getBestTrajectory( int id )
+{
+    return m_stomps[id]->getBestTrajectory();
 }
 
 void stompRun::run( int id, API::Trajectory& T )
@@ -170,13 +201,19 @@ void stompRun::run( int id, API::Trajectory& T )
         return;
     }
 
-    if( m_stomps[id]->initRun( T ) )
+    // impossible to parallize the localpath class
+    m_mtx_set_end.lock();
+    bool succeed = m_stomps[id]->initRun( T );
+    m_mtx_set_end.unlock();
+
+    if( succeed )
     {
+        m_is_thread_running[id] = true;
         m_stomps[id]->run();
     }
 
+    setParallelStompEnd( id );
     cout << "end running thread : " << id << endl;
-    m_is_thread_running[id] = false;
 }
 
 //----------------------------------------------------------------------------------
@@ -215,16 +252,22 @@ void srompRun_MultipleParallel()
 
     cout << "spawns: " <<  robots.size() << " threads" << endl;
 
+    global_stompRun = pool;
+
+    pool->start();
+
     for( int i=0;i<int(robots.size()); i++)
     {
-        pool->setIsRunning(i);
         boost::thread( &stompRun::run, pool, i, trajs[i] );
+        global_MultiStomplinesToDraw[robots[i]].clear();
+        robots[i]->getRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
     }
 
-    while( pool->isRunning() ) { sleep(1); }
+    pool->isRunning();
 
     cout << "Pool of stomps has ended" << endl;
     delete pool;
+    global_stompRun = NULL;
 }
 
 void srompRun_OneParallel()
@@ -235,7 +278,7 @@ void srompRun_OneParallel()
     traj_optim_initScenario();
     std::vector<int> planner_joints = traj_optim_get_planner_joints();
     const CollisionSpace* coll_space = traj_optim_get_collision_space();
-    std::vector<CollisionPoint> collision_points = traj_get_collision_points();
+    std::vector<CollisionPoint> collision_points = traj_optim_get_collision_points();
 
     stompRun* pool = new stompRun( coll_space, planner_joints, collision_points );
     pool->setPool( robots );
@@ -253,5 +296,6 @@ void srompRun_OneParallel()
     API::Trajectory T( robots[0] );
     T.push_back( robots[0]->getInitialPosition() );
     T.push_back( robots[0]->getGoTo() );
+
     pool->run( 0, T );
 }

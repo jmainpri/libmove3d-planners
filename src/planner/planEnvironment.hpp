@@ -58,10 +58,14 @@ namespace PlanParam
             trajSaveCost,
             trajCostRecompute,
             trajComputeCollision,
+
+            // Stomp
             trajStompWithRRT,
             trajStompComputeColl,
             trajStompWithTimeLimit,
+            trajStompWithIterLimit,
             trajStompMultiplyM,
+
             trajBiasOptim,
             trajMoveHuman,
             trajUseOtp,
@@ -92,6 +96,7 @@ namespace PlanParam
 
 
             // Drawing (gl) stuff
+            drawParallelTraj,
             drawColorConfig,
             drawOccupVoxels,
             drawSampledPoints,
@@ -147,6 +152,7 @@ namespace PlanParam
           
             // Stomp
             stompDrawIteration,
+            stompMaxIteration,
           
             // Object TransfertPoint variable
             env_maxIter,

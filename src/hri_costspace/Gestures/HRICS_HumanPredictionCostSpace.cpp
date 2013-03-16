@@ -41,7 +41,9 @@ HumanPredictionCostSpace::~HumanPredictionCostSpace()
 
 double HumanPredictionCostSpace::getCost(Configuration& q)
 {
-    m_robot->setAndUpdate(q); // TODO remove this when necessary
+    Robot* robot = q.getRobot();
+
+    robot->setAndUpdate(q); // TODO remove this when necessary
 
     double cost = 0.0;
 
@@ -55,7 +57,7 @@ double HumanPredictionCostSpace::getCost(Configuration& q)
         if( obj )
         {
             //cout << "compute cost for joint " << jnt->getName() << endl;
-            Eigen::Transform3d T = jnt->getMatrixPos();
+            Eigen::Transform3d T = robot->getJoint( m_active_joints[i] )->getMatrixPos();
             PointCloud& pc = m_surface_sampler->getPointCloud( obj );
 
             for( int j=0; j<int(pc.size()); j++ )
@@ -67,21 +69,22 @@ double HumanPredictionCostSpace::getCost(Configuration& q)
         }
     }
 
+    //cout << "cost : " << cost << endl;
     //cout << "occupancy computed for " << nb_points << endl;
     //cout << "HumanPredictionCostSpace cost : " << cost << endl;
-
     return cost;
 }
 
 double HumanPredictionCostSpace::getCostFromActiveJoints(Configuration& q)
 {
-//    m_robot->setAndUpdate(q);
+     Robot* robot = q.getRobot();
+//    robot->setAndUpdate(q);
 
     double cost=0.0;
 
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
-        cost += 10*m_ws_occupancy->getOccupancyCombination( m_robot->getJoint( m_active_joints[i] )->getVectorPos() );
+        cost += 10*m_ws_occupancy->getOccupancyCombination( robot->getJoint( m_active_joints[i] )->getVectorPos() );
     }
 
     return cost;
