@@ -24,6 +24,8 @@ costComputation::costComputation(Robot* robot,
     use_costspace_ = use_costspace;
     hack_tweek_ = 1.0;
 
+    iteration_ = 0;
+
     num_vars_free_ = group_trajectory_.getNumFreePoints();
     num_vars_all_ = group_trajectory_.getNumPoints();
     num_joints_ = group_trajectory_.getNumJoints();
@@ -63,6 +65,11 @@ costComputation::costComputation(Robot* robot,
             collision_point_acc_eigen_[i].resize(num_collision_points_);
         }
     }
+}
+
+costComputation::~costComputation()
+{
+    cout << "destroy cost computation" << endl;
 }
 
 bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
@@ -186,7 +193,7 @@ void costComputation::getFrames( int segment, const Eigen::VectorXd& joint_array
             Eigen::Transform3d t = robot_model_->getJoint( joints[j].move3d_joint_->getId() )->getMatrixPos();
 
             std::vector<double> vect;
-            eigenTransformToStdVector(t,vect);
+            eigenTransformToStdVector( t, vect );
 
             segment_frames_[segment][j]  = vect;
             joint_pos_eigen_[segment][j] = t.translation();
@@ -210,11 +217,11 @@ bool costComputation::getConfigObstacleCost(int segment, int coll_point, Configu
 
         // To fix in collision space
         // The joint 1 is allways colliding
-        colliding = collision_space_->getCollisionPointPotentialGradient(planning_group_->collision_points_[j],
-                                                                         collision_point_pos_eigen_[i][j],
-                                                                         distance,
-                                                                         collision_point_potential_(i,j),
-                                                                         collision_point_potential_gradient_[i][j]);
+        colliding = collision_space_->getCollisionPointPotentialGradient( planning_group_->collision_points_[j],
+                                                                          collision_point_pos_eigen_[i][j],
+                                                                          distance,
+                                                                          collision_point_potential_(i,j),
+                                                                          collision_point_potential_gradient_[i][j]);
     }
 
     return colliding;
@@ -310,8 +317,10 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
     return is_collision_free_;
 }
 
-bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs )
+bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, int iteration )
 {
+    iteration_ = iteration;
+
     // copy the parameters into group_trajectory_:
     for (int d=0; d<num_joints_; ++d) {
         group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];

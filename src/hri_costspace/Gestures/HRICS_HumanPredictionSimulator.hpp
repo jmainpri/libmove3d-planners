@@ -19,7 +19,7 @@ public:
     void loadHumanTrajectory( const motion_t& motion );
     int classifyMotion( const motion_t& motion );
     void runVoxelOccupancy();
-    void run();
+    double run();
 
 private:
     bool updateMotion();
@@ -32,11 +32,12 @@ private:
     int getBestPathId();
     void setMatrixCol(Eigen::MatrixXd& mat, int j, confPtr_t q);
     void setHumanConfig( confPtr_t q );
+    void printCosts() const;
 
     Robot* m_robot;
     Robot* m_human;
     motion_t m_motion;
-    Eigen::MatrixXd m_current_traj;
+    Eigen::MatrixXd m_current_human_traj;
     int m_human_increment;
     RecordMotion* m_recorder;
     ClassifyMotion* m_classifier;
@@ -45,8 +46,10 @@ private:
     confPtr_t m_q_start;
     std::vector<confPtr_t> m_goal_config;
     std::vector<API::Trajectory> m_paths;
+
     API::Trajectory m_executed_path;
-    int m_max_stomp_iter;
+    std::vector< std::vector<double> > m_cost;
+
     bool m_use_previous_trajectory;
     bool m_is_scenario_init;
 

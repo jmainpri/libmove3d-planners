@@ -22,7 +22,9 @@ public:
                     double obstacle_weight,
                     bool use_costspace );
 
-    bool getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs );
+    ~costComputation();
+
+    bool getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, int iteration=1 );
 
     bool getJointLimitViolationSuccess() const { return succeded_joint_limits_; }
 

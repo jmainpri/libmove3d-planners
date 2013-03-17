@@ -72,6 +72,13 @@ ChompCost::ChompCost(const ChompTrajectory& trajectory, int joint_number, const 
   
 }
 
+ChompCost::ChompCost(const ChompCost& c)
+{
+    quad_cost_full_ = c.quad_cost_full_;
+    quad_cost_ = c.quad_cost_;
+    quad_cost_inv_ = c.quad_cost_;
+}
+
 Eigen::MatrixXd ChompCost::getDiffMatrix(int size, const double* diff_rule) const
 {
   MatrixXd matrix = MatrixXd::Zero(size,size);

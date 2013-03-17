@@ -332,6 +332,13 @@ void StompOptimizer::initHandover()
 StompOptimizer::~StompOptimizer()
 {
     delete handoverGenerator_;
+
+    for(int i=0;i<int(m_compute_fk.size());i++)
+    {
+        delete m_compute_fk[i];
+    }
+
+    cout << "destroy stomp" << endl;
 }
 
 void StompOptimizer::doChompOptimization()
@@ -964,7 +971,7 @@ double StompOptimizer::getSmoothnessCost()
     policy_->computeControlCosts(control_cost_matrices, policy_parameters_, noise,
                                  0.5*stomp_parameters_->getSmoothnessCostWeight(), control_costs );
 
-    for (int d=0; d<control_costs.size(); ++d)
+    for (int d=0; d<int(control_costs.size()); ++d)
     {
         //        cout << "control_costs[" << d << "] = " << control_costs[d].sum() << endl;
         smoothness_cost += control_costs[d].sum();
@@ -1295,9 +1302,6 @@ bool StompOptimizer::performForwardKinematics()
         end = num_vars_all_-1;
     }
 
-    bool collision_free = true;
-
-
     is_collision_free_ = true;
 
     Eigen::VectorXd joint_array;
@@ -1444,12 +1448,12 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     last_trajectory_collision_free_ = performForwardKinematics();
     last_trajectory_constraints_satisfied_ = true;
 
-    double obstacle_cost = 0.0;
-    //    double general_cost=0.0;
-    double constraint_cost = 0.0;
-    double torque_cost = 0.0;
+    //double obstacle_cost = 0.0;
+    //double general_cost=0.0;
+    //double constraint_cost = 0.0;
+    //double torque_cost = 0.0;
 
-    //    std::vector<double> torques(num_joints_);
+    //std::vector<double> torques(num_joints_);
 
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {

@@ -84,10 +84,10 @@ void HRICS_initOccupancyPredictionFramework()
     // Translate all motions
     recorder->translateStoredMotions();
 
-    // 28, Side by side (class 1) starting in 0
+    // 28 (25,26,27,28,29) Side by side (class 1) starting in 0
     // 77, Face to face (class 3)
-    cout << "loading trajectory : " << GestEnv->getInt(GestParam::human_traj_id) << endl;
-    simulator->loadHumanTrajectory( recorder->getStoredMotions()[GestEnv->getInt(GestParam::human_traj_id)] );
+    //cout << "loading trajectory : " << GestEnv->getInt(GestParam::human_traj_id) << endl;
+    //simulator->loadHumanTrajectory( recorder->getStoredMotions()[GestEnv->getInt(GestParam::human_traj_id)] );
 
     // GUI global variables
     global_motionRecorder = recorder;
@@ -112,9 +112,12 @@ HumanPredictionSimulator::HumanPredictionSimulator( Robot* robot, Robot* human, 
     m_recorder = recorder;
     m_classifier = classifier;
     m_occupacy_grid = occupacy_grid;
-    m_current_traj.resize( 0, 0 );
+    m_current_human_traj.resize( 0, 0 );
+
     m_human_increment = 5;
-    m_max_stomp_iter = 30;
+    m_robot_steps_per_exection = 10;
+    m_robot_step = 0.005;
+
     m_use_previous_trajectory = true;
     m_executed_path = API::Trajectory(m_robot);
     m_is_scenario_init = false;
@@ -186,36 +189,36 @@ int HumanPredictionSimulator::classifyMotion( const motion_t& motion )
 
 bool HumanPredictionSimulator::updateMotion()
 {
-    cout << "updateMotion" << endl;
-    int end = m_current_traj.cols() + m_human_increment;
+    cout << "updateMotion, collumns : " << m_current_human_traj.cols() <<  ", motion size : " << m_motion.size() << endl;
+    int end = m_current_human_traj.cols() + m_human_increment;
 
     if( end > int(m_motion.size()) )
     {
         return false;
     }
 
-    m_current_traj.resize( 13, end );
+    m_current_human_traj.resize( 13, end );
 
     motion_t motion = m_recorder->invertTranslation( m_motion );
 
-    int init_motion = std::max(0.0,double(m_current_traj.cols()-2*m_human_increment));
-    int end_motion = m_current_traj.cols();
+    int init_motion = std::max(0.0,double(m_current_human_traj.cols()-2*m_human_increment));
+    int end_motion = m_current_human_traj.cols();
 
     for (int j=init_motion; j<end_motion; j++)
     {
         confPtr_t q = motion[j].second;
-        setMatrixCol( m_current_traj, j, q );
+        setMatrixCol( m_current_human_traj, j, q );
     }
-    //cout << cout << m_current_traj << endl;
+    //cout << cout << m_current_human_traj << endl;
 
-    setHumanConfig( m_motion[m_current_traj.cols()-1].second );
+    setHumanConfig( m_motion[m_current_human_traj.cols()-1].second );
     return true;
 }
 
 void HumanPredictionSimulator::predictVoxelOccupancy()
 {
     cout << "predict voxel occpancy" << endl;
-    std::vector<double> likelihood = m_classifier->classify_motion( m_current_traj );
+    std::vector<double> likelihood = m_classifier->classify_motion( m_current_human_traj );
     m_occupacy_grid->setLikelihood( likelihood );
 }
 
@@ -246,9 +249,10 @@ void HumanPredictionSimulator::loadGoalConfig()
 
 void HumanPredictionSimulator::runMultipleStomp( int iter )
 {
+    Scene* sce = global_Project->getActiveScene();
     std::vector<Robot*> robots;
-    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob1") );
-    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob2") );
+    robots.push_back( sce->getRobotByName("rob1") );
+    robots.push_back( sce->getRobotByName("rob2") );
     if( m_goal_config.size() != robots.size() )
     {
         cout << "Error in multiple stomp run" << endl;
@@ -302,6 +306,9 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
     pool->start(); // locks the pool
 
     global_stompRun = pool;
+
+    sce->getRobotByName("rob3")->getRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
+    sce->getRobotByName("rob4")->getRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
 
     for( int g=0;g<int(stomp_trajs.size()); g++)
     {
@@ -383,11 +390,18 @@ void HumanPredictionSimulator::runParallelStomp( int iter, int id_goal )
     robots.push_back( global_Project->getActiveScene()->getRobotByName("rob4") );
     pool->setRobotPool( 0, robots );
 
+    for(int i=0;i<int(robots.size());i++)
+    {
+        robots[i]->getRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
+        robots[i]->setAndUpdate( *m_q_start );
+        p3d_col_deactivate_rob_rob( robots[i]->getRobotStruct(), m_robot->getRobotStruct() );
+    }
+
     cout << "run pool" << endl;
 
     pool->run( 0, stomp_traj );
-
     m_paths[id_goal] = pool->getBestTrajectory( 0 );
+    delete pool;
 }
 
 void HumanPredictionSimulator::runStandardStomp( int iter, int id_goal  )
@@ -426,7 +440,7 @@ void HumanPredictionSimulator::runStandardStomp( int iter, int id_goal  )
     }
 
     traj_optim_set_use_iteration_limit(true);
-    traj_optim_set_iteration_limit( m_max_stomp_iter );
+    traj_optim_set_iteration_limit( PlanEnv->getInt(PlanParam::stompMaxIteration) );
     traj_optim_runStomp(0);
 
     m_paths[id_goal] = global_optimizer->getBestTraj();
@@ -440,9 +454,11 @@ int HumanPredictionSimulator::getBestPathId()
     {
         Robot* rob = m_paths[i].getRobot();
         confPtr_t q = rob->getCurrentPos();
+        m_cost[i].push_back( m_paths[i].cost() );
         cost_sorter[i] = std::make_pair( m_paths[i].cost(), i );
         rob->setAndUpdate(*q);
     }
+
 
     std::sort( cost_sorter.begin(), cost_sorter.end() );
 
@@ -467,7 +483,7 @@ void HumanPredictionSimulator::execute(const API::Trajectory& path, bool to_end)
          (s<path.getRangeMax() && (!PlanEnv->getBool(PlanParam::stopPlanner)));
          i++ )
     {
-        q = path.configAtParam( s );
+        q = path.configAtParam( s ); m_executed_path.push_back( q );
         m_robot->setAndUpdate( *q );
         g3d_draw_allwin_active();
         usleep(25000);
@@ -489,44 +505,66 @@ void HumanPredictionSimulator::runVoxelOccupancy()
 
             cout << "----------------------------------------------------" << endl;
             cout << "Motion : " << i+25*k << ", size : " << m_motion.size() << endl;
-            m_current_traj.resize( 13, 0 );
+            m_current_human_traj.resize( 13, 0 );
 
             for(int j=0;(!PlanEnv->getBool(PlanParam::stopPlanner)) && updateMotion();j++)
             {
                 predictVoxelOccupancy();
-
                 g3d_draw_allwin_active(); usleep(200000);
-
             }
         }
 //    }
 }
 
-void HumanPredictionSimulator::run()
+void HumanPredictionSimulator::printCosts() const
 {
-    m_robot_steps_per_exection = 20;
-    m_robot_step = 0.005;
+    for(int i =0;i<m_cost.size();i++)
+    {
+        for(int j =0;j<m_cost[i].size();j++)
+        {
+            cout << "cost_" << i << "_(" << j << ") = " <<  m_cost[i][j] << ";" <<endl;
+        }
+    }
+}
+
+
+double HumanPredictionSimulator::run()
+{
+    m_current_human_traj.resize( 0, 0 );
     m_executed_path.clear();
     m_best_path_id = -1;
 
     loadGoalConfig();
+    loadHumanTrajectory( m_recorder->getStoredMotions()[GestEnv->getInt(GestParam::human_traj_id)] );
 
+    m_cost.resize( m_goal_config.size() );
     m_robot->setAndUpdate( *m_q_start );
+
+    ENV.setBool( Env::isCostSpace, true );
 
     for(int i=0;(!PlanEnv->getBool(PlanParam::stopPlanner)) && updateMotion();i++)
     {
         predictVoxelOccupancy();
+
         g3d_draw_allwin_active();
 
-        runMultipleStomp( i );
-
-        /**
-        for(int j=0;(!PlanEnv->getBool(PlanParam::stopPlanner)) && j<int(m_goal_config.size());j++)
+        if(!GestEnv->getBool(GestParam::parallelize_stomp) )
         {
-//            runStandardStomp( i, j );
-            runParallelStomp( i, j );
+            for( int j=0; (!PlanEnv->getBool(PlanParam::stopPlanner)) && j<int(m_goal_config.size()); j++ )
+                runStandardStomp( i, j );
         }
-        */
+        else
+        {
+            if( GestEnv->getBool(GestParam::with_multiple_stomps))
+            {
+                runMultipleStomp( i );
+            }
+            else
+            {
+                for( int j=0; (!PlanEnv->getBool(PlanParam::stopPlanner)) && j<int(m_goal_config.size()); j++ )
+                    runParallelStomp( i, j );
+            }
+        }
 
         if( !PlanEnv->getBool(PlanParam::stopPlanner) )
         {
@@ -544,4 +582,12 @@ void HumanPredictionSimulator::run()
             execute( traj.extractSubTrajectory( parameter, traj.getRangeMax(), false ), true );
         }
     }
+
+    ENV.setBool( Env::isCostSpace, true );
+
+    printCosts();
+
+    cout << "m_executed_path.cost() : " << m_executed_path.cost() << endl;
+    m_executed_path.replaceP3dTraj();
+    return m_executed_path.cost();
 }

@@ -41,6 +41,8 @@ namespace GestParam
             draw_single_class,
             draw_null_cost,
             draw_recorded_motion,
+            with_multiple_stomps,
+            parallelize_stomp
         };
 
         enum intParameter

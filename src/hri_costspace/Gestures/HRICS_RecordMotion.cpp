@@ -458,8 +458,9 @@ void RecordMotion::drawMotion( const motion_t& motion )
     G3D_Window *win = g3d_get_cur_win();
 
     m_robot->getRobotStruct()->draw_transparent = false;
+    p3d_rob* rob = (p3d_rob*)(p3d_get_desc_curid( P3D_ROBOT ));
 
-    for ( int i=0;i<int(motion.size());i++)
+    for ( int i=0; i<int(motion.size()); i++ )
     {
         win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
 
@@ -470,6 +471,7 @@ void RecordMotion::drawMotion( const motion_t& motion )
         drawHeraklesArms();
     }
 
+    p3d_sel_desc_num( P3D_ROBOT, rob->num );
     m_robot->getRobotStruct()->draw_transparent = false;
 }
 

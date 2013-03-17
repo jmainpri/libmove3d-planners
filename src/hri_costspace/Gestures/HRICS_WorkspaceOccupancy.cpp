@@ -295,6 +295,7 @@ double WorkspaceOccupancyGrid::getOccupancyCombination( const Eigen::Vector3d &p
     if( cell == NULL ) {
         //return 0.0;
         cout << "Null cell" << endl;
+        return 0.0;
     }
     
     double occupancy=0.0;

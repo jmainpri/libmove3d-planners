@@ -57,6 +57,8 @@
               int joint_number, 
               const std::vector<double>& derivative_costs, 
               double ridge_factor=0.0);
+
+    ChompCost(const ChompCost& c);
     
     virtual ~ChompCost();
     

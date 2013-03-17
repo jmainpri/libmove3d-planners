@@ -462,7 +462,11 @@ void CollisionSpace::addEnvPoints()
 
         // The robot is not a robot or a human
         if ( !( (mov_obst->getName().find( "ROBOT" ) != string::npos) ||
-                (mov_obst->getName().find( "HUMAN" ) != string::npos) ) )
+                (mov_obst->getName().find( "HUMAN" ) != string::npos) ||
+                 mov_obst->getName() ==  "rob1" ||
+                 mov_obst->getName() ==  "rob2" ||
+                 mov_obst->getName() ==  "rob3" ||
+                 mov_obst->getName() ==  "rob4" ) )
         {
             cout << "Adding : " << mov_obst->getName() << endl;
 

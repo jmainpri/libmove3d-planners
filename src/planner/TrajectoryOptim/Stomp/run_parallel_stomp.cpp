@@ -37,6 +37,8 @@ stompContext::~stompContext()
     delete m_chomptraj;
     delete m_chompplangroup;
     delete m_stompparams;
+
+    m_stomp->resetSharedPtr();
 }
 
 void stompContext::setParallelRobots( const std::vector<Robot*>& robots )

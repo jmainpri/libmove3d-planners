@@ -42,7 +42,6 @@ HumanPredictionCostSpace::~HumanPredictionCostSpace()
 double HumanPredictionCostSpace::getCost(Configuration& q)
 {
     Robot* robot = q.getRobot();
-
     robot->setAndUpdate(q); // TODO remove this when necessary
 
     double cost = 0.0;

@@ -260,7 +260,10 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt) const
             cout << " Warning : Robot not the same as the robot in traj "  << endl;
             return NULL;
         }
-        destroy_list_localpath(m_Robot->getRobotStruct(), trajPt->courbePt);
+        if( trajPt->courbePt != NULL )
+        {
+            destroy_list_localpath( m_Robot->getRobotStruct(), trajPt->courbePt);
+        }
     }
     else
     {
@@ -303,7 +306,10 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt) const
     if (m_Courbe.size() != 0)
         localpathPt->next_lp = NULL;
     else
+    {
         cout << "replaceP3dTraj with empty trajectory" << endl;
+        trajPt->courbePt = NULL;
+    }
 
     return trajPt;
     //	print()
@@ -1626,10 +1632,9 @@ bool Trajectory::cutTrajInSmallLPSimple(unsigned int nLP)
     double delta = range/double(nLP);
 
     vector<LocalPath*> portion;
-
-    double s=0.0;
-
+    bool null_length_local_path = false;
     double length = 0.0;
+    double s=0.0;
 //    cout << "range : " << range << " , delta : " << delta << endl;
 
     for( unsigned int i=0; i<nLP; i++ )
@@ -1637,32 +1642,31 @@ bool Trajectory::cutTrajInSmallLPSimple(unsigned int nLP)
         confPtr_t q_init = configAtParam(s);
         confPtr_t q_goal = configAtParam(s+delta);
         portion.push_back(new LocalPath(q_init,q_goal));
-        //cout << "param max at : " << i << " , " << portion[i]->getParamMax() << endl;
-
-        if( portion[i]->getParamMax() == 0.0 )
-        {
-            for( int i=0; i<int(portion.size()); i++ )
-            {
-                delete portion[i];
-            }
-            return false;
-        }
         s += delta;
 
+        double path_length = portion.back()->getParamMax();
+        if( path_length == 0.0 )
+            null_length_local_path = true;
+
         length += portion.back()->getParamMax();
-        //    q_init->print();
-        //    q_goal->print();
     }
 
-    if(length == 0.0 ){
-        cout << "Null length trajectory in cutTrajInSmallLPSimple" << endl;
-    }
+    m_Courbe = portion;
 
     if (portion.size() != nLP ){
         throw string("Error: int cutTrajInSmallLPSimple");
     }
 
-    m_Courbe = portion;
+    if( length == 0.0 ){
+        cout << "Null length trajectory in cutTrajInSmallLPSimple" << endl;
+        return false;
+    }
+
+    if( null_length_local_path  ){
+        cout << "Null length localpath in cutTrajInSmallLPSimple" << endl;
+        return false;
+    }
+
     return true;
 }
 
@@ -1862,20 +1866,20 @@ bool Trajectory::cutTrajInSmallLP(unsigned int nLP)
     if( !succeed )
         return false;
 
-    if (!m_Source->equal(*configAtParam(0)))
-    {
-        cout << "Error" << endl;
-        return false;
-    }
+//    if (!m_Source->equal(*configAtParam(0)))
+//    {
+//        cout << "Error" << endl;
+//        return false;
+//    }
 
-    if (!m_Target->equal(*configAtParam(getRangeMax())))
-    {
-        m_Source->print();
-        m_Target->print();
-        configAtParam( getRangeMax() )->print();
-        cout << "Error" << endl;
-        return false;
-    }
+//    if (!m_Target->equal(*configAtParam(getRangeMax())))
+//    {
+//        m_Source->print();
+//        m_Target->print();
+//        configAtParam( getRangeMax() )->print();
+//        cout << "Error" << endl;
+//        return false;
+//    }
     return true;
 }
 
