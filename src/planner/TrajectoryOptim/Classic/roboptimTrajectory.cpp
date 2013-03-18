@@ -277,11 +277,11 @@ LinearTrajectory* RoboptimFactory::make_Roboptim(API::Trajectory& traj)
 		{
 			if ( i == -1 ) 
 			{
-				q = traj.getLocalPathPtrAt(i+1)->getBegin();
+                q = traj.getLocalPath(i+1)->getBegin();
 			}
 			else 
 			{
-				q = traj.getLocalPathPtrAt(i)->getEnd();
+                q = traj.getLocalPath(i)->getEnd();
 			}
 			
 			for ( int j=0; j< (int)outputSize; j++) 

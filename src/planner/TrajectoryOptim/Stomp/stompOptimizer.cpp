@@ -72,6 +72,9 @@ const double hack_tweek = 1;
 //--------------------------------------------------------
 MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> global_optimizer;
 
+std::map< Robot*, std::vector<double> >             global_MultiStomplinesColors;
+std::map< Robot*, std::vector<Eigen::Vector3d> >    global_MultiStomplinesToDraw;
+
 namespace stomp_motion_planner
 {
 StompOptimizer::StompOptimizer(ChompTrajectory *trajectory,
@@ -333,9 +336,9 @@ StompOptimizer::~StompOptimizer()
 {
     delete handoverGenerator_;
 
-    for(int i=0;i<int(m_compute_fk.size());i++)
+    for(int i=0;i<int(compute_fk_.size());i++)
     {
-        delete m_compute_fk[i];
+        delete compute_fk_[i];
     }
 
     cout << "destroy stomp" << endl;
@@ -527,7 +530,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
         }
 
         // Policy improvement loop
-        //      pi_loop.runSingleIteration(iteration_+1);
+        // pi_loop.runSingleIteration(iteration_+1);
         if (!stomp_parameters_->getUseChomp())
         {
             pi_loop.runSingleIteration(iteration_+1);
@@ -634,15 +637,6 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
             //        }
         }
 
-        if( PlanEnv->getBool(PlanParam::drawParallelTraj) && ( global_stompRun != NULL ))
-        {
-            ENV.setBool(Env::drawTraj,false);
-            global_stompRun->lockDraw();
-            robot_model_->setAndUpdate(*q_tmp);
-            saveEndeffectorTraj();
-            global_stompRun->unlockDraw();
-        }
-
         // save the cost and time as pair
         //      traj_convergence_with_time.push_back( make_pair( time_, move3d_cost ) );
 
@@ -694,6 +688,15 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
     else
         group_trajectory_.getTrajectory() = best_group_trajectory_;
 
+    // Set this anywhere
+    if( PlanEnv->getBool(PlanParam::drawParallelTraj) && ( global_stompRun != NULL ))
+    {
+        ENV.setBool(Env::drawTraj,false);
+        global_stompRun->lockDraw();
+        robot_model_->setAndUpdate(*q_tmp);
+        saveEndeffectorTraj();
+        global_stompRun->unlockDraw();
+    }
     
     //group_trajectory_.print();
     //updateFullTrajectory();
@@ -734,11 +737,11 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
 
 void StompOptimizer::setRobotPool( const std::vector<Robot*>& robots )
 {
-    m_compute_fk.clear();
+    compute_fk_.clear();
 
     for( int i=0; i<int(robots.size()); i++)
     {
-        m_compute_fk.push_back(new costComputation(robots[i], collision_space_, planning_group_, joint_costs_,
+        compute_fk_.push_back(new costComputation(robots[i], collision_space_, planning_group_, joint_costs_,
                                                    group_trajectory_,
                                                    stomp_parameters_->getObstacleCostWeight(),
                                                    use_costspace_));
@@ -750,7 +753,7 @@ void StompOptimizer::setRobotPool( const std::vector<Robot*>& robots )
   */
 const vector<costComputation*>& StompOptimizer::getCostComputers()
 {
-    return m_compute_fk;
+    return compute_fk_;
 }
 
 //-------------------------------------------------------------------
@@ -1772,7 +1775,6 @@ void StompOptimizer::saveEndeffectorTraj()
         end = num_vars_all_-1;
     }
 
-    confPtr_t q_tmp = robot_model_->getCurrentPos();
     confPtr_t q     = robot_model_->getCurrentPos();
 
     const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
@@ -1796,11 +1798,13 @@ void StompOptimizer::saveEndeffectorTraj()
 
     p3d_jnt* drawnjnt=NULL;
     int indexjnt = p3d_get_user_drawnjnt();
+    cout << "indexjnt : " << indexjnt << endl;
     if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= robot_model_->getRobotStruct()->njoints )
     {
         drawnjnt = robot_model_->getRobotStruct()->joints[indexjnt];
     }
 
+    global_MultiStomplinesColors[robot_model_] = traj_color_;
     global_MultiStomplinesToDraw[robot_model_].clear();
 
     for (int i=0; i<T.getNbOfViaPoints(); ++i)
@@ -2327,7 +2331,7 @@ void StompOptimizer::copyGroupTrajectoryToPolicy()
     policy_->setParameters(policy_parameters_);
 }
 
-void StompOptimizer::setSharedPtr(MOVE3D_BOOST_PTR_NAMESPACE<StompOptimizer>& ptr)
+void StompOptimizer::setSharedPtr( MOVE3D_BOOST_PTR_NAMESPACE<StompOptimizer>& ptr )
 {
     this_shared_ptr_ = ptr;
 }

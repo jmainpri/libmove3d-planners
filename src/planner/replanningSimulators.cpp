@@ -628,21 +628,21 @@ bool ReplanningSimulator::set_executed_traj_to_current(API::Trajectory& traj)
 
     for( int i=0; i<m_ExecuteTraj.getNbOfPaths(); i++ )
     {
-        double param_1 = traj.getLocalPathPtrAt(i)->getParamMax();
-        double param_2 = m_ExecuteTraj.getLocalPathPtrAt(i)->getParamMax();
+        double param_1 = traj.getLocalPath(i)->getParamMax();
+        double param_2 = m_ExecuteTraj.getLocalPath(i)->getParamMax();
 
         if( fabs( param_1 - param_2 ) > EPS6 ) {
 
             cout << "param 1 : " << param_1 << endl;
             cout << "param 2 : " << param_2 << endl;
 
-            confPtr_t q1_1 = traj.getLocalPathPtrAt(i)->getBegin();
-            confPtr_t q2_1 = traj.getLocalPathPtrAt(i)->getEnd();
+            confPtr_t q1_1 = traj.getLocalPath(i)->getBegin();
+            confPtr_t q2_1 = traj.getLocalPath(i)->getEnd();
             cout << "Current traj. conf" << endl;
             q1_1->equal( *q2_1, true );
 
-            confPtr_t q1_2 = m_ExecuteTraj.getLocalPathPtrAt(i)->getBegin();
-            confPtr_t q2_2 = m_ExecuteTraj.getLocalPathPtrAt(i)->getEnd();
+            confPtr_t q1_2 = m_ExecuteTraj.getLocalPath(i)->getBegin();
+            confPtr_t q2_2 = m_ExecuteTraj.getLocalPath(i)->getEnd();
             cout << "Executed traj. conf" << endl;
             q1_2->equal( *q2_2, true );
             cout << "Error : The localpath " << i << " are not the same length" << endl;
@@ -813,7 +813,7 @@ bool ReplanningSimulator::time_switch_and_id(double s, double s_rep, int& id_swi
 
     for (int i=0; i<traj.getNbOfPaths(); i++)
     {
-        p += traj.getLocalPathPtrAt(i)->getParamMax();
+        p += traj.getLocalPath(i)->getParamMax();
 
         if( p > (s+s_rep) )
         {

@@ -91,10 +91,10 @@ ChompTrajectory::ChompTrajectory(const API::Trajectory& T, int diff_rule_length,
             confPtr_t q;
 
             if( source_traj_point != (number_inital_points-1) ) {
-                q = T.getLocalPathPtrAt( source_traj_point )->getBegin();
+                q = T.getLocalPath( source_traj_point )->getBegin();
             }
             else {
-                q = T.getLocalPathPtrAt( source_traj_point-1 )->getEnd();
+                q = T.getLocalPath( source_traj_point-1 )->getEnd();
             }
 
             (*this)(i,j) = (*q)[source_joint];

@@ -25,8 +25,9 @@ public:
     void run();
 
     void setParallelRobots( const std::vector<Robot*>& robots );
+    void setPathColor( const std::vector<double>& color ) { m_color = color; }
 
-    API::Trajectory getBestTrajectory() { return m_stomp->getBestTraj(); }
+    MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> getStompOptimizer() const { return m_stomp; }
 
 private:
 
@@ -41,12 +42,14 @@ private:
     int                                     m_max_iterations;
     bool                                    m_use_costspace;
     int                                     m_runid;
+    std::vector<double>                     m_color;
 
     std::vector<Robot*>                     m_parallel_robots;
 
     std::vector<CollisionPoint>             m_collision_points;
     std::vector<int>                        m_planner_joints;
     const CollisionSpace*                   m_coll_space;
+
 };
 
 class stompRun
@@ -61,6 +64,7 @@ public:
     void start();
     void isRunning();
 
+    void setPathColor( int id, const std::vector<double>& color );
     void setRobotPool( int id, const std::vector<Robot*>& robots );
 
     API::Trajectory getBestTrajectory( int id );
@@ -88,6 +92,5 @@ void srompRun_MultipleParallel();
 void srompRun_OneParallel();
 
 extern stompRun* global_stompRun;
-extern std::map< Robot*, std::vector<Eigen::Vector3d> > global_MultiStomplinesToDraw;
 
 #endif // PARALLEL_STOMP_HPP

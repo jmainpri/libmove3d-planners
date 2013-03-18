@@ -939,7 +939,7 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::
   {
     shared_ptr<Configuration> q_target(new Configuration(_Robot,q));
     
-    LocalPath path(traj.getLocalPathPtrAt(i)->getEnd(),q_target);
+    LocalPath path(traj.getLocalPath(i)->getEnd(),q_target);
     
     if (path.isValid()) 
     {
@@ -1017,7 +1017,7 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::
     for(unsigned int i=0;i<(unsigned int)traj.getNbPaths();i++)
     {
       p3d_set_and_update_this_robot_conf(agent->robotPt,
-                                         traj.getLocalPathPtrAt(i)->getEnd()->getConfigStruct());
+                                         traj.getLocalPath(i)->getEnd()->getConfigStruct());
       
       q = p3d_get_robot_config(agent->robotPt);
       
@@ -1035,7 +1035,7 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::
         {
           showConfig_2(q);
           
-          LocalPath path(traj.getLocalPathPtrAt(i)->getEnd(),q_target);
+          LocalPath path(traj.getLocalPath(i)->getEnd(),q_target);
           
           if (path.isValid()) 
           {

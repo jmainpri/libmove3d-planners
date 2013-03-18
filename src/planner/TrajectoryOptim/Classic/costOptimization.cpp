@@ -126,7 +126,7 @@ bool CostOptimization::oneLoopDeform()
             vector<LocalPath*> paths;
             for(unsigned int i=first;i<=last;i++)
             {
-                paths.push_back(getLocalPathPtrAt(i));
+                paths.push_back(getLocalPath(i));
             }
 
             double costOfPortion = computeSubPortionCost(paths);
@@ -140,13 +140,13 @@ bool CostOptimization::oneLoopDeform()
             paths.push_back(FirstHalf);
             paths.push_back(SecondHalf);
 
-            LocalPath* LP1 = new LocalPath(getLocalPathPtrAt(first)->getBegin(),qPrevPt);
+            LocalPath* LP1 = new LocalPath(getLocalPath(first)->getBegin(),qPrevPt);
             if(LP1->getParamMax()>0)
             {
                 paths.insert(paths.begin(),LP1);
             }
 
-            LocalPath* LP2 = new LocalPath(qNextPt,getLocalPathPtrAt(last)->getEnd());
+            LocalPath* LP2 = new LocalPath(qNextPt,getLocalPath(last)->getEnd());
             if(LP2->getParamMax()>0)
             {
                 paths.push_back(LP2);
@@ -746,6 +746,54 @@ vector<confPtr_t> CostOptimization::get3RandSuccesConfAlongTraj(double& prevDist
 
 //! Connects a configuration to the trajectory
 //! it starts at the begining of the trajectory
+bool CostOptimization::connectConfigurationToClosestAtBegin( confPtr_t q, double step, bool consider_valid )
+{
+    double param=0.0;
+    double range_max = getRangeMax();
+    std::pair<double,LocalPath*> best_so_far;
+    best_so_far.first = std::numeric_limits<double>::max();
+    best_so_far.second = NULL;
+
+    do
+    {
+        LocalPath* path = new LocalPath( q, configAtParam( param ) );
+
+        bool is_valid = true;
+
+        if( consider_valid )
+        {
+            is_valid = path->isValid();
+        }
+
+        if( is_valid && ( path->getParamMax() < best_so_far.first ) )
+        {
+            delete best_so_far.second;
+            best_so_far.first = param;
+            best_so_far.second = path;
+        }
+        else {
+            delete path;
+        }
+        param += step;
+    }
+    while( param < range_max );
+
+//    cout << "param : " << param << endl;
+//    cout << "range_max : " << range_max << endl;
+
+    if( best_so_far.second != NULL ) {
+        std::vector<LocalPath*> portion;
+        portion.push_back( best_so_far.second );
+        return replaceBegin( best_so_far.first, portion );
+    }
+    else {
+        cout << "All paths are invalid" << endl;
+        return false;
+    }
+}
+
+//! Connects a configuration to the trajectory
+//! it starts at the begining of the trajectory
 bool CostOptimization::connectConfigurationToBegin( confPtr_t q, double step, bool consider_cost )
 {
     double param=0.0;
@@ -753,7 +801,6 @@ bool CostOptimization::connectConfigurationToBegin( confPtr_t q, double step, bo
     std::pair<double,LocalPath*> best_so_far;
     best_so_far.first = 0.0;
     best_so_far.second = NULL;
-
 
     do
     {

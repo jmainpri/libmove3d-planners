@@ -115,12 +115,25 @@ HumanPredictionSimulator::HumanPredictionSimulator( Robot* robot, Robot* human, 
     m_current_human_traj.resize( 0, 0 );
 
     m_human_increment = 5;
-    m_robot_steps_per_exection = 10;
+    //m_robot_steps_per_exection = 10; // side by side
+    m_robot_steps_per_exection = 17;  // facing
     m_robot_step = 0.005;
 
     m_use_previous_trajectory = true;
     m_executed_path = API::Trajectory(m_robot);
     m_is_scenario_init = false;
+
+    m_colors.resize(2);
+
+    m_colors[0].push_back( 1.000 ); //1.00000   0.74902   0.16863
+    m_colors[0].push_back( 0.749 );
+    m_colors[0].push_back( 0.168 );
+    m_colors[0].push_back( 0 );
+
+    m_colors[1].push_back( 0.168 ); // 0.16863   1.00000   0.40392
+    m_colors[1].push_back( 1.000 );
+    m_colors[1].push_back( 0.403 );
+    m_colors[1].push_back( 0 );
 }
 
 void HumanPredictionSimulator::loadHumanTrajectory( const motion_t& motion )
@@ -247,6 +260,20 @@ void HumanPredictionSimulator::loadGoalConfig()
     m_paths.resize( m_goal_config.size() );
 }
 
+API::Trajectory HumanPredictionSimulator::setTrajectoryToMainRobot(const API::Trajectory& traj) const
+{
+    API::Trajectory traj_tmp(m_robot);
+
+    for(int i=0;i<traj.getNbOfViaPoints();i++)
+    {
+        confPtr_t q(new Configuration(m_robot));
+        q->setConfiguration( traj[i]->getConfigStructCopy() );
+        traj_tmp.push_back( q );
+    }
+
+    return traj_tmp;
+}
+
 void HumanPredictionSimulator::runMultipleStomp( int iter )
 {
     Scene* sce = global_Project->getActiveScene();
@@ -265,6 +292,7 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
     g3d_draw_allwin_active();
 
     std::vector<API::Trajectory> stomp_trajs( m_goal_config.size() );
+    std::vector<confPtr_t> q_init;
 
     for(int g=0;(!PlanEnv->getBool(PlanParam::stopPlanner)) && g<int(m_goal_config.size());g++)
     {
@@ -282,7 +310,16 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
             else
             {
                 API::CostOptimization traj( m_paths[g] );
-                traj.connectConfigurationToBegin( current_traj.configAtParam( parameter ), parameter/5, true );
+                confPtr_t q_cur = current_traj.configAtParam( parameter );
+
+                if(!traj.connectConfigurationToBegin( q_cur, parameter/5, true ))
+                {
+                    if(!traj.connectConfigurationToClosestAtBegin( q_cur, parameter/5, false ))
+                    {
+                        cout << "Error in runMultipleStomp" << endl;
+                        return;
+                    }
+                }
                 stomp_trajs[g] = traj;
             }
         }
@@ -292,6 +329,17 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
             stomp_trajs[g] = API::Trajectory( robots[g] );
             stomp_trajs[g].push_back( m_q_start );
             stomp_trajs[g].push_back( m_goal_config[g] );
+        }
+
+        q_init.push_back( stomp_trajs[g].getBegin() );
+
+        if( q_init.size() > 1)
+        {
+            cout << "Test first config, iteration : " << iter << endl;
+            if(!q_init.back()->equal( *q_init[q_init.size()-2] ))
+            {
+                cout << "Error building the stomp traj" << endl;
+            }
         }
     }
 
@@ -312,7 +360,9 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
 
     for( int g=0;g<int(stomp_trajs.size()); g++)
     {
-        global_MultiStomplinesToDraw[robots[g]].clear();
+        std::vector<double> color = (g == m_best_path_id) ? m_colors[1] : m_colors[0];
+        pool->setPathColor( g, color );
+
         robots[g]->getRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
         p3d_col_deactivate_rob_rob( robots[g]->getRobotStruct(), m_robot->getRobotStruct() );
 
@@ -323,7 +373,7 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
 
     for( int g=0;g<int(stomp_trajs.size()); g++)
     {
-        m_paths[g] = pool->getBestTrajectory( g );
+        m_paths[g] =  pool->getBestTrajectory( g );
         robots[g]->setAndUpdate( *init_conf[g] );
     }
 
@@ -518,15 +568,14 @@ void HumanPredictionSimulator::runVoxelOccupancy()
 
 void HumanPredictionSimulator::printCosts() const
 {
-    for(int i =0;i<m_cost.size();i++)
+    for(int i =0;i<int(m_cost.size());i++)
     {
-        for(int j =0;j<m_cost[i].size();j++)
+        for(int j =0;j<int(m_cost[i].size());j++)
         {
             cout << "cost_" << i << "_(" << j << ") = " <<  m_cost[i][j] << ";" <<endl;
         }
     }
 }
-
 
 double HumanPredictionSimulator::run()
 {

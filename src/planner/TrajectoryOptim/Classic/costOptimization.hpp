@@ -73,6 +73,12 @@ public:
      * Adds a configuration to the trajectory by starting from
      * the begining of the trajectory
      */
+    bool connectConfigurationToClosestAtBegin( confPtr_t q, double step, bool consider_valid );
+
+    /**
+     * Adds a configuration to the trajectory by starting from
+     * the begining of the trajectory
+     */
     bool connectConfigurationToBegin( confPtr_t q, double step, bool consider_cost=false );
 
     /**

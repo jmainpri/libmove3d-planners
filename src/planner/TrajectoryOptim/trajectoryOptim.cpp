@@ -382,7 +382,7 @@ bool traj_optim_simple_init()
     m_planner_joints.clear();
     m_planner_joints.push_back( 1 );
 
-    p3d_set_user_drawnjnt(1);
+    ENV.setInt( Env::jntToDraw, 1 );
 
     m_coll_space = NULL;
     return (global_costSpace != NULL);
@@ -410,7 +410,7 @@ bool traj_optim_costmap_init()
     m_planner_joints.clear();
     m_planner_joints.push_back( 1 );
 
-    p3d_set_user_drawnjnt(1);
+    ENV.setInt( Env::jntToDraw, 1 );
 
     m_coll_space = NULL;
 
@@ -454,7 +454,7 @@ bool traj_optim_generate_pointsOnTraj()
 
     for (int i=0; i<traj.getNbOfPaths(); i++ )
     {
-        param += traj.getLocalPathPtrAt( i )->getParamMax();
+        param += traj.getLocalPath( i )->getParamMax();
         delta = -step*density;
 
         for(int j=0; j<nb_points_per_via; j++ )
@@ -596,7 +596,7 @@ void traj_optim_shelf_set_localpath_and_cntrts()
 
     fixAllJointsWithoutArm( m_robot->getRobotStruct() , 0 );
 #endif
-    p3d_set_user_drawnjnt(28);
+    //ENV.setInt( Env::jntToDraw, 28 );
 }
 
 //! initializes the collision space
@@ -727,7 +727,7 @@ void traj_optim_navigation_set_localpath_and_cntrts()
     fixAllJointsExceptBase( m_robot->getRobotStruct() );
 #endif
 
-    p3d_set_user_drawnjnt(1);
+    ENV.setInt( Env::jntToDraw, 1 );
 }
 
 //! Sets the point on the navigation DoF
@@ -783,7 +783,7 @@ void traj_optim_hrics_set_localpath_and_cntrts()
     fixAllJointsExceptBase( m_robot->getRobotStruct() );
 #endif
 
-    p3d_set_user_drawnjnt(1);
+    ENV.setInt( Env::jntToDraw, 1 );
 }
 
 //! Sets the point on the navigation DoF

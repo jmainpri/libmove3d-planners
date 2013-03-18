@@ -399,21 +399,6 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
     //	print()
 }
 
-MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> Trajectory::operator [] ( const int &i ) const
-{
-    if( i<0 || m_Courbe.empty() || (i>int(m_Courbe.size())))
-    {
-        return MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration>(new Configuration(m_Robot));
-    }
-
-    if(i == int(m_Courbe.size()))
-    {
-        return m_Courbe[i-1]->getEnd();
-    }
-
-    return m_Courbe[i]->getBegin();
-}
-
 confPtr_t Trajectory::configAtParam(double param, unsigned int* id_localpath) const
 {
     if(m_Courbe.empty()) {
@@ -528,14 +513,9 @@ void Trajectory::clear()
     m_Courbe.clear();
 }
 
-LocalPath* Trajectory::getLocalPathPtrAt(unsigned int id) const
+LocalPath* Trajectory::getLocalPath(unsigned int id) const
 {
-    return m_Courbe.at(id);
-}
-
-int Trajectory::getNbOfPaths() const
-{
-    return m_Courbe.size();
+    return m_Courbe[id];
 }
 
 int Trajectory::getNbOfViaPoints() const
@@ -546,6 +526,20 @@ int Trajectory::getNbOfViaPoints() const
     return (m_Courbe.size()+1);
 }
 
+MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> Trajectory::operator[]( const int &i ) const
+{
+    if( i<0 || m_Courbe.empty() || (i>int(m_Courbe.size())))
+    {
+        return confPtr_t(new Configuration(m_Robot));
+    }
+
+    if(i == int(m_Courbe.size()))
+    {
+        return m_Courbe[i-1]->getEnd();
+    }
+
+    return m_Courbe[i]->getBegin();
+}
 
 double Trajectory::computeSubPortionRange(const vector<LocalPath*>& portion) const
 {
@@ -1127,15 +1121,15 @@ double Trajectory::extractCostPortion(double param1, double param2)
 {
     double totalCost(0.0);
 
-    vector<shared_ptr<Configuration> > conf;
+    vector<confPtr_t> conf;
 
     uint first;
     uint last;
 
     conf = getTowConfigurationAtParam(param1, param2, first, last);
 
-    shared_ptr<Configuration> q1 = conf.at(0);
-    shared_ptr<Configuration> q2 = conf.at(1);
+    confPtr_t q1 = conf.at(0);
+    confPtr_t q2 = conf.at(1);
 
     if (first > last)
     {
@@ -1160,8 +1154,8 @@ double Trajectory::extractCostPortion(double param1, double param2)
         return LP.cost();
     }
 
-    shared_ptr<Configuration> start = m_Courbe.at(first)->getBegin();
-    shared_ptr<Configuration> end = m_Courbe.at(last)->getEnd();
+    confPtr_t start = m_Courbe.at(first)->getBegin();
+    confPtr_t end = m_Courbe.at(last)->getEnd();
 
     // Adds the modified first local path to subpaths
     // Verifies that the configuration is not starting the local path
@@ -1525,13 +1519,13 @@ void Trajectory::draw(int nbKeyFrame)
 
         if (isHighestCostIdSet)
         {
-            if (getIdOfPathAt(u) == HighestCostId && !red)
+            if (getLocalPathId(u) == HighestCostId && !red)
             {
                 red = true;
                 saveColor = mColor;
                 mColor = 3;
             }
-            if ((mColor == 3) && (getIdOfPathAt(u) != HighestCostId) && red)
+            if ((mColor == 3) && (getLocalPathId(u) != HighestCostId) && red)
             {
                 mColor = saveColor;
                 red = false;
@@ -2151,13 +2145,13 @@ bool Trajectory::replaceEnd( double param, const vector<LocalPath*>& paths )
     return true;
 }
 
-unsigned int Trajectory::getIdOfPathAt(double param)
+unsigned int Trajectory::getLocalPathId(double param) const
 {
     double soFar(0.0);
 
     for (unsigned int i = 0; i < m_Courbe.size(); i++)
     {
-        soFar = soFar + m_Courbe.at(i)->getParamMax();
+        soFar = soFar + m_Courbe[i]->getParamMax();
 
         if (param < soFar)
         {

@@ -109,7 +109,7 @@ bool Smoothing::oneLoopShortCut( )
 	{
 		if (false /*ENV.getBool(Env::debugCostOptim)*/)
 		{
-			if( getIdOfPathAt(lFirst)==getHighestCostId() || getIdOfPathAt(lSecond)==getHighestCostId() )
+			if( getLocalPathId(lFirst)==getHighestCostId() || getLocalPathId(lSecond)==getHighestCostId() )
       {
 				debugShowTraj(lFirst,lSecond);
 				m_nbReallyBiased++;
@@ -360,7 +360,7 @@ bool Smoothing::isLowerCostLargePortion( double lFirst, double lSecond , vector<
 	vector<confPtr_t> confs = getTowConfigurationAtParam( lFirst, lSecond, first, last );
 	
 	for(unsigned int i=first;i<=last;i++) {
-		paths.push_back( getLocalPathPtrAt(i) );
+		paths.push_back( getLocalPath(i) );
 	}
 	
 	double costOfPortion = computeSubPortionCost(paths);
@@ -373,12 +373,12 @@ bool Smoothing::isLowerCostLargePortion( double lFirst, double lSecond , vector<
 	paths.clear();
 	paths = newPaths;
 	
-	LocalPath* LP1 = new LocalPath( getLocalPathPtrAt(first)->getBegin(), confs[0] );
+	LocalPath* LP1 = new LocalPath( getLocalPath(first)->getBegin(), confs[0] );
 	if(LP1->getParamMax()>0) {
 		paths.insert(paths.begin(),LP1);
 	}
 	
-	LocalPath* LP2 = new LocalPath( confs.back(), getLocalPathPtrAt(last)->getEnd() );
+	LocalPath* LP2 = new LocalPath( confs.back(), getLocalPath(last)->getEnd() );
 	if(LP2->getParamMax()>0) {
 		paths.push_back(LP2);
 	}
@@ -491,8 +491,8 @@ void Smoothing::removeRedundantNodes()
 	{
 		for (uint j = i + 2; j < NbNodes; j++)
 		{
-			confPtr_t start = getLocalPathPtrAt(i)->getBegin();
-			confPtr_t end   = getLocalPathPtrAt(j)->getBegin();
+			confPtr_t start = getLocalPath(i)->getBegin();
+			confPtr_t end   = getLocalPath(j)->getBegin();
 			
 			LocalPath* pathPtr = new LocalPath(start, end);
 			
@@ -507,7 +507,7 @@ void Smoothing::removeRedundantNodes()
 				
 				for (uint k = i; k < j; k++)
 				{
-					costOfPortion += getLocalPathPtrAt(k)->cost();
+					costOfPortion += getLocalPath(k)->cost();
 				}
 				
 				if (pathPtr->cost() < costOfPortion)
@@ -707,8 +707,8 @@ vector<shared_ptr<Configuration> > Smoothing::get2RandomConf(double step, double
 			secondDist = p3d_random( firstDist , getRangeMax() );
 		}
 		
-		id1 = getIdOfPathAt(firstDist);
-		id2 = getIdOfPathAt(secondDist);
+		id1 = getLocalPathId(firstDist);
+		id2 = getLocalPathId(secondDist);
 		
 		if (id1 != id2)
 		{
@@ -729,8 +729,8 @@ public:
 	bool operator()(uint i, uint j)
 	{
 		
-		return (ptrOptim->getLocalPathPtrAt(i)->cost()
-						> ptrOptim->getLocalPathPtrAt(j)->cost());
+		return (ptrOptim->getLocalPath(i)->cost()
+						> ptrOptim->getLocalPath(j)->cost());
 	}
 	
 } myCompObject;
@@ -757,7 +757,7 @@ void Smoothing::setSortedIndex()
 	if (ENV.getBool(Env::debugCostOptim))
 	{
 		/*for(uint i=0;i<mIdSorted.size();i++){
-		 cout<<"mIdSorted["<<i<<"]"<<getLocalPathPtrAt(mIdSorted[i])->cost()<<endl;
+		 cout<<"mIdSorted["<<i<<"]"<<getLocalPath(mIdSorted[i])->cost()<<endl;
 		 }*/
 	}
 }
@@ -773,12 +773,12 @@ double Smoothing::getBiasedParamOnTraj()
 	
   
 	for (uint i=0; i<m_IdSorted[id]; i++) {
-		randDist += getLocalPathPtrAt(i)->getParamMax();
+		randDist += getLocalPath(i)->getParamMax();
 	}
 	
-	randDist += p3d_random(0, getLocalPathPtrAt(m_IdSorted[id])->getParamMax());
+	randDist += p3d_random(0, getLocalPath(m_IdSorted[id])->getParamMax());
 	
-	if (getIdOfPathAt(randDist) == HighestCostId) {
+	if (getLocalPathId(randDist) == HighestCostId) {
 		m_nbBiased++;
 	}
 	

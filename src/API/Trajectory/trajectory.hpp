@@ -116,16 +116,18 @@ public:
     
     void clear();
     
-    confPtr_t operator [] ( const int &i ) const;
     confPtr_t configAtParam(double param, unsigned int* id_localpath=NULL) const;
 
     std::vector<confPtr_t> getNConfAtParam(double delta);
     std::vector<confPtr_t> getVectorOfConfiguration();
 
-    uint					getIdOfPathAt(double param);
-    LocalPath* 		getLocalPathPtrAt(unsigned int id) const;
-    int						getNbOfPaths() const;
-    int						getNbOfViaPoints() const;
+    uint            getLocalPathId(double param) const;
+    LocalPath*      getLocalPath(unsigned int id) const;
+
+    confPtr_t operator[] ( const int &i ) const;
+    int size() const { return m_Courbe.size(); }
+    int	getNbOfPaths() const { return m_Courbe.size(); }
+    int	getNbOfViaPoints() const;
 
     bool isValid() const;
     void resetIsValid();
@@ -163,11 +165,6 @@ public:
         return m_Robot;
     }
     
-    int size() const
-    {
-        return m_Courbe.size();
-    }
-
     confPtr_t getBegin() const
     {
         return m_Source;
@@ -178,7 +175,7 @@ public:
         return m_Target;
     }
 
-    std::vector<LocalPath*> getCourbe() const
+    const std::vector<LocalPath*>& getCourbe() const
     {
         return m_Courbe;
     }

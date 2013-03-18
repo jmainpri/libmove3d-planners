@@ -124,10 +124,21 @@ void g3d_draw_multistomp_lines()
     for(itr = global_MultiStomplinesToDraw.begin(); itr != global_MultiStomplinesToDraw.end(); ++itr)
     {
         double color[4];
-        color[0] = 0.8;
-        color[1] = 1.0;
-        color[2] = 0.2;
-        color[3] = 1.0;
+
+        if( !global_MultiStomplinesColors.empty() )
+        {
+            color[0] = global_MultiStomplinesColors[itr->first][0];
+            color[1] = global_MultiStomplinesColors[itr->first][1];
+            color[2] = global_MultiStomplinesColors[itr->first][2];
+            color[3] = global_MultiStomplinesColors[itr->first][3];
+        }
+        else
+        {
+            color[0] = 0.8;
+            color[1] = 1.0;
+            color[2] = 0.2;
+            color[3] = 1.0;
+        }
 
         for( int i=0; i<int(itr->second.size()); i++)
         {

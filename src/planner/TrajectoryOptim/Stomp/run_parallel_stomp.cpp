@@ -10,7 +10,6 @@
 #include <boost/thread/thread.hpp>
 
 stompRun* global_stompRun = NULL;
-std::map< Robot*, std::vector<Eigen::Vector3d> > global_MultiStomplinesToDraw;
 
 stompContext::stompContext(Robot* robot, const CollisionSpace* coll_space,  const std::vector<int>& planner_joints, const std::vector<CollisionPoint>& collision_points )
 {
@@ -89,6 +88,7 @@ bool stompContext::initRun( API::Trajectory& T )
     m_stomp->setSource( T.getBegin() );
     m_stomp->setPassiveDofs( passive_dofs );
     m_stomp->setSharedPtr( m_stomp );
+    m_stomp->setTrajColor( m_color );
 
     if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
     {
@@ -185,6 +185,11 @@ void stompRun::isRunning()
      m_mtx_multi_end.unlock();
 }
 
+void stompRun::setPathColor( int id, const std::vector<double>& color )
+{
+    m_stomps[id]->setPathColor( color );
+}
+
 void stompRun::setRobotPool( int id, const std::vector<Robot*>& robots )
 {
     m_stomps[id]->setParallelRobots( robots );
@@ -192,7 +197,7 @@ void stompRun::setRobotPool( int id, const std::vector<Robot*>& robots )
 
 API::Trajectory stompRun::getBestTrajectory( int id )
 {
-    return m_stomps[id]->getBestTrajectory();
+    return m_stomps[id]->getStompOptimizer()->getBestTraj();
 }
 
 void stompRun::run( int id, API::Trajectory& T )
@@ -261,7 +266,7 @@ void srompRun_MultipleParallel()
     for( int i=0;i<int(robots.size()); i++)
     {
         boost::thread( &stompRun::run, pool, i, trajs[i] );
-        global_MultiStomplinesToDraw[robots[i]].clear();
+        //global_MultiStomplinesToDraw[robots[i]].clear();
         robots[i]->getRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
     }
 

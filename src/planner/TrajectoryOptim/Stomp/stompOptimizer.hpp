@@ -248,7 +248,7 @@ public:
     /**
    * Retreive best trajectory
    */
-    API::Trajectory getBestTraj() { return best_traj_; }
+    API::Trajectory getBestTraj() const { return best_traj_; }
 
     /**
       * Get Group traj
@@ -265,6 +265,12 @@ public:
       * space is created
       */
     void setUseCostSpace( bool use_costspace ) { use_costspace_ = use_costspace; }
+
+    /**
+      * Set the path color when drawn in parallel
+      */
+    void setTrajColor( std::vector<double> traj_color ) { traj_color_ = traj_color; }
+
 
 private:
     Robot* robot_model_;
@@ -306,7 +312,8 @@ private:
 
     std::vector<confPtr_t> passive_dofs_;
 
-    std::vector<costComputation*> m_compute_fk;
+    std::vector<costComputation*> compute_fk_;
+    std::vector<double> traj_color_;
 
     ChompTrajectory *full_trajectory_;
     const ChompPlanningGroup *planning_group_;
@@ -464,6 +471,8 @@ private:
 
 }
 
+extern std::map< Robot*, std::vector<Eigen::Vector3d> > global_MultiStomplinesToDraw;
+extern std::map< Robot*, std::vector<double> >          global_MultiStomplinesColors;
 extern MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> global_optimizer;
 
 #endif /* STOMP_OPTIMIZER_H_ */
