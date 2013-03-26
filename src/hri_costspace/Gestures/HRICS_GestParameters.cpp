@@ -63,6 +63,7 @@ void initGestureParameters()
         myBoolMap.insert( std::make_pair( GestParam::draw_ws_occupancy,                new boolContainer(false)));
         myBoolMap.insert( std::make_pair( GestParam::draw_single_class,                new boolContainer(false)));
         myBoolMap.insert( std::make_pair( GestParam::draw_null_cost,                   new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( GestParam::draw_current_occupancy,           new boolContainer(false)));
         myBoolMap.insert( std::make_pair( GestParam::draw_recorded_motion,             new boolContainer(false)));
         myBoolMap.insert( std::make_pair( GestParam::with_multiple_stomps,             new boolContainer(false)));
         myBoolMap.insert( std::make_pair( GestParam::parallelize_stomp,                new boolContainer(false)));

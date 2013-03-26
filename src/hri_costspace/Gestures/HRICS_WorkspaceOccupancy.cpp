@@ -100,7 +100,7 @@ API::ThreeDCell* WorkspaceOccupancyGrid::createNewCell(unsigned int index,unsign
 //! by processing the sampled points on each body 
 //! using the cells to store if they belong to the class given as input
 //! If so, does not add the cell twice to the list and update the cell class
-void WorkspaceOccupancyGrid::get_cells_occupied_by_human( std::vector<WorkspaceOccupancyCell*>& occupied_voxels, int id_class )
+void WorkspaceOccupancyGrid::get_cells_occupied_by_human( std::vector<WorkspaceOccupancyCell*>& occupied_voxels, int id_class, bool checkclass )
 {
     Eigen::Transform3d T; // Each point is transformed to the human config
     
@@ -125,16 +125,23 @@ void WorkspaceOccupancyGrid::get_cells_occupied_by_human( std::vector<WorkspaceO
                 {
                     cell->m_visited = true;
                     
-                    if( cell->m_occupies_class.empty() )
+                    if( !checkclass )
                     {
                         occupied_voxels.push_back(cell);
                     }
                     else
                     {
-                        if( !cell->m_occupies_class[id_class] )
+                        if( cell->m_occupies_class.empty() )
                         {
                             occupied_voxels.push_back(cell);
-                            cell->m_occupies_class[id_class] = true;
+                        }
+                        else
+                        {
+                            if( !cell->m_occupies_class[id_class] )
+                            {
+                                occupied_voxels.push_back(cell);
+                                cell->m_occupies_class[id_class] = true;
+                            }
                         }
                     }
                 }
@@ -193,15 +200,31 @@ bool WorkspaceOccupancyGrid::are_all_cells_blank(int id)
     return true;
 }
 
+void WorkspaceOccupancyGrid::computeCurrentOccupancy()
+{
+    m_current_occupied_cells.clear();
+
+    for(int i=0;i<int(m_current_occupied_cells.size());i++)
+    {
+        m_current_occupied_cells[i]->m_currently_occupied = false;
+    }
+
+    get_cells_occupied_by_human( m_current_occupied_cells, -1, false );
+
+    for(int i=0;i<int(m_current_occupied_cells.size());i++)
+    {
+        m_current_occupied_cells[i]->m_currently_occupied = true;
+    }
+}
+
 //! Set each cell to belong to a class of motion
 //! by computing the voxel occupancy for each point along the path 
 //! of the corresponding regressed motion
 void WorkspaceOccupancyGrid::computeOccpancy()
 {           
-    cout << __func__ << endl;
-    
     confPtr_t q = m_human->getCurrentPos();
 
+    cout << __func__ << endl;
     cout << "Compute workspace occupancy for " << m_motions.size() << " motions" <<  endl;
     
     // For each motion class compute the occupancy
@@ -210,36 +233,36 @@ void WorkspaceOccupancyGrid::computeOccpancy()
         //cout << "----------------------------------------" << endl;
         cout << " Motion : " << i << endl;
         //cout << "----------------------------------------" << endl;
-        
+
         m_occupied_cells[i].clear();
-        
+
         if( !are_all_cells_blank(i) )
         {
             cout << "ERROR" << endl;
         }
 
         // Warning, set to 100 in the normal case
-        //const motion_t& swept_volume_motion = m_motions[i];
-        const motion_t& swept_volume_motion = m_motion_recorder->resample(m_motions[i],10);
-        
+        // const motion_t& swept_volume_motion = m_motions[i];
+        const motion_t& swept_volume_motion = m_motion_recorder->resample( m_motions[i], 10 );
+
         for(int j=0;j<int(swept_volume_motion.size());j++)
         {
             // Compute occupied workspace for each configuration in the trajectory
             m_human->setAndUpdate( *swept_volume_motion[j].second );
-            
+
             std::vector<WorkspaceOccupancyCell*> cells; get_cells_occupied_by_human( cells, i );
             //cout << " Frame : " << j << endl;
             m_occupied_cells[i].insert(  m_occupied_cells[i].end(), cells.begin(), cells.end() );
         }
-        
+
         for( int j=0; j<int(m_occupied_cells[i].size()); j++)
         {
             m_occupied_cells[i][j]->m_visited =false;
         }
-        
+
         cout << "m_occupied_cells[" << i << "].size() : "  << m_occupied_cells[i].size() << endl;
     }
-    
+
     m_human->setAndUpdate(*q);
     
     set_all_occupied_cells();
@@ -269,8 +292,7 @@ void WorkspaceOccupancyGrid::set_all_occupied_cells()
     }
 }
 
-
-double WorkspaceOccupancyGrid::getOccupancy(const Eigen::Vector3d &point)
+double WorkspaceOccupancyGrid::getOccupancy(const Eigen::Vector3d &point) const
 {
     if( m_all_occupied_cells.empty() )
     {
@@ -281,8 +303,18 @@ double WorkspaceOccupancyGrid::getOccupancy(const Eigen::Vector3d &point)
     return double(static_cast<WorkspaceOccupancyCell*>(getCell( point ))->m_occupies_class[m_id_class_to_draw]);
 }
 
+double WorkspaceOccupancyGrid::geCurrentOccupancy(const Eigen::Vector3d &point) const
+{
+    if( m_all_occupied_cells.empty() )
+    {
+        cout << "occupied cells not loaded" << endl;
+        return 0.0;
+    }
 
-double WorkspaceOccupancyGrid::getOccupancyCombination( const Eigen::Vector3d &point )
+    return double(static_cast<WorkspaceOccupancyCell*>(getCell( point ))->m_currently_occupied);
+}
+
+double WorkspaceOccupancyGrid::getOccupancyCombination( const Eigen::Vector3d &point ) const
 {
     if( m_all_occupied_cells.empty() )
     {
@@ -413,6 +445,14 @@ void WorkspaceOccupancyGrid::simple_draw_one_class()
     for( int i=0;i<int(occupied_voxels.size());i++)
     {
         occupied_voxels[i]->drawColorGradient( 0.5, 0.0, 1.0 );
+    }
+}
+
+void WorkspaceOccupancyGrid::simple_draw_current_occupancy()
+{
+    for( int i=0;i<int(m_current_occupied_cells.size());i++)
+    {
+        m_current_occupied_cells[i]->drawColorGradient( 1.0, 0.0, 0.0 );
     }
 }
 
@@ -601,6 +641,15 @@ void WorkspaceOccupancyGrid::draw_voxels( const std::vector<unsigned int>& voxel
 
 void WorkspaceOccupancyGrid::draw()
 {
+     //cout << "draw occupancy grid" << endl;
+
+    if( GestEnv->getBool(GestParam::draw_current_occupancy) )
+    {
+        //cout << "draw current occupancy" << endl;
+        computeCurrentOccupancy();
+        return simple_draw_current_occupancy();
+    }
+
     if( !m_motions.empty() )
     {
         if(GestEnv->getBool(GestParam::draw_single_class))

@@ -15,8 +15,9 @@ public:
 
     void draw();
 
-    double getCost(Configuration& q);
-    double getCostFromActiveJoints(Configuration& q);
+    double getCost(Configuration& q) const;
+    double getCostFromActiveJoints(Configuration& q) const;
+    double getCurrentOccupationCost(Configuration& q) const;
 
 private:
     void draw_sampled_points();

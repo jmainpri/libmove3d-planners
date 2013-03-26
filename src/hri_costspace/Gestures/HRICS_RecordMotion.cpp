@@ -386,12 +386,14 @@ void RecordMotion::showStoredMotion()
         for (int i=0; i<int(m_stored_motions.size()); i++)
         {
             cout << "Show motion : " << i << " with " <<  m_stored_motions[i].size() << " frames" << endl;
-            showMotion( m_stored_motions[i] );
+            showMotion(  m_stored_motions[i] );
+            //showMotion( getArmTorsoMotion( m_stored_motions[i], m_robot->getCurrentPos() ) );
         }
     }
     else
     {
-        showMotion( m_stored_motions[m_ith_shown_motion] );
+        showMotion( getArmTorsoMotion( m_stored_motions[m_ith_shown_motion], m_robot->getCurrentPos() ) );
+//        showMotion( m_stored_motions[m_ith_shown_motion] );
     }
 }
 

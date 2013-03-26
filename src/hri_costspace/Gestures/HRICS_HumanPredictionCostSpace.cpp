@@ -18,6 +18,7 @@ double HRICS_getPredictionOccupancyCost(Configuration& q)
 //    return 1.0;
 //    return global_humanPredictionCostSpace->getCostFromActiveJoints(q);
     return global_humanPredictionCostSpace->getCost(q);
+//    return global_humanPredictionCostSpace->getCurrentOccupationCost(q);
 }
 
 
@@ -39,7 +40,39 @@ HumanPredictionCostSpace::~HumanPredictionCostSpace()
 
 }
 
-double HumanPredictionCostSpace::getCost(Configuration& q)
+double HumanPredictionCostSpace::getCurrentOccupationCost(Configuration& q) const
+{
+    Robot* robot = q.getRobot();
+    robot->setAndUpdate(q); // TODO remove this when necessary
+
+    double cost = 0.0;
+
+    int nb_points = 0;
+
+    for(int i=0; i<int(m_active_joints.size()); i++)
+    {
+        Joint* jnt = m_robot->getJoint( m_active_joints[i] );
+        p3d_obj* obj = jnt->getJointStruct()->o;
+
+        if( obj )
+        {
+            //cout << "compute cost for joint : " << jnt->getName() ;
+            Eigen::Transform3d T = robot->getJoint( m_active_joints[i] )->getMatrixPos();
+            PointCloud& pc = m_surface_sampler->getPointCloud( obj );
+
+            for( int j=0; j<int(pc.size()); j++ )
+            {
+                cost += (4*m_ws_occupancy->geCurrentOccupancy( T*pc[j] ));
+                nb_points++;
+            }
+        }
+    }
+
+    //cout << " , cost : " << cost << endl;
+    return cost;
+}
+
+double HumanPredictionCostSpace::getCost(Configuration& q) const
 {
     Robot* robot = q.getRobot();
     robot->setAndUpdate(q); // TODO remove this when necessary
@@ -74,7 +107,7 @@ double HumanPredictionCostSpace::getCost(Configuration& q)
     return cost;
 }
 
-double HumanPredictionCostSpace::getCostFromActiveJoints(Configuration& q)
+double HumanPredictionCostSpace::getCostFromActiveJoints(Configuration& q) const
 {
      Robot* robot = q.getRobot();
 //    robot->setAndUpdate(q);

@@ -27,6 +27,7 @@ public:
     Eigen::Vector3d m_center;
     bool m_visited;
     std::vector<bool> m_occupies_class;
+    bool m_currently_occupied;
 };
 
 class WorkspaceOccupancyGrid : public API::ThreeDGrid
@@ -39,22 +40,25 @@ public:
     API::ThreeDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z );
 
     void setRegressedMotions( const std::vector<motion_t>& motions );
+    void computeCurrentOccupancy();
     void computeOccpancy();
     void setClassToDraw( int id_class );
     int classifyMotion( const motion_t& motions );
     void setLikelihood( const std::vector<double>& likelyhood );
+    double getOccupancy( const Eigen::Vector3d& point ) const;
+    double getOccupancyCombination( const Eigen::Vector3d& point ) const;
+    double geCurrentOccupancy( const Eigen::Vector3d& point ) const;
     void drawSampledPoints();
     void draw();
-    double getOccupancy( const Eigen::Vector3d& point );
-    double getOccupancyCombination( const Eigen::Vector3d& point );
 
 private:
 
     void simple_draw_one_class();
     void simple_draw_combined();
+    void simple_draw_current_occupancy();
     void set_all_occupied_cells();
     void set_sorted_cell_ids_to_draw( const std::vector<WorkspaceOccupancyCell*>& occupied_voxels );
-    void get_cells_occupied_by_human( std::vector<WorkspaceOccupancyCell*>& occupied_voxels, int id_class );
+    void get_cells_occupied_by_human( std::vector<WorkspaceOccupancyCell*>& occupied_voxels, int id_class, bool checkclass=true );
 //    void draw_all_cubes();
 //    void init_one_cube();
     void init_drawing();
@@ -84,6 +88,7 @@ private:
     double m_min_likelihood;
     double m_max_likelihood;
     std::vector<WorkspaceOccupancyCell*> m_all_occupied_cells;
+    std::vector<WorkspaceOccupancyCell*> m_current_occupied_cells;
 };
 }
 

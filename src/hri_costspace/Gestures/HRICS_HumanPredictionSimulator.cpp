@@ -233,6 +233,7 @@ void HumanPredictionSimulator::predictVoxelOccupancy()
     cout << "predict voxel occpancy" << endl;
     std::vector<double> likelihood = m_classifier->classify_motion( m_current_human_traj );
     m_occupacy_grid->setLikelihood( likelihood );
+    m_occupacy_grid->computeCurrentOccupancy();
 }
 
 void HumanPredictionSimulator::loadGoalConfig()
@@ -572,7 +573,7 @@ void HumanPredictionSimulator::printCosts() const
     {
         for(int j =0;j<int(m_cost[i].size());j++)
         {
-            cout << "cost_" << i << "_(" << j << ") = " <<  m_cost[i][j] << ";" <<endl;
+            cout << "cost_" << i << "_(" << j+1 << ") = " <<  m_cost[i][j] << ";" <<endl;
         }
     }
 }
@@ -595,7 +596,7 @@ double HumanPredictionSimulator::run()
     {
         predictVoxelOccupancy();
 
-        g3d_draw_allwin_active();
+        g3d_draw_allwin_active();        
 
         if(!GestEnv->getBool(GestParam::parallelize_stomp) )
         {

@@ -40,6 +40,7 @@ namespace GestParam
             draw_ws_occupancy,
             draw_single_class,
             draw_null_cost,
+            draw_current_occupancy,
             draw_recorded_motion,
             with_multiple_stomps,
             parallelize_stomp
