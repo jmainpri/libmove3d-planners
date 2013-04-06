@@ -99,6 +99,8 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::trajStompWithIterLimit,     new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::trajStompMultiplyM,         new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::trajStompWithRRT,           new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::trajStompMatrixAdaptation,  new boolContainer(false)));
+
         myBoolMap.insert( std::make_pair( PlanParam::trajBiasOptim,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajMoveHuman,              new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::trajUseOtp,                 new boolContainer(false)));
@@ -114,10 +116,11 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::withStomp,                  new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::doReplanning,               new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::showExploration,            new boolContainer(false)));
-  
+        myBoolMap.insert( std::make_pair( PlanParam::setRobotIK,                 new boolContainer(false)));
+
         // RRT*
-        myBoolMap.insert( std::make_pair( PlanParam::starRRT,            new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( PlanParam::starRewire,            new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::starRRT,                    new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( PlanParam::starRewire,                 new boolContainer(false)));
   
         // Stomp/Chomp
         myBoolMap.insert( std::make_pair( PlanParam::withCurrentTraj,            new boolContainer(false)));

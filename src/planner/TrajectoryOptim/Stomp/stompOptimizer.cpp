@@ -685,6 +685,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
         }
     }
 
+
     if (last_improvement_iteration_>-1)
         cout << "We think the path is collision free: " << is_collision_free_ << endl;
 
@@ -698,14 +699,14 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
         group_trajectory_.getTrajectory() = best_group_trajectory_;
 
     // Set this anywhere
-//    if( PlanEnv->getBool(PlanParam::drawParallelTraj) && ( global_stompRun != NULL ))
-//    {
-//        ENV.setBool(Env::drawTraj,false);
-//        global_stompRun->lockDraw();
-//        robot_model_->setAndUpdate(*q_tmp);
-//        saveEndeffectorTraj();
-//        global_stompRun->unlockDraw();
-//    }
+    //    if( PlanEnv->getBool(PlanParam::drawParallelTraj) && ( global_stompRun != NULL ))
+    //    {
+    //        ENV.setBool(Env::drawTraj,false);
+    //        global_stompRun->lockDraw();
+    //        robot_model_->setAndUpdate(*q_tmp);
+    //        saveEndeffectorTraj();
+    //        global_stompRun->unlockDraw();
+    //    }
     
     //group_trajectory_.print();
     //updateFullTrajectory();
@@ -751,9 +752,9 @@ void StompOptimizer::setRobotPool( const std::vector<Robot*>& robots )
     for( int i=0; i<int(robots.size()); i++)
     {
         compute_fk_.push_back(new costComputation(robots[i], collision_space_, planning_group_, joint_costs_,
-                                                   group_trajectory_,
-                                                   stomp_parameters_->getObstacleCostWeight(),
-                                                   use_costspace_));
+                                                  group_trajectory_,
+                                                  stomp_parameters_->getObstacleCostWeight(),
+                                                  use_costspace_));
     }
 }
 

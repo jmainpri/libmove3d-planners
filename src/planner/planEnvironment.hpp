@@ -65,13 +65,16 @@ namespace PlanParam
             trajStompWithTimeLimit,
             trajStompWithIterLimit,
             trajStompMultiplyM,
+            trajStompMatrixAdaptation,
 
+            // Traj
             trajBiasOptim,
             trajMoveHuman,
             trajUseOtp,
             trajNPoints,
             trajComputeCostAfterPlannif,
-          
+            trajOptimTestMultiGauss,
+
             withMaxIteration,
             withGainLimit,
             withSmoothing,
@@ -79,7 +82,8 @@ namespace PlanParam
             withDeformation,
             withStomp,
             withDescent,
-            trajOptimTestMultiGauss,
+
+            setRobotIK,
             showExploration,
           
             // RRT*

@@ -585,6 +585,9 @@ double HumanPredictionSimulator::run()
     m_best_path_id = -1;
 
     loadGoalConfig();
+
+    cout << "Load human traj id  : " << GestEnv->getInt(GestParam::human_traj_id) << endl;
+
     loadHumanTrajectory( m_recorder->getStoredMotions()[GestEnv->getInt(GestParam::human_traj_id)] );
 
     m_cost.resize( m_goal_config.size() );

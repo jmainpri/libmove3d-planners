@@ -33,9 +33,9 @@ public:
 
     void storeMotion( const motion_t& motion, bool new_motion = true);
     void addToCurrentMotion( const motion_t& motion );
-    void saveToCSV(const std::string &filename,const motion_t& motion);
+    void saveToCSV( const std::string &filename, const motion_t& motion);
     void saveStoredToCSV( const std::string &filename );
-    motion_t resample(const motion_t& motion, int nb_sample );
+    motion_t resample( const motion_t& motion, int nb_sample );
     motion_t getArmTorsoMotion( const motion_t& motion, confPtr_t q );
 
     void showStoredMotion();
@@ -45,7 +45,7 @@ public:
     bool setShowMotion(int ith);
 
     void drawMotion( const motion_t& motion );
-    void dawColorSkinedCylinder(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2);
+    void dawColorSkinedCylinder( const Eigen::Vector3d& p1, const Eigen::Vector3d& p2);
     void drawHeraklesArms();
     void draw();
 

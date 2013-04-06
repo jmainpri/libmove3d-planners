@@ -335,12 +335,9 @@ namespace stomp_motion_planner
         bool get_reused_ones = true;
         policy_improvement_.getRollouts( rollouts_, noise, get_reused_ones, reused_rollouts_ );
 
-        if ( use_annealing_ )
-            limits_violations_ = 0;
-
         //cout << "Run single interation of stomp " << endl;
         if ( ENV.getBool(Env::drawTrajVector) )
-            addRolloutsToDraw(get_reused_ones);
+            addRolloutsToDraw( get_reused_ones );
 
         if( !parrallel_is_rollout_running_.empty() )
             mtx_end_.lock();
@@ -363,17 +360,6 @@ namespace stomp_motion_planner
 
             //cout << rollout_costs_ << endl;
             //cout << "end parallel computing" << endl;
-        }
-
-        if( use_annealing_ )
-        {
-            cout << "Annealing : K(" << K_ <<  ")";
-            cout << "limits_violations_ (" << limits_violations_ << ")" << endl;
-
-            if( limits_violations_ > 10 )
-                K_ /= 2.0;
-            if( limits_violations_ == 0 )
-                K_ *= 1.10;
         }
 
         // TODO: fix this std::vector<>

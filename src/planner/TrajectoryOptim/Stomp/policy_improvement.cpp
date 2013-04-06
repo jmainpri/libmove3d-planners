@@ -193,13 +193,25 @@ namespace stomp_motion_planner
         // invert the control costs, initialize noise generators:
         inv_control_costs_.clear();
         noise_generators_.clear();
+
         for (int d=0; d<num_dimensions_; ++d)
         {
             //cout << "control_costs_[" << d << "] = " << endl << control_costs_[d] << endl;
             //cout << "inv_control_costs_[" << d << "] = " << endl << control_costs_[d].inverse() << endl;
             inv_control_costs_.push_back(control_costs_[d].inverse());
-            MultivariateGaussian mvg(VectorXd::Zero(num_parameters_[d]), inv_control_costs_[d]);
-            noise_generators_.push_back(mvg);
+
+            if( !PlanEnv->getBool(PlanParam::trajStompMatrixAdaptation) )
+            {
+                MultivariateGaussian mvg( VectorXd::Zero(num_parameters_[d]), inv_control_costs_[d] );
+                noise_generators_.push_back(mvg);
+            }
+            else
+            {
+                cout << "Error preAllocateMultivariateGaussianSampler" << endl;
+                MultivariateGaussian mvg( VectorXd::Zero(num_parameters_[d]), MatrixXd::Identity(num_time_steps_,num_time_steps_) );
+                noise_generators_.push_back(mvg);
+                return false;
+            }
         }
 
         return true;
@@ -618,7 +630,7 @@ namespace stomp_motion_planner
     bool PolicyImprovement::getRollouts(std::vector<std::vector<Eigen::VectorXd> >& generated_rollouts, const std::vector<double>& noise_variance,
                                         bool get_reused, std::vector<std::vector<Eigen::VectorXd> >& reused_rollouts)
     {
-        if ( !generateRollouts(noise_variance) )
+        if ( !generateRollouts( noise_variance ) )
         {
             cout << "Failed to generate rollouts." << endl;
             return false;
@@ -873,6 +885,29 @@ namespace stomp_motion_planner
         // {
         //   cout << "parameter_updates[" << d << "] = " << endl << parameter_updates_[d] << endl;
         // }
+        return true;
+    }
+
+    bool PolicyImprovement::covarianceMatrixAdaptaion()
+    {
+        std::vector<MatrixXd> covariance( num_dimensions_ );
+
+        for (int d=0; d<num_dimensions_; ++d)
+        {
+            for (int r=0; r<num_rollouts_; ++r)
+            {
+                covariance[d] += rollouts_[r].probabilities_[d] * ( rollouts_[r].noise_[d] * rollouts_[r].noise_[d].transpose() ) ;
+            }
+        }
+
+        MatrixXd new_covariance = MatrixXd( num_time_steps_, num_time_steps_ );
+
+        noise_generators_.clear();
+        for (int d=0; d<num_dimensions_; ++d)
+        {
+            MultivariateGaussian mvg( VectorXd::Zero(num_parameters_[d]), new_covariance );
+            noise_generators_.push_back(mvg);
+        }
         return true;
     }
 
