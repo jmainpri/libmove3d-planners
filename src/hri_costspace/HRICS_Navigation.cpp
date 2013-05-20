@@ -290,7 +290,7 @@ API::Trajectory* Navigation::getSimplePath(std::vector<double> goal, std::vector
         p.push_back(robotTraj3D.at(j)[2]);
         path.push_back(p);
 
-        confPtr_t q = m_robot->getInitialPosition();
+        confPtr_t q = m_robot->getInitPos();
         (*q)[firstIndexOfRobotDof + 0] = p[0];
         (*q)[firstIndexOfRobotDof + 1] = p[1];
         (*q)[firstIndexOfRobotDof + 5] = p[2];

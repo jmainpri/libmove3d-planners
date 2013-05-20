@@ -452,7 +452,7 @@ bool HRICS::initShelfScenario()
   
   // Set init and goal config
   confPtr_t qInit = rob->getCurrentPos();
-  confPtr_t qGoal = rob->getGoTo();
+  confPtr_t qGoal = rob->getGoalPos();
   global_manipPlanTest->setGoalConfiguration(qInit->getConfigStructCopy());
   global_manipPlanTest->setGoalConfiguration(qGoal->getConfigStructCopy());
   

@@ -312,8 +312,8 @@ API::Trajectory traj_optim_create_sraight_line_traj()
              << __FILE__ << " ,  " << __func__ << endl;
     }
 
-    confPtr_t q_init( m_robot->getInitialPosition() );
-    confPtr_t q_goal( m_robot->getGoTo() );
+    confPtr_t q_init( m_robot->getInitPos() );
+    confPtr_t q_goal( m_robot->getGoalPos() );
 
     if( q_init->equal( *q_goal ) )
     {
@@ -1362,13 +1362,15 @@ bool traj_optim_initStomp()
     // global_costSpace->addCost("CollisionSpace",boost::bind(computeCollisionSpaceCost, _1));
     // global_costSpace->setCost("CollisionSpace");
 
-    m_robot->setAndUpdate( *m_robot->getInitialPosition() );
+    m_robot->setAndUpdate( *m_robot->getInitPos() );
 
     return true;
 }
 
 bool traj_optim_runStomp( int runId )
 {
+//    cout << "Robot is : " << m_robot->getName() << endl;
+
     if(!traj_optim_initStomp() )
     {
         cout << "Could not init stomp in : " << __func__ << endl;

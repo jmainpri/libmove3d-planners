@@ -27,8 +27,8 @@ GreedyCost::GreedyCost(p3d_graph* G, int(*stop_func)(), void(*draw_func)()) :
 		cout << "Error Not Cost Space" << endl;
 	}
 
-	//	Configuration goalConf(*mRobot->getGoTo());
-	//	Configuration startConf(*mRobot->getInitialPosition());
+	//	Configuration goalConf(*mRobot->getGoalPos());
+	//	Configuration startConf(*mRobot->getInitPos());
 
         Expansion = new RRTExpansion(mGraph);
 

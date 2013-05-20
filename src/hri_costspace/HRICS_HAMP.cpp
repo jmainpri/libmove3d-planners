@@ -176,13 +176,13 @@ void HriSpaceCost::computeWorkspacePath()
 
     shared_ptr<Configuration> q = _Robot->getCurrentPos();
 
-    _Robot->setAndUpdate( *_Robot->getInitialPosition() );
+    _Robot->setAndUpdate( *_Robot->getInitPos() );
 
     qs[0] = _Bitmap->robot->joints[_JntId]->abs_pos[0][3];
     qs[1] = _Bitmap->robot->joints[_JntId]->abs_pos[1][3];
     qs[2] = _Bitmap->robot->joints[_JntId]->abs_pos[2][3];
 
-    _Robot->setAndUpdate( *_Robot->getGoTo() );
+    _Robot->setAndUpdate( *_Robot->getGoalPos() );
 
     qf[0] = _Bitmap->robot->joints[_JntId]->abs_pos[0][3];
     qf[1] = _Bitmap->robot->joints[_JntId]->abs_pos[1][3];
@@ -274,9 +274,9 @@ void HriSpaceCost::computeHoleManipulationPath()
 
     cout << "Looking for a 3D path for joint "<< hri_exp_get_robot_joint_object() << endl;
 
-    _Robot->setAndUpdate( *_Robot->getInitialPosition() );
+    _Robot->setAndUpdate( *_Robot->getInitPos() );
 
-    hri_exp_set_exp_from_config( _Bitmap, _Robot->getGoTo()->getConfigStruct() );
+    hri_exp_set_exp_from_config( _Bitmap, _Robot->getGoalPos()->getConfigStruct() );
 
     hri_gik_set_visstep(300);
 

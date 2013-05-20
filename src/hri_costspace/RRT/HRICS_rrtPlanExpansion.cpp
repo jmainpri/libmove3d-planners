@@ -36,7 +36,7 @@ void HRICS_rrtPlanExpansion::init()
 {
     cout << "Init Box Jido" << endl;
 //    double box[] = {-1.3,1.3,-1.3,1.3,0,1.5};
-    shared_ptr<Configuration> qInit = m_Graph->getRobot()->getInitialPosition();
+    shared_ptr<Configuration> qInit = m_Graph->getRobot()->getInitPos();
 
 //    _Box = new double[6];
 //

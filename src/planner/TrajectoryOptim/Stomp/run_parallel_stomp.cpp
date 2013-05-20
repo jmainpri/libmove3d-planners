@@ -245,16 +245,16 @@ void srompRun_MultipleParallel()
     pool->setPool( robots );
 
 //    API::Trajectory T( robots[0] );
-//    T.push_back( robots[0]->getInitialPosition() );
-//    T.push_back( robots[0]->getGoTo() );
+//    T.push_back( robots[0]->getInitPos() );
+//    T.push_back( robots[0]->getGoalPos() );
 //    pool->run( 0, T );
 
     std::vector<API::Trajectory> trajs;
     for( int i=0;i<int(robots.size()); i++)
     {
         trajs.push_back( API::Trajectory( robots[i] ) );
-        trajs.back().push_back( robots[i]->getInitialPosition() );
-        trajs.back().push_back( robots[i]->getGoTo() );
+        trajs.back().push_back( robots[i]->getInitPos() );
+        trajs.back().push_back( robots[i]->getGoalPos() );
     }
 
     cout << "spawns: " <<  robots.size() << " threads" << endl;
@@ -301,8 +301,8 @@ void srompRun_OneParallel()
     robots.push_back( global_Project->getActiveScene()->getRobotByNameContaining("ROBOT") );
 
     API::Trajectory T( robots[0] );
-    T.push_back( robots[0]->getInitialPosition() );
-    T.push_back( robots[0]->getGoTo() );
+    T.push_back( robots[0]->getInitPos() );
+    T.push_back( robots[0]->getGoalPos() );
 
     pool->run( 0, T );
 }

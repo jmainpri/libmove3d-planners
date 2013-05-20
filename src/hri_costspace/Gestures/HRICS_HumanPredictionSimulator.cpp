@@ -256,7 +256,7 @@ void HumanPredictionSimulator::loadGoalConfig()
         sleep(1);
     }
 
-    m_q_start = m_robot->getInitialPosition();
+    m_q_start = m_robot->getInitPos();
 
     m_paths.resize( m_goal_config.size() );
 }
@@ -485,8 +485,8 @@ void HumanPredictionSimulator::runStandardStomp( int iter, int id_goal  )
     }
     else
     {
-        m_robot->setInitialPosition( *m_q_start );
-        m_robot->setGoTo( *m_goal_config[id_goal] );
+        m_robot->setInitPos( *m_q_start );
+        m_robot->setGoalPos( *m_goal_config[id_goal] );
         traj_optim_set_use_extern_trajectory( false );
     }
 

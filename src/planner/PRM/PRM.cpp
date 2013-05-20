@@ -42,8 +42,8 @@ unsigned PRM::init()
   
 	Planner::init();
 	m_nbConscutiveFailures = 0;
-	ADDED += Planner::setInit(_Robot->getInitialPosition());
-	ADDED += Planner::setGoal(_Robot->getGoTo());
+	ADDED += Planner::setInit(_Robot->getInitPos());
+	ADDED += Planner::setGoal(_Robot->getGoalPos());
 	_Init = true;
   
 	return ADDED;

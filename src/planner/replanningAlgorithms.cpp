@@ -208,7 +208,7 @@ bool SimpleReplanner::init()
 
     // Store initial and final configurations
     m_qSwitch = m_robot->getCurrentPos();
-    m_qGoal   = m_robot->getGoTo();
+    m_qGoal   = m_robot->getGoalPos();
 
     m_idRun = 0;
 
@@ -264,8 +264,8 @@ bool SimpleReplanner::init_create_straightline()
         return false;
     }
 
-    confPtr_t q_init( rob->getInitialPosition() );
-    confPtr_t q_goal( rob->getGoTo() );
+    confPtr_t q_init( rob->getInitPos() );
+    confPtr_t q_goal( rob->getGoalPos() );
 
     if( q_init->equal( *q_goal ) )
     {

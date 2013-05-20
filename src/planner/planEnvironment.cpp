@@ -118,6 +118,7 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::showExploration,            new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::setRobotIK,                 new boolContainer(false)));
 
+
         // RRT*
         myBoolMap.insert( std::make_pair( PlanParam::starRRT,                    new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::starRewire,                 new boolContainer(false)));

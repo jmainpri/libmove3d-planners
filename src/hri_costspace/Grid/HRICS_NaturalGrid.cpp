@@ -175,7 +175,7 @@ void NaturalGrid::computeReachability()
 
 	int nbCells = this->getNumberOfCells();
 //	m_NaturalCostSpace->setRobotToConfortPosture();
-	shared_ptr<Configuration> robotConf = getRobot()->getInitialPosition();
+	shared_ptr<Configuration> robotConf = getRobot()->getInitPos();
 	
 	for(int i=0; i<nbCells; i++)
     {

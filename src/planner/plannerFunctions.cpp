@@ -465,8 +465,8 @@ int p3d_run_rrt(p3d_rob* robotPt)
 {	
     Robot* rob = global_Project->getActiveScene()->getRobotByName( robotPt->name );
 
-    confPtr_t q_source = rob->getInitialPosition();
-    confPtr_t q_target = rob->getGoTo();
+    confPtr_t q_source = rob->getInitPos();
+    confPtr_t q_target = rob->getGoalPos();
 
     p3d_traj* path = p3d_planner_function( rob->getRobotStruct(), q_source->getConfigStruct(), q_target->getConfigStruct() );
 
@@ -488,8 +488,8 @@ bool p3d_run_est(p3d_rob* robotPt)
 {	
     // Gets the robot pointer and the 2 configurations
     Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-    confPtr_t q_source = rob->getInitialPosition();
-    confPtr_t q_target = rob->getGoTo();
+    confPtr_t q_source = rob->getInitPos();
+    confPtr_t q_target = rob->getGoalPos();
 
     // Allocate the p3d_graph if does't exist
     // Removes graph if it exists, creates a new graph , Allocate RRT
@@ -531,8 +531,8 @@ int p3d_run_prm(p3d_rob* robotPt)
 {	
     // Gets the robot pointer and the 2 configurations
     Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-    confPtr_t q_source = rob->getInitialPosition();
-    confPtr_t q_target = rob->getGoTo();
+    confPtr_t q_source = rob->getInitPos();
+    confPtr_t q_target = rob->getGoalPos();
 
     // Allocate the p3d_graph if does't exist
     Graph* graph;
@@ -573,8 +573,8 @@ int p3d_run_perturb_prm(p3d_rob* robotPt)
 
     // Gets the robot pointer and the 2 configurations
     Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-    confPtr_t q_source = rob->getInitialPosition();
-    confPtr_t q_target = rob->getGoTo();
+    confPtr_t q_source = rob->getInitPos();
+    confPtr_t q_target = rob->getGoalPos();
 
     // Allocate the p3d_graph if does't exist
     // Removes graph if it exists, creates a new graph , Allocate RRT
@@ -598,8 +598,8 @@ int p3d_run_vis_prm(p3d_rob* robotPt)
 {	
     // Gets the robot pointer and the 2 configurations
     Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-    confPtr_t q_source = rob->getInitialPosition();
-    confPtr_t q_target = rob->getGoTo();
+    confPtr_t q_source = rob->getInitPos();
+    confPtr_t q_target = rob->getGoalPos();
 
     // Allocate the p3d_graph if does't exist
     // Removes graph if it exists, creates a new graph , Allocate RRT
@@ -622,8 +622,8 @@ int p3d_run_acr(p3d_rob* robotPt)
 {	
     // Gets the robot pointer and the 2 configurations
     Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-    confPtr_t q_source = rob->getInitialPosition();
-    confPtr_t q_target = rob->getGoTo();
+    confPtr_t q_source = rob->getInitPos();
+    confPtr_t q_target = rob->getGoalPos();
 
     // Allocate the p3d_graph if does't exist
     // Removes graph if it exists, creates a new graph

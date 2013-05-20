@@ -168,7 +168,7 @@ bool ConfigSpace::computeAStarIn2DGrid()
     //
     ENV.setBool(Env::drawTraj,false);
 
-    shared_ptr<Configuration> config = _Robot->getInitialPosition();
+    shared_ptr<Configuration> config = _Robot->getInitPos();
 
     config->print();
 
@@ -192,7 +192,7 @@ bool ConfigSpace::computeAStarIn2DGrid()
             startCell,
             m2DGrid);
 
-    config = _Robot->getGoTo();
+    config = _Robot->getGoalPos();
 
     pos[0] = config->at(6);
     pos[1] = config->at(7);

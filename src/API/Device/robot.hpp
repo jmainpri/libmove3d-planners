@@ -175,7 +175,12 @@ public:
      * obtient la Configuration current du Robot
      * @return la Configuration current du Robot
      */
-    confPtr_t getInitialPosition();
+    confPtr_t getInitPos();
+
+    /**
+     * Sets the Initial Position of the Robot
+     */
+    void setInitPos(Configuration& conf);
 
     /**
      * Returns true if the robot is
@@ -190,20 +195,15 @@ public:
     bool isInCollisionWithOthersAndEnv();
 
     /**
-     * Sets the Initial Position of the Robot
-     */
-    void setInitialPosition(Configuration& conf);
-
-    /**
      * obtient la Configuration GoTo du Robot
      * @return la Configuration GoTo du Robot
      */
-    confPtr_t getGoTo();
+    confPtr_t getGoalPos();
 
     /**
      * Sets the Goto Position of the Robot
      */
-    void setGoTo(Configuration& conf);
+    void setGoalPos(Configuration& conf);
 
     /**
      * Returns the Robot current Configuration

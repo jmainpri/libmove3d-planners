@@ -313,3 +313,10 @@ src/planner/TrajectoryOptim/Stomp/cost_computation.hpp
 src/planner/TrajectoryOptim/Stomp/cost_computation.cpp
 src/planner/TrajectoryOptim/Stomp/run_parallel_stomp.hpp
 src/planner/TrajectoryOptim/Stomp/run_parallel_stomp.cpp
+src/hri_costspace/HumanTrajectories/SourceList.cmake
+src/hri_costspace/HumanTrajectories/HRICS_HumanCostSpace.hpp
+src/hri_costspace/HumanTrajectories/HRICS_HumanCostSpace.cpp
+src/hri_costspace/HumanTrajectories/HRICS_InverseOptimalControl.hpp
+src/hri_costspace/HumanTrajectories/HRICS_InverseOptimalControl.cpp
+src/hri_costspace/HumanTrajectories/HRICS_IOCSimulator.hpp
+src/hri_costspace/HumanTrajectories/HRICS_IOCSimulator.cpp

@@ -177,7 +177,7 @@ bool TreePlanner::checkStopConditions()
 			_Graph->getGraphStruct()->search_goal = _Goal->getNodeStruct();
 			_Goal->getNodeStruct()->rankFromRoot = 1;
 			_Goal->getNodeStruct()->type = ISOLATED;
-			_Robot->getGoTo() = _Goal->getConfiguration()->copy();
+			_Robot->getGoalPos() = _Goal->getConfiguration()->copy();
 			cout << "Success: distance from start is " << d << endl;
 			return (true);
 		}

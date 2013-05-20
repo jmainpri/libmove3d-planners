@@ -286,7 +286,6 @@ namespace stomp_motion_planner
 
     void PolicyImprovementLoop::executeRollout(int r, int iteration_number )
     {
-
         if( r < parrallel_is_rollout_running_.size()  )
         {
             parrallel_is_rollout_running_[r] = true;

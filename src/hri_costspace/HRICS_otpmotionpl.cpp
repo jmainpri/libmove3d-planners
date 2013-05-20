@@ -155,7 +155,7 @@ void OTPMotionPl::initAll()
 
     // init pos
     shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();
-    m_Human->setInitialPosition(*q_human_cur);
+    m_Human->setInitPos(*q_human_cur);
 
     // Init Manipulation Planner
     m_ManipPl = new ManipulationPlanner( _Robot->getRobotStruct() );
@@ -327,7 +327,7 @@ void OTPMotionPl::initPR2GiveConf()
     shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
             new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
     _Robot->setAndUpdate( *m_q );
-    _Robot->setInitialPosition(*m_q );
+    _Robot->setInitPos(*m_q );
 }
 
 ConfGenerator* OTPMotionPl::getConfGenerator()
@@ -342,7 +342,7 @@ ConfGenerator* OTPMotionPl::getConfGenerator()
 void OTPMotionPl::placeHuman()
 {
     shared_ptr<Configuration> q_robot_cur = _Robot->getCurrentPos();
-    _Robot->setAndUpdate(*_Robot->getInitialPosition());
+    _Robot->setAndUpdate(*_Robot->getInitPos());
 
     m_ReachableSpace->computeIsReachableAndMove(current_WSPoint,false);
     _Robot->setAndUpdate(*q_robot_cur);
@@ -1147,7 +1147,7 @@ bool OTPMotionPl::getRandomPoints(double id, Vector3d& vect)
 bool OTPMotionPl::newComputeOTP()
 {
     m_OTPsuceed = false;
-    _Robot->setInitialPosition(*_Robot->getCurrentPos());
+    _Robot->setInitPos(*_Robot->getCurrentPos());
     clock_t start = clock();
     bool isStanding = PlanEnv->getBool(PlanParam::env_isStanding);
     if (!PlanEnv->getBool(PlanParam::env_realTime))
@@ -2489,8 +2489,8 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
             for(unsigned int i =0; i < robotTraj3D.size(); i++)
             {
 
-                shared_ptr<Configuration> q_tmp(_Robot->getInitialPosition());
-                shared_ptr<Configuration> q_cur(_Robot->getInitialPosition());
+                shared_ptr<Configuration> q_tmp(_Robot->getInitPos());
+                shared_ptr<Configuration> q_cur(_Robot->getInitPos());
 
                 //                        cout << "cell nb: " << i << " coord =\n"<< robotTraj3D.at(i) << endl;
 

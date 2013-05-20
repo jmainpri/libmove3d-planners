@@ -517,23 +517,23 @@ bool Robot::isInCollisionWithOthersAndEnv()
     return pqp_robot_all_no_self_collision_test(_Robot);
 }
 
-confPtr_t Robot::getInitialPosition()
+confPtr_t Robot::getInitPos()
 {
     return (confPtr_t (new Configuration(this, _Robot->ROBOT_POS)));
 }
 
-void Robot::setInitialPosition(Configuration& conf)
+void Robot::setInitPos(Configuration& conf)
 {
     configPt q = _Robot->ROBOT_POS;
     p3d_copy_config_into(_Robot, conf.getConfigStruct(), &q);
 }
 
-confPtr_t Robot::getGoTo()
+confPtr_t Robot::getGoalPos()
 {
     return (confPtr_t (new Configuration(this,_Robot->ROBOT_GOTO)));
 }
 
-void Robot::setGoTo(Configuration& conf)
+void Robot::setGoalPos(Configuration& conf)
 {
     configPt q = _Robot->ROBOT_GOTO;
     p3d_copy_config_into(_Robot,conf.getConfigStruct(),&q);

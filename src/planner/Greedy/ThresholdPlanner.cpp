@@ -32,8 +32,8 @@ ThresholdPlanner::~ThresholdPlanner()
 unsigned ThresholdPlanner::init()
 {
 	int added = Planner::init();
-	added += Planner::setInit(_Robot->getInitialPosition());
-	added += Planner::setGoal(_Robot->getGoTo());
+	added += Planner::setInit(_Robot->getInitPos());
+	added += Planner::setGoal(_Robot->getGoalPos());
 	return added;
 }
 

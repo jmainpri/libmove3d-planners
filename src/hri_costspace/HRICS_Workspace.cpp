@@ -288,7 +288,7 @@ bool Workspace::computeAStarIn3DGrid()
 	//
 	ENV.setBool(Env::drawTraj,false);
 	
-	shared_ptr<Configuration> config = _Robot->getInitialPosition();
+	shared_ptr<Configuration> config = _Robot->getInitPos();
 	
 	config->print();
 	
@@ -315,7 +315,7 @@ bool Workspace::computeAStarIn3DGrid()
 													 startCell,
 													 m3DGrid);
 	
-	config = _Robot->getGoTo();
+	config = _Robot->getGoalPos();
 	
 	pos[0] = config->at(mIndexObjectDof+0);
 	pos[1] = config->at(mIndexObjectDof+1);
@@ -1124,8 +1124,8 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::
 
 bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsigned int threshold)
 {
-	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
-	_Robot->setAndUpdate(*_Robot->getInitialPosition());
+	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
+	_Robot->setAndUpdate(*_Robot->getInitPos());
 
 	p3d_col_activate_rob_rob( _Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
 
@@ -1212,7 +1212,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 	if( sampleRobotBase(q_base,WSPoint) )
 	{
 		p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
-		mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+		mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
 		if (!move)
 		{
 			_Robot->setAndUpdate(*q_cur_robot);
@@ -1222,7 +1222,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 
 	_Robot->setAndUpdate(*q_cur_robot);
 	p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
-	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
 	cout << "No Point found" << endl;
 	return false;
 }
@@ -1230,8 +1230,8 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 //changing this function
 //bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move)
 //{
-//	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
-//	_Robot->setAndUpdate(*_Robot->getInitialPosition());
+//	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
+//	_Robot->setAndUpdate(*_Robot->getInitPos());
 
 //	p3d_col_activate_rob_rob( _Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
 	
@@ -1351,7 +1351,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 //				cout << "Configuration at iteration " << i << " found!!!" << endl;
 
 //                p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
-//                mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+//                mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
 //                if (!move)
 //                {
 //                    _Robot->setAndUpdate(*q_cur_robot);
@@ -1366,14 +1366,14 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 
 //	_Robot->setAndUpdate(*q_cur_robot);
 //	p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
-//	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+//	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
 //	cout << "No Point found" << endl;
 //	return false;
 //}
 
 bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 {	
-	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
 	
 
 	if ( m_ReachableSpace == NULL )
@@ -1485,7 +1485,7 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 		}
 	}
 
-	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitialPosition());
+	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
 
 
 	return false;
@@ -1635,7 +1635,7 @@ void Workspace::initPR2RepoConf()
 
     shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
                                           new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
-    _Robot->setInitialPosition(*m_q);
+    _Robot->setInitPos(*m_q);
     _Robot->setAndUpdate( *m_q );
 
 
@@ -1687,7 +1687,7 @@ void Workspace::initPR2GiveConf()
    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
                                          new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
    _Robot->setAndUpdate( *m_q );
-   _Robot->setInitialPosition(*m_q );
+   _Robot->setInitPos(*m_q );
 }
 
 
@@ -1714,7 +1714,7 @@ void Workspace::initPR2AndHumanTest()
    shared_ptr<Configuration> m_q_human = shared_ptr<Configuration>(
                                          new Configuration(m_ReachableSpace->getRobot(),p3d_copy_config(m_ReachableSpace->getRobot()->getRobotStruct(),q_h)));
 
-   m_ReachableSpace->getRobot()->setInitialPosition(*m_q_human);
+   m_ReachableSpace->getRobot()->setInitPos(*m_q_human);
    m_ReachableSpace->getRobot()->setAndUpdate( *m_q_human );
 
 
@@ -1738,7 +1738,7 @@ void Workspace::initPR2AndHumanTest()
    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
                                          new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
 
-   _Robot->setInitialPosition(*m_q);
+   _Robot->setInitPos(*m_q);
    _Robot->setAndUpdate( *m_q );
 
    initPR2GiveConf();
