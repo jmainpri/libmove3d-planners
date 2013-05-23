@@ -35,6 +35,7 @@ namespace GestParam
         enum boolParameter
         {
             init_module_at_start,
+            init_module_ioc,
             draw_robot_sampled_points,
             draw_human_sampled_points,
             draw_ws_occupancy,

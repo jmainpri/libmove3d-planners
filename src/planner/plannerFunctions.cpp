@@ -401,11 +401,16 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
             cout << "---------------------" << endl;
         }
 
-        last_traj = API::Trajectory(optimTrj);
+        t = API::Trajectory(optimTrj);
+        last_traj = t;
     }
 
     if( PlanEnv->getBool( PlanParam::withStomp ) )
     {
+        //PlanEnv->setBool(PlanParam::withCurrentTraj,true);
+        traj_optim_set_use_extern_trajectory( true );
+        traj_optim_set_extern_trajectory( t );
+
         traj_optim_runStompNoReset( runId );
 
         t = API::Trajectory( rob, rob->getRobotStruct()->tcur );

@@ -316,7 +316,7 @@ src/planner/TrajectoryOptim/Stomp/run_parallel_stomp.cpp
 src/hri_costspace/HumanTrajectories/SourceList.cmake
 src/hri_costspace/HumanTrajectories/HRICS_HumanCostSpace.hpp
 src/hri_costspace/HumanTrajectories/HRICS_HumanCostSpace.cpp
-src/hri_costspace/HumanTrajectories/HRICS_InverseOptimalControl.hpp
-src/hri_costspace/HumanTrajectories/HRICS_InverseOptimalControl.cpp
-src/hri_costspace/HumanTrajectories/HRICS_IOCSimulator.hpp
-src/hri_costspace/HumanTrajectories/HRICS_IOCSimulator.cpp
+src/hri_costspace/HumanTrajectories/HRICS_IOCUpper.hpp
+src/hri_costspace/HumanTrajectories/HRICS_IOCLower.hpp
+src/hri_costspace/HumanTrajectories/HRICS_IOCUpper.cpp
+src/hri_costspace/HumanTrajectories/HRICS_IOCLower.cpp

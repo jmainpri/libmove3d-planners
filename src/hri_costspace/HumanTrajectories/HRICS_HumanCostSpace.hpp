@@ -1,5 +1,7 @@
 #include "API/Device/robot.hpp"
 
+double HRICS_getHumanTrajectoryCost(Configuration& q);
+
 namespace HRICS
 {
 class HumanTrajCostSpace
@@ -26,3 +28,7 @@ private:
     Robot* m_human_passive;
 };
 }
+
+extern HRICS::HumanTrajCostSpace* global_humanTrajectoryCostSpace;
+
+

@@ -50,7 +50,7 @@ static bool m_add_human = false;
 static Robot* m_robot = NULL;
 
 namespace traj_optim {
-enum ScenarioType { Default, CostMap, Simple, Shelf, Navigation , HumanAwareNav, HumanAwareManip, HumanAwareMobileManip };
+enum ScenarioType { Default, CostMap, Simple, Shelf, Navigation , HumanAwareNav, HumanAwareManip, HumanAwareMobileManip, HumanSimulation };
 
 }
 static traj_optim::ScenarioType m_sce;
@@ -88,7 +88,7 @@ static bool m_use_iteration_limit=false;
 static double m_max_iteration;
 
 static bool m_use_external_trajectory=false;
-static API::Trajectory m_external_trajectory=false;
+static API::Trajectory m_external_trajectory;
 
 static bool m_discretize=false;
 static double m_discretization=0.0;
@@ -601,7 +601,7 @@ void traj_optim_shelf_set_localpath_and_cntrts()
 
 //! initializes the collision space
 // --------------------------------------------------------
-void traj_optim_shelf_init_collision_space()
+void traj_optim_init_collision_space()
 {
     //    std::vector<double> env_size = global_Project->getActiveScene()->getBounds();
     //    double pace = env_size[1] - env_size[0];
@@ -614,39 +614,20 @@ void traj_optim_shelf_init_collision_space()
 
     m_coll_space = new CollisionSpace( m_robot, double(ENV.getInt(Env::nbCells))/100, global_Project->getActiveScene()->getBounds() );
 
-    // Set the active joints (links)
-    m_active_joints.clear();
-    //  m_active_joints.push_back( 5 );
-    m_active_joints.push_back( 6 );
-    m_active_joints.push_back( 7 );
-    m_active_joints.push_back( 8 );
-    m_active_joints.push_back( 9 );
-    m_active_joints.push_back( 10 );
-    m_active_joints.push_back( 11 );
-    m_active_joints.push_back( 12 );
-
-    m_active_joints.push_back( 14 );
-    m_active_joints.push_back( 15 );
-
-    // Set the planner joints
-    m_planner_joints.clear();
-    //m_planner_joints.push_back( 5 );
-    m_planner_joints.push_back( 6 );
-    m_planner_joints.push_back( 7 );
-    m_planner_joints.push_back( 8 );
-    m_planner_joints.push_back( 9 );
-    m_planner_joints.push_back( 10 );
-    m_planner_joints.push_back( 11 );
-    m_planner_joints.push_back( 12 );
-
     m_coll_space->resetPoints();
 
-    for (unsigned int joint_id=0; joint_id<m_robot->getNumberOfJoints(); joint_id++)
+    if ( m_robot->getName().find("HERAKLES") == string::npos )
     {
-        if ( find (m_active_joints.begin(), m_active_joints.end(), joint_id )
-             == m_active_joints.end() )
+        cout << "robot name : " << m_robot->getName() << endl;
+        cout << "Add robot bodies exit " << endl; exit(0);
+
+        for (unsigned int joint_id=0; joint_id<m_robot->getNumberOfJoints(); joint_id++)
         {
-            m_coll_space->addRobotBody( m_robot->getJoint(joint_id) );
+            if ( find (m_active_joints.begin(), m_active_joints.end(), joint_id )
+                 == m_active_joints.end() )
+            {
+                m_coll_space->addRobotBody( m_robot->getJoint(joint_id) );
+            }
         }
     }
 
@@ -658,7 +639,7 @@ void traj_optim_shelf_init_collision_space()
         {
             Robot* rob = sc->getRobot(i);
 
-            if ( rob->getName().find("HERAKLES") != string::npos )
+            if (  ( m_robot != rob ) && rob->getName().find("HERAKLES") != string::npos )
             {
                 m_coll_space->addRobot( rob );
             }
@@ -679,7 +660,7 @@ void traj_optim_shelf_init_collision_space()
 
 //! initializes the collision points
 // --------------------------------------------------------
-bool traj_optim_shelf_init_collision_points()
+bool traj_optim_init_collision_points()
 {
     // Generate Bounding volumes for active joints
     BodySurfaceSampler* sampler = m_coll_space->getBodySampler();
@@ -824,7 +805,7 @@ void traj_optim_hrics_generate_points()
 
 //! initializes the collision space
 // --------------------------------------------------------
-void traj_optim_hrics_manip_init_joints()
+void traj_optim_manip_init_joints()
 {
     m_coll_space = NULL;
 
@@ -933,6 +914,58 @@ void traj_optim_hrics_mobile_manip_init_joints()
 
     m_coll_space = NULL;
 }
+
+//! initializes the collision space
+//! and points
+// --------------------------------------------------------
+void traj_optim_hrics_human_trajectory_manip_init_joints()
+{
+    // Set the active joints (links)
+
+//    (*q_cur)[6] =  (*q)[6];  // Pelvis
+//    (*q_cur)[7] =  (*q)[7];  // Pelvis
+//    (*q_cur)[8]=   (*q)[8];  // Pelvis
+//    (*q_cur)[11] = (*q)[11]; // Pelvis
+//    (*q_cur)[12] = (*q)[12]; // TorsoX
+//    (*q_cur)[13] = (*q)[13]; // TorsoY
+//    (*q_cur)[14] = (*q)[14]; // TorsoZ
+//    (*q_cur)[18] = (*q)[18]; // rShoulderX
+//    (*q_cur)[19] = (*q)[19]; // rShoulderZ
+//    (*q_cur)[20] = (*q)[20]; // rShoulderY
+//    (*q_cur)[21] = (*q)[21]; // rArmTrans
+//    (*q_cur)[22] = (*q)[22]; // rElbowZ
+
+    m_active_joints.clear();
+    m_active_joints.push_back( 1 ); // Pelvis
+    m_active_joints.push_back( 2 ); // TorsoX
+    m_active_joints.push_back( 3 ); // TorsoY
+    m_active_joints.push_back( 4 ); // TorsoZ
+    m_active_joints.push_back( 8 ); // rShoulderX
+    m_active_joints.push_back( 9 ); // rShoulderZ
+    m_active_joints.push_back( 10 ); // rShoulderY
+    m_active_joints.push_back( 11 ); // rArmTrans
+    m_active_joints.push_back( 12 ); // rElbowZ
+
+    m_active_joints.push_back( 13 );
+    m_active_joints.push_back( 14 );
+    m_active_joints.push_back( 15 );
+    m_active_joints.push_back( 16 );
+
+    // Set the planner joints
+    m_planner_joints.clear();
+    m_planner_joints.push_back( 1 );
+    m_planner_joints.push_back( 2 );
+    m_planner_joints.push_back( 3 );
+    m_planner_joints.push_back( 4 );
+    m_planner_joints.push_back( 8 );
+    m_planner_joints.push_back( 9 );
+    m_planner_joints.push_back( 10 );
+    m_planner_joints.push_back( 11 );
+    m_planner_joints.push_back( 12 );
+
+    m_coll_space = NULL;
+}
+
 //****************************************************************
 //* Common functions 
 //****************************************************************
@@ -966,10 +999,10 @@ bool traj_optim_init_collision_spaces()
         cout << "Init with 2D costmap" << endl;
         if( !traj_optim_costmap_init() )
             return false;
-        //      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.1);
-        //      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
-        //      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
-        //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.001);
+        // PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.1);
+        // PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
+        // PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
+        // PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.001);
         break;
 
     case traj_optim::Simple:
@@ -977,10 +1010,10 @@ bool traj_optim_init_collision_spaces()
         cout << "Init Simple Nav" << endl;
         if( !traj_optim_simple_init() )
             return false;
-        //      PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.030000);
-        //      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
-        //      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
-        //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.000005);
+        // PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.030000);
+        // PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
+        // PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
+        // PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.000005);
         break;
 
     case traj_optim::Shelf:
@@ -988,31 +1021,33 @@ bool traj_optim_init_collision_spaces()
         cout << "Init Shelf" << endl;
         cout << "Set robot, localpath and cntrts with " << m_robot->getName() << endl;
 
-        //      traj_optim_set_MultiLP();
-        //      traj_optim_invalidate_cntrts();
+        // traj_optim_set_MultiLP();
+        // traj_optim_invalidate_cntrts();
+        traj_optim_manip_init_joints();
         traj_optim_shelf_set_localpath_and_cntrts();
 
         if( !global_collisionSpace )
         {
-            traj_optim_shelf_init_collision_space();
-            traj_optim_shelf_init_collision_points();
+            traj_optim_init_collision_space();
+            traj_optim_init_collision_points();
         }
         else {
             m_coll_space = global_collisionSpace;
         }
 
-        //      PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
-        //      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,15);
-        //      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
-        //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.1);
+        // PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
+        // PlanEnv->setInt(PlanParam::nb_pointsOnTraj,15);
+        // PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,10);
+        // PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.1);
 
-        //      PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
-        //      PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
-        //      PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,30);
-        //      PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.01);
+        // PlanEnv->setDouble(PlanParam::trajOptimStdDev,2);
+        // PlanEnv->setInt(PlanParam::nb_pointsOnTraj,50);
+        // PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,30);
+        // PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.01);
         break;
 
     case traj_optim::HumanAwareNav:
+
         cout << "Init HumanAwareNav" << endl;
         cout << "Set robot, localpath and cntrts with ";
         cout << m_robot->getName() << endl;
@@ -1037,6 +1072,7 @@ bool traj_optim_init_collision_spaces()
         break;
 
     case traj_optim::HumanAwareManip:
+
         cout << "Init HumanAwareManip" << endl;
         cout << "Set robot, localpath and cntrts with ";
         cout << m_robot->getName() << endl;
@@ -1047,12 +1083,13 @@ bool traj_optim_init_collision_spaces()
         {
             traj_optim_invalidate_cntrts();
             traj_optim_shelf_set_localpath_and_cntrts();
+            traj_optim_manip_init_joints();
 
             // Init collspace
             if( !global_collisionSpace )
             {
-                traj_optim_shelf_init_collision_space();
-                traj_optim_shelf_init_collision_points();
+                traj_optim_init_collision_space();
+                traj_optim_init_collision_points();
             }
             else {
                 m_coll_space = global_collisionSpace;
@@ -1060,7 +1097,7 @@ bool traj_optim_init_collision_spaces()
         }
         else {
             traj_optim_init_mlp_cntrts_and_fix_joints();
-            traj_optim_hrics_manip_init_joints();
+            traj_optim_manip_init_joints();
         }
 
         // PlanEnv->setDouble(PlanParam::trajOptimStdDev,3);
@@ -1070,6 +1107,7 @@ bool traj_optim_init_collision_spaces()
         break;
 
     case traj_optim::HumanAwareMobileManip:
+
         cout << "Init HumanAwareMobileManip" << endl;
         cout << "Set robot, localpath and cntrts with ";
         cout << m_robot->getName() << endl;
@@ -1078,6 +1116,24 @@ bool traj_optim_init_collision_spaces()
         traj_optim_invalidate_cntrts();
         traj_optim_hrics_mobile_manip_localpath_and_cntrts();
         traj_optim_hrics_mobile_manip_init_joints();
+        break;
+
+    case traj_optim::HumanSimulation:
+
+        cout << "Init Human Simulation (Trajectory costspace)" << endl;
+
+        traj_optim_hrics_human_trajectory_manip_init_joints();
+
+        // Init collspace
+        if( !global_collisionSpace )
+        {
+            traj_optim_init_collision_space();
+            traj_optim_init_collision_points();
+        }
+        else {
+            m_coll_space = global_collisionSpace;
+        }
+
         break;
 
     case traj_optim::Navigation:
@@ -1115,7 +1171,7 @@ bool traj_optim_init_collision_spaces()
 // --------------------------------------------------------
 bool traj_optim_set_scenario_type()
 {  
-    if( ENV.getBool(Env::isCostSpace) && ( global_costSpace == NULL )){
+    if( ENV.getBool(Env::isCostSpace) && ( global_costSpace == NULL )) {
         cout << "Cost space not initialized!!!" << endl;
         return false;
     }
@@ -1147,11 +1203,20 @@ bool traj_optim_set_scenario_type()
         }
         if( m_planning_type == MANIPULATION )
         {
-            m_sce = traj_optim::HumanAwareManip;
+             m_sce = traj_optim::HumanAwareManip;
         }
         if( m_planning_type == MOBILE_MANIP )
         {
             m_sce = traj_optim::HumanAwareMobileManip;
+        }
+    }
+    else if ( ENV.getBool(Env::isCostSpace) &&
+               global_costSpace->getSelectedCostName() == "costHumanTrajecoryCost" )
+    {
+        if( m_planning_type == MANIPULATION )
+        {
+            cout << "Set human cost function" << endl;
+            m_sce = traj_optim::HumanSimulation;
         }
     }
     else
@@ -1260,6 +1325,8 @@ bool traj_optim_InitTraj(API::Trajectory& T)
 
     T.cutTrajInSmallLP( nb_points );
     T.replaceP3dTraj();
+
+    cout << "End Init traj" << endl;
     return true;
 }
 
@@ -1304,6 +1371,8 @@ bool traj_optim_runChomp()
 // --------------------------------------------------------
 bool traj_optim_initStomp()
 {
+    cout << "----------------------------------" << endl;
+    cout << " Init Stomp ----------------------" << endl;
     API::Trajectory T(m_robot);
 
     if( !traj_optim_InitTraj(T) )
@@ -1400,6 +1469,8 @@ bool traj_optim_runStomp( int runId )
 
 bool traj_optim_runStompNoInit( int runId, const API::Trajectory& traj )
 {
+    cout << "run stomp no init" << endl;
+
     if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
     {
         global_optimizer->setUseTimeLimit( true );
@@ -1409,6 +1480,8 @@ bool traj_optim_runStompNoInit( int runId, const API::Trajectory& traj )
         global_optimizer->setUseTimeLimit( false );
     }
 
+    cout << "set iteration limit" << endl;
+
     if( m_use_iteration_limit )
     {
         global_optimizer->setUseIterationLimit( true );
@@ -1417,6 +1490,9 @@ bool traj_optim_runStompNoInit( int runId, const API::Trajectory& traj )
 
     global_optimizer->setUseOtp( PlanEnv->getBool(PlanParam::trajUseOtp) );
     global_optimizer->initializeFromNewTrajectory( traj );
+
+    cout << "run deformation" << endl;
+
     global_optimizer->runDeformation( 0, runId );
     return true;
 }
@@ -1437,6 +1513,11 @@ bool traj_optim_runStompNoReset(int runId)
 
 //! Run Stomp
 // --------------------------------------------------------
+void traj_optim_add_human_to_collision_space(bool add)
+{
+    m_add_human = add;
+}
+
 void traj_optim_set_use_iteration_limit(bool use)
 {
     m_use_iteration_limit = use;

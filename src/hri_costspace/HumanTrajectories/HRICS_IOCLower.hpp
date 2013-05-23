@@ -1,15 +1,15 @@
-#ifndef HRICS_INVERSEOPTIMALCONTROL_HPP
-#define HRICS_INVERSEOPTIMALCONTROL_HPP
+#ifndef HRICS_IOCLower_HPP
+#define HRICS_IOCLower_HPP
 
 #include "../Gestures/HRICS_RecordMotion.hpp"
 
 namespace HRICS
 {
-class InverseOptimalControl
+class IOCLower
 {
 public:
-    InverseOptimalControl();
-    ~InverseOptimalControl();
+    IOCLower();
+    ~IOCLower();
 
     void setActiveRobot(Robot* robot);
 
@@ -19,7 +19,8 @@ public:
 private:
     Robot* m_robot;
     std::vector< std::pair<confPtr_t,confPtr_t> > m_start_goal_config;
+    bool m_is_scenario_init;
 };
 }
 
-#endif // HRICS_INVERSEOPTIMALCONTROL_HPP
+#endif // HRICS_IOCLower_HPP

@@ -353,16 +353,17 @@ bool Configuration::isInCollision()
     }
     
     //_InCollision = p3d_col_test();      
-    if( global_collisionSpace )
-    {
-      double dist = numeric_limits<double>::max();
-      double potential = numeric_limits<double>::max();
-      _InCollision = global_collisionSpace->isRobotColliding( dist, potential );
-    }
-    else
-    {
+//    if( global_collisionSpace )
+//    {
+//      double dist = numeric_limits<double>::max();
+//      double potential = numeric_limits<double>::max();
+//      _InCollision = global_collisionSpace->isRobotColliding( dist, potential );
+//    }
+//    else
+//    {
       _InCollision = p3d_col_test_robot(_Robot->getRobotStruct(), JUST_BOOL);
-    }
+//    }
+
     //        shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
     //        cout << "6" << " : "<<_Configuration[6] << endl;
     //        cout << "7" << " : "<<_Configuration[7] << endl;

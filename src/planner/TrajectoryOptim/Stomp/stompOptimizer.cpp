@@ -262,6 +262,8 @@ void StompOptimizer::initialize()
 
 bool StompOptimizer::initializeFromNewTrajectory(const API::Trajectory& traj)
 {
+    cout << "initialize stomp from new trajectory" << endl;
+
     if( traj.getRobot()->getName() != robot_model_->getName() ){
         cout << "Can not initialize stomp with this trajectory" << endl;
         return false;

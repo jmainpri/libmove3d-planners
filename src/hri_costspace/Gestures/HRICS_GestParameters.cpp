@@ -58,6 +58,7 @@ void initGestureParameters()
         // Bool
         // ------------------------------------------------------------------
         myBoolMap.insert( std::make_pair( GestParam::init_module_at_start,             new boolContainer(false)));
+        myBoolMap.insert( std::make_pair( GestParam::init_module_ioc,                  new boolContainer(false)));
         myBoolMap.insert( std::make_pair( GestParam::draw_robot_sampled_points,        new boolContainer(false)));
         myBoolMap.insert( std::make_pair( GestParam::draw_human_sampled_points,        new boolContainer(false)));
         myBoolMap.insert( std::make_pair( GestParam::draw_ws_occupancy,                new boolContainer(false)));
