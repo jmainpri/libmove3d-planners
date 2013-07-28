@@ -80,7 +80,7 @@ void HRICS_initOccupancyPredictionFramework()
 
     // Create the simulator
     HumanPredictionSimulator* simulator = new HumanPredictionSimulator( robot, human, recorder, classifier, occupancyGrid );
-    recorder->loadFolder();
+    recorder->loadXMLFolder();
     // Translate all motions
     recorder->translateStoredMotions();
 
