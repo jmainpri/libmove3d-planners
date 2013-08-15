@@ -6,6 +6,7 @@ HRICS_costspace.cpp
 HRICS_Distance.cpp
 HRICS_Visibility.cpp
 HRICS_Natural.cpp
+HRICS_Legibility.cpp
 HRICS_Workspace.cpp
 HRICS_ConfigSpace.cpp
 HRICS_Miscellaneous.cpp
