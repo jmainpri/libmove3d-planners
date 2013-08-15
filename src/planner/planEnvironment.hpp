@@ -89,9 +89,6 @@ namespace PlanParam
             // RRT*
             starRRT,
             starRewire,
-          
-            // HRICS
-            hriSetColorFromConfig,
 
             // Stomp/Chomp & trajectory optim
             withCurrentTraj,
@@ -100,6 +97,7 @@ namespace PlanParam
 
 
             // Drawing (gl) stuff
+            drawNaturalColor,
             drawParallelTraj,
             drawColorConfig,
             drawOccupVoxels,

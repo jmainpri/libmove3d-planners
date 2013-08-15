@@ -151,7 +151,7 @@ void OTPMotionPl::initAll()
     m_VisibilitySpace = new Visibility(m_Human);
 
     //initReachability
-    setReachability(new Natural());
+    setReachability(new Natural(m_Human));
 
     // init pos
     shared_ptr<Configuration> q_human_cur = m_Human->getCurrentPos();

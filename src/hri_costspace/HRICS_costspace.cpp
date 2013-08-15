@@ -212,12 +212,14 @@ double HRICS_getConfigCost(Configuration& Conf)
 //----------------------------------------------------------------------
 void HRICS_loadGrid(std::string docname)
 {
-    ENV.setBool(Env::drawGrid,false);
+    ENV.setBool( Env::drawGrid, false );
 
-    HRICS_activeNatu  = new HRICS::Natural;
+    Robot* human = global_Project->getActiveScene()->getRobotByNameContaining("HUMAN");
+
+    HRICS_activeNatu  = new HRICS::Natural( human );
 
     HRICS::NaturalGrid* myGrid = new HRICS::NaturalGrid;
-    myGrid->setNaturalCostSpace(HRICS_activeNatu);
+    myGrid->setNaturalCostSpace( HRICS_activeNatu );
 
     bool reading_OK=false;
 
@@ -234,12 +236,12 @@ void HRICS_loadGrid(std::string docname)
         if( HRICS_activeNatu->IsHuman() )
         {
             cout << "Set Reachability space" << endl;
-            HRICS_MotionPL->setReachability(HRICS_activeNatu);
+            HRICS_MotionPL->setReachability( HRICS_activeNatu );
         }
         else
         {
             cout << "Set Natural space" << endl;
-            HRICS_MotionPL->setNatural(HRICS_activeNatu);
+            HRICS_MotionPL->setNatural( HRICS_activeNatu );
         }
     }
 

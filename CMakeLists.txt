@@ -155,7 +155,7 @@ Move3DMPLIB_flag(GRASP_PLANNING "Compilation with module Manipulation Planner" O
 Move3DMPLIB_flag(MULTILOCALPATH "Compilation with module Multilocalpath" ON)
 Move3DMPLIB_flag(MULTIGRAPH "Compilation with module Multi-Graph" ON)
 
-Move3DMPLIB_flag(USE_GBM "Compilation with module GBM" ON)
+#Move3DMPLIB_flag(USE_GBM "Compilation with module GBM" ON)
 Move3DMPLIB_flag(USE_GSL "Compilation with module Hri-planner" ON)
 
 Move3DMPLIB_flag(HRI_COSTSPACE "With the hri work" ON)
@@ -261,12 +261,12 @@ MESSAGE("Boost_INCLUDE_DIRS : ${Boost_INCLUDE_DIRS}")
 MESSAGE("Boost_LIBRARIES : ${Boost_LIBRARIES}")
 
 #-------------- GBM ------------------------------------------------------------
-IF(USE_GBM)
-FIND_PACKAGE(GBM REQUIRED)
-INCLUDE_directories(${GBM_INCLUDE_DIR})
-  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GBM_INCLUDE_DIR})
-SET(LIBS ${LIBS} ${GBM_LIBRARIES})
-ENDIF(USE_GBM)
+#IF(USE_GBM)
+#FIND_PACKAGE(GBM REQUIRED)
+#INCLUDE_directories(${GBM_INCLUDE_DIR})
+#  SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${GBM_INCLUDE_DIR})
+#SET(LIBS ${LIBS} ${GBM_LIBRARIES})
+#ENDIF(USE_GBM)
 
 #-------------- SOFTMOTION -----------------------------------------------------
 IF(MULTILOCALPATH)

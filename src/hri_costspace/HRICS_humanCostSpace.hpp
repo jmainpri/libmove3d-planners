@@ -18,18 +18,18 @@
  */
 namespace HRICS
 {
-	class HumanCostSpace 
-	{
-	public:
-		HumanCostSpace();
-		HumanCostSpace( Robot* rob, std::vector<Robot*> humans, Natural* costspace, double cellSize );
+class HumanCostSpace
+{
+public:
+    HumanCostSpace();
+    HumanCostSpace( Robot* rob, std::vector<Robot*> humans, Natural* costspace, double cellSize );
 
-		~HumanCostSpace();
+    ~HumanCostSpace();
     
     Robot* getRobot() { return m_Robot; }
     
     double getCost(Configuration& q);
-		double getCompleteCost(Configuration& q, std::vector<double>& cost_sum);
+    double getCompleteCost(Configuration& q, std::vector<double>& cost_sum);
     double getPointCost(Configuration& q);
     
     bool getHandoverPointList(std::vector<Eigen::Vector3d>& points, bool recompute_cells, int arm_type);
@@ -45,7 +45,7 @@ namespace HRICS
     
     AgentGrid* getAgentGrid(Robot* agent);
     
-	private:
+private:
     bool initElementarySpaces();
     void deleteElementarySpaces();
     
@@ -58,7 +58,7 @@ namespace HRICS
     
     double groupingCost();
     
-		Robot*                        m_Robot;
+    Robot*                        m_Robot;
     std::vector<Joint*>           m_CostJoints;
     std::vector<Robot*>           m_Humans;
     std::vector<AgentGrid*>       m_Grids;
@@ -68,9 +68,9 @@ namespace HRICS
     enum PlanningType { NAVIGATION = 0, MANIPULATION = 1, MOBILE_MANIP = 2 } m_planning_type;
     
     Distance*			m_DistanceSpace;
-		Visibility*		m_VisibilitySpace;
-		Natural*			m_ReachableSpace;
-	};
+    Visibility*		m_VisibilitySpace;
+    Natural*			m_ReachableSpace;
+};
 }
 
 #endif

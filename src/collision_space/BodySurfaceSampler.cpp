@@ -25,7 +25,7 @@ BodySurfaceSampler::BodySurfaceSampler(double step) :
 
 BodySurfaceSampler::~BodySurfaceSampler()
 {
-//    cout << "Delete BodySurfaceSampler" << endl;
+    //    cout << "Delete BodySurfaceSampler" << endl;
 }
 
 bool BodySurfaceSampler::isPointOverGround( const Eigen::Vector3d& point )

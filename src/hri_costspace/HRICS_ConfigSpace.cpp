@@ -83,10 +83,10 @@ void ConfigSpace::initCostSpace()
     mEnvSize[4] = XYZ_ENV->box.z1; mEnvSize[5] = XYZ_ENV->box.z2;
 
 #ifdef LIGHT_PLANNER
-  p3d_jnt* FF_Joint = _Robot->getRobotStruct()->ccCntrts[0]->actjnts[0];
-	ENV.setInt(Env::akinJntId,FF_Joint->num);
+    p3d_jnt* FF_Joint = _Robot->getRobotStruct()->ccCntrts[0]->actjnts[0];
+    ENV.setInt(Env::akinJntId,FF_Joint->num);
 #else
-	cout << "Warning: Lihght Planner not compiled" << endl;
+    cout << "Warning: Lihght Planner not compiled" << endl;
 #endif
     
 #ifdef LIGHT_PLANNER
@@ -98,9 +98,9 @@ void ConfigSpace::initCostSpace()
     vector<Robot*> Humans;
     Humans.push_back(mHuman);
 
-    m_DistanceSpace = new Distance(/*_Robot,Humans*/);
+    m_DistanceSpace = new Distance( _Robot, Humans );
     m_DistanceSpace->parseHumans();
-	
+
     m_VisibilitySpace = new Visibility( mHuman );
 
     m3DGrid = new Grid(ENV.getDouble(Env::CellSize),mEnvSize);
@@ -108,19 +108,19 @@ void ConfigSpace::initCostSpace()
 
     mEnvSize.resize(4);
     m2DGrid = new PlanGrid(_Robot,ENV.getDouble(Env::PlanCellSize),mEnvSize);
-//    API_activeGrid = m2DGrid;
-//    API_EnvGrid = m2DGrid;
+    //    API_activeGrid = m2DGrid;
+    //    API_EnvGrid = m2DGrid;
 }
 
 double ConfigSpace::getConfigCost()
 {
-//    ENV.setBool(Env::useBoxDist,true);
+    //    ENV.setBool(Env::useBoxDist,true);
     mDistCost = ENV.getDouble(Env::Kdistance)*getDistanceCost();
-//    mVisibilityPoint = Vector3d::Random();
+    //    mVisibilityPoint = Vector3d::Random();
     mVisiCost = ENV.getDouble(Env::Kvisibility)*getVisibilityCost(mVisibilityPoint);
 
-//    cout << "DistCost = "  << DistCost << endl;
-//    cout << "VisibCost = "  << VisiCost << endl;
+    //    cout << "DistCost = "  << DistCost << endl;
+    //    cout << "VisibCost = "  << VisiCost << endl;
 
     return  mDistCost + mVisiCost;
 }
@@ -141,8 +141,8 @@ void ConfigSpace::computeVisibilityGrid()
 {
     ENV.setBool(Env::drawGrid,true);
     ENV.setInt(Env::hriCostType,1);
-//    ENV.setBool(Env::useBoxDist,false);
-//    ENV.setBool(Env::useBallDist,true);
+    //    ENV.setBool(Env::useBoxDist,false);
+    //    ENV.setBool(Env::useBallDist,true);
     m3DGrid->computeAllCellCost();
     API_activeGrid = m3DGrid;
 }
@@ -151,7 +151,7 @@ double ConfigSpace::getDistanceCost()
 {
     double Cost = m_DistanceSpace->getDistToZones()[0];
     mVisibilityPoint = m_DistanceSpace->getColsestPointToHuman();
-//    getVisibilityCost(mVisibilityPoint);
+    //    getVisibilityCost(mVisibilityPoint);
     return Cost;
 }
 
@@ -189,8 +189,8 @@ bool ConfigSpace::computeAStarIn2DGrid()
             startCoord[1] << ")" << endl;
 
     PlanState* start = new PlanState(
-            startCell,
-            m2DGrid);
+                startCell,
+                m2DGrid);
 
     config = _Robot->getGoalPos();
 
@@ -215,15 +215,15 @@ bool ConfigSpace::computeAStarIn2DGrid()
     }
 
     PlanState* goal = new PlanState(
-            goalCell,
-            m2DGrid);
+                goalCell,
+                m2DGrid);
 
     solveAStar(start,goal);
 
     double SumOfCost= 0.0;
     for(unsigned int i=0; i< m2DPath.size() ; i++ )
     {
-//        cout << "Cell "<< i <<" = " << endl << m2DPath[i] << endl;
+        //        cout << "Cell "<< i <<" = " << endl << m2DPath[i] << endl;
         SumOfCost +=  dynamic_cast<PlanCell*>(m2DCellPath[i])->getCost();
     }
 
@@ -236,8 +236,8 @@ bool ConfigSpace::computeAStarIn2DGrid()
     //    write(qt_fl_pipe[1],str.c_str(),str.length()+1);
     //    ENV.setBool(Env::drawTraj,true);
     //    cout << "solution : End Search" << endl;
-	
-	return true;
+
+    return true;
 }
 
 /**
@@ -247,9 +247,9 @@ bool ConfigSpace::computeAStarIn2DGrid()
 void ConfigSpace::solveAStar(PlanState* start,PlanState* goal)
 {
     m2DPath.clear();
-//    m2DCellPath.clear();
+    //    m2DCellPath.clear();
 
-//    shared_ptr<Configuration> config = _Robot->getCurrentPos();
+    //    shared_ptr<Configuration> config = _Robot->getCurrentPos();
 
     /*
     * Change the way AStar
@@ -307,7 +307,7 @@ void ConfigSpace::draw2dPath()
 {
     if( mPathExist)
     {
-//        cout << "Drawing 2D path" << endl;
+        //        cout << "Drawing 2D path" << endl;
         for(unsigned int i=0;i<m2DPath.size()-1;i++)
         {
             glLineWidth(3.);
@@ -324,8 +324,8 @@ double ConfigSpace::pathCost()
     double SumOfCost=0;
     for(unsigned int i=0; i< m2DPath.size() ; i++ )
     {
-//        cout << "Cell "<< i <<" = " << endl << m3DPath[i] << endl;
-         SumOfCost += dynamic_cast<PlanCell*>(m2DCellPath[i])->getCost();
+        //        cout << "Cell "<< i <<" = " << endl << m3DPath[i] << endl;
+        SumOfCost += dynamic_cast<PlanCell*>(m2DCellPath[i])->getCost();
     }
     return SumOfCost;
 }

@@ -327,14 +327,14 @@ bool HumanCostSpace::initJustin()
             string name = m_Robot->getJoint(i)->getName();
 
             if(/*name == "RightArm1" ||
-                 name == "RightArm2" ||
-                 name == "RightArm3" ||
-                 name == "RightArm4" ||
-                 name == "RightArm5" ||
-                 name == "RightArm6" ||
-                 name == "RightArm7" ||
-                 name == "RightWrist"
-                  */
+                         name == "RightArm2" ||
+                         name == "RightArm3" ||
+                         name == "RightArm4" ||
+                         name == "RightArm5" ||
+                         name == "RightArm6" ||
+                         name == "RightArm7" ||
+                         name == "RightWrist"
+                          */
                     //         name == "LeftArm1" ||
                     //         name == "LeftArm2" ||
                     //         name == "LeftArm3" ||

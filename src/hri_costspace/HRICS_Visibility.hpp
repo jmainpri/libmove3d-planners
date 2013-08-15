@@ -15,66 +15,45 @@
  */
 namespace HRICS
 {
-    class Visibility 
-	{
-	public:
-		/**
-		 * Sets the Pointer to Human
-		 */
-		Visibility(Robot* R);
+class Visibility
+{
+public:
+    //! Sets the Pointer to Human
+    Visibility(Robot* R);
     
     
-    /**
-		 * Gets the Visibiliy cost (distance to gaze direction) of a 
-		 * Workspace point
-		 */
+    //! Gets the Visibiliy cost (distance to gaze direction) of a
+    //! Workspace point
     double getWorkspaceCost(const Eigen::Vector3d& WSPoint);
     
-    /**
-		 * Gets the Visibiliy cost (distance to gaze direction) of a 
-		 * Workspace point
-		 */
+    //! Gets the Visibiliy cost (distance to gaze direction) of a
+    //! Workspace point
     double getOldWorkspaceCost(const Eigen::Vector3d& WSPoint);
-		
-		/**
-		 * Copy paste from Akins
-		 */
-		double akinVisibilityCost(const Eigen::Vector3d& WSPoint);
-		
-		/**
-		 * Returns the gaze associated to the visibility
-		 * cost
-		 */
-		std::vector<double> getGaze();
-		
-		/**
-		 * Distance on gaze
-		 */
-		Eigen::Vector2d get2dPointAlongGaze(double dist);
-		
-	private:
-		/**
-		 * Human Kinematics
-		 */
-		Robot* m_Human;
-		
-		/**
-		 * Previous cost
-		 */
-		double m_Cost;
-		
-		/**
-		 * Returns the gaze of the
-		 * actual human position
-		 */
-		std::vector<double> m_VectGaze;
-		
-		/**
-		 * Flag to compute 
-		 * the gaze vector
-		 */
-		bool m_DrawGaze;
-	};
+
+    //! Copy paste from Akins
+    double akinVisibilityCost(const Eigen::Vector3d& WSPoint);
+
+    //! Returns the gaze associated to the visibility
+    //! cost
+    std::vector<double> getGaze();
+
+    //! Distance on gaze
+    Eigen::Vector2d get2dPointAlongGaze(double dist);
+
+private:
+    //! Human Kinematics
+    Robot* m_Human;
+
+    //! Previous cost
+    double m_Cost;
+
+    //! Returns the gaze of the
+    //! actual human position
+    std::vector<double> m_VectGaze;
+
+    //! Flag to compute the gaze vector
+    bool m_DrawGaze;
+};
 }
 
 #endif

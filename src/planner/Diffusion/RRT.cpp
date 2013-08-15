@@ -25,10 +25,10 @@ MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace Eigen;
 
 RRT::RRT(Robot* R, Graph* G) :
-TreePlanner(R,G)
+    TreePlanner(R,G)
 {
-    #ifdef DEBUG_STATUS
-        cout << "RRT::RRT(R,G)" << endl;
+#ifdef DEBUG_STATUS
+    cout << "RRT::RRT(R,G)" << endl;
 #endif
 }
 
@@ -41,12 +41,12 @@ RRT::~RRT()
  */
 bool RRT::checkStopConditions()
 {
-	if(TreePlanner::checkStopConditions())
-	{
-		return true;
-	}
-	
-	return false;
+    if(TreePlanner::checkStopConditions())
+    {
+        return true;
+    }
+
+    return false;
 }
 
 /**
@@ -54,35 +54,35 @@ bool RRT::checkStopConditions()
  */
 bool RRT::preConditions()
 {
-	if(TreePlanner::preConditions())
-	{
-		if (ENV.getBool(Env::expandToGoal))
-		{
-			if(trajFound())
-			{
-				cout << "Start And Goal in same component" << endl;
-				return true;
-			}
-			
-			if(!ENV.getBool(Env::isCostSpace))
-			{
-				LocalPath direct(_Start->getConfiguration(), _Goal->getConfiguration());
-				if (direct.isValid())
-				{
-					connectNodeToCompco(_Start,_Goal);
+    if(TreePlanner::preConditions())
+    {
+        if (ENV.getBool(Env::expandToGoal))
+        {
+            if(trajFound())
+            {
+                cout << "Start And Goal in same component" << endl;
+                return true;
+            }
+
+            if(!ENV.getBool(Env::isCostSpace))
+            {
+                LocalPath direct(_Start->getConfiguration(), _Goal->getConfiguration());
+                if (direct.isValid())
+                {
+                    connectNodeToCompco(_Start,_Goal);
 #ifdef DEBUG_STATUS
-          cout << "Direct connection" << endl;
+                    cout << "Direct connection" << endl;
 #endif
-					return true;
-				}
-			}
-		}
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+                    return true;
+                }
+            }
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 /**
@@ -90,9 +90,9 @@ bool RRT::preConditions()
  */
 unsigned  RRT::init()
 {
-	int added = TreePlanner::init();
-	_expan = new RRTExpansion(_Graph);
-	return added;
+    int added = TreePlanner::init();
+    _expan = new RRTExpansion(_Graph);
+    return added;
 }
 
 /**
@@ -107,49 +107,49 @@ unsigned  RRT::init()
  */
 int RRT::expandOneStep(Node* fromComp, Node* toComp)
 {
-	// Resets the expansion structure
-	_expan->setGraph(_Graph);
-	_expan->setFromComp(fromComp);
-	_expan->setToComp(toComp);
-	
-	Node* directionNode(NULL);
-	Node* expansionNode(NULL);
-	confPtr_t directionConfig;
-  
-	
-	// get direction
-	directionConfig = _expan->getExpansionDirection( fromComp, toComp, false, directionNode);
-  
+    // Resets the expansion structure
+    _expan->setGraph(_Graph);
+    _expan->setFromComp(fromComp);
+    _expan->setToComp(toComp);
+
+    Node* directionNode(NULL);
+    Node* expansionNode(NULL);
+    confPtr_t directionConfig;
+
+
+    // get direction
+    directionConfig = _expan->getExpansionDirection( fromComp, toComp, false, directionNode);
+
 #ifdef LIGHT_PLANNER
-	if( ENV.getBool(Env::drawPoints) && PointsToDraw )
-	{
-		PointsToDraw->push_back(directionConfig->getTaskPos());
-	}
+    if( ENV.getBool(Env::drawPoints) && PointsToDraw )
+    {
+        PointsToDraw->push_back(directionConfig->getTaskPos());
+    }
 #endif
-	
-	//    cout << "***********************************************************"  << endl;
-	//    cout << "directionConfig->print()"  << endl;
-	//   directionConfig->print();
-	
-	// get node for expansion
-	expansionNode = _expan->getExpansionNode( fromComp, directionConfig, ENV.getInt(Env::DistConfigChoice));
-	
-	//    cout << "***********************************************************"  << endl;
-	//    cout << "expansionNode->print()"  << endl;
-	//    expansionNode->getConfiguration()->print();
-	
-	// expansion in one direction
-	int nbNodeCreated = _expan->expandProcess( expansionNode, directionConfig, directionNode, ENV.getExpansionMethod());
-	
-	if ( nbNodeCreated < 1 ) 
-	{
-		m_nbFailedExpansion++;
-	}
-  else {
-    m_last_node = _expan->getLasAddedNode();
-  }
-	
-	return nbNodeCreated;
-	//	}
+
+    //    cout << "***********************************************************"  << endl;
+    //    cout << "directionConfig->print()"  << endl;
+    //   directionConfig->print();
+
+    // get node for expansion
+    expansionNode = _expan->getExpansionNode( fromComp, directionConfig, ENV.getInt(Env::DistConfigChoice));
+
+    //    cout << "***********************************************************"  << endl;
+    //    cout << "expansionNode->print()"  << endl;
+    //    expansionNode->getConfiguration()->print();
+
+    // expansion in one direction
+    int nbNodeCreated = _expan->expandProcess( expansionNode, directionConfig, directionNode, ENV.getExpansionMethod());
+
+    if ( nbNodeCreated < 1 )
+    {
+        m_nbFailedExpansion++;
+    }
+    else {
+        m_last_node = _expan->getLasAddedNode();
+    }
+
+    return nbNodeCreated;
+    //	}
 }
 

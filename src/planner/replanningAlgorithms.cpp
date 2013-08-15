@@ -413,7 +413,7 @@ void SimpleReplanner::run()
     cout << "newPortion.getRangeMax() : " << newPortion.getRangeMax() << endl;
 
     API::CostOptimization optimTrj( newPortion );
-    optimTrj.setStep( m_initial_step/PlanEnv->getDouble(PlanParam::PlanParam::MaxFactor) );
+    optimTrj.setStep( m_initial_step/PlanEnv->getDouble(PlanParam::MaxFactor) );
     optimTrj.runDeformation( PlanEnv->getInt(PlanParam::smoothMaxIterations), m_idRun++ );
 
     std::pair<bool,API::Trajectory> concated_traj= concat_to_current_traj( optimTrj );

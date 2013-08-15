@@ -298,8 +298,8 @@ void CollisionSpace::initNeighborhoods()
 
 double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& points)
 {
-//    cout << "Add points to distance field" << endl;
-//    cout << "Propagate distance" << endl;
+    //    cout << "Add points to distance field" << endl;
+    //    cout << "Propagate distance" << endl;
 
     double max_distance_sq = (  _nbCellsX*_nbCellsX
                                 + _nbCellsY*_nbCellsY
@@ -405,7 +405,7 @@ double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& poin
         }
         bucket_queue[i].clear();
     }
-//    cout << "All points have been added!!!" << endl;
+    //    cout << "All points have been added!!!" << endl;
     return 0.0;
 }
 
@@ -463,10 +463,10 @@ void CollisionSpace::addEnvPoints()
         // The robot is not a robot or a human
         if ( !( (mov_obst->getName().find( "ROBOT" ) != string::npos) ||
                 (mov_obst->getName().find( "HUMAN" ) != string::npos) ||
-                 mov_obst->getName() ==  "rob1" ||
-                 mov_obst->getName() ==  "rob2" ||
-                 mov_obst->getName() ==  "rob3" ||
-                 mov_obst->getName() ==  "rob4" ) )
+                mov_obst->getName() ==  "rob1" ||
+                mov_obst->getName() ==  "rob2" ||
+                mov_obst->getName() ==  "rob3" ||
+                mov_obst->getName() ==  "rob4" ) )
         {
             cout << "Adding : " << mov_obst->getName() << endl;
 
