@@ -60,7 +60,6 @@
 std::vector<double> global_noiseTrajectory1;
 std::vector<double> global_noiseTrajectory2;
 
-using namespace std;
 MOVE3D_USING_BOOST_NAMESPACE
 
 USING_PART_OF_NAMESPACE_EIGEN
@@ -138,8 +137,7 @@ namespace stomp_motion_planner
     //----------------------------------------------------------------------
     //----------------------------------------------------------------------
 
-    PolicyImprovement::PolicyImprovement():
-        initialized_(false)
+    PolicyImprovement::PolicyImprovement() : initialized_(false)
     {
 
     }

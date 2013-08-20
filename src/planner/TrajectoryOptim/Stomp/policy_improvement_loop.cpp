@@ -57,7 +57,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/thread.hpp>
 
-using namespace std;
 MOVE3D_USING_BOOST_NAMESPACE
 
 namespace stomp_motion_planner
@@ -381,7 +380,7 @@ namespace stomp_motion_planner
         //    addStraightLineRollout( extra_rollout, extra_rollout_cost );
 
         // Get the trajectory cost
-        bool resample = !PlanEnv->getBool(PlanParam::trajStompMultiplyM);
+        bool resample = !PlanEnv->getBool( PlanParam::trajStompMultiplyM );
         task_->execute( parameters_, tmp_rollout_cost_, iteration_number, resample );
         //printf("Noiseless cost = %lf\n", stats_msg.noiseless_cost);
 

@@ -1429,7 +1429,7 @@ bool StompOptimizer::performForwardKinematics()
 
 bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool resample )
 {
-    //  ros::WallTime start_time = ros::WallTime::now();
+    //cout << "size : " << parameters.size() << " , " << parameters[0].size() <<  endl;
 
     // copy the parameters into group_trajectory_:
     for (int d=0; d<num_joints_; ++d) {
@@ -1441,7 +1441,7 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     succeded_joint_limits_ = handleJointLimits();
     //cout << "Violation number : " << joint_limits_violation_ << endl;
 
-    // copy the parameters into group_trajectory_:
+    // copy the group_trajectory_ parameters:
     for (int d=0; d<num_joints_; ++d) {
         parameters[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
     }

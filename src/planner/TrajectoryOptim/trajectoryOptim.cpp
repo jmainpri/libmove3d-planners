@@ -618,8 +618,8 @@ void traj_optim_init_collision_space()
 
     if ( m_robot->getName().find("HERAKLES") == string::npos )
     {
-        cout << "robot name : " << m_robot->getName() << endl;
-        cout << "Add robot bodies exit " << endl; exit(0);
+//        cout << "robot name : " << m_robot->getName() << endl;
+//        cout << "Add robot bodies exit " << endl; exit(0);
 
         for (unsigned int joint_id=0; joint_id<m_robot->getNumberOfJoints(); joint_id++)
         {
