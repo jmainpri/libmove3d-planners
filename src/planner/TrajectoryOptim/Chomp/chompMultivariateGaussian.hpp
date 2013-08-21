@@ -46,6 +46,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <libmove3d/include/P3d-pkg.h>
+
 //namespace chomp
 //{
   
@@ -82,11 +84,11 @@
   rng_(rand()), 
   gaussian_(rng_, normal_dist_)
   {
-    //int seed_nb = rand();
-    //std::cout << "MultivariateGaussian::MultivariateGaussian seed(" << seed_nb << ") = "<< std::endl;
-    
-    //rng_.seed( seed_nb );
-    size_ = mean.rows();
+//    int seed_nb = rand();
+      int seed_nb = p3d_random_integer(0,RAND_MAX);
+      std::cout << "MultivariateGaussian -> seed( " << seed_nb << " )"<< std::endl;
+      rng_.seed( seed_nb );
+      size_ = mean.rows();
     
     //gaussian_ = boost::variate_generator<boost::mt19937, boost::normal_distribution<> >(rng_, normal_dist_);
   }
