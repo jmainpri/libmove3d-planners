@@ -7,18 +7,6 @@ using namespace std;
 BaseGrid* API_activeGrid = NULL;
 vector<BaseGrid*> API_allGrids;
 
-// Add the grid to the UI
-void (*ext_add_grid_to_ui)( BaseGrid* grid ) = NULL;
-
-// Stores the grid in a vector
-void api_store_new_grid( BaseGrid* grid )
-{
-  API_allGrids.push_back( grid );
-  
-  if( ext_add_grid_to_ui )
-    ext_add_grid_to_ui( grid );
-}
-
 // Returns all grids
 vector<BaseGrid*> api_get_all_grids()
 {

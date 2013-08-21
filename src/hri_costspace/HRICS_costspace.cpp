@@ -19,7 +19,9 @@
 
 #define DebugCostFunctions 0
 
-using namespace std;
+using std::cout;
+using std::endl;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
 
@@ -347,8 +349,6 @@ void HRICS_init(HRI_AGENTS* agents)
     HRICS_activeDist = HRICS_MotionPL->getDistance();
     //API_activeGrid = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getGrid();
 
-    api_store_new_grid( API_activeGrid );
-
     if( ENV.getBool(Env::HRIAutoLoadGrid) )
     {
         if( ENV.getBool(Env::HRIAutoLoadGrid) && getenv("HOME_MOVE3D") )
@@ -371,6 +371,9 @@ void HRICS_init(HRI_AGENTS* agents)
         }
     }
 
+    // Init legility
+    // HRICS_activeLegi = new HRICS::Legibility();
+
     // ------------------------------------------
     // Init global human costspace
     // ------------------------------------------
@@ -391,6 +394,7 @@ void HRICS_init(HRI_AGENTS* agents)
     ENV.setInt(Env::hriCostType,HRICS_Distance);
 
     std::cout << "Initializing the HRI costmap cost function" << std::endl;
+
     global_costSpace->addCost("costHRI",boost::bind(HRICS_getConfigCost, _1));
     global_costSpace->setCost("costHRI");
 

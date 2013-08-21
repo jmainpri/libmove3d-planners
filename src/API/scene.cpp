@@ -41,7 +41,7 @@ Scene::Scene( p3d_env* environnement )
     else
     {
         global_ActiveRobotName = "";
-        cout << "The Scene global_ActiveRobotName has not been set" << endl;
+        cout << "WARNING : the Scene global_ActiveRobotName has not been set!!!!" << endl;
     }
 
     // Set the robot by name containing ROBOT to active

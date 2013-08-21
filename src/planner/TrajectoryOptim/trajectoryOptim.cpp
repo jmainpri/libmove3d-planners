@@ -49,10 +49,21 @@ static bool m_add_human = false;
 
 static Robot* m_robot = NULL;
 
-namespace traj_optim {
-enum ScenarioType { Default, CostMap, Simple, Shelf, Navigation , HumanAwareNav, HumanAwareManip, HumanAwareMobileManip, HumanSimulation };
-
+namespace traj_optim
+{
+enum ScenarioType {
+    Default,
+    CostMap,
+    Simple,
+    Shelf,
+    Navigation,
+    HumanAwareNav,
+    HumanAwareManip,
+    HumanAwareMobileManip,
+    HumanSimulation,
+    LegiblePlane };
 }
+
 static traj_optim::ScenarioType m_sce;
 
 enum PlanningType { DEFAULT = -1, NAVIGATION = 0, MANIPULATION = 1, MOBILE_MANIP = 2 };
@@ -610,7 +621,7 @@ void traj_optim_init_collision_space()
     //    pace /= ENV.getInt(Env::nbCells);
 
 
-//    ChronoTimeOfDayOn();
+    //    ChronoTimeOfDayOn();
 
     m_coll_space = new CollisionSpace( m_robot, double(ENV.getInt(Env::nbCells))/100, global_Project->getActiveScene()->getBounds() );
 
@@ -618,8 +629,8 @@ void traj_optim_init_collision_space()
 
     if ( m_robot->getName().find("HERAKLES") == string::npos )
     {
-//        cout << "robot name : " << m_robot->getName() << endl;
-//        cout << "Add robot bodies exit " << endl; exit(0);
+        //        cout << "robot name : " << m_robot->getName() << endl;
+        //        cout << "Add robot bodies exit " << endl; exit(0);
 
         for (unsigned int joint_id=0; joint_id<m_robot->getNumberOfJoints(); joint_id++)
         {
@@ -652,10 +663,10 @@ void traj_optim_init_collision_space()
     // Adds the sampled points to the distance field
     m_coll_space->propagateDistance();
 
-//    double time=0.0;
-//    ChronoTimeOfDayTimes(&time);
-//    ChronoTimeOfDayOff();
-//    cout << " collision space computed in : " << time << endl;
+    //    double time=0.0;
+    //    ChronoTimeOfDayTimes(&time);
+    //    ChronoTimeOfDayOff();
+    //    cout << " collision space computed in : " << time << endl;
 }
 
 //! initializes the collision points
@@ -922,18 +933,18 @@ void traj_optim_hrics_human_trajectory_manip_init_joints()
 {
     // Set the active joints (links)
 
-//    (*q_cur)[6] =  (*q)[6];  // Pelvis
-//    (*q_cur)[7] =  (*q)[7];  // Pelvis
-//    (*q_cur)[8]=   (*q)[8];  // Pelvis
-//    (*q_cur)[11] = (*q)[11]; // Pelvis
-//    (*q_cur)[12] = (*q)[12]; // TorsoX
-//    (*q_cur)[13] = (*q)[13]; // TorsoY
-//    (*q_cur)[14] = (*q)[14]; // TorsoZ
-//    (*q_cur)[18] = (*q)[18]; // rShoulderX
-//    (*q_cur)[19] = (*q)[19]; // rShoulderZ
-//    (*q_cur)[20] = (*q)[20]; // rShoulderY
-//    (*q_cur)[21] = (*q)[21]; // rArmTrans
-//    (*q_cur)[22] = (*q)[22]; // rElbowZ
+    //    (*q_cur)[6] =  (*q)[6];  // Pelvis
+    //    (*q_cur)[7] =  (*q)[7];  // Pelvis
+    //    (*q_cur)[8]=   (*q)[8];  // Pelvis
+    //    (*q_cur)[11] = (*q)[11]; // Pelvis
+    //    (*q_cur)[12] = (*q)[12]; // TorsoX
+    //    (*q_cur)[13] = (*q)[13]; // TorsoY
+    //    (*q_cur)[14] = (*q)[14]; // TorsoZ
+    //    (*q_cur)[18] = (*q)[18]; // rShoulderX
+    //    (*q_cur)[19] = (*q)[19]; // rShoulderZ
+    //    (*q_cur)[20] = (*q)[20]; // rShoulderY
+    //    (*q_cur)[21] = (*q)[21]; // rArmTrans
+    //    (*q_cur)[22] = (*q)[22]; // rElbowZ
 
     m_active_joints.clear();
     m_active_joints.push_back( 1 ); // Pelvis
@@ -986,7 +997,7 @@ bool traj_optim_init_collision_spaces()
     if( m_robot == NULL )
         return false;
 
-    switch (m_sce)
+    switch( m_sce )
     {
     case traj_optim::Default:
         cout << "Init with default parameters" << endl;
@@ -1137,6 +1148,7 @@ bool traj_optim_init_collision_spaces()
         break;
 
     case traj_optim::Navigation:
+
         cout << "Init Navigation" << endl;
         cout << "Set robot, localpath and cntrts with ";
         cout << m_robot->getName() << endl;
@@ -1160,6 +1172,21 @@ bool traj_optim_init_collision_spaces()
         PlanEnv->setInt(PlanParam::nb_pointsOnTraj,30);
         PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,20);
         PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,0.1);
+        break;
+
+    case traj_optim::LegiblePlane:
+
+        cout << "Init LegiblePlane" << endl;
+        cout << "Set robot, localpath and cntrts with ";
+        cout << m_robot->getName() << endl;
+
+        if( !traj_optim_default_init() )
+            return false;
+        break;
+
+//        traj_optim_set_MultiLP();
+//        traj_optim_invalidate_cntrts();
+//        traj_optim_navigation_set_localpath_and_cntrts();
         break;
     }
 
@@ -1203,7 +1230,7 @@ bool traj_optim_set_scenario_type()
         }
         if( m_planning_type == MANIPULATION )
         {
-             m_sce = traj_optim::HumanAwareManip;
+            m_sce = traj_optim::HumanAwareManip;
         }
         if( m_planning_type == MOBILE_MANIP )
         {
@@ -1211,12 +1238,21 @@ bool traj_optim_set_scenario_type()
         }
     }
     else if ( ENV.getBool(Env::isCostSpace) &&
-               global_costSpace->getSelectedCostName() == "costHumanTrajecoryCost" )
+              global_costSpace->getSelectedCostName() == "costHumanTrajecoryCost" )
     {
         if( m_planning_type == MANIPULATION )
         {
             cout << "Set human cost function" << endl;
             m_sce = traj_optim::HumanSimulation;
+        }
+    }
+    else if (  PlanEnv->getBool(PlanParam::useLegibleCost) )
+    {
+        if( m_planning_type == NAVIGATION )
+        {
+            cout << "Set legible cost function" << endl;
+            cout << "Set default" << endl;
+            m_sce = traj_optim::LegiblePlane;
         }
     }
     else
@@ -1419,7 +1455,9 @@ bool traj_optim_initStomp()
         global_optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
     }
 
-    if( m_sce == traj_optim::HumanAwareManip && m_robot->getName() == "PR2_ROBOT")
+    if( m_sce == traj_optim::HumanAwareManip && m_robot->getName() == "PR2_ROBOT" ||
+        m_sce == traj_optim::Default ||
+        m_sce == traj_optim::CostMap )
     {
         global_optimizer->setUseCostSpace(true);
     }
@@ -1438,7 +1476,7 @@ bool traj_optim_initStomp()
 
 bool traj_optim_runStomp( int runId )
 {
-//    cout << "Robot is : " << m_robot->getName() << endl;
+    //    cout << "Robot is : " << m_robot->getName() << endl;
 
     if(!traj_optim_initStomp() )
     {

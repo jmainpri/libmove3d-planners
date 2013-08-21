@@ -195,13 +195,13 @@ namespace stomp_motion_planner
     {
         int iteration_number = 0;
 
-        assert(initialized_);
+        assert( initialized_ );
         policy_iteration_counter_++;
 
         // compute appropriate noise values
         std::vector<double> noise;
-        noise.resize(num_dimensions_);
-        for (int i=0; i<num_dimensions_; ++i)
+        noise.resize( num_dimensions_ );
+        for( int i=0; i<num_dimensions_; ++i )
         {
             noise[i] = noise_stddev_[i];
         }
@@ -210,7 +210,7 @@ namespace stomp_motion_planner
         const bool get_reused_ones = false;
         policy_improvement_.getRollouts(rollouts_, noise, get_reused_ones, reused_rollouts_);
 
-        if (ENV.getBool(Env::drawTrajVector))
+        if( ENV.getBool(Env::drawTrajVector) )
             addRolloutsToDraw(get_reused_ones);
 
         if( use_annealing_ )

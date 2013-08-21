@@ -318,13 +318,13 @@ public:
      * Get the Eigen Vector of the configuration
      */
     Eigen::VectorXd getEigenVector();
-    Eigen::VectorXd getEigenVector(const int& startIndex, const int& endIndex);
+    Eigen::VectorXd getEigenVector(int startIndex, int endIndex);
 
     /**
      * set the Eigen Vector of the configuration
      */
     void setFromEigenVector(const Eigen::VectorXd& conf);
-    void setFromEigenVector(const Eigen::VectorXd& conf, const int& startIndex, const int& endIndex);
+    void setFromEigenVector(const Eigen::VectorXd& conf, int startIndex, int endIndex);
 
     /**
      *

@@ -30,6 +30,9 @@ public:
     //! returns the cost of a given trajectory
     double costPredict( const Eigen::MatrixXd& t );
 
+    //! sets the start and end points in the trajectory
+    void fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj );
+
     // Get a discretized interpolated trajectory
     Eigen::MatrixXd getInterpolatedTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, int nb_points );
 
@@ -57,6 +60,10 @@ public:
 private:
     double length_;
     Eigen::MatrixXd traj_;
+    Eigen::MatrixXd straight_line_;
+    Eigen::VectorXd q_source_;
+    Eigen::VectorXd q_target_;
+    double c_0_;
 };
 
 }

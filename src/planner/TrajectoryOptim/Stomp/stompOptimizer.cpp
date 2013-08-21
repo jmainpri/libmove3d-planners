@@ -51,6 +51,7 @@
 #include "API/project.hpp"
 #include "utils/ConfGenerator.h"
 #include "hri_costspace/HRICS_costspace.hpp"
+#include "hri_costspace/HRICS_Legibility.hpp"
 #include "hri_costspace/Gestures/HRICS_HumanPredictionCostSpace.hpp"
 
 #include "Graphic-pkg.h"
@@ -101,8 +102,8 @@ void StompOptimizer::initialize()
     human_model_ = sce->getRobotByNameContaining("HERAKLES");
     
     // Handover end configuration generator
-    use_human_sliders_ = PlanEnv->getBool(PlanParam::trajMoveHuman);
-    use_handover_config_generator_ = PlanEnv->getBool(PlanParam::trajUseOtp);
+    use_human_sliders_ = PlanEnv->getBool( PlanParam::trajMoveHuman );
+    use_handover_config_generator_ = PlanEnv->getBool( PlanParam::trajUseOtp );
     use_handover_config_list_ = false;
     use_handover_auto_ = true;
     recompute_handover_cell_list_ = true;
@@ -122,8 +123,20 @@ void StompOptimizer::initialize()
         initHandover();
     }
 
+    // TODO move it somewhere else
+    if( PlanEnv->getBool(PlanParam::useLegibleCost) )
+    {
+        HRICS_activeLegi = new HRICS::Legibility();
+        Robot* goal_0 = global_Project->getActiveScene()->getRobotByName("GOAL_0");
+        Robot* goal_1 = global_Project->getActiveScene()->getRobotByName("GOAL_1");
+        cout <<"goal 0 : " << goal_0->getCurrentPos()->getEigenVector(6,7).transpose() << endl;
+        cout <<"goal 1 : " << goal_1->getCurrentPos()->getEigenVector(6,7).transpose() << endl;
+        HRICS_activeLegi->addGoal( goal_0->getCurrentPos()->getEigenVector(6,7) );
+        HRICS_activeLegi->addGoal( goal_1->getCurrentPos()->getEigenVector(6,7) );
+    }
+
     // Use costspace
-    use_costspace_ = ( collision_space_== NULL );
+    // use_costspace_ = ( collision_space_== NULL );
     
     //clearAnimations();
     
@@ -1323,6 +1336,11 @@ bool StompOptimizer::performForwardKinematics()
 
     Configuration q(robot_model_);
 
+    if( PlanEnv->getBool(PlanParam::useLegibleCost) )
+    {
+        HRICS_activeLegi->setTrajectory( group_trajectory_.getTrajectory() );
+    }
+
     // for each point in the trajectory
     for (int i=start; i<=end; ++i)
     {
@@ -1336,7 +1354,12 @@ bool StompOptimizer::performForwardKinematics()
             general_cost_potential_[i] = global_costSpace->cost(q);
         }
 
-        if(collision_space_ )
+        if( PlanEnv->getBool(PlanParam::useLegibleCost) )
+        {
+            general_cost_potential_[i] = HRICS_activeLegi->cost(i);
+        }
+
+        if( collision_space_ )
         {
             // calculate the position of every collision point:
             for (int j=0; j<num_collision_points_; j++)
@@ -1354,7 +1377,7 @@ bool StompOptimizer::performForwardKinematics()
             }
         }
 
-        if( use_costspace_ && (collision_space_==NULL) )
+        if( ( PlanEnv->getBool(PlanParam::useLegibleCost) || use_costspace_ ) && (collision_space_==NULL) )
         {
             state_is_in_collision_[i] = false;
         }
@@ -1463,13 +1486,6 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     last_trajectory_collision_free_ = performForwardKinematics();
     last_trajectory_constraints_satisfied_ = true;
 
-    //double obstacle_cost = 0.0;
-    //double general_cost=0.0;
-    //double constraint_cost = 0.0;
-    //double torque_cost = 0.0;
-
-    //std::vector<double> torques(num_joints_);
-
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
         double state_collision_cost = 0.0;
@@ -1484,65 +1500,17 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
                 state_collision_cost += cumulative;
             }
         }
-        if( use_costspace_ )
+        if( use_costspace_ || PlanEnv->getBool(PlanParam::useLegibleCost) )
         {
             state_general_cost = ( pow( general_cost_potential_(i) , hack_tweek ) /* ( q_f - q_i ).norm() */) ;
         }
 
-        // evaluate the constraints:
-        double state_constraint_cost = 0.0;
-        //    for (int j=0; j<int(constraint_evaluators_.size()); ++j)
-        //    {
-        //      double cost;
-        //      if (!constraint_evaluators_[j]->getCost(segment_frames_[i], full_trajectory_->getTrajectoryPoint(i), cost))
-        //        last_trajectory_constraints_satisfied_ = false;
-        //      state_constraint_cost += cost;
-        //    }
-
-        // evaluate inverse dynamics:
-        double state_torque_cost = 0.0;
-
-        //    if (stomp_parameters_->getTorqueCostWeight() > 1e-9)
-        //    {
-        //      full_trajectory_->getTrajectoryPointKDL(i, kdl_joint_array_);
-        //      full_trajectory_->getJointVelocities(i, full_joint_state_velocities_);
-        //      full_trajectory_->getJointAccelerations(i, full_joint_state_velocities_);
-        //      for (int j=0; j<num_joints_; ++j)
-        //      {
-        //        int full_joint_num = planning_group_->stomp_joints_[j].kdl_joint_index_;
-        //        kdl_group_joint_array_(j) = kdl_joint_array_(full_joint_num);
-        //        kdl_group_vel_joint_array_(j) = full_joint_state_velocities_(full_joint_num);
-        //        kdl_group_acc_joint_array_(j) = full_joint_state_accelerations_(full_joint_num);
-        //      }
-        //      planning_group_->id_solver_->CartToJnt(kdl_group_joint_array_,
-        //                                             kdl_group_vel_joint_array_,
-        //                                             kdl_group_acc_joint_array_,
-        //                                             wrenches,
-        //                                             kdl_group_torque_joint_array_);
-        //      getTorques(i, torques, wrenches);
-        //      for (int j=0; j<num_joints_; ++j)
-        //      {
-        //        state_torque_cost += fabs(torques[j]);
-        //      }
-        //    }
-
-        //        obstacle_cost += stomp_parameters_->getObstacleCostWeight() * ( state_collision_cost + state_general_cost );
-        //        constraint_cost += stomp_parameters_->getConstraintCostWeight() * state_constraint_cost;
-        //        torque_cost += stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
-
-        costs(i-free_vars_start_) =
-                stomp_parameters_->getObstacleCostWeight() * ( state_collision_cost + state_general_cost ) +
-                stomp_parameters_->getConstraintCostWeight() * state_constraint_cost +
-                stomp_parameters_->getTorqueCostWeight() * state_torque_cost;
+        costs(i-free_vars_start_) = stomp_parameters_->getObstacleCostWeight() * ( state_collision_cost + state_general_cost );
     }
 
     //cout << "StompOptimizer::execute::cost => " << costs.sum() << endl;
     last_trajectory_cost_ = costs.sum();
     //last_trajectory_constraints_satisfied_ = (constraint_cost < 1e-6);
-
-    //printf("Obstacle cost = %f, constraint cost = %f, torque_cost = %f\n", obstacle_cost, constraint_cost, torque_cost);
-    //animateEndeffector();
-    //ROS_INFO("Rollout took %f seconds, ", (ros::WallTime::now() - start_time).toSec());
     return true;
 }
 

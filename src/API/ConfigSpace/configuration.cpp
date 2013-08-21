@@ -561,17 +561,17 @@ Configuration& Configuration::mult(double coeff)
 
 Eigen::VectorXd Configuration::getEigenVector()
 {
-	unsigned int nbDof= 0;
-	unsigned int njnt = _Robot->getNumberOfJoints();
+    unsigned int nbDof= 0;
+    unsigned int njnt = _Robot->getNumberOfJoints();
   
 	// Get  number of Dofs of all joints
-	for (unsigned int i = 0; i < njnt; i++) 
+    for (unsigned int i = 0; i < njnt; i++)
 		nbDof += _Robot->getJoint(i)->getNumberOfDof();
 	
 	VectorXd q(nbDof);
   
-	// Get the values of the dofs
-	for (unsigned int i = 0; i < nbDof; i++) 
+    // Get the values of the dofs
+    for (unsigned int i = 0; i < nbDof; i++)
 	{
 		q(i) = _Configuration[i];
 	}
@@ -579,14 +579,14 @@ Eigen::VectorXd Configuration::getEigenVector()
 	return q;
 }
 
-Eigen::VectorXd Configuration::getEigenVector(const int& startIndex, const int& endIndex)
+Eigen::VectorXd Configuration::getEigenVector( int startIndex, int endIndex )
 {	
-	VectorXd q(endIndex - startIndex);
+    VectorXd q( endIndex - startIndex + 1);
   
 	// Get the values of the dofs
-	for (int i = startIndex; i < endIndex; i++) 
+    for ( int i=startIndex; i <= endIndex; i++)
 	{
-		q(i) = _Configuration[i];
+        q(i-startIndex) = _Configuration[i];
 	}
 	
 	return q;
@@ -601,10 +601,10 @@ void Configuration::setFromEigenVector(const Eigen::VectorXd& conf)
 	}
 }
 
-void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, const int& startIndex, const int& endIndex)
+void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, int startIndex, int endIndex)
 {
   // Get the values of the dofs
-	for (int i = startIndex; i < endIndex; i++) 
+    for (int i = startIndex; i <= endIndex; i++)
 	{
 		_Configuration[i] = conf(i);
 	}

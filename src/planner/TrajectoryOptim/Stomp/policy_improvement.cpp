@@ -86,25 +86,25 @@ namespace stomp_motion_planner
 
         cout << "control cost : " << control_cost << " , state cost : " << state_costs_.sum() << endl;
 
-//        cout << "state_costs_ : ";
-//        for (int i=0; i<state_costs_.size(); i++) {
-//            cout << state_costs_[i] << " ";
-//        }
-//        cout << endl;
+        //        cout << "state_costs_ : ";
+        //        for (int i=0; i<state_costs_.size(); i++) {
+        //            cout << state_costs_[i] << " ";
+        //        }
+        //        cout << endl;
 
-//        cout << "control_costs_ : ";
-//        for (int d=0; d<int(control_costs_.size()); ++d)
-//        {
-//            cout << "( ";
-//            for (int i=0; i<int(control_costs_[d].size()); i++)
-//            {
-//                cout <<  control_costs_[d][i] ;
-//                if(d < int(control_costs_.size()-1))
-//                    cout << " , ";
-//            }
-//            cout << ")";
-//        }
-//        cout << endl;
+        //        cout << "control_costs_ : ";
+        //        for (int d=0; d<int(control_costs_.size()); ++d)
+        //        {
+        //            cout << "( ";
+        //            for (int i=0; i<int(control_costs_[d].size()); i++)
+        //            {
+        //                cout <<  control_costs_[d][i] ;
+        //                if(d < int(control_costs_.size()-1))
+        //                    cout << " , ";
+        //            }
+        //            cout << ")";
+        //        }
+        //        cout << endl;
     }
 
     void Rollout::printProbabilities()
@@ -480,7 +480,7 @@ namespace stomp_motion_planner
             for (int r=0; r<num_rollouts_; ++r)
             {
                 double cost = rollout_costs_total_[r];
-//                cout << "rollouts_(" << r << ") cost : " << rollouts_[r].getCost() << " , stored cost : "  << rollout_costs_total_[r] << endl;
+                //                cout << "rollouts_(" << r << ") cost : " << rollouts_[r].getCost() << " , stored cost : "  << rollout_costs_total_[r] << endl;
 
                 // discard out of bounds rollouts
                 if ( rollouts_[r].out_of_bounds_ ) {

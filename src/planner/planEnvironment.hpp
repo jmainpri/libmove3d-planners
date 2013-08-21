@@ -95,6 +95,9 @@ namespace PlanParam
             doReplanning,
             useSelectedDuration,
 
+            // Use Legible Cost
+            useLegibleCost,
+
 
             // Drawing (gl) stuff
             drawNaturalColor,

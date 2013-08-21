@@ -12,29 +12,29 @@
   */
 namespace API
 {
-  class BaseGrid
-  {
-  public:
+class BaseGrid
+{
+public:
     BaseGrid();
-		BaseGrid(const BaseGrid& grid);
+    BaseGrid(const BaseGrid& grid);
     virtual ~BaseGrid();
     
     BaseCell* getCell(unsigned int i);
-		unsigned int getNumberOfCells();
+    unsigned int getNumberOfCells();
     
-		virtual void draw() =0;
-		
-		virtual std::vector<Eigen::Vector3d> getBox();
-		
-		virtual bool writeToXmlFile(std::string file);
-		virtual bool loadFromXmlFile(std::string file);
-		
-		std::string getName() { return m_name; }
+    virtual void draw() =0;
+
+    virtual std::vector<Eigen::Vector3d> getBox();
+
+    virtual bool writeToXmlFile(std::string file);
+    virtual bool loadFromXmlFile(std::string file);
+
+    std::string getName() { return m_name; }
     
-  protected:
+protected:
     std::vector<BaseCell*> _cells;
     std::string m_name;
-  };
+};
 }
 
 #endif // BASEGRID_HPP
