@@ -37,6 +37,8 @@
 #ifndef STOMP_OPTIMIZER_H_
 #define STOMP_OPTIMIZER_H_
 
+#include <vector>
+
 #include "stompParameters.hpp"
 
 #include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
@@ -44,7 +46,6 @@
 #include "planner/TrajectoryOptim/Chomp/chompCost.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
-
 #include "collision_space/CollisionSpace.hpp"
 
 #include <boost/shared_ptr.hpp>
@@ -63,7 +64,6 @@ class ConfGenerator;
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 
-#include <vector>
 //#include <kdl/frames.hpp>
 //#include <kdl/chainidsolver_recursive_newton_euler.hpp>
 

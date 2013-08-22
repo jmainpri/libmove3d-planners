@@ -9,6 +9,9 @@
 
 #include <boost/thread/thread.hpp>
 
+using std::cout;
+using std::endl;
+
 stompRun* global_stompRun = NULL;
 
 stompContext::stompContext(Robot* robot, const CollisionSpace* coll_space,  const std::vector<int>& planner_joints, const std::vector<CollisionPoint>& collision_points )

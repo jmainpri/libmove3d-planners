@@ -63,7 +63,7 @@ private:
 //    void init_one_cube();
     void init_drawing();
     void transform_cubes();
-    void draw_voxels( const vector<unsigned int>& indices );
+    void draw_voxels( const std::vector<unsigned int>& indices );
     bool are_all_cells_blank(int id);
 
     // OpenGL Drawing

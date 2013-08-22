@@ -46,24 +46,25 @@
 #include <cstdlib>
 #include <iostream>
 
+// For random number generator (seed can be passed as argument)
 #include <libmove3d/include/P3d-pkg.h>
 
 //namespace chomp
 //{
-  
-  /**
+
+/**
    * \brief Generates samples from a multivariate gaussian distribution
    */
-  class MultivariateGaussian
-  {
-  public:
+class MultivariateGaussian
+{
+public:
     template <typename Derived1, typename Derived2>
     MultivariateGaussian(const Eigen::MatrixBase<Derived1>& mean, const Eigen::MatrixBase<Derived2>& covariance);
     
     template <typename Derived>
     void sample(Eigen::MatrixBase<Derived>& output);
     
-  private:
+private:
     Eigen::VectorXd mean_;                /**< Mean of the gaussian distribution */
     Eigen::MatrixXd covariance_;          /**< Covariance of the gaussian distribution */
     Eigen::MatrixXd covariance_cholesky_; /**< Cholesky decomposition (LL^T) of the covariance */
@@ -72,35 +73,30 @@
     boost::mt19937 rng_;
     boost::normal_distribution<> normal_dist_;
     boost::variate_generator<boost::mt19937, boost::normal_distribution<> > gaussian_;
-  };
-  
-  //////////////////////// template function definitions follow //////////////////////////////
-  
-  template <typename Derived1, typename Derived2>
-  MultivariateGaussian::MultivariateGaussian(const Eigen::MatrixBase<Derived1>& mean, const Eigen::MatrixBase<Derived2>& covariance):
-  mean_(mean),
-  covariance_(covariance),
-  covariance_cholesky_(covariance_.llt().matrixL()),
-  rng_(rand()), 
-  gaussian_(rng_, normal_dist_)
-  {
-//    int seed_nb = rand();
-      int seed_nb = p3d_random_integer(0,RAND_MAX);
-      std::cout << "MultivariateGaussian -> seed( " << seed_nb << " )"<< std::endl;
-      rng_.seed( seed_nb );
-      size_ = mean.rows();
-    
-    //gaussian_ = boost::variate_generator<boost::mt19937, boost::normal_distribution<> >(rng_, normal_dist_);
-  }
-  
-  template <typename Derived>
-  void MultivariateGaussian::sample(Eigen::MatrixBase<Derived>& output)
-  {
+};
+
+//////////////////////// template function definitions follow //////////////////////////////
+
+template <typename Derived1, typename Derived2>
+MultivariateGaussian::MultivariateGaussian(const Eigen::MatrixBase<Derived1>& mean, const Eigen::MatrixBase<Derived2>& covariance):
+    mean_(mean),
+    covariance_(covariance),
+    covariance_cholesky_(covariance_.llt().matrixL()),
+    size_(mean.rows()),
+    rng_(p3d_random_integer(0,RAND_MAX)),
+    gaussian_(rng_, normal_dist_)
+{
+
+}
+
+template <typename Derived>
+void MultivariateGaussian::sample(Eigen::MatrixBase<Derived>& output)
+{
     for (int i=0; i<size_; ++i)
-      output(i) = gaussian_();
+        output(i) = gaussian_();
     output = mean_ + covariance_cholesky_*output;
-  }
-  
+}
+
 //}
 
 #endif /* MULTIVARIATE_GAUSSIAN_H_ */

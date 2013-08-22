@@ -4,10 +4,8 @@
 
 #include "API/planningAPI.hpp"
 
-
-using namespace std;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
-using namespace Eigen;
+
 #include <Eigen/StdVector>
 
 class PlannarTrajectorySmoothing

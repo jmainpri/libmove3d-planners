@@ -18,6 +18,8 @@
 #include <boost/bind.hpp>
 
 using namespace HRICS;
+using std::cout;
+using std::endl;
 
 HumanPredictionSimulator* global_humanPredictionSimulator = NULL;
 

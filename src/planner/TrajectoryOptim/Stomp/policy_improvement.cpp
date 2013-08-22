@@ -62,7 +62,11 @@ std::vector<double> global_noiseTrajectory2;
 
 MOVE3D_USING_BOOST_NAMESPACE
 
+
 USING_PART_OF_NAMESPACE_EIGEN
+
+using std::cout;
+using std::endl;
 
 namespace stomp_motion_planner
 {
@@ -480,7 +484,7 @@ namespace stomp_motion_planner
             for (int r=0; r<num_rollouts_; ++r)
             {
                 double cost = rollout_costs_total_[r];
-                //                cout << "rollouts_(" << r << ") cost : " << rollouts_[r].getCost() << " , stored cost : "  << rollout_costs_total_[r] << endl;
+                //  cout << "rollouts_(" << r << ") cost : " << rollouts_[r].getCost() << " , stored cost : "  << rollout_costs_total_[r] << endl;
 
                 // discard out of bounds rollouts
                 if ( rollouts_[r].out_of_bounds_ ) {
@@ -548,7 +552,9 @@ namespace stomp_motion_planner
         {
             for (int r=0; r<num_rollouts_gen_; ++r)
             {
-                noise_generators_[d].sample(tmp_noise_[d]);
+                noise_generators_[d].sample( tmp_noise_[d] );
+
+                //cout << "noise(" << r << "," << d << ") : " << tmp_noise_[d].transpose() << endl;
 
                 rollouts_[r].noise_[d] = noise_stddev[d]*tmp_noise_[d];
                 rollouts_[r].parameters_[d] = parameters_[d] + rollouts_[r].noise_[d];
@@ -577,7 +583,7 @@ namespace stomp_motion_planner
                     //            end = num_time_steps_-1;
                     //          }
 
-                    vector<int> points;
+                    std::vector<int> points;
                     points.resize(7);
                     points[0] = 0;
                     points[1] = num_time_steps_-1;
@@ -638,11 +644,6 @@ namespace stomp_motion_planner
         for (int r=0; r<num_rollouts_gen_; ++r)
         {
             generated_rollouts.push_back( rollouts_[r].parameters_ );
-
-            //  for (int d=0; d<num_dimensions_; d++)
-            //  {
-            //     cout << "rollouts_[" << d << "].parameters_ = " << rollouts_[r].noise_[d].transpose() << endl;
-            //  }
         }
 
         if( get_reused )
@@ -654,9 +655,6 @@ namespace stomp_motion_planner
                 for (int r=0; r<num_rollouts_reused_; ++r)
                 {
                     reused_rollouts.push_back(rollouts_[num_rollouts_gen_+r].parameters_);
-                    //          cout << "reused_rollouts["<< r << "] cost : " << rollouts_[num_rollouts_gen_+r].getCost() << endl;
-                    //          cout << "resued rollout (" << r << ")" ;
-                    //          cout << " is out of bounds : " << rollouts_[num_rollouts_gen_+r].out_of_bounds_ << endl;
                 }
             }
         }

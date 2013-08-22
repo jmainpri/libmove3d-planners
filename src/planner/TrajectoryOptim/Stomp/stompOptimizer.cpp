@@ -698,6 +698,8 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
                 break;
             }
         }
+
+        exit(1);
     }
 
 

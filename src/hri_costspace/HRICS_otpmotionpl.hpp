@@ -30,12 +30,11 @@
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 
-extern string global_ActiveRobotName;
+extern std::string global_ActiveRobotName;
 extern API::TwoDGrid* API_activeRobotGrid;
 
 extern Eigen::Vector3d current_WSPoint;
-extern pair<double,Eigen::Vector3d > current_cost;
-
+extern std::pair<double,Eigen::Vector3d > current_cost;
 
 void hrics_otp_fct();
 /**
@@ -209,7 +208,7 @@ namespace HRICS
         /**
           * return the randomly choosed x, y and Rz. the random can be biased or not. the choice is done in the GUI
           */
-        bool getRandomPoints(double id, Vector3d& vect);
+        bool getRandomPoints(double id, Eigen::Vector3d& vect);
 
         /**
           * test if the vector has already been computed
@@ -431,7 +430,7 @@ namespace HRICS
         /**
           * get a simple path
           */
-        bool getSimplePath(double x, double y, double theta, vector<vector<double> >& path);
+        bool getSimplePath(double x, double y, double theta, std::vector<std::vector<double> >& path);
 
         /**
           * test if the human has moved according to the plan (3d and sitting)

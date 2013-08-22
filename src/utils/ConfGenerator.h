@@ -26,7 +26,7 @@ public:
     void addRange(std::pair<int,std::vector<std::pair<double,double> > > range);
 
 
-    string name;
+    std::string name;
     Robot* R;
     std::vector<std::vector<double> > matrixRotation;
     std::vector<double> vectTranslation;
@@ -77,12 +77,12 @@ public:
   /**
    * Initializes the list config generator
    */
-  bool initialize( string filename, HRICS::Natural* reachableSpace );
+  bool initialize( std::string filename, HRICS::Natural* reachableSpace );
   
   /**
    * load and return configs stored in filename
    */
-  bool sortConfig(std::vector<HRICS::ConfigHR>& configList, int nbNode, bool isStanding, bool isSlice, HRICS::Natural* reachableSpace);
+  bool sortConfig( std::vector<HRICS::ConfigHR>& configList, int nbNode, bool isStanding, bool isSlice, HRICS::Natural* reachableSpace);
   
   /**
    * Adding a 3D point to the OTP list This function is used when loading a set of OTPs in order to test them

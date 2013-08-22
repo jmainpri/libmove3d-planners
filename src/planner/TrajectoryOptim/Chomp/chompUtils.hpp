@@ -47,8 +47,6 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-using namespace std;
-
 //namespace chomp
 //{
   

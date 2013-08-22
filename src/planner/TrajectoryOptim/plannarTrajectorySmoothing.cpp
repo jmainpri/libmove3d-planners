@@ -1,6 +1,8 @@
 #include "plannarTrajectorySmoothing.hpp"
 #include "P3d-pkg.h"
 
+using namespace Eigen;
+
 PlannarTrajectorySmoothing::PlannarTrajectorySmoothing(Robot* robot)
 {
     _id = 0;
@@ -119,7 +121,7 @@ double PlannarTrajectorySmoothing::computeDistBetweenTrajAndPoint(std::vector<Ei
       compute dist between them and p
       return the smallest dist
       */
-    double dist = numeric_limits<double>::max( );
+    double dist = std::numeric_limits<double>::max( );
 
     for (unsigned int i =0; i < traj.size() - 1; i++)
     {
@@ -238,18 +240,18 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
     Robot* cyl=NULL;
     for (int i=0; i<XYZ_ENV->nr; i++)
     {
-        string name(XYZ_ENV->robot[i]->name);
-        if (robot->getName().find("ROBOT") != string::npos)
+        std::string name(XYZ_ENV->robot[i]->name);
+        if (robot->getName().find("ROBOT") != std::string::npos)
         {
-            if(name.find("PR_2CYLINDER") != string::npos )
+            if(name.find("PR_2CYLINDER") != std::string::npos )
             {
                 cyl = new Robot(XYZ_ENV->robot[i]);
                 break;
             }
         }
-        else if (robot->getName().find("HUMAN") != string::npos)
+        else if (robot->getName().find("HUMAN") != std::string::npos)
         {
-            if(name.find("HUMCYLINDER") != string::npos )
+            if(name.find("HUMCYLINDER") != std::string::npos )
             {
                 cyl = new Robot(XYZ_ENV->robot[i]);
                 break;

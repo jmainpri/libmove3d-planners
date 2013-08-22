@@ -59,6 +59,9 @@
 
 MOVE3D_USING_BOOST_NAMESPACE
 
+using std::cout;
+using std::endl;
+
 namespace stomp_motion_planner
 {
     const std::string PI_STATISTICS_TOPIC_NAME = std::string("policy_improvement_statistics");
@@ -336,6 +339,8 @@ namespace stomp_motion_planner
         //cout << "Run single interation of stomp " << endl;
         if ( ENV.getBool(Env::drawTrajVector) )
             addRolloutsToDraw( get_reused_ones );
+
+        //printRollouts();
 
         if( !parrallel_is_rollout_running_.empty() )
             mtx_end_.lock();
@@ -627,7 +632,7 @@ namespace stomp_motion_planner
 
     void PolicyImprovementLoop::addSingleRolloutsToDraw(const std::vector<Eigen::VectorXd>& rollout, int color)
     {
-        vector<confPtr_t> traj;
+        std::vector<confPtr_t> traj;
         getSingleRollout( rollout, traj );
 
         API::Trajectory T(static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->robot_);
@@ -643,20 +648,43 @@ namespace stomp_motion_planner
     void PolicyImprovementLoop::addRolloutsToDraw(bool add_reused)
     {
         trajToDraw.clear();
-        shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
+        //shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
 
         cout << "Add rollouts to draw" << endl;
 
         for ( int k=0; k<int(rollouts_.size()); ++k)
         {
             //cout << "Add rollout(" << k << ") to draw" << endl;
-            addSingleRolloutsToDraw(rollouts_[k],k);
+            addSingleRolloutsToDraw( rollouts_[k], k );
         }
 
         for ( int k=0; k<int(reused_rollouts_.size()); ++k)
         {
             //cout << "Add reused rollout(" << k << ") to draw" << endl;
-            addSingleRolloutsToDraw(reused_rollouts_[k],k+int(rollouts_.size()));
+            addSingleRolloutsToDraw( reused_rollouts_[k], k+int(rollouts_.size()) );
+        }
+    }
+
+    void PolicyImprovementLoop::printSingleRollout( const std::vector<Eigen::VectorXd>& rollout, int id ) const
+    {
+        for( int i=0; i<int(rollout.size()); i++ )
+        {
+            cout << "rollout[" << id << "]" << rollout[i].transpose() << endl;
+        }
+    }
+
+    void PolicyImprovementLoop::printRollouts() const
+    {
+        int id=0;
+
+        for ( int k=0; k<int(rollouts_.size()); ++k)
+        {
+            printSingleRollout( rollouts_[k], id++ );
+        }
+
+        for ( int k=0; k<int(reused_rollouts_.size()); ++k)
+        {
+            printSingleRollout( reused_rollouts_[k], id++ );
         }
     }
 

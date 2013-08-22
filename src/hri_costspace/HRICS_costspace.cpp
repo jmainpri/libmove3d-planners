@@ -353,8 +353,8 @@ void HRICS_init(HRI_AGENTS* agents)
     {
         if( ENV.getBool(Env::HRIAutoLoadGrid) && getenv("HOME_MOVE3D") )
         {
-            string home(getenv("HOME_MOVE3D"));
-            string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
+            std::string home(getenv("HOME_MOVE3D"));
+            std::string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
 
             fileName = home + fileName;
 
@@ -393,7 +393,7 @@ void HRICS_init(HRI_AGENTS* agents)
 
     ENV.setInt(Env::hriCostType,HRICS_Distance);
 
-    std::cout << "Initializing the HRI costmap cost function" << std::endl;
+    cout << "Initializing the HRI costmap cost function" << endl;
 
     global_costSpace->addCost("costHRI",boost::bind(HRICS_getConfigCost, _1));
     global_costSpace->setCost("costHRI");

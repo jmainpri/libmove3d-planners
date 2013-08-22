@@ -2,6 +2,9 @@
 
 #include "cost_space.hpp"
 
+using std::cout;
+using std::endl;
+
 costComputation::costComputation(Robot* robot,
                                  const CollisionSpace *collision_space,
                                  const ChompPlanningGroup* planning_group,
