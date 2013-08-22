@@ -1785,7 +1785,7 @@ OutputConf OTPMotionPl::findBestPosForHumanSitConf(double objectNecessity)
 
     m_2DGrid->setAsNotSorted();
 
-    double elapsedTime = NULL;
+    double elapsedTime = 0.0;
     clock_t beginLoop = clock();
     for (int j = 0; j < nbSittingRot; j ++)
     {
@@ -2456,7 +2456,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
 
     clock_t justSmoothing = clock();
     clock_t endCreateTraj = clock();
-    int msg = NULL;
+    int msg = 0;
     bool trajTest = NULL;
     if (robotTraj2D.size() > 1)
     {

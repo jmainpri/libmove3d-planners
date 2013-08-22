@@ -114,16 +114,12 @@ void PerturbationRoadmap::addTrajectory( const API::Trajectory& T )
   {
     node_2 = new Node( _Graph, T.configAtParam(s), true);
     _Graph->addNode( node_2 );
-    _Graph->addEdges( node_1, node_2, 
-                     false, node_1->getConfiguration()->dist(*node_2->getConfiguration()), 
-                     true, NULL );
+    _Graph->addEdges( node_1, node_2, false, node_1->getConfiguration()->dist(*node_2->getConfiguration()), true, 0 );
     node_1 = node_2;
   }
   node_2 = new Node( _Graph, T.getEnd(), true);
   _Graph->addNode( node_2 );
-  _Graph->addEdges( node_1, node_2, 
-                   false, node_1->getConfiguration()->dist(*T.getEnd()), 
-                   true , NULL );
+  _Graph->addEdges( node_1, node_2, false, node_1->getConfiguration()->dist(*T.getEnd()), true, 0 );
   
   _Graph->rebuildCompcoFromBoostGraph();
 }
@@ -143,7 +139,7 @@ double PerturbationRoadmap::distToTraj( confPtr_t q_new )
 {
   vector<Node*> nodes = _Graph->extractAStarShortestNodePaths( m_qi, m_qf );
   if( nodes.empty() ) {
-    return NULL;
+    return 0.0;
   }
   
   Graph::sortNodesByDist( nodes, q_new );
@@ -266,7 +262,7 @@ bool PerturbationRoadmap::testPerturb( confPtr_t q_new, vector<Node*>& vect_node
   {
     double max_param = edges[i].second->getParamMax();
     
-    _Graph->addEdges( vect_nodes[edges[i].first], node_new, false, max_param, true, NULL);
+    _Graph->addEdges( vect_nodes[edges[i].first], node_new, false, max_param, true, 0 );
     _Graph->rebuildCompcoFromBoostGraph();
     is_valid = true;
   }

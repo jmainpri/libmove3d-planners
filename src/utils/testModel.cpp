@@ -130,7 +130,7 @@ int TestModel::nbOfCostPerSeconds()
 #ifdef QT_LIBRARY
     QString str = QString("%1 Cost per second").arg(val);
     ENV.setString(Env::numberOfCostPerSec,str);
-#endif QT_LIBRARY
+#endif
     return (int) val;
 }
 

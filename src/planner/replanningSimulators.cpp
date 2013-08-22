@@ -857,11 +857,11 @@ int ReplanningSimulator::execute_softmotion_simulation( int (*fct)(p3d_rob* robo
         return false;
     }
 
-    p3d_rob* robotPt;
-    p3d_localpath* localpathPt;
+    p3d_rob* robotPt=NULL;
+    p3d_localpath* localpathPt=NULL;
     SM_TRAJ smTraj;
 
-    bool RunShowTraj=true;
+//    bool RunShowTraj=true;
 
     Configuration q(m_rosim);
 
@@ -993,7 +993,7 @@ int ReplanningSimulator::execute_softmotion_simulation( int (*fct)(p3d_rob* robo
         if (fct) if (((*fct)(robotPt, localpathPt)) == FALSE) return(count);
         count++;
 
-        RunShowTraj = (*fct_stop)();
+        (*fct_stop)();
 
         t += time_since_last_call( isFirstLoop, tu_tmp );
 
@@ -1051,14 +1051,14 @@ int ReplanningSimulator::execute_simple_simulation( int (*fct)(p3d_rob* robot, p
         //return false;
     }
 
-    bool RunShowTraj=true;
+//    bool RunShowTraj=true;
     bool StopRun=false;
     bool isFirstLoop=true;
     bool do_switch=false;
 
     int count=0;
-    p3d_rob* robotPt;
-    p3d_localpath* localpathPt;
+    p3d_rob* robotPt=NULL;
+    p3d_localpath* localpathPt=NULL;
 
     // Replanning variables
     double t=0.0, t_init = 0.0;
@@ -1147,7 +1147,7 @@ int ReplanningSimulator::execute_simple_simulation( int (*fct)(p3d_rob* robot, p
             }
         }
 
-        RunShowTraj = (*fct_stop)();
+        (*fct_stop)();
 
         // Timer using real time &  s is the parameter on the path
         t += time_since_last_call( isFirstLoop, t_init );

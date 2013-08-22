@@ -100,7 +100,7 @@ void Natural::initGeneral()
     case Achile:
         cout << "KinType of HRICS::Natural is Achile ( " << m_Robot->getName() << " ) "<< endl;
         initNaturalAchile();
-        m_IndexObjectDof = NULL;
+        m_IndexObjectDof = 0;
         m_computeNbOfIK = false;
         m_IsHuman = true;
         //A meanwhile to make the soft work ...
@@ -110,7 +110,7 @@ void Natural::initGeneral()
     case Herakles:
         cout << "KinType of HRICS::Natural is Herakles ( " << m_Robot->getName() << " ) "<< endl;
         initNaturalHerakles();
-        m_IndexObjectDof = NULL;
+        m_IndexObjectDof = 0;
         m_computeNbOfIK = false;
         m_IsHuman = true;
         m_Agents = hri_create_agents();
@@ -119,7 +119,7 @@ void Natural::initGeneral()
     case OldDude:
         cout << "KinType of HRICS::Natural is OldDude ( " << m_Robot->getName() << " ) "<< endl;
         initNaturalOldDude();
-        m_IndexObjectDof = NULL;
+        m_IndexObjectDof = 0;
         m_computeNbOfIK = false;
         m_IsHuman = true;
         m_Agents = hri_create_agents();
@@ -786,8 +786,7 @@ void Natural::initHumanBaseGrid(vector<double> box)
 
     vector<double>  envSize(6);
 
-    configPt q;
-    q = p3d_get_robot_config(m_Agents->humans[0]->robotPt);
+    //configPt q = p3d_get_robot_config(m_Agents->humans[0]->robotPt);
 
     envSize[0] = /**(q+6) +*/ box[0]; envSize[1] = /**(q+6) +*/ box[1];
     envSize[2] = /**(q+7) +*/ box[2]; envSize[3] = /**(q+7) +*/ box[3];
@@ -1220,7 +1219,7 @@ double Natural::getCost(const Vector3d& WSPoint, bool useLeftvsRightArm , bool w
         cout << "Warning : Not implemented" << endl;
         break;
     }
-    return NULL;
+    return 0.0;
 }
 
 /*!
@@ -1291,7 +1290,7 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
     //        cout << "Natural::computeIsReachableAndMove" << endl;
     shared_ptr<Configuration> configStored = m_Robot->getCurrentPos();
 
-    bool IKSucceded;
+    bool IKSucceded=false;
     const bool withSideEffect = true;
 
     // 2 - Select Task
@@ -1386,7 +1385,7 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
 bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRightArm)
 {
     shared_ptr<Configuration> configStored = m_Robot->getCurrentPos();
-    bool IKSucceded;
+    bool IKSucceded=false;
     HRI_GIK_TASK_TYPE task;
 
     if (useLeftvsRightArm == true){

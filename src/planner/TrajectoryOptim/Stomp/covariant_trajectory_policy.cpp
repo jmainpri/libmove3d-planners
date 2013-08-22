@@ -373,7 +373,7 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
 
         params_all.segment( free_vars_start_index_, num_vars_free_) = parameters[d] + noise[d];
 
-        bool is_circular_joint = planning_group_->chomp_joints_[d].wrap_around_;
+//        bool is_circular_joint = planning_group_->chomp_joints_[d].wrap_around_;
 
         for (int i=0; i<num_vars_all_; i++)
         {

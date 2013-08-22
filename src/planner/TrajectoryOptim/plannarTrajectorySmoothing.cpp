@@ -145,7 +145,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
     {
         if (i>0)
         {
-//            double threshold = 0.03;
+            //            double threshold = 0.03;
             if (trajectory.at(i+1)[0] - trajectory.at(i-1)[0] != 0)
             {
                 double pente =  (trajectory.at(i+1)[1] - trajectory.at(i-1)[1])/(trajectory.at(i+1)[0] - trajectory.at(i-1)[0]);
@@ -154,7 +154,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
                 if (fabs(trajectory.at(i)[1] - pente*trajectory.at(i)[0] - cst) > threshold)
                 {
                     tmp.push_back(trajectory.at(i));
-//                    cout << "cell to be keeped \n" << trajectory.at(i) << endl;
+                    //                    cout << "cell to be keeped \n" << trajectory.at(i) << endl;
                 }
             }
             else
@@ -162,14 +162,14 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
                 if (trajectory.at(i+1)[0] - trajectory.at(i)[0] > threshold)
                 {
                     tmp.push_back(trajectory.at(i));
-//                    cout << "cell to be keeped \n" << trajectory.at(i) << endl;
+                    //                    cout << "cell to be keeped \n" << trajectory.at(i) << endl;
                 }
             }
         }
         else
         {
             tmp.push_back(trajectory.at(i));
-//            cout << "cell to be keeped \n" << trajectory.at(i) << endl;
+            //            cout << "cell to be keeped \n" << trajectory.at(i) << endl;
         }
     }
     tmp.push_back(trajectory.at(trajectory.size()-1));
@@ -223,7 +223,7 @@ bool PlannarTrajectorySmoothing::robotCanDoTraj(std::vector<Eigen::Vector2d,Eige
 
 
 std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarTrajectorySmoothing::smoothTrajectory(Robot* robot,
-        std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > trajectory)
+                                                                                                                     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > trajectory)
 {
 
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > result;
@@ -235,7 +235,7 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
         result.push_back(v);
         return result;
     }
-    Robot* cyl;
+    Robot* cyl=NULL;
     for (int i=0; i<XYZ_ENV->nr; i++)
     {
         string name(XYZ_ENV->robot[i]->name);
@@ -278,10 +278,10 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
         {
             finished = true;
         }
-//        if (robotCanDoTraj(tmp,cyl,robot,0.1))
-//        {
-//            result = tmp;
-//        }
+        //        if (robotCanDoTraj(tmp,cyl,robot,0.1))
+        //        {
+        //            result = tmp;
+        //        }
     }
 
 
@@ -292,70 +292,70 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
 
 
 
-//    result = removeUnnecessaryPoint(trajectory,0.03);
+    //    result = removeUnnecessaryPoint(trajectory,0.03);
 
-//    for (int m = 0; m< 100; m++)
-//    int am = 0;
-////    double bm = 0;
-////    double dist = computeDistOfTraj(result,0,result.size()-1);
-//
-//
-//    while (am < 100)
-//    {
-//
-//        int limitUp = result.size() ;
-//        if (limitUp > 2)
-//        {
-//            unsigned int i = p3d_random_integer(1,limitUp-2);
-//            unsigned int j = p3d_random_integer(i+1,limitUp - 1);
-//            tmp = findShortCut(result,i,j);
-//            bool test = robotCanDoTraj(tmp,cyl,robot,0.1);
-//            if (test)
-//            {
-//                result = tmp;
-//            }
-//        }
-//        else
-//        {
-//            break;
-//        }
-//
-////        tmp = removeUnnecessaryPoint(result,0.07);
-////        if (robotCanDoTraj(tmp,cyl,robot,0.2))
-////        {
-////            result = tmp;
-////        }
-//
-//        am++;
-////        double tmpDist = numeric_limits<double>::max( );
-////        dist = computeDistOfTraj(result,0,result.size()-1);
-////        cout << "distance = " << dist << "for " << am << endl;
-////        if (tmpDist < dist)
-////        {
-////            bm =0;
-////            dist = tmpDist;
-////        }
-////        else
-////        {
-////            bm++;
-////            if (bm> 40)
-////            {
-////                break;
-////            }
-////        }
-//
-//    }
+    //    for (int m = 0; m< 100; m++)
+    //    int am = 0;
+    ////    double bm = 0;
+    ////    double dist = computeDistOfTraj(result,0,result.size()-1);
+    //
+    //
+    //    while (am < 100)
+    //    {
+    //
+    //        int limitUp = result.size() ;
+    //        if (limitUp > 2)
+    //        {
+    //            unsigned int i = p3d_random_integer(1,limitUp-2);
+    //            unsigned int j = p3d_random_integer(i+1,limitUp - 1);
+    //            tmp = findShortCut(result,i,j);
+    //            bool test = robotCanDoTraj(tmp,cyl,robot,0.1);
+    //            if (test)
+    //            {
+    //                result = tmp;
+    //            }
+    //        }
+    //        else
+    //        {
+    //            break;
+    //        }
+    //
+    ////        tmp = removeUnnecessaryPoint(result,0.07);
+    ////        if (robotCanDoTraj(tmp,cyl,robot,0.2))
+    ////        {
+    ////            result = tmp;
+    ////        }
+    //
+    //        am++;
+    ////        double tmpDist = numeric_limits<double>::max( );
+    ////        dist = computeDistOfTraj(result,0,result.size()-1);
+    ////        cout << "distance = " << dist << "for " << am << endl;
+    ////        if (tmpDist < dist)
+    ////        {
+    ////            bm =0;
+    ////            dist = tmpDist;
+    ////        }
+    ////        else
+    ////        {
+    ////            bm++;
+    ////            if (bm> 40)
+    ////            {
+    ////                break;
+    ////            }
+    ////        }
+    //
+    //    }
 
-//    tmp = removeUnnecessaryPoint(result,0.06);
-//    if (robotCanDoTraj(tmp,cyl,robot,0.2))
-//    {
-//        result = tmp;
-//    }
+    //    tmp = removeUnnecessaryPoint(result,0.06);
+    //    if (robotCanDoTraj(tmp,cyl,robot,0.2))
+    //    {
+    //        result = tmp;
+    //    }
 
-//    for (unsigned int j =0; j< result.size();j++)
-//    {
-//        cout << "cell nb " << j << " with coord:\n" << result.at(j) << endl;
-//    }
+    //    for (unsigned int j =0; j< result.size();j++)
+    //    {
+    //        cout << "cell nb " << j << " with coord:\n" << result.at(j) << endl;
+    //    }
 
     return result;
 
@@ -365,13 +365,13 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
 std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarTrajectorySmoothing::findShortCut(
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, int i, Robot* cyl, Robot* robot)
 {
-    double errorT = EPS1/2;
+    //    double errorT = EPS1/2;
 
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmp = traj;
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > res = traj;
     bool ended = false;
-    int id = 0;
-    while (!ended && tmp.size()>2 && i+1 < tmp.size()-1 )
+    //    int id = 0;
+    while (!ended && int(tmp.size())>2 && i+1 < int(tmp.size())-1 )
     {
 
         tmp.erase(tmp.begin()+i+1);
@@ -412,8 +412,8 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
 
     double oldDist = computeDistOfTraj(traj,i-1,j);
     double newDist = sqrt(pow(traj.at(i-1)[1]-p1[1],2) + pow(traj.at(i-1)[0]-p1[0],2)) +
-                     sqrt(pow(p2[1]-p1[1],2) + pow(p2[0]-p1[0],2)) +
-                     sqrt(pow(p2[1]-traj.at(j)[1],2) + pow(p2[0]-traj.at(j)[0],2));
+            sqrt(pow(p2[1]-p1[1],2) + pow(p2[0]-p1[0],2)) +
+            sqrt(pow(p2[1]-traj.at(j)[1],2) + pow(p2[0]-traj.at(j)[0],2));
     if (oldDist <= newDist)
     {
         return traj;
@@ -450,7 +450,7 @@ Eigen::Vector2d PlannarTrajectorySmoothing::getRandomPointInSegment(Eigen::Vecto
     {
         double pente =  (p2[1] - p1[1])/(p2[0] - p1[0]);
         double cst = p2[1] - pente*p2[0];
-    //    double dist = sqrt(pow(p2[1]-p1[1],2) + pow(p2[0]-p1[0],2));
+        //    double dist = sqrt(pow(p2[1]-p1[1],2) + pow(p2[0]-p1[0],2));
         double xDist = fabs(p2[0] - p1[0]);
         double xRand = p3d_random(0, xDist);
         Eigen::Vector2d res;
@@ -461,7 +461,7 @@ Eigen::Vector2d PlannarTrajectorySmoothing::getRandomPointInSegment(Eigen::Vecto
         }
         res[0] = xRand + xMin;
         res[1] = pente*res[0] + cst;
-    //    cout << "randCell:\n" << res << endl;
+        //    cout << "randCell:\n" << res << endl;
 
         double dist = sqrt(pow(res[1]-p1[1],2) + pow(res[0]-p1[0],2));
         if (dist < errorT)
@@ -498,35 +498,35 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Robot* robot, double epsilon)
 {
 
-//    for (unsigned int j =0; j< traj.size();j++)
-//    {
-//        cout << "cell nb " << j << " with coord:\n" << traj.at(j) << endl;
-//    }
+    //    for (unsigned int j =0; j< traj.size();j++)
+    //    {
+    //        cout << "cell nb " << j << " with coord:\n" << traj.at(j) << endl;
+    //    }
     shared_ptr<Configuration> q_robot (robot->getCurrentPos());
 
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > result;
     result.clear();
     Vector3d tmp;
-//    tmp[0] = traj.at(0)[0];
-//    tmp[1] = traj.at(0)[1];
-//    tmp[2] = (*q_robot)[11];
-//    result.push_back(tmp);
+    //    tmp[0] = traj.at(0)[0];
+    //    tmp[1] = traj.at(0)[1];
+    //    tmp[2] = (*q_robot)[11];
+    //    result.push_back(tmp);
     tmp[0] = traj.at(0)[0];
     tmp[1] = traj.at(0)[1];
     tmp[2] = atan2(-(*q_robot)[7]+traj.at(1)[1],-(*q_robot)[6]+traj.at(1)[0]);
     result.push_back(tmp);
     if (traj.size() > 1)
     {
-//        cout << "----------- add3Ddim -------------" << endl;
+        //        cout << "----------- add3Ddim -------------" << endl;
         for (unsigned int i = 1; i < traj.size();i++)
         {
             double x1 = traj.at(i-1)[0];
             double y1 = traj.at(i-1)[1];
             double x2 = traj.at(i)[0];
             double y2 = traj.at(i)[1];
-//            cout << "loop nb " << i << endl;
-//            cout << "x1 = " << x1 << " x2 = " << x2<<" y1 = " << y1<< " y2 = "<< y2<< endl;
-//            cout << "(x1 - x2) = " << (x1 - x2) << " (y1 -y2) = " << (y1 -y2) << " epsilon = " << epsilon << endl;
+            //            cout << "loop nb " << i << endl;
+            //            cout << "x1 = " << x1 << " x2 = " << x2<<" y1 = " << y1<< " y2 = "<< y2<< endl;
+            //            cout << "(x1 - x2) = " << (x1 - x2) << " (y1 -y2) = " << (y1 -y2) << " epsilon = " << epsilon << endl;
 
             if (fabs(x1 - x2) < epsilon && fabs(y1 -y2) < epsilon)
             {
@@ -543,7 +543,7 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
                 tmp[1] = y1+minDist*sin(angle);
                 tmp[2] = angle;
                 result.push_back(tmp);
-        //
+                //
 
                 tmp[0] = x2-minDist*cos(angle);
                 tmp[1] = y2-minDist*sin(angle);
@@ -558,25 +558,25 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
                 result.push_back(tmp);
             }
         }
-//        cout << "----------- end add3Ddim -------------" << endl;
+        //        cout << "----------- end add3Ddim -------------" << endl;
 
 
     }
-//    else
-//    {
-//        tmp[0] = traj.at(0)[0];
-//        tmp[1] = traj.at(0)[1];
-//        tmp[2] = atan2((*q_robot)[7]-tmp[1],(*q_robot)[6]-tmp[0]);;
-//        result.push_back(tmp);
-//    }
+    //    else
+    //    {
+    //        tmp[0] = traj.at(0)[0];
+    //        tmp[1] = traj.at(0)[1];
+    //        tmp[2] = atan2((*q_robot)[7]-tmp[1],(*q_robot)[6]-tmp[0]);;
+    //        result.push_back(tmp);
+    //    }
 
 
-//    result = removeSamePoints(result,epsilon);
-//
-//    for (unsigned int j =0; j< result.size();j++)
-//    {
-//        cout << "cell nb " << j << " with coord:\n" << result.at(j) << endl;
-//    }
+    //    result = removeSamePoints(result,epsilon);
+    //
+    //    for (unsigned int j =0; j< result.size();j++)
+    //    {
+    //        cout << "cell nb " << j << " with coord:\n" << result.at(j) << endl;
+    //    }
     return result;
 }
 
@@ -584,19 +584,19 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Robot* robot, double epsilon)
 {
 
-//    for (unsigned int j =0; j< traj.size();j++)
-//    {
-//        cout << "cell nb " << j << " with coord:\n" << traj.at(j) << endl;
-//    }
+    //    for (unsigned int j =0; j< traj.size();j++)
+    //    {
+    //        cout << "cell nb " << j << " with coord:\n" << traj.at(j) << endl;
+    //    }
     shared_ptr<Configuration> q_robot (robot->getCurrentPos());
 
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > result;
     result.clear();
     Vector3d tmp;
-//    tmp[0] = traj.at(0)[0];
-//    tmp[1] = traj.at(0)[1];
-//    tmp[2] = atan2(-(*q_robot)[7]+traj.at(1)[1],-(*q_robot)[6]+traj.at(1)[0]);
-//    result.push_back(tmp);
+    //    tmp[0] = traj.at(0)[0];
+    //    tmp[1] = traj.at(0)[1];
+    //    tmp[2] = atan2(-(*q_robot)[7]+traj.at(1)[1],-(*q_robot)[6]+traj.at(1)[0]);
+    //    result.push_back(tmp);
     if (traj.size() > 1)
     {
         for (unsigned int i = 1; i < traj.size();i++)
@@ -639,14 +639,14 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
     for (unsigned int i = 1; i < tmp.size(); i++)
     {
         if (fabs(tmp.at(i-1)[0] - tmp.at(i)[0]) > epsilon ||
-            fabs(tmp.at(i-1)[1] - tmp.at(i)[1]) > epsilon ||
-            fabs(tmp.at(i-1)[2] - tmp.at(i)[2]) > epsilon )
+                fabs(tmp.at(i-1)[1] - tmp.at(i)[1]) > epsilon ||
+                fabs(tmp.at(i-1)[2] - tmp.at(i)[2]) > epsilon )
         {
             result.push_back(tmp.at(i));
         }
     }
     
-//    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmp;
+    //    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > tmp;
     
     
     return result;

@@ -95,7 +95,8 @@ bool MultiRRT::addSeed(shared_ptr<Configuration> q)
 
 Node* MultiRRT::getRandomCompcoForExpansion(Node* fromNode)
 {
-	Node* randomCompco;
+    Node* randomCompco=NULL;
+
 	unsigned int i=0;
 	int initNum = fromNode->getConnectedComponent()->getId() ;
 	int randNum = fromNode->getConnectedComponent()->getId() ;

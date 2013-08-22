@@ -676,7 +676,7 @@ double Trajectory::computeSubPortionIntergralCost(vector<LocalPath*>& portion)
 {
     double cost(0.0);
     double step = p3d_get_env_dmax()*PlanEnv->getDouble(PlanParam::costResolution);
-    double currentParam, currentCost, prevCost;
+    double currentParam(0.0), currentCost, prevCost;
     double range = computeSubPortionRange(portion);
     int n_step = int(range/step);
 
@@ -1288,7 +1288,7 @@ pair<bool, vector<LocalPath*> > Trajectory::extractSubPortion(double param1, dou
         {
             LocalPath* startNew = new LocalPath(q1, m_Courbe.at(first)->getEnd());
 
-            if ( check_for_coll && startNew->isValid() || !check_for_coll )
+            if ( (check_for_coll && startNew->isValid()) || !check_for_coll )
             {
                 paths.push_back(startNew);
             }
@@ -1303,7 +1303,7 @@ pair<bool, vector<LocalPath*> > Trajectory::extractSubPortion(double param1, dou
     {
         LocalPath* startNew = new LocalPath(*m_Courbe.at(first));
 
-        if ( check_for_coll && startNew->isValid() || !check_for_coll )
+        if ( (check_for_coll && startNew->isValid()) || !check_for_coll )
         {
             paths.push_back(startNew);
         }
@@ -1328,7 +1328,7 @@ pair<bool, vector<LocalPath*> > Trajectory::extractSubPortion(double param1, dou
         {
             LocalPath* endNew = new LocalPath(m_Courbe.at(last)->getBegin(), q2);
 
-            if( check_for_coll && endNew->isValid() || !check_for_coll )
+            if( (check_for_coll && endNew->isValid()) || !check_for_coll )
             {
                 paths.push_back(endNew);
             }
@@ -1343,7 +1343,7 @@ pair<bool, vector<LocalPath*> > Trajectory::extractSubPortion(double param1, dou
     {
         LocalPath* endNew = new LocalPath(*m_Courbe.at(last));
 
-        if( check_for_coll && endNew->isValid() || !check_for_coll )
+        if( ( check_for_coll && endNew->isValid() ) || !check_for_coll )
         {
             paths.push_back(endNew);
         }
@@ -1478,11 +1478,10 @@ void Trajectory::draw(int nbKeyFrame)
     double du = getRangeMax() / nbKeyFrame;
     double u = du;
 
-    int val1, val2;
     double Cost1, Cost2;
 
     //	p3d_obj* o;
-    p3d_jnt* 	drawnjnt;
+    p3d_jnt* 	drawnjnt = NULL;
 
     //	int NumBody = m_Robot->getRobotStruct()->no - 1;
     //
@@ -1541,10 +1540,8 @@ void Trajectory::draw(int nbKeyFrame)
         }
         else
         {
-            val1 = GHintersectionVerticalLineWithGround(GroundCostObj, pi[0],
-                                                        pi[1], &Cost1);
-            val2 = GHintersectionVerticalLineWithGround(GroundCostObj, pf[0],
-                                                        pf[1], &Cost2);
+            /*val1 =*/ GHintersectionVerticalLineWithGround(GroundCostObj, pi[0], pi[1], &Cost1);
+            /*val2 =*/ GHintersectionVerticalLineWithGround(GroundCostObj, pf[0], pf[1], &Cost2);
             glLineWidth(3.);
             g3d_drawOneLine(pi[0], pi[1], Cost1 + (ZmaxEnv - ZminEnv) * 0.02,
                             pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02, mColor,
@@ -1561,7 +1558,7 @@ void Trajectory::draw(int nbKeyFrame)
         {
             m_Robot->setAndUpdate(*m_Courbe[i]->getEnd());
             p3d_jnt_get_cur_vect_point(drawnjnt, pf);
-            val2 = GHintersectionVerticalLineWithGround(GroundCostObj, pf[0],pf[1], &Cost2);
+            /*val2 =*/ GHintersectionVerticalLineWithGround(GroundCostObj, pf[0],pf[1], &Cost2);
             g3d_drawSphere(pf[0],pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02,1.);
         }
     }
@@ -1629,7 +1626,7 @@ bool Trajectory::cutTrajInSmallLPSimple(unsigned int nLP)
     bool null_length_local_path = false;
     double length = 0.0;
     double s=0.0;
-//    cout << "range : " << range << " , delta : " << delta << endl;
+    //    cout << "range : " << range << " , delta : " << delta << endl;
 
     for( unsigned int i=0; i<nLP; i++ )
     {
@@ -1860,20 +1857,20 @@ bool Trajectory::cutTrajInSmallLP(unsigned int nLP)
     if( !succeed )
         return false;
 
-//    if (!m_Source->equal(*configAtParam(0)))
-//    {
-//        cout << "Error" << endl;
-//        return false;
-//    }
+    //    if (!m_Source->equal(*configAtParam(0)))
+    //    {
+    //        cout << "Error" << endl;
+    //        return false;
+    //    }
 
-//    if (!m_Target->equal(*configAtParam(getRangeMax())))
-//    {
-//        m_Source->print();
-//        m_Target->print();
-//        configAtParam( getRangeMax() )->print();
-//        cout << "Error" << endl;
-//        return false;
-//    }
+    //    if (!m_Target->equal(*configAtParam(getRangeMax())))
+    //    {
+    //        m_Source->print();
+    //        m_Target->print();
+    //        configAtParam( getRangeMax() )->print();
+    //        cout << "Error" << endl;
+    //        return false;
+    //    }
     return true;
 }
 
@@ -1951,8 +1948,8 @@ bool Trajectory::replacePortion( double param1, double param2, vector<LocalPath*
     double soFar(0.0);
     double prevSoFar(0.0);
 
-    double param_start(0.0);
-    double param_end(0.0);
+//    double param_start(0.0);
+//    double param_end(0.0);
 
     unsigned int id_LP_1(0);
     unsigned int id_LP_2(0);
@@ -1966,7 +1963,7 @@ bool Trajectory::replacePortion( double param1, double param2, vector<LocalPath*
         {
             // get configuration in local path i
             q21 = m_Courbe[i]->configAtParam(param1 - prevSoFar);
-            param_start = param1 - prevSoFar;
+            //param_start = param1 - prevSoFar;
             id_LP_1 = i;
             break;
         }
@@ -1989,7 +1986,7 @@ bool Trajectory::replacePortion( double param1, double param2, vector<LocalPath*
         {
             // get configuration in local path i
             q22 = m_Courbe.at(i)->configAtParam(param2 - prevSoFar);
-            param_end = param2 - soFar;
+//            param_end = param2 - soFar;
             id_LP_2 = i;
             break;
         }
@@ -1999,7 +1996,7 @@ bool Trajectory::replacePortion( double param1, double param2, vector<LocalPath*
         {
             q22 = m_Courbe.at(m_Courbe.size() - 1)->getEnd();
             id_LP_2 = i;
-            param_end = soFar;
+//            param_end = soFar;
         }
     }
 

@@ -265,7 +265,7 @@ API::TwoDCell* TwoDGrid::createNewCell(unsigned int index,unsigned  int x,unsign
         return new TwoDCell( 0, _originCorner , this );
     }
     TwoDCell* newCell = new TwoDCell( index, computeCellCorner(x,y) , this );
-    Vector2d corner = newCell->getCorner();
+    //Vector2d corner = newCell->getCorner();
     //    cout << " = (" << corner[0] <<"," << corner[1] << ")" << endl;
     return newCell;
 }
@@ -346,13 +346,12 @@ Vector2d TwoDGrid::getCoordinates(TwoDCell* cell)
 
 void TwoDGrid::draw()
 {
-    double colorvector[4];
+//    double colorvector[4];
 
-    colorvector[0] = 1.0;       //red
-    colorvector[1] = 0.5;       //green
-    colorvector[2] = 0.0;       //blue
-    colorvector[3] = 0.05;       //transparency
-
+//    colorvector[0] = 1.0;       //red
+//    colorvector[1] = 0.5;       //green
+//    colorvector[2] = 0.0;       //blue
+//    colorvector[3] = 0.05;       //transparence
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

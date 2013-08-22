@@ -596,7 +596,7 @@ bool ConfGenerator::generateConfiguration(int nbConfs)
 
     while (nbConfsFound < nbConfs)
     {
-        for (unsigned int i; i < linkList.size(); i++)
+        for (unsigned int i=0; i < linkList.size(); i++)
         {
 
             linkList.at(i);

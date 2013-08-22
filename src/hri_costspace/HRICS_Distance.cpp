@@ -780,8 +780,8 @@ double Distance::computeBoundingBalls(const Vector3d& WSPoint, p3d_vector3 robot
 
 void Distance::drawInteractionZone() const
 {
-    Vector3d WSPoint;
-    Vector3d robotCenter = m_Robot->getJoint(1)->getVectorPos();
+    //    Vector3d WSPoint;
+    //    Vector3d robotCenter = m_Robot->getJoint(1)->getVectorPos();
     
     Transform3d World_2_Robot( m_Robot->getJoint(1)->getMatrixPos() );
 

@@ -773,36 +773,41 @@ void ChompOptimizer::performForwardKinematics()
 void ChompOptimizer::eigenMapTest()
 {
   double foo_eigen;
-  double foo_kdl;
+//  double foo_kdl;
   
   //  cout << "Eigen location: " << joint_axis_eigen_[free_vars_start_][0](0) << endl;
   //  "  KDL location: " << &(joint_axis_[free_vars_start_][0](0)) << endl;
   
   foo_eigen = joint_axis_eigen_[free_vars_start_][0](0);
   //  foo_kdl = joint_axis_[free_vars_start_][0](0);
-  printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
+  //printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
+   printf("eigen = %f",foo_eigen);
   //ROS_ASSERT(foo_eigen==foo_kdl);
   
   joint_axis_eigen_[free_vars_start_][0](0) = 1.0;
   foo_eigen = joint_axis_eigen_[free_vars_start_][0](0);
   //  foo_kdl = joint_axis_[free_vars_start_][0](0);
-  printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
+  //printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
+  printf("eigen = %f",foo_eigen);
   //ROS_ASSERT(foo_kdl == foo_eigen);
   
   //  joint_axis_[free_vars_start_][0](0) = 2.0;
   foo_eigen = joint_axis_eigen_[free_vars_start_][0](0);
   //  foo_kdl = joint_axis_[free_vars_start_][0](0);
-  printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
+  //printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
+  printf("eigen = %f",foo_eigen);
   //ROS_ASSERT(foo_eigen == foo_kdl);
   
   foo_eigen = joint_pos_eigen_[free_vars_start_][0](0);
   //  foo_kdl = joint_pos_[free_vars_start_][0](0);
   //  printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
+  printf("eigen = %f",foo_eigen);
   //ROS_ASSERT(foo_eigen==foo_kdl);
   
   foo_eigen = collision_point_pos_eigen_[free_vars_start_][5](0);
   //  foo_kdl = collision_point_pos_[free_vars_start_][5](0);
-  printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
+  //printf("eigen = %f, kdl = %f\n", foo_eigen, foo_kdl);
+  printf("eigen = %f",foo_eigen);
   //ROS_ASSERT(foo_eigen==foo_kdl);
 }
 

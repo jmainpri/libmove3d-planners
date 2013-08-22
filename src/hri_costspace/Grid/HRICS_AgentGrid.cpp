@@ -34,7 +34,7 @@ AgentCell::AgentCell() :
     m_IsReachWithLeftArm(false),
     m_IsReachWithRightArm(false),
     m_NbDirections(1.0),
-    m_list(NULL)
+    m_list(0)
 {
 
 }
@@ -444,7 +444,7 @@ void AgentCell::drawOnePoint( bool withTransform )
     _corner[1] = m_Center[1];
     _corner[2] = m_Center[2];
 
-    double Cost;
+    double Cost=0.0;
 
     if( ENV.getInt(Env::hriCostType) == HRICS_Distance )
     {

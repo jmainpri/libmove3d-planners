@@ -13,15 +13,15 @@ using namespace HRICS;
 using namespace Eigen;
 
 HRICS_rrtExpansion::HRICS_rrtExpansion() :
-        TransitionExpansion(),
-        _biasing(false)
+    TransitionExpansion(),
+    _biasing(false)
 {
     this->init();
 }
 
 HRICS_rrtExpansion::HRICS_rrtExpansion(Graph* ptrGraph) :
-        TransitionExpansion(ptrGraph),
-        _biasing(false)
+    TransitionExpansion(ptrGraph),
+    _biasing(false)
 {
     this->init();
 }
@@ -77,14 +77,14 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getExpansionDirection(
     }
     else
     {
-//        if(ENV.getBool(Env::isInverseKinematics))
-//        {
-//            q = m_Graph->getRobot()->shootFreeFlyer(_Box);
-//        }
-//        else
-//        {
-            q = m_Graph->getRobot()->shoot(samplePassive);
-//        }
+        //        if(ENV.getBool(Env::isInverseKinematics))
+        //        {
+        //            q = m_Graph->getRobot()->shootFreeFlyer(_Box);
+        //        }
+        //        else
+        //        {
+        q = m_Graph->getRobot()->shoot(samplePassive);
+        //        }
     }
 
     if(ENV.getBool(Env::drawPoints))
@@ -108,27 +108,27 @@ API::ThreeDCell* BiasedCell=NULL;
 
 shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* CompcoNode)
 {
-    API::ThreeDCell* farthestCell;
+    API::ThreeDCell* farthestCell=NULL;
 
     // Get the farthest cell explored depending on
     // the way the tree explores
-  //WARNING BROKEN
-//    if( CompcoNode->equalCompco( m_Graph->getStart() ) )
-//    {
-//        _forward = true;
-//        farthestCell = _LastForward;
-//    }
-//    else
-//    {
-//        _forward = false;
-//        farthestCell = _LastBackward;
-//    }
+    //WARNING BROKEN
+    //    if( CompcoNode->equalCompco( m_Graph->getStart() ) )
+    //    {
+    //        _forward = true;
+    //        farthestCell = _LastForward;
+    //    }
+    //    else
+    //    {
+    //        _forward = false;
+    //        farthestCell = _LastBackward;
+    //    }
 
-    Vector3d randomPoint;
-    int cellId;
+    //    Vector3d randomPoint;
+    int cellId=0;
 
     // Get Id of Next cell on the 3D Path
-    for(int i=0; i<(int)_3DCellPath.size(); i++)
+    for(int i=0; i<int(_3DCellPath.size()); i++)
     {
         if(_3DCellPath[i] == farthestCell )
         {
@@ -155,10 +155,10 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* C
         }
     }
 
-//    shared_ptr<Configuration> q = m_Graph->getRobot()->shoot(false);
+    //    shared_ptr<Configuration> q = m_Graph->getRobot()->shoot(false);
 
     // Get a random config in the cell
-//    randomPoint = _3DCellPath[cellId]->getRandomPoint();
+    //    randomPoint = _3DCellPath[cellId]->getRandomPoint();
     BiasedCell = _3DCellPath[cellId];
 
     //     if(PointsToDraw==NULL)
@@ -169,8 +169,8 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* C
     //    PointsToDraw->push_back(randomPoint);
     //    g3d_draw_allwin_active();
 
-//    Matrix3d mat = Matrix3d::Identity();
-//    randomPoint =2*mat*randomPoint;
+    //    Matrix3d mat = Matrix3d::Identity();
+    //    randomPoint =2*mat*randomPoint;
 
     shared_ptr<Configuration> q(new Configuration(m_Graph->getRobot()));
 
@@ -188,9 +188,9 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* C
 
     p3d_FreeFlyerShoot( m_Graph->getRobot()->getRobotStruct() , q->getConfigStruct() , biasedBox );
 
-//    q->getConfigStruct()[VIRTUAL_OBJECT_DOF+0] = randomPoint[0];
-//    q->getConfigStruct()[VIRTUAL_OBJECT_DOF+1] = randomPoint[1];
-//    q->getConfigStruct()[VIRTUAL_OBJECT_DOF+2] = randomPoint[2];
+    //    q->getConfigStruct()[VIRTUAL_OBJECT_DOF+0] = randomPoint[0];
+    //    q->getConfigStruct()[VIRTUAL_OBJECT_DOF+1] = randomPoint[1];
+    //    q->getConfigStruct()[VIRTUAL_OBJECT_DOF+2] = randomPoint[2];
 
     return q;
 }
@@ -215,7 +215,7 @@ bool HRICS_rrtExpansion::on3DPathAndAfter(API::ThreeDCell* cell)
 
     if( cellOnPath == false )
     {
-//        cout << "Not on path" << endl;
+        //        cout << "Not on path" << endl;
         return false;
     }
 
@@ -252,9 +252,9 @@ bool HRICS_rrtExpansion::on3DPathAndAfter(API::ThreeDCell* cell)
             }
         }
     }
-	
-	cout << "Warning: HRICS_rrtExpansion::on3DPathAndAfter" << endl;
-	return false;
+
+    cout << "Warning: HRICS_rrtExpansion::on3DPathAndAfter" << endl;
+    return false;
 }
 
 /**
@@ -265,13 +265,13 @@ Node* HRICS_rrtExpansion::addNode(Node* currentNode, LocalPath& path, double pat
                                   Node* directionNode, int& nbCreatedNodes)
 {
     Node* newNode = BaseExpansion::addNode(
-            currentNode,path,pathDelta,directionNode,nbCreatedNodes);
+                currentNode,path,pathDelta,directionNode,nbCreatedNodes);
 
     //    cout << "New Node " << endl;
 
-//    cout << "New node Biased = " << _biasing << endl;
+    //    cout << "New node Biased = " << _biasing << endl;
 
-//    newNode->getConfiguration()->print();
+    //    newNode->getConfiguration()->print();
 
     Vector3d pos;
 
@@ -279,30 +279,30 @@ Node* HRICS_rrtExpansion::addNode(Node* currentNode, LocalPath& path, double pat
     pos[1] = currentNode->getNodeStruct()->q[mIndexObjectDof+1];
     pos[2] = currentNode->getNodeStruct()->q[mIndexObjectDof+2];
 
-// TODO WARNING BROKEN
-//  API::ThreeDCell* cell = _3DGrid->getCell(pos);
-//    _forward = (currentNode->equal(m_Graph->getStart()));
-//
-//    if( _forward )
-//    {
-//        if(_LastForward != cell)
-//        {
-//            if( on3DPathAndAfter( cell ) )
-//            {
-//                _LastForward = cell;
-//            }
-//        }
-//    }
-//    else
-//    {
-//        if(_LastForward != cell)
-//        {
-//            if( on3DPathAndAfter( cell ) )
-//            {
-//                _LastBackward = cell;
-//            }
-//        }
-//    }
+    // TODO WARNING BROKEN
+    //  API::ThreeDCell* cell = _3DGrid->getCell(pos);
+    //    _forward = (currentNode->equal(m_Graph->getStart()));
+    //
+    //    if( _forward )
+    //    {
+    //        if(_LastForward != cell)
+    //        {
+    //            if( on3DPathAndAfter( cell ) )
+    //            {
+    //                _LastForward = cell;
+    //            }
+    //        }
+    //    }
+    //    else
+    //    {
+    //        if(_LastForward != cell)
+    //        {
+    //            if( on3DPathAndAfter( cell ) )
+    //            {
+    //                _LastBackward = cell;
+    //            }
+    //        }
+    //    }
 
     return newNode;
 }

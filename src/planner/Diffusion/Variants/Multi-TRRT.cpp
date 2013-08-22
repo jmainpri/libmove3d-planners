@@ -374,8 +374,8 @@ unsigned int MultiTRRT::run()
     }
 
     int min_size=numeric_limits<int>::max();
-    for (int i=0; i<m_trees.size(); i++) {
-        if(m_trees[i].size() < min_size ) {
+    for (int i=0; i<int(m_trees.size()); i++) {
+        if(int(m_trees[i].size()) < min_size ) {
             min_size = int(m_trees[i].size());
         }
     }
@@ -427,8 +427,8 @@ unsigned int MultiTRRT::run()
             m_temperature[m_tree_id] = dynamic_cast<MultiTransitionExpansion*>(_expan)->m_temperature;
 
             min_size=numeric_limits<int>::max();
-            for (int i=0; i<m_trees.size(); i++) {
-                if(m_trees[i].size() < min_size ) {
+            for (int i=0; i<int(m_trees.size()); i++) {
+                if(int(m_trees[i].size()) < min_size ) {
                     min_size = int(m_trees[i].size());
                 }
             }

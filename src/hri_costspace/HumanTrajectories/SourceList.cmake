@@ -7,9 +7,9 @@ HRICS_TrajectoryEvaluator.cpp
 
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})
 
-BM3D_QT_GENERATE_MOC(
-HRICS_HumanCostSpace.hpp
-)
+#BM3D_QT_GENERATE_MOC(
+#HRICS_HumanCostSpace.hpp
+#)
 
 include_directories (${BM3D_MODULE_NAME})
 SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME_TMP2})

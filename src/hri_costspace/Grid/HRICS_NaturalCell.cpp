@@ -32,7 +32,7 @@ m_IsReachWithLeftArm(false),
 m_IsReachWithRightArm(false),
 m_use_external_cost(false),
 m_NbDirections(1.0),
-m_list(NULL)
+m_list(0)
 {
 	
 }

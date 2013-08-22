@@ -42,7 +42,7 @@ GridToGraph::GridToGraph( Vector3i size ) : ThreeDGrid()
 
 GridToGraph::GridToGraph( double pace, vector<double> envSize ) :
 
-        ThreeDGrid( pace, envSize )
+    ThreeDGrid( pace, envSize )
 {
     _Robot = new Robot(XYZ_ROBOT);
     _Graph = new Graph(_Robot,XYZ_GRAPH);
@@ -56,7 +56,7 @@ void GridToGraph::putGridInGraph()
 {
     createAllCells();
 
-//    return;
+    //    return;
 
     int edges=1;
     int newPath=1;
@@ -81,14 +81,14 @@ void GridToGraph::putGridInGraph()
                 conf->getConfigStruct()[9] =    0;
                 conf->getConfigStruct()[10] =   0;
                 conf->getConfigStruct()[11] =   0;
-//                conf->print();
+                // conf->print();
 
-                Vector3d corner = currentCell->getCorner();
+                // Vector3d corner = currentCell->getCorner();
 
-                                //  cout << "--------------------------------------------" << endl;
-//                cout << newNodes << " = (" << i <<"," << j << "," << k << ")" << endl;
-//                cout << newNodes << " = (" << corner[0] <<"," << corner[1] << "," << corner[2] << ")" << endl;
-//                cout << newNodes << " = (" << center[0] <<"," << center[1] << "," << center[2] << ")" << endl;
+                //  cout << "--------------------------------------------" << endl;
+                // cout << newNodes << " = (" << i <<"," << j << "," << k << ")" << endl;
+                // cout << newNodes << " = (" << corner[0] <<"," << corner[1] << "," << corner[2] << ")" << endl;
+                // cout << newNodes << " = (" << center[0] <<"," << center[1] << "," << center[2] << ")" << endl;
 
                 Node* newNode = new Node(_Graph,conf);
 
@@ -124,10 +124,10 @@ void GridToGraph::putGridInGraph()
 
                             if(path.isValid())
                             {
-//                                double Length = ptrCell->getNode()->getConfiguration()->dist(*conf);
+                                //                                double Length = ptrCell->getNode()->getConfiguration()->dist(*conf);
                                 _Graph->insertConfigurationAsNode(conf,ptrCell->getNode(),path.getParamMax());
                                 edges++;
-//                                cout << "Cell Index  = " <<  currentCell->getIndex() << " " << ptrCell->getIndex()  << endl;
+                                //                                cout << "Cell Index  = " <<  currentCell->getIndex() << " " << ptrCell->getIndex()  << endl;
                             }
                         }
                     }
@@ -156,7 +156,7 @@ ThreeDCell* GridToGraph::createNewCell(unsigned int index,unsigned  int x,unsign
         return new CellToNode( 0, _originCorner , this );
     }
     CellToNode* newCell = new CellToNode( index, computeCellCorner(x,y,z) , this );
-//    Vector3d corner = newCell->getCorner();
-//    cout << " = (" << corner[0] <<"," << corner[1] << "," << corner[2] << ") newCell" << endl;
+    //    Vector3d corner = newCell->getCorner();
+    //    cout << " = (" << corner[0] <<"," << corner[1] << "," << corner[2] << ") newCell" << endl;
     return newCell;
 }

@@ -710,8 +710,8 @@ const double HRICS_outerRadius = 1.6;
 
 bool Workspace::findGrapingPosition(std::string robot_name, std::vector<std::string> objects)
 {
-    double innerRadius = 0.4;
-    double outerRadius = 1;
+//    double innerRadius = 0.4;
+//    double outerRadius = 1;
     int nbOfTests = 20;
 
     if (objects.size() > 1)
@@ -719,8 +719,8 @@ bool Workspace::findGrapingPosition(std::string robot_name, std::vector<std::str
         cout << "WARNING: if there is more than one object and the objects are too far one from another, finding" <<
                 "a grasping position might be ipossible" << endl;
     }
-    Scene* sce = global_Project->getActiveScene();
-    Robot* robot = sce->getRobotByNameContaining(robot_name);
+//    Scene* sce = global_Project->getActiveScene();
+//    Robot* robot = sce->getRobotByNameContaining(robot_name);
 
     std::vector<Robot*> objs;
     for (unsigned int i = 0; i < objects.size(); i++)
@@ -737,14 +737,14 @@ bool Workspace::findGrapingPosition(std::string robot_name, std::vector<std::str
     }
 
     cout << "TODO: find how to change hardcoded distances to computed one form real IK" << endl;
-    double center = (innerRadius + outerRadius)/2;
+//    double center = (innerRadius + outerRadius)/2;
 
     for (int k = 0 ; k < nbOfTests; k++)
     {
 
     }
 
-
+    return true;
 }
 
 

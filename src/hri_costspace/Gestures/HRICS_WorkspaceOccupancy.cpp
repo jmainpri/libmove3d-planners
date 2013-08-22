@@ -55,8 +55,8 @@ WorkspaceOccupancyCell::~WorkspaceOccupancyCell()
 //--------------------------------------------------------------------------
 WorkspaceOccupancyGrid::WorkspaceOccupancyGrid( Robot* human, double pace, vector<double> envSize ) :
 API::ThreeDGrid( pace , envSize ),
-m_human(human),
 m_drawing(false),
+m_human(human),
 m_id_class_to_draw(0)
 {
     cout << "WorkspaceOccupancyGrid::createAllCells" << endl;
@@ -614,22 +614,26 @@ void WorkspaceOccupancyGrid::draw_voxels( const std::vector<unsigned int>& voxel
 {
     //cout << "voxel size is " << voxels.size() << endl;
     //    unsigned int voxel_count =0;
-    unsigned int init_id=0; unsigned int i=0;
+    unsigned int i=0;
     
     while(i<voxels.size())
     {
-        init_id = i;
-        
+        // TODO also uncoment
+        //unsigned int init_id = i;
+
         while( (voxels[i] == ((voxels[i+1]-1))) && i<voxels.size())
         {
             i++;
         }
         
-        GLuint start = sizeof(unsigned int)*36*voxels[init_id];
+        cout << "Error in draw_voxels function (FIX)" << endl;
+        // TODO uncomment region
+/*        GLuint start = sizeof(unsigned int)*36*voxels[init_id];
         GLuint end = sizeof(unsigned int)*36*voxels[i];
         GLsizei count = 36*(voxels[i]-voxels[init_id]+1);
-        
         glDrawRangeElements( GL_TRIANGLES , start, end, count, GL_UNSIGNED_INT, (const GLuint*)(start) );
+*/
+
         
         //        voxel_count += (voxels[i]-voxels[init_id]+1);
         i++;
