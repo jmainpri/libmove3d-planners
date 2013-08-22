@@ -38,7 +38,7 @@ void g3d_show_tcur_both_rob(p3d_rob *robotPt, int (*fct)(p3d_rob* robot, p3d_loc
     pp3d_localpath localpathPt;
     pp3d_localpath humLocalpathPt;
 
-    int end = 0;
+    //int end = 0;
     //  int njnt = robotPt->njoints;
     double u = 0, du = 0, umax; /* parameters along the local path */
     double uHum = 0, duHum = 0, umaxHum; /* parameters along the local path */
@@ -97,13 +97,13 @@ void g3d_show_tcur_both_rob(p3d_rob *robotPt, int (*fct)(p3d_rob* robot, p3d_loc
         u = du;
         if (u > umax - EPS6) {
             u = umax;
-            end = TRUE;
+            //end = TRUE;
         }
 
         uHum = duHum;
         if (uHum > umaxHum - EPS6) {
             uHum = umaxHum;
-            end = TRUE;
+            //end = TRUE;
         }
         if (uHum > umaxHum - EPS6 && u > umax - EPS6)
         {
