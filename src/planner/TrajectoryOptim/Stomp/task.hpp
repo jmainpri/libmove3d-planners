@@ -68,7 +68,7 @@ public:
      * @param costs Vector of num_time_steps, state space cost per timestep (do not include control costs)
      * @return
      */
-    virtual bool execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool resample = false) = 0;
+    virtual bool execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample ) = 0;
 
     /**
      * Get the Policy object of this Task

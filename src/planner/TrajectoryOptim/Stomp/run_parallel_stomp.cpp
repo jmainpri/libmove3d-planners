@@ -98,10 +98,10 @@ bool stompContext::initRun( API::Trajectory& T )
         m_stomp->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
     }
 
-//    if( m_sce == traj_optim::HumanAwareManip && m_robot->getName() == "PR2_ROBOT")
-//    {
-        m_stomp->setUseCostSpace( m_use_costspace );
-//    }
+    //    if( m_sce == traj_optim::HumanAwareManip && m_robot->getName() == "PR2_ROBOT")
+    //    {
+    m_stomp->setUseCostSpace( m_use_costspace );
+    //    }
 
     m_stomp->setRobotPool( m_parallel_robots );
 
@@ -184,8 +184,8 @@ void stompRun::start()
 
 void stompRun::isRunning()
 {
-     m_mtx_multi_end.lock();
-     m_mtx_multi_end.unlock();
+    m_mtx_multi_end.lock();
+    m_mtx_multi_end.unlock();
 }
 
 void stompRun::setPathColor( int id, const std::vector<double>& color )
@@ -236,9 +236,9 @@ void srompRun_MultipleParallel()
     robots.push_back( global_Project->getActiveScene()->getRobotByName("rob2") );
     robots.push_back( global_Project->getActiveScene()->getRobotByName("rob3") );
     robots.push_back( global_Project->getActiveScene()->getRobotByName("rob4") );
-//    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob5") );
-//    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob6") );
-//    robots.push_back( global_Project->getActiveScene()->getRobotByName("rob7") );
+    // robots.push_back( global_Project->getActiveScene()->getRobotByName("rob5") );
+    // robots.push_back( global_Project->getActiveScene()->getRobotByName("rob6") );
+    // robots.push_back( global_Project->getActiveScene()->getRobotByName("rob7") );
 
     traj_optim_initScenario();
     std::vector<int> planner_joints = traj_optim_get_planner_joints();
@@ -247,10 +247,10 @@ void srompRun_MultipleParallel()
     stompRun* pool = new stompRun( NULL, planner_joints, collision_points );
     pool->setPool( robots );
 
-//    API::Trajectory T( robots[0] );
-//    T.push_back( robots[0]->getInitPos() );
-//    T.push_back( robots[0]->getGoalPos() );
-//    pool->run( 0, T );
+    // API::Trajectory T( robots[0] );
+    // T.push_back( robots[0]->getInitPos() );
+    // T.push_back( robots[0]->getGoalPos() );
+    // pool->run( 0, T );
 
     std::vector<API::Trajectory> trajs;
     for( int i=0;i<int(robots.size()); i++)

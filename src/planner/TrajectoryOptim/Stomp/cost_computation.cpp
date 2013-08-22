@@ -328,10 +328,11 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::V
     for (int d=0; d<num_joints_; ++d) {
         group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
     }
-//    group_trajectory_.print();
+    //    group_trajectory_.print();
 
     // respect joint limits:
     succeded_joint_limits_ = handleJointLimits( group_trajectory_ );
+    //succeded_joint_limits_ = true;
 
     // do forward kinematics:
     performForwardKinematics( group_trajectory_ );

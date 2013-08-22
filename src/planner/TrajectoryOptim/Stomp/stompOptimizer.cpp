@@ -698,8 +698,6 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
                 break;
             }
         }
-
-        exit(1);
     }
 
 
@@ -1452,7 +1450,7 @@ bool StompOptimizer::performForwardKinematics()
     return is_collision_free_;
 }
 
-bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool resample )
+bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample )
 {
     //cout << "size : " << parameters.size() << " , " << parameters[0].size() <<  endl;
 
@@ -1463,12 +1461,17 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     //cout << "group_trajectory_ = " << endl << group_trajectory_.getTrajectory() << endl;
 
     // respect joint limits:
+
     succeded_joint_limits_ = handleJointLimits();
     //cout << "Violation number : " << joint_limits_violation_ << endl;
+    //succeded_joint_limits_ = true;
 
     // copy the group_trajectory_ parameters:
-    for (int d=0; d<num_joints_; ++d) {
-        parameters[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
+    if( joint_limits )
+    {
+        for (int d=0; d<num_joints_; ++d) {
+            parameters[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
+        }
     }
 
     if( resample )

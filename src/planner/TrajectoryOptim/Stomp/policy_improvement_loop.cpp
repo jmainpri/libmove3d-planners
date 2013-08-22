@@ -223,7 +223,7 @@ namespace stomp_motion_planner
 
         for (int r=0; r<int(rollouts_.size()); ++r)
         {
-            task_->execute(rollouts_[r], tmp_rollout_cost_, iteration_number);
+            task_->execute(rollouts_[r], tmp_rollout_cost_, iteration_number, true, false );
 
             rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
             //printf("Rollout %d, cost = %lf\n", r+1, tmp_rollout_cost_.sum());
@@ -298,7 +298,7 @@ namespace stomp_motion_planner
         {
             shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
 
-            optimizer->execute( rollouts_[r], tmp_rollout_cost_, iteration_number);
+            optimizer->execute( rollouts_[r], tmp_rollout_cost_, iteration_number, true, false );
             rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
             policy_improvement_.setRolloutOutOfBounds( r, !optimizer->getJointLimitViolationSuccess() );
 
@@ -386,7 +386,9 @@ namespace stomp_motion_planner
 
         // Get the trajectory cost
         bool resample = !PlanEnv->getBool( PlanParam::trajStompMultiplyM );
-        task_->execute( parameters_, tmp_rollout_cost_, iteration_number, resample );
+        // Warning!!!!
+        // not return the modified trajectory when is out of bounds
+        task_->execute( parameters_, tmp_rollout_cost_, iteration_number, false, resample );
         //printf("Noiseless cost = %lf\n", stats_msg.noiseless_cost);
 
         // Only set parameters for the changed chase
@@ -464,7 +466,7 @@ namespace stomp_motion_planner
         }
 
         int iteration_number=1;
-        task_->execute(extra_rollout[0], tmp_rollout_cost_, iteration_number, false );
+        task_->execute(extra_rollout[0], tmp_rollout_cost_, iteration_number, true, false );
         //    cout << "Cost" << tmp_rollout_cost_[0] << endl;
 
         extra_rollout_cost[0] = tmp_rollout_cost_;
