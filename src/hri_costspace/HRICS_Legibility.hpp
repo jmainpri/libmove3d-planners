@@ -33,13 +33,16 @@ public:
     //! sets the start and end points in the trajectory
     void fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj );
 
+    //! resample the matrix rows
+    Eigen::MatrixXd resample( const Eigen::MatrixXd& m, int nb_points ) const;
+
     // Get a discretized interpolated trajectory
     Eigen::MatrixXd getInterpolatedTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, int nb_points );
 
     //! interpolate between configurations
     Eigen::VectorXd interpolate( const Eigen::VectorXd& a, const Eigen::VectorXd& b, double u ) const;
 
-private:
+protected:
     std::vector<Eigen::VectorXd> goals_;
 };
 
@@ -62,8 +65,7 @@ private:
     Eigen::MatrixXd traj_;
     Eigen::MatrixXd straight_line_;
     Eigen::VectorXd q_source_;
-    Eigen::VectorXd q_target_;
-    double c_0_;
+    std::vector<double> c_g_;
 };
 
 }

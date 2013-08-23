@@ -13,6 +13,7 @@
 
 #include "planEnvironment.hpp"
 #include "hri_costspace/Gestures/HRICS_GestParameters.hpp"
+#include "hri_costspace/HRICS_parameters.hpp"
 //#include "SaveContext.hpp"
 
 using namespace std;
@@ -28,6 +29,7 @@ Project::Project(Scene* sc)
 	cout << "Create project and environement parameters" << endl;
 	initPlannerParameters();
     initGestureParameters();
+    initHricsParameters();
 }
 
 Project::~Project()

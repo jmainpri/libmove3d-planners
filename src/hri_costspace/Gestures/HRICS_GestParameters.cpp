@@ -44,64 +44,64 @@ GestParam::~GestParam()
 void initGestureParameters()
 {
 #ifdef QT_LIBRARY
-  EnumGestureParameterObject = new GestParam;
+    EnumGestureParameterObject = new GestParam;
 #endif
 
-        // Create 5 maps for all types and fill the 5 maps
-        // ------------------------------------------------------------------
-        std::map<GestParam::boolParameter,      boolContainer*>                  myBoolMap;
-        std::map<GestParam::intParameter,       intContainer*>                   myIntMap;
-        std::map<GestParam::doubleParameter,    doubleContainer*>                myDoubleMap;
-        std::map<GestParam::stringParameter,    stringContainer*>                myStringMap;
-        std::map<GestParam::vectorParameter,    vectorContainer*>                myVectorMap;
+    // Create 5 maps for all types and fill the 5 maps
+    // ------------------------------------------------------------------
+    std::map<GestParam::boolParameter,      boolContainer*>                  myBoolMap;
+    std::map<GestParam::intParameter,       intContainer*>                   myIntMap;
+    std::map<GestParam::doubleParameter,    doubleContainer*>                myDoubleMap;
+    std::map<GestParam::stringParameter,    stringContainer*>                myStringMap;
+    std::map<GestParam::vectorParameter,    vectorContainer*>                myVectorMap;
 
-        // Bool
-        // ------------------------------------------------------------------
-        myBoolMap.insert( std::make_pair( GestParam::init_module_at_start,             new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( GestParam::init_module_ioc,                  new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( GestParam::draw_robot_sampled_points,        new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( GestParam::draw_human_sampled_points,        new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( GestParam::draw_ws_occupancy,                new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( GestParam::draw_single_class,                new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( GestParam::draw_null_cost,                   new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( GestParam::draw_current_occupancy,           new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( GestParam::draw_recorded_motion,             new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( GestParam::with_multiple_stomps,             new boolContainer(false)));
-        myBoolMap.insert( std::make_pair( GestParam::parallelize_stomp,                new boolContainer(false)));
-        // Int
-        // ------------------------------------------------------------------
-        myIntMap.insert(std::make_pair( GestParam::human_traj_id,                      new intContainer(-1)));
+    // Bool
+    // ------------------------------------------------------------------
+    myBoolMap.insert( std::make_pair( GestParam::init_module_at_start,             new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( GestParam::init_module_ioc,                  new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( GestParam::draw_robot_sampled_points,        new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( GestParam::draw_human_sampled_points,        new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( GestParam::draw_ws_occupancy,                new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( GestParam::draw_single_class,                new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( GestParam::draw_null_cost,                   new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( GestParam::draw_current_occupancy,           new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( GestParam::draw_recorded_motion,             new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( GestParam::with_multiple_stomps,             new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( GestParam::parallelize_stomp,                new boolContainer(false)));
+    // Int
+    // ------------------------------------------------------------------
+    myIntMap.insert(std::make_pair( GestParam::human_traj_id,                      new intContainer(-1)));
 
 
-        // Double
-        // ------------------------------------------------------------------
-        myDoubleMap.insert( std::make_pair( GestParam::tete,        new doubleContainer(10.0)));
+    // Double
+    // ------------------------------------------------------------------
+    myDoubleMap.insert( std::make_pair( GestParam::tete,        new doubleContainer(10.0)));
 
     //cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble( PlanParam::env_objectNessecity ) << endl;
 
-        // String
-        // ------------------------------------------------------------------
+    // String
+    // ------------------------------------------------------------------
 #ifdef QT_LIBRARY
-        myStringMap.insert(std::make_pair(GestParam::titi,                       new stringContainer("titi")));
+    myStringMap.insert(std::make_pair(GestParam::titi,                       new stringContainer("titi")));
 #endif
 
-        // Vector
-        // ------------------------------------------------------------------
-        std::vector<double> tutu;
-        tutu.push_back( 1 ); tutu.push_back( 8 );
+    // Vector
+    // ------------------------------------------------------------------
+    std::vector<double> tutu;
+    tutu.push_back( 1 ); tutu.push_back( 8 );
 
-        myVectorMap.insert(std::make_pair(GestParam::tutu,                       new vectorContainer(tutu)));
+    myVectorMap.insert(std::make_pair(GestParam::tutu,                       new vectorContainer(tutu)));
 
-        // Make the new parameter container
-        GestEnv =  new Parameters<
-        GestParam::boolParameter,
-        GestParam::intParameter,
-        GestParam::doubleParameter,
-        GestParam::stringParameter,
-        GestParam::vectorParameter>(
-                                                                                 myBoolMap,
-                                                                                 myIntMap,
-                                                                                 myDoubleMap,
-                                                                                 myStringMap,
-                                                                                 myVectorMap);
+    // Make the new parameter container
+    GestEnv =  new Parameters<
+            GestParam::boolParameter,
+            GestParam::intParameter,
+            GestParam::doubleParameter,
+            GestParam::stringParameter,
+            GestParam::vectorParameter>(
+                myBoolMap,
+                myIntMap,
+                myDoubleMap,
+                myStringMap,
+                myVectorMap);
 }

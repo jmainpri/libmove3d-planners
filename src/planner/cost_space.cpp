@@ -50,7 +50,7 @@ void GlobalCostSpace::initialize()
     global_costSpace->addCost("costIsInCollision",boost::bind(computeInCollisionCost, _1));
     global_costSpace->setCost("costIsInCollision");
 
-    if(GroundCostObj)
+    if( GroundCostObj )
     {
         std::cout << "Initializing the 2d costmap cost function" << std::endl;
         global_costSpace->addCost("costMap2D",boost::bind(computeIntersectionWithGround, _1));
@@ -133,16 +133,16 @@ void CostSpace::deleteCost(string name)
 //------------------------------------------------------------------------------
 double CostSpace::cost(Configuration& conf)
 {
-//    shared_ptr<Configuration> q_tmp = conf.copy();
+    //    shared_ptr<Configuration> q_tmp = conf.copy();
 
     if(!mSelectedCost.empty())
     {
         double cost = mSelectedCost(conf);
 
-//        if( !conf.equal( *q_tmp ) )
-//        {
-//            cout << "Cost function modifies the config" << endl;
-//        }
+        //        if( !conf.equal( *q_tmp ) )
+        //        {
+        //            cout << "Cost function modifies the config" << endl;
+        //        }
         return cost;
     }
     else
@@ -348,11 +348,11 @@ double CostSpace::cost(LocalPath& path, int& nb_test)
         int nStep;
         double deltaStep;
 
-//        if( m_resolution == cs_classic )
-//        {
-            deltaStep = path.getResolution();
-            nStep = path.getParamMax()/deltaStep;
-//        }
+        //        if( m_resolution == cs_classic )
+        //        {
+        deltaStep = path.getResolution();
+        nStep = path.getParamMax()/deltaStep;
+        //        }
 
         if( m_resolution == cs_pr2_manip )
         {

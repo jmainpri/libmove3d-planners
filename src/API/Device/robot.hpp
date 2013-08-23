@@ -235,7 +235,6 @@ public:
     Joint* getIthActiveDoFJoint(unsigned int ithActiveDoF , unsigned int& ithDofOnJoint  );
 
 
-
 #ifdef LIGHT_PLANNER
     /**
      * Returns the Virtual object dof

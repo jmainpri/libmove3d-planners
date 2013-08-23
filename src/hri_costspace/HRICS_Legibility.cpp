@@ -25,7 +25,7 @@ Predictability::Predictability()
 
 double Predictability::costPredict( const Eigen::MatrixXd& traj )
 {
-    if( traj.cols() == 0 || traj.rows() == 0 )
+    if( traj.cols() == 0 || traj.rows() == 0 || traj.cols() == 1 )
     {
         return 0.0;
     }
@@ -96,6 +96,32 @@ void Predictability::fillTrajectory( const Eigen::VectorXd& a, const Eigen::Vect
     }
 }
 
+Eigen::MatrixXd Predictability::resample( const Eigen::MatrixXd& m, int nb_points ) const
+{
+    if( m.cols() == 0 || m.cols() == 1 )
+        return m;
+
+    double d1 = 1/double(m.cols());
+    double d2 = 1/double(nb_points);
+
+    Eigen::MatrixXd traj( m.rows(), nb_points );
+
+    double s=0.0;
+
+    traj.col(0) = m.col(0);
+    int q_id_prev=0;
+
+    for( int i=1; i<nb_points; i++ )
+    {
+        s += d2;
+        int q_id = s / d1;
+        traj.col(i) = interpolate( m.col(q_id_prev), m.col(q_id), s - (q_id*d1) );
+        q_id_prev = q_id;
+    }
+
+    return traj;
+}
+
 Eigen::MatrixXd Predictability::getInterpolatedTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, int nb_points )
 {
     if( nb_points == 0)
@@ -163,46 +189,42 @@ void Legibility::setTrajectory( const Eigen::MatrixXd& t )
 {
     traj_ = t.transpose();
     q_source_ = traj_.col(0);
-    q_target_ = traj_.col(traj_.cols()-1);
-    straight_line_ = getInterpolatedTrajectory( q_source_, q_target_, traj_.cols() - 2*(DIFF_RULE_LENGTH-1) );
-    c_0_ = costPredict( straight_line_ );
-//    cout << "traj : " << endl << traj_ << endl;
-//    cout << "q_source : " << q_source_ << endl;
-//    cout << "q_target : " << q_target_ << endl;
-//    cout << "straight_line_ : " << endl << straight_line_ << endl;
+
+    // Compute all straight lines to goal cost
+    c_g_.resize( goals_.size() );
+    for(int i=0;i<int(goals_.size());i++)
+    {
+        cout << "goals_[" << i << "] : " << goals_[i].transpose() << endl;
+        straight_line_ = getInterpolatedTrajectory( q_source_, goals_[i], traj_.cols() - 2*(DIFF_RULE_LENGTH-1) );
+        cout << "straight_line_ : " << endl << straight_line_ << endl;
+        c_g_[i] = costPredict( straight_line_ );
+    }
 }
 
-double Legibility::cost( int i )
+double Legibility::cost( int ith )
 {
-//    cout << "i : " << i << endl;
-
-    Eigen::VectorXd q_cur = traj_.col(i);
+    Eigen::VectorXd q_cur = traj_.col(ith);
+    double t = double(ith) / double(traj_.cols()-1);
 
     int rows = traj_.rows();
-    int cols = traj_.cols() - i;
+    int cols = ith+1;
 
-    Eigen::MatrixXd sub_traj_1 = traj_.block( rows, cols, 0 , i );
-    Eigen::MatrixXd sub_traj_2 = getInterpolatedTrajectory( q_source_, q_cur, i );
-
-//    cout << "straight_line_ : " << straight_line_ << endl;
-//    cout << "sub_traj_1 : " << endl << sub_traj_1 << endl;
-//    cout << "sub_traj_2 : " << endl << sub_traj_2 << endl;
+    Eigen::MatrixXd sub_traj_1 = resample( traj_.block( 0, 0, rows, cols ), traj_.cols() - 2*(DIFF_RULE_LENGTH-1) );
+    Eigen::MatrixXd sub_traj_2 = getInterpolatedTrajectory( q_cur, goals_[0], traj_.cols() - 2*(DIFF_RULE_LENGTH-1) );
 
     double c_1 = costPredict( sub_traj_1 );
     double c_2 = costPredict( sub_traj_2 );
 
-//    cout << "c_0 : " << c_0_ << endl;
-//    cout << "c_1 : " << c_1 << endl;
-//    cout << "c_2 : " << c_2 << endl;
-
-    double t = double(i) / double(traj_.cols());
+    double z=0.0;
+    for( int i=0; i<int(goals_.size()); i++ )
+    {
+        straight_line_ = getInterpolatedTrajectory( q_cur, goals_[i], traj_.cols() - 2*(DIFF_RULE_LENGTH-1) );
+        z += exp( c_g_[i] - costPredict( straight_line_ ) );
+    }
 
     // Main cost function
-    double prob = exp( -c_1 - c_2 ) / exp( -c_0_ );
+    double prob = exp( -c_1 - c_2 ) / ( z * exp( -c_g_[0] ) );
     double cost = prob * ( length_ - t );
-
-//    cout << "prob : " << prob << endl;
-//    cout << "cost : " << cost << endl;
 
     return cost;
 }

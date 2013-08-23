@@ -1,4 +1,6 @@
-#include "HRICS_TrajectoryEvaluator.h"
+#include "HRICS_TrajectoryEvaluator.hpp"
+
+using namespace HRICS;
 
 TrajectorySampler::TrajectorySampler()
 {

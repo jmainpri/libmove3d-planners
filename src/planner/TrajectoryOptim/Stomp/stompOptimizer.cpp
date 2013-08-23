@@ -1046,7 +1046,7 @@ double StompOptimizer::getCollisionCost()
 
 double StompOptimizer::getGeneralCost()
 {
-    if( !use_costspace_ )
+    if( !use_costspace_ && !PlanEnv->getBool(PlanParam::useLegibleCost) )
     {
         return 0.0;
     }
@@ -1057,6 +1057,8 @@ double StompOptimizer::getGeneralCost()
     {
         general_cost += pow( general_cost_potential_(i) , hack_tweek );
     }
+
+    //cout << general_cost_potential_.segment(free_vars_start_,free_vars_end_-free_vars_start_).transpose() << endl;
 
     return stomp_parameters_->getObstacleCostWeight() * general_cost;
 }

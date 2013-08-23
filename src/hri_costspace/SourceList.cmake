@@ -14,6 +14,7 @@ HRICS_old.cpp
 HRICS_otpmotionpl.cpp
 HRICS_humanCostSpace.cpp
 HRICS_Navigation.cpp
+HRICS_parameters.cpp
 )
 
 IF(HRI_PLANNER)
@@ -23,6 +24,10 @@ HRICS_HAMP.cpp
 
 )
 ENDIF(HRI_PLANNER)
+
+BM3D_QT_GENERATE_MOC(
+HRICS_parameters.hpp
+)
 
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})
 
