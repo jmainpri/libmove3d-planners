@@ -2192,6 +2192,47 @@ vector<double> Trajectory::getCostAlongTrajectory(int nbSample)
     return cost;
 }
 
+// Returns a matrix with the waypoints of the trajectory
+// The number of rows is the number of dofs
+// The number of cols is the number of waypoints
+Eigen::MatrixXd Trajectory::getEigenMatrix(int startIndex, int endIndex) const
+{
+    if( m_Courbe.size() > 0 )
+    {
+        int rows=0;
+
+        if( startIndex==0 && endIndex==0 )
+            rows = m_Courbe[0]->getBegin()->getEigenVector().size();
+        else
+            rows = endIndex - startIndex + 1;
+
+        int cols = m_Courbe.size()+1;
+
+        Eigen::MatrixXd mat( rows, cols );
+
+        for (int j=0; j<int(m_Courbe.size()); j++)
+        {
+            if( startIndex==0 && endIndex==0 )
+                mat.col(j) = m_Courbe[j]->getBegin()->getEigenVector();
+            else
+                mat.col(j) = m_Courbe[j]->getBegin()->getEigenVector( startIndex, endIndex );
+        }
+
+        if( m_Courbe.size()-1 >= 0 )
+        {
+            if( startIndex==0 && endIndex==0 )
+                mat.col(m_Courbe.size()) = m_Courbe.back()->getEnd()->getEigenVector();
+            else
+                mat.col(m_Courbe.size()) = m_Courbe.back()->getEnd()->getEigenVector( startIndex, endIndex );
+        }
+
+        return mat;
+    }
+    else{
+        return Eigen::MatrixXd(0,0);
+    }
+}
+
 void Trajectory::printAllLocalpathCost()
 {
     cout <<  "( " ;
@@ -2214,27 +2255,8 @@ void Trajectory::print()
     cout << " Number of LP " << m_Courbe.size() << endl;
     cout << " Range Parameter " << this->getRangeMax() << endl;
 
-    if( m_Courbe.size() > 0 )
-    {
-        int size1 = m_Courbe.size()+1;
-        int size2 = m_Courbe.at(0)->getBegin()->getEigenVector().size();
-
-        // size1 = nRow
-        // size2 = nCol
-        Eigen::MatrixXd mat(size1,size2);
-        //Eigen::VectorXd vect
-        for (unsigned int j=0; j<m_Courbe.size(); j++)
-        {
-            mat.row(j) = m_Courbe.at(j)->getBegin()->getEigenVector();
-        }
-
-        if( m_Courbe.size()-1 >= 0 )
-        {
-            mat.row(m_Courbe.size()) = m_Courbe.at(m_Courbe.size()-1)->getEnd()->getEigenVector();
-        }
-
-        cout << mat << endl;
-    }
+    Eigen::MatrixXd mat = getEigenMatrix();
+    cout << mat << endl;
     cout << "-----------------------------------" << endl;
 }
 

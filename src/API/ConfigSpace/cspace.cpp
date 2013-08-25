@@ -60,10 +60,10 @@ double CSpaceCostMap2D::lp_cost(confPtr_t q1, confPtr_t q2)
 
 double CSpaceCostMap2D::volume()
 {
-    assert(m_c_robot);
+    assert( m_c_robot );
     // this means that there is 1 joint + the unused(legacy) joint 0
-    assert(m_c_robot->njoints == 1);
-    assert(m_c_robot->joints[1]->type == P3D_PLAN);
+    assert( m_c_robot->njoints == 1);
+    assert( m_c_robot->joints[1]->type == P3D_PLAN );
     return(fabs((m_c_robot->joints[1]->dof_data[0].vmax - m_c_robot->joints[1]->dof_data[0].vmin) * 
                 (m_c_robot->joints[1]->dof_data[1].vmax - m_c_robot->joints[1]->dof_data[1].vmin)));
 }

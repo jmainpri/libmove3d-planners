@@ -16,28 +16,28 @@
 class RRM : public PRM
 {
 public:
-	/**
-	 * Creates a perturbation roadmap from a given robot 
+    /**
+     * Creates a perturbation roadmap from a given robot
    * and a given graph
-	 * @param Robot
+     * @param Robot
    * @param Graph
-	 */
-	RRM(Robot* R, Graph* G);
-	
-	/**
-	 * Deletes a perturbation planner
-	 */
-	~RRM();
-  
-	/**
-	 * Adds nodes to Graph
-	 */
-	virtual void expandOneStep();
-	
+     */
+    RRM(Robot* R, Graph* G);
+
+    /**
+     * Deletes a perturbation planner
+     */
+    ~RRM();
+
+    /**
+     * Adds nodes to Graph
+     */
+    virtual void expandOneStep();
+
 protected:
-  
-  confPtr_t m_qi;
-  confPtr_t m_qf;
+
+    confPtr_t m_qi;
+    confPtr_t m_qf;
 };
 
 #endif

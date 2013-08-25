@@ -181,7 +181,7 @@ namespace stomp_motion_planner
         //assert(preComputeProjectionMatrices());
 
         preAllocateMultivariateGaussianSampler();
-        setNumRollouts(num_rollouts, num_reused_rollouts, num_extra_rollouts);
+        setNumRollouts( num_rollouts, num_reused_rollouts, num_extra_rollouts );
         preAllocateTempVariables();
         preComputeProjectionMatrices();
 

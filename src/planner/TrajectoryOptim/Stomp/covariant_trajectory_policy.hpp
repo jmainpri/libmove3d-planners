@@ -61,7 +61,7 @@ public:
                                                const double movement_duration,
                                                const double cost_ridge_factor,
                                                const std::vector<double>& derivative_costs,
-                                               const ChompPlanningGroup* planning_group);
+                                               const ChompPlanningGroup* planning_group = NULL);
   
     bool setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal);
     bool getParametersAll(std::vector<Eigen::VectorXd>& parameters);

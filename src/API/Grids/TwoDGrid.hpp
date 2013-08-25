@@ -27,8 +27,10 @@ namespace API
    public:
     	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
        TwoDGrid();
-       TwoDGrid( Eigen::Vector2i size, std::vector<double> envSize );
+       TwoDGrid( Eigen::Vector2i numCell, std::vector<double> envSize );
        TwoDGrid( double samplingRate, std::vector<double> envSize );
+
+       void setEnvSizeAndNumCell( int x, int y, std::vector<double> envSize  );
 
        ~TwoDGrid();
 

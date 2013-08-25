@@ -139,6 +139,7 @@ public:
     p3d_traj* 	replaceP3dTraj(p3d_traj* trajPt) const;
     p3d_traj* 	replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt);
 
+    Eigen::MatrixXd getEigenMatrix(int startIndex=0, int endIndex=0) const;
     void printAllLocalpathCost();
     void draw(int nbKeyFrame);
     void print();

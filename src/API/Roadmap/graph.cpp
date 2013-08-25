@@ -1292,12 +1292,9 @@ bool Graph::areNodesLinked(Node* node1, Node* node2, double & dist)
     // that computes also the IK solution
 
     /* current position of robot is saved */
-    shared_ptr<Configuration> qSave = m_Robot->getCurrentPos();
+    confPtr_t qSave = m_Robot->getCurrentPos();
 
-    LocalPath* LP = new LocalPath(
-                node1->getConfiguration(),
-                node2->getConfiguration() );
-
+    LocalPath* LP = new LocalPath( node1->getConfiguration(), node2->getConfiguration() );
 
     if (LP->getParamMax() != 0.0 )
     {
@@ -1927,9 +1924,9 @@ void Graph::addCycles(Node* node, double step)
                                                       this->getNode(listDistNodePt->N)->getConfiguration()));
             if (LP->isValid()
                     /*&& this->getNode(listDistNodePt->N)->getConfiguration()->costTestSucceeded(
-                                             node, step)
-                                             && node->getConfiguration()->costTestSucceeded(
-                                             this->getNode(listDistNodePt->N), step)*/)
+                                                     node, step)
+                                                     && node->getConfiguration()->costTestSucceeded(
+                                                     this->getNode(listDistNodePt->N), step)*/)
 
             {
                 addEdges(node, m_NodesTable[listDistNodePt->N], false, LP->length(), true, 0.0 );

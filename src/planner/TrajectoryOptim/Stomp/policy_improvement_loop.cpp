@@ -373,8 +373,8 @@ namespace stomp_motion_planner
         policy_improvement_.setRolloutCosts( rollout_costs_, control_cost_weight_, all_costs );
         policy_improvement_.improvePolicy( parameter_updates_ );
 
-        policy_->updateParameters(parameter_updates_);
-        policy_->getParameters(parameters_);
+        policy_->updateParameters( parameter_updates_ );
+        policy_->getParameters( parameters_ );
 
         int num_extra_rollouts = 1;
         std::vector<std::vector<Eigen::VectorXd> > extra_rollout;
@@ -394,7 +394,7 @@ namespace stomp_motion_planner
         // Only set parameters for the changed chase
         if( set_parameters_in_policy_ )
         {
-            policy_->setParameters(parameters_);
+            policy_->setParameters( parameters_ );
         }
 
         // add the noiseless rollout into policy_improvement:

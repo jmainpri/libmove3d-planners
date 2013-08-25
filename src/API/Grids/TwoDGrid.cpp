@@ -43,20 +43,10 @@ TwoDGrid::~TwoDGrid()
  * \param vector int size (number of cells in X, Y)
  * \param vector envSize XMin Xmax YMin YMax
  */
-TwoDGrid::TwoDGrid( Vector2i size, vector<double> envSize )
+TwoDGrid::TwoDGrid( Vector2i numCell, vector<double> envSize )
 
 {
-    _nbCellsX = size[0];
-    _nbCellsY = size[1];
-
-    _cellSize[0] = (envSize.at(1) - envSize.at(0)) / _nbCellsX ;
-    _cellSize[1] = (envSize.at(3) - envSize.at(2)) / _nbCellsY ;
-
-    _originCorner[0] = envSize.at(0);
-    _originCorner[0] = envSize.at(2);
-
-    //    cout << "_originCorner[0] = " << _originCorner.at(0) <<  endl;
-    //    cout << "_originCorner[1] = " << _originCorner.at(1) <<  endl;
+    setEnvSizeAndNumCell( numCell[0], numCell[1], envSize );
 }
 
 
@@ -105,6 +95,21 @@ TwoDGrid::TwoDGrid( double samplingRate, vector<double> envSize )
     cout << "_originCorner[0] = " << _originCorner[0] <<  endl;
     cout << "_originCorner[1] = " << _originCorner[1] <<  endl;
 
+}
+
+void TwoDGrid::setEnvSizeAndNumCell( int x, int y, std::vector<double> envSize  )
+{
+    _nbCellsX = x;
+    _nbCellsY = y;
+
+    _cellSize[0] = (envSize.at(1) - envSize.at(0)) / _nbCellsX ;
+    _cellSize[1] = (envSize.at(3) - envSize.at(2)) / _nbCellsY ;
+
+    _originCorner[0] = envSize.at(0);
+    _originCorner[0] = envSize.at(2);
+
+    //    cout << "_originCorner[0] = " << _originCorner.at(0) <<  endl;
+    //    cout << "_originCorner[1] = " << _originCorner.at(1) <<  endl;
 }
 
 /*!

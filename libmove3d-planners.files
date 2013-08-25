@@ -356,3 +356,4 @@ src/hri_costspace/HumanTrajectories/HRICS_spheres.hpp
 src/hri_costspace/HumanTrajectories/HRICS_spheres.cpp
 src/hri_costspace/HRICS_parameters.hpp
 src/hri_costspace/HRICS_parameters.cpp
+src/planner/PRM/TessallationRM.hpp
