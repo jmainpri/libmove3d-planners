@@ -62,7 +62,6 @@ public:
 
     void addDemonstration(const Eigen::MatrixXd& demo);
     void generateSamples(int nb_samples);
-    void getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<confPtr_t>& traj);
     void addTrajectoryToDraw( const std::vector<Eigen::VectorXd>& rollout, int color );
     void addAllToDraw();
 

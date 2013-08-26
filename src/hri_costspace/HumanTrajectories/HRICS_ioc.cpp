@@ -160,36 +160,23 @@ void Ioc::generateSamples( int nb_samples )
     addAllToDraw();
 }
 
-void Ioc::getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<confPtr_t>& traj)
+void Ioc::addTrajectoryToDraw( const std::vector<Eigen::VectorXd>& rollout, int color )
 {
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
-    Robot* robot = planning_group_->robot_;
+    API::Trajectory T( planning_group_->robot_ );
 
-    traj.clear();
+    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
 
     for ( int j=0; j<num_vars_; ++j)
     {
-        confPtr_t q = robot->getCurrentPos();
+        confPtr_t q = planning_group_->robot_->getCurrentPos();
 
         for ( int i=0; i<num_joints_; ++i)
         {
             (*q)[joints[i].move3d_dof_index_] = rollout[i][j];
         }
-        traj.push_back(q);
+         T.push_back( q );
     }
-}
 
-void Ioc::addTrajectoryToDraw( const std::vector<Eigen::VectorXd>& rollout, int color )
-{
-    std::vector<confPtr_t> traj;
-    getSingleRollout( rollout, traj );
-
-    API::Trajectory T( planning_group_->robot_ );
-
-    for ( int i=0; i<int(traj.size()); ++i )
-        T.push_back( traj[i] );
-
-    //T.print();
     T.setColor( color );
     trajToDraw.push_back( T );
 }
