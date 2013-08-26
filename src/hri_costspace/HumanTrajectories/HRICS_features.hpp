@@ -1,7 +1,10 @@
 #ifndef HRICS_FEATURES_HPP
 #define HRICS_FEATURES_HPP
 
-#include <API/Device/robot.hpp>
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+#include <Eigen/Core>
+
+#include "API/Trajectory/trajectory.hpp"
 
 namespace HRICS
 {
@@ -9,40 +12,41 @@ class Distance;
 class Visibility;
 class Natural;
 
+typedef Eigen::VectorXd FeatureVect;
+
 class Feature
 {
 public:
-    Feature(Robot* r) : robot_(r) {}
-    virtual double getValue();
-    Robot* robot_;
+    Feature() {}
+    virtual FeatureVect getFeatureCount(const API::Trajectory& t) = 0;
 };
 
 class DistanceFeature : public Feature
 {
 public:
-    DistanceFeature(Robot* r) : Feature(r) {}
-    double getValue();
+    DistanceFeature() : Feature() {}
+    FeatureVect getFeatureCount(const API::Trajectory& t);
 };
 
 class VisibilityFeature : public Feature
 {
 public:
-    VisibilityFeature(Robot* r) : Feature(r) {}
-    double getValue();
+    VisibilityFeature() : Feature() {}
+    FeatureVect getFeatureCount(const API::Trajectory& t);
 };
 
 class ReachabilityFeature : public Feature
 {
 public:
-    ReachabilityFeature(Robot* r) : Feature(r) {}
-    double getValue();
+    ReachabilityFeature() : Feature() {}
+    FeatureVect getFeatureCount(const API::Trajectory& t);
 };
 
 class LegibilityFeature : public Feature
 {
 public:
-    LegibilityFeature(Robot* r) : Feature(r) {}
-    double getValue();
+    LegibilityFeature() : Feature() {}
+    FeatureVect getFeatureCount(const API::Trajectory& t);
 };
 
 }

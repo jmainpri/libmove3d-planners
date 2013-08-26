@@ -2,27 +2,26 @@
 
 using namespace HRICS;
 
-double Feature::getValue()
+FeatureVect DistanceFeature::getFeatureCount(const API::Trajectory& t)
 {
-    return 0.0;
+    FeatureVect count;
+    return count;
 }
 
-double DistanceFeature::getValue()
+FeatureVect VisibilityFeature::getFeatureCount(const API::Trajectory& t)
 {
-    return 0.0;
+    FeatureVect count;
+    return count;
 }
 
-double VisibilityFeature::getValue()
+FeatureVect ReachabilityFeature::getFeatureCount(const API::Trajectory& t)
 {
-    return 0.0;
+    FeatureVect count;
+    return count;
 }
 
-double ReachabilityFeature::getValue()
+FeatureVect LegibilityFeature::getFeatureCount(const API::Trajectory& t)
 {
-    return 0.0;
-}
-
-double LegibilityFeature::getValue()
-{
-    return 0.0;
+    FeatureVect count;
+    return count;
 }

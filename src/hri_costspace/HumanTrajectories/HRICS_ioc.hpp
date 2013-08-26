@@ -12,40 +12,55 @@
 namespace HRICS
 {
 
+//! Trajectory structure
 struct IocTrajectory
 {
     IocTrajectory() { }
-    IocTrajectory( int nb_var, int nb_joints );
+    IocTrajectory( int nb_joints, int nb_var );
 
     std::vector<Eigen::VectorXd> parameters_;                       /**< [num_dimensions] num_parameters */
     std::vector<Eigen::VectorXd> noise_;                            /**< [num_dimensions] num_parameters */
     std::vector<Eigen::VectorXd> noise_projected_;                  /**< [num_dimensions][num_time_steps] num_parameters */
     std::vector<Eigen::VectorXd> parameters_noise_projected_;       /**< [num_dimensions][num_time_steps] num_parameters */
-    Eigen::VectorXd state_costs_;                                   /**< num_time_steps */
     std::vector<Eigen::VectorXd> control_costs_;                    /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> total_costs_;                      /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> cumulative_costs_;                 /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> probabilities_;                    /**< [num_dimensions] num_time_steps */
+
+    Eigen::VectorXd state_costs_;                                   /**< num_time_steps */
+    Eigen::VectorXd feature_count_;                                 /**< num_features */
 
     bool out_of_bounds_; /**< Wether the rollout is violating dof limits */
 
     double getCost();   /**< Gets the rollout cost = state cost + control costs per dimension */
     void printCost();
     void printProbabilities();
+
+    API::Trajectory getMove3DTrajectory( const ChompPlanningGroup* planning_group ) const;
 };
 
+//! Sampler of noisy trajectories
 class IocSampler
 {
 public:
     IocSampler();
     IocSampler( int num_var_free, int num_joints );
-    void initialize();
-    void initPolicy();
-    bool preAllocateMultivariateGaussianSampler();
 
-    Eigen::VectorXd sample( int j );
+    //! Initializes the different data structures
+    void initialize();
+
+    //! Samples a noisy trajectory
+    Eigen::MatrixXd sample(double std_dev);
 
 private:
+    //! Initializes a coviarant trajectory policy
+    //! Computes the control cost vector for the multivariate gaussian sampler
+    void initPolicy();
+
+    //! Allocate a multivariate gaussian sampler
+    //! the sampler produces one dimenssional noisy trajectories
+    bool preAllocateMultivariateGaussianSampler();
+
     stomp_motion_planner::CovariantTrajectoryPolicy policy_;
     std::vector<Eigen::MatrixXd> control_costs_;             /**< [num_dimensions] num_parameters x num_parameters */
     std::vector<Eigen::MatrixXd> inv_control_costs_;         /**< [num_dimensions] num_parameters x num_parameters */
@@ -55,19 +70,30 @@ private:
     Eigen::VectorXd tmp_noise_;
 };
 
+//! Main IOC class
 class Ioc
 {
 public:
     Ioc( int num_vars, const ChompPlanningGroup* planning_group );
 
-    void addDemonstration(const Eigen::MatrixXd& demo);
+    //! Add a trajectory to the set of demonstrated trajectories
+    bool addDemonstration(const Eigen::MatrixXd& demo);
+
+    //! Generate the sampled trajectories
+    //! around the demonstrations
     void generateSamples(int nb_samples);
-    void addTrajectoryToDraw( const std::vector<Eigen::VectorXd>& rollout, int color );
+
+    //! Returns Move3D trajectories
+    std::vector<API::Trajectory> getSamples();
+
+    //! Drawing function
+    void addTrajectoryToDraw( const IocTrajectory& t, int color );
     void addAllToDraw();
 
+private:
     std::vector<IocTrajectory> demonstrations_;
     std::vector< std::vector<IocTrajectory> > samples_;
-    std::vector<double> noise_stddev_;
+    double noise_stddev_;
 
     const ChompPlanningGroup* planning_group_;
     int num_vars_;
@@ -77,5 +103,7 @@ public:
 };
 
 }
+
+void HRICS_run_sphere_ioc();
 
 #endif // HRICS_IOC_HPP

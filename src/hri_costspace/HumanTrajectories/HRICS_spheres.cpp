@@ -22,36 +22,68 @@ void Spheres::initialize()
     centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_1") );
     centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_2") );
     centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_3") );
+
+    w_.clear();
+    w_.resize( centers_.size(), 1.0 );
 }
 
 double Spheres::cost( Configuration& q )
 {
     double cost = 0.0;
 
+    FeatureVect phi = features( q );
+
+    for( int i=0; i< int(phi.size()); i++ )
+        cost += w_[i]*phi[i];
+
+    return cost;
+}
+
+FeatureVect Spheres::features( Configuration& q )
+{
+    FeatureVect features(centers_.size());
+
     Eigen::VectorXd x = q.getEigenVector(6,7);
 
     for( int i=0; i< int(centers_.size()); i++ )
     {
         Eigen::VectorXd mu = centers_[i]->getCurrentPos()->getEigenVector(6,7);
-        cost += exp( -( x - mu ).norm() );
+        features[i] = exp( -( x - mu ).norm() );
     }
 
-    return cost;
+    return features;
 }
 
-static Spheres* cost_fct;
+FeatureVect Spheres::getFeatureCount( const API::Trajectory& t )
+{
+    FeatureVect vect( centers_.size() );
+
+    for(int i=0;i<t.getNbOfViaPoints();i++)
+    {
+        confPtr_t q = t[i];
+        vect += features( *q );
+    }
+
+    return vect;
+}
+
+// ------------------------------------------------------
+// ------------------------------------------------------
+// ------------------------------------------------------
+
+Spheres* global_SphereCostFct=NULL;
 
 double HRICS_sphere_cost(Configuration& q)
 {
-    return cost_fct->cost( q );
+    return global_SphereCostFct->cost( q );
 }
 
 void HRICS_init_sphere_cost()
 {
     cout << "initializes sphere cost" << endl;
 
-    cost_fct = new Spheres();
-    cost_fct->initialize();
+    global_SphereCostFct = new Spheres();
+    global_SphereCostFct->initialize();
 
     cout << "add cost functions : " << global_costSpace << endl;
 

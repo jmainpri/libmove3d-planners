@@ -241,7 +241,7 @@ namespace stomp_motion_planner
         policy_->getParameters(parameters_);
 
         // get the trajectory cost
-        assert(task_->execute(parameters_, tmp_rollout_cost_, iteration_number));
+        assert(task_->execute(parameters_, tmp_rollout_cost_, iteration_number, true, false ));
 
         // add the noiseless rollout into policy_improvement:
         std::vector<std::vector<Eigen::VectorXd> > extra_rollout;

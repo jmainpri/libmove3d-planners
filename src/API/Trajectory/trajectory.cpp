@@ -526,7 +526,7 @@ int Trajectory::getNbOfViaPoints() const
     return (m_Courbe.size()+1);
 }
 
-MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> Trajectory::operator[]( const int &i ) const
+confPtr_t Trajectory::operator[]( const int &i ) const
 {
     if( i<0 || m_Courbe.empty() || (i>int(m_Courbe.size())))
     {
