@@ -19,12 +19,41 @@ void Spheres::initialize()
     Scene* sce = global_Project->getActiveScene();
 
     centers_.clear();
-    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_1") );
-    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_2") );
-    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_3") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_01") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_02") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_03") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_04") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_05") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_06") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_07") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_08") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_09") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_10") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_11") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_12") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_13") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_14") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_15") );
+    centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_16") );
 
     w_.clear();
     w_.resize( centers_.size(), 1.0 );
+    w_[0] = 10;
+    w_[1] = 2;
+    w_[2] = 12;
+    w_[3] = 4;
+    w_[4] = 30;
+    w_[5] = 6;
+    w_[6] = 12;
+    w_[7] = 8;
+    w_[8] = 15;
+    w_[9] = 10;
+    w_[10] = 10;
+    w_[11] = 12;
+    w_[12] = 2;
+    w_[13] = 14;
+    w_[14] = 25;
+    w_[15] = 16;
 }
 
 double Spheres::cost( Configuration& q )
@@ -45,10 +74,12 @@ FeatureVect Spheres::features( Configuration& q )
 
     Eigen::VectorXd x = q.getEigenVector(6,7);
 
+    const double factor_distance = 5;
+
     for( int i=0; i< int(centers_.size()); i++ )
     {
         Eigen::VectorXd mu = centers_[i]->getCurrentPos()->getEigenVector(6,7);
-        features[i] = exp( -( x - mu ).norm() );
+        features[i] = exp( -( x - mu ).norm()/factor_distance );
     }
 
     return features;
