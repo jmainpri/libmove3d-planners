@@ -5,6 +5,10 @@
 #include "planEnvironment.hpp"
 #include "API/Trajectory/trajectory.hpp"
 
+#include <owlqn/OWLQN.h>
+#include <owlqn/leastSquares.h>
+#include <owlqn/logreg.h>
+
 using namespace HRICS;
 using std::cout;
 using std::endl;
@@ -67,8 +71,8 @@ void HRICS_run_sphere_ioc()
 
 IocTrajectory::IocTrajectory( int nb_joints, int nb_var  )
 {
-    cout << "nb_joints : " << nb_joints << endl;
-    cout << "nb_var : " << nb_var << endl;
+//    cout << "nb_joints : " << nb_joints << endl;
+//    cout << "nb_var : " << nb_var << endl;
 
     parameters_.clear();
     noise_.clear();
@@ -92,7 +96,7 @@ IocTrajectory::IocTrajectory( int nb_joints, int nb_var  )
         cumulative_costs_.push_back( Eigen::VectorXd::Zero(nb_var) );
         probabilities_.push_back( Eigen::VectorXd::Zero(nb_var) );
 
-        cout << "init parameters : " << parameters_.back().transpose() << endl;
+//        cout << "init parameters : " << parameters_.back().transpose() << endl;
     }
     state_costs_ = Eigen::VectorXd::Zero(nb_var);
     out_of_bounds_ = false;
@@ -250,20 +254,13 @@ void Ioc::generateSamples( int nb_samples )
         {
             // Allocate trajectory
             samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
-
-            cout << "samples_[d][ns].parameters_[j] : " << samples_[d][ns].parameters_[0].transpose() << endl;
+            // cout << "samples_[d][ns].parameters_[j] : " << samples_[d][ns].parameters_[0].transpose() << endl;
 
             // Sample noisy trajectory
             Eigen::MatrixXd noisy_traj = sampler_.sample(noise_stddev_);
 
             for (int j=0; j<num_joints_; ++j)
             {
-                cout << demonstrations_[d].parameters_[j].size() << endl;
-                cout << "demonstrations_[d].parameters_[j] : " << demonstrations_[d].parameters_[j].transpose() << endl;
-                cout << "samples_[d][ns].noise_[j]  : " << samples_[d][ns].noise_[j].transpose() << endl;
-                cout << "samples_[d][ns].parameters_[j] : " << samples_[d][ns].parameters_[j].transpose() << endl;
-                cout << "noisy_traj.row(j) : " << noisy_traj.row(j) << endl;
-
                 samples_[d][ns].noise_[j] = noisy_traj.row(j);
                 samples_[d][ns].parameters_[j] = demonstrations_[d].parameters_[j] + samples_[d][ns].noise_[j];
                 cout << "sample (" << ns << ") : " << samples_[d][ns].parameters_[j].transpose() << endl;
@@ -299,8 +296,7 @@ void Ioc::addTrajectoryToDraw( const IocTrajectory& t, int color )
 void Ioc::addAllToDraw()
 {
     trajToDraw.clear();
-
-    cout << "Add rollouts to draw" << endl;
+    //cout << "Add rollouts to draw" << endl;
 
     for ( int d=0; d<int(demonstrations_.size()); ++d)
     {
@@ -311,8 +307,43 @@ void Ioc::addAllToDraw()
     {
         for ( int k=0; k<int(samples_[d].size()); ++k)
         {
-            cout << "add sample : " << k << endl;
+            //cout << "add sample : " << k << endl;
             addTrajectoryToDraw( samples_[d][k], k );
         }
     }
+}
+
+struct IocObjective : public DifferentiableFunction
+{
+    const double l2weight;
+    IocObjective( double l2weight = 0) : l2weight(l2weight) { }
+    double Eval(const DblVec& input, DblVec& gradient);
+
+};
+
+double IocObjective::Eval(const DblVec& input, DblVec& gradient)
+{
+    double loss = 1.0;
+
+    for (size_t i=0; i<input.size(); i++) {
+        loss += 0.5 * input[i] * input[i] * l2weight;
+        gradient[i] = l2weight * input[i];
+    }
+
+    return loss;
+}
+
+void Ioc::solve()
+{
+    size_t size;
+    bool quiet=false;
+    int m = 10;
+    double regweight=1;
+    double tol = 1e-4;
+
+    DifferentiableFunction *obj = new IocObjective();
+    DblVec init(size), ans(size);
+    OWLQN opt(quiet);
+
+    opt.Minimize( *obj, init, ans, regweight, tol, m );
 }

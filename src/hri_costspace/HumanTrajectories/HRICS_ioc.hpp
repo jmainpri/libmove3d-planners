@@ -90,6 +90,9 @@ public:
     void addTrajectoryToDraw( const IocTrajectory& t, int color );
     void addAllToDraw();
 
+    //! solve the ioc problem
+    void solve();
+
 private:
     std::vector<IocTrajectory> demonstrations_;
     std::vector< std::vector<IocTrajectory> > samples_;

@@ -240,6 +240,12 @@ IF(HRI_PLANNER)
   SET(LIBS ${LIBS} ${LIBHRI_LIBRARIES})
 ENDIF()
 
+#-------------- Ioc ------------------------------------------------------------
+
+INCLUDE_directories(/home/jmainpri/openrobots)
+SET(INCLUDE_DIRS ${INCLUDE_DIRS} /home/jmainpri/openrobots/include)
+SET(LIBS ${LIBS} /home/jmainpri/openrobots/lib/libowlqn.so)
+
 #-------------- Eigen ----------------------------------------------------------
 
 message("CMAKE_MODULE_PATH : " ${CMAKE_MODULE_PATH})
