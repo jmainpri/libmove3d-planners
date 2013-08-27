@@ -91,7 +91,7 @@ public:
     void addAllToDraw();
 
     //! solve the ioc problem
-    void solve();
+    void solve( const Eigen::VectorXd& phi_demo, const std::vector<Eigen::VectorXd>& phi_k );
 
 private:
     std::vector<IocTrajectory> demonstrations_;

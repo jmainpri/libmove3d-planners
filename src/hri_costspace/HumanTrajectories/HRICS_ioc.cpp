@@ -315,35 +315,65 @@ void Ioc::addAllToDraw()
 
 struct IocObjective : public DifferentiableFunction
 {
-    const double l2weight;
-    IocObjective( double l2weight = 0) : l2weight(l2weight) { }
-    double Eval(const DblVec& input, DblVec& gradient);
+    IocObjective() { }
+    double Eval(const DblVec& w, DblVec& dw);
+    Eigen::VectorXd phi_demo_;
+    std::vector<Eigen::VectorXd> phi_k_;
+    Eigen::VectorXd getEigenVector(const DblVec& w);
 
 };
 
-double IocObjective::Eval(const DblVec& input, DblVec& gradient)
+Eigen::VectorXd IocObjective::getEigenVector(const DblVec& w)
+{
+    Eigen::VectorXd w_(w.size());
+
+    for( size_t i=0; i<w.size(); i++ )
+    {
+        w_[i]=w[i];
+    }
+    return w_;
+}
+
+double IocObjective::Eval(const DblVec& w, DblVec& dw)
 {
     double loss = 1.0;
 
-    for (size_t i=0; i<input.size(); i++) {
-        loss += 0.5 * input[i] * input[i] * l2weight;
-        gradient[i] = l2weight * input[i];
+    Eigen::VectorXd w_(getEigenVector(dw));
+
+    double numerator = 0.0;
+    for (size_t k=0; k<phi_k_.size();k++)
+        numerator += std::exp(-w_.transpose()*phi_k_[k]);
+
+    loss = -std::log( std::exp(-w_.transpose()*phi_demo_) / numerator );
+
+    for (size_t i=0; i<dw.size(); i++)
+    {
+        numerator = 0.0;
+        for (size_t k=0; k<phi_k_.size();k++)
+            numerator += ( std::exp(-w_.transpose()*phi_k_[k])*phi_k_[k][i] );
+
+        dw[i] = std::exp(-w_.transpose()*phi_demo_)*phi_demo_[i] / numerator;
+        dw[i] /= loss;
     }
 
     return loss;
 }
 
-void Ioc::solve()
+void Ioc::solve( const Eigen::VectorXd& phi_demo, const std::vector<Eigen::VectorXd>& phi_k )
 {
-    size_t size;
+    size_t size = phi_demo.size();
     bool quiet=false;
     int m = 10;
     double regweight=1;
     double tol = 1e-4;
 
-    DifferentiableFunction *obj = new IocObjective();
-    DblVec init(size), ans(size);
+    IocObjective obj;
+    obj.phi_demo_ = phi_demo;
+    obj.phi_k_ = phi_k;
+
+    DblVec init(size);
+    DblVec ans(size);
     OWLQN opt(quiet);
 
-    opt.Minimize( *obj, init, ans, regweight, tol, m );
+    opt.Minimize( obj, init, ans, regweight, tol, m );
 }
