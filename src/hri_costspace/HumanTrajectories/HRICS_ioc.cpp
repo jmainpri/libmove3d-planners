@@ -27,6 +27,13 @@ void HRICS_run_sphere_ioc()
         return;
     }
 
+    std::string filename("/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/trajectory1.traj");
+    if (!p3d_read_traj(filename.c_str()))
+    {
+        cout << "could not load trajectory" << endl;
+        return;
+    }
+
     confPtr_t q_init( rob->getInitPos() );
     confPtr_t q_goal( rob->getGoalPos() );
     if( *q_init == *q_goal )
@@ -42,12 +49,16 @@ void HRICS_run_sphere_ioc()
 
     int nb_way_points = 20;
 
+    API::Trajectory T( rob, (p3d_traj*)p3d_get_desc_curid(P3D_TRAJ) );
+    /*
     std::vector<confPtr_t> confs(2);
     confs[0] = q_init;
     confs[1] = q_goal;
     API::Trajectory T( confs );
+    */
     T.cutTrajInSmallLP( nb_way_points-1 );
     T.replaceP3dTraj();
+
     Eigen::MatrixXd mat = T.getEigenMatrix(6,7);
 
     cout << "mat : " << mat << endl;
@@ -74,6 +85,7 @@ IocTrajectory::IocTrajectory( int nb_joints, int nb_var  )
 //    cout << "nb_joints : " << nb_joints << endl;
 //    cout << "nb_var : " << nb_var << endl;
 
+    nominal_parameters_.clear();
     parameters_.clear();
     noise_.clear();
     noise_projected_.clear();
@@ -86,6 +98,7 @@ IocTrajectory::IocTrajectory( int nb_joints, int nb_var  )
 
     for (int d=0; d<nb_joints; ++d)
     {
+        nominal_parameters_.push_back( Eigen::VectorXd::Zero( nb_var ) );
         parameters_.push_back( Eigen::VectorXd::Zero( nb_var ) );
         noise_projected_.push_back( Eigen::VectorXd::Zero( nb_var ) );
         noise_.push_back( Eigen::VectorXd::Zero( nb_var ) );
@@ -242,6 +255,29 @@ bool Ioc::addDemonstration( const Eigen::MatrixXd& demo )
     return true;
 }
 
+bool Ioc::jointLimits( IocTrajectory& traj ) const
+{
+    for( int i=0;i<num_joints_;i++)
+    {
+        double coeff = 1.0;
+
+        double j_max = planning_group_->chomp_joints_[i].joint_limit_max_;
+        double j_min = planning_group_->chomp_joints_[i].joint_limit_min_;
+
+        for( int j=0;j<num_vars_;j++)
+        {
+            while( traj.parameters_[i][j] < j_min || traj.parameters_[i][j] > j_max )
+            {
+                coeff *= 0.90; // 90 percent
+                traj.noise_[i] *= coeff;
+                traj.parameters_[i] = traj.nominal_parameters_[i] +  traj.noise_[i];
+            }
+        }
+    }
+
+    return true;
+}
+
 void Ioc::generateSamples( int nb_samples )
 {
     samples_.resize( num_demonstrations_ );
@@ -261,10 +297,13 @@ void Ioc::generateSamples( int nb_samples )
 
             for (int j=0; j<num_joints_; ++j)
             {
+                samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].parameters_[j];
                 samples_[d][ns].noise_[j] = noisy_traj.row(j);
-                samples_[d][ns].parameters_[j] = demonstrations_[d].parameters_[j] + samples_[d][ns].noise_[j];
+                samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j];
                 cout << "sample (" << ns << ") : " << samples_[d][ns].parameters_[j].transpose() << endl;
             }
+
+            jointLimits( samples_[d][ns] );
         }
     }
 
@@ -355,6 +394,8 @@ double IocObjective::Eval(const DblVec& w, DblVec& dw)
         dw[i] = std::exp(-w_.transpose()*phi_demo_)*phi_demo_[i] / numerator;
         dw[i] /= loss;
     }
+
+    cout << "loss : " << loss << endl;
 
     return loss;
 }

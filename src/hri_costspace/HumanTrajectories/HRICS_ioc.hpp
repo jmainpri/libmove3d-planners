@@ -18,6 +18,7 @@ struct IocTrajectory
     IocTrajectory() { }
     IocTrajectory( int nb_joints, int nb_var );
 
+    std::vector<Eigen::VectorXd> nominal_parameters_;               /**< [num_dimensions] num_parameters */
     std::vector<Eigen::VectorXd> parameters_;                       /**< [num_dimensions] num_parameters */
     std::vector<Eigen::VectorXd> noise_;                            /**< [num_dimensions] num_parameters */
     std::vector<Eigen::VectorXd> noise_projected_;                  /**< [num_dimensions][num_time_steps] num_parameters */
@@ -78,6 +79,9 @@ public:
 
     //! Add a trajectory to the set of demonstrated trajectories
     bool addDemonstration(const Eigen::MatrixXd& demo);
+
+    //! Reduces the trajectory magnitude
+    bool jointLimits( IocTrajectory& traj ) const;
 
     //! Generate the sampled trajectories
     //! around the demonstrations
