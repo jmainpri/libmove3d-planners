@@ -5,6 +5,8 @@
 #include <Eigen/Core>
 #include <vector>
 
+#include "HRICS_features.hpp"
+
 #include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
 #include "planner/TrajectoryOptim/Stomp/covariant_trajectory_policy.hpp"
@@ -94,8 +96,11 @@ public:
     void addTrajectoryToDraw( const IocTrajectory& t, int color );
     void addAllToDraw();
 
-    //! solve the ioc problem
+    //! Solve the ioc problem
     void solve( const Eigen::VectorXd& phi_demo, const std::vector<Eigen::VectorXd>& phi_k );
+
+    //! Set feature function
+    void setFeatureFct( Feature* fct ) { feature_fct_ = fct; }
 
 private:
     std::vector<IocTrajectory> demonstrations_;
@@ -107,6 +112,8 @@ private:
     int num_joints_;
     int num_demonstrations_;
     IocSampler sampler_;
+
+    Feature* feature_fct_;
 };
 
 }

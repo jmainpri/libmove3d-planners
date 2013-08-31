@@ -51,57 +51,57 @@ public:
     /**
      * Get the Matrix abs_pos of the Joint
      */
-    Eigen::Transform3d	getMatrixPos() const;
+    Eigen::Transform3d getMatrixPos() const;
 
     /**
      * Get the Vector abs_pos of the Joint
      */
-    Eigen::Vector3d		getVectorPos() const;
+    Eigen::Vector3d	getVectorPos() const;
 
     /**
      * Get the p3d abs pos
      */
-    pp3d_matrix4		getAbsPos();
+    pp3d_matrix4 getAbsPos();
 
     /**
      * Random shoot the joint
      */
-    void            shoot(Configuration& q,bool sample_passive=false);
+    void shoot(Configuration& q,bool sample_passive=false);
 
     /**
      * Returns the Joint Dof
      */
-    double          getJointDof(int ithDoF) const;
+    double getJointDof(int ithDoF) const;
 
     /**
      * Set the Joint Dof
      */
-    void            setJointDof(int ithDoF, double value);
+    void setJointDof(int ithDoF, double value);
 
     /**
    * Set ff from Eigen::Transform
    */
-    bool            setFreeFlyerFromMatrix( const Eigen::Transform3d& T );
+    bool setFreeFlyerFromMatrix( const Eigen::Transform3d& T );
 
     /**
      * True if Joint Dof is user
      */
-    bool            isJointDofUser(int ithDoF) const;
+    bool isJointDofUser(int ithDoF) const;
 
     /**
      * Get Min Max dof
      */
-    void            getDofBounds(int ithDoF, double& vmin, double& vmax) const;
+    void getDofBounds(int ithDoF, double& vmin, double& vmax) const;
 
     /**
      * Get Number of DoF
      */
-    unsigned int		getNumberOfDof() const;
+    unsigned int getNumberOfDof() const;
 
     /**
      * Get Dof Pos in Configuration
      */
-    unsigned int		getIndexOfFirstDof() const;
+    unsigned int getIndexOfFirstDof() const;
 
     /**
    * Get the id in the joint structure of the robot
@@ -111,12 +111,12 @@ public:
     /**
      * Set the config from the DoF values
      */
-    void            setConfigFromDofValues(Configuration& q);
+    void setConfigFromDofValues(Configuration& q);
 
     /**
    * Returns the previous joint
    */
-    Joint*          getPreviousJoint();
+    Joint* getPreviousJoint();
 
     /**
    * Returns the array of previous joints

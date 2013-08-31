@@ -18,6 +18,33 @@ using std::endl;
 // -------------------------------------------------------------
 // -------------------------------------------------------------
 
+void HRICS_produce_cost_map(Robot* rob)
+{
+    double max_1, max_2;
+    double min_1, min_2;
+    rob->getJoint(1)->getDofBounds( 0, min_1 ,max_1 );
+    rob->getJoint(1)->getDofBounds( 1, min_2, max_2 );
+
+    int nb_cells = 100;
+    Eigen::MatrixXd mat( nb_cells, nb_cells );
+
+    for( int i=0; i<nb_cells; i++ )
+    {
+        for( int j=0; j<nb_cells; j++ )
+        {
+            confPtr_t q = rob->getCurrentPos();
+            (*q)[6] = min_1 + double(i)*(max_1-min_1)/double(nb_cells-1);
+            (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(nb_cells-1);
+            mat(i,j) = q->cost();
+        }
+    }
+
+    std::ofstream file("cost_map.txt");
+    if (file.is_open())
+        file << mat << '\n';
+    file.close();
+}
+
 void HRICS_run_sphere_ioc()
 {
     Robot* rob = global_Project->getActiveScene()->getActiveRobot();
@@ -67,12 +94,20 @@ void HRICS_run_sphere_ioc()
     ioc.addDemonstration( mat );
     ioc.generateSamples( 10 );
 
+    FeatureVect phi_demo( global_SphereCostFct->getFeatureCount( T ) );
+    cout << "Feature Demo : " << phi_demo.transpose() << endl;
+
+    std::vector<FeatureVect> phi_k;
     std::vector<API::Trajectory> samples = ioc.getSamples();
     for( int i=0;i<int(samples.size());i++)
     {
-        FeatureVect vect = global_SphereCostFct->getFeatureCount( samples[i] );
-        cout << "Feature(" << i << ") : " << vect.transpose() << endl;
+        phi_k.push_back( global_SphereCostFct->getFeatureCount( samples[i] ) );
+        cout << "Feature(" << i << ") : " << phi_k[i].transpose() << endl;
     }
+
+    //ioc.solve( phi_demo, phi_k );
+
+    HRICS_produce_cost_map(rob);
 }
 
 // -------------------------------------------------------------
@@ -362,7 +397,7 @@ struct IocObjective : public DifferentiableFunction
 
 };
 
-Eigen::VectorXd IocObjective::getEigenVector(const DblVec& w)
+Eigen::VectorXd IocObjective::getEigenVector( const DblVec& w )
 {
     Eigen::VectorXd w_(w.size());
 
@@ -373,29 +408,55 @@ Eigen::VectorXd IocObjective::getEigenVector(const DblVec& w)
     return w_;
 }
 
-double IocObjective::Eval(const DblVec& w, DblVec& dw)
+double IocObjective::Eval( const DblVec& w, DblVec& dw )
 {
     double loss = 1.0;
 
-    Eigen::VectorXd w_(getEigenVector(dw));
-
-    double numerator = 0.0;
-    for (size_t k=0; k<phi_k_.size();k++)
-        numerator += std::exp(-w_.transpose()*phi_k_[k]);
-
-    loss = -std::log( std::exp(-w_.transpose()*phi_demo_) / numerator );
-
-    for (size_t i=0; i<dw.size(); i++)
+    if( w.size() != dw.size() )
     {
-        numerator = 0.0;
-        for (size_t k=0; k<phi_k_.size();k++)
-            numerator += ( std::exp(-w_.transpose()*phi_k_[k])*phi_k_[k][i] );
-
-        dw[i] = std::exp(-w_.transpose()*phi_demo_)*phi_demo_[i] / numerator;
-        dw[i] /= loss;
+        cout << "error in size : " << __func__ << endl;
+        return loss;
     }
 
+    Eigen::VectorXd w_(getEigenVector(w));
+    Eigen::VectorXd dw_(getEigenVector(dw));
+
+    // Loss function
+    double denominator = 0.0;
+    for (size_t k=0; k<phi_k_.size();k++)
+    {
+        denominator += std::exp(-1.0*w_.transpose()*phi_k_[k]);
+    }
+    double numerator = std::exp(-1.0*w_.transpose()*phi_demo_);
+
+    double tmp =  numerator / denominator;
+    loss = -std::log( tmp );
+
+    // Gradient
+    for (int i=0; i<int(w.size()); i++)
+    {
+        double numerator_prime = numerator*phi_demo_[i];
+        double denominator_prime = 0.0;
+        for (size_t k=0; k<phi_k_.size();k++)
+            denominator_prime += std::exp(-1.0*w_.transpose()*phi_k_[k]) * phi_k_[k][i];
+
+        dw_[i] = -( numerator_prime*denominator - numerator*denominator_prime ) / (denominator*denominator);
+        dw_[i] /= tmp;
+    }
+
+    for (int i=0; i<dw_.size(); i++)
+    {
+        dw[i] = dw_[i];
+    }
+
+    cout << "w : " << w_.transpose() << endl;
     cout << "loss : " << loss << endl;
+    cout << "dw : " << dw_.transpose() << endl;
+
+    if( std::isnan(loss) )
+    {
+        exit(1);
+    }
 
     return loss;
 }
@@ -413,8 +474,12 @@ void Ioc::solve( const Eigen::VectorXd& phi_demo, const std::vector<Eigen::Vecto
     obj.phi_k_ = phi_k;
 
     DblVec init(size);
+    for(int i=0;i<int(init.size());i++)
+    {
+        init[i] = phi_demo[i];
+    }
+
     DblVec ans(size);
     OWLQN opt(quiet);
-
     opt.Minimize( obj, init, ans, regweight, tol, m );
 }
