@@ -644,12 +644,12 @@ namespace stomp_motion_planner
         }
         //T.print();
         T.setColor(color);
-        trajToDraw.push_back( T );
+        global_trajToDraw.push_back( T );
     }
 
     void PolicyImprovementLoop::addRolloutsToDraw(bool add_reused)
     {
-        trajToDraw.clear();
+        global_trajToDraw.clear();
         //shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
 
         cout << "Add rollouts to draw" << endl;

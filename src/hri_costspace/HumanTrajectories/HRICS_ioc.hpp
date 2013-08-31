@@ -14,6 +14,26 @@
 namespace HRICS
 {
 
+//! Evaluation Class
+class IocEvaluation
+{
+public:
+    IocEvaluation(Robot* rob);
+
+    void trajToMatlab(const API::Trajectory& t) const;
+    void produceCostMap();
+    void runLearning();
+    void generateDemonstrations();
+    void loadDemonstrations();
+
+private:
+    Robot* robot_;
+    int nb_demos_;
+    std::string folder_;
+    std::vector<API::Trajectory> demos_;
+    std::vector<API::Trajectory> samples_;
+};
+
 //! Trajectory structure
 struct IocTrajectory
 {
@@ -90,14 +110,14 @@ public:
     void generateSamples(int nb_samples);
 
     //! Returns Move3D trajectories
-    std::vector<API::Trajectory> getSamples();
+    std::vector< std::vector<API::Trajectory> > getSamples();
 
     //! Drawing function
     void addTrajectoryToDraw( const IocTrajectory& t, int color );
     void addAllToDraw();
 
     //! Solve the ioc problem
-    void solve( const Eigen::VectorXd& phi_demo, const std::vector<Eigen::VectorXd>& phi_k );
+    Eigen::VectorXd solve( const std::vector<Eigen::VectorXd>& phi_demo, const std::vector< std::vector<Eigen::VectorXd> >& phi_k );
 
     //! Set feature function
     void setFeatureFct( Feature* fct ) { feature_fct_ = fct; }

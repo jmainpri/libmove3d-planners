@@ -92,7 +92,7 @@ FeatureVect Spheres::getFeatureCount( const API::Trajectory& t )
     for(int i=0;i<t.getNbOfViaPoints();i++)
     {
         confPtr_t q = t[i];
-        vect += features( *q );
+        vect += 0.001*features( *q );
     }
 
     return vect;

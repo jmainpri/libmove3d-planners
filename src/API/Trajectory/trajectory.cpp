@@ -32,7 +32,7 @@ using namespace Eigen;
 
 using namespace API;
 
-std::vector<Trajectory> trajToDraw;
+std::vector<Trajectory> global_trajToDraw;
 
 Trajectory::Trajectory() :
     m_Robot(NULL),
@@ -1497,8 +1497,8 @@ void Trajectory::draw(int nbKeyFrame)
     //	if (!(o = m_Robot->getRobotStruct()->o[NumBody]))
     //		return;
 
-    shared_ptr<Configuration> qSave = m_Robot->getCurrentPos();
-    shared_ptr<Configuration> q = m_Source;
+    confPtr_t qSave = m_Robot->getCurrentPos();
+    confPtr_t q = m_Source;
     m_Robot->setAndUpdate(*q);
 
     p3d_vector3 pi, pf;
@@ -1534,8 +1534,7 @@ void Trajectory::draw(int nbKeyFrame)
         if ((!ENV.getBool(Env::isCostSpace)) || (GroundCostObj == NULL))
         {
             glLineWidth(3.);
-            g3d_drawOneLine(pi[0], pi[1], pi[2], pf[0], pf[1], pf[2], mColor,
-                            NULL);
+            g3d_drawOneLine(pi[0], pi[1], pi[2], pf[0], pf[1], pf[2], mColor, NULL);
             glLineWidth(1.);
         }
         else
@@ -1544,8 +1543,8 @@ void Trajectory::draw(int nbKeyFrame)
             /*val2 =*/ GHintersectionVerticalLineWithGround(GroundCostObj, pf[0], pf[1], &Cost2);
             glLineWidth(3.);
             g3d_drawOneLine(pi[0], pi[1], Cost1 + (ZmaxEnv - ZminEnv) * 0.02,
-                            pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02, mColor,
-                            NULL);
+                            pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02,
+                            mColor, NULL);
             glLineWidth(1.);
         }
         p3d_vectCopy(pf, pi);
@@ -2265,15 +2264,15 @@ void draw_traj_debug()
     if( ENV.getBool(Env::debugCostOptim) || ENV.getBool(Env::drawTrajVector) )
     {
         //std::cout << "Should be drawing traj" << std::endl;
-        for(unsigned i=0;i<trajToDraw.size();i++)
+        for(unsigned i=0;i<global_trajToDraw.size();i++)
         {
-            trajToDraw.at(i).draw(500);
+            global_trajToDraw.at(i).draw(500);
             //std::cout << "Drawing traj" << std::endl;
         }
         //    p3d_rob *robotPt = (p3d_rob *) p3d_get_desc_curid(P3D_ROBOT);
         //    if (!robotPt->tcur)
         //    {
-        //      trajToDraw.clear();
+        //      global_trajToDraw.clear();
         //    }
     }
 }

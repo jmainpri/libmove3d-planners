@@ -532,12 +532,12 @@ void CostOptimization::debugShowTraj(double lPrev, double lNext, confPtr_t qNew,
     vectConf.at(1) = qNew;
     vectConf.at(2) = configAtParam(lNext);
 
-    trajToDraw.resize(4);
+    global_trajToDraw.resize(4);
 
-    trajToDraw.at(0) = extractSubTrajectory(0, lPrev);
-    trajToDraw.at(1) = extractSubTrajectory(lPrev, lNext);
-    trajToDraw.at(2) = *new Trajectory(vectConf);
-    trajToDraw.at(3) = extractSubTrajectory(lNext, getRangeMax());
+    global_trajToDraw.at(0) = extractSubTrajectory(0, lPrev);
+    global_trajToDraw.at(1) = extractSubTrajectory(lPrev, lNext);
+    global_trajToDraw.at(2) = *new Trajectory(vectConf);
+    global_trajToDraw.at(3) = extractSubTrajectory(lNext, getRangeMax());
 
     int color_base_traj;
 
@@ -550,10 +550,10 @@ void CostOptimization::debugShowTraj(double lPrev, double lNext, confPtr_t qNew,
         color_base_traj = 3;
     }
 
-    trajToDraw.at(0).setColor(color_base_traj);
-    trajToDraw.at(1).setColor(2);
-    trajToDraw.at(2).setColor(color);
-    trajToDraw.at(3).setColor(color_base_traj);
+    global_trajToDraw.at(0).setColor(color_base_traj);
+    global_trajToDraw.at(1).setColor(2);
+    global_trajToDraw.at(2).setColor(color);
+    global_trajToDraw.at(3).setColor(color_base_traj);
 
     //	g3d_draw_allwin_active();
     //	usleep(200000);

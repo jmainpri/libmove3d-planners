@@ -1856,7 +1856,7 @@ void StompOptimizer::animateEndeffector(bool print_cost)
     else
     {
         T.setColor( Red );
-        trajToDraw.push_back( T );
+        global_trajToDraw.push_back( T );
     }
     
     // Set the robot to the first configuration

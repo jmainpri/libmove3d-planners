@@ -3,11 +3,17 @@
 
 #include "API/project.hpp"
 #include "planEnvironment.hpp"
+#include "plannerFunctions.hpp"
 #include "API/Trajectory/trajectory.hpp"
+
+#include <libmove3d/include/Graphic-pkg.h>
 
 #include <owlqn/OWLQN.h>
 #include <owlqn/leastSquares.h>
 #include <owlqn/logreg.h>
+
+#include <iomanip>
+#include <sstream>
 
 using namespace HRICS;
 using std::cout;
@@ -18,46 +24,12 @@ using std::endl;
 // -------------------------------------------------------------
 // -------------------------------------------------------------
 
-void HRICS_produce_cost_map(Robot* rob)
-{
-    double max_1, max_2;
-    double min_1, min_2;
-    rob->getJoint(1)->getDofBounds( 0, min_1 ,max_1 );
-    rob->getJoint(1)->getDofBounds( 1, min_2, max_2 );
-
-    int nb_cells = 100;
-    Eigen::MatrixXd mat( nb_cells, nb_cells );
-
-    for( int i=0; i<nb_cells; i++ )
-    {
-        for( int j=0; j<nb_cells; j++ )
-        {
-            confPtr_t q = rob->getCurrentPos();
-            (*q)[6] = min_1 + double(i)*(max_1-min_1)/double(nb_cells-1);
-            (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(nb_cells-1);
-            mat(i,j) = q->cost();
-        }
-    }
-
-    std::ofstream file("cost_map.txt");
-    if (file.is_open())
-        file << mat << '\n';
-    file.close();
-}
-
 void HRICS_run_sphere_ioc()
 {
     Robot* rob = global_Project->getActiveScene()->getActiveRobot();
     if (!rob) {
         cout << "robot not initialized in file "
              << __FILE__ << " ,  " << __func__ << endl;
-        return;
-    }
-
-    std::string filename("/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/trajectory1.traj");
-    if (!p3d_read_traj(filename.c_str()))
-    {
-        cout << "could not load trajectory" << endl;
         return;
     }
 
@@ -70,44 +42,164 @@ void HRICS_run_sphere_ioc()
         return;
     }
 
+    IocEvaluation eval(rob);
+
+    eval.loadDemonstrations();
+//    eval.generateDemonstrations();
+    eval.runLearning();
+}
+
+
+// -------------------------------------------------------------
+// -------------------------------------------------------------
+// -------------------------------------------------------------
+// -------------------------------------------------------------
+
+IocEvaluation::IocEvaluation(Robot* rob) : robot_(rob)
+{
+    nb_demos_ = 10;
+    folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
+}
+
+void IocEvaluation::produceCostMap()
+{
+    double max_1, max_2;
+    double min_1, min_2;
+    robot_->getJoint(1)->getDofBounds( 0, min_1 ,max_1 );
+    robot_->getJoint(1)->getDofBounds( 1, min_2, max_2 );
+
+    int nb_cells = 100;
+    Eigen::MatrixXd mat( nb_cells, nb_cells );
+
+    for( int i=0; i<nb_cells; i++ )
+    {
+        for( int j=0; j<nb_cells; j++ )
+        {
+            confPtr_t q = robot_->getCurrentPos();
+            (*q)[6] = min_1 + double(i)*(max_1-min_1)/double(nb_cells-1);
+            (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(nb_cells-1);
+            mat(i,j) = q->cost();
+        }
+    }
+
+    std::ofstream file("matlab/cost_map.txt");
+    if (file.is_open())
+        file << mat << '\n';
+    file.close();
+}
+
+void IocEvaluation::trajToMatlab(const API::Trajectory& t) const
+{
+    API::Trajectory saved_traj(t);
+    int nb_way_points=100;
+    saved_traj.cutTrajInSmallLP(nb_way_points-1);
+
+    Eigen::MatrixXd mat = saved_traj.getEigenMatrix(6,7);
+
+    // Save traj to file
+    std::ofstream file_traj("matlab/traj.txt");
+    if (file_traj.is_open())
+        file_traj << mat << '\n';
+    file_traj.close();
+}
+
+void IocEvaluation::generateDemonstrations()
+{
+    for(int i=0;i<nb_demos_;i++)
+    {
+        try
+        {
+            p3d_run_rrt(robot_->getRobotStruct());
+
+            if( !ENV.getBool(Env::drawDisabled) ) {
+                g3d_draw_allwin_active();
+            }
+        }
+        catch (std::string str)
+        {
+            std::cerr << "Exeption in run rrt : " << endl;
+            std::cerr << str << endl;
+        }
+        catch (...)
+        {
+            std::cerr << "Exeption in run qt_runDiffusion" << endl;
+        }
+
+        std::stringstream ss;
+        ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
+
+        p3d_save_traj( ( folder_ + ss.str() ).c_str(), robot_->getRobotStruct()->tcur );
+    }
+}
+
+void IocEvaluation::loadDemonstrations()
+{
+    demos_.clear();
+    global_trajToDraw.clear();
+
+    std::stringstream ss;
+
+    for(int i=0;i<nb_demos_;i++)
+    {
+        ss.str(""); // clear stream
+        ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
+
+        if ( !p3d_read_traj( ( folder_ + ss.str() ).c_str()) )
+        {
+            cout << "could not load trajectory" << endl;
+            return;
+        }
+
+        API::Trajectory T( robot_, (p3d_traj*)p3d_get_desc_curid(P3D_TRAJ) );
+        T.setColor( i%8 );
+        demos_.push_back(T);
+        global_trajToDraw.push_back(T);
+    }
+}
+
+void IocEvaluation::runLearning()
+{
     std::vector<int> planner_joints(1);
     planner_joints[0] = 1;
-    ChompPlanningGroup* plangroup = new ChompPlanningGroup( rob, planner_joints );
+    ChompPlanningGroup* plangroup = new ChompPlanningGroup( robot_, planner_joints );
 
     int nb_way_points = 20;
 
-    API::Trajectory T( rob, (p3d_traj*)p3d_get_desc_curid(P3D_TRAJ) );
-    /*
-    std::vector<confPtr_t> confs(2);
-    confs[0] = q_init;
-    confs[1] = q_goal;
-    API::Trajectory T( confs );
-    */
-    T.cutTrajInSmallLP( nb_way_points-1 );
-    T.replaceP3dTraj();
-
-    Eigen::MatrixXd mat = T.getEigenMatrix(6,7);
-
-    cout << "mat : " << mat << endl;
-
     HRICS::Ioc ioc( nb_way_points, plangroup );
-    ioc.addDemonstration( mat );
-    ioc.generateSamples( 10 );
 
-    FeatureVect phi_demo( global_SphereCostFct->getFeatureCount( T ) );
-    cout << "Feature Demo : " << phi_demo.transpose() << endl;
-
-    std::vector<FeatureVect> phi_k;
-    std::vector<API::Trajectory> samples = ioc.getSamples();
-    for( int i=0;i<int(samples.size());i++)
+    // Get features of demos
+    std::vector<FeatureVect> phi_demo(demos_.size());
+    for(int i=0;i<int(demos_.size());i++)
     {
-        phi_k.push_back( global_SphereCostFct->getFeatureCount( samples[i] ) );
-        cout << "Feature(" << i << ") : " << phi_k[i].transpose() << endl;
+        demos_[i].cutTrajInSmallLP( nb_way_points-1 );
+        FeatureVect phi = global_SphereCostFct->getFeatureCount( demos_[i] );
+        cout << "Feature Demo : " << phi.transpose() << endl;
+        ioc.addDemonstration( demos_[i].getEigenMatrix(6,7) );
+        phi_demo[i] = phi;
     }
 
-    //ioc.solve( phi_demo, phi_k );
+    // Get features of samples
+    ioc.generateSamples( 30 );
+    std::vector< std::vector<API::Trajectory> > samples = ioc.getSamples();
+    std::vector< std::vector<FeatureVect> > phi_k( samples.size() );
+    for( int d=0;d<int(samples.size());d++)
+    {
+        for( int i=0;i<int(samples[d].size());i++)
+        {
+            phi_k[d].push_back( global_SphereCostFct->getFeatureCount( samples[d][i] ) );
+            cout << "Feature(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
+        }
+    }
 
-    HRICS_produce_cost_map(rob);
+    // Only for plannar robot
+    // produceCostMap();
+    // trajToMatlab(T);
+
+    for( int i=0;i<1;i++)
+    {
+        Eigen::VectorXd w = ioc.solve( phi_demo, phi_k );
+        cout << "w : " << w.transpose() << endl;
+    }
 }
 
 // -------------------------------------------------------------
@@ -345,15 +437,15 @@ void Ioc::generateSamples( int nb_samples )
     addAllToDraw();
 }
 
-std::vector<API::Trajectory> Ioc::getSamples()
+std::vector< std::vector<API::Trajectory> > Ioc::getSamples()
 {
-    std::vector<API::Trajectory> samples;
+    std::vector< std::vector<API::Trajectory> > samples(demonstrations_.size());
 
     for ( int d=0; d<int(demonstrations_.size()); ++d)
     {
         for ( int k=0; k<int(samples_[d].size()); ++k)
         {
-            samples.push_back( samples_[d][k].getMove3DTrajectory( planning_group_ ) );
+            samples[d].push_back( samples_[d][k].getMove3DTrajectory( planning_group_ ) );
         }
     }
 
@@ -362,14 +454,14 @@ std::vector<API::Trajectory> Ioc::getSamples()
 
 void Ioc::addTrajectoryToDraw( const IocTrajectory& t, int color )
 {
-    API::Trajectory Move3DTraj = t.getMove3DTrajectory( planning_group_ );
-    Move3DTraj.setColor( color );
-    trajToDraw.push_back( Move3DTraj );
+    API::Trajectory T = t.getMove3DTrajectory( planning_group_ );
+    T.setColor( color );
+    global_trajToDraw.push_back( T );
 }
 
 void Ioc::addAllToDraw()
 {
-    trajToDraw.clear();
+    global_trajToDraw.clear();
     //cout << "Add rollouts to draw" << endl;
 
     for ( int d=0; d<int(demonstrations_.size()); ++d)
@@ -387,14 +479,25 @@ void Ioc::addAllToDraw()
     }
 }
 
+//////////////////////////////////////////////////////
+// IOC objective
+//////////////////////////////////////////////////////
 struct IocObjective : public DifferentiableFunction
 {
     IocObjective() { }
-    double Eval(const DblVec& w, DblVec& dw);
-    Eigen::VectorXd phi_demo_;
-    std::vector<Eigen::VectorXd> phi_k_;
-    Eigen::VectorXd getEigenVector(const DblVec& w);
 
+    //! Main virtual function
+    double Eval(const DblVec& w, DblVec& dw);
+
+    Eigen::VectorXd getEigenVector(const DblVec& w);
+    Eigen::VectorXd numericalGradient(double loss, const Eigen::VectorXd& w);
+    double value(const Eigen::VectorXd& w);
+
+    //! demonstrations features
+    std::vector<Eigen::VectorXd> phi_demo_;
+
+    //! sample features
+    std::vector< std::vector<Eigen::VectorXd> > phi_k_;
 };
 
 Eigen::VectorXd IocObjective::getEigenVector( const DblVec& w )
@@ -408,6 +511,40 @@ Eigen::VectorXd IocObjective::getEigenVector( const DblVec& w )
     return w_;
 }
 
+double IocObjective::value(const Eigen::VectorXd& w)
+{
+    double loss = 0.0;
+
+    for (size_t d=0; d<phi_demo_.size();d++)
+    {
+        double denominator = 1e-9;
+        for (size_t k=0; k<phi_k_.size();k++)
+            denominator += std::exp(-1.0*w.transpose()*phi_k_[d][k]);
+
+        loss += std::log( std::exp(-1.0*w.transpose()*phi_demo_[d]) / denominator );
+    }
+
+    loss = -loss;
+
+    return loss;
+}
+
+Eigen::VectorXd IocObjective::numericalGradient(double loss, const Eigen::VectorXd& w)
+{
+    double eps = 1e-6;
+
+    Eigen::VectorXd g(w.size());
+
+    for( int i=0; i<g.size(); i++)
+    {
+        Eigen::VectorXd w_tmp(w);
+        w_tmp[i] = w[i] + eps;
+        g[i] = ( value(w_tmp) - loss ) / eps;
+    }
+
+    return g;
+}
+
 double IocObjective::Eval( const DblVec& w, DblVec& dw )
 {
     double loss = 1.0;
@@ -419,67 +556,83 @@ double IocObjective::Eval( const DblVec& w, DblVec& dw )
     }
 
     Eigen::VectorXd w_(getEigenVector(w));
-    Eigen::VectorXd dw_(getEigenVector(dw));
+    Eigen::VectorXd dw_(Eigen::VectorXd::Zero(dw.size()));
+
+    cout << endl;
+    cout << "w : " << w_.transpose() << endl;
 
     // Loss function
-    double denominator = 0.0;
-    for (size_t k=0; k<phi_k_.size();k++)
-    {
-        denominator += std::exp(-1.0*w_.transpose()*phi_k_[k]);
-    }
-    double numerator = std::exp(-1.0*w_.transpose()*phi_demo_);
-
-    double tmp =  numerator / denominator;
-    loss = -std::log( tmp );
+    loss = value(w_);
 
     // Gradient
-    for (int i=0; i<int(w.size()); i++)
-    {
-        double numerator_prime = numerator*phi_demo_[i];
-        double denominator_prime = 0.0;
-        for (size_t k=0; k<phi_k_.size();k++)
-            denominator_prime += std::exp(-1.0*w_.transpose()*phi_k_[k]) * phi_k_[k][i];
+    Eigen::VectorXd dw_n = numericalGradient( loss, w_ );
 
-        dw_[i] = -( numerator_prime*denominator - numerator*denominator_prime ) / (denominator*denominator);
-        dw_[i] /= tmp;
+    for (int d=0; d<int(phi_demo_.size()); d++)
+    {
+        double denominator = 0.0;
+        for (size_t k=0; k<phi_k_.size();k++)
+            denominator += std::exp(-1.0*w_.transpose()*phi_k_[d][k]);
+
+        for (int i=0; i<int(w.size()); i++)
+        {
+            double numerator = 0.0;
+            for (size_t k=0; k<phi_k_.size();k++)
+                numerator += std::exp(-1.0*w_.transpose()*phi_k_[d][k]) * phi_k_[d][k][i];
+
+            dw_[i] +=  phi_demo_[d][i] - ( numerator /  denominator );
+        }
     }
 
     for (int i=0; i<dw_.size(); i++)
-    {
         dw[i] = dw_[i];
-    }
-
-    cout << "w : " << w_.transpose() << endl;
-    cout << "loss : " << loss << endl;
-    cout << "dw : " << dw_.transpose() << endl;
 
     if( std::isnan(loss) )
     {
-        exit(1);
+        cout << endl;
+        cout << "w : " << w_.transpose() << endl;
+        cout << "loss : " << loss << endl;
+        cout <<  "----------------" << endl;
+        cout << "dw_s : " << dw_.transpose() << endl;
+        cout << "dw_n : " << dw_n.transpose() << endl;
+        cout << "error : " << (dw_n - dw_).norm() << endl;
+
+//        exit(1);
     }
 
     return loss;
 }
 
-void Ioc::solve( const Eigen::VectorXd& phi_demo, const std::vector<Eigen::VectorXd>& phi_k )
+Eigen::VectorXd Ioc::solve( const std::vector<Eigen::VectorXd>& phi_demo, const std::vector< std::vector<Eigen::VectorXd> >& phi_k )
 {
-    size_t size = phi_demo.size();
+    if( phi_demo.size() < 1 )
+    {
+        cout << "no demo passed in Ioc solver" << endl;
+        return Eigen::VectorXd();
+    }
+
+    size_t size = phi_demo[0].size();
     bool quiet=false;
-    int m = 10;
+    int m = 50;
     double regweight=1;
-    double tol = 1e-4;
+    double tol = 1e-6;
 
     IocObjective obj;
     obj.phi_demo_ = phi_demo;
     obj.phi_k_ = phi_k;
 
-    DblVec init(size);
-    for(int i=0;i<int(init.size());i++)
-    {
-        init[i] = phi_demo[i];
-    }
+    // Initial value ones
+    DblVec init(size,1);
 
+    for( int i=0;i<int(init.size());i++)
+    {
+//        init[i] = p3d_random(1,2);
+        init[i] = 1;
+    }
     DblVec ans(size);
+
     OWLQN opt(quiet);
+
     opt.Minimize( obj, init, ans, regweight, tol, m );
+
+    return obj.getEigenVector(ans);
 }

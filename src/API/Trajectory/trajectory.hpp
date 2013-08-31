@@ -214,7 +214,7 @@ private:
 //#if defined( QT_LIBRARY ) 
 #include <vector>
 namespace API { class Trajectory; }
-extern std::vector<API::Trajectory> trajToDraw;
+extern std::vector<API::Trajectory> global_trajToDraw;
 void draw_traj_debug();
 //#endif
 
