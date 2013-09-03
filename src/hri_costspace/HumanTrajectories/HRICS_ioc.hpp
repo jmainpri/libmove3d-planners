@@ -25,10 +25,12 @@ public:
     void runLearning();
     void generateDemonstrations();
     void loadDemonstrations();
+    void saveToMatrix(const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples );
 
 private:
     Robot* robot_;
     int nb_demos_;
+    int nb_samples_;
     std::string folder_;
     std::vector<API::Trajectory> demos_;
     std::vector<API::Trajectory> samples_;

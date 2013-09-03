@@ -58,6 +58,7 @@ void HRICS_run_sphere_ioc()
 IocEvaluation::IocEvaluation(Robot* rob) : robot_(rob)
 {
     nb_demos_ = 10;
+    nb_samples_ = 10;
     folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
 }
 
@@ -152,6 +153,7 @@ void IocEvaluation::loadDemonstrations()
 
         API::Trajectory T( robot_, (p3d_traj*)p3d_get_desc_curid(P3D_TRAJ) );
         T.setColor( i%8 );
+        cout << "color : " << i%8 << endl;
         demos_.push_back(T);
         global_trajToDraw.push_back(T);
     }
@@ -179,7 +181,7 @@ void IocEvaluation::runLearning()
     }
 
     // Get features of samples
-    ioc.generateSamples( 30 );
+    ioc.generateSamples( nb_samples_ );
     std::vector< std::vector<API::Trajectory> > samples = ioc.getSamples();
     std::vector< std::vector<FeatureVect> > phi_k( samples.size() );
     for( int d=0;d<int(samples.size());d++)
@@ -191,6 +193,8 @@ void IocEvaluation::runLearning()
         }
     }
 
+    saveToMatrix( phi_demo, phi_k );
+
     // Only for plannar robot
     // produceCostMap();
     // trajToMatlab(T);
@@ -200,6 +204,41 @@ void IocEvaluation::runLearning()
         Eigen::VectorXd w = ioc.solve( phi_demo, phi_k );
         cout << "w : " << w.transpose() << endl;
     }
+}
+
+void IocEvaluation::saveToMatrix( const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples )
+{
+    if( demos.empty() )
+    {
+        return;
+    }
+
+    int nb_samples = 0;
+    for( int d=0;d<int(samples.size());d++)
+        for( int i=0;i<int(samples[d].size());i++)
+            nb_samples++;
+
+    Eigen::MatrixXd mat(demos.size()+nb_samples,demos[0].size());
+
+    for( int d=0;d<int(demos.size());d++)
+    {
+        mat.row(d) = demos[d];
+    }
+
+    int k=0;
+    for( int d=0;d<int(samples.size());d++)
+    {
+        for( int i=0;i<int(samples[d].size());i++)
+        {
+            mat.row( demos.size() + k++ ) = samples[d][i];
+        }
+    }
+
+    // Save traj to file
+    std::ofstream file("matlab/features.txt");
+    if (file.is_open())
+        file << mat << '\n';
+    file.close();
 }
 
 // -------------------------------------------------------------
@@ -466,7 +505,7 @@ void Ioc::addAllToDraw()
 
     for ( int d=0; d<int(demonstrations_.size()); ++d)
     {
-        addTrajectoryToDraw( demonstrations_[d], d );
+        addTrajectoryToDraw( demonstrations_[d], d%8 );
     }
 
     for ( int d=0; d<int(demonstrations_.size()); ++d)
@@ -474,7 +513,7 @@ void Ioc::addAllToDraw()
         for ( int k=0; k<int(samples_[d].size()); ++k)
         {
             //cout << "add sample : " << k << endl;
-            addTrajectoryToDraw( samples_[d][k], k );
+            addTrajectoryToDraw( samples_[d][k], k%8 );
         }
     }
 }
@@ -620,6 +659,16 @@ Eigen::VectorXd Ioc::solve( const std::vector<Eigen::VectorXd>& phi_demo, const 
     obj.phi_demo_ = phi_demo;
     obj.phi_k_ = phi_k;
 
+    Eigen::VectorXd w0 = Eigen::VectorXd::Zero(size);
+    Eigen::VectorXd w1 = Eigen::VectorXd::Zero(size);
+    for( int i=0;i<int(size);i++)
+        w1[i] = 1;
+
+    cout << "zeros value : " << obj.value(w0) << endl;
+    cout << "ones value : " << obj.value(w1) << endl;
+
+    DblVec ans(size);
+    /*
     // Initial value ones
     DblVec init(size,1);
 
@@ -628,11 +677,9 @@ Eigen::VectorXd Ioc::solve( const std::vector<Eigen::VectorXd>& phi_demo, const 
 //        init[i] = p3d_random(1,2);
         init[i] = 1;
     }
-    DblVec ans(size);
-
     OWLQN opt(quiet);
-
     opt.Minimize( obj, init, ans, regweight, tol, m );
+    */
 
     return obj.getEigenVector(ans);
 }
