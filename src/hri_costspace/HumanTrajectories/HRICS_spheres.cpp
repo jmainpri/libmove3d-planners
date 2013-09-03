@@ -4,6 +4,7 @@
 #include "planner/cost_space.hpp"
 
 #include <boost/bind.hpp>
+#include <fstream>
 
 using namespace HRICS;
 using std::cout;
@@ -17,6 +18,8 @@ Spheres::Spheres()
 void Spheres::initialize()
 {
     Scene* sce = global_Project->getActiveScene();
+
+    robot_ = sce->getActiveRobot();
 
     centers_.clear();
     centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_01") );
@@ -36,7 +39,7 @@ void Spheres::initialize()
     centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_15") );
     centers_.push_back( sce->getRobotByName("GAUSSIAN_MU_16") );
 
-    w_.clear();
+//    w_.clear();
     w_.resize( centers_.size(), 1.0 );
     w_[0] = 10;
     w_[1] = 2;
@@ -58,13 +61,8 @@ void Spheres::initialize()
 
 double Spheres::cost( Configuration& q )
 {
-    double cost = 0.0;
-
     FeatureVect phi = features( q );
-
-    for( int i=0; i< int(phi.size()); i++ )
-        cost += w_[i]*phi[i];
-
+    double cost = w_.transpose()*phi;
     return cost;
 }
 
@@ -96,6 +94,35 @@ FeatureVect Spheres::getFeatureCount( const API::Trajectory& t )
     }
 
     return vect;
+}
+
+void Spheres::produceCostMap()
+{
+    double max_1, max_2;
+    double min_1, min_2;
+    robot_->getJoint(1)->getDofBounds( 0, min_1 ,max_1 );
+    robot_->getJoint(1)->getDofBounds( 1, min_2, max_2 );
+
+    int nb_cells = 100;
+    Eigen::MatrixXd mat( nb_cells, nb_cells );
+
+    for( int i=0; i<nb_cells; i++ )
+    {
+        for( int j=0; j<nb_cells; j++ )
+        {
+            confPtr_t q = robot_->getCurrentPos();
+            (*q)[6] = min_1 + double(i)*(max_1-min_1)/double(nb_cells-1);
+            (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(nb_cells-1);
+            mat(i,j) = cost(*q);
+        }
+    }
+
+    std::string filename("matlab/cost_map.txt");
+    cout << "Save cost map to : " << filename << endl;
+    std::ofstream file( filename.c_str() );
+    if (file.is_open())
+        file << mat << '\n';
+    file.close();
 }
 
 // ------------------------------------------------------

@@ -13,6 +13,7 @@ class Visibility;
 class Natural;
 
 typedef Eigen::VectorXd FeatureVect;
+typedef Eigen::VectorXd WeightVect;
 
 class Feature
 {

@@ -44,9 +44,27 @@ void HRICS_run_sphere_ioc()
 
     IocEvaluation eval(rob);
 
-    eval.loadDemonstrations();
+    bool generate_samples=true;
+
+    if( generate_samples )
+    {
+        eval.loadDemonstrations();
+        eval.runLearning();
+    }
+    else{
+        eval.compareDemosAndPlanned();
+    }
+
+//    eval.loadDemonstrations();
+//    eval.runLearning();
+//    eval.loadWeightVector();
 //    eval.generateDemonstrations();
-    eval.runLearning();
+//    eval.loadDemonstrations();
+//    eval.saveDemoToMatlab();
+
+//    eval.compareDemosAndPlanned();
+
+//    global_SphereCostFct->produceCostMap();
 }
 
 
@@ -58,76 +76,43 @@ void HRICS_run_sphere_ioc()
 IocEvaluation::IocEvaluation(Robot* rob) : robot_(rob)
 {
     nb_demos_ = 10;
-    nb_samples_ = 10;
+    nb_samples_ = 1000;
     folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
+    original_vect_ = global_SphereCostFct->getWeights();
+    nb_weights_ = original_vect_.size();
 }
 
-void IocEvaluation::produceCostMap()
+API::Trajectory IocEvaluation::planMotion()
 {
-    double max_1, max_2;
-    double min_1, min_2;
-    robot_->getJoint(1)->getDofBounds( 0, min_1 ,max_1 );
-    robot_->getJoint(1)->getDofBounds( 1, min_2, max_2 );
-
-    int nb_cells = 100;
-    Eigen::MatrixXd mat( nb_cells, nb_cells );
-
-    for( int i=0; i<nb_cells; i++ )
+    try
     {
-        for( int j=0; j<nb_cells; j++ )
-        {
-            confPtr_t q = robot_->getCurrentPos();
-            (*q)[6] = min_1 + double(i)*(max_1-min_1)/double(nb_cells-1);
-            (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(nb_cells-1);
-            mat(i,j) = q->cost();
+        p3d_run_rrt(robot_->getRobotStruct());
+
+        if( !ENV.getBool(Env::drawDisabled) ) {
+            g3d_draw_allwin_active();
         }
     }
+    catch (std::string str)
+    {
+        std::cerr << "Exeption in run rrt : " << endl;
+        std::cerr << str << endl;
+    }
+    catch (...)
+    {
+        std::cerr << "Exeption in run qt_runDiffusion" << endl;
+    }
 
-    std::ofstream file("matlab/cost_map.txt");
-    if (file.is_open())
-        file << mat << '\n';
-    file.close();
-}
-
-void IocEvaluation::trajToMatlab(const API::Trajectory& t) const
-{
-    API::Trajectory saved_traj(t);
-    int nb_way_points=100;
-    saved_traj.cutTrajInSmallLP(nb_way_points-1);
-
-    Eigen::MatrixXd mat = saved_traj.getEigenMatrix(6,7);
-
-    // Save traj to file
-    std::ofstream file_traj("matlab/traj.txt");
-    if (file_traj.is_open())
-        file_traj << mat << '\n';
-    file_traj.close();
+    return p3d_get_last_trajectory();
 }
 
 void IocEvaluation::generateDemonstrations()
 {
     for(int i=0;i<nb_demos_;i++)
     {
-        try
-        {
-            p3d_run_rrt(robot_->getRobotStruct());
-
-            if( !ENV.getBool(Env::drawDisabled) ) {
-                g3d_draw_allwin_active();
-            }
-        }
-        catch (std::string str)
-        {
-            std::cerr << "Exeption in run rrt : " << endl;
-            std::cerr << str << endl;
-        }
-        catch (...)
-        {
-            std::cerr << "Exeption in run qt_runDiffusion" << endl;
-        }
-
         std::stringstream ss;
         ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
+
+        planMotion();
 
         p3d_save_traj( ( folder_ + ss.str() ).c_str(), robot_->getRobotStruct()->tcur );
     }
@@ -157,6 +142,34 @@ void IocEvaluation::loadDemonstrations()
         demos_.push_back(T);
         global_trajToDraw.push_back(T);
     }
+}
+
+void IocEvaluation::loadWeightVector()
+{
+    cout << "Load weight vector" << endl;
+
+    learned_vect_ = Eigen::VectorXd::Zero( nb_weights_ );
+
+    // Load vector from file
+    std::ifstream file("matlab/weights.csv");
+    std::string line, cell;
+
+    int i=0;
+
+    if( file.good() )
+    {
+        std::getline( file, line );
+        std::stringstream lineStream( line );
+
+        while( std::getline( lineStream, cell, ',' ) )
+        {
+            std::istringstream iss( cell );
+            iss >> learned_vect_[i++];
+        }
+    }
+    file.close();
+
+    cout << " w : " << learned_vect_.transpose() << endl;
 }
 
 void IocEvaluation::runLearning()
@@ -196,7 +209,7 @@ void IocEvaluation::runLearning()
     saveToMatrix( phi_demo, phi_k );
 
     // Only for plannar robot
-    // produceCostMap();
+    // global_SphereCostFct->produceCostMap();
     // trajToMatlab(T);
 
     for( int i=0;i<1;i++)
@@ -204,6 +217,79 @@ void IocEvaluation::runLearning()
         Eigen::VectorXd w = ioc.solve( phi_demo, phi_k );
         cout << "w : " << w.transpose() << endl;
     }
+}
+
+Eigen::VectorXd IocEvaluation::getCostsOfDemonstrations() const
+{
+    Eigen::VectorXd costs(demos_.size());
+
+    for( int d=0;d<int(demos_.size());d++)
+    {
+        costs[d] = demos_[d].cost();
+    }
+
+    return costs;
+}
+
+void IocEvaluation::compareDemosAndPlanned()
+{
+    loadDemonstrations();
+
+    global_SphereCostFct->setWeights( original_vect_ );
+
+    Eigen::VectorXd costs_demo = getCostsOfDemonstrations();
+    Eigen::VectorXd costs_learned( costs_demo.size() );
+    learned_.resize( costs_demo.size() );
+
+    cout << ( costs_demo    ).transpose() << endl;
+
+    loadWeightVector();
+
+    for( int i=0;i<costs_demo.size();i++)
+    {
+        global_SphereCostFct->setWeights( learned_vect_ );
+        learned_[i] = planMotion();
+
+        global_SphereCostFct->setWeights( original_vect_ );
+        learned_[i].resetCostComputed();
+        costs_learned[i] = learned_[i].cost();
+    }
+
+    double mean_demo = costs_demo.mean();
+    double sq_sum_demo = costs_demo.transpose()*costs_demo;
+    double stdev_demo = std::sqrt( sq_sum_demo / double(costs_demo.size()) - (mean_demo * mean_demo) );
+
+    double mean_learned = costs_learned.mean();
+    double sq_sum_learned = costs_learned.transpose()*costs_learned;
+    double stdev_learned = std::sqrt( (sq_sum_learned / double(costs_learned.size())) - (mean_learned * mean_learned) );
+
+    cout << ( costs_demo    ).transpose() << endl;
+    cout << ( costs_learned ).transpose() << endl;
+
+    cout << "mean_demo : " << mean_demo << " , stdev_demo : " << stdev_demo << endl;
+    cout << "mean_learned : " << mean_learned << " , stdev_learned : " << stdev_learned << endl;
+
+    cout << "mean diff : " << mean_learned - mean_demo << " , stdev diff : " << stdev_learned - stdev_demo  << endl;
+}
+
+void IocEvaluation::saveDemoToMatlab()
+{
+    saveTrajToMatlab( demos_[0] );
+}
+
+void IocEvaluation::saveTrajToMatlab(const API::Trajectory& t) const
+{
+    API::Trajectory saved_traj(t);
+    int nb_way_points=100;
+    saved_traj.cutTrajInSmallLP(nb_way_points-1);
+
+    Eigen::MatrixXd mat = saved_traj.getEigenMatrix(6,7);
+
+    // Save traj to file
+    std::ofstream file_traj("matlab/traj.txt");
+    if (file_traj.is_open())
+        file_traj << mat << '\n';
+    file_traj.close();
 }
 
 void IocEvaluation::saveToMatrix( const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples )
@@ -248,8 +334,8 @@ void IocEvaluation::saveToMatrix( const std::vector<FeatureVect>& demos, const s
 
 IocTrajectory::IocTrajectory( int nb_joints, int nb_var  )
 {
-//    cout << "nb_joints : " << nb_joints << endl;
-//    cout << "nb_var : " << nb_var << endl;
+    //    cout << "nb_joints : " << nb_joints << endl;
+    //    cout << "nb_var : " << nb_var << endl;
 
     nominal_parameters_.clear();
     parameters_.clear();
@@ -275,7 +361,7 @@ IocTrajectory::IocTrajectory( int nb_joints, int nb_var  )
         cumulative_costs_.push_back( Eigen::VectorXd::Zero(nb_var) );
         probabilities_.push_back( Eigen::VectorXd::Zero(nb_var) );
 
-//        cout << "init parameters : " << parameters_.back().transpose() << endl;
+        //        cout << "init parameters : " << parameters_.back().transpose() << endl;
     }
     state_costs_ = Eigen::VectorXd::Zero(nb_var);
     out_of_bounds_ = false;
@@ -283,7 +369,7 @@ IocTrajectory::IocTrajectory( int nb_joints, int nb_var  )
 
 API::Trajectory IocTrajectory::getMove3DTrajectory( const ChompPlanningGroup* p_g ) const
 {
-     Robot* rob = p_g->robot_;
+    Robot* rob = p_g->robot_;
 
     if( parameters_.empty() )
     {
@@ -301,7 +387,7 @@ API::Trajectory IocTrajectory::getMove3DTrajectory( const ChompPlanningGroup* p_
         for ( int i=0; i<int(parameters_.size()); ++i )
             (*q)[joints[i].move3d_dof_index_] = parameters_[i][j];
 
-         T.push_back( q );
+        T.push_back( q );
     }
 
     return T;
@@ -635,7 +721,7 @@ double IocObjective::Eval( const DblVec& w, DblVec& dw )
         cout << "dw_n : " << dw_n.transpose() << endl;
         cout << "error : " << (dw_n - dw_).norm() << endl;
 
-//        exit(1);
+        //        exit(1);
     }
 
     return loss;

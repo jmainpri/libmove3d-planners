@@ -13,15 +13,19 @@ public:
     Spheres();
 
     void initialize();
-    void setWeights( const std::vector<double>& w ) { w_ = w; }
+    void setWeights( const WeightVect& w ) { w_ = w; }
+    WeightVect getWeights() { return w_; }
+
     double cost( Configuration& q );
     FeatureVect features( Configuration& q );
+    void produceCostMap();
 
     FeatureVect getFeatureCount(const API::Trajectory& t);
 
 private:
+    Robot* robot_;
     std::vector<Robot*> centers_;
-    std::vector<double> w_;
+    FeatureVect w_;
 };
 
 }

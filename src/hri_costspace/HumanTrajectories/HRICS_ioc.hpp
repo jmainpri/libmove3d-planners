@@ -20,20 +20,46 @@ class IocEvaluation
 public:
     IocEvaluation(Robot* rob);
 
-    void trajToMatlab(const API::Trajectory& t) const;
-    void produceCostMap();
+    //! Run learning using the C++ library
     void runLearning();
+
+    //! Generate demonstration using optimal planning
     void generateDemonstrations();
+
+    //! Load recorded traectories in the move3d format
     void loadDemonstrations();
-    void saveToMatrix(const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples );
+
+    //! Load weight vector from CSV format
+    void loadWeightVector();
+
+    void saveDemoToMatlab();
+
+    void compareDemosAndPlanned();
 
 private:
+    //! Compute the cost of the demos
+    Eigen::VectorXd getCostsOfDemonstrations() const;
+
+    //! Save trajectory to matrix
+    void saveTrajToMatlab(const API::Trajectory& t) const;
+
+    //! Save all the feature in a matrix
+    //! that can be read by Matlab
+    void saveToMatrix(const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples );
+
+    //! Plans a motion using the costmap
+    API::Trajectory planMotion();
+
     Robot* robot_;
     int nb_demos_;
     int nb_samples_;
+    int nb_weights_;
     std::string folder_;
     std::vector<API::Trajectory> demos_;
     std::vector<API::Trajectory> samples_;
+    std::vector<API::Trajectory> learned_;
+    WeightVect learned_vect_;
+    WeightVect original_vect_;
 };
 
 //! Trajectory structure
