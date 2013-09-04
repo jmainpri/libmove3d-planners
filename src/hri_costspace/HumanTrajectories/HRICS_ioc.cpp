@@ -231,11 +231,20 @@ Eigen::VectorXd IocEvaluation::getCostsOfDemonstrations() const
     return costs;
 }
 
+void IocEvaluation::setLearnedWeights()
+{
+    global_SphereCostFct->setWeights( learned_vect_ );
+}
+
+void IocEvaluation::setOriginalWeights()
+{
+    global_SphereCostFct->setWeights( original_vect_ );
+}
+
 void IocEvaluation::compareDemosAndPlanned()
 {
     loadDemonstrations();
-
-    global_SphereCostFct->setWeights( original_vect_ );
+    setOriginalWeights();
 
     Eigen::VectorXd costs_demo = getCostsOfDemonstrations();
     Eigen::VectorXd costs_learned( costs_demo.size() );
@@ -247,10 +256,10 @@ void IocEvaluation::compareDemosAndPlanned()
 
     for( int i=0;i<costs_demo.size();i++)
     {
-        global_SphereCostFct->setWeights( learned_vect_ );
+        setLearnedWeights();
         learned_[i] = planMotion();
 
-        global_SphereCostFct->setWeights( original_vect_ );
+        setOriginalWeights();
         learned_[i].resetCostComputed();
         costs_learned[i] = learned_[i].cost();
     }
@@ -736,10 +745,6 @@ Eigen::VectorXd Ioc::solve( const std::vector<Eigen::VectorXd>& phi_demo, const 
     }
 
     size_t size = phi_demo[0].size();
-    bool quiet=false;
-    int m = 50;
-    double regweight=1;
-    double tol = 1e-6;
 
     IocObjective obj;
     obj.phi_demo_ = phi_demo;
@@ -763,6 +768,12 @@ Eigen::VectorXd Ioc::solve( const std::vector<Eigen::VectorXd>& phi_demo, const 
 //        init[i] = p3d_random(1,2);
         init[i] = 1;
     }
+
+    bool quiet=false;
+    int m = 50;
+    double regweight=1;
+    double tol = 1e-6;
+
     OWLQN opt(quiet);
     opt.Minimize( obj, init, ans, regweight, tol, m );
     */

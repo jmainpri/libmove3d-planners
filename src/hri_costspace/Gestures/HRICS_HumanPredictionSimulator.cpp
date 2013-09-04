@@ -92,7 +92,9 @@ void HRICS_initOccupancyPredictionFramework()
     //simulator->loadHumanTrajectory( recorder->getStoredMotions()[GestEnv->getInt(GestParam::human_traj_id)] );
 
     // GUI global variables
-    global_motionRecorder = recorder;
+    if( global_motionRecorders.empty() )
+        global_motionRecorders.push_back( recorder );
+
     global_classifyMotion = classifier;
     global_workspaceOccupancy = occupancyGrid;
     global_humanPredictionCostSpace = predictionSpace;

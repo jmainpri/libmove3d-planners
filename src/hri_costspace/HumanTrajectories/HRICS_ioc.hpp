@@ -32,8 +32,10 @@ public:
     //! Load weight vector from CSV format
     void loadWeightVector();
 
+    //! Save 2D traj to file for Matlab
     void saveDemoToMatlab();
 
+    //! Compute costs using the original costs and the learned costs
     void compareDemosAndPlanned();
 
 private:
@@ -49,6 +51,9 @@ private:
 
     //! Plans a motion using the costmap
     API::Trajectory planMotion();
+
+    void setLearnedWeights();
+    void setOriginalWeights();
 
     Robot* robot_;
     int nb_demos_;

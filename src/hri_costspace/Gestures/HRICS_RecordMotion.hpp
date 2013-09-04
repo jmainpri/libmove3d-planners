@@ -45,7 +45,9 @@ public:
     void showStoredMotion();
     void showCurrentMotion();
     void showMotion( const motion_t& motion );
-    bool setConfiguration(int ith);
+
+    bool setRobotToStoredMotionConfig(int motion_id, int config_id);
+    bool setRobotToConfiguration(int ith);
     bool setShowMotion(int ith);
 
     void drawMotion( const motion_t& motion );
@@ -76,6 +78,7 @@ private:
 };
 }
 
-extern HRICS::RecordMotion* global_motionRecorder;
+extern std::vector<HRICS::RecordMotion*> global_motionRecorders;
+extern void show_recorded_human_motions();
 
 #endif // RECORDMOTION_HPP

@@ -17,7 +17,7 @@
 using namespace std;
 using namespace HRICS;
 
-RecordMotion* global_motionRecorder=NULL;
+std::vector<RecordMotion*> global_motionRecorders;
 
 template <class T>
 bool convert_text_to_num(T& t,
@@ -494,7 +494,7 @@ void RecordMotion::storeMotion( const motion_t& motion, bool new_motion )
     }
 }
 
-bool RecordMotion::setConfiguration(int ith)
+bool RecordMotion::setRobotToConfiguration(int ith)
 {
     if( ith < 0 || ith >= int(m_motion.size()) ) {
         cout << "index out of range in " << __func__ << endl;
@@ -503,6 +503,30 @@ bool RecordMotion::setConfiguration(int ith)
 
     cout << m_motion[ith].first << endl;
     m_robot->setAndUpdate( *m_motion[ith].second );
+    return true;
+}
+
+bool RecordMotion::setRobotToStoredMotionConfig(int motion_id, int config_id)
+{
+    if( motion_id < 0 || ( motion_id > int(m_stored_motions[motion_id].size())))
+    {
+        cout << "index out of stored motion range in " << __func__ << endl;
+        return false;
+    }
+
+    if( config_id < 0 || config_id >= int(m_stored_motions[motion_id].size()) ) {
+        cout << "index out of range in " << __func__ << endl;
+        return false;
+    }
+
+
+    m_robot->setAndUpdate( *m_stored_motions[motion_id][config_id].second );
+
+//    if(use_camera_)
+//    {
+//        _camera->pubImage(m_times[config_id]);
+//    }
+
     return true;
 }
 

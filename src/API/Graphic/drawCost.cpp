@@ -489,8 +489,10 @@ void g3d_draw_hrics(int opengl_context)
     if( GestEnv->getBool(GestParam::draw_robot_sampled_points) && global_humanPredictionCostSpace )
         global_humanPredictionCostSpace->draw();
 
-    if( global_motionRecorder )
-        global_motionRecorder->draw();
+    for( int i=0;i<global_motionRecorders.size();i++ )
+    {
+        global_motionRecorders[i]->draw();
+    }
 
     int OTPListSize = OTPList.size();
     if( ENV.getBool(Env::enableHri) )

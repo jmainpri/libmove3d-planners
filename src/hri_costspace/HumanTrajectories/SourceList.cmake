@@ -5,6 +5,7 @@ HRICS_features.cpp
 HRICS_TrajectoryEvaluator.cpp
 HRICS_ioc.cpp
 HRICS_spheres.cpp
+HRICS_HumanIoc.cpp
 )
 
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})
