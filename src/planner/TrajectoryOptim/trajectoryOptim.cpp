@@ -989,6 +989,7 @@ bool traj_optim_init_collision_spaces()
     if (m_init == true)
         return true;
 
+    // THE ROBOT IS SET HERE!!!!
     m_robot = global_Project->getActiveScene()->getActiveRobot();
     //m_robot = global_Project->getActiveScene()->getRobotByNameContaining("ROBOT");
 
@@ -1476,7 +1477,7 @@ bool traj_optim_initStomp()
 
 bool traj_optim_runStomp( int runId )
 {
-    //    cout << "Robot is : " << m_robot->getName() << endl;
+//    cout << "Robot is : " << m_robot->getName() << endl;
 
     if(!traj_optim_initStomp() )
     {

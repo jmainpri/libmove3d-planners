@@ -36,6 +36,28 @@ private:
     int nb_way_points_;
 };
 
+class HumanTrajSimulator
+{
+public:
+    HumanTrajSimulator(  Robot* active, Robot* passive  );
+
+    bool init();
+    bool run();
+
+private:
+
+    Robot* human_active_;
+    Robot* human_passive_;
+
+    confPtr_t q_init_;
+    confPtr_t q_goal_;
+
+    HumanTrajCostSpace cost_space_;
+
+    bool init_scenario_;
+
+};
+
 }
 
 extern HRICS::HumanTrajCostSpace* global_humanTrajectoryCostSpace;

@@ -2,6 +2,11 @@
 
 #include "HRICS_PlayMotion.hpp"
 #include "API/project.hpp"
+#include "planner/cost_space.hpp"
+#include "planner/TrajectoryOptim/trajectoryOptim.hpp"
+#include "p3d/env.hpp"
+
+#include <boost/bind.hpp>
 
 using namespace HRICS;
 using std::cout;
@@ -47,8 +52,67 @@ void HRICS_run_human_planning()
         player.play(i);
     }
 
-    HumanTrajCostSpace cost_space( human1, human2 );
-    cost_space.setPassiveTrajectory( global_motionRecorders[1]->getStoredMotions()[0] );
+    // Define cost functions
+    ENV.setBool(Env::isCostSpace,true);
+    global_costSpace->addCost( "costHumanTrajecoryCost" , boost::bind(HRICS_getHumanTrajectoryCost, _1) );
+    global_costSpace->setCost( "costHumanTrajecoryCost" );
+
+    HumanTrajSimulator sim( human2, human1 );
+    sim.init();
+    sim.run();
+}
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+// Human Trajectory Simulator
+
+HumanTrajSimulator::HumanTrajSimulator(  Robot* active, Robot* passive  )  :
+    human_active_(active),
+    human_passive_(passive),
+    cost_space_( active, passive ),
+    init_scenario_(false)
+{
+    cout << "Human active : " << human_active_->getName() << endl;
+    cout << "Human passive : " << human_passive_->getName() << endl;
+}
+
+bool HumanTrajSimulator::init()
+{
+    const motion_t& motion_pas = global_motionRecorders[0]->getStoredMotions()[0];
+    const motion_t& motion_act = global_motionRecorders[1]->getStoredMotions()[0];
+
+    if( motion_act.empty() )
+    {
+        return false;
+    }
+    q_init_ = motion_act[0].second;
+    q_goal_ = motion_act.back().second;
+
+    // Adds the trajectory from the passive robot
+    // to the cost space
+    cost_space_.setPassiveTrajectory( motion_pas );
+
+    // Sets the active robot as active for planning
+    global_Project->getActiveScene()->setActiveRobot( human_active_->getName() );
+
+    // Set init and goal config
+    human_active_->setInitPos( *q_init_ );
+    human_active_->setGoalPos( *q_goal_ );
+
+    return true;
+}
+
+
+bool HumanTrajSimulator::run()
+{
+    cout << "run human traj simulator" << endl;
+//    if( !init_scenario_ )
+//    {
+//        traj_optim_initScenario();
+//    }
+
+    traj_optim_runStomp(0);
+    return true;
 }
 
 //----------------------------------------------------------------------

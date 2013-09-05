@@ -2,7 +2,6 @@ SET(BM3D_MODULE_NAME_TMP2 ${BM3D_MODULE_NAME})
 SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME}/HumanTrajectories)
 BM3D_SRC_SUBDIR_PROCESS(
 HRICS_features.cpp
-HRICS_TrajectoryEvaluator.cpp
 HRICS_ioc.cpp
 HRICS_spheres.cpp
 HRICS_HumanIoc.cpp
