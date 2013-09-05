@@ -319,6 +319,7 @@ public:
      */
     Eigen::VectorXd getEigenVector();
     Eigen::VectorXd getEigenVector(int startIndex, int endIndex);
+    Eigen::VectorXd getEigenVector(const std::vector<int>& indices);
 
     /**
      * set the Eigen Vector of the configuration

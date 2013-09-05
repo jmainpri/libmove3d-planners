@@ -1,4 +1,4 @@
-#include "HRICS_PlayMotion.hpp"\
+#include "HRICS_PlayMotion.hpp"
 #include "planEnvironment.hpp"
 #include "Graphic-pkg.h"
 #include <sys/time.h>

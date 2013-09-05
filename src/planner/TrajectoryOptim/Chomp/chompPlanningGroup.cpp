@@ -58,6 +58,17 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
   num_joints_ = chomp_joints_.size();
 }
 
+std::vector<int> ChompPlanningGroup::getActiveDofs() const
+{
+    std::vector<int> active_joints;
+    for(int i=0;i<int(chomp_joints_.size());i++)
+    {
+        active_joints.push_back( chomp_joints_[i].move3d_dof_index_ );
+    }
+
+    return active_joints;
+}
+
 bool ChompPlanningGroup::addCollisionPoint(CollisionPoint& collision_point)
 {
   // create the new parent joints indexing vector:

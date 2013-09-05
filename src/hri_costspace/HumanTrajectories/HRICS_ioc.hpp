@@ -21,7 +21,7 @@ public:
     IocEvaluation(Robot* rob);
 
     //! Run learning using the C++ library
-    void runLearning();
+    virtual void runLearning();
 
     //! Generate demonstration using optimal planning
     void generateDemonstrations();
@@ -38,7 +38,7 @@ public:
     //! Compute costs using the original costs and the learned costs
     void compareDemosAndPlanned();
 
-private:
+protected:
     //! Compute the cost of the demos
     Eigen::VectorXd getCostsOfDemonstrations() const;
 
@@ -52,19 +52,23 @@ private:
     //! Plans a motion using the costmap
     API::Trajectory planMotion();
 
-    void setLearnedWeights();
-    void setOriginalWeights();
+    virtual void setLearnedWeights();
+    virtual void setOriginalWeights();
 
     Robot* robot_;
     int nb_demos_;
     int nb_samples_;
     int nb_weights_;
+    int nb_way_points_;
     std::string folder_;
     std::vector<API::Trajectory> demos_;
     std::vector<API::Trajectory> samples_;
     std::vector<API::Trajectory> learned_;
     WeightVect learned_vect_;
     WeightVect original_vect_;
+    std::string feature_matrix_name_;
+    std::vector<int> active_joints_;
+    Feature* feature_fct_;
 };
 
 //! Trajectory structure

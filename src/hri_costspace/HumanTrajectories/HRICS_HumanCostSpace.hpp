@@ -1,34 +1,46 @@
 #include "API/Device/robot.hpp"
 
-double HRICS_getHumanTrajectoryCost(Configuration& q);
+#include "HRICS_features.hpp"
+#include "hri_costspace/Gestures/HRICS_RecordMotion.hpp"
 
 namespace HRICS
 {
-class HumanTrajCostSpace
+
+class HumanTrajCostSpace : public Feature
 {
 
 public:
-    HumanTrajCostSpace();
+    HumanTrajCostSpace( Robot* active, Robot* passive );
     ~HumanTrajCostSpace();
-
-    void setActiveHuman(Robot* human) { m_human_active = human; }
-    void setPassiveHuman(Robot* human) { m_human_passive = human; }
 
     void draw() { }
 
     double getCost(Configuration& q) const;
 
+    FeatureVect getFeatureCount(const API::Trajectory& t);
+
+    //! Add a passive trajectory
+    void setPassiveTrajectory( const motion_t& traj );
+
 private:
 
-    double getDistance();
-    double getVisibility();
-    double getLegibility();
+    FeatureVect getDistance();
+    FeatureVect getVisibility();
+    FeatureVect getLegibility();
+    FeatureVect getMuskuloskeletal();
 
-    Robot* m_human_active;
-    Robot* m_human_passive;
+    Robot* human_active_;
+    Robot* human_passive_;
+
+    API::Trajectory passive_traj_;
+    int nb_way_points_;
 };
+
 }
 
 extern HRICS::HumanTrajCostSpace* global_humanTrajectoryCostSpace;
 
+double HRICS_getHumanTrajectoryCost(Configuration& q);
 
+//! main test function for human planning
+void HRICS_run_human_planning();

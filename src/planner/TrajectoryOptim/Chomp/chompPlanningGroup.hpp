@@ -68,6 +68,11 @@ public:
     bool addCollisionPoint(CollisionPoint& collision_point);
 
     /**
+      * Returns the Move3d active dofs
+      */
+    std::vector<int> getActiveDofs() const;
+
+    /**
    * Displays all bounding spheres
    */
     void draw() const;

@@ -19,7 +19,13 @@ class Feature
 {
 public:
     Feature() {}
+
     virtual FeatureVect getFeatureCount(const API::Trajectory& t) = 0;
+
+    void setWeights( const WeightVect& w ) { w_ = w; }
+    WeightVect getWeights() { return w_; }
+
+    FeatureVect w_;
 };
 
 class DistanceFeature : public Feature

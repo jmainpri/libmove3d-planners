@@ -1,6 +1,7 @@
 #include "HRICS_HumanIoc.hpp"
-#include "HRICS_RecordMotion.hpp"
+
 #include "HRICS_PlayMotion.hpp"
+#include "HRICS_features.hpp"
 #include "API/project.hpp"
 
 using namespace HRICS;
@@ -27,14 +28,118 @@ void HRICS_run_human_ioc()
     global_motionRecorders[1]->loadCSVFolder( foldername + "/human1");
 
     HRICS::PlayMotion player( global_motionRecorders );
-
-    int i=0;
-    for( i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
+//    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
+    for(int i=0;i<int(1);i++)
     {
         player.play(i);
     }
+
+    HumanIoc ioc( human1 );
+    ioc.setDemos( global_motionRecorders[0]->getStoredMotions() );
+    ioc.runLearning();
 }
 
-HumanIoc::HumanIoc()
+HumanIoc::HumanIoc(Robot* human) : IocEvaluation(human)
 {
+    nb_demos_ = 10;
+    nb_samples_ = 10;
+    nb_way_points_ = 20;
+    folder_ = "/home/jmainpri/workspace/move3d/assets/Collaboration/TRAJECTORIES/";
+
+    feature_matrix_name_ = "matlab/features.txt";
+    feature_fct_ = new HRICS::DistanceFeature();
+
+    original_vect_ = feature_fct_->getWeights();
+    nb_weights_ = original_vect_.size();
+
+    setPlanningGroup();
+}
+
+void HumanIoc::setPlanningGroup()
+{
+    std::vector<int> pj(1); pj[0] = 1;
+
+    // Set the active joints (links)
+    active_joints_.clear();
+    active_joints_.push_back( 1 ); // Pelvis
+    active_joints_.push_back( 2 ); // TorsoX
+    active_joints_.push_back( 3 ); // TorsoY
+    active_joints_.push_back( 4 ); // TorsoZ
+    active_joints_.push_back( 8 ); // rShoulderX
+    active_joints_.push_back( 9 ); // rShoulderZ
+    active_joints_.push_back( 10 ); // rShoulderY
+    active_joints_.push_back( 11 ); // rArmTrans
+    active_joints_.push_back( 12 ); // rElbowZ
+
+    active_joints_.push_back( 13 );
+    active_joints_.push_back( 14 );
+    active_joints_.push_back( 15 );
+    active_joints_.push_back( 16 );
+}
+
+void HumanIoc::setDemos( const std::vector<motion_t>& stored_motions )
+{
+    nb_demos_ = stored_motions.size();
+    demos_.clear();
+    demos_.resize( nb_demos_ );
+
+    for(int i=0;i<int(demos_.size());i++)
+    {
+        demos_[i] = getTrajectoryFromMotion( stored_motions[i] );
+    }
+}
+
+API::Trajectory HumanIoc::getTrajectoryFromMotion( const motion_t& m ) const
+{
+    API::Trajectory t( robot_ );
+
+    for(int i=0;i<int(m.size());i++)
+        t.push_back( m[i].second->copy() );
+
+    t.cutTrajInSmallLP( nb_way_points_-1 );
+
+    return t;
+}
+
+void HumanIoc::runLearning()
+{
+    // Comment it to generate less demos
+    nb_demos_ = 1;
+
+    ChompPlanningGroup* plangroup = new ChompPlanningGroup( robot_, active_joints_ );
+    std::vector<int> active_dofs = plangroup->getActiveDofs();
+
+    // Create IOC sampling object
+    HRICS::Ioc ioc( nb_way_points_, plangroup );
+
+    // Get features of demos
+    std::vector<FeatureVect> phi_demo(nb_demos_);
+    for(int i=0;i<nb_demos_;i++)
+    {
+        FeatureVect phi = feature_fct_->getFeatureCount( demos_[i] );
+        cout << "Feature Demo : " << phi.transpose() << endl;
+        ioc.addDemonstration( demos_[i].getEigenMatrix( active_dofs ) );
+        phi_demo[i] = phi;
+    }
+
+    // Get features of samples
+    ioc.generateSamples( nb_samples_ );
+    std::vector< std::vector<API::Trajectory> > samples = ioc.getSamples();
+    std::vector< std::vector<FeatureVect> > phi_k( samples.size() );
+    for( int d=0;d<int(samples.size());d++)
+    {
+        for( int i=0;i<int(samples[d].size());i++)
+        {
+            phi_k[d].push_back( feature_fct_->getFeatureCount( samples[d][i] ) );
+            cout << "Feature(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
+        }
+    }
+
+//    saveToMatrix( phi_demo, phi_k );
+
+//    for( int i=0;i<1;i++)
+//    {
+//        Eigen::VectorXd w = ioc.solve( phi_demo, phi_k );
+//        cout << "w : " << w.transpose() << endl;
+//    }
 }

@@ -2196,33 +2196,59 @@ vector<double> Trajectory::getCostAlongTrajectory(int nbSample)
 // The number of cols is the number of waypoints
 Eigen::MatrixXd Trajectory::getEigenMatrix(int startIndex, int endIndex) const
 {
+    if( startIndex==0 && endIndex==0)
+    {
+        if( m_Courbe.size() > 0 )
+        {
+            int rows = m_Courbe[0]->getBegin()->getEigenVector().size();
+            int cols = m_Courbe.size()+1;
+
+            Eigen::MatrixXd mat( rows, cols );
+
+            for (int j=0; j<int(m_Courbe.size()); j++)
+            {
+                mat.col(j) = m_Courbe[j]->getBegin()->getEigenVector();
+            }
+
+            if( m_Courbe.size()-1 >= 0 )
+            {
+                mat.col(m_Courbe.size()) = m_Courbe.back()->getEnd()->getEigenVector();
+            }
+
+            return mat;
+        }
+        else{
+            return Eigen::MatrixXd(0,0);
+        }
+    }
+    else
+    {
+        // Get indicies in order
+        std::vector<int> incides;
+        for(int i=startIndex;i<=endIndex;i++)
+            incides.push_back(i);
+
+        return getEigenMatrix( incides );
+    }
+}
+
+Eigen::MatrixXd Trajectory::getEigenMatrix(const std::vector<int>& incides) const
+{
     if( m_Courbe.size() > 0 )
     {
-        int rows=0;
-
-        if( startIndex==0 && endIndex==0 )
-            rows = m_Courbe[0]->getBegin()->getEigenVector().size();
-        else
-            rows = endIndex - startIndex + 1;
-
+        int rows = incides.size();
         int cols = m_Courbe.size()+1;
 
         Eigen::MatrixXd mat( rows, cols );
 
         for (int j=0; j<int(m_Courbe.size()); j++)
         {
-            if( startIndex==0 && endIndex==0 )
-                mat.col(j) = m_Courbe[j]->getBegin()->getEigenVector();
-            else
-                mat.col(j) = m_Courbe[j]->getBegin()->getEigenVector( startIndex, endIndex );
+            mat.col(j) = m_Courbe[j]->getBegin()->getEigenVector( incides );
         }
 
         if( m_Courbe.size()-1 >= 0 )
         {
-            if( startIndex==0 && endIndex==0 )
-                mat.col(m_Courbe.size()) = m_Courbe.back()->getEnd()->getEigenVector();
-            else
-                mat.col(m_Courbe.size()) = m_Courbe.back()->getEnd()->getEigenVector( startIndex, endIndex );
+            mat.col(m_Courbe.size()) = m_Courbe.back()->getEnd()->getEigenVector( incides );
         }
 
         return mat;

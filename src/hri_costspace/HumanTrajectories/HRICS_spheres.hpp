@@ -13,8 +13,6 @@ public:
     Spheres();
 
     void initialize();
-    void setWeights( const WeightVect& w ) { w_ = w; }
-    WeightVect getWeights() { return w_; }
 
     double cost( Configuration& q );
     FeatureVect features( Configuration& q );
@@ -25,7 +23,6 @@ public:
 private:
     Robot* robot_;
     std::vector<Robot*> centers_;
-    FeatureVect w_;
 };
 
 }

@@ -1,13 +1,22 @@
 #ifndef HRICS_HUMANIOC_HPP
 #define HRICS_HUMANIOC_HPP
 
+#include "HRICS_ioc.hpp"
+#include "hri_costspace/Gestures/HRICS_RecordMotion.hpp"
+
 namespace HRICS
 {
 
-class HumanIoc
+class HumanIoc : public IocEvaluation
 {
 public:
-    HumanIoc();
+    HumanIoc(Robot* human);
+
+    void runLearning();
+    void setPlanningGroup();
+    void setDemos( const std::vector<motion_t>& stored_motions );
+private:
+    API::Trajectory getTrajectoryFromMotion( const motion_t& m ) const;
 };
 
 }

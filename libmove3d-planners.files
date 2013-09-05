@@ -346,12 +346,10 @@
 /home/jmainpri/workspace/move3d/libmove3d-planners/CMakeLists.txt
 src/hri_costspace/HumanTrajectories/HRICS_features.hpp
 src/hri_costspace/HumanTrajectories/HRICS_features.cpp
-src/hri_costspace/HumanTrajectories/HRICS_TrajectoryEvaluator.cpp
 src/hri_costspace/HRICS_Legibility.hpp
 src/hri_costspace/HRICS_Legibility.cpp
 src/hri_costspace/HumanTrajectories/HRICS_ioc.hpp
 src/hri_costspace/HumanTrajectories/HRICS_ioc.cpp
-src/hri_costspace/HumanTrajectories/HRICS_TrajectoryEvaluator.hpp
 src/hri_costspace/HumanTrajectories/HRICS_spheres.hpp
 src/hri_costspace/HumanTrajectories/HRICS_spheres.cpp
 src/hri_costspace/HRICS_parameters.hpp

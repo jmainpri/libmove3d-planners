@@ -77,9 +77,20 @@ IocEvaluation::IocEvaluation(Robot* rob) : robot_(rob)
 {
     nb_demos_ = 10;
     nb_samples_ = 1000;
+    nb_way_points_ = 20;
     folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
-    original_vect_ = global_SphereCostFct->getWeights();
-    nb_weights_ = original_vect_.size();
+
+    std::vector<int> aj(1); aj[0] = 1;
+    active_joints_ = aj;
+
+    feature_matrix_name_ = "matlab/features.txt";
+
+    if( global_SphereCostFct != NULL )
+    {
+        feature_fct_ = global_SphereCostFct;
+        original_vect_ = feature_fct_->getWeights();
+        nb_weights_ = original_vect_.size();
+    }
 }
 
 API::Trajectory IocEvaluation::planMotion()
@@ -174,20 +185,16 @@ void IocEvaluation::loadWeightVector()
 
 void IocEvaluation::runLearning()
 {
-    std::vector<int> planner_joints(1);
-    planner_joints[0] = 1;
-    ChompPlanningGroup* plangroup = new ChompPlanningGroup( robot_, planner_joints );
+    ChompPlanningGroup* plangroup = new ChompPlanningGroup( robot_, active_joints_ );
 
-    int nb_way_points = 20;
-
-    HRICS::Ioc ioc( nb_way_points, plangroup );
+    HRICS::Ioc ioc( nb_way_points_, plangroup );
 
     // Get features of demos
     std::vector<FeatureVect> phi_demo(demos_.size());
     for(int i=0;i<int(demos_.size());i++)
     {
-        demos_[i].cutTrajInSmallLP( nb_way_points-1 );
-        FeatureVect phi = global_SphereCostFct->getFeatureCount( demos_[i] );
+        demos_[i].cutTrajInSmallLP( nb_way_points_-1 );
+        FeatureVect phi = feature_fct_->getFeatureCount( demos_[i] );
         cout << "Feature Demo : " << phi.transpose() << endl;
         ioc.addDemonstration( demos_[i].getEigenMatrix(6,7) );
         phi_demo[i] = phi;
@@ -201,7 +208,7 @@ void IocEvaluation::runLearning()
     {
         for( int i=0;i<int(samples[d].size());i++)
         {
-            phi_k[d].push_back( global_SphereCostFct->getFeatureCount( samples[d][i] ) );
+            phi_k[d].push_back( feature_fct_->getFeatureCount( samples[d][i] ) );
             cout << "Feature(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
         }
     }
@@ -233,12 +240,12 @@ Eigen::VectorXd IocEvaluation::getCostsOfDemonstrations() const
 
 void IocEvaluation::setLearnedWeights()
 {
-    global_SphereCostFct->setWeights( learned_vect_ );
+    feature_fct_->setWeights( learned_vect_ );
 }
 
 void IocEvaluation::setOriginalWeights()
 {
-    global_SphereCostFct->setWeights( original_vect_ );
+    feature_fct_->setWeights( original_vect_ );
 }
 
 void IocEvaluation::compareDemosAndPlanned()
@@ -330,7 +337,7 @@ void IocEvaluation::saveToMatrix( const std::vector<FeatureVect>& demos, const s
     }
 
     // Save traj to file
-    std::ofstream file("matlab/features.txt");
+    std::ofstream file( feature_matrix_name_.c_str() );
     if (file.is_open())
         file << mat << '\n';
     file.close();
