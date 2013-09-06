@@ -119,7 +119,7 @@ void g3d_draw_eigen_box(	const Eigen::Vector3d& v1, const Eigen::Vector3d& v2, c
 void g3d_draw_multistomp_lines()
 {
     std::map<Robot*, std::vector<Eigen::Vector3d> >::const_iterator itr;
-//    cout << "draw multiple stomp lines" << endl;
+    //    cout << "draw multiple stomp lines" << endl;
 
     for(itr = global_MultiStomplinesToDraw.begin(); itr != global_MultiStomplinesToDraw.end(); ++itr)
     {
@@ -151,11 +151,11 @@ void g3d_draw_multistomp_lines()
             //g3d_drawOneLine(m_lastLine[i+0][0],m_lastLine[i+0][1],m_lastLine[i+0][2],
             //                m_lastLine[i+1][0],m_lastLine[i+1][1],m_lastLine[i+1][2],Any,color);
 
-//            if( i == int(m_lastLine.size()-2))
-//            {
-//                //g3d_drawSphere(m_lastLine[i+1][0],m_lastLine[i+1][1],m_lastLine[i+1][2],0.01);
-//                g3d_draw_solid_sphere(m_lastLine[i+1][0],m_lastLine[i+1][1],m_lastLine[i+1][2],0.01,10);
-//            }
+            //            if( i == int(m_lastLine.size()-2))
+            //            {
+            //                //g3d_drawSphere(m_lastLine[i+1][0],m_lastLine[i+1][1],m_lastLine[i+1][2],0.01);
+            //                g3d_draw_solid_sphere(m_lastLine[i+1][0],m_lastLine[i+1][1],m_lastLine[i+1][2],0.01,10);
+            //            }
         }
     }
 }
@@ -418,7 +418,7 @@ void g3d_draw_grids()
         global_collisionSpace->drawCollisionPoints();
     }
 
-    if ((global_optimizer.get() != NULL) && ENV.getBool(Env::drawTraj))
+    if ( global_optimizer && ENV.getBool(Env::drawTraj))
     {
         global_optimizer->draw();
     }
@@ -856,7 +856,7 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
         Configuration	q_Cost(r_Cost,cost_q);
 
         std::cout << "Cost for " << r_Cost->getName() << " = " << global_costSpace->cost(q_Cost) << std::endl;
-//        std::cout << "Cost for " << r_Cost->getName() << " = " << HRICS_getPredictionOccupancyCost(q_Cost) << endl;
+        //        std::cout << "Cost for " << r_Cost->getName() << " = " << HRICS_getPredictionOccupancyCost(q_Cost) << endl;
     }
 
     if( global_collisionSpace )

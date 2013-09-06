@@ -1028,7 +1028,7 @@ double StompOptimizer::getCollisionCost()
             {
                 cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
                 state_collision_cost += cumulative;
-                //                state_collision_cost += collision_point_potential_(i,j);
+                // state_collision_cost += collision_point_potential_(i,j);
             }
         }
 
@@ -1244,14 +1244,16 @@ double StompOptimizer::getCollisionSpaceCost( Configuration& q )
     // Calculate the 3d position of every collision point
     for (int j=0; j<num_collision_points_; j++)
     {
-        /* bool colliding = */ getConfigObstacleCost( free_vars_start_, j, q );
+        /* bool colliding = */ getConfigObstacleCost( free_vars_start_, j );
         state_collision_cost += collision_point_potential_( free_vars_start_, j ); // * collision_point_vel_mag_( free_vars_start_, j );
+
+        cout << "collision_point_potential_( " << free_vars_start_ << " , " <<  j << " ) : " << collision_point_potential_( free_vars_start_, j ) << endl;
     }
     
     return state_collision_cost;
 }
 
-void StompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array, Configuration& q )
+void StompOptimizer::getFrames( int segment, const Eigen::VectorXd& joint_array, Configuration& q )
 {
     q = *robot_model_->getCurrentPos();
 
@@ -1273,11 +1275,14 @@ void StompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array, 
     }
 
     robot_model_->setAndUpdate( q );
+    // g3d_draw_allwin_active();
 
     // Get the collision point position
     for(int j=0; j<planning_group_->num_joints_;j++)
     {
         Eigen::Transform3d t = joints[j].move3d_joint_->getMatrixPos();
+
+        //cout << "joints[" << j<< "].move3d_joint_ : " << joints[j].move3d_joint_->getName() << endl;
 
         std::vector<double> vect;
         eigenTransformToStdVector(t,vect);
@@ -1294,25 +1299,32 @@ void StompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array, 
     }
 }
 
-bool StompOptimizer::getConfigObstacleCost(int segment, int coll_point, Configuration& q)
+bool StompOptimizer::getConfigObstacleCost( int segment, int coll_point )
 {
     bool colliding = false;
 
-    if(collision_space_ /*&& (use_costspace_==false)*/ )
+    if( collision_space_ /*&& (use_costspace_==false)*/ )
     {
-        int i= segment;
-        int j= coll_point;
+        int i = segment;
+        int j = coll_point;
         double distance;
 
         planning_group_->collision_points_[j].getTransformedPosition( segment_frames_[i], collision_point_pos_eigen_[i][j] );
 
         // To fix in collision space
         // The joint 1 is allways colliding
-        colliding = collision_space_->getCollisionPointPotentialGradient(planning_group_->collision_points_[j],
-                                                                         collision_point_pos_eigen_[i][j],
-                                                                         distance,
-                                                                         collision_point_potential_(i,j),
-                                                                         collision_point_potential_gradient_[i][j]);
+        colliding = collision_space_->getCollisionPointPotentialGradient( planning_group_->collision_points_[j],
+                                                                          collision_point_pos_eigen_[i][j],
+                                                                          distance,
+                                                                          collision_point_potential_(i,j),
+                                                                          collision_point_potential_gradient_[i][j] );
+
+//        cout << "distance( " << i << ", " << j << " ) : " << distance << endl;
+        //cout << "collision_point_potential_(" << i << ", " << j << " ) : " << collision_point_potential_(i,j) << endl;
+//        if( collision_point_potential_(i,j) != 0.0 )
+//        {
+//            cout << "collision_point_potential_(" << i << ", " << j << " ) : " << collision_point_potential_(i,j) << endl;
+//        }
     }
 
     return colliding;
@@ -1366,7 +1378,7 @@ bool StompOptimizer::performForwardKinematics()
             // calculate the position of every collision point:
             for (int j=0; j<num_collision_points_; j++)
             {
-                bool colliding = getConfigObstacleCost( i, j, q );
+                bool colliding = getConfigObstacleCost( i, j );
 
                 if ( colliding )
                 {
@@ -1513,6 +1525,8 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
         }
 
         costs(i-free_vars_start_) = stomp_parameters_->getObstacleCostWeight() * ( state_collision_cost + state_general_cost );
+
+        //cout << "state_collision_cost : " << state_collision_cost << endl;
     }
 
     //cout << "StompOptimizer::execute::cost => " << costs.sum() << endl;
@@ -2046,16 +2060,51 @@ bool StompOptimizer::replaceEndWithNewConfiguration()
 
 void StompOptimizer::draw()
 {
-    return;
     // Draws two points in the trajectory
-    int middle = (free_vars_start_+free_vars_end_)/2;
+//    int middle = (free_vars_start_+free_vars_end_)/2;
     
-    int start = middle - 3;
-    int end = middle + 3;
+//    int start = middle - 3;
+//    int end = middle + 3;
     
-    
-    planning_group_->draw(segment_frames_[start]);
-    planning_group_->draw(segment_frames_[end]);
+//    planning_group_->draw(segment_frames_[start]);
+//    planning_group_->draw(segment_frames_[end]);
+
+//    planning_group_->draw();
+
+    if( collision_space_ )
+    {
+        //drawCollisionPoints();
+    }
+}
+
+void StompOptimizer::drawCollisionPoints()
+{
+    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+
+    confPtr_t q = robot_model_->getCurrentPos();
+
+    // Get the configuration dof values in the joint array
+    Eigen::VectorXd joint_array(planning_group_->num_joints_);
+
+    for(int j=0; j<planning_group_->num_joints_;j++)
+    {
+        joint_array[j] = (*q)[ joints[j].move3d_dof_index_ ];
+    }
+
+    getFrames( free_vars_start_, joint_array, *q );
+
+    if( collision_space_ )
+    {
+        // calculate the position of every collision point:
+        for (int j=0; j<num_collision_points_; j++)
+        {
+            const CollisionPoint& cp = planning_group_->collision_points_[j];
+            Eigen::Transform3d T;
+            //cout << "segment (" << j << ") : " << cp.getSegmentNumber() << endl;
+            stdVectorToEigenTransform( segment_frames_[free_vars_start_][cp.getSegmentNumber()], T );
+            cp.draw( T );
+        }
+    }
 }
 
 void StompOptimizer::visualizeState(int index)

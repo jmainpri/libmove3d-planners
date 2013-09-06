@@ -152,6 +152,11 @@ configPt Configuration::getConfigStruct()
   return _Configuration;
 }
 
+configPt Configuration::getConfigStructConst() const
+{
+  return _Configuration;
+}
+
 configPt Configuration::getConfigStructCopy()
 {
   return p3d_copy_config(_Robot->getRobotStruct(),_Configuration);
@@ -559,7 +564,7 @@ Configuration& Configuration::mult(double coeff)
 	return (*q);
 }
 
-Eigen::VectorXd Configuration::getEigenVector()
+Eigen::VectorXd Configuration::getEigenVector()  const
 {
     unsigned int nbDof= 0;
     unsigned int njnt = _Robot->getNumberOfJoints();
@@ -579,7 +584,7 @@ Eigen::VectorXd Configuration::getEigenVector()
 	return q;
 }
 
-Eigen::VectorXd Configuration::getEigenVector( int startIndex, int endIndex )
+Eigen::VectorXd Configuration::getEigenVector( int startIndex, int endIndex ) const
 {	
     VectorXd q( endIndex - startIndex + 1);
   
@@ -592,7 +597,7 @@ Eigen::VectorXd Configuration::getEigenVector( int startIndex, int endIndex )
 	return q;
 }
 
-Eigen::VectorXd Configuration::getEigenVector(const std::vector<int>& indices)
+Eigen::VectorXd Configuration::getEigenVector(const std::vector<int>& indices) const
 {
     VectorXd q( indices.size() );
 

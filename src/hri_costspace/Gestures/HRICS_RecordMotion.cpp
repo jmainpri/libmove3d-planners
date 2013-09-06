@@ -420,9 +420,11 @@ void RecordMotion::loadXMLFolder(  const std::string& foldername  )
     cout << "Number of motion loaded : " << number_of_motions_loaded << endl;
 }
 
-void RecordMotion::loadCSVFolder( const std::string& foldername )
+void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet )
 {
-    cout << "Load Folder : " << foldername << endl;
+    if( !quiet ) {
+        cout << "Load Folder : " << foldername << endl;
+    }
 
     std::string command = "ls " + foldername;
     FILE* fp = popen( command.c_str(), "r");
@@ -441,7 +443,9 @@ void RecordMotion::loadCSVFolder( const std::string& foldername )
         //cout << extension << endl;
         if( extension == "csv" )
         {
-            cout << "add : " << filename << endl;
+            if( !quiet ) {
+                cout << "add : " << filename << endl;
+            }
             files.push_back( filename );
         }
     }
@@ -451,10 +455,12 @@ void RecordMotion::loadCSVFolder( const std::string& foldername )
 
     for(int i=0;i<int(files.size());i++)
     {
-        m_stored_motions[i] = loadFromCSV( foldername + "/" + files[i] );
+        m_stored_motions[i] = loadFromCSV( foldername + "/" + files[i], quiet );
     }
 
-    cout << "m_stored_motions.size() : " << m_stored_motions.size() << endl;
+    if( !quiet ) {
+        cout << "m_stored_motions.size() : " << m_stored_motions.size() << endl;
+    }
 }
 
 void RecordMotion::loadMotionFromMultipleFiles( const string& baseFilename, int number_of_files)
@@ -1058,9 +1064,11 @@ confPtr_t RecordMotion::getConfigTwelveDoF( const std::vector<std::string>& conf
     return q;
 }
 
-motion_t RecordMotion::loadFromCSV( const std::string& filename )
+motion_t RecordMotion::loadFromCSV( const std::string& filename, bool quiet )
 {
-    cout << "Loading from CSV : " << filename << endl;
+    if(!quiet) {
+        cout << "Loading from CSV : " << filename << endl;
+    }
 
     std::ifstream       file;
     std::vector< std::vector<std::string> >   matrix;

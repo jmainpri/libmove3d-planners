@@ -236,7 +236,7 @@ std::vector<CollisionPoint>& BodySurfaceSampler::getCollisionPoints(Joint* jnt)
 //! Generates the collision point for a given link
 //! Stores the segment number (the id of the joint for planning)
 //! Also store the parent joints of the link
-std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* jnt, int segment_number , const std::vector<int>& parent_joints )
+std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* jnt, int segment_number, const std::vector<int>& parent_joints )
 {
     std::vector<CollisionPoint> collision_points;
 
@@ -259,6 +259,8 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* j
     double spacing = radius/2.0;
     int num_points = ceil(length/spacing)+1;
     spacing = length/(num_points-1.0);
+
+    cout << "segment number : " << segment_number << endl;
 
     for (int i=0; i<num_points; ++i)
     {
@@ -302,17 +304,48 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateJointCollisionPoints(Rob
         if ( active_joints[j] <= joint )
         {
             parent_joints.push_back( active_joints[j] );
+            cout << "parent joint : " << parent_joints[j] << endl;
         }
     }
 
-    int segment; // The segment is the index of the joint in the planner
+    int segment=-1; // The segment is the index of the joint in the planner
 
-    // Becarefull!!! the segment maybe wrong if the size of the active joints set
-    // is greater than the planner joint set
-    if ( id >= int(planner_joints.size()-1) )
-        segment = planner_joints.size()-1;
-    else
-        segment = id;
+    // TODO remove this is the copy of what happens at the init of
+    // Chomp planning group it sets the index in the planning group
+    // here it counts the number of DoFs for each planned joint to retreive the index
+    for (unsigned int i=0; i<planner_joints.size(); i++)
+    {
+        for (unsigned int j=0; j<robot->getJoint( planner_joints[i] )->getNumberOfDof(); j++)
+        {
+            if( !robot->getJoint( planner_joints[i] )->isJointDofUser(j) )
+                continue;
+
+            double min,max;
+            robot->getJoint( planner_joints[i] )->getDofBounds( j, min, max );
+            if (min == max)
+                continue;
+
+            segment++; // segment starts at 0
+        }
+
+        if( joint == planner_joints[i] )
+            break;
+    }
+
+    // Becarefull!!! the segment maybe wrong if
+    // the size of the active joints set is greater than the planner joint set
+//    if ( id > int(planner_joints.size()-1) )
+//    {
+//        cout << "segment : " << id << " is replaced by : " <<  planner_joints.size()-1 ;
+//        cout << " in " << __func__ << endl;
+//        segment = planner_joints.size()-1;
+//    }
+//    else
+//    {
+//        segment = id;
+//    }
+
+//    cout << "segment : " << segment << endl;
 
     // Generate the collision points of the joint link
     std::vector<CollisionPoint> points = getLinksCollisionPoints( jnt, segment, parent_joints );
@@ -372,7 +405,7 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Rob
     }
 
     // Else only do not account for the first joint
-    for (int id=2; id<int(active_joints.size()); ++id)
+    for ( int id=1; id<int(active_joints.size()); id++ )
     {
         std::vector<CollisionPoint> points = generateJointCollisionPoints( robot, id, active_joints, planner_joints );
 

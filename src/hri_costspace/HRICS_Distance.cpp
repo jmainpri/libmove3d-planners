@@ -54,12 +54,12 @@ Distance::Distance(Robot* rob, vector<Robot*> humans) :
 }
 
 /*!
- * Destructor sets back the safety
- * radius
+ * Destructor sets back the safety radius
  */
 Distance::~Distance()
 {
     cout << "Delete Distance" << endl;
+
     for(unsigned int j=0; j<_Humans.size(); j++)
     {
         for(int i =0; i<_Humans[j]->getRobotStruct()->no; i++)
@@ -71,7 +71,8 @@ Distance::~Distance()
                 //                cout << "i = " << i << endl;
                 for(int k=0;k< _Humans[j]->getRobotStruct()->o[i]->np ; k++)
                 {
-                    //                    cout << "_Humans[j]->getRobotStruct()->o[i]->np = " << _Humans[j]->getRobotStruct()->o[i]->np << endl;
+                    // cout << "_Humans[j]->getRobotStruct()->o[i]->np = " << _Humans[j]->getRobotStruct()->o[i]->np << endl;
+
                     /* the shape : 0,1,2=polyh,
                      * 3=sphere, 4=cube,
                      * 5=box, 6=cylinder,

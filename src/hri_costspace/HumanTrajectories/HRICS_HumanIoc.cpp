@@ -1,5 +1,6 @@
 #include "HRICS_HumanIoc.hpp"
 
+#include "HRICS_HumanCostSpace.hpp"
 #include "HRICS_PlayMotion.hpp"
 #include "HRICS_features.hpp"
 #include "API/project.hpp"
@@ -47,7 +48,7 @@ HumanIoc::HumanIoc(Robot* human) : IocEvaluation(human)
     folder_ = "/home/jmainpri/workspace/move3d/assets/Collaboration/TRAJECTORIES/";
 
     feature_matrix_name_ = "matlab/features.txt";
-    feature_fct_ = new HRICS::DistanceFeature();
+    feature_fct_ = new HRICS::HumanTrajCostSpace(human,NULL);
 
     original_vect_ = feature_fct_->getWeights();
     nb_weights_ = original_vect_.size();

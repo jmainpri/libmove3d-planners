@@ -46,6 +46,7 @@ MOVE3D_USING_SHARED_PTR_NAMESPACE
 //--------------------------------------------------------
 static bool m_init = false;
 static bool m_add_human = false;
+static bool m_plan_for_human = false;
 
 static Robot* m_robot = NULL;
 
@@ -627,15 +628,16 @@ void traj_optim_init_collision_space()
 
     m_coll_space->resetPoints();
 
-    if ( m_robot->getName().find("HERAKLES") == string::npos )
+    // Warning
+    // If not human not add bodies
+    if( m_robot->getName().find("HERAKLES") == string::npos )
     {
-        //        cout << "robot name : " << m_robot->getName() << endl;
-        //        cout << "Add robot bodies exit " << endl; exit(0);
+//        cout << "robot name : " << m_robot->getName() << endl;
+//        cout << "Add robot bodies exit " << endl; exit(0);
 
         for (unsigned int joint_id=0; joint_id<m_robot->getNumberOfJoints(); joint_id++)
         {
-            if ( find (m_active_joints.begin(), m_active_joints.end(), joint_id )
-                 == m_active_joints.end() )
+            if ( find (m_active_joints.begin(), m_active_joints.end(), joint_id ) == m_active_joints.end() )
             {
                 m_coll_space->addRobotBody( m_robot->getJoint(joint_id) );
             }
@@ -830,9 +832,8 @@ void traj_optim_manip_init_joints()
         m_active_joints.push_back( 10 );
         m_active_joints.push_back( 11 );
         m_active_joints.push_back( 12 );
-
-        m_active_joints.push_back( 14 );
-        m_active_joints.push_back( 15 );
+//        m_active_joints.push_back( 14 );
+//        m_active_joints.push_back( 15 );
 
         // Set the planner joints
         m_planner_joints.clear();
@@ -933,34 +934,19 @@ void traj_optim_hrics_human_trajectory_manip_init_joints()
 {
     // Set the active joints (links)
 
-    //    (*q_cur)[6] =  (*q)[6];  // Pelvis
-    //    (*q_cur)[7] =  (*q)[7];  // Pelvis
-    //    (*q_cur)[8]=   (*q)[8];  // Pelvis
-    //    (*q_cur)[11] = (*q)[11]; // Pelvis
-    //    (*q_cur)[12] = (*q)[12]; // TorsoX
-    //    (*q_cur)[13] = (*q)[13]; // TorsoY
-    //    (*q_cur)[14] = (*q)[14]; // TorsoZ
-    //    (*q_cur)[18] = (*q)[18]; // rShoulderX
-    //    (*q_cur)[19] = (*q)[19]; // rShoulderZ
-    //    (*q_cur)[20] = (*q)[20]; // rShoulderY
-    //    (*q_cur)[21] = (*q)[21]; // rArmTrans
-    //    (*q_cur)[22] = (*q)[22]; // rElbowZ
-
     m_active_joints.clear();
     m_active_joints.push_back( 1 ); // Pelvis
-    m_active_joints.push_back( 2 ); // TorsoX
-    m_active_joints.push_back( 3 ); // TorsoY
+//    m_active_joints.push_back( 2 ); // TorsoX
+//    m_active_joints.push_back( 3 ); // TorsoY
     m_active_joints.push_back( 4 ); // TorsoZ
-    m_active_joints.push_back( 8 ); // rShoulderX
-    m_active_joints.push_back( 9 ); // rShoulderZ
+//    m_active_joints.push_back( 8 ); // rShoulderX
+//    m_active_joints.push_back( 9 ); // rShoulderZ
     m_active_joints.push_back( 10 ); // rShoulderY
-    m_active_joints.push_back( 11 ); // rArmTrans
+//    m_active_joints.push_back( 11 ); // rArmTrans
     m_active_joints.push_back( 12 ); // rElbowZ
-
-    m_active_joints.push_back( 13 );
-    m_active_joints.push_back( 14 );
-    m_active_joints.push_back( 15 );
-    m_active_joints.push_back( 16 );
+//    active_joints_.push_back(14); // joint name : rWristX
+//    active_joints_.push_back(15); // joint name : rWristY
+    m_active_joints.push_back(16); // joint name : rWristZ
 
     // Set the planner joints
     m_planner_joints.clear();
@@ -973,6 +959,7 @@ void traj_optim_hrics_human_trajectory_manip_init_joints()
     m_planner_joints.push_back( 10 );
     m_planner_joints.push_back( 11 );
     m_planner_joints.push_back( 12 );
+//    m_planner_joints.push_back( 13 );
 
     m_coll_space = NULL;
 }
@@ -1435,9 +1422,9 @@ bool traj_optim_initStomp()
     m_stompparams = new stomp_motion_planner::StompParameters;
     m_stompparams->init();
 
-    for (int i=0; i<int(m_planner_joints.size()); i++) {
-        cout << m_planner_joints[i] << endl;
-    }
+//    for (int i=0; i<int(m_planner_joints.size()); i++) {
+//        cout << m_planner_joints[i] << endl;
+//    }
     m_chompplangroup = new ChompPlanningGroup( m_robot, m_planner_joints );
     m_chompplangroup->collision_points_ = m_collision_points;
 
@@ -1552,6 +1539,11 @@ bool traj_optim_runStompNoReset(int runId)
 
 //! Run Stomp
 // --------------------------------------------------------
+void traj_optim_plan_for_human(bool use)
+{
+    m_plan_for_human = use;
+}
+
 void traj_optim_add_human_to_collision_space(bool add)
 {
     m_add_human = add;

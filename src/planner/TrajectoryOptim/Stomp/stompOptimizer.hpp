@@ -239,6 +239,11 @@ public:
     void draw();
 
     /**
+   * Draw real collision points
+   */
+    void drawCollisionPoints();
+
+    /**
    * Retreive source and target
    */
     void setSource(confPtr_t q) { source_ = q; }
@@ -438,8 +443,8 @@ private:
     void updateMomentum();
     void updatePositionFromMomentum();
     void calculatePseudoInverse();
-    void getFrames(int segment, const Eigen::VectorXd& joint_array, Configuration& q);
-    bool getConfigObstacleCost(int segment, int dof, Configuration& q);
+    void getFrames( int segment, const Eigen::VectorXd& joint_array, Configuration& q );
+    bool getConfigObstacleCost(int segment, int dof );
     bool performForwardKinematics();
     void doChompOptimization();
 

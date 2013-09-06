@@ -14,11 +14,10 @@ public:
 
     void initialize();
 
-    double cost( Configuration& q );
-    FeatureVect features( Configuration& q );
-    void produceCostMap();
-
+    FeatureVect getFeatures(const Configuration& q );
     FeatureVect getFeatureCount(const API::Trajectory& t);
+
+    void produceCostMap();
 
 private:
     Robot* robot_;

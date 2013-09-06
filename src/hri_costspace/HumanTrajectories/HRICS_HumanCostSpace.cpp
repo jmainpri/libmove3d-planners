@@ -12,16 +12,7 @@ using namespace HRICS;
 using std::cout;
 using std::endl;
 
-HumanTrajCostSpace* global_humanTrajectoryCostSpace = NULL;
-
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
-// Cost Function
-
-double HRICS_getHumanTrajectoryCost(Configuration& q)
-{
-    return global_humanTrajectoryCostSpace->getCost(q);
-}
+static HumanTrajCostSpace* ht_cost_space = NULL;
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -42,22 +33,31 @@ void HRICS_run_human_planning()
     global_motionRecorders.push_back( new HRICS::RecordMotion( human1 ) );
     global_motionRecorders.push_back( new HRICS::RecordMotion( human2 ) );
 
-    global_motionRecorders[0]->loadCSVFolder( foldername + "/human0" );
-    global_motionRecorders[1]->loadCSVFolder( foldername + "/human1");
+    // Set this bool to false is you want to print file names as they are loaded
+    bool quiet = true;
+    global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
+    global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
 
-    PlayMotion player( global_motionRecorders );
-//    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
-    for(int i=0;i<int(1);i++)
+// Uncomment the following to play the motion
+//    PlayMotion player( global_motionRecorders );
+////    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
+//    for(int i=0;i<int(1);i++)
+//    {
+//        player.play(i);
+//    }
+
+    if( ht_cost_space == NULL)
     {
-        player.play(i);
+        ht_cost_space = new HumanTrajCostSpace(  human2, human1 );
+
+        // Define cost functions
+        global_costSpace->addCost( "costHumanTrajecoryCost" , boost::bind( &HumanTrajCostSpace::cost, ht_cost_space, _1) );
     }
 
-    // Define cost functions
-    ENV.setBool(Env::isCostSpace,true);
-    global_costSpace->addCost( "costHumanTrajecoryCost" , boost::bind(HRICS_getHumanTrajectoryCost, _1) );
+    ENV.setBool( Env::isCostSpace, true );
     global_costSpace->setCost( "costHumanTrajecoryCost" );
 
-    HumanTrajSimulator sim( human2, human1 );
+    HumanTrajSimulator sim( ht_cost_space );
     sim.init();
     sim.run();
 }
@@ -66,10 +66,10 @@ void HRICS_run_human_planning()
 //----------------------------------------------------------------------
 // Human Trajectory Simulator
 
-HumanTrajSimulator::HumanTrajSimulator(  Robot* active, Robot* passive  )  :
-    human_active_(active),
-    human_passive_(passive),
-    cost_space_( active, passive ),
+HumanTrajSimulator::HumanTrajSimulator( HumanTrajCostSpace* cost_space )  :
+    cost_space_( cost_space ),
+    human_active_( cost_space->getActiveHuman() ),
+    human_passive_( cost_space->getPassiveHuman() ),
     init_scenario_(false)
 {
     cout << "Human active : " << human_active_->getName() << endl;
@@ -90,7 +90,7 @@ bool HumanTrajSimulator::init()
 
     // Adds the trajectory from the passive robot
     // to the cost space
-    cost_space_.setPassiveTrajectory( motion_pas );
+    cost_space_->setPassiveTrajectory( motion_pas );
 
     // Sets the active robot as active for planning
     global_Project->getActiveScene()->setActiveRobot( human_active_->getName() );
@@ -102,10 +102,10 @@ bool HumanTrajSimulator::init()
     return true;
 }
 
-
 bool HumanTrajSimulator::run()
 {
     cout << "run human traj simulator" << endl;
+
 //    if( !init_scenario_ )
 //    {
 //        traj_optim_initScenario();
@@ -119,14 +119,29 @@ bool HumanTrajSimulator::run()
 //----------------------------------------------------------------------
 // Human Trajectory Cost Space
 
-HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) : human_active_(active), human_passive_(passive)
+HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
+    human_active_(active),
+    human_passive_(passive),
+    dist_feat_( active, passive )
 {
     nb_way_points_ = 20;
+
+    w_ = getFeatures(*human_active_->getCurrentPos());
+
+    for(int i=0;i<w_.size();i++)
+    {
+        w_[i] = 1;
+    }
 }
 
 HumanTrajCostSpace::~HumanTrajCostSpace()
 {
 
+}
+
+void HumanTrajCostSpace::setPassiveConfig( const Configuration& q )
+{
+    human_passive_->setAndUpdate(q);
 }
 
 void HumanTrajCostSpace::setPassiveTrajectory( const motion_t& motion )
@@ -145,10 +160,11 @@ void HumanTrajCostSpace::setPassiveTrajectory( const motion_t& motion )
 FeatureVect HumanTrajCostSpace::getFeatureCount(const API::Trajectory& t)
 {
     std::vector<FeatureVect> vect_stacked;
-    vect_stacked.push_back( getDistance() );
-    vect_stacked.push_back( getVisibility() );
-    vect_stacked.push_back( getLegibility() );
-    vect_stacked.push_back( getMuskuloskeletal() );
+    vect_stacked.push_back( dist_feat_.getFeatureCount(t) );
+    vect_stacked.push_back( visi_feat_.getFeatureCount(t) );
+    vect_stacked.push_back( musk_feat_.getFeatureCount(t) );
+    vect_stacked.push_back( reach_feat_.getFeatureCount(t) );
+    vect_stacked.push_back( legib_feat_.getFeatureCount(t) );
 
     int size=0;
     for(int i=0; i<int(vect_stacked.size());i++)
@@ -167,31 +183,8 @@ FeatureVect HumanTrajCostSpace::getFeatureCount(const API::Trajectory& t)
     return features;
 }
 
-double HumanTrajCostSpace::getCost(Configuration& q) const
+FeatureVect HumanTrajCostSpace::getFeatures(const Configuration& q)
 {
-    return 0.0;
-}
-
-FeatureVect HumanTrajCostSpace::getDistance()
-{
-    FeatureVect vect;
-    return vect;
-}
-
-FeatureVect HumanTrajCostSpace::getVisibility()
-{
-    FeatureVect vect;
-    return vect;
-}
-
-FeatureVect HumanTrajCostSpace::getLegibility()
-{
-    FeatureVect vect;
-    return vect;
-}
-
-FeatureVect HumanTrajCostSpace::getMuskuloskeletal()
-{
-    FeatureVect vect;
+    FeatureVect vect = dist_feat_.getFeatures(q);
     return vect;
 }

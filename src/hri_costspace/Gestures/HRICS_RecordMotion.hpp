@@ -30,10 +30,10 @@ public:
     motion_t invertTranslation( const motion_t& motion );
     confPtr_t getConfigOpenRave( const std::vector<std::string>& config );
     confPtr_t getConfigTwelveDoF( const std::vector<std::string>& config );
-    motion_t loadFromCSV( const std::string& filename );
+    motion_t loadFromCSV( const std::string& filename, bool quiet = false );
     void loadXMLFolder();
     void loadXMLFolder( const std::string& foldername  );
-    void loadCSVFolder( const std::string& foldername );
+    void loadCSVFolder( const std::string& foldername, bool quiet = false );
 
     void storeMotion( const motion_t& motion, bool new_motion = true);
     void addToCurrentMotion( const motion_t& motion );

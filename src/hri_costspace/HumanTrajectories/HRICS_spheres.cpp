@@ -59,14 +59,7 @@ void Spheres::initialize()
     w_[15] = 16;
 }
 
-double Spheres::cost( Configuration& q )
-{
-    FeatureVect phi = features( q );
-    double cost = w_.transpose()*phi;
-    return cost;
-}
-
-FeatureVect Spheres::features( Configuration& q )
+FeatureVect Spheres::getFeatures(const Configuration& q)
 {
     FeatureVect features(centers_.size());
 
@@ -90,7 +83,7 @@ FeatureVect Spheres::getFeatureCount( const API::Trajectory& t )
     for(int i=0;i<t.getNbOfViaPoints();i++)
     {
         confPtr_t q = t[i];
-        vect += 0.001*features( *q );
+        vect += 0.001*getFeatures( *q );
     }
 
     return vect;

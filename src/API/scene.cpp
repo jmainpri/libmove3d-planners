@@ -56,7 +56,6 @@ Scene::Scene( p3d_env* environnement )
     ext_p3d_run_rrt = p3d_run_rrt;
 }
 
-
 Scene::~Scene()
 {
 }
@@ -68,13 +67,13 @@ string Scene::getName()
 
 void Scene::setActiveRobot(const string &name)
 {
-    unsigned int id = getRobotId(name);
-    p3d_sel_desc_id(P3D_ROBOT,m_Scene->robot[id]);
+    unsigned int id = getRobotId( name );
+    p3d_sel_desc_id( P3D_ROBOT, m_Scene->robot[id] );
 }
 
 Robot* Scene::getActiveRobot()
 {
-    return getRobotByName(m_Scene->cur_robot->name);
+    return getRobotByName( m_Scene->cur_robot->name );
 }
 
 unsigned int Scene::getRobotId(const string& str)
@@ -107,7 +106,7 @@ Robot* Scene::getRobotByName(const string &str)
 }
 
 /**
- * Get robot by name containing
+ * Get robot by name containing a sub string
  */
 Robot* Scene::getRobotByNameContaining(const string &str)
 {

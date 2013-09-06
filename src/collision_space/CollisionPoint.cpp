@@ -12,6 +12,9 @@
 
 #include "Graphic-pkg.h"
 
+using std::cout;
+using std::endl;
+
 CollisionPoint::CollisionPoint(
         const std::vector<int>& parent_joints,
         double radius,
@@ -70,6 +73,8 @@ void CollisionPoint::getJacobian(std::vector</*Eigen::Map<*/Eigen::Vector3d> /*>
 void CollisionPoint::draw(const Eigen::Transform3d& T, bool yellow) const
 {
     Eigen::Vector3d point = T*m_position;
+
+    // cout << "point : " << point.transpose() << endl;
 
     // yellow
     double colorvector[4];

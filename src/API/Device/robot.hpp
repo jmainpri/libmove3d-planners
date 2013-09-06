@@ -150,7 +150,7 @@ public:
      * @param q la Configuration dans laquelle le Robot sera placé
      * @return la Configuration est atteignable cinématiquement
      */
-    int setAndUpdate( Configuration& q, bool withoutFreeFlyers = false );
+    int setAndUpdate( const Configuration& q, bool withoutFreeFlyers = false );
 
     /**
      * place le Robot dans une Configuration

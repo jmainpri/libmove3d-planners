@@ -127,6 +127,12 @@ public:
     double* getConfigStruct();
 
     /**
+      * Returns a const pointer to the configuration
+      * Should only be used when configuration is unchanged
+      */
+    double* getConfigStructConst() const;
+
+    /**
      * obtient le pointeur sur la ConfigPt
      * @return la pointeur sur la ConfigPt
      */
@@ -317,9 +323,9 @@ public:
     /**
      * Get the Eigen Vector of the configuration
      */
-    Eigen::VectorXd getEigenVector();
-    Eigen::VectorXd getEigenVector(int startIndex, int endIndex);
-    Eigen::VectorXd getEigenVector(const std::vector<int>& indices);
+    Eigen::VectorXd getEigenVector()  const;
+    Eigen::VectorXd getEigenVector(int startIndex, int endIndex)  const;
+    Eigen::VectorXd getEigenVector(const std::vector<int>& indices)  const;
 
     /**
      * set the Eigen Vector of the configuration
