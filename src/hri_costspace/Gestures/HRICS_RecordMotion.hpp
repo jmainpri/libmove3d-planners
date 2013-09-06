@@ -75,6 +75,7 @@ private:
     motion_t m_motion;
     std::vector<motion_t> m_stored_motions;
     int m_ith_shown_motion;
+    bool m_use_or_format;
 };
 }
 

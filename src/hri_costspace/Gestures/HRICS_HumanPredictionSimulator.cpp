@@ -46,6 +46,9 @@ void HRICS_initOccupancyPredictionFramework()
 
     RecordMotion* recorder = new RecordMotion( human );
 
+    if( global_motionRecorders.empty() )
+        global_motionRecorders.push_back( recorder );
+
     if( recorder->loadRegressedFromCSV() )
     {
         cout << "Motions loaded successfully" << endl;
@@ -73,8 +76,21 @@ void HRICS_initOccupancyPredictionFramework()
     recorder->translateStoredMotions();
 
     WorkspaceOccupancyGrid* occupancyGrid = new WorkspaceOccupancyGrid( human, 0.05, size );
-    occupancyGrid->setRegressedMotions( recorder->getStoredMotions() );
-    occupancyGrid->computeOccpancy();
+
+    const std::vector<motion_t>& r_motions = recorder->getStoredMotions();
+    if( r_motions.empty() )
+    {
+        cout << "Could not load regressed motions" << endl;
+        return;
+    }
+
+    occupancyGrid->setRegressedMotions( r_motions );
+    if( !occupancyGrid->computeOccpancy() )
+    {
+        cout << "Could not compute workspace occupancy" << endl;
+        return;
+    }
+
     occupancyGrid->setClassToDraw(1);
 
     // Create the prediction costspace
@@ -92,9 +108,6 @@ void HRICS_initOccupancyPredictionFramework()
     //simulator->loadHumanTrajectory( recorder->getStoredMotions()[GestEnv->getInt(GestParam::human_traj_id)] );
 
     // GUI global variables
-    if( global_motionRecorders.empty() )
-        global_motionRecorders.push_back( recorder );
-
     global_classifyMotion = classifier;
     global_workspaceOccupancy = occupancyGrid;
     global_humanPredictionCostSpace = predictionSpace;

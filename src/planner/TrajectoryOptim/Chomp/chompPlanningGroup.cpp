@@ -24,13 +24,16 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
     {
         for (unsigned int j=0; j<robot_->getJoint( active_joints[i] )->getNumberOfDof(); j++)
         {
-            cout << "Joint(" << j << ") : (" << robot_->getJoint( active_joints[i] )->getName() << ")" << endl;
+            Joint* move3d_joint = robot_->getJoint( active_joints[i] );
 
-            if( !robot_->getJoint( active_joints[i] )->isJointDofUser(j) )
+            cout << "Joint(" << j << ") : (" << move3d_joint->getName() << ")" << endl;
+
+            if( !move3d_joint->isJointDofUser(j) )
                 continue;
 
             double min,max;
-            robot_->getJoint( active_joints[i] )->getDofBounds(j,min,max);
+            //robot_->getJoint( active_joints[i] )->getDofBounds(j,min,max);
+            move3d_joint->getDofRandBounds(j,min,max);
 
             cout << "Is dof user : ";
             cout << "(min = " << min << ", max = " << max << ")" << endl;
@@ -40,17 +43,15 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
 
             ChompJoint jnt;
 
-            jnt.move3d_joint_ = robot_->getJoint( active_joints[i] );
+            jnt.move3d_joint_ = move3d_joint;
             jnt.move3d_joint_index_ = active_joints[i];
-            jnt.move3d_dof_index_ = jnt.move3d_joint_->getIndexOfFirstDof() + j;
+            jnt.move3d_dof_index_ = move3d_joint->getIndexOfFirstDof() + j;
             jnt.chomp_joint_index_ = i;
-            jnt.joint_name_ = jnt.move3d_joint_->getName();
-            jnt.wrap_around_ = p3d_jnt_is_dof_circular(jnt.move3d_joint_->getJointStruct(),j);
+            jnt.joint_name_ = move3d_joint->getName();
+            jnt.wrap_around_ = p3d_jnt_is_dof_circular(move3d_joint->getJointStruct(),j);
             jnt.has_joint_limits_ = true;
-
             jnt.joint_limit_min_ = min;
             jnt.joint_limit_max_ = max;
-
             jnt.joint_update_limit_ = 0.10;
 
             chomp_joints_.push_back( jnt );

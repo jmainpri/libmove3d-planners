@@ -405,7 +405,7 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Rob
     }
 
     // Else only do not account for the first joint
-    for ( int id=1; id<int(active_joints.size()); id++ )
+    for ( int id=2; id<int(active_joints.size()); id++ )
     {
         std::vector<CollisionPoint> points = generateJointCollisionPoints( robot, id, active_joints, planner_joints );
 

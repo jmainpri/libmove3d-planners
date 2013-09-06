@@ -145,6 +145,12 @@ void Joint::getDofBounds(int ithDoF, double& vmin, double& vmax) const
     vmax = m_Joint->dof_data[ithDoF].vmax;
 }
 
+void Joint::getDofRandBounds(int ithDoF, double& vmin, double& vmax) const
+{
+    vmin = m_Joint->dof_data[ithDoF].vmin_r;
+    vmax = m_Joint->dof_data[ithDoF].vmax_r;
+}
+
 unsigned int Joint::getNumberOfDof() const
 {
     return m_Joint->dof_equiv_nbr;

@@ -94,6 +94,11 @@ public:
     void getDofBounds(int ithDoF, double& vmin, double& vmax) const;
 
     /**
+      * Returns the random bounds
+      */
+    void getDofRandBounds(int ithDoF, double& vmin, double& vmax) const;
+
+    /**
      * Get Number of DoF
      */
     unsigned int getNumberOfDof() const;

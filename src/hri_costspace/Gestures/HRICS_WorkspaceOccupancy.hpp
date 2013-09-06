@@ -41,7 +41,7 @@ public:
 
     void setRegressedMotions( const std::vector<motion_t>& motions );
     void computeCurrentOccupancy();
-    void computeOccpancy();
+    bool computeOccpancy();
     void setClassToDraw( int id_class );
     int classifyMotion( const motion_t& motions );
     void setLikelihood( const std::vector<double>& likelyhood );

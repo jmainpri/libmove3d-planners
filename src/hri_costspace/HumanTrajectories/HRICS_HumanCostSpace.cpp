@@ -95,6 +95,9 @@ bool HumanTrajSimulator::init()
     // Sets the active robot as active for planning
     global_Project->getActiveScene()->setActiveRobot( human_active_->getName() );
 
+    // Change dofs limit
+//    human_active_->se
+
     // Set init and goal config
     human_active_->setInitPos( *q_init_ );
     human_active_->setGoalPos( *q_goal_ );

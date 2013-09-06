@@ -220,7 +220,7 @@ void WorkspaceOccupancyGrid::computeCurrentOccupancy()
 //! Set each cell to belong to a class of motion
 //! by computing the voxel occupancy for each point along the path 
 //! of the corresponding regressed motion
-void WorkspaceOccupancyGrid::computeOccpancy()
+bool WorkspaceOccupancyGrid::computeOccpancy()
 {           
     confPtr_t q = m_human->getCurrentPos();
 
@@ -251,7 +251,7 @@ void WorkspaceOccupancyGrid::computeOccpancy()
             m_human->setAndUpdate( *swept_volume_motion[j].second );
 
             std::vector<WorkspaceOccupancyCell*> cells; get_cells_occupied_by_human( cells, i );
-            //cout << " Frame : " << j << endl;
+            cout << " Frame : " << j << endl;
             m_occupied_cells[i].insert(  m_occupied_cells[i].end(), cells.begin(), cells.end() );
         }
 
@@ -269,7 +269,11 @@ void WorkspaceOccupancyGrid::computeOccpancy()
     
     cout << "There are " << m_all_occupied_cells.size() << " occupied cells" << endl;
     cout << "End : " << __func__ << endl;
-    
+
+    if( m_all_occupied_cells.empty() )
+        return false;
+    else
+        return true;
 }
 
 //! 
@@ -297,6 +301,7 @@ double WorkspaceOccupancyGrid::getOccupancy(const Eigen::Vector3d &point) const
     if( m_all_occupied_cells.empty() )
     {
         cout << "occupied cells not loaded" << endl;
+        exit(0);
         return 0.0;
     }
     
@@ -308,6 +313,7 @@ double WorkspaceOccupancyGrid::geCurrentOccupancy(const Eigen::Vector3d &point) 
     if( m_all_occupied_cells.empty() )
     {
         cout << "occupied cells not loaded" << endl;
+        exit(0);
         return 0.0;
     }
 
@@ -319,6 +325,7 @@ double WorkspaceOccupancyGrid::getOccupancyCombination( const Eigen::Vector3d &p
     if( m_all_occupied_cells.empty() )
     {
         cout << "occupied cells not loaded" << endl;
+        exit(0);
         return 0.0;
     }
     

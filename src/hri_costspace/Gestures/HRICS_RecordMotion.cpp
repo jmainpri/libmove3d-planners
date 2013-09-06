@@ -145,6 +145,7 @@ void set_maps()
 
 RecordMotion::RecordMotion()
 {
+    m_use_or_format = true;
     m_is_recording = false;
     m_id_motion = 0;
     m_robot = NULL;
@@ -154,6 +155,7 @@ RecordMotion::RecordMotion()
 
 RecordMotion::RecordMotion( Robot* robot )
 {
+    m_use_or_format = true;
     m_is_recording = false;
     m_id_motion = 0;
     m_robot = robot;
@@ -971,6 +973,8 @@ bool  RecordMotion::loadRegressedFromCSV()
 
     m_stored_motions.clear();
 
+    m_use_or_format = false; // OpenRave format
+
     motion_t tmp;
 
     tmp = loadFromCSV( foldername + "traj_class_1.csv" );
@@ -1107,8 +1111,17 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename, bool quiet )
 //    cout << "m_robot->getNumberOfActiveDoF()" << m_robot->getNumberOfActiveDoF() << endl;
     for (int i=0; i<int(matrix.size()); i++)
     {
-        confPtr_t q = getConfigOpenRave( matrix[i] );
-        // confPtr_t q = getConfigTwelveDoF( matrix[i] );
+
+        confPtr_t q;
+
+        if( m_use_or_format )
+        {
+            q= getConfigOpenRave( matrix[i] );
+        }
+        else
+        {
+            q = getConfigTwelveDoF( matrix[i] );
+        }
 
         // This is because the data was recorded near limits
         q->adaptCircularJointsLimits();
