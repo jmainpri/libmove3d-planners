@@ -28,7 +28,7 @@ bool traj_optim_runStompNoReset(int runId);
 
 void traj_optim_add_human_to_collision_space(bool add);
 void traj_optim_set_use_iteration_limit(bool use);
-void traj_optim_set_iteration_limit(double max_iter);
+void traj_optim_set_iteration_limit(int max_iter);
 void traj_optim_set_use_extern_trajectory( bool use );
 void traj_optim_set_extern_trajectory( const API::Trajectory& traj );
 void traj_optim_set_discretization( double discretization );

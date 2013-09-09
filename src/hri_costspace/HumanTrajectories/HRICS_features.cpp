@@ -100,7 +100,7 @@ FeatureVect DistanceFeature::computeDistances() const
 
             double j_dist = ( pos_a - pos_p ).norm();
 
-            if( j_dist > 0.50 )
+            if( j_dist > 0.80 )
             {
                 j_dist = 10000000;
             }

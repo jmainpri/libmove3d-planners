@@ -1518,7 +1518,7 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     // copy the group_trajectory_ parameters:
     if( joint_limits )
     {
-        cout << "return with joint limits" << endl;
+        //cout << "return with joint limits" << endl;
         for (int d=0; d<num_joints_; ++d) {
             parameters[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
         }

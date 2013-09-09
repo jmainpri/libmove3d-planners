@@ -1554,7 +1554,7 @@ void traj_optim_set_use_iteration_limit(bool use)
     m_use_iteration_limit = use;
 }
 
-void traj_optim_set_iteration_limit(double max_iter)
+void traj_optim_set_iteration_limit(int max_iter)
 {
     m_max_iteration = max_iter;
 }

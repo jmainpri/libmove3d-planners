@@ -62,6 +62,8 @@ private:
 
     bool init_scenario_;
 
+    std::string folder_;
+
 };
 
 }

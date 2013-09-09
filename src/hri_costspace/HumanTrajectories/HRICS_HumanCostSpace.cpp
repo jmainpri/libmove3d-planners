@@ -111,7 +111,7 @@ bool HumanTrajSimulator::init()
     //take only x, y and z composantes of the base
     double radius = 0.05;
     double dof[3][2];
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < 3; i++) {
         dof[i][0] = p3d_jnt_get_dof( joint, i) - radius;
         dof[i][1] = p3d_jnt_get_dof( joint, i) + radius;
     }
@@ -131,7 +131,22 @@ bool HumanTrajSimulator::run()
 //        traj_optim_initScenario();
 //    }
 
-    traj_optim_runStomp(0);
+    int nb_trajectories = 10;
+    int max_iter = 100;
+
+    folder_ = "/home/jmainpri/workspace/move3d/assets/Collaboration/TRAJECTORIES/";
+
+    for( int i=0;i<nb_trajectories;i++)
+    {
+        traj_optim_set_use_iteration_limit( true );
+        traj_optim_set_iteration_limit( max_iter );
+        traj_optim_runStomp(0);
+
+        std::stringstream ss;
+        ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
+
+        p3d_save_traj( ( folder_ + ss.str() ).c_str(), human_active_->getRobotStruct()->tcur );
+    }
     return true;
 }
 
