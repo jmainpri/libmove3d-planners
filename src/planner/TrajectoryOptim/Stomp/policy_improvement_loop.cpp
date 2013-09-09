@@ -297,8 +297,8 @@ namespace stomp_motion_planner
         else
         {
             shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
-
-            optimizer->execute( rollouts_[r], tmp_rollout_cost_, iteration_number, true, false );
+            bool joint_limits = false;
+            optimizer->execute( rollouts_[r], tmp_rollout_cost_, iteration_number, joint_limits, false );
             rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
             policy_improvement_.setRolloutOutOfBounds( r, !optimizer->getJointLimitViolationSuccess() );
 
@@ -319,7 +319,7 @@ namespace stomp_motion_planner
         if( write_to_file_ )
         {
             // load new policy if neccessary
-            readPolicy(iteration_number);
+            readPolicy( iteration_number );
         }
 
         // compute appropriate noise values
@@ -374,6 +374,9 @@ namespace stomp_motion_planner
         policy_improvement_.improvePolicy( parameter_updates_ );
 
         policy_->updateParameters( parameter_updates_ );
+
+        // Get the parameters from the policy
+        // Warning joint limits
         policy_->getParameters( parameters_ );
 
         int num_extra_rollouts = 1;
@@ -388,14 +391,16 @@ namespace stomp_motion_planner
         bool resample = !PlanEnv->getBool( PlanParam::trajStompMultiplyM );
         // Warning!!!!
         // not return the modified trajectory when is out of bounds
-        task_->execute( parameters_, tmp_rollout_cost_, iteration_number, false, resample );
+        bool joint_limits = true;
+        task_->execute( parameters_, tmp_rollout_cost_, iteration_number, joint_limits, resample );
         //printf("Noiseless cost = %lf\n", stats_msg.noiseless_cost);
 
         // Only set parameters for the changed chase
-        if( set_parameters_in_policy_ )
-        {
-            policy_->setParameters( parameters_ );
-        }
+//        if( set_parameters_in_policy_ )
+//        {
+//            cout << "set parameters to the policy" << endl;
+//            policy_->setParameters( parameters_ );
+//        }
 
         // add the noiseless rollout into policy_improvement:
         extra_rollout[num_extra_rollouts-1] = parameters_;
@@ -466,7 +471,7 @@ namespace stomp_motion_planner
         }
 
         int iteration_number=1;
-        task_->execute(extra_rollout[0], tmp_rollout_cost_, iteration_number, true, false );
+        task_->execute(extra_rollout[0], tmp_rollout_cost_, iteration_number, false, false );
         //    cout << "Cost" << tmp_rollout_cost_[0] << endl;
 
         extra_rollout_cost[0] = tmp_rollout_cost_;

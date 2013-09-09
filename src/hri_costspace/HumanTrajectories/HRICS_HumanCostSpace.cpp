@@ -102,6 +102,23 @@ bool HumanTrajSimulator::init()
     human_active_->setInitPos( *q_init_ );
     human_active_->setGoalPos( *q_goal_ );
 
+    // Set to init pose
+    human_active_->setAndUpdate( *q_init_ );
+
+    // Get first joint and change bounds
+    p3d_jnt* joint = human_active_->getJoint(1)->getJointStruct();
+
+    //take only x, y and z composantes of the base
+    double radius = 0.05;
+    double dof[3][2];
+    for(int i = 0; i < 3; i++){
+        dof[i][0] = p3d_jnt_get_dof( joint, i) - radius;
+        dof[i][1] = p3d_jnt_get_dof( joint, i) + radius;
+    }
+    for(int i = 0; i < 3; i++){
+        p3d_jnt_set_dof_rand_bounds( joint, i, dof[i][0], dof[i][1]);
+    }
+
     return true;
 }
 

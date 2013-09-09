@@ -1159,6 +1159,11 @@ bool StompOptimizer::handleJointLimits()
             int max_violation_index = 0;
             violation = false;
             count_violation = false;
+//            bool violate_max = false;
+//            bool violate_min = false;
+            double violate_max_with = 0;
+            double violate_min_with = 0;
+
             for (int i=free_vars_start_; i<=free_vars_end_; i++)
             {
                 double amount = 0.0;
@@ -1167,11 +1172,21 @@ bool StompOptimizer::handleJointLimits()
                 {
                     amount = joint_max - group_trajectory_(i, joint);
                     absolute_amount = fabs(amount);
+//                    violate_max = true;
+                    if( absolute_amount > violate_max_with )
+                    {
+                        violate_max_with = absolute_amount;
+                    }
                 }
                 else if ( group_trajectory_(i, joint) < joint_min )
                 {
                     amount = joint_min - group_trajectory_(i, joint);
                     absolute_amount = fabs(amount);
+//                    violate_min = true;
+                    if( absolute_amount > violate_min_with )
+                    {
+                        violate_min_with = absolute_amount;
+                    }
                 }
                 if (absolute_amount > max_abs_violation)
                 {
@@ -1201,10 +1216,20 @@ bool StompOptimizer::handleJointLimits()
                 int free_var_index = max_violation_index - free_vars_start_;
                 double multiplier = max_violation / joint_costs_[joint].getQuadraticCostInverse()(free_var_index,free_var_index);
 
-                group_trajectory_.getFreeJointTrajectoryBlock(joint) +=
-                        multiplier * joint_costs_[joint].getQuadraticCostInverse().col(free_var_index);
+//                group_trajectory_.getFreeJointTrajectoryBlock(joint) += multiplier * joint_costs_[joint].getQuadraticCostInverse().col(free_var_index);
+                double offset = ( joint_max + joint_min )  / 2 ;
+
+//                cout << "multiplier : " << multiplier << endl;
+//                cout << "joint limit max : " << joint_max << endl;
+//                cout << "joint limit min : " << joint_min << endl;
+//                cout << "offset : " << offset << endl;
+//                cout << group_trajectory_.getFreeJointTrajectoryBlock(joint).transpose() << endl;
+
+                group_trajectory_.getFreeJointTrajectoryBlock(joint) = ( group_trajectory_.getFreeJointTrajectoryBlock(joint).array() - offset ).array()*multiplier + ( offset );
+
+//                cout << group_trajectory_.getFreeJointTrajectoryBlock(joint).transpose() << endl;
             }
-            if (++count > 10)
+            if ( ++count > 10 )
             {
                 succes_joint_limits = false;
                 //cout << "group_trajectory_(i, joint) = " << endl << group_trajectory_.getFreeJointTrajectoryBlock(joint) << endl;
@@ -1220,6 +1245,8 @@ bool StompOptimizer::handleJointLimits()
     }
 
     //    cout << "succes_joint_limits : " << succes_joint_limits << endl;
+
+//    exit(1);
 
     return succes_joint_limits;
 }
@@ -1477,12 +1504,21 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     // respect joint limits:
 
     succeded_joint_limits_ = handleJointLimits();
+
+    // Fix joint limits
+//    if( !succeded_joint_limits_ )
+//    {
+//        for (int d=0; d<num_joints_; ++d) {
+//            group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
+//        }
+//    }
     //cout << "Violation number : " << joint_limits_violation_ << endl;
     //succeded_joint_limits_ = true;
 
     // copy the group_trajectory_ parameters:
     if( joint_limits )
     {
+        cout << "return with joint limits" << endl;
         for (int d=0; d<num_joints_; ++d) {
             parameters[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
         }

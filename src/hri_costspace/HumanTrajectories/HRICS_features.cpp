@@ -98,7 +98,14 @@ FeatureVect DistanceFeature::computeDistances() const
             Eigen::Vector3d pos_a = joints_a[active_joints_[i]]->getVectorPos();
             Eigen::Vector3d pos_p = joints_p[active_joints_[j]]->getVectorPos();
 
-            dist[k++] = 1e-3/( pos_a - pos_p ).norm();
+            double j_dist = ( pos_a - pos_p ).norm();
+
+            if( j_dist > 0.50 )
+            {
+                j_dist = 10000000;
+            }
+
+            dist[k++] = 1e-3/j_dist;
         }
     }
 

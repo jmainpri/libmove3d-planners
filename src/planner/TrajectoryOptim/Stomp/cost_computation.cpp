@@ -361,6 +361,7 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::V
 
     // cout << costs.transpose() << endl;
 
+    cout << "return with joint_limits" << endl;
     // copy the parameters into group_trajectory_:
     for (int d=0; d<num_joints_; ++d) {
         parameters[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
