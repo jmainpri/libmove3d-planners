@@ -40,6 +40,8 @@ private:
     MuskuloskeletalFeature musk_feat_;
     ReachabilityFeature reach_feat_;
     LegibilityFeature legib_feat_;
+
+    TrajectorySmoothnessCost smoothness_feat_;
 };
 
 class HumanTrajSimulator
@@ -62,7 +64,7 @@ private:
 
     bool init_scenario_;
 
-    std::string folder_;
+    std::string traj_folder_;
 
 };
 

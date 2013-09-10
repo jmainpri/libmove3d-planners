@@ -26,7 +26,7 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
         {
             Joint* move3d_joint = robot_->getJoint( active_joints[i] );
 
-            cout << "Joint(" << j << ") : (" << move3d_joint->getName() << ")" << endl;
+            cout << "Joint(" << j << "), Dof : " << move3d_joint->getIndexOfFirstDof() + j << ", " << move3d_joint->getName() << "" << endl;
 
             if( !move3d_joint->isJointDofUser(j) )
                 continue;
@@ -67,6 +67,7 @@ std::vector<int> ChompPlanningGroup::getActiveDofs() const
     for(int i=0;i<int(chomp_joints_.size());i++)
     {
         active_joints.push_back( chomp_joints_[i].move3d_dof_index_ );
+        cout << "move3d_dof_index_ : " << chomp_joints_[i].move3d_dof_index_ << endl;
     }
 
     return active_joints;

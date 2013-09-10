@@ -78,19 +78,24 @@ HumanTrajSimulator::HumanTrajSimulator( HumanTrajCostSpace* cost_space )  :
 
 bool HumanTrajSimulator::init()
 {
-    const motion_t& motion_pas = global_motionRecorders[0]->getStoredMotions()[0];
-    const motion_t& motion_act = global_motionRecorders[1]->getStoredMotions()[0];
-
-    if( motion_act.empty() )
+    if( !global_motionRecorders[0]->getStoredMotions().empty() )
     {
-        return false;
-    }
-    q_init_ = motion_act[0].second;
-    q_goal_ = motion_act.back().second;
+        cout << "Load init and goal from file" << endl;
+        const motion_t& motion_pas = global_motionRecorders[0]->getStoredMotions()[0];
+        const motion_t& motion_act = global_motionRecorders[1]->getStoredMotions()[0];
 
-    // Adds the trajectory from the passive robot
-    // to the cost space
-    cost_space_->setPassiveTrajectory( motion_pas );
+        q_init_ = motion_act[0].second;
+        q_goal_ = motion_act.back().second;
+
+        // Adds the trajectory from the passive robot
+        // to the cost space
+        cost_space_->setPassiveTrajectory( motion_pas );
+    }
+    else
+    {
+        q_init_ = human_active_->getInitPos();
+        q_goal_ = human_active_->getGoalPos();
+    }
 
     // Sets the active robot as active for planning
     global_Project->getActiveScene()->setActiveRobot( human_active_->getName() );
@@ -134,7 +139,7 @@ bool HumanTrajSimulator::run()
     int nb_trajectories = 10;
     int max_iter = 100;
 
-    folder_ = "/home/jmainpri/workspace/move3d/assets/Collaboration/TRAJECTORIES/";
+    traj_folder_ = "/home/jmainpri/workspace/move3d/assets/Collaboration/TRAJECTORIES/";
 
     for( int i=0;i<nb_trajectories;i++)
     {
@@ -145,7 +150,7 @@ bool HumanTrajSimulator::run()
         std::stringstream ss;
         ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
 
-        p3d_save_traj( ( folder_ + ss.str() ).c_str(), human_active_->getRobotStruct()->tcur );
+        p3d_save_traj( ( traj_folder_ + ss.str() ).c_str(), human_active_->getRobotStruct()->tcur );
     }
     return true;
 }
@@ -195,11 +200,20 @@ void HumanTrajCostSpace::setPassiveTrajectory( const motion_t& motion )
 FeatureVect HumanTrajCostSpace::getFeatureCount(const API::Trajectory& t)
 {
     std::vector<FeatureVect> vect_stacked;
-    vect_stacked.push_back( dist_feat_.getFeatureCount(t) );
-    vect_stacked.push_back( visi_feat_.getFeatureCount(t) );
-    vect_stacked.push_back( musk_feat_.getFeatureCount(t) );
-    vect_stacked.push_back( reach_feat_.getFeatureCount(t) );
-    vect_stacked.push_back( legib_feat_.getFeatureCount(t) );
+//    vect_stacked.push_back( dist_feat_.getFeatureCount(t) );
+//    vect_stacked.push_back( visi_feat_.getFeatureCount(t) );
+//    vect_stacked.push_back( musk_feat_.getFeatureCount(t) );
+//    vect_stacked.push_back( reach_feat_.getFeatureCount(t) );
+//    vect_stacked.push_back( legib_feat_.getFeatureCount(t) );
+
+    FeatureVect f = Eigen::VectorXd::Zero( getFeatures(*t.getBegin()).size());
+
+    for(int i=0;i<t.getNbOfViaPoints();i++)
+    {
+        f += getFeatures(*t[i]);
+    }
+
+    vect_stacked.push_back( f );
 
     int size=0;
     for(int i=0; i<int(vect_stacked.size());i++)

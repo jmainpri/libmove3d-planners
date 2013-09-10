@@ -996,8 +996,7 @@ double StompOptimizer::getSmoothnessCost()
         noise[d] = VectorXd::Zero( policy_parameters_[d].size() );
     }
 
-    policy_->computeControlCosts(control_cost_matrices, policy_parameters_, noise,
-                                 0.5*stomp_parameters_->getSmoothnessCostWeight(), control_costs );
+    policy_->computeControlCosts(control_cost_matrices, policy_parameters_, noise, 0.5*stomp_parameters_->getSmoothnessCostWeight(), control_costs );
 
     for (int d=0; d<int(control_costs.size()); ++d)
     {

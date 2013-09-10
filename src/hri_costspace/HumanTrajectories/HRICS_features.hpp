@@ -10,6 +10,9 @@
 #include "hri_costspace/HRICS_Visibility.hpp"
 #include "hri_costspace/HRICS_Natural.hpp"
 
+#include "planner/TrajectoryOptim/Stomp/covariant_trajectory_policy.hpp"
+#include "planner/TrajectoryOptim/Chomp/chompTrajectory.hpp"
+
 namespace HRICS
 {
 class Distance;
@@ -52,6 +55,30 @@ private:
     Distance* dist_cost_;
 
     std::vector<int> active_joints_;
+};
+
+class TrajectorySmoothnessCost : public Feature
+{
+public:
+    TrajectorySmoothnessCost();
+
+    //! Returns a smoothness cost for the trajectory
+    FeatureVect getFeatureCount(const API::Trajectory& t);
+    FeatureVect getFeatures(const Configuration& q);
+
+private:
+    void initPolicy();
+    void setGroupTrajectoryFromVectorConfig(const std::vector<confPtr_t>& traj);
+
+    //! Smoothness cost
+    MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::CovariantTrajectoryPolicy> policy_;
+    std::vector<Eigen::VectorXd> policy_parameters_;
+    int num_joints_;
+    int num_vars_free_;
+    int free_vars_start_;
+    int free_vars_end_;
+    const ChompPlanningGroup *planning_group_;
+    ChompTrajectory group_trajectory_;
 };
 
 class VisibilityFeature : public Feature

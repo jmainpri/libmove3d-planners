@@ -42,6 +42,11 @@ void HRICS_run_sphere_ioc()
         return;
     }
 
+    if( global_SphereCostFct == NULL )
+    {
+        HRICS_init_sphere_cost();
+    }
+
     IocEvaluation eval(rob);
 
     bool generate_samples=true;
@@ -76,7 +81,7 @@ void HRICS_run_sphere_ioc()
 IocEvaluation::IocEvaluation(Robot* rob) : robot_(rob)
 {
     nb_demos_ = 10;
-    nb_samples_ = 1000;
+    nb_samples_ = 10;
     nb_way_points_ = 20;
     folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
 
@@ -503,22 +508,22 @@ bool Ioc::addDemonstration( const Eigen::MatrixXd& demo )
         return false;
     }
 
-    cout <<  num_joints_ << endl;
-    cout << t.parameters_.size() << endl;
+//    cout <<  num_joints_ << endl;
+//    cout << t.parameters_.size() << endl;
 
     for(int i=0;i<int(t.parameters_.size());i++)
     {
-        cout << demo.row( i ) << endl;
+//        cout << demo.row( i ) << endl;
         t.parameters_[i] = demo.row( i );
     }
 
     demonstrations_.push_back( t );
     num_demonstrations_ = demonstrations_.size();
 
-    for(int j=0;j<int(t.parameters_.size());j++)
-    {
-        cout << "demo (" << demonstrations_.size()-1 << ") : " << demonstrations_.back().parameters_[j].transpose() << endl;
-    }
+//    for(int j=0;j<int(t.parameters_.size());j++)
+//    {
+//        cout << "demo (" << demonstrations_.size()-1 << ") : " << demonstrations_.back().parameters_[j].transpose() << endl;
+//    }
 
     return true;
 }
@@ -568,7 +573,7 @@ void Ioc::generateSamples( int nb_samples )
                 samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].parameters_[j];
                 samples_[d][ns].noise_[j] = noisy_traj.row(j);
                 samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j];
-                cout << "sample (" << ns << ") : " << samples_[d][ns].parameters_[j].transpose() << endl;
+                //cout << "sample (" << ns << ") : " << samples_[d][ns].parameters_[j].transpose() << endl;
             }
 
             jointLimits( samples_[d][ns] );
