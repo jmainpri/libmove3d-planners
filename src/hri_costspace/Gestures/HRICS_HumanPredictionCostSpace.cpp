@@ -15,10 +15,10 @@ HumanPredictionCostSpace* global_humanPredictionCostSpace = NULL;
 
 double HRICS_getPredictionOccupancyCost(Configuration& q)
 {
-//    return 1.0;
-//    return global_humanPredictionCostSpace->getCostFromActiveJoints(q);
+    //    return 1.0;
+    //    return global_humanPredictionCostSpace->getCostFromActiveJoints(q);
     return global_humanPredictionCostSpace->getCost(q);
-//    return global_humanPredictionCostSpace->getCurrentOccupationCost(q);
+    //    return global_humanPredictionCostSpace->getCurrentOccupationCost(q);
 }
 
 
@@ -109,8 +109,8 @@ double HumanPredictionCostSpace::getCost(Configuration& q) const
 
 double HumanPredictionCostSpace::getCostFromActiveJoints(Configuration& q) const
 {
-     Robot* robot = q.getRobot();
-//    robot->setAndUpdate(q);
+    Robot* robot = q.getRobot();
+    //    robot->setAndUpdate(q);
 
     double cost=0.0;
 
@@ -124,8 +124,8 @@ double HumanPredictionCostSpace::getCostFromActiveJoints(Configuration& q) const
 
 void HumanPredictionCostSpace::draw()
 {
-//    if( PlanEnv->getBool(PlanParam::drawSampledPoints) )
-        draw_sampled_points();
+    //    if( PlanEnv->getBool(PlanParam::drawSampledPoints) )
+    draw_sampled_points();
 }
 
 void HumanPredictionCostSpace::sampleRobotPoints()
@@ -154,16 +154,16 @@ void HumanPredictionCostSpace::setActiveJoints()
         // Set the planner joints
         m_active_joints.clear();
         // right arm
-//        m_active_joints.push_back( 6 );
-//        m_active_joints.push_back( 7 );
+        //        m_active_joints.push_back( 6 );
+        //        m_active_joints.push_back( 7 );
 
         m_active_joints.push_back( 8 );
         m_active_joints.push_back( 9 );
         m_active_joints.push_back( 10 );
         m_active_joints.push_back( 11 );
         m_active_joints.push_back( 12 );
-//        m_active_joints.push_back( 14 );
-//        m_active_joints.push_back( 15 );
+        //        m_active_joints.push_back( 14 );
+        //        m_active_joints.push_back( 15 );
     }
 
     int nb_points = 0;
@@ -182,9 +182,9 @@ void HumanPredictionCostSpace::setActiveJoints()
 
     cout << "HumanPredictionCostSpace => add " << nb_points << " to the cost function" << endl;
 
-//    for( int i=0;i<int(m_active_joints.size());i++)
-//    {
-//        cout << m_robot->getJoint( m_active_joints[i] )->getName() << endl;
-//    }
+    //    for( int i=0;i<int(m_active_joints.size());i++)
+    //    {
+    //        cout << m_robot->getJoint( m_active_joints[i] )->getName() << endl;
+    //    }
 }
 

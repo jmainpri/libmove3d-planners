@@ -359,3 +359,5 @@ src/hri_costspace/Gestures/HRICS_PlayMotion.hpp
 src/hri_costspace/Gestures/HRICS_PlayMotion.cpp
 src/hri_costspace/HumanTrajectories/HRICS_HumanIoc.hpp
 src/hri_costspace/HumanTrajectories/HRICS_HumanIoc.cpp
+src/planner/TrajectoryOptim/Stomp/control_cost.hpp
+src/planner/TrajectoryOptim/Stomp/control_cost.cpp

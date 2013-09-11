@@ -1215,8 +1215,8 @@ bool StompOptimizer::handleJointLimits()
                 int free_var_index = max_violation_index - free_vars_start_;
                 double multiplier = max_violation / joint_costs_[joint].getQuadraticCostInverse()(free_var_index,free_var_index);
 
-//                group_trajectory_.getFreeJointTrajectoryBlock(joint) += multiplier * joint_costs_[joint].getQuadraticCostInverse().col(free_var_index);
-                double offset = ( joint_max + joint_min )  / 2 ;
+                group_trajectory_.getFreeJointTrajectoryBlock(joint) += multiplier * joint_costs_[joint].getQuadraticCostInverse().col(free_var_index);
+//                double offset = ( joint_max + joint_min )  / 2 ;
 
 //                cout << "multiplier : " << multiplier << endl;
 //                cout << "joint limit max : " << joint_max << endl;
@@ -1224,7 +1224,7 @@ bool StompOptimizer::handleJointLimits()
 //                cout << "offset : " << offset << endl;
 //                cout << group_trajectory_.getFreeJointTrajectoryBlock(joint).transpose() << endl;
 
-                group_trajectory_.getFreeJointTrajectoryBlock(joint) = ( group_trajectory_.getFreeJointTrajectoryBlock(joint).array() - offset ).array()*multiplier + ( offset );
+//                group_trajectory_.getFreeJointTrajectoryBlock(joint) = ( group_trajectory_.getFreeJointTrajectoryBlock(joint).array() - offset )*multiplier + ( offset );
 
 //                cout << group_trajectory_.getFreeJointTrajectoryBlock(joint).transpose() << endl;
             }
@@ -1396,7 +1396,7 @@ bool StompOptimizer::performForwardKinematics()
 
         if( PlanEnv->getBool(PlanParam::useLegibleCost) )
         {
-            general_cost_potential_[i] = HRICS_activeLegi->cost(i);
+            general_cost_potential_[i] = HRICS_activeLegi->legibilityCost(i);
         }
 
         if( collision_space_ )

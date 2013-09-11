@@ -439,9 +439,9 @@ confPtr_t Trajectory::configAtParam(double param, unsigned int* id_localpath) co
     return m_Courbe.back()->configAtParam(param);
 }
 
-vector< shared_ptr<Configuration> > Trajectory::getVectorOfConfiguration()
+vector<confPtr_t> Trajectory::getVectorOfConfiguration() const
 {
-    vector< shared_ptr<Configuration> > vect;
+    vector<confPtr_t> vect;
 
     if (m_Courbe.empty()) {
         return vect;
@@ -449,30 +449,27 @@ vector< shared_ptr<Configuration> > Trajectory::getVectorOfConfiguration()
 
     vect.push_back( m_Courbe[0]->getBegin() );
 
-    for (unsigned int i=0; i<m_Courbe.size(); i++)
+    for (size_t i=0; i<m_Courbe.size(); i++)
         vect.push_back( m_Courbe[i]->getEnd() );
 
     return vect;
 }
-vector<shared_ptr<Configuration> > Trajectory::getNConfAtParam(double delta)
+vector<confPtr_t> Trajectory::getNConfAtParam(double delta) const
 {
-    vector<shared_ptr<Configuration> > tmpVector(0);
+    vector<confPtr_t> tmpVector(0);
 
     double param = 0;
-
     double soFar(0.0);
     double prevSoFar(0.0);
 
-    for (uint i = 0; i < m_Courbe.size(); i++)
+    for (size_t i=0; i<m_Courbe.size(); i++)
     {
-
-        soFar = soFar + m_Courbe.at(i)->getParamMax();
+        soFar = soFar + m_Courbe[i]->getParamMax();
 
         // Parameter lies in the previous local path
         // return configuration inside previous LP
         while (param < soFar)
         {
-
             if (param < prevSoFar)
             {
                 cout
@@ -493,7 +490,6 @@ vector<shared_ptr<Configuration> > Trajectory::getNConfAtParam(double delta)
     tmpVector.push_back(m_Courbe.at(m_Courbe.size() - 1)->configAtParam(param - prevSoFar));
 
     return tmpVector;
-
 }
 
 bool Trajectory::isEmpty()

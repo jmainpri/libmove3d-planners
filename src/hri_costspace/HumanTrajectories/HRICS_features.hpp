@@ -10,6 +10,7 @@
 #include "hri_costspace/HRICS_Visibility.hpp"
 #include "hri_costspace/HRICS_Natural.hpp"
 
+#include "planner/TrajectoryOptim/Stomp/control_cost.hpp"
 #include "planner/TrajectoryOptim/Stomp/covariant_trajectory_policy.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompTrajectory.hpp"
 
@@ -57,28 +58,19 @@ private:
     std::vector<int> active_joints_;
 };
 
-class TrajectorySmoothnessCost : public Feature
+class TrajectorySmoothness : public Feature
 {
 public:
-    TrajectorySmoothnessCost();
+    TrajectorySmoothness();
 
     //! Returns a smoothness cost for the trajectory
     FeatureVect getFeatureCount(const API::Trajectory& t);
     FeatureVect getFeatures(const Configuration& q);
 
 private:
-    void initPolicy();
+    void computeControlCost( const Eigen::MatrixXd& traj );
     void setGroupTrajectoryFromVectorConfig(const std::vector<confPtr_t>& traj);
-
-    //! Smoothness cost
-    MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::CovariantTrajectoryPolicy> policy_;
-    std::vector<Eigen::VectorXd> policy_parameters_;
-    int num_joints_;
-    int num_vars_free_;
-    int free_vars_start_;
-    int free_vars_end_;
-    const ChompPlanningGroup *planning_group_;
-    ChompTrajectory group_trajectory_;
+    ControlCost control_cost_;
 };
 
 class VisibilityFeature : public Feature

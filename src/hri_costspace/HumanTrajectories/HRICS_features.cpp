@@ -15,90 +15,18 @@ double Feature::cost( Configuration& q )
 //----------------------------------------------------------------------
 // Smoothness cost
 
-TrajectorySmoothnessCost::TrajectorySmoothnessCost()
+TrajectorySmoothness::TrajectorySmoothness()
 {
 
 }
 
-void TrajectorySmoothnessCost::initPolicy()
+FeatureVect TrajectorySmoothness::getFeatureCount( const API::Trajectory& t )
 {
-    policy_.reset(new stomp_motion_planner::CovariantTrajectoryPolicy());
-    policy_->setPrintDebug( false );
-
-    std::vector<double> derivative_costs; // = stomp_parameters_->getSmoothnessCosts();
-    double ridge_factor=0;
-    policy_->initialize( num_vars_free_, num_joints_, group_trajectory_.getDuration(),
-                        ridge_factor,
-                        derivative_costs,
-                        planning_group_);
-
-    // initialize the policy trajectory
-    Eigen::VectorXd start = group_trajectory_.getTrajectoryPoint(free_vars_start_-1).transpose();
-    Eigen::VectorXd end = group_trajectory_.getTrajectoryPoint(free_vars_end_+1).transpose();
-
-    // set paramters
-    int free_vars_start_index = DIFF_RULE_LENGTH - 1;
-    std::vector< Eigen::VectorXd > parameters(num_joints_);
-    for (int i=0; i<num_joints_; i++)
-    {
-        parameters[i] =  group_trajectory_.getJointTrajectory(i).segment(free_vars_start_index, num_vars_free_);
-    }
-    policy_->setToMinControlCost( start, end );
-    policy_->setParameters( parameters );
+    FeatureVect count;
+    return count;
 }
 
-void TrajectorySmoothnessCost::setGroupTrajectoryFromVectorConfig(const std::vector<confPtr_t>& traj)
-{
-    int start = free_vars_start_;
-    int end = free_vars_end_;
-//    TODO
-//    if (iteration_==0) {
-//        start = 0;
-//        end = num_vars_all_-1;
-//    }
-
-    // Get the map from move3d index to group trajectory
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
-
-    for (int i=start; i<=end; ++i)
-    {
-        for(int j=0; j<planning_group_->num_joints_;j++)
-        {
-            double point = (*traj[i])[joints[j].move3d_dof_index_];
-            group_trajectory_.getTrajectoryPoint(i).transpose()[j] = point;
-
-        }
-    }
-}
-
-FeatureVect TrajectorySmoothnessCost::getFeatureCount(const API::Trajectory& t)
-{
-    double smoothness_cost = 0.0;
-
-    std::vector<Eigen::MatrixXd> control_cost_matrices;
-    std::vector<Eigen::VectorXd> noise(num_joints_);
-    std::vector<Eigen::VectorXd> control_costs(num_joints_);
-
-    for (int d=0; d<num_joints_; ++d)
-    {
-        policy_parameters_[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
-        noise[d] = Eigen::VectorXd::Zero( policy_parameters_[d].size() );
-    }
-
-    policy_->computeControlCosts(control_cost_matrices, policy_parameters_, noise, 1, control_costs );
-
-    for (int d=0; d<int(control_costs.size()); ++d)
-    {
-        smoothness_cost += control_costs[d].sum();
-    }
-
-    FeatureVect vect(1);
-    vect[0] = smoothness_cost ;
-    return vect;
-}
-
-
-FeatureVect TrajectorySmoothnessCost::getFeatures(const Configuration& q)
+FeatureVect TrajectorySmoothness::getFeatures(const Configuration& q)
 {
     FeatureVect count;
     return count;

@@ -38,13 +38,13 @@ void HRICS_run_human_planning()
     global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
     global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
 
-// Uncomment the following to play the motion
-//    PlayMotion player( global_motionRecorders );
-////    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
-//    for(int i=0;i<int(1);i++)
-//    {
-//        player.play(i);
-//    }
+    // Uncomment the following to play the motion
+    //    PlayMotion player( global_motionRecorders );
+    ////    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
+    //    for(int i=0;i<int(1);i++)
+    //    {
+    //        player.play(i);
+    //    }
 
     if( ht_cost_space == NULL)
     {
@@ -101,7 +101,7 @@ bool HumanTrajSimulator::init()
     global_Project->getActiveScene()->setActiveRobot( human_active_->getName() );
 
     // Change dofs limit
-//    human_active_->se
+    // human_active_->se
 
     // Set init and goal config
     human_active_->setInitPos( *q_init_ );
@@ -131,10 +131,10 @@ bool HumanTrajSimulator::run()
 {
     cout << "run human traj simulator" << endl;
 
-//    if( !init_scenario_ )
-//    {
-//        traj_optim_initScenario();
-//    }
+    //    if( !init_scenario_ )
+    //    {
+    //        traj_optim_initScenario();
+    //    }
 
     int nb_trajectories = 10;
     int max_iter = 100;
@@ -200,11 +200,11 @@ void HumanTrajCostSpace::setPassiveTrajectory( const motion_t& motion )
 FeatureVect HumanTrajCostSpace::getFeatureCount(const API::Trajectory& t)
 {
     std::vector<FeatureVect> vect_stacked;
-//    vect_stacked.push_back( dist_feat_.getFeatureCount(t) );
-//    vect_stacked.push_back( visi_feat_.getFeatureCount(t) );
-//    vect_stacked.push_back( musk_feat_.getFeatureCount(t) );
-//    vect_stacked.push_back( reach_feat_.getFeatureCount(t) );
-//    vect_stacked.push_back( legib_feat_.getFeatureCount(t) );
+    //    vect_stacked.push_back( dist_feat_.getFeatureCount(t) );
+    //    vect_stacked.push_back( visi_feat_.getFeatureCount(t) );
+    //    vect_stacked.push_back( musk_feat_.getFeatureCount(t) );
+    //    vect_stacked.push_back( reach_feat_.getFeatureCount(t) );
+    //    vect_stacked.push_back( legib_feat_.getFeatureCount(t) );
 
     FeatureVect f = Eigen::VectorXd::Zero( getFeatures(*t.getBegin()).size());
 

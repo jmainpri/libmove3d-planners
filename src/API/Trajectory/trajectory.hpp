@@ -118,8 +118,8 @@ public:
     
     confPtr_t configAtParam(double param, unsigned int* id_localpath=NULL) const;
 
-    std::vector<confPtr_t> getNConfAtParam(double delta);
-    std::vector<confPtr_t> getVectorOfConfiguration();
+    std::vector<confPtr_t> getNConfAtParam(double delta) const;
+    std::vector<confPtr_t> getVectorOfConfiguration() const;
 
     uint            getLocalPathId(double param) const;
     LocalPath*      getLocalPath(unsigned int id) const;

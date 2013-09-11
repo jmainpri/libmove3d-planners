@@ -41,7 +41,7 @@ private:
     ReachabilityFeature reach_feat_;
     LegibilityFeature legib_feat_;
 
-    TrajectorySmoothnessCost smoothness_feat_;
+    TrajectorySmoothness smoothness_feat_;
 };
 
 class HumanTrajSimulator
