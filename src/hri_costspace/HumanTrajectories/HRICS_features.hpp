@@ -67,10 +67,13 @@ public:
     FeatureVect getFeatureCount(const API::Trajectory& t);
     FeatureVect getFeatures(const Configuration& q);
 
+    void setActivejoints( const std::vector<int>& active_joints );
+
 private:
-    void computeControlCost( const Eigen::MatrixXd& traj );
-    void setGroupTrajectoryFromVectorConfig(const std::vector<confPtr_t>& traj);
+    double computeControlCost( const Eigen::MatrixXd& traj );
+
     ControlCost control_cost_;
+    std::vector<int> active_dofs_;
 };
 
 class VisibilityFeature : public Feature

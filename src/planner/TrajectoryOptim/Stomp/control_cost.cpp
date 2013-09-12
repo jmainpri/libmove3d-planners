@@ -26,19 +26,43 @@ ControlCost::ControlCost()
     scaling_ = 100;
 }
 
+int ControlCost::getDiffRuleLength()
+{
+    return diff_rule_length_;
+}
+
 double ControlCost::cost( const Eigen::MatrixXd& traj )
 {
-    if( traj.cols() == 0 || traj.rows() == 0 || traj.cols() == 1 )
-    {
-        return 0.0;
-    }
-    //    cout << "traj.cols() : " << traj.cols() << endl;
-    //    cout << "traj.rows() : " << traj.rows() << endl;
-    //    cout << "traj : " << endl << traj << endl;
+    std::vector<Eigen::VectorXd> control_costs = getSquaredQuantities( traj );
 
+    double cost=0.0;
+    for ( int d=0; d<int(control_costs.size()); ++d )
+    {
+        Eigen::VectorXd cost_vect =  control_costs[d].segment( diff_rule_length_, control_costs[d].size() - 2*(diff_rule_length_-1));
+        //        cout << "cost_vect : " << cost_vect.transpose() << endl;
+        //        cout << "cost_vect.size() : " << cost_vect.size() << endl;
+        cost += cost_vect.sum();
+    }
+
+    return cost / scaling_; // scaling
+}
+
+
+std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::MatrixXd& traj )
+{
     // num of collums is the dimension of state space
     // num of rows is the length of the trajectory
     std::vector<Eigen::VectorXd> control_costs( traj.rows() );
+
+    if( traj.cols() == 0 || traj.rows() == 0 || traj.cols() == 1 )
+    {
+        return control_costs;
+    }
+
+    // cout << "traj.cols() : " << traj.cols() << endl;
+    // cout << "traj.rows() : " << traj.rows() << endl;
+    // cout << "traj : " << endl << traj << endl;
+
     const double weight = 1.0;
 
     int type = type_;
@@ -56,9 +80,9 @@ double ControlCost::cost( const Eigen::MatrixXd& traj )
             {
                 int index = i+j;
 
-                if (index < 0)
+                if ( index < 0 )
                     continue;
-                if (index >= traj.cols())
+                if ( index >= traj.cols() )
                     continue;
 
                 // 0 should be velocity
@@ -66,25 +90,17 @@ double ControlCost::cost( const Eigen::MatrixXd& traj )
             }
         }
 
-        //        cout << "params_all.size() : " << params_all.size() << endl;
-        //        cout << "params_all : " << params_all.transpose() << endl;
-        //        cout << "acc_all : " << acc_all.transpose() << endl;
+        // cout << "params_all.size() : " << params_all.size() << endl;
+        // cout << "params_all : " << params_all.transpose() << endl;
+        // cout << "acc_all : " << acc_all.transpose() << endl;
 
         control_costs[d] = weight * ( acc_all.cwise()*acc_all );
+
+        cout << "control_costs[" << d << "] : " << control_costs[d].transpose() << endl;
     }
 
-    double cost=0.0;
-    for ( int d=0; d<int(control_costs.size()); ++d )
-    {
-        Eigen::VectorXd cost_vect =  control_costs[d].segment( diff_rule_length_, control_costs[d].size() - 2*(diff_rule_length_-1));
-        //        cout << "cost_vect : " << cost_vect.transpose() << endl;
-        //        cout << "cost_vect.size() : " << cost_vect.size() << endl;
-        cost += cost_vect.sum();
-    }
-
-    return cost / scaling_; // scaling
+    return control_costs; // scaling
 }
-
 void ControlCost::fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj )
 {
     // we need diff_rule_length-1 extra points on either side

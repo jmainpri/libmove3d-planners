@@ -35,6 +35,7 @@ void HRICS_run_sphere_ioc()
 
     confPtr_t q_init( rob->getInitPos() );
     confPtr_t q_goal( rob->getGoalPos() );
+
     if( *q_init == *q_goal )
     {
         cout << "init equal q_goal in file "
@@ -47,7 +48,7 @@ void HRICS_run_sphere_ioc()
         HRICS_init_sphere_cost();
     }
 
-    IocEvaluation eval(rob);
+    IocEvaluation eval( rob );
 
     bool generate_samples=true;
 
@@ -80,8 +81,8 @@ void HRICS_run_sphere_ioc()
 
 IocEvaluation::IocEvaluation(Robot* rob) : robot_(rob)
 {
-    nb_demos_ = 10;
-    nb_samples_ = 10;
+    nb_demos_ = 3;
+    nb_samples_ = 5;
     nb_way_points_ = 20;
     folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
 

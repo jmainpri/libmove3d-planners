@@ -37,9 +37,9 @@ void Legibility::setTrajectory( const Eigen::MatrixXd& t )
     c_g_.resize( goals_.size() );
     for(int i=0;i<int(goals_.size());i++)
     {
-        cout << "goals_[" << i << "] : " << goals_[i].transpose() << endl;
+        //cout << "goals_[" << i << "] : " << goals_[i].transpose() << endl;
         straight_line_ = getInterpolatedTrajectory( q_source_, goals_[i], traj_.cols() - 2*(diff_rule_length_-1) );
-        cout << "straight_line_ : " << endl << straight_line_ << endl;
+        //cout << "straight_line_ : " << endl << straight_line_ << endl;
         c_g_[i] = cost( straight_line_ );
     }
 }

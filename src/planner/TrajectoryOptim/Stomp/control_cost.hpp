@@ -11,8 +11,14 @@ class ControlCost
 public:
     ControlCost();
 
-    //! returns the cost of a given trajectory
+    //! Returns the diff rule between
+    int getDiffRuleLength();
+
+    //! Returns the cost of a given trajectory
     double cost( const Eigen::MatrixXd& t );
+
+    //! Returns the squared vel, acc or jerk
+    std::vector<Eigen::VectorXd> getSquaredQuantities( const Eigen::MatrixXd& traj );
 
     //! sets the start and end points in the trajectory
     void fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj );

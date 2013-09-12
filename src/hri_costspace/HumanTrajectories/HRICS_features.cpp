@@ -23,6 +23,18 @@ TrajectorySmoothness::TrajectorySmoothness()
 FeatureVect TrajectorySmoothness::getFeatureCount( const API::Trajectory& t )
 {
     FeatureVect count;
+
+    int rows = active_dofs_.size();
+    int cols = t.getNbOfViaPoints();
+
+    Eigen::MatrixXd mat( rows, cols + 2*(control_cost_.getDiffRuleLength()-1) );
+    Eigen::VectorXd q_init = t.getBegin()->getEigenVector( active_dofs_ );
+    Eigen::VectorXd q_goal = t.getEnd()->getEigenVector( active_dofs_ );
+
+    control_cost_.fillTrajectory( q_init, q_goal, mat );
+    mat.block( 0, 0, rows, cols ) = t.getEigenMatrix( active_dofs_ );
+    control_cost_.cost( mat );
+
     return count;
 }
 
@@ -30,6 +42,11 @@ FeatureVect TrajectorySmoothness::getFeatures(const Configuration& q)
 {
     FeatureVect count;
     return count;
+}
+
+void TrajectorySmoothness::setActivejoints( const std::vector<int>& active_joints )
+{
+
 }
 
 //-------------------------------------------------------------------
