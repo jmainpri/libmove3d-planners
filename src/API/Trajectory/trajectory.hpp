@@ -67,8 +67,8 @@ public:
 
     bool concat(const Trajectory& traj);
 
-    bool replacePortionOfLocalPaths(unsigned int id1,unsigned int id2,std::vector<LocalPath*> paths, bool freeMemory = true );
-    bool replacePortion(double param1,double param2,std::vector<LocalPath*> paths , bool freeMemory = true );
+    bool replacePortionOfLocalPaths( unsigned int id1, unsigned int id2, std::vector<LocalPath*> paths, bool freeMemory = true );
+    bool replacePortion( double param1, double param2, std::vector<LocalPath*> paths, bool freeMemory = true );
     
     bool replaceBegin(double param, const std::vector<LocalPath*>& paths );
     bool replaceEnd(double param, const std::vector<LocalPath*>& paths );

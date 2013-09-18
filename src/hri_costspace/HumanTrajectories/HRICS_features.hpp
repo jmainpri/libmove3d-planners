@@ -6,10 +6,6 @@
 
 #include "API/Trajectory/trajectory.hpp"
 
-#include "hri_costspace/HRICS_Distance.hpp"
-#include "hri_costspace/HRICS_Visibility.hpp"
-#include "hri_costspace/HRICS_Natural.hpp"
-
 #include "planner/TrajectoryOptim/Stomp/control_cost.hpp"
 #include "planner/TrajectoryOptim/Stomp/covariant_trajectory_policy.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompTrajectory.hpp"
@@ -35,27 +31,27 @@ public:
 
     void setWeights( const WeightVect& w ) { w_ = w; }
     WeightVect getWeights() { return w_; }
+    int getNumberOfFeatures() { return w_.size(); }
 
 protected:
 
     FeatureVect w_;
 };
 
-class DistanceFeature : public Feature
+class StackedFeatures : public Feature
 {
 public:
-    DistanceFeature( Robot* active, Robot* passive );
-    FeatureVect getFeatureCount(const API::Trajectory& t);
-    FeatureVect getFeatures(const Configuration& q);
-    FeatureVect computeDistances() const;
+    StackedFeatures();
 
-private:
-    Robot* human_active_;
-    Robot* human_passive_;
+    virtual FeatureVect getFeatureCount(const API::Trajectory& t);
+    virtual FeatureVect getFeatures(const Configuration& q);
 
-    Distance* dist_cost_;
+    void addFeatureFunction( Feature* fct );
 
-    std::vector<int> active_joints_;
+protected:
+
+    int nb_features_;
+    std::vector<Feature*> feature_stack_;
 };
 
 class TrajectorySmoothness : public Feature
@@ -74,38 +70,6 @@ private:
 
     ControlCost control_cost_;
     std::vector<int> active_dofs_;
-};
-
-class VisibilityFeature : public Feature
-{
-public:
-    VisibilityFeature() : Feature() {}
-    FeatureVect getFeatureCount(const API::Trajectory& t);
-    FeatureVect getFeatures(const Configuration& q);
-};
-
-class MuskuloskeletalFeature : public Feature
-{
-public:
-    MuskuloskeletalFeature() : Feature() {}
-    FeatureVect getFeatureCount(const API::Trajectory& t);
-    FeatureVect getFeatures(const Configuration& q);
-};
-
-class ReachabilityFeature : public Feature
-{
-public:
-    ReachabilityFeature() : Feature() {}
-    FeatureVect getFeatureCount(const API::Trajectory& t);
-    FeatureVect getFeatures(const Configuration& q);
-};
-
-class LegibilityFeature : public Feature
-{
-public:
-    LegibilityFeature() : Feature() {}
-    FeatureVect getFeatureCount(const API::Trajectory& t);
-    FeatureVect getFeatures(const Configuration& q);
 };
 
 }

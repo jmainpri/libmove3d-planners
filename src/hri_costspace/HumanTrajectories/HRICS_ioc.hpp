@@ -39,6 +39,7 @@ public:
     void compareDemosAndPlanned();
 
 protected:
+
     //! Compute the cost of the demos
     Eigen::VectorXd getCostsOfDemonstrations() const;
 
@@ -50,7 +51,8 @@ protected:
     void saveToMatrix(const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples );
 
     //! Plans a motion using the costmap
-    API::Trajectory planMotion();
+    API::Trajectory planMotionRRT();
+    API::Trajectory planMotionStomp();
 
     virtual void setLearnedWeights();
     virtual void setOriginalWeights();

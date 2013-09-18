@@ -2,9 +2,12 @@
 #include "HRICS_spheres.hpp"
 
 #include "API/project.hpp"
+#include "API/Trajectory/trajectory.hpp"
+#include "planner/TrajectoryOptim/trajectoryOptim.hpp"
+#include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
 #include "planEnvironment.hpp"
 #include "plannerFunctions.hpp"
-#include "API/Trajectory/trajectory.hpp"
+
 
 #include <libmove3d/include/Graphic-pkg.h>
 
@@ -50,15 +53,16 @@ void HRICS_run_sphere_ioc()
 
     IocEvaluation eval( rob );
 
-    bool generate_samples=true;
+    bool generate_samples=false;
 
     if( generate_samples )
     {
-        eval.loadDemonstrations();
-        eval.runLearning();
+        eval.generateDemonstrations();
     }
     else{
-        eval.compareDemosAndPlanned();
+        eval.loadDemonstrations();
+        eval.runLearning();
+//        eval.compareDemosAndPlanned();
     }
 
 //    eval.loadDemonstrations();
@@ -99,11 +103,11 @@ IocEvaluation::IocEvaluation(Robot* rob) : robot_(rob)
     }
 }
 
-API::Trajectory IocEvaluation::planMotion()
+API::Trajectory IocEvaluation::planMotionRRT()
 {
     try
     {
-        p3d_run_rrt(robot_->getRobotStruct());
+        p3d_run_rrt( robot_->getRobotStruct() );
 
         if( !ENV.getBool(Env::drawDisabled) ) {
             g3d_draw_allwin_active();
@@ -122,16 +126,29 @@ API::Trajectory IocEvaluation::planMotion()
     return p3d_get_last_trajectory();
 }
 
+API::Trajectory IocEvaluation::planMotionStomp()
+{
+    traj_optim_runStomp(0);
+    return global_optimizer->getBestTraj();
+}
+
 void IocEvaluation::generateDemonstrations()
 {
+    std::vector<API::Trajectory> demos;
+
     for(int i=0;i<nb_demos_;i++)
     {
+        demos.push_back( planMotionStomp() );
+    }
+
+    for(int i=0;i<int(demos.size());i++)
+    {
+        demos[i].replaceP3dTraj();
         std::stringstream ss;
         ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
-
-        planMotion();
-
-        p3d_save_traj( ( folder_ + ss.str() ).c_str(), robot_->getRobotStruct()->tcur );
+        std::string filename = folder_ + ss.str();
+        p3d_save_traj( filename.c_str(), robot_->getRobotStruct()->tcur );
+        cout << "save demo " << i << " : " << ss.str() << endl;
     }
 }
 
@@ -270,7 +287,7 @@ void IocEvaluation::compareDemosAndPlanned()
     for( int i=0;i<costs_demo.size();i++)
     {
         setLearnedWeights();
-        learned_[i] = planMotion();
+        learned_[i] = planMotionStomp();
 
         setOriginalWeights();
         learned_[i].resetCostComputed();
@@ -495,7 +512,7 @@ Ioc::Ioc( int num_vars, const ChompPlanningGroup* planning_group ) :
 {
     num_demonstrations_ = 0;
     demonstrations_.clear();
-    noise_stddev_ = PlanEnv->getDouble(PlanParam::trajOptimStdDev);
+    noise_stddev_ = 10*PlanEnv->getDouble(PlanParam::trajOptimStdDev);
     sampler_.initialize();
 }
 

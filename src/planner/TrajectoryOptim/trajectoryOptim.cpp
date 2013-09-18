@@ -1480,6 +1480,15 @@ bool traj_optim_runStomp( int runId )
         m_stompparams->max_iterations_ = m_max_iteration;
     }
 
+    if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
+    {
+        global_optimizer->setUseTimeLimit( true );
+        global_optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
+    }
+    else {
+        global_optimizer->setUseTimeLimit( false );
+    }
+
     if(!PlanEnv->getBool(PlanParam::trajOptimTestMultiGauss))
     {
         global_optimizer->runDeformation( 0, runId );

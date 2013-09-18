@@ -172,6 +172,8 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     {
         w_[i] = 1;
     }
+
+    addFeatureFunction( &dist_feat_ );
 }
 
 HumanTrajCostSpace::~HumanTrajCostSpace()
@@ -197,43 +199,8 @@ void HumanTrajCostSpace::setPassiveTrajectory( const motion_t& motion )
     passive_traj_.replaceP3dTraj();
 }
 
-FeatureVect HumanTrajCostSpace::getFeatureCount(const API::Trajectory& t)
-{
-    std::vector<FeatureVect> vect_stacked;
-    //    vect_stacked.push_back( dist_feat_.getFeatureCount(t) );
-    //    vect_stacked.push_back( visi_feat_.getFeatureCount(t) );
-    //    vect_stacked.push_back( musk_feat_.getFeatureCount(t) );
-    //    vect_stacked.push_back( reach_feat_.getFeatureCount(t) );
-    //    vect_stacked.push_back( legib_feat_.getFeatureCount(t) );
-
-    FeatureVect f = Eigen::VectorXd::Zero( getFeatures(*t.getBegin()).size());
-
-    for(int i=0;i<t.getNbOfViaPoints();i++)
-    {
-        f += getFeatures(*t[i]);
-    }
-
-    vect_stacked.push_back( f );
-
-    int size=0;
-    for(int i=0; i<int(vect_stacked.size());i++)
-        size += vect_stacked[i].size();
-
-    FeatureVect features( size );
-    int i=0;
-    for( int d=0; d<int(features.size()); d++ )
-    {
-        for( int k=0; k<int(vect_stacked[k].size()); k++ )
-        {
-            features[i++] = vect_stacked[d][k];
-        }
-    }
-
-    return features;
-}
-
-FeatureVect HumanTrajCostSpace::getFeatures(const Configuration& q)
-{
-    FeatureVect vect = dist_feat_.getFeatures(q);
-    return vect;
-}
+//FeatureVect HumanTrajCostSpace::getFeatures(const Configuration& q)
+//{
+//    FeatureVect vect = dist_feat_.getFeatures(q);
+//    return vect;
+//}

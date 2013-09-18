@@ -13,11 +13,13 @@ public:
     Spheres();
 
     void initialize();
+    void addCenters(int nb_centers);
 
     FeatureVect getFeatures(const Configuration& q );
     FeatureVect getFeatureCount(const API::Trajectory& t);
 
     void produceCostMap();
+    void placeCenterGrid();
 
 private:
     Robot* robot_;

@@ -361,3 +361,5 @@ src/hri_costspace/HumanTrajectories/HRICS_HumanIoc.hpp
 src/hri_costspace/HumanTrajectories/HRICS_HumanIoc.cpp
 src/planner/TrajectoryOptim/Stomp/control_cost.hpp
 src/planner/TrajectoryOptim/Stomp/control_cost.cpp
+src/hri_costspace/HumanTrajectories/HRICS_HumanFeatures.hpp
+src/hri_costspace/HumanTrajectories/HRICS_HumanFeatures.cpp

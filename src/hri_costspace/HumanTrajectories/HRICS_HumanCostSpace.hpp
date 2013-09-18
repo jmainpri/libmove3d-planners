@@ -1,12 +1,12 @@
 #include "API/Device/robot.hpp"
 
-#include "HRICS_features.hpp"
+#include "HRICS_HumanFeatures.hpp"
 #include "hri_costspace/Gestures/HRICS_RecordMotion.hpp"
 
 namespace HRICS
 {
 
-class HumanTrajCostSpace : public Feature
+class HumanTrajCostSpace : public StackedFeatures
 {
 
 public:
@@ -15,8 +15,8 @@ public:
 
     void draw() { }
 
-    FeatureVect getFeatureCount(const API::Trajectory& t);
-    FeatureVect getFeatures(const Configuration& t);
+//    FeatureVect getFeatureCount(const API::Trajectory& t);
+//    FeatureVect getFeatures(const Configuration& t);
 
     //! Add a passive trajectory
     void setPassiveTrajectory( const motion_t& traj );
