@@ -8,7 +8,6 @@
 #include "planEnvironment.hpp"
 #include "plannerFunctions.hpp"
 
-
 #include <libmove3d/include/Graphic-pkg.h>
 
 #include <owlqn/OWLQN.h>
@@ -51,18 +50,61 @@ void HRICS_run_sphere_ioc()
         HRICS_init_sphere_cost();
     }
 
-    IocEvaluation eval( rob );
+    int nb_sampling_phase = 30;
+    int min_samples = 3;
+    int max_samples = 1000;
 
-    bool generate_samples=false;
+    enum phase_t { generate, sample, compare } phase;
+    phase = compare;
 
-    if( generate_samples )
+    std::vector<Eigen::VectorXd> results;
+
+    for(int i=0;i<nb_sampling_phase;i++)
     {
-        eval.generateDemonstrations();
+        cout << "------------------------------" << endl;
+        cout << " RUN : " << i << endl;
+        cout << "------------------------------" << endl;
+
+        // interpolation for the number of sampling phase
+        int nb_samples = min_samples + double(i)*(max_samples-min_samples)/double(nb_sampling_phase-1);
+
+        IocEvaluation eval( rob, nb_samples );
+
+        switch( phase )
+        {
+        case generate:
+            eval.generateDemonstrations();
+            break;
+
+        case sample:
+            eval.loadDemonstrations();
+            eval.runLearning();
+            break;
+
+        case compare:
+            results.push_back( eval.compareDemosAndPlanned() );
+            break;
+        }
+
+//        if( i == 0 )
+//        {
+//            break;
+//        }
+//        g3d_draw_allwin_active();
     }
-    else{
-        eval.loadDemonstrations();
-        eval.runLearning();
-//        eval.compareDemosAndPlanned();
+
+    Eigen::MatrixXd mat( results.size(), 2 );
+    for( int i=0;i<mat.rows();i++)
+    {
+        mat.row(i) = results[i];
+    }
+
+    if( !results.empty() )
+    {
+        std::ofstream file_traj("matlab/result.txt");
+        if (file_traj.is_open())
+            file_traj << mat << '\n';
+        file_traj.close();
     }
 
 //    eval.loadDemonstrations();
@@ -83,23 +125,35 @@ void HRICS_run_sphere_ioc()
 // -------------------------------------------------------------
 // -------------------------------------------------------------
 
-IocEvaluation::IocEvaluation(Robot* rob) : robot_(rob)
+IocEvaluation::IocEvaluation(Robot* rob, int nb_samples) : robot_(rob)
 {
     nb_demos_ = 3;
-    nb_samples_ = 5;
-    nb_way_points_ = 20;
+    nb_samples_ = nb_samples;
+    nb_way_points_ = 30;
     folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
 
     std::vector<int> aj(1); aj[0] = 1;
     active_joints_ = aj;
 
-    feature_matrix_name_ = "matlab/features.txt";
+    std::stringstream ss;
+    ss << "matlab/spheres_features_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
+    feature_matrix_name_ = ss.str();
+
+    plangroup_ = new ChompPlanningGroup( robot_, active_joints_ );
+
+    // Active dofs are set when the planning group is created
+    smoothness_fct_ = new TrajectorySmoothness;
+    smoothness_fct_->setActiveDofs( plangroup_->getActiveDofs() );
 
     if( global_SphereCostFct != NULL )
     {
-        feature_fct_ = global_SphereCostFct;
+        StackedFeatures* fct = new StackedFeatures;
+        fct->addFeatureFunction( smoothness_fct_ );
+        fct->addFeatureFunction( global_SphereCostFct );
+
+        feature_fct_ = fct;
+        nb_weights_ = feature_fct_->getNumberOfFeatures();
         original_vect_ = feature_fct_->getWeights();
-        nb_weights_ = original_vect_.size();
     }
 }
 
@@ -147,8 +201,8 @@ void IocEvaluation::generateDemonstrations()
         std::stringstream ss;
         ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
         std::string filename = folder_ + ss.str();
-        p3d_save_traj( filename.c_str(), robot_->getRobotStruct()->tcur );
-        cout << "save demo " << i << " : " << ss.str() << endl;
+        //p3d_save_traj( filename.c_str(), robot_->getRobotStruct()->tcur );
+        //cout << "save demo " << i << " : " << ss.str() << endl;
     }
 }
 
@@ -185,7 +239,10 @@ void IocEvaluation::loadWeightVector()
     learned_vect_ = Eigen::VectorXd::Zero( nb_weights_ );
 
     // Load vector from file
-    std::ifstream file("matlab/weights.csv");
+    std::stringstream ss;
+    ss << "matlab/spheres_weights_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
+
+    std::ifstream file( ss.str().c_str() );
     std::string line, cell;
 
     int i=0;
@@ -208,9 +265,7 @@ void IocEvaluation::loadWeightVector()
 
 void IocEvaluation::runLearning()
 {
-    ChompPlanningGroup* plangroup = new ChompPlanningGroup( robot_, active_joints_ );
-
-    HRICS::Ioc ioc( nb_way_points_, plangroup );
+    HRICS::Ioc ioc( nb_way_points_, plangroup_ );
 
     // Get features of demos
     std::vector<FeatureVect> phi_demo(demos_.size());
@@ -218,7 +273,7 @@ void IocEvaluation::runLearning()
     {
         demos_[i].cutTrajInSmallLP( nb_way_points_-1 );
         FeatureVect phi = feature_fct_->getFeatureCount( demos_[i] );
-        cout << "Feature Demo : " << phi.transpose() << endl;
+        //cout << "Feature Demo : " << phi.transpose() << endl;
         ioc.addDemonstration( demos_[i].getEigenMatrix(6,7) );
         phi_demo[i] = phi;
     }
@@ -232,7 +287,8 @@ void IocEvaluation::runLearning()
         for( int i=0;i<int(samples[d].size());i++)
         {
             phi_k[d].push_back( feature_fct_->getFeatureCount( samples[d][i] ) );
-            cout << "Feature(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
+            // cout << "Sample(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
+            // cout << "Smoothness(" << d << "," <<  i << ") : " << phi_k[d][i][0] << endl;
         }
     }
 
@@ -271,7 +327,7 @@ void IocEvaluation::setOriginalWeights()
     feature_fct_->setWeights( original_vect_ );
 }
 
-void IocEvaluation::compareDemosAndPlanned()
+Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
 {
     loadDemonstrations();
     setOriginalWeights();
@@ -287,7 +343,8 @@ void IocEvaluation::compareDemosAndPlanned()
     for( int i=0;i<costs_demo.size();i++)
     {
         setLearnedWeights();
-        learned_[i] = planMotionStomp();
+//        learned_[i] = planMotionStomp();
+        learned_[i] = planMotionRRT();
 
         setOriginalWeights();
         learned_[i].resetCostComputed();
@@ -309,6 +366,11 @@ void IocEvaluation::compareDemosAndPlanned()
     cout << "mean_learned : " << mean_learned << " , stdev_learned : " << stdev_learned << endl;
 
     cout << "mean diff : " << mean_learned - mean_demo << " , stdev diff : " << stdev_learned - stdev_demo  << endl;
+
+    Eigen::VectorXd result(2);
+    result[0] = mean_learned;
+    result[1] = stdev_learned;
+    return result;
 }
 
 void IocEvaluation::saveDemoToMatlab()

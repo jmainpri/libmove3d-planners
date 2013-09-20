@@ -18,7 +18,7 @@ namespace HRICS
 class IocEvaluation
 {
 public:
-    IocEvaluation(Robot* rob);
+    IocEvaluation(Robot* rob, int nb_samples);
 
     //! Run learning using the C++ library
     virtual void runLearning();
@@ -36,7 +36,7 @@ public:
     void saveDemoToMatlab();
 
     //! Compute costs using the original costs and the learned costs
-    void compareDemosAndPlanned();
+    Eigen::VectorXd compareDemosAndPlanned();
 
 protected:
 
@@ -71,6 +71,9 @@ protected:
     std::string feature_matrix_name_;
     std::vector<int> active_joints_;
     Feature* feature_fct_;
+    TrajectorySmoothness* smoothness_fct_;
+    ChompPlanningGroup* plangroup_;
+
 };
 
 //! Trajectory structure

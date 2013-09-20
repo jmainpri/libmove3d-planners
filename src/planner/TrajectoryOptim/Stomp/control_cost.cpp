@@ -22,7 +22,8 @@ const double DIFF_RULES[NUM_DIFF_RULES][DIFF_RULE_LENGTH] = {
 ControlCost::ControlCost()
 {
     diff_rule_length_ = DIFF_RULE_LENGTH;
-    type_ = vel;
+    //type_ = vel;
+    type_ = acc;
     scaling_ = 100;
 }
 
@@ -31,20 +32,24 @@ int ControlCost::getDiffRuleLength()
     return diff_rule_length_;
 }
 
-double ControlCost::cost( const Eigen::MatrixXd& traj )
+double ControlCost::cost( const std::vector<Eigen::VectorXd>& control_costs )
 {
-    std::vector<Eigen::VectorXd> control_costs = getSquaredQuantities( traj );
-
     double cost=0.0;
     for ( int d=0; d<int(control_costs.size()); ++d )
     {
-        Eigen::VectorXd cost_vect =  control_costs[d].segment( diff_rule_length_, control_costs[d].size() - 2*(diff_rule_length_-1));
-        //        cout << "cost_vect : " << cost_vect.transpose() << endl;
-        //        cout << "cost_vect.size() : " << cost_vect.size() << endl;
+        Eigen::VectorXd cost_vect =  control_costs[d].segment( diff_rule_length_-1, control_costs[d].size() - 2*(diff_rule_length_-1));
+        // cout << "cost_vect : " << cost_vect.transpose() << endl;
+        // cout << "cost_vect.size() : " << cost_vect.size() << endl;
         cost += cost_vect.sum();
     }
 
-    return cost / scaling_; // scaling
+    return cost; // scaling
+}
+
+double ControlCost::cost( const Eigen::MatrixXd& traj )
+{
+    std::vector<Eigen::VectorXd> control_costs = getSquaredQuantities( traj );
+    return cost( control_costs ) / scaling_; // scaling
 }
 
 
@@ -96,7 +101,7 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
 
         control_costs[d] = weight * ( acc_all.cwise()*acc_all );
 
-        cout << "control_costs[" << d << "] : " << control_costs[d].transpose() << endl;
+        // cout << "control_costs[" << d << "] : " << endl << control_costs[d].transpose() << endl;
     }
 
     return control_costs; // scaling
@@ -110,7 +115,7 @@ void ControlCost::fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorX
         traj.col(i) = a;
     }
     // Copy on the right side
-    for (int i=(traj.cols()-1-diff_rule_length_-1); i<traj.cols(); i++)
+    for (int i=(traj.cols()-diff_rule_length_+1); i<traj.cols(); i++)
     {
         traj.col(i) = b;
     }

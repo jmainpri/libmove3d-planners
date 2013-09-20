@@ -29,9 +29,9 @@ public:
 
     double cost( Configuration& q );
 
-    void setWeights( const WeightVect& w ) { w_ = w; }
-    WeightVect getWeights() { return w_; }
-    int getNumberOfFeatures() { return w_.size(); }
+    virtual void setWeights( const WeightVect& w ) { w_ = w; }
+    virtual WeightVect getWeights() { return w_; }
+    virtual int getNumberOfFeatures() { return w_.size(); }
 
 protected:
 
@@ -46,7 +46,11 @@ public:
     virtual FeatureVect getFeatureCount(const API::Trajectory& t);
     virtual FeatureVect getFeatures(const Configuration& q);
 
+    void setWeights( const WeightVect& w );
+    WeightVect getWeights();
+
     void addFeatureFunction( Feature* fct );
+    int getNumberOfFeatures() { return nb_features_; }
 
 protected:
 
@@ -63,7 +67,10 @@ public:
     FeatureVect getFeatureCount(const API::Trajectory& t);
     FeatureVect getFeatures(const Configuration& q);
 
-    void setActivejoints( const std::vector<int>& active_joints );
+    void setActiveDofs( const std::vector<int>& active_dofs );
+
+    //! Prints the control cost along the trajectory
+    void printControlCosts( const std::vector<Eigen::VectorXd>& control_cost  );
 
 private:
     double computeControlCost( const Eigen::MatrixXd& traj );

@@ -102,7 +102,7 @@ void Spheres::produceCostMap()
         }
     }
 
-    std::string filename("matlab/cost_map.txt");
+    std::string filename("matlab/cost_map_64.txt");
     cout << "Save cost map to : " << filename << endl;
     std::ofstream file( filename.c_str() );
     if (file.is_open())

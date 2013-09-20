@@ -17,6 +17,9 @@ public:
     //! Returns the cost of a given trajectory
     double cost( const Eigen::MatrixXd& t );
 
+    //! Returns the cost of vel, acc or jerk profile
+    double cost( const std::vector<Eigen::VectorXd>& control_costs );
+
     //! Returns the squared vel, acc or jerk
     std::vector<Eigen::VectorXd> getSquaredQuantities( const Eigen::MatrixXd& traj );
 
