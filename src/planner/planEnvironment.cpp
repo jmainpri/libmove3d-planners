@@ -231,6 +231,9 @@ void initPlannerParameters()
         // RRT*
         myDoubleMap.insert( std::make_pair( PlanParam::starRadius,               new doubleContainer(1.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::starFinish,               new doubleContainer(3.0)));
+
+        // AStar
+        myDoubleMap.insert( std::make_pair( PlanParam::grid_pace,               new doubleContainer(1.0)));
   
         // Object TransfertPoint variable
         myDoubleMap.insert( std::make_pair( PlanParam::env_randomXMinLimit,      new doubleContainer(-3.0)));

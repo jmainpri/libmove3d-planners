@@ -55,7 +55,7 @@ void HRICS_run_sphere_ioc()
     int max_samples = 1000;
 
     enum phase_t { generate, sample, compare } phase;
-    phase = compare;
+    phase = sample;
 
     std::vector<Eigen::VectorXd> results;
 
@@ -86,11 +86,11 @@ void HRICS_run_sphere_ioc()
             break;
         }
 
-//        if( i == 0 )
-//        {
-//            break;
-//        }
-//        g3d_draw_allwin_active();
+        if( i == 0 )
+        {
+            break;
+        }
+        g3d_draw_allwin_active();
     }
 
     Eigen::MatrixXd mat( results.size(), 2 );

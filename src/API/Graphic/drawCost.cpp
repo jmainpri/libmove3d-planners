@@ -353,8 +353,8 @@ void g3d_draw_grids()
     //-------------------------------------------------------------
     if( ENV.getBool(Env::drawGrid) && API_activeGrid )
     {
-        //    cout << "API_activeGrid->draw()" << endl;
         API_activeGrid->draw();
+
 
         if (ENV.getBool(Env::drawBox))
         {

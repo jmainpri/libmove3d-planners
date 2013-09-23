@@ -19,14 +19,14 @@
 
 namespace API
 {
-  /**
+/**
    * @ingroup SEARCH
    * This class is the node class
    * to implement the search tree
    */
-  class TreeNode
-  {
-  public:
+class TreeNode
+{
+public:
     TreeNode() : _Parent(NULL) {}
     TreeNode(API::State*, TreeNode*);
     ~TreeNode() {}
@@ -34,20 +34,20 @@ namespace API
     TreeNode* getParent() const { return _Parent;}
     API::State* getState() const { return _State;}
     
-  private:
+private:
     TreeNode *_Parent;
     API::State *_State;
-  };
-  
-  
-  /**
+};
+
+
+/**
    * @ingroup SEARCH
    * Basic block to be used in
    * the priority queue.
    */
-  class QueueElement
-  {
-  public:
+class QueueElement
+{
+public:
     QueueElement() : _Node(NULL) {}
     QueueElement(TreeNode* te) : _Node(te) {}
     ~QueueElement() {}
@@ -56,49 +56,49 @@ namespace API
     
     friend class PrioritizeQueueElements;
     
-  private:
+private:
     TreeNode* _Node;
-  };
-  
-  /**
+};
+
+/**
    * @ingroup SEARCH
    * Function used for sorting tree nodes
    * in the priority queue
    */
-  class PrioritizeQueueElements
-  {
-  public:
+class PrioritizeQueueElements
+{
+public:
     int operator()(QueueElement &x, QueueElement &y)
     {
-      return x.getTreeNode()->getState()->f() > y.getTreeNode()->getState()->f();
+        return x.getTreeNode()->getState()->f() > y.getTreeNode()->getState()->f();
     }
-  };
-  
-  
-  /**
+};
+
+
+/**
    * @ingroup SEARCH
    * @brief This class keeps a pointer to the A-star search tree, an instant
    *  of priority_queue of "Queue_Element"s. Solve returns a vector of
    *  states
    */
-  class AStar
-  {
-  public:
+class AStar
+{
+public:
     AStar() :
-    _Goal(NULL),
-    _GoalIsDefined(false)
+        _Goal(NULL),
+        _GoalIsDefined(false)
     {}
     
     AStar(API::State* goal) :
-    _Goal(goal),
-    _GoalIsDefined(true)
+        _Goal(goal),
+        _GoalIsDefined(true)
     {}
     
     ~AStar() {}
     
     std::vector<API::State*>  solve(API::State* initial_state);
     
-  private:
+private:
     API::State* _Goal;
     void setGoal(API::State* goal) { _Goal = goal; }
     
@@ -118,7 +118,7 @@ namespace API
     std::vector<API::State*> _Explored;
     
     enum {NOT_FOUND,FOUND} _AStarState;     /* keeps if a solution exists after solve is called */
-  };
+};
 }
 #endif
 

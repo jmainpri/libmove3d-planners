@@ -77,14 +77,14 @@ public:
    * @param Cs la Configuration initiale du robot pour la planification
    * @return un Node a été ajouté au graph
    */
-  bool setInit(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> Cs);
+  bool setInit(confPtr_t Cs);
 	
   /**
    * place le Node final de la planification
    * @param Cg la Configuration finale du robot pour la planification
    * @return un Node a été ajouté au graph
    */
-  bool setGoal(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> Cg);
+  bool setGoal(confPtr_t Cg);
   
   /**
    * obtient le Node intial de la planification

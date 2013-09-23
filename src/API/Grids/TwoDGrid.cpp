@@ -189,7 +189,7 @@ TwoDCell* TwoDGrid::getCell(Vector2d point)
 
     if( !isCellCoordInGrid(coord) )
     {
-        cout << "TwoDGrid:: OutBands " << endl;
+        cout << "TwoDGrid::OutBounds" << endl;
         return 0x0;
     }
 
@@ -211,7 +211,7 @@ TwoDCell* TwoDGrid::getCell(double* pos)
 
     if( !isCellCoordInGrid(coord) )
     {
-        cout << "ThreeDGrid:: OutBands " << endl;
+        cout << "ThreeDGrid::OutBounds" << endl;
         return 0x0;
     }
 

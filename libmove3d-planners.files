@@ -363,3 +363,6 @@ src/planner/TrajectoryOptim/Stomp/control_cost.hpp
 src/planner/TrajectoryOptim/Stomp/control_cost.cpp
 src/hri_costspace/HumanTrajectories/HRICS_HumanFeatures.hpp
 src/hri_costspace/HumanTrajectories/HRICS_HumanFeatures.cpp
+src/planner/AStar/SourceList.cmake
+src/planner/AStar/AStarPlanner.hpp
+src/planner/AStar/AStarPlanner.cpp

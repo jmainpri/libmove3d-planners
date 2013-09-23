@@ -197,6 +197,9 @@ namespace PlanParam
             // RRT*
             starRadius,
             starFinish,
+
+            // Pace
+            grid_pace,
             
             // Object TransfertPoint variable
             env_randomXMinLimit,
