@@ -41,6 +41,9 @@ void Spheres::initialize()
     w_[i++] = 15; w_[i++] = 10; w_[i++] = 10; w_[i++] = 12; w_[i++] = 2;  w_[i++] = 14; w_[i++] = 25; w_[i++] = 16;
     w_[i++] = 10; w_[i++] = 2;  w_[i++] = 12; w_[i++] = 4;  w_[i++] = 30; w_[i++] = 6;  w_[i++] = 12; w_[i++] = 8;
 
+    double max = w_.maxCoeff();
+    w_ /= max;
+
     produceCostMap();
 }
 
@@ -110,7 +113,7 @@ void Spheres::produceCostMap()
     file.close();
 }
 
-FeatureVect Spheres::getFeatures(const Configuration& q)
+FeatureVect Spheres::getFeatures( const Configuration& q )
 {
     FeatureVect features(centers_.size());
 
@@ -129,15 +132,19 @@ FeatureVect Spheres::getFeatures(const Configuration& q)
 
 FeatureVect Spheres::getFeatureCount( const API::Trajectory& t )
 {
-    FeatureVect vect( centers_.size() );
+    FeatureVect phi( Eigen::VectorXd::Zero(centers_.size()) );
 
-    for(int i=0;i<t.getNbOfViaPoints();i++)
+    for(int i=1;i<t.getNbOfViaPoints();i++)
     {
-        confPtr_t q = t[i];
-        vect += 0.001*getFeatures( *q );
+        confPtr_t q_1 = t[i-1];
+        confPtr_t q_2 = t[i];
+        Eigen::VectorXd pos1 = q_1->getEigenVector(6,7);
+        Eigen::VectorXd pos2 = q_2->getEigenVector(6,7);
+        double dist = ( pos1 - pos2 ).norm();
+        phi += getFeatures( *q_1 )*dist;
     }
 
-    return vect;
+    return phi;
 }
 
 // ------------------------------------------------------

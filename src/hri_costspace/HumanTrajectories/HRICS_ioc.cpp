@@ -5,6 +5,7 @@
 #include "API/Trajectory/trajectory.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
+#include "planner/AStar/AStarPlanner.hpp"
 #include "planEnvironment.hpp"
 #include "plannerFunctions.hpp"
 
@@ -50,12 +51,13 @@ void HRICS_run_sphere_ioc()
         HRICS_init_sphere_cost();
     }
 
+    int nb_demos = 1;
     int nb_sampling_phase = 30;
     int min_samples = 3;
     int max_samples = 1000;
 
     enum phase_t { generate, sample, compare } phase;
-    phase = sample;
+    phase = compare;
 
     std::vector<Eigen::VectorXd> results;
 
@@ -68,7 +70,7 @@ void HRICS_run_sphere_ioc()
         // interpolation for the number of sampling phase
         int nb_samples = min_samples + double(i)*(max_samples-min_samples)/double(nb_sampling_phase-1);
 
-        IocEvaluation eval( rob, nb_samples );
+        IocEvaluation eval( rob, nb_demos, nb_samples );
 
         switch( phase )
         {
@@ -86,21 +88,22 @@ void HRICS_run_sphere_ioc()
             break;
         }
 
-        if( i == 0 )
+        g3d_draw_allwin_active();
+
+        if( phase == generate )
         {
             break;
         }
-        g3d_draw_allwin_active();
-    }
-
-    Eigen::MatrixXd mat( results.size(), 2 );
-    for( int i=0;i<mat.rows();i++)
-    {
-        mat.row(i) = results[i];
     }
 
     if( !results.empty() )
     {
+        Eigen::MatrixXd mat( results.size(), results[0].size() );
+        for( int i=0;i<mat.rows();i++)
+        {
+            mat.row(i) = results[i];
+        }
+
         std::ofstream file_traj("matlab/result.txt");
         if (file_traj.is_open())
             file_traj << mat << '\n';
@@ -125,9 +128,9 @@ void HRICS_run_sphere_ioc()
 // -------------------------------------------------------------
 // -------------------------------------------------------------
 
-IocEvaluation::IocEvaluation(Robot* rob, int nb_samples) : robot_(rob)
+IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples) : robot_(rob)
 {
-    nb_demos_ = 3;
+    nb_demos_ = nb_demos;
     nb_samples_ = nb_samples;
     nb_way_points_ = 30;
     folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
@@ -148,12 +151,16 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_samples) : robot_(rob)
     if( global_SphereCostFct != NULL )
     {
         StackedFeatures* fct = new StackedFeatures;
-        fct->addFeatureFunction( smoothness_fct_ );
+        //fct->addFeatureFunction( smoothness_fct_ );
         fct->addFeatureFunction( global_SphereCostFct );
+        fct->setWeights( global_SphereCostFct->getWeights() );
 
         feature_fct_ = fct;
+
         nb_weights_ = feature_fct_->getNumberOfFeatures();
         original_vect_ = feature_fct_->getWeights();
+
+        cout << "original_vect : " << original_vect_.transpose() << endl;
     }
 }
 
@@ -180,6 +187,29 @@ API::Trajectory IocEvaluation::planMotionRRT()
     return p3d_get_last_trajectory();
 }
 
+API::Trajectory IocEvaluation::planAStar()
+{
+    // Warning leaking
+    AStarPlanner planner( robot_ );
+    planner.set_pace( PlanEnv->getDouble(PlanParam::grid_pace) );
+    planner.init();
+
+    confPtr_t q_init = robot_->getInitPos();
+    confPtr_t q_goal = robot_->getGoalPos();
+
+    API::Trajectory* traj = planner.computeRobotTrajectory( q_init, q_goal );
+
+    if( traj != NULL )
+    {
+        cout << "AStar planning OK" << endl;
+    }
+    else {
+        cout << "Error in run AStar planner" << endl;
+    }
+
+    return *traj;
+}
+
 API::Trajectory IocEvaluation::planMotionStomp()
 {
     traj_optim_runStomp(0);
@@ -192,7 +222,8 @@ void IocEvaluation::generateDemonstrations()
 
     for(int i=0;i<nb_demos_;i++)
     {
-        demos.push_back( planMotionStomp() );
+        //demos.push_back( planMotionStomp() );
+        demos.push_back( planAStar() );
     }
 
     for(int i=0;i<int(demos.size());i++)
@@ -201,8 +232,8 @@ void IocEvaluation::generateDemonstrations()
         std::stringstream ss;
         ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
         std::string filename = folder_ + ss.str();
-        //p3d_save_traj( filename.c_str(), robot_->getRobotStruct()->tcur );
-        //cout << "save demo " << i << " : " << ss.str() << endl;
+        p3d_save_traj( filename.c_str(), robot_->getRobotStruct()->tcur );
+        cout << "save demo " << i << " : " << ss.str() << endl;
     }
 }
 
@@ -225,6 +256,7 @@ void IocEvaluation::loadDemonstrations()
         }
 
         API::Trajectory T( robot_, (p3d_traj*)p3d_get_desc_curid(P3D_TRAJ) );
+        T.cutTrajInSmallLP(nb_way_points_-1);
         T.setColor( i%8 );
         cout << "color : " << i%8 << endl;
         demos_.push_back(T);
@@ -287,7 +319,7 @@ void IocEvaluation::runLearning()
         for( int i=0;i<int(samples[d].size());i++)
         {
             phi_k[d].push_back( feature_fct_->getFeatureCount( samples[d][i] ) );
-            // cout << "Sample(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
+            cout << "Sample(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
             // cout << "Smoothness(" << d << "," <<  i << ") : " << phi_k[d][i][0] << endl;
         }
     }
@@ -298,11 +330,11 @@ void IocEvaluation::runLearning()
     // global_SphereCostFct->produceCostMap();
     // trajToMatlab(T);
 
-    for( int i=0;i<1;i++)
-    {
-        Eigen::VectorXd w = ioc.solve( phi_demo, phi_k );
-        cout << "w : " << w.transpose() << endl;
-    }
+//    for( int i=0;i<1;i++)
+//    {
+//        Eigen::VectorXd w = ioc.solve( phi_demo, phi_k );
+//        cout << "w : " << w.transpose() << endl;
+//    }
 }
 
 Eigen::VectorXd IocEvaluation::getCostsOfDemonstrations() const
@@ -311,7 +343,7 @@ Eigen::VectorXd IocEvaluation::getCostsOfDemonstrations() const
 
     for( int d=0;d<int(demos_.size());d++)
     {
-        costs[d] = demos_[d].cost();
+        costs[d] = feature_fct_->costTraj( demos_[d] );
     }
 
     return costs;
@@ -344,11 +376,11 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
     {
         setLearnedWeights();
 //        learned_[i] = planMotionStomp();
-        learned_[i] = planMotionRRT();
+//        learned_[i] = planMotionRRT();
+        learned_[i] = planAStar();
 
         setOriginalWeights();
-        learned_[i].resetCostComputed();
-        costs_learned[i] = learned_[i].cost();
+        costs_learned[i] = feature_fct_->costTraj( learned_[i] );
     }
 
     double mean_demo = costs_demo.mean();
@@ -367,9 +399,10 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
 
     cout << "mean diff : " << mean_learned - mean_demo << " , stdev diff : " << stdev_learned - stdev_demo  << endl;
 
-    Eigen::VectorXd result(2);
-    result[0] = mean_learned;
-    result[1] = stdev_learned;
+    Eigen::VectorXd result(3);
+    result[0] = mean_demo;
+    result[1] = mean_learned;
+    result[2] = mean_learned - mean_demo;
     return result;
 }
 

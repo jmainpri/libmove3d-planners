@@ -35,8 +35,9 @@ void HRICS_run_human_ioc_from_recorded_motion()
         player.play(i);
     }
 
+    int nb_demos = 30;
     int nb_samples = 1000;
-    HumanIoc ioc( human2, human1, nb_samples );
+    HumanIoc ioc( human2, human1, nb_demos, nb_samples );
     ioc.setDemos( global_motionRecorders[0]->getStoredMotions() );
     ioc.runLearning();
 }
@@ -52,15 +53,16 @@ void HRICS_run_human_ioc_evaluation()
         return;
     }
 
+    int nb_demos = 30;
     int nb_samples = 1000;
-    HumanIoc ioc( human2, human1, nb_samples );
+    HumanIoc ioc( human2, human1, nb_demos, nb_samples );
     ioc.loadDemonstrations();
     ioc.runLearning();
 }
 
-HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_samples ) : IocEvaluation(active,nb_samples)
+HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples ) : IocEvaluation( active, nb_demos, nb_samples )
 {
-    nb_demos_ = 10;
+    nb_demos_ = nb_demos;
     nb_samples_ = nb_samples; // 1000
     nb_way_points_ = 15;
     folder_ = "/home/jmainpri/workspace/move3d/assets/Collaboration/TRAJECTORIES/";

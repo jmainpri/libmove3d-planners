@@ -18,7 +18,7 @@ namespace HRICS
 class IocEvaluation
 {
 public:
-    IocEvaluation(Robot* rob, int nb_samples);
+    IocEvaluation( Robot* rob, int nb_demos, int nb_samples );
 
     //! Run learning using the C++ library
     virtual void runLearning();
@@ -53,6 +53,7 @@ protected:
     //! Plans a motion using the costmap
     API::Trajectory planMotionRRT();
     API::Trajectory planMotionStomp();
+    API::Trajectory planAStar();
 
     virtual void setLearnedWeights();
     virtual void setOriginalWeights();

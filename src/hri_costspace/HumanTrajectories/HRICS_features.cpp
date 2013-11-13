@@ -14,6 +14,20 @@ double Feature::cost( Configuration& q )
     return cost;
 }
 
+double Feature::costTraj( const API::Trajectory& t )
+{
+    FeatureVect  phi = getFeatureCount(t);
+
+    cout << w_.size() << endl;
+    cout << phi.size() << endl;
+
+    double cost = w_.transpose()*phi;
+    cout << " w_.transpose() : " << w_.transpose() << endl;
+    cout << " phi.transpose() : " << phi.transpose() << endl;
+    cout << "cost : " << cost << endl;
+    return cost;
+}
+
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 
@@ -47,6 +61,7 @@ void StackedFeatures::addFeatureFunction( Feature* fct )
 {
     feature_stack_.push_back( fct );
     nb_features_ += feature_stack_.back()->getNumberOfFeatures();
+    w_ = Eigen::VectorXd::Zero( nb_features_ );
 }
 
 void StackedFeatures::setWeights( const WeightVect& w )
@@ -59,6 +74,8 @@ void StackedFeatures::setWeights( const WeightVect& w )
         feature_stack_[i]->setWeights( weights );
         height += num;
     }
+
+    w_= w;
 }
 
 WeightVect StackedFeatures::getWeights()

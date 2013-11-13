@@ -28,6 +28,7 @@ public:
     virtual FeatureVect getFeatures(const Configuration& q) = 0;
 
     double cost( Configuration& q );
+    double costTraj( const API::Trajectory& t );
 
     virtual void setWeights( const WeightVect& w ) { w_ = w; }
     virtual WeightVect getWeights() { return w_; }

@@ -191,6 +191,7 @@ double PlanCell::getCost()
 
         confPtr_t q = setRobotAtCenter();
         cost_ = q->cost();
+        //g3d_draw_allwin_active();
         cost_is_computed_ = true;
         return cost_;
     }
@@ -258,6 +259,7 @@ vector<API::State*> PlanState::getSuccessors(API::State* s)
 
         int dir = (coord[0]+1) + (coord[1]+1)*3;
 
+        // Remove directions that go back
         switch (dir)
         {
         case 0: remove[0]=0; remove[1]=1; remove[2]=3; break;
@@ -274,9 +276,9 @@ vector<API::State*> PlanState::getSuccessors(API::State* s)
 
     for(int i=0;i<8;i++)
     {
-        if( i == remove[0] || i == remove[1] || i == remove[2] ){
-            continue;
-        }
+//        if( i == remove[0] || i == remove[1] || i == remove[2] ){
+//            continue;
+//        }
 
         PlanCell* neigh = dynamic_cast<PlanCell*>( grid_->getNeighbour(coord2,i) );
         if( neigh != NULL )
@@ -396,6 +398,9 @@ AStarPlanner::AStarPlanner(Robot* R) : Planner(R,NULL)
 
 AStarPlanner::~AStarPlanner()
 {
+    if( grid_ == API_activeGrid )
+        API_activeGrid = NULL;
+
     delete grid_;
 }
 
