@@ -32,7 +32,7 @@ public:
     confPtr_t getConfigTwelveDoF( const std::vector<std::string>& config );
     motion_t loadFromCSV( const std::string& filename, bool quiet = false );
     void loadXMLFolder();
-    void loadXMLFolder( const std::string& foldername  );
+    bool loadXMLFolder( const std::string& foldername  );
     void loadCSVFolder( const std::string& foldername, bool quiet = false );
 
     void storeMotion( const motion_t& motion, bool new_motion = true);

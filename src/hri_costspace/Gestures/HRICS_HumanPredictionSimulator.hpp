@@ -14,7 +14,7 @@ namespace HRICS
 class HumanPredictionSimulator
 {
 public:
-    HumanPredictionSimulator( Robot* robot, Robot* human, RecordMotion* recorder, ClassifyMotion* classifier, WorkspaceOccupancyGrid* occupacy_grid );
+    HumanPredictionSimulator( Robot* robot, Robot* human, RecordMotion* recorder, ClassifyMotion* classifier,       WorkspaceOccupancyGrid* occupacy_grid );
 
     void loadHumanTrajectory( const motion_t& motion );
     int classifyMotion( const motion_t& motion );

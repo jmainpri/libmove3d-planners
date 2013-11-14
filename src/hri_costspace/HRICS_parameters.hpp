@@ -30,7 +30,7 @@ namespace HricsParam
 
         enum intParameter
         {
-            tata
+            ioc_phase
         };
 
         enum doubleParameter

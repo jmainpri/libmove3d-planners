@@ -52,7 +52,7 @@ void initHricsParameters()
 
     // Int
     // ------------------------------------------------------------------
-    myIntMap.insert( std::make_pair( HricsParam::tata, new intContainer(-1) ));
+    myIntMap.insert( std::make_pair( HricsParam::ioc_phase, new intContainer(-1) ));
 
 
     // Double

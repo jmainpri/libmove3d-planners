@@ -1,5 +1,6 @@
 #include "HRICS_ioc.hpp"
 #include "HRICS_spheres.hpp"
+#include "HRICS_parameters.hpp"
 
 #include "API/project.hpp"
 #include "API/Trajectory/trajectory.hpp"
@@ -56,12 +57,21 @@ void HRICS_run_sphere_ioc()
     int min_samples = 3;
     int max_samples = 1000;
 
+    bool StopRun = false;
+
     enum phase_t { generate, sample, compare } phase;
-    phase = compare;
+
+    switch( HriEnv->getInt(HricsParam::ioc_phase) )
+    {
+    case 0: phase = generate; break;
+    case 1: phase = sample; break;
+    case 2: phase = compare; break;
+    default: cout << "Error : phase not defined!!!" << endl; return;
+    }
 
     std::vector<Eigen::VectorXd> results;
 
-    for(int i=0;i<nb_sampling_phase;i++)
+    for(int i=0; i<nb_sampling_phase && !StopRun; i++)
     {
         cout << "------------------------------" << endl;
         cout << " RUN : " << i << endl;
@@ -88,11 +98,14 @@ void HRICS_run_sphere_ioc()
             break;
         }
 
-        g3d_draw_allwin_active();
-
-        if( phase == generate )
+        if( phase == generate && i == 0 )
         {
             break;
+        }
+        g3d_draw_allwin_active();
+
+        if ( PlanEnv->getBool(PlanParam::stopPlanner) ) {
+            StopRun = true;
         }
     }
 

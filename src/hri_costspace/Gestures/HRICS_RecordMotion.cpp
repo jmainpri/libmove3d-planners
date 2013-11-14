@@ -368,7 +368,7 @@ void RecordMotion::loadXMLFolder()
     loadXMLFolder(foldername);
 }
 
-void RecordMotion::loadXMLFolder(  const std::string& foldername  )
+bool RecordMotion::loadXMLFolder(  const std::string& foldername  )
 {
     //std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/recorded_motion/";
     cout << "Load Folder : " << foldername << endl;
@@ -377,7 +377,7 @@ void RecordMotion::loadXMLFolder(  const std::string& foldername  )
     FILE* fp = popen( command.c_str(), "r");
     if (fp == NULL) {
         cout << "ERROR in system call" << endl;
-        return;
+        return false;
     }
     char path[PATH_MAX]; int max_number_of_motions=0;
     while ( fgets( path, PATH_MAX, fp) != NULL ) max_number_of_motions++;
@@ -420,6 +420,7 @@ void RecordMotion::loadXMLFolder(  const std::string& foldername  )
         }
     }
     cout << "Number of motion loaded : " << number_of_motions_loaded << endl;
+    return true;
 }
 
 void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet )
