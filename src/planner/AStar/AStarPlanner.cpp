@@ -398,10 +398,10 @@ AStarPlanner::AStarPlanner(Robot* R) : Planner(R,NULL)
 
 AStarPlanner::~AStarPlanner()
 {
-    if( grid_ == API_activeGrid )
-        API_activeGrid = NULL;
+//    if( grid_ == API_activeGrid )
+//        API_activeGrid = NULL;
 
-    delete grid_;
+//    delete grid_;
 }
 
 unsigned int AStarPlanner::init()
@@ -412,6 +412,11 @@ unsigned int AStarPlanner::init()
     cout << "pace : " << pace_ << " meters" << endl;
 
     grid_ = new PlanGrid( _Robot,/*ENV.getDouble(Env::PlanCellSize)*/ pace_, env_size_ );
+
+    if( API_activeGrid != NULL )
+    {
+        delete API_activeGrid;
+    }
     API_activeGrid = grid_;
 
     return 1;

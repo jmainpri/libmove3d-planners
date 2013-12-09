@@ -31,15 +31,15 @@ void Spheres::initialize()
 
     int i=0;
 
-    w_[i++] = 10; w_[i++] = 2;  w_[i++] = 12; w_[i++] = 4;  w_[i++] = 30; w_[i++] = 6;  w_[i++] = 12; w_[i++] = 8;
-    w_[i++] = 15; w_[i++] = 10; w_[i++] = 10; w_[i++] = 12; w_[i++] = 2;  w_[i++] = 14; w_[i++] = 25; w_[i++] = 16;
-    w_[i++] = 10; w_[i++] = 2;  w_[i++] = 12; w_[i++] = 4;  w_[i++] = 30; w_[i++] = 6;  w_[i++] = 12; w_[i++] = 8;
-    w_[i++] = 15; w_[i++] = 10; w_[i++] = 10; w_[i++] = 12; w_[i++] = 2;  w_[i++] = 14; w_[i++] = 25; w_[i++] = 16;
+    w_[i++] = 1; w_[i++] = 2;  w_[i++] = 1; w_[i++] = 4;  w_[i++] = 1; w_[i++] = 6;  w_[i++] = 1; w_[i++] = 8;
+    w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 2;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 40;
+    w_[i++] = 99; w_[i++] = 99; w_[i++] = 60; w_[i++] = 60; w_[i++] = 50; w_[i++] = 6;  w_[i++] = 1; w_[i++] = 40;
+    w_[i++] = 50; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 3;
 
-    w_[i++] = 15; w_[i++] = 10; w_[i++] = 10; w_[i++] = 12; w_[i++] = 2;  w_[i++] = 14; w_[i++] = 25; w_[i++] = 16;
-    w_[i++] = 10; w_[i++] = 2;  w_[i++] = 12; w_[i++] = 4;  w_[i++] = 30; w_[i++] = 6;  w_[i++] = 12; w_[i++] = 8;
-    w_[i++] = 15; w_[i++] = 10; w_[i++] = 10; w_[i++] = 12; w_[i++] = 2;  w_[i++] = 14; w_[i++] = 25; w_[i++] = 16;
-    w_[i++] = 10; w_[i++] = 2;  w_[i++] = 12; w_[i++] = 4;  w_[i++] = 30; w_[i++] = 6;  w_[i++] = 12; w_[i++] = 8;
+    w_[i++] = 1; w_[i++] = 10; w_[i++] = 10; w_[i++] = 10; w_[i++] = 10; w_[i++] = 20; w_[i++] = 99; w_[i++] = 99;
+    w_[i++] = 1; w_[i++] = 1;  w_[i++] = 50; w_[i++] = 99;  w_[i++] = 99; w_[i++] = 99;  w_[i++] = 50; w_[i++] = 50;
+    w_[i++] =20; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 3; w_[i++] = 1; w_[i++] = 1; w_[i++] = 10;
+    w_[i++] = 10; w_[i++] = 2;  w_[i++] = 12; w_[i++] = 4;  w_[i++] = 10; w_[i++] = 6;  w_[i++] = 12; w_[i++] = 8;
 
     double max = w_.maxCoeff();
     w_ /= max;
@@ -52,12 +52,29 @@ void Spheres::addCenters(int nb_centers)
     Scene* sce = global_Project->getActiveScene();
     std::stringstream ss;
 
-    for( int i=1;i<=nb_centers;i++)
+    double gray_scale = 0.0;
+    double color_vect[4];
+
+    for( int i=1; i<=nb_centers; i++)
     {
         ss.str(""); // clear stream
         ss << "GAUSSIAN_MU_" << std::setw(2) << std::setfill( '0' ) << i ;
         centers_.push_back( sce->getRobotByName( ss.str() ) );
         cout << "Add robot : " << centers_.back()->getName() << endl;
+
+        p3d_obj* o = p3d_get_robot_body_by_name( centers_.back()->getRobotStruct(), "body" );
+        cout << o->name << endl;
+
+        gray_scale = 1-double(i)/double(nb_centers); // TODO fix
+//        color_vect[0] = gray_scale;
+//        color_vect[1] = gray_scale;
+//        color_vect[2] = gray_scale;
+//        color_vect[3] = 1.0;
+
+        GroundColorMixGreenToRed( color_vect, gray_scale );
+        color_vect[3] = 1.0;
+
+        p3d_poly_set_color( o->pol[1], Any, color_vect );
     }
 }
 
@@ -80,6 +97,7 @@ void Spheres::placeCenterGrid()
             (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(nb_cells-1);
             centers_[id]->setAndUpdate( *q );
             centers_[id]->setInitPos( *q );
+            cout << "c (" << id << ") : " << (*q)[6] << " , " << (*q)[7] << endl;
         }
     }
 }
