@@ -53,9 +53,9 @@ void HRICS_run_sphere_ioc()
     }
 
     int nb_demos = 1;
-    int nb_sampling_phase = 30;
+    int nb_sampling_phase = 20;
     int min_samples = 3;
-    int max_samples = 1000;
+    int max_samples = 100;
 
     bool StopRun = false;
 
@@ -78,7 +78,8 @@ void HRICS_run_sphere_ioc()
         cout << "------------------------------" << endl;
 
         // interpolation for the number of sampling phase
-        int nb_samples = min_samples + double(i)*(max_samples-min_samples)/double(nb_sampling_phase-1);
+        // int nb_samples = min_samples + double(i)*(max_samples-min_samples)/double(nb_sampling_phase-1);
+        int nb_samples = min_samples + double(2)*(max_samples-min_samples)/double(nb_sampling_phase-1);
 
         IocEvaluation eval( rob, nb_demos, nb_samples );
 
@@ -98,7 +99,7 @@ void HRICS_run_sphere_ioc()
             break;
         }
 
-        if( phase == generate && i == 0 )
+        if( (( phase == generate ) || (phase == compare )) && i == 0 )
         {
             break;
         }
@@ -173,7 +174,8 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples) : robot_(
         nb_weights_ = feature_fct_->getNumberOfFeatures();
         original_vect_ = feature_fct_->getWeights();
 
-        cout << "original_vect : " << original_vect_.transpose() << endl;
+        cout << "original_vect : " << endl;
+        feature_fct_->printWeights();
     }
 }
 
@@ -279,7 +281,7 @@ void IocEvaluation::loadDemonstrations()
 
 void IocEvaluation::loadWeightVector()
 {
-    cout << "Load weight vector" << endl;
+    cout << "Load Weight Vector" << endl;
 
     learned_vect_ = Eigen::VectorXd::Zero( nb_weights_ );
 
@@ -305,7 +307,7 @@ void IocEvaluation::loadWeightVector()
     }
     file.close();
 
-    cout << " w : " << learned_vect_.transpose() << endl;
+    // cout << " w : " << learned_vect_.transpose() << endl;
 }
 
 void IocEvaluation::runLearning()
@@ -332,7 +334,7 @@ void IocEvaluation::runLearning()
         for( int i=0;i<int(samples[d].size());i++)
         {
             phi_k[d].push_back( feature_fct_->getFeatureCount( samples[d][i] ) );
-            cout << "Sample(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
+            // cout << "Sample(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
             // cout << "Smoothness(" << d << "," <<  i << ") : " << phi_k[d][i][0] << endl;
         }
     }
@@ -364,12 +366,16 @@ Eigen::VectorXd IocEvaluation::getCostsOfDemonstrations() const
 
 void IocEvaluation::setLearnedWeights()
 {
+    cout << "Set Learned Weight Vector" << endl;
     feature_fct_->setWeights( learned_vect_ );
+    feature_fct_->printWeights();
 }
 
 void IocEvaluation::setOriginalWeights()
 {
+    cout << "Set Original Weight Vector" << endl;
     feature_fct_->setWeights( original_vect_ );
+    feature_fct_->printWeights();
 }
 
 Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
@@ -381,7 +387,7 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
     Eigen::VectorXd costs_learned( costs_demo.size() );
     learned_.resize( costs_demo.size() );
 
-    cout << ( costs_demo    ).transpose() << endl;
+    cout << ( costs_demo ).transpose() << endl;
 
     loadWeightVector();
 
@@ -830,8 +836,8 @@ double IocObjective::Eval( const DblVec& w, DblVec& dw )
     Eigen::VectorXd w_(getEigenVector(w));
     Eigen::VectorXd dw_(Eigen::VectorXd::Zero(dw.size()));
 
-    cout << endl;
-    cout << "w : " << w_.transpose() << endl;
+    // cout << endl;
+    //cout << "w : " << w_.transpose() << endl;
 
     // Loss function
     loss = value(w_);

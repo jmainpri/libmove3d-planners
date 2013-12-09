@@ -33,6 +33,7 @@ public:
     virtual void setWeights( const WeightVect& w ) { w_ = w; }
     virtual WeightVect getWeights() { return w_; }
     virtual int getNumberOfFeatures() { return w_.size(); }
+    virtual void printWeights() const { std::cout << " w_.transpose() : " << w_.transpose() << std::endl; }
 
 protected:
 
@@ -52,6 +53,8 @@ public:
 
     void addFeatureFunction( Feature* fct );
     int getNumberOfFeatures() { return nb_features_; }
+
+    void printWeights() const;
 
 protected:
 

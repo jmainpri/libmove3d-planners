@@ -44,7 +44,8 @@ namespace GestParam
             draw_current_occupancy,
             draw_recorded_motion,
             with_multiple_stomps,
-            parallelize_stomp
+            parallelize_stomp,
+            print_debug
         };
 
         enum intParameter

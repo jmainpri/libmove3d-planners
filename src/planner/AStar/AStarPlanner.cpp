@@ -136,8 +136,8 @@ void PlanGrid::draw()
 
             g3d_set_color( Any, colorvector );
 
-            // cout << "Cost of cell (" << x << " , " << y << ") = " << colorRation;
-            // cout << " , colorvector : (" << colorvector[0] << " , " << colorvector[1] << " , " << colorvector[2] << " , " << colorvector[3] << ")" << endl;
+            // cout << "Cost of cell (" << x << " , " << y << ") = " << cost << endl;
+            //cout << " , colorvector : (" << colorvector[0] << " , " << colorvector[1] << " , " << colorvector[2] << " , " << colorvector[3] << ")" << endl;
 
             Vector2d center = Cell->getCenter();
 

@@ -1,5 +1,7 @@
 #include "HRICS_spheres.hpp"
 
+#include "HRICS_GestParameters.hpp"
+
 #include "API/project.hpp"
 #include "planner/cost_space.hpp"
 
@@ -31,20 +33,36 @@ void Spheres::initialize()
 
     int i=0;
 
-    w_[i++] = 1; w_[i++] = 2;  w_[i++] = 1; w_[i++] = 4;  w_[i++] = 1; w_[i++] = 6;  w_[i++] = 1; w_[i++] = 8;
-    w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 2;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 40;
-    w_[i++] = 99; w_[i++] = 99; w_[i++] = 60; w_[i++] = 60; w_[i++] = 50; w_[i++] = 6;  w_[i++] = 1; w_[i++] = 40;
-    w_[i++] = 50; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 3;
+    w_[i++] = 8; w_[i++] = 8;  w_[i++] = 8; w_[i++] = 8;  w_[i++] = 8; w_[i++] = 8;  w_[i++] = 8; w_[i++] = 8;
+    w_[i++] = 8; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 2;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 40;
+    w_[i++] = 99; w_[i++] = 99; w_[i++] = 80; w_[i++] = 60; w_[i++] = 50; w_[i++] = 6;  w_[i++] = 1; w_[i++] = 40;
+    w_[i++] = 70; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 8;
 
-    w_[i++] = 1; w_[i++] = 10; w_[i++] = 10; w_[i++] = 10; w_[i++] = 10; w_[i++] = 20; w_[i++] = 99; w_[i++] = 99;
-    w_[i++] = 1; w_[i++] = 1;  w_[i++] = 50; w_[i++] = 99;  w_[i++] = 99; w_[i++] = 99;  w_[i++] = 50; w_[i++] = 50;
+    w_[i++] = 8; w_[i++] = 10; w_[i++] = 10; w_[i++] = 10; w_[i++] = 10; w_[i++] = 20; w_[i++] = 99; w_[i++] = 99;
+    w_[i++] = 8; w_[i++] = 1;  w_[i++] = 50; w_[i++] = 99;  w_[i++] = 99; w_[i++] = 99;  w_[i++] = 50; w_[i++] = 50;
     w_[i++] =20; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 3; w_[i++] = 1; w_[i++] = 1; w_[i++] = 10;
-    w_[i++] = 10; w_[i++] = 2;  w_[i++] = 12; w_[i++] = 4;  w_[i++] = 10; w_[i++] = 6;  w_[i++] = 12; w_[i++] = 8;
+    w_[i++] = 10; w_[i++] = 10;  w_[i++] = 12; w_[i++] = 10;  w_[i++] = 10; w_[i++] = 10;  w_[i++] = 12; w_[i++] = 10;
 
     double max = w_.maxCoeff();
     w_ /= max;
 
     produceCostMap();
+}
+
+void Spheres::printWeights() const
+{
+    cout << "weights : " << endl;
+    cout.precision(3);
+
+    int n=8;
+    for(int i=0;i<n;i++)
+    {
+        for(int j=0;j<n;j++)
+        {
+            cout << "\t " << w_[n*i+j] << std::fixed;
+        }
+        cout << endl;
+    }
 }
 
 void Spheres::addCenters(int nb_centers)
@@ -173,6 +191,16 @@ Spheres* global_SphereCostFct=NULL;
 
 double HRICS_sphere_cost(Configuration& q)
 {
+    if( GestEnv->getBool(GestParam::print_debug) )
+    {
+        FeatureVect phi = global_SphereCostFct->getFeatures( q );
+        WeightVect w = global_SphereCostFct->getWeights();
+        cout << "phi : " << endl;
+        cout << phi.transpose() << endl;
+        cout << "w : " << endl;
+        cout << w.transpose() << endl;
+        cout << endl;
+    }
     return global_SphereCostFct->cost( q );
 }
 

@@ -20,6 +20,7 @@ public:
 
     void produceCostMap();
     void placeCenterGrid();
+    void printWeights() const;
 
 private:
     Robot* robot_;

@@ -22,9 +22,9 @@ double Feature::costTraj( const API::Trajectory& t )
     cout << phi.size() << endl;
 
     double cost = w_.transpose()*phi;
-    cout << " w_.transpose() : " << w_.transpose() << endl;
-    cout << " phi.transpose() : " << phi.transpose() << endl;
-    cout << "cost : " << cost << endl;
+    // cout << " w_.transpose() : " << w_.transpose() << endl;
+    // cout << " phi.transpose() : " << phi.transpose() << endl;
+    // cout << "cost : " << cost << endl;
     return cost;
 }
 
@@ -92,6 +92,14 @@ WeightVect StackedFeatures::getWeights()
 
     return w;
 }
+
+ void StackedFeatures::printWeights() const
+ {
+     for(int i=0;i<int(feature_stack_.size());i++)
+     {
+         feature_stack_[i]->printWeights();
+     }
+ }
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
