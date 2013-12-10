@@ -242,9 +242,10 @@ ENDIF()
 
 #-------------- Ioc ------------------------------------------------------------
 
-INCLUDE_directories(/home/jmainpri/openrobots/includes)
-SET(INCLUDE_DIRS ${INCLUDE_DIRS} /home/jmainpri/openrobots/includes)
-SET(LIBS ${LIBS} /home/jmainpri/openrobots/lib/libowlqn.so)
+SET(IOC_DIR /home/jmainpri/workspace/move3d/install) #/home/jmainpri/openrobots
+INCLUDE_directories(includes)
+SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${IOC_DIR}/includes)
+SET(LIBS ${LIBS} ${IOC_DIR}/lib/libowlqn.so)
 
 #-------------- Eigen ----------------------------------------------------------
 

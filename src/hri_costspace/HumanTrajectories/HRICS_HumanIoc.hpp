@@ -12,7 +12,7 @@ class HumanIoc : public IocEvaluation
 public:
     HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples );
 
-    void runLearning();
+    void runSampling();
     void setPlanningGroup();
     void setDemos( const std::vector<motion_t>& stored_motions );
 private:

@@ -1024,9 +1024,14 @@ double Trajectory::costOfPortion(double param1, double param2)
 
 void Trajectory::resetCostComputed()
 {
+    m_Source->setCostAsNotTested();
+    m_Target->setCostAsNotTested();
+
     for (unsigned int i = 0; i < m_Courbe.size(); i++)
     {
         m_Courbe[i]->resetCostComputed();
+        m_Courbe[i]->getBegin()->setCostAsNotTested();
+        m_Courbe[i]->getEnd()->setCostAsNotTested();
     }
 }
 

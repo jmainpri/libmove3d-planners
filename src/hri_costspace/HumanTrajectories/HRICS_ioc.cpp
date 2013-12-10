@@ -73,13 +73,14 @@ void HRICS_run_sphere_ioc()
 
     for(int i=0; i<nb_sampling_phase && !StopRun; i++)
     {
+        int iteration = i;
+        // int interation = 2;
         cout << "------------------------------" << endl;
-        cout << " RUN : " << i << endl;
+        cout << " RUN : " << iteration << endl;
         cout << "------------------------------" << endl;
 
         // interpolation for the number of sampling phase
-        // int nb_samples = min_samples + double(i)*(max_samples-min_samples)/double(nb_sampling_phase-1);
-        int nb_samples = min_samples + double(2)*(max_samples-min_samples)/double(nb_sampling_phase-1);
+        int nb_samples = min_samples + double(iteration)*(max_samples-min_samples)/double(nb_sampling_phase-1);
 
         IocEvaluation eval( rob, nb_demos, nb_samples );
 
@@ -99,7 +100,7 @@ void HRICS_run_sphere_ioc()
             break;
         }
 
-        if( (( phase == generate ) || (phase == compare )) && i == 0 )
+        if( (( phase == generate ) /*|| (phase == compare )*/ ) && i == 0 )
         {
             break;
         }
@@ -118,7 +119,7 @@ void HRICS_run_sphere_ioc()
             mat.row(i) = results[i];
         }
 
-        std::ofstream file_traj("matlab/result.txt");
+        std::ofstream file_traj("matlab/data/result.txt");
         if (file_traj.is_open())
             file_traj << mat << '\n';
         file_traj.close();
@@ -153,7 +154,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples) : robot_(
     active_joints_ = aj;
 
     std::stringstream ss;
-    ss << "matlab/spheres_features_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
+    ss << "matlab/data/spheres_features_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
     feature_matrix_name_ = ss.str();
 
     plangroup_ = new ChompPlanningGroup( robot_, active_joints_ );
@@ -287,7 +288,7 @@ void IocEvaluation::loadWeightVector()
 
     // Load vector from file
     std::stringstream ss;
-    ss << "matlab/spheres_weights_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
+    ss << "matlab/data_ga/spheres_weights_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
 
     std::ifstream file( ss.str().c_str() );
     std::string line, cell;
@@ -310,7 +311,7 @@ void IocEvaluation::loadWeightVector()
     // cout << " w : " << learned_vect_.transpose() << endl;
 }
 
-void IocEvaluation::runLearning()
+void IocEvaluation::runSampling()
 {
     HRICS::Ioc ioc( nb_way_points_, plangroup_ );
 
@@ -344,7 +345,10 @@ void IocEvaluation::runLearning()
     // Only for plannar robot
     // global_SphereCostFct->produceCostMap();
     // trajToMatlab(T);
+}
 
+void IocEvaluation::runLearning()
+{
 //    for( int i=0;i<1;i++)
 //    {
 //        Eigen::VectorXd w = ioc.solve( phi_demo, phi_k );
@@ -354,7 +358,7 @@ void IocEvaluation::runLearning()
 
 Eigen::VectorXd IocEvaluation::getCostsOfDemonstrations() const
 {
-    Eigen::VectorXd costs(demos_.size());
+    Eigen::VectorXd costs( demos_.size() );
 
     for( int d=0;d<int(demos_.size());d++)
     {
@@ -398,7 +402,12 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
 //        learned_[i] = planMotionRRT();
         learned_[i] = planAStar();
 
+        g3d_draw_allwin_active();
+
         setOriginalWeights();
+
+        learned_[i].resetCostComputed();
+
         costs_learned[i] = feature_fct_->costTraj( learned_[i] );
     }
 
@@ -478,6 +487,31 @@ void IocEvaluation::saveToMatrix( const std::vector<FeatureVect>& demos, const s
     if (file.is_open())
         file << mat << '\n';
     file.close();
+}
+
+bool IocEvaluation::loadFromMatrix( std::vector<FeatureVect>& demos, std::vector< std::vector<FeatureVect> >& samples )
+{
+    if( demos.empty() )
+    {
+        return false;
+    }
+
+    Eigen::MatrixXd mat(demos.size()+samples.size(),demos[0].size());
+
+    for( int d=0;d<int(demos.size());d++)
+    {
+        demos[d] = mat.row(d);
+    }
+
+    int k=0;
+    for( int d=0;d<int(samples.size());d++)
+    {
+        for( int i=0;i<int(samples[d].size());i++)
+        {
+            samples[d][i] = mat.row( demos.size() + k++ ) ;
+        }
+    }
+    return true;
 }
 
 // -------------------------------------------------------------

@@ -20,6 +20,9 @@ class IocEvaluation
 public:
     IocEvaluation( Robot* rob, int nb_demos, int nb_samples );
 
+    //! Sample trajectories around the demonstrations
+    virtual void runSampling();
+
     //! Run learning using the C++ library
     virtual void runLearning();
 
@@ -49,6 +52,9 @@ protected:
     //! Save all the feature in a matrix
     //! that can be read by Matlab
     void saveToMatrix(const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples );
+
+    //! Get all the feature from a matrix file
+    bool loadFromMatrix( std::vector<FeatureVect>& demos, std::vector< std::vector<FeatureVect> >& samples );
 
     //! Plans a motion using the costmap
     API::Trajectory planMotionRRT();

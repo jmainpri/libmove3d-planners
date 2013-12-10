@@ -133,7 +133,7 @@ API::Trajectory HumanIoc::getTrajectoryFromMotion( const motion_t& m ) const
     return t;
 }
 
-void HumanIoc::runLearning()
+void HumanIoc::runSampling()
 {
     // Comment it to generate less demos
     nb_demos_ = 10;
