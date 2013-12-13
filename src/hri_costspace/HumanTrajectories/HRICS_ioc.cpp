@@ -86,8 +86,8 @@ void HRICS_run_sphere_ioc()
 
     for(int i=0; i<nb_sampling_phase && !StopRun; i++)
     {
-        int iteration = i;
-        // int interation = 2;
+        //int iteration = i; // 2, 5, 30, 50
+        int iteration = HriEnv->getInt(HricsParam::ioc_sample_iteration);
         cout << "------------------------------" << endl;
         cout << " RUN : " << iteration << endl;
         cout << "------------------------------" << endl;
@@ -116,11 +116,22 @@ void HRICS_run_sphere_ioc()
             break;
         }
 
-        if( (( phase == generate ) /*|| (phase == compare )*/ ) && i == 0 )
+        g3d_draw_allwin_active();
+
+        if( phase == generate && i == 0 )
         {
             break;
         }
-        g3d_draw_allwin_active();
+
+        if( phase == sample && i == 0 )
+        {
+            break;
+        }
+
+        if( phase == compare && i == 0 )
+        {
+            break;
+        }
 
         if ( PlanEnv->getBool(PlanParam::stopPlanner) ) {
             StopRun = true;

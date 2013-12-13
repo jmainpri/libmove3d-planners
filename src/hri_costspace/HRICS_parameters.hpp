@@ -30,7 +30,8 @@ namespace HricsParam
 
         enum intParameter
         {
-            ioc_phase
+            ioc_phase,
+            ioc_sample_iteration
         };
 
         enum doubleParameter
