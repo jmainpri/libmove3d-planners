@@ -35,7 +35,7 @@ namespace HricsParam
 
         enum doubleParameter
         {
-            toto
+            ioc_spheres_power
         };
 
         enum stringParameter

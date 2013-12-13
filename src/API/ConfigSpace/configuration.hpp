@@ -34,6 +34,7 @@ class Configuration;
 
 typedef MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> confPtr_t;
 
+
 /**
  * @ingroup CPP_API
  * @defgroup CONFIG_SPACE Configuration space

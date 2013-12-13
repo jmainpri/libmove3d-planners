@@ -47,7 +47,7 @@ protected:
     Eigen::VectorXd getCostsOfDemonstrations() const;
 
     //! Save trajectory to matrix
-    void saveTrajToMatlab(const API::Trajectory& t) const;
+    void saveTrajToMatlab(const API::Trajectory& t, int id) const;
 
     //! Save all the feature in a matrix
     //! that can be read by Matlab
@@ -98,6 +98,7 @@ struct IocTrajectory
     std::vector<Eigen::VectorXd> total_costs_;                      /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> cumulative_costs_;                 /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> probabilities_;                    /**< [num_dimensions] num_time_steps */
+    std::vector<Eigen::VectorXd> straight_line_;                    /**< [num_dimensions] num_parameters */
 
     Eigen::VectorXd state_costs_;                                   /**< num_time_steps */
     Eigen::VectorXd feature_count_;                                 /**< num_features */
@@ -108,7 +109,14 @@ struct IocTrajectory
     void printCost();
     void printProbabilities();
 
+    // Returns the move3d trajectory
     API::Trajectory getMove3DTrajectory( const ChompPlanningGroup* planning_group ) const;
+
+    // Interpolation between two vector
+    Eigen::VectorXd interpolate( const Eigen::VectorXd& a, const Eigen::VectorXd& b, double u ) const;
+
+    // Sets the interpolated trajectory
+    void setSraightLineTrajectory();
 };
 
 //! Sampler of noisy trajectories
@@ -172,7 +180,7 @@ public:
     void setFeatureFct( Feature* fct ) { feature_fct_ = fct; }
 
 private:
-    std::vector<IocTrajectory> demonstrations_;
+    std::vector< IocTrajectory > demonstrations_;
     std::vector< std::vector<IocTrajectory> > samples_;
     double noise_stddev_;
 

@@ -9,6 +9,7 @@ testModel.cpp
 ConfGenerator.cpp
 OtpUtils.cpp
 #MultiRun.cpp
+NumsAndStrings.cpp
 
 )
 

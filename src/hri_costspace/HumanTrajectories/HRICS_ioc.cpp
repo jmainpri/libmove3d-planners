@@ -10,6 +10,8 @@
 #include "planEnvironment.hpp"
 #include "plannerFunctions.hpp"
 
+#include "utils/NumsAndStrings.hpp"
+
 #include <libmove3d/include/Graphic-pkg.h>
 
 #include <owlqn/OWLQN.h>
@@ -53,7 +55,7 @@ void HRICS_run_sphere_ioc()
     }
 
     int nb_demos = 1;
-    int nb_sampling_phase = 20;
+    int nb_sampling_phase = 50;
     int min_samples = 3;
     int max_samples = 100;
 
@@ -61,11 +63,22 @@ void HRICS_run_sphere_ioc()
 
     enum phase_t { generate, sample, compare } phase;
 
+    cout << "ioc phase : " << HriEnv->getInt(HricsParam::ioc_phase) << endl;
+
     switch( HriEnv->getInt(HricsParam::ioc_phase) )
     {
-    case 0: phase = generate; break;
-    case 1: phase = sample; break;
-    case 2: phase = compare; break;
+    case 0:
+        phase = generate;
+        cout << "SET PHASE GENERATE" << endl;
+        break;
+    case 1:
+        phase = sample;
+        cout << "SET PHASE SAMPLE" << endl;
+        break;
+    case 2:
+        phase = compare;
+        cout << "SET PHASE COMPARE" << endl;
+        break;
     default: cout << "Error : phase not defined!!!" << endl; return;
     }
 
@@ -82,6 +95,8 @@ void HRICS_run_sphere_ioc()
         // interpolation for the number of sampling phase
         int nb_samples = min_samples + double(iteration)*(max_samples-min_samples)/double(nb_sampling_phase-1);
 
+        cout << "NB SAMPLES : " << nb_samples << endl;
+
         IocEvaluation eval( rob, nb_demos, nb_samples );
 
         switch( phase )
@@ -92,7 +107,8 @@ void HRICS_run_sphere_ioc()
 
         case sample:
             eval.loadDemonstrations();
-            eval.runLearning();
+            // eval.runLearning();
+            eval.runSampling();
             break;
 
         case compare:
@@ -177,6 +193,9 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples) : robot_(
 
         cout << "original_vect : " << endl;
         feature_fct_->printWeights();
+
+        // Save costmap to matlab with original weights
+        global_SphereCostFct->produceCostMap();
     }
 }
 
@@ -250,6 +269,9 @@ void IocEvaluation::generateDemonstrations()
         std::string filename = folder_ + ss.str();
         p3d_save_traj( filename.c_str(), robot_->getRobotStruct()->tcur );
         cout << "save demo " << i << " : " << ss.str() << endl;
+
+        saveTrajToMatlab(demos[i],i);
+        cout << "save traj to matlab format!!!!" << endl;
     }
 }
 
@@ -288,7 +310,9 @@ void IocEvaluation::loadWeightVector()
 
     // Load vector from file
     std::stringstream ss;
-    ss << "matlab/data_ga/spheres_weights_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
+    ss << "matlab/data/spheres_weights_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
+
+    cout << "LOADING LEARNED WEIGHTS : " << ss.str() << endl;
 
     std::ifstream file( ss.str().c_str() );
     std::string line, cell;
@@ -436,10 +460,10 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
 
 void IocEvaluation::saveDemoToMatlab()
 {
-    saveTrajToMatlab( demos_[0] );
+    saveTrajToMatlab( demos_[0], 0 );
 }
 
-void IocEvaluation::saveTrajToMatlab(const API::Trajectory& t) const
+void IocEvaluation::saveTrajToMatlab(const API::Trajectory& t, int id) const
 {
     API::Trajectory saved_traj(t);
     int nb_way_points=100;
@@ -448,7 +472,7 @@ void IocEvaluation::saveTrajToMatlab(const API::Trajectory& t) const
     Eigen::MatrixXd mat = saved_traj.getEigenMatrix(6,7);
 
     // Save traj to file
-    std::ofstream file_traj("matlab/traj.txt");
+    std::ofstream file_traj( std::string( "matlab/traj_" + num_to_string<int>(id) + ".txt" ).c_str() );
     if (file_traj.is_open())
         file_traj << mat << '\n';
     file_traj.close();
@@ -580,6 +604,70 @@ API::Trajectory IocTrajectory::getMove3DTrajectory( const ChompPlanningGroup* p_
     return T;
 }
 
+//! Interpolates linearly two configurations
+//! u = 0 -> a
+//! u = 1 -> b
+Eigen::VectorXd IocTrajectory::interpolate( const Eigen::VectorXd& a, const Eigen::VectorXd& b, double u ) const
+{
+    Eigen::VectorXd out;
+    if( a.size() != b.size() )
+    {
+        cout << "Error in interpolate" << endl;
+        return out;
+    }
+
+    out = a;
+    for( int i=0;i<int(out.size());i++)
+    {
+        out[i] += u*(b[i]-a[i]);
+    }
+    return out;
+}
+
+void IocTrajectory::setSraightLineTrajectory()
+{
+    // Set size
+    straight_line_ = parameters_;
+
+    // Get number of points
+    int nb_points = straight_line_[0].size();
+    int dimension = straight_line_.size();
+
+    if( dimension < 1 )
+    {
+        cout << "Error : the trajectory only has one dimension" << endl;
+        return;
+    }
+
+    if( nb_points <= 2 )
+    {
+        cout << "Warning : the trajectory is less or equal than 2 waypoints" << endl;
+        return;
+    }
+
+    Eigen::VectorXd a(dimension);
+    Eigen::VectorXd b(dimension);
+    Eigen::VectorXd c(dimension);
+
+    for ( int j=0; j<dimension; j++ ) {
+        a[j] = straight_line_[j][0];
+        b[j] = straight_line_[j][nb_points-1];
+    }
+
+    double delta = 1 / double(nb_points-1);
+    double s = 0.0;
+
+    // Only fill the inside points of the trajectory
+    for( int i=1; i<nb_points-1; i++ )
+    {
+        c = interpolate( a, b, s );
+        s += delta;
+
+        for( int j=0; j<dimension; j++ )
+            straight_line_[j][i] = c[j];
+    }
+}
+
 // -------------------------------------------------------------
 // -------------------------------------------------------------
 // -------------------------------------------------------------
@@ -686,6 +774,10 @@ bool Ioc::addDemonstration( const Eigen::MatrixXd& demo )
     demonstrations_.push_back( t );
     num_demonstrations_ = demonstrations_.size();
 
+    // TODO can be commented off
+    // Set straight line for sampling
+    demonstrations_.back().setSraightLineTrajectory();
+
 //    for(int j=0;j<int(t.parameters_.size());j++)
 //    {
 //        cout << "demo (" << demonstrations_.size()-1 << ") : " << demonstrations_.back().parameters_[j].transpose() << endl;
@@ -736,7 +828,9 @@ void Ioc::generateSamples( int nb_samples )
 
             for (int j=0; j<num_joints_; ++j)
             {
-                samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].parameters_[j];
+                // Change to generate samples around demonstration
+                //samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].parameters_[j];
+                samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].straight_line_[j];
                 samples_[d][ns].noise_[j] = noisy_traj.row(j);
                 samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j];
                 //cout << "sample (" << ns << ") : " << samples_[d][ns].parameters_[j].transpose() << endl;

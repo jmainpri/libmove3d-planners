@@ -52,12 +52,12 @@ void initHricsParameters()
 
     // Int
     // ------------------------------------------------------------------
-    myIntMap.insert( std::make_pair( HricsParam::ioc_phase, new intContainer(-1) ));
+    myIntMap.insert( std::make_pair( HricsParam::ioc_phase, new intContainer(0) ));
 
 
     // Double
     // ------------------------------------------------------------------
-    myDoubleMap.insert( std::make_pair( HricsParam::toto, new doubleContainer(10.0) ));
+    myDoubleMap.insert( std::make_pair( HricsParam::ioc_spheres_power, new doubleContainer(2.0) ));
 
     //cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble( PlanParam::env_objectNessecity ) << endl;
 

@@ -1,6 +1,7 @@
 #include "HRICS_spheres.hpp"
 
 #include "HRICS_GestParameters.hpp"
+#include "HRICS_parameters.hpp"
 
 #include "API/project.hpp"
 #include "planner/cost_space.hpp"
@@ -35,18 +36,16 @@ void Spheres::initialize()
 
     w_[i++] = 8; w_[i++] = 8;  w_[i++] = 8; w_[i++] = 8;  w_[i++] = 8; w_[i++] = 8;  w_[i++] = 8; w_[i++] = 8;
     w_[i++] = 8; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 2;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 40;
-    w_[i++] = 99; w_[i++] = 99; w_[i++] = 80; w_[i++] = 60; w_[i++] = 50; w_[i++] = 6;  w_[i++] = 1; w_[i++] = 40;
-    w_[i++] = 70; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 8;
+    w_[i++] = 100; w_[i++] = 100; w_[i++] = 100; w_[i++] = 60; w_[i++] = 50; w_[i++] = 6;  w_[i++] = 1; w_[i++] = 40;
+    w_[i++] = 100; w_[i++] = 100; w_[i++] = 50; w_[i++] = 30; w_[i++] = 1;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 50;
 
-    w_[i++] = 8; w_[i++] = 10; w_[i++] = 10; w_[i++] = 10; w_[i++] = 10; w_[i++] = 20; w_[i++] = 99; w_[i++] = 99;
-    w_[i++] = 8; w_[i++] = 1;  w_[i++] = 50; w_[i++] = 99;  w_[i++] = 99; w_[i++] = 99;  w_[i++] = 50; w_[i++] = 50;
-    w_[i++] =20; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 3; w_[i++] = 1; w_[i++] = 1; w_[i++] = 10;
-    w_[i++] = 10; w_[i++] = 10;  w_[i++] = 12; w_[i++] = 10;  w_[i++] = 10; w_[i++] = 10;  w_[i++] = 12; w_[i++] = 10;
+    w_[i++] = 100; w_[i++] = 1; w_[i++] = 5; w_[i++] = 5; w_[i++] = 50; w_[i++] = 100; w_[i++] = 100; w_[i++] = 100;
+    w_[i++] = 8; w_[i++] = 1;  w_[i++] = 30; w_[i++] = 99;  w_[i++] = 99; w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
+    w_[i++] =50; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 3; w_[i++] = 1; w_[i++] = 1; w_[i++] = 10;
+    w_[i++] = 100; w_[i++] = 100;  w_[i++] = 12; w_[i++] = 10;  w_[i++] = 10; w_[i++] = 10;  w_[i++] = 12; w_[i++] = 10;
 
     double max = w_.maxCoeff();
     w_ /= max;
-
-    produceCostMap();
 }
 
 void Spheres::printWeights() const
@@ -155,12 +154,14 @@ FeatureVect Spheres::getFeatures( const Configuration& q )
 
     Eigen::VectorXd x = q.getEigenVector(6,7);
 
-    const double factor_distance = 5;
+    // The factor distance when larger
+    const double factor_distance = 10.0;
+    const double factor_height = HriEnv->getDouble(HricsParam::ioc_spheres_power);
 
     for( int i=0; i< int(centers_.size()); i++ )
     {
         Eigen::VectorXd mu = centers_[i]->getCurrentPos()->getEigenVector(6,7);
-        features[i] = exp( -( x - mu ).norm()/factor_distance );
+        features[i] = pow(exp( -( x - mu ).norm()/factor_distance ),factor_height);
     }
 
     return features;
