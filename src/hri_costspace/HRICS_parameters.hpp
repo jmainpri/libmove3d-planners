@@ -25,7 +25,8 @@ namespace HricsParam
 #endif
         enum boolParameter
         {
-            init_spheres_cost
+            init_spheres_cost,
+            ioc_single_iteration
         };
 
         enum intParameter

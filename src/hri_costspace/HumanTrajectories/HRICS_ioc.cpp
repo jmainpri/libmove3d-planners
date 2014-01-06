@@ -54,6 +54,9 @@ void HRICS_run_sphere_ioc()
         HRICS_init_sphere_cost();
     }
 
+    bool single_iteration = HriEnv->getBool(HricsParam::ioc_single_iteration);
+    int nb_iterations = HriEnv->getInt(HricsParam::ioc_sample_iteration);
+
     int nb_demos = 1;
     int nb_sampling_phase = 50;
     int min_samples = 3;
@@ -84,10 +87,17 @@ void HRICS_run_sphere_ioc()
 
     std::vector<Eigen::VectorXd> results;
 
+    int iteration = 0;
+
     for(int i=0; i<nb_sampling_phase && !StopRun; i++)
     {
-        //int iteration = i; // 2, 5, 30, 50
-        int iteration = HriEnv->getInt(HricsParam::ioc_sample_iteration);
+        // iteration = i; // 2, 5, 30, 50
+
+        if( single_iteration )
+            iteration = nb_iterations;
+        else
+            iteration = i;
+
         cout << "------------------------------" << endl;
         cout << " RUN : " << iteration << endl;
         cout << "------------------------------" << endl;
@@ -118,20 +128,8 @@ void HRICS_run_sphere_ioc()
 
         g3d_draw_allwin_active();
 
-        if( phase == generate && i == 0 )
-        {
+        if( single_iteration )
             break;
-        }
-
-        if( phase == sample && i == 0 )
-        {
-            break;
-        }
-
-        if( phase == compare && i == 0 )
-        {
-            break;
-        }
 
         if ( PlanEnv->getBool(PlanParam::stopPlanner) ) {
             StopRun = true;
@@ -377,9 +375,26 @@ void IocEvaluation::runSampling()
 
     saveToMatrix( phi_demo, phi_k );
 
+    // checkStartAndGoal( samples );
+
     // Only for plannar robot
     // global_SphereCostFct->produceCostMap();
     // trajToMatlab(T);
+}
+
+bool IocEvaluation::checkStartAndGoal( const std::vector< std::vector<API::Trajectory> >& samples ) const
+{
+    for( int d=0;d<int(samples.size());d++)
+    {
+        for( int i=0;i<int(samples[d].size());i++)
+        {
+            cout << "sample(" << d << " , " << i << ") : " << endl;
+            samples[d][i].getBegin()->print();
+            samples[d][i].getEnd()->print();
+        }
+    }
+
+    return true;
 }
 
 void IocEvaluation::runLearning()
@@ -799,22 +814,28 @@ bool Ioc::addDemonstration( const Eigen::MatrixXd& demo )
 
 bool Ioc::jointLimits( IocTrajectory& traj ) const
 {
-    for( int i=0;i<num_joints_;i++)
+    for( int j=0;j<num_joints_;j++)
     {
         double coeff = 1.0;
 
-        double j_max = planning_group_->chomp_joints_[i].joint_limit_max_;
-        double j_min = planning_group_->chomp_joints_[i].joint_limit_min_;
+        double j_max = planning_group_->chomp_joints_[j].joint_limit_max_;
+        double j_min = planning_group_->chomp_joints_[j].joint_limit_min_;
 
-        for( int j=0;j<num_vars_;j++)
+        for( int i=0;i<num_vars_;i++)
         {
-            while( traj.parameters_[i][j] < j_min || traj.parameters_[i][j] > j_max )
+            while( traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max )
             {
                 coeff *= 0.90; // 90 percent
-                traj.noise_[i] *= coeff;
-                traj.parameters_[i] = traj.nominal_parameters_[i] +  traj.noise_[i];
+                traj.noise_[j] *= coeff;
+                traj.parameters_[j] = traj.nominal_parameters_[j] +  traj.noise_[j];
             }
+
+            // cout << "Joint limit coefficient : " << coeff << endl;
         }
+
+        // Set the start and end values constant
+        traj.parameters_[j].start(1) = traj.nominal_parameters_[j].start(1);
+        traj.parameters_[j].end(1) = traj.nominal_parameters_[j].end(1);
     }
 
     return true;
@@ -845,6 +866,7 @@ void Ioc::generateSamples( int nb_samples )
                 samples_[d][ns].noise_[j] = noisy_traj.row(j);
                 samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j];
                 //cout << "sample (" << ns << ") : " << samples_[d][ns].parameters_[j].transpose() << endl;
+                //cout << samples_[d][ns].noise_[j].transpose() << endl;
             }
 
             jointLimits( samples_[d][ns] );

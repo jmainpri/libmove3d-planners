@@ -41,6 +41,9 @@ public:
     //! Compute costs using the original costs and the learned costs
     Eigen::VectorXd compareDemosAndPlanned();
 
+    //! Check start and goal of sampled trajectories
+    bool checkStartAndGoal( const std::vector< std::vector<API::Trajectory> >& samples ) const;
+
 protected:
 
     //! Compute the cost of the demos

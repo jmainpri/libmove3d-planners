@@ -415,9 +415,9 @@ confPtr_t Trajectory::configAtParam(double param, unsigned int* id_localpath) co
 
         // Parameter lies in the previous local path
         // return configuration inside previous LP
-        if (param < soFar)
+        if ( param < soFar )
         {
-            if (param < prevSoFar)
+            if ( param < prevSoFar )
             {
                 cout
                         << "Error: getting Configuration at parameter in trajectory"
@@ -428,7 +428,7 @@ confPtr_t Trajectory::configAtParam(double param, unsigned int* id_localpath) co
                 *id_localpath = i;
             }
 
-            return m_Courbe.at(i)->configAtParam(param - prevSoFar);
+            return m_Courbe.at(i)->configAtParam( param - prevSoFar );
         }
         prevSoFar = soFar;
     }
@@ -1476,27 +1476,17 @@ extern void* GroundCostObj;
 
 void Trajectory::draw(int nbKeyFrame)
 {
-    double du = getRangeMax() / nbKeyFrame;
+    double du = getRangeMax() / (nbKeyFrame - 1);
     double u = du;
 
     double Cost1, Cost2;
 
-    //	p3d_obj* o;
-    p3d_jnt* 	drawnjnt = NULL;
-
-    //	int NumBody = m_Robot->getRobotStruct()->no - 1;
-    //
-    //	if ((NumBody >= m_Robot->getRobotStruct()->no) || (NumBody < 0))
-    //		return;
+    p3d_jnt* drawnjnt = NULL;
 
     int indexjnt = p3d_get_user_drawnjnt();
-
     if (indexjnt != -1 && indexjnt <= m_Robot->getRobotStruct()->njoints ) {
         drawnjnt = m_Robot->getRobotStruct()->joints[indexjnt];
     }
-
-    //	if (!(o = m_Robot->getRobotStruct()->o[NumBody]))
-    //		return;
 
     confPtr_t qSave = m_Robot->getCurrentPos();
     confPtr_t q = m_Source;
@@ -1510,8 +1500,11 @@ void Trajectory::draw(int nbKeyFrame)
 
     double range_max = getRangeMax();
 
-    while (u < range_max)
+    while ( u <= range_max )
     {
+        if( u > ( range_max - du/2 ) )
+            u = range_max;
+
         /* position of the robot corresponding to parameter u */
         q = configAtParam(u);
         m_Robot->setAndUpdate(*q);

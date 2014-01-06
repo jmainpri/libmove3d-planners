@@ -980,6 +980,3 @@ namespace stomp_motion_planner
         }
     }
 };
-
-
-

@@ -366,3 +366,5 @@ src/hri_costspace/HumanTrajectories/HRICS_HumanFeatures.cpp
 src/planner/AStar/SourceList.cmake
 src/planner/AStar/AStarPlanner.hpp
 src/planner/AStar/AStarPlanner.cpp
+src/utils/NumsAndStrings.hpp
+src/utils/NumsAndStrings.cpp
