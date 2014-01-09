@@ -58,8 +58,8 @@ void HRICS_run_sphere_ioc()
     int nb_iterations = HriEnv->getInt(HricsParam::ioc_sample_iteration);
 
     int nb_demos = 1;
-    int nb_sampling_phase = 50;
-    int min_samples = 3;
+    int nb_sampling_phase = 20;
+    int min_samples = 2;
     int max_samples = 100;
 
     bool StopRun = false;
@@ -113,20 +113,21 @@ void HRICS_run_sphere_ioc()
         {
         case generate:
             eval.generateDemonstrations();
+            g3d_draw_allwin_active();
             break;
 
         case sample:
             eval.loadDemonstrations();
             // eval.runLearning();
             eval.runSampling();
+            g3d_draw_allwin_active();
             break;
 
         case compare:
             results.push_back( eval.compareDemosAndPlanned() );
+            g3d_draw_allwin_active();
             break;
         }
-
-        g3d_draw_allwin_active();
 
         if( single_iteration )
             break;
@@ -172,7 +173,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples) : robot_(
 {
     nb_demos_ = nb_demos;
     nb_samples_ = nb_samples;
-    nb_way_points_ = 30;
+    nb_way_points_ = 100;
     folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
 
     std::vector<int> aj(1); aj[0] = 1;
@@ -537,6 +538,8 @@ void IocEvaluation::saveToMatrix( const std::vector<FeatureVect>& demos, const s
     if (file.is_open())
         file << mat << '\n';
     file.close();
+
+    cout << "save samples to : " << feature_matrix_name_ << endl;
 }
 
 bool IocEvaluation::loadFromMatrix( std::vector<FeatureVect>& demos, std::vector< std::vector<FeatureVect> >& samples )

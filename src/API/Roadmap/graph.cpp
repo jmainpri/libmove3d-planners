@@ -2502,7 +2502,7 @@ void Graph::drawNode(BGL_Vertex v)
 
     if( drawnjnt->o != NULL ) {
         p3d_get_box_obj(drawnjnt->o, &x1, &x2, &y1, &y2, &z1, &z2); //get the object bounding box
-        ray = sqrt(SQR(x2 - x1) + SQR(y2 - y1) + SQR(z2 - z1)) / 20.;
+        ray = sqrt(SQR(x2 - x1) + SQR(y2 - y1) + SQR(z2 - z1)) / 10.; // TODO get better method for size
     }
     else {
         ray = 0.05;

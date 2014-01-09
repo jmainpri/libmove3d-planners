@@ -6,6 +6,7 @@ edge.cpp
 node.cpp
 compco.cpp
 graph.cpp 
-graphConverter.cpp 
+graphConverter.cpp
+graphSampler.cpp
 )
 SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME_TMP2})
