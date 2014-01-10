@@ -28,68 +28,68 @@
 
 void g3d_export_cpp_graph()
 {
-	//std::cout << "API_activeGraph : " << API_activeGraph << std::endl;
-  /**
-	if (ENV.getBool(Env::drawGraph) && (!ENV.getBool(Env::use_p3d_structures)) && API_activeGraph ) 
-	{
-		try
-		{
-			if (API_activeGraph->isGraphChanged()) 
-			{
+    //std::cout << "API_activeGraph : " << API_activeGraph << std::endl;
+    /**
+    if (ENV.getBool(Env::drawGraph) && (!ENV.getBool(Env::use_p3d_structures)) && API_activeGraph )
+    {
+        try
+        {
+            if (API_activeGraph->isGraphChanged())
+            {
         // Warning broken
-				//XYZ_GRAPH = API_activeGraph->exportCppToGraphStruct();
-        
+                //XYZ_GRAPH = API_activeGraph->exportCppToGraphStruct();
+
         GraphConverter gc;
         XYZ_GRAPH = gc.convert(*API_activeGraph);
-			}
-		}
-		catch(std::string str)
-		{
-			std::cout << "Exception in exporting the cpp graph" << std::endl;
-			std::cout << str << std::endl;
-		}
-	}
+            }
+        }
+        catch(std::string str)
+        {
+            std::cout << "Exception in exporting the cpp graph" << std::endl;
+            std::cout << str << std::endl;
+        }
+    }
    */
 }
 
 void g3d_draw_boost_graph()
 {
-	if (ENV.getBool(Env::drawGraph) && (!ENV.getBool(Env::use_p3d_structures)) && API_activeGraph ) 
-	{
-		try
-		{
-      //p3d_del_graph(XYZ_GRAPH);
-      XYZ_GRAPH = NULL;
-      
-			API_activeGraph->draw();
-		}
-		catch(std::string str)
-		{
-			std::cout << "Exception in draw boost graph" << std::endl;
-			std::cout << str << std::endl;
-		}
-	}
+    if (ENV.getBool(Env::drawGraph) && (!ENV.getBool(Env::use_p3d_structures)) && API_activeGraph )
+    {
+        try
+        {
+            //p3d_del_graph(XYZ_GRAPH);
+            XYZ_GRAPH = NULL;
+
+            API_activeGraph->draw();
+        }
+        catch(std::string str)
+        {
+            std::cout << "Exception in draw boost graph" << std::endl;
+            std::cout << str << std::endl;
+        }
+    }
 }
 
 void g3d_draw_cost_features()
 {
 #ifdef HRI_COSTSPACE
-	g3d_draw_costspace();
-  g3d_draw_hrics(0);
+    g3d_draw_costspace();
+    g3d_draw_hrics(0);
 #endif
-  //std::cout << "Draw cost features" << std::endl;
-	g3d_draw_grids();
+    //std::cout << "Draw cost features" << std::endl;
+    g3d_draw_grids();
 }
 
 void Graphic::initDrawFunctions()
 {
-  ext_g3d_traj_debug = draw_traj_debug;
-	ext_g3d_draw_cost_features = (void (*)())(g3d_draw_cost_features);
-	//ext_g3d_export_cpp_graph = (void (*)())(g3d_export_cpp_graph);
-  ext_g3d_export_cpp_graph = (void (*)())(g3d_draw_boost_graph);
+    ext_g3d_traj_debug = draw_traj_debug;
+    ext_g3d_draw_cost_features = (void (*)())(g3d_draw_cost_features);
+    //ext_g3d_export_cpp_graph = (void (*)())(g3d_export_cpp_graph);
+    ext_g3d_export_cpp_graph = (void (*)())(g3d_draw_boost_graph);
 #ifdef HRI_PLANNER
-  ext_g3d_draw_hri_features = g3d_hri_main;
+    ext_g3d_draw_hri_features = g3d_hri_main;
 #endif
-  
-  ext_compute_config_cost_along_traj = computeConfigCostOnTraj;
+
+    ext_compute_config_cost_along_traj = computeConfigCostOnTraj;
 }

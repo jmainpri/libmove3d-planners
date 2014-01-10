@@ -119,6 +119,8 @@ public:
 
     void set_pace( double pace ) { pace_ = pace; }
 
+    PlanGrid* getGrid() { return grid_; }
+
 private:
 
     bool computeAStarIn2DGrid( Eigen::Vector2d source, Eigen::Vector2d target );

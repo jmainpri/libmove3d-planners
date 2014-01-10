@@ -54,13 +54,21 @@ double cost_max = 30.0;
 extern Eigen::Vector3d current_WSPoint;
 extern pair<double, Eigen::Vector3d > current_cost;
 extern std::string hri_text_to_display;
-
 extern std::vector<Eigen::Vector3d> OTPList;
-
 extern std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > path_to_draw;
 
-// TODO callback OOMOVE3D
-//#if defined( CXX_PLANNER )
+void drawGauge(int number, double cost);
+
+#ifdef HRI_COSTSPACE
+void g3d_draw_hrics(int opengl_context);
+#endif
+
+//! this functions draws registred
+//! functions
+void g3d_draw_registred_functions()
+{
+
+}
 
 //! @ingroup graphic
 //! Function drawing a box the V7 is bellow V5

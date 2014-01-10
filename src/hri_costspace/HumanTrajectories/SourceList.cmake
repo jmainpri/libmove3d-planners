@@ -7,6 +7,7 @@ HRICS_spheres.cpp
 HRICS_HumanFeatures.cpp
 HRICS_HumanIoc.cpp
 HRICS_HumanCostSpace.cpp
+HRICS_detours.cpp
 )
 
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})

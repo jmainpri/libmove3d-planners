@@ -368,3 +368,7 @@ src/planner/AStar/AStarPlanner.hpp
 src/planner/AStar/AStarPlanner.cpp
 src/utils/NumsAndStrings.hpp
 src/utils/NumsAndStrings.cpp
+src/API/Roadmap/graphSampler.hpp
+src/API/Roadmap/graphSampler.cpp
+src/hri_costspace/HumanTrajectories/HRICS_detours.hpp
+src/hri_costspace/HumanTrajectories/HRICS_detours.cpp
