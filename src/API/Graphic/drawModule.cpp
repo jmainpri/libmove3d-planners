@@ -23,6 +23,85 @@
 #include <libmove3d/hri/hri.h>
 #endif
 
+using namespace Graphic;
+using namespace std;
+
+// Drawing module
+DrawFunctions* global_DrawModule = NULL;
+
+//! Class thats holding the drawing functions
+DrawFunctions::DrawFunctions()
+{
+
+}
+
+// Get all draw functions
+std::vector<std::string> DrawFunctions::getAllDrawFunctions()
+{
+    std::vector< string > functions;
+    std::map< string, boost::function<void()> >::iterator it;
+
+    for ( it=functions_.begin() ; it != functions_.end(); it++ )
+        functions.push_back((*it).first);
+
+    return functions;
+}
+
+// Get active draw functions
+std::vector<std::string> DrawFunctions::getActiveDrawFunctions()
+{
+    std::vector< string > functions;
+    std::set< string >::iterator it;
+
+    for ( it=active_functions_.begin() ; it != active_functions_.end(); it++ )
+        functions.push_back(*it);
+
+    return functions;
+}
+
+// Select the draw function with the given name in the map
+bool DrawFunctions::enableDrawFunction( std::string name )
+{
+    active_functions_.insert( name );
+    return true;
+}
+
+// Select the draw function with the given name in the map
+bool DrawFunctions::disableDrawFunction( std::string name )
+{
+    active_functions_.erase( active_functions_.find(name) );
+    return true;
+}
+
+// Register a new draw function
+void DrawFunctions::addDrawFunction( std::string name, boost::function<void()> f )
+{
+    cout << "set DRAW_FUNCTION : " << name << " , " << f << endl;
+    functions_[name] = f;
+}
+
+// Delete a cost function
+void DrawFunctions::deleteDrawFunction( std::string name )
+{
+    disableDrawFunction( name );
+    functions_.erase( name );
+}
+
+//! call to all functions in draw
+void DrawFunctions::draw()
+{
+    std::set< string >::iterator it;
+    for ( it=active_functions_.begin() ; it != active_functions_.end(); it++ )
+    {
+        cout << "DRAW_FUNCTION : " << *it << ", " << functions_[*it] << endl;
+        functions_[*it]();
+    }
+}
+
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+
 // These are function that are called
 // from within libmove3d 
 
@@ -73,6 +152,10 @@ void g3d_draw_boost_graph()
 
 void g3d_draw_cost_features()
 {
+    // Draws the custom draw functions
+    if( global_DrawModule )
+        global_DrawModule->draw();
+
 #ifdef HRI_COSTSPACE
     g3d_draw_costspace();
     g3d_draw_hrics(0);
@@ -83,6 +166,8 @@ void g3d_draw_cost_features()
 
 void Graphic::initDrawFunctions()
 {
+    global_DrawModule = new Graphic::DrawFunctions();
+
     ext_g3d_traj_debug = draw_traj_debug;
     ext_g3d_draw_cost_features = (void (*)())(g3d_draw_cost_features);
     //ext_g3d_export_cpp_graph = (void (*)())(g3d_export_cpp_graph);

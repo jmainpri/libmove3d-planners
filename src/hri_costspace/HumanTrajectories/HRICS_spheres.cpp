@@ -50,7 +50,7 @@ void Spheres::initialize()
 
 void Spheres::printWeights() const
 {
-    cout << "weights : " << endl;
+    cout << "weights : center" << endl;
     cout.precision(3);
 
     int n=8;

@@ -6,6 +6,7 @@
  *  Copyright 2010 LAAS/CNRS. All rights reserved.
  *
  */
+
 #ifdef HRI_COSTSPACE
 #include "hri_costspace/HRICS_costspace.hpp"
 #include "hri_costspace/HRICS_otpmotionpl.hpp"
@@ -22,6 +23,7 @@
 #include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
 #include "planner/TrajectoryOptim/Stomp/run_parallel_stomp.hpp"
 
+#include "API/Graphic/drawModule.hpp"
 #include "API/project.hpp"
 #include "API/Grids/gridsAPI.hpp"
 

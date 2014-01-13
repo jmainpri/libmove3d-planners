@@ -12,12 +12,11 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <boost/function.hpp>
 
 namespace Graphic 
 {
-
-void initDrawFunctions();
 
 //! Class thats holding the drawing functions
 class DrawFunctions
@@ -38,14 +37,23 @@ public:
     bool disableDrawFunction( std::string name );
 
     // Register a new draw function
-    void addDrawFunction( std::string name, boost::function<void> f );
+    void addDrawFunction( std::string name, boost::function<void()> f );
 
     // Delete a cost function
     void deleteDrawFunction( std::string name );
 
+    // draw all functions
+    void draw();
+
 protected:
-    std::map<std::string, boost::function<void> > mFunctions;
+    std::map< std::string, boost::function<void()> > functions_;
+    std::set< std::string > active_functions_;
 };
+
+void initDrawFunctions();
+
 }
+
+extern Graphic::DrawFunctions* global_DrawModule;
 
 #endif

@@ -11,6 +11,7 @@ class Detours
 {
 public:
     Detours();
+    ~Detours();
 
     void planAStar();
 
