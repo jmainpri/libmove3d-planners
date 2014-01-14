@@ -206,6 +206,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples) : robot_(
 
         // Save costmap to matlab with original weights
         global_SphereCostFct->produceCostMap();
+        global_SphereCostFct->produceDerivativeFeatureCostMap();
     }
 }
 
@@ -274,9 +275,12 @@ void IocEvaluation::generateDemonstrations()
     for(int i=0;i<int(demos.size());i++)
     {
         demos[i].replaceP3dTraj();
+
+        // Set file names
         std::stringstream ss;
         ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
         std::string filename = folder_ + ss.str();
+
         p3d_save_traj( filename.c_str(), robot_->getRobotStruct()->tcur );
         cout << "save demo " << i << " : " << ss.str() << endl;
 

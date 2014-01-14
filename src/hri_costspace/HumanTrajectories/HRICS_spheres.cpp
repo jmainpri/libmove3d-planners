@@ -46,6 +46,11 @@ void Spheres::initialize()
 
     double max = w_.maxCoeff();
     w_ /= max;
+
+    std::vector<int> active_dofs;
+    active_dofs.push_back( 6 );
+    active_dofs.push_back( 7 );
+    setActiveDofs( active_dofs );
 }
 
 void Spheres::printWeights() const
@@ -148,6 +153,47 @@ void Spheres::produceCostMap()
     file.close();
 }
 
+void Spheres::produceDerivativeFeatureCostMap()
+{
+    double max_1, max_2;
+    double min_1, min_2;
+    robot_->getJoint(1)->getDofBounds( 0, min_1, max_1 );
+    robot_->getJoint(1)->getDofBounds( 1, min_2, max_2 );
+
+    int nb_cells = 100;
+    Eigen::MatrixXd mat1( nb_cells, nb_cells );
+    Eigen::MatrixXd mat2( nb_cells, nb_cells );
+
+    for( int i=0; i<nb_cells; i++ )
+    {
+        for( int j=0; j<nb_cells; j++ )
+        {
+            confPtr_t q = robot_->getCurrentPos();
+            (*q)[6] = min_1 + double(i)*(max_1-min_1)/double(nb_cells-1);
+            (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(nb_cells-1);
+            FeatureJacobian J = getFeaturesJacobian(*q);
+            // cout << "J : " << endl << J << endl;
+            mat1(i,j) = J.col(0).maxCoeff();
+            mat2(i,j) = J.col(1).maxCoeff();
+        }
+    }
+
+    std::string filename1("matlab/cost_map_derv_0_64.txt");
+    std::string filename2("matlab/cost_map_derv_1_64.txt");
+
+    cout << "Save derivative cost map to : " << filename1 << endl;
+    std::ofstream file1( filename1.c_str() );
+    if (file1.is_open())
+        file1 << mat1 << '\n';
+    file1.close();
+
+    cout << "Save derivative cost map to : " << filename2 << endl;
+    std::ofstream file2( filename2.c_str() );
+    if (file2.is_open())
+        file2 << mat1 << '\n';
+    file2.close();
+}
+
 FeatureVect Spheres::getFeatures( const Configuration& q )
 {
     FeatureVect features(centers_.size());
@@ -166,6 +212,30 @@ FeatureVect Spheres::getFeatures( const Configuration& q )
 
     return features;
 }
+
+//FeatureJacobian Spheres::getFeaturesJacobian(const Configuration& q_0)
+//{
+//    const double eps = 1e-6;
+
+//    Configuration q_1(*robot_->getCurrentPos());
+//    Configuration q_2(*robot_->getCurrentPos());
+
+//    q_1[6] = q_0[6] + eps;
+//    q_1[7] = q_0[7];
+
+//    q_2[6] = q_0[6];
+//    q_2[7] = q_0[7] + eps;
+
+//    FeatureVect f_0 = getFeatures( q_0 );
+//    FeatureVect f_1 = getFeatures( q_1 );
+//    FeatureVect f_2 = getFeatures( q_2 );
+
+//    FeatureJacobian J = Eigen::MatrixXd::Zero(getNumberOfFeatures(),2);
+//    J.col(0) = (f_1 - f_0) / eps;
+//    J.col(1) = (f_2 - f_0) / eps;
+
+//    return J;
+//}
 
 FeatureVect Spheres::getFeatureCount( const API::Trajectory& t )
 {

@@ -28,6 +28,34 @@ double Feature::costTraj( const API::Trajectory& t )
     return cost;
 }
 
+FeatureJacobian Feature::getFeaturesJacobian(const Configuration& q_0)
+{
+    const double eps = 1e-3;
+
+    FeatureVect f_0 = getFeatures( q_0 );
+    FeatureJacobian J = Eigen::MatrixXd::Zero( getNumberOfFeatures(), active_dofs_.size() );
+
+    for( int i=0;i<int(active_dofs_.size());i++)
+    {
+        int dof = active_dofs_[ i ];
+
+        Configuration q_1 = q_0;
+        q_1[dof] = q_0[ dof ] + eps;
+
+        FeatureVect f_1 = getFeatures( q_1 );
+        J.col(i) = (f_1 - f_0) / eps;
+    }
+
+//    cout << "J : " << endl << J << std::scientific << endl;
+
+    return J;
+}
+
+void Feature::setActiveDofs( const std::vector<int>& active_dofs )
+{
+    active_dofs_ = active_dofs;
+}
+
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 
@@ -107,7 +135,7 @@ WeightVect StackedFeatures::getWeights()
 
 TrajectorySmoothness::TrajectorySmoothness()
 {
-
+     w_ = Eigen::VectorXd::Zero( 1 ); // Sets the number of feature in the base class
 }
 
 FeatureVect TrajectorySmoothness::getFeatureCount( const API::Trajectory& t )
@@ -162,10 +190,3 @@ FeatureVect TrajectorySmoothness::getFeatures(const Configuration& q)
     FeatureVect count;
     return count;
 }
-
-void TrajectorySmoothness::setActiveDofs( const std::vector<int>& active_dofs )
-{
-    active_dofs_ = active_dofs;
-    w_ = Eigen::VectorXd::Zero( 1 ); // Sets the number of feature in the base class
-}
-

@@ -17,8 +17,10 @@ public:
 
     FeatureVect getFeatures(const Configuration& q );
     FeatureVect getFeatureCount(const API::Trajectory& t);
+    // FeatureJacobian getFeaturesJacobian(const Configuration& q);
 
     void produceCostMap();
+    void produceDerivativeFeatureCostMap();
     void placeCenterGrid();
     void printWeights() const;
 

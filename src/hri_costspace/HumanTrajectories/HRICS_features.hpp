@@ -17,6 +17,7 @@ class Visibility;
 class Natural;
 
 typedef Eigen::VectorXd FeatureVect;
+typedef Eigen::MatrixXd FeatureJacobian;
 typedef Eigen::VectorXd WeightVect;
 
 class Feature
@@ -26,9 +27,12 @@ public:
 
     virtual FeatureVect getFeatureCount(const API::Trajectory& t) = 0;
     virtual FeatureVect getFeatures(const Configuration& q) = 0;
+    virtual FeatureJacobian getFeaturesJacobian(const Configuration& q);
 
     double cost( Configuration& q );
     double costTraj( const API::Trajectory& t );
+
+    void setActiveDofs( const std::vector<int>& active_dofs );
 
     virtual void setWeights( const WeightVect& w ) { w_ = w; }
     virtual WeightVect getWeights() { return w_; }
@@ -38,6 +42,7 @@ public:
 protected:
 
     FeatureVect w_;
+    std::vector<int> active_dofs_;
 };
 
 class StackedFeatures : public Feature
@@ -71,8 +76,6 @@ public:
     FeatureVect getFeatureCount(const API::Trajectory& t);
     FeatureVect getFeatures(const Configuration& q);
 
-    void setActiveDofs( const std::vector<int>& active_dofs );
-
     //! Prints the control cost along the trajectory
     void printControlCosts( const std::vector<Eigen::VectorXd>& control_cost  );
 
@@ -80,7 +83,6 @@ private:
     double computeControlCost( const Eigen::MatrixXd& traj );
 
     ControlCost control_cost_;
-    std::vector<int> active_dofs_;
 };
 
 }
