@@ -177,6 +177,10 @@ void initPlannerParameters()
         myBoolMap.insert( std::make_pair( PlanParam::env_trajNormal,             new boolContainer(false)));
         myBoolMap.insert( std::make_pair( PlanParam::env_trajSoftMotion,         new boolContainer(true)));
         myBoolMap.insert( std::make_pair( PlanParam::env_trajRos,                new boolContainer(false)));
+
+        // Sample Graph
+        myBoolMap.insert( std::make_pair( PlanParam::samplegraphMultiLoop,       new boolContainer(false)));
+
   
         // ------------------------------------------------------------------
         // Int
@@ -231,6 +235,10 @@ void initPlannerParameters()
         // RRT*
         myDoubleMap.insert( std::make_pair( PlanParam::starRadius,               new doubleContainer(1.0)));
         myDoubleMap.insert( std::make_pair( PlanParam::starFinish,               new doubleContainer(3.0)));
+
+        // Sample Graph
+        myDoubleMap.insert( std::make_pair( PlanParam::samplegraphVarianceA,     new doubleContainer(1.0)));
+        myDoubleMap.insert( std::make_pair( PlanParam::samplegraphVarianceB,     new doubleContainer(3.0)));
 
         // AStar
         myDoubleMap.insert( std::make_pair( PlanParam::grid_pace,               new doubleContainer(1.0)));

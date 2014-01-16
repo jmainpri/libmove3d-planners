@@ -21,7 +21,7 @@ public:
 
     void produceCostMap();
     void produceDerivativeFeatureCostMap();
-    void placeCenterGrid();
+    void placeCenterGrid(bool on_wall);
     void printWeights() const;
 
 private:

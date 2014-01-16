@@ -317,6 +317,9 @@ public:
     void				setDescriptor(const BGL_Vertex& V);
     void				unSetDescriptor();
 
+    // Node color
+    int color_;
+
 private:
 
     // Old Node structure

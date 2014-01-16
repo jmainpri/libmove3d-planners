@@ -372,3 +372,5 @@ src/API/Roadmap/graphSampler.hpp
 src/API/Roadmap/graphSampler.cpp
 src/hri_costspace/HumanTrajectories/HRICS_detours.hpp
 src/hri_costspace/HumanTrajectories/HRICS_detours.cpp
+src/API/misc_functions.hpp
+src/API/misc_functions.cpp

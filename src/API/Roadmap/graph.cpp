@@ -2502,7 +2502,7 @@ void Graph::drawNode(BGL_Vertex v)
 
     if( drawnjnt->o != NULL ) {
         p3d_get_box_obj(drawnjnt->o, &x1, &x2, &y1, &y2, &z1, &z2); //get the object bounding box
-        ray = sqrt(SQR(x2 - x1) + SQR(y2 - y1) + SQR(z2 - z1)) / 10.; // TODO get better method for size
+        ray = sqrt(SQR(x2 - x1) + SQR(y2 - y1) + SQR(z2 - z1)) / 5.; // TODO get better method for size
     }
     else {
         ray = 0.05;
@@ -2522,7 +2522,10 @@ void Graph::drawNode(BGL_Vertex v)
     }
 
     double color_array[4];
-    g3d_set_color(NodeData[v]->getConnectedComponent()->getId(), color_array);
+    int color = NodeData[v]->color_;
+    if( color == 0 )
+        color = NodeData[v]->getConnectedComponent()->getId();
+    g3d_set_color( color, color_array );
     g3d_draw_solid_sphere(pos[0], pos[1], pos[2], ray, 10);
     //g3d_drawColorSphere(pos[0], pos[1], pos[2], ray, color, NULL);
 }

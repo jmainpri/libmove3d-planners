@@ -85,6 +85,9 @@ namespace PlanParam
 
             setRobotIK,
             showExploration,
+
+            // Sample Graph
+            samplegraphMultiLoop,
           
             // RRT*
             starRRT,
@@ -193,6 +196,10 @@ namespace PlanParam
             trajOptimObstacWeight,
             trajReplanningWindow,
             trajReplanningTotalTime,
+
+            // Sample Graph
+            samplegraphVarianceA,
+            samplegraphVarianceB,
           
             // RRT*
             starRadius,

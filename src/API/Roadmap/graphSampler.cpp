@@ -1,6 +1,9 @@
 #include "graphSampler.hpp"
 
 #include "API/project.hpp"
+#include "planner/planEnvironment.hpp"
+
+#include <iomanip>
 
 using std::cout;
 using std::endl;
@@ -60,19 +63,24 @@ void graphSampler::initialize()
 //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
 //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1;
 
-    double a = -1.5;
-    double b = 1.5;
+    // double a = 1.0;
+    // double b = 0.5;
+    // double c = 0.01;
 
-                 // 1, 2, 3, 4      5, 6, 7, 8
-    precision_ <<   1, a, 0, 0,     0, 0, 0, b, // 1  -> 1,1
-                    a, 1, 0, 0,     0, 0, a, 0, // 2  -> 1,2
-                    0, 0, 1, a,     0, a, 0, 0, // 3  -> 2,1
-                    0, 0, a, 1,     b, 0, 0, 0, // 4  -> 2,2
+    double a = PlanEnv->getDouble(PlanParam::samplegraphVarianceA);
+    double c = PlanEnv->getDouble(PlanParam::samplegraphVarianceB);
 
-                    0, 0, 0, b,     1, 0, a, 0, // 5  -> 1,1
-                    0, 0, a, 0,     0, 1, 0, a, // 6  -> 1,2
-                    0, a, 0, 0,     a, 0, 1, 0, // 7  -> 2,1
-                    b, 0, 0, 0,     0, a, 0, 1; // 8  -> 2,1
+                 // x  x  x  x      y  y  y  y
+                 // 1, 2, 3, 4      1, 2, 3, 4
+    precision_ <<   1, a, c, a,     0, a, c, c, // 1  -> 1,1 x
+                    a, 1, a, c,     c, 0, a, a, // 2  -> 1,2 x
+                    c, a, 1, a,     a, a, 0, c, // 3  -> 2,1 x
+                    a, c, a, 1,     c, a, c, 0, // 4  -> 2,2 x
+
+                    0, c, a, c,     1, c, a, a, // 1  -> 1,1 y
+                    a, 0, a, a,     c, 1, a, a, // 2  -> 1,2 y
+                    c, a, 0, c,     a, a, 1, c, // 3  -> 2,1 y
+                    c, a, c, 0,     a, a, c, 1; // 4  -> 2,1 y
 
     preAllocateMultivariateGaussianSampler();
 }
@@ -82,7 +90,8 @@ bool graphSampler::preAllocateMultivariateGaussianSampler()
     // invert the control costs, initialize noise generators:
     inv_precision_ = precision_.inverse();
 
-    cout << inv_precision_ << endl;
+    cout.precision(3);
+    cout << inv_precision_ << endl; // << std::scientific << endl;
 
     // TODO see of the noise generator needs to be
     // var free or var all
@@ -104,14 +113,19 @@ Eigen::VectorXd graphSampler::sample_noisy(double std_dev)
 
 void graphSampler::setNodesInGraph(Graph* g)
 {
+    int ith=1;
     for( int i=0; i<num_points_per_dim_; i++ )
     {
         for( int j=0; j<num_points_per_dim_; j++ )
         {
             confPtr_t q = g->getRobot()->getCurrentPos();
-            (*q)[6] = tmp_noise_[num_points_per_dim_*i+j];
-            (*q)[7] = tmp_noise_[num_points_per_dim_*i+j+num_points_per_dim_*2];
+            int x_id = num_points_per_dim_*i+j;
+            int y_id = num_points_per_dim_*i+j+num_points_per_dim_*2;
+            (*q)[6] = tmp_noise_[x_id];
+            (*q)[7] = tmp_noise_[y_id];
+            cout << "node( " << x_id << " , " << y_id << " ) : " << (*q)[6] << " , " << (*q)[7] << endl;
             Node* N = new Node( g, q );
+            N->color_ = ith++;
             g->insertNode(N);
         }
     }
@@ -121,8 +135,19 @@ Graph* graphSampler::sample()
 {
     Robot* robot = global_Project->getActiveScene()->getActiveRobot();
     Graph* graph = new Graph(robot);
-    sample_noisy(20);
-    setNodesInGraph( graph );
+
+    int iterations = 1;
+    if(PlanEnv->getBool(PlanParam::samplegraphMultiLoop))
+        iterations = 100;
+
+    for( int i=0; i<iterations; i++)
+    {
+        sample_noisy(20);
+        setNodesInGraph( graph );
+    }
+    cout << "Nb of nodes : " << graph->getNumberOfNodes() << endl;
+
+    delete API_activeGraph;
     API_activeGraph = graph;
     return NULL;
 }

@@ -173,7 +173,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples) : robot_(
 {
     nb_demos_ = nb_demos;
     nb_samples_ = nb_samples;
-    nb_way_points_ = 100;
+    nb_way_points_ = 10; // 100
     folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
 
     std::vector<int> aj(1); aj[0] = 1;
@@ -729,8 +729,8 @@ void IocSampler::initPolicy()
     policy_.setPrintDebug( false );
 
     std::vector<double> derivative_costs(3);
-    derivative_costs[0] = 0.0; //smoothness_cost_velocity_;
-    derivative_costs[1] = 1.0; //smoothness_cost_acceleration_;
+    derivative_costs[0] = 1.0; //smoothness_cost_velocity_;
+    derivative_costs[1] = 0.0; //smoothness_cost_acceleration_;
     derivative_costs[2] = 0.0; //smoothness_cost_jerk_;
 
     // initializes the policy
@@ -746,6 +746,8 @@ bool IocSampler::preAllocateMultivariateGaussianSampler()
     for (int j=0; j<num_joints_; ++j)
     {
         inv_control_costs_.push_back( control_costs_[j].inverse() );
+
+        cout << endl << control_costs_[j] << endl;
 
         // TODO see of the noise generator needs to be
         // var free or var all

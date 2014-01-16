@@ -45,7 +45,8 @@
 
 #include "Util-pkg.h"
 
-#include "planEnvironment.hpp"
+#include "planner/planEnvironment.hpp"
+#include "API/misc_functions.hpp"
 
 using namespace std;
 
@@ -246,7 +247,7 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices()
 {
     double multiplier = 1.0;
     differentiation_matrices_.clear();
-    differentiation_matrices_.resize(NUM_DIFF_RULES, Eigen::MatrixXd::Zero(num_vars_all_, num_vars_all_));
+    differentiation_matrices_.resize( NUM_DIFF_RULES, Eigen::MatrixXd::Zero(num_vars_all_, num_vars_all_) );
     for (int d=0; d<NUM_DIFF_RULES; ++d)
     {
         if( print_debug_ )
@@ -254,8 +255,8 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices()
             cout <<"Movement duration : " << movement_duration_ << endl;
             cout <<"Movement dt : " << movement_dt_ << endl;
         }
-        //multiplier /= movement_dt_;
-        //multiplier /= 0.03815;
+        // multiplier /= movement_dt_;
+        // multiplier /= 0.03815;
 
         for (int i=0; i<num_vars_all_; i++)
         {
@@ -269,11 +270,13 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices()
                 differentiation_matrices_[d](i,index) = multiplier * DIFF_RULES[d][j+DIFF_RULE_LENGTH/2];
             }
         }
-        if( print_debug_ )
-        {
-            cout << "differentiation_matrices_["<<d<<"] = " << endl << differentiation_matrices_[d] << endl ;
-        }
+//        if( print_debug_ )
+//        {
+//            cout << "differentiation_matrices_["<<d<<"] = " << endl << differentiation_matrices_[d] << endl ;
+//        }
     }
+
+    move3d_save_matrix_to_file( differentiation_matrices_[0], "matlab/vel_diff_matrix.txt" );
 }
 
 bool CovariantTrajectoryPolicy::initializeCosts()
@@ -290,17 +293,18 @@ bool CovariantTrajectoryPolicy::initializeCosts()
 
         for (int i=0; i<NUM_DIFF_RULES; ++i)
         {
+            cout << "derivative cost : " << i << " , " << derivative_costs_[i] << endl;
             cost_all += derivative_costs_[i] * (differentiation_matrices_[i].transpose() * differentiation_matrices_[i]);
         }
-        control_costs_all_.push_back(cost_all);
+        control_costs_all_.push_back( cost_all );
 
-        // Extract the quadratic cost just for the free variables:
-        Eigen::MatrixXd cost_free = cost_all.block(DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_, num_vars_free_);
+        // Extract the quadratic cost just for the free variables
+        Eigen::MatrixXd cost_free = cost_all.block( DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_, num_vars_free_ );
 
-        //cout << "cost_free("<<d<<") = " << cost_free << endl;
+        // cout << "cost_free("<<d<<") = " << endl << cost_free << endl;
 
-        control_costs_.push_back(cost_free);
-        inv_control_costs_.push_back(cost_free.inverse());
+        control_costs_.push_back( cost_free );
+        inv_control_costs_.push_back( cost_free.inverse() );
 
         //cout << "control_costs["<< d <<"]  = " << endl << control_costs_[d] << endl;
     }

@@ -27,22 +27,37 @@ void Spheres::initialize()
     robot_ = sce->getActiveRobot();
 
     centers_.clear();
-    addCenters( sce->getNumberOfRobots()-1 );
-    placeCenterGrid();
+    int nb_spheres = sce->getNumberOfRobots()-1;
+    addCenters( nb_spheres );
 
     w_.resize( centers_.size() );
 
     int i=0;
 
-    w_[i++] = 8; w_[i++] = 8;  w_[i++] = 8; w_[i++] = 8;  w_[i++] = 8; w_[i++] = 8;  w_[i++] = 8; w_[i++] = 8;
-    w_[i++] = 8; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 2;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 40;
-    w_[i++] = 100; w_[i++] = 100; w_[i++] = 100; w_[i++] = 60; w_[i++] = 50; w_[i++] = 6;  w_[i++] = 1; w_[i++] = 40;
-    w_[i++] = 100; w_[i++] = 100; w_[i++] = 50; w_[i++] = 30; w_[i++] = 1;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 50;
+    if( nb_spheres == 64 )
+    {
+        placeCenterGrid( true );
 
-    w_[i++] = 100; w_[i++] = 1; w_[i++] = 5; w_[i++] = 5; w_[i++] = 50; w_[i++] = 100; w_[i++] = 100; w_[i++] = 100;
-    w_[i++] = 8; w_[i++] = 1;  w_[i++] = 30; w_[i++] = 99;  w_[i++] = 99; w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
-    w_[i++] =50; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 3; w_[i++] = 1; w_[i++] = 1; w_[i++] = 10;
-    w_[i++] = 100; w_[i++] = 100;  w_[i++] = 12; w_[i++] = 10;  w_[i++] = 10; w_[i++] = 10;  w_[i++] = 12; w_[i++] = 10;
+        w_[i++] = 8; w_[i++] = 8;  w_[i++] = 8; w_[i++] = 8;  w_[i++] = 8; w_[i++] = 8;  w_[i++] = 8; w_[i++] = 8;
+        w_[i++] = 8; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 2;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 40;
+        w_[i++] = 100; w_[i++] = 100; w_[i++] = 100; w_[i++] = 60; w_[i++] = 50; w_[i++] = 6;  w_[i++] = 1; w_[i++] = 40;
+        w_[i++] = 100; w_[i++] = 100; w_[i++] = 50; w_[i++] = 30; w_[i++] = 1;  w_[i++] = 1; w_[i++] = 1; w_[i++] = 50;
+
+        w_[i++] = 100; w_[i++] = 1; w_[i++] = 5; w_[i++] = 5; w_[i++] = 50; w_[i++] = 100; w_[i++] = 100; w_[i++] = 100;
+        w_[i++] = 8; w_[i++] = 1;  w_[i++] = 30; w_[i++] = 99;  w_[i++] = 99; w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
+        w_[i++] =50; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 3; w_[i++] = 1; w_[i++] = 1; w_[i++] = 10;
+        w_[i++] = 100; w_[i++] = 100;  w_[i++] = 12; w_[i++] = 10;  w_[i++] = 10; w_[i++] = 10;  w_[i++] = 12; w_[i++] = 10;
+    }
+
+    if( nb_spheres == 4 )
+    {
+        placeCenterGrid( false );
+
+        w_[i++] = 10;
+        w_[i++] = 5;
+        w_[i++] = 10;
+        w_[i++] = 5;
+    }
 
     double max = w_.maxCoeff();
     w_ /= max;
@@ -58,7 +73,7 @@ void Spheres::printWeights() const
     cout << "weights : center" << endl;
     cout.precision(3);
 
-    int n=8;
+    int n=std::sqrt(w_.size());
     for(int i=0;i<n;i++)
     {
         for(int j=0;j<n;j++)
@@ -100,7 +115,7 @@ void Spheres::addCenters(int nb_centers)
     }
 }
 
-void Spheres::placeCenterGrid()
+void Spheres::placeCenterGrid(bool on_wall)
 {
     double max_1, max_2;
     double min_1, min_2;
@@ -108,15 +123,22 @@ void Spheres::placeCenterGrid()
     robot_->getJoint(1)->getDofBounds( 1, min_2, max_2 );
 
     int nb_cells = std::sqrt( double(centers_.size()) );
+    int offset = on_wall ? 0 : 1 ;
 
-    for( int i=0; i<nb_cells; i++ )
+    for( int i=offset; i<nb_cells+offset; i++ )
     {
-        for( int j=0; j<nb_cells; j++ )
+        for( int j=offset; j<nb_cells+offset; j++ )
         {
-            int id = i*nb_cells+j;
+            int id = (i-offset)*(nb_cells)+(j-offset);
+            //int id = i*(nb_cells)+j;
             confPtr_t q = centers_[id]->getCurrentPos();
-            (*q)[6] = min_1 + double(i)*(max_1-min_1)/double(nb_cells-1);
-            (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(nb_cells-1);
+
+            int divisions = nb_cells-1;
+            if( !on_wall )
+                divisions = nb_cells+1;
+
+            (*q)[6] = min_1 + double(i)*(max_1-min_1)/double(divisions);
+            (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(divisions);
             centers_[id]->setAndUpdate( *q );
             centers_[id]->setInitPos( *q );
             cout << "c (" << id << ") : " << (*q)[6] << " , " << (*q)[7] << endl;
