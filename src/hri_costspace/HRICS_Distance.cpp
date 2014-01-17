@@ -412,7 +412,6 @@ vector<double> Distance::getDistToZones()
         break;
     }
 
-
     case Boxes:
         //cout << "Boxes Distance" << endl;
         activateSafetyZonesMode();

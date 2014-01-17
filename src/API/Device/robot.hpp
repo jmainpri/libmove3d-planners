@@ -194,6 +194,16 @@ public:
     bool isInCollisionWithOthersAndEnv();
 
     /**
+      * Robot to environment distance
+      */
+    double distanceToEnviroment();
+
+    /**
+      * Robot to robot distance
+      */
+    double distanceToRobot(Robot* robot);
+
+    /**
      * obtient la Configuration GoTo du Robot
      * @return la Configuration GoTo du Robot
      */

@@ -8,6 +8,8 @@ HRICS_HumanFeatures.cpp
 HRICS_HumanIoc.cpp
 HRICS_HumanCostSpace.cpp
 HRICS_detours.cpp
+HRICS_planarfeature.cpp
+HRICS_squares.cpp
 )
 
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})

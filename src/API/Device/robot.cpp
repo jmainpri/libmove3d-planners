@@ -517,6 +517,20 @@ bool Robot::isInCollisionWithOthersAndEnv()
     return pqp_robot_all_no_self_collision_test(_Robot);
 }
 
+double Robot::distanceToEnviroment()
+{
+    p3d_vector3 closest_point_rob;
+    p3d_vector3 closest_point_obst;
+    return pqp_robot_environment_distance( _Robot, closest_point_rob, closest_point_obst);
+}
+
+double Robot::distanceToRobot(Robot *robot)
+{
+    p3d_vector3 closest_point_rob1;
+    p3d_vector3 closest_point_rob2;
+    return pqp_robot_robot_distance( _Robot, robot->_Robot, closest_point_rob1, closest_point_rob2 );
+}
+
 confPtr_t Robot::getInitPos()
 {
     return (confPtr_t (new Configuration(this, _Robot->ROBOT_POS)));

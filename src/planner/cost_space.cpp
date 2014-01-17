@@ -101,8 +101,7 @@ bool CostSpace::setCost(string name)
 }
 
 //------------------------------------------------------------------------------
-void CostSpace::addCost(string name, 
-                        boost::function<double(Configuration&)> f)
+void CostSpace::addCost(string name, boost::function<double(Configuration&)> f)
 {
     if(mFunctions.find(name) == mFunctions.end())
     {

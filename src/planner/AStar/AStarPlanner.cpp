@@ -389,6 +389,7 @@ double PlanState::computeHeuristic( API::State *parent, API::State* goal )
 
 AStarPlanner::AStarPlanner(Robot* R) : Planner(R,NULL)
 {
+    cout << "Create planner for robot : " << R->getName() << endl;
     pace_ = 1.0;
 
     // double diagonal = std::sqrt( std::pow(m_envSize[1]-m_envSize[0], 2 ) + std::pow(m_envSize[3]-m_envSize[2] , 2 ) );

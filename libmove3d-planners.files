@@ -374,3 +374,7 @@ src/hri_costspace/HumanTrajectories/HRICS_detours.hpp
 src/hri_costspace/HumanTrajectories/HRICS_detours.cpp
 src/API/misc_functions.hpp
 src/API/misc_functions.cpp
+src/hri_costspace/HumanTrajectories/HRICS_planarfeature.hpp
+src/hri_costspace/HumanTrajectories/HRICS_planarfeature.cpp
+src/hri_costspace/HumanTrajectories/HRICS_squares.hpp
+src/hri_costspace/HumanTrajectories/HRICS_squares.cpp

@@ -57,7 +57,7 @@ public:
 	/**
 	 * Returns the robot ID
 	 */
-    unsigned int getRobotId(const std::string& str);
+    int getRobotId(const std::string& str);
 	
 	/**
 	 * Get robot by name

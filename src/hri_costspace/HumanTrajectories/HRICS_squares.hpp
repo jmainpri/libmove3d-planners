@@ -1,15 +1,15 @@
-#ifndef HRICS_SPHERES_HPP
-#define HRICS_SPHERES_HPP
+#ifndef HRICS_SQUARES_HPP
+#define HRICS_SQUARES_HPP
 
 #include "HRICS_planarfeature.hpp"
 
 namespace HRICS
 {
 
-class Spheres : public PlanarFeature
+class Squares : public PlanarFeature
 {
 public:
-    Spheres();
+    Squares();
 
     void initialize();
 
@@ -20,6 +20,6 @@ public:
 }
 
 // Global cost function
-void HRICS_init_sphere_cost();
+void HRICS_init_square_cost();
 
-#endif // HRICS_SPHERES_HPP
+#endif // HRICS_SQUARES_HPP

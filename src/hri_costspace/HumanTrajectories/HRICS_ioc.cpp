@@ -1,14 +1,16 @@
 #include "HRICS_ioc.hpp"
 #include "HRICS_spheres.hpp"
+#include "HRICS_squares.hpp"
 #include "HRICS_parameters.hpp"
 
 #include "API/project.hpp"
 #include "API/Trajectory/trajectory.hpp"
+
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
 #include "planner/AStar/AStarPlanner.hpp"
-#include "planEnvironment.hpp"
-#include "plannerFunctions.hpp"
+#include "planner/planEnvironment.hpp"
+#include "planner/plannerFunctions.hpp"
 
 #include "utils/NumsAndStrings.hpp"
 
@@ -20,6 +22,8 @@
 
 #include <iomanip>
 #include <sstream>
+
+#include "Util-pkg.h"
 
 using namespace HRICS;
 using std::cout;
@@ -49,9 +53,10 @@ void HRICS_run_sphere_ioc()
         return;
     }
 
-    if( global_SphereCostFct == NULL )
+    if( global_PlanarCostFct == NULL )
     {
         HRICS_init_sphere_cost();
+        HRICS_init_square_cost();
     }
 
     bool single_iteration = HriEnv->getBool(HricsParam::ioc_single_iteration);
@@ -160,7 +165,7 @@ void HRICS_run_sphere_ioc()
 
 //    eval.compareDemosAndPlanned();
 
-//    global_SphereCostFct->produceCostMap();
+//    global_PlanarCostFct->produceCostMap();
 }
 
 
@@ -173,7 +178,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples) : robot_(
 {
     nb_demos_ = nb_demos;
     nb_samples_ = nb_samples;
-    nb_way_points_ = 10; // 100
+    nb_way_points_ = 20; // 100
     folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
 
     std::vector<int> aj(1); aj[0] = 1;
@@ -189,12 +194,12 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples) : robot_(
     smoothness_fct_ = new TrajectorySmoothness;
     smoothness_fct_->setActiveDofs( plangroup_->getActiveDofs() );
 
-    if( global_SphereCostFct != NULL )
+    if( global_PlanarCostFct != NULL )
     {
         StackedFeatures* fct = new StackedFeatures;
         //fct->addFeatureFunction( smoothness_fct_ );
-        fct->addFeatureFunction( global_SphereCostFct );
-        fct->setWeights( global_SphereCostFct->getWeights() );
+        fct->addFeatureFunction( global_PlanarCostFct );
+        fct->setWeights( global_PlanarCostFct->getWeights() );
 
         feature_fct_ = fct;
 
@@ -205,8 +210,15 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples) : robot_(
         feature_fct_->printWeights();
 
         // Save costmap to matlab with original weights
-        global_SphereCostFct->produceCostMap();
-        global_SphereCostFct->produceDerivativeFeatureCostMap();
+        ChronoTimeOfDayOn();
+
+        global_PlanarCostFct->produceCostMap();
+        global_PlanarCostFct->produceDerivativeFeatureCostMap();
+
+        double time;
+        ChronoTimeOfDayTimes( &time );
+        ChronoTimeOfDayOff();
+        cout << "time to compute costmaps : " << time << endl;
     }
 }
 
@@ -383,7 +395,7 @@ void IocEvaluation::runSampling()
     // checkStartAndGoal( samples );
 
     // Only for plannar robot
-    // global_SphereCostFct->produceCostMap();
+    // global_PlanarCostFct->produceCostMap();
     // trajToMatlab(T);
 }
 

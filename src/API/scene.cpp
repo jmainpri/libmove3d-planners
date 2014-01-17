@@ -76,7 +76,7 @@ Robot* Scene::getActiveRobot()
     return getRobotByName( m_Scene->cur_robot->name );
 }
 
-unsigned int Scene::getRobotId(const string& str)
+int Scene::getRobotId(const string& str)
 {
     for (unsigned int i=0; i<m_Robot.size(); i++)
     {
@@ -86,7 +86,7 @@ unsigned int Scene::getRobotId(const string& str)
         }
     }
 
-    cout << "Error geting robot id in " << __func__ << endl;
+    cout << "Error getting robot id in " << __func__ << endl;
     return -1;
 }
 
@@ -95,9 +95,9 @@ unsigned int Scene::getRobotId(const string& str)
  */
 Robot* Scene::getRobotByName(const string &str)
 {
-    unsigned int id = getRobotId(str);
+    int id = getRobotId(str);
 
-    if ( id >= 0 && id < m_Robot.size() )
+    if ( id >= 0 && id < int(m_Robot.size()) )
     {
         return m_Robot[id];
     }

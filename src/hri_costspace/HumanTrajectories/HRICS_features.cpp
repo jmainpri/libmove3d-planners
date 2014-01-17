@@ -1,5 +1,7 @@
 #include "HRICS_features.hpp"
 
+#include "HRICS_GestParameters.hpp"
+
 using namespace HRICS;
 using std::cout;
 using std::endl;
@@ -11,6 +13,17 @@ double Feature::cost( Configuration& q )
 {
     FeatureVect phi = getFeatures( q );
     double cost = w_.transpose()*phi;
+
+    if( GestEnv->getBool(GestParam::print_debug) )
+    {
+        WeightVect w = getWeights();
+        cout << "phi : " << endl;
+        cout << phi.transpose() << endl;
+        cout << "w : " << endl;
+        cout << w.transpose() << endl;
+        cout << endl;
+    }
+
     return cost;
 }
 
