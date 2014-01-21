@@ -61,8 +61,19 @@ void Square::draw()
 
 Squares::Squares()
 {
-    global_DrawModule->addDrawFunction( "Squares", boost::bind( &Squares::draw, this) );
-    global_DrawModule->enableDrawFunction( "Squares" );
+    if( global_DrawModule )
+    {
+        global_DrawModule->addDrawFunction( "Squares", boost::bind( &Squares::draw, this) );
+        global_DrawModule->enableDrawFunction( "Squares" );
+    }
+}
+
+Squares::~Squares()
+{
+    if( global_DrawModule )
+    {
+        global_DrawModule->deleteDrawFunction( "Squares" );
+    }
 }
 
 void Squares::initialize()
@@ -237,9 +248,7 @@ double Squares::distToSquare(  const Square& square, const Configuration& q  )
 {
     std::vector<Eigen::Vector2d> corners(4);
 
-    Eigen::Vector2d p;
-    p[0] = q[6];
-    p[1] = q[7];
+    Eigen::Vector2d p = q.getEigenVector(6,7);
 
     corners[0][0] = square.center_[0] + square.x_;
     corners[0][1] = square.center_[1] + square.y_;

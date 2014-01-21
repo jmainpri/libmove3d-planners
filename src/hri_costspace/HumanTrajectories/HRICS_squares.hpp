@@ -27,6 +27,7 @@ class Squares : public PlanarFeature
 {
 public:
     Squares();
+    ~Squares();
 
     void initialize();
     void computeSize();

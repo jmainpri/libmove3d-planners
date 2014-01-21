@@ -16,13 +16,19 @@ Detours::Detours()
 {
     robot_ = global_Project->getActiveScene()->getActiveRobot();
 
-    global_DrawModule->addDrawFunction( "Detours", boost::bind( &Detours::draw, this) );
-    global_DrawModule->enableDrawFunction( "Detours" );
+    if( global_DrawModule )
+    {
+        global_DrawModule->addDrawFunction( "Detours", boost::bind( &Detours::draw, this) );
+        global_DrawModule->enableDrawFunction( "Detours" );
+    }
 }
 
 Detours::~Detours()
 {
-    global_DrawModule->deleteDrawFunction( "Detours" );
+    if( global_DrawModule )
+    {
+        global_DrawModule->deleteDrawFunction( "Detours" );
+    }
 }
 
 void Detours::planAStar()
