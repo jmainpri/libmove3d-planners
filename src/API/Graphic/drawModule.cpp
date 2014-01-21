@@ -93,7 +93,7 @@ void DrawFunctions::draw()
     std::set< string >::iterator it;
     for ( it=active_functions_.begin() ; it != active_functions_.end(); it++ )
     {
-        cout << "DRAW_FUNCTION : " << *it << ", " << functions_[*it] << endl;
+        // cout << "DRAW_FUNCTION : " << *it << ", " << functions_[*it] << endl;
         functions_[*it]();
     }
 }

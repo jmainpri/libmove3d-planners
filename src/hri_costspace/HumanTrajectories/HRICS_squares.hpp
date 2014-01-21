@@ -9,13 +9,16 @@ namespace HRICS
 class Square
 {
 public:
-    Square( Robot* center, double x, double y )
+    Square( const Eigen::Vector2d& center, double x, double y )
     {
         center_ = center;
         x_ = x;
         y_ = y;
     }
-    Robot* center_;
+
+    void draw();
+
+    Eigen::Vector2d center_;
     double x_;
     double y_;
 };
@@ -31,8 +34,13 @@ public:
     FeatureVect getFeatures(const Configuration& q );
     FeatureVect getFeatureCount(const API::Trajectory& t);
 
+    double distToSquare(  const Square& square, const Configuration& q  );
+    bool isInAASquare( const std::vector<Eigen::Vector2d>& corners, Eigen::Vector2d p );
+    double pointToLineSegmentDistance(const Eigen::Vector2d& p, const Eigen::Vector2d& p1, const Eigen::Vector2d& p2, Eigen::Vector2d& closestPoint);
+
+    void draw();
+
 private:
-    void isInSquare( const Square& square, const Configuration& q );
     std::vector<Square> squares_;
 };
 

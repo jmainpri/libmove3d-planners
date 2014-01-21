@@ -213,7 +213,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples) : robot_(
         ChronoTimeOfDayOn();
 
         global_PlanarCostFct->produceCostMap();
-        // global_PlanarCostFct->produceDerivativeFeatureCostMap();
+        global_PlanarCostFct->produceDerivativeFeatureCostMap();
 
         double time;
         ChronoTimeOfDayTimes( &time );
