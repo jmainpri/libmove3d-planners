@@ -81,6 +81,7 @@ void Squares::initialize()
     if( nb_squares == 16 )
     {
         placeCenterGrid( true );
+        computeSize();
         w_[i++] = 100; w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
         w_[i++] = 100; w_[i++] = 50;  w_[i++] = 8; w_[i++] = 100;
         w_[i++] = 100; w_[i++] = 30; w_[i++] = 50; w_[i++] = 100;
@@ -124,6 +125,61 @@ FeatureVect Squares::getFeatures( const Configuration& q )
     // cout << "features.norm() : " << features.norm() << endl;
 
     return features;
+}
+
+void Squares::computeSize()
+{
+    cout << "compute sizes" << endl;
+
+    squares_.clear();
+
+    for( int i=0; i< int(centers_.size()); i++ )
+    {
+        p3d_obj* o = p3d_get_robot_body_by_name( centers_[i]->getRobotStruct(), "body" );
+//        cout << o->name << " : " << o->np << " , ";
+//        for(int j=0;j<o->np;j++)
+//            cout << o->pol[j]->entity_type << " , ";
+
+        cout << o->name ;
+        cout << "( " ;
+        cout << o->pol[0]->primitive_data->x_length << " , ";
+        cout << o->pol[0]->primitive_data->y_length ; // << " , ";
+        // cout << o->pol[0]->primitive_data->z_length ;
+        cout << " )" ;
+
+        squares_.push_back( Square( centers_[i], o->pol[0]->primitive_data->x_length, o->pol[0]->primitive_data->y_length ) );
+
+//        cout << "( " ;
+//        cout << o->pol[0]->pos0[0][3] << " , ";
+//        cout << o->pol[0]->pos0[1][3] << " , ";
+//        cout << o->pol[0]->pos0[2][3] ;
+//        cout << " )" ;
+
+//        cout << "( " ;
+//        cout << o->jnt->abs_pos[0][3] << " , ";
+//        cout << o->jnt->abs_pos[1][3] << " , ";
+//        cout << o->jnt->abs_pos[2][3] ;
+//        cout << " )" ;
+
+        Eigen::Vector3d p = centers_[i]->getJoint(1)->getVectorPos();
+
+        cout << "( " ;
+        cout << p[0] << " , ";
+        cout << p[1] ; // << " , ";
+        // cout << p[2] ;
+        cout << " )" ;
+
+
+        cout << endl;
+    }
+}
+
+void Squares::isInSquare( const Square& square, const Configuration& q )
+{
+    double x = q[6];
+    double y = q[7];
+
+//    if( x < )
 }
 
 FeatureVect Squares::getFeatureCount( const API::Trajectory& t )

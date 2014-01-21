@@ -19,6 +19,7 @@ class PlanarFeature : public Feature
         void placeCenterGrid(bool on_wall);
         void printWeights() const;
         int addCenters(std::string type);
+        void computeSize();
 
     protected:
         Robot* robot_;
