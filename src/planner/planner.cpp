@@ -131,7 +131,7 @@ bool Planner::setInit(confPtr_t Cs)
         if (N == NULL)
         {
             _Start = new Node(_Graph, Cs);
-            _Graph->insertNode(_Start);
+            _Graph->addNode(_Start);
             _Graph->linkNode(_Start);
             b = true;
         }
@@ -144,7 +144,7 @@ bool Planner::setInit(confPtr_t Cs)
     if (_Init && (*_Start->getConfiguration() != *Cs))
     {
         _Start = new Node(_Graph, Cs);
-        _Graph->insertNode(_Start);
+        _Graph->addNode(_Start);
         _Graph->linkNode(_Start);
         b = true;
     }
@@ -167,7 +167,7 @@ bool Planner::setGoal(confPtr_t Cg)
             if (N == NULL)
             {
                 _Goal = new Node(_Graph, Cg);
-                _Graph->insertNode(_Goal);
+                _Graph->addNode(_Goal);
                 // Warning
                 //				_Graph->linkNode(_Goal);
                 b = true;
@@ -181,7 +181,7 @@ bool Planner::setGoal(confPtr_t Cg)
         if (_Init && (_Goal == NULL || (*_Goal->getConfiguration() != *Cg)))
         {
             _Goal = new Node(_Graph, Cg);
-            _Graph->insertNode(_Goal);
+            _Graph->addNode(_Goal);
             //			_Graph->linkNode(_Goal);
             b = true;
         }

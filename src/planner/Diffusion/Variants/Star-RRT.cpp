@@ -333,7 +333,7 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
 
         if( print_exploration )
         {
-           cout << "radius : " << radius  << " , number of nodes : " << m_Graph->getNumberOfNodes() << endl;
+            cout << "radius : " << radius  << " , number of nodes : " << m_Graph->getNumberOfNodes() << endl;
         }
 
         int K = m_Graph->getNumberOfNodes();

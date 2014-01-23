@@ -45,7 +45,10 @@
 #include "LightPlanner-pkg.h"
 #endif
 
-using namespace std;
+using std::cout;
+using std::endl;
+using std::cerr;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 // ---------------------------------------------------------------------------------
@@ -106,7 +109,7 @@ static bool set_costspace=false;
 // ---------------------------------------------------------------------------------
 // Extract Traj
 // ---------------------------------------------------------------------------------
-p3d_traj* p3d_extract_traj(bool is_traj_found, int nb_added_nodes, Graph* graph, confPtr_t q_source, confPtr_t q_target) 
+p3d_traj* p3d_extract_traj( bool is_traj_found, int nb_added_nodes, Graph* graph, confPtr_t q_source, confPtr_t q_target)
 {
     cout << "--- p3d_extract_traj ---------------------------" << endl;
     API::Trajectory* traj = NULL;
@@ -118,7 +121,7 @@ p3d_traj* p3d_extract_traj(bool is_traj_found, int nb_added_nodes, Graph* graph,
         // Case of direct connection
         if( nb_added_nodes == 2 )
         {
-            vector<confPtr_t> configs;
+            std::vector<confPtr_t> configs;
 
             configs.push_back( q_source );
             configs.push_back( q_target );
@@ -298,7 +301,7 @@ p3d_traj* p3d_planner_function(p3d_rob* robotPt, configPt qs, configPt qg)
     cout << "Time before trajectory extraction :"  << time << " sec." << endl;
 
     // Extract the trajectory if one exists, else return NULL
-    p3d_traj* traj = p3d_extract_traj(rrt->trajFound(), nb_added_nodes, graph, q_source, q_target);
+    p3d_traj* traj = p3d_extract_traj( rrt->trajFound(), nb_added_nodes, graph, q_source, q_target );
 
     ChronoTimeOfDayTimes(&time);
     ChronoTimeOfDayOff();

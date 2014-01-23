@@ -106,7 +106,7 @@ bool Vis_PRM::linkOrphanLinking(Node* node, int type, unsigned int& ADDED, int& 
 	}
 	else if ((type == 0 || type == 2) && (link == 0))
 	{
-		_Graph->insertNode(node);
+        _Graph->addNode(node);
 		ADDED++; nodes_added++;
 		nb_fail = 0;
 		return true;
@@ -154,12 +154,8 @@ void Vis_PRM::createOneOrphanLinking(int type, unsigned int & ADDED, int & nb_fa
 	
 	if ( q->setConstraintsWithSideEffect() && !q->isInCollision() ) 
 	{
-		Node* N = new Node(_Graph,q);
-		
-		if(linkOrphanLinking( N, type, ADDED, nb_fail) && ENV.getBool(Env::drawExploration) )
-        {
-			(*_draw_func)();
-		}
+        Node* N = new Node( _Graph, q );
+        linkOrphanLinking( N, type, ADDED, nb_fail );
 	}
 }
 

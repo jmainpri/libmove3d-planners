@@ -94,7 +94,7 @@ void GridToGraph::putGridInGraph()
 
                 if( (i==0) && (j ==0) && (k == 0) )
                 {
-                    _Graph->insertNode(newNode);
+                    _Graph->addNode(newNode);
                     _Graph->linkToAllNodes(newNode);
                     currentCell->setNode(newNode);
                     continue;
@@ -102,7 +102,7 @@ void GridToGraph::putGridInGraph()
 
 
                 newNodes++;
-                _Graph->insertNode(newNode);
+                _Graph->addNode(newNode);
                 currentCell->setNode(newNode);
 
                 Vector3i pos;

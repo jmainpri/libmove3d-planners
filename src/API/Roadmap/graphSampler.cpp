@@ -5,7 +5,10 @@
 
 #include <iomanip>
 
+extern void* GroundCostObj;
+
 using std::cout;
+using std::cerr;
 using std::endl;
 
 graphSampler::graphSampler()
@@ -13,11 +16,13 @@ graphSampler::graphSampler()
     num_points_per_dim_ = 2;
     num_joints_ = 2;
     vect_length_ = num_joints_ * pow( double(num_points_per_dim_), double(num_joints_) );
+    noise_generator_ = NULL;
 }
 
 graphSampler::graphSampler( int num_points_per_dim, int num_joints ) : num_points_per_dim_(num_points_per_dim), num_joints_(num_joints)
 {
     vect_length_ = num_joints_ * pow( double(num_points_per_dim_), double(num_joints_) );
+    noise_generator_ = NULL;
 }
 
 graphSampler::~graphSampler()
@@ -30,38 +35,38 @@ void graphSampler::initialize()
     tmp_noise_ = Eigen::VectorXd::Zero( vect_length_ );
     precision_ = Eigen::MatrixXd::Zero( vect_length_, vect_length_ );
 
-//    precision_ <<   1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 1  -> 1,1
-//                    0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 2  -> 1,2
-//                    0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 3  -> 1,3
-//                    0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 4  -> 1,4
-//                    0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 5  -> 2,1
-//                    0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 6  -> 2,2
-//                    0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 7  -> 2,3
-//                    0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 8  -> 2,4
-//                    0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 9  -> 3,1
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 10 -> 3,2
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 11 -> 3,3
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 12 -> 3,4
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 13 -> 4,1
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 14 -> 4,2
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 15 -> 4,3
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16 -> 4,4
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
-//                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1;
+    //    precision_ <<   1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 1  -> 1,1
+    //                    0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 2  -> 1,2
+    //                    0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 3  -> 1,3
+    //                    0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 4  -> 1,4
+    //                    0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 5  -> 2,1
+    //                    0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 6  -> 2,2
+    //                    0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 7  -> 2,3
+    //                    0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 8  -> 2,4
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 9  -> 3,1
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 10 -> 3,2
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 11 -> 3,3
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 12 -> 3,4
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 13 -> 4,1
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 14 -> 4,2
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 15 -> 4,3
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16 -> 4,4
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
+    //                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1;
 
     // double a = 1.0;
     // double b = 0.5;
@@ -70,17 +75,17 @@ void graphSampler::initialize()
     double a = PlanEnv->getDouble(PlanParam::samplegraphVarianceA);
     double c = PlanEnv->getDouble(PlanParam::samplegraphVarianceB);
 
-                 // x  x  x  x      y  y  y  y
-                 // 1, 2, 3, 4      1, 2, 3, 4
+    // x  x  x  x      y  y  y  y
+    // 1, 2, 3, 4      1, 2, 3, 4
     precision_ <<   1, a, c, a,     0, a, c, c, // 1  -> 1,1 x
-                    a, 1, a, c,     c, 0, a, a, // 2  -> 1,2 x
-                    c, a, 1, a,     a, a, 0, c, // 3  -> 2,1 x
-                    a, c, a, 1,     c, a, c, 0, // 4  -> 2,2 x
+            a, 1, a, c,     c, 0, a, a, // 2  -> 1,2 x
+            c, a, 1, a,     a, a, 0, c, // 3  -> 2,1 x
+            a, c, a, 1,     c, a, c, 0, // 4  -> 2,2 x
 
-                    0, c, a, c,     1, c, a, a, // 1  -> 1,1 y
-                    a, 0, a, a,     c, 1, a, a, // 2  -> 1,2 y
-                    c, a, 0, c,     a, a, 1, c, // 3  -> 2,1 y
-                    c, a, c, 0,     a, a, c, 1; // 4  -> 2,1 y
+            0, c, a, c,     1, c, a, a, // 1  -> 1,1 y
+            a, 0, a, a,     c, 1, a, a, // 2  -> 1,2 y
+            c, a, 0, c,     a, a, 1, c, // 3  -> 2,1 y
+            c, a, c, 0,     a, a, c, 1; // 4  -> 2,1 y
 
     preAllocateMultivariateGaussianSampler();
 }
@@ -126,7 +131,7 @@ void graphSampler::setNodesInGraph(Graph* g)
             cout << "node( " << x_id << " , " << y_id << " ) : " << (*q)[6] << " , " << (*q)[7] << endl;
             Node* N = new Node( g, q );
             N->color_ = ith++;
-            g->insertNode(N);
+            g->addNode(N);
         }
     }
 }
@@ -149,5 +154,83 @@ Graph* graphSampler::sample()
 
     delete API_activeGraph;
     API_activeGraph = graph;
-    return NULL;
+    return graph;
+}
+
+Graph* graphSampler::makeGrid(int DichotomicFactor)
+{
+    Robot* robot = global_Project->getActiveScene()->getActiveRobot();
+    cout << "Make grid for robot : " << robot->getName() << endl;
+
+    Graph* graph = new Graph(robot);
+    Node* newNodePt;
+    double vMinDof1, vMaxDof1, vMinDof2, vMaxDof2;
+    int nbPart = std::pow( 2, DichotomicFactor ), i, j, count = 0;
+    confPtr_t q;
+    int indPrev;
+//    std::vector<Node*> nodes;
+
+    Joint* joint = robot->getJoint(1);
+    joint->getDofRandBounds( 0, vMinDof1, vMaxDof1 );
+    joint->getDofRandBounds( 1, vMinDof2, vMaxDof2 );
+
+    for(i = 0; i < nbPart; i++)
+    {
+        Node* prevJNode = NULL;
+
+        for(j = 0; j < nbPart; j++)
+        {
+            q = robot->getCurrentPos();
+            (*q)[6] = vMinDof1 + i*(vMaxDof1 - vMinDof1)/(nbPart-1) ;
+            (*q)[7] = vMinDof2 + j*(vMaxDof2 - vMinDof2)/(nbPart-1) ;
+
+            newNodePt = new Node( graph, q );
+            if(newNodePt == NULL) {
+                cerr << "Error: Failed to create a new node for an optimal cost search \n";
+                delete graph;
+                return NULL;
+            }
+
+            graph->addNode( newNodePt );
+
+            if(prevJNode == NULL) {
+                prevJNode = newNodePt;
+            } else {
+                // edge linking previous node in the j direction
+                Node* node = prevJNode;
+                LocalPath path( node->getConfiguration(), newNodePt->getConfiguration() );
+                graph->mergeComp( node, newNodePt, path.getParamMax(), true );
+                prevJNode = newNodePt;
+            }
+            // count is the current counter of the node and
+            // indPrev is the indice of the previous node in the i direction
+            indPrev = count - nbPart;
+
+            // edge linking previous node - 1 (diagonal) in the i direction
+            if( ((indPrev-1) >= 0)&& ((indPrev-1)%nbPart !=(nbPart -1))) {
+                Node* node = graph->getNodes()[indPrev-1];
+                LocalPath path( node->getConfiguration(), newNodePt->getConfiguration() );
+                graph->mergeComp( node, newNodePt, path.getParamMax(), true );
+            }
+            // edge linking previous node in the i direction
+            if(indPrev >= 0) {
+                Node* node = graph->getNodes()[indPrev];
+                LocalPath path( node->getConfiguration(), newNodePt->getConfiguration() );
+                graph->mergeComp( node, newNodePt, path.getParamMax(), true );
+            }
+            // edge linking previous node +1 in the i direction
+            if( ((indPrev+1) >= 0) && (((indPrev+1)%nbPart !=0))) {
+                Node* node = graph->getNodes()[indPrev+1];
+                LocalPath path( node->getConfiguration(), newNodePt->getConfiguration() );
+                graph->mergeComp( node, newNodePt, path.getParamMax(), true );
+            }
+            count++;
+        }
+    }
+
+    cout << "End make grid" << endl;
+
+    delete API_activeGraph;
+    API_activeGraph = graph;
+    return graph;
 }

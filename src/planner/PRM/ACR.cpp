@@ -22,7 +22,8 @@
 
 #include "Planner-pkg.h"
 
-using namespace std;
+using std::cout;
+using std::endl;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 ACR::ACR(Robot* R, Graph* G)
@@ -46,15 +47,14 @@ void ACR::expandOneStep()
         Node* node_new = new Node( _Graph, q );
 
         _Graph->addNode( node_new );
-        _Graph->linkNode( node_new );
 
         m_nbConscutiveFailures = 0;
 
-        int K = _Graph->getNumberOfNodes();
+        int K = _Graph->getNumberOfNodes(); // All nodes
         //int K = m_K_Nearest;
         double radius = ENV.getDouble(Env::extensionStep)*p3d_get_env_dmax();
 
-        vector<Node*> near_nodes = _Graph->KNearestWeightNeighbour( q, K, radius, false, ENV.getInt(Env::DistConfigChoice) );
+        std::vector<Node*> near_nodes = _Graph->KNearestWeightNeighbour( q, K, radius, false, ENV.getInt(Env::DistConfigChoice), node_new );
 
         for (int i=0; i<int(near_nodes.size()); i++)
         {
@@ -68,15 +68,10 @@ void ACR::expandOneStep()
 
             if ( is_valid  )
             {
-                _Graph->linkNodeAndMerge( near_nodes[i], node_new, true );
+                _Graph->mergeComp( near_nodes[i], node_new, path.getParamMax(), true );
             }
         }
     }
 
     m_nbAddedNode ++;
-
-    if (ENV.getBool(Env::drawExploration))
-    {
-        (*_draw_func)();
-    }
 }

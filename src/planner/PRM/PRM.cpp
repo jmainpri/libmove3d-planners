@@ -132,16 +132,11 @@ void PRM::expandOneStep()
     {
         Node* N = new Node(_Graph,q);
 
-        _Graph->insertNode(N);
+        _Graph->addNode(N);
         _Graph->linkNode(N);
 
         m_nbConscutiveFailures = 0;
         m_nbAddedNode++;
-
-        if (ENV.getBool(Env::drawExploration)) {
-            cout << "Number of nodes added : " << m_nbAddedNode << endl;
-            (*_draw_func)();
-        }
     }
     else {
         m_nbConscutiveFailures++;
@@ -167,6 +162,12 @@ unsigned int PRM::run()
     {
         expandOneStep(); m_nbExpansions++;
         ChronoTimes( &m_time , &ts );
+
+        if( PlanEnv->getBool( PlanParam::rrtExtractShortestPath ) )
+            _Graph->extractBestAStarPathSoFar( _q_start, _q_goal );
+
+        if (ENV.getBool(Env::drawExploration))
+            (*_draw_func)();
     }
 
     ChronoOff();

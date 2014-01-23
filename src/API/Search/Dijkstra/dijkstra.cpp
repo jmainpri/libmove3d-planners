@@ -251,13 +251,13 @@ Trajectory* Dijkstra::extractTrajectory(shared_ptr<Configuration> init,shared_pt
     Node* N;
 
     N = new Node(m_graph,init);
-    m_graph->insertNode(N);
+    m_graph->addNode(N);
     m_graph->linkNode(N);
 
     vertex_t source = N->getNodeStruct()->num;
 
     N = new Node(m_graph,goal);
-    m_graph->insertNode(N);
+    m_graph->addNode(N);
     m_graph->linkNode(N);
 
     vertex_t target = N->getNodeStruct()->num;

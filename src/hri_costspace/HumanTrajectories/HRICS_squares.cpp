@@ -61,19 +61,21 @@ void Square::draw()
 
 Squares::Squares()
 {
-    if( global_DrawModule )
-    {
-        global_DrawModule->addDrawFunction( "Squares", boost::bind( &Squares::draw, this) );
-        global_DrawModule->enableDrawFunction( "Squares" );
-    }
+// Uncomment to draw squares
+//    if( global_DrawModule )
+//    {
+//        global_DrawModule->addDrawFunction( "Squares", boost::bind( &Squares::draw, this) );
+//        global_DrawModule->enableDrawFunction( "Squares" );
+//    }
 }
 
 Squares::~Squares()
 {
-    if( global_DrawModule )
-    {
-        global_DrawModule->deleteDrawFunction( "Squares" );
-    }
+    // Uncomment to draw squares
+//    if( global_DrawModule )
+//    {
+//        global_DrawModule->deleteDrawFunction( "Squares" );
+//    }
 }
 
 void Squares::initialize()
@@ -205,8 +207,7 @@ void Squares::computeSize()
 //        cout << p[2] ;
 //        cout << " )" ;
 
-
-        cout << endl;
+//        cout << endl;
     }
 }
 

@@ -146,7 +146,7 @@ unsigned MultiTRRT::init()
     for (int i=0; i<int(multi_rrt_configs.size()); i++)
     {
         Node* newNode = new Node( _Graph, multi_rrt_configs[i] );
-        _Graph->insertNode(newNode );
+        _Graph->addNode(newNode );
     }
 
     _expan = new MultiTransitionExpansion(this->getActivGraph());

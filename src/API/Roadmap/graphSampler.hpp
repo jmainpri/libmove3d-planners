@@ -24,6 +24,9 @@ public:
     // get random graph
     Graph* sample();
 
+    // Make graph in a grid
+    Graph* makeGrid(int DichotomicFactor = 6 );
+
 private:
 
     //! Samples a noisy trajectory

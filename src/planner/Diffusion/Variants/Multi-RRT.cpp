@@ -82,7 +82,7 @@ bool MultiRRT::addSeed(shared_ptr<Configuration> q)
 		if (N == NULL)
 		{
 			Node* newNode = new Node( _Graph, q );
-			_Graph->insertNode(newNode );
+            _Graph->addNode(newNode );
 			m_Roots.push_back( newNode );
 			return true;
 		}
