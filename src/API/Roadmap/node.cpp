@@ -205,9 +205,9 @@ int Node::getNumberOfEdges()
     return getEdges().size();
 }
 
-vector<Edge*> Node::getEdges()
+std::vector<Edge*> Node::getEdges()
 {
-    vector<Edge*> allEdges;
+    std::vector<Edge*> allEdges;
 
     BGL_Graph& g = m_Graph->get_BGL_Graph();
     BGL_EdgeDataMapT EdgeData = boost::get( EdgeData_t() , g );
@@ -219,18 +219,22 @@ vector<Edge*> Node::getEdges()
     boost::tie(beginOut, endOut) = boost::out_edges( u, g );
     for( out_edge_iter it = beginOut; it != endOut; ++(it))
     {
+        // cout << "edge : " << *it << endl;
         // allEdges.push_back( EdgeData[*it] );
         // allEdges.push_back( g[*ep.first] );
-        allEdges.push_back( boost::get(EdgeData, *it) );
+        allEdges.push_back( EdgeData[*it] );
     }
 
-    // Get in edges
-    typedef boost::graph_traits<BGL_Graph>::in_edge_iterator in_edge_iter;
-    in_edge_iter beginIn, endIn;
-    boost::tie(beginIn, endIn) = boost::in_edges( u, g );
-    for (in_edge_iter it = beginIn; it != endIn; ++(it))
+    if( PlanEnv->getBool(PlanParam::orientedGraph) )
     {
-        allEdges.push_back( EdgeData[*it] );
+        // Get in edges
+        typedef boost::graph_traits<BGL_Graph>::in_edge_iterator in_edge_iter;
+        in_edge_iter beginIn, endIn;
+        boost::tie(beginIn, endIn) = boost::in_edges( u, g );
+        for (in_edge_iter it = beginIn; it != endIn; ++(it))
+        {
+            allEdges.push_back( EdgeData[*it] );
+        }
     }
 
     return allEdges;
@@ -283,18 +287,32 @@ double& Node::sumCost(bool recompute)
 
         //cout << "--------------------" << endl;
 
-        while(node->parent() != NULL) {
-
+        while(node->parent() != NULL)
+        {
             Edge* edge = NULL;
-            vector<Edge*> edges = node->getEdges();
+            std::vector<Edge*> edges = node->getEdges();
 
-            for (int i=0; i<int(edges.size()); i++) {
-
-                if((edges[i]->getTarget() == node) && (edges[i]->getSource() == node->parent())) {
-                    edge = edges[i];
-                    break;
+            if ( PlanEnv->getBool(PlanParam::orientedGraph) )
+            {
+                for (int i=0; i<int(edges.size()); i++)
+                {
+                    if( (edges[i]->getTarget() == node) && (edges[i]->getSource() == node->parent()) ) {
+                        edge = edges[i];
+                        break;
+                    }
                 }
             }
+            else
+            {
+                for (int i=0; i<int(edges.size()); i++)
+                {
+                    if( (edges[i]->getSource() == node->parent()) || (edges[i]->getTarget() == node->parent()) ) {
+                        edge = edges[i];
+                        break;
+                    }
+                }
+            }
+
             sum_cost += edge->cost();
             node = node->parent();
             //cout << "edge_cost : " << edge->cost() << endl;

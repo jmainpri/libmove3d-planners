@@ -210,7 +210,11 @@ bool MultiTRRT::testAddEdge(Node* source, Node* target)
     {
         if( path.getParamMax() <= _expan->step() )
         {
-            _Graph->addEdges( source, target, false, path.getParamMax(), false, path.cost() );
+            if ( PlanEnv->getBool(PlanParam::orientedGraph) )
+                _Graph->addEdges( source, target, false, path.getParamMax(), false, path.cost() );
+            else
+                _Graph->addEdge( source, target, false, path.getParamMax(), false, path.cost() );
+
             return true;
         }
     }
@@ -220,7 +224,11 @@ bool MultiTRRT::testAddEdge(Node* source, Node* target)
     if( ENV.getBool(Env::costExpandToGoal) && (path.getParamMax() <= (minumFinalCostGap*_expan->step())) &&
             _expan->expandToGoal( source, target->getConfiguration() ))
     {
-        _Graph->addEdges( source, target, false, path.getParamMax(), false, path.cost() );
+        if ( PlanEnv->getBool(PlanParam::orientedGraph) )
+            _Graph->addEdges( source, target, false, path.getParamMax(), false, path.cost() );
+        else
+            _Graph->addEdge( source, target, false, path.getParamMax(), false, path.cost() );
+
         return true;
     }
     return false;

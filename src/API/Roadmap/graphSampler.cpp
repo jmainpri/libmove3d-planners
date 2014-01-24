@@ -168,6 +168,7 @@ Graph* graphSampler::makeGrid(int DichotomicFactor)
     int nbPart = std::pow( 2, DichotomicFactor ), i, j, count = 0;
     confPtr_t q;
     int indPrev;
+    bool compute_edge_cost = false;
 //    std::vector<Node*> nodes;
 
     Joint* joint = robot->getJoint(1);
@@ -199,7 +200,7 @@ Graph* graphSampler::makeGrid(int DichotomicFactor)
                 // edge linking previous node in the j direction
                 Node* node = prevJNode;
                 LocalPath path( node->getConfiguration(), newNodePt->getConfiguration() );
-                graph->mergeComp( node, newNodePt, path.getParamMax(), true );
+                graph->mergeComp( node, newNodePt, path.getParamMax(), compute_edge_cost );
                 prevJNode = newNodePt;
             }
             // count is the current counter of the node and
@@ -210,19 +211,19 @@ Graph* graphSampler::makeGrid(int DichotomicFactor)
             if( ((indPrev-1) >= 0)&& ((indPrev-1)%nbPart !=(nbPart -1))) {
                 Node* node = graph->getNodes()[indPrev-1];
                 LocalPath path( node->getConfiguration(), newNodePt->getConfiguration() );
-                graph->mergeComp( node, newNodePt, path.getParamMax(), true );
+                graph->mergeComp( node, newNodePt, path.getParamMax(), compute_edge_cost );
             }
             // edge linking previous node in the i direction
             if(indPrev >= 0) {
                 Node* node = graph->getNodes()[indPrev];
                 LocalPath path( node->getConfiguration(), newNodePt->getConfiguration() );
-                graph->mergeComp( node, newNodePt, path.getParamMax(), true );
+                graph->mergeComp( node, newNodePt, path.getParamMax(), compute_edge_cost );
             }
             // edge linking previous node +1 in the i direction
             if( ((indPrev+1) >= 0) && (((indPrev+1)%nbPart !=0))) {
                 Node* node = graph->getNodes()[indPrev+1];
                 LocalPath path( node->getConfiguration(), newNodePt->getConfiguration() );
-                graph->mergeComp( node, newNodePt, path.getParamMax(), true );
+                graph->mergeComp( node, newNodePt, path.getParamMax(), compute_edge_cost );
             }
             count++;
         }

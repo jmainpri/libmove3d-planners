@@ -237,7 +237,7 @@ public:
     /**
      * Remove edge
      */
-    void removeEdge(Edge* E);
+    void removeEdge( Edge* E );
 
     /**
      * Remove edges between source node and target node

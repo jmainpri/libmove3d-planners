@@ -161,7 +161,11 @@ Graph::Graph(const Graph& G)
             Node* Source = searchConf( *G.edges_[i]->getSource()->getConfiguration() );
             Node* Target = searchConf( *G.edges_[i]->getTarget()->getConfiguration() );
 
-            addEdges( Source, Target, true, 0.0 , true, 0.0 );
+            if ( PlanEnv->getBool(PlanParam::orientedGraph) )
+                addEdges( Source, Target, true, 0.0 , true, 0.0 );
+            else
+                addEdge( Source, Target, true, 0.0 , true, 0.0 );
+
         }
 
         int k=0;
@@ -827,11 +831,25 @@ void Graph::sortEdges()
  */
 Edge* Graph::isEdgeInGraph(Node* N1, Node* N2)
 {
-    for ( int i=0; i<int(edges_.size()); i++)
+    if ( PlanEnv->getBool(PlanParam::orientedGraph) )
     {
-        if((edges_[i]->getSource()==N1 )&&( edges_[i]->getTarget()==N2))
+        for ( int i=0; i<int(edges_.size()); i++)
         {
-            return edges_[i];
+            if((edges_[i]->getSource()==N1 )&&( edges_[i]->getTarget()==N2))
+            {
+                return edges_[i];
+            }
+        }
+    }
+    else
+    {
+        for ( int i=0; i<int(edges_.size()); i++)
+        {
+            if( ((edges_[i]->getSource()==N1 )&&( edges_[i]->getTarget()==N2)) ||
+                ((edges_[i]->getSource()==N2 )&&( edges_[i]->getTarget()==N1)) )
+            {
+                return edges_[i];
+            }
         }
     }
     return NULL;
@@ -842,7 +860,7 @@ Edge* Graph::isEdgeInGraph(Node* N1, Node* N2)
  */
 Edge* Graph::addEdge( Node* source, Node* target, bool compute_length, double length , bool compute_cost,  double cost )
 {	
-    Edge* E = isEdgeInGraph(source, target);
+    Edge* E = isEdgeInGraph( source, target );
 
     // Edge is not in the graph
     if ( E == NULL )
@@ -850,23 +868,25 @@ Edge* Graph::addEdge( Node* source, Node* target, bool compute_length, double le
         E = new Edge(this, source, target, compute_length, length , compute_cost, cost );
         edges_.push_back(E);
 
-        if (init_bgl_) {
-            
+        if (init_bgl_)
+        {
             BGL_EdgeDataMapT EdgeData = boost::get( EdgeData_t() , boost_graph_ );
             BGL_Edge e; bool found;
 
-            boost::tie(e, found) = boost::add_edge( source->getDescriptor(),
-                                                    target->getDescriptor(), boost_graph_);
-
+            boost::tie(e, found) = boost::add_edge( source->getDescriptor(), target->getDescriptor(), boost_graph_);
             if (found)
             {
-                //cout << "descriptor	: " << e << endl;
+                // cout << "Add edge : " << e << endl;
                 EdgeData[e] = E;
                 E->setDescriptor(e);
             }
         }
         graph_is_modified_ = true;
     }
+//    else
+//    {
+//        cout << "edge is already in graph" << endl;
+//    }
 
     return E;
 }
@@ -903,12 +923,26 @@ void Graph::removeEdge( Node* source, Node* target )
     // Get out edges
     std::vector<Edge*> edges = source->getEdges();
 
-    // Remove the ones going to target from graph
-    for(int i=0;i<int(edges.size());i++)
+    if ( PlanEnv->getBool(PlanParam::orientedGraph) )
     {
-        if ((edges[i]->getSource() == source) && (edges[i]->getTarget() == target))
+        // Remove the ones going to target from graph
+        for(int i=0;i<int(edges.size());i++)
         {
-            removeEdge( edges[i] );
+            if ((edges[i]->getSource() == source) && (edges[i]->getTarget() == target))
+            {
+                removeEdge( edges[i] );
+            }
+        }
+    }
+    else
+    {
+        for(int i=0;i<int(edges.size());i++)
+        {
+            if( ((edges[i]->getSource() == source) && (edges[i]->getTarget() == target)) ||
+                ((edges[i]->getSource() == target) && (edges[i]->getTarget() == source)) )
+            {
+                removeEdge( edges[i] );
+            }
         }
     }
 }
@@ -928,17 +962,6 @@ void Graph::removeEdges( Node* N1, Node* N2 )
         }
     }
 }
-
-/**
- * Remove an edge from the graph
- */
-//void Graph::removeEdge(Edge* E)
-//{
-//	removeNodeFromGraph(E->getSource());
-//	removeNodeFromGraph(E->getTarget());
-//	
-//	p3d_removem_Edge_from_list(E->getEdgeStruct(),graph_->edges);
-//}
 
 /**
  * Add basically a node to the graph
@@ -971,7 +994,10 @@ void Graph::addNode(Node* N, double maxDist)
 
             if ( path.isValid() )
             {
-                this->addEdges( nodes_[i], N, false, d, true, 0.0 );
+                if ( PlanEnv->getBool(PlanParam::orientedGraph) )
+                    this->addEdges( nodes_[i], N, false, d, true, 0.0 );
+                else
+                    this->addEdge( nodes_[i], N, false, d, true, 0.0 );
             }
         }
     }
@@ -1194,7 +1220,11 @@ bool Graph::linkNodeCompMultisol( Node* N, ConnectedComponent* TargetComp )
         {
             if ( N->isLinkableMultisol( Nc, &dist) )
             {
-                addEdges( N, Nc, false, dist, true, 0.0);
+                if ( PlanEnv->getBool(PlanParam::orientedGraph) )
+                    addEdges( N, Nc, false, dist, true, 0.0);
+                else
+                    addEdge( N, Nc, false, dist, true, 0.0);
+
                 // If the node is still not included in a compco, it will be absorbed in the tested compco
                 if ( N->getConnectedComponent() == NULL) {
                     TargetComp->addNode(N);
@@ -1635,10 +1665,11 @@ bool Graph::mergeComp( Node* node1, Node* node2, double dist_nodes, bool compute
     }
 
     compco1->mergeWith( compco2 );
-    if (PlanEnv->getBool(PlanParam::orientedGraph))
-        addEdge( node1, node2, false, dist_nodes, compute_edge_cost, 0.0 );
-    else
+
+    if ( PlanEnv->getBool(PlanParam::orientedGraph) )
         addEdges( node1, node2, false, dist_nodes, compute_edge_cost, 0.0 );
+    else
+        addEdge( node1, node2, false, dist_nodes, compute_edge_cost, 0.0 );
 
     return true;
 }
@@ -1872,13 +1903,17 @@ void Graph::addCycles(Node* node, double step)
                                                       this->getNode(listDistNodePt->N)->getConfiguration()));
             if (LP->isValid()
                     /*&& this->getNode(listDistNodePt->N)->getConfiguration()->costTestSucceeded(
-                                                             node, step)
-                                                             && node->getConfiguration()->costTestSucceeded(
-                                                             this->getNode(listDistNodePt->N), step)*/)
+                                                                     node, step)
+                                                                     && node->getConfiguration()->costTestSucceeded(
+                                                                     this->getNode(listDistNodePt->N), step)*/)
 
             {
-                addEdges(node, nodes_Table[listDistNodePt->N], false, LP->length(), true, 0.0 );
-                //                p3d_create_edges(graph_, node->getNodeStruct(),
+                if ( PlanEnv->getBool(PlanParam::orientedGraph) )
+                    addEdges(node, nodes_Table[listDistNodePt->N], false, LP->length(), true, 0.0 );
+                else
+                    addEdge(node, nodes_Table[listDistNodePt->N], false, LP->length(), true, 0.0 );
+
+                // p3d_create_edges(graph_, node->getNodeStruct(),
                 //                                 listDistNodePt->N, LP->length());
 
                 node->getNodeStruct()->edges->E->for_cycle = true;
@@ -1940,35 +1975,39 @@ bool Graph::checkAllEdgesValid()
 API::Trajectory* Graph::extractDijkstraShortestPathsTraj( confPtr_t qi, confPtr_t qf )
 {
     boost::property_map<BGL_Graph, boost::edge_weight_t>::type weightmap = boost::get(boost::edge_weight, boost_graph_);
-
     BGL_EdgeDataMapT EdgeData = boost::get(EdgeData_t(), boost_graph_);
     BOOST_FOREACH(BGL_Edge e, boost::edges(boost_graph_))
     {
         weightmap[e] = EdgeData[e]->cost();
     }
 
-    boost::property_map<BGL_Graph, boost::vertex_distance_t>::type d = boost::get(boost::vertex_distance, boost_graph_);
-    boost::property_map<BGL_Graph, boost::vertex_predecessor_t>::type p = boost::get(boost::vertex_predecessor, boost_graph_);
+//    boost::property_map<BGL_Graph, boost::vertex_distance_t>::type d = boost::get(boost::vertex_distance, boost_graph_);
+//    boost::property_map<BGL_Graph, boost::vertex_predecessor_t>::type p = boost::get(boost::vertex_predecessor, boost_graph_);
+    std::vector<BGL_Vertex> p(boost::num_vertices(boost_graph_));
+    std::vector<double> d(boost::num_vertices(boost_graph_));
 
-    Node* node_init = searchConf( *qi );
+//    Node* node_init = searchConf( *qi );
+    Node* node_init = nearestNeighbour(qi);
     if( node_init == NULL )
     {
+        cout << "node init not in graph" << endl;
         return NULL;
     }
 
     BGL_Vertex s = node_init->getDescriptor();
 
-    dijkstra_shortest_paths(boost_graph_, s, predecessor_map(p).distance_map(d));
+    // dijkstra_shortest_paths(boost_graph_, s, predecessor_map(p).distance_map(d));
+    dijkstra_shortest_paths( boost_graph_, s, boost::weight_map(weightmap).predecessor_map(&p[0]).distance_map(&d[0]) );
 
     std::cout << "distances and parents:" << std::endl;
     boost::graph_traits<BGL_Graph>::vertex_iterator vi, vend;
     for (boost::tie(vi, vend) = vertices(boost_graph_); vi != vend; ++vi) {
-        //std::cout << "distance(" << name[*vi] << ") = " << d[*vi] << ", ";
-        //std::cout << "parent(" << name[*vi] << ") = " << name[p[*vi]] << std::endl;
+        std::cout << "distance(" << *vi << ") = " << d[*vi] << ", ";
+        std::cout << "parent(" << *vi << ") = " << p[*vi] << std::endl;
     }
     std::cout << std::endl;
 
-    std::ofstream dot_file("figs/dijkstra-eg.dot");
+    std::ofstream dot_file("dijkstra-eg.dot");
     dot_file << "digraph D {\n"
              << "  rankdir=LR\n"
              << "  size=\"4,3\"\n"
@@ -1976,11 +2015,11 @@ API::Trajectory* Graph::extractDijkstraShortestPathsTraj( confPtr_t qi, confPtr_
              << "  edge[style=\"bold\"]\n" << "  node[shape=\"circle\"]\n";
 
     boost::graph_traits<BGL_Graph>::edge_iterator ei, ei_end;
-    for (boost::tie(ei, ei_end) = edges(boost_graph_); ei != ei_end; ++ei) {
+    for (boost::tie(ei, ei_end) = edges(boost_graph_); ei != ei_end; ++ei)
+    {
         boost::graph_traits<BGL_Graph>::edge_descriptor e = *ei;
-        boost::graph_traits<BGL_Graph>::vertex_descriptor
-                u = source(e, boost_graph_), v = target(e, boost_graph_);
-        //dot_file << name[u] << " -> " << name[v] << "[label=\"" << get(weightmap, e) << "\"";
+        boost::graph_traits<BGL_Graph>::vertex_descriptor u = source(e, boost_graph_), v = target(e, boost_graph_);
+        dot_file << u << " -> " << v << "[label=\"" << get( weightmap, e ) << "\"";
         if (p[v] == u)
             dot_file << ", color=\"black\"";
         else
@@ -2006,11 +2045,15 @@ public:
 
     CostType operator()(Vertex u)
     {
-        confPtr_t q1 = m_location[m_goal]->getConfiguration();
-        confPtr_t q2 = m_location[u]->getConfiguration();
-        //    return q1->dist(*q2);
-        //    return 0.0;
-        return 0.001;
+        if( ENV.getBool(Env::isCostSpace))
+        {
+            return 0.0;
+        }
+        else{
+            confPtr_t q1 = m_location[m_goal]->getConfiguration();
+            confPtr_t q2 = m_location[u]->getConfiguration();
+            return q1->dist(*q2);
+        }
     }
 private:
     LocMap m_location;
@@ -2059,12 +2102,20 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( Node* node_init, Node* 
 
     BGL_EdgeDataMapT EdgeData = boost::get(EdgeData_t(), boost_graph_);
     boost::property_map<BGL_Graph, boost::edge_weight_t>::type weightmap = boost::get(boost::edge_weight, boost_graph_);
+
+    // int i=0;
     BOOST_FOREACH(BGL_Edge e, boost::edges(boost_graph_)) {
         if( use_cost )
             weightmap[e] = EdgeData[e]->cost();
         else
             weightmap[e] = EPS6;
-        // cout << "weightmap[e] : " << weightmap[e] << endl;
+
+        if ( weightmap[e] == 0.0 )
+        {
+            cout << "weightmap" << e << " == 0.0" << endl;
+        }
+        // cout << "weightmap[" << i++ << "] : " << weightmap[e] << endl;
+        // cout << "length[" << i++ << "] : " << EdgeData[e]->length() << endl;
     }
 
     typedef double cost;
@@ -2082,18 +2133,15 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( Node* node_init, Node* 
     catch( found_goal fg)
     {
         std::list<BGL_Vertex> shortest_path;
-        for (BGL_Vertex v = goal;; v = p[v]) {
+        for( BGL_Vertex v = goal;; v = p[v] ) {
             shortest_path.push_front(v);
             if (p[v] == v)
                 break;
         }
 
-        for (std::list<BGL_Vertex>::iterator spi = shortest_path.begin(); spi != shortest_path.end(); ++spi)
+        for( std::list<BGL_Vertex>::iterator spi = shortest_path.begin(); spi != shortest_path.end(); ++spi)
             nodes.push_back(NodeData[*spi]);
     }
-    //  astar_search( boost_graph_, start,
-    //                distance_heuristic<BGL_Graph, double, BGL_VertexDataMapT> (NodeData, goal),
-    //                boost::predecessor_map(&p[0]));
 
     return nodes;
 }
@@ -2125,19 +2173,12 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( confPtr_t qi, confPtr_t
     return extractAStarShortestNodePaths( node_init, node_goal );
 }
 
-// Searches for the shortest path 
-// bewteen the configuration qi and qf which has to be in the same connected component
-API::Trajectory* Graph::extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf )
-{
-    std::vector<Node*> nodes = extractAStarShortestNodePaths( qi, qf );
-    return trajectoryFromNodeVector( nodes );
-}
-
 //! This function works for tree type of graphs
 API::Trajectory* Graph::extractBestAStarPathSoFar( confPtr_t qi, confPtr_t qf )
 {
     // Start needs to be in the graph
-//    Node* source = searchConf(*qi);
+    // TODO decide which one to use
+    //    Node* source = searchConf(*qi);
     Node* source = nearestNeighbour(qi);
     if( source == NULL ) {
         cout << "qi not in graph in " << __func__ << endl;
@@ -2159,6 +2200,14 @@ API::Trajectory* Graph::extractBestAStarPathSoFar( confPtr_t qi, confPtr_t qf )
     return trajectoryFromNodeVector( nodes );
 }
 
+// Searches for the shortest path 
+// bewteen the configuration qi and qf which has to be in the same connected component
+API::Trajectory* Graph::extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf )
+{
+    std::vector<Node*> nodes = extractAStarShortestNodePaths( qi, qf );
+    return trajectoryFromNodeVector( nodes );
+}
+
 API::Trajectory* Graph::trajectoryFromNodeVector( const std::vector<Node*>& nodes )
 {
     if( nodes.size() < 2 ) {
@@ -2166,18 +2215,28 @@ API::Trajectory* Graph::trajectoryFromNodeVector( const std::vector<Node*>& node
         return NULL;
     }
 
+    cout << "Trajectory has " << nodes.size() << " nodes" << endl;
+
     // Build the trajectory
     API::Trajectory* traj = new API::Trajectory( robot_ );
 
-    for(int i=1; i<int(nodes.size()); i++)
+    for(int i=0; i<int(nodes.size()-1); i++)
     {
-        Edge* edge = isEdgeInGraph( nodes[i-1], nodes[i] );
+        Edge* edge = isEdgeInGraph( nodes[i], nodes[i+1] );
 
         if( edge == NULL ) {
             cout << "Edge is not in graph in " << __func__ << endl;
             return NULL;
         }
-        traj->push_back( edge->getLocalPath() );
+
+        traj->push_back( nodes[i]->getConfiguration() );
+
+        // Last configuration
+        if( i+1 == int(nodes.size()-1) )
+            traj->push_back( nodes[i+1]->getConfiguration() );
+
+        // Warning does not work with local path and undirected graphs
+        // traj->push_back( edge->getLocalPath() );
     }
 
     traj->replaceP3dTraj();
@@ -2270,7 +2329,7 @@ API::Trajectory* Graph::extractBestTraj( confPtr_t qi, confPtr_t qf )
                 return NULL;
     }
 
-    if(qf->isInCollision())
+    if( qf->isInCollision() )
     {
         (graph_->nb_test_coll)++;
         cout << "Computation of approximated optimal cost stopped: \

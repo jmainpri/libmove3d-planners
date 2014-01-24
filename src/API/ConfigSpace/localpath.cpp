@@ -537,6 +537,7 @@ double LocalPath::cost()
     {
         _Cost = global_costSpace->cost( *this, _NbCostTest );
         _costEvaluated = true;
+        // cout << "local path cost : " << _Cost << endl;
     }
 
     return _Cost;

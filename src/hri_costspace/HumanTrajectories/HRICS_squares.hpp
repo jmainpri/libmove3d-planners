@@ -35,6 +35,8 @@ public:
     FeatureVect getFeatures(const Configuration& q );
     FeatureVect getFeatureCount(const API::Trajectory& t);
 
+    double jacobianMagnitude( const Configuration& q );
+
     double distToSquare(  const Square& square, const Configuration& q  );
     bool isInAASquare( const std::vector<Eigen::Vector2d>& corners, Eigen::Vector2d p );
     double pointToLineSegmentDistance(const Eigen::Vector2d& p, const Eigen::Vector2d& p1, const Eigen::Vector2d& p2, Eigen::Vector2d& closestPoint);

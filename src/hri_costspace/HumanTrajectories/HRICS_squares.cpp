@@ -38,6 +38,7 @@ void HRICS_init_square_cost()
         std::string cost_function("costSquares");
         cout << "add cost functions : " << cost_function << endl;
         global_costSpace->addCost( cost_function, boost::bind( &Squares::cost, global_SquareCostFct, _1) );
+        global_costSpace->addCost( "costSquaresJacobian", boost::bind( &Squares::jacobianMagnitude, global_SquareCostFct, _1) );
         global_costSpace->setCost( cost_function );
     }
     else{
@@ -117,6 +118,8 @@ void Squares::initialize()
     double max = w_.maxCoeff();
     w_ /= max;
 
+    cout << "w_ : " << w_.transpose() << endl;
+
     std::vector<int> active_dofs;
     active_dofs.push_back( 6 );
     active_dofs.push_back( 7 );
@@ -160,6 +163,18 @@ FeatureVect Squares::getFeatures( const Configuration& q )
 //    cout << "features.norm() : " << features.norm() << endl;
 
     return features;
+}
+
+double Squares::jacobianMagnitude( const Configuration& q )
+{
+    FeatureJacobian J = getFeaturesJacobian( q );
+    double magnitude = ( std::abs(J.maxCoeff()) + std::abs(J.minCoeff()) ) / 2;
+
+    magnitude = 1 / magnitude;
+    // cout << J << endl;
+    // cout << magnitude << endl;
+    // Maybe average the min and max coefficient
+    return magnitude;
 }
 
 void Squares::computeSize()

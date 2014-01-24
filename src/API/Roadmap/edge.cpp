@@ -101,10 +101,10 @@ Edge::Edge(Graph* G, Node* N1, Node* N2, bool compute_length, double& length, bo
     }
 
     // Compute the cost from the associated localpath
-    if( compute_cost ){
-        m_Edge->cost = getLocalPath()->cost();
-        cost = m_Edge->cost;
-    }
+    if( compute_cost )
+        cost = getLocalPath()->cost();
+
+    // cout << "edge cost : " << cost << endl;
     
     m_Edge->cost = cost;
 
@@ -141,7 +141,7 @@ Robot* Edge::getRobot()
     return m_Robot;
 }
 
-double Edge::longueur()
+double Edge::length()
 {
     return m_Long;
 }
@@ -158,7 +158,7 @@ Node* Edge::getTarget()
 
 double Edge::cost()
 {
-    if( !m_is_cost_computed )
+//    if( !m_is_cost_computed )
         m_Edge->cost = getLocalPath()->cost();
 
     //  if( m_Edge->cost == 0.0 ) {

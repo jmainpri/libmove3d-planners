@@ -138,10 +138,10 @@ double CostSpace::cost(Configuration& conf)
     {
         double cost = mSelectedCost(conf);
 
-        //        if( !conf.equal( *q_tmp ) )
-        //        {
-        //            cout << "Cost function modifies the config" << endl;
-        //        }
+//        if( !conf.equal( *q_tmp ) )
+//        {
+//            cout << "Cost function modifies the config" << endl;
+//        }
         return cost;
     }
     else

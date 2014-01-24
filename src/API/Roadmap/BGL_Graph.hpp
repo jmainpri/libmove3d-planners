@@ -36,10 +36,13 @@ typedef boost::adjacency_list_traits<boost::listS, boost::vecS, boost::bidirecti
 //typedef VertexProperty;
 //typedef EdgeProperty;
 
+// bidirectionalS
+// undirectedS
+
 typedef boost::adjacency_list<
 boost::listS,          //  The container used for egdes : here, std::list.
 boost::vecS,           //  The container used for vertices: here, std::vector.
-boost::bidirectionalS, //  directed or undirected edges ?.
+boost::undirectedS, //  directed or undirected edges ?.
 
 boost::property<NodeData_t, Node*, 
 boost::property<boost::vertex_distance_t, int,

@@ -275,8 +275,16 @@ void StarExpansion::rewireGraph(Node* new_node, Node* min_node, const vector<Nod
 
         if ( neigh_sum_cost > (new_sum_cost+path_cost) )
         {
-            m_Graph->removeEdges( neigh_nodes[i], neigh_nodes[i]->parent() );
-            m_Graph->addEdges( neigh_nodes[i], new_node, false, path.getParamMax(), false, path.cost() );
+            if ( PlanEnv->getBool(PlanParam::orientedGraph) )
+            {
+                m_Graph->removeEdges( neigh_nodes[i], neigh_nodes[i]->parent() );
+                m_Graph->addEdges( neigh_nodes[i], new_node, false, path.getParamMax(), false, path.cost() );
+            }
+            else
+            {
+                m_Graph->removeEdge( neigh_nodes[i], neigh_nodes[i]->parent() );
+                m_Graph->addEdge( neigh_nodes[i], new_node, false, path.getParamMax(), false, path.cost() );
+            }
 
             neigh_nodes[i]->parent() = new_node;
             new_node->isLeaf() = false;
@@ -390,8 +398,13 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
 
         // Add node_new to the graph, and add the edge n_min -> n_new
         m_last_added_node = node_new;
+
         m_Graph->addNode( node_new );
-        m_Graph->addEdges( node_min, node_new, false, min_path_dist, false, min_path_cost );
+
+        if ( PlanEnv->getBool(PlanParam::orientedGraph) )
+            m_Graph->addEdges( node_min, node_new, false, min_path_dist, false, min_path_cost );
+        else
+            m_Graph->addEdge( node_min, node_new, false, min_path_dist, false, min_path_cost );
 
         // Merge compco with minNode and set as parent
         node_new->merge( node_min );
@@ -591,6 +604,7 @@ void StarRRT::saveConvergenceToFile()
 
 void StarRRT::extractTrajectory()
 {
+//    API::Trajectory* traj = _Graph->extractBestAStarPathSoFar( _q_start, _q_goal );
     API::Trajectory* traj = _Graph->extractAStarShortestPathsTraj( _q_start, _q_goal );
 
     if( traj )

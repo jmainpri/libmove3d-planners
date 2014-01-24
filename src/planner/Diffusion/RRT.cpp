@@ -149,6 +149,8 @@ int RRT::expandOneStep(Node* fromComp, Node* toComp)
         m_last_node = _expan->getLasAddedNode();
     }
 
+    _Graph->saveBGLGraphToDotFile("bgl_graph.dot");
+
     return nbNodeCreated;
     //	}
 }
