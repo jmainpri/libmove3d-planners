@@ -121,7 +121,7 @@ private:
     Eigen::VectorXd tmp_rollout_cost_;
 
     bool readParameters();
-  
+
     // added by jim
     bool readParametersSingleRollout();
     void resampleParameters();

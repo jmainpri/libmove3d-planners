@@ -50,9 +50,22 @@ StompParameters::StompParameters()
 StompParameters::~StompParameters()
 {
 }
+
+double StompParameters::getSmoothnessCostWeight() const
+{
+    return PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight);
+//  return smoothness_cost_weight_;
+}
+
+double StompParameters::getObstacleCostWeight() const
+{
+    return PlanEnv->getDouble(PlanParam::trajOptimObstacWeight);
+//  return obstacle_cost_weight_;
+}
   
 void StompParameters::init()
 {
+  max_time_ = 10;
   max_iterations_ = 10;
   //max_iterations_after_collision_free_ = 100;
   max_iterations_after_collision_free_ = 100;
@@ -62,6 +75,7 @@ void StompParameters::init()
 //  smoothness_cost_weight_ = 0.05;
 //  obstacle_cost_weight_ = 1.0;
 
+  // Not used anymore
   smoothness_cost_weight_ = PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight);
   obstacle_cost_weight_ =   PlanEnv->getDouble(PlanParam::trajOptimObstacWeight);
   

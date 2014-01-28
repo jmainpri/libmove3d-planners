@@ -31,6 +31,7 @@
 
 #include "P3d-pkg.h"
 #include "Graphic-pkg.h"
+#include "GroundHeight-pkg.h"
 
 #ifdef P3D_COLLISION_CHECKING
 #include "Collision-pkg.h"
@@ -56,8 +57,11 @@ double cost_max = 30.0;
 extern Eigen::Vector3d current_WSPoint;
 extern pair<double, Eigen::Vector3d > current_cost;
 extern std::string hri_text_to_display;
-extern std::vector<Eigen::Vector3d> OTPList;
-extern std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > path_to_draw;
+extern std::vector< Eigen::Vector3d > OTPList;
+extern std::vector< Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> > path_to_draw;
+extern double ZminEnv;
+extern double ZmaxEnv;
+extern void* GroundCostObj;
 
 void drawGauge(int number, double cost);
 
@@ -128,7 +132,9 @@ void g3d_draw_eigen_box(	const Eigen::Vector3d& v1, const Eigen::Vector3d& v2, c
 
 void g3d_draw_multistomp_lines()
 {
-    std::map<Robot*, std::vector<Eigen::Vector3d> >::const_iterator itr;
+    std::map< Robot*, std::vector<Eigen::Vector3d> >::const_iterator itr;
+    std::map< Robot*, std::vector<Eigen::Vector3d> >::const_iterator itr_next;
+    std::map< Robot*, std::vector<Eigen::Vector3d> >::const_iterator itr_end;
     //    cout << "draw multiple stomp lines" << endl;
 
     for(itr = global_MultiStomplinesToDraw.begin(); itr != global_MultiStomplinesToDraw.end(); ++itr)
@@ -150,22 +156,37 @@ void g3d_draw_multistomp_lines()
             color[3] = 1.0;
         }
 
-        for( int i=0; i<int(itr->second.size()); i++)
+        itr_next = itr;
+        itr_next++;
+
+        if( itr_next != global_MultiStomplinesToDraw.end() )
         {
-            Eigen::Vector3d pos = itr->second[i];
+            itr_end = itr_next;
+            itr_end++;
 
             g3d_set_color(Any,color);
-            //g3d_drawSphere(m_lastLine[i+0][0],m_lastLine[i+0][1],m_lastLine[i+0][2],0.01);
-            g3d_draw_solid_sphere(pos[0],pos[1],pos[2],0.02,10);
 
-            //g3d_drawOneLine(m_lastLine[i+0][0],m_lastLine[i+0][1],m_lastLine[i+0][2],
-            //                m_lastLine[i+1][0],m_lastLine[i+1][1],m_lastLine[i+1][2],Any,color);
+            for( int i=0; i<int(itr->second.size()); i++)
+            {
+                Eigen::Vector3d pi = itr->second[i];
+                Eigen::Vector3d pf = itr_next->second[i];
 
-            //            if( i == int(m_lastLine.size()-2))
-            //            {
-            //                //g3d_drawSphere(m_lastLine[i+1][0],m_lastLine[i+1][1],m_lastLine[i+1][2],0.01);
-            //                g3d_draw_solid_sphere(m_lastLine[i+1][0],m_lastLine[i+1][1],m_lastLine[i+1][2],0.01,10);
-            //            }
+                if( (!ENV.getBool(Env::isCostSpace)) || (GroundCostObj == NULL) )
+                {
+                    g3d_draw_solid_sphere( pi[0], pi[1], pi[2], 0.02, 10 );
+                    g3d_drawOneLine( pi[0], pi[1], pi[2], pf[0], pf[1], pf[2], Any, color );
+                }
+                else {
+                    double Cost1; GHintersectionVerticalLineWithGround(GroundCostObj, pi[0], pi[1], &Cost1);
+                    double Cost2; GHintersectionVerticalLineWithGround(GroundCostObj, pf[0], pf[1], &Cost2);
+                    glLineWidth(3.);
+                    g3d_drawOneLine(pi[0], pi[1], Cost1 + (ZmaxEnv - ZminEnv)*0.02, pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv)*0.02, Red, NULL);
+                    glLineWidth(3.);
+
+                    if( itr_end == global_MultiStomplinesToDraw.end() )
+                        g3d_drawSphere(pf[0],pf[1], Cost2 + (ZmaxEnv - ZminEnv)*0.02, 1.);
+                }
+            }
         }
     }
 }

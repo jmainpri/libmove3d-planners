@@ -1193,7 +1193,7 @@ bool traj_optim_set_scenario_type()
 
     if( m_planning_type == DEFAULT )
     {
-        if( ENV.getBool(Env::isCostSpace) && global_costSpace->getSelectedCostName() == "costMap2D")
+        if( ENV.getBool(Env::isCostSpace) && global_costSpace->getSelectedCostName() == "costMap2D" )
         {
             m_sce = traj_optim::CostMap;
         }
@@ -1440,7 +1440,8 @@ bool traj_optim_initStomp()
 
     if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
     {
-        global_optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
+        global_optimizer->setUseTimeLimit( true );
+        m_stompparams->max_time_ = PlanEnv->getDouble(PlanParam::trajStompTimeLimit);
     }
 
     if( (m_sce == traj_optim::HumanAwareManip && m_robot->getName() == "PR2_ROBOT") ||
@@ -1483,7 +1484,7 @@ bool traj_optim_runStomp( int runId )
     if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
     {
         global_optimizer->setUseTimeLimit( true );
-        global_optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
+        m_stompparams->max_time_ = PlanEnv->getDouble(PlanParam::trajStompTimeLimit);
     }
     else {
         global_optimizer->setUseTimeLimit( false );
@@ -1509,7 +1510,7 @@ bool traj_optim_runStompNoInit( int runId, const API::Trajectory& traj )
     if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
     {
         global_optimizer->setUseTimeLimit( true );
-        global_optimizer->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
+        m_stompparams->max_time_ = PlanEnv->getDouble(PlanParam::trajStompTimeLimit);
     }
     else {
         global_optimizer->setUseTimeLimit( false );

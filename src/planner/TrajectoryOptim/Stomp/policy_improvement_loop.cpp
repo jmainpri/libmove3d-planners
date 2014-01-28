@@ -132,11 +132,13 @@ namespace stomp_motion_planner
         num_rollouts_ = 10;
         num_reused_rollouts_ = 5;
 
-        noise_stddev_.clear();
-        noise_decay_.clear();
 
-        noise_stddev_.resize(num_dimensions_,PlanEnv->getDouble(PlanParam::trajOptimStdDev));
+        noise_decay_.clear();
         noise_decay_.resize(num_dimensions_,.99);
+
+        // noise is now recomputed dynamicaly
+        noise_stddev_.clear();
+        noise_stddev_.resize(num_dimensions_,PlanEnv->getDouble(PlanParam::trajOptimStdDev));
 
         write_to_file_ = false; // defaults are sometimes good!
         use_cumulative_costs_ =  false;
@@ -158,13 +160,13 @@ namespace stomp_motion_planner
         num_reused_rollouts_ = 5;
         //num_time_steps_ = 51;
 
-        noise_stddev_.clear();
-        noise_decay_.clear();
 
-        //noise_stddev_.resize(num_dimensions_,2.);
-        //PlanEnv->setDouble(PlanParam::trajOptimStdDev,0.008);
-        noise_stddev_.resize(num_dimensions_,PlanEnv->getDouble(PlanParam::trajOptimStdDev));
+        noise_decay_.clear();
         noise_decay_.resize(num_dimensions_,.99);
+
+        // noise is now recomputed dynamicaly
+        noise_stddev_.clear();
+        noise_stddev_.resize( num_dimensions_, PlanEnv->getDouble(PlanParam::trajOptimStdDev) );
 
         // noise_stddev
         // noise_decay
@@ -327,7 +329,8 @@ namespace stomp_motion_planner
         noise.resize(num_dimensions_);
         for (int i=0; i<num_dimensions_; ++i)
         {
-            noise[i] = noise_stddev_[i] /* K_ * pow(noise_decay_[i], iteration_number-1)*/;
+            // noise[i] = noise_stddev_[i] /* K_ * pow(noise_decay_[i], iteration_number-1)*/;
+            noise[i] = PlanEnv->getDouble(PlanParam::trajOptimStdDev);
             //cout << "noise_stddev_[" << i << "] = " << noise_stddev_[i] << endl;
             //cout << "noise_stddev = " << noise[i] << endl;
         }

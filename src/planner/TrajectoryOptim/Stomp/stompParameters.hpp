@@ -77,6 +77,7 @@ public:
   std::string getAnimateEndeffectorSegment() const;
   bool getUseChomp() const;
 
+  double max_time_;
   int max_iterations_;
 
 private:
@@ -115,16 +116,6 @@ inline int StompParameters::getMaxIterationsAfterCollisionFree() const
 inline int StompParameters::getMaxBestIterations() const
 {
   return max_best_iterations_;
-}
-
-inline double StompParameters::getSmoothnessCostWeight() const
-{
-  return smoothness_cost_weight_;
-}
-
-inline double StompParameters::getObstacleCostWeight() const
-{
-  return obstacle_cost_weight_;
 }
 
 inline double StompParameters::getConstraintCostWeight() const

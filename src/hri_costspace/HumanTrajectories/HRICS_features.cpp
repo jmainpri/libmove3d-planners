@@ -64,6 +64,12 @@ FeatureJacobian Feature::getFeaturesJacobian(const Configuration& q_0)
     return J;
 }
 
+double Feature::getFeaturesJacobianMagnitude(const Configuration& q)
+{
+    FeatureJacobian J = getFeaturesJacobian(q);
+    return J.norm();
+}
+
 void Feature::setActiveDofs( const std::vector<int>& active_dofs )
 {
     active_dofs_ = active_dofs;

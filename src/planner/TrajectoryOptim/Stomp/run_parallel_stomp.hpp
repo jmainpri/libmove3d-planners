@@ -40,6 +40,8 @@ private:
 
     bool                                    m_use_iteration_limit;
     int                                     m_max_iterations;
+    bool                                    m_use_time_limit;
+    int                                     m_max_time;
     bool                                    m_use_costspace;
     int                                     m_runid;
     std::vector<double>                     m_color;

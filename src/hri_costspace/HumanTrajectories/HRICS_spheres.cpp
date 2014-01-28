@@ -34,7 +34,7 @@ void HRICS_init_sphere_cost()
         std::string cost_function("costSpheres");
         cout << "add cost functions : " << cost_function << endl;
         global_costSpace->addCost( cost_function, boost::bind( &Spheres::cost, global_SphereCostFct, _1) );
-        global_costSpace->setCost( cost_function );
+        // global_costSpace->setCost( cost_function );
     }
     else{
         delete global_SphereCostFct;

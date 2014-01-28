@@ -31,6 +31,8 @@ stompContext::stompContext(Robot* robot, const CollisionSpace* coll_space,  cons
     m_use_costspace = ENV.getBool( Env::isCostSpace );
     m_use_iteration_limit = PlanEnv->getBool( PlanParam::trajStompWithIterLimit );
     m_max_iterations = PlanEnv->getInt( PlanParam::stompMaxIteration );
+    m_use_time_limit = PlanEnv->getBool( PlanParam::trajStompWithTimeLimit );
+    m_max_time = PlanEnv->getDouble( PlanParam::trajStompTimeLimit );
     m_nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
 }
 
@@ -93,10 +95,6 @@ bool stompContext::initRun( API::Trajectory& T )
     m_stomp->setSharedPtr( m_stomp );
     m_stomp->setTrajColor( m_color );
 
-    if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
-    {
-        m_stomp->setTimeLimit( PlanEnv->getDouble(PlanParam::trajStompTimeLimit));
-    }
 
     //    if( m_sce == traj_optim::HumanAwareManip && m_robot->getName() == "PR2_ROBOT")
     //    {
@@ -117,6 +115,12 @@ void stompContext::run()
     {
         m_stomp->setUseIterationLimit( true );
         m_stompparams->max_iterations_ = m_max_iterations;
+    }
+
+    if( m_use_time_limit )
+    {
+        m_stomp->setUseTimeLimit( true );
+        m_stompparams->max_time_ = m_max_time;
     }
 
     m_stomp->runDeformation( 0, ++m_runid );

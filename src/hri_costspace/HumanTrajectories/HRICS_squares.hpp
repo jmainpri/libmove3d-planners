@@ -34,8 +34,9 @@ public:
 
     FeatureVect getFeatures(const Configuration& q );
     FeatureVect getFeatureCount(const API::Trajectory& t);
+    double getFeaturesJacobianMagnitude(const Configuration& q);
 
-    double jacobianMagnitude( const Configuration& q );
+    double jacobianCost(const Configuration& q);
 
     double distToSquare(  const Square& square, const Configuration& q  );
     bool isInAASquare( const std::vector<Eigen::Vector2d>& corners, Eigen::Vector2d p );

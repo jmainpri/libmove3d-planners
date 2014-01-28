@@ -114,12 +114,6 @@ public:
     void setUseTimeLimit(bool use_limit) { use_time_limit_ = use_limit; }
 
     /**
-   * Set the maximal time for optimization in second
-   * @param Time in second
-   */
-    void setTimeLimit(double time) { time_limit_ = time; }
-
-    /**
       * set the robots for parallel
       */
     void setRobotPool( const std::vector<Robot*>& robots );

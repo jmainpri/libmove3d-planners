@@ -33,13 +33,11 @@ void HRICS_init_square_cost()
 
     if( global_SquareCostFct->getNumberOfFeatures() > 0 )
     {
+        cout << "add cost functions : " << "costSquares" << endl;
         global_PlanarCostFct = global_SquareCostFct;
-
-        std::string cost_function("costSquares");
-        cout << "add cost functions : " << cost_function << endl;
-        global_costSpace->addCost( cost_function, boost::bind( &Squares::cost, global_SquareCostFct, _1) );
-        global_costSpace->addCost( "costSquaresJacobian", boost::bind( &Squares::jacobianMagnitude, global_SquareCostFct, _1) );
-        global_costSpace->setCost( cost_function );
+        global_costSpace->addCost( "costSquares", boost::bind( &Squares::cost, global_SquareCostFct, _1) );
+        global_costSpace->addCost( "costSquaresJacobian", boost::bind( &Squares::jacobianCost, global_SquareCostFct, _1) );
+        // global_costSpace->setCost( "costSquares" );
     }
     else{
         delete global_SquareCostFct;
@@ -165,16 +163,21 @@ FeatureVect Squares::getFeatures( const Configuration& q )
     return features;
 }
 
-double Squares::jacobianMagnitude( const Configuration& q )
+double Squares::getFeaturesJacobianMagnitude( const Configuration& q )
 {
     FeatureJacobian J = getFeaturesJacobian( q );
     double magnitude = ( std::abs(J.maxCoeff()) + std::abs(J.minCoeff()) ) / 2;
 
-    magnitude = 1 / magnitude;
+    // magnitude = 1 / magnitude;
     // cout << J << endl;
     // cout << magnitude << endl;
     // Maybe average the min and max coefficient
     return magnitude;
+}
+
+double Squares::jacobianCost(const Configuration& q)
+{
+    return 1 / Feature::getFeaturesJacobianMagnitude( q );
 }
 
 void Squares::computeSize()

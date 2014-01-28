@@ -60,7 +60,7 @@ int TestModel::nbOfVoxelCCPerSeconds()
     double val = (double) nbTested / tu;
 #ifdef QT_LIBRARY
     QString str = QString("%1 Voxel Collision per second").arg(val);
-    ENV.setString(Env::numberOfCollisionPerSec,str);
+    ENV.setString(Env::numberOfCollisionPerSec,str.toStdString());
 #endif
     return (int) val;
 }
@@ -95,7 +95,7 @@ int TestModel::nbOfColisionsPerSeconds()
     double val = (double) nbTested / tu;
 #ifdef QT_LIBRARY
     QString str = QString("%1 Collision Test per second").arg(val);
-    ENV.setString(Env::numberOfCollisionPerSec,str);
+    ENV.setString(Env::numberOfCollisionPerSec,str.toStdString());
 #endif
     return (int) val;
 }
@@ -129,7 +129,7 @@ int TestModel::nbOfCostPerSeconds()
     double val = (double) nbCost / tu;
 #ifdef QT_LIBRARY
     QString str = QString("%1 Cost per second").arg(val);
-    ENV.setString(Env::numberOfCostPerSec,str);
+    ENV.setString(Env::numberOfCostPerSec,str.toStdString());
 #endif
     return (int) val;
 }
@@ -235,7 +235,7 @@ int TestModel::nbOfLocalPathsPerSeconds()
     double val = (double) nbLPtot / tu;
 #ifdef QT_LIBRARY
     QString str = QString("%1 LocalPaths per second").arg(val);
-    ENV.setString(Env::numberOfLocalPathPerSec,str);
+    ENV.setString(Env::numberOfLocalPathPerSec,str.toStdString());
 #endif
     return (int) val;
 }
@@ -261,9 +261,9 @@ void TestModel::runAllTests()
 
 #ifdef QT_LIBRARY
     QString str1 = QString("%1 Collisions per second").arg(colPerSec);
-    ENV.setString(Env::numberOfCollisionPerSec,str1);
+    ENV.setString(Env::numberOfCollisionPerSec,str1.toStdString());
     QString str2 = QString("%1 LocalPaths per second").arg(lpPerSec);
-    ENV.setString(Env::numberOfLocalPathPerSec,str2);
+    ENV.setString(Env::numberOfLocalPathPerSec,str2.toStdString());
 #endif
 
     if(ENV.getBool(Env::isCostSpace))
@@ -271,7 +271,7 @@ void TestModel::runAllTests()
         cout << costPerSec << " Cost computation per second " << endl;
 #ifdef QT_LIBRARY
         QString str3 = QString("%1 Cost per second").arg(costPerSec);
-        ENV.setString(Env::numberOfCostPerSec,str3);
+        ENV.setString(Env::numberOfCostPerSec,str3.toStdString());
 #endif
     }
 

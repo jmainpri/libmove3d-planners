@@ -469,6 +469,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
     
     // Set this variable to false to cancel printing
     const bool print_cost=true;
+    cout << "use_time_limit_ : " << use_time_limit_ << endl;
 
     int ith_save = 1;
     
@@ -683,7 +684,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
 
         if( use_time_limit_ )
         {
-            if( time_ >= time_limit_ )
+            if( time_ >= stomp_parameters_->max_time_ )
             {
                 cout << "Stopped at time limit (" << time_ << ")" << endl;
                 break;
@@ -1158,8 +1159,8 @@ bool StompOptimizer::handleJointLimits()
             int max_violation_index = 0;
             violation = false;
             count_violation = false;
-//            bool violate_max = false;
-//            bool violate_min = false;
+            //            bool violate_max = false;
+            //            bool violate_min = false;
             double violate_max_with = 0;
             double violate_min_with = 0;
 
@@ -1171,7 +1172,7 @@ bool StompOptimizer::handleJointLimits()
                 {
                     amount = joint_max - group_trajectory_(i, joint);
                     absolute_amount = fabs(amount);
-//                    violate_max = true;
+                    //                    violate_max = true;
                     if( absolute_amount > violate_max_with )
                     {
                         violate_max_with = absolute_amount;
@@ -1181,7 +1182,7 @@ bool StompOptimizer::handleJointLimits()
                 {
                     amount = joint_min - group_trajectory_(i, joint);
                     absolute_amount = fabs(amount);
-//                    violate_min = true;
+                    //                    violate_min = true;
                     if( absolute_amount > violate_min_with )
                     {
                         violate_min_with = absolute_amount;
@@ -1216,17 +1217,17 @@ bool StompOptimizer::handleJointLimits()
                 double multiplier = max_violation / joint_costs_[joint].getQuadraticCostInverse()(free_var_index,free_var_index);
 
                 group_trajectory_.getFreeJointTrajectoryBlock(joint) += multiplier * joint_costs_[joint].getQuadraticCostInverse().col(free_var_index);
-//                double offset = ( joint_max + joint_min )  / 2 ;
+                //                double offset = ( joint_max + joint_min )  / 2 ;
 
-//                cout << "multiplier : " << multiplier << endl;
-//                cout << "joint limit max : " << joint_max << endl;
-//                cout << "joint limit min : " << joint_min << endl;
-//                cout << "offset : " << offset << endl;
-//                cout << group_trajectory_.getFreeJointTrajectoryBlock(joint).transpose() << endl;
+                //                cout << "multiplier : " << multiplier << endl;
+                //                cout << "joint limit max : " << joint_max << endl;
+                //                cout << "joint limit min : " << joint_min << endl;
+                //                cout << "offset : " << offset << endl;
+                //                cout << group_trajectory_.getFreeJointTrajectoryBlock(joint).transpose() << endl;
 
-//                group_trajectory_.getFreeJointTrajectoryBlock(joint) = ( group_trajectory_.getFreeJointTrajectoryBlock(joint).array() - offset )*multiplier + ( offset );
+                //                group_trajectory_.getFreeJointTrajectoryBlock(joint) = ( group_trajectory_.getFreeJointTrajectoryBlock(joint).array() - offset )*multiplier + ( offset );
 
-//                cout << group_trajectory_.getFreeJointTrajectoryBlock(joint).transpose() << endl;
+                //                cout << group_trajectory_.getFreeJointTrajectoryBlock(joint).transpose() << endl;
             }
             if ( ++count > 10 )
             {
@@ -1245,7 +1246,7 @@ bool StompOptimizer::handleJointLimits()
 
     //    cout << "succes_joint_limits : " << succes_joint_limits << endl;
 
-//    exit(1);
+    //    exit(1);
 
     return succes_joint_limits;
 }
@@ -1345,12 +1346,12 @@ bool StompOptimizer::getConfigObstacleCost( int segment, int coll_point )
                                                                           collision_point_potential_(i,j),
                                                                           collision_point_potential_gradient_[i][j] );
 
-//        cout << "distance( " << i << ", " << j << " ) : " << distance << endl;
+        //        cout << "distance( " << i << ", " << j << " ) : " << distance << endl;
         //cout << "collision_point_potential_(" << i << ", " << j << " ) : " << collision_point_potential_(i,j) << endl;
-//        if( collision_point_potential_(i,j) != 0.0 )
-//        {
-//            cout << "collision_point_potential_(" << i << ", " << j << " ) : " << collision_point_potential_(i,j) << endl;
-//        }
+        //        if( collision_point_potential_(i,j) != 0.0 )
+        //        {
+        //            cout << "collision_point_potential_(" << i << ", " << j << " ) : " << collision_point_potential_(i,j) << endl;
+        //        }
     }
 
     return colliding;
@@ -1505,12 +1506,12 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     succeded_joint_limits_ = handleJointLimits();
 
     // Fix joint limits
-//    if( !succeded_joint_limits_ )
-//    {
-//        for (int d=0; d<num_joints_; ++d) {
-//            group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
-//        }
-//    }
+    //    if( !succeded_joint_limits_ )
+    //    {
+    //        for (int d=0; d<num_joints_; ++d) {
+    //            group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
+    //        }
+    //    }
     //cout << "Violation number : " << joint_limits_violation_ << endl;
     //succeded_joint_limits_ = true;
 
@@ -1840,6 +1841,8 @@ void StompOptimizer::saveEndeffectorTraj()
         drawnjnt = robot_model_->getRobotStruct()->joints[indexjnt];
     }
 
+    traj_color_.resize(4,0);
+
     global_MultiStomplinesColors[robot_model_] = traj_color_;
     global_MultiStomplinesToDraw[robot_model_].clear();
 
@@ -2096,15 +2099,15 @@ bool StompOptimizer::replaceEndWithNewConfiguration()
 void StompOptimizer::draw()
 {
     // Draws two points in the trajectory
-//    int middle = (free_vars_start_+free_vars_end_)/2;
+    //    int middle = (free_vars_start_+free_vars_end_)/2;
     
-//    int start = middle - 3;
-//    int end = middle + 3;
+    //    int start = middle - 3;
+    //    int end = middle + 3;
     
-//    planning_group_->draw(segment_frames_[start]);
-//    planning_group_->draw(segment_frames_[end]);
+    //    planning_group_->draw(segment_frames_[start]);
+    //    planning_group_->draw(segment_frames_[end]);
 
-//    planning_group_->draw();
+    //    planning_group_->draw();
 
     if( collision_space_ )
     {

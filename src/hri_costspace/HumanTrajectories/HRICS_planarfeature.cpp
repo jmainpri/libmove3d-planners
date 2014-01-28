@@ -107,6 +107,8 @@ void PlanarFeature::produceDerivativeFeatureCostMap()
     Eigen::MatrixXd mat0( nb_cells, nb_cells );
     Eigen::MatrixXd mat1( nb_cells, nb_cells );
     Eigen::MatrixXd mat2( nb_cells, nb_cells );
+    Eigen::MatrixXd mat3( nb_cells, nb_cells );
+    Eigen::MatrixXd mat4( nb_cells, nb_cells );
 
     for( int i=0; i<nb_cells; i++ )
     {
@@ -122,12 +124,18 @@ void PlanarFeature::produceDerivativeFeatureCostMap()
             // mat2(i,j) = J.col(1).maxCoeff();
             mat1(i,j) = J.col(0).norm();
             mat2(i,j) = J.col(1).norm();
+
+            mat3(i,j) = Feature::getFeaturesJacobianMagnitude(*q);
+            mat4(i,j) = getFeaturesJacobianMagnitude(*q);
         }
     }
 
     move3d_save_matrix_to_file( mat0, "matlab/cost_map_feat_64.txt");
     move3d_save_matrix_to_file( mat1, "matlab/cost_map_derv_0_64.txt");
     move3d_save_matrix_to_file( mat2, "matlab/cost_map_derv_1_64.txt");
+
+    move3d_save_matrix_to_file( mat3, "matlab/cost_map_jac_mag_simple.txt");
+    move3d_save_matrix_to_file( mat4, "matlab/cost_map_jac_mag_custom.txt");
 }
 
 void PlanarFeature::placeCenterGrid(bool on_wall)

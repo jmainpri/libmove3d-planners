@@ -10,6 +10,7 @@ HRICS_HumanCostSpace.cpp
 HRICS_detours.cpp
 HRICS_planarfeature.cpp
 HRICS_squares.cpp
+HRICS_run_multiple_stomp.cpp
 )
 
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})

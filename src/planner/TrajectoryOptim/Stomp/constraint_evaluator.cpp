@@ -50,27 +50,27 @@ ConstraintEvaluator::~ConstraintEvaluator()
 OrientationConstraintEvaluator::OrientationConstraintEvaluator(const motion_planning_msgs::OrientationConstraint &oc,
                                                                const StompRobotModel& robot_model)
 {
-  frame_number_ = robot_model.getForwardKinematicsSolver()->segmentNameToIndex(oc.link_name);
-  btQuaternion q;
-  tf::quaternionMsgToTF(oc.orientation,q);
-  nominal_orientation_ = btMatrix3x3(q);
-  nominal_orientation_inverse_ = nominal_orientation_.inverse();
-  if(oc.type == oc.HEADER_FRAME)
-    body_fixed_orientation_constraint_ = false;
-  else
-    body_fixed_orientation_constraint_ = true;
-  absolute_roll_tolerance_ = oc.absolute_roll_tolerance;
-  absolute_pitch_tolerance_ = oc.absolute_pitch_tolerance;
-  absolute_yaw_tolerance_ = oc.absolute_yaw_tolerance;
-  weight_ = oc.weight;
+    frame_number_ = robot_model.getForwardKinematicsSolver()->segmentNameToIndex(oc.link_name);
+    btQuaternion q;
+    tf::quaternionMsgToTF(oc.orientation,q);
+    nominal_orientation_ = btMatrix3x3(q);
+    nominal_orientation_inverse_ = nominal_orientation_.inverse();
+    if(oc.type == oc.HEADER_FRAME)
+        body_fixed_orientation_constraint_ = false;
+    else
+        body_fixed_orientation_constraint_ = true;
+    absolute_roll_tolerance_ = oc.absolute_roll_tolerance;
+    absolute_pitch_tolerance_ = oc.absolute_pitch_tolerance;
+    absolute_yaw_tolerance_ = oc.absolute_yaw_tolerance;
+    weight_ = oc.weight;
 
-  roll_weight_ = pitch_weight_ = yaw_weight_ = 1.0;
-  if (absolute_pitch_tolerance_ >= M_PI)
-    pitch_weight_ = 0.0;
-  if (absolute_roll_tolerance_ >= M_PI)
-    roll_weight_ = 0.0;
-  if (absolute_yaw_tolerance_ >= M_PI)
-    yaw_weight_ = 0.0;
+    roll_weight_ = pitch_weight_ = yaw_weight_ = 1.0;
+    if (absolute_pitch_tolerance_ >= M_PI)
+        pitch_weight_ = 0.0;
+    if (absolute_roll_tolerance_ >= M_PI)
+        roll_weight_ = 0.0;
+    if (absolute_yaw_tolerance_ >= M_PI)
+        yaw_weight_ = 0.0;
 }
 
 OrientationConstraintEvaluator::~OrientationConstraintEvaluator()
@@ -79,38 +79,38 @@ OrientationConstraintEvaluator::~OrientationConstraintEvaluator()
 
 bool OrientationConstraintEvaluator::getCost(const std::vector<KDL::Frame>& frame, const Eigen::VectorXd& full_trajectory_joint_pos, double& cost)
 {
-  double w, x, y, z;
-  frame[frame_number_].M.GetQuaternion(x, y, z, w);
-  btMatrix3x3 orientation_matrix(btQuaternion(x, y, z, w));
+    double w, x, y, z;
+    frame[frame_number_].M.GetQuaternion(x, y, z, w);
+    btMatrix3x3 orientation_matrix(btQuaternion(x, y, z, w));
 
-  double roll, pitch, yaw;
-  getRPYDistance(orientation_matrix, roll, pitch, yaw);
+    double roll, pitch, yaw;
+    getRPYDistance(orientation_matrix, roll, pitch, yaw);
 
-  roll=fabs(roll);
-  pitch=fabs(pitch);
-  yaw=fabs(yaw);
+    roll=fabs(roll);
+    pitch=fabs(pitch);
+    yaw=fabs(yaw);
 
-  bool satisfied = true;
-  cost = weight_ * (roll_weight_ * roll + pitch_weight_*pitch + yaw_weight_*yaw);
+    bool satisfied = true;
+    cost = weight_ * (roll_weight_ * roll + pitch_weight_*pitch + yaw_weight_*yaw);
 
-  if (roll > absolute_roll_tolerance_ || pitch > absolute_pitch_tolerance_ || yaw > absolute_yaw_tolerance_)
-    satisfied = false;
+    if (roll > absolute_roll_tolerance_ || pitch > absolute_pitch_tolerance_ || yaw > absolute_yaw_tolerance_)
+        satisfied = false;
 
-  return satisfied;
+    return satisfied;
 }
 
 void OrientationConstraintEvaluator::getRPYDistance(const btMatrix3x3 &orientation_matrix, double &roll, double &pitch, double &yaw) const
 {
-  if(!body_fixed_orientation_constraint_)
-  {
-    btMatrix3x3 result = orientation_matrix * nominal_orientation_inverse_;
-    result.getRPY(roll, pitch, yaw);
-  }
-  else
-  {
-    btMatrix3x3 result = nominal_orientation_inverse_ * orientation_matrix;
-    result.getRPY(roll, pitch, yaw);
-  }
+    if(!body_fixed_orientation_constraint_)
+    {
+        btMatrix3x3 result = orientation_matrix * nominal_orientation_inverse_;
+        result.getRPY(roll, pitch, yaw);
+    }
+    else
+    {
+        btMatrix3x3 result = nominal_orientation_inverse_ * orientation_matrix;
+        result.getRPY(roll, pitch, yaw);
+    }
 }
 
 

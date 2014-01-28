@@ -369,9 +369,7 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
         API::CostOptimization optimTrj( rob, traj );
 
         optimTrj.setRunId( runId );
-#ifdef QT_LIBRARY
-        optimTrj.setContextName( ENV.getString(Env::nameOfFile).toStdString() );
-#endif
+        optimTrj.setContextName( ENV.getString(Env::nameOfFile) );
 
         if(PlanEnv->getBool(PlanParam::withDeformation))
         {

@@ -28,6 +28,7 @@ public:
     virtual FeatureVect getFeatureCount(const API::Trajectory& t) = 0;
     virtual FeatureVect getFeatures(const Configuration& q) = 0;
     virtual FeatureJacobian getFeaturesJacobian(const Configuration& q);
+    virtual double getFeaturesJacobianMagnitude(const Configuration& q);
 
     double cost( Configuration& q );
     double costTraj( const API::Trajectory& t );
