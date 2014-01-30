@@ -30,20 +30,23 @@ public:
     virtual FeatureJacobian getFeaturesJacobian(const Configuration& q);
     virtual double getFeaturesJacobianMagnitude(const Configuration& q);
 
+    double getJacobianSum(const API::Trajectory& t);
+
     double cost( Configuration& q );
     double costTraj( const API::Trajectory& t );
 
-    void setActiveDofs( const std::vector<int>& active_dofs );
 
     virtual void setWeights( const WeightVect& w ) { w_ = w; }
     virtual WeightVect getWeights() { return w_; }
     virtual int getNumberOfFeatures() { return w_.size(); }
     virtual void printWeights() const { std::cout << " w_.transpose() : " << w_.transpose() << std::endl; }
 
+    // Why this does not work in protected
+    std::vector<int> active_dofs_;
+
 protected:
 
     FeatureVect w_;
-    std::vector<int> active_dofs_;
 };
 
 class StackedFeatures : public Feature
@@ -57,7 +60,7 @@ public:
     void setWeights( const WeightVect& w );
     WeightVect getWeights();
 
-    void addFeatureFunction( Feature* fct );
+    bool addFeatureFunction( Feature* fct );
     int getNumberOfFeatures() { return nb_features_; }
 
     void printWeights() const;

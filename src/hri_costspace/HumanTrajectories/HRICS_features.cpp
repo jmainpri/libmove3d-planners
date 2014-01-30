@@ -41,7 +41,7 @@ double Feature::costTraj( const API::Trajectory& t )
     return cost;
 }
 
-FeatureJacobian Feature::getFeaturesJacobian(const Configuration& q_0)
+FeatureJacobian Feature::getFeaturesJacobian( const Configuration& q_0 )
 {
     const double eps = 1e-3;
 
@@ -59,20 +59,28 @@ FeatureJacobian Feature::getFeaturesJacobian(const Configuration& q_0)
         J.col(i) = (f_1 - f_0) / eps;
     }
 
-//    cout << "J : " << endl << J << std::scientific << endl;
+    // cout << "J : " << endl << J << std::scientific << endl;
 
     return J;
 }
 
-double Feature::getFeaturesJacobianMagnitude(const Configuration& q)
+double Feature::getFeaturesJacobianMagnitude( const Configuration& q )
 {
-    FeatureJacobian J = getFeaturesJacobian(q);
+    FeatureJacobian J = getFeaturesJacobian( q );
     return J.norm();
 }
 
-void Feature::setActiveDofs( const std::vector<int>& active_dofs )
+double Feature::getJacobianSum( const API::Trajectory& t )
 {
-    active_dofs_ = active_dofs;
+    double sum=0.0;
+
+    for( int i=0;i<t.getNbOfViaPoints(); i++ )
+    {
+        sum += getFeaturesJacobianMagnitude( *t[i] );
+        // cout << "sum : " << sum << endl;
+    }
+
+    return sum;
 }
 
 //----------------------------------------------------------------------
@@ -100,15 +108,39 @@ FeatureVect StackedFeatures::getFeatureCount(const API::Trajectory& t)
 
 FeatureVect StackedFeatures::getFeatures(const Configuration& q)
 {
-    FeatureVect f;
+    FeatureVect f = Eigen::VectorXd::Zero( nb_features_ );
+
+    int height = 0;
+    for( int i=0;i<int(feature_stack_.size()); i++)
+    {
+        FeatureVect fi = feature_stack_[i]->getFeatures(q);
+        f.segment( height, fi.size() ) = fi;
+        height += fi.size();
+    }
+
     return f;
 }
 
-void StackedFeatures::addFeatureFunction( Feature* fct )
+bool StackedFeatures::addFeatureFunction( Feature* fct )
 {
+    if( feature_stack_.empty() )
+    {
+        active_dofs_ = (*fct).active_dofs_;
+    }
+    else
+    {
+        for( int i=0;i<int(active_dofs_.size()); i++ )
+        {
+            if( active_dofs_[i] != (*fct).active_dofs_[i] )
+            {
+                return false;
+            }
+        }
+    }
     feature_stack_.push_back( fct );
     nb_features_ += feature_stack_.back()->getNumberOfFeatures();
     w_ = Eigen::VectorXd::Zero( nb_features_ );
+    return true;
 }
 
 void StackedFeatures::setWeights( const WeightVect& w )

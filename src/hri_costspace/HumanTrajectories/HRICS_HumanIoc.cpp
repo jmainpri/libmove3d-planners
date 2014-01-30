@@ -3,6 +3,8 @@
 #include "HRICS_HumanCostSpace.hpp"
 #include "HRICS_PlayMotion.hpp"
 #include "HRICS_features.hpp"
+#include "HRICS_parameters.hpp"
+
 #include "API/project.hpp"
 
 using namespace HRICS;
@@ -37,7 +39,9 @@ void HRICS_run_human_ioc_from_recorded_motion()
 
     int nb_demos = 30;
     int nb_samples = 1000;
-    HumanIoc ioc( human2, human1, nb_demos, nb_samples );
+    int nb_way_points = HriEnv->getInt(HricsParam::ioc_nb_of_way_points);
+
+    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points );
     ioc.setDemos( global_motionRecorders[0]->getStoredMotions() );
     ioc.runLearning();
 }
@@ -55,12 +59,14 @@ void HRICS_run_human_ioc_evaluation()
 
     int nb_demos = 30;
     int nb_samples = 1000;
-    HumanIoc ioc( human2, human1, nb_demos, nb_samples );
+    int nb_way_points = HriEnv->getInt(HricsParam::ioc_nb_of_way_points);
+
+    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points );
     ioc.loadDemonstrations();
     ioc.runLearning();
 }
 
-HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples ) : IocEvaluation( active, nb_demos, nb_samples )
+HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples, int nb_way_points ) : IocEvaluation( active, nb_demos, nb_samples, nb_way_points )
 {
     nb_demos_ = nb_demos;
     nb_samples_ = nb_samples; // 1000

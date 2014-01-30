@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "HRICS_features.hpp"
+#include "HRICS_run_multiple_stomp.hpp"
 
 #include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
@@ -13,78 +14,6 @@
 
 namespace HRICS
 {
-
-//! Evaluation Class
-class IocEvaluation
-{
-public:
-    IocEvaluation( Robot* rob, int nb_demos, int nb_samples );
-
-    //! Sample trajectories around the demonstrations
-    virtual void runSampling();
-
-    //! Run learning using the C++ library
-    virtual void runLearning();
-
-    //! Generate demonstration using optimal planning
-    void generateDemonstrations();
-
-    //! Load recorded traectories in the move3d format
-    void loadDemonstrations();
-
-    //! Load weight vector from CSV format
-    void loadWeightVector();
-
-    //! Save 2D traj to file for Matlab
-    void saveDemoToMatlab();
-
-    //! Compute costs using the original costs and the learned costs
-    Eigen::VectorXd compareDemosAndPlanned();
-
-    //! Check start and goal of sampled trajectories
-    bool checkStartAndGoal( const std::vector< std::vector<API::Trajectory> >& samples ) const;
-
-protected:
-
-    //! Compute the cost of the demos
-    Eigen::VectorXd getCostsOfDemonstrations() const;
-
-    //! Save trajectory to matrix
-    void saveTrajToMatlab(const API::Trajectory& t, int id) const;
-
-    //! Save all the feature in a matrix
-    //! that can be read by Matlab
-    void saveToMatrix(const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples );
-
-    //! Get all the feature from a matrix file
-    bool loadFromMatrix( std::vector<FeatureVect>& demos, std::vector< std::vector<FeatureVect> >& samples );
-
-    //! Plans a motion using the costmap
-    API::Trajectory planMotionRRT();
-    API::Trajectory planMotionStomp();
-    API::Trajectory planAStar();
-
-    virtual void setLearnedWeights();
-    virtual void setOriginalWeights();
-
-    Robot* robot_;
-    int nb_demos_;
-    int nb_samples_;
-    int nb_weights_;
-    int nb_way_points_;
-    std::string folder_;
-    std::vector<API::Trajectory> demos_;
-    std::vector<API::Trajectory> samples_;
-    std::vector<API::Trajectory> learned_;
-    WeightVect learned_vect_;
-    WeightVect original_vect_;
-    std::string feature_matrix_name_;
-    std::vector<int> active_joints_;
-    Feature* feature_fct_;
-    TrajectorySmoothness* smoothness_fct_;
-    ChompPlanningGroup* plangroup_;
-
-};
 
 //! Trajectory structure
 struct IocTrajectory
@@ -162,6 +91,11 @@ public:
     //! Add a trajectory to the set of demonstrated trajectories
     bool addDemonstration(const Eigen::MatrixXd& demo);
 
+    //! Add a trajectory to the set of sample trajectories
+    //! @param d is the id of the demonstration
+    //! @param sample is the trajectory
+    bool addSample( int d, const Eigen::MatrixXd& sample );
+
     //! Reduces the trajectory magnitude
     bool jointLimits( IocTrajectory& traj ) const;
 
@@ -182,6 +116,9 @@ public:
     //! Set feature function
     void setFeatureFct( Feature* fct ) { feature_fct_ = fct; }
 
+    // Returns the number of demonstrations
+    int getNbOfDemonstrations() { return demonstrations_.size(); }
+
 private:
     std::vector< IocTrajectory > demonstrations_;
     std::vector< std::vector<IocTrajectory> > samples_;
@@ -190,10 +127,88 @@ private:
     const ChompPlanningGroup* planning_group_;
     int num_vars_;
     int num_joints_;
-    int num_demonstrations_;
     IocSampler sampler_;
 
     Feature* feature_fct_;
+};
+
+//! Evaluation Class
+class IocEvaluation
+{
+public:
+    IocEvaluation( Robot* rob, int nb_demos, int nb_samples, int nb_way_points );
+
+    //! Sample trajectories around the demonstrations
+    virtual void runSampling();
+
+    //! Run learning using the C++ library
+    virtual void runLearning();
+
+    //! run Sampling using saved trajectories
+    void runStompSampling();
+
+    //! Generate demonstration using optimal planning
+    void generateDemonstrations();
+
+    //! Load recorded traectories in the move3d format
+    void loadDemonstrations();
+
+    //! Load weight vector from CSV format
+    void loadWeightVector();
+
+    //! Save 2D traj to file for Matlab
+    void saveDemoToMatlab();
+
+    //! Compute costs using the original costs and the learned costs
+    Eigen::VectorXd compareDemosAndPlanned();
+
+    //! Check start and goal of sampled trajectories
+    bool checkStartAndGoal( const std::vector< std::vector<API::Trajectory> >& samples ) const;
+
+protected:
+
+    std::vector<FeatureVect> addDemonstrations(Ioc& ioc);
+    std::vector< std::vector<FeatureVect> > addSamples(Ioc& ioc);
+
+    //! Compute the cost of the demos
+    Eigen::VectorXd getCostsOfDemonstrations() const;
+
+    //! Save trajectory to matrix
+    void saveTrajToMatlab(const API::Trajectory& t, int id) const;
+
+    //! Save all the feature in a matrix
+    //! that can be read by Matlab
+    void saveToMatrix(const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples );
+
+    //! Get all the feature from a matrix file
+    bool loadFromMatrix( std::vector<FeatureVect>& demos, std::vector< std::vector<FeatureVect> >& samples );
+
+    //! Plans a motion using the costmap
+    API::Trajectory planMotionRRT();
+    API::Trajectory planMotionStomp();
+    API::Trajectory planAStar();
+
+    virtual void setLearnedWeights();
+    virtual void setOriginalWeights();
+
+    Robot* robot_;
+    int nb_demos_;
+    int nb_samples_;
+    int nb_weights_;
+    int nb_way_points_;
+    std::string folder_;
+    std::vector<API::Trajectory> demos_;
+    std::vector<API::Trajectory> samples_;
+    std::vector<API::Trajectory> learned_;
+    WeightVect learned_vect_;
+    WeightVect original_vect_;
+    std::string feature_matrix_name_;
+    std::vector<int> active_joints_;
+    Feature* feature_fct_;
+    TrajectorySmoothness* smoothness_fct_;
+    ChompPlanningGroup* plangroup_;
+    MultipleStomp stomps_;
+
 };
 
 }

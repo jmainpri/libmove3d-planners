@@ -31,6 +31,8 @@ void MultipleStomp::multipleRun( int nb_runs )
     {
         run();
     }
+
+    saveTrajsToFile();
 }
 
 void MultipleStomp::saveTrajsToFile()
@@ -49,12 +51,14 @@ void MultipleStomp::saveTrajsToFile()
     }
 }
 
-void MultipleStomp::loadTrajsFromFile()
+void MultipleStomp::loadTrajsFromFile(int nb_trajs)
 {
-    best_traj_.resize(10); // only loads 10
+    best_traj_.resize( nb_trajs ); // only loads 10
     global_trajToDraw.clear();
 
     std::stringstream ss;
+
+    int nb_of_loaded_traj = 0;
 
     for( int i=0;i<int(best_traj_.size());i++)
     {
@@ -74,8 +78,11 @@ void MultipleStomp::loadTrajsFromFile()
         best_traj_[i] = T;
         global_trajToDraw.push_back( T );
 
-        cout << "load traj : " << ss.str() << " , with : " << T.getNbOfViaPoints() << endl;
+        nb_of_loaded_traj++;
+        // cout << "load traj : " << ss.str() << " , with : " << T.getNbOfViaPoints() << endl;
     }
+
+    cout << "Successfully loaded "  << nb_of_loaded_traj << " trajectories !!!" << endl;
 }
 
 bool MultipleStomp::run()

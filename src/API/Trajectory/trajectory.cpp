@@ -1637,7 +1637,7 @@ bool Trajectory::cutTrajInSmallLPSimple(unsigned int nLP)
 
     m_Courbe = portion;
 
-    if (portion.size() != nLP ){
+    if( portion.size() != nLP ){
         throw string("Error: int cutTrajInSmallLPSimple");
     }
 
@@ -1843,8 +1843,8 @@ bool Trajectory::cutTrajInSmallLP(unsigned int nLP)
         return false;
     }
 
-    cout << "Cutting into " << nLP << " local paths" << endl;
-    cout << "Traj Size = " << m_Courbe.size() << endl;
+    // cout << "Cutting into " << nLP << " local paths" << endl;
+    // cout << "Traj Size = " << m_Courbe.size() << endl;
     //cout << "Cost Of trajectory :" << this->cost() << endl;
 
     if( !succeed )

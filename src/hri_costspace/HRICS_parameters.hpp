@@ -26,18 +26,25 @@ namespace HricsParam
         enum boolParameter
         {
             init_spheres_cost,
-            ioc_single_iteration
+            ioc_single_iteration,
+            ioc_load_samples_from_file,
+            ioc_draw_demonstrations,
+            ioc_draw_samples,
+            ioc_sample_around_demo,
+            ioc_exit_after_run
         };
 
         enum intParameter
         {
             ioc_phase,
-            ioc_sample_iteration
+            ioc_sample_iteration,
+            ioc_nb_of_way_points
         };
 
         enum doubleParameter
         {
-            ioc_spheres_power
+            ioc_spheres_power,
+            ioc_sample_std_dev
         };
 
         enum stringParameter

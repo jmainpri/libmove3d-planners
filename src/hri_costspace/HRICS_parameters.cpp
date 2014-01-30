@@ -50,15 +50,23 @@ void initHricsParameters()
     // ------------------------------------------------------------------
     myBoolMap.insert( std::make_pair( HricsParam::init_spheres_cost, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_single_iteration, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_load_samples_from_file, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_draw_demonstrations, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_draw_samples, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_sample_around_demo, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_exit_after_run, new boolContainer(false) ));
 
     // Int
     // ------------------------------------------------------------------
     myIntMap.insert( std::make_pair( HricsParam::ioc_phase, new intContainer(0) ));
     myIntMap.insert( std::make_pair( HricsParam::ioc_sample_iteration, new intContainer(0) ));
 
+    myIntMap.insert( std::make_pair( HricsParam::ioc_nb_of_way_points, new intContainer(0) ));
+
     // Double
     // ------------------------------------------------------------------
     myDoubleMap.insert( std::make_pair( HricsParam::ioc_spheres_power, new doubleContainer(2.0) ));
+    myDoubleMap.insert( std::make_pair( HricsParam::ioc_sample_std_dev, new doubleContainer(2.0) ));
 
     //cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble( PlanParam::env_objectNessecity ) << endl;
 

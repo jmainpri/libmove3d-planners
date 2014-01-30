@@ -17,7 +17,9 @@ public:
     void initializeNoisy();
     bool run();
     void saveTrajsToFile();
-    void loadTrajsFromFile();
+    void loadTrajsFromFile(int nb_trajs=10);
+
+    const std::vector<API::Trajectory>& getBestTraj() { return best_traj_; }
 
 private:
     Robot* robot_;

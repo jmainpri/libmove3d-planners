@@ -109,10 +109,9 @@ void Spheres::initialize()
     double max = w_.maxCoeff();
     w_ /= max;
 
-    std::vector<int> active_dofs;
-    active_dofs.push_back( 6 );
-    active_dofs.push_back( 7 );
-    setActiveDofs( active_dofs );
+    active_dofs_.resize(2);
+    active_dofs_[0] = 6;
+    active_dofs_[1] = 6;
 }
 
 FeatureVect Spheres::getFeatures( const Configuration& q )

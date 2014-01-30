@@ -118,22 +118,13 @@ void Squares::initialize()
 
     cout << "w_ : " << w_.transpose() << endl;
 
-    std::vector<int> active_dofs;
-    active_dofs.push_back( 6 );
-    active_dofs.push_back( 7 );
-    setActiveDofs( active_dofs );
+    active_dofs_.resize(2);
+    active_dofs_[0] = 6;
+    active_dofs_[1] = 6;
 }
 
 FeatureVect Squares::getFeatures( const Configuration& q )
 {
-//    for( int i=0;i<int(squares_.size());i++)
-//    {
-//        if( isInSquare(squares_[i], q ) )
-//        {
-//            cout << "in square : " << i << endl;
-//        }
-//    }
-
     FeatureVect features(centers_.size());
 
     robot_->setAndUpdate(q);
@@ -142,19 +133,9 @@ FeatureVect Squares::getFeatures( const Configuration& q )
     const double factor_distance = 10.0;
     const double factor_height = HriEnv->getDouble(HricsParam::ioc_spheres_power);
 
-//    if( robot_->isInCollision() )
-//    {
-//        dist = 0;
-//    }
-//    else {
-//        dist = robot_->distanceToEnviroment(); // TODO FIX FUNCTION
-//    }
-
     for( int i=0; i< int(centers_.size()); i++ )
     {
         double dist = distToSquare( squares_[i], q );
-//        double dist = robot_->distanceToRobot( centers_[i] );
-//        cout << dist << endl;
         features[i] = pow( exp( -dist/factor_distance ), factor_height );
     }
 
