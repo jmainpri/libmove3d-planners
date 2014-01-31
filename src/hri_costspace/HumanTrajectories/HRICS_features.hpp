@@ -16,6 +16,7 @@ class Distance;
 class Visibility;
 class Natural;
 
+typedef Eigen::VectorXd FeatureProfile;
 typedef Eigen::VectorXd FeatureVect;
 typedef Eigen::MatrixXd FeatureJacobian;
 typedef Eigen::VectorXd WeightVect;
@@ -25,9 +26,12 @@ class Feature
 public:
     Feature() {}
 
-    virtual FeatureVect getFeatureCount(const API::Trajectory& t) = 0;
     virtual FeatureVect getFeatures(const Configuration& q) = 0;
+    virtual FeatureProfile getFeatureProfile(const API::Trajectory& t);
+    virtual FeatureVect getFeatureCount(const API::Trajectory& t);
+
     virtual FeatureJacobian getFeaturesJacobian(const Configuration& q);
+    virtual FeatureProfile getFeatureJacobianProfile(const API::Trajectory& t);
     virtual double getFeaturesJacobianMagnitude(const Configuration& q);
 
     double getJacobianSum(const API::Trajectory& t);

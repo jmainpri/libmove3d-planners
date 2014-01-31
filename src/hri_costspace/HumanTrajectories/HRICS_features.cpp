@@ -83,6 +83,47 @@ double Feature::getJacobianSum( const API::Trajectory& t )
     return sum;
 }
 
+FeatureVect Feature::getFeatureCount( const API::Trajectory& t )
+{
+    FeatureVect phi( Eigen::VectorXd::Zero(w_.size()) );
+
+    for(int i=1;i<t.getNbOfViaPoints();i++)
+    {
+        confPtr_t q_1 = t[i-1];
+        confPtr_t q_2 = t[i];
+        Eigen::VectorXd pos1 = q_1->getEigenVector();
+        Eigen::VectorXd pos2 = q_2->getEigenVector();
+        double dist = ( pos1 - pos2 ).norm();
+        phi += getFeatures( *q_1 )*dist;
+    }
+
+    return phi;
+}
+
+FeatureProfile Feature::getFeatureProfile( const API::Trajectory& t )
+{
+    FeatureProfile p( Eigen::VectorXd::Zero(t.getNbOfViaPoints()) );
+
+    for(int i=0;i<p.size();i++)
+    {
+        p[i] = getFeatures( *t[i] ).norm();
+    }
+
+    return p;
+}
+
+FeatureProfile Feature::getFeatureJacobianProfile( const API::Trajectory& t )
+{
+    FeatureProfile p( Eigen::VectorXd::Zero(t.getNbOfViaPoints()) );
+
+    for(int i=0;i<p.size();i++)
+    {
+        p[i] = getFeaturesJacobianMagnitude( *t[i] );
+    }
+
+    return p;
+}
+
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 

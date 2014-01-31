@@ -14,7 +14,7 @@ public:
     void initialize();
 
     FeatureVect getFeatures(const Configuration& q );
-    FeatureVect getFeatureCount(const API::Trajectory& t);
+//    FeatureVect getFeatureCount(const API::Trajectory& t);
 };
 
 }

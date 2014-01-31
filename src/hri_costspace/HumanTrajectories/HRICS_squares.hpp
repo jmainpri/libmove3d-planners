@@ -33,7 +33,7 @@ public:
     void computeSize();
 
     FeatureVect getFeatures(const Configuration& q );
-    FeatureVect getFeatureCount(const API::Trajectory& t);
+//    FeatureVect getFeatureCount(const API::Trajectory& t);
     double getFeaturesJacobianMagnitude(const Configuration& q);
 
     double jacobianCost(const Configuration& q);

@@ -156,20 +156,3 @@ FeatureVect Spheres::getFeatures( const Configuration& q )
 
 //    return J;
 //}
-
-FeatureVect Spheres::getFeatureCount( const API::Trajectory& t )
-{
-    FeatureVect phi( Eigen::VectorXd::Zero(centers_.size()) );
-
-    for(int i=1;i<t.getNbOfViaPoints();i++)
-    {
-        confPtr_t q_1 = t[i-1];
-        confPtr_t q_2 = t[i];
-        Eigen::VectorXd pos1 = q_1->getEigenVector(6,7);
-        Eigen::VectorXd pos2 = q_2->getEigenVector(6,7);
-        double dist = ( pos1 - pos2 ).norm();
-        phi += getFeatures( *q_1 )*dist;
-    }
-
-    return phi;
-}

@@ -1477,6 +1477,9 @@ extern void* GroundCostObj;
 void Trajectory::draw(int nbKeyFrame)
 {
     double du = getRangeMax() / (nbKeyFrame - 1);
+    if( du == 0.0 )
+        return;
+
     double u = du;
 
     double Cost1, Cost2;

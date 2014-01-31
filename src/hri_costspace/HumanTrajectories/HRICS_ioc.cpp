@@ -207,7 +207,8 @@ IocTrajectory::IocTrajectory( int nb_joints, int nb_var  )
         parameters_noise_projected_.push_back( Eigen::VectorXd::Zero(nb_var) );
 
         control_costs_.push_back( Eigen::VectorXd::Zero(nb_var) );
-        total_costs_.push_back( Eigen::VectorXd::Zero(nb_var) );
+        // Todo use own structure
+        total_costs_.push_back( 0.2 * Eigen::VectorXd::Ones(nb_var) );
         cumulative_costs_.push_back( Eigen::VectorXd::Zero(nb_var) );
         probabilities_.push_back( Eigen::VectorXd::Zero(nb_var) );
 
@@ -335,9 +336,9 @@ void IocSampler::initPolicy()
     policy_.setPrintDebug( false );
 
     std::vector<double> derivative_costs(3);
-    derivative_costs[0] = 0.0; // velocity
+    derivative_costs[0] = 1.0; // velocity
     derivative_costs[1] = 0.0; // acceleration
-    derivative_costs[2] = 1.0; // smoothness
+    derivative_costs[2] = 0.0; // smoothness
 
     // initializes the policy
     policy_.initialize( num_vars_free_, num_joints_, 1.0, 0.0, derivative_costs );
@@ -443,6 +444,45 @@ bool Ioc::addSample( int d, const Eigen::MatrixXd& sample )
     return true;
 }
 
+//! Set mean
+bool Ioc::setNominalSampleValue( int d, int i, const Eigen::MatrixXd& nominal_parameters )
+{
+    if( num_joints_ != nominal_parameters.rows() || num_vars_ != nominal_parameters.cols()  )
+    {
+        cout << "Error in add nominal sample values : trajectory dimension not appropriate" << endl;
+        return false;
+    }
+    if( d >= int(samples_.size()) ){
+        cout << "Error in add nominal sample values : nb of demonstrations too small" << endl;
+        return false;
+    }
+    for(int k=0;k<int(samples_[d][i].nominal_parameters_.size());k++)
+    {
+        samples_[d][i].nominal_parameters_[k] = nominal_parameters.row( k );
+    }
+    return true;
+}
+
+//! Set mean
+bool Ioc::setTotalCostsSampleValue( int d, int i, const Eigen::VectorXd& total_costs )
+{
+    if( num_vars_ != total_costs.rows()  )
+    {
+        cout << "Error in add total_costs : trajectory dimension not appropriate";
+        cout << " : (" << num_vars_ << ") : (" << total_costs.cols() << ", " << total_costs.rows() << ")" << endl;
+        return false;
+    }
+    if( d >= int(samples_.size()) ){
+        cout << "Error in add total_costs : nb of demonstrations too small" << endl;
+        return false;
+    }
+    for(int k=0;k<int(samples_[d][i].total_costs_.size());k++)
+    {
+        samples_[d][i].total_costs_[k] = total_costs;
+    }
+    return true;
+}
+
 bool Ioc::jointLimits( IocTrajectory& traj ) const
 {
     for( int j=0;j<num_joints_;j++)
@@ -485,7 +525,7 @@ void Ioc::generateSamples( int nb_samples )
         for (int ns=0; ns<int(samples_[d].size()); ++ns )
         {
             // Allocate trajectory
-            samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
+            // samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
             // cout << "samples_[d][ns].parameters_[j] : " << samples_[d][ns].parameters_[0].transpose() << endl;
 
             // Sample noisy trajectory
@@ -496,11 +536,11 @@ void Ioc::generateSamples( int nb_samples )
                 // Change to generate samples around demonstration
                 if( HriEnv->getBool(HricsParam::ioc_sample_around_demo))
                     samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].parameters_[j];
-                else
-                    samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].straight_line_[j];
+//                else
+//                    samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].straight_line_[j];
 
                 samples_[d][ns].noise_[j] = noisy_traj.row(j);
-                samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j];
+                samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j]+ samples_[d][ns].noise_[j].cwiseProduct(samples_[d][ns].total_costs_[j]);
                 //cout << "sample (" << ns << ") : " << samples_[d][ns].parameters_[j].transpose() << endl;
                 //cout << samples_[d][ns].noise_[j].transpose() << endl;
             }
@@ -736,6 +776,8 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
     nb_way_points_ = nb_way_points;
     folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
 
+    load_sample_from_file_ = HriEnv->getBool(HricsParam::ioc_load_samples_from_file);
+
     std::vector<int> aj(1); aj[0] = 1;
     active_joints_ = aj;
 
@@ -782,7 +824,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
         }
     }
 
-    if( HriEnv->getBool(HricsParam::ioc_load_samples_from_file) )
+    if( load_sample_from_file_ )
     {
         stomps_.loadTrajsFromFile(100);
     }
@@ -947,21 +989,33 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
 std::vector< std::vector<FeatureVect> > IocEvaluation::addSamples(HRICS::Ioc& ioc)
 {
     // Get features of demos
-    std::vector< std::vector<FeatureVect> > phi_k(1);
-    phi_k[0].resize( samples_.size() );
+    for(int i=0;i<int(samples_.size());i++)
+    {
+        samples_[i].cutTrajInSmallLP( nb_way_points_-1 );
+        FeatureProfile p = feature_fct_->getFeatureJacobianProfile( samples_[i] );
+        ioc.addSample( 0, samples_[i].getEigenMatrix(6,7) );
+        ioc.setNominalSampleValue( 0, i, samples_[i].getEigenMatrix(6,7)  );
+        ioc.setTotalCostsSampleValue( 0, i, p );
+        p = p.array().pow( 4 );
+        cout << "p(" << i << ") : " << p.transpose() << endl;
+    }
+
+    ioc.generateSamples( nb_samples_ );
 
     // Compute the sum of gradient
     double gradient_sum = 0.0;
 
-    for(int i=0;i<int(samples_.size());i++)
+    std::vector< std::vector<API::Trajectory> > samples = ioc.getSamples();
+    std::vector< std::vector<FeatureVect> > phi_k( samples.size() );
+    for( int d=0;d<int(samples.size());d++)
     {
-        samples_[i].cutTrajInSmallLP( nb_way_points_-1 );
-        FeatureVect phi = feature_fct_->getFeatureCount( samples_[i] );
-        // cout << "Feature Sample : " << phi.transpose() << endl;
-        gradient_sum += feature_fct_->getJacobianSum( samples_[i] );
-
-        ioc.addSample( 0, samples_[i].getEigenMatrix(6,7) );
-        phi_k[0][i] = phi;
+        for( int i=0;i<int(samples[d].size());i++)
+        {
+            FeatureVect phi = feature_fct_->getFeatureCount( samples[d][i] );
+            // cout << "Feature Sample : " << phi.transpose() << endl;
+            gradient_sum += feature_fct_->getJacobianSum( samples[d][i] );
+            phi_k[d].push_back( phi );
+        }
     }
 
     cout << "gradient sum = " << gradient_sum << endl;
@@ -1015,9 +1069,10 @@ void IocEvaluation::runStompSampling()
     std::vector<FeatureVect> phi_demo = addDemonstrations( ioc );
 
     // Load samples from file
-    samples_ = stomps.getBestTraj();
+    samples_ = stomps_.getBestTraj();
 
-    while( int(samples_.size()) != nb_samples_ ) // Random removal in the vector
+    // Random removal in the vector
+    while( int(samples_.size()) != nb_samples_ )
     {
         int pos = p3d_random_integer(0,samples_.size()-1);
         std::vector<API::Trajectory>::iterator it = samples_.begin();

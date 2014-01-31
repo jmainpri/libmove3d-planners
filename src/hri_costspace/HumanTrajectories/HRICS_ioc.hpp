@@ -96,6 +96,11 @@ public:
     //! @param sample is the trajectory
     bool addSample( int d, const Eigen::MatrixXd& sample );
 
+    //! Set mean
+    bool setNominalSampleValue( int d, int i, const Eigen::MatrixXd& sample ) ;
+    //! Set costs
+    bool setTotalCostsSampleValue( int d, int i, const Eigen::VectorXd& sample ) ;
+
     //! Reduces the trajectory magnitude
     bool jointLimits( IocTrajectory& traj ) const;
 
@@ -113,9 +118,6 @@ public:
     //! Solve the ioc problem
     Eigen::VectorXd solve( const std::vector<Eigen::VectorXd>& phi_demo, const std::vector< std::vector<Eigen::VectorXd> >& phi_k );
 
-    //! Set feature function
-    void setFeatureFct( Feature* fct ) { feature_fct_ = fct; }
-
     // Returns the number of demonstrations
     int getNbOfDemonstrations() { return demonstrations_.size(); }
 
@@ -128,8 +130,6 @@ private:
     int num_vars_;
     int num_joints_;
     IocSampler sampler_;
-
-    Feature* feature_fct_;
 };
 
 //! Evaluation Class
@@ -207,6 +207,8 @@ protected:
     Feature* feature_fct_;
     TrajectorySmoothness* smoothness_fct_;
     ChompPlanningGroup* plangroup_;
+
+    bool load_sample_from_file_;
     MultipleStomp stomps_;
 
 };
