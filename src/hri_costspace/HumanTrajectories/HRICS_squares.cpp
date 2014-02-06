@@ -107,10 +107,10 @@ void Squares::initialize()
     {
         placeCenterGrid( true );
         computeSize();
-        w_[i++] = 100; w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
-        w_[i++] = 100; w_[i++] = 50;  w_[i++] = 8; w_[i++] = 100;
-        w_[i++] = 100; w_[i++] = 30; w_[i++] = 50; w_[i++] = 100;
-        w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100; w_[i++] = 100;
+        w_[i++] = 100;  w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
+        w_[i++] = 100;  w_[i++] = 50;   w_[i++] = 8;   w_[i++] = 100;
+        w_[i++] = 100;  w_[i++] = 30;   w_[i++] = 50;  w_[i++] = 100;
+        w_[i++] = 100;  w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
     }
 
     double max = w_.maxCoeff();
@@ -125,7 +125,7 @@ void Squares::initialize()
 
 FeatureVect Squares::getFeatures( const Configuration& q )
 {
-    FeatureVect features(centers_.size());
+    FeatureVect features(Eigen::VectorXd::Zero(centers_.size()));
 
     robot_->setAndUpdate(q);
 
@@ -133,10 +133,11 @@ FeatureVect Squares::getFeatures( const Configuration& q )
     const double factor_distance = 10.0;
     const double factor_height = HriEnv->getDouble(HricsParam::ioc_spheres_power);
 
-    for( int i=0; i< int(centers_.size()); i++ )
+    for( int i=0; i< int(active_features_.size()); i++ )
     {
-        double dist = distToSquare( squares_[i], q );
-        features[i] = pow( exp( -dist/factor_distance ), factor_height );
+        int k = active_features_[i];
+        double dist = distToSquare( squares_[k], q );
+        features[k] = pow( exp( -dist/factor_distance ), factor_height );
     }
 
 //    cout << "features.norm() : " << features.norm() << endl;

@@ -124,6 +124,15 @@ FeatureProfile Feature::getFeatureJacobianProfile( const API::Trajectory& t )
     return p;
 }
 
+void Feature::setWeights( const WeightVect& w )
+{
+     w_ = w;
+
+     active_features_.resize( w_.size() );
+     for( int i=0;i<int(active_features_.size());i++)
+         active_features_[i] = i;
+}
+
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 
@@ -166,13 +175,13 @@ bool StackedFeatures::addFeatureFunction( Feature* fct )
 {
     if( feature_stack_.empty() )
     {
-        active_dofs_ = (*fct).active_dofs_;
+        active_dofs_ = fct->getActiveDoFs();
     }
     else
     {
         for( int i=0;i<int(active_dofs_.size()); i++ )
         {
-            if( active_dofs_[i] != (*fct).active_dofs_[i] )
+            if( active_dofs_[i] != fct->getActiveDoFs()[i] )
             {
                 return false;
             }
@@ -213,13 +222,61 @@ WeightVect StackedFeatures::getWeights()
     return w;
 }
 
- void StackedFeatures::printWeights() const
- {
-     for(int i=0;i<int(feature_stack_.size());i++)
-     {
-         feature_stack_[i]->printWeights();
-     }
- }
+void StackedFeatures::setActiveFeatures( const std::vector<int>& active_features )
+{
+// TODO active feature acros stack
+//    int height = 0;
+//    for( int i=0;i<int(feature_stack_.size()); i++)
+//    {
+//        int num = feature_stack_[i]->getActiveFeatures().size();
+//        Eigen::VectorXd weights = active_features.segment( height, num );
+//        feature_stack_[i]->setWeights( weights );
+//        height += num;
+//    }
+
+    if( feature_stack_.empty() )
+        return;
+
+    feature_stack_[0]->setActiveFeatures( active_features );
+    active_features_= active_features;
+}
+
+void StackedFeatures::printWeights() const
+{
+    for(int i=0;i<int(feature_stack_.size());i++)
+    {
+        feature_stack_[i]->printWeights();
+    }
+}
+
+void StackedFeatures::printStackInfo() const
+{
+    cout << "------------------------------" << endl;
+    cout << "stack of features : nb of fct ( " << feature_stack_.size() << " )" << endl;
+
+    for(int i=0;i<int(feature_stack_.size());i++)
+    {
+        WeightVect w = feature_stack_[i]->getWeights();
+
+        cout << " -- feature fct " << i << " contains : " << w.size() << " features with ( active, weight ) :" ;
+        cout << endl;
+
+        for(int j=0;j<w.size();j++)
+        {
+            std::vector<int>::const_iterator it = find( feature_stack_[i]->getActiveFeatures().begin(),
+                                                        feature_stack_[i]->getActiveFeatures().end(),
+                                                        j );
+
+            cout << "\t( " << ( it != feature_stack_[i]->getActiveFeatures().end() ) << " , " << w_[j] << " ) ; ";
+
+            if( (j+1) % 5 == 0 )
+                cout << endl;
+        }
+
+        cout << endl;
+    }
+    cout << "------------------------------" << endl;
+}
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -227,7 +284,7 @@ WeightVect StackedFeatures::getWeights()
 
 TrajectorySmoothness::TrajectorySmoothness()
 {
-     w_ = Eigen::VectorXd::Zero( 1 ); // Sets the number of feature in the base class
+    w_ = Eigen::VectorXd::Zero( 1 ); // Sets the number of feature in the base class
 }
 
 FeatureVect TrajectorySmoothness::getFeatureCount( const API::Trajectory& t )

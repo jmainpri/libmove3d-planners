@@ -789,7 +789,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
 
     // Active dofs are set when the planning group is created
     smoothness_fct_ = new TrajectorySmoothness;
-    smoothness_fct_->active_dofs_ =  plangroup_->getActiveDofs();
+    smoothness_fct_->setActiveDoFs( plangroup_->getActiveDofs() );
 
     if( global_PlanarCostFct != NULL )
     {
@@ -802,6 +802,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
         else
         {
             fct->setWeights( global_PlanarCostFct->getWeights() );
+            fct->printStackInfo();
 
             feature_fct_ = fct;
 
@@ -814,8 +815,11 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
             // Save costmap to matlab with original weights
             ChronoTimeOfDayOn();
 
-    //        global_PlanarCostFct->produceCostMap();
-    //        global_PlanarCostFct->produceDerivativeFeatureCostMap();
+            std::vector<int> active_feature; active_feature.push_back(0);
+            feature_fct_->setActiveFeatures( active_feature );
+
+            global_PlanarCostFct->produceCostMap();
+            global_PlanarCostFct->produceDerivativeFeatureCostMap();
 
             double time;
             ChronoTimeOfDayTimes( &time );
