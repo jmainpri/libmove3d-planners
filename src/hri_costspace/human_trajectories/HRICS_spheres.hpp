@@ -1,7 +1,7 @@
 #ifndef HRICS_SPHERES_HPP
 #define HRICS_SPHERES_HPP
 
-#include "HRICS_planarfeature.hpp"
+#include "HRICS_planar_feature.hpp"
 
 namespace HRICS
 {

@@ -1,4 +1,4 @@
-#include "HRICS_planarfeature.hpp"
+#include "HRICS_planar_feature.hpp"
 
 #include "API/misc_functions.hpp"
 #include "API/project.hpp"

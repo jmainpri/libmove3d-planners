@@ -1,4 +1,4 @@
-#include "HRICS_HumanFeatures.hpp"
+#include "HRICS_human_features.hpp"
 
 using namespace HRICS;
 

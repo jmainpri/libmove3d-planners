@@ -34,7 +34,7 @@ BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Grid/SourceList.cmake)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/RRT/SourceList.cmake)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Gestures/SourceList.cmake)
-include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/HumanTrajectories/SourceList.cmake)
+include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/human_trajectories/SourceList.cmake)
 
 SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME_TMP})
 ENDIF(HRI_COSTSPACE)

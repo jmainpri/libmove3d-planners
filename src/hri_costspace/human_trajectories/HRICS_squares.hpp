@@ -1,7 +1,7 @@
 #ifndef HRICS_SQUARES_HPP
 #define HRICS_SQUARES_HPP
 
-#include "HRICS_planarfeature.hpp"
+#include "HRICS_planar_feature.hpp"
 
 namespace HRICS
 {

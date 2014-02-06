@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "HRICS_features.hpp"
-#include "HRICS_run_multiple_stomp.hpp"
+#include "HRICS_run_multiple_planners.hpp"
 
 #include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"

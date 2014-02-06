@@ -1,4 +1,4 @@
-#include "HRICS_HumanCostSpace.hpp"
+#include "HRICS_human_cost_space.hpp"
 
 #include "HRICS_PlayMotion.hpp"
 #include "API/project.hpp"

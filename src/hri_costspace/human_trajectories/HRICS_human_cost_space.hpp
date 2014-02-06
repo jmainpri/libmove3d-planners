@@ -1,6 +1,6 @@
 #include "API/Device/robot.hpp"
 
-#include "HRICS_HumanFeatures.hpp"
+#include "HRICS_human_features.hpp"
 #include "hri_costspace/Gestures/HRICS_RecordMotion.hpp"
 
 namespace HRICS

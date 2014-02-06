@@ -1,4 +1,4 @@
-#include "HRICS_run_multiple_stomp.hpp"
+#include "HRICS_run_multiple_planners.hpp"
 
 #include "API/project.hpp"
 
