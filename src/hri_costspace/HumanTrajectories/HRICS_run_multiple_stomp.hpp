@@ -13,12 +13,12 @@ public:
     MultipleStomp();
     ~MultipleStomp() { }
 
+    bool run();
     void multipleRun( int nb_runs );
     void initializeNoisy();
-    bool run();
     void saveTrajsToFile();
     void loadTrajsFromFile(int nb_trajs=10);
-
+    void setFolder( std::string folder ) { folder_ = folder; }
     const std::vector<API::Trajectory>& getBestTraj() { return best_traj_; }
 
 private:

@@ -28,9 +28,7 @@ void MultipleStomp::multipleRun( int nb_runs )
     best_traj_.clear();
 
     for( int i=0;i<nb_runs;i++)
-    {
         run();
-    }
 
     saveTrajsToFile();
 }

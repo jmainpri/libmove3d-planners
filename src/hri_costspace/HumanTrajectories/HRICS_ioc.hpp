@@ -98,6 +98,7 @@ public:
 
     //! Set mean
     bool setNominalSampleValue( int d, int i, const Eigen::MatrixXd& sample ) ;
+
     //! Set costs
     bool setTotalCostsSampleValue( int d, int i, const Eigen::VectorXd& sample ) ;
 
@@ -145,7 +146,10 @@ public:
     virtual void runLearning();
 
     //! run Sampling using saved trajectories
-    void runStompSampling();
+    void runFromFileSampling();
+
+    //! Run Stomp for multiple feature functions
+    void runStompMultipleFeature( int nb_runs=1 );
 
     //! Generate demonstration using optimal planning
     void generateDemonstrations();

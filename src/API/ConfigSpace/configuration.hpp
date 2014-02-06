@@ -337,7 +337,7 @@ public:
     /**
      *
      */
-    void print(bool withPassive = false);
+    void print(bool withPassive = false) const;
 
 
 private:

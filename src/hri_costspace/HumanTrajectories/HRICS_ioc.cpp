@@ -4,6 +4,7 @@
 #include "HRICS_parameters.hpp"
 
 #include "API/project.hpp"
+#include "API/misc_functions.hpp"
 #include "API/Trajectory/trajectory.hpp"
 
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
@@ -70,7 +71,7 @@ void HRICS_run_sphere_ioc()
 
     bool StopRun = false;
 
-    enum phase_t { generate, sample, compare } phase;
+    enum phase_t { generate, sample, compare, run_stomp } phase;
 
     cout << "ioc phase : " << HriEnv->getInt(HricsParam::ioc_phase) << endl;
 
@@ -87,6 +88,10 @@ void HRICS_run_sphere_ioc()
     case 2:
         phase = compare;
         cout << "SET PHASE COMPARE" << endl;
+        break;
+    case 3:
+        phase = run_stomp;
+        cout << "SET PHASE RUN STOMP" << endl;
         break;
     default: cout << "Error : phase not defined!!!" << endl; return;
     }
@@ -127,7 +132,7 @@ void HRICS_run_sphere_ioc()
             // eval.runLearning();
 
             if( HriEnv->getBool(HricsParam::ioc_load_samples_from_file) )
-                eval.runStompSampling();
+                eval.runFromFileSampling();
             else
                 eval.runSampling();
 
@@ -137,6 +142,9 @@ void HRICS_run_sphere_ioc()
         case compare:
             results.push_back( eval.compareDemosAndPlanned() );
             g3d_draw_allwin_active();
+
+        case run_stomp:
+            eval.runStompMultipleFeature();
             break;
         }
 
@@ -156,10 +164,7 @@ void HRICS_run_sphere_ioc()
             mat.row(i) = results[i];
         }
 
-        std::ofstream file_traj("matlab/data/result.txt");
-        if (file_traj.is_open())
-            file_traj << mat << '\n';
-        file_traj.close();
+        move3d_save_matrix_to_file( mat, "matlab/data/result.txt" );
     }
 
 //    eval.loadDemonstrations();
@@ -795,6 +800,8 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
     {
         StackedFeatures* fct = new StackedFeatures;
         //fct->addFeatureFunction( smoothness_fct_ );
+        global_PlanarCostFct->setActiveDoFs( plangroup_->getActiveDofs() );
+
         if( !fct->addFeatureFunction( global_PlanarCostFct ) )
         {
             cout << "ERROR : could not add feature function!!!!" << endl;
@@ -815,11 +822,15 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
             // Save costmap to matlab with original weights
             ChronoTimeOfDayOn();
 
-            std::vector<int> active_feature; active_feature.push_back(0);
-            feature_fct_->setActiveFeatures( active_feature );
-
-            global_PlanarCostFct->produceCostMap();
-            global_PlanarCostFct->produceDerivativeFeatureCostMap();
+            std::vector<int> active_feature;
+            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
+            {
+                active_feature.clear();
+                active_feature.push_back(i);
+                feature_fct_->setActiveFeatures( active_feature );
+//                global_PlanarCostFct->produceCostMap(i);
+//                global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
+            }
 
             double time;
             ChronoTimeOfDayTimes( &time );
@@ -870,12 +881,9 @@ API::Trajectory IocEvaluation::planAStar()
     API::Trajectory* traj = planner.computeRobotTrajectory( q_init, q_goal );
 
     if( traj != NULL )
-    {
         cout << "AStar planning OK" << endl;
-    }
-    else {
+    else
         cout << "Error in run AStar planner" << endl;
-    }
 
     return *traj;
 }
@@ -884,6 +892,27 @@ API::Trajectory IocEvaluation::planMotionStomp()
 {
     traj_optim_runStomp(0);
     return global_optimizer->getBestTraj();
+}
+
+void IocEvaluation::runStompMultipleFeature( int nb_runs )
+{
+    stomps_.setFolder( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square" );
+
+    for( int i=0;i<nb_runs;i++)
+    {
+        std::vector<int> active_feature;
+        for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
+        {
+            active_feature.clear();
+            active_feature.push_back(i);
+            feature_fct_->setActiveFeatures( active_feature );
+            // stomps_.multipleRun(1);
+            planAStar();
+            g3d_draw_allwin_active();
+        }
+    }
+
+    stomps_.saveTrajsToFile();
 }
 
 void IocEvaluation::generateDemonstrations()
@@ -1065,7 +1094,7 @@ void IocEvaluation::runSampling()
     cout << "gradient sum = " << gradient_sum << endl;
 }
 
-void IocEvaluation::runStompSampling()
+void IocEvaluation::runFromFileSampling()
 {
     HRICS::Ioc ioc( nb_way_points_, plangroup_ );
 

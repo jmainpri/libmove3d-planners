@@ -62,17 +62,17 @@ int PlanarFeature::addCenters(std::string type)
     return centers_.size();
 }
 
-void PlanarFeature::produceCostMap()
+void PlanarFeature::produceCostMap(int ith)
 {
     double max_1, max_2;
     double min_1, min_2;
     robot_->getJoint(1)->getDofBounds( 0, min_1, max_1 );
     robot_->getJoint(1)->getDofBounds( 1, min_2, max_2 );
-
-    cout << max_1 << " , " << max_2 << " , " << min_1 << " , " << min_2 << endl;
+    // cout << max_1 << " , " << max_2 << " , " << min_1 << " , " << min_2 << endl;
 
     int nb_cells = 100;
-    Eigen::MatrixXd mat( nb_cells, nb_cells );
+    Eigen::MatrixXd mat0( nb_cells, nb_cells );
+    Eigen::MatrixXd mat1( nb_cells, nb_cells );
 
     int k=0;
 
@@ -83,20 +83,28 @@ void PlanarFeature::produceCostMap()
             confPtr_t q = robot_->getCurrentPos();
             (*q)[6] = min_1 + double(i)*(max_1-min_1)/double(nb_cells-1);
             (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(nb_cells-1);
-            mat(i,j) = cost(*q);
-            // mat(i,j) = getFeatures(*q).norm();
+            mat0(i,j) = cost(*q);
+            mat1(i,j) = getFeatures(*q).norm();
             // cout << getFeatures(*q).transpose() << endl;
             // cout << " ( x : " << (*q)[6] << " , y : " << (*q)[7] << " ) = " << mat(i,j) << endl;
             k++;
         }
     }
 
-    cout << "k : " << k << endl;
+//    cout << "k : " << k << endl;
 
-    move3d_save_matrix_to_file( mat, "matlab/cost_map_64.txt");
+    std::stringstream ss;
+
+    ss.str(""); // clear stream
+    ss << "matlab/cost_maps/cost_map_" << std::setw(2) << std::setfill( '0' ) << ith << ".txt";
+    move3d_save_matrix_to_file( mat0, ss.str() );
+
+    ss.str(""); // clear stream
+    ss << "matlab/cost_maps/cost_map_feat_" << std::setw(2) << std::setfill( '0' ) << ith << ".txt";
+    move3d_save_matrix_to_file( mat1, ss.str() );
 }
 
-void PlanarFeature::produceDerivativeFeatureCostMap()
+void PlanarFeature::produceDerivativeFeatureCostMap(int ith)
 {
     double max_1, max_2;
     double min_1, min_2;
@@ -119,7 +127,7 @@ void PlanarFeature::produceDerivativeFeatureCostMap()
             (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(nb_cells-1);
             FeatureJacobian J = getFeaturesJacobian(*q);
             // cout << "J : " << endl << J << endl;
-            mat0(i,j) = getFeatures(*q).norm(); // NORM
+            // mat0(i,j) = getFeatures(*q).norm(); // NORM
             // mat1(i,j) = J.col(0).maxCoeff();
             // mat2(i,j) = J.col(1).maxCoeff();
             mat1(i,j) = J.col(0).norm();
@@ -130,12 +138,19 @@ void PlanarFeature::produceDerivativeFeatureCostMap()
         }
     }
 
-    move3d_save_matrix_to_file( mat0, "matlab/cost_map_feat_64.txt");
-    move3d_save_matrix_to_file( mat1, "matlab/cost_map_derv_0_64.txt");
-    move3d_save_matrix_to_file( mat2, "matlab/cost_map_derv_1_64.txt");
+    std::stringstream ss;
 
-    move3d_save_matrix_to_file( mat3, "matlab/cost_map_jac_mag_simple.txt");
-    move3d_save_matrix_to_file( mat4, "matlab/cost_map_jac_mag_custom.txt");
+    ss.str(""); ss << "matlab/cost_maps/cost_map_derv_0_" << std::setw(2) << std::setfill( '0' ) << ith << ".txt";
+    move3d_save_matrix_to_file( mat1, ss.str() );
+
+    ss.str(""); ss << "matlab/cost_maps/cost_map_derv_1_" << std::setw(2) << std::setfill( '0' ) << ith << ".txt";
+    move3d_save_matrix_to_file( mat2, ss.str() );
+
+    ss.str(""); ss << "matlab/cost_maps/cost_map_jac_mag_simple_" << std::setw(2) << std::setfill( '0' ) << ith << ".txt";
+    move3d_save_matrix_to_file( mat3, ss.str() );
+
+    ss.str(""); ss << "matlab/cost_maps/cost_map_jac_mag_custom_" << std::setw(2) << std::setfill( '0' ) << ith << ".txt";
+    move3d_save_matrix_to_file( mat4, ss.str() );
 }
 
 void PlanarFeature::placeCenterGrid(bool on_wall)

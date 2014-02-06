@@ -700,7 +700,7 @@ void Configuration::setCostAsNotTested()
 	_CostTested = false;
 }
 
-void Configuration::print(bool withPassive)
+void Configuration::print(bool withPassive) const
 {
   
   cout << "Print Configuration; Robot: " << _Robot->getRobotStruct() << endl;

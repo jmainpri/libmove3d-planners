@@ -52,6 +52,8 @@ FeatureJacobian Feature::getFeaturesJacobian( const Configuration& q_0 )
     {
         int dof = active_dofs_[ i ];
 
+        //cout << "dof : " << dof << endl;
+
         Configuration q_1 = q_0;
         q_1[dof] = q_0[ dof ] + eps;
 
@@ -59,8 +61,7 @@ FeatureJacobian Feature::getFeaturesJacobian( const Configuration& q_0 )
         J.col(i) = (f_1 - f_0) / eps;
     }
 
-    // cout << "J : " << endl << J << std::scientific << endl;
-
+//    cout << "J : " << endl << J.transpose() << std::scientific << endl;
     return J;
 }
 

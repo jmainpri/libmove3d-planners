@@ -378,3 +378,5 @@ src/hri_costspace/HumanTrajectories/HRICS_squares.cpp
 src/hri_costspace/HumanTrajectories/HRICS_planarfeature.cpp
 src/hri_costspace/HumanTrajectories/HRICS_run_multiple_stomp.hpp
 src/hri_costspace/HumanTrajectories/HRICS_run_multiple_stomp.cpp
+src/API/misc_functions.hpp
+src/API/misc_functions.cpp

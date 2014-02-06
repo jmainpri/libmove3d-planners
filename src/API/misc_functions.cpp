@@ -6,7 +6,6 @@
 using std::cout;
 using std::endl;
 
-
 void move3d_save_matrix_to_file( const Eigen::MatrixXd& mat, std::string filename )
 {
     cout << "save matrix to : " << filename << endl;

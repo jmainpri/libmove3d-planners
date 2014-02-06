@@ -21,6 +21,7 @@ typedef Eigen::VectorXd FeatureVect;
 typedef Eigen::MatrixXd FeatureJacobian;
 typedef Eigen::VectorXd WeightVect;
 
+////////////////////////////////////////
 class Feature
 {
 public:
@@ -57,6 +58,7 @@ protected:
     FeatureVect w_;
 };
 
+////////////////////////////////////////
 class StackedFeatures : public Feature
 {
 public:
@@ -77,11 +79,11 @@ public:
     void printStackInfo() const;
 
 protected:
-
     int nb_features_;
     std::vector<Feature*> feature_stack_;
 };
 
+////////////////////////////////////////
 class TrajectorySmoothness : public Feature
 {
 public:
@@ -96,7 +98,6 @@ public:
 
 private:
     double computeControlCost( const Eigen::MatrixXd& traj );
-
     ControlCost control_cost_;
 };
 

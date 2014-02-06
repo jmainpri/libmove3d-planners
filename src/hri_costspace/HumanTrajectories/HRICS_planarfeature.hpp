@@ -14,8 +14,8 @@ class PlanarFeature : public Feature
 
         virtual void initialize() = 0;
 
-        void produceCostMap();
-        void produceDerivativeFeatureCostMap();
+        void produceCostMap(int ith);
+        void produceDerivativeFeatureCostMap(int ith);
         void placeCenterGrid(bool on_wall);
         void printWeights() const;
         int addCenters(std::string type);
