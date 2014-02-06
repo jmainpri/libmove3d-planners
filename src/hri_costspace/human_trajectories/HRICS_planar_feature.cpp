@@ -83,7 +83,8 @@ void PlanarFeature::produceCostMap(int ith)
             confPtr_t q = robot_->getCurrentPos();
             (*q)[6] = min_1 + double(i)*(max_1-min_1)/double(nb_cells-1);
             (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(nb_cells-1);
-            mat0(i,j) = cost(*q);
+            // mat0(i,j) = cost(*q); // Class function
+            mat0(i,j) = q->cost(); // Global cost
             mat1(i,j) = getFeatures(*q).norm();
             // cout << getFeatures(*q).transpose() << endl;
             // cout << " ( x : " << (*q)[6] << " , y : " << (*q)[7] << " ) = " << mat(i,j) << endl;

@@ -149,7 +149,7 @@ public:
     void runFromFileSampling();
 
     //! Run Stomp for multiple feature functions
-    void runStompMultipleFeature( int nb_runs=1 );
+    void runPlannerMultipleFeature( int nb_runs=1 );
 
     //! Generate demonstration using optimal planning
     void generateDemonstrations();
@@ -213,7 +213,7 @@ protected:
     ChompPlanningGroup* plangroup_;
 
     bool load_sample_from_file_;
-    MultipleStomp stomps_;
+    MultiplePlanners planners_;
 
 };
 

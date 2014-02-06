@@ -71,30 +71,14 @@ void HRICS_run_sphere_ioc()
 
     bool StopRun = false;
 
-    enum phase_t { generate, sample, compare, run_stomp } phase;
+    enum phase_t { generate=0,
+                   sample=1,
+                   compare=2,
+                   run_planner=3 } phase;
+
+    phase = phase_t(HriEnv->getInt(HricsParam::ioc_phase));
 
     cout << "ioc phase : " << HriEnv->getInt(HricsParam::ioc_phase) << endl;
-
-    switch( HriEnv->getInt(HricsParam::ioc_phase) )
-    {
-    case 0:
-        phase = generate;
-        cout << "SET PHASE GENERATE" << endl;
-        break;
-    case 1:
-        phase = sample;
-        cout << "SET PHASE SAMPLE" << endl;
-        break;
-    case 2:
-        phase = compare;
-        cout << "SET PHASE COMPARE" << endl;
-        break;
-    case 3:
-        phase = run_stomp;
-        cout << "SET PHASE RUN STOMP" << endl;
-        break;
-    default: cout << "Error : phase not defined!!!" << endl; return;
-    }
 
     std::vector<Eigen::VectorXd> results;
 
@@ -123,11 +107,13 @@ void HRICS_run_sphere_ioc()
         switch( phase )
         {
         case generate:
+            cout << "GENERATE" << endl;
             eval.generateDemonstrations();
             g3d_draw_allwin_active();
             break;
 
         case sample:
+            cout << "SAMPLE" << endl;
             eval.loadDemonstrations();
             // eval.runLearning();
 
@@ -140,11 +126,14 @@ void HRICS_run_sphere_ioc()
             break;
 
         case compare:
+            cout << "COMPARE" << endl;
             results.push_back( eval.compareDemosAndPlanned() );
             g3d_draw_allwin_active();
+            break;
 
-        case run_stomp:
-            eval.runStompMultipleFeature();
+        case run_planner:
+            cout << "RUN MULTI-PLANNER" << endl;
+            eval.runPlannerMultipleFeature(10);
             break;
         }
 
@@ -774,7 +763,7 @@ Eigen::VectorXd Ioc::solve( const std::vector<Eigen::VectorXd>& phi_demo, const 
 // -------------------------------------------------------------
 // -------------------------------------------------------------
 
-IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_way_points ) : robot_(rob)
+IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_way_points ) : robot_(rob), planners_(rob)
 {
     nb_demos_ = nb_demos;
     nb_samples_ = nb_samples;
@@ -841,64 +830,61 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
 
     if( load_sample_from_file_ )
     {
-        stomps_.loadTrajsFromFile(100);
+        planners_.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP" ); // TODO make this dynamic to the folder
     }
 }
 
 API::Trajectory IocEvaluation::planMotionRRT()
 {
-    try
-    {
-        p3d_run_rrt( robot_->getRobotStruct() );
+    planners_.clearTrajs();
+    planners_.setPlannerType( rrt );
 
-        if( !ENV.getBool(Env::drawDisabled) ) {
-            g3d_draw_allwin_active();
-        }
-    }
-    catch (std::string str)
-    {
-        std::cerr << "Exeption in run rrt : " << endl;
-        std::cerr << str << endl;
-    }
-    catch (...)
-    {
-        std::cerr << "Exeption in run qt_runDiffusion" << endl;
-    }
+    if( planners_.run() ){
 
-    return p3d_get_last_trajectory();
+        return planners_.getBestTrajs()[0];
+    }
+    else{
+        API::Trajectory traj(robot_);
+        return traj;
+    }
 }
 
 API::Trajectory IocEvaluation::planAStar()
 {
-    // Warning leaking
-    AStarPlanner planner( robot_ );
-    planner.set_pace( PlanEnv->getDouble(PlanParam::grid_pace) );
-    planner.init();
+    planners_.clearTrajs();
+    planners_.setPlannerType( astar );
 
-    confPtr_t q_init = robot_->getInitPos();
-    confPtr_t q_goal = robot_->getGoalPos();
+    if( planners_.run() ){
 
-    API::Trajectory* traj = planner.computeRobotTrajectory( q_init, q_goal );
-
-    if( traj != NULL )
-        cout << "AStar planning OK" << endl;
-    else
-        cout << "Error in run AStar planner" << endl;
-
-    return *traj;
+        return planners_.getBestTrajs()[0];
+    }
+    else{
+        API::Trajectory traj(robot_);
+        return traj;
+    }
 }
 
 API::Trajectory IocEvaluation::planMotionStomp()
 {
-    traj_optim_runStomp(0);
-    return global_optimizer->getBestTraj();
+    planners_.clearTrajs();
+    planners_.setPlannerType( stomp );
+
+    if( planners_.run() ){
+
+        return planners_.getBestTrajs()[0];
+    }
+    else{
+        API::Trajectory traj(robot_);
+        return traj;
+    }
 }
 
-void IocEvaluation::runStompMultipleFeature( int nb_runs )
+void IocEvaluation::runPlannerMultipleFeature( int nb_runs )
 {
-    stomps_.setFolder( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square" );
+    planners_.clearTrajs();
+    planners_.setPlannerType( planner_t(HriEnv->getInt(HricsParam::ioc_planner_type)) );
 
-    for( int i=0;i<nb_runs;i++)
+    for( int i=0; i<nb_runs; i++ )
     {
         std::vector<int> active_feature;
         for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
@@ -906,13 +892,13 @@ void IocEvaluation::runStompMultipleFeature( int nb_runs )
             active_feature.clear();
             active_feature.push_back(i);
             feature_fct_->setActiveFeatures( active_feature );
-            // stomps_.multipleRun(1);
-            planAStar();
+            // planners_.multipleRun(1);
+            planners_.run();
             g3d_draw_allwin_active();
         }
     }
 
-    stomps_.saveTrajsToFile();
+    planners_.saveTrajsToFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square" );
 }
 
 void IocEvaluation::generateDemonstrations()
@@ -1102,7 +1088,7 @@ void IocEvaluation::runFromFileSampling()
     std::vector<FeatureVect> phi_demo = addDemonstrations( ioc );
 
     // Load samples from file
-    samples_ = stomps_.getBestTraj();
+    samples_ = planners_.getBestTrajs();
 
     // Random removal in the vector
     while( int(samples_.size()) != nb_samples_ )
@@ -1241,10 +1227,7 @@ void IocEvaluation::saveTrajToMatlab(const API::Trajectory& t, int id) const
     Eigen::MatrixXd mat = saved_traj.getEigenMatrix(6,7);
 
     // Save traj to file
-    std::ofstream file_traj( std::string( "matlab/traj_" + num_to_string<int>(id) + ".txt" ).c_str() );
-    if (file_traj.is_open())
-        file_traj << mat << '\n';
-    file_traj.close();
+    move3d_save_matrix_to_file( mat, std::string( "matlab/traj_" + num_to_string<int>(id) + ".txt" ) );
 }
 
 void IocEvaluation::saveToMatrix( const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples )

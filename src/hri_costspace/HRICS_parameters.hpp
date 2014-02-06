@@ -38,7 +38,8 @@ namespace HricsParam
         {
             ioc_phase,
             ioc_sample_iteration,
-            ioc_nb_of_way_points
+            ioc_nb_of_way_points,
+            ioc_planner_type
         };
 
         enum doubleParameter

@@ -6,25 +6,37 @@
 
 namespace HRICS
 {
+enum planner_t {
+    stomp=0,
+    astar=1,
+    rrt=2 };
 
-class MultipleStomp
+class MultiplePlanners
 {
 public:
-    MultipleStomp();
-    ~MultipleStomp() { }
+    MultiplePlanners(Robot* robot);
+    ~MultiplePlanners() { }
 
     bool run();
-    void multipleRun( int nb_runs );
+    void multipleRun( std::string folder, int nb_runs );
+    void saveTrajsToFile( std::string folder );
+    void loadTrajsFromFile( std::string folder );
+
     void initializeNoisy();
-    void saveTrajsToFile();
-    void loadTrajsFromFile(int nb_trajs=10);
-    void setFolder( std::string folder ) { folder_ = folder; }
-    const std::vector<API::Trajectory>& getBestTraj() { return best_traj_; }
+
+    const std::vector<API::Trajectory>& getBestTrajs() { return best_traj_; }
+    void setPlannerType( planner_t planner ) { planner_type_ = planner; }
+    void clearTrajs() { best_traj_.clear(); }
 
 private:
+
+    bool runStomp();
+    bool runAStar();
+    bool runRRT();
+
     Robot* robot_;
     std::vector<API::Trajectory> best_traj_;
-    std::string folder_;
+    planner_t planner_type_;
 };
 
 }

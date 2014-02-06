@@ -159,7 +159,8 @@ double Squares::getFeaturesJacobianMagnitude( const Configuration& q )
 
 double Squares::jacobianCost(const Configuration& q)
 {
-    return 1 / Feature::getFeaturesJacobianMagnitude( q );
+//    return 1 / Feature::getFeaturesJacobianMagnitude( q );
+    return exp(-10*Feature::getFeaturesJacobianMagnitude( q )); // 10 is for scaling TODO findout what to put here
 }
 
 void Squares::computeSize()
