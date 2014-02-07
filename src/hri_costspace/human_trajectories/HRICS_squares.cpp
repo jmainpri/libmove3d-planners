@@ -138,7 +138,7 @@ FeatureVect Squares::getFeatures( const Configuration& q )
         int k = active_features_[i];
         double dist = distToSquare( squares_[k], q );
         features[k] = pow( exp( -dist/factor_distance ), factor_height );
-        cout << "features[" << k << "] = " << features[k] << endl;
+        // cout << "features[" << k << "] = " << features[k] << endl;
     }
 
 //    cout << "features.norm() : " << features.norm() << endl;

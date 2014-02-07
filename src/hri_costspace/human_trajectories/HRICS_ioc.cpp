@@ -133,7 +133,7 @@ void HRICS_run_sphere_ioc()
 
         case run_planner:
             cout << "RUN MULTI-PLANNER" << endl;
-            eval.runPlannerMultipleFeature(10);
+            eval.runPlannerMultipleFeature(1); // 10
             break;
         }
 
@@ -514,10 +514,12 @@ void Ioc::generateSamples( int nb_samples )
 
     for (int d=0; d<nb_demos; ++d)
     {
-        samples_[d].resize( nb_samples, IocTrajectory( num_joints_, num_vars_ ) );
+        samples_[d].resize( nb_samples );
 
         for (int ns=0; ns<int(samples_[d].size()); ++ns )
         {
+            samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
+
             // Sample noisy trajectory
             Eigen::MatrixXd noisy_traj = sampler_.sample(noise_stddev_);
 
@@ -805,15 +807,15 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
             // Save costmap to matlab with original weights
             ChronoTimeOfDayOn();
 
-//            std::vector<int> active_feature;
-//            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
-//            {
-//                active_feature.clear();
-//                active_feature.push_back(i);
-//                feature_fct_->setActiveFeatures( active_feature );
-//                global_PlanarCostFct->produceCostMap(i);
-//                global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
-//            }
+            std::vector<int> active_feature;
+            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
+            {
+                active_feature.clear();
+                active_feature.push_back(i);
+                feature_fct_->setActiveFeatures( active_feature );
+                global_PlanarCostFct->produceCostMap(i);
+                global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
+            }
 
 //            global_PlanarCostFct->produceCostMap(0);
 
@@ -1015,7 +1017,7 @@ std::vector< std::vector<FeatureVect> > IocEvaluation::addSamples(HRICS::Ioc& io
         cout << "p(" << i << ") : " << p.transpose() << endl;
     }
 
-    ioc.generateSamples( nb_samples_ );
+    // ioc.generateSamples( nb_samples_ );
 
     // Compute the sum of gradient
     double gradient_sum = 0.0;
