@@ -330,9 +330,9 @@ void IocSampler::initPolicy()
     policy_.setPrintDebug( false );
 
     std::vector<double> derivative_costs(3);
-    derivative_costs[0] = 1.0; // velocity
+    derivative_costs[0] = 0.0; // velocity
     derivative_costs[1] = 0.0; // acceleration
-    derivative_costs[2] = 0.0; // smoothness
+    derivative_costs[2] = 1.0; // smoothness
 
     // initializes the policy
     policy_.initialize( num_vars_free_, num_joints_, 1.0, 0.0, derivative_costs );
@@ -514,14 +514,10 @@ void Ioc::generateSamples( int nb_samples )
 
     for (int d=0; d<nb_demos; ++d)
     {
-        samples_[d].resize( nb_samples );
+        samples_[d].resize( nb_samples, IocTrajectory( num_joints_, num_vars_ ) );
 
         for (int ns=0; ns<int(samples_[d].size()); ++ns )
         {
-            // Allocate trajectory
-            // samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
-            // cout << "samples_[d][ns].parameters_[j] : " << samples_[d][ns].parameters_[0].transpose() << endl;
-
             // Sample noisy trajectory
             Eigen::MatrixXd noisy_traj = sampler_.sample(noise_stddev_);
 
@@ -530,13 +526,11 @@ void Ioc::generateSamples( int nb_samples )
                 // Change to generate samples around demonstration
                 if( HriEnv->getBool(HricsParam::ioc_sample_around_demo))
                     samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].parameters_[j];
-//                else
-//                    samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].straight_line_[j];
+                else
+                    samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].straight_line_[j]; // TODO why commented
 
                 samples_[d][ns].noise_[j] = noisy_traj.row(j);
-                samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j]+ samples_[d][ns].noise_[j].cwiseProduct(samples_[d][ns].total_costs_[j]);
-                //cout << "sample (" << ns << ") : " << samples_[d][ns].parameters_[j].transpose() << endl;
-                //cout << samples_[d][ns].noise_[j].transpose() << endl;
+                samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j].cwiseProduct(samples_[d][ns].total_costs_[j]);
             }
 
             jointLimits( samples_[d][ns] );
@@ -811,15 +805,17 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
             // Save costmap to matlab with original weights
             ChronoTimeOfDayOn();
 
-            std::vector<int> active_feature;
-            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
-            {
-                active_feature.clear();
-                active_feature.push_back(i);
-                feature_fct_->setActiveFeatures( active_feature );
+//            std::vector<int> active_feature;
+//            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
+//            {
+//                active_feature.clear();
+//                active_feature.push_back(i);
+//                feature_fct_->setActiveFeatures( active_feature );
 //                global_PlanarCostFct->produceCostMap(i);
 //                global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
-            }
+//            }
+
+//            global_PlanarCostFct->produceCostMap(0);
 
             double time;
             ChronoTimeOfDayTimes( &time );
@@ -1053,7 +1049,7 @@ void IocEvaluation::runSampling()
     ioc.generateSamples( nb_samples_ );
 
     // Compute the sum of gradient
-    double gradient_sum = 0.0;
+    // double gradient_sum = 0.0;
 
     // Get samples features
     std::vector< std::vector<API::Trajectory> > samples = ioc.getSamples();
@@ -1065,7 +1061,7 @@ void IocEvaluation::runSampling()
             FeatureVect phi = feature_fct_->getFeatureCount( samples[d][i] );
             // cout << "Feature Sample : " << phi.transpose() << endl;
             phi_k[d].push_back( phi );
-            gradient_sum += feature_fct_->getJacobianSum( samples[d][i] );
+            // gradient_sum += feature_fct_->getJacobianSum( samples[d][i] );
             // cout << "Sample(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
             // cout << "Smoothness(" << d << "," <<  i << ") : " << phi_k[d][i][0] << endl;
         }
@@ -1074,10 +1070,8 @@ void IocEvaluation::runSampling()
     // checkStartAndGoal( samples );
 
     ioc.addAllToDraw();
-
     saveToMatrix( phi_demo, phi_k );
-
-    cout << "gradient sum = " << gradient_sum << endl;
+    // cout << "gradient sum = " << gradient_sum << endl;
 }
 
 void IocEvaluation::runFromFileSampling()

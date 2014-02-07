@@ -63,7 +63,8 @@ void MultiplePlanners::saveTrajsToFile( std::string folder )
 
 void MultiplePlanners::loadTrajsFromFile( std::string folder )
 {
-    cout << " loadTrajsFromFile " << endl;
+    cout << "--------------------------------------------" << endl;
+    cout << " load trajs trom file " << endl;
 
     std::vector<std::string>  files = move3d_get_files_in_folder( folder , "traj" );
 

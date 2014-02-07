@@ -92,8 +92,8 @@ FeatureVect Feature::getFeatureCount( const API::Trajectory& t )
     {
         confPtr_t q_1 = t[i-1];
         confPtr_t q_2 = t[i];
-        Eigen::VectorXd pos1 = q_1->getEigenVector();
-        Eigen::VectorXd pos2 = q_2->getEigenVector();
+        Eigen::VectorXd pos1 = q_1->getEigenVector(6,7);
+        Eigen::VectorXd pos2 = q_2->getEigenVector(6,7);
         double dist = ( pos1 - pos2 ).norm();
         phi += getFeatures( *q_1 )*dist;
     }
