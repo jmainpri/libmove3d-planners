@@ -156,11 +156,12 @@ public:
     //---------------------------------------------------------
     // Getters & Setters
 
-    void setColor(int col) {mColor=col;}
+    void setUseContinuousColors(bool use_continuous_color) { m_use_continuous_color=use_continuous_color; }
+    void setColor(double col) { m_Color=col; }
 
     unsigned int getHighestCostId() const
     {
-        return HighestCostId;
+        return m_HighestCostId;
     }
 
     Robot* getRobot() const
@@ -191,25 +192,26 @@ public:
     // Members
 protected:
     /* Robot */
-    Robot*										m_Robot;
+    Robot*						m_Robot;
 
-    unsigned int							HighestCostId;
-    bool											isHighestCostIdSet;
+    unsigned int				m_HighestCostId;
+    bool						m_isHighestCostIdSet;
 
 private:
     std::vector<LocalPath*> 	m_Courbe;
 
     /* name of trajectory */
-    std::string name;
+    std::string                 m_name;
 
     /* Name of the file */
-    std::string file;
+    std::string                 m_file;
 
-    int mColor;
+    bool                        m_use_continuous_color;
+    double                      m_Color;
 
     /* Start and Goal (should never change) */
-    confPtr_t m_Source;
-    confPtr_t m_Target;
+    confPtr_t                   m_Source;
+    confPtr_t                   m_Target;
 };
 }
 

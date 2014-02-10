@@ -67,6 +67,7 @@ enum boolParameter
     trajStompWithIterLimit,
     trajStompMultiplyM,
     trajStompMatrixAdaptation,
+    trajStompNoPrint,
 
     // Traj
     trajBiasOptim,

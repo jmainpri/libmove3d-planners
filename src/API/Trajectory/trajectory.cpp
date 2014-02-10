@@ -36,11 +36,12 @@ std::vector<Trajectory> global_trajToDraw;
 
 Trajectory::Trajectory() :
     m_Robot(NULL),
-    HighestCostId(0),
-    isHighestCostIdSet(false),
-    name(""),
-    file(""),
-    mColor(0),
+    m_HighestCostId(0),
+    m_isHighestCostIdSet(false),
+    m_name(""),
+    m_file(""),
+    m_use_continuous_color(false),
+    m_Color(0),
     m_Source(new Configuration(m_Robot,NULL))
 {
 
@@ -48,11 +49,12 @@ Trajectory::Trajectory() :
 
 Trajectory::Trajectory(Robot* R) :
     m_Robot(R),
-    HighestCostId(0),
-    isHighestCostIdSet(false),
-    name(""),
-    file(""),
-    mColor(0),
+    m_HighestCostId(0),
+    m_isHighestCostIdSet(false),
+    m_name(""),
+    m_file(""),
+    m_use_continuous_color(false),
+    m_Color(0),
     m_Source(new Configuration(m_Robot,NULL))
 {
 
@@ -60,11 +62,12 @@ Trajectory::Trajectory(Robot* R) :
 
 Trajectory::Trajectory(const Trajectory& T) :
     m_Robot(T.m_Robot),
-    HighestCostId(T.HighestCostId),
-    isHighestCostIdSet(T.isHighestCostIdSet),
-    name(T.name),
-    file(T.file),
-    mColor(T.mColor),
+    m_HighestCostId(T.m_HighestCostId),
+    m_isHighestCostIdSet(T.m_isHighestCostIdSet),
+    m_name(T.m_name),
+    m_file(T.m_file),
+    m_use_continuous_color(T.m_use_continuous_color),
+    m_Color(T.m_Color),
     m_Source(T.m_Source),
     m_Target(T.m_Target)
 {
@@ -88,9 +91,9 @@ Trajectory& Trajectory::operator=(const Trajectory& T)
 
     m_Courbe.clear();
 
-    // TODO Name of file and robot
-    name = T.name;
-    file = T.file;
+    // TODO m_name of m_file and robot
+    m_name = T.m_name;
+    m_file = T.m_file;
 
     m_Robot = T.m_Robot;
 
@@ -103,21 +106,23 @@ Trajectory& Trajectory::operator=(const Trajectory& T)
 
     m_Source = T.m_Source;
     m_Target = T.m_Target;
-    mColor = T.mColor;
-    HighestCostId = T.HighestCostId;
-    isHighestCostIdSet = T.isHighestCostIdSet;
+    m_use_continuous_color = T.m_use_continuous_color;
+    m_Color = T.m_Color;
+    m_HighestCostId = T.m_HighestCostId;
+    m_isHighestCostIdSet = T.m_isHighestCostIdSet;
 
     return *this;
 }
 
-Trajectory::Trajectory( vector< shared_ptr<Configuration> >& configs) :
-    HighestCostId(0),
-    isHighestCostIdSet(false)
+Trajectory::Trajectory( std::vector<confPtr_t>& configs) :
+    m_HighestCostId(0),
+    m_isHighestCostIdSet(false),
+    m_use_continuous_color(false)
 {
     if ( !configs.empty() )
     {
-        name = "";
-        file = "";
+        m_name = "";
+        m_file = "";
 
         m_Robot	= configs[0]->getRobot();
 
@@ -145,7 +150,7 @@ Trajectory::Trajectory( vector< shared_ptr<Configuration> >& configs) :
                 << "Warning: Constructing a class out of empty vector of configuration"
                 << endl;
     }
-    mColor = 1;
+    m_Color = 1;
 }
 
 Trajectory::Trajectory(Robot* R, p3d_traj* t)
@@ -157,7 +162,7 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t)
         return;
     }
 
-    // TODO Name and file (string based)
+    // TODO Name and m_file (string based)
     m_Robot = R;
 
     p3d_localpath* localpathPt = t->courbePt;
@@ -183,7 +188,8 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t)
     //	m_Target->print();
 
     //	cout << "range_param = " << range_param << endl;
-    mColor = 0;
+    m_use_continuous_color = false;
+    m_Color = 0;
 
     if (!getBegin()->equal(*configAtParam(0)))
     {
@@ -1513,37 +1519,46 @@ void Trajectory::draw(int nbKeyFrame)
         m_Robot->setAndUpdate(*q);
         p3d_jnt_get_cur_vect_point(drawnjnt, pf);
 
-        if (isHighestCostIdSet)
+        if (m_isHighestCostIdSet)
         {
-            if (getLocalPathId(u) == HighestCostId && !red)
+            if (getLocalPathId(u) == m_HighestCostId && !red)
             {
                 red = true;
-                saveColor = mColor;
-                mColor = 3;
+                saveColor = m_Color;
+                m_Color = 3;
             }
-            if ((mColor == 3) && (getLocalPathId(u) != HighestCostId) && red)
+            if ((m_Color == 3) && (getLocalPathId(u) != m_HighestCostId) && red)
             {
-                mColor = saveColor;
+                m_Color = saveColor;
                 red = false;
             }
         }
 
+        double height_i, height_f;
+
         if ((!ENV.getBool(Env::isCostSpace)) || (GroundCostObj == NULL))
         {
-            glLineWidth(3.);
-            g3d_drawOneLine(pi[0], pi[1], pi[2], pf[0], pf[1], pf[2], mColor, NULL);
-            glLineWidth(1.);
+            height_i = pi[2];
+            height_f = pf[2];
         }
-        else
-        {
+        else {
             /*val1 =*/ GHintersectionVerticalLineWithGround(GroundCostObj, pi[0], pi[1], &Cost1);
             /*val2 =*/ GHintersectionVerticalLineWithGround(GroundCostObj, pf[0], pf[1], &Cost2);
-            glLineWidth(3.);
-            g3d_drawOneLine(pi[0], pi[1], Cost1 + (ZmaxEnv - ZminEnv) * 0.02,
-                            pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02,
-                            mColor, NULL);
-            glLineWidth(1.);
+            height_i = Cost1 + (ZmaxEnv - ZminEnv) * 0.02;
+            height_f = Cost2 + (ZmaxEnv - ZminEnv) * 0.02;
         }
+
+        glLineWidth(3.);
+        if( !m_use_continuous_color ) {
+            g3d_drawOneLine(pi[0], pi[1], height_i, pf[0], pf[1], height_f, m_Color, NULL);
+        }
+        else{
+            double colorvector[4];
+            GroundColorMixGreenToRed( colorvector, m_Color );
+            g3d_drawOneLine(pi[0], pi[1], height_i, pf[0], pf[1], height_f, Any, colorvector);
+        }
+        glLineWidth(1.);
+
         p3d_vectCopy(pf, pi);
         u += du;
     }
@@ -1944,8 +1959,8 @@ bool Trajectory::replacePortion( double param1, double param2, vector<LocalPath*
     double soFar(0.0);
     double prevSoFar(0.0);
 
-//    double param_start(0.0);
-//    double param_end(0.0);
+    //    double param_start(0.0);
+    //    double param_end(0.0);
 
     unsigned int id_LP_1(0);
     unsigned int id_LP_2(0);
@@ -1982,7 +1997,7 @@ bool Trajectory::replacePortion( double param1, double param2, vector<LocalPath*
         {
             // get configuration in local path i
             q22 = m_Courbe.at(i)->configAtParam(param2 - prevSoFar);
-//            param_end = param2 - soFar;
+            //            param_end = param2 - soFar;
             id_LP_2 = i;
             break;
         }
@@ -1992,7 +2007,7 @@ bool Trajectory::replacePortion( double param1, double param2, vector<LocalPath*
         {
             q22 = m_Courbe.at(m_Courbe.size() - 1)->getEnd();
             id_LP_2 = i;
-//            param_end = soFar;
+            //            param_end = soFar;
         }
     }
 

@@ -751,8 +751,8 @@ void Smoothing::setSortedIndex()
 	
 	sort(m_IdSorted.begin(), m_IdSorted.end(), myCompObject);
 	
-	isHighestCostIdSet = true;
-	HighestCostId = m_IdSorted[0];
+    m_isHighestCostIdSet = true;
+    m_HighestCostId = m_IdSorted[0];
 	
 	if (ENV.getBool(Env::debugCostOptim))
 	{
@@ -778,7 +778,7 @@ double Smoothing::getBiasedParamOnTraj()
 	
 	randDist += p3d_random(0, getLocalPath(m_IdSorted[id])->getParamMax());
 	
-	if (getLocalPathId(randDist) == HighestCostId) {
+    if (getLocalPathId(randDist) == m_HighestCostId) {
 		m_nbBiased++;
 	}
 	

@@ -47,16 +47,16 @@ void MultiplePlanners::multipleRun( std::string folder, int nb_runs )
 
 void MultiplePlanners::saveTrajsToFile( std::string folder )
 {
+    std::stringstream ss;
+
     for( int i=0;i<int(best_traj_.size());i++)
     {
-        // Set file names
-        std::stringstream ss;
+        ss.str("");
         ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
-        std::string filename = folder + "/" + ss.str();
 
         best_traj_[i].replaceP3dTraj();
+        p3d_save_traj( (folder + "/" + ss.str()).c_str(), robot_->getRobotStruct()->tcur );
 
-        p3d_save_traj( filename.c_str(), robot_->getRobotStruct()->tcur );
         cout << "save planner result " << i << " : " << ss.str() << endl;
     }
 }
@@ -77,7 +77,7 @@ void MultiplePlanners::loadTrajsFromFile( std::string folder )
 
     for( int i=0;i<int(files.size());i++)
     {
-        ss.str(""); // clear stream
+        ss.str("");
         ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
 
         if ( !p3d_read_traj( ( folder + "/" + files[i] ).c_str()) )

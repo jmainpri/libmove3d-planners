@@ -606,7 +606,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
             {
                 if ( is_collision_free_)
                 {
-                    if( print_cost )
+                    if( !PlanEnv->getBool(PlanParam::trajStompNoPrint) )
                         cout << "New best" << endl;
 
                     best_group_trajectory_ = group_trajectory_.getTrajectory();
@@ -663,9 +663,9 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
         }
 
         // save the cost and time as pair
-        //      traj_convergence_with_time.push_back( make_pair( time_, move3d_cost ) );
+        // traj_convergence_with_time.push_back( make_pair( time_, move3d_cost ) );
 
-        if( print_cost )
+        if( !PlanEnv->getBool(PlanParam::trajStompNoPrint) )
         {
             if( (!ENV.getBool(Env::drawDisabled)) && ( ENV.getBool(Env::drawTraj) || PlanEnv->getBool(PlanParam::drawParallelTraj) ))
             {

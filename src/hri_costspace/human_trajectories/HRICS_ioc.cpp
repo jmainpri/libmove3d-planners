@@ -65,9 +65,9 @@ void HRICS_run_sphere_ioc()
     int nb_iterations = HriEnv->getInt(HricsParam::ioc_sample_iteration);
 
     int nb_demos = 1;
-    int nb_sampling_phase = 20;
-    int min_samples = 10;
-    int max_samples = 100;
+    int nb_sampling_phase = 10;
+//    int min_samples = 10;
+//    int max_samples = 100;
 
     bool StopRun = false;
 
@@ -86,7 +86,7 @@ void HRICS_run_sphere_ioc()
 
     MultiplePlanners planners(rob);
     if( HriEnv->getBool(HricsParam::ioc_load_samples_from_file) )
-        planners.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP");
+        planners.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP_LARGE" );
         // planners.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/GENERAL_COSTMAP");
 
     for(int i=0; i<nb_sampling_phase && !StopRun; i++)
@@ -103,7 +103,8 @@ void HRICS_run_sphere_ioc()
         cout << "------------------------------" << endl;
 
         // interpolation for the number of sampling phase
-        int nb_samples = min_samples + double(iteration)*(max_samples-min_samples)/double(nb_sampling_phase-1);
+        // int nb_samples = min_samples + double(iteration)*(max_samples-min_samples)/double(nb_sampling_phase-1);
+        int nb_samples = (i+1)*16;
 
         cout << "NB SAMPLES : " << nb_samples << endl;
 
@@ -138,7 +139,14 @@ void HRICS_run_sphere_ioc()
 
         case run_planner:
             cout << "RUN MULTI-PLANNER" << endl;
-            eval.runPlannerMultipleFeature( 100 ); // 10
+            eval.runPlannerMultipleFeature( 50 ); // 10
+            StopRun = true;
+            break;
+
+        default:
+            cout << "DEFAULT : LOAD TRAJECTORIES" << endl;
+            eval.loadPlannerTrajectories( 16, i, false );
+            // StopRun = true;
             break;
         }
 
@@ -160,20 +168,7 @@ void HRICS_run_sphere_ioc()
 
         move3d_save_matrix_to_file( mat, "matlab/data/result.txt" );
     }
-
-//    eval.loadDemonstrations();
-//    eval.runLearning();
-//    eval.loadWeightVector();
-//    eval.generateDemonstrations();
-//    eval.loadDemonstrations();
-//    eval.saveDemoToMatlab();
-
-//    eval.compareDemosAndPlanned();
-
-//    global_PlanarCostFct->produceCostMap();
 }
-
-
 
 
 // -------------------------------------------------------------
@@ -890,19 +885,21 @@ void IocEvaluation::runPlannerMultipleFeature( int nb_runs )
 
     for( int i=0; i<nb_runs; i++ )
     {
-        planners_.run();
-        g3d_draw_allwin_active();
+//        planners_.run();
+//        g3d_draw_allwin_active();
 
-//        std::vector<int> active_feature;
-//        for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
-//        {
-//            active_feature.clear();
-//            active_feature.push_back(i);
-//            feature_fct_->setActiveFeatures( active_feature );
-//            // planners_.multipleRun(1);
-//            planners_.run();
-//            g3d_draw_allwin_active();
-//        }
+        std::vector<int> active_feature;
+        for( int j=0;j<feature_fct_->getNumberOfFeatures();j++)
+        {
+            cout << "--------------------------------------------" << endl;
+            cout << "RUN : " << i << " , FEATURE : " << j << endl;
+            active_feature.clear();
+            active_feature.push_back(j);
+            feature_fct_->setActiveFeatures( active_feature );
+            // planners_.multipleRun(1);
+            planners_.run();
+            g3d_draw_allwin_active();
+        }
     }
 
     planners_.saveTrajsToFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square" );
@@ -960,6 +957,63 @@ void IocEvaluation::loadDemonstrations()
         demos_.push_back(T);
         global_trajToDraw.push_back(T);
     }
+}
+
+void IocEvaluation::loadPlannerTrajectories(int nb_trajs, int offset, bool random )
+{
+//    planners_.clearTrajs();
+//    planners_.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP" );
+
+    cout << "planners_.getBestTrajs().size() : " << planners_.getBestTrajs().size() << endl;
+
+    if( nb_trajs < 0 ){
+        nb_trajs = planners_.getBestTrajs().size();
+    }
+    if( offset < 0 ){
+        offset = 0;
+    }
+    if( nb_trajs*(offset+1) > int(planners_.getBestTrajs().size()) ){
+        samples_.clear();
+        cout << "out of bounds in : " << __func__ << endl;
+        return;
+    }
+
+    int sequence_size = 16;
+
+    if( random == false )
+    {
+        std::vector<API::Trajectory>::const_iterator first = planners_.getBestTrajs().begin() + (nb_trajs*offset) ;
+        std::vector<API::Trajectory>::const_iterator last  = planners_.getBestTrajs().begin() + (nb_trajs*(offset+1));
+        samples_ = std::vector<API::Trajectory>(first, last);
+    }
+    else
+    {
+        // int nb_sequences =  int(planners_.getBestTrajs().size()) / sequence_size;
+        int nb_big_sequence = int(planners_.getBestTrajs().size()) / nb_trajs;
+
+        samples_.clear();
+        // cout << "nb of sequences : " << nb_sequences << endl;
+        for(int i=0;i<nb_trajs;i++)
+        {
+            int id = i + nb_trajs*p3d_random_integer( 0, nb_big_sequence-1 );
+            // cout << "Add id : " << id << endl;
+            samples_.push_back( planners_.getBestTrajs()[id] );
+        }
+    }
+
+    global_trajToDraw.clear();
+    for(int i=0;i<int(samples_.size());i++)
+    {
+        double color = (double(i%sequence_size)/sequence_size);
+        // cout << "i : " << i << ", color : " << color << endl;
+        samples_[i].cutTrajInSmallLP(nb_way_points_-1);
+        samples_[i].setUseContinuousColors(true);
+        samples_[i].setColor( color );
+
+        global_trajToDraw.push_back( samples_[i] );
+    }
+
+    g3d_draw_allwin_active();
 }
 
 void IocEvaluation::loadWeightVector()
@@ -1093,15 +1147,22 @@ void IocEvaluation::runFromFileSampling()
     std::vector<FeatureVect> phi_demo = addDemonstrations( ioc );
 
     // Load samples from file
-    samples_ = planners_.getBestTrajs();
+    // samples_ = planners_.getBestTrajs();
 
     // Random removal in the vector
-    while( int(samples_.size()) != nb_samples_ )
+    bool random_removal = false;
+    if( random_removal )
     {
-        int pos = p3d_random_integer(0,samples_.size()-1);
-        std::vector<API::Trajectory>::iterator it = samples_.begin();
-        std::advance(it, pos);
-        samples_.erase(it);
+        while( int(samples_.size()) != nb_samples_ )
+        {
+            int pos = p3d_random_integer(0,samples_.size()-1);
+            std::vector<API::Trajectory>::iterator it = samples_.begin();
+            std::advance(it, pos);
+            samples_.erase(it);
+        }
+    }
+    else {
+        loadPlannerTrajectories( nb_samples_, -1, true );
     }
 
     global_trajToDraw.clear();
@@ -1219,10 +1280,11 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
 
     cout << "mean diff : " << mean_learned - mean_demo << " , stdev diff : " << stdev_learned - stdev_demo  << endl;
 
-    Eigen::VectorXd result(3);
+    Eigen::VectorXd result(4);
     result[0] = mean_demo;
     result[1] = mean_learned;
     result[2] = mean_learned - mean_demo;
+    result[3] = ( learned_vect_ - original_vect_ ).norm();
     return result;
 }
 
@@ -1271,13 +1333,8 @@ void IocEvaluation::saveToMatrix( const std::vector<FeatureVect>& demos, const s
         }
     }
 
-    // Save traj to file
-    std::ofstream file( feature_matrix_name_.c_str() );
-    if (file.is_open())
-        file << mat << '\n';
-    file.close();
-
-    cout << "save samples to : " << feature_matrix_name_ << endl;
+    //cout << "save samples to : " << feature_matrix_name_ << endl;
+    move3d_save_matrix_to_file( mat, feature_matrix_name_ );
 }
 
 bool IocEvaluation::loadFromMatrix( std::vector<FeatureVect>& demos, std::vector< std::vector<FeatureVect> >& samples )

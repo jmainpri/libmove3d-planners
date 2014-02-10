@@ -145,7 +145,7 @@ public:
     //! Run learning using the C++ library
     virtual void runLearning();
 
-    //! run Sampling using saved trajectories
+    //! Run Sampling using saved trajectories
     void runFromFileSampling();
 
     //! Run Stomp for multiple feature functions
@@ -156,6 +156,9 @@ public:
 
     //! Load recorded traectories in the move3d format
     void loadDemonstrations();
+
+    //! Load trajectories in planner class
+    void loadPlannerTrajectories( int nb_trajs=-1, int offset=-1, bool random=false );
 
     //! Load weight vector from CSV format
     void loadWeightVector();
@@ -214,7 +217,7 @@ protected:
 
     bool load_sample_from_file_;
     MultiplePlanners& planners_;
-
+    int round_id_;
 };
 
 }
