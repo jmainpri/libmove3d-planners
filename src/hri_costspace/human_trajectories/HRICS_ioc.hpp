@@ -137,7 +137,7 @@ private:
 class IocEvaluation
 {
 public:
-    IocEvaluation( Robot* rob, int nb_demos, int nb_samples, int nb_way_points );
+    IocEvaluation( Robot* rob, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners );
 
     //! Sample trajectories around the demonstrations
     virtual void runSampling();
@@ -213,7 +213,7 @@ protected:
     ChompPlanningGroup* plangroup_;
 
     bool load_sample_from_file_;
-    MultiplePlanners planners_;
+    MultiplePlanners& planners_;
 
 };
 

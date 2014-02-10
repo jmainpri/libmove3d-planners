@@ -10,7 +10,7 @@ namespace HRICS
 class HumanIoc : public IocEvaluation
 {
 public:
-    HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples, int nb_way_points );
+    HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners );
 
     void runSampling();
     void setPlanningGroup();

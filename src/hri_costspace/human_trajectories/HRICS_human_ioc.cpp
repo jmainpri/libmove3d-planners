@@ -40,7 +40,9 @@ void HRICS_run_human_ioc_from_recorded_motion()
     int nb_samples = 1000;
     int nb_way_points = HriEnv->getInt(HricsParam::ioc_nb_of_way_points);
 
-    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points );
+    MultiplePlanners planners(human2);
+
+    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points, planners );
     ioc.setDemos( global_motionRecorders[0]->getStoredMotions() );
     ioc.runLearning();
 }
@@ -60,12 +62,14 @@ void HRICS_run_human_ioc_evaluation()
     int nb_samples = 1000;
     int nb_way_points = HriEnv->getInt(HricsParam::ioc_nb_of_way_points);
 
-    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points );
+    MultiplePlanners planners(human2);
+
+    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points, planners );
     ioc.loadDemonstrations();
     ioc.runLearning();
 }
 
-HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples, int nb_way_points ) : IocEvaluation( active, nb_demos, nb_samples, nb_way_points )
+HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners ) : IocEvaluation( active, nb_demos, nb_samples, nb_way_points, planners )
 {
     nb_demos_ = nb_demos;
     nb_samples_ = nb_samples; // 1000

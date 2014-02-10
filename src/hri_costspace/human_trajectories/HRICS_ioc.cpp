@@ -84,6 +84,11 @@ void HRICS_run_sphere_ioc()
 
     int iteration = 0;
 
+    MultiplePlanners planners(rob);
+    if( HriEnv->getBool(HricsParam::ioc_load_samples_from_file) )
+        planners.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP");
+        // planners.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/GENERAL_COSTMAP");
+
     for(int i=0; i<nb_sampling_phase && !StopRun; i++)
     {
         // iteration = i; // 2, 5, 30, 50
@@ -102,7 +107,7 @@ void HRICS_run_sphere_ioc()
 
         cout << "NB SAMPLES : " << nb_samples << endl;
 
-        IocEvaluation eval( rob, nb_demos, nb_samples, nb_way_points );
+        IocEvaluation eval( rob, nb_demos, nb_samples, nb_way_points, planners );
 
         switch( phase )
         {
@@ -133,7 +138,7 @@ void HRICS_run_sphere_ioc()
 
         case run_planner:
             cout << "RUN MULTI-PLANNER" << endl;
-            eval.runPlannerMultipleFeature(1); // 10
+            eval.runPlannerMultipleFeature( 100 ); // 10
             break;
         }
 
@@ -759,7 +764,7 @@ Eigen::VectorXd Ioc::solve( const std::vector<Eigen::VectorXd>& phi_demo, const 
 // -------------------------------------------------------------
 // -------------------------------------------------------------
 
-IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_way_points ) : robot_(rob), planners_(rob)
+IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners ) : robot_(rob), planners_(planners)
 {
     nb_demos_ = nb_demos;
     nb_samples_ = nb_samples;
@@ -807,15 +812,15 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
             // Save costmap to matlab with original weights
             ChronoTimeOfDayOn();
 
-            std::vector<int> active_feature;
-            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
-            {
-                active_feature.clear();
-                active_feature.push_back(i);
-                feature_fct_->setActiveFeatures( active_feature );
-                global_PlanarCostFct->produceCostMap(i);
-                global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
-            }
+//            std::vector<int> active_feature;
+//            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
+//            {
+//                active_feature.clear();
+//                active_feature.push_back(i);
+//                feature_fct_->setActiveFeatures( active_feature );
+//                global_PlanarCostFct->produceCostMap(i);
+//                global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
+//            }
 
 //            global_PlanarCostFct->produceCostMap(0);
 
@@ -826,10 +831,11 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
         }
     }
 
-    if( load_sample_from_file_ )
-    {
-        planners_.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP" ); // TODO make this dynamic to the folder
-    }
+//    if( load_sample_from_file_ )
+//    {
+//        planners_.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/GENERAL_COSTMAP");
+////        planners_.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP" );
+//    }
 }
 
 API::Trajectory IocEvaluation::planMotionRRT()
@@ -884,16 +890,19 @@ void IocEvaluation::runPlannerMultipleFeature( int nb_runs )
 
     for( int i=0; i<nb_runs; i++ )
     {
-        std::vector<int> active_feature;
-        for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
-        {
-            active_feature.clear();
-            active_feature.push_back(i);
-            feature_fct_->setActiveFeatures( active_feature );
-            // planners_.multipleRun(1);
-            planners_.run();
-            g3d_draw_allwin_active();
-        }
+        planners_.run();
+        g3d_draw_allwin_active();
+
+//        std::vector<int> active_feature;
+//        for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
+//        {
+//            active_feature.clear();
+//            active_feature.push_back(i);
+//            feature_fct_->setActiveFeatures( active_feature );
+//            // planners_.multipleRun(1);
+//            planners_.run();
+//            g3d_draw_allwin_active();
+//        }
     }
 
     planners_.saveTrajsToFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square" );
@@ -1009,18 +1018,18 @@ std::vector< std::vector<FeatureVect> > IocEvaluation::addSamples(HRICS::Ioc& io
     for(int i=0;i<int(samples_.size());i++)
     {
         samples_[i].cutTrajInSmallLP( nb_way_points_-1 );
-        FeatureProfile p = feature_fct_->getFeatureJacobianProfile( samples_[i] );
+        //FeatureProfile p = feature_fct_->getFeatureJacobianProfile( samples_[i] );
         ioc.addSample( 0, samples_[i].getEigenMatrix(6,7) );
         ioc.setNominalSampleValue( 0, i, samples_[i].getEigenMatrix(6,7)  );
-        ioc.setTotalCostsSampleValue( 0, i, p );
-        p = p.array().pow( 4 );
-        cout << "p(" << i << ") : " << p.transpose() << endl;
+        // ioc.setTotalCostsSampleValue( 0, i, p );
+        // p = p.array().pow( 4 );
+        // cout << "p(" << i << ") : " << p.transpose() << endl;
     }
 
     // ioc.generateSamples( nb_samples_ );
 
     // Compute the sum of gradient
-    double gradient_sum = 0.0;
+    // double gradient_sum = 0.0;
 
     std::vector< std::vector<API::Trajectory> > samples = ioc.getSamples();
     std::vector< std::vector<FeatureVect> > phi_k( samples.size() );
@@ -1030,12 +1039,12 @@ std::vector< std::vector<FeatureVect> > IocEvaluation::addSamples(HRICS::Ioc& io
         {
             FeatureVect phi = feature_fct_->getFeatureCount( samples[d][i] );
             // cout << "Feature Sample : " << phi.transpose() << endl;
-            gradient_sum += feature_fct_->getJacobianSum( samples[d][i] );
+            // gradient_sum += feature_fct_->getJacobianSum( samples[d][i] );
             phi_k[d].push_back( phi );
         }
     }
 
-    cout << "gradient sum = " << gradient_sum << endl;
+    // cout << "gradient sum = " << gradient_sum << endl;
 
     return phi_k;
 }
@@ -1095,15 +1104,23 @@ void IocEvaluation::runFromFileSampling()
         samples_.erase(it);
     }
 
+    global_trajToDraw.clear();
+    std::vector< std::vector<FeatureVect> > phi_k(1);
+    for( int i=0;i<int(samples_.size());i++)
+    {
+        global_trajToDraw.push_back( samples_[i] );
+        FeatureVect phi = feature_fct_->getFeatureCount( samples_[i] );
+        phi_k[0].push_back( phi );
+    }
+
     // Get samples features
-    std::vector< std::vector<FeatureVect> > phi_k = addSamples( ioc );
+    // std::vector< std::vector<FeatureVect> > phi_k = addSamples( ioc );
 
 //    std::vector< std::vector<API::Trajectory> > samples;
 //    samples.push_back( samples_ );
 //    checkStartAndGoal( samples );
 
-    ioc.addAllToDraw();
-
+//    ioc.addAllToDraw();
     saveToMatrix( phi_demo, phi_k );
 }
 

@@ -17,7 +17,7 @@ void move3d_save_matrix_to_file( const Eigen::MatrixXd& mat, std::string filenam
 
 std::vector<std::string>  move3d_get_files_in_folder( std::string foldername, std::string extension )
 {
-    bool quiet = false;
+    bool quiet = true;
     std::vector<std::string> files;
 
     std::string command = "ls " + foldername;
