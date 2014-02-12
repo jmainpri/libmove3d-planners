@@ -380,3 +380,5 @@ src/hri_costspace/human_trajectories/HRICS_human_features.cpp
 src/hri_costspace/human_trajectories/HRICS_human_cost_space.cpp
 src/hri_costspace/human_trajectories/HRICS_features.cpp
 src/hri_costspace/human_trajectories/HRICS_detours.cpp
+src/hri_costspace/human_trajectories/HRICS_boxes.hpp
+src/hri_costspace/human_trajectories/HRICS_boxes.cpp
