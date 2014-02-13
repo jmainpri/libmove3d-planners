@@ -125,7 +125,7 @@ int ThresholdExpansion::extendExpandProcess(Node* expansionNode, MOVE3D_PTR_NAME
   // Discards potential nodes that are to close to the graph
   if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath,*expansionNode))
   {
-		//		cout << "Failed expandControl test in " << __func__ << endl;
+		//		cout << "Failed expandControl test in " << __PRETTY_FUNCTION__ << endl;
     return 0;
   }
 	
@@ -171,7 +171,7 @@ int ThresholdExpansion::extendExpandProcess(Node* expansionNode, MOVE3D_PTR_NAME
 		if ( ( directionNode != NULL )&&( extensionNode == directionNode ))
 		{
 			// Components were merged
-			cout << "Connected in Transition" << __func__ << endl;
+			cout << "Connected in Transition" << __PRETTY_FUNCTION__ << endl;
 			return 0;
 		}
 	}

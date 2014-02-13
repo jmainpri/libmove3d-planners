@@ -55,7 +55,7 @@ SoftmotionReplanner::SoftmotionReplanner(Robot* r) : Replanner(r)
     // Call to the virtual function
     if( !init() )
     {
-        cout << "Error initializing virtual function of the replanner in " << __FILE__ << " at " << __func__ << endl;
+        cout << "Error initializing virtual function of the replanner in " << __FILE__ << " at " << __PRETTY_FUNCTION__ << endl;
     }
 }
 
@@ -69,7 +69,7 @@ bool SoftmotionReplanner::init()
 {
     if( m_robot == NULL )
     {
-        cout << "Error: robot is not initialized in " << __func__ << endl;
+        cout << "Error: robot is not initialized in " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
@@ -176,7 +176,7 @@ void SoftmotionReplanner::run()
 {
     if ( m_robot == NULL || m_manipPlanner == NULL )
     {
-        cout << "Error : replanning not well initialized in " << __func__ << __FILE__ << endl;
+        cout << "Error : replanning not well initialized in " << __PRETTY_FUNCTION__ << __FILE__ << endl;
         return;
     }
 

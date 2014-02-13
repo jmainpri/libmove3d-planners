@@ -21,7 +21,7 @@ using std::endl;
 
 Spheres* global_SphereCostFct=NULL;
 
-void HRICS_init_sphere_cost()
+bool HRICS_init_sphere_cost()
 {
     cout << "Initializing sphere cost" << endl;
 
@@ -35,10 +35,12 @@ void HRICS_init_sphere_cost()
         cout << "add cost functions : " << cost_function << endl;
         global_costSpace->addCost( cost_function, boost::bind( &Spheres::cost, global_SphereCostFct, _1) );
         // global_costSpace->setCost( cost_function );
+        return true;
     }
     else{
         delete global_SphereCostFct;
         global_SphereCostFct = NULL;
+        return false;
     }
 }
 
@@ -109,9 +111,11 @@ void Spheres::initialize()
     double max = w_.maxCoeff();
     w_ /= max;
 
+    nb_dofs_ = 2;
+
     active_dofs_.resize(2);
     active_dofs_[0] = 6;
-    active_dofs_[1] = 6;
+    active_dofs_[1] = 7;
 }
 
 FeatureVect Spheres::getFeatures( const Configuration& q )

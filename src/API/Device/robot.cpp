@@ -152,7 +152,7 @@ const std::vector<Joint*>& Robot::getAllJoints()
 vector<Vector3d> Robot::getObjectBox()
 {
     //	if (m_ObjectBox.empty()) {
-    //    cout << "Warning : " << __func__ << " : no Object Box" << endl;
+    //    cout << "Warning : " << __PRETTY_FUNCTION__ << " : no Object Box" << endl;
     //	}
 
     vector<Vector3d> box(8);

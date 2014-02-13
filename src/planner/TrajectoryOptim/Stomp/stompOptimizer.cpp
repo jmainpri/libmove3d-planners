@@ -329,7 +329,7 @@ void StompOptimizer::initHandover()
     
     const char* home = getenv("HOME_MOVE3D");
     if( home == NULL ) {
-        cout << "ERROR home is not defined for config generator in " << __func__ << endl;
+        cout << "ERROR home is not defined for config generator in " << __PRETTY_FUNCTION__ << endl;
     }
     
     string dir(home);

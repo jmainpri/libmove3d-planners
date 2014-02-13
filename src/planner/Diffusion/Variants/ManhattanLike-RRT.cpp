@@ -123,7 +123,7 @@ bool ManhattanLikeRRT::getCurrentInvalidConf(Configuration& q) {
 	 bio_get_current_q_inv(_Robot->getRobotStruct(), q.getConfigStruct()) :
 	 p3d_get_current_q_inv(_Robot->getRobotStruct(), q.getConfigStruct()));
 #endif
-	cout << "Warning : BIO Not compiled in " << __func__ <<  endl;
+	cout << "Warning : BIO Not compiled in " << __PRETTY_FUNCTION__ <<  endl;
 	return false;
 }
 

@@ -23,6 +23,7 @@ class DrawFunctions
 {
 public:
     DrawFunctions();
+    ~DrawFunctions();
 
     // Get all draw functions
     std::vector<std::string> getAllDrawFunctions();

@@ -40,7 +40,7 @@ void HRICS_run_sphere_ioc()
     Robot* rob = global_Project->getActiveScene()->getActiveRobot();
     if (!rob) {
         cout << "robot not initialized in file "
-             << __FILE__ << " ,  " << __func__ << endl;
+             << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
         return;
     }
 
@@ -50,7 +50,7 @@ void HRICS_run_sphere_ioc()
     if( *q_init == *q_goal )
     {
         cout << "init equal q_goal in file "
-             << __FILE__ << " ,  " << __func__ << endl;
+             << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
         return;
     }
 
@@ -657,7 +657,7 @@ double IocObjective::Eval( const DblVec& w, DblVec& dw )
 
     if( w.size() != dw.size() )
     {
-        cout << "error in size : " << __func__ << endl;
+        cout << "error in size : " << __PRETTY_FUNCTION__ << endl;
         return loss;
     }
 
@@ -806,17 +806,19 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
             // Save costmap to matlab with original weights
             ChronoTimeOfDayOn();
 
-//            std::vector<int> active_feature;
-//            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
-//            {
+            std::vector<int> active_feature;
+            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
+            {
 //                active_feature.clear();
-//                active_feature.push_back(i);
+                active_feature.push_back(i);
 //                feature_fct_->setActiveFeatures( active_feature );
 //                global_PlanarCostFct->produceCostMap(i);
 //                global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
-//            }
+            }
 
-//            global_PlanarCostFct->produceCostMap(0);
+            feature_fct_->setActiveFeatures( active_feature );
+            global_PlanarCostFct->produceCostMap(0);
+            global_PlanarCostFct->produceDerivativeFeatureCostMap(0);
 
             double time;
             ChronoTimeOfDayTimes( &time );
@@ -973,7 +975,7 @@ void IocEvaluation::loadPlannerTrajectories(int nb_trajs, int offset, bool rando
     }
     if( nb_trajs*(offset+1) > int(planners_.getBestTrajs().size()) ){
         samples_.clear();
-        cout << "out of bounds in : " << __func__ << endl;
+        cout << "out of bounds in : " << __PRETTY_FUNCTION__ << endl;
         return;
     }
 

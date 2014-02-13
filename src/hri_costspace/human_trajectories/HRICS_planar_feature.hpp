@@ -14,15 +14,16 @@ class PlanarFeature : public Feature
 
         virtual void initialize() = 0;
 
-        void produceCostMap(int ith);
-        void produceDerivativeFeatureCostMap(int ith);
-        void placeCenterGrid(bool on_wall);
+        virtual void produceCostMap(int ith);
+        virtual void produceDerivativeFeatureCostMap(int ith);
+        virtual void placeCenterGrid(bool on_wall);
         void printWeights() const;
         int addCenters(std::string type);
 
     protected:
         Robot* robot_;
         std::vector<Robot*> centers_;
+        int nb_dofs_;
     };
 }
 

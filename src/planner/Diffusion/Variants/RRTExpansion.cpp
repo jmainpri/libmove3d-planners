@@ -80,7 +80,7 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
                                  expandComp->getConnectedComponent()->getCompcoStruct()->box_env_small,
                                  (int) samplePassive);
 #else
-            printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+            printf("P3D_PLANNER not compiled in %s in %s",__PRETTY_FUNCTION__,__FILE__);
 #endif
 
             break;

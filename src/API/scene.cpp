@@ -86,7 +86,7 @@ int Scene::getRobotId(const string& str)
         }
     }
 
-    cout << "Error getting robot id in " << __func__ << endl;
+    cout << "Error getting robot id in " << __PRETTY_FUNCTION__ << endl;
     return -1;
 }
 

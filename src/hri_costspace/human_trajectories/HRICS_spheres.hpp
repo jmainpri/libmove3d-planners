@@ -20,6 +20,6 @@ public:
 }
 
 // Global cost function
-void HRICS_init_sphere_cost();
+bool HRICS_init_sphere_cost();
 
 #endif // HRICS_SPHERES_HPP

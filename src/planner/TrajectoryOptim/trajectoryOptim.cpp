@@ -127,7 +127,7 @@ bool traj_optim_set_MultiLP()
 {
     if (!m_robot) {
         cout << "robot not initialized in file "
-             << __FILE__ << " ,  " << __func__ << endl;
+             << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
@@ -154,7 +154,7 @@ bool traj_optim_invalidate_cntrts()
 {
     if (!m_robot) {
         cout << "robot not initialized in file "
-             << __FILE__ << " ,  " << __func__ << endl;
+             << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
@@ -321,7 +321,7 @@ API::Trajectory traj_optim_create_sraight_line_traj()
 {
     if (!m_robot) {
         cout << "robot not initialized in file "
-             << __FILE__ << " ,  " << __func__ << endl;
+             << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
     }
 
     confPtr_t q_init( m_robot->getInitPos() );
@@ -330,7 +330,7 @@ API::Trajectory traj_optim_create_sraight_line_traj()
     if( q_init->equal( *q_goal ) )
     {
         cout << "init equal q_goal in file "
-             << __FILE__ << " ,  " << __func__ << endl;
+             << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
     }
 
     vector<confPtr_t> confs(2);
@@ -351,7 +351,7 @@ bool traj_optim_default_init()
 {
     if (!m_robot) {
         cout << "robot not initialized in file "
-             << __FILE__ << " ,  " << __func__ << endl;
+             << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
@@ -382,7 +382,7 @@ bool traj_optim_simple_init()
 {
     if (!m_robot) {
         cout << "robot not initialized in file "
-             << __FILE__ << " ,  " << __func__ << endl;
+             << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
@@ -410,7 +410,7 @@ bool traj_optim_costmap_init()
 {
     if (!m_robot) {
         cout << "robot not initialized in file "
-             << __FILE__ << " ,  " << __func__ << endl;
+             << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
@@ -980,7 +980,7 @@ bool traj_optim_init_collision_spaces()
     m_robot = global_Project->getActiveScene()->getActiveRobot();
     //m_robot = global_Project->getActiveScene()->getRobotByNameContaining("ROBOT");
 
-    cout << "Robot is : " << m_robot->getName() << " in " << __func__ << endl;
+    cout << "Robot is : " << m_robot->getName() << " in " << __PRETTY_FUNCTION__ << endl;
 
     if( m_robot == NULL )
         return false;
@@ -1469,7 +1469,7 @@ bool traj_optim_runStomp( int runId )
 
     if(!traj_optim_initStomp() )
     {
-        cout << "Could not init stomp in : " << __func__ << endl;
+        cout << "Could not init stomp in : " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 

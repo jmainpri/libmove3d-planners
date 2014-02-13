@@ -35,6 +35,11 @@ DrawFunctions::DrawFunctions()
 
 }
 
+DrawFunctions::~DrawFunctions()
+{
+    cout << __PRETTY_FUNCTION__ << endl;
+}
+
 // Get all draw functions
 std::vector<std::string> DrawFunctions::getAllDrawFunctions()
 {
@@ -62,6 +67,7 @@ std::vector<std::string> DrawFunctions::getActiveDrawFunctions()
 // Select the draw function with the given name in the map
 bool DrawFunctions::enableDrawFunction( std::string name )
 {
+    cout << "SET DRAW_FUNCTION : " << name << " active" << endl;
     active_functions_.insert( name );
     return true;
 }
@@ -69,6 +75,7 @@ bool DrawFunctions::enableDrawFunction( std::string name )
 // Select the draw function with the given name in the map
 bool DrawFunctions::disableDrawFunction( std::string name )
 {
+    cout << "DISABLE DRAW_FUNCTION : " << name << endl;
     active_functions_.erase( active_functions_.find(name) );
     return true;
 }
@@ -76,13 +83,14 @@ bool DrawFunctions::disableDrawFunction( std::string name )
 // Register a new draw function
 void DrawFunctions::addDrawFunction( std::string name, boost::function<void()> f )
 {
-    cout << "set DRAW_FUNCTION : " << name << " , " << f << endl;
+    cout << "ADD DRAW_FUNCTION : " << name << " , " << f << endl;
     functions_[name] = f;
 }
 
 // Delete a cost function
 void DrawFunctions::deleteDrawFunction( std::string name )
 {
+    cout << "DELETE DRAW_FUNCTION : " << name << endl;
     disableDrawFunction( name );
     functions_.erase( name );
 }
@@ -90,10 +98,11 @@ void DrawFunctions::deleteDrawFunction( std::string name )
 //! call to all functions in draw
 void DrawFunctions::draw()
 {
+    cout << __PRETTY_FUNCTION__ << endl;
     std::set< string >::iterator it;
     for ( it=active_functions_.begin() ; it != active_functions_.end(); it++ )
     {
-        // cout << "DRAW_FUNCTION : " << *it << ", " << functions_[*it] << endl;
+        cout << "DRAW_FUNCTION : " << *it << ", " << functions_[*it] << endl;
         functions_[*it]();
     }
 }
@@ -153,7 +162,7 @@ void g3d_draw_boost_graph()
 void g3d_draw_cost_features()
 {
     // Draws the custom draw functions
-    if( global_DrawModule )
+    if( global_DrawModule != NULL )
         global_DrawModule->draw();
 
 #ifdef HRI_COSTSPACE

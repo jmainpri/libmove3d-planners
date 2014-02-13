@@ -188,7 +188,7 @@ p3d_traj* p3d_extract_traj( bool is_traj_found, int nb_added_nodes, Graph* graph
     }
     else
     {
-        cout << __FILE__ << " , " << __func__ << " : No traj found" << endl;
+        cout << __FILE__ << " , " << __PRETTY_FUNCTION__ << " : No traj found" << endl;
         return NULL;
     }
 }
@@ -344,7 +344,7 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
 
     if( robotPt == NULL )
     {
-        cout << "robot not defined in " << __func__ << endl;
+        cout << "robot not defined in " << __PRETTY_FUNCTION__ << endl;
         return;
     }
 
@@ -360,7 +360,7 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
         double optTime = 0.0;
 
         if( traj == NULL ) {
-            cout << "trajectory NULL in " << __func__ << endl;
+            cout << "trajectory NULL in " << __PRETTY_FUNCTION__ << endl;
             return;
         }
         cout << "traj->nlp = " << traj->nlp << endl;
@@ -670,7 +670,7 @@ void p3d_learn_cxx(int NMAX,
 #ifdef P3D_PLANNER
     p3d_set_planning_type(P3D_GLOBAL);
 #else
-    printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+    printf("P3D_PLANNER not compiled in %s in %s",__PRETTY_FUNCTION__,__FILE__);
 #endif
 
     ENV.setBool(Env::expandToGoal,false);
@@ -712,7 +712,7 @@ void p3d_learn_cxx(int NMAX,
 #ifdef P3D_PLANNER
     p3d_set_planning_type(P3D_NONE);
 #else
-    printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+    printf("P3D_PLANNER not compiled in %s in %s",__PRETTY_FUNCTION__,__FILE__);
 #endif
 
     PrintInfo(("Pour la creation de %d noeuds : ", inode));
@@ -837,7 +837,7 @@ int p3d_specific_learn_cxx(double *qs, double *qg, int *iksols, int *iksolg,
 #ifdef P3D_PLANNER
     p3d_set_planning_type(P3D_NONE);
 #else
-    printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+    printf("P3D_PLANNER not compiled in %s in %s",__PRETTY_FUNCTION__,__FILE__);
 #endif
 
     PrintInfo(("Pour la creation de %d noeuds : ", inode));

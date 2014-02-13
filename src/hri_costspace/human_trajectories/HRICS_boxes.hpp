@@ -1,36 +1,25 @@
 #ifndef HRICS_BOXES_HPP
 #define HRICS_BOXES_HPP
 
-#include "HRICS_features.hpp"
+#include "HRICS_squares.hpp"
 #include "API/Device/robot.hpp"
 
 namespace HRICS
 {
 
-class Box
+class Box : public Square
 {
 public:
-    Box( const Eigen::Vector3d& center, double x, double y, double z )
-    {
-        center_ = center;
-        x_ = x;
-        y_ = y;
-        z_ = z;
-    }
-
-    void draw();
-
-    Eigen::Vector3d center_;
-    double x_;
-    double y_;
-    double z_;
+    Box( const Eigen::VectorXd& center, const Eigen::VectorXd& size ) : Square(center,size) {}
+    void draw() const;
 };
 
-class Boxes : public Feature
+class Boxes : public Squares
 {
     public:
 
-        Boxes() { }
+        Boxes();
+        ~Boxes();
 
         void initialize();
 
@@ -38,22 +27,15 @@ class Boxes : public Feature
         double getFeaturesJacobianMagnitude(const Configuration& q);
         double jacobianCost(const Configuration& q);
 
-        void placeCenterGrid(bool on_wall);
-        void printWeights() const;
-        int addCenters(std::string type);
         void computeSize();
 
-        bool isInAASquare( const std::vector<Eigen::Vector3d>& corners, Eigen::Vector3d p );
-        double distToSquare(  const Box& box, const Configuration& q  );
-        double pointToLineSegmentDistance(const Eigen::Vector3d& p, const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, Eigen::Vector3d& closestPoint);
+        bool isInAABox( const std::vector<Eigen::Vector3d>& corners, Eigen::Vector3d p );
+        double distToBox(  const Box& box, const Configuration& q  );
         void draw();
-
-    protected:
-        Robot* robot_;
-        std::vector<Robot*> centers_;
-        std::vector<Box> boxes_;
     };
 }
+
+bool HRICS_init_boxes_cost();
 
 extern HRICS::Boxes* global_BoxesCostFct;
 

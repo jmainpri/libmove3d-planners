@@ -93,7 +93,7 @@ int CostmapExpansion::connectExpandProcess(Node* expansionNode, MOVE3D_PTR_NAMES
 	// Discards potential nodes that are to close to the graph
 	if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath, *expansionNode))
 	{
-		//cout << "Failed expandControl test in " << __func__ << endl;
+		//cout << "Failed expandControl test in " << __PRETTY_FUNCTION__ << endl;
 		return 0;
 	}
 	
@@ -112,7 +112,7 @@ int CostmapExpansion::connectExpandProcess(Node* expansionNode, MOVE3D_PTR_NAMES
 	}
 	else
 	{
-		//cout << "Expansion failed in " << __func__ << endl;
+		//cout << "Expansion failed in " << __PRETTY_FUNCTION__ << endl;
 		this->expansionFailed(*expansionNode);
 	}
 	
@@ -153,7 +153,7 @@ int CostmapExpansion::extendExpandProcess(Node* expansionNode,
 	// Discards potential nodes that are to close to the graph
 	if (ENV.getBool(Env::expandControl) && !expandControl(directionLocalpath,*expansionNode))
 	{
-		//cout << "Failed expandControl test in " << __func__ << endl;
+		//cout << "Failed expandControl test in " << __PRETTY_FUNCTION__ << endl;
 		return 0;
 	}
 	
@@ -199,7 +199,7 @@ int CostmapExpansion::extendExpandProcess(Node* expansionNode,
 	// Add node to graph if everything succeeded
 	if (!failed)
 	{
-		//cout << "Expansion succeded in " << __func__ << endl;
+		//cout << "Expansion succeded in " << __PRETTY_FUNCTION__ << endl;
 		extensionNode = addNode(expansionNode, 
 														extensionLocalpath, 
 														delta,directionNode, nbCreatedNodes);
@@ -207,13 +207,13 @@ int CostmapExpansion::extendExpandProcess(Node* expansionNode,
 		if ( ( directionNode != NULL )&&( extensionNode == directionNode ) )
 		{
 			// Components were merged
-			//cout << "Connected in Transition" << __func__ << endl;
+			//cout << "Connected in Transition" << __PRETTY_FUNCTION__ << endl;
 			return 0;
 		}
 	}
 	else
 	{
-		//cout << "Expansion failed in " << __func__ << endl;
+		//cout << "Expansion failed in " << __PRETTY_FUNCTION__ << endl;
 		this->expansionFailed(*expansionNode);
 	}
 	

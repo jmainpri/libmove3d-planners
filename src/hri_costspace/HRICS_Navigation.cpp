@@ -254,7 +254,7 @@ API::Trajectory* Navigation::getSimplePath(std::vector<double> goal, std::vector
 
     if (!computeRobotTrajectory(i,g))
     {
-        cout << "No trajectory found in " << __func__ << endl;
+        cout << "No trajectory found in " << __PRETTY_FUNCTION__ << endl;
         m_robot->setAndUpdate(*i);
         return NULL;
     }

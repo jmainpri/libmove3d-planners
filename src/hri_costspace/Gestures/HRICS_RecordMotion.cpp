@@ -201,7 +201,7 @@ void RecordMotion::saveToXml(const std::string &filename)
 void RecordMotion::saveToXml(const string &filename, const vector< pair<double,confPtr_t> >& motion )
 {
     if( motion.empty() ) {
-        cout << "No file to save empty vector in " << __func__ << endl;
+        cout << "No file to save empty vector in " << __PRETTY_FUNCTION__ << endl;
         return;
     }
 
@@ -480,7 +480,7 @@ void RecordMotion::storeMotion( const motion_t& motion, bool new_motion )
 bool RecordMotion::setRobotToConfiguration(int ith)
 {
     if( ith < 0 || ith >= int(m_motion.size()) ) {
-        cout << "index out of range in " << __func__ << endl;
+        cout << "index out of range in " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
@@ -493,12 +493,12 @@ bool RecordMotion::setRobotToStoredMotionConfig(int motion_id, int config_id)
 {
     if( motion_id < 0 || ( motion_id > int(m_stored_motions[motion_id].size())))
     {
-        cout << "index out of stored motion range in " << __func__ << endl;
+        cout << "index out of stored motion range in " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
     if( config_id < 0 || config_id >= int(m_stored_motions[motion_id].size()) ) {
-        cout << "index out of range in " << __func__ << endl;
+        cout << "index out of range in " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
@@ -519,7 +519,7 @@ bool RecordMotion::setShowMotion(int ith)
         cout << "disable ith show motion" << endl;
     }
     else if( ith < 0 || ith >= int(m_stored_motions.size()) ) {
-        cout << "index out of range in " << __func__ << endl;
+        cout << "index out of range in " << __PRETTY_FUNCTION__ << endl;
         cout << "ith : " << ith << endl;
         cout << "m_stored_motions.size() : " << m_stored_motions.size() << endl;
         return false;
@@ -726,7 +726,7 @@ motion_t RecordMotion::extractSubpart( int begin, int end, const motion_t& motio
 
     if( begin < 0 || end >= int(motion.size()) )
     {
-        cout << "indexes are not good in " << __func__ << endl;
+        cout << "indexes are not good in " << __PRETTY_FUNCTION__ << endl;
         return vectConfs;
     }
 
@@ -794,7 +794,7 @@ void RecordMotion::saveStoredToCSV( const std::string &filename )
 {
     if( m_stored_motions.empty() )
     {
-        cout << "No stored motion in " << __func__ << endl;
+        cout << "No stored motion in " << __PRETTY_FUNCTION__ << endl;
         return;
     }
 

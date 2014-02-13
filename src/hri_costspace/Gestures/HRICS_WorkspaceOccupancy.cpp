@@ -160,7 +160,7 @@ void WorkspaceOccupancyGrid::get_cells_occupied_by_human( std::vector<WorkspaceO
 //! @param a vector of motions of each class
 void WorkspaceOccupancyGrid::setRegressedMotions(const std::vector<motion_t>& motions)
 {
-    cout << __func__ << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
     m_motions.clear();
     m_occupied_cells.clear();
     
@@ -224,7 +224,7 @@ bool WorkspaceOccupancyGrid::computeOccpancy()
 {           
     confPtr_t q = m_human->getCurrentPos();
 
-    cout << __func__ << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
     cout << "Compute workspace occupancy for " << m_motions.size() << " motions" <<  endl;
     
     // For each motion class compute the occupancy
@@ -268,7 +268,7 @@ bool WorkspaceOccupancyGrid::computeOccpancy()
     set_all_occupied_cells();
     
     cout << "There are " << m_all_occupied_cells.size() << " occupied cells" << endl;
-    cout << "End : " << __func__ << endl;
+    cout << "End : " << __PRETTY_FUNCTION__ << endl;
 
     if( m_all_occupied_cells.empty() )
         return false;

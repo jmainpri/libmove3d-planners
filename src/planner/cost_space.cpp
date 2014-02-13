@@ -206,7 +206,7 @@ double CostSpace::deltaStepCost(double cost1, double cost2, double length)
             return 1/exp(ENV.getInt(Env::maxCostOptimFailures)*(cost2-cost1)/(kb*temp));
 
         default:
-            std::cout << "Warning: " << __func__ <<  std::endl;
+            std::cout << "Warning: " << __PRETTY_FUNCTION__ <<  std::endl;
         }
     }
     //no cost function
@@ -520,7 +520,7 @@ void CostSpace::initMotionPlanning(p3d_graph* graph, p3d_node* start, p3d_node* 
 #ifdef P3D_PLANNER
     p3d_SetInitCostThreshold( start->cost );
 #else
-    printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+    printf("P3D_PLANNER not compiled in %s in %s",__PRETTY_FUNCTION__,__FILE__);
 #endif
 
     if ( ENV.getBool(Env::expandToGoal) && (goal != NULL))
@@ -550,7 +550,7 @@ void CostSpace::initMotionPlanning(p3d_graph* graph, p3d_node* start, p3d_node* 
         p3d_SetInitCostThreshold(start->cost );
         p3d_SetAverQsQgCost( graph->search_start->cost );
 #else
-        printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+        printf("P3D_PLANNER not compiled in %s in %s",__PRETTY_FUNCTION__,__FILE__);
 #endif
     }
 }

@@ -337,7 +337,7 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateJointCollisionPoints(Rob
 //    if ( id > int(planner_joints.size()-1) )
 //    {
 //        cout << "segment : " << id << " is replaced by : " <<  planner_joints.size()-1 ;
-//        cout << " in " << __func__ << endl;
+//        cout << " in " << __PRETTY_FUNCTION__ << endl;
 //        segment = planner_joints.size()-1;
 //    }
 //    else

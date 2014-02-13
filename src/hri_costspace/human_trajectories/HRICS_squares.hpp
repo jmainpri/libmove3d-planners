@@ -9,18 +9,16 @@ namespace HRICS
 class Square
 {
 public:
-    Square( const Eigen::Vector2d& center, double x, double y )
+    Square( const Eigen::VectorXd& center, const Eigen::VectorXd& size )
     {
         center_ = center;
-        x_ = x;
-        y_ = y;
+        size_ = size;
     }
 
-    void draw();
+    virtual void draw() const;
 
-    Eigen::Vector2d center_;
-    double x_;
-    double y_;
+    Eigen::VectorXd center_;
+    Eigen::VectorXd size_;
 };
 
 class Squares : public PlanarFeature
@@ -29,7 +27,7 @@ public:
     Squares();
     ~Squares();
 
-    void initialize();
+    virtual void initialize();
     void computeSize();
 
     FeatureVect getFeatures(const Configuration& q );
@@ -40,17 +38,17 @@ public:
 
     double distToSquare(  const Square& square, const Configuration& q  );
     bool isInAASquare( const std::vector<Eigen::Vector2d>& corners, Eigen::Vector2d p );
-    double pointToLineSegmentDistance(const Eigen::Vector2d& p, const Eigen::Vector2d& p1, const Eigen::Vector2d& p2, Eigen::Vector2d& closestPoint);
+    double pointToLineSegmentDistance(const Eigen::VectorXd& p, const Eigen::VectorXd& p1, const Eigen::VectorXd& p2, Eigen::VectorXd& closestPoint);
 
     void draw();
 
-private:
-    std::vector<Square> squares_;
+protected:
+    std::vector<const Square*> boxes_;
 };
 
 }
 
 // Global cost function
-void HRICS_init_square_cost();
+bool HRICS_init_square_cost();
 
 #endif // HRICS_SQUARES_HPP

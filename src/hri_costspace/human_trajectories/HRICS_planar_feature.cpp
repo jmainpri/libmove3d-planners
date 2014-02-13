@@ -16,47 +16,44 @@ int PlanarFeature::addCenters(std::string type)
 {
     Scene* sce = global_Project->getActiveScene();
     std::stringstream ss;
+    centers_.clear();
 
-    double gray_scale = 0.0;
-    double color_vect[4];
-
-    int i=1;
-
-    // Add the sphere centers
-    while(true)
+    // Add the box centers
+    for(int i=1;;i++)
     {
         ss.str(""); // clear stream
         ss << type << "_MU_" << std::setw(2) << std::setfill( '0' ) << i ;
 
         Robot* center = sce->getRobotByName( ss.str() );
-
         if( center != NULL )
         {
             centers_.push_back( center );
             cout << "Add robot : " << centers_.back()->getName() << endl;
-            i++;
         }
         else{
             break;
         }
     }
 
-    // Set the colors
+    double color_vect[4];
+    color_vect[3] = 1.0; // Set transparency alpha
+
+    // Set boxes colors
     for(int i=0;i<int(centers_.size());i++)
     {
         p3d_obj* o = p3d_get_robot_body_by_name( centers_[i]->getRobotStruct(), "body" );
-        cout << o->name << endl;
+        if( o == NULL ) {
+            cout << "Could not get center : " << i << " , with name body" << endl;
+            continue;
+        }
 
-        gray_scale = 1-double(i)/double(centers_.size()); // TODO fix
-        // color_vect[0] = gray_scale;
-        // color_vect[1] = gray_scale;
-        // color_vect[2] = gray_scale;
-        // color_vect[3] = 1.0;
-
-        GroundColorMixGreenToRed( color_vect, gray_scale );
-        color_vect[3] = 1.0;
-
-        p3d_poly_set_color( o->pol[1], Any, color_vect );
+        if( o->np > 1 ) {
+            GroundColorMixGreenToRed( color_vect, 1-double(i)/double(centers_.size()) );
+            p3d_poly_set_color( o->pol[1], Any, color_vect ); // Set the second body color
+        }
+        else {
+            cout << "Could not set color of body : " << o->name << endl;
+        }
     }
 
     return centers_.size();

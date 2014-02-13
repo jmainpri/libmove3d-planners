@@ -429,7 +429,7 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
         // Components were merged
         if(( directionNode != NULL )&&( node_new == directionNode ))
         {
-            cout << "Connected in Transition" << __func__ << endl;
+            cout << "Connected in Transition" << __PRETTY_FUNCTION__ << endl;
             return 0;
         }
     }
@@ -542,7 +542,7 @@ bool StarRRT::connectNodeToCompco( Node* node, Node* compNode )
     {
         if ( path.getParamMax() == 0.0 && print_exploration )
         {
-            cout << "path.getParamMax() == 0.0 in " << __func__ << endl;
+            cout << "path.getParamMax() == 0.0 in " << __PRETTY_FUNCTION__ << endl;
             node->print();
             compNode->print();
         }

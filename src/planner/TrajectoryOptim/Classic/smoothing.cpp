@@ -138,11 +138,11 @@ bool Smoothing::oneLoopShortCut( )
       }
 			
 			if ( !getBegin()->equal( *configAtParam(0) ) ) {
-				cout << "ERROR in " << __func__ << endl;
+                cout << "ERROR in " << __PRETTY_FUNCTION__ << endl;
 			}
 			
 			if (!getEnd()->equal(*configAtParam(getRangeMax()))) {
-				cout << "ERROR in " << __func__<< endl;
+                cout << "ERROR in " << __PRETTY_FUNCTION__<< endl;
 			}
 			
 			isOptimSuccess = true;
@@ -333,7 +333,7 @@ bool Smoothing::partialShortcut()
 			}
 			//			else 
 			//			{
-			//				cout << "Could not replace portion in " << __func__ << " " << __FILE__ << endl;
+            //				cout << "Could not replace portion in " << __PRETTY_FUNCTION__ << " " << __FILE__ << endl;
 			//			}
 		}
 	}

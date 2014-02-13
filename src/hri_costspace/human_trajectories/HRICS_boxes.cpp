@@ -27,7 +27,7 @@ using std::endl;
 
 HRICS::Boxes* global_BoxesCostFct=NULL;
 
-void HRICS_init_boxes_cost()
+bool HRICS_init_boxes_cost()
 {
     cout << "Initializing square cost" << endl;
 
@@ -40,10 +40,12 @@ void HRICS_init_boxes_cost()
         global_costSpace->addCost( "costBoxes", boost::bind( &Boxes::cost, global_BoxesCostFct, _1) );
         global_costSpace->addCost( "costBoxesJacobian", boost::bind( &Boxes::jacobianCost, global_BoxesCostFct, _1) );
         // global_costSpace->setCost( "costSquares" );
+        return true;
     }
     else{
         delete global_BoxesCostFct;
         global_BoxesCostFct = NULL;
+        return false;
     }
 }
 
@@ -51,14 +53,42 @@ void HRICS_init_boxes_cost()
 // ------------------------------------------------------
 // ------------------------------------------------------
 
-void Box::draw()
+void Box::draw() const
 {
-    g3d_draw_simple_box( center_[0]-x_, center_[0]+x_, center_[1]-y_, center_[1]+y_, 0.0, 0.0, 0, 0, 1.0);
+//    cout << __PRETTY_FUNCTION__ << endl;
+//    cout << "draw box " << endl;
+//    cout << center_.transpose() << endl;
+//    cout << size_.transpose() << endl;
+    g3d_draw_simple_box( center_[0]-size_[0], center_[0]+size_[0],
+                         center_[1]-size_[1], center_[1]+size_[1],
+                         center_[2]-size_[2], center_[2]+size_[2],  0, 0, 1.0);
 }
 
 // ------------------------------------------------------
 // ------------------------------------------------------
 // ------------------------------------------------------
+
+Boxes::Boxes()
+{
+    // Uncomment to draw squares
+//    if( global_DrawModule )
+//    {
+//        global_DrawModule->addDrawFunction( "Boxes", boost::bind( &Boxes::draw, this) );
+//        global_DrawModule->enableDrawFunction( "Boxes" );
+//    }
+//    else{
+//        cout << "Draw module not initialized" << endl;
+//    }
+}
+
+Boxes::~Boxes()
+{
+    // Uncomment to draw squares
+//    if( global_DrawModule )
+//    {
+//        global_DrawModule->deleteDrawFunction( "Boxes" );
+//    }
+}
 
 void Boxes::initialize()
 {
@@ -81,126 +111,37 @@ void Boxes::initialize()
 
     w_.resize( centers_.size() );
 
-    int i=0;
+//    int i=0;
 
-    cout << "nb_squares : " << nb_boxes << endl;
+    cout << "nb_boxes : " << nb_boxes << endl;
 
-    if( nb_boxes == 16 )
-    {
-        placeCenterGrid( true );
-        computeSize();
-        w_[i++] = 100;  w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
-        w_[i++] = 100;  w_[i++] = 50;   w_[i++] = 8;   w_[i++] = 100;
-        w_[i++] = 100;  w_[i++] = 30;   w_[i++] = 50;  w_[i++] = 100;
-        w_[i++] = 100;  w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
-    }
+    computeSize();
+
+//    if( nb_boxes == 16 )
+//    {
+//        placeCenterGrid( true );
+//        computeSize();
+//        w_[i++] = 100;  w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
+//        w_[i++] = 100;  w_[i++] = 50;   w_[i++] = 8;   w_[i++] = 100;
+//        w_[i++] = 100;  w_[i++] = 30;   w_[i++] = 50;  w_[i++] = 100;
+//        w_[i++] = 100;  w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
+//    }
 
     double max = w_.maxCoeff();
     w_ /= max;
 
     cout << "w_ : " << w_.transpose() << endl;
 
-    active_dofs_.resize(2);
+    active_dofs_.resize(7); // Arm
     active_dofs_[0] = 6;
-    active_dofs_[1] = 6;
+    active_dofs_[1] = 7;
+    active_dofs_[2] = 8;
+    active_dofs_[3] = 9;
+    active_dofs_[4] = 10;
+    active_dofs_[5] = 11;
+    active_dofs_[6] = 12;
 }
 
-int Boxes::addCenters(std::string type)
-{
-    Scene* sce = global_Project->getActiveScene();
-    std::stringstream ss;
-
-    double gray_scale = 0.0;
-    double color_vect[4];
-
-    int i=1;
-
-    // Add the sphere centers
-    while(true)
-    {
-        ss.str(""); // clear stream
-        ss << type << "_MU_" << std::setw(2) << std::setfill( '0' ) << i ;
-
-        Robot* center = sce->getRobotByName( ss.str() );
-
-        if( center != NULL )
-        {
-            centers_.push_back( center );
-            cout << "Add robot : " << centers_.back()->getName() << endl;
-            i++;
-        }
-        else{
-            break;
-        }
-    }
-
-    // Set the colors
-    for(int i=0;i<int(centers_.size());i++)
-    {
-        p3d_obj* o = p3d_get_robot_body_by_name( centers_[i]->getRobotStruct(), "body" );
-        cout << o->name << endl;
-
-        gray_scale = 1-double(i)/double(centers_.size()); // TODO fix
-        // color_vect[0] = gray_scale;
-        // color_vect[1] = gray_scale;
-        // color_vect[2] = gray_scale;
-        // color_vect[3] = 1.0;
-
-        GroundColorMixGreenToRed( color_vect, gray_scale );
-        color_vect[3] = 1.0;
-
-        p3d_poly_set_color( o->pol[1], Any, color_vect );
-    }
-
-    return centers_.size();
-}
-
-void Boxes::placeCenterGrid(bool on_wall)
-{
-    double max_1, max_2;
-    double min_1, min_2;
-    robot_->getJoint(1)->getDofBounds( 0, min_1, max_1 );
-    robot_->getJoint(1)->getDofBounds( 1, min_2, max_2 );
-
-    int nb_cells = std::sqrt( double(centers_.size()) );
-    int offset = on_wall ? 0 : 1 ;
-
-    for( int i=offset; i<nb_cells+offset; i++ )
-    {
-        for( int j=offset; j<nb_cells+offset; j++ )
-        {
-            int id = (i-offset)*(nb_cells)+(j-offset);
-            //int id = i*(nb_cells)+j;
-            confPtr_t q = centers_[id]->getCurrentPos();
-
-            int divisions = nb_cells-1;
-            if( !on_wall )
-                divisions = nb_cells+1;
-
-            (*q)[6] = min_1 + double(i)*(max_1-min_1)/double(divisions);
-            (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(divisions);
-            centers_[id]->setAndUpdate( *q );
-            centers_[id]->setInitPos( *q );
-            cout << "c (" << id << ") : " << (*q)[6] << " , " << (*q)[7] << endl;
-        }
-    }
-}
-
-void Boxes::printWeights() const
-{
-    cout << "weights : center" << endl;
-    cout.precision(3);
-
-    int n=std::sqrt(w_.size());
-    for(int i=0;i<n;i++)
-    {
-        for(int j=0;j<n;j++)
-        {
-            cout << "\t " << w_[n*i+j] << std::fixed;
-        }
-        cout << endl;
-    }
-}
 
 FeatureVect Boxes::getFeatures( const Configuration& q )
 {
@@ -215,7 +156,7 @@ FeatureVect Boxes::getFeatures( const Configuration& q )
     for( int i=0; i< int(active_features_.size()); i++ )
     {
         int k = active_features_[i];
-        double dist = distToSquare( boxes_[k], q );
+        double dist = distToBox( static_cast<const Box&>(*boxes_[k]), q );
         features[k] = pow( exp( -dist/factor_distance ), factor_height );
         // cout << "features[" << k << "] = " << features[k] << endl;
     }
@@ -265,7 +206,12 @@ void Boxes::computeSize()
 
         Eigen::Vector3d center = centers_[i]->getJoint(1)->getVectorPos();
 
-        boxes_.push_back( Box( center, o->pol[0]->primitive_data->x_length/2, o->pol[0]->primitive_data->y_length/2, o->pol[0]->primitive_data->z_length/2 ) );
+        Eigen::VectorXd size(3);
+        size[0] = o->pol[0]->primitive_data->x_length/2;
+        size[1] = o->pol[0]->primitive_data->y_length/2;
+        size[2] = o->pol[0]->primitive_data->z_length/2;
+
+        boxes_.push_back( new Box( center, size ) );
 
 //        cout << "( " ;
 //        cout << o->pol[0]->pos0[0][3] << " , ";
@@ -289,7 +235,7 @@ void Boxes::computeSize()
     }
 }
 
-bool Boxes::isInAASquare( const std::vector<Eigen::Vector3d>& corners, Eigen::Vector3d p )
+bool Boxes::isInAABox( const std::vector<Eigen::Vector3d>& corners, Eigen::Vector3d p )
 {
     bool outside[4];
     outside[0] = true;
@@ -323,31 +269,31 @@ bool Boxes::isInAASquare( const std::vector<Eigen::Vector3d>& corners, Eigen::Ve
     return true;
 }
 
-double Boxes::distToSquare( const Box& box, const Configuration& q )
+double Boxes::distToBox( const Box& box, const Configuration& q )
 {
     std::vector<Eigen::Vector3d> corners(4);
 
     Eigen::Vector3d p = q.getEigenVector(6,8);
 
-    corners[0][0] = box.center_[0] + box.x_;
-    corners[0][1] = box.center_[1] + box.y_;
+    corners[0][0] = box.center_[0] + box.size_[0];
+    corners[0][1] = box.center_[1] + box.size_[1];
 
-    corners[1][0] = box.center_[0] - box.x_;
-    corners[1][1] = box.center_[1] + box.y_;
+    corners[1][0] = box.center_[0] - box.size_[0];
+    corners[1][1] = box.center_[1] + box.size_[1];
 
-    corners[2][0] = box.center_[0] + box.x_;
-    corners[2][1] = box.center_[1] - box.y_;
+    corners[2][0] = box.center_[0] + box.size_[0];
+    corners[2][1] = box.center_[1] - box.size_[1];
 
-    corners[3][0] = box.center_[0] - box.x_;
-    corners[3][1] = box.center_[1] - box.y_;
+    corners[3][0] = box.center_[0] - box.size_[0];
+    corners[3][1] = box.center_[1] - box.size_[1];
 
-    if( isInAASquare( corners, p ) )
+    if( isInAABox( corners, p ) )
     {
         return 0.0;
     }
     else {
         std::vector<double> distances(4);
-        Eigen::Vector3d closestPoint; // TODO use results from is in square
+        Eigen::VectorXd closestPoint; // TODO use results from is in square
         distances[0] = pointToLineSegmentDistance( p, corners[0], corners[1], closestPoint );
         distances[1] = pointToLineSegmentDistance( p, corners[1], corners[3], closestPoint );
         distances[2] = pointToLineSegmentDistance( p, corners[3], corners[2], closestPoint );
@@ -356,55 +302,12 @@ double Boxes::distToSquare( const Box& box, const Configuration& q )
     }
 }
 
-//! Computes the closest point of a point to a segment line.
-//! \param p the point
-//! \param p1 the first point of the segment line
-//! \param p2 the second point of the segment line
-//! \param closestPoint the point on the segment that is the closest to p
-//! \return the minimimal distance between the segment and the point
-double Boxes::pointToLineSegmentDistance( const Eigen::Vector3d& p, const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, Eigen::Vector3d& closestPoint )
-{
-    double alpha, d1, d2, norm_p1p2;
-    Eigen::Vector3d p1p2, p1p2_n, p1p, proj;
-
-    // Precompute the norm and the dot product
-    p1p2			= p2 - p1;
-    norm_p1p2	= p1p2.norm();
-    p1p2_n		= p1p2.normalized();
-
-    p1p			= p - p1;
-    alpha		= p1p.dot(p1p2_n);
-
-    // the projection is on the segment -> it is the closest point
-    if( (alpha > 0) && (alpha < norm_p1p2) )
-    {
-        proj			= p1 + alpha*p1p2_n;
-        closestPoint	= proj;
-        return (proj-p).norm();
-    }
-    else
-    {
-        d1		= (p1-p).norm();
-        d2		= (p2-p).norm();
-
-        if( d1 < d2 )
-        {
-            closestPoint = p1;
-            return d1;
-        }
-        else
-        {
-            closestPoint = p2;
-            return d2;
-        }
-    }
-}
-
 void Boxes::draw()
 {
+    //cout << __PRETTY_FUNCTION__ << endl;
     for( int i=0; i<int(boxes_.size()); i++ )
     {
-        boxes_[i].draw();
+        static_cast<const Box*>(boxes_[i])->draw();
     }
 }
 

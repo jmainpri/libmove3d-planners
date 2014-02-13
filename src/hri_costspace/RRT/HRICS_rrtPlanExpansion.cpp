@@ -178,7 +178,7 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getConfigurationInNextCell(Nod
 #ifdef P3D_PLANNER
     p3d_ShootAroundPoint( m_Graph->getRobot()->getRobotStruct() , q->getConfigStruct(), CellCenter , 0);
 #else
-    printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+    printf("P3D_PLANNER not compiled in %s in %s",__PRETTY_FUNCTION__,__FILE__);
 #endif
 
     return q;

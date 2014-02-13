@@ -59,7 +59,7 @@ Replanner::Replanner(Robot* r) : m_robot(r), m_human(NULL), m_useMLP(false)
 
     if( !init_mlp() )
     {
-        cout << "Error initializing multi-localpahts in " << __FILE__ << " at " << __func__ << endl;
+        cout << "Error initializing multi-localpahts in " << __FILE__ << " at " << __PRETTY_FUNCTION__ << endl;
     }
 }
 
@@ -260,7 +260,7 @@ bool SimpleReplanner::init_create_straightline()
     }
 
     if (!rob) {
-        cout << "Robot not initialized in file " << __FILE__ << " ,  " << __func__ << endl;
+        cout << "Robot not initialized in file " << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
@@ -269,7 +269,7 @@ bool SimpleReplanner::init_create_straightline()
 
     if( q_init->equal( *q_goal ) )
     {
-        cout << "Init equal q_goal in file " << __FILE__ << " ,  " << __func__ << endl;
+        cout << "Init equal q_goal in file " << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
         cout << "for robot : " << rob->getName() << endl;
         q_init->print();
         q_goal->print();
@@ -428,7 +428,7 @@ void SimpleReplanner::run()
     }
 
     //store_traj_to_draw( optimTrj 0.0 );
-    cout << "End replanning : " << __func__ << endl;
+    cout << "End replanning : " << __PRETTY_FUNCTION__ << endl;
     m_isPlanning = false;
 }
 
@@ -513,7 +513,7 @@ void RRTReplanner::run()
     }
 
     //store_traj_to_draw( optimTrj 0.0 );
-    cout << "End replanning : " << __func__ << endl;
+    cout << "End replanning : " << __PRETTY_FUNCTION__ << endl;
     m_isPlanning = false;
 }
 
@@ -541,7 +541,7 @@ bool HandoverReplanner::init()
 
     const char* home = getenv("HOME_MOVE3D");
     if( home == NULL ) {
-        cout << "ERROR home is not defined for config generator in " << __func__ << endl;
+        cout << "ERROR home is not defined for config generator in " << __PRETTY_FUNCTION__ << endl;
     }
 
     string dir(home);
@@ -679,7 +679,7 @@ void HandoverReplanner::run()
     if( !m_planningSucceded ) {
         cout << "Replanning failed" << endl;
     }
-    cout << "End replanning : " << __func__ << endl;
+    cout << "End replanning : " << __PRETTY_FUNCTION__ << endl;
     m_isPlanning = false;
 }
 
@@ -744,7 +744,7 @@ void StompReplanner::run()
     if( !m_planningSucceded ) {
         cout << "Replanning failed" << endl;
     }
-    cout << "End replanning : " << __func__ << endl;
+    cout << "End replanning : " << __PRETTY_FUNCTION__ << endl;
     m_isPlanning = false;
 }
 
@@ -824,6 +824,6 @@ void AStarReplanner::run()
     if( !m_planningSucceded ) {
         cout << "Replanning failed" << endl;
     }
-    cout << "End replanning : " << __func__ << endl;
+    cout << "End replanning : " << __PRETTY_FUNCTION__ << endl;
     m_isPlanning = false;
 }

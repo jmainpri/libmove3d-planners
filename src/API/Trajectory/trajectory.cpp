@@ -398,7 +398,7 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
 #ifdef P3D_PLANNER
     trajPt->range_param = p3d_compute_traj_rangeparam(trajPt);
 #else
-    printf("P3D_PLANNER not compiled in %s in %s",__func__,__FILE__);
+    printf("P3D_PLANNER not compiled in %s in %s",__PRETTY_FUNCTION__,__FILE__);
 #endif
 
     return trajPt;

@@ -1341,13 +1341,13 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
                 {
                     IKSucceded = false;
                     m_Robot->setAndUpdate(*configStored);
-                    cout << "Config in collision in " << __func__ << endl;
+                    cout << "Config in collision in " << __PRETTY_FUNCTION__ << endl;
                 }
             }
             else
             {
                 m_Robot->setAndUpdate(*configStored);
-                cout << "IK Failed in " << __func__ << endl;
+                cout << "IK Failed in " << __PRETTY_FUNCTION__ << endl;
             }
         }
         else // Robots
@@ -1417,10 +1417,10 @@ bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRight
                 {
                     ptrQ->print();
                     IKSucceded = false;
-                    cout << "Config in collision in " << __func__ << endl;
+                    cout << "Config in collision in " << __PRETTY_FUNCTION__ << endl;
                 }
             }else{
-                //          cout << "IK Failed in " << __func__ << endl;
+                //          cout << "IK Failed in " << __PRETTY_FUNCTION__ << endl;
             }
         }
     }else{

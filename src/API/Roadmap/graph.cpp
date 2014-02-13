@@ -2181,18 +2181,18 @@ API::Trajectory* Graph::extractBestAStarPathSoFar( confPtr_t qi, confPtr_t qf )
     //    Node* source = searchConf(*qi);
     Node* source = nearestNeighbour(qi);
     if( source == NULL ) {
-        cout << "qi not in graph in " << __func__ << endl;
+        cout << "qi not in graph in " << __PRETTY_FUNCTION__ << endl;
         return NULL;
     }
 
     if( source->getConnectedComponent()->getNumberOfNodes() < 2 ) {
-        cout << "Not enough nodes in source component in " << __func__ << endl;
+        cout << "Not enough nodes in source component in " << __PRETTY_FUNCTION__ << endl;
         return NULL;
     }
 
     Node* target = nearestWeightNeighbour( source, qf, false, ENV.getInt(Env::DistConfigChoice));
     if( target == NULL ) {
-        cout << "No goal nearest neighbour in graph in " << __func__ << endl;
+        cout << "No goal nearest neighbour in graph in " << __PRETTY_FUNCTION__ << endl;
         return NULL;
     }
 
@@ -2211,7 +2211,7 @@ API::Trajectory* Graph::extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t q
 API::Trajectory* Graph::trajectoryFromNodeVector( const std::vector<Node*>& nodes )
 {
     if( nodes.size() < 2 ) {
-        cout << "No path in " << __func__ << endl;
+        cout << "No path in " << __PRETTY_FUNCTION__ << endl;
         return NULL;
     }
 
@@ -2225,7 +2225,7 @@ API::Trajectory* Graph::trajectoryFromNodeVector( const std::vector<Node*>& node
         Edge* edge = isEdgeInGraph( nodes[i], nodes[i+1] );
 
         if( edge == NULL ) {
-            cout << "Edge is not in graph in " << __func__ << endl;
+            cout << "Edge is not in graph in " << __PRETTY_FUNCTION__ << endl;
             return NULL;
         }
 
@@ -2254,13 +2254,13 @@ std::pair<bool, std::vector<Node*> > Graph::extractBestNodePathSoFar( confPtr_t 
     // Start needs to be in the graph
     Node* source = searchConf(*qi);
     if( source == NULL ) {
-        cout << "Start not in graph in " << __func__ << endl;
+        cout << "Start not in graph in " << __PRETTY_FUNCTION__ << endl;
         return make_pair(false,traj_nodes_reverse) ;
     }
 
     Node* node = nearestWeightNeighbour( source, qf, false, ENV.getInt(Env::DistConfigChoice));
     if( node == NULL ) {
-        cout << "No goal nearest neihbour in graph in " << __func__ << endl;
+        cout << "No goal nearest neihbour in graph in " << __PRETTY_FUNCTION__ << endl;
         return make_pair(false,traj_nodes_reverse);
     }
 
@@ -2272,7 +2272,7 @@ std::pair<bool, std::vector<Node*> > Graph::extractBestNodePathSoFar( confPtr_t 
         traj_nodes_reverse.push_back( node );
 
         if (node == NULL) {
-            cout << "Error finding nodes in " << __func__ << endl;
+            cout << "Error finding nodes in " << __PRETTY_FUNCTION__ << endl;
             return make_pair(false,traj_nodes_reverse);
         }
     }
@@ -2368,7 +2368,7 @@ API::Trajectory* Graph::extractBestTraj( confPtr_t qi, confPtr_t qf )
     p3d_node* Ng_ = p3d_TestConfInGraph( graph_, qf->getConfigStruct() );
 
     if( Ns_== NULL || Ng_ == NULL ) {
-        cout << "Error in " << __func__ << endl;
+        cout << "Error in " << __PRETTY_FUNCTION__ << endl;
         return NULL;
     }
 

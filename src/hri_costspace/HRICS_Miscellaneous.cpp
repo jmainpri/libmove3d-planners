@@ -489,7 +489,7 @@ bool HRICS::execShelfScenario()
   ManipulationPlanner* planner = global_manipPlanTest->getManipPlanner();
   
   if (planner ==NULL) {
-    cout << "planner not defined in : " << __func__ << endl;
+    cout << "planner not defined in : " << __PRETTY_FUNCTION__ << endl;
     return false;
   }
   
@@ -497,7 +497,7 @@ bool HRICS::execShelfScenario()
   Robot* rob = sc->getRobotByName( planner->robot()->name );
   
   if (rob ==NULL) {
-    cout << "robot not defined in : " << __func__ << endl;
+    cout << "robot not defined in : " << __PRETTY_FUNCTION__ << endl;
     return false;
   }
   
@@ -665,7 +665,7 @@ bool HRICS::simpShelfScenario()
   ManipulationPlanner* planner = global_manipPlanTest->getManipPlanner();
   
   if (planner ==NULL) {
-    cout << "planner not defined in : " << __func__ << endl;
+    cout << "planner not defined in : " << __PRETTY_FUNCTION__ << endl;
     return false;
   }
   
@@ -673,7 +673,7 @@ bool HRICS::simpShelfScenario()
   Robot* rob = sc->getRobotByName( planner->robot()->name );
   
   if (rob ==NULL) {
-    cout << "robot not defined in : " << __func__ << endl;
+    cout << "robot not defined in : " << __PRETTY_FUNCTION__ << endl;
     return false;
   }
   

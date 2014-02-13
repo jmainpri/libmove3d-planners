@@ -230,21 +230,21 @@ ThreeDCell* ThreeDGrid::getCell(const Vector3d& point) const
     if( (point[0]<_originCorner[0]) || (point[0]>(_originCorner[0]+_nbCellsX*_cellSize[0]) ))
     {
         if (DebugCell)
-            cout << "Error point not in grid in " << __func__ << endl;
+            cout << "Error point not in grid in " << __PRETTY_FUNCTION__ << endl;
         return 0x00;
     }
 
     if( (point[1]<_originCorner[1]) || (point[1]>(_originCorner[1]+_nbCellsY*_cellSize[1]) ))
     {
         if (DebugCell)
-            cout << "Error point not in grid in " << __func__ << endl;
+            cout << "Error point not in grid in " << __PRETTY_FUNCTION__ << endl;
         return 0x00;
     }
 
     if( (point[2]<_originCorner[2]) || (point[2]>(_originCorner[2]+_nbCellsZ*_cellSize[2]) ))
     {
         if (DebugCell)
-            cout << "Error point not in grid in " << __func__ << endl;
+            cout << "Error point not in grid in " << __PRETTY_FUNCTION__ << endl;
         return 0x00;
     }
 //#endif

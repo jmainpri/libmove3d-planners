@@ -24,7 +24,7 @@ using std::endl;
 
 Squares* global_SquareCostFct=NULL;
 
-void HRICS_init_square_cost()
+bool HRICS_init_square_cost()
 {
     cout << "Initializing square cost" << endl;
 
@@ -38,10 +38,12 @@ void HRICS_init_square_cost()
         global_costSpace->addCost( "costSquares", boost::bind( &Squares::cost, global_SquareCostFct, _1) );
         global_costSpace->addCost( "costSquaresJacobian", boost::bind( &Squares::jacobianCost, global_SquareCostFct, _1) );
         // global_costSpace->setCost( "costSquares" );
+        return true;
     }
     else{
         delete global_SquareCostFct;
         global_SquareCostFct = NULL;
+        return false;
     }
 }
 
@@ -49,9 +51,10 @@ void HRICS_init_square_cost()
 // ------------------------------------------------------
 // ------------------------------------------------------
 
-void Square::draw()
+void Square::draw() const
 {
-    g3d_draw_simple_box( center_[0]-x_, center_[0]+x_, center_[1]-y_, center_[1]+y_, 0.0, 0.0, 0, 0, 1.0);
+    cout << __PRETTY_FUNCTION__ << endl;
+    g3d_draw_simple_box( center_[0]-size_[0], center_[0]+size_[0], center_[1]-size_[1], center_[1]+size_[1], 0.0, 0.0, 0, 0, 1.0);
 }
 
 // ------------------------------------------------------
@@ -61,20 +64,20 @@ void Square::draw()
 Squares::Squares()
 {
 // Uncomment to draw squares
-//    if( global_DrawModule )
-//    {
-//        global_DrawModule->addDrawFunction( "Squares", boost::bind( &Squares::draw, this) );
-//        global_DrawModule->enableDrawFunction( "Squares" );
-//    }
+    if( global_DrawModule )
+    {
+        global_DrawModule->addDrawFunction( "Squares", boost::bind( &Squares::draw, this) );
+        global_DrawModule->enableDrawFunction( "Squares" );
+    }
 }
 
 Squares::~Squares()
 {
     // Uncomment to draw squares
-//    if( global_DrawModule )
-//    {
-//        global_DrawModule->deleteDrawFunction( "Squares" );
-//    }
+    if( global_DrawModule )
+    {
+        global_DrawModule->deleteDrawFunction( "Squares" );
+    }
 }
 
 void Squares::initialize()
@@ -120,7 +123,7 @@ void Squares::initialize()
 
     active_dofs_.resize(2);
     active_dofs_[0] = 6;
-    active_dofs_[1] = 6;
+    active_dofs_[1] = 7;
 }
 
 FeatureVect Squares::getFeatures( const Configuration& q )
@@ -136,7 +139,7 @@ FeatureVect Squares::getFeatures( const Configuration& q )
     for( int i=0; i< int(active_features_.size()); i++ )
     {
         int k = active_features_[i];
-        double dist = distToSquare( squares_[k], q );
+        double dist = distToSquare( *boxes_[k], q );
         features[k] = pow( exp( -dist/factor_distance ), factor_height );
         // cout << "features[" << k << "] = " << features[k] << endl;
     }
@@ -168,7 +171,7 @@ void Squares::computeSize()
 {
     cout << "compute sizes" << endl;
 
-    squares_.clear();
+    boxes_.clear();
 
     for( int i=0; i< int(centers_.size()); i++ )
     {
@@ -185,11 +188,16 @@ void Squares::computeSize()
 //        cout << " )" ;
 
         Eigen::Vector3d p = centers_[i]->getJoint(1)->getVectorPos();
-        Eigen::Vector2d center;
+
+        Eigen::VectorXd center(2);
         center[0] = p[0];
         center[1] = p[1];
 
-        squares_.push_back( Square( center, o->pol[0]->primitive_data->x_length/2, o->pol[0]->primitive_data->y_length/2 ) );
+        Eigen::VectorXd size(2);
+        size[0] = o->pol[0]->primitive_data->x_length/2;
+        size[1] = o->pol[0]->primitive_data->y_length/2;
+
+        boxes_.push_back( new Square( center, size ) );
 
 //        cout << "( " ;
 //        cout << o->pol[0]->pos0[0][3] << " , ";
@@ -253,17 +261,17 @@ double Squares::distToSquare(  const Square& square, const Configuration& q  )
 
     Eigen::Vector2d p = q.getEigenVector(6,7);
 
-    corners[0][0] = square.center_[0] + square.x_;
-    corners[0][1] = square.center_[1] + square.y_;
+    corners[0][0] = square.center_[0] + square.size_[0];
+    corners[0][1] = square.center_[1] + square.size_[1];
 
-    corners[1][0] = square.center_[0] - square.x_;
-    corners[1][1] = square.center_[1] + square.y_;
+    corners[1][0] = square.center_[0] - square.size_[0];
+    corners[1][1] = square.center_[1] + square.size_[1];
 
-    corners[2][0] = square.center_[0] + square.x_;
-    corners[2][1] = square.center_[1] - square.y_;
+    corners[2][0] = square.center_[0] + square.size_[0];
+    corners[2][1] = square.center_[1] - square.size_[1];
 
-    corners[3][0] = square.center_[0] - square.x_;
-    corners[3][1] = square.center_[1] - square.y_;
+    corners[3][0] = square.center_[0] - square.size_[0];
+    corners[3][1] = square.center_[1] - square.size_[1];
 
     if( isInAASquare( corners, p ) )
     {
@@ -271,7 +279,7 @@ double Squares::distToSquare(  const Square& square, const Configuration& q  )
     }
     else {
         std::vector<double> distances(4);
-        Eigen::Vector2d closestPoint; // TODO use results from is in square
+        Eigen::VectorXd closestPoint(2); // TODO use results from is in square
         distances[0] = pointToLineSegmentDistance( p, corners[0], corners[1], closestPoint );
         distances[1] = pointToLineSegmentDistance( p, corners[1], corners[3], closestPoint );
         distances[2] = pointToLineSegmentDistance( p, corners[3], corners[2], closestPoint );
@@ -286,10 +294,10 @@ double Squares::distToSquare(  const Square& square, const Configuration& q  )
 //! \param p2 the second point of the segment line
 //! \param closestPoint the point on the segment that is the closest to p
 //! \return the minimimal distance between the segment and the point
-double Squares::pointToLineSegmentDistance(const Eigen::Vector2d& p, const Eigen::Vector2d& p1, const Eigen::Vector2d& p2, Eigen::Vector2d& closestPoint)
+double Squares::pointToLineSegmentDistance(const Eigen::VectorXd& p, const Eigen::VectorXd& p1, const Eigen::VectorXd& p2, Eigen::VectorXd& closestPoint)
 {
     double alpha, d1, d2, norm_p1p2;
-    Eigen::Vector2d p1p2, p1p2_n, p1p, proj;
+    Eigen::VectorXd p1p2, p1p2_n, p1p, proj;
 
     // Precompute the norm and the dot product
     p1p2			= p2 - p1;
@@ -326,8 +334,10 @@ double Squares::pointToLineSegmentDistance(const Eigen::Vector2d& p, const Eigen
 
 void Squares::draw()
 {
-    for( int i=0; i<int(squares_.size()); i++ )
+    cout << __PRETTY_FUNCTION__ << endl;
+
+    for( int i=0; i<int(boxes_.size()); i++ )
     {
-        squares_[i].draw();
+        boxes_[i]->draw();
     }
 }
