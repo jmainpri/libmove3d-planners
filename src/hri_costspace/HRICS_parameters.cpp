@@ -67,6 +67,7 @@ void initHricsParameters()
     // ------------------------------------------------------------------
     myDoubleMap.insert( std::make_pair( HricsParam::ioc_spheres_power, new doubleContainer(2.0) ));
     myDoubleMap.insert( std::make_pair( HricsParam::ioc_sample_std_dev, new doubleContainer(2.0) ));
+    myDoubleMap.insert( std::make_pair( HricsParam::ioc_cost_factor, new doubleContainer(2.0) ));
 
     //cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble( PlanParam::env_objectNessecity ) << endl;
 

@@ -738,7 +738,7 @@ double Trajectory::computeSubPortionCostVisib( vector<LocalPath*>& portion )
 
     m_Robot->setAndUpdate(*m_Source);
     Vector3d prevPos;
-    Vector3d currentPos = m_Robot->getJointPos(jnt_id);
+    Vector3d currentPos = m_Robot->getJoint(jnt_id)->getVectorPos();
 
     while (currentParam <= range)
     {
@@ -750,7 +750,7 @@ double Trajectory::computeSubPortionCostVisib( vector<LocalPath*>& portion )
         prevPos = currentPos;
 
         m_Robot->setAndUpdate(*currentConf);
-        currentPos = m_Robot->getJointPos(jnt_id);
+        currentPos = m_Robot->getJoint(jnt_id)->getVectorPos();
         double distStep=0;
         for(int k=0;k<currentPos.size();k++)
         {

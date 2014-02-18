@@ -225,14 +225,9 @@ public:
     confPtr_t getNewConfig();
 
     /**
-     * Get the Robot joint AbsPos
+     * Returns an array of dof ids
      */
-    Eigen::Matrix4d getJointAbsPos(int id);
-
-    /**
-     * Get the Robot joint Position
-     */
-    Eigen::Vector3d getJointPos(int id);
+    std::vector<int> getActiveDoFsFromJoints( const std::vector<int>& joint_ids );
 
     /**
      * Get Number of active DoFs

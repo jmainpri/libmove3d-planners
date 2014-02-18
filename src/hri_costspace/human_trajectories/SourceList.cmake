@@ -4,6 +4,7 @@ BM3D_SRC_SUBDIR_PROCESS(
 HRICS_features.cpp
 HRICS_ioc.cpp
 HRICS_spheres.cpp
+HRICS_spheres_3d.cpp
 HRICS_human_features.cpp
 HRICS_human_ioc.cpp
 HRICS_human_cost_space.cpp

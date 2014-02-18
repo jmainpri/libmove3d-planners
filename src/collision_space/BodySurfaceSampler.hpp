@@ -45,7 +45,7 @@ public:
     // Generate cylinders
     //-----------------------------------------------------
     BoundingCylinder* generateBoudingCylinder( p3d_obj* obj );
-    double generateRobotBoudingCylinder(Robot* rob, const std::vector<Joint*>& activeJoints);
+    double generateRobotBoudingCylinder( Robot* rob, const std::vector<Joint*>& activeJoints );
     void generateAllRobotsBoundingCylinders();
 
     //-----------------------------------------------------

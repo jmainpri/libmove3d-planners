@@ -63,21 +63,21 @@ void Square::draw() const
 
 Squares::Squares()
 {
-// Uncomment to draw squares
-    if( global_DrawModule )
-    {
-        global_DrawModule->addDrawFunction( "Squares", boost::bind( &Squares::draw, this) );
-        global_DrawModule->enableDrawFunction( "Squares" );
-    }
+    // Uncomment to draw squares
+//    if( global_DrawModule )
+//    {
+//        global_DrawModule->addDrawFunction( "Squares", boost::bind( &Squares::draw, this) );
+//        global_DrawModule->enableDrawFunction( "Squares" );
+//    }
 }
 
 Squares::~Squares()
 {
     // Uncomment to draw squares
-    if( global_DrawModule )
-    {
-        global_DrawModule->deleteDrawFunction( "Squares" );
-    }
+//    if( global_DrawModule )
+//    {
+//        global_DrawModule->deleteDrawFunction( "Squares" );
+//    }
 }
 
 void Squares::initialize()
@@ -334,7 +334,7 @@ double Squares::pointToLineSegmentDistance(const Eigen::VectorXd& p, const Eigen
 
 void Squares::draw()
 {
-    cout << __PRETTY_FUNCTION__ << endl;
+    // cout << __PRETTY_FUNCTION__ << endl;
 
     for( int i=0; i<int(boxes_.size()); i++ )
     {

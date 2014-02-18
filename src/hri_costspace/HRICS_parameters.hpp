@@ -45,7 +45,8 @@ namespace HricsParam
         enum doubleParameter
         {
             ioc_spheres_power,
-            ioc_sample_std_dev
+            ioc_sample_std_dev,
+            ioc_cost_factor
         };
 
         enum stringParameter

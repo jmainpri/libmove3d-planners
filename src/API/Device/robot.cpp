@@ -564,48 +564,33 @@ confPtr_t Robot::getNewConfig()
     return (confPtr_t (new Configuration(this,p3d_alloc_config(_Robot),true)));
 }
 
-Matrix4d Robot::getJointAbsPos(int id)
+std::vector<int> Robot::getActiveDoFsFromJoints( const std::vector<int>& joint_ids )
 {
-    Matrix4d absPos;
+    std::vector<int> dof_ids;
 
-    //p3d_jnt* jntPt= _Robot->joints[id];
+    for (size_t i=0; i<joint_ids.size(); i++)
+    {
+        Joint* move3d_joint = getJoint( joint_ids[i] );
 
-    //	absPos[0][0] = jntPt->abs_pos[0][0];
-    //    absPos[1][1] = jntPt->abs_pos[1][0];
-    //    absPos[2][2] = jntPt->abs_pos[2][0];
-    //	absPos[3][2] = jntPt->abs_pos[3][0];
-    //
-    //	absPos[0][0] = jntPt->abs_pos[0][1];
-    //    absPos[1][1] = jntPt->abs_pos[1][1];
-    //    absPos[2][2] = jntPt->abs_pos[2][1];
-    //	absPos[3][2] = jntPt->abs_pos[3][1];
-    //
-    //	absPos[0][0] = jntPt->abs_pos[0][2];
-    //    absPos[1][1] = jntPt->abs_pos[1][2];
-    //    absPos[2][2] = jntPt->abs_pos[2][2];
-    //	absPos[3][2] = jntPt->abs_pos[3][2];
-    //
-    //	absPos[0][0] = jntPt->abs_pos[0][4];
-    //    absPos[1][1] = jntPt->abs_pos[1][4];
-    //    absPos[2][2] = jntPt->abs_pos[2][4];
-    //	absPos[3][2] = jntPt->abs_pos[3][4];
+        for (size_t j=0; j<move3d_joint->getNumberOfDof(); j++)
+        {
+            // cout << "Joint(" << j << "), Dof : " << move3d_joint->getIndexOfFirstDof() + j << ", " << move3d_joint->getName() << "" << endl;
 
-    return absPos;
-}
+            if( !move3d_joint->isJointDofUser(j) )
+                continue;
 
-Vector3d Robot::getJointPos(int id)
-{
-    Vector3d vect;
+            double min,max;
+            // robot_->getJoint( active_joints[i] )->getDofBounds(j,min,max);
+            move3d_joint->getDofRandBounds(j,min,max);
 
-    p3d_jnt* jntPt= _Robot->joints[id];
+            if (min == max)
+                continue;
 
-    vect[0] = jntPt->abs_pos[0][3];
-    vect[1] = jntPt->abs_pos[1][3];
-    vect[2] = jntPt->abs_pos[2][3];
+            dof_ids.push_back( move3d_joint->getIndexOfFirstDof() + j );
+        }
+    }
 
-    //    cout << "vect = " << endl << vect << endl;
-
-    return vect;
+    return dof_ids;
 }
 
 /**

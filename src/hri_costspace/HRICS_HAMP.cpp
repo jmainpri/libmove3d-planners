@@ -50,7 +50,7 @@ vector<int> HriSpaceCost::getTaskPosition()
 
     vector<int> pos1(3);
 
-    Vector3d pos2 = _Robot->getJointPos(_JntId);
+    Vector3d pos2 = _Robot->getJoint(_JntId)->getVectorPos();
 
 
     pos1[0] = (int)((pos2[0]-_Bitmap->realx)/_Bitmap->pace);

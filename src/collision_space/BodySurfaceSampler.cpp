@@ -201,7 +201,7 @@ BoundingCylinder* BodySurfaceSampler::generateBoudingCylinder(p3d_obj* obj)
     return new BoundingCylinder(p1,p2,radius);
 }
 
-double BodySurfaceSampler::generateRobotBoudingCylinder(Robot* robot,const vector<Joint*>& activeJoints)
+double BodySurfaceSampler::generateRobotBoudingCylinder( Robot* robot, const vector<Joint*>& activeJoints )
 {
     double maxRadius= numeric_limits<double>::min();
 

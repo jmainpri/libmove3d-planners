@@ -406,7 +406,7 @@ vector<double> Distance::getDistToZones()
     {
     case Balls:
     {
-        Vector3d WSPoint = m_Robot->getJointPos( ENV.getInt(Env::akinJntId) );
+        Vector3d WSPoint = m_Robot->getJoint(ENV.getInt(Env::akinJntId))->getVectorPos();
         distances[k] = computeBoundingBalls( WSPoint, body[k], other[k] );
         _PenetrationDist[k] = (_SafeRadius - distances[k])/_SafeRadius;
         break;

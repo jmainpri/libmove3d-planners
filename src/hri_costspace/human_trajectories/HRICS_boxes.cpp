@@ -68,26 +68,28 @@ void Box::draw() const
 // ------------------------------------------------------
 // ------------------------------------------------------
 
-Boxes::Boxes()
+Boxes::Boxes() : sampler_(NULL)
 {
     // Uncomment to draw squares
-//    if( global_DrawModule )
-//    {
-//        global_DrawModule->addDrawFunction( "Boxes", boost::bind( &Boxes::draw, this) );
-//        global_DrawModule->enableDrawFunction( "Boxes" );
-//    }
-//    else{
-//        cout << "Draw module not initialized" << endl;
-//    }
+    if( global_DrawModule )
+    {
+        global_DrawModule->addDrawFunction( "Boxes", boost::bind( &Boxes::draw, this) );
+        global_DrawModule->enableDrawFunction( "Boxes" );
+    }
+    else{
+        cout << "Draw module not initialized" << endl;
+    }
 }
 
 Boxes::~Boxes()
 {
     // Uncomment to draw squares
-//    if( global_DrawModule )
-//    {
-//        global_DrawModule->deleteDrawFunction( "Boxes" );
-//    }
+    if( global_DrawModule )
+    {
+        global_DrawModule->deleteDrawFunction( "Boxes" );
+    }
+
+    delete sampler_;
 }
 
 void Boxes::initialize()
@@ -132,14 +134,27 @@ void Boxes::initialize()
 
     cout << "w_ : " << w_.transpose() << endl;
 
-    active_dofs_.resize(7); // Arm
-    active_dofs_[0] = 6;
-    active_dofs_[1] = 7;
-    active_dofs_[2] = 8;
-    active_dofs_[3] = 9;
-    active_dofs_[4] = 10;
-    active_dofs_[5] = 11;
-    active_dofs_[6] = 12;
+    active_joints_.resize(7); // Arm
+    active_joints_[0] = 1;
+    active_joints_[1] = 2;
+    active_joints_[2] = 3;
+    active_joints_[3] = 4;
+    active_joints_[4] = 5;
+    active_joints_[5] = 6;
+    active_joints_[6] = 7;
+
+    active_dofs_ = robot_->getActiveDoFsFromJoints( active_joints_ );
+
+    // Get all joints active in the motion planning
+    // and compute bounding cylinders
+    std::vector<Joint*> joints;
+    for (size_t i=0; i<active_joints_.size(); i++)
+        joints.push_back( robot_->getJoint( active_joints_[i] ) );
+
+    // Generate collision points
+    sampler_ = new BodySurfaceSampler(0.1);
+    sampler_->generateRobotBoudingCylinder( robot_, joints );
+    sampler_->generateRobotCollisionPoints( robot_, active_joints_, active_joints_ );
 }
 
 
@@ -235,35 +250,25 @@ void Boxes::computeSize()
     }
 }
 
-bool Boxes::isInAABox( const std::vector<Eigen::Vector3d>& corners, Eigen::Vector3d p )
+// 0 -> +x
+// 1 -> -x
+// 2 -> +y
+// 3 -> -y
+// 4 -> +z
+// 5 -> -z
+bool Boxes::isInAABox( const Eigen::VectorXd& limits, Eigen::Vector3d p )
 {
-    bool outside[4];
-    outside[0] = true;
-    outside[1] = true;
-    outside[2] = true;
-    outside[3] = true;
-
-    for( int i=0;i<4;i++)
-    {
-        if( ! (p[0] < corners[i][0]) )
-        {
-            outside[0] = false;
-        }
-        if( ! (p[0] > corners[i][0]) )
-        {
-            outside[1] = false;
-        }
-        if( ! (p[1] < corners[i][1]) )
-        {
-            outside[2] = false;
-        }
-        if( ! (p[1] > corners[i][1]) )
-        {
-            outside[3] = false;
-        }
-    }
-
-    if( outside[0] || outside[1] || outside[2] || outside[3] )
+    if( p[0] > limits[0] )
+        return false;
+    if( p[0] < limits[1] )
+        return false;
+    if( p[1] > limits[2] )
+        return false;
+    if( p[1] < limits[3] )
+        return false;
+    if( p[2] > limits[4] )
+        return false;
+    if( p[2] < limits[5] )
         return false;
 
     return true;
@@ -271,43 +276,119 @@ bool Boxes::isInAABox( const std::vector<Eigen::Vector3d>& corners, Eigen::Vecto
 
 double Boxes::distToBox( const Box& box, const Configuration& q )
 {
-    std::vector<Eigen::Vector3d> corners(4);
+    Eigen::VectorXd limits(6);
+    limits[0] = box.center_[0] + box.size_[0];
+    limits[1] = box.center_[0] - box.size_[0];
+    limits[2] = box.center_[1] + box.size_[1];
+    limits[3] = box.center_[1] - box.size_[1];
+    limits[4] = box.center_[2] + box.size_[2];
+    limits[5] = box.center_[2] - box.size_[2];
 
     Eigen::Vector3d p = q.getEigenVector(6,8);
 
-    corners[0][0] = box.center_[0] + box.size_[0];
-    corners[0][1] = box.center_[1] + box.size_[1];
-
-    corners[1][0] = box.center_[0] - box.size_[0];
-    corners[1][1] = box.center_[1] + box.size_[1];
-
-    corners[2][0] = box.center_[0] + box.size_[0];
-    corners[2][1] = box.center_[1] - box.size_[1];
-
-    corners[3][0] = box.center_[0] - box.size_[0];
-    corners[3][1] = box.center_[1] - box.size_[1];
-
-    if( isInAABox( corners, p ) )
+    if( isInAABox( limits, p ) )
     {
-        return 0.0;
+        return 0.0; // TODO set fixed cost
     }
     else {
-        std::vector<double> distances(4);
-        Eigen::VectorXd closestPoint; // TODO use results from is in square
-        distances[0] = pointToLineSegmentDistance( p, corners[0], corners[1], closestPoint );
-        distances[1] = pointToLineSegmentDistance( p, corners[1], corners[3], closestPoint );
-        distances[2] = pointToLineSegmentDistance( p, corners[3], corners[2], closestPoint );
-        distances[3] = pointToLineSegmentDistance( p, corners[2], corners[0], closestPoint );
+        std::vector<Eigen::Vector3d> corners(8);
+
+        //           V1 -- V0
+        //          /      / |
+        // z  y    V4 -- V2 V3
+        // |/      |      | /
+        // 0--x    V7 -- V5
+
+        corners[0][0] = box.center_[0] + box.size_[0];
+        corners[0][1] = box.center_[1] + box.size_[1];
+        corners[0][2] = box.center_[2] + box.size_[1];
+
+        corners[1][0] = box.center_[0] - box.size_[0];
+        corners[1][1] = box.center_[1] + box.size_[1];
+        corners[1][2] = box.center_[2] + box.size_[2];
+
+        corners[2][0] = box.center_[0] + box.size_[0];
+        corners[2][1] = box.center_[1] - box.size_[1];
+        corners[2][2] = box.center_[2] + box.size_[2];
+
+        corners[3][0] = box.center_[0] + box.size_[0];
+        corners[3][1] = box.center_[1] + box.size_[1];
+        corners[3][2] = box.center_[2] - box.size_[2];
+
+        corners[4][0] = box.center_[0] - box.size_[0];
+        corners[4][1] = box.center_[1] - box.size_[1];
+        corners[4][2] = box.center_[2] + box.size_[2];
+
+        corners[5][0] = box.center_[0] + box.size_[0];
+        corners[5][1] = box.center_[1] - box.size_[1];
+        corners[5][2] = box.center_[2] - box.size_[2];
+
+        corners[6][0] = box.center_[0] - box.size_[0];
+        corners[6][1] = box.center_[1] + box.size_[1];
+        corners[6][2] = box.center_[2] - box.size_[2];
+
+        corners[7][0] = box.center_[0] - box.size_[0];
+        corners[7][1] = box.center_[1] - box.size_[1];
+        corners[7][2] = box.center_[2] - box.size_[2];
+
+        std::vector<double> distances(12);
+        Eigen::VectorXd closestPoint;
+        distances[0]   = pointToLineSegmentDistance( p, corners[1], corners[0], closestPoint );
+        distances[1]   = pointToLineSegmentDistance( p, corners[2], corners[0], closestPoint );
+        distances[2]   = pointToLineSegmentDistance( p, corners[3], corners[0], closestPoint );
+        distances[3]   = pointToLineSegmentDistance( p, corners[4], corners[2], closestPoint );
+        distances[4]   = pointToLineSegmentDistance( p, corners[4], corners[1], closestPoint );
+        distances[5]   = pointToLineSegmentDistance( p, corners[5], corners[2], closestPoint );
+        distances[6]   = pointToLineSegmentDistance( p, corners[5], corners[3], closestPoint );
+        distances[7]   = pointToLineSegmentDistance( p, corners[6], corners[3], closestPoint );
+        distances[8]   = pointToLineSegmentDistance( p, corners[6], corners[4], closestPoint );
+        distances[9]   = pointToLineSegmentDistance( p, corners[7], corners[4], closestPoint );
+        distances[10]  = pointToLineSegmentDistance( p, corners[7], corners[5], closestPoint );
+        distances[11]  = pointToLineSegmentDistance( p, corners[7], corners[6], closestPoint );
         return *std::min_element( distances.begin(), distances.end() );
+    }
+}
+
+void Boxes::drawCollisionPoints()
+{
+    for( size_t i=0; i<active_joints_.size(); i++ )
+    {
+        Joint* jnt = robot_->getJoint( active_joints_[i] );
+        std::vector<CollisionPoint>& points = sampler_->getCollisionPoints(jnt);
+        Eigen::Transform3d T = jnt->getMatrixPos();
+
+        cout << "joint : " << active_joints_[i] << " , points size : " << points.size() << endl;
+
+        for( size_t j=0; j<points.size(); j++ )
+        {
+            if( points[j].m_is_colliding )
+            {
+                double color[4];
+
+                color[0] = 1.0;       // (r)ed
+                color[1] = 0.0;       // (g)reen
+                color[2] = 0.0;       // (b)lue
+                color[3] = 0.7;       // transparency
+
+                g3d_set_color(Any,color);
+            }
+
+            bool yellow = true;
+            //bool yellow = (!points[j].m_is_colliding);
+
+            points[j].draw( T, yellow );
+        }
     }
 }
 
 void Boxes::draw()
 {
-    //cout << __PRETTY_FUNCTION__ << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
     for( int i=0; i<int(boxes_.size()); i++ )
     {
         static_cast<const Box*>(boxes_[i])->draw();
     }
+
+    drawCollisionPoints();
 }
 

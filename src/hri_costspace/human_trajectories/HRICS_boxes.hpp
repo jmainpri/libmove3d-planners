@@ -3,6 +3,7 @@
 
 #include "HRICS_squares.hpp"
 #include "API/Device/robot.hpp"
+#include "collision_space/BodySurfaceSampler.hpp"
 
 namespace HRICS
 {
@@ -29,9 +30,15 @@ class Boxes : public Squares
 
         void computeSize();
 
-        bool isInAABox( const std::vector<Eigen::Vector3d>& corners, Eigen::Vector3d p );
+        bool isInAABox( const Eigen::VectorXd& limits, Eigen::Vector3d p );
         double distToBox(  const Box& box, const Configuration& q  );
+
+        void drawCollisionPoints();
         void draw();
+
+private:
+        std::vector<int> active_joints_;
+        BodySurfaceSampler* sampler_;
     };
 }
 

@@ -98,11 +98,11 @@ void DrawFunctions::deleteDrawFunction( std::string name )
 //! call to all functions in draw
 void DrawFunctions::draw()
 {
-    cout << __PRETTY_FUNCTION__ << endl;
+    // cout << __PRETTY_FUNCTION__ << endl;
     std::set< string >::iterator it;
     for ( it=active_functions_.begin() ; it != active_functions_.end(); it++ )
     {
-        cout << "DRAW_FUNCTION : " << *it << ", " << functions_[*it] << endl;
+        // cout << "DRAW_FUNCTION : " << *it << ", " << functions_[*it] << endl;
         functions_[*it]();
     }
 }
