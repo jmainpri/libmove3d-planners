@@ -105,20 +105,39 @@ void Spheres3D::initialize()
     if( nb_spheres == 0 ){
         return;
     }
-    computeSize();
 
     cout << "nb_spheres : " << nb_spheres << endl;
 
     // SET WEIGHTS AND ACTIVATE FEATURES
     w_.resize( nb_spheres );
+
     if( nb_spheres == 3 )
     {
         w_[0] = 100;  w_[1] = 100;  w_[2] = 100;
+    }
+    if( nb_spheres == 27 )
+    {
+        placeCenterGrid(false);
+
+         w_[0] = 100;   w_[1] = 100;   w_[2] = 100; // BOTTOM
+         w_[3] = 005;   w_[4] = 001;   w_[5] = 100;
+         w_[6] = 010;   w_[7] = 005;   w_[8] = 020;
+
+         w_[9] = 100;  w_[10] = 100;  w_[11] = 100; // Middle
+        w_[12] = 80;   w_[13] = 001;  w_[14] = 001;
+        w_[15] = 005;  w_[16] = 005;  w_[17] = 020;
+
+        w_[18] = 100;  w_[19] = 100;  w_[20] = 80; // TOP
+        w_[21] = 001;  w_[22] = 80;   w_[23] = 001;
+        w_[24] = 001;  w_[25] = 100;  w_[26] = 100;
     }
 
     w_ /= w_.maxCoeff();
     setWeights( w_ );
     cout << "w_ : " << w_.transpose() << endl;
+
+    // SET RADIUS AND CENTERS
+    computeSize();
 
     // SET ACTIVE JOINTS AND BUILD COLLISION POINTS
     active_joints_.resize(7); // Arm
@@ -209,8 +228,10 @@ void Spheres3D::computeSize()
         // Set sphere position and radius
         spheres_.push_back( new Sphere( centers_[i]->getJoint(1)->getVectorPos(), o->pol[0]->primitive_data->radius ) );
 
-        // Set sphere center color
-        GroundColorMixGreenToRed( spheres_.back()->color_, 1-double(i)/double(centers_.size()) );
+        // Set spheres center color
+        // low ids are green, high ids are red
+        // GroundColorMixGreenToRed( spheres_.back()->color_, double(i)/double(centers_.size()) );
+        GroundColorMixGreenToRed( spheres_.back()->color_, w_[i] );
 
 //        cout << "( " ;
 //        cout << o->pol[0]->pos0[0][3] << " , ";
@@ -231,6 +252,49 @@ void Spheres3D::computeSize()
 //        cout << " )" ;
 
 //        cout << endl;
+    }
+}
+
+void Spheres3D::placeCenterGrid(bool on_wall)
+{
+    std::vector<double> bounds = global_Project->getActiveScene()->getBounds();
+
+    double x_max = bounds[1], y_max = bounds[3], z_max = bounds[5];
+    double x_min = bounds[0], y_min = bounds[2], z_min = bounds[4];
+
+    cout << "x_max : " << x_max << " , y_max : " << y_max << " , z_max : " << z_max << endl;
+    cout << "x_min : " << x_min << " , y_min : " << y_min << " , z_min : " << z_min << endl;
+
+    int nb_cells = std::pow( double(centers_.size()), 1/3. );
+    int offset = on_wall ? 0 : 1 ;
+
+    cout << "nb_cells : " << nb_cells << endl;
+
+    for( int i=offset; i<nb_cells+offset; i++ )
+    {
+        for( int j=offset; j<nb_cells+offset; j++ )
+        {
+            for( int k=offset; k<nb_cells+offset; k++ )
+            {
+                int id = (k-offset)*std::pow(nb_cells,2) + (j-offset)*(nb_cells) + (nb_cells-i); // TODO fix offset
+
+                confPtr_t q = centers_[id]->getCurrentPos();
+
+                int divisions = nb_cells-1;
+                if( !on_wall )
+                    divisions = nb_cells+1;
+
+                (*q)[6] = x_min + double(i)*(x_max-x_min)/double(divisions);
+                (*q)[7] = y_min + double(j)*(y_max-y_min)/double(divisions);
+                (*q)[8] = z_min + double(k)*(z_max-z_min)/double(divisions);
+
+                centers_[id]->setAndUpdate( *q );
+                centers_[id]->setInitPos( *q );
+
+                cout.precision(3);
+                cout << "c (" << id << ") : " << (*q)[6] << " , " << (*q)[7] << " , " << (*q)[8] << endl;
+            }
+        }
     }
 }
 
@@ -294,12 +358,69 @@ void Spheres3D::drawCollisionPoints()
     }
 }
 
+void Spheres3D::setSphereToDraw(int id, bool enable)
+{
+    p3d_obj* o = p3d_get_robot_body_by_name( centers_[id]->getRobotStruct(), "body" );
+    if( o == NULL ) {
+        cout << "Could not get center : " << id << " , with name body" << endl;
+        return;
+    }
+
+    if( o->np >= 1 ) {
+        if( enable )
+            o->pol[0]->color_vect[3] = 0.2;
+        else
+            o->pol[0]->color_vect[3] = 0.0;
+    }
+    else {
+        cout << "Could not set color of body : " << o->name << endl;
+    }
+}
+
+void Spheres3D::setShperesToDraw()
+{
+    if( centers_.size() != 27 )
+        return;
+
+    for( size_t i=0;i<centers_.size();i++)
+        setSphereToDraw( i, false );
+
+    sphere_to_draw_.clear();
+
+    switch( HriEnv->getInt(HricsParam::ioc_spheres_to_draw) )
+    {
+    case 0:
+        for( size_t i=0; i<9; i++)
+            sphere_to_draw_.push_back( i );
+        break;
+    case 1:
+        for( size_t i=0; i<9; i++)
+            sphere_to_draw_.push_back( i+9 );
+        break;
+    case 2:
+        for( size_t i=0; i<9; i++)
+            sphere_to_draw_.push_back( i+18 );
+        break;
+    case -1:
+        break;
+    default:
+        for( size_t i=0; i<centers_.size(); i++)
+            sphere_to_draw_.push_back(i);
+        break;
+    }
+
+    for( size_t i=0;i<sphere_to_draw_.size();i++)
+        setSphereToDraw( sphere_to_draw_[i], true );
+}
+
 void Spheres3D::draw()
 {
+    setShperesToDraw();
+
     // cout << __PRETTY_FUNCTION__ << endl;
-    for( int i=0; i<int(spheres_.size()); i++ )
+    for( size_t i=0; i<sphere_to_draw_.size(); i++ )
     {
-        static_cast<const Sphere*>(spheres_[i])->draw();
+        static_cast<const Sphere*>(spheres_[sphere_to_draw_[i]])->draw();
     }
 
     drawCollisionPoints();

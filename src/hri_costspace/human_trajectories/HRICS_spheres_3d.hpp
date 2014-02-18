@@ -36,9 +36,12 @@ class Spheres3D : public PlanarFeature
         double jacobianCost(const Configuration& q);
 
         void computeSize();
+        void placeCenterGrid(bool on_wall);
 
         double distToShpere( const Sphere& sph );
 
+        void setSphereToDraw(int id, bool enable);
+        void setShperesToDraw();
         void drawCollisionPoints();
         void draw();
 
@@ -46,6 +49,7 @@ private:
         std::vector<int> active_joints_;
         BodySurfaceSampler* sampler_;
         std::vector<Sphere*> spheres_;
+        std::vector<int> sphere_to_draw_;
     };
 }
 
