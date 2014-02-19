@@ -48,7 +48,8 @@ int PlanarFeature::addCenters(std::string type)
         }
 
         if( o->np > 1 ) {
-            GroundColorMixGreenToRed( color_vect, 1-double(i)/double(centers_.size()) );
+            // Low ids are green, high ids are red
+            GroundColorMixGreenToRed( color_vect, double(i)/double(centers_.size()) );
             p3d_poly_set_color( o->pol[1], Any, color_vect ); // Set the second body color
         }
         else {
@@ -148,6 +149,9 @@ void PlanarFeature::produceDerivativeFeatureCostMap(int ith)
     move3d_save_matrix_to_file( mat3, ss.str() );
 
     ss.str(""); ss << "matlab/cost_maps/cost_map_jac_mag_custom_" << std::setw(2) << std::setfill( '0' ) << ith << ".txt";
+    move3d_save_matrix_to_file( mat4, ss.str() );
+
+    ss.str(""); ss << "matlab/cost_maps/cost_map_jac_cost_" << std::setw(2) << std::setfill( '0' ) << ith << ".txt";
     move3d_save_matrix_to_file( mat4, ss.str() );
 }
 

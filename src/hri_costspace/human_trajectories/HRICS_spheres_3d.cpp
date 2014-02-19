@@ -55,7 +55,7 @@ bool HRICS_init_shperes_3d_cost()
 
 void Sphere::draw() const
 {
-//    cout << "draw sphere at : " <<
+    //    cout << "draw sphere at : " <<
     g3d_set_color( Any, (double *) color_ );
     g3d_draw_solid_sphere( center_[0], center_[1], center_[2], 0.02 , 20 );
 }
@@ -64,7 +64,7 @@ void Sphere::draw() const
 // ------------------------------------------------------
 // ------------------------------------------------------
 
-Spheres3D::Spheres3D()
+Spheres3D::Spheres3D() : sampler_(NULL)
 {
     // Uncomment to draw squares
     if( global_DrawModule )
@@ -91,7 +91,7 @@ Spheres3D::~Spheres3D()
 void Spheres3D::initialize()
 {
     cout << "--------------------------------"  << endl;
-    cout << "INIT BOXES" << endl;
+    cout << "INIT SPHERE3D" << endl;
 
     Scene* sce = global_Project->getActiveScene();
 
@@ -119,11 +119,11 @@ void Spheres3D::initialize()
     {
         placeCenterGrid(false);
 
-         w_[0] = 100;   w_[1] = 100;   w_[2] = 100; // BOTTOM
-         w_[3] = 005;   w_[4] = 001;   w_[5] = 100;
-         w_[6] = 010;   w_[7] = 005;   w_[8] = 020;
+        w_[0] = 100;   w_[1] = 100;   w_[2] = 100; // BOTTOM
+        w_[3] = 005;   w_[4] = 001;   w_[5] = 100;
+        w_[6] = 010;   w_[7] = 005;   w_[8] = 020;
 
-         w_[9] = 100;  w_[10] = 100;  w_[11] = 100; // Middle
+        w_[9] = 100;  w_[10] = 100;  w_[11] = 100; // MIDDLE
         w_[12] = 80;   w_[13] = 001;  w_[14] = 001;
         w_[15] = 005;  w_[16] = 005;  w_[17] = 020;
 
@@ -183,7 +183,7 @@ FeatureVect Spheres3D::getFeatures( const Configuration& q )
     for( int i=0; i< int(active_features_.size()); i++ )
     {
         int k = active_features_[i];
-//        int k = 0; int i=0;
+        //        int k = 0; int i=0;
         double dist = distToShpere( static_cast<const Sphere&>(*spheres_[k]) );
         features[i] = factor_total * pow( exp( - dist * factor_distance ), factor_height ); // replace 0 by i
         // cout << "features[" << k << "] = " << features[k] << endl;
@@ -208,7 +208,7 @@ double Spheres3D::getFeaturesJacobianMagnitude( const Configuration& q )
 
 double Spheres3D::jacobianCost(const Configuration& q)
 {
-//    return 1 / Feature::getFeaturesJacobianMagnitude( q );
+    //    return 1 / Feature::getFeaturesJacobianMagnitude( q );
     return exp(-10*Feature::getFeaturesJacobianMagnitude( q )); // 10 is for scaling TODO findout what to put here
 }
 
@@ -221,9 +221,9 @@ void Spheres3D::computeSize()
     for( int i=0; i< int(centers_.size()); i++ )
     {
         p3d_obj* o = p3d_get_robot_body_by_name( centers_[i]->getRobotStruct(), "body" );
-//        cout << o->name << " : " << o->np << " , ";
-//        for(int j=0;j<o->np;j++)
-//            cout << o->pol[j]->entity_type << " , ";
+        //        cout << o->name << " : " << o->np << " , ";
+        //        for(int j=0;j<o->np;j++)
+        //            cout << o->pol[j]->entity_type << " , ";
 
         // Set sphere position and radius
         spheres_.push_back( new Sphere( centers_[i]->getJoint(1)->getVectorPos(), o->pol[0]->primitive_data->radius ) );
@@ -233,25 +233,25 @@ void Spheres3D::computeSize()
         // GroundColorMixGreenToRed( spheres_.back()->color_, double(i)/double(centers_.size()) );
         GroundColorMixGreenToRed( spheres_.back()->color_, w_[i] );
 
-//        cout << "( " ;
-//        cout << o->pol[0]->pos0[0][3] << " , ";
-//        cout << o->pol[0]->pos0[1][3] << " , ";
-//        cout << o->pol[0]->pos0[2][3] ;
-//        cout << " )" ;
+        //        cout << "( " ;
+        //        cout << o->pol[0]->pos0[0][3] << " , ";
+        //        cout << o->pol[0]->pos0[1][3] << " , ";
+        //        cout << o->pol[0]->pos0[2][3] ;
+        //        cout << " )" ;
 
-//        cout << "( " ;
-//        cout << o->jnt->abs_pos[0][3] << " , ";
-//        cout << o->jnt->abs_pos[1][3] << " , ";
-//        cout << o->jnt->abs_pos[2][3] ;
-//        cout << " )" ;
+        //        cout << "( " ;
+        //        cout << o->jnt->abs_pos[0][3] << " , ";
+        //        cout << o->jnt->abs_pos[1][3] << " , ";
+        //        cout << o->jnt->abs_pos[2][3] ;
+        //        cout << " )" ;
 
-//        cout << "( " ;
-//        cout << p[0] << " , ";
-//        cout << p[1] ; // << " , ";
-//        cout << p[2] ;
-//        cout << " )" ;
+        //        cout << "( " ;
+        //        cout << p[0] << " , ";
+        //        cout << p[1] ; // << " , ";
+        //        cout << p[2] ;
+        //        cout << " )" ;
 
-//        cout << endl;
+        //        cout << endl;
     }
 }
 
@@ -276,6 +276,8 @@ void Spheres3D::placeCenterGrid(bool on_wall)
         {
             for( int k=offset; k<nb_cells+offset; k++ )
             {
+                // The id computation is switched for conveinence when looking
+                // at the scenario from above
                 int id = (k-offset)*std::pow(nb_cells,2) + (j-offset)*(nb_cells) + (nb_cells-i); // TODO fix offset
 
                 confPtr_t q = centers_[id]->getCurrentPos();
@@ -308,7 +310,7 @@ double Spheres3D::distToShpere( const Sphere& sph )
         std::vector<CollisionPoint>& points = sampler_->getCollisionPoints(jnt);
         Eigen::Transform3d T = jnt->getMatrixPos();
 
-         for( size_t j=0; j<points.size(); j++ )
+        for( size_t j=0; j<points.size(); j++ )
         {
             double dist_to_sphere = ( T*points[j].getPosition() - sph.center_ ).norm() - points[j].getRadius() - sph.raduis_;
             // cout << "point[" << i << "][" << j << "] = " << dist_to_sphere << endl;

@@ -2,6 +2,7 @@
 
 #include "API/project.hpp"
 #include "API/misc_functions.hpp"
+#include "API/Graphic/drawModule.hpp"
 
 #include "planner/plannerFunctions.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
@@ -24,10 +25,19 @@ MultiplePlanners::MultiplePlanners(Robot* robot)
     robot_ = robot;
     cout << "PLanner initialized for robot : " << robot->getName() << endl;
 
-//    folder_ = "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/squares";
-//    folder_ = "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/ASTAR";
+    //    folder_ = "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/squares";
+    //    folder_ = "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/ASTAR";
 
     planner_type_ = astar;
+
+    if( global_DrawModule )
+    {
+        global_DrawModule->addDrawFunction( "MultiplePlanner", boost::bind( &MultiplePlanners::draw, this) );
+        global_DrawModule->enableDrawFunction( "MultiplePlanner" );
+    }
+    else{
+        cout << "Draw module not initialized" << endl;
+    }
 }
 
 void MultiplePlanners::initializeNoisy()
@@ -42,7 +52,7 @@ void MultiplePlanners::multipleRun( std::string folder, int nb_runs )
     for( int i=0;i<nb_runs;i++)
         run();
 
-    saveTrajsToFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/ASTAR" );
+    saveTrajsToFile( folder );
 }
 
 void MultiplePlanners::saveTrajsToFile( std::string folder )
@@ -199,4 +209,10 @@ bool MultiplePlanners::runAStar()
     } else {
         return false;
     }
+}
+
+void MultiplePlanners::draw()
+{
+//    for( size_t i=0;i<best_traj_.size();i++)
+//        best_traj_[i].draw(100);
 }

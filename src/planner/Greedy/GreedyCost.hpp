@@ -2,6 +2,7 @@
 #define P3D_GREEDY_PROTO_HH
 
 #include "API/planningAPI.hpp"
+
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 

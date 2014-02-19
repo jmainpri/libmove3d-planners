@@ -14,6 +14,7 @@
 #define A_STAR_H
 
 #include "API/Search/AStar/State.hpp"
+
 #include <queue>
 #include <vector>
 

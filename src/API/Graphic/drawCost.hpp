@@ -10,7 +10,7 @@
 #ifndef G3D_DRAW_COST_H
 #define G3D_DRAW_COST_H
 
-#include "device.h"
+#include <libmove3d/include/device.h>
 
 void g3d_draw_costspace();
 void g3d_draw_grids();
@@ -19,7 +19,6 @@ void g3d_draw_hrics(int opengl_context);
 #endif
 
 //void drawGauge(int number, double cost);
-void computeConfigCostOnTraj(p3d_rob* rob,configPt q);
-
+void computeConfigCostOnTraj( p3d_rob* rob, configPt q );
 
 #endif

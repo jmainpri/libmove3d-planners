@@ -23,7 +23,7 @@
 /**
  * Environment has to be included before anything (weird)
  */
-#include "../p3d/env.hpp"
+#include <libmove3d/p3d/env.hpp>
 
 /**
  * The CPP API so that

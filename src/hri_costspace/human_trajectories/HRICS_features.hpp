@@ -33,6 +33,7 @@ public:
 
     virtual FeatureJacobian getFeaturesJacobian(const Configuration& q);
     virtual FeatureProfile getFeatureJacobianProfile(const API::Trajectory& t);
+    virtual FeatureJacobian getFeatureJacobian(const API::Trajectory& t);
     virtual double getFeaturesJacobianMagnitude(const Configuration& q);
 
     double getJacobianSum(const API::Trajectory& t);

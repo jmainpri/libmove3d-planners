@@ -35,6 +35,7 @@ public:
     double getFeaturesJacobianMagnitude(const Configuration& q);
 
     double jacobianCost(const Configuration& q);
+    void produceDerivativeFeatureCostMap(int ith);
 
     double distToSquare(  const Square& square, const Configuration& q  );
     bool isInAASquare( const std::vector<Eigen::Vector2d>& corners, Eigen::Vector2d p );

@@ -9,8 +9,8 @@
 #ifndef BODY_SURFACE_SAMPLING_H
 #define BODY_SURFACE_SAMPLING_H
 
-#include "p3d.h"
-#include "environment.h"
+#include <libmove3d/include/p3d.h>
+#include <libmove3d/include/environment.h>
 
 #include "API/Device/robot.hpp"
 #include "API/Grids/PointCloud.hpp"

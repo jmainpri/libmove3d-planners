@@ -6,9 +6,7 @@
 #include <Eigen/Core>
 
 #include "API/Grids/BaseGrid.hpp"
-
 #include "API/Grids/TwoDCell.hpp"
-
 
 /*!
  @ingroup GRID

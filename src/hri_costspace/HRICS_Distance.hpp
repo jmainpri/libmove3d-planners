@@ -12,6 +12,8 @@
 
 #include "API/planningAPI.hpp"
 
+class p3d_poly;
+
 /**
  @ingroup HRICS
  */

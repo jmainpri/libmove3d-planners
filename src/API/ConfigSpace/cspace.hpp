@@ -3,7 +3,8 @@
 
 #include "API/Device/robot.hpp"
 #include "API/ConfigSpace/configuration.hpp"
-#include "P3d-pkg.h"
+
+#include <libmove3d/include/P3d-pkg.h>
 
 class CSpace
 {

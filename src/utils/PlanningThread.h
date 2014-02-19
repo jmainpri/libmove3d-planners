@@ -11,8 +11,9 @@
 
 #include "qtLibrary.h"
 #include "planner_cxx/plannerFunctions.hpp"
-#include "Planner-pkg.h"
-#include "move3d-headless.h"
+
+#include <libmove3d/include/Planner-pkg.h>
+#include <libmove3d/include/move3d-headless.h>
 
 /**
  * @ingroup qtWindow

@@ -86,7 +86,9 @@ void HRICS_run_sphere_ioc()
 
     MultiplePlanners planners(rob);
     if( HriEnv->getBool(HricsParam::ioc_load_samples_from_file) )
-        planners.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP_LARGE" );
+//        planners.loadTrajsFromFile( "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/FIRST_TRY" );
+        planners.loadTrajsFromFile( "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square" );
+//        planners.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP_LARGE" );
         // planners.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/GENERAL_COSTMAP");
 
     for(int i=0; i<nb_sampling_phase && !StopRun; i++)
@@ -139,7 +141,8 @@ void HRICS_run_sphere_ioc()
 
         case run_planner:
             cout << "RUN MULTI-PLANNER" << endl;
-            eval.runPlannerMultipleFeature( 50 ); // 10
+            // eval.runPlannerMultipleFeature( 50 ); // 10
+            eval.runPlannerWeightedFeature( 50 );
             StopRun = true;
             break;
 
@@ -763,7 +766,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
     nb_demos_ = nb_demos;
     nb_samples_ = nb_samples;
     nb_way_points_ = nb_way_points;
-    folder_ = "/home/jmainpri/workspace/move3d/assets/IOC/TRAJECTORIES/";
+    folder_ = "/home/jmainpri/Dropbox/move3d/assets/IOC/TRAJECTORIES/";
 
     load_sample_from_file_ = HriEnv->getBool(HricsParam::ioc_load_samples_from_file);
 
@@ -817,7 +820,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
             }
 
             feature_fct_->setActiveFeatures( active_feature );
-            global_PlanarCostFct->produceCostMap(0);
+//            global_PlanarCostFct->produceCostMap(0);
             global_PlanarCostFct->produceDerivativeFeatureCostMap(0);
 
             double time;
@@ -886,9 +889,6 @@ void IocEvaluation::runPlannerMultipleFeature( int nb_runs )
 
     for( int i=0; i<nb_runs; i++ )
     {
-//        planners_.run();
-//        g3d_draw_allwin_active();
-
         std::vector<int> active_feature;
         for( int j=0;j<feature_fct_->getNumberOfFeatures();j++)
         {
@@ -904,6 +904,93 @@ void IocEvaluation::runPlannerMultipleFeature( int nb_runs )
     }
 
     planners_.saveTrajsToFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square" );
+}
+
+void IocEvaluation::activateAllFeatures()
+{
+    std::vector<int> active_feature;
+    for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
+        active_feature.push_back(i);
+
+    feature_fct_->setActiveFeatures( active_feature );
+}
+
+WeightVect IocEvaluation::computeOptimalWeights()
+{
+    WeightVect w( Eigen::VectorXd::Zero( feature_fct_->getNumberOfFeatures() ) );
+//    stored_features_;
+
+    // Jacobian magnitude per DoF
+    FeatureJacobian J = feature_fct_->getFeatureJacobian( planners_.getBestTrajs().back() );
+    if( J.cols() != w.size() ) {
+        cout << __PRETTY_FUNCTION__ << endl;
+        cout << "ERROR IN OPTIMAL WEIGHTS COMPUTATION" << endl;
+        return w;
+    }
+
+    FeatureVect feat_gradient_sum( Eigen::VectorXd::Zero( J.cols() ) );
+
+    for( int i=0;i<w.size();i++) // For each feature
+    {
+        feat_gradient_sum(i) += ( J.col(i).sum() + EPS6);
+    }
+
+    cout << feat_gradient_sum.transpose() << endl;
+    cout << stored_features_[0].transpose() << endl;
+
+    // stored_features_.push_back( feat_gradient_sum );
+    stored_features_[0] += feat_gradient_sum;
+
+    feat_gradient_sum = stored_features_[0].normalized();
+
+    for( int i=0;i<w.size();i++) // For each feature
+    {
+        w(i) = 1 / feat_gradient_sum(i);
+    }
+
+    w.normalize();
+
+    return w;
+}
+
+void IocEvaluation::runPlannerWeightedFeature( int nb_runs )
+{
+    planners_.clearTrajs();
+    planners_.setPlannerType( planner_t(HriEnv->getInt(HricsParam::ioc_planner_type)) );
+
+    activateAllFeatures();
+
+    WeightVect w( Eigen::VectorXd::Ones( feature_fct_->getNumberOfFeatures() ) );
+
+    stored_features_.resize( 1, Eigen::VectorXd::Zero( feature_fct_->getNumberOfFeatures() ) );
+
+    for( int i=0; i<nb_runs; i++ )
+    {
+        for( int j=0;j<feature_fct_->getNumberOfFeatures();j++)
+        {
+            cout << "--------------------------------------------" << endl;
+            cout << "RUN : " << i << " , FEATURE : " << j << endl;
+
+            feature_fct_->setWeights( w );
+            feature_fct_->printWeights();
+
+            global_PlanarCostFct->produceDerivativeFeatureCostMap( i*feature_fct_->getNumberOfFeatures() + j );
+
+            planners_.run();
+
+            g3d_draw_allwin_active();
+
+            w = computeOptimalWeights();
+        }
+
+        // WARNING RESET EVERY 10
+        if( (i+1)%10 == 0 ) {
+            w = Eigen::VectorXd::Ones( feature_fct_->getNumberOfFeatures() );
+            stored_features_[0] = Eigen::VectorXd::Zero( feature_fct_->getNumberOfFeatures() );
+        }
+    }
+
+    planners_.saveTrajsToFile( "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square" );
 }
 
 void IocEvaluation::generateDemonstrations()

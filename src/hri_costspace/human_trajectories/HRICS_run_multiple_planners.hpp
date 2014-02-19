@@ -28,6 +28,8 @@ public:
     void setPlannerType( planner_t planner ) { planner_type_ = planner; }
     void clearTrajs() { best_traj_.clear(); }
 
+    void draw();
+
 private:
 
     bool runStomp();

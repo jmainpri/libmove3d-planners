@@ -2,14 +2,15 @@
 #define GRAPHSTATE_HPP
 
 #include "API/Search/AStar/State.hpp"
-#include "Planner-pkg.h"
+
+#include <libmove3d/include/Planner-pkg.h>
 /**
   * @ingroup CPP_API
   * @defgroup SEARCH Graph search
   * @brief Astar and Dijsktra
   */
 
- /**
+/**
    * @ingroup SEARCH
    * @brief Graph state interface for the AStar class
    */

@@ -3,14 +3,14 @@
 
 #include "API/Device/robot.hpp"
 #include "planner/planner.hpp"
+#include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
 
 #include "utils/OtpUtils.hpp"
 #include "utils/ConfGenerator.h"
 
-#include "LightPlanner-pkg.h"
-#include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
 #include "hri_costspace/HRICS_Natural.hpp"
 
+#include <libmove3d/include/LightPlanner-pkg.h>
 
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>

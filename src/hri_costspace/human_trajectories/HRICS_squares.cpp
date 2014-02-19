@@ -5,6 +5,8 @@
 
 #include "API/Graphic/drawModule.hpp"
 #include "API/project.hpp"
+#include "API/misc_functions.hpp"
+
 #include "planner/cost_space.hpp"
 
 #include <boost/bind.hpp>
@@ -164,7 +166,49 @@ double Squares::getFeaturesJacobianMagnitude( const Configuration& q )
 double Squares::jacobianCost(const Configuration& q)
 {
 //    return 1 / Feature::getFeaturesJacobianMagnitude( q );
-    return exp(-10*Feature::getFeaturesJacobianMagnitude( q )); // 10 is for scaling TODO findout what to put here
+//    return exp(-10*Feature::getFeaturesJacobianMagnitude( q )); // 10 is for scaling TODO findout what to put here
+    FeatureJacobian J = getFeaturesJacobian( q );
+    FeatureVect f(w_.size());
+
+    if( f.size() != J.rows() )
+    {
+        cout << __PRETTY_FUNCTION__ << endl;
+        cout << "ERROR IN OPTIMAL WEIGHTS COMPUTATION" << endl;
+        return f.norm();
+    }
+
+    for( int i=0;i<J.rows();i++)
+    {
+        f(i) = w_(i) * J.row(i).norm();
+    }
+    return  exp(-10*f.norm());
+}
+
+void Squares::produceDerivativeFeatureCostMap(int ith)
+{
+    double max_1, max_2;
+    double min_1, min_2;
+    robot_->getJoint(1)->getDofBounds( 0, min_1, max_1 );
+    robot_->getJoint(1)->getDofBounds( 1, min_2, max_2 );
+
+    int nb_cells = 100;
+    Eigen::MatrixXd mat0( nb_cells, nb_cells );
+
+    for( int i=0; i<nb_cells; i++ )
+    {
+        for( int j=0; j<nb_cells; j++ )
+        {
+            confPtr_t q = robot_->getCurrentPos();
+            (*q)[6] = min_1 + double(i)*(max_1-min_1)/double(nb_cells-1);
+            (*q)[7] = min_2 + double(j)*(max_2-min_2)/double(nb_cells-1);
+
+            mat0(i,j) = jacobianCost( *q );
+        }
+    }
+
+    std::stringstream ss;
+    ss.str(""); ss << "matlab/cost_maps/cost_jac_" << std::setw(2) << std::setfill( '0' ) << ith << ".txt";
+    move3d_save_matrix_to_file( mat0, ss.str() );
 }
 
 void Squares::computeSize()

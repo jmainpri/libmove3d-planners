@@ -8,8 +8,10 @@
  */
 
 #include "CollisionSpace.hpp"
-#include "CollisionSpaceCell.hpp"
+//#include "CollisionSpaceCell.hpp"
 #include "BodySurfaceSampler.hpp"
+
+#include "API/project.hpp"
 
 #include "planner/planEnvironment.hpp"
 

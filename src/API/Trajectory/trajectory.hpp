@@ -15,6 +15,7 @@
 #ifndef _TRAJ_H
 struct traj;
 #endif
+
 /**
  * @ingroup CPP_API
  * @defgroup Trajectory
@@ -136,8 +137,8 @@ public:
     double computeSubPortionRange(const std::vector<LocalPath*>& portion) const;
 
     bool        replaceP3dTraj() const;
-    p3d_traj* 	replaceP3dTraj(p3d_traj* trajPt) const;
-    p3d_traj* 	replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt);
+    traj* 	replaceP3dTraj(traj* trajPt) const;
+    traj* 	replaceHumanP3dTraj(Robot*rob, traj* trajPt);
 
     Eigen::MatrixXd getEigenMatrix(int startIndex=0, int endIndex=0) const;
     Eigen::MatrixXd getEigenMatrix(const std::vector<int>& incides) const;
@@ -188,6 +189,8 @@ public:
         return computeSubPortionRange(m_Courbe);
     }
 
+    long int Id() { return m_id; }
+
     //---------------------------------------------------------
     // Members
 protected:
@@ -202,6 +205,9 @@ private:
 
     /* name of trajectory */
     std::string                 m_name;
+
+    /* trajectory id */
+    long int                    m_id;
 
     /* Name of the file */
     std::string                 m_file;

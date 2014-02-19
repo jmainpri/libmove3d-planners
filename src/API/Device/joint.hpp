@@ -11,7 +11,7 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 
-#include "p3d_matrix.h"
+#include <libmove3d/include/p3d_matrix.h>
 
 class Robot;
 

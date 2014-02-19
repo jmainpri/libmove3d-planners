@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string.h>
+
 #include "API/ConfigSpace/configuration.hpp"
 
 typedef std::vector< std::pair<double,confPtr_t> > motion_t;

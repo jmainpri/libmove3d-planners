@@ -14,8 +14,7 @@
 
 #include "P3d-pkg.h"
 #include "Collision-pkg.h"
-#include "Planner-pkg.h"
-#include "Localpath-pkg.h"
+//#include "Localpath-pkg.h"
 
 #include "planner/cost_space.hpp"
 #include "collision_space/CollisionSpace.hpp"
@@ -29,147 +28,147 @@ using namespace Eigen;
 
 //constructor and destructor
 Configuration::Configuration(Robot* R) :
-_flagInitQuaternions(false),
-_CollisionTested(false),
-_InCollision(true),
-_CostTested(false),
-_Cost(0.0),
-_Robot(R)
+    _flagInitQuaternions(false),
+    _CollisionTested(false),
+    _InCollision(true),
+    _CostTested(false),
+    _Cost(0.0),
+    _Robot(R)
 {
-  if(_Robot==NULL)
-  {
-    _Configuration = NULL;
-  }
-  else
-  {
-    _Configuration = p3d_alloc_config(_Robot->getRobotStruct());
-  }
-}
-
-Configuration::Configuration(Robot* R, double* C, bool noCopy) :
-_flagInitQuaternions(false),
-_CollisionTested(false),
-_InCollision(true),
-_CostTested(false),
-_Cost(0.0),
-_Robot(R)
-{
-  if(_Robot==NULL)
-  {
-    _Configuration = NULL;
-  }
-  else
-  {
-    if(C==NULL)
+    if(_Robot==NULL)
     {
-      _Configuration = C;
+        _Configuration = NULL;
     }
     else
     {
-      _Configuration = noCopy ? C : p3d_copy_config(_Robot->getRobotStruct(), C);
-      //            this->initQuaternions();
+        _Configuration = p3d_alloc_config(_Robot->getRobotStruct());
     }
-  }
+}
+
+Configuration::Configuration(Robot* R, double* C, bool noCopy) :
+    _flagInitQuaternions(false),
+    _CollisionTested(false),
+    _InCollision(true),
+    _CostTested(false),
+    _Cost(0.0),
+    _Robot(R)
+{
+    if(_Robot==NULL)
+    {
+        _Configuration = NULL;
+    }
+    else
+    {
+        if(C==NULL)
+        {
+            _Configuration = C;
+        }
+        else
+        {
+            _Configuration = noCopy ? C : p3d_copy_config(_Robot->getRobotStruct(), C);
+            //            this->initQuaternions();
+        }
+    }
 }
 
 Configuration::Configuration(const Configuration& conf) :
-_flagInitQuaternions(conf._flagInitQuaternions),
-_CollisionTested(conf._CollisionTested),
-_InCollision(conf._InCollision),
-_CostTested(conf._CostTested),
-_Cost(conf._Cost),
-_Robot(conf._Robot)
+    _flagInitQuaternions(conf._flagInitQuaternions),
+    _CollisionTested(conf._CollisionTested),
+    _InCollision(conf._InCollision),
+    _CostTested(conf._CostTested),
+    _Cost(conf._Cost),
+    _Robot(conf._Robot)
 {
-  if(_Robot==NULL)
-  {
-    _Configuration = NULL;
-  }
-  else
-  {
-    _Configuration = p3d_copy_config(_Robot->getRobotStruct(), conf._Configuration);
-  }
+    if(_Robot==NULL)
+    {
+        _Configuration = NULL;
+    }
+    else
+    {
+        _Configuration = p3d_copy_config(_Robot->getRobotStruct(), conf._Configuration);
+    }
 }
 
 Configuration& Configuration::operator= (const Configuration& source)
 {
-  _flagInitQuaternions = source._flagInitQuaternions;
-  _CollisionTested = source._CollisionTested;
-  _InCollision = source._InCollision;
-  _CostTested = source._CostTested;
-  _Cost = source._Cost;
-  _Robot = source._Robot;
-  
-  if(_Robot==NULL)
-  {
-    _Configuration = NULL;
-  }
-  else
-  {
-    p3d_copy_config_into(_Robot->getRobotStruct(), source._Configuration, &_Configuration) ;
-  }
-  
-  return *this;
+    _flagInitQuaternions = source._flagInitQuaternions;
+    _CollisionTested = source._CollisionTested;
+    _InCollision = source._InCollision;
+    _CostTested = source._CostTested;
+    _Cost = source._Cost;
+    _Robot = source._Robot;
+
+    if(_Robot==NULL)
+    {
+        _Configuration = NULL;
+    }
+    else
+    {
+        p3d_copy_config_into(_Robot->getRobotStruct(), source._Configuration, &_Configuration) ;
+    }
+
+    return *this;
 }
 
 Configuration::~Configuration()
 {
-  this->Clear();
+    this->Clear();
 }
 
 void Configuration::Clear()
 {
-  if(_Configuration != NULL)
-  {
-    p3d_destroy_config(_Robot->getRobotStruct(), _Configuration);
-  }
+    if(_Configuration != NULL)
+    {
+        p3d_destroy_config(_Robot->getRobotStruct(), _Configuration);
+    }
 }
 
 
 void Configuration::convertToRadian()
 {
-  configPt q = p3d_alloc_config(_Robot->getRobotStruct());
-  p3d_convert_config_deg_to_rad(_Robot->getRobotStruct(),_Configuration,&q);
-  p3d_destroy_config(_Robot->getRobotStruct(),_Configuration);
-  _Configuration = q;
+    configPt q = p3d_alloc_config(_Robot->getRobotStruct());
+    p3d_convert_config_deg_to_rad(_Robot->getRobotStruct(),_Configuration,&q);
+    p3d_destroy_config(_Robot->getRobotStruct(),_Configuration);
+    _Configuration = q;
 }
 
 shared_ptr<Configuration> Configuration::getConfigInDegree()
 {
-  configPt q = p3d_alloc_config(_Robot->getRobotStruct());
-  p3d_convert_config_rad_to_deg(_Robot->getRobotStruct(),_Configuration,&q);
-  return (shared_ptr<Configuration> (new Configuration(_Robot,q,true)));
+    configPt q = p3d_alloc_config(_Robot->getRobotStruct());
+    p3d_convert_config_rad_to_deg(_Robot->getRobotStruct(),_Configuration,&q);
+    return (shared_ptr<Configuration> (new Configuration(_Robot,q,true)));
 }
 
 
 //Accessors
 Robot* Configuration::getRobot()
 {
-  return _Robot;
+    return _Robot;
 }
 
 configPt Configuration::getConfigStruct()
 {
-  return _Configuration;
+    return _Configuration;
 }
 
 configPt Configuration::getConfigStructConst() const
 {
-  return _Configuration;
+    return _Configuration;
 }
 
 configPt Configuration::getConfigStructCopy()
 {
-  return p3d_copy_config(_Robot->getRobotStruct(),_Configuration);
+    return p3d_copy_config(_Robot->getRobotStruct(),_Configuration);
 }
 
 void Configuration::setConfiguration(configPt C)
 {
-  _Configuration = C;
+    _Configuration = C;
 }
 
 void Configuration::setConfiguration(Configuration& C)
 {
-  _Configuration = C.getConfigStruct();
+    _Configuration = C.getConfigStruct();
 }
 
 /*bool Configuration::isQuatInit()
@@ -262,8 +261,8 @@ void Configuration::setConfiguration(Configuration& C)
  */
 double Configuration::dist(Configuration& Conf, bool print)
 {
-	return p3d_dist_config(_Robot->getRobotStruct(), _Configuration, Conf.getConfigStruct(),print);
-	/*
+    return p3d_dist_config(_Robot->getRobotStruct(), _Configuration, Conf.getConfigStruct(),print);
+    /*
    double ljnt = 0.;
    int njnt = _Robot->getRobotStruct()->njoints;
    p3d_jnt * jntPt;
@@ -272,7 +271,7 @@ double Configuration::dist(Configuration& Conf, bool print)
    
    bool ActivQuaterion = _flagInitQuaternions && Conf._flagInitQuaternions;
    
-   for (int i = 0; i <= njnt; i++) 
+   for (int i = 0; i <= njnt; i++)
    {
    jntPt = _Robot->getRobotStruct()->joints[i];
    
@@ -308,293 +307,293 @@ double Configuration::dist(Configuration& Conf, bool print)
 
 double Configuration::dist(Configuration& q, int distChoice)
 {
-  switch (distChoice)
-  {
+    switch (distChoice)
+    {
     case ACTIVE_CONFIG_DIST:
-      return (p3d_ActiveDistConfig(_Robot->getRobotStruct(), _Configuration,
-                                   q.getConfigStruct()));
-      //  case LIGAND_PROTEIN_DIST:
-      //    return(bio_compute_ligand_dist(_Robot->getRobotStruct(), _Configuration, q.getConfigurationStruct()));
-      //    break;
+        return (p3d_ActiveDistConfig(_Robot->getRobotStruct(), _Configuration,
+                                     q.getConfigStruct()));
+        //  case LIGAND_PROTEIN_DIST:
+        //    return(bio_compute_ligand_dist(_Robot->getRobotStruct(), _Configuration, q.getConfigurationStruct()));
+        //    break;
     case MOBILE_FRAME_DIST:
-      cout
-      << "Warning: the MOBILE_FRAME_DIST can't be directly returned from the configurations"
-      << endl;
-      // hrm_mob_frame_dist(robotPt, mob_frame_ref,ListNode->N->rel_mob_frame);
+        cout
+                << "Warning: the MOBILE_FRAME_DIST can't be directly returned from the configurations"
+                << endl;
+        // hrm_mob_frame_dist(robotPt, mob_frame_ref,ListNode->N->rel_mob_frame);
 #ifdef LIGHT_PLANNER
     case ONLY_ROBOT_BASE:
-		{
-			double ljnt=0.0;
-			p3d_jnt* jntPt= _Robot->getBaseJnt();
-			for(int j=0; j<jntPt->dof_equiv_nbr; j++) 
-			{
-				int k = jntPt->index_dof + j;
-				
-				if ( (p3d_jnt_get_dof_is_user(jntPt, j) && p3d_jnt_get_dof_is_active_for_planner(jntPt,j)) &&
-            (_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) ) 
-				{
-					ljnt += SQR(p3d_jnt_calc_dof_dist(jntPt, j, _Configuration, q.getConfigStruct()));
-				} 
-			}
-			return ljnt;
-		}
+    {
+        double ljnt=0.0;
+        p3d_jnt* jntPt= _Robot->getBaseJnt();
+        for(int j=0; j<jntPt->dof_equiv_nbr; j++)
+        {
+            int k = jntPt->index_dof + j;
+
+            if ( (p3d_jnt_get_dof_is_user(jntPt, j) && p3d_jnt_get_dof_is_active_for_planner(jntPt,j)) &&
+                 (_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) )
+            {
+                ljnt += SQR(p3d_jnt_calc_dof_dist(jntPt, j, _Configuration, q.getConfigStruct()));
+            }
+        }
+        return ljnt;
+    }
 #endif			
     case GENERAL_CSPACE_DIST:
     default:
-      return (this->dist(q));
-  }
+        return (this->dist(q));
+    }
 }
 
 bool Configuration::isInCollision()
 {
-  if(!_CollisionTested)
-  {
-    _CollisionTested = true;
-    
-    if( !_Robot->setAndUpdate(*this) ) 
+    if(!_CollisionTested)
     {
-      _InCollision = true;
-      return _InCollision;
-    }
-    
-    //_InCollision = p3d_col_test();      
-//    if( global_collisionSpace )
-//    {
-//      double dist = numeric_limits<double>::max();
-//      double potential = numeric_limits<double>::max();
-//      _InCollision = global_collisionSpace->isRobotColliding( dist, potential );
-//    }
-//    else
-//    {
-      _InCollision = p3d_col_test_robot(_Robot->getRobotStruct(), JUST_BOOL);
-//    }
+        _CollisionTested = true;
 
-    //        shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
-    //        cout << "6" << " : "<<_Configuration[6] << endl;
-    //        cout << "7" << " : "<<_Configuration[7] << endl;
-    //        cout << "---------" << endl;
-  }
-  
-  return _InCollision;
+        if( !_Robot->setAndUpdate(*this) )
+        {
+            _InCollision = true;
+            return _InCollision;
+        }
+
+        //_InCollision = p3d_col_test();
+        //    if( global_collisionSpace )
+        //    {
+        //      double dist = numeric_limits<double>::max();
+        //      double potential = numeric_limits<double>::max();
+        //      _InCollision = global_collisionSpace->isRobotColliding( dist, potential );
+        //    }
+        //    else
+        //    {
+        _InCollision = p3d_col_test_robot(_Robot->getRobotStruct(), JUST_BOOL);
+        //    }
+
+        //        shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
+        //        cout << "6" << " : "<<_Configuration[6] << endl;
+        //        cout << "7" << " : "<<_Configuration[7] << endl;
+        //        cout << "---------" << endl;
+    }
+
+    return _InCollision;
 }
 
 bool Configuration::isOutOfBounds(bool print)
 {
-	return(p3d_isOutOfBounds(_Robot->getRobotStruct(), _Configuration, print));
+    return(p3d_isOutOfBounds(_Robot->getRobotStruct(), _Configuration, print));
 }
 
 void Configuration::adaptCircularJointsLimits()
 {
-  configPt q = p3d_alloc_config( _Robot->getRobotStruct() );
-  
-  p3d_adaptConfigsForCircularDofs( _Robot->getRobotStruct(), &_Configuration, &q );
-//  p3d_copy_config_into( _Robot->getRobotStruct(), q, &_Configuration );
-  p3d_destroy_config( _Robot->getRobotStruct(), q );
+    configPt q = p3d_alloc_config( _Robot->getRobotStruct() );
+
+    p3d_adaptConfigsForCircularDofs( _Robot->getRobotStruct(), &_Configuration, &q );
+    //  p3d_copy_config_into( _Robot->getRobotStruct(), q, &_Configuration );
+    p3d_destroy_config( _Robot->getRobotStruct(), q );
 }
 
 void Configuration::setAsNotTested()
 {
-	_CollisionTested = false;
+    _CollisionTested = false;
 }
 
 double Configuration::distEnv()
 {
-  this->getRobot()->setAndUpdate(*this);
-  int settings = get_kcd_which_test();
-  set_kcd_which_test((p3d_type_col_choice) (40 + 3));
-  // 40 = KCD_ROB_ENV
-  // 3 = DISTANCE_EXACT
-  p3d_col_test_choice();
-  // Collision detection with other robots only
-  
-  int nof_bodies = _Robot->getRobotStruct()->no;
-  
-  double* distances = new double[nof_bodies];
-  
-  p3d_vector3 *body = new p3d_vector3[nof_bodies];
-  p3d_vector3 *other = new p3d_vector3[nof_bodies];
-  
-  p3d_kcd_closest_points_robot_environment(_Robot->getRobotStruct(),
-                                           body,other,distances);
-  // Get robot closest points to human for each body
-  
-  set_kcd_which_test((p3d_type_col_choice) settings);
-  
-  int i = (int)(std::min_element(distances,distances+nof_bodies-1 )-distances);
-  
-  return distances[i];
+    this->getRobot()->setAndUpdate(*this);
+    int settings = get_kcd_which_test();
+    set_kcd_which_test((p3d_type_col_choice) (40 + 3));
+    // 40 = KCD_ROB_ENV
+    // 3 = DISTANCE_EXACT
+    p3d_col_test_choice();
+    // Collision detection with other robots only
+
+    int nof_bodies = _Robot->getRobotStruct()->no;
+
+    double* distances = new double[nof_bodies];
+
+    p3d_vector3 *body = new p3d_vector3[nof_bodies];
+    p3d_vector3 *other = new p3d_vector3[nof_bodies];
+
+    p3d_kcd_closest_points_robot_environment(_Robot->getRobotStruct(),
+                                             body,other,distances);
+    // Get robot closest points to human for each body
+
+    set_kcd_which_test((p3d_type_col_choice) settings);
+
+    int i = (int)(std::min_element(distances,distances+nof_bodies-1 )-distances);
+
+    return distances[i];
 }
 
 
 double Configuration::getActiveDoF(unsigned int ith)
 {
-	unsigned int nbDoF(0);
-	
-	for(unsigned int i=0;i<_Robot->getNumberOfJoints();i++)
-	{
-		p3d_jnt* jntPt = _Robot->getJoint(i)->getJointStruct();
-		
-		for(int j=0; j<jntPt->dof_equiv_nbr; j++) 
-		{
-			int k = jntPt->index_dof + j;
-			
-			if (
-					(p3d_jnt_get_dof_is_user(jntPt, j) && p3d_jnt_get_dof_is_active_for_planner(jntPt,j)) &&
-					(_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) ) 
-			{
-				if( ith == nbDoF)
-				{
-					return _Configuration[k];
-				}
-				nbDoF++;
-			}
-		}
-	}
-	
-	return nbDoF;
+    unsigned int nbDoF(0);
+
+    for(unsigned int i=0;i<_Robot->getNumberOfJoints();i++)
+    {
+        p3d_jnt* jntPt = _Robot->getJoint(i)->getJointStruct();
+
+        for(int j=0; j<jntPt->dof_equiv_nbr; j++)
+        {
+            int k = jntPt->index_dof + j;
+
+            if (
+                    (p3d_jnt_get_dof_is_user(jntPt, j) && p3d_jnt_get_dof_is_active_for_planner(jntPt,j)) &&
+                    (_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) )
+            {
+                if( ith == nbDoF)
+                {
+                    return _Configuration[k];
+                }
+                nbDoF++;
+            }
+        }
+    }
+
+    return nbDoF;
 }
 
 void Configuration::setActiveDoF(unsigned int ith, double value)
 {
-	unsigned int nbDoF(0);
-	
-	for(unsigned int i=0;i<_Robot->getNumberOfJoints();i++)
-	{
-		p3d_jnt* jntPt = _Robot->getJoint(i)->getJointStruct();
-		
-		for(int j=0; j<jntPt->dof_equiv_nbr; j++) 
-		{
-			int k = jntPt->index_dof + j;
-			
-			if (
-					(p3d_jnt_get_dof_is_user(jntPt, j) && p3d_jnt_get_dof_is_active_for_planner(jntPt,j)) &&
-					(_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) ) 
-			{
-				if( ith == nbDoF)
-				{
-					//cout << "ith = " << k << endl;
-					_Configuration[k] = value;
-					return;
-				}
-				nbDoF++;
-			}
-		}
-	}
+    unsigned int nbDoF(0);
+
+    for(unsigned int i=0;i<_Robot->getNumberOfJoints();i++)
+    {
+        p3d_jnt* jntPt = _Robot->getJoint(i)->getJointStruct();
+
+        for(int j=0; j<jntPt->dof_equiv_nbr; j++)
+        {
+            int k = jntPt->index_dof + j;
+
+            if (
+                    (p3d_jnt_get_dof_is_user(jntPt, j) && p3d_jnt_get_dof_is_active_for_planner(jntPt,j)) &&
+                    (_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) )
+            {
+                if( ith == nbDoF)
+                {
+                    //cout << "ith = " << k << endl;
+                    _Configuration[k] = value;
+                    return;
+                }
+                nbDoF++;
+            }
+        }
+    }
 }
 
 bool Configuration::equal(Configuration& Conf, bool print)
 {
-  if(_Configuration==Conf.getConfigStruct())
-  {
-    if(_Configuration==NULL)
+    if(_Configuration==Conf.getConfigStruct())
     {
-      return false;
+        if(_Configuration==NULL)
+        {
+            return false;
+        }
+
+        return true;
     }
-    
-    return true;
-  }
-  else
-  {
-    if(_Configuration==NULL || Conf.getConfigStruct()==NULL)
+    else
     {
-      return false;
+        if(_Configuration==NULL || Conf.getConfigStruct()==NULL)
+        {
+            return false;
+        }
     }
-  }
-	
-  return p3d_equal_config( _Robot->getRobotStruct(), _Configuration, Conf.getConfigStruct(), print);
+
+    return p3d_equal_config( _Robot->getRobotStruct(), _Configuration, Conf.getConfigStruct(), print);
 }
 
 //copie la Configuration courante dans une nouvelle Configuration
 shared_ptr<Configuration> Configuration::copy()
 {
-  return (shared_ptr<Configuration>(new Configuration(*this)));
+    return (shared_ptr<Configuration>(new Configuration(*this)));
 }
 
 void Configuration::copyPassive(Configuration& C)
 {
-  for (int i(0); i <= _Robot->getRobotStruct()->njoints; i++)
-  {
-    p3d_jnt* joint(_Robot->getRobotStruct()->joints[i]);
-    for (int j(0); j < joint->dof_equiv_nbr; j++)
+    for (int i(0); i <= _Robot->getRobotStruct()->njoints; i++)
     {
-      int k = joint->index_dof + j;
-      if ((!p3d_jnt_get_dof_is_user(joint, j))
-          || (!p3d_jnt_get_dof_is_active_for_planner(joint, j)))
-        C[k] = (*this)[k];
+        p3d_jnt* joint(_Robot->getRobotStruct()->joints[i]);
+        for (int j(0); j < joint->dof_equiv_nbr; j++)
+        {
+            int k = joint->index_dof + j;
+            if ((!p3d_jnt_get_dof_is_user(joint, j))
+                    || (!p3d_jnt_get_dof_is_active_for_planner(joint, j)))
+                C[k] = (*this)[k];
+        }
     }
-  }
 }
 
 shared_ptr<Configuration> Configuration::add(Configuration& C)
 {
-  shared_ptr<Configuration> ptrQ(new Configuration(_Robot));
-  
-  p3d_addConfig(_Robot->getRobotStruct(), _Configuration,
-                C.getConfigStruct(), ptrQ->getConfigStruct() );
-  
-  return ptrQ;
+    shared_ptr<Configuration> ptrQ(new Configuration(_Robot));
+
+    p3d_addConfig(_Robot->getRobotStruct(), _Configuration,
+                  C.getConfigStruct(), ptrQ->getConfigStruct() );
+
+    return ptrQ;
 }
 
 shared_ptr<Configuration> Configuration::sub(Configuration& C)
 {
-	shared_ptr<Configuration> ptrQ(new Configuration(_Robot));
-	
-  p3d_subConfig(_Robot->getRobotStruct(), _Configuration,
-                C.getConfigStruct(), ptrQ->getConfigStruct() );
-	
-  return ptrQ;
+    shared_ptr<Configuration> ptrQ(new Configuration(_Robot));
+
+    p3d_subConfig(_Robot->getRobotStruct(), _Configuration,
+                  C.getConfigStruct(), ptrQ->getConfigStruct() );
+
+    return ptrQ;
 }
 
 Configuration& Configuration::mult(double coeff)
 {
-	Configuration* q = new Configuration(*this);
-	
-	int njnt = _Robot->getRobotStruct()->njoints;
-	int k = 0;
-	for (int i = 0; i <= njnt; i++) 
-	{
-		p3d_jnt *jntPt = _Robot->getRobotStruct()->joints[i];
-		for (int j = 0; j < jntPt->dof_equiv_nbr; j++) 
-		{
-			(*q)[k] *= coeff;
-			k ++;
-		}
-	}
-	
-	return (*q);
+    Configuration* q = new Configuration(*this);
+
+    int njnt = _Robot->getRobotStruct()->njoints;
+    int k = 0;
+    for (int i = 0; i <= njnt; i++)
+    {
+        p3d_jnt *jntPt = _Robot->getRobotStruct()->joints[i];
+        for (int j = 0; j < jntPt->dof_equiv_nbr; j++)
+        {
+            (*q)[k] *= coeff;
+            k ++;
+        }
+    }
+
+    return (*q);
 }
 
 Eigen::VectorXd Configuration::getEigenVector()  const
 {
     unsigned int nbDof= 0;
     unsigned int njnt = _Robot->getNumberOfJoints();
-  
-	// Get  number of Dofs of all joints
+
+    // Get  number of Dofs of all joints
     for (unsigned int i = 0; i < njnt; i++)
-		nbDof += _Robot->getJoint(i)->getNumberOfDof();
-	
-	VectorXd q(nbDof);
-  
+        nbDof += _Robot->getJoint(i)->getNumberOfDof();
+
+    VectorXd q(nbDof);
+
     // Get the values of the dofs
     for (unsigned int i = 0; i < nbDof; i++)
-	{
-		q(i) = _Configuration[i];
-	}
-	
-	return q;
+    {
+        q(i) = _Configuration[i];
+    }
+
+    return q;
 }
 
 Eigen::VectorXd Configuration::getEigenVector( int startIndex, int endIndex ) const
 {	
     VectorXd q( endIndex - startIndex + 1);
-  
-	// Get the values of the dofs
+
+    // Get the values of the dofs
     for ( int i=startIndex; i <= endIndex; i++)
-	{
+    {
         q(i-startIndex) = _Configuration[i];
-	}
-	
-	return q;
+    }
+
+    return q;
 }
 
 Eigen::VectorXd Configuration::getEigenVector(const std::vector<int>& indices) const
@@ -612,137 +611,137 @@ Eigen::VectorXd Configuration::getEigenVector(const std::vector<int>& indices) c
 
 void Configuration::setFromEigenVector(const Eigen::VectorXd& conf)
 {	
-	// Get the values of the dofs
-	for (int i = 0; i < conf.size(); i++) 
-	{
-		_Configuration[i] = conf(i);
-	}
+    // Get the values of the dofs
+    for (int i = 0; i < conf.size(); i++)
+    {
+        _Configuration[i] = conf(i);
+    }
 }
 
 void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, int startIndex, int endIndex)
 {
-  // Get the values of the dofs
+    // Get the values of the dofs
     for (int i = startIndex; i <= endIndex; i++)
-	{
-		_Configuration[i] = conf(i);
-	}
+    {
+        _Configuration[i] = conf(i);
+    }
 }
 
 bool Configuration::setConstraintsWithSideEffect()
 {
-	Configuration q(_Robot,p3d_get_robot_config(_Robot->getRobotStruct()), true);
-	
-  bool respect = _Robot->setAndUpdate(*this);
-	
-  if(respect)
-  {
-    this->Clear();
-    _Configuration = p3d_get_robot_config(_Robot->getRobotStruct());
-  }
-	
-  return respect;
+    Configuration q(_Robot,p3d_get_robot_config(_Robot->getRobotStruct()), true);
+
+    bool respect = _Robot->setAndUpdate(*this);
+
+    if(respect)
+    {
+        this->Clear();
+        _Configuration = p3d_get_robot_config(_Robot->getRobotStruct());
+    }
+
+    return respect;
 }
 
 bool Configuration::setConstraints()
 {
-  Configuration q(_Robot,p3d_get_robot_config(_Robot->getRobotStruct()), true);
-  
-  bool respect = _Robot->setAndUpdate(*this);
-  
-  if(respect)
-  {
-    this->Clear();
-    _Configuration = p3d_get_robot_config(_Robot->getRobotStruct());
-  }
-  
-  _Robot->setAndUpdate(q);
-  
-  return respect;
+    Configuration q(_Robot,p3d_get_robot_config(_Robot->getRobotStruct()), true);
+
+    bool respect = _Robot->setAndUpdate(*this);
+
+    if(respect)
+    {
+        this->Clear();
+        _Configuration = p3d_get_robot_config(_Robot->getRobotStruct());
+    }
+
+    _Robot->setAndUpdate(q);
+
+    return respect;
 }
 
 #ifdef LIGHT_PLANNER
 Vector3d Configuration::getTaskPos()
 {
-  // TODO: fix the problem of having a function 
-  // that modifies the configuration in cost computation
-  //    if(!ENV.getBool(Env::isInverseKinematics))
-  //    {
-  //        this->setConstraints();
-  //    }
-  Vector3d taskPos;
-  int objDof = _Robot->getObjectDof();
-	//cout << "Robot object dof = " << objDof << endl;
-  taskPos[0] = _Configuration[objDof+0];
-  taskPos[1] = _Configuration[objDof+1];
-  taskPos[2] = _Configuration[objDof+2];
-  return taskPos;
+    // TODO: fix the problem of having a function
+    // that modifies the configuration in cost computation
+    //    if(!ENV.getBool(Env::isInverseKinematics))
+    //    {
+    //        this->setConstraints();
+    //    }
+    Vector3d taskPos;
+    int objDof = _Robot->getObjectDof();
+    //cout << "Robot object dof = " << objDof << endl;
+    taskPos[0] = _Configuration[objDof+0];
+    taskPos[1] = _Configuration[objDof+1];
+    taskPos[2] = _Configuration[objDof+2];
+    return taskPos;
 }
 #endif
 
 double Configuration::cost()
 {
-  if(!_CostTested)
-  {
-    if( global_costSpace )
+    if(!_CostTested)
     {
-      _Cost = global_costSpace->cost(*this);
+        if( global_costSpace )
+        {
+            _Cost = global_costSpace->cost(*this);
+        }
+
+        _CostTested = true;
+        //				cout << "Cost = " << _Cost << endl;
     }
-    
-    _CostTested = true;
-    //				cout << "Cost = " << _Cost << endl;
-  }
-	
-	return _Cost;
+
+    return _Cost;
 }
 
 void Configuration::setCostAsNotTested()
 {
-	_CostTested = false;
+    _CostTested = false;
 }
 
 void Configuration::print(bool withPassive) const
 {
-  
-  cout << "Print Configuration; Robot: " << _Robot->getRobotStruct() << endl;
-  
-  //	print_config(_Robot->getRobotStruct(),_Configuration);
-  
-  //    configPt degConf = getConfigInDegree()->getConfigStruct();
-  //
-  //    for (int i = 0; i < _Robot->getRobotStruct()->nb_dof; i++)
-  //    {
-  //        //	    cout << "q["<<i<<"]"<<" = "<< _Configuration[i] << endl;
-  //        cout << "degConf["<< i <<"] = " << degConf[i] << endl;
-  //    }
-  
-  //	int nb_dof;
-  //
-  //	if(robotPt != NULL){
-  //		nb_dof = mR->getP3dRob()->nb_user_dof;
-  //	}
-  
-  //	for(int i=0; i<nb_dof;i++){
-  //		PrintInfo(("q[%d] = %f\n", i, q[i]));
-  //	}
-  
-  
-  int njnt = _Robot->getRobotStruct()->njoints, k;
-  p3d_jnt * jntPt;
-  for(int i=0; i<=njnt; i++)
-  {
-    jntPt = _Robot->getRobotStruct()->joints[i];
-    for(int j=0; j<jntPt->dof_equiv_nbr; j++)
+
+    cout << "Print Configuration; Robot: " << _Robot->getRobotStruct() << endl;
+
+    //	print_config(_Robot->getRobotStruct(),_Configuration);
+
+    //    configPt degConf = getConfigInDegree()->getConfigStruct();
+    //
+    //    for (int i = 0; i < _Robot->getRobotStruct()->nb_dof; i++)
+    //    {
+    //        //	    cout << "q["<<i<<"]"<<" = "<< _Configuration[i] << endl;
+    //        cout << "degConf["<< i <<"] = " << degConf[i] << endl;
+    //    }
+
+    //	int nb_dof;
+    //
+    //	if(robotPt != NULL){
+    //		nb_dof = mR->getP3dRob()->nb_user_dof;
+    //	}
+
+    //	for(int i=0; i<nb_dof;i++){
+    //		PrintInfo(("q[%d] = %f\n", i, q[i]));
+    //	}
+
+
+    int njnt = _Robot->getRobotStruct()->njoints, k;
+    p3d_jnt * jntPt;
+    for(int i=0; i<=njnt; i++)
     {
-      k = jntPt->index_dof + j;
-//      cout << "p3d_jnt_get_dof_is_user : " << p3d_jnt_get_dof_is_user(jntPt, j) << endl;
-//      cout << "_Robot->getRobotStruct()->cntrt_manager->in_cntrt[" << k << "] = " << _Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] << endl;
-      if (withPassive || ( p3d_jnt_get_dof_is_user(jntPt, j)
-                          /*&& (p3d_jnt_get_dof_is_active_for_planner(jntPt,j) */
-                          && (_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != DOF_PASSIF )))
-      {
-        cout << "q["<<k<<"] = "<<_Configuration[k]<<endl;
-      }
+        jntPt = _Robot->getRobotStruct()->joints[i];
+        for(int j=0; j<jntPt->dof_equiv_nbr; j++)
+        {
+            k = jntPt->index_dof + j;
+            //      cout << "p3d_jnt_get_dof_is_user : " << p3d_jnt_get_dof_is_user(jntPt, j) << endl;
+            //      cout << "_Robot->getRobotStruct()->cntrt_manager->in_cntrt[" << k << "] = " << _Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] << endl;
+            if (withPassive || ( p3d_jnt_get_dof_is_user(jntPt, j)
+                                 /*&& (p3d_jnt_get_dof_is_active_for_planner(jntPt,j) */
+                                 && (_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != DOF_PASSIF )))
+            {
+                cout << "q["<<k<<"] = "<<_Configuration[k]<<endl;
+            }
+        }
     }
-  }
-  cout << "\n--------------------------------" << endl;
+    cout << "\n--------------------------------" << endl;
 }

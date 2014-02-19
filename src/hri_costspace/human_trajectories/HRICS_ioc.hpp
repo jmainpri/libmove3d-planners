@@ -151,6 +151,9 @@ public:
     //! Run Stomp for multiple feature functions
     void runPlannerMultipleFeature( int nb_runs=1 );
 
+    //! Run Stomp on weighted features
+    void runPlannerWeightedFeature( int nb_runs=1 );
+
     //! Generate demonstration using optimal planning
     void generateDemonstrations();
 
@@ -195,6 +198,11 @@ protected:
     API::Trajectory planMotionStomp();
     API::Trajectory planAStar();
 
+    void activateAllFeatures();
+
+    //! Compute weights when planning multiple times.
+    WeightVect computeOptimalWeights();
+
     virtual void setLearnedWeights();
     virtual void setOriginalWeights();
 
@@ -218,6 +226,8 @@ protected:
     bool load_sample_from_file_;
     MultiplePlanners& planners_;
     int round_id_;
+
+    std::vector<FeatureVect> stored_features_;
 };
 
 }

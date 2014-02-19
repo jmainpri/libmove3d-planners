@@ -8,7 +8,7 @@
 #include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
 
-#include "graph.hpp"
+#include "API/Roadmap/graph.hpp"
 
 //! Sampler of noisy trajectories
 class graphSampler

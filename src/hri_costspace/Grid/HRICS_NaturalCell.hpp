@@ -11,8 +11,10 @@
 #define HRICS_NATURALCELL_H_
 
 #include "API/planningAPI.hpp"
-#include "Graphic-pkg.h"
+
 #include "HRICS_NaturalGrid.hpp"
+
+#include <libmove3d/include/Graphic-pkg.h>
 
 namespace HRICS
 {

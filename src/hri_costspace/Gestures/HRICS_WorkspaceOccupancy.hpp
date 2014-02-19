@@ -10,7 +10,7 @@
 #include "HRICS_RecordMotion.hpp"
 #include "HRICS_ClassifyMotion.hpp"
 
-#include "Graphic-pkg.h"
+#include <libmove3d/include/Graphic-pkg.h>
 
 namespace HRICS
 {

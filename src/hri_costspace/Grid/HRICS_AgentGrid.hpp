@@ -14,7 +14,7 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Grids/ThreeDGrid.hpp"
 
-#include "Graphic-pkg.h"
+#include <libmove3d/include/Graphic-pkg.h>
 
 namespace HRICS
 {

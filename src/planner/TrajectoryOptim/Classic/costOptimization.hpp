@@ -22,51 +22,51 @@ class CostOptimization : public Smoothing
 public:
 
     /**
-         * Constructors and Destructors of the class
-         */
+      * Constructors and Destructors of the class
+      */
     CostOptimization();
-    CostOptimization(const Trajectory& T);
-    CostOptimization(Robot* R,p3d_traj* t);
+    CostOptimization( const Trajectory& T );
+    CostOptimization( Robot* R, traj* t );
 
     ~CostOptimization();
     
     /**
-         * Prints debug information
-         */
+      * Prints debug information
+      */
     void printDebugInfo();
 
     /**
-         * Returns true if the new trajectory is in collision
-         */
+      * Returns true if the new trajectory is in collision
+      */
     bool deformInCollision() { return m_inCollision; }
 
     /**
-         * Set the cheat
-         */
+      * Set the cheat
+      */
     void setCheat() { m_cheat = true; }
     
     /**
-         * Get the minimal cost
-         */
+      * Get the minimal cost
+      */
     double getMinCost() { return m_mincost; }
     
     /**
-         * One loop of the deformation strategy
-         * @param step is the distance between 2 configurations
-         */
+     * One loop of the deformation strategy
+     * @param step is the distance between 2 configurations
+     */
     bool oneLoopDeform();
 
     /**
-         * One loop of the deformation strategy with recomputing
-         * of the trajectory portion cost as it might change
-         * @param step is the distance between 2 configurations
-         */
+     * One loop of the deformation strategy with recomputing
+     * of the trajectory portion cost as it might change
+     * @param step is the distance between 2 configurations
+     */
     bool oneLoopDeformRecompute();
 
     /**
-         * Stops at the last descending configuration
-         * on the cost map
-         */
+     * Stops at the last descending configuration
+     * on the cost map
+     */
     static double getLastDescendingConfParam( LocalPath& directionPath );
     
     /**
@@ -88,35 +88,35 @@ public:
     bool connectConfigurationToEnd( confPtr_t q, double step, bool consider_cost=false );
 
     /**
-         * Expand the configuration to a ne
-         */
+     * Expand the configuration to a ne
+     */
     static confPtr_t perturbCurrent( confPtr_t qCurrPt, confPtr_t qRandPt, double step, bool descent );
 
     /**
-         *
-         */
+     *
+     */
     void runDeformation( int nbIteration , int idRun=0 );
     
 
 protected:
 
     /**
-         * Cheat for Justin
-         */
+     * Cheat for Justin
+     */
     confPtr_t cheat();
 
     /**
-         * Create new trajectories to show in debug mode
-         * also calls the g3d_draw function to plot in the OpenGl display
-         */
+     * Create new trajectories to show in debug mode
+     * also calls the g3d_draw function to plot in the OpenGl display
+     */
     void debugShowTraj(double lPrev,double lNext, confPtr_t qNew , int color);
     
     /**
-         * Returns 3 random configurations along the trajtectory
-         * @param the step between the 3 configuration
-         * @return vector of configuration
-         * @return
-         */
+     * Returns 3 random configurations along the trajtectory
+     * @param the step between the 3 configuration
+     * @return vector of configuration
+     * @return
+     */
     std::vector<confPtr_t> get3RandSuccesConfAlongTraj(
             double& prevDistPt,
             double& randDistPt,
@@ -124,9 +124,9 @@ protected:
             double step);
 
     /**
-         * Returns the 3 configurations that are the closest to the input configuration
-         * @param
-         */
+     * Returns the 3 configurations that are the closest to the input configuration
+     * @param
+     */
     std::vector<confPtr_t> getClosestConfOnTraj(
             double& prevDistPt,
             double& randDistPt,

@@ -2,16 +2,14 @@
 #define OTPUTILS_HPP
 
 #include "API/planningAPI.hpp"
-
 #include "API/Trajectory/trajectory.hpp"
+
 #include "planner/planner.hpp"
+#include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
 
 #include "utils/OtpUtils.hpp"
 
-#include "LightPlanner-pkg.h"
-#include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
-
-
+#include <libmove3d/include/LightPlanner-pkg.h>
 
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>

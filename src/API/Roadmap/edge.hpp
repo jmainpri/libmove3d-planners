@@ -131,22 +131,23 @@ public:
     }
 
 private:
-    edge*			m_Edge;
+    edge*       m_Edge;
 
-    bool      m_is_cost_computed;
+    bool        m_is_cost_computed;
 
-    Node*			m_Source;
-    Node*			m_Target;
+    Node*		m_Source;
+    Node*		m_Target;
 
     Graph*		m_Graph;
     Robot*		m_Robot;
 
     double		m_Long;
 
-    bool m_is_BGL_Descriptor_Valid;
-    BGL_Edge m_BGL_Descriptor;
+    bool        m_is_BGL_Descriptor_Valid;
+    BGL_Edge    m_BGL_Descriptor;
 
-    bool														m_is_LocalPath_Computed;
+    bool		m_is_LocalPath_Computed;
+
     MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> m_path;
 };
 

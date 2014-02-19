@@ -2,7 +2,7 @@
  *
  * State.h
  *
- * This is the header file of a pure virtual base class for the 
+ * This is the header file of a pure virtual base class for the
  * state class that will be written by the
  * programmer for his/her own purpose
  * */
@@ -14,12 +14,12 @@
 
 namespace API
 {
-  /**
+/**
    * @ingroup C++ Planning API
    */
-  class State
-  {
-  public:
+class State
+{
+public:
     State();
     double computeCost(State *parent, State* goal); /* f (f=g+h) */
     
@@ -46,14 +46,14 @@ namespace API
     
     virtual void print() {}
     
-  protected:
+protected:
     virtual double computeLength(State *parent);       /* g */
     virtual double computeHeuristic(State *parent,State* goal);    /* h */
     
-  private:
+private:
     /* f, g, h values */
     double _f,_g,_h;
-  };
+};
 }
 
 #endif

@@ -41,6 +41,9 @@ double Feature::costTraj( const API::Trajectory& t )
     return cost;
 }
 
+//! The jacobian is
+//! column per dof
+//! row per feature
 FeatureJacobian Feature::getFeaturesJacobian( const Configuration& q_0 )
 {
     const double eps = 1e-3;
@@ -86,7 +89,7 @@ double Feature::getJacobianSum( const API::Trajectory& t )
 
 FeatureVect Feature::getFeatureCount( const API::Trajectory& t )
 {
-    FeatureVect phi( Eigen::VectorXd::Zero(w_.size()) );
+    FeatureVect phi( Eigen::VectorXd::Zero( w_.size() ) );
 
     for(int i=1;i<t.getNbOfViaPoints();i++)
     {
@@ -108,6 +111,21 @@ FeatureProfile Feature::getFeatureProfile( const API::Trajectory& t )
     for(int i=0;i<p.size();i++)
     {
         p[i] = getFeatures( *t[i] ).norm();
+    }
+
+    return p;
+}
+
+FeatureJacobian Feature::getFeatureJacobian( const API::Trajectory& t )
+{
+    FeatureJacobian p( Eigen::MatrixXd::Zero( t.getNbOfViaPoints() , getNumberOfFeatures() ) );
+
+    for(int i=0;i<p.rows();i++) // number of via points
+    {
+        for(int j=0;j<p.cols();j++) // number of features
+        {
+            p(i,j) = getFeaturesJacobian( *t[i] ).row( j ).norm() ;
+        }
     }
 
     return p;

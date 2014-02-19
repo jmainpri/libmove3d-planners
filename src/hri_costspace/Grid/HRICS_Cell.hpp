@@ -5,7 +5,7 @@
 
 #include "HRICS_Grid.hpp"
 
-#include "Graphic-pkg.h"
+#include <libmove3d/include/Graphic-pkg.h>
 
 /**
  @ingroup HRICS

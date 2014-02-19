@@ -1,4 +1,3 @@
-//
 // C++ Implementation: localpath
 //
 // Description:
@@ -211,7 +210,19 @@ bool LocalPath::getEvaluated()
     return _Evaluated;
 }
 
-p3d_localpath_type LocalPath::getType()
+//p3d_localpath_type LocalPath::getType()
+//{
+//    if (getLocalpathStruct())
+//    {
+//        return _Type;
+//    }
+//    else
+//    {
+//        return (p3d_localpath_type) (NULL);
+//    }
+//}
+
+int LocalPath::getType()
 {
     if (getLocalpathStruct())
     {
@@ -219,7 +230,7 @@ p3d_localpath_type LocalPath::getType()
     }
     else
     {
-        return (p3d_localpath_type) (NULL);
+        return (int) (NULL);
     }
 }
 

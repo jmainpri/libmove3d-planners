@@ -23,6 +23,8 @@
 
 #include "move3d-headless.h"
 
+#include <ctime>
+
 using namespace std;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
@@ -39,6 +41,7 @@ Trajectory::Trajectory() :
     m_HighestCostId(0),
     m_isHighestCostIdSet(false),
     m_name(""),
+    m_id( std::time(0) ),
     m_file(""),
     m_use_continuous_color(false),
     m_Color(0),
@@ -52,6 +55,7 @@ Trajectory::Trajectory(Robot* R) :
     m_HighestCostId(0),
     m_isHighestCostIdSet(false),
     m_name(""),
+    m_id( std::time(0) ),
     m_file(""),
     m_use_continuous_color(false),
     m_Color(0),
@@ -65,6 +69,7 @@ Trajectory::Trajectory(const Trajectory& T) :
     m_HighestCostId(T.m_HighestCostId),
     m_isHighestCostIdSet(T.m_isHighestCostIdSet),
     m_name(T.m_name),
+    m_id( std::time(0) ),
     m_file(T.m_file),
     m_use_continuous_color(T.m_use_continuous_color),
     m_Color(T.m_Color),
@@ -93,6 +98,7 @@ Trajectory& Trajectory::operator=(const Trajectory& T)
 
     // TODO m_name of m_file and robot
     m_name = T.m_name;
+    m_id =  std::time(0);
     m_file = T.m_file;
 
     m_Robot = T.m_Robot;
@@ -122,6 +128,7 @@ Trajectory::Trajectory( std::vector<confPtr_t>& configs) :
     if ( !configs.empty() )
     {
         m_name = "";
+        m_id =  std::time(0);
         m_file = "";
 
         m_Robot	= configs[0]->getRobot();
@@ -164,6 +171,7 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t)
 
     // TODO Name and m_file (string based)
     m_Robot = R;
+    m_id =  std::time(0);
 
     p3d_localpath* localpathPt = t->courbePt;
 

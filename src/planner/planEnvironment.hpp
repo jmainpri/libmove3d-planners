@@ -14,7 +14,7 @@
 #ifndef PLAN_ENVIRONMENT_HPP
 #define PLAN_ENVIRONMENT_HPP
 
-#include "../p3d/ParametersEnv.hpp"
+#include <libmove3d/p3d/ParametersEnv.hpp>
 
 bool Env_stopUser();
 

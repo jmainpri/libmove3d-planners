@@ -9,22 +9,22 @@
  *  Copyright 2011 magharbi@laas.fr All rights reserved.
  *
  */
+
+#include "HRICS_Workspace.hpp"
+
 #include "API/planningAPI.hpp"
 
 #include "API/Trajectory/trajectory.hpp"
-#include "planner/planner.hpp"
 
-#include "HRICS_Workspace.hpp"
+#include "planner/planner.hpp"
+#include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
 
 #include "Grid/HRICS_EnvGrid.hpp"
 #include "Grid/HRICS_TwoDGrid.hpp"
 #include "utils/OtpUtils.hpp"
 #include "utils/ConfGenerator.h"
 
-#include "LightPlanner-pkg.h"
-#include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
-
-
+#include <libmove3d/include/LightPlanner-pkg.h>
 
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>

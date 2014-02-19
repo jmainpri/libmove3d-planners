@@ -17,8 +17,8 @@
 
 #include "utils/ConfGenerator.h"
 
-#include "P3d-pkg.h"
-#include "LightPlanner-pkg.h"
+#include <libmove3d/include/P3d-pkg.h>
+#include <libmove3d/include/LightPlanner-pkg.h>
 
 //#include "planner/Diffusion/Variants/Star-RRT.hpp"
 

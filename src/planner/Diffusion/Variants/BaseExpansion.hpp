@@ -9,7 +9,7 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 
-#include "../p3d/env.hpp"
+#include <libmove3d/p3d/env.hpp>
 
 #ifndef LOCALPATH_HPP
 class LocalPath;
