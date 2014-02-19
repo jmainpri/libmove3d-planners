@@ -40,7 +40,8 @@ namespace HricsParam
             ioc_sample_iteration,
             ioc_nb_of_way_points,
             ioc_planner_type,
-            ioc_spheres_to_draw
+            ioc_spheres_to_draw,
+            ioc_from_file_offset
         };
 
         enum doubleParameter

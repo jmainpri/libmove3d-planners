@@ -146,7 +146,7 @@ public:
     virtual void runLearning();
 
     //! Run Sampling using saved trajectories
-    void runFromFileSampling();
+    void runFromFileSampling( int offset );
 
     //! Run Stomp for multiple feature functions
     void runPlannerMultipleFeature( int nb_runs=1 );
@@ -161,7 +161,7 @@ public:
     void loadDemonstrations();
 
     //! Load trajectories in planner class
-    void loadPlannerTrajectories( int nb_trajs=-1, int offset=-1, bool random=false );
+    void loadPlannerTrajectories( int nb_trajs=-1, int offset=-1, int random=0 );
 
     //! Load weight vector from CSV format
     void loadWeightVector();

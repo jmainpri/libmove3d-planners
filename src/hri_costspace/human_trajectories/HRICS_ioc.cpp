@@ -37,6 +37,10 @@ using std::endl;
 
 void HRICS_run_sphere_ioc()
 {
+    cout << "************************************************************" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
+    cout << "************************************************************" << endl;
+
     Robot* rob = global_Project->getActiveScene()->getActiveRobot();
     if (!rob) {
         cout << "robot not initialized in file "
@@ -46,7 +50,6 @@ void HRICS_run_sphere_ioc()
 
     confPtr_t q_init( rob->getInitPos() );
     confPtr_t q_goal( rob->getGoalPos() );
-
     if( *q_init == *q_goal )
     {
         cout << "init equal q_goal in file "
@@ -56,40 +59,39 @@ void HRICS_run_sphere_ioc()
 
     if( global_PlanarCostFct == NULL )
     {
-        HRICS_init_sphere_cost();
-        HRICS_init_square_cost();
+        cout << "global_PlanarCostFct not initialized in file "
+             << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
+        return;
     }
 
-    int nb_way_points = HriEnv->getInt(HricsParam::ioc_nb_of_way_points);
-    bool single_iteration = HriEnv->getBool(HricsParam::ioc_single_iteration);
-    int nb_iterations = HriEnv->getInt(HricsParam::ioc_sample_iteration);
+    // IOC PHASES
+    enum phase_t { generate=0, sample=1, compare=2, run_planner=3, default_phase=4 };
+
+    // LOAD PARAMETERS FROM SETTING FILE
+    int nb_way_points       = HriEnv->getInt(HricsParam::ioc_nb_of_way_points);
+    bool single_iteration   = HriEnv->getBool(HricsParam::ioc_single_iteration);
+    int nb_iterations       = HriEnv->getInt(HricsParam::ioc_sample_iteration);
+    bool sample_from_file   = HriEnv->getBool(HricsParam::ioc_load_samples_from_file);
+    int file_offset         = HriEnv->getInt(HricsParam::ioc_from_file_offset);
+    phase_t phase           = (phase_t)HriEnv->getInt(HricsParam::ioc_phase);
+
+    cout << "ioc phase : " << phase << endl;
 
     int nb_demos = 1;
     int nb_sampling_phase = 10;
-//    int min_samples = 10;
-//    int max_samples = 100;
+    //    int min_samples = 10;
+    //    int max_samples = 100;
 
     bool StopRun = false;
-
-    enum phase_t { generate=0,
-                   sample=1,
-                   compare=2,
-                   run_planner=3 } phase;
-
-    phase = phase_t(HriEnv->getInt(HricsParam::ioc_phase));
-
-    cout << "ioc phase : " << HriEnv->getInt(HricsParam::ioc_phase) << endl;
-
     std::vector<Eigen::VectorXd> results;
-
     int iteration = 0;
 
     MultiplePlanners planners(rob);
-    if( HriEnv->getBool(HricsParam::ioc_load_samples_from_file) )
-//        planners.loadTrajsFromFile( "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/FIRST_TRY" );
+    if( sample_from_file )
+        //        planners.loadTrajsFromFile( "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/FIRST_TRY" );
         planners.loadTrajsFromFile( "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square" );
-//        planners.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP_LARGE" );
-        // planners.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/GENERAL_COSTMAP");
+    //        planners.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP_LARGE" );
+    // planners.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/GENERAL_COSTMAP");
 
     for(int i=0; i<nb_sampling_phase && !StopRun; i++)
     {
@@ -100,10 +102,6 @@ void HRICS_run_sphere_ioc()
         else
             iteration = i;
 
-        cout << "------------------------------" << endl;
-        cout << " RUN : " << iteration << endl;
-        cout << "------------------------------" << endl;
-
         // interpolation for the number of sampling phase
         // int nb_samples = min_samples + double(iteration)*(max_samples-min_samples)/double(nb_sampling_phase-1);
         int nb_samples = (i+1)*16;
@@ -111,6 +109,10 @@ void HRICS_run_sphere_ioc()
         cout << "NB SAMPLES : " << nb_samples << endl;
 
         IocEvaluation eval( rob, nb_demos, nb_samples, nb_way_points, planners );
+
+        cout << "------------------------------" << endl;
+        cout << " RUN : " << iteration << endl;
+        cout << "------------------------------" << endl;
 
         switch( phase )
         {
@@ -125,8 +127,8 @@ void HRICS_run_sphere_ioc()
             eval.loadDemonstrations();
             // eval.runLearning();
 
-            if( HriEnv->getBool(HricsParam::ioc_load_samples_from_file) )
-                eval.runFromFileSampling();
+            if( sample_from_file )
+                eval.runFromFileSampling( file_offset );
             else
                 eval.runSampling();
 
@@ -148,7 +150,7 @@ void HRICS_run_sphere_ioc()
 
         default:
             cout << "DEFAULT : LOAD TRAJECTORIES" << endl;
-            eval.loadPlannerTrajectories( 16, i, false );
+            eval.loadPlannerTrajectories( 16, 16*i, 0 );
             // StopRun = true;
             break;
         }
@@ -812,16 +814,16 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
             std::vector<int> active_feature;
             for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
             {
-//                active_feature.clear();
+                // active_feature.clear();
                 active_feature.push_back(i);
-//                feature_fct_->setActiveFeatures( active_feature );
-//                global_PlanarCostFct->produceCostMap(i);
-//                global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
+                // feature_fct_->setActiveFeatures( active_feature );
+                // global_PlanarCostFct->produceCostMap(i);
+                // global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
             }
 
             feature_fct_->setActiveFeatures( active_feature );
-//            global_PlanarCostFct->produceCostMap(0);
-            global_PlanarCostFct->produceDerivativeFeatureCostMap(0);
+            // global_PlanarCostFct->produceCostMap(0);
+            // global_PlanarCostFct->produceDerivativeFeatureCostMap(0);
 
             double time;
             ChronoTimeOfDayTimes( &time );
@@ -830,11 +832,11 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
         }
     }
 
-//    if( load_sample_from_file_ )
-//    {
-//        planners_.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/GENERAL_COSTMAP");
-////        planners_.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP" );
-//    }
+    //    if( load_sample_from_file_ )
+    //    {
+    //        planners_.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/GENERAL_COSTMAP");
+    ////        planners_.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP" );
+    //    }
 }
 
 API::Trajectory IocEvaluation::planMotionRRT()
@@ -918,7 +920,7 @@ void IocEvaluation::activateAllFeatures()
 WeightVect IocEvaluation::computeOptimalWeights()
 {
     WeightVect w( Eigen::VectorXd::Zero( feature_fct_->getNumberOfFeatures() ) );
-//    stored_features_;
+    //    stored_features_;
 
     // Jacobian magnitude per DoF
     FeatureJacobian J = feature_fct_->getFeatureJacobian( planners_.getBestTrajs().back() );
@@ -1047,10 +1049,10 @@ void IocEvaluation::loadDemonstrations()
     }
 }
 
-void IocEvaluation::loadPlannerTrajectories(int nb_trajs, int offset, bool random )
+void IocEvaluation::loadPlannerTrajectories( int nb_trajs, int offset, int random )
 {
-//    planners_.clearTrajs();
-//    planners_.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP" );
+    //    planners_.clearTrajs();
+    //    planners_.loadTrajsFromFile( "/home/jmainpri/workspace/move3d/move3d-launch/matlab/stomp_trajs/per_feature_square/STOMP" );
 
     cout << "planners_.getBestTrajs().size() : " << planners_.getBestTrajs().size() << endl;
 
@@ -1060,7 +1062,7 @@ void IocEvaluation::loadPlannerTrajectories(int nb_trajs, int offset, bool rando
     if( offset < 0 ){
         offset = 0;
     }
-    if( nb_trajs*(offset+1) > int(planners_.getBestTrajs().size()) ){
+    if( (random == 0) &&  ((offset + nb_trajs) > int(planners_.getBestTrajs().size() )) ){
         samples_.clear();
         cout << "out of bounds in : " << __PRETTY_FUNCTION__ << endl;
         return;
@@ -1068,13 +1070,13 @@ void IocEvaluation::loadPlannerTrajectories(int nb_trajs, int offset, bool rando
 
     int sequence_size = 16;
 
-    if( random == false )
+    if( random == 0 ) // Continuous sequence
     {
-        std::vector<API::Trajectory>::const_iterator first = planners_.getBestTrajs().begin() + (nb_trajs*offset) ;
-        std::vector<API::Trajectory>::const_iterator last  = planners_.getBestTrajs().begin() + (nb_trajs*(offset+1));
+        std::vector<API::Trajectory>::const_iterator first = planners_.getBestTrajs().begin() + offset ;
+        std::vector<API::Trajectory>::const_iterator last  = planners_.getBestTrajs().begin() + offset + nb_trajs ;
         samples_ = std::vector<API::Trajectory>(first, last);
     }
-    else
+    else if( random == 1 ) // Random pick in each sequence
     {
         // int nb_sequences =  int(planners_.getBestTrajs().size()) / sequence_size;
         int nb_big_sequence = int(planners_.getBestTrajs().size()) / nb_trajs;
@@ -1160,7 +1162,7 @@ std::vector< std::vector<FeatureVect> > IocEvaluation::addSamples(HRICS::Ioc& io
     for(int i=0;i<int(samples_.size());i++)
     {
         samples_[i].cutTrajInSmallLP( nb_way_points_-1 );
-        //FeatureProfile p = feature_fct_->getFeatureJacobianProfile( samples_[i] );
+        // FeatureProfile p = feature_fct_->getFeatureJacobianProfile( samples_[i] );
         ioc.addSample( 0, samples_[i].getEigenMatrix(6,7) );
         ioc.setNominalSampleValue( 0, i, samples_[i].getEigenMatrix(6,7)  );
         // ioc.setTotalCostsSampleValue( 0, i, p );
@@ -1227,7 +1229,7 @@ void IocEvaluation::runSampling()
     // cout << "gradient sum = " << gradient_sum << endl;
 }
 
-void IocEvaluation::runFromFileSampling()
+void IocEvaluation::runFromFileSampling(int offset)
 {
     HRICS::Ioc ioc( nb_way_points_, plangroup_ );
 
@@ -1250,7 +1252,10 @@ void IocEvaluation::runFromFileSampling()
         }
     }
     else {
-        loadPlannerTrajectories( nb_samples_, -1, true );
+        if( offset == -1 )
+            loadPlannerTrajectories( nb_samples_, -1, 1 );
+        else
+            loadPlannerTrajectories( nb_samples_, offset, 0 );
     }
 
     global_trajToDraw.clear();
@@ -1265,11 +1270,11 @@ void IocEvaluation::runFromFileSampling()
     // Get samples features
     // std::vector< std::vector<FeatureVect> > phi_k = addSamples( ioc );
 
-//    std::vector< std::vector<API::Trajectory> > samples;
-//    samples.push_back( samples_ );
-//    checkStartAndGoal( samples );
+    //    std::vector< std::vector<API::Trajectory> > samples;
+    //    samples.push_back( samples_ );
+    //    checkStartAndGoal( samples );
 
-//    ioc.addAllToDraw();
+    //    ioc.addAllToDraw();
     saveToMatrix( phi_demo, phi_k );
 }
 
@@ -1290,11 +1295,11 @@ bool IocEvaluation::checkStartAndGoal( const std::vector< std::vector<API::Traje
 
 void IocEvaluation::runLearning()
 {
-//    for( int i=0;i<1;i++)
-//    {
-//        Eigen::VectorXd w = ioc.solve( phi_demo, phi_k );
-//        cout << "w : " << w.transpose() << endl;
-//    }
+    //    for( int i=0;i<1;i++)
+    //    {
+    //        Eigen::VectorXd w = ioc.solve( phi_demo, phi_k );
+    //        cout << "w : " << w.transpose() << endl;
+    //    }
 }
 
 Eigen::VectorXd IocEvaluation::getCostsOfDemonstrations() const
@@ -1339,8 +1344,8 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
     for( int i=0;i<costs_demo.size();i++)
     {
         setLearnedWeights();
-//        learned_[i] = planMotionStomp();
-//        learned_[i] = planMotionRRT();
+        // learned_[i] = planMotionStomp();
+        // learned_[i] = planMotionRRT();
         learned_[i] = planAStar();
 
         g3d_draw_allwin_active();

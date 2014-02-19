@@ -20,7 +20,7 @@ public:
     bool run();
     void multipleRun( std::string folder, int nb_runs );
     void saveTrajsToFile( std::string folder );
-    void loadTrajsFromFile( std::string folder );
+    void loadTrajsFromFile( std::string folder, int nb_max_files=-1 );
 
     void initializeNoisy();
 

@@ -71,12 +71,12 @@ void MultiplePlanners::saveTrajsToFile( std::string folder )
     }
 }
 
-void MultiplePlanners::loadTrajsFromFile( std::string folder )
+void MultiplePlanners::loadTrajsFromFile( std::string folder, int nb_max_files )
 {
     cout << "--------------------------------------------" << endl;
     cout << " load trajs trom file " << endl;
 
-    std::vector<std::string>  files = move3d_get_files_in_folder( folder , "traj" );
+    std::vector<std::string>  files = move3d_get_files_in_folder( folder , "traj", nb_max_files );
 
     best_traj_.resize( files.size() ); // only loads 10
     global_trajToDraw.clear();

@@ -63,6 +63,7 @@ void initHricsParameters()
     myIntMap.insert( std::make_pair( HricsParam::ioc_nb_of_way_points, new intContainer(0) ));
     myIntMap.insert( std::make_pair( HricsParam::ioc_planner_type, new intContainer(0) ));
     myIntMap.insert( std::make_pair( HricsParam::ioc_spheres_to_draw, new intContainer(-1) ));
+    myIntMap.insert( std::make_pair( HricsParam::ioc_from_file_offset, new intContainer(-1) ));
 
     // Double
     // ------------------------------------------------------------------

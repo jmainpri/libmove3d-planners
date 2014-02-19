@@ -15,7 +15,7 @@ void move3d_save_matrix_to_file( const Eigen::MatrixXd& mat, std::string filenam
     file.close();
 }
 
-std::vector<std::string>  move3d_get_files_in_folder( std::string foldername, std::string extension )
+std::vector<std::string>  move3d_get_files_in_folder( std::string foldername, std::string extension, int nb_max_files )
 {
     bool quiet = true;
     std::vector<std::string> files;
@@ -39,6 +39,10 @@ std::vector<std::string>  move3d_get_files_in_folder( std::string foldername, st
                 cout << "add : " << filename << endl;
             }
             files.push_back( filename );
+        }
+
+        if( (nb_max_files > 0) && (int(files.size()) >= nb_max_files) ) {
+            break;
         }
     }
     pclose(fp);
