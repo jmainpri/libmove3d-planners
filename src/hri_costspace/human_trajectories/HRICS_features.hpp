@@ -27,19 +27,19 @@ class Feature
 public:
     Feature() {}
 
-    virtual FeatureVect getFeatures(const Configuration& q) = 0;
-    virtual FeatureProfile getFeatureProfile(const API::Trajectory& t);
-    virtual FeatureVect getFeatureCount(const API::Trajectory& t);
+    virtual FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_features = std::vector<int>(0)) = 0;
+    virtual FeatureProfile getFeatureProfile(const Move3D::Trajectory& t);
+    virtual FeatureVect getFeatureCount(const Move3D::Trajectory& t);
 
-    virtual FeatureJacobian getFeaturesJacobian(const Configuration& q);
-    virtual FeatureProfile getFeatureJacobianProfile(const API::Trajectory& t);
-    virtual FeatureJacobian getFeatureJacobian(const API::Trajectory& t);
-    virtual double getFeaturesJacobianMagnitude(const Configuration& q);
+    virtual FeatureJacobian getFeaturesJacobian(const Move3D::Configuration& q );
+    virtual FeatureProfile getFeatureJacobianProfile(const Move3D::Trajectory& t);
+    virtual FeatureJacobian getFeatureJacobian(const Move3D::Trajectory& t);
+    virtual double getFeaturesJacobianMagnitude(const Move3D::Configuration& q);
 
-    double getJacobianSum(const API::Trajectory& t);
+    double getJacobianSum(const Move3D::Trajectory& t);
 
-    double cost( Configuration& q );
-    double costTraj( const API::Trajectory& t );
+    double cost( Move3D::Configuration& q );
+    double costTraj( const Move3D::Trajectory& t );
 
     virtual void setWeights( const WeightVect& w );
     virtual WeightVect getWeights() { return w_; }
@@ -50,7 +50,7 @@ public:
     virtual void setActiveDoFs( const std::vector<int>& active_dofs ) { active_dofs_ = active_dofs; }
     virtual const std::vector<int>& getActiveDoFs() const { return active_dofs_; }
 
-    virtual int getNumberOfFeatures() { return w_.size(); }
+    virtual int getNumberOfFeatures() const { return w_.size(); }
     virtual void printWeights() const { std::cout << " w_.transpose() : " << w_.transpose() << std::endl; }
 
 protected:
@@ -65,8 +65,8 @@ class StackedFeatures : public Feature
 public:
     StackedFeatures();
 
-    virtual FeatureVect getFeatureCount(const API::Trajectory& t);
-    virtual FeatureVect getFeatures(const Configuration& q);
+    virtual FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+    virtual FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
 
     void setWeights( const WeightVect& w );
     WeightVect getWeights();
@@ -78,6 +78,8 @@ public:
 
     void printWeights() const;
     void printStackInfo() const;
+
+    Feature* getFeatureFunction(int i) { return feature_stack_[i]; }
 
 protected:
     int nb_features_;
@@ -91,8 +93,8 @@ public:
     TrajectorySmoothness();
 
     //! Returns a smoothness cost for the trajectory
-    FeatureVect getFeatureCount(const API::Trajectory& t);
-    FeatureVect getFeatures(const Configuration& q);
+    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+    FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
 
     //! Prints the control cost along the trajectory
     void printControlCosts( const std::vector<Eigen::VectorXd>& control_cost  );

@@ -13,14 +13,14 @@ namespace HRICS
 class DistanceFeature : public Feature
 {
 public:
-    DistanceFeature( Robot* active, Robot* passive );
-    FeatureVect getFeatureCount(const API::Trajectory& t);
-    FeatureVect getFeatures(const Configuration& q);
+    DistanceFeature( Move3D::Robot* active, Move3D::Robot* passive );
+    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+    FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
     FeatureVect computeDistances() const;
 
 private:
-    Robot* human_active_;
-    Robot* human_passive_;
+    Move3D::Robot* human_active_;
+    Move3D::Robot* human_passive_;
 
     Distance* dist_cost_;
 
@@ -31,32 +31,32 @@ class VisibilityFeature : public Feature
 {
 public:
     VisibilityFeature() : Feature() {}
-    FeatureVect getFeatureCount(const API::Trajectory& t);
-    FeatureVect getFeatures(const Configuration& q);
+    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+    FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
 };
 
 class MuskuloskeletalFeature : public Feature
 {
 public:
     MuskuloskeletalFeature() : Feature() {}
-    FeatureVect getFeatureCount(const API::Trajectory& t);
-    FeatureVect getFeatures(const Configuration& q);
+    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+    FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
 };
 
 class ReachabilityFeature : public Feature
 {
 public:
     ReachabilityFeature() : Feature() {}
-    FeatureVect getFeatureCount(const API::Trajectory& t);
-    FeatureVect getFeatures(const Configuration& q);
+    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+    FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
 };
 
 class LegibilityFeature : public Feature
 {
 public:
     LegibilityFeature() : Feature() {}
-    FeatureVect getFeatureCount(const API::Trajectory& t);
-    FeatureVect getFeatures(const Configuration& q);
+    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+    FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
 };
 
 }

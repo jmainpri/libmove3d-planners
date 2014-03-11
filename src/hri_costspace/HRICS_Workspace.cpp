@@ -12,9 +12,13 @@
 #include "Grid/HRICS_GridState.hpp"
 #include "RRT/HRICS_rrt.hpp"
 #include "RRT/HRICS_rrtExpansion.hpp"
-#include "../Diffusion/Variants//Transition-RRT.hpp"
-//#include "../../qtWindow/cppToQt.hpp"
+
+#include "planner/Diffusion/Variants/Transition-RRT.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
+
+#include "API/project.hpp"
+
+//#include "../../qtWindow/cppToQt.hpp"
 
 //#include <Eigen/Array>
 
@@ -38,12 +42,13 @@ HRICS::Legibility*   	HRICS_activeLegi = NULL;
 
 HRICS::HumanAwareMotionPlanner*		HRICS_MotionPL = NULL;
 
-API::ThreeDCell*	BiasedCell3D = NULL;
-API::TwoDCell*		BiasedCell2D = NULL;
+Move3D::ThreeDCell*	BiasedCell3D = NULL;
+Move3D::TwoDCell*		BiasedCell2D = NULL;
 
 using namespace std;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
+using namespace Move3D;
 
 // import most common Eigen types 
 //USING_PART_OF_NAMESPACE_EIGEN
@@ -379,8 +384,8 @@ void Workspace::solveAStar(State* start,State* goal)
      */
     if( start->getCell()->getCost() < goal->getCell()->getCost() )
     {
-        API::AStar* search = new API::AStar(start);
-        vector<API::State*> path = search->solve(goal);
+        Move3D::AStar* search = new Move3D::AStar(start);
+        vector<Move3D::State*> path = search->solve(goal);
 
         if(path.size() == 0 )
         {
@@ -392,15 +397,15 @@ void Workspace::solveAStar(State* start,State* goal)
 
         for (unsigned int i=0;i<path.size();i++)
         {
-            API::ThreeDCell* cell = dynamic_cast<State*>(path[i])->getCell();
+            Move3D::ThreeDCell* cell = dynamic_cast<State*>(path[i])->getCell();
             m3DPath.push_back( cell->getCenter() );
             m3DCellPath.push_back( cell );
         }
     }
     else
     {
-        API::AStar* search = new API::AStar(goal);
-        vector<API::State*> path = search->solve(start);
+        Move3D::AStar* search = new Move3D::AStar(goal);
+        vector<Move3D::State*> path = search->solve(start);
 
         if(path.size() == 0 )
         {
@@ -412,7 +417,7 @@ void Workspace::solveAStar(State* start,State* goal)
 
         for (int i=path.size()-1;i>=0;i--)
         {
-            API::ThreeDCell* cell = dynamic_cast<State*>(path[i])->getCell();
+            Move3D::ThreeDCell* cell = dynamic_cast<State*>(path[i])->getCell();
             m3DPath.push_back( cell->getCenter() );
             m3DCellPath.push_back( cell );
         }
@@ -909,7 +914,7 @@ struct target_info
     double* q;
 };
 
-double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::Trajectory& traj , unsigned int& id)
+double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, Move3D::Trajectory& traj , unsigned int& id)
 {
     cout << " * Start testing for new OTP ***************" << endl;
     ChronoOn();
@@ -968,7 +973,7 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::
 }
 
 /**
-double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, API::Trajectory& traj , unsigned int& id)
+double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, Move3D::Trajectory& traj , unsigned int& id)
 {
   cout << " * Start testing for new OTP ***************" << endl;
   ChronoOn();
@@ -1511,7 +1516,7 @@ bool Workspace::ComputeTheObjectTransfertPoint(bool Move, int type, Vector3d& WS
 
         if ( ENV.getBool(Env::HRIComputeOTP) ){
 
-            API::BaseGrid* tmp_grid;
+            Move3D::BaseGrid* tmp_grid;
             tmp_grid = API_activeGrid;
             API_activeGrid = reachSpace->getGrid();
 

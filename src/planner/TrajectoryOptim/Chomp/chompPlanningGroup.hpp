@@ -17,6 +17,9 @@
 // Included for random number
 #include <libmove3d/include/P3d-pkg.h>
 
+namespace Move3D {
+
+
 /**
  * \brief Contains information about a single joint for CHOMP planning
  */
@@ -96,6 +99,8 @@ void ChompPlanningGroup::ChompPlanningGroup::getRandomState(Eigen::MatrixBase<De
 
         state_vec(i) = ((((double)p3d_random(0,RAND_MAX))/RAND_MAX) * (max-min)) + min;
     }
+}
+
 }
 
 #endif

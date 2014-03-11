@@ -32,11 +32,11 @@
 #include "Planner-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
-vector<confPtr_t> multi_rrt_configs;
-
-
+vector<confPtr_t> Move3D::multi_rrt_configs;
 
 MultiTRRT::MultiTRRT(Robot* R, Graph* G) : MultiRRT(R,G)
 {
@@ -330,7 +330,7 @@ bool MultiTRRT::connectNodeToCompco( Node* node, Node* compNode )
 
 void MultiTRRT::extractTrajectory()
 {
-    API::Trajectory* traj = _Graph->extractAStarShortestPathsTraj( _q_start, _q_goal );
+    Move3D::Trajectory* traj = _Graph->extractAStarShortestPathsTraj( _q_start, _q_goal );
 
     if( traj )
     {
@@ -347,7 +347,7 @@ void MultiTRRT::extractTrajectory()
             //m_convergence_rate.push_back( std::make_pair( getTime(), stat )  );
 
             if( m_current_traj == NULL )
-                m_current_traj = new API::Trajectory( _Graph->getRobot() );
+                m_current_traj = new Move3D::Trajectory( _Graph->getRobot() );
 
             // replace current trajectory by new trajectory
             (*m_current_traj) = (*traj);

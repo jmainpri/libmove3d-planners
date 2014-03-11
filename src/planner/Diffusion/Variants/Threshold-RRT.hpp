@@ -19,6 +19,7 @@
 #include "planner/Diffusion/RRT.hpp"
 #include "planner/Diffusion/Variants/RRTExpansion.hpp"
 
+namespace Move3D {
 
 /**
  @ingroup Diffusion
@@ -128,5 +129,7 @@ public:
 	virtual bool connectNodeToCompco(Node* node, Node* compNode);
 	
 };
+
+}
 
 #endif

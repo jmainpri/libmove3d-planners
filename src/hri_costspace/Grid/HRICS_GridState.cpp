@@ -22,9 +22,9 @@ State::State( Cell* cell , Grid* grid) :
 }
 
 
-vector<API::State*> State::getSuccessors()
+vector<Move3D::State*> State::getSuccessors()
 {
-    vector<API::State*> newStates;
+    vector<Move3D::State*> newStates;
 //    newStates.reserve(26);
 
     for(int i=0;i<26;i++)
@@ -45,7 +45,7 @@ bool State::isLeaf()
     return false;
 }
 
-bool State::equal(API::State* other)
+bool State::equal(Move3D::State* other)
 {
     //bool equal(false);
     State* state = dynamic_cast<State*>(other);
@@ -98,7 +98,7 @@ void State::print()
 
 }
 
-double State::computeLength(API::State *parent)
+double State::computeLength(Move3D::State *parent)
 {
     State* preced = dynamic_cast<State*>(parent);
 
@@ -116,7 +116,7 @@ double State::computeLength(API::State *parent)
     return g;
 }
 
-double State::computeHeuristic(API::State *parent,API::State* goal)
+double State::computeHeuristic(Move3D::State *parent,Move3D::State* goal)
 {
     State* state = dynamic_cast<State*>(goal);
 

@@ -13,6 +13,8 @@ struct compco;
 
 #include "BGL_Graph.hpp"
 
+namespace Move3D {
+
 #ifndef EDGE_HPP
 class Edge;
 #endif
@@ -48,7 +50,7 @@ public:
      * @param C la Configuration stockée dans le Node
    * @param id the number in the graph (Graph->getNumberOfNodes)
      */
-    Node(Graph* G, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> C, bool newCompco=true);
+    Node(Graph* G, confPtr_t C, bool newCompco=true);
 
     /**
      * Constructeur de la classe
@@ -96,7 +98,7 @@ public:
      * obtient la Configuration stockée
      * @return la Configuration stockée
      */
-    confPtr_t getConfiguration();
+    confPtr_t getConfiguration() { return m_Configuration; }
 
     /**
      * modifie la valeur de activ
@@ -347,5 +349,7 @@ private:
     // Used for debug
     bool m_specificNode;
 };
+
+}
 
 #endif

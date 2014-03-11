@@ -1,67 +1,67 @@
 #ifndef HRICS_EnvGRID_HPP
 #define HRICS_EnvGRID_HPP
 
-#include "API/planningAPI.hpp"
 #include "API/Grids/gridsAPI.hpp"
+#include "API/Device/robot.hpp"
 
 namespace HRICS
 {	
-	class EnvCell;
-	/**
-	 @ingroup HRICS
-	 @brief Plannar HRI Grid
-	 */
-	class EnvGrid : public API::TwoDGrid
-	{
-	public:
+class EnvCell;
+/**
+     @ingroup HRICS
+     @brief Plannar HRI Grid
+     */
+class EnvGrid : public Move3D::TwoDGrid
+{
+public:
 
-		EnvGrid();
-		EnvGrid(double pace, std::vector<double> envSize, bool isHumanCentered);
-		EnvGrid(double pace, std::vector<double> envSize, bool isHumanCentered, Robot* robot, Robot* human);
+    EnvGrid();
+    EnvGrid(double pace, std::vector<double> envSize, bool isHumanCentered);
+    EnvGrid(double pace, std::vector<double> envSize, bool isHumanCentered, Move3D::Robot* robot, Move3D::Robot* human);
 
-                //getters and setters
-                void setRobot(Robot* R) { mRobot = R; }
-                Robot* getRobot() { return mRobot; }
+    //getters and setters
+    void setRobot( Move3D::Robot* R) { mRobot = R; }
+    Move3D::Robot* getRobot() { return mRobot; }
 
-                void setHuman(Robot* R) { mHuman = R; }
-                Robot* getHuman() { return mHuman; }
+    void setHuman( Move3D::Robot* R) { mHuman = R; }
+    Move3D::Robot* getHuman() { return mHuman; }
 
-                Robot* getHumanCylinder() {return humCyl;}
-                Robot* getRobotCylinder() {return robotCyl;}
+    Move3D::Robot* getHumanCylinder() {return humCyl;}
+    Move3D::Robot* getRobotCylinder() {return robotCyl;}
 
-                double getNbCellX() {return _nbCellsX;}
-                double getNbCellY() {return _nbCellsY;}
+    double getNbCellX() {return _nbCellsX;}
+    double getNbCellY() {return _nbCellsY;}
 
-                double getHumanMaxDist() {return m_humanMaxDist;}
-                double getRobotMaxDist() { return m_robotMaxDist;}
+    double getHumanMaxDist() {return m_humanMaxDist;}
+    double getRobotMaxDist() { return m_robotMaxDist;}
 
-                void setAsNotSorted() {gridIsSorted = false;}
+    void setAsNotSorted() {gridIsSorted = false;}
 
-                std::vector<EnvCell*> getHumanAccessibleCells() {return m_HumanAccessible;}
+    std::vector<EnvCell*> getHumanAccessibleCells() {return m_HumanAccessible;}
 
-                void dumpVar();
+    void dumpVar();
 
-                /**
-                  * initialisation of the grid ( computing distances and taking obstacle into account)
-                  */
-		void init(std::pair<double,double> minMax);
+    /**
+      * initialisation of the grid ( computing distances and taking obstacle into account)
+      */
+    void init(std::pair<double,double> minMax);
 
-                /**
-                  * initialising the part of the grid needed for fused grid use
-                  */
-                void initGrid(Eigen::Vector3d humanPos);
+    /**
+      * initialising the part of the grid needed for fused grid use
+      */
+    void initGrid(Eigen::Vector3d humanPos);
 
-                /**
-                  * recompute the grid cost if human move
-                  */
-                void recomputeGridWhenHumanMove(Eigen::Vector3d humanPos);
+    /**
+      * recompute the grid cost if human move
+      */
+    void recomputeGridWhenHumanMove(Eigen::Vector3d humanPos);
 
-                /**
-                  * Compute the crown arround the human for reacheability
-                  */
-		void computeHumanRobotReacheability(std::pair<double,double> minMax);
+    /**
+      * Compute the crown arround the human for reacheability
+      */
+    void computeHumanRobotReacheability(std::pair<double,double> minMax);
 
-                /*!
+    /*!
                  * \brief Virtual function that creates a new Cell
                  *
                  * \param integer index
@@ -69,354 +69,354 @@ namespace HRICS
                  * \param integer y
                  * \param integer z
                  */
-		API::TwoDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y );
+    Move3D::TwoDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y );
 
-                /**
-                  * using the method of distance propagation to compute distances
-                  */
-		void computeDistances(EnvCell* cell, bool isHuman);
+    /**
+      * using the method of distance propagation to compute distances
+      */
+    void computeDistances(EnvCell* cell, bool isHuman);
 
-                /**
-                  * using the method of distance propagation to compute distances for robot
-                  */
-                void  computeRobotDistances(EnvCell* cell);
+    /**
+      * using the method of distance propagation to compute distances for robot
+      */
+    void  computeRobotDistances(EnvCell* cell);
 
-                /**
-                  * using the method of distance propagation to compute distances for human
-                  */
-                void  computeHumanDistances(EnvCell* cell);
-		
-                /**
-                  * drawing the grid
-                  */
-		void draw();
+    /**
+      * using the method of distance propagation to compute distances for human
+      */
+    void  computeHumanDistances(EnvCell* cell);
 
-                /**
-                 * call setBlankCost() in each cell
-                 */
-		void setCellsToblankCost();
+    /**
+      * drawing the grid
+      */
+    void draw();
 
-                /**
-                 * call resetexplorationstatus() in each cell
-                 */
-		void initAllCellState();
+    /**
+      * call setBlankCost() in each cell
+      */
+    void setCellsToblankCost();
 
-                /**
-                 * call resetTrajs() in each cell
-                 */
-                void initAllTrajs();
+    /**
+      * call resetexplorationstatus() in each cell
+      */
+    void initAllCellState();
 
-                /**
-                 * call resetexplorationstatus() in each cell
-                 */
-		void initAllReachability();
+    /**
+      * call resetTrajs() in each cell
+      */
+    void initAllTrajs();
 
-                /**
-                  * sort the cells of the grid
-                  */
-		std::vector<std::pair<double,EnvCell*> > getSortedGrid();
+    /**
+      * call resetexplorationstatus() in each cell
+      */
+    void initAllReachability();
 
-	private:
-                /**
-                  * the Robot
-                  */
-		Robot* mRobot;
+    /**
+      * sort the cells of the grid
+      */
+    std::vector<std::pair<double,EnvCell*> > getSortedGrid();
 
-                /**
-                  * the human
-                  */
-		Robot* mHuman;
+private:
+    /**
+      * the Robot
+      */
+    Move3D::Robot* mRobot;
 
-                /**
-                  * the robot cylinder
-                  */
-                Robot* robotCyl;
+    /**
+      * the human
+      */
+    Move3D::Robot* mHuman;
 
-                /**
-                  * the human cylinder
-                  */
-		Robot* humCyl;
+    /**
+      * the robot cylinder
+      */
+    Move3D::Robot* robotCyl;
 
-                /**
-                  * the distance maximum that can walk the human in the grid
-                  */
-		double m_humanMaxDist;
+    /**
+      * the human cylinder
+      */
+    Move3D::Robot* humCyl;
 
-                /**
-                  * the maximum distance that the robot can navigate in the grid
-                  */
-		double m_robotMaxDist;
+    /**
+      * the distance maximum that can walk the human in the grid
+      */
+    double m_humanMaxDist;
 
-                /**
-                  * the list of cell where the human is accessible
-                  */
-		std::vector<EnvCell*> m_HumanAccessible;
+    /**
+      * the maximum distance that the robot can navigate in the grid
+      */
+    double m_robotMaxDist;
 
-                /**
-                  * the list of cells where the robot is accessible
-                  */
-		std::vector<EnvCell*> m_RobotAccessible;
+    /**
+      * the list of cell where the human is accessible
+      */
+    std::vector<EnvCell*> m_HumanAccessible;
 
-                /**
-                  * the list of sorted cells
-                  */
-		std::vector<std::pair<double,EnvCell*> > sortedGrid;
+    /**
+      * the list of cells where the robot is accessible
+      */
+    std::vector<EnvCell*> m_RobotAccessible;
 
-                /**
-                  * if the grid is already sorted
-                  */
-		bool gridIsSorted;
-	};
-	
-	/**
-	 @ingroup HRICS
-	 @brief Plannar HRI Cell
-	 */
-	class EnvCell : public API::TwoDCell
-	{
-		
-	public:
-		EnvCell();
-		EnvCell(int i, Eigen::Vector2i coord, Eigen::Vector2d corner, EnvGrid* grid);
-		
-		~EnvCell() { }
-		
-                //#######################
-                //getters et setters ####
-                //#######################
+    /**
+      * the list of sorted cells
+      */
+    std::vector<std::pair<double,EnvCell*> > sortedGrid;
 
-                //human distance computing
-                void setHumanDist(double value) {m_humanDist = value; }
-                double getHumanDist() {return m_humanDist; }
-                void setHumanDistIsComputed() {m_humanDistIsComputed = true;}
-                bool isHumanDistComputed() {return m_humanDistIsComputed;}
+    /**
+      * if the grid is already sorted
+      */
+    bool gridIsSorted;
+};
 
-                // robot distance computing
-                void setRobotDist(double value) {m_robotDist = value; }
-                double getRobotDist() {return m_robotDist; }
-                void setRobotDistIsComputed() {m_robotDistIsComputed = true;}
-                bool isRobotDistComputed() {return m_robotDistIsComputed;}
+/**
+     @ingroup HRICS
+     @brief Plannar HRI Cell
+     */
+class EnvCell : public Move3D::TwoDCell
+{
 
-                // distance propagation algorithm
-                bool getOpen() { return _Open; }
-                void setOpen() { _Open = true; }
+public:
+    EnvCell();
+    EnvCell(int i, Eigen::Vector2i coord, Eigen::Vector2d corner, EnvGrid* grid);
 
-                bool getClosed() { return _Closed; }
-                void setClosed() { _Closed = true; }
+    ~EnvCell() { }
 
-                void resetExplorationStatus() { _Open = false; _Closed = false; }
+    //#######################
+    //getters et setters ####
+    //#######################
 
-                // Trajectories
+    //human distance computing
+    void setHumanDist(double value) {m_humanDist = value; }
+    double getHumanDist() {return m_humanDist; }
+    void setHumanDistIsComputed() {m_humanDistIsComputed = true;}
+    bool isHumanDistComputed() {return m_humanDistIsComputed;}
 
-                std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > getHumanVectorTraj() {return humanVectorTraj;}
-                void setHumanVectorTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > _humanVectorTraj) {humanVectorTraj = _humanVectorTraj; }
+    // robot distance computing
+    void setRobotDist(double value) {m_robotDist = value; }
+    double getRobotDist() {return m_robotDist; }
+    void setRobotDistIsComputed() {m_robotDistIsComputed = true;}
+    bool isRobotDistComputed() {return m_robotDistIsComputed;}
 
-                std::vector<EnvCell*> getHumanTraj() {return humanTraj;}
-                void setHumanTraj(std::vector<EnvCell*> _humanTraj) {humanTraj = _humanTraj; }
+    // distance propagation algorithm
+    bool getOpen() { return _Open; }
+    void setOpen() { _Open = true; }
 
-                std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > getRobotVectorTraj() {return robotVectorTraj;}
-                void setRobotVectorTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > _RobotVectorTraj) {robotVectorTraj = _RobotVectorTraj; }
+    bool getClosed() { return _Closed; }
+    void setClosed() { _Closed = true; }
 
-                std::vector<EnvCell*> getRobotTraj() {return robotTraj;}
-                void setRobotTraj(std::vector<EnvCell*> _robotTraj) {robotTraj = _robotTraj; }
+    void resetExplorationStatus() { _Open = false; _Closed = false; }
 
-                //accessibility
-                bool isHumAccessible() {return m_isHumanAccessible;}
-                void setHumAccessible(bool value) {m_isHumanAccessible = value;}
+    // Trajectories
 
-                bool isRobAccessible() {return m_isRobotAccessible;}
-                void setRobAccessible(bool value) {m_isRobotAccessible = value;}
+    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > getHumanVectorTraj() {return humanVectorTraj;}
+    void setHumanVectorTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > _humanVectorTraj) {humanVectorTraj = _humanVectorTraj; }
 
-                // human robot reachability (the crown)
-                void setHumanRobotReacheable(std::vector<EnvCell*> value) {initHumanRobotReacheable = value;}
-                std::vector<EnvCell*> getHumanRobotReacheable() {return initHumanRobotReacheable;}
-                void addToHumanRobotReacheable(EnvCell* cell) {initHumanRobotReacheable.push_back(cell);}
-                void clearHumanRobotReacheable() {initHumanRobotReacheable.clear();}
+    std::vector<EnvCell*> getHumanTraj() {return humanTraj;}
+    void setHumanTraj(std::vector<EnvCell*> _humanTraj) {humanTraj = _humanTraj; }
 
-                void setCurrentHumanRobotReacheable(std::vector<EnvCell*> value) {currentHumanRobotReacheable = value;}
-                std::vector<EnvCell*> getCurrentHumanRobotReacheable() {return currentHumanRobotReacheable;}
-                void addToCurrentHumanRobotReacheable(EnvCell* cell) {currentHumanRobotReacheable.push_back(cell);}
-                void clearCurrentHumanRobotReacheable() {currentHumanRobotReacheable.clear();}
+    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > getRobotVectorTraj() {return robotVectorTraj;}
+    void setRobotVectorTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > _RobotVectorTraj) {robotVectorTraj = _RobotVectorTraj; }
 
-                //special grid usage (slices)
-                std::pair<double,EnvCell*> getRobotBestPos(){return robotBestPos;}
-                void setRobotBestPos(std::pair<double,EnvCell*> value){robotBestPos = value;}
+    std::vector<EnvCell*> getRobotTraj() {return robotTraj;}
+    void setRobotTraj(std::vector<EnvCell*> _robotTraj) {robotTraj = _robotTraj; }
 
-                void setAngleForHumanComming(double value) {angleForHumanComming = value;}
-                double getAngleForHumanComming(){return angleForHumanComming;}
+    //accessibility
+    bool isHumAccessible() {return m_isHumanAccessible;}
+    void setHumAccessible(bool value) {m_isHumanAccessible = value;}
 
-                //other
-                void setBlankCost() { mCostIsComputed = false; }
-                void setCost(double value) {mCost = value; }
-                double getCost() {return mCost; }
+    bool isRobAccessible() {return m_isRobotAccessible;}
+    void setRobAccessible(bool value) {m_isRobotAccessible = value;}
 
-                Eigen::Vector2i getCoord() { return _Coord; }
+    // human robot reachability (the crown)
+    void setHumanRobotReacheable(std::vector<EnvCell*> value) {initHumanRobotReacheable = value;}
+    std::vector<EnvCell*> getHumanRobotReacheable() {return initHumanRobotReacheable;}
+    void addToHumanRobotReacheable(EnvCell* cell) {initHumanRobotReacheable.push_back(cell);}
+    void clearHumanRobotReacheable() {initHumanRobotReacheable.clear();}
 
-                std::vector<double> getRandomVector(){return randomVectorPoint;}
+    void setCurrentHumanRobotReacheable(std::vector<EnvCell*> value) {currentHumanRobotReacheable = value;}
+    std::vector<EnvCell*> getCurrentHumanRobotReacheable() {return currentHumanRobotReacheable;}
+    void addToCurrentHumanRobotReacheable(EnvCell* cell) {currentHumanRobotReacheable.push_back(cell);}
+    void clearCurrentHumanRobotReacheable() {currentHumanRobotReacheable.clear();}
+
+    //special grid usage (slices)
+    std::pair<double,EnvCell*> getRobotBestPos(){return robotBestPos;}
+    void setRobotBestPos(std::pair<double,EnvCell*> value){robotBestPos = value;}
+
+    void setAngleForHumanComming(double value) {angleForHumanComming = value;}
+    double getAngleForHumanComming(){return angleForHumanComming;}
+
+    //other
+    void setBlankCost() { mCostIsComputed = false; }
+    void setCost(double value) {mCost = value; }
+    double getCost() {return mCost; }
+
+    Eigen::Vector2i getCoord() { return _Coord; }
+
+    std::vector<double> getRandomVector(){return randomVectorPoint;}
 
 
 
-                //#######################
-                // others ###############
-                //#######################
+    //#######################
+    // others ###############
+    //#######################
 
-                /**
+    /**
                   * test if there is a collision with a BB (the cylinders) for the human
                   */
-                void computeHumanReach();
+    void computeHumanReach();
 
-                /**
+    /**
                   * test if there is a collision with a BB (the cylinders) for the robot
                   */
-                void computeRobotReach();
+    void computeRobotReach();
 
-                /**
+    /**
                   * compute partial cost
                   */
-                double computeCost();
+    double computeCost();
 
-                /**
+    /**
                   * compute best robot pos
                   */
-                bool computeBestRobotPos();
+    bool computeBestRobotPos();
 
-                /**
+    /**
                   * reset the reacheability computing
                   */
-		void resetReacheability();
+    void resetReacheability();
 
-                /**
+    /**
                   * reset the Trajectories computing
                   */
-                void resetTraj();
+    void resetTraj();
 
-                /**
+    /**
                   * find the neighbors of this cell (used when computing distance propagation)
                   */
-		std::vector<EnvCell*> getNeighbors(bool isHuman);
+    std::vector<EnvCell*> getNeighbors(bool isHuman);
 
-                /**
+    /**
                   * compute distance between two cells
                   */
-		double computeDist(EnvCell* neighCell);
+    double computeDist(EnvCell* neighCell);
 
-                /**
+    /**
                   * add a point to the random vector in order to draw it (the red arrows)
                   */
-		void addPoint(double Rz);
+    void addPoint(double Rz);
 
-                /**
+    /**
                   * return the crown arround the cell taking the min and max value
                   */
-                std::vector<EnvCell*> getCrown(double min, double max);
+    std::vector<EnvCell*> getCrown(double min, double max);
 
-	private:
-                /**
+private:
+    /**
                   * the x y coord of the cell
                   */
-		Eigen::Vector2i _Coord;
-		
-                /**
-                  * the status of the cell
-                  */
-		bool _Open;
+    Eigen::Vector2i _Coord;
 
-                /**
+    /**
                   * the status of the cell
                   */
-		bool _Closed;
-		
-                /**
+    bool _Open;
+
+    /**
+                  * the status of the cell
+                  */
+    bool _Closed;
+
+    /**
                   * if the cost is computed
                   */
-		bool mCostIsComputed;
+    bool mCostIsComputed;
 
-                /**
+    /**
                   * the computed cost
                   */
-		double mCost;
+    double mCost;
 
-                /**
+    /**
                   * if the cell is accessible for the human
                   */
-		bool m_isHumanAccessible;
+    bool m_isHumanAccessible;
 
-                /**
+    /**
                   * if the cell is accessible for the robot
                   */
-		bool m_isRobotAccessible;
+    bool m_isRobotAccessible;
 
-                /**
+    /**
                   * if the accessibility is computed
                   */
-		bool m_reachComputed;
+    bool m_reachComputed;
 
-                /**
+    /**
                   * if the human distance is computed
                   */
-		bool m_humanDistIsComputed;
+    bool m_humanDistIsComputed;
 
-                /**
+    /**
                   * the human distance
                   */
-		double m_humanDist;
+    double m_humanDist;
 
-                /**
+    /**
                   * the human trajectory (with cells)
                   */
-		std::vector<EnvCell*> humanTraj;
+    std::vector<EnvCell*> humanTraj;
 
-                /**
+    /**
                   * the human trajectory (with vector2D)
                   */
-		std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanVectorTraj;
+    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanVectorTraj;
 
-                /**
+    /**
                   * if the robot distance is computed
                   */
-		bool m_robotDistIsComputed;
+    bool m_robotDistIsComputed;
 
-                /**
+    /**
                   * the robot distance
                   */
-		double m_robotDist;
+    double m_robotDist;
 
-                /**
+    /**
                   * the robot trajectory (with cells)
                   */
-		std::vector<EnvCell*> robotTraj;
+    std::vector<EnvCell*> robotTraj;
 
-                /**
+    /**
                   * the robot trajectory (with vector2D)
                   */
-		std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > robotVectorTraj;
+    std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > robotVectorTraj;
 
-                /**
+    /**
                   *the vector of the tested points
                   */
-		std::vector<double> randomVectorPoint;
+    std::vector<double> randomVectorPoint;
 
-                /**
+    /**
                   * the human robot reacheability (crown) initialy initialised
                   */
-		std::vector<EnvCell*> initHumanRobotReacheable;
+    std::vector<EnvCell*> initHumanRobotReacheable;
 
-                /**
+    /**
                   * the human robot reacheability (crown) currently used
                   */
-		std::vector<EnvCell*> currentHumanRobotReacheable;
+    std::vector<EnvCell*> currentHumanRobotReacheable;
 
-                /**
+    /**
                   * the robot best position in the crown
                   */
-		std::pair<double,EnvCell*> robotBestPos;
+    std::pair<double,EnvCell*> robotBestPos;
 
-                /**
+    /**
                   * the angle from witch the human come, used in directed slice grid usage
                   */
-		double angleForHumanComming;
+    double angleForHumanComming;
 
-	};
+};
 }
 
 

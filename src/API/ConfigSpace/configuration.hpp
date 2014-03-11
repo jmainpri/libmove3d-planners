@@ -29,6 +29,9 @@
 #define MOVE3D_BOOST_PTR_NAMESPACE boost::shared_ptr
 #endif
 
+namespace Move3D
+{
+
 class Robot;
 class Configuration;
 
@@ -108,7 +111,7 @@ public:
      * obtient le Robot pour lequel la Configuration est créée
      * @return le Robot pour lequel la Configuration est créée
      */
-    Robot* getRobot();
+    Move3D::Robot* getRobot();
 
     /**
      * Gets the quaternion
@@ -125,7 +128,7 @@ public:
      * obtient le pointeur sur la ConfigPt
      * @return la pointeur sur la ConfigPt
      */
-    double* getConfigStruct();
+    double* getConfigStruct() { return _Configuration; }
 
     /**
       * Returns a const pointer to the configuration
@@ -174,14 +177,14 @@ public:
     /**
      * Get Config in degrees
      */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getConfigInDegree();
+    confPtr_t getConfigInDegree();
 
     /**
      * calcule la distance à une Configuration
      * @param Conf la Configuration entrée
      * @return la distance
      */
-    double dist(Configuration& Conf, bool print=false);
+    double dist(const Configuration& Conf, bool print=false) const;
 
     /**
      * calcule la distance à une Configuration
@@ -189,7 +192,7 @@ public:
      * @param distChoice le type de calcul de distance
      * @return la distance
      */
-    double dist(Configuration& q, int distChoice);
+    double dist(const Configuration& q, int distChoice) const;
 
     /**
      * indique si la Configuration est en collision
@@ -253,7 +256,7 @@ public:
      * copie une Configuration
      * @return une copie de la Configuration
      */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> copy();
+    confPtr_t copy();
 
     /**
      * copie les joints passifs de la Configuration courante dans la Configuration entrée
@@ -339,8 +342,8 @@ public:
      */
     void print(bool withPassive = false) const;
 
-
 private:
+
     bool _flagInitQuaternions;/*!< Booleen indiquant que les Quaternions ont été initialisés*/
     int _QuatDof;
     //        Eigen::Quaterniond _Quaternions;
@@ -354,5 +357,7 @@ private:
     Robot* _Robot; /*!< Le Robot pour lequel la Configuration est créée*/
     double* _Configuration;/*!< une structure de congitPt contenant les données sur la Configuration*/
 };
+
+}
 
 #endif

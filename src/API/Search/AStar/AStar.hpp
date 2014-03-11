@@ -18,7 +18,7 @@
 #include <queue>
 #include <vector>
 
-namespace API
+namespace Move3D
 {
 /**
    * @ingroup SEARCH
@@ -29,15 +29,15 @@ class TreeNode
 {
 public:
     TreeNode() : _Parent(NULL) {}
-    TreeNode(API::State*, TreeNode*);
+    TreeNode(Move3D::State*, TreeNode*);
     ~TreeNode() {}
     
     TreeNode* getParent() const { return _Parent;}
-    API::State* getState() const { return _State;}
+    Move3D::State* getState() const { return _State;}
     
 private:
     TreeNode *_Parent;
-    API::State *_State;
+    Move3D::State *_State;
 };
 
 
@@ -90,23 +90,23 @@ public:
         _GoalIsDefined(false)
     {}
     
-    AStar(API::State* goal) :
+    AStar(Move3D::State* goal) :
         _Goal(goal),
         _GoalIsDefined(true)
     {}
     
     ~AStar() {}
     
-    std::vector<API::State*>  solve(API::State* initial_state);
+    std::vector<Move3D::State*>  solve(Move3D::State* initial_state);
     
 private:
-    API::State* _Goal;
-    void setGoal(API::State* goal) { _Goal = goal; }
+    Move3D::State* _Goal;
+    void setGoal(Move3D::State* goal) { _Goal = goal; }
     
     bool _GoalIsDefined;
-    bool isGoal(API::State* state);
+    bool isGoal(Move3D::State* state);
     
-    std::vector<API::State*>  getSolution(QueueElement qEl);
+    std::vector<Move3D::State*>  getSolution(QueueElement qEl);
     
     void cleanStates();
     
@@ -115,8 +115,8 @@ private:
     
     std::priority_queue <QueueElement, std::vector<QueueElement>, PrioritizeQueueElements> _OpenSet;
     
-    std::vector<API::State*> _Solution;           /* This array is allocated when solve is called */
-    std::vector<API::State*> _Explored;
+    std::vector<Move3D::State*> _Solution;           /* This array is allocated when solve is called */
+    std::vector<Move3D::State*> _Explored;
     
     enum {NOT_FOUND,FOUND} _AStarState;     /* keeps if a solution exists after solve is called */
 };

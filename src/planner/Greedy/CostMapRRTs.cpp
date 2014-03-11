@@ -21,6 +21,8 @@
 #include "cost_space.hpp"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 #define FORIT(it, v) for(it = (v).begin(); it != (v).end(); (it)++)
@@ -240,7 +242,7 @@ void CostmapPlanner::deleteHighIntergralOfCost()
 /*!
  * Returns the trajectory
  */ 
-API::Trajectory* CostmapPlanner::getTrajectoryAndComputeCost()
+Move3D::Trajectory* CostmapPlanner::getTrajectoryAndComputeCost()
 {
 	cout << "Export the cpp graph to new graph" << endl;
 	
@@ -250,7 +252,7 @@ API::Trajectory* CostmapPlanner::getTrajectoryAndComputeCost()
   GraphConverter gc;
   Graph graphTraj( _Robot , gc.convert(*_Graph) );
   
-	API::Trajectory* traj = graphTraj.extractBestTraj(_Start->getConfiguration(),
+	Move3D::Trajectory* traj = graphTraj.extractBestTraj(_Start->getConfiguration(),
 																										_Goal->getConfiguration());
 	
 	// Compute new cost and record the gain
@@ -292,7 +294,7 @@ unsigned int CostmapPlanner::run()
 	
 	m_GainOfIterations.clear();
 	
-	API::Trajectory* lastTraj = NULL;
+	Move3D::Trajectory* lastTraj = NULL;
 	
 	double alpha = 0.99;
 	

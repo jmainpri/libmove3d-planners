@@ -1,12 +1,12 @@
 #include "HRICS_EnvGrid.hpp"
 
-using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
-using namespace HRICS;
 
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
+using namespace std;
+using namespace HRICS;
 using namespace Eigen;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 #include "P3d-pkg.h"
 #include "Graphic-pkg.h"
@@ -33,7 +33,7 @@ public:
 // Grid
 //---------------------------------------------------------------------------
 EnvGrid::EnvGrid() :
-        API::TwoDGrid(),
+        Move3D::TwoDGrid(),
         mRobot(0x00),
         mHuman(0x00),
         m_humanMaxDist(1),
@@ -42,7 +42,7 @@ EnvGrid::EnvGrid() :
 }
 
 EnvGrid::EnvGrid(double pace, vector<double> envSize, bool isHumanCentered) :
-        API::TwoDGrid(pace,envSize),
+        Move3D::TwoDGrid(pace,envSize),
         mRobot(0x00),
         mHuman(0x00),
         m_humanMaxDist(1),
@@ -56,7 +56,7 @@ EnvGrid::EnvGrid(double pace, vector<double> envSize, bool isHumanCentered) :
 }
 
 EnvGrid::EnvGrid(double pace, vector<double> envSize, bool isHumanCentered, Robot* robot, Robot* human) :
-        API::TwoDGrid(pace,envSize),
+        Move3D::TwoDGrid(pace,envSize),
         mRobot(robot),
         mHuman(human),
         m_humanMaxDist(1),
@@ -462,7 +462,7 @@ std::vector<std::pair<double,EnvCell*> > EnvGrid::getSortedGrid()
     return sortedGrid;
 }
 
-API::TwoDCell* EnvGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y )
+Move3D::TwoDCell* EnvGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y )
 {
     Vector2i coord;
 
@@ -473,7 +473,7 @@ API::TwoDCell* EnvGrid::createNewCell(unsigned int index,unsigned  int x,unsigne
     {
         return new EnvCell( 0, coord, _originCorner , this );
     }
-    API::TwoDCell* newCell = new EnvCell( index, coord, computeCellCorner(x,y) , this );
+    Move3D::TwoDCell* newCell = new EnvCell( index, coord, computeCellCorner(x,y) , this );
     return newCell;
 }
 
@@ -1145,7 +1145,7 @@ EnvCell::EnvCell() :
 }
 
 EnvCell::EnvCell(int i, Vector2i coord, Vector2d corner, EnvGrid* grid) :
-        API::TwoDCell(i,corner,grid),
+        Move3D::TwoDCell(i,corner,grid),
         _Coord(coord),
         _Open(false),
         _Closed(false),

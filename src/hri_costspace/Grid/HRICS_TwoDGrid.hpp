@@ -1,8 +1,9 @@
 #ifndef HRICS_TWODGRID_HPP
 #define HRICS_TWODGRID_HPP
 
-#include "API/planningAPI.hpp"
 #include "API/Grids/gridsAPI.hpp"
+#include "API/Search/AStar/AStar.hpp"
+#include "API/Device/robot.hpp"
 
 namespace HRICS
 {	
@@ -10,29 +11,29 @@ namespace HRICS
      @ingroup HRICS
      @brief Plannar HRI Grid
      */
-class PlanGrid : public API::TwoDGrid
+class PlanGrid : public Move3D::TwoDGrid
 {
 public:
-    PlanGrid(Robot* R, double pace, std::vector<double> envSize);
+    PlanGrid( Move3D::Robot* R, double pace, std::vector<double> envSize);
 
-    API::TwoDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y );
+    Move3D::TwoDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y );
     
     void writeToOBPlane();
     void draw();
     void setRobotToStoredConfig();
     void reset();
 
-    Robot* getRobot() { return mRobot; }
+    Move3D::Robot* getRobot() { return mRobot; }
 
 private:
-    Robot* mRobot;
+    Move3D::Robot* mRobot;
 };
 
 /**
      @ingroup HRICS
      @brief Plannar HRI Cell
      */
-class PlanCell : public API::TwoDCell
+class PlanCell : public Move3D::TwoDCell
 {
 
 public:
@@ -56,7 +57,7 @@ public:
     
 private:
     
-    confPtr_t setRobotAtCenter();
+    Move3D::confPtr_t setRobotAtCenter();
 
     Eigen::Vector2i _Coord;
 
@@ -74,17 +75,17 @@ private:
      @ingroup HRICS
      @brief Plannar HRI State
      */
-class PlanState : public API::State
+class PlanState : public Move3D::State
 {
 public:
     PlanState() {}
     PlanState( Eigen::Vector2i cell, PlanGrid* grid);
     PlanState( PlanCell* cell , PlanGrid* grid);
 
-    std::vector<API::State*> getSuccessors(API::State* s);
+    std::vector<Move3D::State*> getSuccessors(Move3D::State* s);
 
     bool isLeaf();		/* leaf control for an admissible heuristic function; the test of h==0*/
-    bool equal(API::State* other);
+    bool equal(Move3D::State* other);
     bool isValid();
 
     void setClosed(std::vector<PlanState*>& closedStates,std::vector<PlanState*>& openStates);
@@ -99,8 +100,8 @@ public:
     PlanCell* getCell() { return _Cell; }
 
 protected:
-    double computeLength(API::State *parent);       /* g */
-    double computeHeuristic(API::State *parent = NULL ,API::State* goal = NULL);    /* h */
+    double computeLength( Move3D::State *parent);       /* g */
+    double computeHeuristic( Move3D::State *parent = NULL, Move3D::State* goal = NULL);    /* h */
 
 private:
     PlanGrid* _Grid;

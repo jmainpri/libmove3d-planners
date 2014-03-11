@@ -14,6 +14,9 @@
 
 #include "planner/Diffusion/TreePlanner.hpp"
 
+namespace Move3D
+{
+
 class ThresholdPlanner : public TreePlanner
 {
 public:
@@ -33,7 +36,7 @@ public:
 	/**
 	 * Tries to extract a trajectory and erase the old one
 	 */ 	
-	bool newTrajectoryExtracted(API::Trajectory* trajPt);
+	bool newTrajectoryExtracted(Move3D::Trajectory* trajPt);
 	
 	/**
 	 * Expand One Step
@@ -46,5 +49,7 @@ public:
 	unsigned int run();
 	
 };
+
+}
 
 #endif

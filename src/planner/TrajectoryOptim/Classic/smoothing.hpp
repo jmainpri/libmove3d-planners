@@ -18,7 +18,7 @@ extern std::vector< std::pair<double,double> > traj_convergence_with_time;
  * @ingroup Trajectory
  * @brief Basic optimization of a trajectory
  */
-namespace API 
+namespace Move3D 
 {
 class Smoothing : public Trajectory
 {

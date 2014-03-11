@@ -3,14 +3,14 @@
 
 using MOVE3D_PTR_NAMESPACE::shared_ptr;
 
-SamplingAPI::~SamplingAPI() {}
+SamplingMove3D::~SamplingAPI() {}
 
-shared_ptr<Configuration> SamplingAPI::sample(bool samplePassive)
+shared_ptr<Configuration> SamplingMove3D::sample(bool samplePassive)
 {
 	return(mR->shoot(samplePassive));
 }
 
-shared_ptr<Configuration> SamplingAPI::shootCollisionFree()
+shared_ptr<Configuration> SamplingMove3D::shootCollisionFree()
 {
 	bool collision(true);
 	shared_ptr<Configuration> q;

@@ -17,13 +17,15 @@
 #include "Collision-pkg.h"
 #include <libmove3d/hri/HRI_tasks.h>
 
+#include "API/project.hpp"
+
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
-#include "planEnvironment.hpp"
-#include "plannerFunctions.hpp"
+#include "planner/planEnvironment.hpp"
+#include "planner/plannerFunctions.hpp"
 #include "time.h"
 
-
+#include <fstream>
 
 #ifdef LIGHT_PLANNER
 #include "LightPlanner-pkg.h"
@@ -33,6 +35,7 @@
 using namespace std;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
+using namespace Move3D;
 
 // import most common Eigen types
 //USING_PART_OF_NAMESPACE_EIGEN
@@ -2412,7 +2415,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
     p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
     p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPl->getUpBodyMLP(), 1, false);
 
-    API::Trajectory p3d_trajectory(_Robot);
+    Move3D::Trajectory p3d_trajectory(_Robot);
     p3d_trajectory.clear();
 
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > robotTraj2D = conf.robotTraj;
@@ -2641,7 +2644,7 @@ bool OTPMotionPl::createTrajectoryFromOutputConf(OutputConf conf)
             p3d_multiLocalPath_set_groupToPlan( m_Human->getRobotStruct(), m_ManipPlHum->getBaseMLP(), 1, false);
 
             //////////////////
-            API::Trajectory base_hum_traj(humanVectorConf);
+            Move3D::Trajectory base_hum_traj(humanVectorConf);
             base_hum_traj.replaceHumanP3dTraj(m_Human, m_Human->getTrajStruct());
         }
         else
@@ -3409,7 +3412,7 @@ bool OTPMotionPl::testTrajectories(bool fullbody)
     p3d_multiLocalPath_disable_all_groupToPlan( _Robot->getRobotStruct() , false );
     p3d_multiLocalPath_set_groupToPlan( _Robot->getRobotStruct(), m_ManipPl->getUpBodyMLP(), 1, false);
 
-    API::Trajectory p3d_trajectory(_Robot);
+    Move3D::Trajectory p3d_trajectory(_Robot);
     p3d_trajectory.clear();
 
 

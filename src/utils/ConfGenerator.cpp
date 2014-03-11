@@ -1,23 +1,21 @@
 #include "ConfGenerator.h"
 
+#include "API/project.hpp"
 
+#include "planner/planEnvironment.hpp"
+#include "planner/plannerFunctions.hpp"
+#include "OtpUtils.hpp"
 
 #include "P3d-pkg.h"
 #include "move3d-headless.h"
 #include "Planner-pkg.h"
 
-#include "planEnvironment.hpp"
-#include "plannerFunctions.hpp"
-#include "OtpUtils.hpp"
-
+using namespace Move3D;
 using namespace std;
+using namespace Eigen;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
-//using namespace HRICS;
-
-// import most common Eigen types
-//USING_PART_OF_NAMESPACE_EIGEN
-using namespace Eigen;
 extern Eigen::Vector3d current_WSPoint;
 
 std::vector<Eigen::Vector3d> OTPList;

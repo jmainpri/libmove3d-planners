@@ -5,7 +5,7 @@
 
 #include "API/Grids/BaseCell.hpp"
 
-namespace API
+namespace Move3D
 {
     class TwoDGrid;
     /**

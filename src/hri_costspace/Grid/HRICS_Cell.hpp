@@ -13,7 +13,7 @@
  */
 namespace HRICS
 {
-	class Cell : public API::ThreeDCell
+	class Cell : public Move3D::ThreeDCell
 	{
 		
 	public:

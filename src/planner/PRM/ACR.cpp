@@ -22,8 +22,10 @@
 
 #include "Planner-pkg.h"
 
+using namespace Move3D;
 using std::cout;
 using std::endl;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 ACR::ACR(Robot* R, Graph* G)

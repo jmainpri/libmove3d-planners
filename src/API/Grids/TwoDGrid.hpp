@@ -18,7 +18,7 @@
 * this function in the new class as well as the constructors which allready
 * call the base one.
 */
-namespace API
+namespace Move3D
 {
     class TwoDGrid : public BaseGrid
    {

@@ -21,8 +21,8 @@
 #include <Eigen/Core>
 
 #include <vector>
-//namespace API
-//{
+namespace Move3D
+{
   class ChompOptimizer 
   {
   public:
@@ -141,5 +141,7 @@
     void calculatePseudoInverse();
     confPtr_t getConfigurationOnGroupTraj(int ith);
   };
-//}
+
+}
+
 #endif

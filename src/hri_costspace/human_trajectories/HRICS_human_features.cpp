@@ -1,6 +1,7 @@
 #include "HRICS_human_features.hpp"
 
 using namespace HRICS;
+using namespace Move3D;
 
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
@@ -67,13 +68,13 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
     }
 }
 
-FeatureVect DistanceFeature::getFeatures(const Configuration& q )
+FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs )
 {
     FeatureVect count = computeDistances();
     return count;
 }
 
-FeatureVect DistanceFeature::getFeatureCount(const API::Trajectory& t)
+FeatureVect DistanceFeature::getFeatureCount(const Move3D::Trajectory& t)
 {
     FeatureVect count;
     return count;
@@ -114,13 +115,13 @@ FeatureVect DistanceFeature::computeDistances() const
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
 
-FeatureVect VisibilityFeature::getFeatures(const Configuration& q)
+FeatureVect VisibilityFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
     FeatureVect count;
     return count;
 }
 
-FeatureVect VisibilityFeature::getFeatureCount(const API::Trajectory& t)
+FeatureVect VisibilityFeature::getFeatureCount(const Move3D::Trajectory& t)
 {
     FeatureVect count;
     return count;
@@ -129,13 +130,13 @@ FeatureVect VisibilityFeature::getFeatureCount(const API::Trajectory& t)
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
 
-FeatureVect MuskuloskeletalFeature::getFeatures(const Configuration& q)
+FeatureVect MuskuloskeletalFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
     FeatureVect count = Eigen::VectorXd::Zero(1);
     return count;
 }
 
-FeatureVect MuskuloskeletalFeature::getFeatureCount(const API::Trajectory& t)
+FeatureVect MuskuloskeletalFeature::getFeatureCount(const Move3D::Trajectory& t)
 {
     FeatureVect count;
     return count;
@@ -144,13 +145,13 @@ FeatureVect MuskuloskeletalFeature::getFeatureCount(const API::Trajectory& t)
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
 
-FeatureVect LegibilityFeature::getFeatures(const Configuration& q)
+FeatureVect LegibilityFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
     FeatureVect count = Eigen::VectorXd::Zero(1);
     return count;
 }
 
-FeatureVect LegibilityFeature::getFeatureCount(const API::Trajectory& t)
+FeatureVect LegibilityFeature::getFeatureCount(const Move3D::Trajectory& t)
 {
     FeatureVect count;
     return count;
@@ -159,13 +160,13 @@ FeatureVect LegibilityFeature::getFeatureCount(const API::Trajectory& t)
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
 
-FeatureVect ReachabilityFeature::getFeatures(const Configuration& q)
+FeatureVect ReachabilityFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
     FeatureVect count = Eigen::VectorXd::Zero(1);
     return count;
 }
 
-FeatureVect ReachabilityFeature::getFeatureCount(const API::Trajectory& t)
+FeatureVect ReachabilityFeature::getFeatureCount(const Move3D::Trajectory& t)
 {
     FeatureVect count;
     return count;

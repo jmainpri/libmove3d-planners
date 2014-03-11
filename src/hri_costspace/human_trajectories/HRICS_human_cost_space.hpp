@@ -10,29 +10,29 @@ class HumanTrajCostSpace : public StackedFeatures
 {
 
 public:
-    HumanTrajCostSpace( Robot* active, Robot* passive );
+    HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* passive );
     ~HumanTrajCostSpace();
 
     void draw() { }
 
-//    FeatureVect getFeatureCount(const API::Trajectory& t);
+//    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
 //    FeatureVect getFeatures(const Configuration& t);
 
     //! Add a passive trajectory
     void setPassiveTrajectory( const motion_t& traj );
 
     //! Set the passive configuration
-    void setPassiveConfig( const Configuration& q );
+    void setPassiveConfig( const Move3D::Configuration& q );
 
-    Robot* getActiveHuman() { return human_active_; }
-    Robot* getPassiveHuman() { return human_passive_; }
+    Move3D::Robot* getActiveHuman() { return human_active_; }
+    Move3D::Robot* getPassiveHuman() { return human_passive_; }
 
 private:
 
-    Robot* human_active_;
-    Robot* human_passive_;
+    Move3D::Robot* human_active_;
+    Move3D::Robot* human_passive_;
 
-    API::Trajectory passive_traj_;
+    Move3D::Trajectory passive_traj_;
     int nb_way_points_;
 
     DistanceFeature dist_feat_;
@@ -56,11 +56,11 @@ private:
 
     HumanTrajCostSpace* cost_space_;
 
-    Robot* human_active_;
-    Robot* human_passive_;
+    Move3D::Robot* human_active_;
+    Move3D::Robot* human_passive_;
 
-    confPtr_t q_init_;
-    confPtr_t q_goal_;
+    Move3D::confPtr_t q_init_;
+    Move3D::confPtr_t q_goal_;
 
     bool init_scenario_;
 

@@ -24,21 +24,21 @@ class Boxes : public Squares
 
         void initialize();
 
-        FeatureVect getFeatures(const Configuration& q );
-        double getFeaturesJacobianMagnitude(const Configuration& q);
-        double jacobianCost(const Configuration& q);
+        FeatureVect getFeatures( const Move3D::Configuration& q, std::vector<int> active_dofs );
+        double getFeaturesJacobianMagnitude( const Move3D::Configuration& q );
+        double jacobianCost( const Move3D::Configuration& q );
 
         void computeSize();
 
         bool isInAABox( const Eigen::VectorXd& limits, Eigen::Vector3d p );
-        double distToBox(  const Box& box, const Configuration& q  );
+        double distToBox(  const Box& box, const Move3D::Configuration& q  );
 
         void drawCollisionPoints();
         void draw();
 
 private:
         std::vector<int> active_joints_;
-        BodySurfaceSampler* sampler_;
+        Move3D::BodySurfaceSampler* sampler_;
     };
 }
 

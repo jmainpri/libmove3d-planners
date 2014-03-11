@@ -25,6 +25,7 @@ using namespace HRICS;
 using namespace std;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace Eigen;
+using namespace Move3D;
 
 extern string global_ActiveRobotName;
 #ifdef MULTILOCALPATH

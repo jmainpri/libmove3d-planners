@@ -19,7 +19,7 @@ class Visibility
 {
 public:
     //! Sets the Pointer to Human
-    Visibility(Robot* R);
+    Visibility( Move3D::Robot* R);
     
     
     //! Gets the Visibiliy cost (distance to gaze direction) of a
@@ -42,7 +42,7 @@ public:
 
 private:
     //! Human Kinematics
-    Robot* m_Human;
+    Move3D::Robot* m_Human;
 
     //! Previous cost
     double m_Cost;

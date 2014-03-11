@@ -24,6 +24,9 @@ typedef struct obj;
 typedef struct env;
 #endif
 
+namespace Move3D
+{
+
 class BodySurfaceSampler 
 {
 public:
@@ -78,5 +81,7 @@ private:
     std::map<Joint*, std::vector<CollisionPoint> >  m_jointToCollisionPoint;
 
 };
+
+}
 
 #endif

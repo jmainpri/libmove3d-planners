@@ -1,16 +1,17 @@
 #include "HRICS_rrtPlanExpansion.hpp"
 #include "../HRICS_ConfigSpace.hpp"
+
 #include "API/Grids/PointCloud.hpp"
+#include "API/Roadmap/graph.hpp"
 
 #include "Planner-pkg.h"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 HRICS_rrtPlanExpansion::HRICS_rrtPlanExpansion() :
     TransitionExpansion(),
@@ -54,7 +55,7 @@ void HRICS_rrtPlanExpansion::init()
 /**
   * Sets the Cell path, First and Last Cell
   */
-void HRICS_rrtPlanExpansion::setCellPath(vector<API::TwoDCell*> cellPath)
+void HRICS_rrtPlanExpansion::setCellPath(vector<Move3D::TwoDCell*> cellPath)
 {
     m2DCellPath = cellPath;
     mLastForward = cellPath.at(0);
@@ -108,7 +109,7 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getExpansionDirection(
 
 shared_ptr<Configuration> HRICS_rrtPlanExpansion::getConfigurationInNextCell(Node* CompcoNode)
 {
-    API::TwoDCell* farthestCell=NULL;
+    Move3D::TwoDCell* farthestCell=NULL;
 
     // Get the farthest cell explored depending on
     // the way the tree explores
@@ -188,7 +189,7 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getConfigurationInNextCell(Nod
   * Return true if the cell is on the path
   * and after the first cell depending on the order (forward or backwards)
   */
-bool HRICS_rrtPlanExpansion::on2DPathAndAfter(API::TwoDCell* cell)
+bool HRICS_rrtPlanExpansion::on2DPathAndAfter(Move3D::TwoDCell* cell)
 {
     // Is cell on path
     bool cellOnPath;
@@ -276,7 +277,7 @@ Node* HRICS_rrtPlanExpansion::addNode(Node* currentNode, LocalPath& path, double
     pos[1] = currentNode->getConfiguration()->at(7);
 
     // TODO WARNING BROKEN
-    //    API::TwoDCell* cell = m2DGrid->getCell(pos);
+    //    Move3D::TwoDCell* cell = m2DGrid->getCell(pos);
     //
     //    if( currentNode->equalCompco( m_Graph->getStart() ) )
     //    {

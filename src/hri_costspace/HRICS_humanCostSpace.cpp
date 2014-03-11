@@ -23,6 +23,8 @@ HRICS::HumanCostSpace* HRICS_humanCostMaps = NULL;
 
 using namespace HRICS;
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 HumanCostSpace::HumanCostSpace()

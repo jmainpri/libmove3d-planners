@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <sstream>
 
+using namespace Move3D;
 using namespace HRICS;
 using std::cout;
 using std::endl;
@@ -96,7 +97,7 @@ void MultiplePlanners::loadTrajsFromFile( std::string folder, int nb_max_files )
             continue;
         }
 
-        API::Trajectory T( robot_, (p3d_traj*)p3d_get_desc_curid(P3D_TRAJ) );
+        Move3D::Trajectory T( robot_, (p3d_traj*)p3d_get_desc_curid(P3D_TRAJ) );
         T.setColor( i%8 );
 
         //cout << "color : " << i%8 << endl;
@@ -125,6 +126,16 @@ bool MultiplePlanners::run()
     }
 }
 
+const std::vector<Move3D::Trajectory>& MultiplePlanners::getAllTrajs()
+{
+    if( planner_type_ != stomp ){
+        return best_traj_;
+    }
+    else {
+        return all_traj_;
+    }
+}
+
 bool MultiplePlanners::runStomp()
 {
     if( robot_ == NULL )
@@ -143,19 +154,25 @@ bool MultiplePlanners::runStomp()
     const CollisionSpace* coll_space = traj_optim_get_collision_space();
     std::vector<CollisionPoint> collision_points = traj_optim_get_collision_points();
 
-    stompRun pool( coll_space, planner_joints, collision_points );
+    stomp_motion_planner::stompRun pool( coll_space, planner_joints, collision_points );
     pool.setPool( robots );
+    // Uncomment for parallel stomps
+    // pool.setRobotPool( 0, robots );
 
-    robots.clear();
-    robots.push_back( robots[0] );
-    pool.setRobotPool( 0, robots );
+    Move3D::Trajectory T( robot_ );
 
-    API::Trajectory T( robot_ );
-    T.push_back( robot_->getInitPos() );
-    T.push_back( robot_->getGoalPos() );
+    if( init_stomp_.getNbOfViaPoints() == 0 )
+    {
+        T.push_back( robot_->getInitPos() );
+        T.push_back( robot_->getGoalPos() );
+    }
+    else{
+       T = init_stomp_;
+    }
 
     pool.run( 0, T );
 
+    all_traj_ = pool.getContext(0)->getStompOptimizer()->getAllTrajs();
     best_traj_.push_back( pool.getBestTrajectory( 0 ) );
 
     return true;
@@ -201,7 +218,8 @@ bool MultiplePlanners::runAStar()
     confPtr_t q_init = robot_->getInitPos();
     confPtr_t q_goal = robot_->getGoalPos();
 
-    API::Trajectory* traj = planner.computeRobotTrajectory( q_init, q_goal );
+    cout << "PLANNING ASTAR" << endl;
+    Move3D::Trajectory* traj = planner.computeRobotTrajectory( q_init, q_goal );
 
     if( traj != NULL ){
         best_traj_.push_back(*traj);

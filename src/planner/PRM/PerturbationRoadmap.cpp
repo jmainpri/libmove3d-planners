@@ -24,6 +24,8 @@
 #include "Graphic-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 PerturbationRoadmap::PerturbationRoadmap(Robot* R, Graph* G)  : PRM(R,G)
@@ -83,26 +85,26 @@ unsigned PerturbationRoadmap::init()
     //    return added;
     //  }
 
-    API::Trajectory T(_Robot);
+    Move3D::Trajectory T(_Robot);
 
     if( _Robot->getTrajStruct() )
     {
         T = _Robot->getCurrentTraj();
     }
     else {
-        T =  API::Trajectory( traj_optim_create_sraight_line_traj() );
+        T =  Move3D::Trajectory( traj_optim_create_sraight_line_traj() );
     }
 
     m_qi = T.getBegin();
     m_qf = T.getEnd();
     addTrajectory( T );
 
-    m_traj = new API::CostOptimization( T );
+    m_traj = new Move3D::CostOptimization( T );
 
     return added;
 }
 
-void PerturbationRoadmap::addTrajectory( const API::Trajectory& T )
+void PerturbationRoadmap::addTrajectory( const Move3D::Trajectory& T )
 {
     double range_max = T.getRangeMax();
     m_delta = range_max/20;
@@ -287,7 +289,7 @@ bool PerturbationRoadmap::addPerturbation( confPtr_t q_rand )
 {
     Node* node_near = _Graph->nearestWeightNeighbour( m_main_compco, q_rand, false, ENV.getInt(Env::DistConfigChoice));
 
-    confPtr_t q_new = API::CostOptimization::perturbCurrent( node_near->getConfiguration(), q_rand, m_delta, m_descent );
+    confPtr_t q_new = Move3D::CostOptimization::perturbCurrent( node_near->getConfiguration(), q_rand, m_delta, m_descent );
 
     vector<Node*> nodes = _Graph->KNearestWeightNeighbour( q_new, m_K_Nearest, P3D_HUGE,
                                                            false, ENV.getInt(Env::DistConfigChoice));
@@ -452,11 +454,11 @@ void PerturbationRoadmap::expandOneStep()
         if( m_traj ) {
             delete m_traj;
         }
-        API::Trajectory* traj = _Graph->extractAStarShortestPathsTraj( m_qi, m_qf );
+        Move3D::Trajectory* traj = _Graph->extractAStarShortestPathsTraj( m_qi, m_qf );
 
         if( traj != NULL ) {
 
-            m_traj = new API::CostOptimization(*traj);
+            m_traj = new Move3D::CostOptimization(*traj);
             delete traj;
             cout << "trajectory cost : " << m_traj->cost() << endl;
         }

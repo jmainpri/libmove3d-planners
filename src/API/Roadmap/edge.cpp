@@ -20,6 +20,8 @@
 #include "Planner-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 const bool use_localpath_planner = false;

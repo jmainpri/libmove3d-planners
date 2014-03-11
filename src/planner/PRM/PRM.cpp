@@ -23,6 +23,8 @@
 #include "Planner-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 PRM::PRM(Robot* R, Graph* G) :

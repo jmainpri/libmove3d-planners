@@ -4,10 +4,12 @@
 #include "API/Grids/ThreeDCell.hpp"
 #include "API/Grids/GridToGraph/gridtograph.hpp"
 
+namespace Move3D {
+
 /**
   @ingroup GRID
   */
-class CellToNode : public API::ThreeDCell
+class CellToNode : public Move3D::ThreeDCell
 {
 public:
     CellToNode();
@@ -26,5 +28,7 @@ private:
     bool _CellHasNode;
     Node* _Node;
 };
+
+}
 
 #endif // CELLTONODE_H

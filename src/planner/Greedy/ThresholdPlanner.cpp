@@ -14,6 +14,8 @@
 #include "Planner-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 ThresholdPlanner::ThresholdPlanner(Robot* R, Graph* G) : TreePlanner(R,G)
@@ -68,7 +70,7 @@ bool ThresholdPlanner::checkStopConditions()
 /**
  * Tries to extract a trajectory and erase the old one
  */ 
-bool ThresholdPlanner::newTrajectoryExtracted(API::Trajectory* trajPt)
+bool ThresholdPlanner::newTrajectoryExtracted(Move3D::Trajectory* trajPt)
 {
 /**	if( trajFound() )
 	{
@@ -139,7 +141,7 @@ unsigned int ThresholdPlanner::run()
 	const double nbIter = 10;
 	const double delta = previousThreshold/nbIter;
 	
-	API::Trajectory* traj = NULL;
+	Move3D::Trajectory* traj = NULL;
 	
 	while ( (!checkStopConditions()) && (Threshold > 0))
 	{

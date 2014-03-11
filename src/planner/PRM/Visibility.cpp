@@ -20,6 +20,8 @@
 #include "Planner-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 Vis_PRM::Vis_PRM(Robot* R, Graph* G) : PRM(R,G)

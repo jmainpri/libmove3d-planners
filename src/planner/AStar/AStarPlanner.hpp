@@ -9,12 +9,14 @@
 
 #include <Eigen/StdVector>
 
-class PlanGrid : public API::TwoDGrid
+namespace Move3D {
+
+class PlanGrid : public Move3D::TwoDGrid
 {
 public:
     PlanGrid(Robot* R, double pace, std::vector<double> envSize);
 
-    API::TwoDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y );
+    Move3D::TwoDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y );
 
     void draw();
     void setRobotToStoredConfig();
@@ -27,7 +29,7 @@ private:
     Robot* robot_;
 };
 
-class PlanCell : public API::TwoDCell
+class PlanCell : public Move3D::TwoDCell
 {
 
 public:
@@ -39,6 +41,7 @@ public:
 
     double getCost(); /* { std::cout << " Warning not implemented"  << std::endl; }*/
     void resetCost() { cost_is_computed_ = false; }
+    void setCost( double cost ) { cost_is_computed_ = true; cost_ = cost; }
 
     bool getOpen() { return open_; }
     void setOpen() { open_ = true; }
@@ -65,17 +68,17 @@ private:
     bool is_valid_;
 };
 
-class PlanState : public API::State
+class PlanState : public Move3D::State
 {
 public:
     PlanState() {}
     PlanState( Eigen::Vector2i cell, PlanGrid* grid);
     PlanState( PlanCell* cell , PlanGrid* grid);
 
-    std::vector<API::State*> getSuccessors(API::State* s);
+    std::vector<Move3D::State*> getSuccessors(Move3D::State* s);
 
     bool isLeaf();		/* leaf control for an admissible heuristic function; the test of h==0*/
-    bool equal(API::State* other);
+    bool equal(Move3D::State* other);
     bool isValid();
 
     void setClosed(std::vector<PlanState*>& closedStates,std::vector<PlanState*>& openStates);
@@ -90,8 +93,8 @@ public:
     PlanCell* getCell() { return cell_; }
 
 protected:
-    double computeLength(API::State *parent);       /* g */
-    double computeHeuristic(API::State *parent = NULL ,API::State* goal = NULL);    /* h */
+    double computeLength(Move3D::State *parent);       /* g */
+    double computeHeuristic(Move3D::State *parent = NULL ,Move3D::State* goal = NULL);    /* h */
 
 private:
     PlanGrid* grid_;
@@ -105,8 +108,8 @@ public:
     AStarPlanner(Robot* robot);
     ~AStarPlanner();
 
-    API::Trajectory* computeRobotTrajectory( confPtr_t source, confPtr_t target );
-    API::Trajectory* getSimplePath( std::vector<double> goal, std::vector<std::vector<double> >& path );
+    Move3D::Trajectory* computeRobotTrajectory( confPtr_t source, confPtr_t target );
+    Move3D::Trajectory* getSimplePath( std::vector<double> goal, std::vector<std::vector<double> >& path );
 
     //! change implementation here
     unsigned int run() { return 0; }
@@ -131,7 +134,9 @@ private:
     double pace_;
     PlanGrid* grid_;
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > path_;
-    std::vector<API::TwoDCell*> cell_path_;
+    std::vector<Move3D::TwoDCell*> cell_path_;
 };
+
+}
 
 #endif // ASTARPLANNER_HPP

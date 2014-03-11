@@ -1,7 +1,9 @@
 #include "HRICS_features.hpp"
 
 #include "HRICS_GestParameters.hpp"
+#include "planner/planEnvironment.hpp"
 
+using namespace Move3D;
 using namespace HRICS;
 using std::cout;
 using std::endl;
@@ -24,10 +26,12 @@ double Feature::cost( Configuration& q )
         cout << endl;
     }
 
+//    cout << __PRETTY_FUNCTION__ << endl;
+
     return cost;
 }
 
-double Feature::costTraj( const API::Trajectory& t )
+double Feature::costTraj( const Move3D::Trajectory& t )
 {
     FeatureVect  phi = getFeatureCount(t);
 
@@ -41,7 +45,7 @@ double Feature::costTraj( const API::Trajectory& t )
     return cost;
 }
 
-//! The jacobian is
+//! The jacobian is of m by n -> nb features by active dofs
 //! column per dof
 //! row per feature
 FeatureJacobian Feature::getFeaturesJacobian( const Configuration& q_0 )
@@ -51,17 +55,16 @@ FeatureJacobian Feature::getFeaturesJacobian( const Configuration& q_0 )
     FeatureVect f_0 = getFeatures( q_0 );
     FeatureJacobian J = Eigen::MatrixXd::Zero( getNumberOfFeatures(), active_dofs_.size() );
 
-    for( int i=0;i<int(active_dofs_.size());i++)
+    for( size_t j=0;j<active_dofs_.size();j++) // For each colomn
     {
-        int dof = active_dofs_[ i ];
-
-        //cout << "dof : " << dof << endl;
+        int dof = active_dofs_[ j ];
+        // cout << "dof : " << dof << endl;
 
         Configuration q_1 = q_0;
         q_1[dof] = q_0[ dof ] + eps;
 
         FeatureVect f_1 = getFeatures( q_1 );
-        J.col(i) = (f_1 - f_0) / eps;
+        J.col(j) = (f_1 - f_0) / eps;
     }
 
 //    cout << "J : " << endl << J.transpose() << std::scientific << endl;
@@ -74,7 +77,7 @@ double Feature::getFeaturesJacobianMagnitude( const Configuration& q )
     return J.norm();
 }
 
-double Feature::getJacobianSum( const API::Trajectory& t )
+double Feature::getJacobianSum( const Move3D::Trajectory& t )
 {
     double sum=0.0;
 
@@ -87,26 +90,61 @@ double Feature::getJacobianSum( const API::Trajectory& t )
     return sum;
 }
 
-FeatureVect Feature::getFeatureCount( const API::Trajectory& t )
+FeatureVect Feature::getFeatureCount( const Move3D::Trajectory& traj )
 {
-    FeatureVect phi( Eigen::VectorXd::Zero( w_.size() ) );
+    FeatureVect phi( FeatureVect::Zero( getNumberOfFeatures() ) );
 
-    for(int i=1;i<t.getNbOfViaPoints();i++)
+//    for(int i=1;i<t.getNbOfViaPoints();i++)
+//    {
+//        confPtr_t q_1 = t[i-1];
+//        confPtr_t q_2 = t[i];
+//        Eigen::VectorXd pos1 = q_1->getEigenVector(6,7);
+//        Eigen::VectorXd pos2 = q_2->getEigenVector(6,7);
+//        double dist = ( pos1 - pos2 ).norm();
+//        phi += getFeatures( *q_1 )*dist;
+//    }
+
+//    int i=0;
+//    for(; t <= t_max; i++ )
+//    {
+//        confPtr_t q = traj.configAtParam( t );
+
+//        double powerOnIntegral = 1.0;
+
+//        phi += getFeatures( *q )*step;
+//        t += step;
+//    }
+
+    double t = 0.0;
+    double t_max = traj.getRangeMax();
+    double step = p3d_get_env_dmax()*PlanEnv->getDouble(PlanParam::costResolution);
+    int n_step = int(t_max/step);
+
+    confPtr_t q = traj.configAtParam(0.0);
+    FeatureVect feat1 = getFeatures( *q );
+
+    for ( int i=0; i<n_step; i++ )
     {
-        confPtr_t q_1 = t[i-1];
-        confPtr_t q_2 = t[i];
-        Eigen::VectorXd pos1 = q_1->getEigenVector(6,7);
-        Eigen::VectorXd pos2 = q_2->getEigenVector(6,7);
-        double dist = ( pos1 - pos2 ).norm();
-        phi += getFeatures( *q_1 )*dist;
+        t += step;
+        q = traj.configAtParam(t);
+        FeatureVect feat2 = getFeatures( *q );
+        phi += ( (feat1 + feat2) / 2 )  * step;
+        feat1 = feat2;
     }
+
+//    cout << "--------- Integral ----------------" << endl;
+//    cout << "Range = " << t_max << endl;
+//    cout << "step = " << step << endl;
+//    cout << "n_step = " << n_step << endl;
+
+    // cout << "ith computation for integral : " << i << endl;
 
     return phi;
 }
 
-FeatureProfile Feature::getFeatureProfile( const API::Trajectory& t )
+FeatureProfile Feature::getFeatureProfile( const Move3D::Trajectory& t )
 {
-    FeatureProfile p( Eigen::VectorXd::Zero(t.getNbOfViaPoints()) );
+    FeatureProfile p( FeatureProfile::Zero(t.getNbOfViaPoints()) );
 
     for(int i=0;i<p.size();i++)
     {
@@ -116,22 +154,24 @@ FeatureProfile Feature::getFeatureProfile( const API::Trajectory& t )
     return p;
 }
 
-FeatureJacobian Feature::getFeatureJacobian( const API::Trajectory& t )
+FeatureJacobian Feature::getFeatureJacobian( const Move3D::Trajectory& t )
 {
     FeatureJacobian p( Eigen::MatrixXd::Zero( t.getNbOfViaPoints() , getNumberOfFeatures() ) );
 
     for(int i=0;i<p.rows();i++) // number of via points
     {
+        FeatureJacobian J = getFeaturesJacobian( *t[i] );
+
         for(int j=0;j<p.cols();j++) // number of features
         {
-            p(i,j) = getFeaturesJacobian( *t[i] ).row( j ).norm() ;
+            p(i,j) = J.row( j ).norm();
         }
     }
 
     return p;
 }
 
-FeatureProfile Feature::getFeatureJacobianProfile( const API::Trajectory& t )
+FeatureProfile Feature::getFeatureJacobianProfile( const Move3D::Trajectory& t )
 {
     FeatureProfile p( Eigen::VectorXd::Zero(t.getNbOfViaPoints()) );
 
@@ -160,7 +200,7 @@ StackedFeatures::StackedFeatures()
     nb_features_ = 0;
 }
 
-FeatureVect StackedFeatures::getFeatureCount(const API::Trajectory& t)
+FeatureVect StackedFeatures::getFeatureCount(const Move3D::Trajectory& t)
 {
     FeatureVect f = Eigen::VectorXd::Zero( nb_features_ );
 
@@ -175,7 +215,7 @@ FeatureVect StackedFeatures::getFeatureCount(const API::Trajectory& t)
     return f;
 }
 
-FeatureVect StackedFeatures::getFeatures(const Configuration& q)
+FeatureVect StackedFeatures::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
     FeatureVect f = Eigen::VectorXd::Zero( nb_features_ );
 
@@ -306,7 +346,7 @@ TrajectorySmoothness::TrajectorySmoothness()
     w_ = Eigen::VectorXd::Zero( 1 ); // Sets the number of feature in the base class
 }
 
-FeatureVect TrajectorySmoothness::getFeatureCount( const API::Trajectory& t )
+FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 {
     FeatureVect f;
 
@@ -353,7 +393,7 @@ void TrajectorySmoothness::printControlCosts( const std::vector<Eigen::VectorXd>
     cout << f_tmp.transpose() << endl;
 }
 
-FeatureVect TrajectorySmoothness::getFeatures(const Configuration& q)
+FeatureVect TrajectorySmoothness::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
     FeatureVect count;
     return count;

@@ -18,14 +18,12 @@
 #include <iostream>
 
 using namespace std;
+using namespace Eigen;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
-using namespace Eigen;
-
-RRT::RRT(Robot* R, Graph* G) :
-    TreePlanner(R,G)
+RRT::RRT(Robot* R, Graph* G) : TreePlanner(R,G)
 {
 #ifdef DEBUG_STATUS
     cout << "RRT::RRT(R,G)" << endl;

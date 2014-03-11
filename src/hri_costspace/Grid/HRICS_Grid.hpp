@@ -10,17 +10,16 @@
  */
 namespace HRICS
 {
-	
 	class Cell;
 	
-	class Grid : public API::ThreeDGrid
+	class Grid : public Move3D::ThreeDGrid
 	{
 	public:
 		Grid();
 		Grid( std::vector<int> size );
 		Grid(double pace, std::vector<double> envSize);
 		
-		API::ThreeDCell* createNewCell(unsigned int index, unsigned int x, unsigned int y, unsigned int z );
+		Move3D::ThreeDCell* createNewCell(unsigned int index, unsigned int x, unsigned int y, unsigned int z );
 		void computeAllCellCost();
 		
 		void drawVectorFeild();
@@ -28,8 +27,8 @@ namespace HRICS
 		void draw();
 		void resetCellCost();
 		
-		void setRobot(Robot* rob) { _Robot = rob; }
-		Robot* getRobot() { return _Robot; }
+        void setRobot(Move3D::Robot* rob) { _Robot = rob; }
+        Move3D::Robot* getRobot() { return _Robot; }
 		
 		bool isVirtualObjectPathValid(Cell* fromCell,Cell* toCell);
 		
@@ -37,7 +36,7 @@ namespace HRICS
 		
 	private:
 		
-		Robot* _Robot;
+        Move3D::Robot* _Robot;
 	};
 }
 

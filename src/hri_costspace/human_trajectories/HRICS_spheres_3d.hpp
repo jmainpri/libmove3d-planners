@@ -31,9 +31,9 @@ class Spheres3D : public PlanarFeature
 
         void initialize();
 
-        FeatureVect getFeatures(const Configuration& q );
-        double getFeaturesJacobianMagnitude(const Configuration& q);
-        double jacobianCost(const Configuration& q);
+        FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0) );
+        double getFeaturesJacobianMagnitude(const Move3D::Configuration& q);
+        double jacobianCost(const Move3D::Configuration& q);
 
         void computeSize();
         void placeCenterGrid(bool on_wall);
@@ -47,7 +47,7 @@ class Spheres3D : public PlanarFeature
 
 private:
         std::vector<int> active_joints_;
-        BodySurfaceSampler* sampler_;
+        Move3D::BodySurfaceSampler* sampler_;
         std::vector<Sphere*> spheres_;
         std::vector<int> sphere_to_draw_;
     };

@@ -18,6 +18,7 @@
 
 using namespace std;
 using namespace HRICS;
+using namespace Move3D;
 
 std::vector<RecordMotion*> global_motionRecorders;
 

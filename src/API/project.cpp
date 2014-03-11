@@ -16,9 +16,10 @@
 #include "hri_costspace/HRICS_parameters.hpp"
 //#include "SaveContext.hpp"
 
+using namespace Move3D;
 using namespace std;
 
-Project* global_Project = NULL;
+Project* Move3D::global_Project = NULL;
 
 
 Project::Project(Scene* sc)
@@ -36,7 +37,7 @@ Project::~Project()
 {
 }
 
-Scene* Project::getActiveScene()
+Move3D::Scene* Project::getActiveScene()
 {
 	for(unsigned int i = 0; i < m_Scenes.size(); i++)
 	{

@@ -47,6 +47,7 @@
 #include <tr1/memory>
 
 using namespace std;
+using namespace Move3D;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 Eigen::Vector3d global_DrawnSphere;

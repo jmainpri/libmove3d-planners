@@ -13,8 +13,7 @@ public:
 
     void initialize();
 
-    FeatureVect getFeatures(const Configuration& q );
-//    FeatureVect getFeatureCount(const API::Trajectory& t);
+    FeatureVect getFeatures( const Move3D::Configuration& q, std::vector<int> active_features = std::vector<int>(0) ) ;
 };
 
 }

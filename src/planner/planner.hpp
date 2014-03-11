@@ -3,6 +3,8 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 
+namespace Move3D {
+
 #ifndef GRAPH_HPP
 class Graph;
 #endif
@@ -172,5 +174,7 @@ protected:
 };
 
 extern Planner* global_Move3DPlanner;
+
+}
 
 #endif

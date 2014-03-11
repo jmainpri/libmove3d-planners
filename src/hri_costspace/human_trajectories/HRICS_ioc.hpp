@@ -42,7 +42,7 @@ struct IocTrajectory
     void printProbabilities();
 
     // Returns the move3d trajectory
-    API::Trajectory getMove3DTrajectory( const ChompPlanningGroup* planning_group ) const;
+    Move3D::Trajectory getMove3DTrajectory( const Move3D::ChompPlanningGroup* planning_group ) const;
 
     // Interpolation between two vector
     Eigen::VectorXd interpolate( const Eigen::VectorXd& a, const Eigen::VectorXd& b, double u ) const;
@@ -86,7 +86,7 @@ private:
 class Ioc
 {
 public:
-    Ioc( int num_vars, const ChompPlanningGroup* planning_group );
+    Ioc( int num_vars, const Move3D::ChompPlanningGroup* planning_group );
 
     //! Add a trajectory to the set of demonstrated trajectories
     bool addDemonstration(const Eigen::MatrixXd& demo);
@@ -110,7 +110,10 @@ public:
     void generateSamples(int nb_samples);
 
     //! Returns Move3D trajectories
-    std::vector< std::vector<API::Trajectory> > getSamples();
+    std::vector< std::vector<Move3D::Trajectory> > getSamples();
+
+    //! Returns Move3D trajectories
+    std::vector< Move3D::Trajectory > getDemonstrations();
 
     //! Drawing function
     void addTrajectoryToDraw( const IocTrajectory& t, int color );
@@ -127,7 +130,7 @@ private:
     std::vector< std::vector<IocTrajectory> > samples_;
     double noise_stddev_;
 
-    const ChompPlanningGroup* planning_group_;
+    const Move3D::ChompPlanningGroup* planning_group_;
     int num_vars_;
     int num_joints_;
     IocSampler sampler_;
@@ -137,7 +140,7 @@ private:
 class IocEvaluation
 {
 public:
-    IocEvaluation( Robot* rob, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners );
+    IocEvaluation( Move3D::Robot* rob, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners );
 
     //! Sample trajectories around the demonstrations
     virtual void runSampling();
@@ -173,7 +176,10 @@ public:
     Eigen::VectorXd compareDemosAndPlanned();
 
     //! Check start and goal of sampled trajectories
-    bool checkStartAndGoal( const std::vector< std::vector<API::Trajectory> >& samples ) const;
+    bool checkStartAndGoal( const std::vector< std::vector<Move3D::Trajectory> >& samples ) const;
+
+    //! Generate a distribution that maximizes entropy
+    void monteCarloSampling( double factor, int nb_tries );
 
 protected:
 
@@ -184,50 +190,71 @@ protected:
     Eigen::VectorXd getCostsOfDemonstrations() const;
 
     //! Save trajectory to matrix
-    void saveTrajToMatlab(const API::Trajectory& t, int id) const;
+    void saveTrajToMatlab(const Move3D::Trajectory& t, int id) const;
 
     //! Save all the feature in a matrix
     //! that can be read by Matlab
-    void saveToMatrix(const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples );
+    void saveToMatrixFile(const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples, std::string name );
 
-    //! Get all the feature from a matrix file
-    bool loadFromMatrix( std::vector<FeatureVect>& demos, std::vector< std::vector<FeatureVect> >& samples );
+    //! Save sample trajectories
+    void saveTrajectories(const std::vector<Move3D::Trajectory>& trajectories);
+
+    // Return the feature gradien norm sum along each trajectory
+    std::vector< std::vector<FeatureVect> > getFeatureCount( const std::vector< std::vector<Move3D::Trajectory> >& all_trajs );
+
+    // Return the feature gradien norm sum along each trajectory
+    std::vector< std::vector<FeatureVect> > getFeatureJacobianSum( const std::vector< std::vector<Move3D::Trajectory> >& all_trajs );
 
     //! Plans a motion using the costmap
-    API::Trajectory planMotionRRT();
-    API::Trajectory planMotionStomp();
-    API::Trajectory planAStar();
+    Move3D::Trajectory planMotion( planner_t type );
 
+    //! Set all features active
     void activateAllFeatures();
 
     //! Compute weights when planning multiple times.
     WeightVect computeOptimalWeights();
 
+    //! Compute if samples dominate demonstration
+    bool checkDegeneration( const std::vector< FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples ) const;
+
+    //! Returns true if the sample2 is domintated by sample1
+    bool isSampleDominated( const FeatureVect& sample1, const FeatureVect& sample2 ) const;
+
+    //! Removes the dominated samples by resampling
+    void removeDominatedSamplesAndResample( Ioc &ioc, std::vector< std::vector<FeatureVect> >& phi_k );
+
+    //! Returns trajectory that best fits
+    Move3D::Trajectory selectBestSample( double detla_mean, const std::vector<Move3D::Trajectory>& trajs );
+
     virtual void setLearnedWeights();
     virtual void setOriginalWeights();
 
-    Robot* robot_;
+    Move3D::Robot* robot_;
     int nb_demos_;
     int nb_samples_;
     int nb_weights_;
     int nb_way_points_;
     std::string folder_;
-    std::vector<API::Trajectory> demos_;
-    std::vector<API::Trajectory> samples_;
-    std::vector<API::Trajectory> learned_;
+    std::vector<Move3D::Trajectory> demos_;
+    std::vector<Move3D::Trajectory> samples_;
+    std::vector<Move3D::Trajectory> learned_;
     WeightVect learned_vect_;
     WeightVect original_vect_;
-    std::string feature_matrix_name_;
+
     std::vector<int> active_joints_;
-    Feature* feature_fct_;
+    StackedFeatures* feature_fct_;
+    std::string feature_type_;
     TrajectorySmoothness* smoothness_fct_;
-    ChompPlanningGroup* plangroup_;
+    Move3D::ChompPlanningGroup* plangroup_;
 
     bool load_sample_from_file_;
     MultiplePlanners& planners_;
     int round_id_;
 
     std::vector<FeatureVect> stored_features_;
+
+    std::vector<FeatureVect> phi_demos_;
+    std::vector<FeatureVect> phi_jac_demos_;
 };
 
 }

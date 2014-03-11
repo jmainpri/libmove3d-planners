@@ -9,10 +9,12 @@
 
 #include <boost/thread/thread.hpp>
 
+using namespace Move3D;
+using namespace stomp_motion_planner;
 using std::cout;
 using std::endl;
 
-stompRun* global_stompRun = NULL;
+stompRun* stomp_motion_planner::global_stompRun = NULL;
 
 stompContext::stompContext(Robot* robot, const CollisionSpace* coll_space,  const std::vector<int>& planner_joints, const std::vector<CollisionPoint>& collision_points )
 {
@@ -50,7 +52,7 @@ void stompContext::setParallelRobots( const std::vector<Robot*>& robots )
     m_parallel_robots = robots;
 }
 
-bool stompContext::initRun( API::Trajectory& T )
+bool stompContext::initRun( Move3D::Trajectory& T )
 {
     if( T.getNbOfPaths() == 0 )
     {
@@ -202,12 +204,12 @@ void stompRun::setRobotPool( int id, const std::vector<Robot*>& robots )
     m_stomps[id]->setParallelRobots( robots );
 }
 
-API::Trajectory stompRun::getBestTrajectory( int id )
+Move3D::Trajectory stompRun::getBestTrajectory( int id )
 {
     return m_stomps[id]->getStompOptimizer()->getBestTraj();
 }
 
-void stompRun::run( int id, API::Trajectory& T )
+void stompRun::run( int id, Move3D::Trajectory& T )
 {
     if( id >= int(m_stomps.size()) )
     {
@@ -233,7 +235,7 @@ void stompRun::run( int id, API::Trajectory& T )
 //----------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------
-void srompRun_MultipleParallel()
+void stomp_motion_planner::srompRun_MultipleParallel()
 {
     std::vector<Robot*> robots;
     robots.push_back( global_Project->getActiveScene()->getRobotByName("rob1") );
@@ -251,22 +253,22 @@ void srompRun_MultipleParallel()
     stompRun* pool = new stompRun( NULL, planner_joints, collision_points );
     pool->setPool( robots );
 
-    // API::Trajectory T( robots[0] );
+    // Move3D::Trajectory T( robots[0] );
     // T.push_back( robots[0]->getInitPos() );
     // T.push_back( robots[0]->getGoalPos() );
     // pool->run( 0, T );
 
-    std::vector<API::Trajectory> trajs;
+    std::vector<Move3D::Trajectory> trajs;
     for( int i=0;i<int(robots.size()); i++)
     {
-        trajs.push_back( API::Trajectory( robots[i] ) );
+        trajs.push_back( Move3D::Trajectory( robots[i] ) );
         trajs.back().push_back( robots[i]->getInitPos() );
         trajs.back().push_back( robots[i]->getGoalPos() );
     }
 
     cout << "spawns: " <<  robots.size() << " threads" << endl;
 
-    global_stompRun = pool;
+    stomp_motion_planner::global_stompRun = pool;
 
     pool->start();
 
@@ -281,10 +283,10 @@ void srompRun_MultipleParallel()
 
     cout << "Pool of stomps has ended" << endl;
     delete pool;
-    global_stompRun = NULL;
+    stomp_motion_planner::global_stompRun = NULL;
 }
 
-void srompRun_OneParallel()
+void stomp_motion_planner::srompRun_OneParallel()
 {
     std::vector<Robot*> robots;
     robots.push_back( global_Project->getActiveScene()->getRobotByNameContaining("ROBOT") );
@@ -307,7 +309,7 @@ void srompRun_OneParallel()
     robots.clear();
     robots.push_back( global_Project->getActiveScene()->getRobotByNameContaining("ROBOT") );
 
-    API::Trajectory T( robots[0] );
+    Move3D::Trajectory T( robots[0] );
     T.push_back( robots[0]->getInitPos() );
     T.push_back( robots[0]->getGoalPos() );
 

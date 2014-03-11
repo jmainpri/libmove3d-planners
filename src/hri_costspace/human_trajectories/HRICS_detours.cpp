@@ -8,6 +8,7 @@
 
 #include "Graphic-pkg.h"
 
+using namespace Move3D;
 using namespace HRICS;
 using std::cout;
 using std::endl;
@@ -42,7 +43,7 @@ void Detours::planAStar()
     confPtr_t q_init = robot_->getInitPos();
     confPtr_t q_goal = robot_->getGoalPos();
 
-    API::Trajectory* traj = planner.computeRobotTrajectory( q_init, q_goal );
+    Move3D::Trajectory* traj = planner.computeRobotTrajectory( q_init, q_goal );
 
     if( traj != NULL )
         cout << "AStar planning OK" << endl;

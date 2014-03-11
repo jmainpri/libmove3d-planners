@@ -30,6 +30,7 @@
 #include <boost/thread/thread.hpp>
 #include <sys/time.h>
 
+using namespace Move3D;
 using namespace std;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
@@ -120,9 +121,9 @@ bool Replanner::init_mlp()
 
 //! Concat the new portion of the trajectory which is going to be used 
 //! The concatanation happens at swith id which has to be computed before
-std::pair<bool,API::Trajectory>  Replanner::concat_to_current_traj(const API::Trajectory& newPortion)
+std::pair<bool,Move3D::Trajectory>  Replanner::concat_to_current_traj(const Move3D::Trajectory& newPortion)
 {
-    pair<bool,API::Trajectory> pair;
+    pair<bool,Move3D::Trajectory> pair;
     pair.first = false;
 
     if ( m_robot==NULL ) {
@@ -130,7 +131,7 @@ std::pair<bool,API::Trajectory>  Replanner::concat_to_current_traj(const API::Tr
         return pair;
     }
 
-    API::Trajectory concatTraj = m_CurrentTraj.extractSubTrajectory( 0, m_s_switch, false );
+    Move3D::Trajectory concatTraj = m_CurrentTraj.extractSubTrajectory( 0, m_s_switch, false );
 
     cout << "concatTraj.getRangeMax() : " << concatTraj.getRangeMax() << endl;
     cout << "newPortion.getNbOfPaths() : " << newPortion.getNbOfPaths() << endl;
@@ -281,7 +282,7 @@ bool SimpleReplanner::init_create_straightline()
     confs[0] = q_init;
     confs[1] = q_goal;
 
-    m_CurrentTraj = API::Trajectory( confs );
+    m_CurrentTraj = Move3D::Trajectory( confs );
     m_CurrentTraj.replaceP3dTraj();
     return true;
 }
@@ -408,15 +409,15 @@ void SimpleReplanner::run()
     cout << "m_s_switch : " << m_s_switch << endl;
     cout << "m_CurrentTraj.getRangeMax() : " << m_CurrentTraj.getRangeMax() << endl;
 
-    API::Trajectory newPortion = m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false);
+    Move3D::Trajectory newPortion = m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false);
     cout << "newPortion.getNbOfPaths() : " << newPortion.getNbOfPaths() << endl;
     cout << "newPortion.getRangeMax() : " << newPortion.getRangeMax() << endl;
 
-    API::CostOptimization optimTrj( newPortion );
+    Move3D::CostOptimization optimTrj( newPortion );
     optimTrj.setStep( m_initial_step/PlanEnv->getDouble(PlanParam::MaxFactor) );
     optimTrj.runDeformation( PlanEnv->getInt(PlanParam::smoothMaxIterations), m_idRun++ );
 
-    std::pair<bool,API::Trajectory> concated_traj= concat_to_current_traj( optimTrj );
+    std::pair<bool,Move3D::Trajectory> concated_traj= concat_to_current_traj( optimTrj );
     m_planningSucceded = concated_traj.first;
 
     if( m_planningSucceded ) {
@@ -466,7 +467,7 @@ void RRTReplanner::run()
     PlanEnv->setBool( PlanParam::planWithTimeLimit, true );
     PlanEnv->setDouble(PlanParam::timeLimitPlanning, m_t_rep-0.3 );
 
-    API::Trajectory traj(m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false) );
+    Move3D::Trajectory traj(m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false) );
 
     double t_init = 0.0;
     double time = 0.0;
@@ -495,11 +496,11 @@ void RRTReplanner::run()
         p3d_smoothing_function( m_robot->getRobotStruct(), path, 100, -1 );
     }
 
-    std::pair<bool,API::Trajectory> concated_traj;
+    std::pair<bool,Move3D::Trajectory> concated_traj;
 
     if( path ) {
         // Cutt the new trajectory in lp average piecese
-        API::Trajectory path_( m_robot, path );
+        Move3D::Trajectory path_( m_robot, path );
         path_.cutTrajInSmallLPSimple( traj.getRangeMax() / m_lp_avera_length );
         concated_traj = concat_to_current_traj( path_ );
         m_planningSucceded = concated_traj.first;
@@ -661,10 +662,10 @@ void HandoverReplanner::run()
     if( path )
     {
         // Cut the new trajectory in lp average piecese
-        API::Trajectory final_traj( m_robot, path );
+        Move3D::Trajectory final_traj( m_robot, path );
         cout << "final_traj.getRangeMax() : " << final_traj.getRangeMax() << endl;
 
-        std::pair<bool,API::Trajectory> concated_traj = concat_to_current_traj( final_traj );
+        std::pair<bool,Move3D::Trajectory> concated_traj = concat_to_current_traj( final_traj );
         global_rePlanningEnv->store_traj_to_draw( final_traj, 0 );
 
         m_planningSucceded = concated_traj.first;
@@ -712,7 +713,7 @@ void StompReplanner::run()
 
     m_idRun++;
     
-    API::Trajectory newPortion = m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false);
+    Move3D::Trajectory newPortion = m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false);
     if( newPortion.getNbOfPaths() != 0 )
     {
         // Set 0.3 seconds to do the concat traj
@@ -724,11 +725,11 @@ void StompReplanner::run()
         traj_optim_runStompNoInit( m_idRun, newPortion );
 
         // Get the new trajectory and store to draw
-        API::Trajectory final_traj = global_optimizer->getBestTraj();
+        Move3D::Trajectory final_traj = global_optimizer->getBestTraj();
         cout << "final_traj.getRangeMax() : " << final_traj.getRangeMax() << endl;
         global_rePlanningEnv->store_traj_to_draw( final_traj, 0 );
 
-        std::pair<bool,API::Trajectory> concated_traj = concat_to_current_traj( final_traj );
+        std::pair<bool,Move3D::Trajectory> concated_traj = concat_to_current_traj( final_traj );
         m_planningSucceded = concated_traj.first;
         if( !m_planningSucceded ) {
             cout << "Could not concatanate trajectory" << endl;
@@ -783,10 +784,10 @@ void AStarReplanner::run()
     timeval tim;
     gettimeofday(&tim, NULL); double t_init=tim.tv_sec+(tim.tv_usec/1000000.0);
 
-    API::Trajectory traj( m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false) );
+    Move3D::Trajectory traj( m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false) );
     m_navigation->reset();
 
-    API::Trajectory* path_ = m_navigation->computeRobotTrajectory( traj.getBegin(), traj.getEnd() );
+    Move3D::Trajectory* path_ = m_navigation->computeRobotTrajectory( traj.getBegin(), traj.getEnd() );
     //  cout << "path length : " << path_->getRangeMax() << endl;
 
     gettimeofday(&tim, NULL); double time=tim.tv_sec+(tim.tv_usec/1000000.0) - t_init;
@@ -805,9 +806,9 @@ void AStarReplanner::run()
     if( path_ )
     {
         // Cut the new trajectory in lp average piecese
-        API::Trajectory final_traj = m_robot->getCurrentTraj();
+        Move3D::Trajectory final_traj = m_robot->getCurrentTraj();
         final_traj.cutTrajInSmallLPSimple( traj.getRangeMax() / m_lp_avera_length );
-        std::pair<bool,API::Trajectory> concated_traj = concat_to_current_traj( final_traj );
+        std::pair<bool,Move3D::Trajectory> concated_traj = concat_to_current_traj( final_traj );
         cout << "path length : " << concated_traj.second.getRangeMax() << endl;
         global_rePlanningEnv->store_traj_to_draw( *path_, 0 );
         delete path_;

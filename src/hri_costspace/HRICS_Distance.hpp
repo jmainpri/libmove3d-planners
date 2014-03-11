@@ -10,8 +10,6 @@
  *
  */
 
-#include "API/planningAPI.hpp"
-
 class p3d_poly;
 
 /**
@@ -23,7 +21,7 @@ class Distance
 {
 public:
     //! Constructor that sets the Human and Robot structures
-    Distance(Robot* rob, std::vector<Robot*> humans);
+    Distance( Move3D::Robot* rob, std::vector<Move3D::Robot*> humans);
     ~Distance();
 
     //! Goes through the Human (p3d_rob) structure
@@ -85,8 +83,8 @@ public:
 
 
 private:
-    Robot* m_Robot;
-    std::vector<Robot*> _Humans;
+    Move3D::Robot* m_Robot;
+    std::vector<Move3D::Robot*> _Humans;
     std::vector< std::vector<int> > _SafetyZonesBodyId;
     std::vector<double> _PenetrationDist;
     std::vector<double> vect_jim;

@@ -17,6 +17,7 @@
 
 #include "Graphic-pkg.h"
 
+using namespace Move3D;
 using namespace HRICS;
 using std::cout;
 using std::endl;
@@ -158,7 +159,7 @@ void Boxes::initialize()
 }
 
 
-FeatureVect Boxes::getFeatures( const Configuration& q )
+FeatureVect Boxes::getFeatures( const Configuration& q, std::vector<int> active_dofs )
 {
     FeatureVect features(Eigen::VectorXd::Zero(centers_.size()));
 

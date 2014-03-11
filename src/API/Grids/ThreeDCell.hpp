@@ -17,7 +17,7 @@
 /**
  @ingroup GRID
  */
-namespace API
+namespace Move3D
 {
 class ThreeDGrid;
 

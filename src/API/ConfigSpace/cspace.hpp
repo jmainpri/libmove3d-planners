@@ -6,6 +6,9 @@
 
 #include <libmove3d/include/P3d-pkg.h>
 
+namespace Move3D
+{
+
 class CSpace
 {
 public:
@@ -104,5 +107,7 @@ public:
 private:
     path_cost_mode m_mode;
 };
+
+}
 
 #endif // CSPACE_INCLUDED_HPP

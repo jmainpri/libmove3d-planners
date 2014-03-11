@@ -6,12 +6,11 @@
 #include "P3d-pkg.h"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 Grid::Grid()
 {
@@ -23,7 +22,7 @@ Grid::Grid(vector<int> size)
 }
 
 Grid::Grid(double pace, vector<double> envSize) :
-API::ThreeDGrid(pace,envSize)
+Move3D::ThreeDGrid(pace,envSize)
 {
   createAllCells();
   cout << "Number total of cells = " << _nbCellsX*_nbCellsY*_nbCellsZ << endl;
@@ -37,7 +36,7 @@ API::ThreeDGrid(pace,envSize)
  * \param integer y
  * \param integer z
  */
-API::ThreeDCell* Grid::createNewCell(unsigned int index, unsigned int x, unsigned int y, unsigned int z )
+Move3D::ThreeDCell* Grid::createNewCell(unsigned int index, unsigned int x, unsigned int y, unsigned int z )
 {
   Vector3i pos;
   

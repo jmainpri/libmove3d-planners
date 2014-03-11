@@ -24,6 +24,8 @@
 #include "Planner-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 Node::Node() :
@@ -255,10 +257,10 @@ Robot* Node::getRobot()
     return m_Robot;
 }
 
-shared_ptr<Configuration> Node::getConfiguration()
-{
-    return m_Configuration;
-}
+//confPtr_t Node::getConfiguration()
+//{
+//    return m_Configuration;
+//}
 
 void Node::activ(bool b)
 {

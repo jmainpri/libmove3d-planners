@@ -1,17 +1,20 @@
 #ifndef P3D_GREEDY_PROTO_HH
 #define P3D_GREEDY_PROTO_HH
 
-#include "API/planningAPI.hpp"
-
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 
 #include "planner/Diffusion/RRT.hpp"
 #include "planner/Diffusion/Variants//Transition-RRT.hpp"
 
+#include "API/Roadmap/graph.hpp"
+
 /**
   * Planner based on trajectory optimization
   */
+namespace Move3D
+{
+
 class GreedyCost {
 
 public:
@@ -24,7 +27,7 @@ public:
 	void createVectorLocalPath();
 
 	int strait(Node& expansionNode,
-			MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
+             confPtr_t directionConfig,
 		     Node* directionNode,
 		     Env::expansionMethod method,
 		     bool toGoal);
@@ -52,7 +55,7 @@ private:
 
 	RRTExpansion* Expansion;
 	RRT* Diffusion;
-	API::CostOptimization* optimTrj;
+    Move3D::CostOptimization* optimTrj;
 
 	int nb_Loops;
 	int nb_LocalPaths;
@@ -66,5 +69,7 @@ private:
 
 extern bool p3d_RunGreedyCost(graph* GraphPt, int (*fct_stop)(void),
 		void (*fct_draw)(void));
+
+}
 
 #endif

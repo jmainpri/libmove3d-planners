@@ -25,9 +25,11 @@
 //#include <PolyVoxCore/SurfaceMesh.h>
 //#include <PolyVoxCore/SimpleVolume.h>
 
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace std;
 using namespace HRICS;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 HRICS::WorkspaceOccupancyGrid* global_workspaceOccupancy = NULL;
 
@@ -39,7 +41,7 @@ double glfwGetTime()
 }
 
 WorkspaceOccupancyCell::WorkspaceOccupancyCell(int i, Eigen::Vector3i coord , Eigen::Vector3d corner, WorkspaceOccupancyGrid* grid) :
-API::ThreeDCell(i,corner,grid), m_visited(false)
+Move3D::ThreeDCell(i,corner,grid), m_visited(false)
 {
     m_center = getCenter();
 }
@@ -54,7 +56,7 @@ WorkspaceOccupancyCell::~WorkspaceOccupancyCell()
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 WorkspaceOccupancyGrid::WorkspaceOccupancyGrid( Robot* human, double pace, vector<double> envSize ) :
-API::ThreeDGrid( pace , envSize ),
+Move3D::ThreeDGrid( pace , envSize ),
 m_drawing(false),
 m_human(human),
 m_id_class_to_draw(0)
@@ -84,7 +86,7 @@ WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
 //! @param integer x position in the grid
 //! @param integer y position in the grid
 //! @param integer z position in the grid
-API::ThreeDCell* WorkspaceOccupancyGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z )
+Move3D::ThreeDCell* WorkspaceOccupancyGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z )
 {
     Eigen::Vector3i pos;
     pos[0] = x; pos[1] = y; pos[2] = z;
@@ -502,8 +504,8 @@ void WorkspaceOccupancyGrid::init_drawing()
     
     for( int i=0; i<int(_cells.size()); i++)
     {
-        dynamic_cast<API::ThreeDCell*>(_cells[i])->getVerticies(verticies);
-        //        cout << "index : " << dynamic_cast<API::ThreeDCell*>(_cells[i])->getIndex() << endl;
+        dynamic_cast<Move3D::ThreeDCell*>(_cells[i])->getVerticies(verticies);
+        //        cout << "index : " << dynamic_cast<Move3D::ThreeDCell*>(_cells[i])->getIndex() << endl;
         
         // 8*3 = 24; 7*3+2 = 23;
         
@@ -578,7 +580,7 @@ void WorkspaceOccupancyGrid::transform_cubes()
     
     for( int i=0; i<int(_cells.size()); i++)
     {
-        dynamic_cast<API::ThreeDCell*>(_cells[i])->getVerticies(verticies);
+        dynamic_cast<Move3D::ThreeDCell*>(_cells[i])->getVerticies(verticies);
         
         // 8*3 = 24; 7*3+2 = 23;
         

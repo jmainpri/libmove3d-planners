@@ -49,6 +49,7 @@
 #include "API/misc_functions.hpp"
 
 using namespace std;
+using namespace Move3D;
 
 namespace stomp_motion_planner
 {

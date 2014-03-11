@@ -31,7 +31,8 @@ namespace HricsParam
             ioc_draw_demonstrations,
             ioc_draw_samples,
             ioc_sample_around_demo,
-            ioc_exit_after_run
+            ioc_exit_after_run,
+            ioc_use_stomp_spetial_cost
         };
 
         enum intParameter

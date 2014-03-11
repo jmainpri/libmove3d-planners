@@ -56,7 +56,7 @@
 #include "stompStatistics.hpp"
 #include "cost_computation.hpp"
 
-class ConfGenerator;
+namespace Move3D { class ConfGenerator; }
 
 //#include <motion_planning_msgs/Constraints.h>
 //#include "constraint_evaluator.hpp"
@@ -73,10 +73,10 @@ namespace stomp_motion_planner
 class StompOptimizer: public Task
 {
 public:
-    StompOptimizer(ChompTrajectory *trajectory,
+    StompOptimizer( Move3D::ChompTrajectory *trajectory,
                    const StompParameters *parameters,
-                   const ChompPlanningGroup *planning_group,
-                   const CollisionSpace *collision_space);
+                   const Move3D::ChompPlanningGroup *planning_group,
+                   const Move3D::CollisionSpace *collision_space);
 
     //  StompOptimizer(StompTrajectory *trajectory, const StompRobotModel *robot_model,
     //      const StompRobotModel::StompPlanningGroup *planning_group, const StompParameters *parameters,
@@ -116,7 +116,7 @@ public:
     /**
       * set the robots for parallel
       */
-    void setRobotPool( const std::vector<Robot*>& robots );
+    void setRobotPool( const std::vector<Move3D::Robot*>& robots );
 
     /**
       * get the cost conputer
@@ -127,13 +127,13 @@ public:
     /**
    * Set the passive Dofs
    */
-    void setPassiveDofs( std::vector<confPtr_t> passive_dofs ) { passive_dofs_ = passive_dofs; }
+    void setPassiveDofs( std::vector<Move3D::confPtr_t> passive_dofs ) { passive_dofs_ = passive_dofs; }
 
     /**
    * Generate the noisy trajectories
    * @param num_time_steps
    */
-    void generateNoisyTrajectory(const API::Trajectory& traj, std::vector< std::vector<confPtr_t> >& noisy_trajectory);
+    void generateNoisyTrajectory(const Move3D::Trajectory& traj, std::vector< std::vector<Move3D::confPtr_t> >& noisy_trajectory);
 
     /**
    * Functions to set the shared pointer
@@ -149,7 +149,7 @@ public:
     /**
    * Get the current configuration collision cost
    */
-    double getCollisionSpaceCost( Configuration& q );
+    double getCollisionSpaceCost( Move3D::Configuration& q );
 
     /**
    * Get the current trajectory cost profile
@@ -173,7 +173,7 @@ public:
     /**
    * Initializes from a new trajectory
    */
-    bool initializeFromNewTrajectory(const API::Trajectory& traj);
+    bool initializeFromNewTrajectory(const Move3D::Trajectory& traj);
 
     /**
    * Initializes the handover generator
@@ -220,12 +220,12 @@ public:
     /**
    * Returns the planning group of the optimizer
    */
-    const ChompPlanningGroup* getPlanningGroup() const { return planning_group_; }
+    const Move3D::ChompPlanningGroup* getPlanningGroup() const { return planning_group_; }
 
     /**
    * Get the robot
    */
-    Robot* getRobot() { return robot_model_; }
+    Move3D::Robot* getRobot() { return robot_model_; }
 
     /**
    * Draw function to be called outside
@@ -240,19 +240,19 @@ public:
     /**
    * Retreive source and target
    */
-    void setSource(confPtr_t q) { source_ = q; }
-    confPtr_t getSource();
-    confPtr_t getTarget();
+    void setSource( Move3D::confPtr_t q ) { source_ = q; }
+    Move3D::confPtr_t getSource();
+    Move3D::confPtr_t getTarget();
 
     /**
    * Retreive best trajectory
    */
-    API::Trajectory getBestTraj() const { return best_traj_; }
+    Move3D::Trajectory getBestTraj() const { return best_traj_; }
 
     /**
       * Get Group traj
       */
-    void setGroupTrajectoryToApiTraj(API::Trajectory& traj);
+    void setGroupTrajectoryToApiTraj(Move3D::Trajectory& traj);
 
     /**
       * Returns cost profiles
@@ -270,15 +270,20 @@ public:
       */
     void setTrajColor( std::vector<double> traj_color ) { traj_color_ = traj_color; }
 
+    /**
+      * Get the vector of all move3d trajs
+      */
+    const std::vector<Move3D::Trajectory>& getAllTrajs() const { return all_move3d_traj_; }
 
 private:
-    Robot* robot_model_;
-    Robot* human_model_;
+    Move3D::Robot* robot_model_;
+    Move3D::Robot* human_model_;
 
     double time_;
 
-    API::Trajectory move3d_traj_;
-    API::Trajectory best_traj_;
+    std::vector<Move3D::Trajectory> all_move3d_traj_;
+    Move3D::Trajectory move3d_traj_;
+    Move3D::Trajectory best_traj_;
 
     int num_joints_;
     int num_vars_free_;
@@ -301,7 +306,7 @@ private:
     bool use_handover_config_list_;
     bool use_handover_auto_;
     bool recompute_handover_cell_list_;
-    ConfGenerator* handoverGenerator_;
+    Move3D::ConfGenerator* handoverGenerator_;
 
     double last_move3d_cost_;
 
@@ -309,17 +314,17 @@ private:
     double time_limit_;
     bool use_iteration_limit_;
 
-    std::vector<confPtr_t> passive_dofs_;
+    std::vector<Move3D::confPtr_t> passive_dofs_;
 
     std::vector<costComputation*> compute_fk_;
     std::vector<double> traj_color_;
 
-    ChompTrajectory *full_trajectory_;
-    const ChompPlanningGroup *planning_group_;
+    Move3D::ChompTrajectory *full_trajectory_;
+    const Move3D::ChompPlanningGroup *planning_group_;
     const StompParameters *stomp_parameters_;
-    const CollisionSpace *collision_space_;
-    ChompTrajectory group_trajectory_;
-    std::vector<ChompCost> joint_costs_;
+    const Move3D::CollisionSpace *collision_space_;
+    Move3D::ChompTrajectory group_trajectory_;
+    std::vector<Move3D::ChompCost> joint_costs_;
 
     MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::CovariantTrajectoryPolicy> policy_;
     std::vector<Eigen::VectorXd> policy_parameters_;
@@ -399,9 +404,9 @@ private:
     std::vector<double> last_human_pos_;
     bool reset_reused_rollouts_;
 
-    confPtr_t source_;
-    confPtr_t target_;
-    confPtr_t target_new_;
+    Move3D::confPtr_t source_;
+    Move3D::confPtr_t target_;
+    Move3D::confPtr_t target_new_;
 
     //  ros::Publisher vis_marker_array_pub_;
     //  ros::Publisher vis_marker_pub_;
@@ -437,7 +442,7 @@ private:
     void updateMomentum();
     void updatePositionFromMomentum();
     void calculatePseudoInverse();
-    void getFrames( int segment, const Eigen::VectorXd& joint_array, Configuration& q );
+    void getFrames( int segment, const Eigen::VectorXd& joint_array, Move3D::Configuration& q );
     bool getConfigObstacleCost(int segment, int dof );
     bool performForwardKinematics();
     void doChompOptimization();
@@ -449,8 +454,8 @@ private:
     //----------------------------------------------------------------------------
     // Jim functions
     //----------------------------------------------------------------------------
-    void setGroupTrajectoryFromVectorConfig(const std::vector<confPtr_t>& traj);
-    void setGroupTrajectoryToVectorConfig(std::vector<confPtr_t>& traj);
+    void setGroupTrajectoryFromVectorConfig(const std::vector<Move3D::confPtr_t>& traj);
+    void setGroupTrajectoryToVectorConfig(std::vector<Move3D::confPtr_t>& traj);
 
     bool replaceEndWithNewConfiguration();
     bool getManipulationHandOver();
@@ -459,7 +464,7 @@ private:
     bool getNewTargetFromHandOver();
     double resampleParameters(std::vector<Eigen::VectorXd>& parameters);
     double computeMove3DCost();
-    confPtr_t getConfigurationOnGroupTraj(int ith);
+    Move3D::confPtr_t getConfigurationOnGroupTraj(int ith);
 
     void saveTrajectoryCostStats();
     void saveCostFromConvergenceTraj();
@@ -470,8 +475,8 @@ private:
 
 }
 
-extern std::map< Robot*, std::vector<Eigen::Vector3d> > global_MultiStomplinesToDraw;
-extern std::map< Robot*, std::vector<double> >          global_MultiStomplinesColors;
+extern std::map< Move3D::Robot*, std::vector<Eigen::Vector3d> > global_MultiStomplinesToDraw;
+extern std::map< Move3D::Robot*, std::vector<double> >          global_MultiStomplinesColors;
 extern MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> global_optimizer;
 
 #endif /* STOMP_OPTIMIZER_H_ */

@@ -14,7 +14,7 @@
 #include "Transition-RRT.hpp"
 
 using namespace std;
-
+using namespace Move3D;
 
 /**
  * ****************************************************

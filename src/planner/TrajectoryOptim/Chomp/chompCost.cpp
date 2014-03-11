@@ -40,7 +40,7 @@
 
 USING_PART_OF_NAMESPACE_EIGEN
 using namespace std;
-using namespace API;
+using namespace Move3D;
 //namespace chomp
 //{
 

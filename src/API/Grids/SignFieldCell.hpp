@@ -18,7 +18,7 @@
 #include <Eigen/Geometry> 
 
 
-class SignFieldCell : public API::ThreeDCell
+class SignFieldCell : public Move3D::ThreeDCell
 {		
 public:
 	Cell();

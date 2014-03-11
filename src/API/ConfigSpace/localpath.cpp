@@ -11,8 +11,6 @@
 #include "planner/cost_space.hpp"
 #include "planner/planEnvironment.hpp"
 
-#include "API/planningAPI.hpp"
-
 #include "P3d-pkg.h"
 #include "Localpath-pkg.h"
 #include "Planner-pkg.h"
@@ -20,12 +18,10 @@
 #include "Graphic-pkg.h"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
-
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
+using namespace Move3D;
 using namespace Eigen;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 LocalPath::LocalPath(confPtr_t B, confPtr_t E) :
     _Robot(B->getRobot()),
@@ -99,9 +95,7 @@ LocalPath::LocalPath(const LocalPath& path) :
     _Robot(path._Robot),
     _Begin(path._Begin),
     _End(path._End),
-    _LocalPath(path._LocalPath ?
-                   path._LocalPath->copy(path._Robot->getRobotStruct(), path._LocalPath) :
-                   NULL),
+    _LocalPath(path._LocalPath ? path._LocalPath->copy(path._Robot->getRobotStruct(), path._LocalPath) : NULL),
     //	_Graph(path._Graph),
     _Valid(path._Valid),
     _Evaluated(path._Evaluated),
@@ -109,8 +103,10 @@ LocalPath::LocalPath(const LocalPath& path) :
     _lastValidConfig(path._lastValidConfig),
     _lastValidEvaluated(false),
     _NbColTest(path._NbColTest),
-    _costEvaluated(path._costEvaluated), _Cost(path._Cost),
-    _ResolEvaluated(path._ResolEvaluated), _Resolution(path._Resolution),
+    _costEvaluated(path._costEvaluated),
+    _Cost(path._Cost),
+    _ResolEvaluated(path._ResolEvaluated),
+    _Resolution(path._Resolution),
     _Type(path._Type)
 {
 }

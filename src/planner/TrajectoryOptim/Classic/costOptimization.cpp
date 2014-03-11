@@ -33,7 +33,7 @@ extern void* GroundCostObj;
 using namespace std;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
-using namespace API;
+using namespace Move3D;
 
 CostOptimization::CostOptimization() :
     m_cheat(false),

@@ -26,23 +26,25 @@
 #include <boost/thread/thread.hpp>
 #include <sys/time.h>
 
+using namespace Move3D;
 using namespace std;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 //! Soft motion trajectory for planner
 SM_TRAJ ManipPlannerLastTraj;
 
 //! Replanning simulator pointer
-ReplanningSimulator* global_rePlanningEnv=NULL;
+ReplanningSimulator* Move3D::global_rePlanningEnv=NULL;
 
 //! Replanning graph
-Graph* global_rePlanningGraph=NULL;
+Graph* Move3D::global_rePlanningGraph=NULL;
 
 // Replanning drawing function
 void replan_current_draw()
 {
-    if( global_rePlanningEnv )
-        global_rePlanningEnv->draw();
+    if( Move3D::global_rePlanningEnv )
+        Move3D::global_rePlanningEnv->draw();
 }
 
 //-----------------------------------------------------------------------------------
@@ -158,7 +160,7 @@ bool SoftmotionReplanner::generate_new_trajectory(const vector<p3d_traj*>& trajs
 
         if( lin_traj )
         {
-            m_CurrentTraj = API::Trajectory( m_robot, lin_traj );
+            m_CurrentTraj = Move3D::Trajectory( m_robot, lin_traj );
         }
         else
         {
@@ -219,7 +221,7 @@ void SoftmotionReplanner::run()
         cout << "Manipulation : softmotion not implemented" << endl;
         break;
     }
-
+#include "API/Search/AStar/AStar.hpp"
     m_planningSucceded = ( status == MANIPULATION_TASK_OK );
     m_planningSucceded = ( generate_new_trajectory(trajs) );
     m_isPlanning = false;
@@ -240,7 +242,7 @@ ReplanningSimulator::ReplanningSimulator()
     m_robot=NULL;
     m_rosim=NULL;
     m_human=NULL;
-
+#include "API/Search/AStar/AStar.hpp"
     //m_manipPlanner=NULL;
 
     global_rePlanningEnv = this;
@@ -287,7 +289,7 @@ bool ReplanningSimulator::init_simulator()
     }
 
     // Create one line traj from current traj for robot simul
-    m_ExecuteTraj = API::Trajectory( m_rosim );
+    m_ExecuteTraj = Move3D::Trajectory( m_rosim );
     m_ExecuteTraj.clear();
 
     // Set the simulator as initialized and put set the drawing variables
@@ -441,7 +443,7 @@ void ReplanningSimulator::store_human_pos()
 }
 
 //! Stores the trajectory in a vector
-void ReplanningSimulator::store_traj_to_vect(API::Trajectory& traj, double step)
+void ReplanningSimulator::store_traj_to_vect(Move3D::Trajectory& traj, double step)
 {
     if( !m_init )
         return;
@@ -482,7 +484,7 @@ void ReplanningSimulator::store_traj_to_vect(API::Trajectory& traj, double step)
 }
 
 //! Stores the trajectory to a current trajectory
-void ReplanningSimulator::store_traj_to_draw(const API::Trajectory& traj, double step)
+void ReplanningSimulator::store_traj_to_draw(const Move3D::Trajectory& traj, double step)
 {
     if( !m_init )
         return;
@@ -556,7 +558,7 @@ void ReplanningSimulator::store_graph_to_draw(const Graph& graph)
 }
 
 //! Stores the trajectory to a current trajectory
-void ReplanningSimulator::store_exploration(const API::Trajectory& traj, double lPrev, double lNext, shared_ptr<
+void ReplanningSimulator::store_exploration(const Move3D::Trajectory& traj, double lPrev, double lNext, shared_ptr<
                                             Configuration> qNew)
 {
     if( !m_init )
@@ -601,7 +603,7 @@ void ReplanningSimulator::store_exploration(const API::Trajectory& traj, double 
 }
 
 //! Set current traj as executed
-bool ReplanningSimulator::set_executed_traj_to_current(API::Trajectory& traj)
+bool ReplanningSimulator::set_executed_traj_to_current(Move3D::Trajectory& traj)
 {
     m_ExecuteTraj.clear();
 
@@ -807,7 +809,7 @@ double ReplanningSimulator::time_since_last_call(bool& is_first_call, double& t_
 }
 
 bool ReplanningSimulator::time_switch_and_id(double s, double s_rep, int& id_switch, 
-                                             API::Trajectory& traj, double &s_switch)
+                                             Move3D::Trajectory& traj, double &s_switch)
 {
     double p = 0.0;
 
@@ -870,7 +872,7 @@ int ReplanningSimulator::execute_softmotion_simulation( int (*fct)(p3d_rob* robo
     // Set global variables
     confPtr_t qSwitch =   m_replanner->getQSwitch();
     confPtr_t qGoal =     m_replanner->getQGoal();
-    API::Trajectory& CurrentTraj = m_replanner->getCurrentTraj();
+    Move3D::Trajectory& CurrentTraj = m_replanner->getCurrentTraj();
 
     m_lastLine.clear();
     m_currentLine.clear();
@@ -1070,7 +1072,7 @@ int ReplanningSimulator::execute_simple_simulation( int (*fct)(p3d_rob* robot, p
 
     // Retreive Current traj & q_switch from replanner
     confPtr_t q_switch;
-    API::Trajectory& CurrentTraj = m_replanner->getCurrentTraj();
+    Move3D::Trajectory& CurrentTraj = m_replanner->getCurrentTraj();
     initial_step = CurrentTraj.getRangeMax()/1;
     m_q_end = CurrentTraj.getEnd();
 

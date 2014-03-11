@@ -38,12 +38,14 @@
 #include <iostream>
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 //namespace chomp
 //{
 
-ChompTrajectory::ChompTrajectory(const API::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_)
+ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_)
 //planning_group_(planning_group),
 //discretization_(source_traj.discretization_)
 {

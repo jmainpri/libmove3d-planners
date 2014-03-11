@@ -1,7 +1,8 @@
 #ifndef P3D_HRICOST_HPP
 #define P3D_HRICOST_HPP
 
-#include "API/planningAPI.hpp"
+#include "API/Roadmap/node.hpp"
+#include <libmove3d/include/P3d-pkg.h>
 
 struct p3d_poly;
 struct obj;
@@ -11,6 +12,7 @@ struct obj;
  * */
 namespace HRICS
 {
+
 typedef struct confCost {
     double* q;
     double cost;
@@ -116,7 +118,7 @@ public:
     Hri();
     Hri(double zone_size);
 
-    void setNodes(Node* fromComp,Node* toComp);
+    void setNodes( Move3D::Node* fromComp, Move3D::Node* toComp );
 
     void parseEnvForZone();
     void parseEnvHoleHuman();

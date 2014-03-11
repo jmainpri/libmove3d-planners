@@ -11,12 +11,11 @@
 //HRICS::MainPlanner* HRICS_MOPL = NULL;
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
+using namespace Move3D;
 using namespace Eigen;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 Cell::Cell() :
         _Open(false),
@@ -27,7 +26,7 @@ Cell::Cell() :
 }
 
 Cell::Cell(int i, Vector3i coord , Vector3d corner, Grid* grid) :
-        API::ThreeDCell(i,corner,grid),
+        Move3D::ThreeDCell(i,corner,grid),
         _Open(false),
         _Closed(false),
         _CostIsComputed(false)

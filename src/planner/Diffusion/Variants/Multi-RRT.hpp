@@ -15,45 +15,50 @@
 /**
  @ingroup Diffusion
  */
+namespace Move3D
+{
+
 class MultiRRT : public RRT {
-	
+
 public:
-	
+
     MultiRRT(Robot* R, Graph* G);
     ~MultiRRT();
-	
-	unsigned init();
-	
-	/**
-	 * Adds a Seed to the algorithm
-	 */
-	bool addSeed(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q);
-	
-  /**
+
+    unsigned init();
+
+    /**
+     * Adds a Seed to the algorithm
+     */
+    bool addSeed(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q);
+
+    /**
    * Get random compco for expansion
    */
-	Node* getRandomCompcoForExpansion(Node* fromNode);
-	
-	/**
-	 * Returns the least expanded component
-	 */
-	Node* getInitCompco();
-	
-	/**
-	 * Returns a Goal Compco
-	 */
-	Node* getGoalCompco();
+    Node* getRandomCompcoForExpansion(Node* fromNode);
 
-	/**
-	 * Main function of multi RRT
-	 */ 
-	unsigned int run();
-	
+    /**
+     * Returns the least expanded component
+     */
+    Node* getInitCompco();
+
+    /**
+     * Returns a Goal Compco
+     */
+    Node* getGoalCompco();
+
+    /**
+     * Main function of multi RRT
+     */
+    unsigned int run();
+
 protected:
-	std::vector<Node*> m_Roots;
-	
-	Node* m_initNode;
-	Node* m_goalNode;
+    std::vector<Node*> m_Roots;
+
+    Node* m_initNode;
+    Node* m_goalNode;
 };
+
+}
 
 #endif /* MULTI_RRT_HPP_ */

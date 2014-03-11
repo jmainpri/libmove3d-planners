@@ -27,7 +27,7 @@ public:
 
 protected:
 
-    API::TwoDGrid grid_;
+    Move3D::TwoDGrid grid_;
 
     confPtr_t m_qi;
     confPtr_t m_qf;

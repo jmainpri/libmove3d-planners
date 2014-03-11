@@ -7,6 +7,8 @@
 
 extern void* GroundCostObj;
 
+using namespace Move3D;
+
 using std::cout;
 using std::cerr;
 using std::endl;

@@ -14,15 +14,14 @@
 #include "gridsAPI.hpp"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 NaturalGrid::NaturalGrid() :
-	API::ThreeDGrid(),
+	Move3D::ThreeDGrid(),
 	m_firstDisplay(true)
 {
 	//setGridOrigin();	
@@ -35,7 +34,7 @@ NaturalGrid::NaturalGrid(vector<int> size) :
 }
 
 NaturalGrid::NaturalGrid(double pace, vector<double> envSize, Natural* costSpace) :
-	API::ThreeDGrid(pace,envSize),
+	Move3D::ThreeDGrid(pace,envSize),
 	m_NaturalCostSpace(costSpace),
 	m_firstDisplay(true)
 {
@@ -46,7 +45,7 @@ NaturalGrid::NaturalGrid(double pace, vector<double> envSize, Natural* costSpace
 }
 
 NaturalGrid::NaturalGrid(const NaturalGrid& grid) :
-	API::ThreeDGrid(grid),
+	Move3D::ThreeDGrid(grid),
 	m_NaturalCostSpace(grid.m_NaturalCostSpace),
 	m_firstDisplay(true)
 {
@@ -81,7 +80,7 @@ void NaturalGrid::setGridOrigin()
  * \param integer y
  * \param integer z
  */
-API::ThreeDCell* NaturalGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z )
+Move3D::ThreeDCell* NaturalGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z )
 {
     Vector3i pos;
 	

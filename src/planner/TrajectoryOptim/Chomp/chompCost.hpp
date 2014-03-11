@@ -45,8 +45,9 @@
 
 #include <vector>
 
-//namespace API
-//{
+namespace Move3D
+{
+
   /**
    * \brief Represents the smoothness cost for CHOMP, for a single joint
    */
@@ -106,7 +107,7 @@
     return joint_trajectory.dot( quad_cost_full_ * joint_trajectory );
   }
   
-//} // namespace chomp
+} // namespace Move3D
 
 #endif /* CHOMP_COST_H_ */
 

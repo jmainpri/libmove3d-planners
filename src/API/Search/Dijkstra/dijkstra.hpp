@@ -30,7 +30,7 @@ struct edge_dijkstra {
 };
 
 typedef std::map<vertex_t, std::list<edge_dijkstra> > adjacency_map_t;
-typedef std::map<int,Node*> node_map_t;
+typedef std::map<int,Move3D::Node*> node_map_t;
 
 /**
   * @ingroup SEARCH
@@ -56,7 +56,7 @@ class Dijkstra {
 
 public :
 	Dijkstra();
-	Dijkstra(Graph* ptrG);
+    Dijkstra(Move3D::Graph* ptrG);
 	~Dijkstra();
 
 	/**
@@ -64,7 +64,7 @@ public :
 	 */
 	void creatStructures();
 
-	void creatStructuresFromGrid(API::ThreeDGrid* grid);
+	void creatStructuresFromGrid(Move3D::ThreeDGrid* grid);
 
 	void computePaths(vertex_t source,
 	                          adjacency_map_t& adjacency_map,
@@ -82,16 +82,16 @@ public :
 	/**
 	 * Extract Trajectory beetween two Configurations
 	 */
-	API::Trajectory* extractTrajectory(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> init, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> goal);
+    Move3D::Trajectory* extractTrajectory( Move3D::confPtr_t init, Move3D::confPtr_t goal );
 
 	/**
 	 * Extract Trajectory beetween two Nodes
 	 */
-	API::Trajectory* extractTrajectory(vertex_t source,vertex_t target);
+    Move3D::Trajectory* extractTrajectory( vertex_t source, vertex_t target );
 
 
 private :
-	Graph* 				m_graph;
+    Move3D::Graph* 		m_graph;
 	adjacency_map_t 	m_graph_adjacency_map;
 	node_map_t 			m_graph_node_map;
 };

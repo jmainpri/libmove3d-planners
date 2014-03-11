@@ -19,12 +19,15 @@
 typedef struct obj;
 #endif
 
-class CollisionSpaceCell : public API::ThreeDCell
+namespace Move3D
+{
+
+class CollisionSpaceCell : public Move3D::ThreeDCell
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    CollisionSpaceCell(int i, const Eigen::Vector3d& corner, API::ThreeDGrid* grid);
+    CollisionSpaceCell(int i, const Eigen::Vector3d& corner, Move3D::ThreeDGrid* grid);
 
     //setters and getters
     inline bool isValid(void){return m_Valid;}
@@ -56,7 +59,7 @@ private:
     Eigen::Vector3i  m_Location;               /**< Place in the grid */
 };
 
-class CollisionSpace : public API::ThreeDGrid
+class CollisionSpace : public Move3D::ThreeDGrid
 {
 public:
     //constructors and destructors
@@ -115,7 +118,7 @@ public:
     void draw();
 
 protected:
-    API::ThreeDCell* createNewCell(unsigned int index,
+    Move3D::ThreeDCell* createNewCell(unsigned int index,
                                    unsigned  int x,unsigned  int y,unsigned  int z );
 
 private:
@@ -152,5 +155,7 @@ private:
 };
 
 extern CollisionSpace* global_collisionSpace;
+
+}
 
 #endif

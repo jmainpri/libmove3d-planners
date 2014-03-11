@@ -10,6 +10,7 @@
 
 using namespace std;
 using namespace HRICS;
+using namespace Move3D;
 
 //Hri hri_zones;
 

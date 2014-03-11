@@ -2,6 +2,9 @@
 
 #include "cost_space.hpp"
 
+using namespace stomp_motion_planner;
+using namespace Move3D;
+
 using std::cout;
 using std::endl;
 
@@ -322,6 +325,7 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
 
 bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, int iteration )
 {
+    cout << __PRETTY_FUNCTION__ << endl;
     iteration_ = iteration;
 
     // copy the parameters into group_trajectory_:

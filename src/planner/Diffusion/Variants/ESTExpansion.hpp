@@ -16,6 +16,8 @@
   * Functions to expand a tree in the CSpace
   * Collision Checking, Random sampling and Biasing
   */
+namespace Move3D {
+
 class ESTExpansion: public RRTExpansion
 {
 
@@ -23,9 +25,7 @@ public:
 
     ESTExpansion();
     ESTExpansion(Graph* prtGraph);
-
     ~ESTExpansion();
-
 
     /**
      * EST Special case
@@ -35,21 +35,19 @@ public:
     /**
      * EST Special case
      */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getExpansionDirection(Node* expansionNode,Node* toComp);
+    confPtr_t getExpansionDirection( Node* expansionNode, Node* toComp );
 
     /**
      * EST Special case
      */
-    Node* expandProcessEST( Node* expansionNode,
-                            MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
-                            int& nbOfNodesAdded);
+    Node* expandProcessEST( Node* expansionNode, confPtr_t, int& nbOfNodesAdded );
 
     /**
      * EST
      */
     void printAllNodes(std::vector<Node*>& nodes);
-
-
 };
+
+}
 
 #endif

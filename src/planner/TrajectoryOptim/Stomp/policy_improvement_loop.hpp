@@ -70,7 +70,7 @@ public:
      */
     void testSampler();
     bool generateSingleNoisyTrajectory();
-    void getRollouts(std::vector<std::vector<confPtr_t> >& traj);
+    void getRollouts(std::vector<std::vector<Move3D::confPtr_t> >& traj);
   
     // Reset all extra rollouts
     void resetReusedRollouts();
@@ -138,7 +138,7 @@ private:
   
     void addStraightLineRollout(std::vector<std::vector<Eigen::VectorXd> >& extra_rollout, std::vector<Eigen::VectorXd>& extra_rollout_cost);
     void parametersToVector(std::vector<Eigen::VectorXd>& rollout);
-    void getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<confPtr_t>& traj);
+    void getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<Move3D::confPtr_t>& traj);
     void addSingleRolloutsToDraw(const std::vector<Eigen::VectorXd>& rollout, int color);
     void addRolloutsToDraw(bool add_reused);
 

@@ -30,7 +30,7 @@
 using namespace std;
 USING_PART_OF_NAMESPACE_EIGEN
 
-using namespace API;
+using namespace Move3D;
 
 ChompOptimizer::ChompOptimizer(ChompTrajectory *trajectory, 
                                const ChompParameters *parameters,
@@ -723,7 +723,7 @@ void ChompOptimizer::performForwardKinematics()
 
     if(is_collision_free_) //2nd turn of verification : test of paths between configurations
     {
-        API::Trajectory T(robot_model_);
+        Move3D::Trajectory T(robot_model_);
 
 
         // for each point in the trajectory
@@ -869,7 +869,7 @@ void ChompOptimizer::animateEndeffector()
 {
     ENV.setBool(Env::drawTraj,true);
 
-    API::Trajectory T(robot_model_);
+    Move3D::Trajectory T(robot_model_);
 
     // calculate the forward kinematics for the fixed states only in the first iteration:
     int start = free_vars_start_;

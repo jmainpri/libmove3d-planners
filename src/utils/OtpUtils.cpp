@@ -8,8 +8,10 @@
 #include "planEnvironment.hpp"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 int ConfigHR::index = 0;
 

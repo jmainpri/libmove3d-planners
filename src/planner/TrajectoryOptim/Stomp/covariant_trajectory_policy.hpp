@@ -61,7 +61,7 @@ public:
                                                const double movement_duration,
                                                const double cost_ridge_factor,
                                                const std::vector<double>& derivative_costs,
-                                               const ChompPlanningGroup* planning_group = NULL);
+                                               const Move3D::ChompPlanningGroup* planning_group = NULL);
   
     bool setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal);
     bool getParametersAll(std::vector<Eigen::VectorXd>& parameters);
@@ -195,7 +195,7 @@ private:
 
     std::vector<Eigen::MatrixXd> differentiation_matrices_;
 
-    const ChompPlanningGroup* planning_group_;
+    const Move3D::ChompPlanningGroup* planning_group_;
 
     void createDifferentiationMatrices();
     bool readParameters();

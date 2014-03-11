@@ -26,13 +26,10 @@
 #include <ctime>
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
+using namespace Move3D;
 
-using namespace API;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 std::vector<Trajectory> global_trajToDraw;
 
@@ -77,39 +74,35 @@ Trajectory::Trajectory(const Trajectory& T) :
     m_Target(T.m_Target)
 {
 
-    for (uint i = 0; i < T.m_Courbe.size(); i++)
+    for (size_t i = 0; i<T.m_Courbe.size(); i++)
     {
-        m_Courbe.push_back(new LocalPath(*(T.m_Courbe.at(i))));
+        m_Courbe.push_back(new LocalPath(*(T.m_Courbe[i])));
     }
     //	cout << "Copy Trajectory" << endl;
 }
 
 Trajectory& Trajectory::operator=(const Trajectory& T)
 {
-    if (m_Courbe.size() > 0)
+    if ( !m_Courbe.empty() ) // Delete courbe if not empty
     {
-        for (uint i = 0; i <m_Courbe.size(); i++)
+        for ( size_t i=0; i <m_Courbe.size(); i++ )
         {
             delete m_Courbe[i];
         }
+        m_Courbe.clear();
     }
 
-    m_Courbe.clear();
+    m_Robot = T.m_Robot;
+
+    for ( size_t i=0; i<T.m_Courbe.size(); i++)
+    {
+        m_Courbe.push_back( new LocalPath(*(T.m_Courbe[i])) );
+    }
 
     // TODO m_name of m_file and robot
     m_name = T.m_name;
     m_id =  std::time(0);
     m_file = T.m_file;
-
-    m_Robot = T.m_Robot;
-
-    for (uint i = 0; i <T.m_Courbe.size(); i++)
-    {
-        m_Courbe.push_back(new LocalPath(*(T.m_Courbe[i])));
-    }
-
-    //	cout << "Copy in operator= Trajtecory" << endl;
-
     m_Source = T.m_Source;
     m_Target = T.m_Target;
     m_use_continuous_color = T.m_use_continuous_color;
@@ -260,7 +253,8 @@ Trajectory::~Trajectory()
 bool Trajectory::replaceP3dTraj() const
 {
     //cout << "Robot name : " << m_Robot->getRobotStruct()->name << endl;
-    return replaceP3dTraj( p3d_get_robot_by_name( m_Robot->getName().c_str() )->tcur );
+    // return replaceP3dTraj( p3d_get_robot_by_name( m_Robot->getName().c_str() )->tcur );
+    return replaceP3dTraj(  m_Robot->getRobotStruct()->tcur );
 }
 
 p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt) const
@@ -433,9 +427,7 @@ confPtr_t Trajectory::configAtParam(double param, unsigned int* id_localpath) co
         {
             if ( param < prevSoFar )
             {
-                cout
-                        << "Error: getting Configuration at parameter in trajectory"
-                        << endl;
+                cout << "Error: getting Configuration at parameter in trajectory" << endl;
             }
 
             if( id_localpath != NULL ) {
@@ -660,7 +652,7 @@ double Trajectory::computeSubPortionCost(const vector<LocalPath*>& portion) cons
     return sumCost;
 }
 
-double Trajectory::ReComputeSubPortionCost(vector<LocalPath*>& portion, int& nb_cost_tests)
+double Trajectory::reComputeSubPortionCost(vector<LocalPath*>& portion, int& nb_cost_tests)
 {
     double sumCost(0.0);
 
@@ -682,7 +674,7 @@ double Trajectory::ReComputeSubPortionCost(vector<LocalPath*>& portion, int& nb_
     return sumCost;
 }
 
-double Trajectory::computeSubPortionIntergralCost(vector<LocalPath*>& portion)
+double Trajectory::computeSubPortionIntergralCost(const vector<LocalPath*>& portion)
 {
     double cost(0.0);
     double step = p3d_get_env_dmax()*PlanEnv->getDouble(PlanParam::costResolution);
@@ -710,6 +702,9 @@ double Trajectory::computeSubPortionIntergralCost(vector<LocalPath*>& portion)
         cost += delta_cost;
         prevCost = currentCost;
     }
+
+    cout << "cost : " << cost << endl;
+
     return cost;
 }
 
@@ -816,7 +811,7 @@ double Trajectory::cost() const
     double cost(0.0);
     cost = computeSubPortionCost(m_Courbe);
     // cost =  computeSubPortionIntergralCost(m_Courbe);
-    // cost = ReComputeSubPortionCost(m_Courbe,nb_cost_tests);
+    // cost = reComputeSubPortionCost(m_Courbe,nb_cost_tests);
     return cost;
 }
 
@@ -828,7 +823,7 @@ double Trajectory::costRecomputed()
     }
 
     int nb_test=0;
-    return ReComputeSubPortionCost(m_Courbe,nb_test);
+    return reComputeSubPortionCost(m_Courbe,nb_test);
 }
 
 double Trajectory::costNoRecompute()
@@ -856,18 +851,18 @@ double Trajectory::costStatistics(TrajectoryStatistics& stat)
         stat.sum = costNPoints(100);
 
         global_costSpace->setDeltaStepMethod( cs_max );
-        ReComputeSubPortionCost( m_Courbe, nb_cost_tests );
+        reComputeSubPortionCost( m_Courbe, nb_cost_tests );
         stat.max = computeSubPortionMaxCost( m_Courbe );
         total_cost_tests += nb_cost_tests;
 
         global_costSpace->setDeltaStepMethod( cs_average );
-        stat.average = ReComputeSubPortionCost( m_Courbe, nb_cost_tests );
+        stat.average = reComputeSubPortionCost( m_Courbe, nb_cost_tests );
 
         global_costSpace->setDeltaStepMethod( cs_integral );
-        stat.integral = ReComputeSubPortionCost( m_Courbe, nb_cost_tests );
+        stat.integral = reComputeSubPortionCost( m_Courbe, nb_cost_tests );
 
         global_costSpace->setDeltaStepMethod( cs_mechanical_work );
-        stat.mecha_work = ReComputeSubPortionCost( m_Courbe, nb_cost_tests );
+        stat.mecha_work = reComputeSubPortionCost( m_Courbe, nb_cost_tests );
 
         global_costSpace->setDeltaStepMethod( method );
 
@@ -897,7 +892,7 @@ double Trajectory::costDeltaAlongTraj()
         cout << "Trajectory not the same" << endl;
     }
     int nb_cost_tests=0;
-    cout << "Sum of LP cost (Recomputed) = "  << ReComputeSubPortionCost(tmp.m_Courbe, nb_cost_tests) << endl;
+    cout << "Sum of LP cost (Recomputed) = "  << reComputeSubPortionCost(tmp.m_Courbe, nb_cost_tests) << endl;
     double cost = computeSubPortionIntergralCost(m_Courbe);
     cout << "Intergral along traj = " << cost << endl;
     return cost;
@@ -1488,7 +1483,7 @@ double ZmaxEnv;
 
 extern void* GroundCostObj;
 
-void Trajectory::draw(int nbKeyFrame)
+void Trajectory::draw( int nbKeyFrame )
 {
     double du = getRangeMax() / (nbKeyFrame - 1);
     if( du == 0.0 )
@@ -1609,7 +1604,7 @@ bool Trajectory::push_back(shared_ptr<LocalPath> path)
     return true;
 }
 
-void Trajectory::push_back(shared_ptr<Configuration> q)
+void Trajectory::push_back(confPtr_t q)
 {
     if( m_Courbe.empty() )
     {
@@ -2294,7 +2289,7 @@ void Trajectory::printAllLocalpathCost()
     }
 }
 
-void Trajectory::print()
+void Trajectory::print() const
 {
     cout << "-------------- Trajectory --------------" << endl;
     cout << " Number of LP " << m_Courbe.size() << endl;
@@ -2309,16 +2304,9 @@ void draw_traj_debug()
 {
     if( ENV.getBool(Env::debugCostOptim) || ENV.getBool(Env::drawTrajVector) )
     {
-        //std::cout << "Should be drawing traj" << std::endl;
-        for(unsigned i=0;i<global_trajToDraw.size();i++)
+        for( size_t i=0; i<global_trajToDraw.size(); i++ )
         {
-            global_trajToDraw.at(i).draw(500);
-            //std::cout << "Drawing traj" << std::endl;
+            global_trajToDraw[i].draw( 500 );
         }
-        //    p3d_rob *robotPt = (p3d_rob *) p3d_get_desc_curid(P3D_ROBOT);
-        //    if (!robotPt->tcur)
-        //    {
-        //      global_trajToDraw.clear();
-        //    }
     }
 }

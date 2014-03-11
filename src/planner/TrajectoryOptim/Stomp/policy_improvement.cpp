@@ -50,6 +50,7 @@
 #include <algorithm>
 #include <iostream>
 
+#include "API/ConfigSpace/configuration.hpp"
 #include "API/Trajectory/trajectory.hpp"
 #include "planner/planEnvironment.hpp"
 #include "Graphic-pkg.h"
@@ -60,13 +61,13 @@
 std::vector<double> global_noiseTrajectory1;
 std::vector<double> global_noiseTrajectory2;
 
-MOVE3D_USING_BOOST_NAMESPACE
-
-
-USING_PART_OF_NAMESPACE_EIGEN
-
 using std::cout;
 using std::endl;
+using namespace Move3D;
+
+MOVE3D_USING_BOOST_NAMESPACE
+
+USING_PART_OF_NAMESPACE_EIGEN
 
 namespace stomp_motion_planner
 {
@@ -260,6 +261,7 @@ namespace stomp_motion_planner
             rollout.total_costs_.push_back(VectorXd::Zero(num_time_steps_));
             rollout.cumulative_costs_.push_back(VectorXd::Zero(num_time_steps_));
             rollout.probabilities_.push_back(VectorXd::Zero(num_time_steps_));
+            rollout.nominal_parameters_.push_back(VectorXd::Zero(num_time_steps_));
         }
         rollout.state_costs_ = VectorXd::Zero(num_time_steps_);
         rollout.out_of_bounds_ = false;
@@ -352,7 +354,7 @@ namespace stomp_motion_planner
         //    // draw traj
         //    const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
         //    Robot* robot = optimizer->getPlanningGroup()->robot_;
-        //    API::Trajectory traj(robot);
+        //    Move3D::Trajectory traj(robot);
         //
         //    for ( int j=0; j<num_time_steps_; ++j)
         //    {
@@ -453,6 +455,39 @@ namespace stomp_motion_planner
         for (int d=0; d<num_dimensions_; ++d) {
             rollout.noise_[d] = rollout.parameters_[d] - parameters_[d];
         }
+    }
+
+    bool PolicyImprovement::simpleJointLimits( Rollout& traj ) const
+    {
+        for( int j=0;j<num_dimensions_;j++)
+        {
+            double coeff = 1.0;
+
+            double j_max = static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->chomp_joints_[j].joint_limit_max_;
+            double j_min = static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->chomp_joints_[j].joint_limit_min_;
+
+            for( int i=0;i<num_time_steps_;i++)
+            {
+                int k=0;
+                while( traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max )
+                {
+                    coeff *= 0.90; // 90 percent
+                    traj.noise_[j] *= coeff;
+                    traj.parameters_[j] = traj.nominal_parameters_[j] +  traj.noise_[j];
+                    if( k++ > 100 ){
+                        break;
+                    }
+                }
+
+                // cout << "Joint limit coefficient : " << coeff << endl;
+            }
+
+            // Set the start and end values constant
+            traj.parameters_[j].start(1) = traj.parameters_[j].start(1);
+            traj.parameters_[j].end(1) = traj.parameters_[j].end(1);
+        }
+
+        return true;
     }
 
     bool PolicyImprovement::generateRollouts(const std::vector<double>& noise_stddev)
@@ -558,6 +593,7 @@ namespace stomp_motion_planner
 
                 rollouts_[r].noise_[d] = noise_stddev[d]*tmp_noise_[d];
                 rollouts_[r].parameters_[d] = parameters_[d] + rollouts_[r].noise_[d];
+                rollouts_[r].nominal_parameters_[d] = parameters_[d];
 
                 bool add_straight_lines = false;
 
@@ -627,6 +663,12 @@ namespace stomp_motion_planner
                 //cout << "rollouts_[" << r << "].noise_[" << d << "] = "<< rollouts_[r].noise_[d].transpose() << endl;
                 //cout << "rollouts_[" << r << "].parameters_[" << d << "] = "<< rollouts_[r].parameters_[d].transpose() << endl;
             }
+        }
+
+        for (int r=0; r<num_rollouts_gen_; ++r)
+        {
+            // WARNING ADDED FOR IOC
+            simpleJointLimits( rollouts_[r] );
         }
         return true;
     }
@@ -801,7 +843,7 @@ namespace stomp_motion_planner
         const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
 
         // New trajectory and parameters trajectory
-        API::Trajectory traj( static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->robot_);
+        Move3D::Trajectory traj( static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->robot_);
         Eigen::MatrixXd parameters(num_dimensions_,num_time_steps_);
 
         for ( int d=0; d<num_dimensions_; ++d) {

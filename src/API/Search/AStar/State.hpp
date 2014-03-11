@@ -12,7 +12,7 @@
 
 #include <vector>
 
-namespace API
+namespace Move3D
 {
 /**
    * @ingroup C++ Planning API

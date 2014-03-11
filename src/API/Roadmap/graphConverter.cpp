@@ -15,6 +15,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace Move3D;
 
 const bool graph_debug_import_export = false;
 

@@ -11,12 +11,11 @@
 #include "move3d-headless.h"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 HriSpaceCost::HriSpaceCost(p3d_rob* rob,int jnt) :
         _JntId(jnt),

@@ -12,6 +12,8 @@
 
 #include "Graphic-pkg.h"
 
+using namespace Move3D;
+
 using std::cout;
 using std::endl;
 

@@ -67,6 +67,7 @@ namespace stomp_motion_planner
     std::vector<Eigen::VectorXd> total_costs_;                      /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> cumulative_costs_;                 /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> probabilities_;                    /**< [num_dimensions] num_time_steps */
+    std::vector<Eigen::VectorXd> nominal_parameters_;                    /**< [num_dimensions] num_time_steps */
     
     bool out_of_bounds_; /**< Wether the rollout is violating dof limits */
     
@@ -228,6 +229,7 @@ namespace stomp_motion_planner
     
     void addStraightLines( std::vector<int> points, Rollout& rollouts);
     bool generateRollouts(const std::vector<double>& noise_variance);
+    bool simpleJointLimits( Rollout& traj ) const;
   };
   
 }

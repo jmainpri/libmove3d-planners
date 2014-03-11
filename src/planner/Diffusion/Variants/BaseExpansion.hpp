@@ -11,6 +11,8 @@
 
 #include <libmove3d/p3d/env.hpp>
 
+namespace Move3D {
+
 #ifndef LOCALPATH_HPP
 class LocalPath;
 #endif
@@ -195,5 +197,7 @@ protected:
 	Node* m_fromComp;
 	Node* m_toComp;
 };
+
+}
 
 #endif

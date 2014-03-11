@@ -9,6 +9,7 @@
 #include "API/ConfigSpace/localpath.hpp"
 #include "API/Roadmap/graph.hpp"
 
+namespace Move3D {
 
 /*!
  * Delta step cost method enum
@@ -110,5 +111,7 @@ double computeCollisionSpaceCost(Configuration& conf);
 double computeLocalpathKinematicCost(rob* rob, localpath* LP);
 
 extern CostSpace* global_costSpace;
+
+}
 
 #endif

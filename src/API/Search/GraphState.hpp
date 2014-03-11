@@ -15,7 +15,7 @@
    * @brief Graph state interface for the AStar class
    */
 
-class GraphState : public API::State
+class GraphState : public Move3D::State
 {
 public:
     GraphState();
@@ -36,8 +36,8 @@ public:
     bool isOpen(std::vector<State*>& openStates);
 
 protected:
-    double computeLength(API::State *parent);       /* g */
-    double computeHeuristic(API::State *parent);    /* h */
+    double computeLength(Move3D::State *parent);       /* g */
+    double computeHeuristic(Move3D::State *parent);    /* h */
 
 private:
     p3d_node* _GraphNode;

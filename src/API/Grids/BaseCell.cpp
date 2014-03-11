@@ -1,6 +1,6 @@
 #include "BaseCell.hpp"
 
-using namespace API;
+using namespace Move3D;
 
 BaseCell::BaseCell()
 {

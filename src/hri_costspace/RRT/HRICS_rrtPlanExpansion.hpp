@@ -1,19 +1,21 @@
 #ifndef HRICS_RRTPLANEXPANSION_H
 #define HRICS_RRTPLANEXPANSION_H
 
-#include "API/planningAPI.hpp"
 #include "planner/Diffusion/Variants/Transition-RRT.hpp"
 #include "hri_costspace/Grid/HRICS_TwoDGrid.hpp"
+
+namespace HRICS
+{
 
 /**
   @ingroup HRICS
   @brief Special RRT Expansion method for the HRICS
   */
-class HRICS_rrtPlanExpansion : public TransitionExpansion
+class HRICS_rrtPlanExpansion : public Move3D::TransitionExpansion
 {
 public:
     HRICS_rrtPlanExpansion();
-    HRICS_rrtPlanExpansion(Graph* G);
+    HRICS_rrtPlanExpansion(Move3D::Graph* G);
 
     /**
       * Initializes some variables for the expansion
@@ -21,52 +23,52 @@ public:
       */
     void init();
 
-     /**
+    /**
       * Sets the grid
       */
-    void setGrid(API::TwoDGrid* grid) { m2DGrid = dynamic_cast<HRICS::PlanGrid*>(grid); }
+    void setGrid( Move3D::TwoDGrid* grid ) { m2DGrid = dynamic_cast<HRICS::PlanGrid*>(grid); }
 
-     /**
+    /**
       * Sets the cell path
       */
-    void setCellPath(std::vector<API::TwoDCell*> cellPath);
+    void setCellPath( std::vector<Move3D::TwoDCell*> cellPath );
 
     /**
       * Direction used in RRT one step
       */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getExpansionDirection(
-            Node* expandComp, Node* goalComp, bool samplePassive, Node*& directionNode);
+    Move3D::confPtr_t getExpansionDirection( Move3D::Node* expandComp, Move3D::Node* goalComp, bool samplePassive, Move3D::Node*& directionNode);
 
     /**
       * Configuration from the next cell along the 3dPath
       */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getConfigurationInNextCell(Node* node);
+    Move3D::confPtr_t getConfigurationInNextCell( Move3D::Node* node );
 
     /**
       * Adds a node to a conected component
       */
-    Node* addNode(Node* currentNode, LocalPath& path, double pathDelta,
-                  Node* directionNode, int& nbCreatedNodes);
+    Move3D::Node* addNode( Move3D::Node* currentNode, Move3D::LocalPath& path, double pathDelta, Move3D::Node* directionNode, int& nbCreatedNodes );
 
     /**
       * Checks it the cell is after the given cell on the
       * 2D path
       */
-    bool on2DPathAndAfter(API::TwoDCell* cell);
+    bool on2DPathAndAfter( Move3D::TwoDCell* cell );
 
 private:
-    HRICS::PlanGrid*             m2DGrid;
-    std::vector<API::TwoDCell*>  m2DCellPath;
+    HRICS::PlanGrid*                m2DGrid;
+    std::vector<Move3D::TwoDCell*>  m2DCellPath;
 
-    API::TwoDCell*               mLastForward;
-    API::TwoDCell*               mLastBackward;
-    API::TwoDCell*               mBiasedPlanCell;
+    Move3D::TwoDCell*               mLastForward;
+    Move3D::TwoDCell*               mLastBackward;
+    Move3D::TwoDCell*               mBiasedPlanCell;
 
-    bool                     mForward;
-    bool                     mBiasing;
+    bool                            mForward;
+    bool                            mBiasing;
 
-    double*                  mBox;
+    double*                         mBox;
 
 };
+
+}
 
 #endif // HRICS_RRTEXPANSION_H

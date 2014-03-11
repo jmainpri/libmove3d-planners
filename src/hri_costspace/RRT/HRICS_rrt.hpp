@@ -8,10 +8,14 @@
   @ingroup HRICS
   @brief Special RRT implentation for the HRICS
   */
-class HRICS_RRT : public RRT
+namespace HRICS
 {
+
+class HRICS_RRT : public Move3D::RRT
+{
+
 public:
-    HRICS_RRT(Robot* R, Graph* G);
+    HRICS_RRT(Move3D::Robot* R, Move3D::Graph* G);
 
     /**
       * Sets the grid pointer
@@ -21,7 +25,7 @@ public:
     /**
       * Sets the cell path
       */
-    void setCellPath(std::vector<API::ThreeDCell*> cellPath);
+    void setCellPath(std::vector<Move3D::ThreeDCell*> cellPath);
 
    /**
      * Initialzation of the plannificator
@@ -32,22 +36,24 @@ public:
     /**
       * Intents to connect a node to the compco
       */
-    bool connectNodeToCompco(Node* node, Node* compNode);
+    bool connectNodeToCompco(Move3D::Node* node, Move3D::Node* compNode);
 
     /**
       * Finds the nearest neighbour in the cell
       * @return Other wise returns NULL
       */
-    Node* nearestNeighbourInCell(Node* node, std::vector<Node*> neigbour);
+    Move3D::Node* nearestNeighbourInCell(Move3D::Node* node, std::vector<Move3D::Node*> neigbour);
 
     /**
       * @return the cell in which is the given node
       */
-    API::ThreeDCell* getCellFromNode(Node* node);
+    Move3D::ThreeDCell* getCellFromNode(Move3D::Node* node);
 
  private:
     HRICS::Grid* _Grid;
 
 };
+
+}
 
 #endif // HRICS_RRT_H

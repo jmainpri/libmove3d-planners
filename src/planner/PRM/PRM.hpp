@@ -14,6 +14,10 @@
  @brief Classe représentant l'algorithme PRM
  @author Florian Pilardeau,B90,6349 <fpilarde@jolimont>
  */
+
+namespace Move3D
+{
+
 class PRM : public Planner
 {
 public:
@@ -46,7 +50,6 @@ public:
      */
     bool preConditions();
 
-
     /**
      * Function that adds nodes to Graph
      */
@@ -66,5 +69,7 @@ protected:
     int m_nbConscutiveFailures; /*!< nombre d'échecs consécutifs*/
     int m_nbExpansions;
 };
+
+}
 
 #endif

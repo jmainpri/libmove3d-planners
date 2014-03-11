@@ -1,6 +1,6 @@
 #include "BaseGrid.hpp"
 
-using namespace API;
+using namespace Move3D;
 using namespace std;
 
 // Pointers to grids

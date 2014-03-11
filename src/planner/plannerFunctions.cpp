@@ -5,20 +5,18 @@
  *      Author: jmainpri
  */
 
-#include "../p3d/env.hpp"
+#include <libmove3d/p3d/env.hpp>
 
-#include "planEnvironment.hpp"
-#include "plannerFunctions.hpp"
-#include "replanningSimulators.hpp"
-#include "../p3d/env.hpp"
+#include "API/project.hpp"
 
+#include "planner/planEnvironment.hpp"
+#include "planner/plannerFunctions.hpp"
+#include "planner/replanningSimulators.hpp"
 #include "planner/planner.hpp"
-
 #include "planner/PRM/PRM.hpp"
 #include "planner/PRM/Visibility.hpp"
 #include "planner/PRM/ACR.hpp"
 #include "planner/PRM/PerturbationRoadmap.hpp"
-
 #include "planner/Diffusion/RRT.hpp"
 #include "planner/Diffusion/EST.hpp"
 #include "planner/Diffusion/Variants/Transition-RRT.hpp"
@@ -27,7 +25,6 @@
 #include "planner/Diffusion/Variants/Multi-TRRT.hpp"
 #include "planner/Diffusion/Variants/Threshold-RRT.hpp"
 #include "planner/Diffusion/Variants/Star-RRT.hpp"
-
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 
@@ -45,6 +42,8 @@
 #include "LightPlanner-pkg.h"
 #endif
 
+using namespace Move3D;
+
 using std::cout;
 using std::endl;
 using std::cerr;
@@ -59,9 +58,9 @@ unsigned int trajId = 0;
 // ---------------------------------------------------------------------------------
 // Last trajectory
 // ---------------------------------------------------------------------------------
-API::Trajectory last_traj;
+Move3D::Trajectory last_traj;
 
-API::Trajectory p3d_get_last_trajectory()
+Move3D::Trajectory p3d_get_last_trajectory()
 {
     return last_traj;
 }
@@ -112,7 +111,7 @@ static bool set_costspace=false;
 p3d_traj* p3d_extract_traj( bool is_traj_found, int nb_added_nodes, Graph* graph, confPtr_t q_source, confPtr_t q_target)
 {
     cout << "--- p3d_extract_traj ---------------------------" << endl;
-    API::Trajectory* traj = NULL;
+    Move3D::Trajectory* traj = NULL;
     Robot* rob = graph->getRobot();
 
     // If traj is found, extract it from the graph
@@ -127,7 +126,7 @@ p3d_traj* p3d_extract_traj( bool is_traj_found, int nb_added_nodes, Graph* graph
             configs.push_back( q_target );
 
             cout << "Creating trajectory from two confgurations" << endl;
-            traj = new API::Trajectory( configs );
+            traj = new Move3D::Trajectory( configs );
         }
         else
         {
@@ -215,11 +214,11 @@ RRT* p3d_allocate_rrt(Robot* rob,Graph* graph)
 #ifdef HRI_COSTSPACE
     else if(ENV.getBool(Env::HRIPlannerWS) && ENV.getBool(Env::HRIPlannerTRRT))
     {
-        rrt = new HRICS_RRT(rob,graph);
+        rrt = new HRICS::HRICS_RRT(rob,graph);
     }
     else if(ENV.getBool(Env::HRIPlannerCS) && ENV.getBool(Env::HRIPlannerTRRT))
     {
-        rrt = new HRICS_RRTPlan(rob,graph);
+        rrt = new HRICS::HRICS_RRTPlan(rob,graph);
     }
 #endif
     else if(ENV.getBool(Env::isCostSpace) && ENV.getBool(Env::costThresholdRRT) )
@@ -353,7 +352,7 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
 
     Robot* rob = global_Project->getActiveScene()->getRobotByName( robotPt->name );
 
-    API::Trajectory t;
+    Move3D::Trajectory t;
 
     if(PlanEnv->getBool(PlanParam::withDeformation) || PlanEnv->getBool(PlanParam::withShortCut) )
     {
@@ -366,7 +365,7 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
         cout << "traj->nlp = " << traj->nlp << endl;
         cout << "traj->range_param = " << traj->range_param << endl;
 
-        API::CostOptimization optimTrj( rob, traj );
+        Move3D::CostOptimization optimTrj( rob, traj );
 
         optimTrj.setRunId( runId );
         optimTrj.setContextName( ENV.getString(Env::nameOfFile) );
@@ -402,7 +401,7 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
             cout << "---------------------" << endl;
         }
 
-        t = API::Trajectory(optimTrj);
+        t = Move3D::Trajectory(optimTrj);
         last_traj = t;
     }
 
@@ -414,7 +413,7 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
 
         traj_optim_runStompNoReset( runId );
 
-        t = API::Trajectory( rob, rob->getRobotStruct()->tcur );
+        t = Move3D::Trajectory( rob, rob->getRobotStruct()->tcur );
         t.resetCostComputed();
 
         if( PlanEnv->getBool(PlanParam::trajComputeCostAfterPlannif) )

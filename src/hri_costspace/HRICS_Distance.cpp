@@ -13,9 +13,11 @@
 #include "Collision-pkg.h"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
 using namespace Eigen;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 /*!
  * Constructor that sets the Human and Robot structures

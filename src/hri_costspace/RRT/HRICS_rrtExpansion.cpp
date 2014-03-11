@@ -1,16 +1,16 @@
 #include "HRICS_rrtExpansion.hpp"
 #include "../HRICS_Workspace.hpp"
 #include "API/Grids/PointCloud.hpp"
+#include "API/Roadmap/graph.hpp"
 
 #include "Planner-pkg.h"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 HRICS_rrtExpansion::HRICS_rrtExpansion() :
     TransitionExpansion(),
@@ -34,7 +34,7 @@ void HRICS_rrtExpansion::init()
 {
     cout << "Init Box Jido" << endl;
     double box[] = {-1.3,1.3,-1.3,1.3,0,1.5};
-    shared_ptr<Configuration> qInit = m_Graph->getRobot()->getInitPos();
+    confPtr_t qInit = m_Graph->getRobot()->getInitPos();
 
     _Box = new double[6];
 
@@ -53,7 +53,7 @@ void HRICS_rrtExpansion::init()
 /**
   * Sets the Cell path, First and Last Cell
   */
-void HRICS_rrtExpansion::setCellPath(vector<API::ThreeDCell*> cellPath)
+void HRICS_rrtExpansion::setCellPath(vector<Move3D::ThreeDCell*> cellPath)
 {
     _3DCellPath = cellPath;
     _LastForward = cellPath.at(0);
@@ -104,11 +104,11 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getExpansionDirection(
     return q;
 }
 
-API::ThreeDCell* BiasedCell=NULL;
+Move3D::ThreeDCell* BiasedCell=NULL;
 
 shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* CompcoNode)
 {
-    API::ThreeDCell* farthestCell=NULL;
+    Move3D::ThreeDCell* farthestCell=NULL;
 
     // Get the farthest cell explored depending on
     // the way the tree explores
@@ -199,7 +199,7 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* C
   * Return true if the cell is on the path
   * and after the first cell depending on the order (forward or backwards)
   */
-bool HRICS_rrtExpansion::on3DPathAndAfter(API::ThreeDCell* cell)
+bool HRICS_rrtExpansion::on3DPathAndAfter(Move3D::ThreeDCell* cell)
 {
     // Is cell on path
     bool cellOnPath;
@@ -280,7 +280,7 @@ Node* HRICS_rrtExpansion::addNode(Node* currentNode, LocalPath& path, double pat
     pos[2] = currentNode->getNodeStruct()->q[mIndexObjectDof+2];
 
     // TODO WARNING BROKEN
-    //  API::ThreeDCell* cell = _3DGrid->getCell(pos);
+    //  Move3D::ThreeDCell* cell = _3DGrid->getCell(pos);
     //    _forward = (currentNode->equal(m_Graph->getStart()));
     //
     //    if( _forward )

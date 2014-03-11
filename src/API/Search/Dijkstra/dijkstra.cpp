@@ -5,8 +5,9 @@
 #include "P3d-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
-using namespace API;
 
 Dijkstra::Dijkstra() : m_graph(NULL)
 {
@@ -46,12 +47,12 @@ void Dijkstra::creatStructures()
     {
         Node* ptrNode = nodes[i];
 
-			
-			cout << "Warning this function is broken" << endl;
-			vector<p3d_node*> neighbors; // = ptrNode->getNeighbors();
-			vector<p3d_edge*> edges; //= ptrNode->getEdges();
-			
-			cout << "Broken use p3d_edges" << endl;
+
+        cout << "Warning this function is broken" << endl;
+        vector<p3d_node*> neighbors; // = ptrNode->getNeighbors();
+        vector<p3d_edge*> edges; //= ptrNode->getEdges();
+
+        cout << "Broken use p3d_edges" << endl;
 
         vector<vertex_t> neighID;
         vector<weight_t> neighWeight;
@@ -131,7 +132,7 @@ void Dijkstra::computePaths(vertex_t source, adjacency_map_t& adjacency_map,
                             map<vertex_t, vertex_t>& previous)
 {
     for (adjacency_map_t::iterator vertex_iter = adjacency_map.begin(); vertex_iter
-											  != adjacency_map.end();   vertex_iter++)
+         != adjacency_map.end();   vertex_iter++)
     {
         vertex_t v = vertex_iter->first;
         min_distance[v] = numeric_limits<double>::infinity();
@@ -141,7 +142,7 @@ void Dijkstra::computePaths(vertex_t source, adjacency_map_t& adjacency_map,
     set<pair<weight_t, vertex_t> , pair_first_less<weight_t, vertex_t> > vertex_queue;
 
     for (adjacency_map_t::iterator vertex_iter = adjacency_map.begin(); vertex_iter
-											  != adjacency_map.end();   vertex_iter++)
+         != adjacency_map.end();   vertex_iter++)
     {
         vertex_t v = vertex_iter->first;
         vertex_queue.insert(pair<weight_t, vertex_t> (min_distance[v], v));
@@ -154,7 +155,7 @@ void Dijkstra::computePaths(vertex_t source, adjacency_map_t& adjacency_map,
 
         // Visit each edge exiting u
         for (list<edge_dijkstra>::iterator edge_iter = adjacency_map[u].begin(); edge_iter
-                                                       != adjacency_map[u].end(); edge_iter++)
+             != adjacency_map[u].end(); edge_iter++)
         {
             vertex_t v = edge_iter->target;
             weight_t weight = edge_iter->weight;
@@ -163,7 +164,7 @@ void Dijkstra::computePaths(vertex_t source, adjacency_map_t& adjacency_map,
             if (distance_through_u < min_distance[v])
             {
                 vertex_queue.erase(
-                        pair<weight_t, vertex_t> (min_distance[v], v));
+                            pair<weight_t, vertex_t> (min_distance[v], v));
 
                 min_distance[v] = distance_through_u;
                 previous[v] = u;
@@ -223,7 +224,7 @@ int Dijkstra::example()
     computePaths(0, adjacency_map, min_distance, previous);
 
     for (adjacency_map_t::iterator vertex_iter = adjacency_map.begin(); vertex_iter
-                                                 != adjacency_map.end(); vertex_iter++)
+         != adjacency_map.end(); vertex_iter++)
     {
         vertex_t v = vertex_iter->first;
         cout << "Distance to " << vertex_names[v] << ": " << min_distance[v]
@@ -241,7 +242,7 @@ int Dijkstra::example()
     return 0;
 }
 
-Trajectory* Dijkstra::extractTrajectory(shared_ptr<Configuration> init,shared_ptr<Configuration> goal)
+Trajectory* Dijkstra::extractTrajectory( confPtr_t init, confPtr_t goal )
 {
     if(m_graph==NULL)
     {
@@ -262,15 +263,10 @@ Trajectory* Dijkstra::extractTrajectory(shared_ptr<Configuration> init,shared_pt
 
     vertex_t target = N->getNodeStruct()->num;
 
-    //	if (ENV.getBool(Env::drawGraph))
-    //	{
-    //		g3d_draw_allwin_active();
-    //	}
-
     return extractTrajectory(source,target);
 }
 
-Trajectory* Dijkstra::extractTrajectory(vertex_t source,vertex_t target)
+Trajectory* Dijkstra::extractTrajectory( vertex_t source, vertex_t target )
 {
     creatStructures();
 
@@ -283,8 +279,8 @@ Trajectory* Dijkstra::extractTrajectory(vertex_t source,vertex_t target)
     Trajectory* traj = new Trajectory(m_graph->getRobot());
 
     for (list<vertex_t>::iterator path_iter = path.begin();
-    path_iter != path.end();
-    path_iter++)
+         path_iter != path.end();
+         path_iter++)
     {
         Node* ptrNode = m_graph_node_map[*path_iter];
         shared_ptr<Configuration> q = ptrNode->getConfiguration();

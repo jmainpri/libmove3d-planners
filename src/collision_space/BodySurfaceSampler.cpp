@@ -15,6 +15,7 @@
 #include "Graphic-pkg.h"
 
 using namespace std;
+using namespace Move3D;
 
 BodySurfaceSampler::BodySurfaceSampler(double step) : 
     m_step(step),

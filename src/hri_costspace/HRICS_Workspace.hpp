@@ -10,7 +10,6 @@
  *
  */
 
-#include "API/planningAPI.hpp"
 #include "planner/planner.hpp"
 #include "planner/Diffusion/RRT.hpp"
 
@@ -30,188 +29,187 @@
  */
 namespace HRICS
 {
+/*!
+     * Base class for the HRICS motion planners
+     */
+class HumanAwareMotionPlanner : public Move3D::Planner
+{
 
-	/*! 
-	 * Base class for the HRICS motion planners
-	 */
-	class HumanAwareMotionPlanner : public Planner 
-	{
-		
-	public:
-		HumanAwareMotionPlanner() : 
-		Planner(),
-		m_DistanceSpace(NULL),
-		m_VisibilitySpace(NULL),
-		m_ReachableSpace(NULL),
-		m_NaturalSpace(NULL) { }
-		
-		HumanAwareMotionPlanner(Robot* rob, Graph* graph) : 
-		Planner(rob,graph),
-		m_DistanceSpace(NULL),
-		m_VisibilitySpace(NULL),
-		m_ReachableSpace(NULL),
-		m_NaturalSpace(NULL) { }
-		
-		~HumanAwareMotionPlanner() 
-		{
-			delete m_DistanceSpace;
-			delete m_VisibilitySpace;
-		}
-		
-		Distance*	getDistance() { return m_DistanceSpace; }
-		Visibility* getVisibility() { return m_VisibilitySpace; }
-		Natural*	getNaturality() { return m_NaturalSpace; }
-		Natural*	getReachability() { return m_ReachableSpace; }
-		
-		
-		void setDistance(Distance* dist) 
-		{ 
-			if( m_DistanceSpace )
-			{ 
-				delete m_DistanceSpace;
-			}
-			m_DistanceSpace = dist;
-		}
-		
-		void setVisibility(Visibility* visib) 
-		{ 
-			if( m_VisibilitySpace )
-			{ 
-				delete m_VisibilitySpace;
-			}
-			m_VisibilitySpace = visib;
-		}
-		
-		void setNatural(Natural* nat) 
-		{ 
-			if( m_NaturalSpace )
-			{ 
-				delete m_NaturalSpace;
-			}
-			m_NaturalSpace = nat;
-		}
-		
-		void setReachability(Natural* nat) 
-		{ 
-			if( m_ReachableSpace )
-			{ 
-				delete m_ReachableSpace;
-			}
-			m_ReachableSpace = nat;
-		}
-		
-		unsigned int run() { return 0; }
-		
-	protected:
-		/**
-		 * Distance and Visibility 
-		 * cost spaces
-		 */
-		Distance*			m_DistanceSpace;
-		Visibility*		m_VisibilitySpace;
-		Natural*			m_ReachableSpace;
-		Natural*			m_NaturalSpace;
-		
-	};
-	
-	/*! 
-	 * Workspace Motion Planners
-	 */
-	class Workspace : public HumanAwareMotionPlanner
-	{
-		
-    public :
-		
-		/**
-		 * Constructors & Destructors
-		 */
-		Workspace();
-		Workspace(Robot* rob, Graph* graph);
-		~Workspace();
-		
-		/**
-		 * Init Associated Objects
-		 */
-		void initGrid();
-		void deleteGrid();
+public:
+    HumanAwareMotionPlanner() :
+        Planner(),
+        m_DistanceSpace(NULL),
+        m_VisibilitySpace(NULL),
+        m_ReachableSpace(NULL),
+        m_NaturalSpace(NULL) { }
+
+    HumanAwareMotionPlanner(Move3D::Robot* rob, Move3D::Graph* graph) :
+        Planner(rob,graph),
+        m_DistanceSpace(NULL),
+        m_VisibilitySpace(NULL),
+        m_ReachableSpace(NULL),
+        m_NaturalSpace(NULL) { }
+
+    ~HumanAwareMotionPlanner()
+    {
+        delete m_DistanceSpace;
+        delete m_VisibilitySpace;
+    }
+
+    Distance*	getDistance() { return m_DistanceSpace; }
+    Visibility* getVisibility() { return m_VisibilitySpace; }
+    Natural*	getNaturality() { return m_NaturalSpace; }
+    Natural*	getReachability() { return m_ReachableSpace; }
+
+
+    void setDistance(Distance* dist)
+    {
+        if( m_DistanceSpace )
+        {
+            delete m_DistanceSpace;
+        }
+        m_DistanceSpace = dist;
+    }
+
+    void setVisibility(Visibility* visib)
+    {
+        if( m_VisibilitySpace )
+        {
+            delete m_VisibilitySpace;
+        }
+        m_VisibilitySpace = visib;
+    }
+
+    void setNatural(Natural* nat)
+    {
+        if( m_NaturalSpace )
+        {
+            delete m_NaturalSpace;
+        }
+        m_NaturalSpace = nat;
+    }
+
+    void setReachability(Natural* nat)
+    {
+        if( m_ReachableSpace )
+        {
+            delete m_ReachableSpace;
+        }
+        m_ReachableSpace = nat;
+    }
+
+    unsigned int run() { return 0; }
+
+protected:
+    /**
+         * Distance and Visibility
+         * cost spaces
+         */
+    Distance*			m_DistanceSpace;
+    Visibility*		m_VisibilitySpace;
+    Natural*			m_ReachableSpace;
+    Natural*			m_NaturalSpace;
+
+};
+
+/*!
+     * Workspace Motion Planners
+     */
+class Workspace : public HumanAwareMotionPlanner
+{
+
+public :
+
+    /**
+         * Constructors & Destructors
+         */
+    Workspace();
+    Workspace(Move3D::Robot* rob, Move3D::Graph* graph);
+    ~Workspace();
+
+    /**
+         * Init Associated Objects
+         */
+    void initGrid();
+    void deleteGrid();
     
     void initAgentGrids(double cellsize);
     void deleteAgentGrids();
     std::vector<AgentGrid*> getAgentGrids() { return m_HumanGrids; }
     
-		void initDistance();
-		void initVisibility();
-		void initReachable();
-		void initNatural();
+    void initDistance();
+    void initVisibility();
+    void initReachable();
+    void initNatural();
     void initOtpPlanner();
 #ifdef HRI_PLANNER
     void setAgents( HRI_AGENTS* agents ) { m_Agents = agents; }
 #endif
-		
-		/**
-		 * Get Robot and Human
-		 */
-		Robot* getHuman(){ return mHumans[0]; }
-    std::vector<Robot*> getHumans(){ return mHumans; }
-		Robot* getRobot(){ return _Robot; }
+
+    /**
+         * Get Robot and Human
+         */
+    Move3D::Robot* getHuman(){ return mHumans[0]; }
+    std::vector<Move3D::Robot*> getHumans(){ return mHumans; }
+    Move3D::Robot* getRobot(){ return _Robot; }
     Eigen::Vector3d getVisball();
     
-		/**
-		 * Computes A* in Grid
-		 */
-		bool computeAStarIn3DGrid();
-		double pathCost();
-		void draw3dPath();
-		
-		/**
-		 * Distance to 3D path
-		 */
-		double distanceToEntirePath();
-		double distanceToCellPath();
-		
-		/**
-		 * Getters
-		 */
-		Grid* getGrid() { return m3DGrid; }
-		std::vector<Eigen::Vector3d> get3DPath() { return m3DPath; }
-		std::vector<API::ThreeDCell*> getCellPath() { return m3DCellPath; }
-		int getIndexObjectDof() 
-		{ 
-			if(mIndexObjectDof==0)
-			{	
-				std::cout << "Workspace::Warning::mIndexObjectDof == 0" << std::endl;
-			}
-			return mIndexObjectDof; 
-		}
-		
-		/**
-		 * Run RRT
-		 */
-		bool initHriRRT();
-		
-		/**
-		 * Choose best transfer point from
-		 * the natural costspace associated to the human
-		 */
-		void deactivateOnlyBaseCollision();
-		void activateOnlyBaseCollision();
+    /**
+         * Computes A* in Grid
+         */
+    bool computeAStarIn3DGrid();
+    double pathCost();
+    void draw3dPath();
+
+    /**
+         * Distance to 3D path
+         */
+    double distanceToEntirePath();
+    double distanceToCellPath();
+
+    /**
+         * Getters
+         */
+    Grid* getGrid() { return m3DGrid; }
+    std::vector<Eigen::Vector3d> get3DPath() { return m3DPath; }
+    std::vector<Move3D::ThreeDCell*> getCellPath() { return m3DCellPath; }
+    int getIndexObjectDof()
+    {
+        if(mIndexObjectDof==0)
+        {
+            std::cout << "Workspace::Warning::mIndexObjectDof == 0" << std::endl;
+        }
+        return mIndexObjectDof;
+    }
+
+    /**
+      * Run RRT
+      */
+    bool initHriRRT();
+
+    /**
+      * Choose best transfer point from
+      * the natural costspace associated to the human
+      */
+    void deactivateOnlyBaseCollision();
+    void activateOnlyBaseCollision();
     
     /**
      * Test if Jido (Base?) is in collision in this configuration
      */
-		bool sampleRobotBase(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q_base, const Eigen::Vector3d& WSPoint);
+    bool sampleRobotBase(Move3D::confPtr_t q_base, const Eigen::Vector3d& WSPoint);
 
     /**
      * find a position where the robot can probably pick the objects on the list
      */
-                bool findGrapingPosition(std::string robot_name, std::vector<std::string> objects);
+    bool findGrapingPosition(std::string robot_name, std::vector<std::string> objects);
     
     /**
      * Test if Jido is in collision in this configuration (?)
      */
-		bool transPFromBaseConf(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q_base, std::vector< Eigen::Vector3d > points );
-		bool baseInSight(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q_base);
-		
+    bool transPFromBaseConf(Move3D::confPtr_t q_base, std::vector< Eigen::Vector3d > points );
+    bool baseInSight(Move3D::confPtr_t q_base);
+
     /**
      * Set the OTP from given point
      */
@@ -225,7 +223,7 @@ namespace HRICS
     /**
      * testColision for the given configuration
      */
-    bool testCol(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q_base);
+    bool testCol(Move3D::confPtr_t q_base);
 
     /**
      * set Repo Pose of PR2
@@ -260,7 +258,7 @@ namespace HRICS
     /**
      * Test straight lines between target point and the point of the trajectory
      */
-    double* testTransferPointToTrajectory( const Eigen::Vector3d& WSPoint, API::Trajectory& traj, unsigned int& id);
+    double* testTransferPointToTrajectory( const Eigen::Vector3d& WSPoint, Move3D::Trajectory& traj, unsigned int& id);
 
 
     /**
@@ -272,7 +270,7 @@ namespace HRICS
      * Compute a transfert point from a loaded grid, without taking into acount a possible colision.
      * If a trandfert point is found, return true and put the vector into transfPoint else return false
      */
-        bool computeBestTransferPoint(Eigen::Vector3d& transfPoint);
+    bool computeBestTransferPoint(Eigen::Vector3d& transfPoint);
 
     /**
      * Compute a transfert point from a loaded grid, taking into acount a possible colision.
@@ -287,7 +285,7 @@ namespace HRICS
      */
     bool ComputeTheObjectTransfertPoint(bool Move, int type, Eigen::Vector3d& transfPoint, int threshold);
 
-        /**
+    /**
      * compute an object transfert point.
      * The pose if the left or right hand of Herakles is used depending
      * on the flag given as input
@@ -296,13 +294,13 @@ namespace HRICS
      */
     Eigen::Vector3d computeOTPFromHandPose( bool rightHand );
 
-	private:
-		
-		void solveAStar(State* start,State* goal);
-		
-		//! Humans in the scene
-		std::vector<Robot*>     mHumans;
-		
+private:
+
+    void solveAStar( State* start, State* goal );
+
+    //! Humans in the scene
+    std::vector<Move3D::Robot*>     mHumans;
+
     //! index of the Dof from which the robot holds
     //! the object
     int mIndexObjectDof;
@@ -310,19 +308,19 @@ namespace HRICS
     //! OPT (object transfer point)
     Eigen::Vector3d m_OTP;
     
-		//! 3d grid to compute a Workspace path
-		Grid*                   m3DGrid;
+    //! 3d grid to compute a Workspace path
+    Grid*                   m3DGrid;
     std::vector<AgentGrid*> m_HumanGrids;
 
 #ifdef HRI_PLANNER
-		HRI_AGENTS*		m_Agents;
+    HRI_AGENTS*		m_Agents;
 #endif
-		
-		//! 3d path internals
-		bool mPathExist;
-		std::vector<Eigen::Vector3d>   m3DPath;
-		std::vector<API::ThreeDCell*>  m3DCellPath;
-	};
+
+    //! 3d path internals
+    bool mPathExist;
+    std::vector<Eigen::Vector3d>   m3DPath;
+    std::vector<Move3D::ThreeDCell*>  m3DCellPath;
+};
 }
 
 #endif

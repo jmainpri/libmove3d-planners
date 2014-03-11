@@ -15,6 +15,8 @@
 
 #include <map>
 
+namespace Move3D {
+
 class GraphConverter {
   
 public:
@@ -34,5 +36,7 @@ private:
   p3d_list_edge* createEdgeList(std::map<Edge*,p3d_edge*>& EdgeMap, const std::vector<Edge*>& edges, p3d_list_edge* end = NULL) const;
   p3d_list_node* createNodeList(std::map<Node*,p3d_node*>& NodeMap, const std::vector<Node*>& nodes, p3d_list_node* end = NULL) const;
 };
+
+}
 
 #endif

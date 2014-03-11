@@ -14,6 +14,9 @@
  * \brief Classe représentant l'espace de travail de l'application
  * @author Florian Pilardeau,B90,6349 <fpilarde@jolimont>
  */
+namespace Move3D
+{
+
 class Project {
 
 public:
@@ -51,5 +54,7 @@ private:
 };
 
 extern Project* global_Project;
+
+}
 
 #endif

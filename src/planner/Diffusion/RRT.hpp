@@ -21,75 +21,78 @@
  * connect cannot be used with T-RRT,
  * while ML-RRT should be used with connect.
  */
+
+namespace Move3D
+{
+
 class RRT: public TreePlanner
 {
-	
+
 public:
-	/** Constructor from a WorkSpace object
-	 * @param WS the WorkSpace
-	 */
-	RRT(Robot* R, Graph* G);
-	
-	/**
-	 * Destructor
-	 */
-	~RRT();
-	
-	/**
-	 * Initialzation of the plannificator
-	 * @return the number of node added during the init phase
-	 */
-	virtual unsigned init();
-	
-	/**
-	 * Checks out the Stop condition
-	 */
-	bool checkStopConditions();
-	
-	/**
-	 * Checks out the preconditions
-	 */
-	bool preConditions();
-	
-	/**
-	 * Three phases One Step Expansion
-	 *  - Direction
-	 *  - Node
-	 *  - Process
-	 *
-	 *  @param fromComp the component which is expanded
-	 *  @param toComp the goal component
-	 */
-	virtual int expandOneStep(Node* fromComp, Node* toComp);
-	
-	
-	/**
-	 * Shoots a new configuration randomly at a fix step
-	 * @param qCurrent la Configuration limitant la distance
-	 * @return la Configuration tirée
-	 */
-	confPtr_t diffuseOneConf(confPtr_t qCurrent)
-	{
-		MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> path = MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> (new LocalPath(
-																							  qCurrent, _Robot->shoot()));
-		
-		return path->configAtParam(std::min(path->length(), _expan->step()));
-	}
-	
-	/**
-	 * Returns number of consecutive failure
-	 * during plannification
-	 */
+    /** Constructor from a WorkSpace object
+     * @param WS the WorkSpace
+     */
+    RRT(Robot* R, Graph* G);
+
+    /**
+     * Destructor
+     */
+    ~RRT();
+
+    /**
+     * Initialzation of the plannificator
+     * @return the number of node added during the init phase
+     */
+    virtual unsigned init();
+
+    /**
+     * Checks out the Stop condition
+     */
+    bool checkStopConditions();
+
+    /**
+     * Checks out the preconditions
+     */
+    bool preConditions();
+
+    /**
+     * Three phases One Step Expansion
+     *  - Direction
+     *  - Node
+     *  - Process
+     *
+     *  @param fromComp the component which is expanded
+     *  @param toComp the goal component
+     */
+    virtual int expandOneStep(Node* fromComp, Node* toComp);
+
+    /**
+     * Shoots a new configuration randomly at a fix step
+     * @param qCurrent la Configuration limitant la distance
+     * @return la Configuration tirée
+     */
+    confPtr_t diffuseOneConf(confPtr_t qCurrent)
+    {
+        LocalPath path( qCurrent, _Robot->shoot());
+        return path.configAtParam( std::min(path.length(), _expan->step()) );
+    }
+
+    /**
+     * Returns number of consecutive failure
+     * during plannification
+     */
     RRTExpansion* getExpansion()
-	{
-		return _expan;
-	}
-	
-	
+    {
+        return _expan;
+    }
+
+
 protected:
-  
-	RRTExpansion* _expan;
-	
+
+    RRTExpansion* _expan;
+
 };
+
+}
 
 #endif

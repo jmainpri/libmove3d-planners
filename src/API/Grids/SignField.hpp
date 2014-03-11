@@ -9,14 +9,14 @@
 
 class SignFeildCell;
 
-class SignFeildGrid : public API::ThreeDGrid
+class SignFeildGrid : public Move3D::ThreeDGrid
 {
 public:
 	Grid();
 	Grid( std::vector<int> size );
 	Grid(double pace, std::vector<double> envSize);
 	
-	API::ThreeDCell* createNewCell(unsigned int index, unsigned int x, unsigned int y, unsigned int z );
+	Move3D::ThreeDCell* createNewCell(unsigned int index, unsigned int x, unsigned int y, unsigned int z );
 	void computeAllCellCost();
 	
 	void drawSpheres();

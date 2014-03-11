@@ -19,6 +19,9 @@
 
 #include "planner/TrajectoryOptim/Chomp/chompUtils.hpp"
 
+namespace Move3D
+{
+
 class BoundingCylinder  
 {
 public:
@@ -143,6 +146,6 @@ inline void CollisionPoint::getTransformedPosition(std::vector<std::vector<doubl
     position = T*m_position;
 }
 
-
+}
 
 #endif /* COLLISION_POINT_HPP */

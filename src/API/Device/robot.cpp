@@ -24,45 +24,17 @@
 #include "LightPlanner-pkg.h"
 #endif
 
-Robot* API_activeRobot = NULL;
-
 using namespace std;
+using namespace Move3D;
+using namespace Eigen;
 
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 //using MOVE3D_PTR_NAMESPACE::shared_ptr;
 
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
-using namespace Eigen;
 
-//constructor and destructor
-//Robot::Robot(p3d_rob* R,Graph* G)
-//{
-//	_Robot = R;
-//	_nbCreatedGraph = 0;
-//
-//	if(!G)
-//	{
-//		G = this->newGraph();
-//	}
-//	else
-//	{
-//		this->insertGraph(G);
-//		setActivGraph(nbGraph() - 1);
-//	}
-//
-//	_Robot->GRAPH = G->getGraphStruct();
-//	_Name = _Robot->name;
-//}
+Move3D::Robot* Move3D::API_activeRobot = NULL;
 
-//Robot::Robot(p3d_rob* R)
-//{
-//    _Robot = R;
-//    string name(R->name);
-//    _Name = name;
-//}
-
-Robot::Robot(p3d_rob* robotPt, bool copy )
+Move3D::Robot::Robot(p3d_rob* robotPt, bool copy )
 {
     _copy = copy;
 
@@ -111,9 +83,9 @@ p3d_traj* Robot::getTrajStruct()
     return _Robot->tcur;
 }
 
-API::Trajectory Robot::getCurrentTraj()
+Move3D::Trajectory Robot::getCurrentTraj()
 {
-    API::Trajectory traj(this,_Robot->tcur);
+    Move3D::Trajectory traj(this,_Robot->tcur);
     return traj;
 }
 

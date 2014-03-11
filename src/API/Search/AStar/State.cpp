@@ -17,7 +17,7 @@
 #include "State.hpp"
 
 using namespace std;
-using namespace API;
+using namespace Move3D;
 
 State::State() : _f(0), _g(0), _h(0) {}
 

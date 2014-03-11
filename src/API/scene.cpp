@@ -15,11 +15,12 @@
 
 #include "planner/plannerFunctions.hpp"
 
+using namespace Move3D;
 using namespace std;
 
 std::string global_ActiveRobotName;
 
-Scene::Scene( p3d_env* environnement )
+Move3D::Scene::Scene( p3d_env* environnement )
 {
     m_Scene = environnement;
     m_Name = m_Scene->name;
@@ -56,7 +57,7 @@ Scene::Scene( p3d_env* environnement )
     ext_p3d_run_rrt = p3d_run_rrt;
 }
 
-Scene::~Scene()
+Move3D::Scene::~Scene()
 {
 }
 

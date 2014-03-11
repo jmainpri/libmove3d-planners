@@ -19,7 +19,9 @@
 
 //#include "Greedy/CollisionSpace.h"
 
+using namespace Move3D;
 using namespace std;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 TestModel::TestModel() :

@@ -17,126 +17,130 @@
   \image html RRT_graph2.png
   */
 
+namespace Move3D
+{
+
 /**
   @ingroup Diffusion
   */
 class TreePlanner : public Planner {
 
 public:
-	/**
-	 * Constructor
-	 */
-	TreePlanner(Robot* R, Graph* G);
+    /**
+     * Constructor
+     */
+    TreePlanner(Robot* R, Graph* G);
 
-	/**
-	 * Destructor
-	 */
-	~TreePlanner();
+    /**
+     * Destructor
+     */
+    ~TreePlanner();
 
-	/**
-	 * Initializes Planner
-	 */
-	virtual unsigned init();
+    /**
+     * Initializes Planner
+     */
+    virtual unsigned init();
 
-	/**
-	 * Checks out the Stop condition
-	 */
-	virtual bool checkStopConditions();
+    /**
+     * Checks out the Stop condition
+     */
+    virtual bool checkStopConditions();
 
-	/**
-	 * Checks out the Pre-conditions
-	 * - start and goal are not in collision
-	 * - start and goal are different configurations
-	 */
-	virtual bool preConditions();
+    /**
+     * Checks out the Pre-conditions
+     * - start and goal are not in collision
+     * - start and goal are different configurations
+     */
+    virtual bool preConditions();
 
-	/**
-	 * Tries to connect a node to the other
-	 * connected component of the graph
-	 *
-	 * @param currentNode The node that will be connected
-	 * @param ComNode The Connected Component
-	 */
-	virtual bool connectNodeToCompco(Node* N, Node* CompNode);
+    /**
+     * Tries to connect a node to the other
+     * connected component of the graph
+     *
+     * @param currentNode The node that will be connected
+     * @param ComNode The Connected Component
+     */
+    virtual bool connectNodeToCompco(Node* N, Node* CompNode);
 
-	/**
-	 * Main function to connect to the other Connected Component
-	 */
-	virtual bool connectionToTheOtherCompco(Node* toNode);
+    /**
+     * Main function to connect to the other Connected Component
+     */
+    virtual bool connectionToTheOtherCompco(Node* toNode);
 
-	/**
-	 * Expands tree from component fromComp
-	 * to component toComp
-	 * @param fromComp the starting connex component
-	 * @param toComp the arriving connex component
-	 * @return the number of node created
-	 */
-	virtual int expandOneStep(Node* fromComp, Node* toComp) = 0 ;
-  
-	/**
-	 * Main function of the Tree process
-	 * @return the number of Nodes added to the Graph
-	 */
-	virtual unsigned int run();
-  
-  /**
+    /**
+     * Expands tree from component fromComp
+     * to component toComp
+     * @param fromComp the starting connex component
+     * @param toComp the arriving connex component
+     * @return the number of node created
+     */
+    virtual int expandOneStep(Node* fromComp, Node* toComp) = 0 ;
+
+    /**
+     * Main function of the Tree process
+     * @return the number of Nodes added to the Graph
+     */
+    virtual unsigned int run();
+
+    /**
    * Extract trajectory
    */
-  virtual void extractTrajectory() { }
+    virtual void extractTrajectory() { }
 
-  
-	/**
-	 * Returns number of consecutive failure
-	 * during plannification
-	 */
-	unsigned int getNumberOfConsecutiveFail()
-	{
-		return m_nbConscutiveFailures;
-	};
+    /**
+     * Returns number of consecutive failure
+     * during plannification
+     */
+    unsigned int getNumberOfConsecutiveFail()
+    {
+        return m_nbConscutiveFailures;
+    }
 
-	/**
-	 * Returns number of expansion
-	 * during plannification
-	 */
-	unsigned int getNumberOfExpansion()
-	{
-		return m_nbExpansion;
-	};
-	
-	/**
-	 * Returns number of expansion failure
-	 * during plannification
-	 */
-	unsigned int getNumberOfFailedExpansion()
-	{
-		return m_nbFailedExpansion;
-	};
-	
-	/**
-	 * Returns number the initial number of nodes
-	 * of plannification
-	 */
-	unsigned int getNumberOfInitialNodes()
-	{
-		return m_nbInitNodes;
-	};
-  
-  /**
-	 * Returns the last node added to the graph
-	 */
-  Node* getLastNode()
-  {
-     return m_last_node;
-  };
+    /**
+     * Returns number of expansion
+     * during plannification
+     */
+    unsigned int getNumberOfExpansion()
+    {
+        return m_nbExpansion;
+    }
+
+    /**
+     * Returns number of expansion failure
+     * during plannification
+     */
+    unsigned int getNumberOfFailedExpansion()
+    {
+        return m_nbFailedExpansion;
+    }
+
+    /**
+     * Returns number the initial number of nodes
+     * of plannification
+     */
+    unsigned int getNumberOfInitialNodes()
+    {
+        return m_nbInitNodes;
+    }
+
+    /**
+     * Returns the last node added to the graph
+     */
+    Node* getLastNode()
+    {
+        return m_last_node;
+    }
 
 protected:
-	
-  unsigned int m_nbConscutiveFailures;
-	unsigned int m_nbExpansion;
-	unsigned int m_nbFailedExpansion;
-	unsigned int m_nbInitNodes;
-  
-  Node* m_last_node;
+
+    unsigned int m_nbConscutiveFailures;
+    unsigned int m_nbExpansion;
+    unsigned int m_nbFailedExpansion;
+    unsigned int m_nbInitNodes;
+
+    Node* m_last_node;
 };
+
+}
 
 #endif /* TREEPLANNER_HPP_ */

@@ -16,8 +16,8 @@
 #include <libmove3d/hri/hri.h>
 
 // Main cost function
-extern double HRICS_getConfigCost(Configuration& Conf);
-extern double HRICS_getPlanarHumanGridCost(Configuration& q);
+extern double HRICS_getConfigCost(Move3D::Configuration& Conf);
+extern double HRICS_getPlanarHumanGridCost(Move3D::Configuration& q);
 extern   void HRICS_init(HRI_AGENTS* agents = NULL);
 
 // Human kinematics
@@ -70,8 +70,8 @@ extern HRICS::HumanAwareMotionPlanner*	HRICS_MotionPLConfig;
 /**
  * Cells to be drawn
  */ 
-extern API::ThreeDCell*		BiasedCell3D;
-extern API::TwoDCell*		BiasedCell2D;
+extern Move3D::ThreeDCell*		BiasedCell3D;
+extern Move3D::TwoDCell*		BiasedCell2D;
 
 #endif
 

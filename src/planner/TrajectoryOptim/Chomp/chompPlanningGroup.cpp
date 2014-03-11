@@ -12,6 +12,7 @@
 #include "P3d-pkg.h"
 
 using namespace std;
+using namespace Move3D;
 
 ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& active_joints )
 {

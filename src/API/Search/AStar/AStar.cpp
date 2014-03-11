@@ -2,10 +2,11 @@
 #include "State.hpp"
 #include "AStar.hpp"
 
+#include "planner/planEnvironment.hpp"
 #include "Util-pkg.h"
 
 using namespace std;
-using namespace API;
+using namespace Move3D;
 
 /**
  * Tree Element Class
@@ -112,6 +113,10 @@ vector<State*> AStar::solve(State* initialState)
             ChronoOff();
             cout << "Number of explored states = " << _Explored.size() << endl;
             return getSolution(q_tmp);
+        }
+
+        if( PlanEnv->getBool(PlanParam::stopPlanner) ){
+            break;
         }
 
         TreeNode* parent = q_tmp.getTreeNode()->getParent();

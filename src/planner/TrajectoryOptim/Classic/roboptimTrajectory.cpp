@@ -246,7 +246,7 @@ LinearTrajectory::print (std::ostream& o) const throw ()
 /*!
  * make a roboptim linear traj from move3d
  */
-LinearTrajectory* RoboptimFactory::make_Roboptim(API::Trajectory& traj)
+LinearTrajectory* RoboptimFactory::make_Roboptim(Move3D::Trajectory& traj)
 {
 	using namespace boost::numeric;
 
@@ -318,11 +318,11 @@ LinearTrajectory* RoboptimFactory::make_Roboptim(API::Trajectory& traj)
 /*!
  * make a move 3d linear traj from roboptim
  */
-API::Trajectory*	RoboptimFactory::make_Move3D(LinearTrajectory& traj)
+Move3D::Trajectory*	RoboptimFactory::make_Move3D(LinearTrajectory& traj)
 {
 	
 	using namespace boost::numeric;
-	API::Trajectory* optimTrajPt;
+	Move3D::Trajectory* optimTrajPt;
 	
 	try 
 	{
@@ -347,7 +347,7 @@ API::Trajectory*	RoboptimFactory::make_Move3D(LinearTrajectory& traj)
 			vect_conf.push_back(q);
 		}
 		
-		optimTrajPt = new API::Trajectory( vect_conf );
+		optimTrajPt = new Move3D::Trajectory( vect_conf );
 	}
 	catch (...) 
 	{
@@ -389,7 +389,7 @@ void CostMapFunction::impl_compute (result_t& r , const argument_t& a) const thr
 		vect_conf.push_back(q);
 	}
 	
-	API::Trajectory traj( vect_conf );
+	Move3D::Trajectory traj( vect_conf );
 	double Cost = traj.cost();
 	std::cout << "Cost is : "<< Cost << std::endl;
 	r(0) = Cost;
@@ -405,7 +405,7 @@ int RoboptimTrajectory::run_CostMap()
 	try  
 	{
 		Robot* robotPt = global_Project->getActiveScene()->getActiveRobot();
-		API::Trajectory* traj = new API::Trajectory( robotPt, robotPt->getTrajStruct() );
+		Move3D::Trajectory* traj = new Move3D::Trajectory( robotPt, robotPt->getTrajStruct() );
 		
 		roboptim::RoboptimFactory factory;
 		LinearTrajectory optimTraj = *factory.make_Roboptim(*traj);

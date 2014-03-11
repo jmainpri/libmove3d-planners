@@ -5,17 +5,7 @@
 #include "API/Roadmap/edge.hpp"
 #include "API/Trajectory/trajectory.hpp"
 
-#ifndef COMPCO_HPP
-class ConnectedComponent;
-#endif
-
 #include <map>
-
-/**
- @ingroup ROADMAP
- \brief Classe représentant un Graph pour un Robot
- @author Florian Pilardeau,B90,6349 <fpilarde@jolimont>
- */
 
 #ifndef _ROADMAP_H
 struct node;
@@ -23,6 +13,19 @@ struct edge;
 struct graph;
 struct list_node;
 struct list_edge;
+#endif
+
+/**
+ @ingroup ROADMAP
+ \brief Classe représentant un Graph pour un Robot
+ @author Florian Pilardeau,B90,6349 <fpilarde@jolimont>
+ */
+
+namespace Move3D
+{
+
+#ifndef COMPCO_HPP
+class ConnectedComponent;
 #endif
 
 class Graph {
@@ -451,13 +454,13 @@ public:
     /**
    * Extract best traj from qi that is closest to q_f
    */
-    API::Trajectory* extractBestTrajSoFar( confPtr_t qi, confPtr_t qf );
+    Move3D::Trajectory* extractBestTrajSoFar( confPtr_t qi, confPtr_t qf );
 
     /**
      * Extract best traj
      * @param the configuration
      */
-    API::Trajectory* extractDijkstraShortestPathsTraj( confPtr_t qi, confPtr_t qf);
+    Move3D::Trajectory* extractDijkstraShortestPathsTraj( confPtr_t qi, confPtr_t qf);
 
     /**
      * Extract best traj
@@ -475,25 +478,25 @@ public:
      * Extract best traj
      * @param the configuration
      */
-    API::Trajectory* extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf );
+    Move3D::Trajectory* extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf );
 
     /**
      * Extract best traj
      * @param the configuration
      */
-    API::Trajectory* extractBestAStarPathSoFar( confPtr_t qi, confPtr_t qf );
+    Move3D::Trajectory* extractBestAStarPathSoFar( confPtr_t qi, confPtr_t qf );
 
     /**
      * Extract best traj
      * @param the configuration
      */
-    API::Trajectory* extractBestTraj( confPtr_t qi, confPtr_t qf);
+    Move3D::Trajectory* extractBestTraj( confPtr_t qi, confPtr_t qf);
 
     /**
      * Get trajectory from node vector
      * @param vector of nodes
      */
-    API::Trajectory* trajectoryFromNodeVector( const std::vector<Node*>& nodes );
+    Move3D::Trajectory* trajectoryFromNodeVector( const std::vector<Node*>& nodes );
 
     /**
      * Init Motion planning problem
@@ -552,5 +555,7 @@ private:
 };
 
 extern Graph* API_activeGraph;
+
+}
 
 #endif

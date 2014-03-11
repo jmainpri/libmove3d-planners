@@ -31,6 +31,8 @@
 #include "Graphic-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 const bool print_exploration = false;
@@ -165,7 +167,7 @@ confPtr_t StarExpansion::sampleInTube()
         if( m_start_bias == false )
             m_start_bias = m_Graph->searchConf( *m_q_goal );
 
-        API::Trajectory* traj = NULL;
+        Move3D::Trajectory* traj = NULL;
 
         if( m_start_bias ) {
             traj = m_Graph->extractBestTrajSoFar( m_q_init, m_q_goal );
@@ -604,8 +606,8 @@ void StarRRT::saveConvergenceToFile()
 
 void StarRRT::extractTrajectory()
 {
-//    API::Trajectory* traj = _Graph->extractBestAStarPathSoFar( _q_start, _q_goal );
-    API::Trajectory* traj = _Graph->extractAStarShortestPathsTraj( _q_start, _q_goal );
+//    Move3D::Trajectory* traj = _Graph->extractBestAStarPathSoFar( _q_start, _q_goal );
+    Move3D::Trajectory* traj = _Graph->extractAStarShortestPathsTraj( _q_start, _q_goal );
 
     if( traj )
     {
@@ -622,7 +624,7 @@ void StarRRT::extractTrajectory()
             m_convergence_rate.push_back( std::make_pair( getTime(), stat )  );
 
             if( m_current_traj == NULL )
-                m_current_traj = new API::Trajectory( _Graph->getRobot() );
+                m_current_traj = new Move3D::Trajectory( _Graph->getRobot() );
 
             // replace current trajectory by new trajectory
             (*m_current_traj) = (*traj);

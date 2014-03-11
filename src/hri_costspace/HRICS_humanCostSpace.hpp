@@ -18,19 +18,22 @@
  */
 namespace HRICS
 {
+
 class HumanCostSpace
 {
+
 public:
+
     HumanCostSpace();
-    HumanCostSpace( Robot* rob, std::vector<Robot*> humans, Natural* costspace, double cellSize );
+    HumanCostSpace( Move3D::Robot* rob, std::vector<Move3D::Robot*> humans, Natural* costspace, double cellSize );
 
     ~HumanCostSpace();
     
-    Robot* getRobot() { return m_Robot; }
+    Move3D::Robot* getRobot() { return m_Robot; }
     
-    double getCost(Configuration& q);
-    double getCompleteCost(Configuration& q, std::vector<double>& cost_sum);
-    double getPointCost(Configuration& q);
+    double getCost( Move3D::Configuration& q);
+    double getCompleteCost( Move3D::Configuration& q, std::vector<double>& cost_sum);
+    double getPointCost( Move3D::Configuration& q);
     
     bool getHandoverPointList(std::vector<Eigen::Vector3d>& points, bool recompute_cells, int arm_type);
     
@@ -43,9 +46,10 @@ public:
     void drawDistances();
     void drawReachableGrid();
     
-    AgentGrid* getAgentGrid(Robot* agent);
+    AgentGrid* getAgentGrid( Move3D::Robot* agent );
     
 private:
+
     bool initElementarySpaces();
     void deleteElementarySpaces();
     
@@ -58,17 +62,17 @@ private:
     
     double groupingCost();
     
-    Robot*                        m_Robot;
-    std::vector<Joint*>           m_CostJoints;
-    std::vector<Robot*>           m_Humans;
+    Move3D::Robot*                m_Robot;
+    std::vector<Move3D::Joint*>   m_CostJoints;
+    std::vector<Move3D::Robot*>   m_Humans;
     std::vector<AgentGrid*>       m_Grids;
-    Joint*                        m_PlatformJoint;
+    Move3D::Joint*                m_PlatformJoint;
     std::vector< std::pair<double,NaturalCell*> > m_ReachableCells;
     
     enum PlanningType { NAVIGATION = 0, MANIPULATION = 1, MOBILE_MANIP = 2 } m_planning_type;
     
     Distance*			m_DistanceSpace;
-    Visibility*		m_VisibilitySpace;
+    Visibility*         m_VisibilitySpace;
     Natural*			m_ReachableSpace;
 };
 }

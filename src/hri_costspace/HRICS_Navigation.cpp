@@ -9,10 +9,13 @@
 #include "HRICS_Navigation.hpp"
 
 #include "API/ConfigSpace/configuration.hpp"
+#include "API/project.hpp"
+
 #include "Grid/HRICS_Grid.hpp"
+
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 #include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
-#include "planEnvironment.hpp"
+#include "planner/planEnvironment.hpp"
 
 #include "Graphic-pkg.h"
 #include "P3d-pkg.h"
@@ -21,9 +24,11 @@
 std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   path_to_draw;
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace Eigen;
 using namespace HRICS;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 /**
  * Take as input a robot and a human and performs init
@@ -84,7 +89,7 @@ void Navigation::reset()
 /**
  * Computes a trajectory
  */
-API::Trajectory* Navigation::computeRobotTrajectory( confPtr_t source, confPtr_t target )
+Move3D::Trajectory* Navigation::computeRobotTrajectory( confPtr_t source, confPtr_t target )
 {
     confPtr_t q = m_cyl->getCurrentPos();
     (*q)[6] =0;
@@ -102,7 +107,7 @@ API::Trajectory* Navigation::computeRobotTrajectory( confPtr_t source, confPtr_t
 
     if( computeAStarIn2DGrid( x1, x2 ) )
     {
-        API::Trajectory* traj = new API::Trajectory(m_robot);
+        Move3D::Trajectory* traj = new Move3D::Trajectory(m_robot);
 
         traj->push_back( source );
 
@@ -186,8 +191,8 @@ bool Navigation::solveAStar( PlanState* start, PlanState* goal )
     // Change the way AStar is computed to go down
     if( start->getCell()->getCost() < goal->getCell()->getCost() )
     {
-        API::AStar* search = new API::AStar(start);
-        vector<API::State*> path = search->solve(goal);
+        Move3D::AStar* search = new Move3D::AStar(start);
+        vector<Move3D::State*> path = search->solve(goal);
 
         if(path.size() == 0 )
         {
@@ -199,15 +204,15 @@ bool Navigation::solveAStar( PlanState* start, PlanState* goal )
 
         for (unsigned int i=0;i<path.size();i++)
         {
-            API::TwoDCell* cell = dynamic_cast<PlanState*>(path[i])->getCell();
+            Move3D::TwoDCell* cell = dynamic_cast<PlanState*>(path[i])->getCell();
             m_2DPath.push_back( cell->getCenter() );
             m_2DCellPath.push_back( cell );
         }
     }
     else
     {
-        API::AStar* search = new API::AStar(goal);
-        vector<API::State*> path = search->solve(start);
+        Move3D::AStar* search = new Move3D::AStar(goal);
+        vector<Move3D::State*> path = search->solve(start);
 
         if(path.size() == 0 )
         {
@@ -243,7 +248,7 @@ void Navigation::draw()
     }
 }
 
-API::Trajectory* Navigation::getSimplePath(std::vector<double> goal, std::vector<std::vector<double> >& path)
+Move3D::Trajectory* Navigation::getSimplePath(std::vector<double> goal, std::vector<std::vector<double> >& path)
 {
     confPtr_t i = m_robot->getCurrentPos();
     confPtr_t g = m_robot->getCurrentPos();
@@ -279,7 +284,7 @@ API::Trajectory* Navigation::getSimplePath(std::vector<double> goal, std::vector
 
     robotTraj3D.push_back(v);
 
-    API::Trajectory* t = new API::Trajectory(m_robot);
+    Move3D::Trajectory* t = new Move3D::Trajectory(m_robot);
     t->push_back(i);
 
     for (unsigned int j = 0; j<robotTraj3D.size();j++)

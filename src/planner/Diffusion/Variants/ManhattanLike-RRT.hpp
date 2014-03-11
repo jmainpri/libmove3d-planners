@@ -10,6 +10,9 @@
 
 #include "planner/Diffusion/RRT.hpp"
 
+namespace Move3D
+{
+
 /**
 @ingroup Diffusion
 */
@@ -60,5 +63,7 @@ public:
     void shoot_jnt_list_and_copy_into_conf(Configuration& qrand, std::vector<jnt*>& joints);
 
 };
+
+}
 
 #endif /* MANHATTANLIKERRT_HPP_ */

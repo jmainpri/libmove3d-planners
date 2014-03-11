@@ -13,11 +13,13 @@
 
 #include <libmove3d/include/p3d_matrix.h>
 
-class Robot;
-
 #ifndef _DEVICE_H
 struct jnt;
 #endif
+
+namespace Move3D {
+
+class Robot;
 
 /*!
  @ingroup ROBOT
@@ -31,7 +33,7 @@ public:
    * Constructor
    * @param The p3d_jnt that is used
    */
-    Joint(Robot* R, jnt* jntPt , int id = -1, bool copy = false );
+    Joint(Move3D::Robot* R, jnt* jntPt , int id = -1, bool copy = false );
 
     /**
    * Destructor of the class
@@ -137,5 +139,7 @@ private:
     int             m_id;   /*!< id with which it was initilized */
 
 };
+
+}
 
 #endif

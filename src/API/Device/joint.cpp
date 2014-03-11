@@ -20,12 +20,10 @@
 #include "P3d-pkg.h"
 
 using namespace std;
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
+using namespace Move3D;
 
-Joint::Joint(Robot *R, p3d_jnt* jntPt, int id, bool copy ) : 
+Joint::Joint(Robot *R, p3d_jnt* jntPt, int id, bool copy ) :
     m_Robot(R),
     m_id(id)
 {

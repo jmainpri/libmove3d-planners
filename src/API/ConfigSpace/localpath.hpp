@@ -3,8 +3,11 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 
-class Robot;
 class localpath;
+
+namespace Move3D {
+
+class Robot;
 
 /**
  @ingroup CONFIG_SPACE
@@ -242,5 +245,7 @@ private:
     // p3d_localpath_type _Type; //type du local path(mahantan, linear ...)
     int _Type;
 };
+
+}
 
 #endif

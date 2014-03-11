@@ -18,8 +18,8 @@ public:
     void draw();
 
 private:
-    Robot* robot_;
-    PlanGrid* grid_;
+    Move3D::Robot* robot_;
+    Move3D::PlanGrid* grid_;
 };
 
 }

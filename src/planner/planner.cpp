@@ -20,9 +20,11 @@
 #include "Util-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
-Planner* global_Move3DPlanner = NULL;
+Planner* Move3D::global_Move3DPlanner = NULL;
 
 Planner::Planner() :
     _stop_func(fct_stop),

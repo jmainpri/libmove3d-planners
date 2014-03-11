@@ -24,6 +24,7 @@
 #endif
 
 using namespace Graphic;
+using namespace Move3D;
 using namespace std;
 
 // Drawing module

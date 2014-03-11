@@ -4,11 +4,14 @@
 #include "API/Roadmap/node.hpp"
 #include "API/ConfigSpace/localpath.hpp"
 
-class Graph;
-
 #ifndef _ROADMAP_H
 struct edge;
 #endif
+
+namespace Move3D
+{
+
+class Graph;
 
 /**
  * @ingroup CPP_API
@@ -150,6 +153,8 @@ private:
 
     MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> m_path;
 };
+
+}
 
 #endif
 

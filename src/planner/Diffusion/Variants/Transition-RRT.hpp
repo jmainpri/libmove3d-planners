@@ -10,6 +10,9 @@
 
 #include "planner/Diffusion/RRT.hpp"
 
+namespace Move3D
+{
+
 class ConnectedComponent;
 
 
@@ -24,7 +27,7 @@ public:
 	TransitionExpansion() : RRTExpansion() {};
 
 	//! Constructor (with graph).
-    TransitionExpansion(Graph * G) : RRTExpansion(G) {};
+    TransitionExpansion( Graph * G) : RRTExpansion(G) {};
 
     //! Destructor.
     virtual ~TransitionExpansion() {};
@@ -129,5 +132,7 @@ public:
      */
     unsigned run();
 };
+
+}
 
 #endif /* TRANSITIONRRT_HPP_ */

@@ -7,12 +7,11 @@
 #include "Planner-pkg.h"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
+using namespace Move3D;
 using namespace HRICS;
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 /**
   * Basic constructor
@@ -58,7 +57,7 @@ void HRICS_RRTPlan::setGrid(HRICS::PlanGrid* G)
 /**
  * Sets the cell path
  */
-void HRICS_RRTPlan::setCellPath(std::vector<API::TwoDCell*> cellPath)
+void HRICS_RRTPlan::setCellPath(std::vector<Move3D::TwoDCell*> cellPath)
 {
     dynamic_cast<HRICS_rrtPlanExpansion*>(_expan)->setCellPath(cellPath);
 }
@@ -105,7 +104,7 @@ bool HRICS_RRTPlan::connectNodeToCompco(Node* node, Node* compNode)
 Node* HRICS_RRTPlan::nearestNeighbourInCell(Node* node, vector<Node*> neigbour)
 {
 
-    API::TwoDCell* cell = getCellFromNode(node);
+    Move3D::TwoDCell* cell = getCellFromNode(node);
     vector<Node*> nodesInCell;
 
     for(unsigned int i=0;i<neigbour.size();i++)
@@ -136,7 +135,7 @@ Node* HRICS_RRTPlan::nearestNeighbourInCell(Node* node, vector<Node*> neigbour)
 /**
   * Gets Cell in grid from a given node
   */
-API::TwoDCell* HRICS_RRTPlan::getCellFromNode(Node* node)
+Move3D::TwoDCell* HRICS_RRTPlan::getCellFromNode(Node* node)
 {
     shared_ptr<Configuration> config = node->getConfiguration();
 

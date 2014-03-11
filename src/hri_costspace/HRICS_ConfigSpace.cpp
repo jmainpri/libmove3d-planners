@@ -16,17 +16,19 @@
 
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 
+#include "API/project.hpp"
+#include "API/Roadmap/graph.hpp"
+
 #include "P3d-pkg.h"
 #include "move3d-headless.h"
 #include "Planner-pkg.h"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 HRICS::HumanAwareMotionPlanner*	HRICS_MotionPLConfig = NULL;
 
@@ -257,8 +259,8 @@ void ConfigSpace::solveAStar(PlanState* start,PlanState* goal)
     */
     if( start->getCell()->getCost() < goal->getCell()->getCost() )
     {
-        API::AStar* search = new API::AStar(start);
-        vector<API::State*> path = search->solve(goal);
+        Move3D::AStar* search = new Move3D::AStar(start);
+        vector<Move3D::State*> path = search->solve(goal);
 
         if(path.size() == 0 )
         {
@@ -270,15 +272,15 @@ void ConfigSpace::solveAStar(PlanState* start,PlanState* goal)
 
         for (unsigned int i=0;i<path.size();i++)
         {
-            API::TwoDCell* cell = dynamic_cast<PlanState*>(path[i])->getCell();
+            Move3D::TwoDCell* cell = dynamic_cast<PlanState*>(path[i])->getCell();
             m2DPath.push_back( cell->getCenter() );
             m2DCellPath.push_back( cell );
         }
     }
     else
     {
-        API::AStar* search = new API::AStar(goal);
-        vector<API::State*> path = search->solve(start);
+        Move3D::AStar* search = new Move3D::AStar(goal);
+        vector<Move3D::State*> path = search->solve(start);
 
         if(path.size() == 0 )
         {

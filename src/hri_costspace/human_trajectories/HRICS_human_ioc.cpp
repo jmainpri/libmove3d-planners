@@ -6,6 +6,7 @@
 
 #include "API/project.hpp"
 
+using namespace Move3D;
 using namespace HRICS;
 using std::cout;
 using std::endl;
@@ -76,7 +77,7 @@ HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples,
     nb_way_points_ = 15;
     folder_ = "/home/jmainpri/workspace/move3d/assets/Collaboration/TRAJECTORIES/";
 
-    feature_matrix_name_ = "matlab/features.txt";
+    // feature_matrix_name_ = "matlab/features.txt";
     feature_fct_ = new HRICS::HumanTrajCostSpace( active, passive );
 
     original_vect_ = feature_fct_->getWeights();
@@ -130,9 +131,9 @@ void HumanIoc::setDemos( const std::vector<motion_t>& stored_motions )
     }
 }
 
-API::Trajectory HumanIoc::getTrajectoryFromMotion( const motion_t& m ) const
+Move3D::Trajectory HumanIoc::getTrajectoryFromMotion( const motion_t& m ) const
 {
-    API::Trajectory t( robot_ );
+    Move3D::Trajectory t( robot_ );
 
     for(int i=0;i<int(m.size());i++)
         t.push_back( m[i].second->copy() );
@@ -171,7 +172,7 @@ void HumanIoc::runSampling()
 
     // Get features of samples
     ioc.generateSamples( nb_samples_ );
-    std::vector< std::vector<API::Trajectory> > samples = ioc.getSamples();
+    std::vector< std::vector<Move3D::Trajectory> > samples = ioc.getSamples();
     std::vector< std::vector<FeatureVect> > phi_k( samples.size() );
     for( int d=0;d<int(samples.size());d++)
     {

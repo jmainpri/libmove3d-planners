@@ -1,19 +1,21 @@
 #ifndef HRICS_RRTEXPANSION_H
 #define HRICS_RRTEXPANSION_H
 
-#include "API/planningAPI.hpp"
 #include "Diffusion/Variants/Transition-RRT.hpp"
 #include "hri_costspace/Grid/HRICS_Grid.hpp"
+
+namespace HRICS
+{
 
 /**
   @ingroup HRICS
   @brief Special RRT Expansion method for the HRICS
   */
-class HRICS_rrtExpansion : public TransitionExpansion
+class HRICS_rrtExpansion : public Move3D::TransitionExpansion
 {
 public:
     HRICS_rrtExpansion();
-    HRICS_rrtExpansion(Graph* G);
+    HRICS_rrtExpansion(Move3D::Graph* G);
 
     /**
       * Initializes some variables for the expansion
@@ -24,42 +26,40 @@ public:
      /**
       * Sets the grid
       */
-    void setGrid(API::ThreeDGrid* grid) { _3DGrid = dynamic_cast<HRICS::Grid*>(grid); }
+    void setGrid(Move3D::ThreeDGrid* grid) { _3DGrid = dynamic_cast<HRICS::Grid*>(grid); }
 
      /**
       * Sets the cell path
       */
-    void setCellPath(std::vector<API::ThreeDCell*> cellPath);
+    void setCellPath(std::vector<Move3D::ThreeDCell*> cellPath);
 
     /**
       * Direction used in RRT one step
       */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getExpansionDirection(
-            Node* expandComp, Node* goalComp, bool samplePassive, Node*& directionNode);
+    Move3D::confPtr_t getExpansionDirection( Move3D::Node* expandComp, Move3D::Node* goalComp, bool samplePassive, Move3D::Node*& directionNode);
 
     /**
       * Configuration from the next cell along the 3dPath
       */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getConfigurationInNextCell(Node* node);
+    Move3D::confPtr_t getConfigurationInNextCell(Move3D::Node* node);
 
     /**
       * Adds a node to a conected component
       */
-    Node* addNode(Node* currentNode, LocalPath& path, double pathDelta,
-                  Node* directionNode, int& nbCreatedNodes);
+    Move3D::Node* addNode(Move3D::Node* currentNode, Move3D::LocalPath& path, double pathDelta, Move3D::Node* directionNode, int& nbCreatedNodes);
 
     /**
       * Checks it the cell is after the given cell on the
       * 3D path
       */
-    bool on3DPathAndAfter(API::ThreeDCell* cell);
+    bool on3DPathAndAfter(Move3D::ThreeDCell* cell);
 
 private:
     HRICS::Grid*             _3DGrid;
-    std::vector<API::ThreeDCell*>  _3DCellPath;
+    std::vector<Move3D::ThreeDCell*>  _3DCellPath;
 
-    API::ThreeDCell*               _LastForward;
-    API::ThreeDCell*               _LastBackward;
+    Move3D::ThreeDCell*               _LastForward;
+    Move3D::ThreeDCell*               _LastBackward;
 
     int         mIndexObjectDof;
 
@@ -69,5 +69,7 @@ private:
     double*                  _Box;
 
 };
+
+}
 
 #endif // HRICS_RRTEXPANSION_H

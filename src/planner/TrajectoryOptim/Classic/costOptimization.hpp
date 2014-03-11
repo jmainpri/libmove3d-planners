@@ -15,7 +15,7 @@
  * @ingroup Trajectory
  * @brief Genera Cost Optimization of a trajectory
  */
-namespace API 
+namespace Move3D 
 {
 class CostOptimization : public Smoothing
 {

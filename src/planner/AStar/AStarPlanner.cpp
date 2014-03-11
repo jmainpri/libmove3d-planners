@@ -3,11 +3,15 @@
 
 #include "AStarPlanner.hpp"
 
+#include "API/project.hpp"
 #include "API/ConfigSpace/configuration.hpp"
+#include "API/Search/AStar/AStar.hpp"
+
 #include "Grid/HRICS_Grid.hpp"
+
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 #include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
-#include "planEnvironment.hpp"
+#include "planner/planEnvironment.hpp"
 
 #include "Graphic-pkg.h"
 #include "P3d-pkg.h"
@@ -15,27 +19,29 @@
 
 //std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > path_to_draw;
 
+using namespace Move3D;
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace Eigen;
 
+MOVE3D_USING_SHARED_PTR_NAMESPACE
+
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 
-PlanGrid::PlanGrid(Robot* R, double pace, vector<double> env_size) : API::TwoDGrid( pace, env_size ), robot_(R)
+PlanGrid::PlanGrid(Robot* R, double pace, vector<double> env_size) : Move3D::TwoDGrid( pace, env_size ), robot_(R)
 {
     createAllCells();
     cout << "Number total of cells = " << _nbCellsX*_nbCellsY << endl;
 }
 
-API::TwoDCell* PlanGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y )
+Move3D::TwoDCell* PlanGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y )
 {
     Vector2i coord;
     coord[0] = x;
     coord[1] = y;
 
-    API::TwoDCell* newCell;
+    Move3D::TwoDCell* newCell;
 
     if (index == 0) {
         newCell = new PlanCell( 0, coord, _originCorner , this );
@@ -111,7 +117,7 @@ void PlanGrid::draw()
     if( c_max > 100)
         c_max = 100;
 
-    // cout << "c_min : " << c_min << " , c_max : " << c_max << endl;
+    cout << "c_min : " << c_min << " , c_max : " << c_max << endl;
 
     const double height = 0.0;
     // cout << "Drawing 2D Grid"  << endl;
@@ -159,7 +165,7 @@ void PlanGrid::draw()
 //---------------------------------------------------------------------------
 
 PlanCell::PlanCell(int i, Vector2i coord, Vector2d corner, PlanGrid* grid) :
-    API::TwoDCell(i,corner,grid),
+    Move3D::TwoDCell(i,corner,grid),
     coord_(coord),
     open_(false),
     closed_(false),
@@ -197,7 +203,10 @@ double PlanCell::getCost()
     }
     else
     {
-        return 1;
+        if( cost_is_computed_ )
+            return cost_;
+        else
+            return 0.0;
     }
 }
 
@@ -241,9 +250,9 @@ PlanState::PlanState( PlanCell* cell , PlanGrid* grid ) : grid_(grid), cell_(cel
 
 }
 
-vector<API::State*> PlanState::getSuccessors(API::State* s)
+vector<Move3D::State*> PlanState::getSuccessors(Move3D::State* s)
 {
-    vector<API::State*> newStates;
+    vector<Move3D::State*> newStates;
     // newStates.reserve(26);
 
     vector<int> remove(3);
@@ -300,7 +309,7 @@ bool PlanState::isValid()
     return cell_->isValid();
 }
 
-bool PlanState::equal(API::State* other)
+bool PlanState::equal(Move3D::State* other)
 {
     // bool equal(false);
     PlanState* state = dynamic_cast<PlanState*>(other);
@@ -350,27 +359,36 @@ void PlanState::print()
 
 }
 
-double PlanState::computeLength(API::State *parent)
+double PlanState::computeLength(Move3D::State *parent)
 {
     PlanState* preced = dynamic_cast<PlanState*>(parent);
+
+    double g;
 
     Vector2d pos1 = cell_->getCenter();
     Vector2d pos2 = preced->cell_->getCenter();
 
-    double g;
-    double dist = ( pos1 - pos2 ).norm();
 
-    if( ENV.getBool(Env::isCostSpace) ) {
-        g = preced->g() + cell_->getCost()*dist;
+    if( ENV.getBool(Env::isCostSpace) )
+    {
+        confPtr_t q1 = grid_->getRobot()->getNewConfig();
+        confPtr_t q2 = grid_->getRobot()->getNewConfig();
+        (*q1)[6] = pos1[0]; (*q2)[6] = pos2[0];
+        (*q1)[7] = pos1[1]; (*q2)[7] = pos2[1];
+        LocalPath path( q2, q1 );
+        g = preced->g() + path.cost();
     }
     else {
-        g = preced->g() + dist;
+        g = preced->g() + ( pos1 - pos2 ).norm();
+        cell_->setCost( g );
     }
     return g;
 }
 
-double PlanState::computeHeuristic( API::State *parent, API::State* goal )
+double PlanState::computeHeuristic( Move3D::State *parent, Move3D::State* goal )
 {
+//    return 0.0;
+
     if( !ENV.getBool(Env::isCostSpace) )
     {
         PlanState* state = dynamic_cast<PlanState*>(goal);
@@ -436,8 +454,8 @@ bool AStarPlanner::solveAStar( PlanState* start, PlanState* goal )
     // Change the way AStar is computed to go down
     if( start->getCell()->getCost() < goal->getCell()->getCost() )
     {
-        API::AStar* search = new API::AStar(start);
-        vector<API::State*> path = search->solve(goal);
+        Move3D::AStar* search = new Move3D::AStar(start);
+        vector<Move3D::State*> path = search->solve(goal);
 
         if(path.size() == 0 )
         {
@@ -449,15 +467,15 @@ bool AStarPlanner::solveAStar( PlanState* start, PlanState* goal )
 
         for (unsigned int i=0;i<path.size();i++)
         {
-            API::TwoDCell* cell = dynamic_cast<PlanState*>(path[i])->getCell();
+            Move3D::TwoDCell* cell = dynamic_cast<PlanState*>(path[i])->getCell();
             path_.push_back( cell->getCenter() );
             cell_path_.push_back( cell );
         }
     }
     else
     {
-        API::AStar* search = new API::AStar(goal);
-        vector<API::State*> path = search->solve(start);
+        Move3D::AStar* search = new Move3D::AStar(goal);
+        vector<Move3D::State*> path = search->solve(start);
 
         if(path.size() == 0 )
         {
@@ -531,7 +549,7 @@ bool AStarPlanner::computeAStarIn2DGrid( Vector2d source, Vector2d target )
     }
 }
 
-API::Trajectory* AStarPlanner::computeRobotTrajectory( confPtr_t source, confPtr_t target )
+Move3D::Trajectory* AStarPlanner::computeRobotTrajectory( confPtr_t source, confPtr_t target )
 {
     confPtr_t q = _Robot->getCurrentPos();
     (*q)[6] =0;
@@ -549,7 +567,7 @@ API::Trajectory* AStarPlanner::computeRobotTrajectory( confPtr_t source, confPtr
 
     if( computeAStarIn2DGrid( x1, x2 ) )
     {
-        API::Trajectory* traj = new API::Trajectory(_Robot);
+        Move3D::Trajectory* traj = new Move3D::Trajectory(_Robot);
 
         traj->push_back( source );
 
@@ -562,7 +580,7 @@ API::Trajectory* AStarPlanner::computeRobotTrajectory( confPtr_t source, confPtr
             traj->push_back( q );
         }
         traj->push_back( target );
-
+        traj->computeSubPortionIntergralCost( traj->getCourbe() );
         traj->replaceP3dTraj();
         _Robot->setAndUpdate(*q);
         return traj;

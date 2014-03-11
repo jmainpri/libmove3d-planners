@@ -2,12 +2,16 @@
 
 #include "HRICS_PlayMotion.hpp"
 #include "API/project.hpp"
+
 #include "planner/cost_space.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
+
 #include "p3d/env.hpp"
 
 #include <boost/bind.hpp>
+#include <iomanip>
 
+using namespace Move3D;
 using namespace HRICS;
 using std::cout;
 using std::endl;
@@ -188,7 +192,7 @@ void HumanTrajCostSpace::setPassiveConfig( const Configuration& q )
 
 void HumanTrajCostSpace::setPassiveTrajectory( const motion_t& motion )
 {
-    API::Trajectory t( human_passive_ );
+    Move3D::Trajectory t( human_passive_ );
 
     for(int i=0;i<int(motion.size());i++)
     {

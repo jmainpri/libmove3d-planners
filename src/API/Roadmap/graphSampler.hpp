@@ -10,6 +10,8 @@
 
 #include "API/Roadmap/graph.hpp"
 
+namespace Move3D {
+
 //! Sampler of noisy trajectories
 class graphSampler
 {
@@ -47,5 +49,7 @@ private:
     int vect_length_;
     Eigen::VectorXd tmp_noise_;
 };
+
+}
 
 #endif // GRAPHSAMPLER_HPP

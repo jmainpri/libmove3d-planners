@@ -16,6 +16,7 @@
 
 #include "Graphic-pkg.h"
 
+using namespace Move3D;
 using namespace HRICS;
 using std::cout;
 using std::endl;
@@ -38,7 +39,7 @@ bool HRICS_init_square_cost()
         cout << "add cost functions : " << "costSquares" << endl;
         global_PlanarCostFct = global_SquareCostFct;
         global_costSpace->addCost( "costSquares", boost::bind( &Squares::cost, global_SquareCostFct, _1) );
-        global_costSpace->addCost( "costSquaresJacobian", boost::bind( &Squares::jacobianCost, global_SquareCostFct, _1) );
+        global_costSpace->addCost( "costSquaresJacobian", boost::bind( &PlanarFeature::jacobianCost, global_SquareCostFct, _1) );
         // global_costSpace->setCost( "costSquares" );
         return true;
     }
@@ -63,23 +64,23 @@ void Square::draw() const
 // ------------------------------------------------------
 // ------------------------------------------------------
 
-Squares::Squares()
+Squares::Squares() : PlanarFeature()
 {
     // Uncomment to draw squares
-//    if( global_DrawModule )
-//    {
-//        global_DrawModule->addDrawFunction( "Squares", boost::bind( &Squares::draw, this) );
-//        global_DrawModule->enableDrawFunction( "Squares" );
-//    }
+    //    if( global_DrawModule )
+    //    {
+    //        global_DrawModule->addDrawFunction( "Squares", boost::bind( &Squares::draw, this) );
+    //        global_DrawModule->enableDrawFunction( "Squares" );
+    //    }
 }
 
 Squares::~Squares()
 {
     // Uncomment to draw squares
-//    if( global_DrawModule )
-//    {
-//        global_DrawModule->deleteDrawFunction( "Squares" );
-//    }
+    //    if( global_DrawModule )
+    //    {
+    //        global_DrawModule->deleteDrawFunction( "Squares" );
+    //    }
 }
 
 void Squares::initialize()
@@ -128,29 +129,6 @@ void Squares::initialize()
     active_dofs_[1] = 7;
 }
 
-FeatureVect Squares::getFeatures( const Configuration& q )
-{
-    FeatureVect features(Eigen::VectorXd::Zero(centers_.size()));
-
-    robot_->setAndUpdate(q);
-
-    // The factor distance when larger
-    const double factor_distance = 10.0;
-    const double factor_height = HriEnv->getDouble(HricsParam::ioc_spheres_power);
-
-    for( int i=0; i< int(active_features_.size()); i++ )
-    {
-        int k = active_features_[i];
-        double dist = distToSquare( *boxes_[k], q );
-        features[k] = pow( exp( -dist/factor_distance ), factor_height );
-        // cout << "features[" << k << "] = " << features[k] << endl;
-    }
-
-//    cout << "features.norm() : " << features.norm() << endl;
-
-    return features;
-}
-
 double Squares::getFeaturesJacobianMagnitude( const Configuration& q )
 {
     FeatureJacobian J = getFeaturesJacobian( q );
@@ -161,27 +139,6 @@ double Squares::getFeaturesJacobianMagnitude( const Configuration& q )
     // cout << magnitude << endl;
     // Maybe average the min and max coefficient
     return magnitude;
-}
-
-double Squares::jacobianCost(const Configuration& q)
-{
-//    return 1 / Feature::getFeaturesJacobianMagnitude( q );
-//    return exp(-10*Feature::getFeaturesJacobianMagnitude( q )); // 10 is for scaling TODO findout what to put here
-    FeatureJacobian J = getFeaturesJacobian( q );
-    FeatureVect f(w_.size());
-
-    if( f.size() != J.rows() )
-    {
-        cout << __PRETTY_FUNCTION__ << endl;
-        cout << "ERROR IN OPTIMAL WEIGHTS COMPUTATION" << endl;
-        return f.norm();
-    }
-
-    for( int i=0;i<J.rows();i++)
-    {
-        f(i) = w_(i) * J.row(i).norm();
-    }
-    return  exp(-10*f.norm());
 }
 
 void Squares::produceDerivativeFeatureCostMap(int ith)
@@ -207,7 +164,7 @@ void Squares::produceDerivativeFeatureCostMap(int ith)
     }
 
     std::stringstream ss;
-    ss.str(""); ss << "matlab/cost_maps/cost_jac_" << std::setw(2) << std::setfill( '0' ) << ith << ".txt";
+    ss.str(""); ss << cost_map_folder + "cost_jac_" << std::setw(3) << std::setfill( '0' ) << ith << ".txt";
     move3d_save_matrix_to_file( mat0, ss.str() );
 }
 
@@ -220,16 +177,16 @@ void Squares::computeSize()
     for( int i=0; i< int(centers_.size()); i++ )
     {
         p3d_obj* o = p3d_get_robot_body_by_name( centers_[i]->getRobotStruct(), "body" );
-//        cout << o->name << " : " << o->np << " , ";
-//        for(int j=0;j<o->np;j++)
-//            cout << o->pol[j]->entity_type << " , ";
+        //        cout << o->name << " : " << o->np << " , ";
+        //        for(int j=0;j<o->np;j++)
+        //            cout << o->pol[j]->entity_type << " , ";
 
-//        cout << o->name ;
-//        cout << "( " ;
-//        cout << o->pol[0]->primitive_data->x_length << " , ";
-//        cout << o->pol[0]->primitive_data->y_length ; // << " , ";
-//        cout << o->pol[0]->primitive_data->z_length ;
-//        cout << " )" ;
+        //        cout << o->name ;
+        //        cout << "( " ;
+        //        cout << o->pol[0]->primitive_data->x_length << " , ";
+        //        cout << o->pol[0]->primitive_data->y_length ; // << " , ";
+        //        cout << o->pol[0]->primitive_data->z_length ;
+        //        cout << " )" ;
 
         Eigen::Vector3d p = centers_[i]->getJoint(1)->getVectorPos();
 
@@ -243,25 +200,25 @@ void Squares::computeSize()
 
         boxes_.push_back( new Square( center, size ) );
 
-//        cout << "( " ;
-//        cout << o->pol[0]->pos0[0][3] << " , ";
-//        cout << o->pol[0]->pos0[1][3] << " , ";
-//        cout << o->pol[0]->pos0[2][3] ;
-//        cout << " )" ;
+        //        cout << "( " ;
+        //        cout << o->pol[0]->pos0[0][3] << " , ";
+        //        cout << o->pol[0]->pos0[1][3] << " , ";
+        //        cout << o->pol[0]->pos0[2][3] ;
+        //        cout << " )" ;
 
-//        cout << "( " ;
-//        cout << o->jnt->abs_pos[0][3] << " , ";
-//        cout << o->jnt->abs_pos[1][3] << " , ";
-//        cout << o->jnt->abs_pos[2][3] ;
-//        cout << " )" ;
+        //        cout << "( " ;
+        //        cout << o->jnt->abs_pos[0][3] << " , ";
+        //        cout << o->jnt->abs_pos[1][3] << " , ";
+        //        cout << o->jnt->abs_pos[2][3] ;
+        //        cout << " )" ;
 
-//        cout << "( " ;
-//        cout << p[0] << " , ";
-//        cout << p[1] ; // << " , ";
-//        cout << p[2] ;
-//        cout << " )" ;
+        //        cout << "( " ;
+        //        cout << p[0] << " , ";
+        //        cout << p[1] ; // << " , ";
+        //        cout << p[2] ;
+        //        cout << " )" ;
 
-//        cout << endl;
+        //        cout << endl;
     }
 }
 
@@ -374,6 +331,30 @@ double Squares::pointToLineSegmentDistance(const Eigen::VectorXd& p, const Eigen
             return d2;
         }
     }
+}
+
+FeatureVect Squares::getFeatures( const Configuration& q, std::vector<int> active_features )
+{
+    FeatureVect features(Eigen::VectorXd::Zero(centers_.size()));
+
+    robot_->setAndUpdate(q);
+
+    // The factor distance when larger
+    const double factor_distance = 10.0;
+    const double factor_height = HriEnv->getDouble(HricsParam::ioc_spheres_power);
+    const std::vector<int>& active_features_sq = active_features.empty() ? active_features_ : active_features ;
+
+    for( int i=0; i< int(active_features_sq.size()); i++ )
+    {
+        int k = active_features_sq[i];
+        double dist = distToSquare( *boxes_[k], q );
+        features[k] = std::pow( std::exp( -dist/factor_distance ), factor_height );
+        // cout << "features[" << k << "] = " << features[k] << endl;
+    }
+
+    //    cout << "features.norm() : " << features.norm() << endl;
+
+    return features;
 }
 
 void Squares::draw()

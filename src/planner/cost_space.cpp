@@ -21,10 +21,12 @@
 
 extern void* GroundCostObj;
 
-CostSpace* global_costSpace(NULL);
-
+using namespace Move3D;
 using namespace std;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
+
+CostSpace* Move3D::global_costSpace(NULL);
 
 //using std::string;
 //------------------------------------------------------------------------------
@@ -185,10 +187,10 @@ double CostSpace::deltaStepCost(double cost1, double cost2, double length)
         case cs_visibility:
         {
             double powerOnIntegral = 1.0;
-            double cost = pow(((cost1 + cost2)/2),powerOnIntegral)*length;
+            double cost = std::pow( ( (cost1 + cost2) / 2 ), powerOnIntegral ) * length;
 
             // Warning, length added for dynamic shortcut (HRI)
-            cost += epsilon*length;
+            // cost += epsilon*length;
 
             return cost;
         }
@@ -432,14 +434,14 @@ double CostSpace::cost(LocalPath& path, int& nb_test)
 // Basic cost functions
 //----------------------------------------------------------------------
 
-double computeFlatCost(Configuration& conf)
+double Move3D::computeFlatCost(Configuration& conf)
 {
     return 1.0;
 }
 
 extern void* GroundCostObj;
 
-double computeIntersectionWithGround(Configuration& conf)
+double Move3D::computeIntersectionWithGround(Configuration& conf)
 {
     double cost(0);
     if(GroundCostObj)
@@ -453,7 +455,7 @@ double computeIntersectionWithGround(Configuration& conf)
     return(cost);
 }
 
-double computeDistanceToObstacles(Configuration& conf)
+double Move3D::computeDistanceToObstacles(Configuration& conf)
 {
     if( conf.isInCollision() )
     {
@@ -465,7 +467,7 @@ double computeDistanceToObstacles(Configuration& conf)
     return cost;
 }
 
-double computeInCollisionCost(Configuration& conf)
+double Move3D::computeInCollisionCost(Configuration& conf)
 {
     Robot* robot = conf.getRobot();
     shared_ptr<Configuration> qActual = robot->getCurrentPos();
@@ -481,7 +483,7 @@ double computeInCollisionCost(Configuration& conf)
     return cost;
 }
 
-double computeCollisionSpaceCost(Configuration& conf)
+double Move3D::computeCollisionSpaceCost(Configuration& conf)
 {
     double cost = 0.1;
     if( global_optimizer.get() != NULL ) {
@@ -490,7 +492,7 @@ double computeCollisionSpaceCost(Configuration& conf)
     return cost;
 }
 
-double computeLocalpathKinematicCost(p3d_rob* rob, p3d_localpath* LP)
+double Move3D::computeLocalpathKinematicCost(p3d_rob* rob, p3d_localpath* LP)
 {
     if (LP == NULL) {
         return 1;

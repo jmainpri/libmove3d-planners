@@ -48,13 +48,15 @@
 
 extern void* GroundCostObj;
 
-Graph* API_activeGraph = NULL;
+using namespace Move3D;
 
 using std::cout;
 using std::cerr;
 using std::endl;
 
 MOVE3D_USING_SHARED_PTR_NAMESPACE
+
+Graph* Move3D::API_activeGraph = NULL;
 
 const bool graph_debug_import_export = false;
 
@@ -64,7 +66,7 @@ const bool graph_debug_import_export = false;
 //! Constructor from graph and robot
 //! @param R the robot for which the graph is created
 //! @param G the old graph structure
-Graph::Graph(Robot* R, p3d_graph* G)
+Graph::Graph( Robot* R, p3d_graph* G )
 {
     robot_ = R;
 
@@ -1972,7 +1974,7 @@ bool Graph::checkAllEdgesValid()
 //---------------------------------------------------------------------
 //---------------------------------------------------------------------
 // Warning Broken, WIP
-API::Trajectory* Graph::extractDijkstraShortestPathsTraj( confPtr_t qi, confPtr_t qf )
+Move3D::Trajectory* Graph::extractDijkstraShortestPathsTraj( confPtr_t qi, confPtr_t qf )
 {
     boost::property_map<BGL_Graph, boost::edge_weight_t>::type weightmap = boost::get(boost::edge_weight, boost_graph_);
     BGL_EdgeDataMapT EdgeData = boost::get(EdgeData_t(), boost_graph_);
@@ -2174,7 +2176,7 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( confPtr_t qi, confPtr_t
 }
 
 //! This function works for tree type of graphs
-API::Trajectory* Graph::extractBestAStarPathSoFar( confPtr_t qi, confPtr_t qf )
+Move3D::Trajectory* Graph::extractBestAStarPathSoFar( confPtr_t qi, confPtr_t qf )
 {
     // Start needs to be in the graph
     // TODO decide which one to use
@@ -2202,13 +2204,13 @@ API::Trajectory* Graph::extractBestAStarPathSoFar( confPtr_t qi, confPtr_t qf )
 
 // Searches for the shortest path 
 // bewteen the configuration qi and qf which has to be in the same connected component
-API::Trajectory* Graph::extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf )
+Move3D::Trajectory* Graph::extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf )
 {
     std::vector<Node*> nodes = extractAStarShortestNodePaths( qi, qf );
     return trajectoryFromNodeVector( nodes );
 }
 
-API::Trajectory* Graph::trajectoryFromNodeVector( const std::vector<Node*>& nodes )
+Move3D::Trajectory* Graph::trajectoryFromNodeVector( const std::vector<Node*>& nodes )
 {
     if( nodes.size() < 2 ) {
         cout << "No path in " << __PRETTY_FUNCTION__ << endl;
@@ -2218,7 +2220,7 @@ API::Trajectory* Graph::trajectoryFromNodeVector( const std::vector<Node*>& node
     cout << "Trajectory has " << nodes.size() << " nodes" << endl;
 
     // Build the trajectory
-    API::Trajectory* traj = new API::Trajectory( robot_ );
+    Move3D::Trajectory* traj = new Move3D::Trajectory( robot_ );
 
     for(int i=0; i<int(nodes.size()-1); i++)
     {
@@ -2291,7 +2293,7 @@ std::pair<bool, std::vector<Node*> > Graph::extractBestNodePathSoFar( confPtr_t 
 }
 
 // This function works for tree type of graphs
-API::Trajectory* Graph::extractBestTrajSoFar( confPtr_t qi, confPtr_t qf )
+Move3D::Trajectory* Graph::extractBestTrajSoFar( confPtr_t qi, confPtr_t qf )
 {  
     // Extract the nodes trajectory
     std::pair<bool, std::vector<Node*> > traj_nodes = extractBestNodePathSoFar( qi, qf );
@@ -2312,7 +2314,7 @@ API::Trajectory* Graph::extractBestTrajSoFar( confPtr_t qi, confPtr_t qf )
 
 // This function extracts a trajectory
 // it first converts the grapgh to a p3d_graph
-API::Trajectory* Graph::extractBestTraj( confPtr_t qi, confPtr_t qf )
+Move3D::Trajectory* Graph::extractBestTraj( confPtr_t qi, confPtr_t qf )
 {  	
     //  cout << "----------------------------------------------" << endl;
     //	cout << "Extracting the trajectory" << endl;
@@ -2424,7 +2426,7 @@ API::Trajectory* Graph::extractBestTraj( confPtr_t qi, confPtr_t qf )
 
     if( ConnectRes && trajPt)
     {
-        API::Trajectory* traj = new API::Trajectory(robot_,trajPt);
+        Move3D::Trajectory* traj = new Move3D::Trajectory(robot_,trajPt);
         //cout << "Trajectory cost  = " << traj->cost() << endl;
         return traj;
     }

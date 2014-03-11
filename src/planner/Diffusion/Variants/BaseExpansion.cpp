@@ -8,14 +8,17 @@
 
 #include "BaseExpansion.hpp"
 
-#include "API/planningAPI.hpp"
-
-#include "Roadmap/compco.hpp"
+#include "API/ConfigSpace/localpath.hpp"
+#include "API/Roadmap/compco.hpp"
+#include "API/Roadmap/node.hpp"
+#include "API/Roadmap/graph.hpp"
 
 #include "P3d-pkg.h"
 #include "Planner-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 BaseExpansion::BaseExpansion() :

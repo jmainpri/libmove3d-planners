@@ -18,8 +18,8 @@
 #include "API/Grids/ThreeDGrid.hpp"
 #include "API/Grids/PointCloud.hpp"
 
-extern API::BaseGrid* API_activeGrid;
-extern API::TwoDGrid* API_activeRobotGrid;
+extern Move3D::BaseGrid* API_activeGrid;
+extern Move3D::TwoDGrid* API_activeRobotGrid;
 
 extern Eigen::Vector3d global_DrawnSphere;
 

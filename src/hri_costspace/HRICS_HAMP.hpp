@@ -8,9 +8,9 @@
 #ifndef HRITASKSPACECOST_HPP_
 #define HRITASKSPACECOST_HPP_
 
+#include "API/Device/robot.hpp"
 
 #include <libmove3d/hri/hri.h>
-#include "API/planningAPI.hpp"
 
 /**
   @ingroup HRICS
@@ -89,7 +89,7 @@ namespace HRICS
             /**
              *
              */
-            Robot* _Robot;
+            Move3D::Robot* _Robot;
 
             hri_bitmapset* _Bitmap;
 

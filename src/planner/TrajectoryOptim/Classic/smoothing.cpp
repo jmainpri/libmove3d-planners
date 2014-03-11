@@ -22,7 +22,7 @@
 using namespace std;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
-using namespace API;
+using namespace Move3D;
 
 std::vector< std::pair<double,double> > traj_convergence_with_time;
 
@@ -895,7 +895,7 @@ void Smoothing::computeStats()
   for (int i=0; i<int(m_convergence_trajs.size()); i++) 
   {
     double time = m_convergence_trajs[i].first;
-    API::Trajectory traj( m_convergence_trajs[i].second );
+    Move3D::Trajectory traj( m_convergence_trajs[i].second );
     
     TrajectoryStatistics stat;
     traj.costStatistics( stat );

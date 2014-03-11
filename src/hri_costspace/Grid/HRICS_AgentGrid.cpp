@@ -18,12 +18,11 @@
 #include "gridsAPI.hpp"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
+using namespace Move3D;
 using namespace Eigen;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 AgentCell::AgentCell() :
     m_Open(false),
@@ -40,7 +39,7 @@ AgentCell::AgentCell() :
 }
 
 AgentCell::AgentCell(int i, Vector3i coord , Vector3d corner, AgentGrid* grid) :
-    API::ThreeDCell(i,corner,grid),
+    Move3D::ThreeDCell(i,corner,grid),
     m_Open(false),
     m_Closed(false),
     m_IsCostComputed(false),
@@ -620,14 +619,14 @@ void AgentCell::draw(bool transform)
 //--------------------------------------------------------------------------
 
 AgentGrid::AgentGrid() :
-    API::ThreeDGrid(),
+    Move3D::ThreeDGrid(),
     m_firstDisplay(true)
 {
 
 }
 
 AgentGrid::AgentGrid( Robot* robot, Distance* distCostSpace, Visibility* VisiCostSpace, Natural* NatuCostSpace ) : 
-    API::ThreeDGrid(),
+    Move3D::ThreeDGrid(),
     m_Robot(robot),
     m_DistanceCostSpace(distCostSpace),
     m_VisibilityCostSpace(VisiCostSpace),
@@ -651,7 +650,7 @@ AgentGrid::AgentGrid(vector<int> size) :
 //! @param Natural, the functions used to compute the comfort of the agen in a reaching posture
 AgentGrid::AgentGrid(double pace, vector<double> envSize, 
                      Robot* robot, Distance* distCostSpace,Visibility* VisiCostSpace, Natural* NatuCostSpace) :
-    API::ThreeDGrid(pace,envSize),
+    Move3D::ThreeDGrid(pace,envSize),
     m_Robot(robot),
     m_DistanceCostSpace(distCostSpace),
     m_VisibilityCostSpace(VisiCostSpace),
@@ -668,7 +667,7 @@ AgentGrid::AgentGrid(double pace, vector<double> envSize,
 //! @brief Creates a copy of a given grid
 //! @param the agent grid to be copied
 AgentGrid::AgentGrid(const AgentGrid& grid) :
-    API::ThreeDGrid(grid),
+    Move3D::ThreeDGrid(grid),
     m_NaturalCostSpace(grid.m_NaturalCostSpace),
     m_firstDisplay(true)
 {	
@@ -693,7 +692,7 @@ AgentGrid::AgentGrid(const AgentGrid& grid) :
 //! @param integer x position in the grid
 //! @param integer y position in the grid
 //! @param integer z position in the grid
-API::ThreeDCell* AgentGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z )
+Move3D::ThreeDCell* AgentGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z )
 {
     Vector3i pos;
     pos[0] = x; pos[1] = y; pos[2] = z;

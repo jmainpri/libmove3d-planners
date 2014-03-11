@@ -21,12 +21,14 @@
 #include "Collision-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 /*!
  * Constructor
  */
-TreePlanner::TreePlanner(Robot* R, Graph* G) :
+TreePlanner::TreePlanner( Move3D::Robot* R, Move3D::Graph* G ) :
     Planner(R,G),
     m_nbConscutiveFailures(0),
     m_nbExpansion(0),

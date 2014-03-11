@@ -17,11 +17,17 @@ struct traj;
 #endif
 
 /**
+ * @ingroup Trajectory
+ * @brief Trajectory witch is a vector of local paths
+ */
+namespace Move3D
+{
+/**
  * @ingroup CPP_API
  * @defgroup Trajectory
  */
 
-struct TrajectoryStatistics 
+struct TrajectoryStatistics
 {
     double length;
     double max;
@@ -32,12 +38,6 @@ struct TrajectoryStatistics
     bool is_valid;
 };
 
-/**
- * @ingroup Trajectory
- * @brief Trajectory witch is a vector of local paths
- */
-namespace API 
-{
 class Trajectory
 {
 public:
@@ -92,10 +92,10 @@ public:
     double collisionCost() const;
     
     std::vector< std::pair<double,double > > getCostProfile();
-    double computeSubPortionIntergralCost(std::vector<LocalPath*>& portion);
+    double computeSubPortionIntergralCost(const std::vector<LocalPath*>& portion);
     double computeSubPortionCost(const std::vector<LocalPath*>& portion) const;
     double computeSubPortionMaxCost(std::vector<LocalPath*>& portion);
-    double ReComputeSubPortionCost(std::vector<LocalPath*>& portion, int& nb_cost_tests);
+    double reComputeSubPortionCost(std::vector<LocalPath*>& portion, int& nb_cost_tests);
     double computeSubPortionCostVisib( std::vector<LocalPath*>& portion );
     double costOfPortion(double param1,double param2);
     double extractCostPortion(double param1, double param2);
@@ -134,9 +134,9 @@ public:
     void resetIsValid();
 
     void 	updateRange();
-    double computeSubPortionRange(const std::vector<LocalPath*>& portion) const;
+    double  computeSubPortionRange(const std::vector<LocalPath*>& portion) const;
 
-    bool        replaceP3dTraj() const;
+    bool    replaceP3dTraj() const;
     traj* 	replaceP3dTraj(traj* trajPt) const;
     traj* 	replaceHumanP3dTraj(Robot*rob, traj* trajPt);
 
@@ -145,7 +145,7 @@ public:
 
     void printAllLocalpathCost();
     void draw(int nbKeyFrame);
-    void print();
+    void print() const;
 
     int meanCollTest();
 
@@ -223,8 +223,8 @@ private:
 
 //#if defined( QT_LIBRARY ) 
 #include <vector>
-namespace API { class Trajectory; }
-extern std::vector<API::Trajectory> global_trajToDraw;
+namespace Move3D { class Trajectory; }
+extern std::vector<Move3D::Trajectory> global_trajToDraw;
 void draw_traj_debug();
 //#endif
 

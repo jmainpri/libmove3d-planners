@@ -3,32 +3,34 @@
 
 #include "HRICS_WorkspaceOccupancy.hpp"
 
-double HRICS_getPredictionOccupancyCost(Configuration& q);
+double HRICS_getPredictionOccupancyCost(Move3D::Configuration& q);
 
 namespace HRICS
 {
+
 class HumanPredictionCostSpace {
 
 public:
-    HumanPredictionCostSpace( Robot* robot, WorkspaceOccupancyGrid* occup_grid);
+    HumanPredictionCostSpace( Move3D::Robot* robot, WorkspaceOccupancyGrid* occup_grid);
     ~HumanPredictionCostSpace();
 
     void draw();
 
-    double getCost(Configuration& q) const;
-    double getCostFromActiveJoints(Configuration& q) const;
-    double getCurrentOccupationCost(Configuration& q) const;
+    double getCost( Move3D::Configuration& q ) const;
+    double getCostFromActiveJoints( Move3D::Configuration& q ) const;
+    double getCurrentOccupationCost( Move3D::Configuration& q ) const;
 
 private:
     void draw_sampled_points();
     void sampleRobotPoints();
     void setActiveJoints();
 
-    Robot* m_robot;
+    Move3D::Robot* m_robot;
     WorkspaceOccupancyGrid* m_ws_occupancy;
-    BodySurfaceSampler* m_surface_sampler;
+    Move3D::BodySurfaceSampler* m_surface_sampler;
     std::vector<int> m_active_joints;
 };
+
 }
 
 extern HRICS::HumanPredictionCostSpace* global_humanPredictionCostSpace;

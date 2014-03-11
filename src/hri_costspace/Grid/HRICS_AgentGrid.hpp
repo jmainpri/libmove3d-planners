@@ -20,7 +20,7 @@ namespace HRICS
 {
 class AgentGrid;
 
-class AgentCell : public API::ThreeDCell
+class AgentCell : public Move3D::ThreeDCell
 {
 public:
     AgentCell();
@@ -103,7 +103,7 @@ private:
 
     unsigned int m_NbDirections;
 
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_QStored;
+    Move3D::confPtr_t m_QStored;
 
     GLint m_list;
 };
@@ -113,21 +113,21 @@ class Distance;
 class Visibility;
 class Natural;
 
-class AgentGrid : public API::ThreeDGrid
+class AgentGrid : public Move3D::ThreeDGrid
 {
 public:
     AgentGrid();
-    AgentGrid( Robot* robot, Distance* distCostSpace,Visibility* VisiCostSpace, Natural* NatuCostSpace );
+    AgentGrid( Move3D::Robot* robot, Distance* distCostSpace,Visibility* VisiCostSpace, Natural* NatuCostSpace );
     AgentGrid( std::vector<int> size );
     AgentGrid( double pace, std::vector<double> envSize,
-               Robot* robot, Distance* distCostSpace,Visibility* VisiCostSpace, Natural* NatuCostSpace);
+               Move3D::Robot* robot, Distance* distCostSpace,Visibility* VisiCostSpace, Natural* NatuCostSpace);
     AgentGrid( const AgentGrid& grid );
 
     ~AgentGrid();
 
-    API::ThreeDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z );
+    Move3D::ThreeDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z );
 
-    Robot*        getRobot();
+    Move3D::Robot*        getRobot();
 
     Distance*     getDistance();
     Visibility*   getVisibility();
@@ -158,23 +158,23 @@ public:
 
 private:
 
-    Robot*                            m_Robot;
+    Move3D::Robot*                    m_Robot;
 
     double                            m_Radius;
 
     Distance*                         m_DistanceCostSpace;
     Visibility*                       m_VisibilityCostSpace;
-    Natural*													m_NaturalCostSpace;
+    Natural*                          m_NaturalCostSpace;
 
     std::vector<AgentCell*>           m_DangerCells;
     std::vector<AgentCell*>           m_VisibilityCells;
     std::vector<AgentCell*>           m_ReachableCells;
     std::vector<AgentCell*>           m_CombinedCells;
 
-    bool                                m_firstDisplay;
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_ActualConfig;
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_LastConfig;
-    Eigen::Transform3d                  m_RobotOriginPos;
+    bool                              m_firstDisplay;
+    Move3D::confPtr_t                 m_ActualConfig;
+    Move3D::confPtr_t                 m_LastConfig;
+    Eigen::Transform3d                m_RobotOriginPos;
 
 };
 }

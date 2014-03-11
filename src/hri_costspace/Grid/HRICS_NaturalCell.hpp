@@ -10,15 +10,13 @@
 #ifndef HRICS_NATURALCELL_H_
 #define HRICS_NATURALCELL_H_
 
-#include "API/planningAPI.hpp"
-
 #include "HRICS_NaturalGrid.hpp"
 
 #include <libmove3d/include/Graphic-pkg.h>
 
 namespace HRICS
 {
-class NaturalCell : public API::ThreeDCell
+class NaturalCell : public Move3D::ThreeDCell
 {
 
 public:
@@ -93,7 +91,7 @@ private:
 
     unsigned int m_NbDirections;
 
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_QStored;
+    Move3D::confPtr_t m_QStored;
 
     GLint m_list;
 };

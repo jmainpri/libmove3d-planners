@@ -14,7 +14,7 @@ enum planner_t {
 class MultiplePlanners
 {
 public:
-    MultiplePlanners(Robot* robot);
+    MultiplePlanners( Move3D::Robot* robot);
     ~MultiplePlanners() { }
 
     bool run();
@@ -24,9 +24,11 @@ public:
 
     void initializeNoisy();
 
-    const std::vector<API::Trajectory>& getBestTrajs() { return best_traj_; }
+    const std::vector<Move3D::Trajectory>& getBestTrajs() { return best_traj_; }
+    const std::vector<Move3D::Trajectory>& getAllTrajs();
     void setPlannerType( planner_t planner ) { planner_type_ = planner; }
     void clearTrajs() { best_traj_.clear(); }
+    void setStompInit( const Move3D::Trajectory& t ) { init_stomp_ = t; }
 
     void draw();
 
@@ -36,9 +38,11 @@ private:
     bool runAStar();
     bool runRRT();
 
-    Robot* robot_;
-    std::vector<API::Trajectory> best_traj_;
+    Move3D::Robot* robot_;
+    std::vector<Move3D::Trajectory> best_traj_;
+    std::vector<Move3D::Trajectory> all_traj_;
     planner_t planner_type_;
+    Move3D::Trajectory init_stomp_;
 };
 
 }

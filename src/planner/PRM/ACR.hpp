@@ -5,9 +5,13 @@
 /**
   @ingroup PRM
 
-	\brief Classe représentant l'algorithme ACR
-	@author Florian Pilardeau,B90,6349 <fpilarde@jolimont>
+    \brief Classe représentant l'algorithme ACR
+    @author Florian Pilardeau,B90,6349 <fpilarde@jolimont>
 */
+
+namespace Move3D
+{
+
 class ACR : public PRM
 {
 public:
@@ -30,7 +34,8 @@ public:
      * @return le nombre de Node ajoutés au Graph
      */
     void expandOneStep();
-
 };
+
+}
 
 #endif

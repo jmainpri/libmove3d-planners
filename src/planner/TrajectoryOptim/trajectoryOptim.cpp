@@ -38,6 +38,7 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 
+using namespace Move3D;
 using namespace std;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
@@ -100,7 +101,7 @@ static bool m_use_iteration_limit=false;
 static double m_max_iteration;
 
 static bool m_use_external_trajectory=false;
-static API::Trajectory m_external_trajectory;
+static Move3D::Trajectory m_external_trajectory;
 
 static bool m_discretize=false;
 static double m_discretization=0.0;
@@ -317,7 +318,7 @@ bool traj_optim_switch_cartesian_mode(bool cartesian) {
 //! it generates a straigt line between the two configuration init 
 //! and goal
 // --------------------------------------------------------
-API::Trajectory traj_optim_create_sraight_line_traj()
+Move3D::Trajectory traj_optim_create_sraight_line_traj()
 {
     if (!m_robot) {
         cout << "robot not initialized in file "
@@ -338,7 +339,7 @@ API::Trajectory traj_optim_create_sraight_line_traj()
     confs[0] = q_init;
     confs[1] = q_goal;
 
-    API::Trajectory T( confs );
+    Move3D::Trajectory T( confs );
 
     return T;
 }
@@ -444,7 +445,7 @@ bool traj_optim_generate_pointsOnTraj()
     if ( m_robot == NULL )
         m_robot = global_Project->getActiveScene()->getActiveRobot();
 
-    API::Trajectory traj = m_robot->getCurrentTraj();
+    Move3D::Trajectory traj = m_robot->getCurrentTraj();
 
     int nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
     int nb_via = traj.getNbOfViaPoints()-2;
@@ -457,7 +458,7 @@ bool traj_optim_generate_pointsOnTraj()
 
     int nb_points_per_via = ceil( nb_points/nb_via );
 
-    API::Trajectory new_traj( m_robot );
+    Move3D::Trajectory new_traj( m_robot );
 
     double param=0.0;
     double delta = 0.0;
@@ -490,7 +491,7 @@ bool traj_optim_generate_softMotion()
     if( !traj_optim_set_MultiLP() )
         return false;
 
-    API::Trajectory T = m_robot->getCurrentTraj();
+    Move3D::Trajectory T = m_robot->getCurrentTraj();
 
     if( T.isEmpty() )
     {
@@ -511,7 +512,7 @@ bool traj_optim_generate_softMotion()
     p3d_multiLocalPath_set_groupToPlan(m_robot->getRobotStruct(), m_UpBodyMLP, 1, FALSE);
     smTraj.clear();
 
-    API::Trajectory TSaved = T;
+    Move3D::Trajectory TSaved = T;
 
     //  p3d_traj * trajPt
     //  bool param_write_file
@@ -533,7 +534,7 @@ bool traj_optim_generate_softMotion()
     p3d_multiLocalPath_disable_all_groupToPlan(m_robot->getRobotStruct(), FALSE);
     p3d_multiLocalPath_set_groupToPlan(m_robot->getRobotStruct(), m_UpBodyMLP, 1, FALSE);
 
-    API::Trajectory newT(m_robot);
+    Move3D::Trajectory newT(m_robot);
     cout << "delta = " << delta << endl;
 
     double t = 0.0;
@@ -1310,7 +1311,7 @@ bool traj_optim_initScenario()
 //!
 //! Get Initial trajectory
 // --------------------------------------------------------
-bool traj_optim_InitTraj(API::Trajectory& T)
+bool traj_optim_InitTraj(Move3D::Trajectory& T)
 {
     if( !m_init )
     {
@@ -1358,7 +1359,7 @@ bool traj_optim_InitTraj(API::Trajectory& T)
 // --------------------------------------------------------
 bool traj_optim_runChomp()
 {
-    API::Trajectory T(m_robot);
+    Move3D::Trajectory T(m_robot);
 
     if( !traj_optim_InitTraj(T) ){
         return false;
@@ -1397,7 +1398,7 @@ bool traj_optim_initStomp()
 {
     cout << "----------------------------------" << endl;
     cout << " Init Stomp ----------------------" << endl;
-    API::Trajectory T(m_robot);
+    Move3D::Trajectory T(m_robot);
 
     if( !traj_optim_InitTraj(T) )
     {
@@ -1503,7 +1504,7 @@ bool traj_optim_runStomp( int runId )
     return true;
 }
 
-bool traj_optim_runStompNoInit( int runId, const API::Trajectory& traj )
+bool traj_optim_runStompNoInit( int runId, const Move3D::Trajectory& traj )
 {
     cout << "run stomp no init" << endl;
 
@@ -1537,13 +1538,13 @@ bool traj_optim_runStompNoReset(int runId)
 {
     traj_optim_switch_cartesian_mode( false );
 
-    API::Trajectory traj( m_robot );
+    Move3D::Trajectory traj( m_robot );
 
     if( !traj_optim_InitTraj( traj ) ){
         return false;
     }
 
-    //  API::Trajectory traj = m_robot->getCurrentTraj();
+    //  Move3D::Trajectory traj = m_robot->getCurrentTraj();
     return traj_optim_runStompNoInit( runId, traj );
 }
 
@@ -1574,7 +1575,7 @@ void traj_optim_set_use_extern_trajectory( bool use )
     m_use_external_trajectory = use;
 }
 
-void traj_optim_set_extern_trajectory( const API::Trajectory& traj )
+void traj_optim_set_extern_trajectory( const Move3D::Trajectory& traj )
 {
     m_external_trajectory = traj;
 }

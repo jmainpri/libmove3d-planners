@@ -14,6 +14,9 @@
 
 #include "API/Trajectory/trajectory.hpp"
 
+namespace Move3D
+{
+
 class CostmapPlanner : public TreePlanner
 {
 public:
@@ -58,7 +61,7 @@ public:
 	/**
 	 * Returns the trajectory in the graph and compute cost
 	 */
-	API::Trajectory* getTrajectoryAndComputeCost();
+	Move3D::Trajectory* getTrajectoryAndComputeCost();
 	
 	/**
 	 * Expand One Step
@@ -83,5 +86,7 @@ private:
 	std::vector<double> m_GainOfIterations;
 	
 };
+
+}
 
 #endif

@@ -11,9 +11,6 @@
 #include "API/Device/joint.hpp"
 #include "API/ConfigSpace/configuration.hpp"
 
-class Scene;
-
-namespace API { class Trajectory; }
 
 #ifndef _DEVICE_H
 struct rob;
@@ -23,6 +20,11 @@ struct jnt;
 #ifndef _TRAJ_H
 struct traj;
 #endif
+
+namespace Move3D {
+
+class Scene;
+class Trajectory;
 
 /**
  * @ingroup CPP_API
@@ -68,12 +70,12 @@ public:
     /**
      * Associate an active scene to the robot
      */
-    void setActiveScene(Scene* sc) { m_ActiveScene = sc; }
+    void setActiveScene(Move3D::Scene* sc) { m_ActiveScene = sc; }
 
     /**
      * Returns the active scene involving the robot
      */
-    Scene* getActiveScene() { return m_ActiveScene; }
+    Move3D::Scene* getActiveScene() { return m_ActiveScene; }
 
     /**
      * Gets traj associated with Robot
@@ -84,7 +86,7 @@ public:
     /**
      * Gets the current trajectory
      */
-    API::Trajectory getCurrentTraj();
+    Move3D::Trajectory getCurrentTraj();
 
     /**
      * Get the number of Joints
@@ -302,7 +304,7 @@ public:
 private:
     rob* _Robot; /*!< une structure de p3d_rob contenant les données sur le Robot*/
     std::string _Name; /*!< le nom du Robot*/
-    Scene* m_ActiveScene;
+    Move3D::Scene* m_ActiveScene;
     bool _copy; /*!< Is true if the p3d_jnt copies and not only points to the structure */
 
     std::vector<Joint*> m_Joints;
@@ -312,5 +314,7 @@ private:
 };
 
 extern Robot* API_activeRobot;
+
+}
 
 #endif

@@ -1,7 +1,6 @@
 #ifndef OTPUTILS_HPP
 #define OTPUTILS_HPP
 
-#include "API/planningAPI.hpp"
 #include "API/Trajectory/trajectory.hpp"
 
 #include "planner/planner.hpp"
@@ -20,21 +19,18 @@
 extern void g3d_show_tcur_both_rob(p3d_rob *robotPt, int (*fct)(p3d_rob* robot, p3d_localpath* curLp),
                                    p3d_rob *hum_robotPt, int (*hum_fct)(p3d_rob* hum_robot, p3d_localpath* hum_curLp));
 
-extern bool detectSittingFurniture(Robot* human, double threshold, Robot** furniture);
+extern bool detectSittingFurniture( Move3D::Robot* human, double threshold, Move3D::Robot** furniture);
 
 namespace HRICS
 {
-
-
-
     class OutputConf
     {
     public:
-        MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> humanConf;
+        Move3D::confPtr_t humanConf;
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > humanTraj;
         bool humanTrajExist;
 
-        MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> robotConf;
+        Move3D::confPtr_t robotConf;
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > robotTraj;
         bool robotTrajExist;
 
@@ -45,7 +41,7 @@ namespace HRICS
 
         void clearAll();
 
-        MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> chairConf;
+        Move3D::confPtr_t chairConf;
 //        OutputConf& operator= (const OutputConf& o);
 
     };
@@ -58,10 +54,10 @@ namespace HRICS
         ConfigHR() { id = index++; cost = 1.; }
 
         configPt getHumanConf() const { return q_hum; }
-        void setHumanConf(Robot* human, configPt q);
+        void setHumanConf( Move3D::Robot* human, configPt q);
 
         configPt getRobotConf() const { return q_rob; }
-        void setRobotConf(Robot* robot, configPt q);
+        void setRobotConf( Move3D::Robot* robot, configPt q);
 
         int getId() const { return id; }
         void setId(int value) { id = value; }

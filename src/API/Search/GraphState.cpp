@@ -3,7 +3,7 @@
 #include "P3d-pkg.h"
 
 using namespace std;
-using namespace API;
+using namespace Move3D;
 
 GraphState::GraphState()
 {

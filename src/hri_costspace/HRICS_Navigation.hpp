@@ -27,13 +27,13 @@ namespace HRICS
   class Navigation 
   {
   public:
-    Navigation(Robot* R);
+    Navigation( Move3D::Robot* R );
     ~Navigation();
     
-    Robot* getRobot() { return m_robot; }
+    Move3D::Robot* getRobot() { return m_robot; }
     
-    API::Trajectory* computeRobotTrajectory( confPtr_t source, confPtr_t target );
-    API::Trajectory* getSimplePath(std::vector<double> goal, std::vector<std::vector<double> >& path);
+    Move3D::Trajectory* computeRobotTrajectory( Move3D::confPtr_t source, Move3D::confPtr_t target );
+    Move3D::Trajectory* getSimplePath(std::vector<double> goal, std::vector<std::vector<double> >& path);
     
     void reset();
     void draw();
@@ -43,19 +43,19 @@ namespace HRICS
   private:
     bool init();
     bool computeAStarIn2DGrid( Eigen::Vector2d source, Eigen::Vector2d target );
-    bool solveAStar(PlanState* start,PlanState* goal);
+    bool solveAStar( PlanState* start, PlanState* goal) ;
 
     
     std::vector<double> m_envSize;
     
-    Robot* m_robot;
-    Robot* m_cyl;
+    Move3D::Robot* m_robot;
+    Move3D::Robot* m_cyl;
     
     double m_maxRadius;
     
     PlanGrid* m_2DGrid;
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m_2DPath;
-    std::vector<API::TwoDCell*> m_2DCellPath;
+    std::vector<Move3D::TwoDCell*> m_2DCellPath;
   };
 }
 

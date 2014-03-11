@@ -1,6 +1,7 @@
 #include "ManhattanLike-RRT.hpp"
 
-#include "API/planningAPI.hpp"
+#include "API/Roadmap/graph.hpp"
+#include "API/Roadmap/node.hpp"
 
 #include "P3d-pkg.h"
 #include "Bio-pkg.h"
@@ -8,6 +9,8 @@
 #include "Planner-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 #define ML_DEBUG 0

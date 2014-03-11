@@ -4,24 +4,27 @@
 #include "../../Diffusion/RRT.hpp"
 #include "../Grid/HRICS_TwoDGrid.hpp"
 
+namespace HRICS {
+
+
 /**
   @ingroup HRICS
   @brief Special RRT implentation for the HRICS
   */
-class HRICS_RRTPlan : public RRT
+class HRICS_RRTPlan : public Move3D::RRT
 {
 public:
-    HRICS_RRTPlan(Robot* R, Graph* G);
+    HRICS_RRTPlan( Move3D::Robot* R, Move3D::Graph* G );
 
     /**
       * Sets the grid pointer
       */
-    void setGrid(HRICS::PlanGrid* G);
+    void setGrid( HRICS::PlanGrid* G );
 
     /**
       * Sets the cell path
       */
-    void setCellPath(std::vector<API::TwoDCell*> cellPath);
+    void setCellPath(std::vector<Move3D::TwoDCell*> cellPath);
 
    /**
      * Initialzation of the plannificator
@@ -32,22 +35,24 @@ public:
     /**
       * Intents to connect a node to the compco
       */
-    bool connectNodeToCompco(Node* node, Node* compNode);
+    bool connectNodeToCompco( Move3D::Node* node, Move3D::Node* compNode);
 
     /**
       * Finds the nearest neighbour in the cell
       * @return Other wise returns NULL
       */
-    Node* nearestNeighbourInCell(Node* node, std::vector<Node*> neigbour);
+    Move3D::Node* nearestNeighbourInCell( Move3D::Node* node, std::vector<Move3D::Node*> neigbour);
 
     /**
       * @return the cell in which is the given node
       */
-    API::TwoDCell* getCellFromNode(Node* node);
+    Move3D::TwoDCell* getCellFromNode( Move3D::Node* node );
 
  private:
     HRICS::PlanGrid* mGrid;
 
 };
+
+}
 
 #endif // HRICS_RRT_H

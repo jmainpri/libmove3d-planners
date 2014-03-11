@@ -1,20 +1,20 @@
 #ifndef PLANNARTRAJECTORYSMOOTHING_HPP
 #define PLANNARTRAJECTORYSMOOTHING_HPP
 
-
-#include "API/planningAPI.hpp"
-
+#include "API/ConfigSpace/configuration.hpp"
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 #include <Eigen/StdVector>
 
+namespace Move3D {
+
 class PlannarTrajectorySmoothing
 {
 public:
-    PlannarTrajectorySmoothing(Robot* robot);
+    PlannarTrajectorySmoothing( Move3D::Robot* robot );
 
 
-    void initTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Robot* Cylinder);
+    void initTraj( std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj, Move3D::Robot* Cylinder );
     bool goToNextStep();
 
 
@@ -58,13 +58,15 @@ public:
 private:
     int _id;
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > _traj;
-    Robot* _cyl;
-    Robot* _Robot;
+    Move3D::Robot* _cyl;
+    Move3D::Robot* _Robot;
     shared_ptr<Configuration>  _curRobotConf;
     shared_ptr<Configuration>  _curCylConf;
     double _dist;
 
 
 };
+
+}
 
 #endif // PLANNARTRAJECTORYSMOOTHING_HPP

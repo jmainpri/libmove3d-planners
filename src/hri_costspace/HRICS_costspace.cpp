@@ -8,22 +8,25 @@
  */
 
 #include "HRICS_costspace.hpp"
-#include "API/planningAPI.hpp"
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include "cost_space.hpp"
-#include "planEnvironment.hpp"
+
+#include "API/project.hpp"
+#include "planner/planEnvironment.hpp"
 
 #include "P3d-pkg.h"
 
 #define DebugCostFunctions 0
 
+using namespace HRICS;
+using namespace Move3D;
+
 using std::cout;
 using std::endl;
 
 MOVE3D_USING_SHARED_PTR_NAMESPACE
-using namespace HRICS;
 
 // Cost function type
 enum CostSpaceFunction 

@@ -17,6 +17,7 @@
 
 #include "Graphic-pkg.h"
 
+using namespace Move3D;
 using namespace HRICS;
 using std::cout;
 using std::endl;
@@ -169,7 +170,7 @@ void Spheres3D::initialize()
         sampler_->generateJointCollisionPoints( robot_, id, active_joints_, active_joints_ );
 }
 
-FeatureVect Spheres3D::getFeatures( const Configuration& q )
+FeatureVect Spheres3D::getFeatures( const Configuration& q, std::vector<int> active_dofs )
 {
     FeatureVect features(Eigen::VectorXd::Zero(centers_.size()));
 

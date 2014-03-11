@@ -14,7 +14,7 @@
 #include "planner/planner.hpp"
 #include "API/Trajectory/trajectory.hpp"
 
-Global std::vector<Planner*> plannerlist;
+Global std::vector<Move3D::Planner*> plannerlist;
 
 /**
  * RRT statistics
@@ -32,7 +32,7 @@ struct RRTStatistics
 /**
  * Return the last trajectory
  */
-API::Trajectory p3d_get_last_trajectory();
+Move3D::Trajectory p3d_get_last_trajectory();
 
 /**
  * Get last RRT statistics
@@ -42,7 +42,7 @@ void p3d_get_rrt_statistics( RRTStatistics& stat );
 /**
  * Get last Trajectory statistics
  */
-void p3d_get_traj_statistics( TrajectoryStatistics& stat );
+void p3d_get_traj_statistics( Move3D::TrajectoryStatistics& stat );
 
 /**
  * @ingroup NEW_CPP_MODULE
@@ -77,7 +77,7 @@ void p3d_set_goal_solution_function( configPt (*fct)() );
  * Generate Goal Configuration Function
  * This function can be set outside the library
  */ 
-bool p3d_generate_goal_configuration( Configuration& q );
+bool p3d_generate_goal_configuration( Move3D::Configuration& q );
 
 /**
   @ingroup NEW_CPP_MODULE

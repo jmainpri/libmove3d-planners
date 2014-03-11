@@ -7,8 +7,9 @@
 #include "Planner-pkg.h"
 #include "Collision-pkg.h"
 
-
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 GreedyCost::GreedyCost(p3d_graph* G, int(*stop_func)(), void(*draw_func)()) :
@@ -78,7 +79,7 @@ bool GreedyCost::run()
              << endl;
 
         p3d_ExtractBestTraj(mGraph->getGraphStruct());
-        optimTrj = new API::CostOptimization(mRobot, mRobot->getTrajStruct());
+        optimTrj = new Move3D::CostOptimization(mRobot, mRobot->getTrajStruct());
 
         //                if(ENV.getBool(Env::debugCostOptim))
         //                {

@@ -3,6 +3,10 @@
 
 #include "HRICS_planar_feature.hpp"
 
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+#include <Eigen/Core>
+#include <vector>
+
 namespace HRICS
 {
 
@@ -30,14 +34,12 @@ public:
     virtual void initialize();
     void computeSize();
 
-    FeatureVect getFeatures(const Configuration& q );
-//    FeatureVect getFeatureCount(const API::Trajectory& t);
-    double getFeaturesJacobianMagnitude(const Configuration& q);
+    FeatureVect getFeatures( const Move3D::Configuration& q, std::vector<int> active_features = std::vector<int>(0) );
+    double getFeaturesJacobianMagnitude( const Move3D::Configuration& q );
 
-    double jacobianCost(const Configuration& q);
     void produceDerivativeFeatureCostMap(int ith);
 
-    double distToSquare(  const Square& square, const Configuration& q  );
+    double distToSquare(  const Square& square, const Move3D::Configuration& q  );
     bool isInAASquare( const std::vector<Eigen::Vector2d>& corners, Eigen::Vector2d p );
     double pointToLineSegmentDistance(const Eigen::VectorXd& p, const Eigen::VectorXd& p1, const Eigen::VectorXd& p2, Eigen::VectorXd& closestPoint);
 

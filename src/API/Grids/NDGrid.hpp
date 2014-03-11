@@ -10,7 +10,7 @@
 /**
  * Base class for a Grid
  */
-namespace API
+namespace Move3D
 {
 	template <int _nDimGrid_Dimension_ > 
 	class nDimGrid

@@ -17,7 +17,9 @@
 
 #include <boost/bind.hpp>
 
+using namespace Move3D;
 using namespace HRICS;
+using namespace stomp_motion_planner;
 using std::cout;
 using std::endl;
 
@@ -137,7 +139,7 @@ HumanPredictionSimulator::HumanPredictionSimulator( Robot* robot, Robot* human, 
     m_robot_step = 0.005;
 
     m_use_previous_trajectory = true;
-    m_executed_path = API::Trajectory(m_robot);
+    m_executed_path = Move3D::Trajectory(m_robot);
     m_is_scenario_init = false;
 
     m_colors.resize(2);
@@ -278,9 +280,9 @@ void HumanPredictionSimulator::loadGoalConfig()
     m_paths.resize( m_goal_config.size() );
 }
 
-API::Trajectory HumanPredictionSimulator::setTrajectoryToMainRobot(const API::Trajectory& traj) const
+Move3D::Trajectory HumanPredictionSimulator::setTrajectoryToMainRobot(const Move3D::Trajectory& traj) const
 {
-    API::Trajectory traj_tmp(m_robot);
+    Move3D::Trajectory traj_tmp(m_robot);
 
     for(int i=0;i<traj.getNbOfViaPoints();i++)
     {
@@ -309,7 +311,7 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
 
     g3d_draw_allwin_active();
 
-    std::vector<API::Trajectory> stomp_trajs( m_goal_config.size() );
+    std::vector<Move3D::Trajectory> stomp_trajs( m_goal_config.size() );
     std::vector<confPtr_t> q_init;
 
     for(int g=0;(!PlanEnv->getBool(PlanParam::stopPlanner)) && g<int(m_goal_config.size());g++)
@@ -318,7 +320,7 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
 
         if( iter>0 )
         {
-            const API::Trajectory& current_traj = m_paths[m_best_path_id];
+            const Move3D::Trajectory& current_traj = m_paths[m_best_path_id];
             const double parameter = m_robot_steps_per_exection*m_robot_step;
 
             if( g == m_best_path_id )
@@ -327,7 +329,7 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
             }
             else
             {
-                API::CostOptimization traj( m_paths[g] );
+                Move3D::CostOptimization traj( m_paths[g] );
                 confPtr_t q_cur = current_traj.configAtParam( parameter );
 
                 if(!traj.connectConfigurationToBegin( q_cur, parameter/5, true ))
@@ -344,7 +346,7 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
         else
         {
             cout << "start with straight line for goal : " << g << endl;
-            stomp_trajs[g] = API::Trajectory( robots[g] );
+            stomp_trajs[g] = Move3D::Trajectory( robots[g] );
             stomp_trajs[g].push_back( m_q_start );
             stomp_trajs[g].push_back( m_goal_config[g] );
         }
@@ -414,11 +416,11 @@ void HumanPredictionSimulator::runParallelStomp( int iter, int id_goal )
 
     m_robot->setAndUpdate( *m_q_start );
 
-    API::Trajectory stomp_traj;
+    Move3D::Trajectory stomp_traj;
 
     if( (iter>0))
     {
-        const API::Trajectory& current_traj = m_paths[m_best_path_id];
+        const Move3D::Trajectory& current_traj = m_paths[m_best_path_id];
         const double parameter = m_robot_steps_per_exection*m_robot_step;
 
         if( id_goal == m_best_path_id )
@@ -427,7 +429,7 @@ void HumanPredictionSimulator::runParallelStomp( int iter, int id_goal )
         }
         else
         {
-            API::CostOptimization traj( m_paths[id_goal] );
+            Move3D::CostOptimization traj( m_paths[id_goal] );
             traj.connectConfigurationToBegin( current_traj.configAtParam( parameter ), parameter/5, true );
             stomp_traj = traj;
         }
@@ -482,9 +484,9 @@ void HumanPredictionSimulator::runStandardStomp( int iter, int id_goal  )
 
     if( iter>0 )
     {
-        const API::Trajectory& current_traj = m_paths[m_best_path_id];
+        const Move3D::Trajectory& current_traj = m_paths[m_best_path_id];
         const double parameter = m_robot_steps_per_exection*m_robot_step;
-        API::Trajectory optimi_traj;
+        Move3D::Trajectory optimi_traj;
 
         if( id_goal == m_best_path_id )
         {
@@ -492,7 +494,7 @@ void HumanPredictionSimulator::runStandardStomp( int iter, int id_goal  )
         }
         else
         {
-            API::CostOptimization traj( m_paths[id_goal] );
+            Move3D::CostOptimization traj( m_paths[id_goal] );
             traj.connectConfigurationToBegin( current_traj.configAtParam( parameter ), parameter/5, true );
             optimi_traj = traj;
         }
@@ -537,7 +539,7 @@ int HumanPredictionSimulator::getBestPathId()
     return cost_sorter[0].second;
 }
 
-void HumanPredictionSimulator::execute(const API::Trajectory& path, bool to_end)
+void HumanPredictionSimulator::execute(const Move3D::Trajectory& path, bool to_end)
 {
     double s = 0.0;
 
@@ -647,7 +649,7 @@ double HumanPredictionSimulator::run()
     {
         if( m_best_path_id != -1 )
         {
-            const API::Trajectory& traj = m_paths[m_best_path_id];
+            const Move3D::Trajectory& traj = m_paths[m_best_path_id];
             const double parameter =  m_robot_steps_per_exection*m_robot_step;
             execute( traj.extractSubTrajectory( parameter, traj.getRangeMax(), false ), true );
         }

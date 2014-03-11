@@ -10,8 +10,6 @@
 #ifndef HRICS_NATURAL_HPP
 #define HRICS_NATURAL_HPP
 
-#include "API/planningAPI.hpp"
-
 #include "hri_costspace/Grid/HRICS_NaturalGrid.hpp"
 #include "hri_costspace/Grid/HRICS_NaturalCell.hpp"
 
@@ -33,7 +31,7 @@ namespace HRICS
 class Natural
 {
 public:
-    Natural( Robot* R );
+    Natural( Move3D::Robot* R );
     ~Natural();
 
     /**
@@ -78,8 +76,8 @@ public:
     
 
     std::vector<double> getUpperBodyHeigth(bool useReference = true);
-    double getCustomDistConfig(Configuration& q);
-    double getJointLimits(Configuration& q);
+    double getCustomDistConfig( Move3D::Configuration& q);
+    double getJointLimits( Move3D::Configuration& q);
 
     /**
       * Simple number of IK Cost
@@ -121,7 +119,7 @@ public:
       */
     int getObjectDof() { return m_IndexObjectDof; }
     bool IsHuman() { return m_IsHuman; }
-    Robot* getRobot() { return m_Robot; }
+    Move3D::Robot* getRobot() { return m_Robot; }
     NaturalGrid* getGrid() { return m_Grid; }
 
     /**
@@ -135,7 +133,7 @@ private:
     bool                m_computeNbOfIK;
     bool                m_leftArmCost;
     bool                m_BestPointsSorted;
-    Robot*              m_Robot;
+    Move3D::Robot*      m_Robot;
     NaturalGrid*        m_Grid;
 
     enum Kinematic
@@ -183,12 +181,12 @@ private:
     /**
       * @brief The Confort configuration
       */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_q_Confort;
+    Move3D::confPtr_t m_q_Confort;
 
     /**
       * @brief Weights associated to confort
       */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_q_ConfortWeigths;
+    Move3D::confPtr_t m_q_ConfortWeigths;
 
     /**
       * Weigth associated to the joints limits function
@@ -207,8 +205,8 @@ private:
     std::vector<double>        m_armHeightL;
     std::vector<double>        m_armHeightR;
 
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_q_Init;
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_q_Goal;
+    Move3D::confPtr_t m_q_Init;
+    Move3D::confPtr_t m_q_Goal;
 
     /**
       * Sorted Cells

@@ -1,7 +1,6 @@
 #ifndef HRICS_CSPACE_HPP
 #define HRICS_CSPACE_HPP
 
-#include "API/planningAPI.hpp"
 #include "planner/planner.hpp"
 
 #include "HRICS_Workspace.hpp"
@@ -28,7 +27,7 @@ namespace HRICS
     {
     public:
         ConfigSpace();
-        ConfigSpace(Robot* R, Robot* H);
+        ConfigSpace( Move3D::Robot* R, Move3D::Robot* H );
 
         ~ConfigSpace();
 
@@ -52,7 +51,7 @@ namespace HRICS
 		
         Grid* getGrid() { return m3DGrid; }
         PlanGrid* getPlanGrid() { return m2DGrid; }
-        std::vector<API::TwoDCell*> getCellPath() { return m2DCellPath; }
+        std::vector<Move3D::TwoDCell*> getCellPath() { return m2DCellPath; }
 
         double getLastDistanceCost() {return mDistCost; }
         double getLastVisibiliCost() {return mVisiCost; }
@@ -69,13 +68,12 @@ namespace HRICS
         void initCostSpace();
 
         //        Robot* mRobot;
-        Robot* mHuman;
-
+        Move3D::Robot* mHuman;
         Grid* m3DGrid;
-
         PlanGrid* m2DGrid;
+
         std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> >   m2DPath;
-        std::vector<API::TwoDCell*> m2DCellPath;
+        std::vector<Move3D::TwoDCell*> m2DCellPath;
 
         int mIndexObjectDof;
 

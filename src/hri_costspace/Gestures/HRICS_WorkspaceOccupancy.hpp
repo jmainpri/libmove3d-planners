@@ -16,7 +16,7 @@ namespace HRICS
 {
 class WorkspaceOccupancyGrid;
 
-class WorkspaceOccupancyCell : public API::ThreeDCell
+class WorkspaceOccupancyCell : public Move3D::ThreeDCell
 {
 public:
     WorkspaceOccupancyCell(int i, Eigen::Vector3i pos , Eigen::Vector3d corner, WorkspaceOccupancyGrid* grid);
@@ -30,14 +30,14 @@ public:
     bool m_currently_occupied;
 };
 
-class WorkspaceOccupancyGrid : public API::ThreeDGrid
+class WorkspaceOccupancyGrid : public Move3D::ThreeDGrid
 {
 public:
-    WorkspaceOccupancyGrid( Robot* human, double pace, std::vector<double> envSize );
+    WorkspaceOccupancyGrid( Move3D::Robot* human, double pace, std::vector<double> envSize );
 
     ~WorkspaceOccupancyGrid();
 
-    API::ThreeDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z );
+    Move3D::ThreeDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z );
 
     void setRegressedMotions( const std::vector<motion_t>& motions );
     void computeCurrentOccupancy();
@@ -77,8 +77,8 @@ private:
     double m_lasttime;
 
     // Motions
-    Robot* m_human;
-    BodySurfaceSampler* m_sampler;
+    Move3D::Robot* m_human;
+    Move3D::BodySurfaceSampler* m_sampler;
     std::vector<motion_t> m_motions;
     std::vector< std::vector<WorkspaceOccupancyCell*> > m_occupied_cells;
     int m_id_class_to_draw;

@@ -6,7 +6,7 @@
 /**
  * Base class for a Grid
  */
-namespace API
+namespace Move3D
 {
 class BaseCell
 {

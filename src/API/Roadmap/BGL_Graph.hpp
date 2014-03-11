@@ -28,8 +28,10 @@ struct EdgeData_t {
 	typedef boost::edge_property_tag kind;
 };
 
+namespace Move3D {
 class Node;
 class Edge;
+}
 
 typedef boost::adjacency_list_traits<boost::listS, boost::vecS, boost::bidirectionalS>::vertex_descriptor vertex_descriptor;
 
@@ -44,11 +46,11 @@ boost::listS,          //  The container used for egdes : here, std::list.
 boost::vecS,           //  The container used for vertices: here, std::vector.
 boost::undirectedS, //  directed or undirected edges ?.
 
-boost::property<NodeData_t, Node*, 
+boost::property<NodeData_t, Move3D::Node*,
 boost::property<boost::vertex_distance_t, int,
 boost::property<boost::vertex_predecessor_t, vertex_descriptor> > >, // The type that describes a Vertex
 
-boost::property<EdgeData_t, Edge*, 
+boost::property<EdgeData_t, Move3D::Edge*,
 boost::property<boost::edge_weight_t, double> > // The type that describes en Edge
 >	BGL_Graph;
 

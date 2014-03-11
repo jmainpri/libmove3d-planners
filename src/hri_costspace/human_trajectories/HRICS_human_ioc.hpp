@@ -10,13 +10,13 @@ namespace HRICS
 class HumanIoc : public IocEvaluation
 {
 public:
-    HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners );
+    HumanIoc( Move3D::Robot* active, Move3D::Robot* passive, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners );
 
     void runSampling();
     void setPlanningGroup();
     void setDemos( const std::vector<motion_t>& stored_motions );
 private:
-    API::Trajectory getTrajectoryFromMotion( const motion_t& m ) const;
+    Move3D::Trajectory getTrajectoryFromMotion( const motion_t& m ) const;
 };
 
 }

@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <sstream>
 
+using namespace Move3D;
 using namespace HRICS;
 using std::cout;
 using std::endl;
@@ -30,10 +31,10 @@ bool HRICS_init_sphere_cost()
 
     if( global_SphereCostFct->getNumberOfFeatures() > 0 )
     {
+        cout << "add cost functions : " << "costSpheres" << endl;
         global_PlanarCostFct = global_SphereCostFct;
-        std::string cost_function("costSpheres");
-        cout << "add cost functions : " << cost_function << endl;
-        global_costSpace->addCost( cost_function, boost::bind( &Spheres::cost, global_SphereCostFct, _1) );
+        global_costSpace->addCost( "costSpheres", boost::bind( &Spheres::cost, global_SphereCostFct, _1) );
+        global_costSpace->addCost( "costSpheresJacobian", boost::bind( &PlanarFeature::jacobianCost, global_SphereCostFct, _1) );
         // global_costSpace->setCost( cost_function );
         return true;
     }
@@ -48,13 +49,16 @@ bool HRICS_init_sphere_cost()
 // ------------------------------------------------------
 // ------------------------------------------------------
 
-Spheres::Spheres()
+Spheres::Spheres() : PlanarFeature()
 {
 
 }
 
 void Spheres::initialize()
 {
+    cout << "--------------------------------"  << endl;
+    cout << "INIT SPHERE 2D" << endl;
+
     Scene* sce = global_Project->getActiveScene();
 
     robot_ = sce->getActiveRobot();
@@ -99,6 +103,24 @@ void Spheres::initialize()
         w_[i++] = 5;
     }
 
+    if( nb_spheres == 3 )
+    {
+//        Configuration q1(*centers_[0]->getCurrentPos());
+//        Configuration q2(*centers_[1]->getCurrentPos());
+//        Configuration q3(*centers_[2]->getCurrentPos());
+
+//        q1[6] = -0.5; q2[6] = 0; q3[6] = 0.5;
+//        q1[7] = 0.5;  q2[7] = 0; q3[7] = 0.5;
+
+//        centers_[0]->setAndUpdate( q1 );
+//        centers_[1]->setAndUpdate( q2 );
+//        centers_[2]->setAndUpdate( q3 );
+
+        w_[i++] = 3;
+        w_[i++] = 10;
+        w_[i++] = 5;
+    }
+
     if( nb_spheres == 16 )
     {
         placeCenterGrid( true );
@@ -111,6 +133,8 @@ void Spheres::initialize()
     double max = w_.maxCoeff();
     w_ /= max;
 
+    setWeights( w_ ); // sets active featues
+
     nb_dofs_ = 2;
 
     active_dofs_.resize(2);
@@ -118,45 +142,25 @@ void Spheres::initialize()
     active_dofs_[1] = 7;
 }
 
-FeatureVect Spheres::getFeatures( const Configuration& q )
+FeatureVect Spheres::getFeatures( const Configuration& q, std::vector<int> active_features )
 {
-    FeatureVect features(centers_.size());
+    const std::vector<int>& features = active_features.empty() ? active_features_ : active_features ;
 
+    FeatureVect phi(Eigen::VectorXd::Zero(centers_.size()));
     Eigen::VectorXd x = q.getEigenVector(6,7);
 
     // The factor distance when larger
-    const double factor_distance = 10.0;
+    const double factor_distance = 0.3; // 10
     const double factor_height = HriEnv->getDouble(HricsParam::ioc_spheres_power);
 
-    for( int i=0; i< int(centers_.size()); i++ )
+    for( int i=0; i< int(features.size()); i++ )
     {
-        Eigen::VectorXd mu = centers_[i]->getCurrentPos()->getEigenVector(6,7);
-        features[i] = pow(exp( -( x - mu ).norm()/factor_distance ),factor_height);
+        int k = features[i];
+        Eigen::VectorXd mu = centers_[k]->getCurrentPos()->getEigenVector(6,7);
+        phi[k] = std::pow( std::exp( -( x - mu ).norm()/factor_distance ), factor_height );
     }
 
-    return features;
+   // cout << "phi : " << phi.transpose() << endl;
+
+    return phi;
 }
-
-//FeatureJacobian Spheres::getFeaturesJacobian(const Configuration& q_0)
-//{
-//    const double eps = 1e-6;
-
-//    Configuration q_1(*robot_->getCurrentPos());
-//    Configuration q_2(*robot_->getCurrentPos());
-
-//    q_1[6] = q_0[6] + eps;
-//    q_1[7] = q_0[7];
-
-//    q_2[6] = q_0[6];
-//    q_2[7] = q_0[7] + eps;
-
-//    FeatureVect f_0 = getFeatures( q_0 );
-//    FeatureVect f_1 = getFeatures( q_1 );
-//    FeatureVect f_2 = getFeatures( q_2 );
-
-//    FeatureJacobian J = Eigen::MatrixXd::Zero(getNumberOfFeatures(),2);
-//    J.col(0) = (f_1 - f_0) / eps;
-//    J.col(1) = (f_2 - f_0) / eps;
-
-//    return J;
-//}

@@ -3,6 +3,7 @@
 // import most common Eigen types 
 //USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
+using namespace Move3D;
 
 CellToNode::CellToNode()
 {

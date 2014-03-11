@@ -11,6 +11,9 @@
 
 #include "replanningAlgorithms.hpp"
 
+namespace Move3D
+{
+
 //! Class for implementing a replanning simulator
 //!
 class ReplanningSimulator 
@@ -23,9 +26,9 @@ public:
   
   void set_multithread_graphical(bool enable);
   
-  void store_traj_to_vect(API::Trajectory& traj, double step);
-  void store_exploration(const API::Trajectory& traj, double lPrev, double lNext, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> qNew);
-  void store_traj_to_draw(const API::Trajectory& traj, double step);
+  void store_traj_to_vect(Move3D::Trajectory& traj, double step);
+  void store_exploration(const Move3D::Trajectory& traj, double lPrev, double lNext, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> qNew);
+  void store_traj_to_draw(const Move3D::Trajectory& traj, double step);
   void store_graph_to_draw(const Graph& graph);
   
   int execute_simple_simulation( int (*fct)(p3d_rob* robot, p3d_localpath* localpathPt) );
@@ -47,11 +50,11 @@ private:
   void optimize_current_traj();
   
   void store_traj_to_vect(SM_TRAJ& smTraj, double current, double step);
-  void store_shortcut(const API::Trajectory& traj, double lPrev, double lNext);
+  void store_shortcut(const Move3D::Trajectory& traj, double lPrev, double lNext);
   void store_human_pos();
   
-  bool set_executed_traj_to_current(API::Trajectory& traj);
-  bool time_switch_and_id(double s, double s_rep, int& id_switch, API::Trajectory& traj, double &s_switch);
+  bool set_executed_traj_to_current(Move3D::Trajectory& traj);
+  bool time_switch_and_id(double s, double s_rep, int& id_switch, Move3D::Trajectory& traj, double &s_switch);
   
   //----------------------------------------------------
   //! Local variables
@@ -68,7 +71,7 @@ private:
   
   confPtr_t m_q_end;
   
-  API::Trajectory m_ExecuteTraj;
+  Move3D::Trajectory m_ExecuteTraj;
   
   bool m_isWritingDisplay;
   bool m_isReadingDisplay;
@@ -83,5 +86,7 @@ private:
 
 extern ReplanningSimulator* global_rePlanningEnv;
 extern Graph* global_rePlanningGraph;
+
+}
 
 #endif

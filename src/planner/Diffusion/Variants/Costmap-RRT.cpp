@@ -21,6 +21,8 @@
 #include "P3d-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 /*!
@@ -50,10 +52,9 @@ CostmapExpansion::~CostmapExpansion()
 /*!
  * Expand the localpath
  */
-bool CostmapExpansion::expandToGoal(Node* expansionNode, shared_ptr<Configuration> directionConfig)
+bool CostmapExpansion::expandToGoal(Node* expansionNode, confPtr_t directionConfig)
 {
-	LocalPath extensionLocalpath(expansionNode->getConfiguration(), 
-															 directionConfig);
+    LocalPath extensionLocalpath( expansionNode->getConfiguration(), directionConfig);
   
 	double costOfNode = expansionNode->sumCost() + extensionLocalpath.cost();
 	
@@ -71,7 +72,7 @@ bool CostmapExpansion::expandToGoal(Node* expansionNode, shared_ptr<Configuratio
 /*!
  * Connect expansion method
  */
-int CostmapExpansion::connectExpandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode)
+int CostmapExpansion::connectExpandProcess( Node* expansionNode, confPtr_t directionConfig, Node* directionNode )
 {
 	bool failed(false);
 	int nbCreatedNodes(0);
@@ -122,9 +123,7 @@ int CostmapExpansion::connectExpandProcess(Node* expansionNode, MOVE3D_PTR_NAMES
 /*!
  * Extend expansion method
  */
-int CostmapExpansion::extendExpandProcess(Node* expansionNode, 
-																					MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
-																					Node* directionNode)
+int CostmapExpansion::extendExpandProcess( Node* expansionNode, confPtr_t directionConfig, Node* directionNode)
 {
 	bool failed(false);
 	int nbCreatedNodes(0);
@@ -223,25 +222,18 @@ int CostmapExpansion::extendExpandProcess(Node* expansionNode,
 /*!
  * expandProcess
  */
-unsigned CostmapExpansion::expandProcess(Node* expansionNode,
-                                    shared_ptr<Configuration> directionConfig,
-                                    Node* directionNode,
-                                    Env::expansionMethod method)
+unsigned CostmapExpansion::expandProcess( Node* expansionNode, confPtr_t directionConfig, Node* directionNode, Env::expansionMethod method)
 {
 	
 	switch (method) 
 	{
 		case Env::Connect:
 			
-			return connectExpandProcess(expansionNode,
-																	directionConfig,
-																	directionNode);
+            return connectExpandProcess( expansionNode, directionConfig, directionNode );
 			
 		case Env::Extend:
 			
-			return extendExpandProcess(expansionNode,
-																 directionConfig,
-																 directionNode);
+            return extendExpandProcess( expansionNode, directionConfig, directionNode );
 		default:
 			cerr << "Error : expand process not implemented" << endl;
 			return 0;
@@ -282,8 +274,7 @@ unsigned CostmapRRT::init()
  */
 void CostmapRRT::addFinalNode(Node* node, Node* final)
 {
-	LocalPath path(node->getConfiguration(),
-								 final->getConfiguration());
+    LocalPath path( node->getConfiguration(), final->getConfiguration() );
 	
 	int nbCreatedNodes = 0;
 	
@@ -311,10 +302,7 @@ bool CostmapRRT::connectNodeToCompco(Node* node, Node* compNode)
 	//p3d_SetIsMaxDistNeighbor(FALSE);
 	PlanEnv->setBool(PlanParam::isMaxDisNeigh,SavedIsMaxDis);
 	
-	node2 = _Graph->nearestWeightNeighbour(compNode,
-																				 node->getConfiguration(),
-																				 false,
-																				 ENV.getInt(Env::DistConfigChoice));
+    node2 = _Graph->nearestWeightNeighbour( compNode, node->getConfiguration(), false, ENV.getInt(Env::DistConfigChoice) );
 	
 	//p3d_SetIsMaxDistNeighbor(SavedIsMaxDis);
 	PlanEnv->setBool(PlanParam::isMaxDisNeigh,SavedIsMaxDis);
@@ -336,9 +324,7 @@ bool CostmapRRT::connectNodeToCompco(Node* node, Node* compNode)
 			
 			if( ENV.getBool(Env::costExpandToGoal) &&
 			   //(path.getParamMax() <= (minumFinalCostGap*_expan->step())) &&
-			   dynamic_cast<CostmapExpansion*>(_expan)->expandToGoal(
-																																 node,
-																																 node2->getConfiguration()))
+               dynamic_cast<CostmapExpansion*>(_expan)->expandToGoal( node, node2->getConfiguration()))
 			{
 				addFinalNode(node,node2);
 				
@@ -372,9 +358,7 @@ bool CostmapRRT::connectNodeToCompco(Node* node, Node* compNode)
 		
 		if( ENV.getBool(Env::costExpandToGoal) &&
 		   //(path.getParamMax() <= (minumFinalCostGap*_expan->step())) &&
-		   dynamic_cast<CostmapExpansion*>(_expan)->expandToGoal(
-																														node,
-																														node2->getConfiguration() ))
+           dynamic_cast<CostmapExpansion*>(_expan)->expandToGoal( node, node2->getConfiguration() ))
 		{
 			if( path.isValid() )
 			{

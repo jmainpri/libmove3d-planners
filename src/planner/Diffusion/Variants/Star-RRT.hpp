@@ -23,6 +23,10 @@
 #include "API/ConfigSpace/cspace.hpp"
 #include "API/Roadmap/compco.hpp"
 #include "API/Trajectory/trajectory.hpp"
+
+namespace Move3D
+{
+
 /**
  @ingroup Diffusion
  */
@@ -58,8 +62,7 @@ public:
      * Checks that the localpath
      * between epansionNode and directionConfig can expanded in the costspace
      */
-    bool expandToGoal(Node* expansionNode,
-                      MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig);
+    bool expandToGoal( Node* expansionNode, confPtr_t directionConfig);
 
     /**
    * Sample in tube
@@ -69,21 +72,17 @@ public:
     /**
    * Get the extepansion direction
    */
-    confPtr_t getExpansionDirection(Node* expandComp, Node* goalComp, bool samplePassive, Node*& directionNode);
+    confPtr_t getExpansionDirection( Node* expandComp, Node* goalComp, bool samplePassive, Node*& directionNode);
 
     /**
      * Connect expansion method
      */
-    int connectExpandProcess(Node* expansionNode,
-                             MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
-                             Node* directionNode);
+    int connectExpandProcess( Node* expansionNode, confPtr_t directionConfig, Node* directionNode );
 
     /**
      * Extend expansion method
      */
-    int extendExpandProcess(Node* expansionNode,
-                            MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
-                            Node* directionNode);
+    int extendExpandProcess( Node* expansionNode, confPtr_t directionConfig, Node* directionNode);
 
     /**
    * Set the initial compco
@@ -113,8 +112,7 @@ public:
      *
      * @return the number of nodes created
      */
-    unsigned expandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode,
-                           Env::expansionMethod method);
+    unsigned expandProcess( Node* expansionNode, confPtr_t directionConfig, Node* directionNode, Env::expansionMethod method);
 
 private:
 
@@ -137,13 +135,10 @@ private:
     // cspace
     CSpace* m_cspace;
 
-
     // init and goal configurations
     confPtr_t m_q_init;
     confPtr_t m_q_goal;
-
 };
-
 
 class StarRRT : public RRT
 {
@@ -191,9 +186,10 @@ public:
 
 private:
 
-    API::Trajectory* m_current_traj;
+    Move3D::Trajectory* m_current_traj;
     std::vector< std::pair<double,TrajectoryStatistics> > m_convergence_rate;
-
 };
+
+}
 
 #endif

@@ -20,11 +20,10 @@
 #include "collision_space/CollisionSpace.hpp"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 //constructor and destructor
 Configuration::Configuration(Robot* R) :
@@ -139,24 +138,18 @@ shared_ptr<Configuration> Configuration::getConfigInDegree()
     return (shared_ptr<Configuration> (new Configuration(_Robot,q,true)));
 }
 
-
 //Accessors
 Robot* Configuration::getRobot()
 {
     return _Robot;
 }
 
-configPt Configuration::getConfigStruct()
+double* Configuration::getConfigStructConst() const
 {
     return _Configuration;
 }
 
-configPt Configuration::getConfigStructConst() const
-{
-    return _Configuration;
-}
-
-configPt Configuration::getConfigStructCopy()
+double* Configuration::getConfigStructCopy()
 {
     return p3d_copy_config(_Robot->getRobotStruct(),_Configuration);
 }
@@ -259,59 +252,17 @@ void Configuration::setConfiguration(Configuration& C)
  * Computes the distance
  *  between configurations
  */
-double Configuration::dist(Configuration& Conf, bool print)
+double Configuration::dist(const Configuration& Conf, bool print) const
 {
-    return p3d_dist_config(_Robot->getRobotStruct(), _Configuration, Conf.getConfigStruct(),print);
-    /*
-   double ljnt = 0.;
-   int njnt = _Robot->getRobotStruct()->njoints;
-   p3d_jnt * jntPt;
-   int* IsConstraintedDof = _Robot->getRobotStruct()->cntrt_manager->in_cntrt;
-   int k = 0;
-   
-   bool ActivQuaterion = _flagInitQuaternions && Conf._flagInitQuaternions;
-   
-   for (int i = 0; i <= njnt; i++)
-   {
-   jntPt = _Robot->getRobotStruct()->joints[i];
-   
-   for (int j = 0; j < jntPt->dof_equiv_nbr; j++)
-   {
-   k = jntPt->index_dof + j;
-   if (IsConstraintedDof[k] != DOF_PASSIF)
-   {
-   if ( ActivQuaterion && ( (k) >= _QuatDof ) && ( (k) < (_QuatDof+3) ))
-   {
-   
-   }
-   else
-   {
-   double dist_n = SQR(p3d_jnt_calc_dof_dist_2(jntPt, j, _Configuration, Conf.getConfigStruct()));
-   cout << "Joint "  << k << "  is = " << dist_n << endl;
-   ljnt += dist_n;
-   }
-   }
-   }
-   }
-   
-   
-   //    if(ActivQuaterion)
-   //    {
-   //        ljnt += SQR(_Quaternions.angularDistance(Conf._Quaternions));
-   //    }
-   
-   double dist = sqrt(ljnt);
-   //    cout << " Dist is = "  << dist << endl;
-   return dist;*/
+    return p3d_dist_config( _Robot->getRobotStruct(), _Configuration, Conf._Configuration , print );
 }
 
-double Configuration::dist(Configuration& q, int distChoice)
+double Configuration::dist(const Configuration& q, int distChoice) const
 {
     switch (distChoice)
     {
     case ACTIVE_CONFIG_DIST:
-        return (p3d_ActiveDistConfig(_Robot->getRobotStruct(), _Configuration,
-                                     q.getConfigStruct()));
+        return (p3d_ActiveDistConfig(_Robot->getRobotStruct(), _Configuration, q._Configuration));
         //  case LIGAND_PROTEIN_DIST:
         //    return(bio_compute_ligand_dist(_Robot->getRobotStruct(), _Configuration, q.getConfigurationStruct()));
         //    break;
@@ -332,7 +283,7 @@ double Configuration::dist(Configuration& q, int distChoice)
             if ( (p3d_jnt_get_dof_is_user(jntPt, j) && p3d_jnt_get_dof_is_active_for_planner(jntPt,j)) &&
                  (_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) )
             {
-                ljnt += SQR(p3d_jnt_calc_dof_dist(jntPt, j, _Configuration, q.getConfigStruct()));
+                ljnt += SQR(p3d_jnt_calc_dof_dist(jntPt, j, _Configuration, q._Configuration ));
             }
         }
         return ljnt;
@@ -504,9 +455,9 @@ bool Configuration::equal(Configuration& Conf, bool print)
 }
 
 //copie la Configuration courante dans une nouvelle Configuration
-shared_ptr<Configuration> Configuration::copy()
+confPtr_t Configuration::copy()
 {
-    return (shared_ptr<Configuration>(new Configuration(*this)));
+    return (confPtr_t(new Configuration(*this)));
 }
 
 void Configuration::copyPassive(Configuration& C)

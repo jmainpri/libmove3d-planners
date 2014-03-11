@@ -6,6 +6,7 @@
 
 using namespace std;
 using namespace HRICS;
+using namespace Move3D;
 
 HumanPredictionCostSpace* global_humanPredictionCostSpace = NULL;
 

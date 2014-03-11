@@ -8,7 +8,7 @@
 //#include <Eigen/Array>
 
 using namespace std;
-using namespace API;
+using namespace Move3D;
 
 // import most common Eigen types 
 //USING_PART_OF_NAMESPACE_EIGEN

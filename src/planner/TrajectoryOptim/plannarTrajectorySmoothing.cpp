@@ -1,7 +1,10 @@
 #include "plannarTrajectorySmoothing.hpp"
+#include "API/Device/robot.hpp"
+
 #include "P3d-pkg.h"
 
 using namespace Eigen;
+using namespace Move3D;
 
 PlannarTrajectorySmoothing::PlannarTrajectorySmoothing(Robot* robot)
 {
@@ -21,19 +24,19 @@ bool PlannarTrajectorySmoothing::goToNextStep()
 {
     if (_id == 0)
     {
-        shared_ptr<Configuration> q_cur_robot (_Robot->getCurrentPos());
+        confPtr_t q_cur_robot (_Robot->getCurrentPos());
         _curRobotConf = q_cur_robot;
 
-        shared_ptr<Configuration> q_robot (_Robot->getCurrentPos());
+        confPtr_t q_robot (_Robot->getCurrentPos());
         (*q_robot)[6] = 0;
         (*q_robot)[7] = 0;
         _Robot->setAndUpdate(*q_robot);
 
-        shared_ptr<Configuration> q_cur (_cyl->getCurrentPos());
+        confPtr_t q_cur (_cyl->getCurrentPos());
         _curCylConf = q_cur;
     }
 
-    shared_ptr<Configuration> q (_cyl->getCurrentPos());
+    confPtr_t q (_cyl->getCurrentPos());
 
 
     if (_id >= (int)_traj.size() -1)
@@ -181,14 +184,14 @@ std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > PlannarT
 bool PlannarTrajectorySmoothing::robotCanDoTraj(std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > traj,
                                                 Robot* BoundingBox, Robot* trajOfThisRobot, double dist)
 {
-    shared_ptr<Configuration> q_cur_robot (trajOfThisRobot->getCurrentPos());
-    shared_ptr<Configuration> q_robot (trajOfThisRobot->getCurrentPos());
+    confPtr_t q_cur_robot (trajOfThisRobot->getCurrentPos());
+    confPtr_t q_robot (trajOfThisRobot->getCurrentPos());
     (*q_robot)[6] = 0;
     (*q_robot)[7] = 0;
     trajOfThisRobot->setAndUpdate(*q_robot);
 
-    shared_ptr<Configuration> q_cur (BoundingBox->getCurrentPos());
-    shared_ptr<Configuration> q (BoundingBox->getCurrentPos());
+    confPtr_t q_cur (BoundingBox->getCurrentPos());
+    confPtr_t q (BoundingBox->getCurrentPos());
 
     for (unsigned int i = 0; i < traj.size() -1; i++)\
     {
@@ -504,7 +507,7 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
     //    {
     //        cout << "cell nb " << j << " with coord:\n" << traj.at(j) << endl;
     //    }
-    shared_ptr<Configuration> q_robot (robot->getCurrentPos());
+    confPtr_t q_robot (robot->getCurrentPos());
 
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > result;
     result.clear();
@@ -590,7 +593,7 @@ std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > PlannarT
     //    {
     //        cout << "cell nb " << j << " with coord:\n" << traj.at(j) << endl;
     //    }
-    shared_ptr<Configuration> q_robot (robot->getCurrentPos());
+    confPtr_t q_robot (robot->getCurrentPos());
 
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d> > result;
     result.clear();

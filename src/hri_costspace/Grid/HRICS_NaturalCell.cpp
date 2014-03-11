@@ -15,12 +15,11 @@
 #include "Graphic-pkg.h"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
 using namespace Eigen;
+using namespace Move3D;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 NaturalCell::NaturalCell() :
 m_Open(false),
@@ -38,7 +37,7 @@ m_list(0)
 }
 
 NaturalCell::NaturalCell(int i, Vector3i coord , Vector3d corner, NaturalGrid* grid) :
-API::ThreeDCell(i,corner,grid),
+Move3D::ThreeDCell(i,corner,grid),
 m_Open(false),
 m_Closed(false),
 m_IsCostComputed(false),

@@ -14,16 +14,15 @@
 #include "Planner-pkg.h"
 
 using namespace std;
-MOVE3D_USING_SHARED_PTR_NAMESPACE
 using namespace HRICS;
-
-// import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
+using namespace Move3D;
 using namespace Eigen;
+
+MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 extern Eigen::Vector3d global_DrawnSphere;
 
-extern API::TwoDGrid* API_activeRobotGrid;
+extern Move3D::TwoDGrid* API_activeRobotGrid;
 
 //Natural::Natural() :
 //    m_leftArmCost(false),
@@ -38,7 +37,7 @@ extern API::TwoDGrid* API_activeRobotGrid;
 //    initGeneral();
 //}
 
-Natural::Natural(Robot* R) :
+Natural::Natural( Move3D::Robot* R ) :
     m_debug(false),
     m_leftArmCost(false),
     m_BestPointsSorted(false),

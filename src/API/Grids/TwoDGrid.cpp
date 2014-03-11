@@ -5,7 +5,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace API;
+using namespace Move3D;
 
 // import most common Eigen types 
 //USING_PART_OF_NAMESPACE_EIGEN
@@ -263,7 +263,7 @@ Vector2i TwoDGrid::getCellCoord(TwoDCell* ptrCell)
  * \param integer y
  * \param integer z
  */
-API::TwoDCell* TwoDGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y )
+Move3D::TwoDCell* TwoDGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y )
 {
     if (index == 0)
     {

@@ -14,6 +14,8 @@
 #include "Collision-pkg.h"
 
 using namespace std;
+using namespace Move3D;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 const bool forward_s = true;

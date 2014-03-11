@@ -12,6 +12,8 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/ConfigSpace/localpath.hpp"
 
+namespace Move3D {
+
 /**
  * @ingroup CONFIG_SPACE
  * \brief Tests the localPath using a colision checker
@@ -48,7 +50,7 @@ public:
 	/**
 	 *
 	 */
-	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getLastValidConfiguration();
+    confPtr_t getLastValidConfiguration();
 	
 private:
 	
@@ -75,6 +77,8 @@ private:
 	unsigned int mNbTest;
 
 };
+
+}
 
 #endif
  

@@ -6,7 +6,7 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 
-typedef std::vector< std::pair<double,confPtr_t> > motion_t;
+typedef std::vector< std::pair<double,Move3D::confPtr_t> > motion_t;
 
 namespace HRICS
 {
@@ -14,7 +14,7 @@ class RecordMotion {
 
 public:
     RecordMotion();
-    RecordMotion( Robot* robot );
+    RecordMotion( Move3D::Robot* robot );
     ~RecordMotion();
 
     void setRobot(const std::string& robotname);
@@ -29,8 +29,8 @@ public:
     bool loadRegressedFromCSV();
     void translateStoredMotions();
     motion_t invertTranslation( const motion_t& motion );
-    confPtr_t getConfigOpenRave( const std::vector<std::string>& config );
-    confPtr_t getConfigTwelveDoF( const std::vector<std::string>& config );
+    Move3D::confPtr_t getConfigOpenRave( const std::vector<std::string>& config );
+    Move3D::confPtr_t getConfigTwelveDoF( const std::vector<std::string>& config );
     motion_t loadFromCSV( const std::string& filename, bool quiet = false );
     void loadXMLFolder();
     bool loadXMLFolder( const std::string& foldername  );
@@ -41,7 +41,7 @@ public:
     void saveToCSV( const std::string &filename, const motion_t& motion);
     void saveStoredToCSV( const std::string &filename );
     motion_t resample( const motion_t& motion, int nb_sample );
-    motion_t getArmTorsoMotion( const motion_t& motion, confPtr_t q );
+    motion_t getArmTorsoMotion( const motion_t& motion, Move3D::confPtr_t q );
 
     void showStoredMotion();
     void showCurrentMotion();
@@ -66,8 +66,8 @@ public:
     bool m_is_recording;
 
 private:
-    Robot* m_robot;
-    confPtr_t m_init_q;
+    Move3D::Robot* m_robot;
+    Move3D::confPtr_t m_init_q;
     double m_time_last_saved;
     double m_time_to_record;
     double m_time_last_record;

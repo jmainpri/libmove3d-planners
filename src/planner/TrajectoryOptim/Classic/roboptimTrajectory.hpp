@@ -118,8 +118,8 @@ namespace roboptim
 	public:
 		RoboptimFactory() {}
 		
-		LinearTrajectory* make_Roboptim(API::Trajectory& traj);
-		API::Trajectory*	make_Move3D(LinearTrajectory& traj);
+		LinearTrajectory* make_Roboptim(Move3D::Trajectory& traj);
+		Move3D::Trajectory*	make_Move3D(LinearTrajectory& traj);
 		
 	private:
 		Robot* m_Robot;

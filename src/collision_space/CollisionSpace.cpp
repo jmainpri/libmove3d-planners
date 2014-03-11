@@ -20,13 +20,15 @@
 
 #include <Eigen/Core>
 
-CollisionSpace* global_collisionSpace = NULL;
-
+using namespace Move3D;
 using namespace std;
+
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
-CollisionSpaceCell::CollisionSpaceCell(int i, const Eigen::Vector3d& corner, API::ThreeDGrid* grid) :
-    API::ThreeDCell(i, corner, grid)
+CollisionSpace* Move3D::global_collisionSpace = NULL;
+
+CollisionSpaceCell::CollisionSpaceCell(int i, const Eigen::Vector3d& corner, Move3D::ThreeDGrid* grid) :
+    Move3D::ThreeDCell(i, corner, grid)
 {
     m_Valid = true;
     m_Visited = false;
@@ -80,7 +82,7 @@ void CollisionSpaceCell::draw()
 //-----------------------------------------------------------------
 
 CollisionSpace::CollisionSpace( Robot* rob, double pace, const vector<double>& env_size ) :
-    API::ThreeDGrid( pace , env_size ), m_sampler(NULL)
+    Move3D::ThreeDGrid( pace , env_size ), m_sampler(NULL)
 {
     this->createAllCells();
 
@@ -118,7 +120,7 @@ CollisionSpace::~CollisionSpace()
     delete m_sampler;
 }
 
-API::ThreeDCell* CollisionSpace::createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z )
+Move3D::ThreeDCell* CollisionSpace::createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z )
 {
     return new CollisionSpaceCell( index, computeCellCorner(x,y,z) , this );
 }
@@ -145,7 +147,7 @@ void CollisionSpace::init()
     m_invTwiceResolution = 1.0/(2.0*resolution);
     initNeighborhoods();
 }
-
+#include "API/project.hpp"
 void CollisionSpace::resetOccupationCells()
 {
     for(unsigned int i = 0; i < getNumberOfCells(); i++)
@@ -307,7 +309,7 @@ double CollisionSpace::addPointsToField(const std::vector<Eigen::Vector3d>& poin
                                 + _nbCellsY*_nbCellsY
                                 + _nbCellsZ*_nbCellsZ );
 
-    //cout << "max_distance_sq : " << max_distance_sq << endl;
+    //cout << "max_distance_sq : " << max_distan#include "API/project.hpp"ce_sq << endl;
 
     // initialize the bucket queue
     vector< vector<CollisionSpaceCell*> > bucket_queue;

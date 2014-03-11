@@ -3,6 +3,9 @@
 
 #include "planner/Diffusion/Variants/BaseExpansion.hpp"
 
+namespace Move3D
+{
+
 /**
   @ingroup Diffusion
   * RRT Expansion Methods
@@ -17,7 +20,6 @@ public:
 
     RRTExpansion();
     RRTExpansion(Graph* prtGraph);
-
     ~RRTExpansion();
 
 
@@ -29,8 +31,7 @@ public:
      * @param Sampling passive mode
      * @param Direction node
      */
-    virtual MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getExpansionDirection(
-            Node* expandComp, Node* goalComp, bool samplePassive,Node*& directionNode);
+    virtual confPtr_t getExpansionDirection( Node* expandComp, Node* goalComp, bool samplePassive,Node*& directionNode);
 
     /**
      * Gets the nearest node in the graph
@@ -39,8 +40,7 @@ public:
      * @param direction Direction of expansion
      * @param Sampling passive mode
      */
-    virtual Node* getExpansionNode(
-            Node* compNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> direction, int distance);
+    virtual Node* getExpansionNode( Node* compNode, confPtr_t direction, int distance);
 	
 	/**
      * Expands towards the goal
@@ -48,8 +48,7 @@ public:
      * @param expansionNode     Node expanded
      * @param directionConfig   Direction
      */
-    virtual bool expandToGoal(
-			Node* expansionNode,MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig);
+    virtual bool expandToGoal( Node* expansionNode, confPtr_t directionConfig);
 
 	/** 
 	 * expandProcess 
@@ -64,10 +63,10 @@ public:
 	 *
 	 * @return the number of nodes created
 	 */
-    virtual unsigned expandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
-                       Node* directionNode,
-                       Env::expansionMethod method);
+    virtual unsigned expandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode, Env::expansionMethod method);
 
 };
+
+}
 
 #endif // RRTEXPANSION_HPP

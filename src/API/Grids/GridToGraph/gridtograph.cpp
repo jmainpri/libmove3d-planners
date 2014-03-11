@@ -10,7 +10,7 @@
 
 using namespace std;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
-using namespace API;
+using namespace Move3D;
 
 // import most common Eigen types 
 //USING_PART_OF_NAMESPACE_EIGEN
