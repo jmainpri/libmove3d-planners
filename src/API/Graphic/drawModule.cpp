@@ -27,6 +27,38 @@ using namespace Graphic;
 using namespace Move3D;
 using namespace std;
 
+// ****************************************************************************************************
+// API FUNCTIONS
+// ****************************************************************************************************
+
+static boost::function<void( double, double, double, double )> Move3DDrawSphere;
+static boost::function<void( double ,double ,double, double, double, double, int, double* )> Move3DDrawOneLine;
+
+// ****************************************************************************************************
+// SETTERS
+// ****************************************************************************************************
+
+void move3d_set_fct_draw_sphere( boost::function<void( double, double, double, double )> fct ) {  Move3DDrawSphere = fct; }
+void move3d_set_fct_draw_one_line( boost::function<void( double ,double ,double, double, double, double, int, double*)> fct ) { Move3DDrawOneLine = fct; }
+
+// ----------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
+
+void move3d_draw_sphere( double x, double y, double z, double radius  )
+{
+    Move3DDrawSphere( x, y, z, radius );
+}
+
+void move3d_draw_one_line( double x1, double y1, double z1, double x2, double y2, double z2, int color, double *color_vect )
+{
+    Move3DDrawOneLine( x1, y1, z1, x2, y2, z2, color, color_vect );
+}
+
+// ----------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------
+
 // Drawing module
 DrawFunctions* global_DrawModule = NULL;
 

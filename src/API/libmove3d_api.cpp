@@ -5,11 +5,13 @@
 #include "API/Device/robot.hpp"
 #include "API/Device/joint.hpp"
 #include "API/Trajectory/trajectory.hpp"
+#include "API/Graphic/drawModule.hpp"
 
 #include "P3d-pkg.h"
 #include "Collision-pkg.h"
 #include "Localpath-pkg.h"
 #include "Planner-pkg.h"
+#include "Graphic-pkg.h"
 #include "move3d-gui.h"
 #include "move3d-headless.h"
 
@@ -287,7 +289,7 @@ void* move3d_localpath_get_localpath_struct( LocalPath& path, bool multi_sol, in
 {
     p3d_localpath* path_struct = NULL;
 
-    if (!path.getP3dLocalpathStructConst())
+    if ( !path.getP3dLocalpathStructConst() )
     {
         if( !multi_sol )
         {
@@ -303,10 +305,14 @@ void* move3d_localpath_get_localpath_struct( LocalPath& path, bool multi_sol, in
             type = path_struct->type_lp;
         }
     }
+    else {
+        path_struct = path.getP3dLocalpathStructConst();
+    }
+
     return path_struct;
 }
 
-void* move3d_localpath_init_from_struct( LocalPath& path, void* lpPtr, confPtr_t begin, confPtr_t end )
+void* move3d_localpath_init_from_struct( LocalPath& path, void* lpPtr, confPtr_t& begin, confPtr_t& end )
 {
     p3d_localpath* path_struct = NULL;
 
@@ -316,17 +322,17 @@ void* move3d_localpath_init_from_struct( LocalPath& path, void* lpPtr, confPtr_t
         path_struct = static_cast<p3d_localpath*>(lpPtr)->copy( static_cast<p3d_rob*>( path.getRobot()->getP3dRobotStruct()), static_cast<p3d_localpath*>(lpPtr));
 
         begin = confPtr_t (
-                    new Configuration( path.getRobot(), path.getP3dLocalpathStruct()->config_at_param(
+                    new Configuration( path.getRobot(), path_struct->config_at_param(
                                            static_cast<p3d_rob*>(path.getRobot()->getP3dRobotStruct()),
-                                           path.getP3dLocalpathStruct(), 0),true));
+                                           path_struct, 0),true));
 
         begin->setConstraints();
 
         end = confPtr_t (
-                    new Configuration( path.getRobot(), path.getP3dLocalpathStruct()->config_at_param(
+                    new Configuration( path.getRobot(), path_struct->config_at_param(
                                            static_cast<p3d_rob*>(path.getRobot()->getP3dRobotStruct()),
-                                           path.getP3dLocalpathStruct(),
-                                           path.getP3dLocalpathStruct()->range_param),true));
+                                           path_struct,
+                                           path_struct->range_param),true));
 
         end->setConstraints();
 
@@ -823,6 +829,24 @@ double move3d_joint_get_dist( const Joint* J )
 // ****************************************************************************************************
 // ****************************************************************************************************
 //
+// DAW
+//
+// ****************************************************************************************************
+// ****************************************************************************************************
+
+void move3d_draw_sphere_fct( double x, double y, double z, double radius )
+{
+    g3d_draw_solid_sphere( x, y, z, radius, 10 );
+}
+
+void move3d_draw_one_line_fct( double x1, double y1, double z1, double x2, double y2, double z2, int color, double *color_vect )
+{
+    g3d_drawOneLine( x1, y1, z1, x2, y2, z2, color, color_vect );
+}
+
+// ****************************************************************************************************
+// ****************************************************************************************************
+//
 // SETTER
 //
 // ****************************************************************************************************
@@ -906,4 +930,10 @@ void move3d_set_api_functions_joint()
     move3d_set_fct_joint_get_index_of_first_dof( boost::bind( move3d_joint_get_index_of_first_joint, _1 ) );
     move3d_set_fct_joint_get_previous_joint( boost::bind( move3d_joint_get_previous_joint, _1, _2 ) );
     move3d_set_fct_joint_joint_dist( boost::bind( move3d_joint_get_dist, _1 ) );
+}
+
+void move3d_set_api_functions_draw()
+{
+    move3d_set_fct_draw_sphere( boost::bind( move3d_draw_sphere_fct, _1, _2, _3, _4 ) );
+    move3d_set_fct_draw_one_line( boost::bind( move3d_draw_one_line_fct, _1, _2, _3, _4, _5, _6, _7, _8 ) );
 }

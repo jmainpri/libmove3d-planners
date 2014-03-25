@@ -233,6 +233,7 @@ public:
     void print();
 
 protected:
+
     Robot* _Robot;
 
     confPtr_t _Begin;
@@ -267,7 +268,7 @@ private:
 void move3d_set_fct_localpath_copy( boost::function<void*(const Move3D::LocalPath&, Move3D::Robot*)> fct );
 void move3d_set_fct_localpath_copy_p3d( boost::function<void*(const Move3D::LocalPath&, Move3D::Robot*)> fct );
 void move3d_set_fct_localpath_path_destructor( boost::function<void(Move3D::LocalPath&)> fct );
-void move3d_set_fct_localpath_copy_from_struct( boost::function<void*(Move3D::LocalPath&, void*, Move3D::confPtr_t, Move3D::confPtr_t )> fct );
+void move3d_set_fct_localpath_copy_from_struct( boost::function<void*(Move3D::LocalPath&, void*, Move3D::confPtr_t&, Move3D::confPtr_t& )> fct );
 void move3d_set_fct_localpath_get_struct( boost::function<void*(Move3D::LocalPath&, bool, int&)> fct );
 void move3d_set_fct_localpath_classic_test( boost::function<bool(Move3D::LocalPath&, Move3D::confPtr_t, int&, double&)> fct );
 void move3d_set_fct_localpath_is_valid( boost::function<bool(Move3D::LocalPath&, int&)> fct );

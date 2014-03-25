@@ -55,6 +55,12 @@ void initDrawFunctions();
 
 }
 
+void move3d_set_fct_draw_sphere( boost::function<void( double, double, double, double )> fct );
+void move3d_set_fct_draw_one_line( boost::function<void( double ,double ,double, double, double, double, int, double*)> fct );
+
+void move3d_draw_sphere( double x, double y, double z, double radius );
+void move3d_draw_one_line( double x1, double y1, double z1, double x2, double y2, double z2, int color, double *color_vect );
+
 extern Graphic::DrawFunctions* global_DrawModule;
 
 #endif

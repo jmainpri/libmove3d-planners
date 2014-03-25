@@ -170,9 +170,9 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t)
 
     while (localpathPt != NULL)
     {
-        LocalPath* path = new LocalPath(m_Robot, localpathPt);
-        //			path->getBegin()->print();
-        //			path->getEnd()->print();
+        LocalPath* path = new LocalPath( m_Robot, localpathPt );
+        // path->getBegin()->print();
+        // path->getEnd()->print();
         m_Courbe.push_back(path);
         localpathPt = localpathPt->next_lp;
     }
@@ -1500,13 +1500,16 @@ void Trajectory::draw( int nbKeyFrame )
     if (indexjnt != -1 && indexjnt <= int(m_Robot->getNumberOfJoints()) ) {
         drawnjnt = m_Robot->getJoint( indexjnt );
     }
+    if( drawnjnt == NULL ){
+        return;
+    }
 
     confPtr_t qSave = m_Robot->getCurrentPos();
     confPtr_t q = m_Source;
     m_Robot->setAndUpdate(*q);
 
-    p3d_vector3 pi, pf;
-    p3d_jnt_get_cur_vect_point( (p3d_jnt*)drawnjnt->getP3dJointStruct(), pi);
+    Eigen::Vector3d pi, pf;
+    pi = drawnjnt->getVectorPos();
 
     int saveColor;
     bool red = false;
@@ -1521,7 +1524,7 @@ void Trajectory::draw( int nbKeyFrame )
         /* position of the robot corresponding to parameter u */
         q = configAtParam(u);
         m_Robot->setAndUpdate(*q);
-        p3d_jnt_get_cur_vect_point( (p3d_jnt*)drawnjnt->getP3dJointStruct(), pf);
+        pf = drawnjnt->getVectorPos();
 
         if (m_isHighestCostIdSet)
         {
@@ -1546,24 +1549,24 @@ void Trajectory::draw( int nbKeyFrame )
             height_f = pf[2];
         }
         else {
-            /*val1 =*/ GHintersectionVerticalLineWithGround(GroundCostObj, pi[0], pi[1], &Cost1);
-            /*val2 =*/ GHintersectionVerticalLineWithGround(GroundCostObj, pf[0], pf[1], &Cost2);
+            /*val1 =*/ GHintersectionVerticalLineWithGround( GroundCostObj, pi[0], pi[1], &Cost1 );
+            /*val2 =*/ GHintersectionVerticalLineWithGround( GroundCostObj, pf[0], pf[1], &Cost2 );
             height_i = Cost1 + (ZmaxEnv - ZminEnv) * 0.02;
             height_f = Cost2 + (ZmaxEnv - ZminEnv) * 0.02;
         }
 
         glLineWidth(3.);
         if( !m_use_continuous_color ) {
-            g3d_drawOneLine(pi[0], pi[1], height_i, pf[0], pf[1], height_f, m_Color, NULL);
+            g3d_drawOneLine( pi[0], pi[1], height_i, pf[0], pf[1], height_f, m_Color, NULL );
         }
         else{
             double colorvector[4];
             GroundColorMixGreenToRed( colorvector, m_Color );
-            g3d_drawOneLine(pi[0], pi[1], height_i, pf[0], pf[1], height_f, Any, colorvector);
+            g3d_drawOneLine( pi[0], pi[1], height_i, pf[0], pf[1], height_f, Any, colorvector );
         }
         glLineWidth(1.);
 
-        p3d_vectCopy(pf, pi);
+        pi = pf;
         u += du;
     }
 
@@ -1572,9 +1575,9 @@ void Trajectory::draw( int nbKeyFrame )
         for (unsigned int i=0; i<m_Courbe.size(); i++)
         {
             m_Robot->setAndUpdate(*m_Courbe[i]->getEnd());
-            p3d_jnt_get_cur_vect_point( (p3d_jnt*)drawnjnt->getP3dJointStruct(), pf);
-            /*val2 =*/ GHintersectionVerticalLineWithGround(GroundCostObj, pf[0],pf[1], &Cost2);
-            g3d_drawSphere(pf[0],pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02,1.);
+            pf = drawnjnt->getVectorPos();
+            /*val2 =*/ GHintersectionVerticalLineWithGround( GroundCostObj, pf[0], pf[1], &Cost2 );
+            g3d_draw_solid_sphere( pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02,1., 10 );
         }
     }
 

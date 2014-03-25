@@ -26,6 +26,7 @@
 #include "API/Roadmap/graph.hpp"
 #include "API/Roadmap/compco.hpp"
 #include "API/Roadmap/graphConverter.hpp"
+#include "API/Graphic/drawModule.hpp"
 
 #include "planner/planEnvironment.hpp"
 #include "planner/cost_space.hpp"
@@ -2485,38 +2486,38 @@ void Graph::initMotionPlanning( p3d_node* start, p3d_node* goal )
 
 void Graph::drawNode(BGL_Vertex v) 
 {
-    p3d_jnt* 	drawnjnt=NULL;
+    Joint* 	drawnjnt=NULL;
     int indexjnt = p3d_get_user_drawnjnt();
-    if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= static_cast<p3d_rob*>( robot_->getP3dRobotStruct() )->njoints )
+    if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= int(robot_->getNumberOfJoints()) )
     {
-        drawnjnt = static_cast<p3d_rob*>( robot_->getP3dRobotStruct() )->joints[indexjnt];
+        drawnjnt = robot_->getJoint( indexjnt );
     }
-
     if (drawnjnt == NULL) {
         return;
     }
 
-    double ray, x1, x2, y1, y2, z1, z2;
+    double radius, x1, x2, y1, y2, z1, z2;
 
-    if( drawnjnt->o != NULL ) {
-        p3d_get_box_obj(drawnjnt->o, &x1, &x2, &y1, &y2, &z1, &z2); //get the object bounding box
-        ray = sqrt(SQR(x2 - x1) + SQR(y2 - y1) + SQR(z2 - z1)) / 5.; // TODO get better method for size
-    }
-    else {
-        ray = 0.05;
+    radius = 0.05;
+
+    if( drawnjnt->getP3dJointStruct() != NULL )
+    {
+        if( drawnjnt->getP3dJointStruct()->o != NULL ) {
+            p3d_get_box_obj( drawnjnt->getP3dJointStruct()->o, &x1, &x2, &y1, &y2, &z1, &z2 ); //get the object bounding box
+            radius = sqrt(SQR(x2 - x1) + SQR(y2 - y1) + SQR(z2 - z1)) / 5.; // TODO get better method for size
+        }
     }
 
     BGL_VertexDataMapT NodeData = boost::get( NodeData_t() , boost_graph_ );
 
-    robot_->setAndUpdate(*NodeData[v]->getConfiguration());
-    p3d_vector3 pos;
-    p3d_jnt_get_cur_vect_point(drawnjnt, pos);
+    robot_->setAndUpdate( *NodeData[v]->getConfiguration() );
+    Eigen::Vector3d pos = drawnjnt->getVectorPos();
 
-    if(GroundCostObj) {
+    if( GroundCostObj ) {
         double cost(0);
-        GHintersectionVerticalLineWithGround(GroundCostObj, pos[0], pos[1], &cost);
+        GHintersectionVerticalLineWithGround( GroundCostObj, pos[0], pos[1], &cost );
         pos[2] = cost+0.5;
-        ray = 0.5;
+        radius = 0.5;
     }
 
     double color_array[4];
@@ -2524,20 +2525,21 @@ void Graph::drawNode(BGL_Vertex v)
     if( color == 0 )
         color = NodeData[v]->getConnectedComponent()->getId();
     g3d_set_color( color, color_array );
-    g3d_draw_solid_sphere(pos[0], pos[1], pos[2], ray, 10);
-    //g3d_drawColorSphere(pos[0], pos[1], pos[2], ray, color, NULL);
+
+    move3d_draw_sphere( pos[0], pos[1], pos[2], radius );
+    // g3d_draw_solid_sphere( pos[0], pos[1], pos[2], radius, 10 );
+    // g3d_drawColorSphere(pos[0], pos[1], pos[2], radius, color, NULL);
 }
 
 void Graph::drawEdge(BGL_Vertex v1, BGL_Vertex v2) 
 {
     int color=0;
-    p3d_jnt* 	drawnjnt=NULL;
+    Joint* 	drawnjnt=NULL;
     int indexjnt = p3d_get_user_drawnjnt();
-    if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= static_cast<p3d_rob*>( robot_->getP3dRobotStruct() )->njoints )
+    if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= int(robot_->getNumberOfJoints()) )
     {
-        drawnjnt = static_cast<p3d_rob*>( robot_->getP3dRobotStruct() )->joints[indexjnt];
+        drawnjnt = robot_->getJoint( indexjnt );
     }
-
     if (drawnjnt == NULL) {
         return;
     }
@@ -2545,25 +2547,26 @@ void Graph::drawEdge(BGL_Vertex v1, BGL_Vertex v2)
     BGL_VertexDataMapT NodeData = boost::get( NodeData_t() , boost_graph_ );
 
     robot_->setAndUpdate(*NodeData[v1]->getConfiguration());
-    p3d_vector3 source_pos;
-    p3d_jnt_get_cur_vect_point(drawnjnt, source_pos);
+    Eigen::Vector3d source_pos = drawnjnt->getVectorPos();
 
     robot_->setAndUpdate(*NodeData[v2]->getConfiguration());
-    p3d_vector3 target_pos;
-    p3d_jnt_get_cur_vect_point(drawnjnt, target_pos);
+    Eigen::Vector3d target_pos = drawnjnt->getVectorPos();
 
-    if(GroundCostObj)
+    if( GroundCostObj )
     {
         double Cost1(0);
         GHintersectionVerticalLineWithGround(GroundCostObj, source_pos[0], source_pos[1], &Cost1);
         double Cost2(0);
         GHintersectionVerticalLineWithGround(GroundCostObj, target_pos[0], target_pos[1], &Cost2);
-        g3d_drawOneLine(source_pos[0], source_pos[1], Cost1 + 0.5, target_pos[0], target_pos[1], Cost2 + 0.5, color, NULL);
+
+        move3d_draw_one_line( source_pos[0], source_pos[1], Cost1 + 0.5, target_pos[0], target_pos[1], Cost2 + 0.5, color, NULL);
+        // g3d_drawOneLine( source_pos[0], source_pos[1], Cost1 + 0.5, target_pos[0], target_pos[1], Cost2 + 0.5, color, NULL);
     }
     else
     {
-        g3d_drawOneLine(source_pos[0], source_pos[1], source_pos[2],
-                        target_pos[0], target_pos[1], target_pos[2], color, NULL);
+        move3d_draw_one_line( source_pos[0], source_pos[1], source_pos[2], target_pos[0], target_pos[1], target_pos[2], color, NULL);
+        // g3d_drawOneLine( source_pos[0], source_pos[1], source_pos[2],
+        //                  target_pos[0], target_pos[1], target_pos[2], color, NULL);
     }
 }
 

@@ -30,7 +30,7 @@ MOVE3D_USING_SHARED_PTR_NAMESPACE
 static boost::function<void*(const LocalPath&, Robot*)> Move3DLocalPathCopy;
 static boost::function<void*(const LocalPath&, Robot*)> Move3DLocalPathCopyP3d;
 static boost::function<void(LocalPath&)> Move3DLocalPathDestructor;
-static boost::function<void*(LocalPath&, void*, confPtr_t, confPtr_t )> Move3DLocalPathCopyFromStruct;
+static boost::function<void*(LocalPath&, void*, confPtr_t&, confPtr_t& )> Move3DLocalPathCopyFromStruct;
 static boost::function<void*(LocalPath&, bool, int&)> Move3DLocalPathGetStruct;
 static boost::function<bool(LocalPath&, confPtr_t, int&, double&)> Move3DLocalPathClassicTest;
 static boost::function<bool(LocalPath&, int&)> Move3DLocalPathIsValid;
@@ -47,7 +47,7 @@ static boost::function<double(LocalPath&,double,bool,double&)> Move3DLocalPathSt
 void move3d_set_fct_localpath_copy( boost::function<void*(const LocalPath&, Robot*)> fct ) {  Move3DLocalPathCopy = fct; }
 void move3d_set_fct_localpath_copy_p3d( boost::function<void*(const LocalPath&, Robot*)> fct ) {  Move3DLocalPathCopyP3d = fct; }
 void move3d_set_fct_localpath_path_destructor( boost::function<void(LocalPath&)> fct ) {  Move3DLocalPathDestructor = fct; }
-void move3d_set_fct_localpath_copy_from_struct( boost::function<void*(LocalPath&, void*, confPtr_t, confPtr_t )> fct ) {  Move3DLocalPathCopyFromStruct = fct; }
+void move3d_set_fct_localpath_copy_from_struct( boost::function<void*(LocalPath&, void*, confPtr_t&, confPtr_t& )> fct ) {  Move3DLocalPathCopyFromStruct = fct; }
 void move3d_set_fct_localpath_get_struct( boost::function<void*(LocalPath&, bool, int&)> fct ) {  Move3DLocalPathGetStruct = fct; }
 void move3d_set_fct_localpath_classic_test( boost::function<bool(LocalPath&, confPtr_t, int&, double&)> fct ) {  Move3DLocalPathClassicTest = fct; }
 void move3d_set_fct_localpath_is_valid( boost::function<bool(LocalPath&, int&)> fct ) {  Move3DLocalPathIsValid = fct; }
@@ -143,7 +143,7 @@ LocalPath::LocalPath(const LocalPath& path) :
     _LocalPath = Move3DLocalPathCopy( path, _Robot );
 }
 
-LocalPath::LocalPath(Robot* R, p3d_localpath* lpPtr) :
+LocalPath::LocalPath( Robot* R, p3d_localpath* lpPtr ) :
     _Robot(R),
     _LocalPath(NULL),
     _Valid(false),
@@ -151,8 +151,10 @@ LocalPath::LocalPath(Robot* R, p3d_localpath* lpPtr) :
     _lastValidParam(0.0),
     _lastValidEvaluated(false),
     _NbColTest(0),
-    _costEvaluated(false), _Cost(0.0),
-    _ResolEvaluated(false), _Resolution(0.0)
+    _costEvaluated(false),
+    _Cost(0.0),
+    _ResolEvaluated(false),
+    _Resolution(0.0)
 {
 
     _LocalPath = Move3DLocalPathCopyFromStruct( *this, lpPtr, _Begin, _End );
