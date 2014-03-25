@@ -48,8 +48,8 @@ bool ConfGenerator::computeRobotIkForGrabing( configPt &q, const Eigen::Vector3d
   confPtr_t q_robot_cur = _robot->getCurrentPos();
   
   int armId = 0;
-  ArmManipulationData& armData = (*_robot->getRobotStruct()->armManipulationData)[armId];
-  ManipulationConfigs manipConf(_robot->getRobotStruct());
+  ArmManipulationData& armData = (*_robot->getP3dRobotStruct()->armManipulationData)[armId];
+  ManipulationConfigs manipConf(_robot->getP3dRobotStruct());
   gpGrasp grasp;
   double confCost = -1;
   
@@ -175,7 +175,7 @@ pair<confPtr_t,confPtr_t> ConfGenerator::setRobotsToConf( const HRICS::ConfigHR&
   vector<HRICS::ConfigHR> vectConfs;
   
   int firstIndexOfHumanDof = _human->getJoint("Pelvis")->getIndexOfFirstDof();
-  int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+  int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_robot->getP3dRobotStruct()->baseJnt)->user_dof_equiv_nbr;
   
   // First is human
   confPtr_t q_human_cur = _human->getCurrentPos();
@@ -204,7 +204,7 @@ bool ConfGenerator::sortConfig(std::vector<HRICS::ConfigHR>& vectConfs, int nbNo
   confPtr_t q_robot_cur = _robot->getCurrentPos();
   confPtr_t q_human_cur = _human->getCurrentPos();
   
-  int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+  int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_robot->getP3dRobotStruct()->baseJnt)->user_dof_equiv_nbr;
   int firstIndexOfHumanDof = _human->getJoint("Pelvis")->getIndexOfFirstDof();
   
   double reachFactor = ENV.getDouble(Env::Kreachable);
@@ -289,7 +289,7 @@ bool ConfGenerator::placeRobot()
   
   confPtr_t q_robot = _robot->getCurrentPos();
   confPtr_t q_robot_cur = _robot->getCurrentPos();
-  int firstIndexOfDof = dynamic_cast<p3d_jnt*>(_robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+  int firstIndexOfDof = dynamic_cast<p3d_jnt*>(_robot->getP3dRobotStruct()->baseJnt)->user_dof_equiv_nbr;
   
   double dist = sqrt(pow(HumanPos[0] - current_WSPoint[0], 2) + pow(HumanPos[1] - current_WSPoint[1], 2));
   
@@ -331,7 +331,7 @@ bool ConfGenerator::placeRobot()
   }
   
   confPtr_t m_q = confPtr_t(
-                            new Configuration(_robot,p3d_copy_config(_robot->getRobotStruct(),q)));
+                            new Configuration(_robot,p3d_copy_config(_robot->getP3dRobotStruct(),q)));
   _robot->setAndUpdate( *m_q );
   return true;
 }
@@ -339,7 +339,7 @@ bool ConfGenerator::placeRobot()
 std::vector<HRICS::ConfigHR> ConfGenerator::addConfToList()
 {
   int firstIndexOfHumanDof = _human->getJoint(1)->getIndexOfFirstDof();
-  int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+  int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_robot->getP3dRobotStruct()->baseJnt)->user_dof_equiv_nbr;
   
   
   confPtr_t q_robot_cur = _robot->getCurrentPos();
@@ -399,11 +399,11 @@ void ConfGenerator::saveToXml(string filename)
     xmlNodePtr cur = xmlNewChild (root, NULL, xmlCharStrdup(name.c_str()), NULL);
     xmlNodePtr curHuman = xmlNewChild (cur, NULL, xmlCharStrdup("humanConfig"), NULL);
     
-    writeXmlRobotConfig(curHuman,_human->getRobotStruct(),m_configList.at(i).getHumanConf());
+    writeXmlRobotConfig(curHuman,_human->getP3dRobotStruct(),m_configList.at(i).getHumanConf());
     
     xmlNodePtr curRobot = xmlNewChild (cur, NULL, xmlCharStrdup("robotConfig"), NULL);
     
-    writeXmlRobotConfig(curRobot,_robot->getRobotStruct(),m_configList.at(i).getRobotConf());
+    writeXmlRobotConfig(curRobot,_robot->getP3dRobotStruct(),m_configList.at(i).getRobotConf());
   }
   
   xmlDocSetRootElement(doc, root);
@@ -464,7 +464,7 @@ std::vector<HRICS::ConfigHR> ConfGenerator::loadFromXml(string filename)
   int i =0;
   
   int firstIndexOfHumanDof = _human->getJoint(1)->getIndexOfFirstDof();
-  int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+  int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_robot->getP3dRobotStruct()->baseJnt)->user_dof_equiv_nbr;
   
   vectConfs.clear();
   while (i < nbNode)
@@ -486,7 +486,7 @@ std::vector<HRICS::ConfigHR> ConfGenerator::loadFromXml(string filename)
         return vectConfs;
       }
       
-      configPt q_hum = readXmlConfig(_human->getRobotStruct(),ptrTmp->xmlChildrenNode->next);
+      configPt q_hum = readXmlConfig(_human->getP3dRobotStruct(),ptrTmp->xmlChildrenNode->next);
       
       
       ptrTmp = ptrTmp->next->next;
@@ -495,7 +495,7 @@ std::vector<HRICS::ConfigHR> ConfGenerator::loadFromXml(string filename)
         cout << "Error: no robot config" << endl;
         return vectConfs;
       }
-      configPt q_rob =readXmlConfig(_robot->getRobotStruct(),ptrTmp->xmlChildrenNode->next);
+      configPt q_rob =readXmlConfig(_robot->getP3dRobotStruct(),ptrTmp->xmlChildrenNode->next);
       
       
       

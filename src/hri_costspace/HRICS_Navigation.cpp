@@ -40,7 +40,7 @@ Navigation::Navigation(Robot* R) : m_robot(R)
 
 Navigation::~Navigation()
 {
-    p3d_col_activate_rob_rob( m_robot->getRobotStruct(), m_cyl->getRobotStruct() );
+    p3d_col_activate_rob_rob( m_robot->getP3dRobotStruct(), m_cyl->getP3dRobotStruct() );
     delete m_2DGrid;
 }
 
@@ -73,7 +73,7 @@ bool Navigation::init()
         cout<< "ERROR: no cylinder found" <<endl;
         return false;
     }
-    p3d_col_deactivate_rob_rob( m_robot->getRobotStruct(), m_cyl->getRobotStruct() );
+    p3d_col_deactivate_rob_rob( m_robot->getP3dRobotStruct(), m_cyl->getP3dRobotStruct() );
 
     m_2DGrid = new PlanGrid( m_cyl,/*ENV.getDouble(Env::PlanCellSize)*/ pace, m_envSize );
     API_activeGrid = m_2DGrid;
@@ -252,7 +252,7 @@ Move3D::Trajectory* Navigation::getSimplePath(std::vector<double> goal, std::vec
 {
     confPtr_t i = m_robot->getCurrentPos();
     confPtr_t g = m_robot->getCurrentPos();
-    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(m_robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(m_robot->getP3dRobotStruct()->baseJnt)->user_dof_equiv_nbr;
     (*g)[firstIndexOfRobotDof + 0] = goal[0];
     (*g)[firstIndexOfRobotDof + 1] = goal[1];
     (*g)[firstIndexOfRobotDof + 5] = goal[2];

@@ -203,7 +203,7 @@ bool BaseExpansion::nextStep(LocalPath& path, Node* directionNode, double& pathD
 		}
 		else
 		{
-			ptrEnd = path.configAtParam(pathDelta * path.getLocalpathStruct()->range_param);
+            ptrEnd = path.configAtParam( pathDelta * path.getParamMax() );
 		}
 		ptrEnd->setConstraints();
 		newPath = shared_ptr<LocalPath>(new LocalPath(path.getBegin(),ptrEnd));
@@ -230,7 +230,7 @@ bool BaseExpansion::nextStep(LocalPath& path, shared_ptr<Configuration>& directi
 																		new LocalPath(path.getBegin(),
 																									pathDelta == 1. && directionConfig ?
 																									directionConfig :
-																									path.configAtParam(pathDelta * path.getLocalpathStruct()->range_param)));
+																									path.configAtParam(pathDelta * path.getP3dLocalpathStruct()->range_param)));
 	}
 	
 	return(newPath->isValid());

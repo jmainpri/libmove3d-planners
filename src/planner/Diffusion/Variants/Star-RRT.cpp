@@ -59,7 +59,7 @@ StarExpansion::StarExpansion(Graph* G) : RRTExpansion(G)
 
     Robot* rob = m_Graph->getRobot();
 
-    if( rob->getRobotStruct()->njoints == 1 && rob->getRobotStruct()->joints[1]->type == P3D_PLAN )
+    if( rob->getP3dRobotStruct()->njoints == 1 && rob->getP3dRobotStruct()->joints[1]->type == P3D_PLAN )
     {
         m_cspace = new CSpaceCostMap2D();
         initCSpace();
@@ -349,7 +349,7 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
         int K = m_Graph->getNumberOfNodes();
         //int K = m_K_Nearest;
 
-        vector<Node*> near_nodes = m_compco->KNearestWeightNeighbour(node_new->getConfiguration(), K, radius, false, ENV.getInt(Env::DistConfigChoice));
+        vector<Node*> near_nodes = m_compco->KNearestWeightNeighbour( node_new->getConfiguration(), K, radius, false, ENV.getInt(Env::DistConfigChoice) );
 
         if( print_exploration )
         {

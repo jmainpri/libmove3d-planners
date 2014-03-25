@@ -224,7 +224,7 @@ void g3d_draw_bounding_box(Robot* robot)
     Eigen::Vector3d p1;
 
     Joint* jnt = robot->getJoint(1);
-    p3d_obj* object = jnt->getJointStruct()->o;
+    p3d_obj* object = static_cast<p3d_jnt*>(jnt->getP3dJointStruct())->o;
 
     if( object )
     {
@@ -261,7 +261,7 @@ void g3d_draw_squeleton()
     for(unsigned int i=0; i<robot->getNumberOfJoints(); i++)
     {
         Joint* jnt = robot->getJoint(i);
-        p3d_obj* obj = jnt->getJointStruct()->o;
+        p3d_obj* obj = static_cast<p3d_jnt*>(jnt->getP3dJointStruct())->o;
 
         if(obj)
         {
@@ -647,7 +647,7 @@ void g3d_draw_hrics(int opengl_context)
         //    }
         //
         //    //    cout << "HUMAN = " << human->getName() << endl;
-        //    p3d_jnt* eyes = human->getJoint(gazeIndex)->getJointStruct();
+        //    p3d_jnt* eyes = human->getJoint(gazeIndex)->getP3dJointStruct();
         //
         //    // 46 is for HERAKLES
         //    // 42 is for ACHILE
@@ -846,14 +846,14 @@ void g3d_draw_hrics(int opengl_context)
     //        Robot* rob = global_Project->getActiveScene()->getActiveRobot();
     //        shared_ptr<Configuration> q_cur = rob->getCurrentPos();
     //
-    ////        p3d_set_and_update_robot_conf(rob->getRobotStruct()->ROBOT_POS);
+    ////        p3d_set_and_update_robot_conf(rob->getP3dRobotStruct()->ROBOT_POS);
     //        /* collision checking */
     //        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
     //        //g3d_draw_robot(robotPt->num, win);
-    //        p3d_set_and_update_robot_conf(rob->getRobotStruct()->ROBOT_GOTO);
+    //        p3d_set_and_update_robot_conf(rob->getP3dRobotStruct()->ROBOT_GOTO);
     //        /* collision checking */
     //        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
-    //        g3d_draw_robot(rob->getRobotStruct()->num, win, opengl_context);
+    //        g3d_draw_robot(rob->getP3dRobotStruct()->num, win, opengl_context);
     //        win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
     //
     //        p3d_set_and_update_robot_conf(q_cur->getConfigStruct());
@@ -906,12 +906,12 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
 
             GroundColorMixGreenToRed(colorvector,1.0);
 
-            g3d_set_custom_color_draw( robCollSapce->getRobotStruct(), true );
+            g3d_set_custom_color_draw( static_cast<p3d_rob*>(robCollSapce->getP3dRobotStruct()), true );
             g3d_set_custom_color_vect(colorvector);
         }
         else
         {
-            g3d_set_custom_color_draw( robCollSapce->getRobotStruct(), false );
+            g3d_set_custom_color_draw( static_cast<p3d_rob*>(robCollSapce->getP3dRobotStruct()), false );
         }
     }
 }
@@ -943,14 +943,14 @@ void drawSlice(int opengl_context)
         global_Project->getActiveScene()->setActiveRobot("PR2_ROBOT");
         //cout << "g3d_draw_robot" << endl;
         //q->print();
-        g3d_draw_robot(rob->getRobotStruct()->num, win , opengl_context);
+        g3d_draw_robot(rob->getP3dRobotStruct()->num, win , opengl_context);
 
         //        shared_ptr<Configuration> q( new Configuration(human,dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getRobotConfigAt(i) ));
         //        human->setAndUpdate(*q);
         //        global_Project->getActiveScene()->setActiveRobot("ACHILE_HUMAN1");
         //        //cout << "g3d_draw_robot" << endl;
         //        //q->print();
-        //        g3d_draw_robot(human->getRobotStruct()->num, win);
+        //        g3d_draw_robot(human->getP3dRobotStruct()->num, win);
     }
     human->setAndUpdate(*q_cur);
 }

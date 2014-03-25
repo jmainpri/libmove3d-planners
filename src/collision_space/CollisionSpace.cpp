@@ -165,7 +165,7 @@ void CollisionSpace::updateRobotOccupationCells(Robot* rob)
 
     for( int i=0; i<int(rob->getNumberOfJoints()); i++)
     {
-        p3d_obj* obj = rob->getJoint(i)->getJointStruct()->o;
+        p3d_obj* obj = static_cast<p3d_jnt*>( rob->getJoint(i)->getP3dJointStruct() )->o;
 
         if( obj )
         {
@@ -426,7 +426,7 @@ void CollisionSpace::resetPoints()
 
 void CollisionSpace::addRobotBody(Joint* jnt)
 {
-    p3d_obj* obj = jnt->getJointStruct()->o;
+    p3d_obj* obj = static_cast<p3d_jnt*>( jnt->getP3dJointStruct() )->o;
 
     if ( obj == NULL )
         return;
@@ -476,10 +476,10 @@ void CollisionSpace::addEnvPoints()
 
             Joint* jnt = mov_obst->getJoint(1);
 
-            if( jnt->getJointStruct()->o == NULL)
+            if( static_cast<p3d_jnt*>( jnt->getP3dJointStruct() )->o == NULL)
                 continue;
 
-            PointCloud& cloud = m_sampler->getPointCloud( jnt->getJointStruct()->o );
+            PointCloud& cloud = m_sampler->getPointCloud( static_cast<p3d_jnt*>( jnt->getP3dJointStruct() )->o );
 
             for ( int j=0; j<int(cloud.size()); j++)
             {

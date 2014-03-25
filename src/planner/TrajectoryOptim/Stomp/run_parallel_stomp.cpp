@@ -276,7 +276,7 @@ void stomp_motion_planner::srompRun_MultipleParallel()
     {
         boost::thread( &stompRun::run, pool, i, trajs[i] );
         //global_MultiStomplinesToDraw[robots[i]].clear();
-        robots[i]->getRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
+        robots[i]->getP3dRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
     }
 
     pool->isRunning();

@@ -37,7 +37,7 @@ MOVE3D_USING_SHARED_PTR_NAMESPACE
 //! Deactivate all kinematic constraints
 void p3d_deactivate_all_cntrts( Robot* r )
 {
-    p3d_rob* rob = r->getRobotStruct();
+    p3d_rob* rob = r->getP3dRobotStruct();
 
     int nb_cntrts = rob->cntrt_manager->ncntrts;
     p3d_cntrt** cntrts = rob->cntrt_manager->cntrts;
@@ -93,21 +93,21 @@ bool Replanner::init_mlp()
     if (m_robot == NULL)
         return false;
 
-    for (int i=0; i<m_robot->getRobotStruct()->mlp->nblpGp; i++)
+    for (int i=0; i<m_robot->getP3dRobotStruct()->mlp->nblpGp; i++)
     {
-        if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "base")) {
+        if (!strcmp(m_robot->getP3dRobotStruct()->mlp->mlpJoints[i]->gpName, "base")) {
             m_BaseMLP = i;
             m_useMLP = true;
-        } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "baseSm")) {
+        } else if (!strcmp(m_robot->getP3dRobotStruct()->mlp->mlpJoints[i]->gpName, "baseSm")) {
             m_BaseSmMLP = i;
             m_useMLP = true;
-        } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "head")) {
+        } else if (!strcmp(m_robot->getP3dRobotStruct()->mlp->mlpJoints[i]->gpName, "head")) {
             m_HeadMLP = i;
             m_useMLP = true;
-        } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "upBody")) {
+        } else if (!strcmp(m_robot->getP3dRobotStruct()->mlp->mlpJoints[i]->gpName, "upBody")) {
             m_UpBodyMLP = i;
             m_useMLP = true;
-        } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "upBodySm")) {
+        } else if (!strcmp(m_robot->getP3dRobotStruct()->mlp->mlpJoints[i]->gpName, "upBodySm")) {
             m_UpBodySmMLP = i;
             m_useMLP = true;
         }
@@ -224,7 +224,7 @@ bool SimpleReplanner::init()
         break;
 
     case 1: {
-        if( !p3d_run_rrt( m_robot->getRobotStruct() ) ){
+        if( !p3d_run_rrt( m_robot->getP3dRobotStruct() ) ){
             cout << " Error : could initialize with RRT" << endl;
             return false;
         }
@@ -293,12 +293,12 @@ void SimpleReplanner::init_for_manipuation()
     {
         cout << "Set upbody MLP" << endl;
 #ifdef MULTILOCALPATH
-        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-        p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
+        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getP3dRobotStruct() , false );
+        p3d_multiLocalPath_set_groupToPlan( m_robot->getP3dRobotStruct(), m_UpBodyMLP, 1, false);
 #endif
 
         // Fix all the joints but unfixes the arm 0
-        fixAllJointsWithoutArm( m_robot->getRobotStruct(), 0 );
+        fixAllJointsWithoutArm( m_robot->getP3dRobotStruct(), 0 );
     }
 
     // Deactivate all kinematic constraints
@@ -311,16 +311,16 @@ void SimpleReplanner::init_for_mobile_manip()
     {
         cout << "Set upbody MLP" << endl;
 #ifdef MULTILOCALPATH
-        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-        p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
+        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getP3dRobotStruct() , false );
+        p3d_multiLocalPath_set_groupToPlan( m_robot->getP3dRobotStruct(), m_UpBodyMLP, 1, false);
 #endif
     }
 
     // Fix all the joints but unfixes the arm 0
-    fixAllJointsWithoutArm( m_robot->getRobotStruct(), 0 );
+    fixAllJointsWithoutArm( m_robot->getP3dRobotStruct(), 0 );
 
     // Unfix base joint for planning
-    unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->baseJnt );
+    unFixJoint( m_robot->getP3dRobotStruct(), m_robot->getP3dRobotStruct()->baseJnt );
 
     // Deactivate all kinematic constraints
     //p3d_deactivate_all_cntrts( m_robot );
@@ -333,13 +333,13 @@ void SimpleReplanner::init_for_navigation()
     {
         cout << "Set base MLP" << endl;
 #ifdef MULTILOCALPATH
-        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-        p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_BaseMLP, 1, false);
+        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getP3dRobotStruct() , false );
+        p3d_multiLocalPath_set_groupToPlan( m_robot->getP3dRobotStruct(), m_BaseMLP, 1, false);
 #endif
 
         // Fix all joints for planner
         // This only works with manipulation planner
-        fixAllJointsExceptBase( m_robot->getRobotStruct() );
+        fixAllJointsExceptBase( m_robot->getP3dRobotStruct() );
     }
 
     // Deactivate all kinematic constraints
@@ -479,7 +479,7 @@ void RRTReplanner::run()
     timeval tim;
     gettimeofday(&tim, NULL); t_init=tim.tv_sec+(tim.tv_usec/1000000.0);
 
-    p3d_traj* path = p3d_planner_function( m_robot->getRobotStruct(),
+    p3d_traj* path = p3d_planner_function( m_robot->getP3dRobotStruct(),
                                            traj.getBegin()->getConfigStruct(),
                                            traj.getEnd()->getConfigStruct() );
 
@@ -493,7 +493,7 @@ void RRTReplanner::run()
             !PlanEnv->getBool(PlanParam::stopPlanner) &&
             PlanEnv->getBool(PlanParam::withSmoothing) )
     {
-        p3d_smoothing_function( m_robot->getRobotStruct(), path, 100, -1 );
+        p3d_smoothing_function( m_robot->getP3dRobotStruct(), path, 100, -1 );
     }
 
     std::pair<bool,Move3D::Trajectory> concated_traj;
@@ -574,7 +574,7 @@ std::pair<bool,confPtr_t> HandoverReplanner::newGoalFromList()
         //human_model_->setAndUpdate( *best_handover_conf.first );
         //robot_model_->setAndUpdate( *best_handover_conf.second );
         result.second = best_handover_conf.second;
-        p3d_update_virtual_object_config_for_arm_ik_constraint(m_robot->getRobotStruct(), 0, best_handover_conf.second->getConfigStruct() );
+        p3d_update_virtual_object_config_for_arm_ik_constraint(m_robot->getP3dRobotStruct(), 0, best_handover_conf.second->getConfigStruct() );
         //cout << "Hand-over found with cost : " << best_cost << endl;
     }
     return result;
@@ -604,7 +604,7 @@ std::pair<bool,confPtr_t> HandoverReplanner::newGoalFromIK()
     {
         gettimeofday(&tim, NULL); dt = tim.tv_sec+(tim.tv_usec/1000000.0) - t_init;
         cout << "Could not compute a valid robot IK configuration in : " << dt << "sec" << endl;
-        p3d_destroy_config(m_robot->getRobotStruct(), q);
+        p3d_destroy_config(m_robot->getP3dRobotStruct(), q);
         confPtr_t q_rob( new Configuration( m_robot, NULL ) );
         return std::make_pair( false, q_rob );
     }
@@ -645,7 +645,7 @@ void HandoverReplanner::run()
     PlanEnv->setBool( PlanParam::planWithTimeLimit, true );
     PlanEnv->setDouble(PlanParam::timeLimitPlanning, m_t_rep-0.3 );
 
-    p3d_traj* path = p3d_planner_function( m_robot->getRobotStruct(),
+    p3d_traj* path = p3d_planner_function( m_robot->getP3dRobotStruct(),
                                            initConfig->getConfigStruct(),
                                            goalConfig->getConfigStruct() );
 
@@ -656,7 +656,7 @@ void HandoverReplanner::run()
             !PlanEnv->getBool(PlanParam::stopPlanner) &&
             PlanEnv->getBool(PlanParam::withSmoothing) )
     {
-        p3d_smoothing_function( m_robot->getRobotStruct(), path, 100, m_t_rep-0.3-time);
+        p3d_smoothing_function( m_robot->getP3dRobotStruct(), path, 100, m_t_rep-0.3-time);
     }
 
     if( path )
@@ -800,7 +800,7 @@ void AStarReplanner::run()
             !PlanEnv->getBool(PlanParam::stopPlanner) &&
             PlanEnv->getBool(PlanParam::withSmoothing) )
     {
-        p3d_smoothing_function( m_robot->getRobotStruct(), path_->replaceP3dTraj(NULL), 100, -1 );
+        p3d_smoothing_function( m_robot->getP3dRobotStruct(), path_->replaceP3dTraj(NULL), 100, -1 );
     }
 
     if( path_ )

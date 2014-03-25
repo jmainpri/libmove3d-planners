@@ -169,7 +169,7 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getConfigurationInNextCell(Nod
     //    biasedBox[1] = corner[0] + cellSize[0];
     //    biasedBox[2] = corner[1];
     //    biasedBox[3] = corner[1] + cellSize[1];
-    //    p3d_ShootInCell( m_Graph->getRobot()->getRobotStruct() , q->getConfigStruct() , biasedBox , 0 );
+    //    p3d_ShootInCell( m_Graph->getRobot()->getP3dRobotStruct() , q->getConfigStruct() , biasedBox , 0 );
 
     Vector2d center = mBiasedPlanCell->getCenter();
     double CellCenter[2];
@@ -177,7 +177,7 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getConfigurationInNextCell(Nod
     CellCenter[1] = center[1];
 
 #ifdef P3D_PLANNER
-    p3d_ShootAroundPoint( m_Graph->getRobot()->getRobotStruct() , q->getConfigStruct(), CellCenter , 0);
+    p3d_ShootAroundPoint( m_Graph->getRobot()->getP3dRobotStruct() , q->getConfigStruct(), CellCenter , 0);
 #else
     printf("P3D_PLANNER not compiled in %s in %s",__PRETTY_FUNCTION__,__FILE__);
 #endif

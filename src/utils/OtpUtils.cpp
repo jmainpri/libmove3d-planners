@@ -155,7 +155,7 @@ bool detectSittingFurniture(Robot* human, double threshold, Robot** furniture)
     //    Eigen::Vector3d p1;
     //
     //    Joint* jnt = robot->getJoint(1);
-    //    p3d_obj* object = jnt->getJointStruct()->o;
+    //    p3d_obj* object = jnt->getP3dJointStruct()->o;
     //
     //    if( object )
     //    {
@@ -181,12 +181,12 @@ bool detectSittingFurniture(Robot* human, double threshold, Robot** furniture)
 
 void ConfigHR::setHumanConf(Robot* human, configPt q)
 {
-    q_hum = p3d_copy_config(human->getRobotStruct(),q);
+    q_hum = p3d_copy_config(human->getP3dRobotStruct(),q);
 }
 
 void ConfigHR::setRobotConf(Robot* robot, configPt q)
 {
-    q_rob = p3d_copy_config(robot->getRobotStruct(),q);
+    q_rob = p3d_copy_config(robot->getP3dRobotStruct(),q);
 }
 
 void OutputConf::clearAll()

@@ -82,7 +82,7 @@ bool LocalPathValidTest::testClassic()
 {	
     double u = 0., du, umax; /* parameters along the local path */
     //	configPt qp;
-    int njnt = _Robot->getRobotStruct()->njoints;
+    int njnt = _Robot->getNumberOfJoints();
     double* distances;
     double tolerance, newtol, dmax, dist0;
     int end_localpath = 0;
@@ -96,7 +96,7 @@ bool LocalPathValidTest::testClassic()
 
     p3d_col_get_dmax(&dmax);
 
-    if (this->getLocalpathStruct() == NULL)
+    if (this->getP3dLocalpathStruct() == NULL)
     {
         return false;
     }
@@ -104,7 +104,7 @@ bool LocalPathValidTest::testClassic()
     //cout << "Classic Test " << endl;
 
     /* Some curves can be decided unvalid by the user */
-    if (this->getLocalpathStruct()->valid == false)
+    if (this->getP3dLocalpathStruct()->valid == false)
     {
         return true;
     }
@@ -200,7 +200,7 @@ bool LocalPathValidTest::testClassic()
         qp = _Robot->getCurrentPos();
 
         // TEMP MODIF : PROBLEM WITH SELF COLLISION : CONSTANT STEP
-        p3d_BB_dist_robot(_Robot->getRobotStruct(), distances);
+        p3d_BB_dist_robot((p3d_rob*)_Robot->getP3dRobotStruct(), distances);
 
         int test = false;
         for (int j=0; j<=njnt; j++)
@@ -222,7 +222,7 @@ bool LocalPathValidTest::testClassic()
             if (p3d_col_test())
             {
                 /* The initial position of the robot is recovered */
-                p3d_set_current_q_inv(_Robot->getRobotStruct(), getLocalpathStruct(), qp->getConfigStruct());
+                p3d_set_current_q_inv((p3d_rob*)_Robot->getP3dRobotStruct(), getP3dLocalpathStruct(), qp->getConfigStruct());
                 _Robot->setAndUpdateWithoutConstraints(*qp);
                 p3d_col_set_tolerance(tolerance);
                 return true;
@@ -271,7 +271,7 @@ bool LocalPathValidTest::testDichotomic()
 
 bool LocalPathValidTest::changePositionRobot(double l) 
 {
-    shared_ptr<Configuration> q = configAtParam(l);
+    confPtr_t q = configAtParam(l);
     if (!_Robot->setAndUpdate(*q))
     {
         return true;
@@ -288,19 +288,19 @@ bool LocalPathValidTest::changePositionRobotWithoutCntrt(double l)
 
 bool LocalPathValidTest::invalidJointLimits()
 {
+    p3d_rob* robotPt = (p3d_rob*)_Robot->getP3dRobotStruct();
     p3d_jnt* jntPt;
     double v, v_min, v_max;
 
     /* test that joints keep in their bounds */
-    for (int i = 0;  i <= _Robot->getRobotStruct()->njoints; i++)
+    for (int i = 0;  i <= robotPt->njoints; i++)
     {
-        jntPt = _Robot->getRobotStruct()->joints[i];
+        jntPt = robotPt->joints[i];
         for (int j = 0; j < jntPt->dof_equiv_nbr; j++)
         {
             p3d_jnt_get_dof_bounds(jntPt, j, &v_min, &v_max);
             v = p3d_jnt_get_dof(jntPt, j);
-            if (((v > v_max + EPS6) || (v < v_min - EPS6)) &&
-                    !p3d_jnt_is_dof_circular(jntPt, j))
+            if (((v > v_max + EPS6) || (v < v_min - EPS6)) && !p3d_jnt_is_dof_circular(jntPt, j))
             {
                 return true;
             }

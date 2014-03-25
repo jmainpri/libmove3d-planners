@@ -111,7 +111,8 @@ void Node::deleteNode()
         }
         if(m_Node->iksol)
         {
-            p3d_destroy_specific_iksol(m_Robot->getRobotStruct()->cntrt_manager, m_Node->iksol);
+            p3d_rob* robotPt = (p3d_rob*)m_Robot->getP3dRobotStruct();
+            p3d_destroy_specific_iksol( robotPt->cntrt_manager, m_Node->iksol );
             m_Node->iksol = NULL;
         }
         delete m_Node;
@@ -345,10 +346,12 @@ double Node::distMultisol(Node *node) const
     int *ikSol = NULL;
     double dist = P3D_HUGE;
     //if the two nodes are in the same solution class
-    if (p3d_compare_iksol(m_Robot->getRobotStruct()->cntrt_manager, m_Node->iksol, node->m_Node->iksol))
+    p3d_rob* robotPt = (p3d_rob*)m_Robot->getP3dRobotStruct();
+
+    if (p3d_compare_iksol( robotPt->cntrt_manager, m_Node->iksol, node->m_Node->iksol))
     {
-        p3d_get_non_sing_iksol(m_Robot->getRobotStruct()->cntrt_manager, m_Node->iksol, node->m_Node->iksol, &ikSol);
-        dist = p3d_dist_q1_q2_multisol(m_Robot->getRobotStruct(), m_Configuration->getConfigStruct(), node->m_Configuration->getConfigStruct(), ikSol);
+        p3d_get_non_sing_iksol( robotPt->cntrt_manager, m_Node->iksol, node->m_Node->iksol, &ikSol);
+        dist = p3d_dist_q1_q2_multisol( robotPt, m_Configuration->getConfigStruct(), node->m_Configuration->getConfigStruct(), ikSol);
     }
     m_Node->dist_Nnew = dist;
     return dist;
@@ -367,29 +370,31 @@ bool Node::isLinkable(Node* N, double* dist) const
     // current position of robot is saved
     confPtr_t qsave = m_Robot->getCurrentPos();
 
+    p3d_rob* robotPt = (p3d_rob*) m_Robot->getP3dRobotStruct();
+
     int DEBUGm_Graph_API = 0;
     if (DEBUGm_Graph_API){
         printf("API Node Linked :\n");
-        p3d_print_iksol( m_Robot->getRobotStruct()->cntrt_manager,m_Node->iksol);
-        p3d_print_iksol(m_Robot->getRobotStruct()->cntrt_manager,N->m_Node->iksol);
+        p3d_print_iksol( robotPt->cntrt_manager,m_Node->iksol);
+        p3d_print_iksol( robotPt->cntrt_manager,N->m_Node->iksol);
     }
 
     int isNoCol = 0, *ikSol = NULL;
 
-    if(!p3d_compare_iksol(m_Robot->getRobotStruct()->cntrt_manager, m_Node->iksol, N->m_Node->iksol)) {
+    if(!p3d_compare_iksol( robotPt->cntrt_manager, m_Node->iksol, N->m_Node->iksol)) {
         return false;
     }
 
-    p3d_get_non_sing_iksol(m_Robot->getRobotStruct()->cntrt_manager, m_Node->iksol, N->m_Node->iksol, &ikSol);
+    p3d_get_non_sing_iksol( robotPt->cntrt_manager, m_Node->iksol, N->m_Node->iksol, &ikSol);
 
-    LocalPath path(m_Configuration, N->m_Configuration);
+    LocalPath path( m_Configuration, N->m_Configuration );
     path.setIkSol( ikSol );
-    if ( path.getLocalpathStruct(true) == NULL) { // With Ik Sol
+    if ( path.getP3dLocalpathStruct(true) == NULL) { // With Ik Sol
         return false;
     }
 
-    if (path.getLocalpathStruct()->length != NULL)
-        *dist = path.getLocalpathStruct()->length(m_Robot->getRobotStruct(),path.getLocalpathStruct());
+    if (path.getP3dLocalpathStruct()->length != NULL)
+        *dist = path.getP3dLocalpathStruct()->length( robotPt, path.getP3dLocalpathStruct() );
     else{
         PrintInfo(("Warning: created an edge with \
                    a 0 distance: no localpathPt->length \n"));
@@ -407,8 +412,8 @@ bool Node::isLinkable(Node* N, double* dist) const
 
     //start path deform
     if (p3d_get_cycles() == TRUE) {
-        if (path.getLocalpathStruct()->length != NULL)
-            *dist = path.getLocalpathStruct()->length(m_Robot->getRobotStruct(),path.getLocalpathStruct());
+        if (path.getP3dLocalpathStruct()->length != NULL)
+            *dist = path.getP3dLocalpathStruct()->length( robotPt, path.getP3dLocalpathStruct() );
         else {
             PrintInfo(("linked: no distance function specified\n"));
             *dist = 0;
@@ -425,11 +430,13 @@ bool Node::isLinkable(Node* N, double* dist) const
 // Copy of p3d_APInode_linked_multisol
 bool Node::isLinkableMultisol(Node* node, double* dist) const
 {
-    if (p3d_compare_iksol(m_Robot->getRobotStruct()->cntrt_manager, m_Node->iksol, node->m_Node->iksol))
+    p3d_rob* robotPt = (p3d_rob*) m_Robot->getP3dRobotStruct();
+
+    if (p3d_compare_iksol( robotPt->cntrt_manager, m_Node->iksol, node->m_Node->iksol))
     {
         if ( m_Node->isSingularity || node->m_Node->isSingularity )
         {
-            if (!p3d_test_singularity_connexion(m_Robot->getRobotStruct()->cntrt_manager, m_Node, node->m_Node))
+            if (!p3d_test_singularity_connexion( robotPt->cntrt_manager, m_Node, node->m_Node))
             {
                 return false;
             }

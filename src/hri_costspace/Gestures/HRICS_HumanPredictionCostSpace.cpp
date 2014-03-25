@@ -53,7 +53,7 @@ double HumanPredictionCostSpace::getCurrentOccupationCost(Configuration& q) cons
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
         Joint* jnt = m_robot->getJoint( m_active_joints[i] );
-        p3d_obj* obj = jnt->getJointStruct()->o;
+        p3d_obj* obj = jnt->getP3dJointStruct()->o;
 
         if( obj )
         {
@@ -85,7 +85,7 @@ double HumanPredictionCostSpace::getCost(Configuration& q) const
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
         Joint* jnt = m_robot->getJoint( m_active_joints[i] );
-        p3d_obj* obj = jnt->getJointStruct()->o;
+        p3d_obj* obj = jnt->getP3dJointStruct()->o;
 
         if( obj )
         {
@@ -139,7 +139,7 @@ void HumanPredictionCostSpace::draw_sampled_points()
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
         Joint* jnt = m_robot->getJoint( m_active_joints[i] );
-        p3d_obj* obj = jnt->getJointStruct()->o;
+        p3d_obj* obj = jnt->getP3dJointStruct()->o;
 
         if( obj )
         {
@@ -172,7 +172,7 @@ void HumanPredictionCostSpace::setActiveJoints()
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
         Joint* jnt = m_robot->getJoint( m_active_joints[i] );
-        p3d_obj* obj = jnt->getJointStruct()->o;
+        p3d_obj* obj = jnt->getP3dJointStruct()->o;
 
         if( obj )
         {

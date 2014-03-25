@@ -60,6 +60,7 @@ Graph* Move3D::API_activeGraph = NULL;
 
 const bool graph_debug_import_export = false;
 
+
 // Constructors
 //----------------------------------------------
 
@@ -76,7 +77,7 @@ Graph::Graph( Robot* R, p3d_graph* G )
     }
     else
     {
-        graph_ = p3d_create_graph(R->getRobotStruct());
+        graph_ = p3d_create_graph( static_cast<p3d_rob*>(R->getP3dRobotStruct()) );
         cout << "Allocate graph : " << graph_ << endl;
     }
 
@@ -87,13 +88,13 @@ Graph::Graph( Robot* R, p3d_graph* G )
     this->initBGL();
 }
 
-Graph::Graph(Robot* R)
+Graph::Graph( Robot* R )
 {
     robot_ = R;
 
     graph_ = p3d_allocinit_graph();
     graph_->env = (p3d_env *) p3d_get_desc_curid(P3D_ENV);
-    graph_->rob = robot_->getRobotStruct();
+    graph_->rob = static_cast<p3d_rob*>(robot_->getP3dRobotStruct());
 
     if (STAT)
     {
@@ -114,7 +115,7 @@ Graph::Graph(Robot* R)
 //! Constructeur de la classe
 //! 
 //! @param G la structure p3d_graph qui sera stockée
-Graph::Graph(p3d_graph* G)
+Graph::Graph( p3d_graph* G )
 {
     if (G)
     {
@@ -143,7 +144,7 @@ Graph::Graph(const Graph& G)
     //  graph_ = gc.exportGraphStruct( G );
 
     robot_ = G.robot_;
-    graph_ = p3d_create_graph(G.robot_->getRobotStruct());
+    graph_ = p3d_create_graph( static_cast<p3d_rob*>(G.robot_->getP3dRobotStruct()) );
     name_ = G.name_;
 
     graph_is_modified_ = true;
@@ -264,7 +265,7 @@ void Graph::init()
 
     }
     this->setName();
-    p3d_calc_DMAX(robot_->getRobotStruct());
+    p3d_calc_DMAX(robot_->getP3dRobotStruct());
 }
 
 // BGL Functions
@@ -405,7 +406,7 @@ Graph::~Graph()
 
     // Deletes the old graph
 
-    //  robot_->getRobotStruct()->GRAPH = XYZ_GRAPH = NULL;
+    //  robot_->getP3dRobotStruct()->GRAPH = XYZ_GRAPH = NULL;
     deleteGraphStruct();
 
     // The configuration arrays have been deleted in the old API
@@ -464,7 +465,7 @@ void Graph::deleteGraphStruct()
 
         if (XYZ_GRAPH == graph_)
         {
-            robot_->getRobotStruct()->GRAPH = XYZ_GRAPH = NULL;
+            static_cast<p3d_rob*>(robot_->getP3dRobotStruct())->GRAPH = XYZ_GRAPH = NULL;
         }
 
         delete graph_;
@@ -1371,7 +1372,7 @@ void Graph::createRandConfs(int NMAX)
 
     inode = 0;
 
-    confPtr_t Cs = confPtr_t (new Configuration(robot_, robot_->getRobotStruct()->ROBOT_POS));
+    confPtr_t Cs = confPtr_t (new Configuration(robot_, robot_->getP3dRobotStruct()->ROBOT_POS));
     Node* Ns = new Node(this, Cs);
     this->addNode(Ns);
 
@@ -1889,7 +1890,7 @@ void Graph::addCycles(Node* node, double step)
 {
     double longStep = 3. * step;
     p3d_list_node* listDistNodePt = p3d_listNodeInDist(
-                robot_->getRobotStruct(), node->getNodeStruct()->comp,
+                static_cast<p3d_rob*>(robot_->getP3dRobotStruct()), node->getNodeStruct()->comp,
                 node->getNodeStruct(), longStep);
 
     p3d_list_node* savedListDistNodePt = listDistNodePt;
@@ -2418,7 +2419,7 @@ Move3D::Trajectory* Graph::extractBestTraj( confPtr_t qi, confPtr_t qf )
         (graph_->nb_test_coll)++;
         cout << "Connection of the extremal nodes succeeded" << endl;
         //cout << graph_->ncomp << endl;
-        trajPt = p3d_graph_to_traj(robot_->getRobotStruct());
+        trajPt = p3d_graph_to_traj( static_cast<p3d_rob*>(robot_->getP3dRobotStruct()) );
     }
 
     // time info
@@ -2486,9 +2487,9 @@ void Graph::drawNode(BGL_Vertex v)
 {
     p3d_jnt* 	drawnjnt=NULL;
     int indexjnt = p3d_get_user_drawnjnt();
-    if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= robot_->getRobotStruct()->njoints )
+    if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= static_cast<p3d_rob*>( robot_->getP3dRobotStruct() )->njoints )
     {
-        drawnjnt = robot_->getRobotStruct()->joints[indexjnt];
+        drawnjnt = static_cast<p3d_rob*>( robot_->getP3dRobotStruct() )->joints[indexjnt];
     }
 
     if (drawnjnt == NULL) {
@@ -2532,9 +2533,9 @@ void Graph::drawEdge(BGL_Vertex v1, BGL_Vertex v2)
     int color=0;
     p3d_jnt* 	drawnjnt=NULL;
     int indexjnt = p3d_get_user_drawnjnt();
-    if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= robot_->getRobotStruct()->njoints )
+    if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= static_cast<p3d_rob*>( robot_->getP3dRobotStruct() )->njoints )
     {
-        drawnjnt = robot_->getRobotStruct()->joints[indexjnt];
+        drawnjnt = static_cast<p3d_rob*>( robot_->getP3dRobotStruct() )->joints[indexjnt];
     }
 
     if (drawnjnt == NULL) {

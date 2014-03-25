@@ -29,16 +29,14 @@ RRTExpansion::~RRTExpansion()
 {
 }
 
-shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
-        Node* expandComp, Node* goalComp, bool samplePassive,
-        Node*& directionNode)
+confPtr_t RRTExpansion::getExpansionDirection( Node* expandComp, Node* goalComp, bool samplePassive, Node*& directionNode)
 {
     if (p3d_GetCostMethodChoice() == MONTE_CARLO_SEARCH)
     {
 
         confPtr_t q = m_Graph->getRobot()->shootDir(samplePassive);
 
-        p3d_addConfig(m_Graph->getRobot()->getRobotStruct(),
+        p3d_addConfig(m_Graph->getRobot()->getP3dRobotStruct(),
                       q->getConfigStruct(),
                       expandComp->getConnectedComponent()->getCompcoStruct()->dist_nodes->N->q,
                       q->getConfigStruct());
@@ -47,7 +45,7 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
 
     }
 
-    shared_ptr<Configuration> q;
+    confPtr_t q;
     //int savedRlg;
     // if (m_IsDirSampleWithRlg)
     // {
@@ -72,11 +70,10 @@ shared_ptr<Configuration> RRTExpansion::getExpansionDirection(
             // Selection in a subregion of the CSpace
             // (typically close to the current tree)
             // and  biased to the goal configuration
-            q = shared_ptr<Configuration> (
-                        new Configuration(m_Graph->getRobot()));
+            q = confPtr_t ( new Configuration(m_Graph->getRobot() ) );
 
 #ifdef P3D_PLANNER
-            p3d_shoot_inside_box(m_Graph->getRobot()->getRobotStruct(),
+            p3d_shoot_inside_box(m_Graph->getRobot()->getP3dRobotStruct(),
                                  /*expandComp->getConfiguration()->getConfigStruct(),*/
                                  q->getConfigStruct(),
                                  expandComp->getConnectedComponent()->getCompcoStruct()->box_env_small,

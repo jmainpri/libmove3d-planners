@@ -28,7 +28,7 @@ public:
 
     double get_step() { return(m_step); }
 
-    void set_robot(Robot* robot) { m_robot = robot; m_c_robot = robot->getRobotStruct(); }
+    void set_robot(Robot* robot) { m_robot = robot; /* m_c_robot = robot->getP3dRobotStruct(); */ }
 
     Robot* get_robot() { return(m_robot); }
 
@@ -36,7 +36,7 @@ public:
 
     virtual double lp_cost(confPtr_t q1, confPtr_t q2) = 0;
 
-    virtual double traj_cost(p3d_traj* traj);
+    // virtual double traj_cost(p3d_traj* traj);
     
     bool get_connection_radius_flag() { return(m_connection_radius_flag); }
 
@@ -52,7 +52,7 @@ protected:
     double m_step;
     double m_cost_step;
     Robot* m_robot;
-    p3d_rob* m_c_robot;
+    /* p3d_rob* m_c_robot; */
     bool m_connection_radius_flag;
 };
 

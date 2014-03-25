@@ -258,9 +258,9 @@ void HriSpaceCost::computeHoleManipulationPath()
         BTGRAPH = NULL;
     }
 
-    if(_Bitmap->robot != _Robot->getRobotStruct() )
+    if(_Bitmap->robot != _Robot->getP3dRobotStruct() )
     {
-        cout << "Error : _Bitmap->robot != _Robot->getRobotStruct()" << endl;
+        cout << "Error : _Bitmap->robot != _Robot->getP3dRobotStruct()" << endl;
         return;
     }
 

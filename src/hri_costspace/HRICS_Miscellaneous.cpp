@@ -69,54 +69,54 @@ void HRICS::printPr2Config()
   confPtr_t q = rob->getCurrentPos();
   
   Joint* jnt = rob->getJoint("platformJoint");
-  double base_tx = (*q)[jnt->getJointStruct()->index_dof+0];
-  double base_ty = (*q)[jnt->getJointStruct()->index_dof+1];
-  double base_tz = (*q)[jnt->getJointStruct()->index_dof+2];
-  double base_rx = (*q)[jnt->getJointStruct()->index_dof+3];
-  double base_ry = (*q)[jnt->getJointStruct()->index_dof+4];
-  double base_rz = (*q)[jnt->getJointStruct()->index_dof+5];
+  double base_tx = (*q)[jnt->getIndexOfFirstDof()+0];
+  double base_ty = (*q)[jnt->getIndexOfFirstDof()+1];
+  double base_tz = (*q)[jnt->getIndexOfFirstDof()+2];
+  double base_rx = (*q)[jnt->getIndexOfFirstDof()+3];
+  double base_ry = (*q)[jnt->getIndexOfFirstDof()+4];
+  double base_rz = (*q)[jnt->getIndexOfFirstDof()+5];
   
   jnt = rob->getJoint("Torso");
-  double torso = (*q)[jnt->getJointStruct()->index_dof+0];
+  double torso = (*q)[jnt->getIndexOfFirstDof()+0];
   
   jnt = rob->getJoint("pan_cam");
-  double head_pan = (*q)[jnt->getJointStruct()->index_dof+0]; 
+  double head_pan = (*q)[jnt->getIndexOfFirstDof()+0];
   
   jnt = rob->getJoint("tilt_cam");
-  double head_tilt = (*q)[jnt->getJointStruct()->index_dof+0];
+  double head_tilt = (*q)[jnt->getIndexOfFirstDof()+0];
   
   jnt = rob->getJoint("laser-jnt");
-  double laser_tilt = (*q)[jnt->getJointStruct()->index_dof+0];
+  double laser_tilt = (*q)[jnt->getIndexOfFirstDof()+0];
   
   jnt = rob->getJoint("right-Arm1");
-  double r_shoulder_pan     = (*q)[jnt->getJointStruct()->index_dof+0]; 
-  double r_shoulder_lift    = (*q)[jnt->getJointStruct()->index_dof+1];
-  double r_upper_arm_roll   = (*q)[jnt->getJointStruct()->index_dof+2];
-  double r_elbow_flex       = (*q)[jnt->getJointStruct()->index_dof+3];
-  double r_forearm_roll     = (*q)[jnt->getJointStruct()->index_dof+4];
-  double r_wrist_flex       = (*q)[jnt->getJointStruct()->index_dof+5];
-  double r_writ_roll        = (*q)[jnt->getJointStruct()->index_dof+6];
+  double r_shoulder_pan     = (*q)[jnt->getIndexOfFirstDof()+0];
+  double r_shoulder_lift    = (*q)[jnt->getIndexOfFirstDof()+1];
+  double r_upper_arm_roll   = (*q)[jnt->getIndexOfFirstDof()+2];
+  double r_elbow_flex       = (*q)[jnt->getIndexOfFirstDof()+3];
+  double r_forearm_roll     = (*q)[jnt->getIndexOfFirstDof()+4];
+  double r_wrist_flex       = (*q)[jnt->getIndexOfFirstDof()+5];
+  double r_writ_roll        = (*q)[jnt->getIndexOfFirstDof()+6];
   
   jnt = rob->getJoint("fingerJointGripper_0");
-  double r_gripper = (*q)[jnt->getJointStruct()->index_dof+0]; 
+  double r_gripper = (*q)[jnt->getIndexOfFirstDof()+0];
   
   jnt = rob->getJoint("right-grip2");
-  double r_gripper_false = (*q)[jnt->getJointStruct()->index_dof+0]; 
+  double r_gripper_false = (*q)[jnt->getIndexOfFirstDof()+0];
   
   jnt = rob->getJoint("left-Arm1");
-  double l_shoulder_pan     = (*q)[jnt->getJointStruct()->index_dof+0];
-  double l_shoulder_lift    = (*q)[jnt->getJointStruct()->index_dof+1];
-  double l_upper_arm_roll   = (*q)[jnt->getJointStruct()->index_dof+2];
-  double l_elbow_flex       = (*q)[jnt->getJointStruct()->index_dof+3];
-  double l_forearm_roll     = (*q)[jnt->getJointStruct()->index_dof+4];
-  double l_wrist_flex       = (*q)[jnt->getJointStruct()->index_dof+5];
-  double l_wrist_roll       = (*q)[jnt->getJointStruct()->index_dof+6];
+  double l_shoulder_pan     = (*q)[jnt->getIndexOfFirstDof()+0];
+  double l_shoulder_lift    = (*q)[jnt->getIndexOfFirstDof()+1];
+  double l_upper_arm_roll   = (*q)[jnt->getIndexOfFirstDof()+2];
+  double l_elbow_flex       = (*q)[jnt->getIndexOfFirstDof()+3];
+  double l_forearm_roll     = (*q)[jnt->getIndexOfFirstDof()+4];
+  double l_wrist_flex       = (*q)[jnt->getIndexOfFirstDof()+5];
+  double l_wrist_roll       = (*q)[jnt->getIndexOfFirstDof()+6];
   
   jnt = rob->getJoint("fingerJointGripper_1");
-  double l_gripper = (*q)[jnt->getJointStruct()->index_dof+0]; 
+  double l_gripper = (*q)[jnt->getIndexOfFirstDof()+0];
   
   jnt = rob->getJoint("left-grip2");
-  double l_gripper_false = (*q)[jnt->getJointStruct()->index_dof+0]; 
+  double l_gripper_false = (*q)[jnt->getIndexOfFirstDof()+0];
   
   cout << "CONFIG FOR PR2 SOFTMOTION" << endl;
   cout << base_tx << " ";
@@ -165,10 +165,10 @@ void HRICS::setSimulationRobotsTransparent()
   }
   
   // Draws the second PR2 transparent
-  sim->getRobotStruct()->draw_transparent = true;
+  sim->getP3dRobotStruct()->draw_transparent = true;
   
   // Deactivate robot to simulation robot collision checking
-  p3d_col_deactivate_rob_rob(rob->getRobotStruct(),sim->getRobotStruct());
+  p3d_col_deactivate_rob_rob(rob->getP3dRobotStruct(),sim->getP3dRobotStruct());
 }
 
 

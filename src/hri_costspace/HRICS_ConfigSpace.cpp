@@ -85,7 +85,7 @@ void ConfigSpace::initCostSpace()
     mEnvSize[4] = XYZ_ENV->box.z1; mEnvSize[5] = XYZ_ENV->box.z2;
 
 #ifdef LIGHT_PLANNER
-    p3d_jnt* FF_Joint = _Robot->getRobotStruct()->ccCntrts[0]->actjnts[0];
+    p3d_jnt* FF_Joint = static_cast<p3d_rob*>( _Robot->getP3dRobotStruct() )->ccCntrts[0]->actjnts[0];
     ENV.setInt(Env::akinJntId,FF_Joint->num);
 #else
     cout << "Warning: Lihght Planner not compiled" << endl;

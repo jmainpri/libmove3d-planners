@@ -10,22 +10,22 @@
 
 using namespace Move3D;
 
-double CSpace::traj_cost(p3d_traj* traj)
-{
-    double cost(0.);
-    p3d_localpath *lp;
-    if (traj)
-    {
-        lp = traj->courbePt;
-        while (lp)
-        {
-            LocalPath path(m_robot, lp);
-            cost += this->lp_cost(path.getBegin(), path.getEnd());
-            lp = lp->next_lp;
-        }
-    }
-    return(cost);
-}
+//double CSpace::traj_cost(p3d_traj* traj)
+//{
+//    double cost(0.);
+//    p3d_localpath *lp;
+//    if (traj)
+//    {
+//        lp = traj->courbePt;
+//        while (lp)
+//        {
+//            LocalPath path(m_robot, lp);
+//            cost += this->lp_cost(path.getBegin(), path.getEnd());
+//            lp = lp->next_lp;
+//        }
+//    }
+//    return(cost);
+//}
 
 CSpaceCostMap2D::CSpaceCostMap2D()
 {
@@ -62,12 +62,20 @@ double CSpaceCostMap2D::lp_cost(confPtr_t q1, confPtr_t q2)
 
 double CSpaceCostMap2D::volume()
 {
-    assert( m_c_robot );
+    assert( m_robot );
     // this means that there is 1 joint + the unused(legacy) joint 0
-    assert( m_c_robot->njoints == 1);
-    assert( m_c_robot->joints[1]->type == P3D_PLAN );
-    return(fabs((m_c_robot->joints[1]->dof_data[0].vmax - m_c_robot->joints[1]->dof_data[0].vmin) * 
-                (m_c_robot->joints[1]->dof_data[1].vmax - m_c_robot->joints[1]->dof_data[1].vmin)));
+    assert( m_robot->getP3dRobotStruct()->njoints == 1);
+    assert( m_robot->getP3dRobotStruct()->joints[1]->type == P3D_PLAN );
+
+    double vmax_0, vmin_0, vmax_1, vmin_1;
+
+    m_robot->getJoint( 1 )->getDofBounds( 0, vmin_0, vmax_0 );
+    m_robot->getJoint( 1 )->getDofBounds( 1, vmin_1, vmax_1 );
+
+    return( fabs( ( vmax_0 - vmin_0 ) * (vmax_1 - vmin_1 ) ) );
+
+//    return(fabs((m_c_robot->joints[1]->dof_data[0].vmax - m_c_robot->joints[1]->dof_data[0].vmin) *
+//                (m_c_robot->joints[1]->dof_data[1].vmax - m_c_robot->joints[1]->dof_data[1].vmin)));
 }
 
 double CSpaceCostMap2D::unit_sphere()
@@ -105,7 +113,7 @@ double Pr2CSpace::lp_cost(confPtr_t q1, confPtr_t q2)
 
 double Pr2CSpace::volume()
 {
-  assert(m_c_robot);
+  assert( m_robot->getP3dRobotStruct() );
 //  jnt->getName() : right-Arm1(6) , index_dof : 16
 //  jnt->getName() : right-Arm2(7) , index_dof : 17
 //  jnt->getName() : right-Arm3(8) , index_dof : 18
@@ -115,11 +123,13 @@ double Pr2CSpace::volume()
 //  jnt->getName() : right-Arm7(12) , index_dof : 22
 
   double volume=1.0;
+  double vmin,vmax;
   
   for( int i=6; i<=12; i++) 
   {
-    p3d_jnt* jntPt = m_c_robot->joints[i];
-    volume *= jntPt->dist*fabs(jntPt->dof_data[0].vmax - jntPt->dof_data[0].vmin);
+    Joint* jntPt = m_robot->getJoint(i);
+    jntPt->getDofBounds( 0, vmin, vmax );
+    volume *= jntPt->getDist() * fabs(vmax - vmin);
   }
   
   return volume;

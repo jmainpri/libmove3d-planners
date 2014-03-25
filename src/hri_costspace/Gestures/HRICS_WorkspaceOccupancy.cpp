@@ -108,7 +108,7 @@ void WorkspaceOccupancyGrid::get_cells_occupied_by_human( std::vector<WorkspaceO
     
     for( int i=0; i<int(m_human->getNumberOfJoints()); i++)
     {
-        p3d_obj* obj = m_human->getJoint(i)->getJointStruct()->o;
+        p3d_obj* obj = m_human->getJoint(i)->getP3dJointStruct()->o;
         
         if( obj )
         {
@@ -428,7 +428,7 @@ void WorkspaceOccupancyGrid::drawSampledPoints()
     {
         Joint* jnt = m_human->getJoint(i);
         
-        p3d_obj* obj = jnt->getJointStruct()->o;
+        p3d_obj* obj = jnt->getP3dJointStruct()->o;
         
         if( obj )
         {

@@ -132,16 +132,16 @@ bool traj_optim_set_MultiLP()
         return false;
     }
 
-    for (int i = 0; m_robot && i < m_robot->getRobotStruct()->mlp->nblpGp; i++) {
-        if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "base")) {
+    for (int i = 0; m_robot && i < m_robot->getP3dRobotStruct()->mlp->nblpGp; i++) {
+        if (!strcmp(m_robot->getP3dRobotStruct()->mlp->mlpJoints[i]->gpName, "base")) {
             m_BaseMLP = i;
-        } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "baseSm")) {
+        } else if (!strcmp(m_robot->getP3dRobotStruct()->mlp->mlpJoints[i]->gpName, "baseSm")) {
             m_BaseSmMLP = i;
-        } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "head")) {
+        } else if (!strcmp(m_robot->getP3dRobotStruct()->mlp->mlpJoints[i]->gpName, "head")) {
             m_HeadMLP = i;
-        } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "upBody")) {
+        } else if (!strcmp(m_robot->getP3dRobotStruct()->mlp->mlpJoints[i]->gpName, "upBody")) {
             m_UpBodyMLP = i;
-        } else if (!strcmp(m_robot->getRobotStruct()->mlp->mlpJoints[i]->gpName, "upBodySm")) {
+        } else if (!strcmp(m_robot->getP3dRobotStruct()->mlp->mlpJoints[i]->gpName, "upBodySm")) {
             m_UpBodySmMLP = i;
         }
     }
@@ -159,7 +159,7 @@ bool traj_optim_invalidate_cntrts()
         return false;
     }
 
-    p3d_rob* rob = m_robot->getRobotStruct();
+    p3d_rob* rob = m_robot->getP3dRobotStruct();
     p3d_cntrt* ct;
 
     // over all constraints
@@ -212,41 +212,41 @@ bool traj_optim_init_mlp_cntrts_and_fix_joints()
     {
     case 0 : // Navigation
         cout << "Set navigation parameters" << endl;
-        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-        p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_BaseMLP, 1, false);
-        fixAllJointsExceptBase( m_robot->getRobotStruct() );
+        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getP3dRobotStruct() , false );
+        p3d_multiLocalPath_set_groupToPlan( m_robot->getP3dRobotStruct(), m_BaseMLP, 1, false);
+        fixAllJointsExceptBase( m_robot->getP3dRobotStruct() );
         break;
 
     case 1 : // Manipulation
     {
         cout << "Set manipulation parameters" << endl;
-        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-        p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
+        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getP3dRobotStruct() , false );
+        p3d_multiLocalPath_set_groupToPlan( m_robot->getP3dRobotStruct(), m_UpBodyMLP, 1, false);
 
         m_ArmId = 0;
         if( m_robot->getName() == "JUSTIN_ROBOT" )
             m_ArmId = 1;
 
-        fixAllJointsWithoutArm( m_robot->getRobotStruct() , m_ArmId );
+        fixAllJointsWithoutArm( m_robot->getP3dRobotStruct() , m_ArmId );
 
         if( m_robot->getName() == "JUSTIN_ROBOT" )
         {
-            unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[2] );
-            unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[3] );
-            unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[4] );
-            unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[5] );
+            unFixJoint( m_robot->getP3dRobotStruct(), m_robot->getP3dRobotStruct()->joints[2] );
+            unFixJoint( m_robot->getP3dRobotStruct(), m_robot->getP3dRobotStruct()->joints[3] );
+            unFixJoint( m_robot->getP3dRobotStruct(), m_robot->getP3dRobotStruct()->joints[4] );
+            unFixJoint( m_robot->getP3dRobotStruct(), m_robot->getP3dRobotStruct()->joints[5] );
             // Unfix virtual joint
-            //unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->joints[30] );
+            //unFixJoint( m_robot->getP3dRobotStruct(), m_robot->getP3dRobotStruct()->joints[30] );
         }
     }
         break;
 
     case 2 : // Mobile Manipulation
         cout << "Set mobile-manipulation parameters" << endl;
-        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-        p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
-        fixAllJointsWithoutArm( m_robot->getRobotStruct() , 0 );
-        unFixJoint(m_robot->getRobotStruct(), m_robot->getRobotStruct()->baseJnt);
+        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getP3dRobotStruct() , false );
+        p3d_multiLocalPath_set_groupToPlan( m_robot->getP3dRobotStruct(), m_UpBodyMLP, 1, false);
+        fixAllJointsWithoutArm( m_robot->getP3dRobotStruct() , 0 );
+        unFixJoint(m_robot->getP3dRobotStruct(), m_robot->getP3dRobotStruct()->baseJnt);
         break;
     }
 
@@ -265,7 +265,7 @@ bool traj_optim_switch_cartesian_mode(bool cartesian) {
     cout << "Set Cartesian (" << cartesian << ")" << endl;
 
     p3d_rob* object = NULL;
-    p3d_rob* robot = m_robot->getRobotStruct();
+    p3d_rob* robot = m_robot->getP3dRobotStruct();
 
     configPt q = p3d_get_robot_config(robot);
 
@@ -508,8 +508,8 @@ bool traj_optim_generate_softMotion()
     MANPIPULATION_TRAJECTORY_CONF_STR confs;
     SM_TRAJ smTraj;
 
-    p3d_multiLocalPath_disable_all_groupToPlan(m_robot->getRobotStruct(), FALSE);
-    p3d_multiLocalPath_set_groupToPlan(m_robot->getRobotStruct(), m_UpBodyMLP, 1, FALSE);
+    p3d_multiLocalPath_disable_all_groupToPlan(m_robot->getP3dRobotStruct(), FALSE);
+    p3d_multiLocalPath_set_groupToPlan(m_robot->getP3dRobotStruct(), m_UpBodyMLP, 1, FALSE);
     smTraj.clear();
 
     Move3D::Trajectory TSaved = T;
@@ -520,7 +520,7 @@ bool traj_optim_generate_softMotion()
     //  std::vector < int >&lp
     //  std::vector < std::vector <double > > &positions
     //  SM_TRAJ & smTraj
-    p3d_convert_traj_to_softMotion(m_robot->getRobotStruct()->tcur,
+    p3d_convert_traj_to_softMotion(m_robot->getP3dRobotStruct()->tcur,
                                    ENV.getBool(Env::smoothSoftMotionTraj),
                                    true,
                                    false,
@@ -531,8 +531,8 @@ bool traj_optim_generate_softMotion()
     T = m_robot->getCurrentTraj();
     double delta = T.getRangeMax() / (100-1) ;
 
-    p3d_multiLocalPath_disable_all_groupToPlan(m_robot->getRobotStruct(), FALSE);
-    p3d_multiLocalPath_set_groupToPlan(m_robot->getRobotStruct(), m_UpBodyMLP, 1, FALSE);
+    p3d_multiLocalPath_disable_all_groupToPlan(m_robot->getP3dRobotStruct(), FALSE);
+    p3d_multiLocalPath_set_groupToPlan(m_robot->getP3dRobotStruct(), m_UpBodyMLP, 1, FALSE);
 
     Move3D::Trajectory newT(m_robot);
     cout << "delta = " << delta << endl;
@@ -604,10 +604,10 @@ void traj_optim_shelf_set_localpath_and_cntrts()
     traj_optim_set_MultiLP();
     traj_optim_invalidate_cntrts();
 
-    p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-    p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
+    p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getP3dRobotStruct() , false );
+    p3d_multiLocalPath_set_groupToPlan( m_robot->getP3dRobotStruct(), m_UpBodyMLP, 1, false);
 
-    fixAllJointsWithoutArm( m_robot->getRobotStruct() , 0 );
+    fixAllJointsWithoutArm( m_robot->getP3dRobotStruct() , 0 );
 #endif
     //ENV.setInt( Env::jntToDraw, 28 );
 }
@@ -716,10 +716,10 @@ bool traj_optim_init_collision_points()
 void traj_optim_navigation_set_localpath_and_cntrts()
 {
 #ifdef MULTILOCALPATH
-    p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-    p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_BaseMLP, 1, false);
+    p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getP3dRobotStruct() , false );
+    p3d_multiLocalPath_set_groupToPlan( m_robot->getP3dRobotStruct(), m_BaseMLP, 1, false);
 
-    fixAllJointsExceptBase( m_robot->getRobotStruct() );
+    fixAllJointsExceptBase( m_robot->getP3dRobotStruct() );
 #endif
 
     ENV.setInt( Env::jntToDraw, 1 );
@@ -772,10 +772,10 @@ void traj_optim_navigation_generate_points()
 void traj_optim_hrics_set_localpath_and_cntrts()
 {
 #ifdef MULTILOCALPATH
-    p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-    p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_BaseMLP, 1, false);
+    p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getP3dRobotStruct() , false );
+    p3d_multiLocalPath_set_groupToPlan( m_robot->getP3dRobotStruct(), m_BaseMLP, 1, false);
 
-    fixAllJointsExceptBase( m_robot->getRobotStruct() );
+    fixAllJointsExceptBase( m_robot->getP3dRobotStruct() );
 #endif
 
     ENV.setInt( Env::jntToDraw, 1 );
@@ -889,10 +889,10 @@ void traj_optim_manip_init_joints()
 void traj_optim_hrics_mobile_manip_localpath_and_cntrts()
 {
     cout << "Set mobile-manipulation parameters" << endl;
-    p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct() , false );
-    p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false);
-    fixAllJointsWithoutArm( m_robot->getRobotStruct() , 0 );
-    unFixJoint( m_robot->getRobotStruct(), m_robot->getRobotStruct()->baseJnt );
+    p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getP3dRobotStruct() , false );
+    p3d_multiLocalPath_set_groupToPlan( m_robot->getP3dRobotStruct(), m_UpBodyMLP, 1, false);
+    fixAllJointsWithoutArm( m_robot->getP3dRobotStruct() , 0 );
+    unFixJoint( m_robot->getP3dRobotStruct(), m_robot->getP3dRobotStruct()->baseJnt );
 }
 
 //! initializes the collision space

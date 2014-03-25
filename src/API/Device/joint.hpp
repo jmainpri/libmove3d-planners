@@ -33,7 +33,7 @@ public:
    * Constructor
    * @param The p3d_jnt that is used
    */
-    Joint(Move3D::Robot* R, jnt* jntPt , int id = -1, bool copy = false );
+    Joint(Move3D::Robot* R, void* jntPt , int id = -1, bool copy = false );
 
     /**
    * Destructor of the class
@@ -48,7 +48,7 @@ public:
     /**
      * Get the Joint structue
      */
-    jnt* getJointStruct() const { return m_Joint; }
+    jnt* getP3dJointStruct() const { return static_cast<jnt*>( m_Joint ); }
 
     /**
      * Get the Matrix abs_pos of the Joint
@@ -59,11 +59,6 @@ public:
      * Get the Vector abs_pos of the Joint
      */
     Eigen::Vector3d	getVectorPos() const;
-
-    /**
-     * Get the p3d abs pos
-     */
-    pp3d_matrix4 getAbsPos();
 
     /**
      * Random shoot the joint
@@ -79,11 +74,6 @@ public:
      * Set the Joint Dof
      */
     void setJointDof(int ithDoF, double value);
-
-    /**
-   * Set ff from Eigen::Transform
-   */
-    bool setFreeFlyerFromMatrix( const Eigen::Transform3d& T );
 
     /**
      * True if Joint Dof is user
@@ -130,10 +120,15 @@ public:
    */
     std::vector<Joint*> getAllPrevJoints();
 
+    /**
+     * Returns the value size of the attached body
+     */
+    double getDist();
+
 
 private:
     Robot*			m_Robot;
-    jnt*            m_Joint; /*!< The p3d structure for the Joint*/
+    void*           m_Joint; /*!< The p3d structure for the Joint*/
     std::string		m_Name; /*!< The Joint's Name */
     bool            m_copy; /*!< Is true if the p3d_jnt copies and not only points to the structure */
     int             m_id;   /*!< id with which it was initilized */
@@ -141,5 +136,19 @@ private:
 };
 
 }
+
+void move3d_set_fct_joint_constructor( boost::function<void*( Move3D::Joint*, void*, std::string& name )> fct );
+void move3d_set_fct_joint_get_vector_pos( boost::function<Eigen::Vector3d( const Move3D::Joint* )> fct ) ;
+void move3d_set_fct_joint_get_matrix_pos( boost::function<Eigen::Transform3d( const Move3D::Joint* )> fct );
+void move3d_set_fct_joint_joint_shoot( boost::function<void( Move3D::Joint*, Move3D::Configuration&, bool )> fct );
+void move3d_set_fct_joint_get_joint_dof( boost::function<double( const Move3D::Joint*, int )> fct );
+void move3d_set_fct_joint_set_joint_dof( boost::function<void( const Move3D::Joint*, int, double )> fct );
+void move3d_set_fct_joint_is_joint_user( boost::function<bool( const Move3D::Joint*, int )> fct );
+void move3d_set_fct_joint_get_bound( boost::function<void( const Move3D::Joint*, int, double&, double& )> fct );
+void move3d_set_fct_joint_get_bound_rand( boost::function<void( const Move3D::Joint*, int, double&, double& )> fct );
+void move3d_set_fct_joint_get_nb_of_joints( boost::function<int( const Move3D::Joint* )> fct );
+void move3d_set_fct_joint_get_index_of_first_dof( boost::function<int( const Move3D::Joint* )> fct );
+void move3d_set_fct_joint_get_previous_joint( boost::function<Move3D::Joint*( const Move3D::Joint*, Move3D::Robot* )> fct );
+void move3d_set_fct_joint_joint_dist( boost::function<double( const Move3D::Joint* )> fct );
 
 #endif

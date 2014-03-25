@@ -102,34 +102,34 @@ public:
 
 protected:
     /**
-         * Distance and Visibility
-         * cost spaces
-         */
+      * Distance and Visibility
+      * cost spaces
+      */
     Distance*			m_DistanceSpace;
-    Visibility*		m_VisibilitySpace;
+    Visibility*		    m_VisibilitySpace;
     Natural*			m_ReachableSpace;
     Natural*			m_NaturalSpace;
 
 };
 
 /*!
-     * Workspace Motion Planners
-     */
+ * Workspace Motion Planners
+ */
 class Workspace : public HumanAwareMotionPlanner
 {
 
 public :
 
     /**
-         * Constructors & Destructors
-         */
+      * Constructors & Destructors
+      */
     Workspace();
     Workspace(Move3D::Robot* rob, Move3D::Graph* graph);
     ~Workspace();
 
     /**
-         * Init Associated Objects
-         */
+      * Init Associated Objects
+      */
     void initGrid();
     void deleteGrid();
     
@@ -147,29 +147,29 @@ public :
 #endif
 
     /**
-         * Get Robot and Human
-         */
+      * Get Robot and Human
+      */
     Move3D::Robot* getHuman(){ return mHumans[0]; }
     std::vector<Move3D::Robot*> getHumans(){ return mHumans; }
     Move3D::Robot* getRobot(){ return _Robot; }
     Eigen::Vector3d getVisball();
     
     /**
-         * Computes A* in Grid
-         */
+      * Computes A* in Grid
+      */
     bool computeAStarIn3DGrid();
     double pathCost();
     void draw3dPath();
 
     /**
-         * Distance to 3D path
-         */
+      * Distance to 3D path
+      */
     double distanceToEntirePath();
     double distanceToCellPath();
 
     /**
-         * Getters
-         */
+      * Getters
+      */
     Grid* getGrid() { return m3DGrid; }
     std::vector<Eigen::Vector3d> get3DPath() { return m3DPath; }
     std::vector<Move3D::ThreeDCell*> getCellPath() { return m3DCellPath; }
@@ -293,6 +293,12 @@ public :
      * @return a position vector in world coordiate
      */
     Eigen::Vector3d computeOTPFromHandPose( bool rightHand );
+
+    /**
+     * @brief setAndUpdateHumanArms
+     * @param q
+     */
+    bool setAndUpdateHumanArms( Move3D::Configuration& q );
 
 private:
 

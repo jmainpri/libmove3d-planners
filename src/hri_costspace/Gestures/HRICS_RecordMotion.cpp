@@ -230,7 +230,7 @@ void RecordMotion::saveToXml(const string &filename, const vector< pair<double,c
         xmlNodePtr curTime = xmlNewChild (cur, NULL, xmlCharStrdup("time"), NULL);
         xmlNewProp ( curTime, xmlCharStrdup("seconds"), xmlCharStrdup(str) );
 
-        writeXmlRobotConfig( cur, m_robot->getRobotStruct(), motion[i].second->getConfigStruct() );
+        writeXmlRobotConfig( cur, static_cast<p3d_rob*>( m_robot->getP3dRobotStruct() ), motion[i].second->getConfigStruct() );
     }
 
     xmlDocSetRootElement(doc, root);
@@ -321,7 +321,7 @@ motion_t RecordMotion::loadFromXml(const string& filename)
 
             //cout << "time : " << time << endl;
 
-            configPt q = readXmlConfig( m_robot->getRobotStruct(), cur->xmlChildrenNode->next->next->next );
+            configPt q = readXmlConfig( static_cast<p3d_rob*>( m_robot->getP3dRobotStruct() ), cur->xmlChildrenNode->next->next->next );
             if( q == NULL ) {
                 cout << "Error : in readXmlConfig" << endl;
             }
@@ -612,7 +612,7 @@ void RecordMotion::drawMotion( const motion_t& motion )
 
     G3D_Window *win = g3d_get_cur_win();
 
-    m_robot->getRobotStruct()->draw_transparent = false;
+    static_cast<p3d_rob*>( m_robot->getP3dRobotStruct() )->draw_transparent = false;
     p3d_rob* rob = (p3d_rob*)(p3d_get_desc_curid( P3D_ROBOT ));
 
     for ( int i=0; i<int(motion.size()); i++ )
@@ -621,13 +621,13 @@ void RecordMotion::drawMotion( const motion_t& motion )
 
         m_robot->setAndUpdate( *motion[i].second );
 
-        p3d_sel_desc_num( P3D_ROBOT, m_robot->getRobotStruct()->num );
-        g3d_draw_robot( m_robot->getRobotStruct()->num, win, 0 );
+        p3d_sel_desc_num( P3D_ROBOT, static_cast<p3d_rob*>( m_robot->getP3dRobotStruct() )->num );
+        g3d_draw_robot( static_cast<p3d_rob*>( m_robot->getP3dRobotStruct() )->num, win, 0 );
         drawHeraklesArms();
     }
 
     p3d_sel_desc_num( P3D_ROBOT, rob->num );
-    m_robot->getRobotStruct()->draw_transparent = false;
+    static_cast<p3d_rob*>( m_robot->getP3dRobotStruct() )->draw_transparent = false;
 }
 
 void RecordMotion::dawColorSkinedCylinder(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2)

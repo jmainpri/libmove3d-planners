@@ -115,7 +115,7 @@ bool HumanTrajSimulator::init()
     human_active_->setAndUpdate( *q_init_ );
 
     // Get first joint and change bounds
-    p3d_jnt* joint = human_active_->getJoint(1)->getJointStruct();
+    p3d_jnt* joint = human_active_->getJoint(1)->getP3dJointStruct();
 
     //take only x, y and z composantes of the base
     double radius = 0.05;
@@ -154,7 +154,7 @@ bool HumanTrajSimulator::run()
         std::stringstream ss;
         ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
 
-        p3d_save_traj( ( traj_folder_ + ss.str() ).c_str(), human_active_->getRobotStruct()->tcur );
+        p3d_save_traj( ( traj_folder_ + ss.str() ).c_str(), human_active_->getP3dRobotStruct()->tcur );
     }
     return true;
 }

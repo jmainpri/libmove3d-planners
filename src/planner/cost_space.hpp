@@ -89,6 +89,7 @@ protected:
 
     void getPr2ArmConfiguration( Eigen::VectorXd& x, confPtr_t q );
     double getPr2ArmDistance( Robot* robot, Eigen::VectorXd& q_i, Eigen::VectorXd& q_f );
+
 private:
 
     // Delta
@@ -108,7 +109,7 @@ double computeFlatCost(Configuration& conf);
 double computeDistanceToObstacles(Configuration& conf);
 double computeInCollisionCost(Configuration& conf);
 double computeCollisionSpaceCost(Configuration& conf);
-double computeLocalpathKinematicCost(rob* rob, localpath* LP);
+double computeLocalpathKinematicCost(void* rob, localpath* LP);
 
 extern CostSpace* global_costSpace;
 

@@ -23,24 +23,24 @@ public:
      * @param B la Configuration initiale du LocalPath
      * @param E la Configuration finale du LocalPath
      */
-    LocalPath(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> B, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> E);
+    LocalPath( confPtr_t B, confPtr_t E );
 
     /**
      * smaller local path (for the extend method)
      */
-    LocalPath(LocalPath& path, double& pathDelta , bool lastValidConfig = true);
+    LocalPath( LocalPath& path, double& pathDelta , bool lastValidConfig = true );
 
     /**
      * Copy constructor
      * @param path a LocalPath
      */
-    LocalPath(const LocalPath& path);
+    LocalPath( const LocalPath& path );
 
     /**
      * Constructor from a struct
      * @param p3d struct
      */
-    LocalPath(Robot* R, localpath* lpPtr);
+    LocalPath( Robot* R, localpath* lpPtr );
 
     /**
      * Destructor
@@ -52,18 +52,24 @@ public:
      * obtient la structure p3d_localpath stockée
      * @return la structure p3d_localpath stockée
      */
-    localpath* getLocalpathStruct(bool multi_sol = false);
+    localpath* getP3dLocalpathStruct( bool multi_sol = false );
+
+    /**
+     * obtient la structure p3d_localpath stockée
+     * @return la structure p3d_localpath stockée
+     */
+    localpath* getP3dLocalpathStructConst() const { return static_cast<localpath*>(_LocalPath); }
 
     /**
      * obtient la configuration initiale
      * @return la configuration initiale
      */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getBegin();
+    confPtr_t getBegin();
     /**
      * obtient la configuration finale
      * @return la configuration finale
      */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getEnd();
+    confPtr_t getEnd();
 
     /**
      * obtient le Graph pour lequel le LocalPath est créé
@@ -102,11 +108,16 @@ public:
     int  getType();
 
     /**
+      * Sets the type of the local path
+      */
+    void setType( int type ) { _Type = type; }
+
+    /**
      * obtient la dernière Configuration valide le long du LocalPath
      * @param p in/out le paramètre correspondant à la dernière Configauration valide
      * @return la dernière Configuration valide le long du LocalPath
      */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getLastValidConfig(double& p);
+    confPtr_t getLastValidConfig( double& p );
 
     /**
      * Set the localpath as untested
@@ -125,7 +136,7 @@ public:
      * @param ntest in/out le nombre de tests
      * @return ! le LocalPath n'est pas valide
      */
-    bool unvalidLocalpathTest(Robot* R, int* ntest);
+    // bool unvalidLocalpathTest( Robot* R, int* ntest );
 
     /**
    * Test the localpath using the classic method as opposed to dichotomic test
@@ -150,7 +161,7 @@ public:
      * @param dist la distance par rapport au début
      * @return la Configuration
      */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> configAtDist(double dist);
+    confPtr_t configAtDist( double dist );
 
     /**
      * obtient une Configuration se trouvant sur le LocalPath à un paramètre donnée
@@ -158,7 +169,7 @@ public:
      * @param param le paramètre
      * @return la Configuration
      */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> configAtParam(double param);
+    confPtr_t configAtParam( double param );
 
     /**
      * Stay within dist
@@ -211,6 +222,11 @@ public:
     void setIkSol(int* iksol) { _ikSol = iksol; }
 
     /**
+     * Returns the ik solutions returned by the local planner
+     */
+    int* getIkSol() { return _ikSol; }
+
+    /**
      * Prints the variables
      * inside the LocalPath
      */
@@ -219,17 +235,17 @@ public:
 protected:
     Robot* _Robot;
 
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> _Begin;
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> _End;
+    confPtr_t _Begin;
+    confPtr_t _End;
 
 private:
 
-    localpath* _LocalPath;
+    void* _LocalPath;
 
     bool _Valid;
     bool _Evaluated;
     double _lastValidParam;
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> _lastValidConfig;
+    confPtr_t _lastValidConfig;
     bool _lastValidEvaluated;
     int _NbColTest;
 
@@ -247,5 +263,18 @@ private:
 };
 
 }
+
+void move3d_set_fct_localpath_copy( boost::function<void*(const Move3D::LocalPath&, Move3D::Robot*)> fct );
+void move3d_set_fct_localpath_copy_p3d( boost::function<void*(const Move3D::LocalPath&, Move3D::Robot*)> fct );
+void move3d_set_fct_localpath_path_destructor( boost::function<void(Move3D::LocalPath&)> fct );
+void move3d_set_fct_localpath_copy_from_struct( boost::function<void*(Move3D::LocalPath&, void*, Move3D::confPtr_t, Move3D::confPtr_t )> fct );
+void move3d_set_fct_localpath_get_struct( boost::function<void*(Move3D::LocalPath&, bool, int&)> fct );
+void move3d_set_fct_localpath_classic_test( boost::function<bool(Move3D::LocalPath&, Move3D::confPtr_t, int&, double&)> fct );
+void move3d_set_fct_localpath_is_valid( boost::function<bool(Move3D::LocalPath&, int&)> fct );
+void move3d_set_fct_localpath_get_length( boost::function<double(Move3D::LocalPath&)> fct );
+void move3d_set_fct_localpath_get_param_max( boost::function<double(Move3D::LocalPath&)> fct );
+void move3d_set_fct_localpath_config_at_dist( boost::function<Move3D::confPtr_t(Move3D::LocalPath&,double)> fct );
+void move3d_set_fct_localpath_config_at_param( boost::function<Move3D::confPtr_t(Move3D::LocalPath&,double)> fct );
+void move3d_set_fct_localpath_stay_within_dist( boost::function<double(Move3D::LocalPath&,double,bool,double&)> fct );
 
 #endif

@@ -1193,7 +1193,7 @@ void IocEvaluation::generateDemonstrations()
         std::stringstream ss;
         ss << folder_ << "trajectory_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << i << ".traj";
 
-        p3d_save_traj( ss.str().c_str(), robot_->getRobotStruct()->tcur );
+        p3d_save_traj( ss.str().c_str(), robot_->getP3dRobotStruct()->tcur );
         cout << "save demo " << i << " : " << ss.str() << endl;
 
         saveTrajToMatlab( demos[i], i );
@@ -1847,7 +1847,7 @@ void IocEvaluation::saveTrajectories(const std::vector<Move3D::Trajectory>& traj
         ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
 
         trajectories[i].replaceP3dTraj();
-        p3d_save_traj( (move3d_traj_folder + "/" + ss.str()).c_str(), robot_->getRobotStruct()->tcur );
+        p3d_save_traj( (move3d_traj_folder + "/" + ss.str()).c_str(), robot_->getP3dRobotStruct()->tcur );
 
         cout << "save planner result " << i << " : " << ss.str() << endl;
     }

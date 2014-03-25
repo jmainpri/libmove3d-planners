@@ -177,10 +177,10 @@ double HRICS_getConfigCost(Configuration& Conf)
 
 
                 if (ReachCost<0) {
-                    p3d_set_robot_display_mode(rob->getRobotStruct(),P3D_ROB_BLUE_DISPLAY);
+                    p3d_set_robot_display_mode(rob->getP3dRobotStruct(),P3D_ROB_BLUE_DISPLAY);
                 }
                 else {
-                    p3d_set_robot_display_mode(rob->getRobotStruct(),P3D_ROB_DEFAULT_DISPLAY);
+                    p3d_set_robot_display_mode(rob->getP3dRobotStruct(),P3D_ROB_DEFAULT_DISPLAY);
                 }
 
 #if DebugCostFunctions

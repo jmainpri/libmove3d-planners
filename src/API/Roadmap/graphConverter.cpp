@@ -89,9 +89,9 @@ p3d_graph* GraphConverter::exportGraphStruct(const Graph& g) const
     p3d_graph* G = new p3d_graph(*g.getGraphStruct());
 
     G->env = (p3d_env *) p3d_get_desc_curid(P3D_ENV);
-    G->rob = robot->getRobotStruct();
+    G->rob = (p3d_rob *) robot->getP3dRobotStruct();
 
-    robot->getRobotStruct()->GRAPH = G;
+    G->rob->GRAPH = G;
 
     G->nnode = static_cast<int>(nodes.size());
     G->nedge = static_cast<int>(edges.size());
@@ -127,7 +127,7 @@ p3d_graph* GraphConverter::exportGraphStruct(const Graph& g) const
         // Creates a new copied p3d_node
         ln = new p3d_list_node;
         ln->N = new p3d_node(*nodes[i]->getNodeStruct());
-        ln->N->q = p3d_copy_config(robot->getRobotStruct(),ln->N->q);
+        ln->N->q = p3d_copy_config( (p3d_rob*) robot->getP3dRobotStruct(), ln->N->q );
         cout << "Node( " << ln->N->num << " ) = " << ln->N->numcomp << endl;
 
         //cout <<  "ln->N->num = " << ln->N->num << endl;
@@ -414,9 +414,9 @@ p3d_graph* GraphConverter::convert(const Graph& g, bool deleteGraphStruct) const
     }
 
     G->env = (p3d_env *) p3d_get_desc_curid(P3D_ENV);
-    G->rob = robot->getRobotStruct();
+    G->rob = (p3d_rob*) robot->getP3dRobotStruct();
 
-    robot->getRobotStruct()->GRAPH = G;
+    G->rob->GRAPH = G;
 
     G->nnode = static_cast<int>(nodes.size());
     G->nedge = static_cast<int>(edges.size());
@@ -455,8 +455,7 @@ p3d_graph* GraphConverter::convert(const Graph& g, bool deleteGraphStruct) const
         ln = new p3d_list_node;
         ln->N = new p3d_node(*(*it)->getNodeStruct()); i++;
 
-        ln->N->q = p3d_copy_config(robot->getRobotStruct(),
-                                   (*it)->getConfiguration()->getConfigStruct());
+        ln->N->q = p3d_copy_config( (p3d_rob*) robot->getP3dRobotStruct(), (*it)->getConfiguration()->getConfigStruct() );
 
         //cout << "Node( " << ln->N->num << " ) = " << ln->N->numcomp << endl;
 
@@ -512,10 +511,10 @@ p3d_graph* GraphConverter::convert(const Graph& g, bool deleteGraphStruct) const
         le->E->Ni = NodeMap[(*it)->getSource()];
         le->E->Nf = NodeMap[(*it)->getTarget()];
 
+        p3d_rob* robotPt = (p3d_rob*)(*it)->getLocalPath()->getRobot()->getP3dRobotStruct();
+
         // Copy the localpath struct
-        le->E->path = (*it)->getLocalPath()->getLocalpathStruct()->copy(
-                    (*it)->getLocalPath()->getRobot()->getRobotStruct(),
-                    (*it)->getLocalPath()->getLocalpathStruct());
+        le->E->path = (*it)->getLocalPath()->getP3dLocalpathStruct()->copy( robotPt, (*it)->getLocalPath()->getP3dLocalpathStruct() );
 
         // Adds the new Edge to the map
         EdgeMap.insert(pair<Edge*,p3d_edge*>((*it),le->E));

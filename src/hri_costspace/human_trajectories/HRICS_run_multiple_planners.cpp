@@ -66,7 +66,7 @@ void MultiplePlanners::saveTrajsToFile( std::string folder )
         ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
 
         best_traj_[i].replaceP3dTraj();
-        p3d_save_traj( (folder + "/" + ss.str()).c_str(), robot_->getRobotStruct()->tcur );
+        p3d_save_traj( (folder + "/" + ss.str()).c_str(), robot_->getP3dRobotStruct()->tcur );
 
         cout << "save planner result " << i << " : " << ss.str() << endl;
     }
@@ -184,7 +184,7 @@ bool MultiplePlanners::runRRT()
 
     try
     {
-        succeed = p3d_run_rrt( robot_->getRobotStruct() );
+        succeed = p3d_run_rrt( robot_->getP3dRobotStruct() );
 
         if( !ENV.getBool(Env::drawDisabled) ) {
             g3d_draw_allwin_active();

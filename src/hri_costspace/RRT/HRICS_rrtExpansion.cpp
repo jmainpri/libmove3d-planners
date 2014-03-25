@@ -186,7 +186,7 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* C
     biasedBox[4] = corner[2];
     biasedBox[5] = corner[2] + cellSize[2];
 
-    p3d_FreeFlyerShoot( m_Graph->getRobot()->getRobotStruct() , q->getConfigStruct() , biasedBox );
+    p3d_FreeFlyerShoot( m_Graph->getRobot()->getP3dRobotStruct() , q->getConfigStruct() , biasedBox );
 
     //    q->getConfigStruct()[VIRTUAL_OBJECT_DOF+0] = randomPoint[0];
     //    q->getConfigStruct()[VIRTUAL_OBJECT_DOF+1] = randomPoint[1];

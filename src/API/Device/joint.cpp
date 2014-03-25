@@ -9,6 +9,8 @@
 
 #include "API/Device/robot.hpp"
 
+#include "P3d-pkg.h"
+
 #include <Eigen/Core>
 #define EIGEN_USE_NEW_STDVECTOR
 #include <Eigen/StdVector>
@@ -16,181 +18,122 @@
 #include <Eigen/LU>
 
 #include <string>
-
-#include "P3d-pkg.h"
+#include <boost/function.hpp>
 
 using namespace std;
 using namespace Eigen;
 using namespace Move3D;
 
-Joint::Joint(Robot *R, p3d_jnt* jntPt, int id, bool copy ) :
+// ****************************************************************************************************
+// API FUNCTIONS
+// ****************************************************************************************************
+
+static boost::function<void*( Joint*, void*, std::string& name )> Move3DJointConstructor;
+static boost::function<Vector3d( const Joint* )> Move3DJointGetVectorPos;
+static boost::function<Transform3d( const Joint* )> Move3DJointGetMatrixPos;
+static boost::function<void( Joint*, Configuration&, bool )> Move3DJointShoot;
+static boost::function<double( const Joint*, int )> Move3DJointGetJointDoF;
+static boost::function<void( const Joint*, int, double )> Move3DJointSetJointDoF;
+static boost::function<bool( const Joint*, int )> Move3DJointIsJointUser;
+static boost::function<void( const Joint*, int, double&, double& )> Move3DJointGetBound;
+static boost::function<void( const Joint*, int, double&, double& )> Move3DJointGetRandBound;
+static boost::function<int( const Joint* )> Move3DJointGetNbOfDoFs;
+static boost::function<int( const Joint* )> Move3DJointGetIndexOfFirstDoF;
+static boost::function<Joint*( const Joint*, Robot* )> Move3DJointGetPreviousJoint;
+static boost::function<double( const Joint* )> Move3DJointDist;
+
+// ****************************************************************************************************
+// SETTERS
+// ****************************************************************************************************
+
+void move3d_set_fct_joint_constructor( boost::function<void*( Joint*, void*, std::string& name )> fct ) {  Move3DJointConstructor = fct; }
+void move3d_set_fct_joint_get_vector_pos( boost::function<Vector3d( const Joint* )> fct ) {  Move3DJointGetVectorPos = fct; }
+void move3d_set_fct_joint_get_matrix_pos( boost::function<Transform3d( const Joint* )> fct ) {  Move3DJointGetMatrixPos = fct; }
+void move3d_set_fct_joint_joint_shoot( boost::function<void( Joint*, Configuration&, bool )> fct ) {  Move3DJointShoot = fct; }
+void move3d_set_fct_joint_get_joint_dof( boost::function<double( const Joint*, int )> fct ) {  Move3DJointGetJointDoF = fct; }
+void move3d_set_fct_joint_set_joint_dof( boost::function<void( const Joint*, int, double )> fct ) {  Move3DJointSetJointDoF = fct; }
+void move3d_set_fct_joint_is_joint_user( boost::function<bool( const Joint*, int )> fct ) {  Move3DJointIsJointUser = fct; }
+void move3d_set_fct_joint_get_bound( boost::function<void( const Joint*, int, double&, double& )> fct ) {  Move3DJointGetBound = fct; }
+void move3d_set_fct_joint_get_bound_rand( boost::function<void( const Joint*, int, double&, double& )> fct ) {  Move3DJointGetRandBound = fct; }
+void move3d_set_fct_joint_get_nb_of_joints( boost::function<int( const Joint* )> fct ) {  Move3DJointGetNbOfDoFs = fct; }
+void move3d_set_fct_joint_get_index_of_first_dof( boost::function<int( const Joint* )> fct ) {  Move3DJointGetIndexOfFirstDoF = fct; }
+void move3d_set_fct_joint_get_previous_joint( boost::function<Joint*( const Joint*, Robot* )> fct ) {  Move3DJointGetPreviousJoint = fct; }
+void move3d_set_fct_joint_joint_dist( boost::function<double( const Joint* )> fct ) {  Move3DJointDist = fct; }
+
+// ****************************************************************************************************
+
+Joint::Joint(Robot *R, void* jntPt, int id, bool copy ) :
     m_Robot(R),
     m_id(id)
 {
-    m_Joint = jntPt;
-    m_Name = jntPt->name;
+    m_Joint = Move3DJointConstructor( this, static_cast<jnt*>(jntPt), m_Name );
 }
 
 Vector3d Joint::getVectorPos() const
 {
-    Vector3d v;
-
-    pp3d_matrix4 mat = &(m_Joint->abs_pos);
-
-    v(0) = (*mat)[0][3];
-    v(1) = (*mat)[1][3];
-    v(2) = (*mat)[2][3];
-
-    return v;
+    return Move3DJointGetVectorPos( this );
 }
 
 Transform3d Joint::getMatrixPos() const
 {
-    Transform3d t;
-
-    pp3d_matrix4 mat = &(m_Joint->abs_pos);
-
-    t(0,0) = (*mat)[0][0];
-    t(1,0) = (*mat)[1][0];
-    t(2,0) = (*mat)[2][0];
-    t(3,0) = 0.0;
-
-    t(0,1) = (*mat)[0][1];
-    t(1,1) = (*mat)[1][1];
-    t(2,1) = (*mat)[2][1];
-    t(3,1) = 0.0;
-
-    t(0,2) = (*mat)[0][2];
-    t(1,2) = (*mat)[1][2];
-    t(2,2) = (*mat)[2][2];
-    t(3,2) = 0.0;
-
-    t(0,3) = (*mat)[0][3];
-    t(1,3) = (*mat)[1][3];
-    t(2,3) = (*mat)[2][3];
-    t(3,3) = 1.0;
-
-    return t;
+    return Move3DJointGetMatrixPos( this );
 }
 
-pp3d_matrix4 Joint::getAbsPos()
-{ 
-    return &(m_Joint->abs_pos);
-}
-
-void Joint::shoot(Configuration& q,bool sample_passive)
+void Joint::shoot( Configuration& q, bool sample_passive )
 {
-    for(int j=0; j<m_Joint->dof_equiv_nbr; j++)
-    {
-        int k = m_Joint->index_dof + j;
-
-        if (
-                sample_passive ||
-                ((p3d_jnt_get_dof_is_user(m_Joint, j) && p3d_jnt_get_dof_is_active_for_planner(m_Joint,j)) &&
-                 (q.getRobot()->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) ) )
-        {
-            double vmin,vmax;
-            p3d_jnt_get_dof_rand_bounds(m_Joint, j, &vmin, &vmax);
-            q[k] = p3d_random(vmin, vmax);
-            //std::cout << "Sample Passive = "<<sample_passive<<" , Sampling q["<<k<<"] = "<<q[k]<< std::endl;
-        }
-        else
-        {
-            q[k] = p3d_jnt_get_dof(m_Joint, j);
-        }
-    }
+    Move3DJointShoot( this, q, sample_passive);
 }
 
 double Joint::getJointDof(int ithDoF) const
 {
-    return p3d_jnt_get_dof(m_Joint,ithDoF);
+    return Move3DJointGetJointDoF( this, ithDoF );
 }
 
 void Joint::setJointDof(int ithDoF, double value)
 {
-    p3d_jnt_set_dof(m_Joint,ithDoF,value);
-}
-
-bool Joint::setFreeFlyerFromMatrix( const Eigen::Transform3d& T )
-{
-    if( m_Joint->type == P3D_FREEFLYER )
-    {
-        Eigen::Vector3d trans = T.translation();
-        p3d_jnt_set_dof(m_Joint,0,trans[0]);
-        p3d_jnt_set_dof(m_Joint,1,trans[1]);
-        p3d_jnt_set_dof(m_Joint,2,trans[2]);
-
-        cout << "trans : " << endl << trans << endl;
-
-        Eigen::Vector3d rot = T.linear().eulerAngles(0, 1, 2);
-        p3d_jnt_set_dof(m_Joint,3,rot[0]);
-        p3d_jnt_set_dof(m_Joint,4,rot[1]);
-        p3d_jnt_set_dof(m_Joint,5,rot[2]);
-        return true;
-    }
-    else
-        return false;
+    Move3DJointSetJointDoF( this, ithDoF, value );
 }
 
 bool Joint::isJointDofUser(int ithDoF) const
 {  
-    return p3d_jnt_get_dof_is_user(m_Joint,ithDoF);
+    return Move3DJointIsJointUser( this, ithDoF );
 }
 
 void Joint::getDofBounds(int ithDoF, double& vmin, double& vmax) const
 {
-    vmin = m_Joint->dof_data[ithDoF].vmin;
-    vmax = m_Joint->dof_data[ithDoF].vmax;
+    Move3DJointGetBound( this, ithDoF, vmin, vmax );
 }
 
 void Joint::getDofRandBounds(int ithDoF, double& vmin, double& vmax) const
 {
-    vmin = m_Joint->dof_data[ithDoF].vmin_r;
-    vmax = m_Joint->dof_data[ithDoF].vmax_r;
+    Move3DJointGetRandBound( this, ithDoF, vmin, vmax );
 }
 
 unsigned int Joint::getNumberOfDof() const
 {
-    return m_Joint->dof_equiv_nbr;
+    return Move3DJointGetNbOfDoFs( this );
 }
 
 unsigned int Joint::getIndexOfFirstDof() const
 {
-    return m_Joint->index_dof;
+    return Move3DJointGetIndexOfFirstDoF( this );
 }
 
 void Joint::setConfigFromDofValues(Configuration& q)
 {
-    for(int j=0; j<m_Joint->dof_equiv_nbr; j++)
+    int nb_of_dofs = getNumberOfDof();
+    int index_first_dof = getIndexOfFirstDof();
+
+    for(int j=0; j<nb_of_dofs; j++)
     {
-        int k = m_Joint->index_dof + j;
+        int k = index_first_dof + j;
         q[k] = getJointDof(j);
     }
 }
 
 Joint* Joint::getPreviousJoint()
 {
-    Joint* prevJnt=NULL; int found=0;
-
-    for (unsigned int i=0; i<m_Robot->getNumberOfJoints(); i++ )
-    {
-        Joint* jnt = m_Robot->getJoint(i);
-
-        if ( m_Joint->prev_jnt == jnt->m_Joint )
-        {
-            found++;
-            prevJnt = jnt;
-        }
-    }
-
-    if (found == 1) {
-        return prevJnt;
-    }
-    else if (found > 1 ) {
-        cout << "Found : " << found << " prev. joints!!!" << endl;
-    }
-
-    return NULL;
+    return Move3DJointGetPreviousJoint( this, m_Robot );
 }
 
 std::vector<Joint*> Joint::getAllPrevJoints()
@@ -209,4 +152,9 @@ std::vector<Joint*> Joint::getAllPrevJoints()
     }
 
     return prevJoints;
+}
+
+double Joint::getDist()
+{
+    return Move3DJointDist( this );
 }

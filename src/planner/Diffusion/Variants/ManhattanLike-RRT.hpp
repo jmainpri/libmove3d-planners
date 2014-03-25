@@ -10,6 +10,8 @@
 
 #include "planner/Diffusion/RRT.hpp"
 
+#include <libmove3d/include/device.h>
+
 namespace Move3D
 {
 
@@ -56,11 +58,11 @@ public:
      */
     bool manhattanSamplePassive();
 
-    int selectNewJntInList(std::vector<jnt*>& joints, std::vector<jnt*>& oldJoints, std::vector<jnt*>& newJoints);
+    int selectNewJntInList( std::vector<jnt*>& joints, std::vector<jnt*>& oldJoints, std::vector<p3d_jnt*>& newJoints );
 
-    int getCollidingPassiveJntList(Robot* R, Configuration& qinv, std::vector<jnt*>& joints);
+    int getCollidingPassiveJntList( Robot* R, Configuration& qinv, std::vector<p3d_jnt*>& joints );
 
-    void shoot_jnt_list_and_copy_into_conf(Configuration& qrand, std::vector<jnt*>& joints);
+    void shoot_jnt_list_and_copy_into_conf( Configuration& qrand, std::vector<p3d_jnt*>& joints );
 
 };
 

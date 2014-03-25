@@ -252,36 +252,39 @@ Trajectory::~Trajectory()
 
 bool Trajectory::replaceP3dTraj() const
 {
-    //cout << "Robot name : " << m_Robot->getRobotStruct()->name << endl;
+    //cout << "Robot name : " << m_Robot->getP3dRobotStruct()->name << endl;
     // return replaceP3dTraj( p3d_get_robot_by_name( m_Robot->getName().c_str() )->tcur );
-    return replaceP3dTraj(  m_Robot->getRobotStruct()->tcur );
+    p3d_rob* robotPt = (p3d_rob*)m_Robot->getP3dRobotStruct();
+    return replaceP3dTraj( robotPt->tcur );
 }
 
 p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt) const
 {
     //	print();
 
+    p3d_rob* robotPt = (p3d_rob*)m_Robot->getP3dRobotStruct();
+
     if(trajPt!=NULL)
     {
-        if(strcmp(trajPt->rob->name,m_Robot->getRobotStruct()->name) != 0 )
+        if( strcmp( trajPt->rob->name, robotPt->name) != 0 )
         {
             cout << " Warning : Robot not the same as the robot in traj "  << endl;
             return NULL;
         }
         if( trajPt->courbePt != NULL )
         {
-            destroy_list_localpath( m_Robot->getRobotStruct(), trajPt->courbePt);
+            destroy_list_localpath( robotPt, trajPt->courbePt);
         }
     }
     else
     {
-        trajPt = p3d_create_empty_trajectory(m_Robot->getRobotStruct());
+        trajPt = p3d_create_empty_trajectory( robotPt );
     }
 
     // trajPt->name = strdup(name);
     // trajPt->file = NULL;  // Modification Fabien
-    trajPt->num = 0; //m_Robot->getRobotStruct()->nt;
-    // trajPt->rob = m_Robot->getRobotStruct();
+    trajPt->num = 0; //m_Robot->getP3dRobotStruct()->nt;
+    // trajPt->rob = m_Robot->getP3dRobotStruct();
 
     p3d_localpath *localpathPt = NULL;
     p3d_localpath *localprevPt = NULL;
@@ -291,8 +294,7 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt) const
     for (int i=0; i<int(m_Courbe.size()); i++)
     {
         localprevPt = localpathPt;
-        localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( m_Robot->getRobotStruct(),
-                                                               m_Courbe[i]->getLocalpathStruct() );
+        localpathPt = m_Courbe[i]->getP3dLocalpathStruct()->copy( (p3d_rob*)m_Robot->getP3dRobotStruct(), m_Courbe[i]->getP3dLocalpathStruct() );
 
         if( localprevPt )
         {
@@ -341,19 +343,19 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
     //	Robot* rob =new Robot(p3d_get_robot_by_name(trajPt->rob->name));
     if(trajPt!=NULL)
     {
-        destroy_list_localpath(rob->getRobotStruct(), trajPt->courbePt);
+        destroy_list_localpath( (p3d_rob*) rob->getP3dRobotStruct(), trajPt->courbePt);
     }
     else
     {
-        trajPt = p3d_create_empty_trajectory(rob->getRobotStruct());
+        trajPt = p3d_create_empty_trajectory( (p3d_rob*) rob->getP3dRobotStruct() );
     }
 
     //	trajPt->name       = strdup(name);
     //	trajPt->file       = NULL;  // Modification Fabien
-    trajPt->num = 0; //rob->getRobotStruct()->nt;
-    //    trajPt->rob = m_Robot->getRobotStruct();
+    trajPt->num = 0; //rob->getP3dRobotStruct()->nt;
+    //    trajPt->rob = m_Robot->getP3dRobotStruct();
 
-    //	cout << rob->getRobotStruct() << endl;
+    //	cout << rob->getP3dRobotStruct() << endl;
 
     p3d_localpath *localpathPt = NULL;
     p3d_localpath *localprevPt = NULL;
@@ -369,8 +371,7 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
         //    }
 
         localprevPt = localpathPt;
-        localpathPt = m_Courbe[i]->getLocalpathStruct()->copy( rob->getRobotStruct(),
-                                                               m_Courbe[i]->getLocalpathStruct() );
+        localpathPt = m_Courbe[i]->getP3dLocalpathStruct()->copy( (p3d_rob*)rob->getP3dRobotStruct(), m_Courbe[i]->getP3dLocalpathStruct() );
 
         if( localprevPt )
         {
@@ -1493,11 +1494,11 @@ void Trajectory::draw( int nbKeyFrame )
 
     double Cost1, Cost2;
 
-    p3d_jnt* drawnjnt = NULL;
+    Joint* drawnjnt = NULL;
 
     int indexjnt = p3d_get_user_drawnjnt();
-    if (indexjnt != -1 && indexjnt <= m_Robot->getRobotStruct()->njoints ) {
-        drawnjnt = m_Robot->getRobotStruct()->joints[indexjnt];
+    if (indexjnt != -1 && indexjnt <= int(m_Robot->getNumberOfJoints()) ) {
+        drawnjnt = m_Robot->getJoint( indexjnt );
     }
 
     confPtr_t qSave = m_Robot->getCurrentPos();
@@ -1505,7 +1506,7 @@ void Trajectory::draw( int nbKeyFrame )
     m_Robot->setAndUpdate(*q);
 
     p3d_vector3 pi, pf;
-    p3d_jnt_get_cur_vect_point(drawnjnt, pi);
+    p3d_jnt_get_cur_vect_point( (p3d_jnt*)drawnjnt->getP3dJointStruct(), pi);
 
     int saveColor;
     bool red = false;
@@ -1520,7 +1521,7 @@ void Trajectory::draw( int nbKeyFrame )
         /* position of the robot corresponding to parameter u */
         q = configAtParam(u);
         m_Robot->setAndUpdate(*q);
-        p3d_jnt_get_cur_vect_point(drawnjnt, pf);
+        p3d_jnt_get_cur_vect_point( (p3d_jnt*)drawnjnt->getP3dJointStruct(), pf);
 
         if (m_isHighestCostIdSet)
         {
@@ -1571,7 +1572,7 @@ void Trajectory::draw( int nbKeyFrame )
         for (unsigned int i=0; i<m_Courbe.size(); i++)
         {
             m_Robot->setAndUpdate(*m_Courbe[i]->getEnd());
-            p3d_jnt_get_cur_vect_point(drawnjnt, pf);
+            p3d_jnt_get_cur_vect_point( (p3d_jnt*)drawnjnt->getP3dJointStruct(), pf);
             /*val2 =*/ GHintersectionVerticalLineWithGround(GroundCostObj, pf[0],pf[1], &Cost2);
             g3d_drawSphere(pf[0],pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02,1.);
         }

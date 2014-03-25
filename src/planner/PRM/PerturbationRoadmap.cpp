@@ -51,7 +51,7 @@ PerturbationRoadmap::~PerturbationRoadmap()
 
 void PerturbationRoadmap::getTranslationBounds()
 {
-    p3d_jnt* joint = _Robot->getJoint(1)->getJointStruct();
+    p3d_jnt* joint = static_cast<p3d_jnt*>( _Robot->getJoint(1)->getP3dJointStruct() );
 
     if( joint->type == P3D_PLAN || joint->type == P3D_FREEFLYER )
     {
@@ -85,13 +85,9 @@ unsigned PerturbationRoadmap::init()
     //    return added;
     //  }
 
-    Move3D::Trajectory T(_Robot);
+    Move3D::Trajectory T( _Robot->getCurrentTraj() );
 
-    if( _Robot->getTrajStruct() )
-    {
-        T = _Robot->getCurrentTraj();
-    }
-    else {
+    if( T.getNbOfPaths() == 0 ) {
         T =  Move3D::Trajectory( traj_optim_create_sraight_line_traj() );
     }
 
@@ -396,12 +392,11 @@ bool PerturbationRoadmap::expandPerturbation( confPtr_t q_rand )
 confPtr_t PerturbationRoadmap::trajShootConfiguration()
 {
     double dist=0.0;
+
     confPtr_t q1( m_traj->getRandConfAlongTraj( dist, false ));
     confPtr_t q2( new Configuration(*q1));
 
-    p3d_gaussian_config2_specific(q1->getRobot()->getRobotStruct(),
-                                  q1->getConfigStruct(),
-                                  q2->getConfigStruct(),
+    p3d_gaussian_config2_specific(q1->getRobot()->getP3dRobotStruct(), q1->getConfigStruct(), q2->getConfigStruct(),
                                   m_std_dev_trans, m_std_dev_rot, false);
 
     _Robot->setAndUpdate( *q2 );

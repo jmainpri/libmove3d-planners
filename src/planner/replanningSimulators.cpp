@@ -75,7 +75,7 @@ bool SoftmotionReplanner::init()
         return false;
     }
 
-    m_manipPlanner = new ManipulationPlanner(m_robot->getRobotStruct());
+    m_manipPlanner = new ManipulationPlanner( static_cast<p3d_rob*>(m_robot->getP3dRobotStruct()) );
     m_manipPlanner->setUseBaseMotion( true );
     m_manipPlanner->setPlanningMethod( p3d_planner_function );
     m_manipPlanner->setSmoothingMethod( p3d_smoothing_function );
@@ -153,8 +153,8 @@ bool SoftmotionReplanner::generate_new_trajectory(const vector<p3d_traj*>& trajs
 
     if( m_planningSucceded )
     {
-        p3d_multiLocalPath_disable_all_groupToPlan( m_robot->getRobotStruct(), false );
-        p3d_multiLocalPath_set_groupToPlan( m_robot->getRobotStruct(), m_UpBodyMLP, 1, false );
+        p3d_multiLocalPath_disable_all_groupToPlan( static_cast<p3d_rob*>(m_robot->getP3dRobotStruct()), false );
+        p3d_multiLocalPath_set_groupToPlan( static_cast<p3d_rob*>(m_robot->getP3dRobotStruct()), m_UpBodyMLP, 1, false );
 
         p3d_traj* lin_traj =  p3d_get_last_linear_traj();
 
@@ -351,11 +351,11 @@ bool ReplanningSimulator::init_rosim_cntrts_and_collisions()
     }
 
     // Deactivate robot to simulation robot collision checking
-    p3d_col_deactivate_rob_rob( m_robot->getRobotStruct(), m_rosim->getRobotStruct() );
+    p3d_col_deactivate_rob_rob( static_cast<p3d_rob*>(m_robot->getP3dRobotStruct()), static_cast<p3d_rob*>(m_rosim->getP3dRobotStruct()) );
 
     if( m_rocyl ) {
-        p3d_col_deactivate_rob_rob( m_rocyl->getRobotStruct(), m_robot->getRobotStruct() );
-        p3d_col_deactivate_rob_rob( m_rocyl->getRobotStruct(), m_rosim->getRobotStruct() );
+        p3d_col_deactivate_rob_rob( static_cast<p3d_rob*>(m_rocyl->getP3dRobotStruct()), static_cast<p3d_rob*>(m_robot->getP3dRobotStruct()) );
+        p3d_col_deactivate_rob_rob( static_cast<p3d_rob*>(m_rocyl->getP3dRobotStruct()), static_cast<p3d_rob*>(m_rosim->getP3dRobotStruct()) );
     }
 
     // Deactivate all kinematic constraints
@@ -363,7 +363,7 @@ bool ReplanningSimulator::init_rosim_cntrts_and_collisions()
 
     // Fix all the joints but unfixes the arm 0
     if( m_robot->getName() == "PR2_ROBOT" )
-        fixAllJointsWithoutArm( m_rosim->getRobotStruct(), 0 );
+        fixAllJointsWithoutArm( static_cast<p3d_rob*>(m_rosim->getP3dRobotStruct()), 0 );
 
     return true;
 }
@@ -386,12 +386,12 @@ void ReplanningSimulator::set_multithread_graphical(bool enable)
 
     if (enable)
     {
-        m_robot->getRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
+        m_robot->getP3dRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
         ext_g3d_draw_multi_thread = replan_current_draw;
     }
     else
     {
-        m_robot->getRobotStruct()->display_mode = P3D_ROB_DEFAULT_DISPLAY;
+        m_robot->getP3dRobotStruct()->display_mode = P3D_ROB_DEFAULT_DISPLAY;
         ext_g3d_draw_multi_thread = NULL;
     }
 }
@@ -774,9 +774,9 @@ void ReplanningSimulator::draw()
     //    win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
     //
     //    m_rosim->setAndUpdate( *m_q_end );
-    //    m_rosim->getRobotStruct()->draw_transparent = false;
-    //    g3d_draw_robot( m_rosim->getRobotStruct()->num, win, 0);
-    //    m_rosim->getRobotStruct()->draw_transparent = false;
+    //    m_rosim->getP3dRobotStruct()->draw_transparent = false;
+    //    g3d_draw_robot( m_rosim->getP3dRobotStruct()->num, win, 0);
+    //    m_rosim->getP3dRobotStruct()->draw_transparent = false;
     //    m_rosim->setAndUpdate( *q_tmp );
     //  }
 

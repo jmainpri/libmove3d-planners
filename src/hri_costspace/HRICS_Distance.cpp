@@ -64,23 +64,23 @@ Distance::~Distance()
 
     for(unsigned int j=0; j<_Humans.size(); j++)
     {
-        for(int i =0; i<_Humans[j]->getRobotStruct()->no; i++)
+        for(int i =0; i< static_cast<p3d_rob*>( _Humans[j]->getP3dRobotStruct() )->no; i++)
         {
-            string body = _Humans[j]->getRobotStruct()->o[i]->name;
+            string body = static_cast<p3d_rob*>( _Humans[j]->getP3dRobotStruct() )->o[i]->name;
 
             if( body.find("safety_zone_graphic") != string::npos )
             {
                 //                cout << "i = " << i << endl;
-                for(int k=0;k< _Humans[j]->getRobotStruct()->o[i]->np ; k++)
+                for(int k=0;k< static_cast<p3d_rob*>( _Humans[j]->getP3dRobotStruct() )->o[i]->np ; k++)
                 {
-                    // cout << "_Humans[j]->getRobotStruct()->o[i]->np = " << _Humans[j]->getRobotStruct()->o[i]->np << endl;
+                    // cout << "_Humans[j]->getP3dRobotStruct()->o[i]->np = " << _Humans[j]->getP3dRobotStruct()->o[i]->np << endl;
 
                     /* the shape : 0,1,2=polyh,
                      * 3=sphere, 4=cube,
                      * 5=box, 6=cylinder,
                      * 7=cone */
 
-                    int shape = _Humans[j]->getRobotStruct()->o[i]->pol[k]->entity_type;
+                    int shape = static_cast<p3d_rob*>( _Humans[j]->getP3dRobotStruct() )->o[i]->pol[k]->entity_type;
 
                     if( shape==0 || shape==1 || shape == 2)
                     {
@@ -88,7 +88,7 @@ Distance::~Distance()
                         break;
                     }
 
-                    offSetPrim(_Humans[j]->getRobotStruct()->o[i]->pol[k],-_SafeRadius);
+                    offSetPrim( static_cast<p3d_rob*>( _Humans[j]->getP3dRobotStruct() )->o[i]->pol[k],-_SafeRadius);
                     //                    cout << "Set object " << i <<" with offset " << -_SafeRadius << endl;
                 }
             }
@@ -124,9 +124,9 @@ void Distance::parseHumans()
         vector<int> safetyZonesId;
 
         //        cout << "Looking for important zones on " << human->getName() << endl;
-        for(int j=0;j<human->getRobotStruct()->no;j++)
+        for(int j=0;j< static_cast<p3d_rob*>( human->getP3dRobotStruct() )->no;j++)
         {
-            body = human->getRobotStruct()->o[j]->name;
+            body = static_cast<p3d_rob*>( human->getP3dRobotStruct() )->o[j]->name;
             //size_t found;
             b_name = body;
 
@@ -161,16 +161,16 @@ void Distance::parseHumans()
 
             if( body.find("safety_zone_graphic") != string::npos)
             {
-                for(int k=0;k< human->getRobotStruct()->o[j]->np ; k++)
+                for(int k=0;k< static_cast<p3d_rob*>( human->getP3dRobotStruct() )->o[j]->np ; k++)
                 {
                     //                    cout << "j = " << j << endl;
-                    //                    cout << "human->getRobotStruct()->o[j]->np = " <<human->getRobotStruct()->o[j]->np << endl;
+                    //                    cout << "human->getP3dRobotStruct()->o[j]->np = " <<human->getP3dRobotStruct()->o[j]->np << endl;
                     /* the shape : 0,1,2=polyh,
                      * 3=sphere, 4=cube,
                      * 5=box, 6=cylinder,
                      * 7=cone */
 
-                    int shape = human->getRobotStruct()->o[j]->pol[k]->entity_type;
+                    int shape = static_cast<p3d_rob*>( human->getP3dRobotStruct() )->o[j]->pol[k]->entity_type;
 
                     if( shape==0 || shape==1 || shape == 2)
                     {
@@ -195,7 +195,7 @@ void Distance::parseHumans()
                     }
 
                     _SafeOffset = ENV.getDouble(Env::zone_size) - _SafeRadius;
-                    offSetPrim(human->getRobotStruct()->o[j]->pol[k],_SafeOffset);
+                    offSetPrim(human->getP3dRobotStruct()->o[j]->pol[k],_SafeOffset);
                     //                    cout << "offSetPrim on " << body << endl;
                 }
             }
@@ -268,21 +268,19 @@ void Distance::activateSafetyZonesMode()
 
     for(unsigned int j=0; j<_Humans.size(); j++)
     {
-        //        cout << _Robot->getRobotStruct() << endl;
+        //        cout << _Robot->getP3dRobotStruct() << endl;
 
-        p3d_col_activate_rob_rob(m_Robot->getRobotStruct(),_Humans[j]->getRobotStruct());
+        p3d_col_activate_rob_rob( static_cast<p3d_rob*>( m_Robot->getP3dRobotStruct() ),_Humans[j]->getP3dRobotStruct());
 
-        for(int i =0; i<_Humans[j]->getRobotStruct()->no; i++)
+        for(int i =0; i< static_cast<p3d_rob*>( _Humans[j]->getP3dRobotStruct() )->no; i++)
         {
             if(binary_search(_SafetyZonesBodyId[j].begin(), _SafetyZonesBodyId[j].end(),i))
             {
-                p3d_col_activate_rob_obj(m_Robot->getRobotStruct(),
-                                         _Humans[j]->getRobotStruct()->o[i]);
+                p3d_col_activate_rob_obj( static_cast<p3d_rob*>( m_Robot->getP3dRobotStruct() ), static_cast<p3d_rob*>( _Humans[j]->getP3dRobotStruct() )->o[i]);
             }
             else
             {
-                p3d_col_deactivate_rob_obj(m_Robot->getRobotStruct()
-                                           ,_Humans[j]->getRobotStruct()->o[i]);
+                p3d_col_deactivate_rob_obj( static_cast<p3d_rob*>( m_Robot->getP3dRobotStruct() ) , static_cast<p3d_rob*>( _Humans[j]->getP3dRobotStruct() )->o[i]);
             }
         }
     }
@@ -299,22 +297,21 @@ void Distance::activateNormalMode()
         if (m_Robot)
         {
             // Activate robot to human collision checking
-            p3d_col_activate_rob_rob(m_Robot->getRobotStruct(),
-                                     _Humans[j]->getRobotStruct());
+            p3d_col_activate_rob_rob( static_cast<p3d_rob*>( m_Robot->getP3dRobotStruct() ), static_cast<p3d_rob*>( _Humans[j]->getP3dRobotStruct() ) );
         }
 
         // Deactivate all safety gosts self collision
         for ( vector<int>::iterator it  = _SafetyZonesBodyId[j].begin();
               it != _SafetyZonesBodyId[j].end(); ++it )
         {
-            //  p3d_col_deactivate_rob_obj(_Robot->getRobotStruct(),
-            //                             _Humans[j]->getRobotStruct()->o[i]);
+            //  p3d_col_deactivate_rob_obj(_Robot->getP3dRobotStruct(),
+            //                             _Humans[j]->getP3dRobotStruct()->o[i]);
 
-            p3d_obj* obj =	_Humans[j]->getRobotStruct()->o[(*it)];
+            p3d_obj* obj =	static_cast<p3d_rob*>( _Humans[j]->getP3dRobotStruct() )->o[(*it)];
 
-            for (int ib = 0; ib < _Humans[j]->getRobotStruct()->no; ib++)
+            for (int ib = 0; ib < static_cast<p3d_rob*>( _Humans[j]->getP3dRobotStruct() )->no; ib++)
             {
-                p3d_obj *o = _Humans[j]->getRobotStruct()->o[ib];
+                p3d_obj *o = static_cast<p3d_rob*>( _Humans[j]->getP3dRobotStruct() )->o[ib];
                 if (o == obj) continue;
                 p3d_col_deactivate_obj_obj(o, obj);
             }
@@ -380,8 +377,8 @@ vector<double> Distance::getDistToZones()
 {
     //    activateSafetyZonesMode();
 
-    int nof_bodies = m_Robot->getRobotStruct()->no;
-    double* distances= MY_ALLOC(double,nof_bodies);
+    int nof_bodies = static_cast<p3d_rob*>( m_Robot->getP3dRobotStruct() )->no;
+    double* distances = MY_ALLOC(double,nof_bodies);
 
     p3d_vector3 *body= MY_ALLOC(p3d_vector3,nof_bodies);
     p3d_vector3 *other= MY_ALLOC(p3d_vector3,nof_bodies);
@@ -437,7 +434,7 @@ vector<double> Distance::getDistToZones()
             p3d_col_test_choice();
             // Collision detection with other robots only
 
-            p3d_kcd_closest_points_between_bodies(m_Robot->getRobotStruct(),body,other,distances);
+            p3d_kcd_closest_points_between_bodies( static_cast<p3d_rob*>( m_Robot->getP3dRobotStruct() ),body,other,distances);
 
             double buffer = -numeric_limits<double>::max();
             //double radius = ENV.getDouble(Env::zone_size);
@@ -462,12 +459,7 @@ vector<double> Distance::getDistToZones()
         case p3d_col_mode_pqp:
         {
             cout << "PQP distance = " << endl;
-            distances[k] =  pqp_robot_robot_distance(
-                        m_Robot->getRobotStruct(),
-                        _Humans[k]->getRobotStruct(),
-                        body[k],
-                        other[k]);
-
+            distances[k] =  pqp_robot_robot_distance( static_cast<p3d_rob*>( m_Robot->getP3dRobotStruct() ), static_cast<p3d_rob*>( _Humans[k]->getP3dRobotStruct() ), body[k], other[k]);
             _PenetrationDist[k] = (_SafeRadius - distances[k])/_SafeRadius;
         }
             break;
@@ -541,20 +533,20 @@ double Distance::computeBBDist(p3d_vector3 robot, p3d_vector3 human)
     {
         //cout << "Distance for Human = " << _Humans[i]->getName() << endl;
 
-        p3d_col_activate_rob_rob(m_Robot->getRobotStruct(),_Humans[i]->getRobotStruct());
+        p3d_col_activate_rob_rob( static_cast<p3d_rob*>( m_Robot->getP3dRobotStruct() ), static_cast<p3d_rob*>( _Humans[i]->getP3dRobotStruct() ));
 
         for(unsigned int j =0; j<_SafetyZonesBodyId[i].size();j++)
         {
-            p3d_obj* Obj2= _Humans[i]->getRobotStruct()->o[_SafetyZonesBodyId[i][j]];
+            p3d_obj* Obj2= static_cast<p3d_rob*>( _Humans[i]->getP3dRobotStruct() )->o[_SafetyZonesBodyId[i][j]];
 
             bool pureGraphic = true;
 
             // Is object pure graphic
-            for(int k =0; k<m_Robot->getRobotStruct()->no; k++)
+            for(int k =0; k< static_cast<p3d_rob*>( m_Robot->getP3dRobotStruct() )->no; k++)
             {
-                for(int l=0; l<m_Robot->getRobotStruct()->o[k]->np;l++)
+                for(int l=0; l< static_cast<p3d_rob*>(m_Robot->getP3dRobotStruct() )->o[k]->np;l++)
                 {
-                    if(m_Robot->getRobotStruct()->o[k]->pol[l]->TYPE!=P3D_GRAPHIC)
+                    if( static_cast<p3d_rob*>(m_Robot->getP3dRobotStruct())->o[k]->pol[l]->TYPE!=P3D_GRAPHIC)
                     {
                         pureGraphic = false;
                     }
@@ -562,7 +554,7 @@ double Distance::computeBBDist(p3d_vector3 robot, p3d_vector3 human)
 
                 if(!pureGraphic)
                 {
-                    p3d_obj* Obj1= m_Robot->getRobotStruct()->o[k];
+                    p3d_obj* Obj1= static_cast<p3d_rob*>( m_Robot->getP3dRobotStruct() )->o[k];
 
                     double minDistance2;
                     double minDistance1 = p3d_BB_obj_obj_extern_dist ( Obj1 , Obj2, &minDistance2 );
@@ -587,19 +579,19 @@ double Distance::computeBBDist(p3d_vector3 robot, p3d_vector3 human)
     }
 
     //#if defined(LIGHT_PLANNER) && defined(PQP)
-    //	if(m_Robot->getRobotStruct()->isCarryingObject)
+    //	if(m_Robot->getP3dRobotStruct()->isCarryingObject)
     //	{
-    //		//        if(_Robot->getRobotStruct()->carriedObject->joints[1]->o > 1)
+    //		//        if(_Robot->getP3dRobotStruct()->carriedObject->joints[1]->o > 1)
     //		//        {
     //		//            cout << "Warning Distance::computeBBDist => FF with more than 1 object"  << endl;
     //		//        }
-    //		p3d_obj* Obj1 = m_Robot->getRobotStruct()->carriedObject->joints[1]->o;
+    //		p3d_obj* Obj1 = m_Robot->getP3dRobotStruct()->carriedObject->joints[1]->o;
     //
     //		for( unsigned int i=0; i<_Humans.size(); i++ )
     //		{
     //			for( unsigned int j =0; j<_SafetyZonesBodyId[i].size();j++)
     //			{
-    //				p3d_obj* Obj2= _Humans[i]->getRobotStruct()->o[_SafetyZonesBodyId[i][j]];
+    //				p3d_obj* Obj2= _Humans[i]->getP3dRobotStruct()->o[_SafetyZonesBodyId[i][j]];
     //
     //				double minDistance2;
     //				double minDistance1 = p3d_BB_obj_obj_extern_dist ( Obj1 , Obj2, &minDistance2 );
@@ -650,7 +642,7 @@ bool Distance::computeCylinderZone(Vector3d &p1, Vector3d& p2)
 
         for(unsigned int j =0; j<_SafetyZonesBodyId[i].size();j++)
         {
-            p3d_obj* Obj = _Humans[i]->getRobotStruct()->o[_SafetyZonesBodyId[i][j]];
+            p3d_obj* Obj = _Humans[i]->getP3dRobotStruct()->o[_SafetyZonesBodyId[i][j]];
             string ObjectName(Obj->name);
             //cout << ObjectName << endl;
             if ( ObjectName.find("safety_zone_ghost_0") != string::npos )
@@ -673,8 +665,8 @@ bool Distance::computeCylinderZone(Vector3d &p1, Vector3d& p2)
     }
     else
     {
-        p3d_vector3 v; p3d_mat4ExtractTrans ( _Humans[0]->getRobotStruct()->o[ObjIndex]->jnt->abs_pos,v);
-        p3d_matrix4* m = &(_Humans[0]->getRobotStruct()->o[ObjIndex]->jnt->abs_pos);
+        p3d_vector3 v; p3d_mat4ExtractTrans ( static_cast<p3d_rob*>( _Humans[0]->getP3dRobotStruct() )->o[ObjIndex]->jnt->abs_pos,v);
+        p3d_matrix4* m = &( static_cast<p3d_rob*>( _Humans[0]->getP3dRobotStruct() )->o[ObjIndex]->jnt->abs_pos);
 
         p1(0) = (*m)[0][2]*(TopAndBottom)	+ v[0];
         p1(1) = (*m)[1][2]*(TopAndBottom)	+ v[1];

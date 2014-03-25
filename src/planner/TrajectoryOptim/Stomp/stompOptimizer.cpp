@@ -143,7 +143,7 @@ void StompOptimizer::initialize()
     }
 
     // Use costspace
-    // use_costspace_ = ( collision_space_== NULL );
+    use_costspace_ = ( collision_space_== NULL );
     
     //clearAnimations();
     
@@ -1398,7 +1398,7 @@ bool StompOptimizer::performForwardKinematics()
         HRICS_activeLegi->setTrajectory( group_trajectory_.getTrajectory() );
     }
 
-    Move3D::Trajectory current_traj( robot_model_ );
+    // Move3D::Trajectory current_traj( robot_model_ );
 
     // for each point in the trajectory
     for (int i=start; i<=end; ++i)
@@ -1408,54 +1408,53 @@ bool StompOptimizer::performForwardKinematics()
         getFrames( i, joint_array, q );
         state_is_in_collision_[i] = false;
 
-        current_traj.push_back( confPtr_t(new Configuration(q)) );
+        // current_traj.push_back( confPtr_t(new Configuration(q)) );
 
-        if( /*!HriEnv->getBool(HricsParam::ioc_use_stomp_spetial_cost)*/ false )
+        if( use_costspace_ )
         {
-            if( use_costspace_ )
-            {
-                general_cost_potential_[i] = global_costSpace->cost(q);
-            }
+            general_cost_potential_[i] = global_costSpace->cost(q);
+        }
 
-            if( PlanEnv->getBool(PlanParam::useLegibleCost) )
-            {
-                general_cost_potential_[i] = HRICS_activeLegi->legibilityCost(i);
-            }
+        if( PlanEnv->getBool(PlanParam::useLegibleCost) )
+        {
+            general_cost_potential_[i] = HRICS_activeLegi->legibilityCost(i);
+        }
 
-            if( collision_space_ )
+        if( collision_space_ )
+        {
+            // calculate the position of every collision point:
+            for (int j=0; j<num_collision_points_; j++)
             {
-                // calculate the position of every collision point:
-                for (int j=0; j<num_collision_points_; j++)
+                bool colliding = getConfigObstacleCost( i, j );
+
+                if ( colliding )
                 {
-                    bool colliding = getConfigObstacleCost( i, j );
-
-                    if ( colliding )
+                    // This is the function that discards joints too close to the base
+                    if( planning_group_->collision_points_[j].getSegmentNumber() > 1 )
                     {
-                        // This is the function that discards joints too close to the base
-                        if( planning_group_->collision_points_[j].getSegmentNumber() > 1 )
-                        {
-                            state_is_in_collision_[i] = true;
-                        }
+                        state_is_in_collision_[i] = true;
                     }
                 }
             }
+        }
 
-            if( ( PlanEnv->getBool(PlanParam::useLegibleCost) || use_costspace_ ) && (collision_space_==NULL) )
-            {
-                state_is_in_collision_[i] = false;
-            }
+        if( ( PlanEnv->getBool(PlanParam::useLegibleCost) || use_costspace_ ) && (collision_space_==NULL) )
+        {
+            state_is_in_collision_[i] = false;
+        }
 
-            if ( state_is_in_collision_[i] )
-            {
-                is_collision_free_ = false;
-            }
+        if ( state_is_in_collision_[i] )
+        {
+            is_collision_free_ = false;
         }
     }
 
-    if( /*!HriEnv->getBool(HricsParam::ioc_use_stomp_spetial_cost)*/ true )
-    {
-        general_cost_potential_ = global_PlanarCostFct->getStompCost( current_traj );
-    }
+// Set true for spetial IOC cost
+//    if( /*!HriEnv->getBool(HricsParam::ioc_use_stomp_spetial_cost)*/ true )
+//    {
+//        general_cost_potential_ = global_PlanarCostFct->getStompCost( current_traj );
+//    }
+
     //    if(is_collision_free_)
     //    {
     //        // for each point in the trajectory
@@ -1863,9 +1862,9 @@ void StompOptimizer::saveEndeffectorTraj()
     p3d_jnt* drawnjnt=NULL;
     int indexjnt = p3d_get_user_drawnjnt();
     cout << "indexjnt : " << indexjnt << endl;
-    if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= robot_model_->getRobotStruct()->njoints )
+    if (indexjnt != -1 && indexjnt >= 0 && indexjnt <= robot_model_->getP3dRobotStruct()->njoints )
     {
-        drawnjnt = robot_model_->getRobotStruct()->joints[indexjnt];
+        drawnjnt = robot_model_->getP3dRobotStruct()->joints[indexjnt];
     }
 
     traj_color_.resize(4,0);
@@ -1997,7 +1996,7 @@ bool StompOptimizer::getManipulationHandOver()
     
     // Disable cntrts
     p3d_cntrt* ct;
-    p3d_rob* rob = robot_model_->getRobotStruct();
+    p3d_rob* rob = robot_model_->getP3dRobotStruct();
     for(int i=0; i<rob->cntrt_manager->ncntrts; i++) {
         ct = rob->cntrt_manager->cntrts[i];
         p3d_desactivateCntrt( rob, ct );

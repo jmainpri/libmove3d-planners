@@ -375,7 +375,7 @@ void EnvGrid::recomputeGridWhenHumanMove(Eigen::Vector3d humanPos)
     shared_ptr<Configuration> q_robot = mRobot->getCurrentPos();
 
     int firstIndexOfHumanDof = mHuman->getJoint("Pelvis")->getIndexOfFirstDof();
-    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(mRobot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+    int firstIndexOfRobotDof = static_cast<p3d_jnt*>( static_cast<p3d_rob*>(mRobot->getP3dRobotStruct() )->baseJnt )->user_dof_equiv_nbr;
 
 
     (*q_human)[firstIndexOfHumanDof + 0] = 0;
@@ -485,7 +485,7 @@ void EnvGrid::draw()
     }
 
 #ifdef LIGHT_PLANNER
-	deactivateCcCntrts(mRobot->getRobotStruct(),-1);
+    deactivateCcCntrts( static_cast<p3d_rob*>( mRobot->getP3dRobotStruct() ),-1);
 #else
 	cout << "Warning: Lihght Planner not compiled" << endl;
 #endif

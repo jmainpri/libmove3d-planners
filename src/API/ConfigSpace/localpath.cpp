@@ -23,11 +23,47 @@ using namespace Eigen;
 
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
+// ****************************************************************************************************
+// API FUNCTIONS
+// ****************************************************************************************************
+
+static boost::function<void*(const LocalPath&, Robot*)> Move3DLocalPathCopy;
+static boost::function<void*(const LocalPath&, Robot*)> Move3DLocalPathCopyP3d;
+static boost::function<void(LocalPath&)> Move3DLocalPathDestructor;
+static boost::function<void*(LocalPath&, void*, confPtr_t, confPtr_t )> Move3DLocalPathCopyFromStruct;
+static boost::function<void*(LocalPath&, bool, int&)> Move3DLocalPathGetStruct;
+static boost::function<bool(LocalPath&, confPtr_t, int&, double&)> Move3DLocalPathClassicTest;
+static boost::function<bool(LocalPath&, int&)> Move3DLocalPathIsValid;
+static boost::function<double(LocalPath&)> Move3DLocalPathGetLength;
+static boost::function<double(LocalPath&)> Move3DLocalPathGetParamMax;
+static boost::function<confPtr_t(LocalPath&,double)> Move3DLocalPathConfigAtDist;
+static boost::function<confPtr_t(LocalPath&,double)> Move3DLocalPathConfigAtParam;
+static boost::function<double(LocalPath&,double,bool,double&)> Move3DLocalPathStayWithinDist;
+
+// ****************************************************************************************************
+// SETTERS
+// ****************************************************************************************************
+
+void move3d_set_fct_localpath_copy( boost::function<void*(const LocalPath&, Robot*)> fct ) {  Move3DLocalPathCopy = fct; }
+void move3d_set_fct_localpath_copy_p3d( boost::function<void*(const LocalPath&, Robot*)> fct ) {  Move3DLocalPathCopyP3d = fct; }
+void move3d_set_fct_localpath_path_destructor( boost::function<void(LocalPath&)> fct ) {  Move3DLocalPathDestructor = fct; }
+void move3d_set_fct_localpath_copy_from_struct( boost::function<void*(LocalPath&, void*, confPtr_t, confPtr_t )> fct ) {  Move3DLocalPathCopyFromStruct = fct; }
+void move3d_set_fct_localpath_get_struct( boost::function<void*(LocalPath&, bool, int&)> fct ) {  Move3DLocalPathGetStruct = fct; }
+void move3d_set_fct_localpath_classic_test( boost::function<bool(LocalPath&, confPtr_t, int&, double&)> fct ) {  Move3DLocalPathClassicTest = fct; }
+void move3d_set_fct_localpath_is_valid( boost::function<bool(LocalPath&, int&)> fct ) {  Move3DLocalPathIsValid = fct; }
+void move3d_set_fct_localpath_get_length( boost::function<double(LocalPath&)> fct ) {  Move3DLocalPathGetLength = fct; }
+void move3d_set_fct_localpath_get_param_max( boost::function<double(LocalPath&)> fct ) {  Move3DLocalPathGetParamMax = fct; }
+void move3d_set_fct_localpath_config_at_dist( boost::function<confPtr_t(LocalPath&,double)> fct ) {  Move3DLocalPathConfigAtDist = fct; }
+void move3d_set_fct_localpath_config_at_param( boost::function<confPtr_t(LocalPath&,double)> fct ) {  Move3DLocalPathConfigAtParam = fct; }
+void move3d_set_fct_localpath_stay_within_dist( boost::function<double(LocalPath&,double,bool,double&)> fct ) {  Move3DLocalPathStayWithinDist = fct; }
+
+// ****************************************************************************************************
+// ****************************************************************************************************
+
 LocalPath::LocalPath(confPtr_t B, confPtr_t E) :
     _Robot(B->getRobot()),
     _Begin(B), _End(E),
     _LocalPath(NULL),
-    //_Graph(_Robot->getActivGraph()),
     _Valid(false),
     _Evaluated(false),
     _lastValidParam(0.0),
@@ -50,14 +86,12 @@ LocalPath::LocalPath(LocalPath& path, double& p , bool lastValidConfig) :
     _Robot(path.getRobot()),
     _Begin(path._Begin),
     _LocalPath(NULL)
-  //_Graph(_Robot->getActivGraph()),
-
 {
     // For extend (Construct a smaller local path)
     // This function is used in Base Expansion
     if(!lastValidConfig)
     {
-        _End = path.configAtParam(p * path.getParamMax());
+        _End = path.configAtParam( p * path.getParamMax() );
         _Valid =false;
         _Evaluated = false;
         _lastValidParam = 0.0;
@@ -78,8 +112,7 @@ LocalPath::LocalPath(LocalPath& path, double& p , bool lastValidConfig) :
         // and consequently the new path is valid.
         _End = path.getLastValidConfig(p);
         _Valid = (p > 0);
-        _Evaluated = (path._Evaluated),
-                _lastValidParam = (p > 0 ? 1.0 : 0.0);
+        _Evaluated = (path._Evaluated), _lastValidParam = (p > 0 ? 1.0 : 0.0);
         _lastValidEvaluated = true;
         _NbColTest = path._NbColTest;
         _costEvaluated = false ;
@@ -95,8 +128,6 @@ LocalPath::LocalPath(const LocalPath& path) :
     _Robot(path._Robot),
     _Begin(path._Begin),
     _End(path._End),
-    _LocalPath(path._LocalPath ? path._LocalPath->copy(path._Robot->getRobotStruct(), path._LocalPath) : NULL),
-    //	_Graph(path._Graph),
     _Valid(path._Valid),
     _Evaluated(path._Evaluated),
     _lastValidParam(0.0),
@@ -109,8 +140,8 @@ LocalPath::LocalPath(const LocalPath& path) :
     _Resolution(path._Resolution),
     _Type(path._Type)
 {
+    _LocalPath = Move3DLocalPathCopy( path, _Robot );
 }
-
 
 LocalPath::LocalPath(Robot* R, p3d_localpath* lpPtr) :
     _Robot(R),
@@ -123,67 +154,20 @@ LocalPath::LocalPath(Robot* R, p3d_localpath* lpPtr) :
     _costEvaluated(false), _Cost(0.0),
     _ResolEvaluated(false), _Resolution(0.0)
 {
-    // TODO : check which copy are/are not necessary.
-    if (lpPtr)
-    {
-        _LocalPath = lpPtr->copy(_Robot->getRobotStruct(), lpPtr);
 
-        _Begin = confPtr_t (
-                    new Configuration(_Robot,
-                                      getLocalpathStruct()->config_at_param(
-                                          _Robot->getRobotStruct(),
-                                          getLocalpathStruct(),
-                                          0),true));
-
-        _Begin->setConstraints();
-
-        _End = confPtr_t (
-                    new Configuration(_Robot,
-                                      getLocalpathStruct()->config_at_param(
-                                          _Robot->getRobotStruct(),
-                                          getLocalpathStruct(),
-                                          getLocalpathStruct()->range_param),true));
-
-        _End->setConstraints();
-
-        _Type = lpPtr->type_lp;
-    }
-    else
-    {
-        cout << "Warning : creating Localpath from uninitialized p3d_localpath"
-             << endl;
-    }
+    _LocalPath = Move3DLocalPathCopyFromStruct( *this, lpPtr, _Begin, _End );
 }
 
 
 LocalPath::~LocalPath()
 {
-    if (_LocalPath)
-    {
-        getLocalpathStruct()->destroy(_Robot->getRobotStruct(), getLocalpathStruct());
-    }
+    Move3DLocalPathDestructor( *this );
 }
 
 //Accessors
-p3d_localpath* LocalPath::getLocalpathStruct(bool multi_sol)
+p3d_localpath* LocalPath::getP3dLocalpathStruct(bool multi_sol)
 {
-    if (!_LocalPath)
-    {
-        if( !multi_sol )
-        {
-            _LocalPath = p3d_local_planner( _Robot->getRobotStruct(), _Begin->getConfigStruct(), _End->getConfigStruct() );
-        }
-        else
-        {
-            _LocalPath = p3d_local_planner_multisol( _Robot->getRobotStruct(), _Begin->getConfigStruct(), _End->getConfigStruct(), _ikSol );
-        }
-
-        if (_LocalPath)
-        {
-            _Type = _LocalPath->type_lp;
-        }
-    }
-    return _LocalPath;
+    return static_cast<p3d_localpath*>( Move3DLocalPathGetStruct( *this, multi_sol, _Type ) );
 }
 
 confPtr_t LocalPath::getBegin()
@@ -206,21 +190,9 @@ bool LocalPath::getEvaluated()
     return _Evaluated;
 }
 
-//p3d_localpath_type LocalPath::getType()
-//{
-//    if (getLocalpathStruct())
-//    {
-//        return _Type;
-//    }
-//    else
-//    {
-//        return (p3d_localpath_type) (NULL);
-//    }
-//}
-
 int LocalPath::getType()
 {
-    if (getLocalpathStruct())
+    if (getP3dLocalpathStruct())
     {
         return _Type;
     }
@@ -232,7 +204,7 @@ int LocalPath::getType()
 
 confPtr_t LocalPath::getLastValidConfig(double& p)
 {
-    _lastValidConfig = confPtr_t(new Configuration(_Robot));
+    _lastValidConfig = _Robot->getNewConfig();
     this->classicTest();
     p = _lastValidParam;
     return (_lastValidConfig);
@@ -246,16 +218,10 @@ bool LocalPath::classicTest()
     {
         if (_lastValidConfig == NULL)
         {
-            _lastValidConfig = confPtr_t (new Configuration(_Robot));
+            _lastValidConfig = _Robot->getNewConfig();
         }
-        configPt q = _lastValidConfig->getConfigStruct();
-        configPt *q_atKpath = &q;
 
-        _Valid = !p3d_unvalid_localpath_classic_test(_Robot->getRobotStruct(),
-                                                     this->getLocalpathStruct(),
-                                                     /*&(_Graph->getGraphStruct()->nb_test_coll)*/&_NbColTest,
-                                                     &_lastValidParam, q_atKpath);
-
+        _Valid = Move3DLocalPathClassicTest( *this, _lastValidConfig, _NbColTest, _lastValidParam );
         _Evaluated = true;
         _lastValidEvaluated = true;
     }
@@ -274,12 +240,7 @@ bool LocalPath::isValid()
         {
             if (*_Begin != *_End)
             {
-                _Valid = !p3d_unvalid_localpath_test(_Robot->getRobotStruct(), this->getLocalpathStruct(), &_NbColTest);
-                //        if( !_Valid )
-                //        {
-                //          cout << "_NbColTest : " << _NbColTest << endl;
-                //          g3d_draw_allwin_active();
-                //        }
+                _Valid = Move3DLocalPathIsValid( *this, _NbColTest );
             }
         }
         _NbColTest++;
@@ -317,111 +278,33 @@ int LocalPath::getNbCostTest()
 
 double LocalPath::length()
 {
-    if (this->getLocalpathStruct())
-    {
-        return (this->getLocalpathStruct()->length_lp);
-    }
-    else
-    {
-        if (_Begin->equal(*_End))
-            return 0;
-        else
-        {
-            std::cout << "ERROR : in Localpath::length() : this->getLocalpathStruct() is NULL" << std::endl;
-            return(-1);
-        }
-    }
+    return Move3DLocalPathGetLength( *this );
 }
 
 double LocalPath::getParamMax()
 {
-    if (*_Begin == *_End)
-    {
-        return 0;
-    }
-
-    return this->getLocalpathStruct()->range_param;
+    return Move3DLocalPathGetParamMax( *this );
 }
 
 confPtr_t LocalPath::configAtDist(double dist)
 {
-    //fonction variable en fonction du type de local path
-    configPt q(NULL);
-    switch (getType())
-    {
-    case HILFLAT://hilare
-        q = p3d_hilflat_config_at_distance(_Robot->getRobotStruct(),getLocalpathStruct(), dist);
-        break;
-    case LINEAR://linear
-        q = p3d_lin_config_at_distance(_Robot->getRobotStruct(),getLocalpathStruct(), dist);
-        break;
-    case MANHATTAN://manhatan
-        q = p3d_manh_config_at_distance(_Robot->getRobotStruct(),getLocalpathStruct(), dist);
-        break;
-    case REEDS_SHEPP://R&S
-        q = p3d_rs_config_at_distance(_Robot->getRobotStruct(),getLocalpathStruct(), dist);
-        break;
-    case TRAILER:
-        q = p3d_trailer_config_at_distance(_Robot->getRobotStruct(),getLocalpathStruct(), dist);
-        break;
-    default:
-        // TODO : implement those methods !
-        std::cout << "ERROR : LocalPath::configAtDist : the TRAILER_FORWARD, HILFLAT_FORWARD, and DUBINS localpath types are not implemented." << std::endl;
-    }
-    return confPtr_t(new Configuration(_Robot, q));
+    return Move3DLocalPathConfigAtDist( *this, dist );
 }
 
 confPtr_t LocalPath::configAtParam(double param)
 {
-    //fonction variable en fonction du type de local path
-    configPt q;
-
-    if (param > getParamMax())
-    {
-        return _End;
-    }
-    if (param <= 0)
-    {
-        return _Begin;
-    }
-
-    q = getLocalpathStruct()->config_at_param(_Robot->getRobotStruct(),
-                                              getLocalpathStruct(), param);
-
-    if ( q == NULL )
-    {
-        throw string("Could not find configuration along path");
-    }
-
-    confPtr_t ptrQ(new Configuration( _Robot, q, true ));
-    ptrQ->setConstraints();
-    return ptrQ;
+    return Move3DLocalPathConfigAtParam( *this, param );
 }
 
 double LocalPath::stayWithInDistance(double u, bool goForward, double* distance)
 {
-    int way;
-
-    if (goForward) {
-        way = 1;
-    }
-    else {
-        way = -1;
-    }
-
-    double du = getLocalpathStruct()->stay_within_dist(_Robot->getRobotStruct() , getLocalpathStruct(),
-                                                       u,
-                                                       way,
-                                                       distance);
-
-    return du;
+    return Move3DLocalPathStayWithinDist( *this, u, goForward, *distance );
 }
 
-bool LocalPath::unvalidLocalpathTest(Robot* R, int* ntest)
-{
-    return p3d_unvalid_localpath_test(R->getRobotStruct(),
-                                      getLocalpathStruct(), ntest);
-}
+//bool LocalPath::unvalidLocalpathTest(Robot* R, int* ntest)
+//{
+//    return p3d_unvalid_localpath_test( (p3d_rob*)R->getP3dRobotStruct(), getP3dLocalpathStruct(), ntest );
+//}
 
 /*!
  * Returns the closest Resolution To Step

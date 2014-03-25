@@ -24,7 +24,7 @@ using namespace Move3D;
 
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
-const bool use_localpath_planner = false;
+#undef USE_LOCALPATH_PLANNER
 
 Edge::Edge(Graph* G, unsigned int i, unsigned int j) :
     m_is_cost_computed(false),
@@ -75,8 +75,6 @@ Edge::Edge(Graph* G, Node* N1, Node* N2, bool compute_length, double& length, bo
     m_Graph = G;
     m_Robot = G->getRobot();
 
-    int *ikSol = NULL;
-
     m_Edge = new p3d_edge;
 
     m_Edge->Ni = N1->getNodeStruct();
@@ -86,15 +84,17 @@ Edge::Edge(Graph* G, Node* N1, Node* N2, bool compute_length, double& length, bo
     //	m_Edge->num = _Graph->getNumberOfEdges();
     m_Edge->path = NULL;
 
-    if( use_localpath_planner )
-    {
-        m_Edge->path = p3d_local_planner_multisol( G->getRobot()->getRobotStruct(),
+#ifdef USE_LOCALPATH_PLANNER
+
+        int *ikSol = NULL;
+
+        m_Edge->path = p3d_local_planner_multisol( static_cast<p3d_rob*>( G->getRobot()->getP3dRobotStruct()),
                                                    N1->getConfiguration()->getConfigStruct(),
                                                    N2->getConfiguration()->getConfigStruct(),
                                                    ikSol);
 
         m_Edge->planner = p3d_local_get_planner();
-    }
+#endif
 
     // Compute the length from the associated localpath
     if( compute_length ) {
@@ -121,7 +121,7 @@ Edge::Edge(Graph* G, Node* N1, Node* N2, bool compute_length, double& length, bo
 Edge::~Edge()
 {
     if( m_Edge->path ) {
-        m_Edge->path->destroy(m_Robot->getRobotStruct(), m_Edge->path );
+        m_Edge->path->destroy( (p3d_rob*) m_Robot->getP3dRobotStruct(), m_Edge->path );
     }
 
     delete m_Edge;

@@ -79,7 +79,7 @@ bool GreedyCost::run()
              << endl;
 
         p3d_ExtractBestTraj(mGraph->getGraphStruct());
-        optimTrj = new Move3D::CostOptimization(mRobot, mRobot->getTrajStruct());
+        optimTrj = new Move3D::CostOptimization( mRobot, mRobot->getP3dRobotStruct()->tcur );
 
         //                if(ENV.getBool(Env::debugCostOptim))
         //                {

@@ -8,6 +8,7 @@
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 #include <tr1/memory>
+#include <boost/function.hpp>
 
 //#ifdef LINUX
 //#define MOVE3D_USING_SHARED_PTR_NAMESPACE
@@ -154,22 +155,6 @@ public:
     void setConfiguration(Configuration& C);
 
     /**
-     * indique si le vecteur de Quaternions est initialisé
-     * @return le vecteur de Quaternions est initialisé
-     */
-    //    bool isQuatInit();
-
-    /**
-     * initialise le vecteur de Quaternions
-     */
-    //    void initQuaternions();
-
-    /**
-     * Set Quaternions
-     */
-    //    void initQuaternions(int quatDof,Eigen::Quaternion<double> quat);
-
-    /**
      * Convert Configuration in radian
      */
     void convertToRadian();
@@ -223,17 +208,6 @@ public:
      * @return min dist
      */
     double distEnv();
-
-    /**
-     * Get the Ith Active Dof
-     * @return the ith active DoF
-     */
-    double getActiveDoF(unsigned int ith);
-
-    /**
-     * Set the ith active DoF
-     */
-    void setActiveDoF(unsigned int ith, double value);
 
     /**
      * compare à une autre Configuration
@@ -317,12 +291,12 @@ public:
     /**
      *
      */
-    Configuration& mult(double coeff);
+    confPtr_t mult(double coeff);
 
     /**
      *
      */
-    Configuration& operator*(double coeff) { return this->mult(coeff); }
+    confPtr_t operator*(double coeff) { return this->mult(coeff); }
 
     /**
      * Get the Eigen Vector of the configuration
@@ -359,5 +333,26 @@ private:
 };
 
 }
+
+void move3d_set_fct_configuration_constructor_robot( boost::function<double*(Move3D::Robot*)> fct );
+void move3d_set_fct_configuration_constructor_config_struct( boost::function<double*(Move3D::Robot*, double*, bool)> fct );
+void move3d_set_fct_configuration_assignment( boost::function<void(const Move3D::Configuration& q_s, Move3D::Configuration& q_t)> fct );
+void move3d_set_fct_configuration_clear( boost::function<void(Move3D::Robot*,double*)> fct );
+void move3d_set_fct_configuration_convert_to_radians( boost::function<void(Move3D::Robot*,double*)> fct );
+void move3d_set_fct_configuration_convert_to_degrees( boost::function<Move3D::confPtr_t(Move3D::Robot*,double*)> fct );
+void move3d_set_fct_configuration_get_struct_copy( boost::function<double*(Move3D::Robot*,double*)> fct );
+void move3d_set_fct_configuration_dist( boost::function<double(Move3D::Robot*, double*, double*, bool)> fct );
+void move3d_set_fct_configuration_dist_choice( boost::function<double( Move3D::Robot*, const Move3D::Configuration&, const Move3D::Configuration&, int)> fct );
+void move3d_set_fct_configuration_in_collision( boost::function<bool(Move3D::Robot* R)> fct );
+void move3d_set_fct_configuration_is_out_of_bounds( boost::function<bool(Move3D::Robot*,double*,bool)> fct );
+void move3d_set_fct_configuration_adapt_circular_joint_limits( boost::function<void(Move3D::Robot*,double*)> fct );
+void move3d_set_fct_configuration_dist_env( boost::function<double(Move3D::Robot*)> fct );
+void move3d_set_fct_configuration_equal( boost::function<bool(Move3D::Robot*, double*, double*, bool)> fct );
+void move3d_set_fct_configuration_copy( boost::function<void(Move3D::Robot*, double*)> fct );
+void move3d_set_fct_configuration_copy_passive( boost::function<void(Move3D::Robot*, double*, double*)> fct );
+void move3d_set_fct_configuration_add( boost::function<void(Move3D::Robot* R, double*, double*, double*)> fct );
+void move3d_set_fct_configuration_sub( boost::function<void(Move3D::Robot* R, double*, double*, double*)> fct );
+void move3d_set_fct_configuration_mult( boost::function<void(Move3D::Robot* R, double*, double*, double)> fct );
+void move3d_set_fct_configuration_print( boost::function<void(Move3D::Robot* R, double*, bool)> fct );
 
 #endif

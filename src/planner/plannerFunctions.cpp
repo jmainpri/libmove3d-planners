@@ -168,7 +168,7 @@ p3d_traj* p3d_extract_traj( bool is_traj_found, int nb_added_nodes, Graph* graph
         last_traj = *traj;
 
         p3d_traj* result = traj->replaceP3dTraj(NULL);
-        rob->getRobotStruct()->tcur = result;
+        static_cast<p3d_rob*>(rob->getP3dRobotStruct())->tcur = result;
 
         if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) )
         {
@@ -179,7 +179,7 @@ p3d_traj* p3d_extract_traj( bool is_traj_found, int nb_added_nodes, Graph* graph
         cout << "result->range_param = " << result->range_param << endl;
 
         char trajName[] = "Specific";
-        g3d_add_traj( trajName, trajId, rob->getRobotStruct(), rob->getRobotStruct()->tcur );
+        g3d_add_traj( trajName, trajId, static_cast<p3d_rob*>(rob->getP3dRobotStruct()), static_cast<p3d_rob*>(rob->getP3dRobotStruct())->tcur );
 
         // Prevent segfault if p3d graph deleted outside
         delete traj;
@@ -413,7 +413,7 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
 
         traj_optim_runStompNoReset( runId );
 
-        t = Move3D::Trajectory( rob, rob->getRobotStruct()->tcur );
+        t = Move3D::Trajectory( rob, static_cast<p3d_rob*>(rob->getP3dRobotStruct())->tcur );
         t.resetCostComputed();
 
         if( PlanEnv->getBool(PlanParam::trajComputeCostAfterPlannif) )
@@ -473,7 +473,7 @@ int p3d_run_rrt(p3d_rob* robotPt)
     confPtr_t q_source = rob->getInitPos();
     confPtr_t q_target = rob->getGoalPos();
 
-    p3d_traj* path = p3d_planner_function( rob->getRobotStruct(), q_source->getConfigStruct(), q_target->getConfigStruct() );
+    p3d_traj* path = p3d_planner_function( rob->getP3dRobotStruct(), q_source->getConfigStruct(), q_target->getConfigStruct() );
 
     if( path != NULL &&
             !PlanEnv->getBool(PlanParam::stopPlanner) &&
@@ -482,7 +482,7 @@ int p3d_run_rrt(p3d_rob* robotPt)
         double max_iteration = PlanEnv->getInt(PlanParam::smoothMaxIterations);
         double max_time = PlanEnv->getDouble( PlanParam::timeLimitSmoothing );
 
-        p3d_smoothing_function(rob->getRobotStruct(), path, max_iteration, max_time);
+        p3d_smoothing_function(rob->getP3dRobotStruct(), path, max_iteration, max_time);
     }
 
     return (path != NULL);

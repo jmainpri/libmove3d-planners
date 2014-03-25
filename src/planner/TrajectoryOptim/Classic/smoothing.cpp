@@ -299,8 +299,12 @@ bool Smoothing::partialShortcut()
 		double interpolationStep = 1/(double)vectConf.size();
 		
 		// Get the value of the configuration i and i+1
-		double init = vectConf[0]->getActiveDoF(ithActiveDoF);
-		double end = vectConf.back()->getActiveDoF(ithActiveDoF);
+        cout << "ERROR in : " << __PRETTY_FUNCTION__ << endl;
+        // double init = vectConf[0]->getActiveDoF(ithActiveDoF);
+        // double end = vectConf.back()->getActiveDoF(ithActiveDoF);
+
+        double init = 0;
+        double end = 0;
 		
 		if ( vectConf.size() >= 3) 
 		{
@@ -408,12 +412,10 @@ double Smoothing::interpolateOneDoF( unsigned int ithActiveDoF ,
 	// alpha should be between 0 and 1
   alpha = MAX(0.,MIN(1.,alpha));
 	
-  if (p3d_jnt_is_dof_circular(jntPt->getJointStruct(), ithDofOnJoint)) 
+  if (p3d_jnt_is_dof_circular( static_cast<p3d_jnt*>(jntPt->getP3dJointStruct()), ithDofOnJoint))
 	{
 		// Get the min and max values of the DoF
-    p3d_jnt_get_dof_bounds_deg(jntPt->getJointStruct(), 
-															 ithDofOnJoint, 
-															 &vmin, &vmax);
+    p3d_jnt_get_dof_bounds_deg( static_cast<p3d_jnt*>(jntPt->getP3dJointStruct()), ithDofOnJoint, &vmin, &vmax);
 		
     if(vmin < 0.0) 
 		{
@@ -452,8 +454,8 @@ void Smoothing::changeIthActiveDofValueOnConf( Configuration& q,
 			
 			// All Active DoFs
 			if (
-					(p3d_jnt_get_dof_is_user(jntPt->getJointStruct(), j) && p3d_jnt_get_dof_is_active_for_planner(jntPt->getJointStruct(),j)) &&
-					(m_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) ) 
+                    (p3d_jnt_get_dof_is_user( static_cast<p3d_jnt*>(jntPt->getP3dJointStruct()), j) && p3d_jnt_get_dof_is_active_for_planner( static_cast<p3d_jnt*>(jntPt->getP3dJointStruct()),j)) &&
+					(m_Robot->getP3dRobotStruct()->cntrt_manager->in_cntrt[k] != 2) ) 
 			{
 				// Change the corresponding value of the configuration
 				// Passed as an argument of the active DoF

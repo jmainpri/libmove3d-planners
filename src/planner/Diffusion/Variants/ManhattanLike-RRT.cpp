@@ -56,7 +56,7 @@ int ManhattanLikeRRT::getCollidingPassiveJntList(Robot* R, Configuration& qinv,
         p3d_jnt** passiveJoints = NULL;
         int nJoints = 0;
         bio_get_list_of_passive_joints_involved_in_collision(
-                    R->getRobotStruct(), qinv.getConfigStruct(), &nJoints, &passiveJoints);
+                    R->getP3dRobotStruct(), qinv.getConfigStruct(), &nJoints, &passiveJoints);
         for(int i(0); i < nJoints; i++)
         {
             joints.push_back(passiveJoints[i]);
@@ -123,8 +123,8 @@ void ManhattanLikeRRT::shoot_jnt_list_and_copy_into_conf(Configuration& qrand,
 bool ManhattanLikeRRT::getCurrentInvalidConf(Configuration& q) {
 #ifdef BIO
     return(p3d_col_get_mode() == p3d_col_mode_bio ?
-               bio_get_current_q_inv(_Robot->getRobotStruct(), q.getConfigStruct()) :
-               p3d_get_current_q_inv(_Robot->getRobotStruct(), q.getConfigStruct()));
+               bio_get_current_q_inv(_Robot->getP3dRobotStruct(), q.getConfigStruct()) :
+               p3d_get_current_q_inv(_Robot->getP3dRobotStruct(), q.getConfigStruct()));
 #endif
     cout << "Warning : BIO Not compiled in " << __PRETTY_FUNCTION__ <<  endl;
     return false;

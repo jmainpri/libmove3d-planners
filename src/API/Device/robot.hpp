@@ -14,12 +14,12 @@
 
 #ifndef _DEVICE_H
 struct rob;
-struct jnt;
+//struct jnt;
 #endif
 
-#ifndef _TRAJ_H
-struct traj;
-#endif
+//#ifndef _TRAJ_H
+//struct traj;
+//#endif
 
 namespace Move3D {
 
@@ -45,21 +45,26 @@ public:
      * Constructeur de la classe
      * @param R le p3d_rob pour lequel l'objet Robot est créé
      */
-    Robot(rob* R , bool copy = false );
+    Robot(void* R , bool copy = false );
 
     /**
      * Destructeur de la classe
      */
     virtual ~Robot();
 
-    rob* copyRobotStruct(rob* robotPt);
+    /**
+     * @brief copyRobotStruct
+     * @param robotPt
+     * @return
+     */
+    void* copyRobotStruct(void* robotPt);
 
     //Accessor
     /**
      * obtient la structure p3d_rob de la classe
      * @return la structure p3d_rob
      */
-    rob* getRobotStruct();
+    rob* getP3dRobotStruct();
 
     /**
      * obtient le nom du Robot
@@ -81,7 +86,7 @@ public:
      * Gets traj associated with Robot
      * @return pointer to structure p3d_traj
      */
-    traj* getTrajStruct();
+    void* getTrajStruct();
 
     /**
      * Gets the current trajectory
@@ -105,6 +110,12 @@ public:
      * @return pointer to the joint by name or NULL if not found
      */
     Joint* getJoint(std::string name) const;
+
+    /**
+     * Gets joint by name
+     * @return pointer to the joint by name or NULL if not found
+     */
+    const std::vector<Joint*>& getJoints() const { return m_Joints; }
 
     /**
    * Returns an vector of all robot joints
@@ -159,18 +170,13 @@ public:
      * @param q la Configuration dans laquelle le Robot sera placé
      * @return la Configuration est atteignable cinématiquement
      */
-    bool setAndUpdateMultiSol( Configuration& q );
+    bool setAndUpdateMultiSol( const Configuration& q );
 
     /**
      * place le Robot dans une Configuration, without checking the cinematic constraints.
      * @param q la Configuration dans laquelle le Robot sera placé
      */
-    void setAndUpdateWithoutConstraints( Configuration& q );
-
-    /**
-     * set and update Human Arms
-     */
-    bool setAndUpdateHumanArms( Configuration& q );
+    void setAndUpdateWithoutConstraints( const Configuration& q );
 
     /**
      * obtient la Configuration current du Robot
@@ -267,7 +273,7 @@ public:
     /**
      * Returns the base Joint
      */
-    jnt* getBaseJnt();
+    void* getBaseJnt();
 
     /**
      * Shoots a random direction
@@ -302,7 +308,7 @@ public:
 #endif
 
 private:
-    rob* _Robot; /*!< une structure de p3d_rob contenant les données sur le Robot*/
+    void* _Robot; /*!< une structure de p3d_rob contenant les données sur le Robot*/
     std::string _Name; /*!< le nom du Robot*/
     Move3D::Scene* m_ActiveScene;
     bool _copy; /*!< Is true if the p3d_jnt copies and not only points to the structure */
@@ -316,5 +322,25 @@ private:
 extern Robot* API_activeRobot;
 
 }
+
+void move3d_set_fct_robot_constructor( boost::function<void( Move3D::Robot*, void*, bool, std::string&, std::vector<Move3D::Joint*>& )> fct );
+void move3d_set_fct_robot_get_current_trajectory( boost::function<Move3D::Trajectory( Move3D::Robot* )> fct );
+void move3d_set_fct_robot_shoot( boost::function<Move3D::confPtr_t( Move3D::confPtr_t, bool )> fct );
+void move3d_set_fct_robot_shoot_dir( boost::function<Move3D::confPtr_t( Move3D::confPtr_t, bool )> fct );
+void move3d_set_fct_robot_set_and_update( boost::function<bool( Move3D::Robot*, const Move3D::Configuration& q, bool )> fct );
+void move3d_set_fct_robot_set_and_update_multi_sol( boost::function<bool( Move3D::Robot*, const Move3D::Configuration& q )> fct );
+void move3d_set_fct_robot_without_constraints( boost::function<void( Move3D::Robot*, const Move3D::Configuration& q )> fct );
+void move3d_set_fct_robot_is_in_collision( boost::function<bool( Move3D::Robot* )> fct );
+void move3d_set_fct_robot_is_in_collision_with_others_and_env( boost::function<bool( Move3D::Robot* )> fct );
+void move3d_set_fct_robot_distance_to_env( boost::function<double( Move3D::Robot* )> fct ) ;
+void move3d_set_fct_robot_distance_to_robot( boost::function<double( Move3D::Robot*, Move3D::Robot* )> fct );
+void move3d_set_fct_robot_get_init_pos( boost::function<Move3D::confPtr_t( Move3D::Robot* )> fct );
+void move3d_set_fct_robot_set_init_pos( boost::function<void( Move3D::Robot*, const Move3D::Configuration& )> fct );
+void move3d_set_fct_robot_get_goal_pos( boost::function<Move3D::confPtr_t( Move3D::Robot* )> fct );
+void move3d_set_fct_robot_set_goal_pos( boost::function<void( Move3D::Robot*, const Move3D::Configuration& )> fct );
+void move3d_set_fct_robot_get_current_pos( boost::function<Move3D::confPtr_t( Move3D::Robot* )> fct );
+void move3d_set_fct_robot_get_new_pos( boost::function<Move3D::confPtr_t( Move3D::Robot* )> fct );
+void move3d_set_fct_robot_get_number_of_active_dofs( boost::function<unsigned int( Move3D::Robot* )> fct );
+void move3d_set_fct_robot_get_ith_active_dof_joint( boost::function<Move3D::Joint*( Move3D::Robot*, unsigned int, unsigned int& )> fct );
 
 #endif

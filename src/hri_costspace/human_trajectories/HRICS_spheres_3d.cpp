@@ -221,7 +221,7 @@ void Spheres3D::computeSize()
 
     for( int i=0; i< int(centers_.size()); i++ )
     {
-        p3d_obj* o = p3d_get_robot_body_by_name( centers_[i]->getRobotStruct(), "body" );
+        p3d_obj* o = p3d_get_robot_body_by_name( centers_[i]->getP3dRobotStruct(), "body" );
         //        cout << o->name << " : " << o->np << " , ";
         //        for(int j=0;j<o->np;j++)
         //            cout << o->pol[j]->entity_type << " , ";
@@ -363,7 +363,7 @@ void Spheres3D::drawCollisionPoints()
 
 void Spheres3D::setSphereToDraw(int id, bool enable)
 {
-    p3d_obj* o = p3d_get_robot_body_by_name( centers_[id]->getRobotStruct(), "body" );
+    p3d_obj* o = p3d_get_robot_body_by_name( centers_[id]->getP3dRobotStruct(), "body" );
     if( o == NULL ) {
         cout << "Could not get center : " << id << " , with name body" << endl;
         return;

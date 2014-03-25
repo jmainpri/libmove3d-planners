@@ -19,28 +19,83 @@
 #include "planner/cost_space.hpp"
 #include "collision_space/CollisionSpace.hpp"
 
+#include <boost/function.hpp>
+
 using namespace std;
 using namespace Eigen;
 using namespace Move3D;
 
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
+// ****************************************************************************************************
+// API FUNCTIONS
+// ****************************************************************************************************
+
+static boost::function<double*(Robot*)> Move3DConfigurationConstructorRobot;
+static boost::function<double*(Robot*, double*, bool)> Move3DConfigurationConstructorConfigStruct;
+static boost::function<void(const Configuration& q_s, Configuration& q_t)> Move3DConfigurationAssignment;
+static boost::function<void(Robot*,double*)> Move3DConfigurationClear;
+static boost::function<void(Robot*,double*)> Move3DConfigurationConvertToRadians;
+static boost::function<confPtr_t(Robot*,double*)> Move3DConfigurationConvertToDegrees;
+static boost::function<double*(Robot*,double*)> Move3DConfigurationGetStructCopy;
+static boost::function<double(Robot*, double*, double*, bool)> Move3DConfigurationDist;
+static boost::function<double(Robot*, const Configuration&, const Configuration&, int)> Move3DConfigurationDistChoice;
+static boost::function<bool(Robot* R)> Move3DConfigurationInCollision;
+static boost::function<bool(Robot*, double*, bool)> Move3DConfigurationIsOutOfBounds;
+static boost::function<void(Robot*, double*)> Move3DConfigurationAdaptCircularJointLimits;
+static boost::function<double(Robot*)> Move3DConfigurationDistEnv;
+static boost::function<bool(Robot*, double*, double*, bool)> Move3DConfigurationEqual;
+static boost::function<void(Robot*, double*)> Move3DConfigurationCopy;
+static boost::function<void(Robot*, double*, double*)> Move3DConfigurationCopyPassive;
+static boost::function<void(Robot* R, double*, double*, double*)> Move3DConfigurationAdd;
+static boost::function<void(Robot* R, double*, double*, double*)> Move3DConfigurationSub;
+static boost::function<void(Robot* R, double*, double*, double)> Move3DConfigurationMult;
+static boost::function<void(Robot* R, double*, bool)> Move3DConfigurationPrint;
+
+// ****************************************************************************************************
+// SETTERS
+// ****************************************************************************************************
+
+void move3d_set_fct_configuration_constructor_robot( boost::function<double*(Robot*)> fct ) {  Move3DConfigurationConstructorRobot = fct; }
+void move3d_set_fct_configuration_constructor_config_struct( boost::function<double*(Robot*, double*, bool)> fct ) { Move3DConfigurationConstructorConfigStruct = fct; }
+void move3d_set_fct_configuration_assignment( boost::function<void(const Configuration& q_s, Configuration& q_t)> fct ) { Move3DConfigurationAssignment = fct; }
+void move3d_set_fct_configuration_clear( boost::function<void(Robot*,double*)> fct ) { Move3DConfigurationClear = fct; }
+void move3d_set_fct_configuration_convert_to_radians( boost::function<void(Robot*,double*)> fct ) { Move3DConfigurationConvertToRadians = fct; }
+void move3d_set_fct_configuration_convert_to_degrees( boost::function<confPtr_t(Robot*,double*)> fct ) { Move3DConfigurationConvertToDegrees = fct; }
+void move3d_set_fct_configuration_get_struct_copy( boost::function<double*(Robot*,double*)> fct ) { Move3DConfigurationGetStructCopy = fct; }
+void move3d_set_fct_configuration_dist( boost::function<double(Robot*, double*, double*, bool)> fct ) { Move3DConfigurationDist = fct; }
+void move3d_set_fct_configuration_dist_choice( boost::function<double(Robot*, const Configuration&, const Configuration&, int)> fct ) { Move3DConfigurationDistChoice = fct; }
+void move3d_set_fct_configuration_in_collision( boost::function<bool(Robot* R)> fct ) { Move3DConfigurationInCollision = fct; }
+void move3d_set_fct_configuration_is_out_of_bounds( boost::function<bool(Robot*,double*,bool)> fct ) { Move3DConfigurationIsOutOfBounds = fct; }
+void move3d_set_fct_configuration_adapt_circular_joint_limits( boost::function<void(Robot*,double*)> fct ) { Move3DConfigurationAdaptCircularJointLimits = fct; }
+void move3d_set_fct_configuration_dist_env( boost::function<double(Robot*)> fct ) { Move3DConfigurationDistEnv = fct; }
+void move3d_set_fct_configuration_equal( boost::function<bool(Robot*, double*, double*, bool)> fct ) { Move3DConfigurationEqual = fct; }
+void move3d_set_fct_configuration_copy( boost::function<void(Robot*, double*)> fct ) { Move3DConfigurationCopy = fct; }
+void move3d_set_fct_configuration_copy_passive( boost::function<void(Robot*, double*, double*)> fct ) { Move3DConfigurationCopyPassive = fct; }
+void move3d_set_fct_configuration_add( boost::function<void(Robot* R, double*, double*, double*)> fct ) { Move3DConfigurationAdd = fct; }
+void move3d_set_fct_configuration_sub( boost::function<void(Robot* R, double*, double*, double*)> fct ) { Move3DConfigurationSub = fct; }
+void move3d_set_fct_configuration_mult( boost::function<void(Robot* R, double*, double*, double)> fct ) { Move3DConfigurationMult = fct; }
+void move3d_set_fct_configuration_print( boost::function<void(Robot* R, double*, bool)> fct ) { Move3DConfigurationPrint = fct; }
+
+// ****************************************************************************************************
+// ****************************************************************************************************
+
 //constructor and destructor
-Configuration::Configuration(Robot* R) :
+Configuration::Configuration(Robot* robot) :
     _flagInitQuaternions(false),
     _CollisionTested(false),
     _InCollision(true),
     _CostTested(false),
     _Cost(0.0),
-    _Robot(R)
+    _Robot( robot )
 {
-    if(_Robot==NULL)
+    if(robot==NULL)
     {
         _Configuration = NULL;
     }
     else
     {
-        _Configuration = p3d_alloc_config(_Robot->getRobotStruct());
+        _Configuration = Move3DConfigurationConstructorRobot( robot );
     }
 }
 
@@ -58,15 +113,7 @@ Configuration::Configuration(Robot* R, double* C, bool noCopy) :
     }
     else
     {
-        if(C==NULL)
-        {
-            _Configuration = C;
-        }
-        else
-        {
-            _Configuration = noCopy ? C : p3d_copy_config(_Robot->getRobotStruct(), C);
-            //            this->initQuaternions();
-        }
+        _Configuration = Move3DConfigurationConstructorConfigStruct( R, C, noCopy );
     }
 }
 
@@ -84,18 +131,18 @@ Configuration::Configuration(const Configuration& conf) :
     }
     else
     {
-        _Configuration = p3d_copy_config(_Robot->getRobotStruct(), conf._Configuration);
+        _Configuration = Move3DConfigurationConstructorConfigStruct( _Robot, conf._Configuration, false );
     }
 }
 
 Configuration& Configuration::operator= (const Configuration& source)
 {
-    _flagInitQuaternions = source._flagInitQuaternions;
-    _CollisionTested = source._CollisionTested;
-    _InCollision = source._InCollision;
-    _CostTested = source._CostTested;
-    _Cost = source._Cost;
-    _Robot = source._Robot;
+    _flagInitQuaternions = source._flagInitQuaternions ;
+    _CollisionTested = source._CollisionTested ;
+    _InCollision = source._InCollision ;
+    _CostTested = source._CostTested ;
+    _Cost = source._Cost ;
+    _Robot =  source._Robot ;
 
     if(_Robot==NULL)
     {
@@ -103,7 +150,7 @@ Configuration& Configuration::operator= (const Configuration& source)
     }
     else
     {
-        p3d_copy_config_into(_Robot->getRobotStruct(), source._Configuration, &_Configuration) ;
+        Move3DConfigurationAssignment( source, *this );
     }
 
     return *this;
@@ -118,24 +165,19 @@ void Configuration::Clear()
 {
     if(_Configuration != NULL)
     {
-        p3d_destroy_config(_Robot->getRobotStruct(), _Configuration);
+        Move3DConfigurationClear( _Robot, _Configuration );
     }
 }
 
 
 void Configuration::convertToRadian()
 {
-    configPt q = p3d_alloc_config(_Robot->getRobotStruct());
-    p3d_convert_config_deg_to_rad(_Robot->getRobotStruct(),_Configuration,&q);
-    p3d_destroy_config(_Robot->getRobotStruct(),_Configuration);
-    _Configuration = q;
+    Move3DConfigurationConvertToRadians( _Robot, _Configuration );
 }
 
-shared_ptr<Configuration> Configuration::getConfigInDegree()
+confPtr_t Configuration::getConfigInDegree()
 {
-    configPt q = p3d_alloc_config(_Robot->getRobotStruct());
-    p3d_convert_config_rad_to_deg(_Robot->getRobotStruct(),_Configuration,&q);
-    return (shared_ptr<Configuration> (new Configuration(_Robot,q,true)));
+    return Move3DConfigurationConvertToDegrees( _Robot, _Configuration );
 }
 
 //Accessors
@@ -151,10 +193,10 @@ double* Configuration::getConfigStructConst() const
 
 double* Configuration::getConfigStructCopy()
 {
-    return p3d_copy_config(_Robot->getRobotStruct(),_Configuration);
+    return Move3DConfigurationGetStructCopy(_Robot, _Configuration);
 }
 
-void Configuration::setConfiguration(configPt C)
+void Configuration::setConfiguration(double* C)
 {
     _Configuration = C;
 }
@@ -164,135 +206,18 @@ void Configuration::setConfiguration(Configuration& C)
     _Configuration = C.getConfigStruct();
 }
 
-/*bool Configuration::isQuatInit()
- {
- return _flagInitQuaternions;
- }
- 
- 
- Eigen::Quaterniond Configuration::getQuaternion()
- {
- return _Quaternions;
- }*/
-
-
-/**
- * InitsQuaternion from eulers Angle
- */
-/*void Configuration::initQuaternions()
- {
- for(int i = 0; i <= (_Robot->getRobotStruct())->njoints; i++)
- {
- if( _Robot->getRobotStruct()->joints[i]->type == P3D_FREEFLYER)
- {
- _QuatDof = _Robot->getRobotStruct()->joints[i]->index_dof+3;
- 
- Matrix3d m;
- m =     Eigen::AngleAxisd(_Configuration[_QuatDof+0], Vector3d::UnitX())
- *   Eigen::AngleAxisd(_Configuration[_QuatDof+1], Vector3d::UnitY())
- *   Eigen::AngleAxisd(_Configuration[_QuatDof+2], Vector3d::UnitZ());
- 
- _Quaternions = Eigen::AngleAxisd(m);
- }
- }
- _flagInitQuaternions = true;
- }*/
-
-/**
- * InitsQuaternion from ExternQuaternion and indexDof
- */
-/*void Configuration::initQuaternions(int quatDof,Eigen::Quaternion<double> quat)
- {
- _QuatDof = quatDof;
- _Quaternions = quat;
- _flagInitQuaternions = true;
- }*/
-
-
-/**
- * this conversion uses conventions as described on page:
- *   http://www.euclideanspace.com/maths/geometry/rotations/euler/index.htm
- *   Coordinate System: right hand
- *   Positive angle: right hand
- *   Order of euler angles: heading first, then attitude, then bank
- *   matrix row column ordering:
- *   [m00 m01 m02]
- *   [m10 m11 m12]
- *   [m20 m21 m22]*/
-/*void Configuration::setQuaternionsToEuler()
- {
- Matrix3d m = _Quaternions.toRotationMatrix();
- 
- double* heading =   _Configuration+_QuatDof+0;
- double* attitude =  _Configuration+_QuatDof+1;
- double* bank =      _Configuration+_QuatDof+2;
- 
- // Assuming the angles are in radians.
- if (m(1,0) > 0.998) // singularity at north pole
- {
- *heading = atan2(m(0,2),m(2,2));
- *attitude = M_PI_2;
- *bank = 0;
- }
- else if (m(1,0) < -0.998) // singularity at south pole
- {
- *heading = atan2(m(0,2),m(2,2));
- *attitude = -M_PI_2;
- *bank = 0;
- }
- else
- {
- *heading = atan2(-m(2,0),m(0,0));
- *bank = atan2(-m(1,2),m(1,1));
- *attitude = asin(m(1,0));
- }
- }*/
-
 /**
  * Computes the distance
  *  between configurations
  */
 double Configuration::dist(const Configuration& Conf, bool print) const
 {
-    return p3d_dist_config( _Robot->getRobotStruct(), _Configuration, Conf._Configuration , print );
+    return Move3DConfigurationDist( _Robot, _Configuration, Conf._Configuration, print );
 }
 
 double Configuration::dist(const Configuration& q, int distChoice) const
 {
-    switch (distChoice)
-    {
-    case ACTIVE_CONFIG_DIST:
-        return (p3d_ActiveDistConfig(_Robot->getRobotStruct(), _Configuration, q._Configuration));
-        //  case LIGAND_PROTEIN_DIST:
-        //    return(bio_compute_ligand_dist(_Robot->getRobotStruct(), _Configuration, q.getConfigurationStruct()));
-        //    break;
-    case MOBILE_FRAME_DIST:
-        cout
-                << "Warning: the MOBILE_FRAME_DIST can't be directly returned from the configurations"
-                << endl;
-        // hrm_mob_frame_dist(robotPt, mob_frame_ref,ListNode->N->rel_mob_frame);
-#ifdef LIGHT_PLANNER
-    case ONLY_ROBOT_BASE:
-    {
-        double ljnt=0.0;
-        p3d_jnt* jntPt= _Robot->getBaseJnt();
-        for(int j=0; j<jntPt->dof_equiv_nbr; j++)
-        {
-            int k = jntPt->index_dof + j;
-
-            if ( (p3d_jnt_get_dof_is_user(jntPt, j) && p3d_jnt_get_dof_is_active_for_planner(jntPt,j)) &&
-                 (_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) )
-            {
-                ljnt += SQR(p3d_jnt_calc_dof_dist(jntPt, j, _Configuration, q._Configuration ));
-            }
-        }
-        return ljnt;
-    }
-#endif			
-    case GENERAL_CSPACE_DIST:
-    default:
-        return (this->dist(q));
-    }
+    return Move3DConfigurationDistChoice( _Robot, *this, q, distChoice );
 }
 
 bool Configuration::isInCollision()
@@ -306,23 +231,7 @@ bool Configuration::isInCollision()
             _InCollision = true;
             return _InCollision;
         }
-
-        //_InCollision = p3d_col_test();
-        //    if( global_collisionSpace )
-        //    {
-        //      double dist = numeric_limits<double>::max();
-        //      double potential = numeric_limits<double>::max();
-        //      _InCollision = global_collisionSpace->isRobotColliding( dist, potential );
-        //    }
-        //    else
-        //    {
-        _InCollision = p3d_col_test_robot(_Robot->getRobotStruct(), JUST_BOOL);
-        //    }
-
-        //        shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
-        //        cout << "6" << " : "<<_Configuration[6] << endl;
-        //        cout << "7" << " : "<<_Configuration[7] << endl;
-        //        cout << "---------" << endl;
+        _InCollision = Move3DConfigurationInCollision( _Robot );
     }
 
     return _InCollision;
@@ -330,16 +239,12 @@ bool Configuration::isInCollision()
 
 bool Configuration::isOutOfBounds(bool print)
 {
-    return(p3d_isOutOfBounds(_Robot->getRobotStruct(), _Configuration, print));
+    return Move3DConfigurationIsOutOfBounds( _Robot, _Configuration, print );
 }
 
 void Configuration::adaptCircularJointsLimits()
 {
-    configPt q = p3d_alloc_config( _Robot->getRobotStruct() );
-
-    p3d_adaptConfigsForCircularDofs( _Robot->getRobotStruct(), &_Configuration, &q );
-    //  p3d_copy_config_into( _Robot->getRobotStruct(), q, &_Configuration );
-    p3d_destroy_config( _Robot->getRobotStruct(), q );
+    Move3DConfigurationAdaptCircularJointLimits( _Robot, _Configuration );
 }
 
 void Configuration::setAsNotTested()
@@ -349,87 +254,8 @@ void Configuration::setAsNotTested()
 
 double Configuration::distEnv()
 {
-    this->getRobot()->setAndUpdate(*this);
-    int settings = get_kcd_which_test();
-    set_kcd_which_test((p3d_type_col_choice) (40 + 3));
-    // 40 = KCD_ROB_ENV
-    // 3 = DISTANCE_EXACT
-    p3d_col_test_choice();
-    // Collision detection with other robots only
-
-    int nof_bodies = _Robot->getRobotStruct()->no;
-
-    double* distances = new double[nof_bodies];
-
-    p3d_vector3 *body = new p3d_vector3[nof_bodies];
-    p3d_vector3 *other = new p3d_vector3[nof_bodies];
-
-    p3d_kcd_closest_points_robot_environment(_Robot->getRobotStruct(),
-                                             body,other,distances);
-    // Get robot closest points to human for each body
-
-    set_kcd_which_test((p3d_type_col_choice) settings);
-
-    int i = (int)(std::min_element(distances,distances+nof_bodies-1 )-distances);
-
-    return distances[i];
-}
-
-
-double Configuration::getActiveDoF(unsigned int ith)
-{
-    unsigned int nbDoF(0);
-
-    for(unsigned int i=0;i<_Robot->getNumberOfJoints();i++)
-    {
-        p3d_jnt* jntPt = _Robot->getJoint(i)->getJointStruct();
-
-        for(int j=0; j<jntPt->dof_equiv_nbr; j++)
-        {
-            int k = jntPt->index_dof + j;
-
-            if (
-                    (p3d_jnt_get_dof_is_user(jntPt, j) && p3d_jnt_get_dof_is_active_for_planner(jntPt,j)) &&
-                    (_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) )
-            {
-                if( ith == nbDoF)
-                {
-                    return _Configuration[k];
-                }
-                nbDoF++;
-            }
-        }
-    }
-
-    return nbDoF;
-}
-
-void Configuration::setActiveDoF(unsigned int ith, double value)
-{
-    unsigned int nbDoF(0);
-
-    for(unsigned int i=0;i<_Robot->getNumberOfJoints();i++)
-    {
-        p3d_jnt* jntPt = _Robot->getJoint(i)->getJointStruct();
-
-        for(int j=0; j<jntPt->dof_equiv_nbr; j++)
-        {
-            int k = jntPt->index_dof + j;
-
-            if (
-                    (p3d_jnt_get_dof_is_user(jntPt, j) && p3d_jnt_get_dof_is_active_for_planner(jntPt,j)) &&
-                    (_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != 2) )
-            {
-                if( ith == nbDoF)
-                {
-                    //cout << "ith = " << k << endl;
-                    _Configuration[k] = value;
-                    return;
-                }
-                nbDoF++;
-            }
-        }
-    }
+    _Robot->setAndUpdate(*this);
+    return Move3DConfigurationDistEnv( _Robot );
 }
 
 bool Configuration::equal(Configuration& Conf, bool print)
@@ -451,7 +277,7 @@ bool Configuration::equal(Configuration& Conf, bool print)
         }
     }
 
-    return p3d_equal_config( _Robot->getRobotStruct(), _Configuration, Conf.getConfigStruct(), print);
+    return Move3DConfigurationEqual( _Robot, _Configuration, Conf.getConfigStruct(), print );
 }
 
 //copie la Configuration courante dans une nouvelle Configuration
@@ -460,58 +286,36 @@ confPtr_t Configuration::copy()
     return (confPtr_t(new Configuration(*this)));
 }
 
-void Configuration::copyPassive(Configuration& C)
+void Configuration::copyPassive(Configuration& q)
 {
-    for (int i(0); i <= _Robot->getRobotStruct()->njoints; i++)
-    {
-        p3d_jnt* joint(_Robot->getRobotStruct()->joints[i]);
-        for (int j(0); j < joint->dof_equiv_nbr; j++)
-        {
-            int k = joint->index_dof + j;
-            if ((!p3d_jnt_get_dof_is_user(joint, j))
-                    || (!p3d_jnt_get_dof_is_active_for_planner(joint, j)))
-                C[k] = (*this)[k];
-        }
-    }
+    Move3DConfigurationCopyPassive( _Robot, _Configuration, q.getConfigStruct() );
 }
 
-shared_ptr<Configuration> Configuration::add(Configuration& C)
+confPtr_t Configuration::add(Configuration& C)
 {
-    shared_ptr<Configuration> ptrQ(new Configuration(_Robot));
+    confPtr_t ptrQ(new Configuration(_Robot));
 
-    p3d_addConfig(_Robot->getRobotStruct(), _Configuration,
-                  C.getConfigStruct(), ptrQ->getConfigStruct() );
+    Move3DConfigurationAdd( _Robot, _Configuration, C.getConfigStruct(), ptrQ->getConfigStruct() );
 
     return ptrQ;
 }
 
-shared_ptr<Configuration> Configuration::sub(Configuration& C)
+confPtr_t Configuration::sub(Configuration& C)
 {
-    shared_ptr<Configuration> ptrQ(new Configuration(_Robot));
+    confPtr_t ptrQ(new Configuration(_Robot));
 
-    p3d_subConfig(_Robot->getRobotStruct(), _Configuration,
-                  C.getConfigStruct(), ptrQ->getConfigStruct() );
+    Move3DConfigurationSub( _Robot, _Configuration, C.getConfigStruct(), ptrQ->getConfigStruct() );
 
     return ptrQ;
 }
 
-Configuration& Configuration::mult(double coeff)
+confPtr_t Configuration::mult(double coeff)
 {
-    Configuration* q = new Configuration(*this);
+    confPtr_t ptrQ(new Configuration(_Robot));
 
-    int njnt = _Robot->getRobotStruct()->njoints;
-    int k = 0;
-    for (int i = 0; i <= njnt; i++)
-    {
-        p3d_jnt *jntPt = _Robot->getRobotStruct()->joints[i];
-        for (int j = 0; j < jntPt->dof_equiv_nbr; j++)
-        {
-            (*q)[k] *= coeff;
-            k ++;
-        }
-    }
+    Move3DConfigurationMult( _Robot, _Configuration, ptrQ->getConfigStruct(), coeff );
 
-    return (*q);
+    return ptrQ;
 }
 
 Eigen::VectorXd Configuration::getEigenVector()  const
@@ -580,14 +384,12 @@ void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, int startInd
 
 bool Configuration::setConstraintsWithSideEffect()
 {
-    Configuration q(_Robot,p3d_get_robot_config(_Robot->getRobotStruct()), true);
-
     bool respect = _Robot->setAndUpdate(*this);
 
     if(respect)
     {
         this->Clear();
-        _Configuration = p3d_get_robot_config(_Robot->getRobotStruct());
+        _Configuration = _Robot->getCurrentPos()->getConfigStructCopy();
     }
 
     return respect;
@@ -595,17 +397,11 @@ bool Configuration::setConstraintsWithSideEffect()
 
 bool Configuration::setConstraints()
 {
-    Configuration q(_Robot,p3d_get_robot_config(_Robot->getRobotStruct()), true);
+    confPtr_t q( _Robot->getCurrentPos() );
 
-    bool respect = _Robot->setAndUpdate(*this);
+    bool respect = setConstraintsWithSideEffect();
 
-    if(respect)
-    {
-        this->Clear();
-        _Configuration = p3d_get_robot_config(_Robot->getRobotStruct());
-    }
-
-    _Robot->setAndUpdate(q);
+    _Robot->setAndUpdate(*q);
 
     return respect;
 }
@@ -652,47 +448,5 @@ void Configuration::setCostAsNotTested()
 
 void Configuration::print(bool withPassive) const
 {
-
-    cout << "Print Configuration; Robot: " << _Robot->getRobotStruct() << endl;
-
-    //	print_config(_Robot->getRobotStruct(),_Configuration);
-
-    //    configPt degConf = getConfigInDegree()->getConfigStruct();
-    //
-    //    for (int i = 0; i < _Robot->getRobotStruct()->nb_dof; i++)
-    //    {
-    //        //	    cout << "q["<<i<<"]"<<" = "<< _Configuration[i] << endl;
-    //        cout << "degConf["<< i <<"] = " << degConf[i] << endl;
-    //    }
-
-    //	int nb_dof;
-    //
-    //	if(robotPt != NULL){
-    //		nb_dof = mR->getP3dRob()->nb_user_dof;
-    //	}
-
-    //	for(int i=0; i<nb_dof;i++){
-    //		PrintInfo(("q[%d] = %f\n", i, q[i]));
-    //	}
-
-
-    int njnt = _Robot->getRobotStruct()->njoints, k;
-    p3d_jnt * jntPt;
-    for(int i=0; i<=njnt; i++)
-    {
-        jntPt = _Robot->getRobotStruct()->joints[i];
-        for(int j=0; j<jntPt->dof_equiv_nbr; j++)
-        {
-            k = jntPt->index_dof + j;
-            //      cout << "p3d_jnt_get_dof_is_user : " << p3d_jnt_get_dof_is_user(jntPt, j) << endl;
-            //      cout << "_Robot->getRobotStruct()->cntrt_manager->in_cntrt[" << k << "] = " << _Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] << endl;
-            if (withPassive || ( p3d_jnt_get_dof_is_user(jntPt, j)
-                                 /*&& (p3d_jnt_get_dof_is_active_for_planner(jntPt,j) */
-                                 && (_Robot->getRobotStruct()->cntrt_manager->in_cntrt[k] != DOF_PASSIF )))
-            {
-                cout << "q["<<k<<"] = "<<_Configuration[k]<<endl;
-            }
-        }
-    }
-    cout << "\n--------------------------------" << endl;
+    Move3DConfigurationPrint( _Robot, _Configuration, withPassive );
 }

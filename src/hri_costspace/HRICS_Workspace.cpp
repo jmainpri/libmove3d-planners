@@ -85,11 +85,11 @@ Workspace::Workspace() : HumanAwareMotionPlanner() , mPathExist(false)
 #ifdef LIGHT_PLANNER
     if(_Robot)
     {
-        if((*_Robot->getRobotStruct()->armManipulationData).size() >= 1 )
+        if((*_Robot->getP3dRobotStruct()->armManipulationData).size() >= 1 )
         {
-            p3d_jnt* FF_Joint = (*_Robot->getRobotStruct()->armManipulationData)[0].getManipulationJnt();
+            p3d_jnt* FF_Joint = (*_Robot->getP3dRobotStruct()->armManipulationData)[0].getManipulationJnt();
             ENV.setInt(Env::akinJntId,FF_Joint->num);
-            mIndexObjectDof = FF_Joint->index_dof;//_Robot->getRobotStruct()->baseJnt;
+            mIndexObjectDof = FF_Joint->index_dof;//_Robot->getP3dRobotStruct()->baseJnt;
         }
         else
         {
@@ -224,7 +224,7 @@ void Workspace::initDistance()
     if (_Robot)
     {
         cout << "Robot " << _Robot->getName() << endl;
-        cout << "Robot get struct " << _Robot->getRobotStruct() << endl;
+        cout << "Robot get struct " << _Robot->getP3dRobotStruct() << endl;
     }
 
     m_DistanceSpace->parseHumans();
@@ -583,11 +583,11 @@ bool Workspace::initHriRRT()
 #ifdef LIGHT_PLANNER
     if(ENV.getBool(Env::isInverseKinematics))
     {
-        activateCcCntrts(_Robot->getRobotStruct(),-1,true);
+        activateCcCntrts(_Robot->getP3dRobotStruct(),-1,true);
     }
     else
     {
-        deactivateCcCntrts(_Robot->getRobotStruct(),-1);//true);
+        deactivateCcCntrts(_Robot->getP3dRobotStruct(),-1);//true);
     }
 #else
     cout << "Warning: Lihght Planner not compiled" << endl;
@@ -604,23 +604,23 @@ bool Workspace::initHriRRT()
 
 void Workspace::activateOnlyBaseCollision()
 {
-    p3d_col_deactivate_rob(_Robot->getRobotStruct());
-    p3d_col_deactivate_rob_env(_Robot->getRobotStruct());
-    p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(),mHumans[0]->getRobotStruct());
+    p3d_col_deactivate_rob(_Robot->getP3dRobotStruct());
+    p3d_col_deactivate_rob_env(_Robot->getP3dRobotStruct());
+    p3d_col_deactivate_rob_rob(_Robot->getP3dRobotStruct(),mHumans[0]->getP3dRobotStruct());
 
-    p3d_col_activate_obj_env(_Robot->getJoint(1)->getJointStruct()->o);
-    p3d_col_activate_obj_rob(_Robot->getJoint(1)->getJointStruct()->o,mHumans[0]->getRobotStruct());
+    p3d_col_activate_obj_env( static_cast<p3d_jnt*>( _Robot->getJoint(1)->getP3dJointStruct() )->o);
+    p3d_col_activate_obj_rob( static_cast<p3d_jnt*>( _Robot->getJoint(1)->getP3dJointStruct() )->o,mHumans[0]->getP3dRobotStruct());
 }
 
 void Workspace::deactivateOnlyBaseCollision()
 {
-    p3d_col_deactivate_rob(_Robot->getRobotStruct());
-    p3d_col_deactivate_rob_env(_Robot->getRobotStruct());
-    p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(),mHumans[0]->getRobotStruct());
+    p3d_col_deactivate_rob(_Robot->getP3dRobotStruct());
+    p3d_col_deactivate_rob_env(_Robot->getP3dRobotStruct());
+    p3d_col_deactivate_rob_rob(_Robot->getP3dRobotStruct(),mHumans[0]->getP3dRobotStruct());
 
-    p3d_col_activate_rob(_Robot->getRobotStruct());
-    p3d_col_activate_rob_env(_Robot->getRobotStruct());
-    p3d_col_activate_rob_rob(_Robot->getRobotStruct(),mHumans[0]->getRobotStruct());
+    p3d_col_activate_rob(_Robot->getP3dRobotStruct());
+    p3d_col_activate_rob_env(_Robot->getP3dRobotStruct());
+    p3d_col_activate_rob_rob(_Robot->getP3dRobotStruct(),mHumans[0]->getP3dRobotStruct());
 }
 
 bool Workspace::transPFromBaseConf(shared_ptr<Configuration> q_base, vector< Vector3d > points )
@@ -920,8 +920,8 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, Move3
     ChronoOn();
 
     int armId = 0;
-    ArmManipulationData& armData = (*_Robot->getRobotStruct()->armManipulationData)[armId];
-    ManipulationConfigs manipConf(_Robot->getRobotStruct());
+    ArmManipulationData& armData = (*_Robot->getP3dRobotStruct()->armManipulationData)[armId];
+    ManipulationConfigs manipConf(_Robot->getP3dRobotStruct());
     gpGrasp grasp;
     double confCost = -1;
 
@@ -963,7 +963,7 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, Move3
         return q;
     }
     else {
-        p3d_destroy_config(_Robot->getRobotStruct(),q);
+        p3d_destroy_config(_Robot->getP3dRobotStruct(),q);
     }
 
     ChronoPrint("");
@@ -979,8 +979,8 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, Move3
   ChronoOn();
   
 //  int armId = 0;
-//  ArmManipulationData& armData = (*_Robot->getRobotStruct()->armManipulationData)[armId];
-//  ManipulationConfigs manipConf(_Robot->getRobotStruct());
+//  ArmManipulationData& armData = (*_Robot->getP3dRobotStruct()->armManipulationData)[armId];
+//  ManipulationConfigs manipConf(_Robot->getP3dRobotStruct());
 //  gpGrasp grasp;
 //  double confCost = -1;
 //  
@@ -1032,11 +1032,11 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, Move3
       {
         shared_ptr<Configuration> q_target(new Configuration(_Robot,q));
         
-        p3d_update_virtual_object_config_for_arm_ik_constraint(_Robot->getRobotStruct(), 0, q);
+        p3d_update_virtual_object_config_for_arm_ik_constraint(_Robot->getP3dRobotStruct(), 0, q);
         
         //ManipulationUtils::checkConfigForCartesianMode(q,NULL);
 
-        if (p3d_is_collision_free(_Robot->getRobotStruct(),q))
+        if (p3d_is_collision_free(_Robot->getP3dRobotStruct(),q))
         {
           showConfig_2(q);
           
@@ -1055,7 +1055,7 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, Move3
         }
       }
       else {
-        p3d_destroy_config(_Robot->getRobotStruct(),q);
+        p3d_destroy_config(_Robot->getP3dRobotStruct(),q);
       }
     }
     
@@ -1080,7 +1080,7 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, Move3
       return costOfTargetTmp.second.q;
     }
     else {
-      p3d_destroy_config(_Robot->getRobotStruct(),q);
+      p3d_destroy_config(_Robot->getP3dRobotStruct(),q);
     }
   }
   ChronoPrint("");
@@ -1129,10 +1129,10 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, Move3
 
 bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsigned int threshold)
 {
-    mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
+    setAndUpdateHumanArms(*mHumans[0]->getInitPos());
     _Robot->setAndUpdate(*_Robot->getInitPos());
 
-    p3d_col_activate_rob_rob( _Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+    p3d_col_activate_rob_rob( _Robot->getP3dRobotStruct(), mHumans[0]->getP3dRobotStruct());
 
     shared_ptr<Configuration> q_base = _Robot->getCurrentPos();
     shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
@@ -1216,8 +1216,8 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 
     if( sampleRobotBase(q_base,WSPoint) )
     {
-        p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
-        mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
+        p3d_col_deactivate_rob_rob(_Robot->getP3dRobotStruct(), mHumans[0]->getP3dRobotStruct());
+        setAndUpdateHumanArms(*mHumans[0]->getInitPos());
         if (!move)
         {
             _Robot->setAndUpdate(*q_cur_robot);
@@ -1226,8 +1226,8 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
     }
 
     _Robot->setAndUpdate(*q_cur_robot);
-    p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
-    mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
+    p3d_col_deactivate_rob_rob(_Robot->getP3dRobotStruct(), mHumans[0]->getP3dRobotStruct());
+    setAndUpdateHumanArms(*mHumans[0]->getInitPos());
     cout << "No Point found" << endl;
     return false;
 }
@@ -1238,7 +1238,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 //	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
 //	_Robot->setAndUpdate(*_Robot->getInitPos());
 
-//	p3d_col_activate_rob_rob( _Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+//	p3d_col_activate_rob_rob( _Robot->getP3dRobotStruct(), mHumans[0]->getP3dRobotStruct());
 
 
 //	if ( m_ReachableSpace == NULL )
@@ -1355,7 +1355,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 //			{
 //				cout << "Configuration at iteration " << i << " found!!!" << endl;
 
-//                p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+//                p3d_col_deactivate_rob_rob(_Robot->getP3dRobotStruct(), mHumans[0]->getP3dRobotStruct());
 //                mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
 //                if (!move)
 //                {
@@ -1370,7 +1370,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 //	}
 
 //	_Robot->setAndUpdate(*q_cur_robot);
-//	p3d_col_deactivate_rob_rob(_Robot->getRobotStruct(), mHumans[0]->getRobotStruct());
+//	p3d_col_deactivate_rob_rob(_Robot->getP3dRobotStruct(), mHumans[0]->getP3dRobotStruct());
 //	mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
 //	cout << "No Point found" << endl;
 //	return false;
@@ -1378,8 +1378,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 
 bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 {	
-    mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
-
+    setAndUpdateHumanArms(*mHumans[0]->getInitPos());
 
     if ( m_ReachableSpace == NULL )
     {
@@ -1436,7 +1435,7 @@ bool Workspace::computeBestTransferPoint(Vector3d& transfPoint)
 
 bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
 {
-    mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getCurrentPos());
+    setAndUpdateHumanArms(*mHumans[0]->getCurrentPos());
 
     if ( m_ReachableSpace == NULL )
     {
@@ -1490,8 +1489,7 @@ bool Workspace::computeBestFeasableTransferPoint(Vector3d& transfPoint)
         }
     }
 
-    mHumans[0]->setAndUpdateHumanArms(*mHumans[0]->getInitPos());
-
+    setAndUpdateHumanArms(*mHumans[0]->getInitPos());
 
     return false;
 }
@@ -1592,7 +1590,7 @@ void Workspace::initPR2RepoConf()
     int IndexObjectDof = m_ReachableSpace->getRobot()->getJoint("Pelvis")->getIndexOfFirstDof();
 
     configPt q;
-    q = p3d_alloc_config(_Robot->getRobotStruct());
+    q = p3d_alloc_config(_Robot->getP3dRobotStruct());
     q[0] = 0;
     q[1] = 0;
     q[2] = 0;
@@ -1639,7 +1637,7 @@ void Workspace::initPR2RepoConf()
 
 
     shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
-                new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
+                new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
     _Robot->setInitPos(*m_q);
     _Robot->setAndUpdate( *m_q );
 
@@ -1654,7 +1652,7 @@ void Workspace::initPR2GiveConf()
     shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
 
     configPt q;
-    q = p3d_alloc_config(_Robot->getRobotStruct());
+    q = p3d_alloc_config(_Robot->getP3dRobotStruct());
 
 
     for (unsigned int i = 0; i < 48; i++)
@@ -1690,7 +1688,7 @@ void Workspace::initPR2GiveConf()
 
 
     shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
-                new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
+                new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
     _Robot->setAndUpdate( *m_q );
     _Robot->setInitPos(*m_q );
 }
@@ -1705,8 +1703,8 @@ void Workspace::initPR2AndHumanTest()
     int firstIndexOfHumanDof = m_ReachableSpace->getRobot()->getJoint("Pelvis")->getIndexOfFirstDof();
 
     configPt q_h;
-    q_h = p3d_alloc_config(m_ReachableSpace->getRobot()->getRobotStruct());
-    for (int i = 0; i < m_ReachableSpace->getRobot()->getRobotStruct()->nb_dof; i++)
+    q_h = p3d_alloc_config(m_ReachableSpace->getRobot()->getP3dRobotStruct());
+    for (int i = 0; i < m_ReachableSpace->getRobot()->getP3dRobotStruct()->nb_dof; i++)
     {
         q_h[i] = (*q_cur_human)[i];
     }
@@ -1717,7 +1715,7 @@ void Workspace::initPR2AndHumanTest()
     q_h[firstIndexOfHumanDof + 5] = 0;
 
     shared_ptr<Configuration> m_q_human = shared_ptr<Configuration>(
-                new Configuration(m_ReachableSpace->getRobot(),p3d_copy_config(m_ReachableSpace->getRobot()->getRobotStruct(),q_h)));
+                new Configuration(m_ReachableSpace->getRobot(),p3d_copy_config(m_ReachableSpace->getRobot()->getP3dRobotStruct(),q_h)));
 
     m_ReachableSpace->getRobot()->setInitPos(*m_q_human);
     m_ReachableSpace->getRobot()->setAndUpdate( *m_q_human );
@@ -1725,14 +1723,14 @@ void Workspace::initPR2AndHumanTest()
 
     shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
     configPt q;
-    q = p3d_alloc_config(_Robot->getRobotStruct());
+    q = p3d_alloc_config(_Robot->getP3dRobotStruct());
 
-    for (int i = 0; i < _Robot->getRobotStruct()->nb_dof; i++)
+    for (int i = 0; i < _Robot->getP3dRobotStruct()->nb_dof; i++)
     {
         q[i] = (*q_cur)[i];
     }
 
-    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+    int firstIndexOfRobotDof = dynamic_cast<p3d_jnt*>(_Robot->getP3dRobotStruct()->baseJnt)->user_dof_equiv_nbr;
 
     q[firstIndexOfRobotDof + 0] = (*q_cur_human)[firstIndexOfHumanDof+0] + 1.5;
     q[firstIndexOfRobotDof + 1] = (*q_cur_human)[firstIndexOfHumanDof+1];
@@ -1741,7 +1739,7 @@ void Workspace::initPR2AndHumanTest()
     q[firstIndexOfRobotDof + 5] = 179.0*M_PI;
 
     shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
-                new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
+                new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
 
     _Robot->setInitPos(*m_q);
     _Robot->setAndUpdate( *m_q );
@@ -1757,8 +1755,8 @@ void Workspace::computePR2GIK(bool move)
     cout << "Workspace::computePR2GIK()" << endl;
 
     int armId = 0;
-    ArmManipulationData& armData = (*_Robot->getRobotStruct()->armManipulationData)[armId];
-    ManipulationConfigs manipConf(_Robot->getRobotStruct());
+    ArmManipulationData& armData = (*_Robot->getP3dRobotStruct()->armManipulationData)[armId];
+    ManipulationConfigs manipConf(_Robot->getP3dRobotStruct());
     gpGrasp grasp;
     double confCost = -1;
 
@@ -1775,7 +1773,7 @@ void Workspace::computePR2GIK(bool move)
     if (q != NULL)
     {
         shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
-                    new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
+                    new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
         _Robot->setAndUpdate( *m_q );
     }
     else
@@ -1788,9 +1786,9 @@ void Workspace::computePR2GIK(bool move)
 
     /*shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
     configPt q;
-    q = p3d_alloc_config(_Robot->getRobotStruct());
+    q = p3d_alloc_config(_Robot->getP3dRobotStruct());
 
-    for (unsigned int i = 0; i < _Robot->getRobotStruct()->nb_dof ; i++)
+    for (unsigned int i = 0; i < _Robot->getP3dRobotStruct()->nb_dof ; i++)
     {
         q[i] = (*q_cur)[i];
 
@@ -1806,7 +1804,7 @@ void Workspace::computePR2GIK(bool move)
     unsigned int loopThreshold = 50;
 
     shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
-                                          new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
+                                          new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
     _Robot->setAndUpdate( *m_q );
 
     shared_ptr<Configuration> m_q_tmp;
@@ -1819,7 +1817,7 @@ void Workspace::computePR2GIK(bool move)
         q[virtualObjectDOF + 5] = p3d_random(-M_PI,M_PI);
         Joint* j14 = _Robot->getJoint("fingerJointGripper_0");
 
-        m_q_tmp = shared_ptr<Configuration>(new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
+        m_q_tmp = shared_ptr<Configuration>(new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
         _Robot->setAndUpdate( *m_q_tmp );
 
         dist = std::sqrt( pow(current_WSPoint[0] - j14->getVectorPos()[0], 2) + pow(current_WSPoint[1] - j14->getVectorPos()[1], 2) + pow(current_WSPoint[2] - j14->getVectorPos()[2], 2));
@@ -1851,15 +1849,15 @@ void Workspace::ChangeRobotPos(double value)
     int firstIndexOfHumanDof = m_ReachableSpace->getRobot()->getJoint("Pelvis")->getIndexOfFirstDof();
     shared_ptr<Configuration> q_cur_human = m_ReachableSpace->getRobot()->getCurrentPos();
 
-    int firstIndexOfDof = dynamic_cast<p3d_jnt*>(_Robot->getRobotStruct()->baseJnt)->user_dof_equiv_nbr;
+    int firstIndexOfDof = dynamic_cast<p3d_jnt*>(_Robot->getP3dRobotStruct()->baseJnt)->user_dof_equiv_nbr;
     cout << "Workspace::ChangeRobotPos()" << endl;
     cout << value << endl;
 
     shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
     configPt q;
-    q = p3d_alloc_config(_Robot->getRobotStruct());
+    q = p3d_alloc_config(_Robot->getP3dRobotStruct());
 
-    for (int i = 0; i < _Robot->getRobotStruct()->nb_dof; i++)
+    for (int i = 0; i < _Robot->getP3dRobotStruct()->nb_dof; i++)
     {
         q[i] = (*q_cur)[i];
     }
@@ -1868,11 +1866,30 @@ void Workspace::ChangeRobotPos(double value)
     q[firstIndexOfDof] = (*q_cur_human)[firstIndexOfHumanDof + 0] + value;
 
     shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
-                new Configuration(_Robot,p3d_copy_config(_Robot->getRobotStruct(),q)));
+                new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
     //    _Robot->setInitialPosition(*m_q);
     _Robot->setAndUpdate( *m_q );
 
     computePR2GIK(true);
+}
+
+/**
+ * set and update Human Arms
+ */
+bool Workspace::setAndUpdateHumanArms( Move3D::Configuration& q )
+{
+    Robot* robot = q.getRobot();
+
+    for(int i=2; i<=21; i++) // Just Arms
+    {
+        p3d_jnt* jntPt = static_cast<p3d_rob*>( robot->getP3dRobotStruct() )->joints[i];
+        for(int j=0; j<jntPt->dof_equiv_nbr; j++)
+        {
+            p3d_jnt_set_dof(jntPt, j, q[jntPt->index_dof+j]);
+        }
+    }
+
+    return p3d_update_this_robot_pos(static_cast<p3d_rob*>( robot->getP3dRobotStruct() ));
 }
 
 //void Workspace::getCostForPr2FromAgentGrids()

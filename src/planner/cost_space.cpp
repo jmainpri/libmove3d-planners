@@ -52,6 +52,10 @@ void GlobalCostSpace::initialize()
     global_costSpace->addCost("costIsInCollision",boost::bind(computeInCollisionCost, _1));
     global_costSpace->setCost("costIsInCollision");
 
+    std::cout << "Initializing the collision costmap cost function" << std::endl;
+    global_costSpace->addCost("costLength",boost::bind(computeFlatCost, _1));
+    global_costSpace->setCost("costLength");
+
     if( GroundCostObj )
     {
         std::cout << "Initializing the 2d costmap cost function" << std::endl;
@@ -248,7 +252,6 @@ void CostSpace::setNodeCost( Node* node, Node* parent )
     }
 }
 
-
 /*if (p3d_GetCostMethodChoice() == URMSON_TRANSITION)
  {
  node->getConnectedComponent()->getCompcoStruct()->maxUrmsonCost
@@ -292,7 +295,7 @@ void CostSpace::getPr2ArmConfiguration( Eigen::VectorXd& x, confPtr_t q )
 
 double CostSpace::getPr2ArmDistance( Robot* robot, Eigen::VectorXd& q_i, Eigen::VectorXd& q_f )
 {
-    p3d_jnt** joints = robot->getRobotStruct()->joints;
+    p3d_jnt** joints = static_cast<p3d_rob*>(robot->getP3dRobotStruct())->joints;
     const int joints_id[] = { 6,7,8,9,10,11,12,32 };
     double dist=0.0,ljnt=0.0;
 
@@ -335,7 +338,7 @@ double CostSpace::getPr2ArmDistance( Robot* robot, Eigen::VectorXd& q_i, Eigen::
 }
 
 //----------------------------------------------------------------------
-double CostSpace::cost(LocalPath& path, int& nb_test)
+double CostSpace::cost( LocalPath& path, int& nb_test )
 {
     confPtr_t q_tmp_begin = path.getBegin()->copy();
     confPtr_t q_tmp_end   = path.getEnd()->copy();
@@ -344,7 +347,7 @@ double CostSpace::cost(LocalPath& path, int& nb_test)
 
     nb_test = 0;
 
-    if (ENV.getBool(Env::isCostSpace))
+    if (ENV.getBool(Env::isCostSpace) && mSelectedCostName != "costLength" )
     {
         int nStep;
         double deltaStep;
@@ -360,7 +363,7 @@ double CostSpace::cost(LocalPath& path, int& nb_test)
             Eigen::VectorXd a( Eigen::VectorXd::Zero(13) );
             Eigen::VectorXd b( Eigen::VectorXd::Zero(13) );
 
-            path.getLocalpathStruct();
+            path.getP3dLocalpathStruct();
 
             getPr2ArmConfiguration( a, path.getBegin() );
             getPr2ArmConfiguration( b, path.getEnd() );
@@ -463,14 +466,14 @@ double Move3D::computeDistanceToObstacles(Configuration& conf)
     }
     Robot* robot = conf.getRobot();
     robot->setAndUpdate(conf);
-    double cost = p3d_GetMinDistCost(robot->getRobotStruct());
+    double cost = p3d_GetMinDistCost( static_cast<p3d_rob*>(robot->getP3dRobotStruct()) );
     return cost;
 }
 
 double Move3D::computeInCollisionCost(Configuration& conf)
 {
     Robot* robot = conf.getRobot();
-    shared_ptr<Configuration> qActual = robot->getCurrentPos();
+    confPtr_t qActual = robot->getCurrentPos();
 
     double cost = 0.1;
 
@@ -492,13 +495,14 @@ double Move3D::computeCollisionSpaceCost(Configuration& conf)
     return cost;
 }
 
-double Move3D::computeLocalpathKinematicCost(p3d_rob* rob, p3d_localpath* LP)
+double Move3D::computeLocalpathKinematicCost(void* rob, p3d_localpath* LP)
 {
     if (LP == NULL) {
         return 1;
     }
 
-    Robot* currRob = global_Project->getActiveScene()->getRobotByNameContaining(rob->name);
+    p3d_rob* robotPt = (p3d_rob*)rob;
+    Robot* currRob = global_Project->getActiveScene()->getRobotByNameContaining( robotPt->name );
     LocalPath path(currRob,LP);
     double cost = path.cost();
     cout << "Kinematic cost = " << cost << endl;

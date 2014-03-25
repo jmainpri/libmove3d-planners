@@ -147,7 +147,7 @@ void BodySurfaceSampler::sampleRobotBodiesSurface( Robot* robot )
     // PointCloud points;
     for( int i=0; i<int(robot->getNumberOfJoints()); i++)
     {
-        p3d_obj* obj = robot->getJoint(i)->getJointStruct()->o;
+        p3d_obj* obj = static_cast<p3d_jnt*>( robot->getJoint(i)->getP3dJointStruct() )->o;
 
         if( obj )
         {
@@ -208,7 +208,7 @@ double BodySurfaceSampler::generateRobotBoudingCylinder( Robot* robot, const vec
 
     for(unsigned int i=0;i<activeJoints.size();i++)
     {
-        p3d_obj* obj = activeJoints[i]->getJointStruct()->o;
+        p3d_obj* obj = static_cast<p3d_jnt*>( activeJoints[i]->getP3dJointStruct() )->o;
 
         if(obj)
         {
@@ -244,7 +244,7 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* j
     if (m_objectToBoCylinderMap.empty())
         return collision_points;
 
-    BoundingCylinder* bc = m_objectToBoCylinderMap[jnt->getJointStruct()->o];
+    BoundingCylinder* bc = m_objectToBoCylinderMap[ static_cast<p3d_jnt*>( jnt->getP3dJointStruct() )->o];
 
     if (bc == NULL)
         return collision_points;
@@ -449,7 +449,7 @@ void BodySurfaceSampler::draw()
             //        points[i].draw(t);
             //      }
 
-            p3d_obj* obj = jnt->getJointStruct()->o;
+            p3d_obj* obj = static_cast<p3d_jnt*>( jnt->getP3dJointStruct() )->o;
 
             if( obj )
             {

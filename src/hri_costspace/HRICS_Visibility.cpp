@@ -105,9 +105,9 @@ double Visibility::getOldWorkspaceCost(const Vector3d& WSPoint)
             {0,1,0,0},
             {0,0,1,0},
             {0,0,0,1}};
-        //Matrix4d newAbsPos; = m_Human->getRobotStruct()->joints[HUMANj_NECK_TILT]->abs_pos
+        //Matrix4d newAbsPos; = m_Human->getP3dRobotStruct()->joints[HUMANj_NECK_TILT]->abs_pos
 
-        p3d_mat4Mult(m_Human->getRobotStruct()->joints[HRICS_HUMANj_NECK_TILT]->abs_pos,rotation,newABS);
+        p3d_mat4Mult(m_Human->getP3dRobotStruct()->joints[HRICS_HUMANj_NECK_TILT]->abs_pos,rotation,newABS);
 
         // Invert frame and get the point in this frame
         p3d_matInvertXform(newABS, inv);
@@ -116,10 +116,10 @@ double Visibility::getOldWorkspaceCost(const Vector3d& WSPoint)
     else
     {
         double Ccoord[6];
-        p3d_mat4ExtractPosReverseOrder(m_Human->getRobotStruct()->joints[5]->abs_pos,
+        p3d_mat4ExtractPosReverseOrder(m_Human->getP3dRobotStruct()->joints[5]->abs_pos,
                                        Ccoord, Ccoord+1, Ccoord+2,Ccoord+3, Ccoord+4, Ccoord+5);
 
-        p3d_matInvertXform(m_Human->getRobotStruct()->joints[5]->abs_pos, inv);
+        p3d_matInvertXform(m_Human->getP3dRobotStruct()->joints[5]->abs_pos, inv);
         p3d_matvec4Mult(inv, realcoord, newcoord);
     }
 
@@ -182,11 +182,11 @@ double Visibility::akinVisibilityCost(const Vector3d& WSPoint)
                             {0,0,-1,0},
                             {0,1,0,0},
                             {0,0,0,1}};
-    //Matrix4d newAbsPos; = m_Human->getRobotStruct()->joints[HUMANj_NECK_TILT]->abs_pos
+    //Matrix4d newAbsPos; = m_Human->getP3dRobotStruct()->joints[HUMANj_NECK_TILT]->abs_pos
 
-    p3d_mat4Mult(m_Human->getRobotStruct()->joints[HRICS_HUMANj_NECK_TILT]->abs_pos,rotation,newABS);
+    p3d_mat4Mult(m_Human->getP3dRobotStruct()->joints[HRICS_HUMANj_NECK_TILT]->abs_pos,rotation,newABS);
 
-    //	p3d_mat4ExtractPosReverseOrder(m_Human->getRobotStruct()->joints[6]->abs_pos,
+    //	p3d_mat4ExtractPosReverseOrder(m_Human->getP3dRobotStruct()->joints[6]->abs_pos,
     //								   Ccoord, Ccoord+1, Ccoord+2,Ccoord+3, Ccoord+4, Ccoord+5);
 
     p3d_matInvertXform(newABS,inv);

@@ -259,7 +259,7 @@ void HumanPredictionSimulator::loadGoalConfig()
 {
     m_goal_config.clear();
 
-    p3d_rob* rob = m_robot->getRobotStruct();
+    p3d_rob* rob = static_cast<p3d_rob*>( m_robot->getP3dRobotStruct() );
 
     for( int i=0; i<rob->nconf; i++ )
     {
@@ -375,16 +375,16 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
 
     global_stompRun = pool;
 
-    sce->getRobotByName("rob3")->getRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
-    sce->getRobotByName("rob4")->getRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
+    static_cast<p3d_rob*>( sce->getRobotByName("rob3")->getP3dRobotStruct() )->display_mode = P3D_ROB_NO_DISPLAY;
+    static_cast<p3d_rob*>( sce->getRobotByName("rob4")->getP3dRobotStruct() )->display_mode = P3D_ROB_NO_DISPLAY;
 
     for( int g=0;g<int(stomp_trajs.size()); g++)
     {
         std::vector<double> color = (g == m_best_path_id) ? m_colors[1] : m_colors[0];
         pool->setPathColor( g, color );
 
-        robots[g]->getRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
-        p3d_col_deactivate_rob_rob( robots[g]->getRobotStruct(), m_robot->getRobotStruct() );
+        static_cast<p3d_rob*>( robots[g]->getP3dRobotStruct() )->display_mode = P3D_ROB_NO_DISPLAY;
+        p3d_col_deactivate_rob_rob( static_cast<p3d_rob*>( robots[g]->getP3dRobotStruct() ), m_robot->getP3dRobotStruct() );
 
         boost::thread( &stompRun::run, pool, g, stomp_trajs[g] );
     }
@@ -462,9 +462,9 @@ void HumanPredictionSimulator::runParallelStomp( int iter, int id_goal )
 
     for(int i=0;i<int(robots.size());i++)
     {
-        robots[i]->getRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
+        static_cast<p3d_rob*>( robots[i]->getP3dRobotStruct() )->display_mode = P3D_ROB_NO_DISPLAY;
         robots[i]->setAndUpdate( *m_q_start );
-        p3d_col_deactivate_rob_rob( robots[i]->getRobotStruct(), m_robot->getRobotStruct() );
+        p3d_col_deactivate_rob_rob( static_cast<p3d_rob*>( robots[i]->getP3dRobotStruct() ), static_cast<p3d_rob*>( m_robot->getP3dRobotStruct() ) );
     }
 
     cout << "run pool" << endl;
