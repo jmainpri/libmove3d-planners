@@ -227,7 +227,7 @@ bool EST::connectNodeToCompco(Node* node, Node* compNode)
 
         PlanEnv->setBool(PlanParam::isMaxDisNeigh,false);
 
-        node2 = _Graph->nearestWeightNeighbour(compNode, node->getConfiguration(), false, ENV.getInt(Env::DistConfigChoice));
+        node2 = _Graph->nearestWeightNeighbour(compNode, node->getConfiguration(), ENV.getInt(Env::DistConfigChoice));
 
         p3d_SetIsMaxDistNeighbor(SavedIsMaxDis);
 

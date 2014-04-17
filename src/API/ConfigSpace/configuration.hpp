@@ -155,6 +155,12 @@ public:
     void setConfiguration(Configuration& C);
 
     /**
+     * modifie la structure configPt stockée
+     * @param C la Configuration contentant la nouvelle structure
+     */
+    void setConfigurationCopy(Configuration& C);
+
+    /**
      * Convert Configuration in radian
      */
     void convertToRadian();

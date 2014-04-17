@@ -47,8 +47,7 @@
 #include <iostream>
 
 // For random number generator (seed can be passed as argument)
-#include <libmove3d/include/P3d-pkg.h>
-
+#include "API/misc_functions.hpp"
 //namespace chomp
 //{
 
@@ -83,7 +82,7 @@ MultivariateGaussian::MultivariateGaussian(const Eigen::MatrixBase<Derived1>& me
     covariance_(covariance),
     covariance_cholesky_(covariance_.llt().matrixL()),
     size_(mean.rows()),
-    rng_(p3d_random_integer(0,RAND_MAX)),
+    rng_(move3d_random_integer(0,RAND_MAX)),
     gaussian_(rng_, normal_dist_)
 {
 

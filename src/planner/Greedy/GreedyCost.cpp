@@ -89,7 +89,7 @@ bool GreedyCost::run()
 
         double dmax = 0;
         p3d_col_get_dmax(&dmax);
-        dmax = p3d_get_env_dmax();
+        dmax = ENV.getDouble(Env::dmax);
         cout << "dmax = " << dmax << endl;
         cout << "RangeMax = " << optimTrj->getRangeMax() << endl;
 
@@ -172,7 +172,7 @@ void GreedyCost::optimizeLinear()
 {
     double dmax = 0;
     p3d_col_get_dmax(&dmax);
-    dmax = p3d_get_env_dmax();
+    dmax = ENV.getDouble(Env::dmax);
 
     double maxFactor = dmax * (PlanEnv->getDouble(PlanParam::MaxFactor));
     double minFactor = dmax * (PlanEnv->getDouble(PlanParam::MinStep));

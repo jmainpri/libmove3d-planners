@@ -13,10 +13,13 @@
 #include "planner/plannerFunctions.hpp"
 #include "planner/replanningSimulators.hpp"
 #include "planner/planner.hpp"
+
 #include "planner/PRM/PRM.hpp"
 #include "planner/PRM/Visibility.hpp"
 #include "planner/PRM/ACR.hpp"
 #include "planner/PRM/PerturbationRoadmap.hpp"
+#include "planner/PRM/sPRM.hpp"
+
 #include "planner/Diffusion/RRT.hpp"
 #include "planner/Diffusion/EST.hpp"
 #include "planner/Diffusion/Variants/Transition-RRT.hpp"
@@ -25,6 +28,7 @@
 #include "planner/Diffusion/Variants/Multi-TRRT.hpp"
 #include "planner/Diffusion/Variants/Threshold-RRT.hpp"
 #include "planner/Diffusion/Variants/Star-RRT.hpp"
+
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 
@@ -167,8 +171,8 @@ p3d_traj* p3d_extract_traj( bool is_traj_found, int nb_added_nodes, Graph* graph
 
         last_traj = *traj;
 
-        p3d_traj* result = traj->replaceP3dTraj(NULL);
-        static_cast<p3d_rob*>(rob->getP3dRobotStruct())->tcur = result;
+        traj->replaceP3dTraj();
+        p3d_traj* result = static_cast<p3d_rob*>(rob->getP3dRobotStruct())->tcur;
 
         if( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) )
         {
@@ -588,6 +592,31 @@ int p3d_run_perturb_prm(p3d_rob* robotPt)
     cout << "Initializing PRM " << endl;
     int nb_added_nodes=0;
     PerturbationRoadmap* prm = new PerturbationRoadmap(rob, graph);
+    nb_added_nodes = prm->init();
+    nb_added_nodes += prm->run();
+
+    cout << "nb added nodes " << nb_added_nodes << endl;
+    cout << "nb nodes " << graph->getNumberOfNodes() << endl;
+
+    p3d_extract_traj( prm->trajFound(), nb_added_nodes, graph, q_source, q_target);
+    delete prm;
+    return nb_added_nodes;
+}
+
+int p3d_run_simple_prm(p3d_rob* robotPt)
+{
+    // Gets the robot pointer and the 2 configurations
+    Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
+    confPtr_t q_source = rob->getInitPos();
+    confPtr_t q_target = rob->getGoalPos();
+
+    // Allocate the p3d_graph if does't exist
+    // Removes graph if it exists, creates a new graph , Allocate RRT
+    Graph* graph = API_activeGraph =  new Graph(rob);
+
+    cout << "Initializing PRM " << endl;
+    int nb_added_nodes=0;
+    sPRM* prm = new sPRM(rob, graph);
     nb_added_nodes = prm->init();
     nb_added_nodes += prm->run();
 

@@ -67,7 +67,7 @@ void GlobalCostSpace::initialize()
 //------------------------------------------------------------------------------
 CostSpace::CostSpace() : mSelectedCostName("No Cost"), m_deltaMethod(cs_integral), m_resolution(cs_classic)/* m_resolution(cs_pr2_manip)*/ 
 {
-    m_dmax = p3d_get_env_dmax();
+    m_dmax = ENV.getDouble(Env::dmax);
 
     //m_resolution = cs_pr2_manip;
 }

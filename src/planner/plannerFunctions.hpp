@@ -116,6 +116,15 @@ int p3d_run_vis_prm(p3d_rob* robotPt);
 int p3d_run_perturb_prm(p3d_rob* robotPt);
 
 /**
+ @ingroup NEW_CPP_MODULE
+ * \fn int p3d_run_simple_prm
+ * \brief function that starts the perturbation algorithm
+ * @param robotPt the robot
+ * @return le nombre de Node ajoutés au Graph
+ */
+int p3d_run_simple_prm(p3d_rob* robotPt);
+
+/**
   @ingroup NEW_CPP_MODULE
  * \fn bool p3d_run_rrt(p3d_graph* GraphPt,int (*fct_stop)(void), void (*fct_draw)(void));
  * \brief fonction de lancement de l'algorithme RRT

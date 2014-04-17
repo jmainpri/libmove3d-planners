@@ -375,18 +375,18 @@ public:
      * @param distConfigChoice le type de calcul de distance
      * @return le Node le plus proche de la Configuration appartenant à la composante connexe
      */
-    Node* nearestWeightNeighbour(Node* compco, confPtr_t C, bool weighted, int distConfigChoice);
+    Node* nearestWeightNeighbour(Node* compco, confPtr_t C, int distConfigChoice);
 
     /**
      * Compute the K nearest on the graph nodes
      * @param K the maximal number of neighbors
      */
-    std::vector<Node*> KNearestWeightNeighbour(confPtr_t config, int K, double radius, bool weighted, int distConfigChoice, Node* node_to_discard=NULL );
+    std::vector<Node*> KNearestWeightNeighbour(confPtr_t config, int K, double radius, int distConfigChoice, Node* node_to_discard=NULL );
 
     /**
    * Compute the KNearestWeightNeighbour
    */
-    static std::vector<Node*> KNearestWeightNeighbour( const std::vector<Node*>& nodes, confPtr_t config, int K, double radius, bool weighted, int distConfigChoice, Node* node_to_discard=NULL );
+    static std::vector<Node*> KNearestWeightNeighbour( const std::vector<Node*>& nodes, confPtr_t config, int K, double radius, int distConfigChoice, Node* node_to_discard=NULL );
 
     /**
      * Get Ith Compco

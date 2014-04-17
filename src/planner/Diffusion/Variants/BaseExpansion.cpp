@@ -54,7 +54,7 @@ BaseExpansion::~BaseExpansion(){}
  */
 double BaseExpansion::step()
 {
-	return(p3d_get_env_dmax() * ENV.getDouble(Env::extensionStep));
+	return(ENV.getDouble(Env::dmax) * ENV.getDouble(Env::extensionStep));
 }
 
 double BaseExpansion::positionAlongPath(LocalPath& path, double param)
@@ -111,7 +111,7 @@ bool BaseExpansion::expandControl( LocalPath& path, Node& compNode )
 	}
 	else
 	{
-		radius = ENV.getDouble(Env::refiRadius)*p3d_get_env_dmax();
+		radius = ENV.getDouble(Env::refiRadius)*ENV.getDouble(Env::dmax);
 	}
   
   ConnectedComponent* compco = compNode.getConnectedComponent();
@@ -120,12 +120,12 @@ bool BaseExpansion::expandControl( LocalPath& path, Node& compNode )
 	
 	if( ENV.getBool(Env::printRadius) ){
 		cout << "radius = " << radius << endl;
-		cout << "path.length() = " << path.getParamMax() << endl;
-    cout << "compco->getCompcoStruct()->nbRefinNodes = " << compco->getCompcoStruct()->nbRefinNodes << endl;
-    cout << "compco->getNumberOfNodes() = " << compco->getNumberOfNodes() << endl;
-		cout << "ratio of RNODES = " << ratio << endl;
-		cout << endl;
-	}
+        cout << "path.length() = " << path.getParamMax() << endl;
+        cout << "compco->getCompcoStruct()->nbRefinNodes = " << compco->getCompcoStruct()->nbRefinNodes << endl;
+        cout << "compco->getNumberOfNodes() = " << compco->getNumberOfNodes() << endl;
+        cout << "ratio of RNODES = " << ratio << endl;
+        cout << endl;
+    }
 	
 	if( path.getParamMax() <= radius )
 	{
@@ -195,7 +195,7 @@ bool BaseExpansion::nextStep(LocalPath& path, Node* directionNode, double& pathD
 	else
 	{
 		pathDelta = path.getParamMax() == 0. ? 1. : MIN(1., step() / path.getParamMax());
-		shared_ptr<Configuration> ptrEnd;
+        confPtr_t ptrEnd;
 		
 		if(pathDelta == 1. && directionNode)
 		{
@@ -215,7 +215,7 @@ bool BaseExpansion::nextStep(LocalPath& path, Node* directionNode, double& pathD
 /**
  * Gives successive co
  */
-bool BaseExpansion::nextStep(LocalPath& path, shared_ptr<Configuration>& directionConfig, double& pathDelta, shared_ptr<LocalPath>& newPath, Env::expansionMethod method)
+bool BaseExpansion::nextStep(LocalPath& path, confPtr_t& directionConfig, double& pathDelta, shared_ptr<LocalPath>& newPath, Env::expansionMethod method)
 {
 	
 	if(method == Env::Connect)

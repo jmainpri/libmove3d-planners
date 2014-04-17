@@ -14,11 +14,9 @@
 
 #include "collision_space/CollisionPoint.hpp"
 
-// Included for random number
-#include <libmove3d/include/P3d-pkg.h>
-
 namespace Move3D {
 
+double chomp_random_value( double max, double min );
 
 /**
  * \brief Contains information about a single joint for CHOMP planning
@@ -68,7 +66,7 @@ public:
    * control the collision point in some way. Also converts the ChompCollisionPoint::parent_joints
    * vector into group joint indexes
    */
-    bool addCollisionPoint(CollisionPoint& collision_point);
+    bool addCollisionPoint( CollisionPoint& collision_point );
 
     /**
       * Returns the Move3d active dofs
@@ -97,7 +95,7 @@ void ChompPlanningGroup::ChompPlanningGroup::getRandomState(Eigen::MatrixBase<De
             max = M_PI/2.0;
         }
 
-        state_vec(i) = ((((double)p3d_random(0,RAND_MAX))/RAND_MAX) * (max-min)) + min;
+        state_vec(i) = chomp_random_value( max, min );
     }
 }
 

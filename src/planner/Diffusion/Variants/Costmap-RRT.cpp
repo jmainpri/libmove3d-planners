@@ -302,7 +302,7 @@ bool CostmapRRT::connectNodeToCompco(Node* node, Node* compNode)
 	//p3d_SetIsMaxDistNeighbor(FALSE);
 	PlanEnv->setBool(PlanParam::isMaxDisNeigh,SavedIsMaxDis);
 	
-    node2 = _Graph->nearestWeightNeighbour( compNode, node->getConfiguration(), false, ENV.getInt(Env::DistConfigChoice) );
+    node2 = _Graph->nearestWeightNeighbour( compNode, node->getConfiguration(), ENV.getInt(Env::DistConfigChoice) );
 	
 	//p3d_SetIsMaxDistNeighbor(SavedIsMaxDis);
 	PlanEnv->setBool(PlanParam::isMaxDisNeigh,SavedIsMaxDis);

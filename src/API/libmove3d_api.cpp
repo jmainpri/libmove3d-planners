@@ -6,6 +6,7 @@
 #include "API/Device/joint.hpp"
 #include "API/Trajectory/trajectory.hpp"
 #include "API/Graphic/drawModule.hpp"
+#include "API/scene.hpp"
 
 #include "P3d-pkg.h"
 #include "Collision-pkg.h"
@@ -20,6 +21,10 @@
 using namespace std;
 using namespace Eigen;
 using namespace Move3D;
+
+extern void* move3d_localpath_get_localpath_struct( LocalPath& path, bool multi_sol, int& type );
+extern confPtr_t move3d_localpath_config_at_param( LocalPath& path, double param );
+extern bool move3d_localpath_is_valid_test( LocalPath& path, int& nb_col_check );
 
 // ****************************************************************************************************
 // ****************************************************************************************************
@@ -466,7 +471,7 @@ double move3d_stay_within_dist( LocalPath& path, double u, bool goForward, doubl
 // ****************************************************************************************************
 // ****************************************************************************************************
 
-void* move3d_robot_constructor( Robot* R, void* robotPt, bool copy, std::string& name, std::vector<Joint*>& joints )
+void* move3d_robot_constructor( Robot* R, void* robotPt, unsigned int& nb_dofs, bool copy, std::string& name, std::vector<Joint*>& joints )
 {
     void* robot;
 
@@ -485,6 +490,8 @@ void* move3d_robot_constructor( Robot* R, void* robotPt, bool copy, std::string&
     {
         joints.push_back( new Joint( R, static_cast<p3d_rob*>(robot)->joints[i] , i , copy ) );
     }
+
+    nb_dofs = static_cast<p3d_rob*>(robotPt)->nb_dof;
 
     return robot;
 }
@@ -759,6 +766,16 @@ double move3d_joint_get_joint_dof( const Joint* J, int ithDoF )
     return p3d_jnt_get_dof( J->getP3dJointStruct(), ithDoF );
 }
 
+double move3d_joint_is_joint_dof_angular( const Joint* J, int ithDoF )
+{
+    return p3d_jnt_is_dof_angular( J->getP3dJointStruct(), ithDoF );
+}
+
+double move3d_joint_is_joint_dof_circular( const Joint* J, int ithDoF )
+{
+    return p3d_jnt_is_dof_circular( J->getP3dJointStruct(), ithDoF );
+}
+
 void move3d_joint_set_joint_dof( const Joint* J, int ithDoF, double value )
 {
     p3d_jnt_set_dof( J->getP3dJointStruct(), ithDoF, value );
@@ -783,7 +800,7 @@ void move3d_joint_get_joint_rand_bounds( const Joint* J, int ithDoF, double& vmi
     vmax = jntPt->dof_data[ithDoF].vmax_r;
 }
 
-int move3d_joint_get_nb_of_joints( const Joint* J )
+int move3d_joint_get_nb_of_dofs( const Joint* J )
 {
     p3d_jnt* jntPt = (p3d_jnt*)(J->getP3dJointStruct());
     return jntPt->dof_equiv_nbr;
@@ -844,6 +861,84 @@ void move3d_draw_one_line_fct( double x1, double y1, double z1, double x2, doubl
     g3d_drawOneLine( x1, y1, z1, x2, y2, z2, color, color_vect );
 }
 
+void move3d_draw_clear_handles_fct()
+{
+
+}
+
+// ****************************************************************************************************
+// ****************************************************************************************************
+//
+// SCENE
+//
+// ****************************************************************************************************
+// ****************************************************************************************************
+
+void* move3d_scene_constructor_fct( void* penv, std::string& name, std::vector<Robot*>& robots, std::string& active_robot )
+{
+    p3d_env* scene = static_cast<p3d_env*>( penv );
+
+    name = scene->name;
+
+    robots.clear();
+
+    for (int i=0; i<scene->nr; i++)
+    {
+        cout << "Add new Robot to Scene : " << scene->robot[i]->name << endl;
+        robots.push_back( new Robot( scene->robot[i] ) );
+    }
+
+    // For all HRI planner the robot
+    // Will be set here
+    if ( scene->active_robot )
+    {
+        active_robot = scene->active_robot->name;
+        cout << "The Scene global_ActiveRobotName is : " << active_robot << endl;
+    }
+    else
+    {
+        active_robot = "";
+        cout << "WARNING : the Scene global_ActiveRobotName has not been set!!!!" << endl;
+    }
+
+    return scene;
+}
+
+void move3d_scene_set_active_robot( Scene* sce, void* penv, const std::string& name )
+{
+    p3d_env* scene = static_cast<p3d_env*>( penv );
+    unsigned int id = sce->getRobotId( name );
+    p3d_sel_desc_id( P3D_ROBOT, scene->robot[id] );
+}
+
+Robot* move3d_scene_get_active_robot( Scene* sce, void* penv )
+{
+    p3d_env* scene = static_cast<p3d_env*>( penv );
+    cout << "scene->cur_robot->name : " << scene->cur_robot->name << endl;
+    return sce->getRobotByName( scene->cur_robot->name );
+}
+
+double move3d_scene_get_dmax( void* penv )
+{
+    p3d_env* scene = static_cast<p3d_env*>( penv );
+    return scene->dmax;
+}
+
+std::vector<double> move3d_scene_get_bounds( void* penv )
+{
+    p3d_env* scene = static_cast<p3d_env*>( penv );
+
+    vector<double> bounds(6);
+    bounds[0] = scene->box.x1;
+    bounds[1] = scene->box.x2;
+    bounds[2] = scene->box.y1;
+    bounds[3] = scene->box.y2;
+    bounds[4] = scene->box.z1;
+    bounds[5] = scene->box.z2;
+
+    return bounds;
+}
+
 // ****************************************************************************************************
 // ****************************************************************************************************
 //
@@ -851,6 +946,15 @@ void move3d_draw_one_line_fct( double x1, double y1, double z1, double x2, doubl
 //
 // ****************************************************************************************************
 // ****************************************************************************************************
+
+void move3d_set_api_scene()
+{
+    move3d_set_fct_scene_constructor( boost::bind( move3d_scene_constructor_fct, _1, _2, _3, _4 ) );
+    move3d_set_fct_set_active_robot( boost::bind( move3d_scene_set_active_robot, _1, _2, _3 ) );
+    move3d_set_fct_get_active_robot( boost::bind( move3d_scene_get_active_robot, _1, _2 ) );
+    move3d_set_fct_get_dmax( boost::bind( move3d_scene_get_dmax, _1 ) );
+    move3d_set_fct_get_bounds( boost::bind( move3d_scene_get_bounds, _1 ) );
+}
 
 void move3d_set_api_functions_configuration()
 {
@@ -894,7 +998,7 @@ void move3d_set_api_functions_localpath()
 
 void move3d_set_api_functions_robot()
 {
-    move3d_set_fct_robot_constructor( boost::bind( move3d_robot_constructor, _1, _2, _3, _4, _5 ) );
+    move3d_set_fct_robot_constructor( boost::bind( move3d_robot_constructor, _1, _2, _3, _4, _5, _6 ) );
     move3d_set_fct_robot_get_current_trajectory( boost::bind( move3d_robot_get_current_trajectory, _1 ) );
     move3d_set_fct_robot_shoot( boost::bind( move3d_robot_shoot, _1, _2 ) );
     // move3d_set_fct_robot_shoot_dir( boost::bind( move3d_robot_set_and_update, _1, _2, _3 ));
@@ -922,11 +1026,13 @@ void move3d_set_api_functions_joint()
     move3d_set_fct_joint_get_matrix_pos( boost::bind( move3d_joint_get_matrix_pos, _1 ) );
     move3d_set_fct_joint_joint_shoot( boost::bind( move3d_joint_shoot, _1, _2, _3 ) );
     move3d_set_fct_joint_get_joint_dof( boost::bind( move3d_joint_get_joint_dof, _1, _2 ) );
+    move3d_set_fct_joint_is_joint_dof_angular( boost::bind( move3d_joint_is_joint_dof_angular, _1, _2 ) );
+    move3d_set_fct_joint_is_joint_dof_circular( boost::bind( move3d_joint_is_joint_dof_circular, _1, _2 ) );
     move3d_set_fct_joint_set_joint_dof( boost::bind( move3d_joint_set_joint_dof, _1, _2, _3 ) );
     move3d_set_fct_joint_is_joint_user( boost::bind( move3d_joint_is_joint_user, _1, _2 ) );
     move3d_set_fct_joint_get_bound( boost::bind( move3d_joint_get_joint_bounds, _1, _2, _3, _4 ) );
     move3d_set_fct_joint_get_bound_rand( boost::bind( move3d_joint_get_joint_rand_bounds, _1, _2, _3, _4 ) );
-    move3d_set_fct_joint_get_nb_of_joints( boost::bind( move3d_joint_get_nb_of_joints, _1 ) );
+    move3d_set_fct_joint_get_nb_of_dofs( boost::bind( move3d_joint_get_nb_of_dofs, _1 ) );
     move3d_set_fct_joint_get_index_of_first_dof( boost::bind( move3d_joint_get_index_of_first_joint, _1 ) );
     move3d_set_fct_joint_get_previous_joint( boost::bind( move3d_joint_get_previous_joint, _1, _2 ) );
     move3d_set_fct_joint_joint_dist( boost::bind( move3d_joint_get_dist, _1 ) );
@@ -936,4 +1042,5 @@ void move3d_set_api_functions_draw()
 {
     move3d_set_fct_draw_sphere( boost::bind( move3d_draw_sphere_fct, _1, _2, _3, _4 ) );
     move3d_set_fct_draw_one_line( boost::bind( move3d_draw_one_line_fct, _1, _2, _3, _4, _5, _6, _7, _8 ) );
+    move3d_set_fct_draw_clear_handles( boost::bind( move3d_draw_clear_handles_fct ) );
 }

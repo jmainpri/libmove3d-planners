@@ -260,8 +260,8 @@ bool TreePlanner::connectionToTheOtherCompco( Node* toNode )
         bool WeigtedRot = ENV.getBool(Env::isWeightedRotation);
         ENV.setBool(Env::isWeightedRotation,false);
 
-        Node* closestNode = _Graph->nearestWeightNeighbour(toNode,_Graph->getLastNode()->getConfiguration(),
-                                                           false, ENV.getInt(Env::DistConfigChoice));
+        Node* closestNode = _Graph->nearestWeightNeighbour( toNode, _Graph->getLastNode()->getConfiguration(),
+                                                            ENV.getInt(Env::DistConfigChoice));
 
         ENV.setBool(Env::isWeightedRotation,WeigtedRot);
 

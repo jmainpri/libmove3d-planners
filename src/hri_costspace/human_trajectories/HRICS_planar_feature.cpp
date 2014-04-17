@@ -6,6 +6,9 @@
 #include "API/misc_functions.hpp"
 #include "API/project.hpp"
 
+// Included for random number
+#include <libmove3d/include/P3d-pkg.h>
+
 #include <iomanip>
 #include <sstream>
 

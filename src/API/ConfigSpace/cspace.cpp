@@ -8,6 +8,8 @@
 
 #include <boost/math/special_functions/factorials.hpp>
 
+#include <libmove3d/include/P3d-pkg.h>
+
 using namespace Move3D;
 
 //double CSpace::traj_cost(p3d_traj* traj)

@@ -199,7 +199,7 @@ BoundingCylinder* BodySurfaceSampler::generateBoudingCylinder(p3d_obj* obj)
         return NULL;
     }
 
-    return new BoundingCylinder(p1,p2,radius);
+    return new BoundingCylinder( p1, p2, radius );
 }
 
 double BodySurfaceSampler::generateRobotBoudingCylinder( Robot* robot, const vector<Joint*>& activeJoints )
@@ -257,15 +257,15 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* j
 
     Eigen::Vector3d p;
 
-    double spacing = radius/2.0;
-    int num_points = ceil(length/spacing)+1;
-    spacing = length/(num_points-1.0);
+    double spacing = radius / 2.0;
+    int num_points = ceil( length / spacing ) + 1;
+    spacing = length / ( num_points - 1.0 );
 
     cout << "segment number : " << segment_number << endl;
 
     for (int i=0; i<num_points; ++i)
     {
-        Eigen::Vector3d p = p1 + ((double)i/(double)num_points)*(p2-p1);
+        Eigen::Vector3d p = p1 + ((double)i/(double)num_points)*( p2 - p1 );
         collision_points.push_back(CollisionPoint(parent_joints, radius, m_collision_clearance_default, segment_number, p));
     }
 

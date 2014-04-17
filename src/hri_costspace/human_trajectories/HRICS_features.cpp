@@ -3,6 +3,8 @@
 #include "HRICS_GestParameters.hpp"
 #include "planner/planEnvironment.hpp"
 
+#include "p3d/env.hpp"
+
 using namespace Move3D;
 using namespace HRICS;
 using std::cout;
@@ -117,7 +119,7 @@ FeatureVect Feature::getFeatureCount( const Move3D::Trajectory& traj )
 
     double t = 0.0;
     double t_max = traj.getRangeMax();
-    double step = p3d_get_env_dmax()*PlanEnv->getDouble(PlanParam::costResolution);
+    double step = ENV.getDouble(Env::dmax)*PlanEnv->getDouble(PlanParam::costResolution);
     int n_step = int(t_max/step);
 
     confPtr_t q = traj.configAtParam(0.0);

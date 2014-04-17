@@ -11,8 +11,6 @@
 
 #include "planner/PRM/PRM.hpp"
 
-#include "API/Trajectory/trajectory.hpp"
-
 class RRM : public PRM
 {
 public:

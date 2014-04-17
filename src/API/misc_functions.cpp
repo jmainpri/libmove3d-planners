@@ -3,6 +3,9 @@
 #include <iostream>
 #include <fstream>
 
+// For random number generator (seed can be passed as argument)
+#include <libmove3d/include/P3d-pkg.h>
+
 using std::cout;
 using std::endl;
 
@@ -52,4 +55,9 @@ std::vector<std::string>  move3d_get_files_in_folder( std::string foldername, st
     }
     pclose(fp);
     return files;
+}
+
+double move3d_random_integer( int min, int max )
+{
+    return p3d_random_integer( min, max );
 }

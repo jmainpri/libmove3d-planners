@@ -211,7 +211,7 @@ void costComputation::getFrames( int segment, const Eigen::VectorXd& joint_array
     }
 }
 
-bool costComputation::getConfigObstacleCost(int segment, int coll_point, Configuration& q)
+bool costComputation::getConfigObstacleCost(int segment, int coll_point, Configuration& q )
 {
     bool colliding = false;
 

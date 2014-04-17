@@ -1458,10 +1458,7 @@ bool Graph::connectNodeToCompco(Node* node1, Node* compco)
         PlanEnv->setBool(PlanParam::isMaxDisNeigh,false);
         PlanEnv->setBool(PlanParam::isWeightedChoice,false);
 
-        node2 =  nearestWeightNeighbour(compco,
-                                        node1->getConfiguration(),
-                                        false,
-                                        GENERAL_CSPACE_DIST);
+        node2 =  nearestWeightNeighbour( compco, node1->getConfiguration(), GENERAL_CSPACE_DIST );
 
         p3d_SetIsMaxDistNeighbor(SavedIsMaxDis);
         p3d_SetIsWeightedChoice(SavedIsWeightChoice);
@@ -1498,10 +1495,8 @@ bool Graph::connectNodeToCompco(Node* node1, Node* compco)
 
         p3d_SetIsMaxDistNeighbor(false);
         p3d_SetIsWeightedChoice(false);
-        node2 =  nearestWeightNeighbour(compco,
-                                        node1->getConfiguration(),
-                                        false,
-                                        GENERAL_CSPACE_DIST);
+
+        node2 =  nearestWeightNeighbour( compco, node1->getConfiguration(), GENERAL_CSPACE_DIST );
 
         p3d_SetIsMaxDistNeighbor(SavedIsMaxDis);
         p3d_SetIsWeightedChoice(SavedIsWeightChoice);
@@ -1553,9 +1548,9 @@ Node* Graph::nearestNeighbour( confPtr_t q ) const
  * returns the KNearest neighbours of the configuration config
  * in the entire graph within a minimum radius
  */
-std::vector<Node*> Graph::KNearestWeightNeighbour( confPtr_t q, int K, double radius, bool weighted, int distConfigChoice, Node* node_to_discard )
+std::vector<Node*> Graph::KNearestWeightNeighbour( confPtr_t q, int K, double radius, int distConfigChoice, Node* node_to_discard )
 {
-    return Graph::KNearestWeightNeighbour( nodes_, q, K, radius, weighted, distConfigChoice, node_to_discard );
+    return Graph::KNearestWeightNeighbour( nodes_, q, K, radius, distConfigChoice, node_to_discard );
 }
 
 /**
@@ -1564,7 +1559,7 @@ std::vector<Node*> Graph::KNearestWeightNeighbour( confPtr_t q, int K, double ra
  * returns the KNearest neighbours of the configuration config
  * in the entire graph within a minimum radius
  */
-std::vector<Node*> Graph::KNearestWeightNeighbour( const std::vector<Node*>& nodes, confPtr_t q, int K, double radius, bool weighted, int distConfigChoice, Node* node_to_discard )
+std::vector<Node*> Graph::KNearestWeightNeighbour( const std::vector<Node*>& nodes, confPtr_t q, int K, double radius, int distConfigChoice, Node* node_to_discard )
 {
     double score;
     std::vector< std::pair<double, Node*> > nearNodesQueue;
@@ -1589,7 +1584,7 @@ std::vector<Node*> Graph::KNearestWeightNeighbour( const std::vector<Node*>& nod
     std::sort( nearNodesQueue.begin(), nearNodesQueue.end() );
 
     // put the first K nodes of the queue in a vector
-    int bound = MIN(K, int(nearNodesQueue.size()));
+    int bound = MIN( K, int(nearNodesQueue.size() ));
 
     for (int i = 0; i < bound; ++i) {
         Node* node = nearNodesQueue[i].second;
@@ -1606,7 +1601,7 @@ std::vector<Node*> Graph::KNearestWeightNeighbour( const std::vector<Node*>& nod
  * finds the closest node from configuration in the
  * connected component of node compco
  */
-Node* Graph::nearestWeightNeighbour(Node* compco, confPtr_t q, bool weighted, int distConfigChoice)
+Node* Graph::nearestWeightNeighbour(Node* compco, confPtr_t q, int distConfigChoice)
 {
     // When retrieving statistics
     if (getStatStatus())
@@ -1614,7 +1609,7 @@ Node* Graph::nearestWeightNeighbour(Node* compco, confPtr_t q, bool weighted, in
         graph_->stat->planNeigCall++;
     }
 
-    return compco->getConnectedComponent()->nearestWeightNeighbour( q, weighted, distConfigChoice );
+    return compco->getConnectedComponent()->nearestWeightNeighbour( q, distConfigChoice );
 }
 
 //-----------------------------------------------------------
@@ -2194,7 +2189,7 @@ Move3D::Trajectory* Graph::extractBestAStarPathSoFar( confPtr_t qi, confPtr_t qf
         return NULL;
     }
 
-    Node* target = nearestWeightNeighbour( source, qf, false, ENV.getInt(Env::DistConfigChoice));
+    Node* target = nearestWeightNeighbour( source, qf, ENV.getInt(Env::DistConfigChoice));
     if( target == NULL ) {
         cout << "No goal nearest neighbour in graph in " << __PRETTY_FUNCTION__ << endl;
         return NULL;
@@ -2243,7 +2238,7 @@ Move3D::Trajectory* Graph::trajectoryFromNodeVector( const std::vector<Node*>& n
         // traj->push_back( edge->getLocalPath() );
     }
 
-    traj->replaceP3dTraj();
+    // traj->replaceP3dTraj();
     return traj;
 }
 
@@ -2262,7 +2257,7 @@ std::pair<bool, std::vector<Node*> > Graph::extractBestNodePathSoFar( confPtr_t 
         return make_pair(false,traj_nodes_reverse) ;
     }
 
-    Node* node = nearestWeightNeighbour( source, qf, false, ENV.getInt(Env::DistConfigChoice));
+    Node* node = nearestWeightNeighbour( source, qf, ENV.getInt(Env::DistConfigChoice));
     if( node == NULL ) {
         cout << "No goal nearest neihbour in graph in " << __PRETTY_FUNCTION__ << endl;
         return make_pair(false,traj_nodes_reverse);
@@ -2510,6 +2505,8 @@ void Graph::drawNode(BGL_Vertex v)
 
     BGL_VertexDataMapT NodeData = boost::get( NodeData_t() , boost_graph_ );
 
+    // NodeData[v]->getConfiguration()->print();
+
     robot_->setAndUpdate( *NodeData[v]->getConfiguration() );
     Eigen::Vector3d pos = drawnjnt->getVectorPos();
 
@@ -2524,7 +2521,7 @@ void Graph::drawNode(BGL_Vertex v)
     int color = NodeData[v]->color_;
     if( color == 0 )
         color = NodeData[v]->getConnectedComponent()->getId();
-    g3d_set_color( color, color_array );
+    g3d_set_color( color % 34, color_array );
 
     move3d_draw_sphere( pos[0], pos[1], pos[2], radius );
     // g3d_draw_solid_sphere( pos[0], pos[1], pos[2], radius, 10 );

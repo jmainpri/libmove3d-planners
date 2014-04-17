@@ -144,7 +144,7 @@ public:
     Eigen::MatrixXd getEigenMatrix(const std::vector<int>& incides) const;
 
     void printAllLocalpathCost();
-    void draw(int nbKeyFrame);
+    void draw(int nbKeyFrame = 0);
     void print() const;
 
     int meanCollTest();

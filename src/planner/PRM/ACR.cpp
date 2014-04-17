@@ -54,9 +54,9 @@ void ACR::expandOneStep()
 
         int K = _Graph->getNumberOfNodes(); // All nodes
         //int K = m_K_Nearest;
-        double radius = ENV.getDouble(Env::extensionStep)*p3d_get_env_dmax();
+        double radius = ENV.getDouble(Env::extensionStep)*ENV.getDouble(Env::dmax);
 
-        std::vector<Node*> near_nodes = _Graph->KNearestWeightNeighbour( q, K, radius, false, ENV.getInt(Env::DistConfigChoice), node_new );
+        std::vector<Node*> near_nodes = _Graph->KNearestWeightNeighbour( q, K, radius, ENV.getInt(Env::DistConfigChoice), node_new );
 
         for (int i=0; i<int(near_nodes.size()); i++)
         {

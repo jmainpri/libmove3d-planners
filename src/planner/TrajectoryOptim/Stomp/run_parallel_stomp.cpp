@@ -1,11 +1,11 @@
 #include "run_parallel_stomp.hpp"
 
-#include "p3d/env.hpp"
-
 #include "planner/planEnvironment.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
-
 #include "API/project.hpp"
+
+#include <libmove3d/include/P3d-pkg.h>
+#include <libmove3d/p3d/env.hpp>
 
 #include <boost/thread/thread.hpp>
 

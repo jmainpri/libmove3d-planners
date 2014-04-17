@@ -322,7 +322,8 @@ private:
     Move3D::ChompTrajectory *full_trajectory_;
     const Move3D::ChompPlanningGroup *planning_group_;
     const StompParameters *stomp_parameters_;
-    const Move3D::CollisionSpace *collision_space_;
+    const Move3D::CollisionSpace *move3d_collision_space_;
+    bool use_external_collision_space_;
     Move3D::ChompTrajectory group_trajectory_;
     std::vector<Move3D::ChompCost> joint_costs_;
 
@@ -442,8 +443,12 @@ private:
     void updateMomentum();
     void updatePositionFromMomentum();
     void calculatePseudoInverse();
+
     void getFrames( int segment, const Eigen::VectorXd& joint_array, Move3D::Configuration& q );
-    bool getConfigObstacleCost(int segment, int dof );
+
+    bool getCollisionPointObstacleCost( int segment, int coll_point, double& collion_point_potential, Eigen::Vector3d& pos );
+    bool getConfigObstacleCost( Move3D::Robot* robot, int i, Eigen::MatrixXd& collision_point_potential, std::vector< std::vector<Eigen::Vector3d> >& collision_point_pos );
+
     bool performForwardKinematics();
     void doChompOptimization();
 
@@ -470,6 +475,8 @@ private:
     void saveCostFromConvergenceTraj();
     void saveOptimToFile(std::string fileName);
 
+    int getNumberOfCollisionPoints();
+
     //  void getTorques(int index, std::vector<double>& torques, const std::vector<KDL::Wrench>& wrenches);
 };
 
@@ -478,5 +485,10 @@ private:
 extern std::map< Move3D::Robot*, std::vector<Eigen::Vector3d> > global_MultiStomplinesToDraw;
 extern std::map< Move3D::Robot*, std::vector<double> >          global_MultiStomplinesColors;
 extern MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> global_optimizer;
+
+void move3d_set_api_functions_collision_space( bool use_move3d_fct );
+bool move3d_use_api_functions_collision_space();
+void move3d_set_fct_get_nb_collision_points( boost::function<int(void)> fct );
+void move3d_set_fct_get_config_collision_cost( boost::function<bool( Move3D::Robot* robot, int i, Eigen::MatrixXd&, std::vector< std::vector<Eigen::Vector3d> >& )> fct ) ;
 
 #endif /* STOMP_OPTIMIZER_H_ */

@@ -10,7 +10,6 @@
 #define BODY_SURFACE_SAMPLING_H
 
 #include <libmove3d/include/p3d.h>
-#include <libmove3d/include/environment.h>
 
 #include "API/Device/robot.hpp"
 #include "API/Grids/PointCloud.hpp"
@@ -73,7 +72,6 @@ private:
     bool isPointInEnvironment( const Eigen::Vector3d& point );
     bool isPointOverGround( const Eigen::Vector3d& point );
 
-    env*                                            m_env;
     double                                          m_step;
     double                                          m_collision_clearance_default;
     std::map<obj*,PointCloud>                       m_objectToPointCloudMap;

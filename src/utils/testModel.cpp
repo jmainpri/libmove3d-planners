@@ -171,7 +171,7 @@ int TestModel::nbOfLocalPathsPerSeconds()
 
     vector<double> dist;
 
-    double x = ENV.getDouble(Env::extensionStep) * p3d_get_env_dmax();
+    double x = ENV.getDouble(Env::extensionStep) * ENV.getDouble(Env::dmax);
 
     for (int i = 0;/*i<100*/; i++)
     {

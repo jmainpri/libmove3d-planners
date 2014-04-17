@@ -163,6 +163,7 @@ unsigned int PRM::run()
     while (!checkStopConditions())
     {
         expandOneStep(); m_nbExpansions++;
+
         ChronoTimes( &m_time , &ts );
 
         if( PlanEnv->getBool( PlanParam::rrtExtractShortestPath ) )
@@ -172,7 +173,10 @@ unsigned int PRM::run()
             (*_draw_func)();
     }
 
+    postPocess();
+
     ChronoOff();
+
     _Robot->setAndUpdate(*tmp);
 
     return m_nbAddedNode;

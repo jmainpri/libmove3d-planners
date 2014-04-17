@@ -1170,7 +1170,7 @@ double Hri::getPeneTrajCost(p3d_graph* graphPt, p3d_traj* trajPt,
 	configPt config;
 	double currentCost;
 	double currentParam = 0.;
-	double dMax = p3d_get_env_dmax();
+	double dMax = ENV.getDouble(Env::dmax);
 	double prevCost;
 	double Wsum = 0.;
 
@@ -1330,7 +1330,7 @@ void Hri::saveGPlotCostTraj(int iteration) {
 #if P3D_PLANNER
 
 	for (double current_param = 0.; current_param < robotPt->tcur->range_param; current_param
-	+= (p3d_get_env_dmax() * ENV.getDouble(Env::extensionStep)/2)) {
+	+= (ENV.getDouble(Env::dmax) * ENV.getDouble(Env::extensionStep)/2)) {
 		configPt q = p3d_config_at_param_along_traj(robotPt->tcur,
 				current_param);
 

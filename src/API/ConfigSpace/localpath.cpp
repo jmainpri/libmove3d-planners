@@ -319,7 +319,7 @@ double LocalPath::getResolution(double step)
 
         if (step == 0.0)
         {
-            step = PlanEnv->getDouble(PlanParam::costResolution)*p3d_get_env_dmax();
+            step = PlanEnv->getDouble(PlanParam::costResolution)*ENV.getDouble(Env::dmax);
         }
 
         _Resolution = length/ceil(length/(step));

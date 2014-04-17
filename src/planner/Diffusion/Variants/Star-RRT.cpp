@@ -349,7 +349,7 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
         int K = m_Graph->getNumberOfNodes();
         //int K = m_K_Nearest;
 
-        vector<Node*> near_nodes = m_compco->KNearestWeightNeighbour( node_new->getConfiguration(), K, radius, false, ENV.getInt(Env::DistConfigChoice) );
+        vector<Node*> near_nodes = m_compco->KNearestWeightNeighbour( node_new->getConfiguration(), K, radius, ENV.getInt(Env::DistConfigChoice) );
 
         if( print_exploration )
         {

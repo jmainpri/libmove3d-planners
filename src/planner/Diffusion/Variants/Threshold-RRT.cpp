@@ -263,7 +263,6 @@ bool ThresholdRRT::connectNodeToCompco(Node* node, Node* compNode)
 	
     node2 = _Graph->nearestWeightNeighbour(compNode,
                                            node->getConfiguration(),
-                                           false,
                                            ENV.getInt(Env::DistConfigChoice));
 	
     //p3d_SetIsMaxDistNeighbor(SavedIsMaxDis);

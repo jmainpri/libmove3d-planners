@@ -253,6 +253,149 @@ bool traj_optim_init_mlp_cntrts_and_fix_joints()
     return true;
 }
 
+//! initializes the collision space
+// --------------------------------------------------------
+void traj_optim_init_collision_space()
+{
+    //    std::vector<double> env_size = global_Project->getActiveScene()->getBounds();
+    //    double pace = env_size[1] - env_size[0];
+    //    pace = max( env_size[3] - env_size[3], pace);
+    //    pace = max( env_size[4] - env_size[5], pace);
+    //    pace /= ENV.getInt(Env::nbCells);
+
+
+    //    ChronoTimeOfDayOn();
+
+    m_coll_space = new CollisionSpace( m_robot, double(ENV.getInt(Env::nbCells))/100, global_Project->getActiveScene()->getBounds() );
+
+    m_coll_space->resetPoints();
+
+    // Warning
+    // If not human not add bodies
+    if( m_robot->getName().find("HERAKLES") == string::npos )
+    {
+//        cout << "robot name : " << m_robot->getName() << endl;
+//        cout << "Add robot bodies exit " << endl; exit(0);
+
+        for (unsigned int joint_id=0; joint_id<m_robot->getNumberOfJoints(); joint_id++)
+        {
+            if ( find (m_active_joints.begin(), m_active_joints.end(), joint_id ) == m_active_joints.end() )
+            {
+                m_coll_space->addRobotBody( m_robot->getJoint(joint_id) );
+            }
+        }
+    }
+
+    if( m_add_human )
+    {
+        Scene* sc = global_Project->getActiveScene();
+
+        for (unsigned int i=0; i<sc->getNumberOfRobots(); i++)
+        {
+            Robot* rob = sc->getRobot(i);
+
+            if (  ( m_robot != rob ) && rob->getName().find("HERAKLES") != string::npos )
+            {
+                m_coll_space->addRobot( rob );
+            }
+        }
+    }
+
+    // Add all moving and static obstacles
+    m_coll_space->addEnvPoints();
+
+    // Adds the sampled points to the distance field
+    m_coll_space->propagateDistance();
+
+    //    double time=0.0;
+    //    ChronoTimeOfDayTimes(&time);
+    //    ChronoTimeOfDayOff();
+    //    cout << " collision space computed in : " << time << endl;
+}
+
+//! initializes the collision points
+// --------------------------------------------------------
+bool traj_optim_init_collision_points()
+{
+    // Generate Bounding volumes for active joints
+    BodySurfaceSampler* sampler = m_coll_space->getBodySampler();
+
+    // Get all joints active in the motion planning
+    // and compute bounding cylinders
+    vector<Joint*> joints;
+    joints.clear();
+
+    for (unsigned int i=0; i<m_active_joints.size(); i++)
+    {
+        joints.push_back( m_robot->getJoint( m_active_joints[i] ) );
+    }
+    /*double maxRadius =*/ sampler->generateRobotBoudingCylinder( m_robot, joints );
+
+    // Get all planner joint and compute collision points
+    vector<int> planner_joints_id;
+    for (unsigned int i=0; i<m_planner_joints.size(); i++)
+    {
+        planner_joints_id.push_back( m_planner_joints[i] );
+    }
+    m_collision_points = sampler->generateRobotCollisionPoints( m_robot, m_active_joints, planner_joints_id );
+
+    cout << "nb of collision point are " << m_collision_points.size() << endl;
+
+    // Set the collision space as global (drawing)
+    global_collisionSpace = m_coll_space;
+    return true;
+}
+
+//! Generate A Soft Motion Trajectory
+// --------------------------------------------------------
+bool traj_optim_generate_pointsOnTraj()
+{
+    //  if ( m_robot->getName() != traj.getRobot()->getName() )
+    //  {
+    //    cout << "trajectory not for propper robot" << endl;
+    //    return false;
+    //  }
+    cout << "Generate Points on Vias" << endl;
+
+    if ( m_robot == NULL )
+        m_robot = global_Project->getActiveScene()->getActiveRobot();
+
+    Move3D::Trajectory traj = m_robot->getCurrentTraj();
+
+    int nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
+    int nb_via = traj.getNbOfViaPoints()-2;
+
+    if( nb_via < 1 )
+    {
+        cout << "not enought via" << endl;
+        return false;
+    }
+
+    int nb_points_per_via = ceil( nb_points/nb_via );
+
+    Move3D::Trajectory new_traj( m_robot );
+
+    double param=0.0;
+    double delta = 0.0;
+    double density = 4;
+    double step = traj.getRangeMax()/(nb_points*density);
+
+    for (int i=0; i<traj.getNbOfPaths(); i++ )
+    {
+        param += traj.getLocalPath( i )->getParamMax();
+        delta = -step*density;
+
+        for(int j=0; j<nb_points_per_via; j++ )
+        {
+            new_traj.push_back( traj.configAtParam( param+delta ));
+            delta += step;
+        }
+    }
+    traj = new_traj;
+    traj.replaceP3dTraj();
+    return true;
+}
+
 //! Virtual object
 // --------------------------------------------------------
 bool traj_optim_switch_cartesian_mode(bool cartesian) {
@@ -359,19 +502,38 @@ bool traj_optim_default_init()
     m_active_joints.clear();
     m_planner_joints.clear();
 
-    for (int i=1; i<int(m_robot->getNumberOfJoints()); i++)
-    {
-        // Set the active joints (links)
-        m_active_joints.push_back( i );
+    m_active_joints = m_robot->getActiveJointsIds();
+    m_planner_joints = m_active_joints;
 
-        // Set the planner joints
-        m_planner_joints.push_back( i );
-    }
+//    for (int i=1; i<int(m_robot->getNumberOfJoints()); i++)
+//    {
+//        // Set the active joints (links)
+//        m_active_joints.push_back( i );
+
+//        // Set the planner joints
+//        m_planner_joints.push_back( i );
+//    }
 
     m_coll_space = NULL;
-    return (global_costSpace != NULL);
-}
 
+    if( ENV.getBool(Env::isCostSpace) )
+    {
+        return (global_costSpace != NULL);
+    }
+    if( move3d_use_api_functions_collision_space() )
+    {
+        if( global_collisionSpace == NULL )
+        {
+            traj_optim_init_collision_space();
+            traj_optim_init_collision_points();
+        }
+        else {
+            m_coll_space = global_collisionSpace;
+        }
+    }
+
+    return true;
+}
 
 //****************************************************************
 //* 2D Simple example
@@ -429,56 +591,6 @@ bool traj_optim_costmap_init()
 
     bool valid_costspace = global_costSpace->setCost("costMap2D");
     return valid_costspace;
-}
-
-//! Generate A Soft Motion Trajectory
-// --------------------------------------------------------
-bool traj_optim_generate_pointsOnTraj()
-{
-    //  if ( m_robot->getName() != traj.getRobot()->getName() )
-    //  {
-    //    cout << "trajectory not for propper robot" << endl;
-    //    return false;
-    //  }
-    cout << "Generate Points on Vias" << endl;
-
-    if ( m_robot == NULL )
-        m_robot = global_Project->getActiveScene()->getActiveRobot();
-
-    Move3D::Trajectory traj = m_robot->getCurrentTraj();
-
-    int nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
-    int nb_via = traj.getNbOfViaPoints()-2;
-
-    if( nb_via < 1 )
-    {
-        cout << "not enought via" << endl;
-        return false;
-    }
-
-    int nb_points_per_via = ceil( nb_points/nb_via );
-
-    Move3D::Trajectory new_traj( m_robot );
-
-    double param=0.0;
-    double delta = 0.0;
-    double density = 4;
-    double step = traj.getRangeMax()/(nb_points*density);
-
-    for (int i=0; i<traj.getNbOfPaths(); i++ )
-    {
-        param += traj.getLocalPath( i )->getParamMax();
-        delta = -step*density;
-
-        for(int j=0; j<nb_points_per_via; j++ )
-        {
-            new_traj.push_back( traj.configAtParam( param+delta ));
-            delta += step;
-        }
-    }
-    traj = new_traj;
-    traj.replaceP3dTraj();
-    return true;
 }
 
 //! Generate A Soft Motion Trajectory
@@ -610,99 +722,6 @@ void traj_optim_shelf_set_localpath_and_cntrts()
     fixAllJointsWithoutArm( m_robot->getP3dRobotStruct() , 0 );
 #endif
     //ENV.setInt( Env::jntToDraw, 28 );
-}
-
-//! initializes the collision space
-// --------------------------------------------------------
-void traj_optim_init_collision_space()
-{
-    //    std::vector<double> env_size = global_Project->getActiveScene()->getBounds();
-    //    double pace = env_size[1] - env_size[0];
-    //    pace = max( env_size[3] - env_size[3], pace);
-    //    pace = max( env_size[4] - env_size[5], pace);
-    //    pace /= ENV.getInt(Env::nbCells);
-
-
-    //    ChronoTimeOfDayOn();
-
-    m_coll_space = new CollisionSpace( m_robot, double(ENV.getInt(Env::nbCells))/100, global_Project->getActiveScene()->getBounds() );
-
-    m_coll_space->resetPoints();
-
-    // Warning
-    // If not human not add bodies
-    if( m_robot->getName().find("HERAKLES") == string::npos )
-    {
-//        cout << "robot name : " << m_robot->getName() << endl;
-//        cout << "Add robot bodies exit " << endl; exit(0);
-
-        for (unsigned int joint_id=0; joint_id<m_robot->getNumberOfJoints(); joint_id++)
-        {
-            if ( find (m_active_joints.begin(), m_active_joints.end(), joint_id ) == m_active_joints.end() )
-            {
-                m_coll_space->addRobotBody( m_robot->getJoint(joint_id) );
-            }
-        }
-    }
-
-    if( m_add_human )
-    {
-        Scene* sc = global_Project->getActiveScene();
-
-        for (unsigned int i=0; i<sc->getNumberOfRobots(); i++)
-        {
-            Robot* rob = sc->getRobot(i);
-
-            if (  ( m_robot != rob ) && rob->getName().find("HERAKLES") != string::npos )
-            {
-                m_coll_space->addRobot( rob );
-            }
-        }
-    }
-
-    // Add all moving and static obstacles
-    m_coll_space->addEnvPoints();
-
-    // Adds the sampled points to the distance field
-    m_coll_space->propagateDistance();
-
-    //    double time=0.0;
-    //    ChronoTimeOfDayTimes(&time);
-    //    ChronoTimeOfDayOff();
-    //    cout << " collision space computed in : " << time << endl;
-}
-
-//! initializes the collision points
-// --------------------------------------------------------
-bool traj_optim_init_collision_points()
-{
-    // Generate Bounding volumes for active joints
-    BodySurfaceSampler* sampler = m_coll_space->getBodySampler();
-
-    // Get all joints active in the motion planning
-    // and compute bounding cylinders
-    vector<Joint*> joints;
-    joints.clear();
-
-    for (unsigned int i=0; i<m_active_joints.size(); i++)
-    {
-        joints.push_back( m_robot->getJoint( m_active_joints[i] ) );
-    }
-    /*double maxRadius =*/ sampler->generateRobotBoudingCylinder( m_robot, joints );
-
-    // Get all planner joint and compute collision points
-    vector<int> planner_joints_id;
-    for (unsigned int i=0; i<m_planner_joints.size(); i++)
-    {
-        planner_joints_id.push_back( m_planner_joints[i] );
-    }
-    m_collision_points = sampler->generateRobotCollisionPoints( m_robot, m_active_joints, planner_joints_id );
-
-    cout << "nb of collision point are " << m_collision_points.size() << endl;
-
-    // Set the collision space as global (drawing)
-    global_collisionSpace = m_coll_space;
-    return true;
 }
 
 //****************************************************************
@@ -1423,9 +1442,6 @@ bool traj_optim_initStomp()
     m_stompparams = new stomp_motion_planner::StompParameters;
     m_stompparams->init();
 
-//    for (int i=0; i<int(m_planner_joints.size()); i++) {
-//        cout << m_planner_joints[i] << endl;
-//    }
     m_chompplangroup = new ChompPlanningGroup( m_robot, m_planner_joints );
     m_chompplangroup->collision_points_ = m_collision_points;
 
@@ -1434,10 +1450,18 @@ bool traj_optim_initStomp()
     cout << "Chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
 
     cout << "Initialize optimizer" << endl;
-    global_optimizer.reset(new stomp_motion_planner::StompOptimizer( m_chomptraj, m_stompparams, m_chompplangroup, m_coll_space));
+    global_optimizer.reset( new stomp_motion_planner::StompOptimizer( m_chomptraj, m_stompparams, m_chompplangroup, m_coll_space ));
     global_optimizer->setSource( T.getBegin() );
     global_optimizer->setSharedPtr( global_optimizer );
     global_optimizer->setPassiveDofs( passive_dofs );
+
+    m_stompparams->init();
+
+    if( PlanEnv->getBool(PlanParam::trajStompWithIterLimit) || m_use_iteration_limit )
+    {
+        global_optimizer->setUseIterationLimit( true );
+        m_stompparams->max_iterations_ = PlanEnv->getInt(PlanParam::stompMaxIteration);
+    }
 
     if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
     {
@@ -1445,9 +1469,7 @@ bool traj_optim_initStomp()
         m_stompparams->max_time_ = PlanEnv->getDouble(PlanParam::trajStompTimeLimit);
     }
 
-    if( (m_sce == traj_optim::HumanAwareManip && m_robot->getName() == "PR2_ROBOT") ||
-        (m_sce == traj_optim::Default) ||
-        (m_sce == traj_optim::CostMap) )
+    if( (m_sce == traj_optim::HumanAwareManip && m_robot->getName() == "PR2_ROBOT") || (m_sce == traj_optim::CostMap) )
     {
         global_optimizer->setUseCostSpace(true);
     }
@@ -1472,23 +1494,6 @@ bool traj_optim_runStomp( int runId )
     {
         cout << "Could not init stomp in : " << __PRETTY_FUNCTION__ << endl;
         return false;
-    }
-
-    m_stompparams->init();
-
-    if( m_use_iteration_limit )
-    {
-        global_optimizer->setUseIterationLimit( true );
-        m_stompparams->max_iterations_ = m_max_iteration;
-    }
-
-    if( PlanEnv->getBool(PlanParam::trajStompWithTimeLimit) )
-    {
-        global_optimizer->setUseTimeLimit( true );
-        m_stompparams->max_time_ = PlanEnv->getDouble(PlanParam::trajStompTimeLimit);
-    }
-    else {
-        global_optimizer->setUseTimeLimit( false );
     }
 
     if(!PlanEnv->getBool(PlanParam::trajOptimTestMultiGauss))

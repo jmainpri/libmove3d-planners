@@ -89,7 +89,7 @@ confPtr_t RRTExpansion::getExpansionDirection( Node* expandComp, Node* goalComp,
             m_Graph->getRobot()->deactivateCcConstraint();
 
             q = m_Graph->getRobot()->shoot();
-            Node* closest = m_Graph->nearestWeightNeighbour(expandComp,q,false,ONLY_ROBOT_BASE);
+            Node* closest = m_Graph->nearestWeightNeighbour(expandComp,q,ONLY_ROBOT_BASE);
 
             LocalPath path(closest->getConfiguration(),q);
             //				cout << "Param max = " << path.getParamMax() << " , step = " << step() << endl;
@@ -148,7 +148,7 @@ Node* RRTExpansion::getExpansionNode(Node* compNode, shared_ptr<Configuration> d
 
     case NEAREST_EXP_NODE_METH:
         /* Choose the nearest node of the componant*/
-        return (m_Graph->nearestWeightNeighbour( compNode, direction, p3d_GetIsWeightedChoice(), distance));
+        return (m_Graph->nearestWeightNeighbour( compNode, direction, distance));
 
     case K_NEAREST_EXP_NODE_METH:
         /* Select randomly among the K nearest nodes of a componant */
@@ -158,18 +158,18 @@ Node* RRTExpansion::getExpansionNode(Node* compNode, shared_ptr<Configuration> d
         //   ExpansionNodePt = KNearestWeightNeighbor(mG, compNode->mN->comp, direction->mQ,
         // KNearest);
 
-        return (m_Graph->nearestWeightNeighbour( compNode, direction, p3d_GetIsWeightedChoice(), distance));
+        return (m_Graph->nearestWeightNeighbour( compNode, direction, distance));
 
     case BEST_SCORE_EXP_METH:
         /* Select the node which has the best score: weight*dist */
-        return (m_Graph->nearestWeightNeighbour( compNode, direction, p3d_GetIsWeightedChoice(), distance));
+        return (m_Graph->nearestWeightNeighbour( compNode, direction,  distance));
 
     case K_BEST_SCORE_EXP_METH:
        // NearestPercent = m_kNearestPercent;
         //KNearest = MAX(1,(int)((NearestPercent*(compNode->getConnectedComponent()->getNumberOfNodes()))/100.));
         // TODO : fix
         // ExpansionNodePt = KNearestWeightNeighbor(mG, compNode->mN->comp, direction->mQ, KNearest);
-        return (m_Graph->nearestWeightNeighbour( compNode, direction, p3d_GetIsWeightedChoice(), distance));
+        return (m_Graph->nearestWeightNeighbour( compNode, direction,  distance));
 
     case RANDOM_IN_SHELL_METH:
         /* Select randomly among all the nodes inside a given portion of shell */
@@ -213,8 +213,7 @@ Node* RRTExpansion::getExpansionNode(Node* compNode, shared_ptr<Configuration> d
 
     default:
         /* By default return the nearest node of the componant */
-        return (m_Graph->nearestWeightNeighbour(compNode, direction,
-                                                p3d_GetIsWeightedChoice(), distance));
+        return m_Graph->nearestWeightNeighbour( compNode, direction, distance );
     }
 }
 
@@ -225,8 +224,7 @@ bool RRTExpansion::expandToGoal(Node* expansionNode,
 }
 
 
-unsigned RRTExpansion::expandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode,
-                                     Env::expansionMethod method)
+unsigned RRTExpansion::expandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode, Env::expansionMethod method)
 {
     bool extensionSucceeded(false);
     bool failed(false);

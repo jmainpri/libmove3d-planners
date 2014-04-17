@@ -144,7 +144,7 @@ Node* ESTExpansion::expandProcessEST( Node* expansionNode,
 
     Node* ptrToNode(NULL);
 
-    Node* neigh = m_Graph->nearestWeightNeighbour(expansionNode,toConfig,false,
+    Node* neigh = m_Graph->nearestWeightNeighbour(expansionNode,toConfig,
                                                   ENV.getInt(Env::DistConfigChoice));
 
     if( neigh->getConfiguration()->dist(*toConfig) < 2*step()/3 )

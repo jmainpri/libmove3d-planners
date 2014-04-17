@@ -67,20 +67,37 @@ public:
     rob* getP3dRobotStruct();
 
     /**
+     * obtient la structure p3d_rob de la classe
+     * @return la structure p3d_rob
+     */
+    void* getRobotStruct() { return robot_kin_struct_; }
+
+    /**
      * obtient le nom du Robot
      * @return le nom du Robot
      */
     std::string getName();
 
     /**
+     * Gets wether the robot uses libmove3d structures
+     * @return bool
+     */
+    bool getUseLibmove3dStruct() { return contains_libmove3d_struct_; }
+
+    /**
+     * Sets wether the robot uses libmove3d structures
+     */
+    void setUseLibmove3dStruct( bool use_libmove3d_struct ) { contains_libmove3d_struct_ = use_libmove3d_struct; }
+
+    /**
      * Associate an active scene to the robot
      */
-    void setActiveScene(Move3D::Scene* sc) { m_ActiveScene = sc; }
+    void setActiveScene(Move3D::Scene* sc) { active_scene_ = sc; }
 
     /**
      * Returns the active scene involving the robot
      */
-    Move3D::Scene* getActiveScene() { return m_ActiveScene; }
+    Move3D::Scene* getActiveScene() { return active_scene_; }
 
     /**
      * Gets traj associated with Robot
@@ -94,10 +111,16 @@ public:
     Move3D::Trajectory getCurrentTraj();
 
     /**
+     * Get the number of dofs
+     * @return the Number of dofs
+     */
+    unsigned int getNumberOfDofs() const;
+
+    /**
      * Get the number of Joints
      * @return the Number of Joints
      */
-    unsigned int getNumberOfJoints();
+    unsigned int getNumberOfJoints() const;
 
     /**
      * Gets the ith joint structure
@@ -115,7 +138,7 @@ public:
      * Gets joint by name
      * @return pointer to the joint by name or NULL if not found
      */
-    const std::vector<Joint*>& getJoints() const { return m_Joints; }
+    const std::vector<Joint*>& getJoints() const { return joints_; }
 
     /**
    * Returns an vector of all robot joints
@@ -235,6 +258,11 @@ public:
     /**
      * Returns an array of dof ids
      */
+    std::vector<int> getActiveJointsIds();
+
+    /**
+     * Returns an array of dof ids
+     */
     std::vector<int> getActiveDoFsFromJoints( const std::vector<int>& joint_ids );
 
     /**
@@ -308,22 +336,24 @@ public:
 #endif
 
 private:
-    void* _Robot; /*!< une structure de p3d_rob contenant les données sur le Robot*/
-    std::string _Name; /*!< le nom du Robot*/
-    Move3D::Scene* m_ActiveScene;
-    bool _copy; /*!< Is true if the p3d_jnt copies and not only points to the structure */
+    void* robot_kin_struct_; /*!< une structure de p3d_rob contenant les données sur le Robot*/
+    std::string name_; /*!< le nom du Robot*/
+    Move3D::Scene* active_scene_;
+    bool copy_; /*!< Is true if the p3d_jnt copies and not only points to the structure */
+    bool contains_libmove3d_struct_;
+    unsigned int nb_dofs_;
 
-    std::vector<Joint*> m_Joints;
+    std::vector<Joint*> joints_;
 
-    Eigen::Vector3d m_ObjectBoxCenter;
-    Eigen::Vector3d m_ObjectBoxDimentions;
+    Eigen::Vector3d object_box_center_;
+    Eigen::Vector3d object_box_dimentions_;
 };
 
 extern Robot* API_activeRobot;
 
 }
 
-void move3d_set_fct_robot_constructor( boost::function<void( Move3D::Robot*, void*, bool, std::string&, std::vector<Move3D::Joint*>& )> fct );
+void move3d_set_fct_robot_constructor( boost::function<void( Move3D::Robot*, void*, unsigned int&, bool, std::string&, std::vector<Move3D::Joint*>& )> fct );
 void move3d_set_fct_robot_get_current_trajectory( boost::function<Move3D::Trajectory( Move3D::Robot* )> fct );
 void move3d_set_fct_robot_shoot( boost::function<Move3D::confPtr_t( Move3D::confPtr_t, bool )> fct );
 void move3d_set_fct_robot_shoot_dir( boost::function<Move3D::confPtr_t( Move3D::confPtr_t, bool )> fct );

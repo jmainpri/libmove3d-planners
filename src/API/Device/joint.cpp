@@ -33,6 +33,8 @@ static boost::function<Vector3d( const Joint* )> Move3DJointGetVectorPos;
 static boost::function<Transform3d( const Joint* )> Move3DJointGetMatrixPos;
 static boost::function<void( Joint*, Configuration&, bool )> Move3DJointShoot;
 static boost::function<double( const Joint*, int )> Move3DJointGetJointDoF;
+static boost::function<double( const Joint*, int )> Move3DJointIsJointDoFAngular;
+static boost::function<double( const Joint*, int )> Move3DJointIsJointDoFCircular;
 static boost::function<void( const Joint*, int, double )> Move3DJointSetJointDoF;
 static boost::function<bool( const Joint*, int )> Move3DJointIsJointUser;
 static boost::function<void( const Joint*, int, double&, double& )> Move3DJointGetBound;
@@ -51,11 +53,13 @@ void move3d_set_fct_joint_get_vector_pos( boost::function<Vector3d( const Joint*
 void move3d_set_fct_joint_get_matrix_pos( boost::function<Transform3d( const Joint* )> fct ) {  Move3DJointGetMatrixPos = fct; }
 void move3d_set_fct_joint_joint_shoot( boost::function<void( Joint*, Configuration&, bool )> fct ) {  Move3DJointShoot = fct; }
 void move3d_set_fct_joint_get_joint_dof( boost::function<double( const Joint*, int )> fct ) {  Move3DJointGetJointDoF = fct; }
+void move3d_set_fct_joint_is_joint_dof_angular( boost::function<double( const Joint*, int )> fct ) {  Move3DJointIsJointDoFAngular = fct; }
+void move3d_set_fct_joint_is_joint_dof_circular( boost::function<double( const Joint*, int )> fct ) {  Move3DJointIsJointDoFCircular = fct; }
 void move3d_set_fct_joint_set_joint_dof( boost::function<void( const Joint*, int, double )> fct ) {  Move3DJointSetJointDoF = fct; }
 void move3d_set_fct_joint_is_joint_user( boost::function<bool( const Joint*, int )> fct ) {  Move3DJointIsJointUser = fct; }
 void move3d_set_fct_joint_get_bound( boost::function<void( const Joint*, int, double&, double& )> fct ) {  Move3DJointGetBound = fct; }
 void move3d_set_fct_joint_get_bound_rand( boost::function<void( const Joint*, int, double&, double& )> fct ) {  Move3DJointGetRandBound = fct; }
-void move3d_set_fct_joint_get_nb_of_joints( boost::function<int( const Joint* )> fct ) {  Move3DJointGetNbOfDoFs = fct; }
+void move3d_set_fct_joint_get_nb_of_dofs( boost::function<int( const Joint* )> fct ) {  Move3DJointGetNbOfDoFs = fct; }
 void move3d_set_fct_joint_get_index_of_first_dof( boost::function<int( const Joint* )> fct ) {  Move3DJointGetIndexOfFirstDoF = fct; }
 void move3d_set_fct_joint_get_previous_joint( boost::function<Joint*( const Joint*, Robot* )> fct ) {  Move3DJointGetPreviousJoint = fct; }
 void move3d_set_fct_joint_joint_dist( boost::function<double( const Joint* )> fct ) {  Move3DJointDist = fct; }
@@ -66,7 +70,7 @@ Joint::Joint(Robot *R, void* jntPt, int id, bool copy ) :
     m_Robot(R),
     m_id(id)
 {
-    m_Joint = Move3DJointConstructor( this, static_cast<jnt*>(jntPt), m_Name );
+    m_Joint = Move3DJointConstructor( this, jntPt, m_Name );
 }
 
 Vector3d Joint::getVectorPos() const
@@ -92,6 +96,16 @@ double Joint::getJointDof(int ithDoF) const
 void Joint::setJointDof(int ithDoF, double value)
 {
     Move3DJointSetJointDoF( this, ithDoF, value );
+}
+
+bool Joint::isJointDofAngular(int ithDoF) const
+{
+    return Move3DJointIsJointDoFAngular( this, ithDoF );
+}
+
+bool Joint::isJointDofCircular(int ithDoF) const
+{
+    return Move3DJointIsJointDoFCircular( this, ithDoF );
 }
 
 bool Joint::isJointDofUser(int ithDoF) const

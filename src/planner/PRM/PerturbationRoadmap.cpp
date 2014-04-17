@@ -283,12 +283,12 @@ bool PerturbationRoadmap::testPerturb( confPtr_t q_new, vector<Node*>& vect_node
 
 bool PerturbationRoadmap::addPerturbation( confPtr_t q_rand )
 {
-    Node* node_near = _Graph->nearestWeightNeighbour( m_main_compco, q_rand, false, ENV.getInt(Env::DistConfigChoice));
+    Node* node_near = _Graph->nearestWeightNeighbour( m_main_compco, q_rand, ENV.getInt(Env::DistConfigChoice));
 
     confPtr_t q_new = Move3D::CostOptimization::perturbCurrent( node_near->getConfiguration(), q_rand, m_delta, m_descent );
 
     vector<Node*> nodes = _Graph->KNearestWeightNeighbour( q_new, m_K_Nearest, P3D_HUGE,
-                                                           false, ENV.getInt(Env::DistConfigChoice));
+                                                           ENV.getInt(Env::DistConfigChoice));
 
     if( int(nodes.size()) < m_K_Nearest )
         return false;
@@ -303,7 +303,7 @@ bool PerturbationRoadmap::addPerturbation( confPtr_t q_rand )
 
 bool PerturbationRoadmap::expandPerturbation( confPtr_t q_rand )
 {
-    Node* node_near = _Graph->nearestWeightNeighbour( m_main_compco, q_rand, false, ENV.getInt(Env::DistConfigChoice));
+    Node* node_near = _Graph->nearestWeightNeighbour( m_main_compco, q_rand, ENV.getInt(Env::DistConfigChoice));
     if (node_near == NULL) {
         return false;
     }
@@ -364,7 +364,7 @@ bool PerturbationRoadmap::expandPerturbation( confPtr_t q_rand )
     if( m_sampled_on_traj )
     {
         nodes = _Graph->KNearestWeightNeighbour( q_new, 5, P3D_HUGE,
-                                                 false, ENV.getInt(Env::DistConfigChoice));
+                                                 ENV.getInt(Env::DistConfigChoice));
         //Graph::sortNodesByDist( nodes, q_new );
     }
     else {

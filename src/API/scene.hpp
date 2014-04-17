@@ -3,10 +3,6 @@
 
 #include "API/Device/robot.hpp"
 
-#ifndef _ENVIRONMENT_H
-struct env;
-#endif
-
 extern std::string global_ActiveRobotName;
 
 namespace Move3D
@@ -27,7 +23,7 @@ public:
      * Constructeur de la classe
      * @param name le nom de l'Scene
      */
-    Scene(env* environnment);
+    Scene(void* environnment);
 
     /**
      * Destructeur de la classe
@@ -98,10 +94,16 @@ private:
     std::vector<Robot*> m_Robot;/*!< All Robots in the scene */
     std::string m_Name;/*!< The environnement name */
 
-    env* m_Scene;
+    void* m_Scene;
 
 };
 
 }
+
+void move3d_set_fct_scene_constructor( boost::function<void*(void*, std::string&, std::vector<Move3D::Robot*>&, std::string& )> fct );
+void move3d_set_fct_set_active_robot( boost::function<void( Move3D::Scene*, void*, const std::string& )> fct );
+void move3d_set_fct_get_active_robot( boost::function<Move3D::Robot*( Move3D::Scene*, void* )> fct );
+void move3d_set_fct_get_dmax( boost::function<double(void*)> fct );
+void move3d_set_fct_get_bounds( boost::function<std::vector<double>( void* )> fct );
 
 #endif

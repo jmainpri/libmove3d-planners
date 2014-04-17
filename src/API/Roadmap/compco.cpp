@@ -186,14 +186,14 @@ void ConnectedComponent::mergeWith(ConnectedComponent* compco)
  * returns the KNearest neighbours of the configuration config
  * in the entire graph within a minimum radius
  */
-vector<Node*> ConnectedComponent::KNearestWeightNeighbour(confPtr_t q, int K, double radius, bool weighted, int distConfigChoice)
+vector<Node*> ConnectedComponent::KNearestWeightNeighbour( confPtr_t q, int K, double radius, int distConfigChoice )
 {
-    return Graph::KNearestWeightNeighbour( m_Nodes, q, K, radius, weighted, distConfigChoice );
+    return Graph::KNearestWeightNeighbour( m_Nodes, q, K, radius, distConfigChoice );
 }
 
-Node* ConnectedComponent::nearestWeightNeighbour(confPtr_t q, bool weighted, int distConfigChoice)
+Node* ConnectedComponent::nearestWeightNeighbour( confPtr_t q, int distConfigChoice )
 {
-    double current_dist, current_score;
+    double current_dist; //current_score;
     double best_score = numeric_limits<double>::max();
     Node* BestNodePt = NULL;
     Node* node = NULL;
@@ -206,11 +206,11 @@ Node* ConnectedComponent::nearestWeightNeighbour(confPtr_t q, bool weighted, int
         if (!node->getNodeStruct()->IsDiscarded)
         {
             current_dist = q->dist( *node->getConfiguration(), distConfigChoice );
-            current_score = current_dist * (weighted ? p3d_GetNodeWeight(node->getNodeStruct()) : 1.0);
+            // current_score = current_dist * (weighted ? p3d_GetNodeWeight(node->getNodeStruct()) : 1.0);
 
-            if (current_score < best_score)
+            if (current_dist < best_score)
             {
-                best_score = current_score;
+                best_score = current_dist;
                 BestNodePt = node;
             }
         }

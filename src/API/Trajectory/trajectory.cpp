@@ -6,6 +6,7 @@
  */
 
 #include "API/Trajectory/trajectory.hpp"
+#include "API/Graphic/drawModule.hpp"
 
 #include "planEnvironment.hpp"
 
@@ -252,14 +253,26 @@ Trajectory::~Trajectory()
 
 bool Trajectory::replaceP3dTraj() const
 {
-    //cout << "Robot name : " << m_Robot->getP3dRobotStruct()->name << endl;
+    // cout << "Robot name : " << m_Robot->getP3dRobotStruct()->name << endl;
     // return replaceP3dTraj( p3d_get_robot_by_name( m_Robot->getName().c_str() )->tcur );
-    p3d_rob* robotPt = (p3d_rob*)m_Robot->getP3dRobotStruct();
-    return replaceP3dTraj( robotPt->tcur );
+
+    if( m_Robot->getUseLibmove3dStruct() )
+    {
+        return replaceP3dTraj( static_cast<p3d_rob*>( m_Robot->getP3dRobotStruct() )->tcur );
+    }
+    else
+    {
+        return false;
+    }
 }
 
 p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt) const
 {
+    if( ! m_Robot->getUseLibmove3dStruct() )
+    {
+        return NULL;
+    }
+
     //	print();
 
     p3d_rob* robotPt = (p3d_rob*)m_Robot->getP3dRobotStruct();
@@ -678,7 +691,7 @@ double Trajectory::reComputeSubPortionCost(vector<LocalPath*>& portion, int& nb_
 double Trajectory::computeSubPortionIntergralCost(const vector<LocalPath*>& portion)
 {
     double cost(0.0);
-    double step = p3d_get_env_dmax()*PlanEnv->getDouble(PlanParam::costResolution);
+    double step = ENV.getDouble(Env::dmax)*PlanEnv->getDouble(PlanParam::costResolution);
     double currentParam(0.0), currentCost, prevCost;
     double range = computeSubPortionRange(portion);
     int n_step = int(range/step);
@@ -1486,6 +1499,9 @@ extern void* GroundCostObj;
 
 void Trajectory::draw( int nbKeyFrame )
 {
+    if( nbKeyFrame == 0 ){
+        nbKeyFrame = 100;
+    }
     double du = getRangeMax() / (nbKeyFrame - 1);
     if( du == 0.0 )
         return;
@@ -1557,12 +1573,12 @@ void Trajectory::draw( int nbKeyFrame )
 
         glLineWidth(3.);
         if( !m_use_continuous_color ) {
-            g3d_drawOneLine( pi[0], pi[1], height_i, pf[0], pf[1], height_f, m_Color, NULL );
+            move3d_draw_one_line( pi[0], pi[1], height_i, pf[0], pf[1], height_f, m_Color, NULL );
         }
         else{
             double colorvector[4];
             GroundColorMixGreenToRed( colorvector, m_Color );
-            g3d_drawOneLine( pi[0], pi[1], height_i, pf[0], pf[1], height_f, Any, colorvector );
+            move3d_draw_one_line( pi[0], pi[1], height_i, pf[0], pf[1], height_f, Any, colorvector );
         }
         glLineWidth(1.);
 
@@ -1577,7 +1593,7 @@ void Trajectory::draw( int nbKeyFrame )
             m_Robot->setAndUpdate(*m_Courbe[i]->getEnd());
             pf = drawnjnt->getVectorPos();
             /*val2 =*/ GHintersectionVerticalLineWithGround( GroundCostObj, pf[0], pf[1], &Cost2 );
-            g3d_draw_solid_sphere( pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02,1., 10 );
+            move3d_draw_sphere( pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02, 1. /*, 10*/ );
         }
     }
 
@@ -1595,7 +1611,7 @@ bool Trajectory::push_back(shared_ptr<LocalPath> path)
     }
     else
     {
-        if ( m_Target->equal(*path->getBegin()) )
+        if ( m_Target->equal( *path->getBegin() ) )
         {
             m_Courbe.push_back(new LocalPath(*path));
             m_Target = path->getEnd();
@@ -1608,7 +1624,7 @@ bool Trajectory::push_back(shared_ptr<LocalPath> path)
     return true;
 }
 
-void Trajectory::push_back(confPtr_t q)
+void Trajectory::push_back( confPtr_t q )
 {
     if( m_Courbe.empty() )
     {

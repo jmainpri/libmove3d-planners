@@ -163,7 +163,7 @@ unsigned TransitionExpansion::extend(Node * fromNode, confPtr_t directionConf, N
     if (ENV.getBool(Env::refinementControl) && (k == 1. && nbCreatedNodes > 0))
         fromComp->updateNumberOfRefinementNodes(nbCreatedNodes);
 
-	return nbCreatedNodes;
+    return nbCreatedNodes;
 }
 
 
@@ -248,7 +248,7 @@ unsigned TransitionExpansion::connect(Node * fromNode, confPtr_t directionConf, 
  * @return the number of created nodes
  */
 unsigned TransitionExpansion::expandProcess(Node * fromNode, confPtr_t directionConf, Node * directionNode,
-        Env::expansionMethod method)
+                                            Env::expansionMethod method)
 {
     switch (method)
     {
@@ -308,8 +308,7 @@ unsigned TransitionRRT::expandOneStep(Node * fromNode)
     confPtr_t dirConf = ((TransitionExpansion *) _expan)->sampleExpansionDirection(dirNode);
 
     // select, from the component to be grown, the node from which the expansion will be attempted
-    Node * expandNode = fromNode->getConnectedComponent()->nearestWeightNeighbour(dirConf,
-            p3d_GetIsWeightedChoice(), ENV.getInt(Env::DistConfigChoice));
+    Node * expandNode = fromNode->getConnectedComponent()->nearestWeightNeighbour( dirConf, ENV.getInt(Env::DistConfigChoice) );
 
     // directed expansion
     unsigned nbCreatedNode = _expan->expandProcess(expandNode, dirConf, dirNode, ENV.getExpansionMethod());
@@ -406,8 +405,8 @@ unsigned TransitionRRT::run()
         // TODO DD check whether balancing is useful
         // do not expand, in the case of a balanced Bi-directional T-TRRT, when components are unbalanced
         if (!(ENV.getBool(Env::biDir) && ENV.getBool(Env::expandBalanced)
-                && (fromNode->getConnectedComponent()->getNumberOfNodes()
-                        > toNode->getConnectedComponent()->getNumberOfNodes() + 2)))
+              && (fromNode->getConnectedComponent()->getNumberOfNodes()
+                  > toNode->getConnectedComponent()->getNumberOfNodes() + 2)))
         {
             ++m_nbExpansion;
 
@@ -429,8 +428,8 @@ unsigned TransitionRRT::run()
                         // look for the node whose configuration is the closest to that of the last node
                         // within the connected component to which toNode belongs
                         Node * closestNode = _Graph->nearestWeightNeighbour(toNode,
-                                _Graph->getLastNode()->getConfiguration(), false,
-                                ENV.getInt(Env::DistConfigChoice));
+                                                                            _Graph->getLastNode()->getConfiguration(),
+                                                                            ENV.getInt(Env::DistConfigChoice));
                         this->connectNodeToComp(_Graph->getLastNode(), closestNode);
                     }
                     // mono-directional T-RRT (with goal)

@@ -10,7 +10,6 @@
 
 #include "scene.hpp"
 
-#include "P3d-pkg.h"
 #include "Planner-pkg.h"
 
 #include "planner/plannerFunctions.hpp"
@@ -20,37 +19,45 @@ using namespace std;
 
 std::string global_ActiveRobotName;
 
-Move3D::Scene::Scene( p3d_env* environnement )
+// ****************************************************************************************************
+// API FUNCTIONS
+// ****************************************************************************************************
+
+static boost::function<void*(void*, std::string&, std::vector<Robot*>&, std::string& )> Move3DSceneConstructor;
+static boost::function<void( Scene*, void*, const std::string& )> Move3DSceneSetActiveRobot;
+static boost::function<Robot*( Scene*, void* )> Move3DSceneGetActiveRobot;
+static boost::function<double( void* )> Move3DSceneGetDMax;
+static boost::function<std::vector<double>( void* )> Move3DSceneGetBounds;
+
+// ****************************************************************************************************
+// SETTERS
+// ****************************************************************************************************
+
+void move3d_set_fct_scene_constructor( boost::function<void*(void*, std::string&, std::vector<Robot*>&, std::string& )> fct ) {  Move3DSceneConstructor = fct; }
+void move3d_set_fct_set_active_robot( boost::function<void( Scene*, void*, const std::string& )> fct ) {  Move3DSceneSetActiveRobot = fct; }
+void move3d_set_fct_get_active_robot( boost::function<Robot*( Scene*, void* )> fct ) {  Move3DSceneGetActiveRobot = fct; }
+void move3d_set_fct_get_dmax( boost::function<double(void*)> fct ) {  Move3DSceneGetDMax = fct; }
+void move3d_set_fct_get_bounds( boost::function<std::vector<double>( void* )> fct ) {  Move3DSceneGetBounds = fct; }
+
+// ****************************************************************************************************
+// CLASS
+// ****************************************************************************************************
+
+Move3D::Scene::Scene( void* environnement )
 {
-    m_Scene = environnement;
-    m_Name = m_Scene->name;
-
-    for (int i=0; i<m_Scene->nr; i++)
-    {
-        //cout << "Add new Robot to Scene : " << m_Scene->robot[i]->name << endl;
-        m_Robot.push_back( new Robot( m_Scene->robot[i] ) );
-        m_Robot.back()->setActiveScene( this );
-    }
-
-    // For all HRI planner the robot
-    // Will be set here
-    if ( m_Scene->active_robot )
-    {
-        global_ActiveRobotName = m_Scene->active_robot->name;
-        cout << "The Scene global_ActiveRobotName is : " << global_ActiveRobotName << endl;
-    }
-    else
-    {
-        global_ActiveRobotName = "";
-        cout << "WARNING : the Scene global_ActiveRobotName has not been set!!!!" << endl;
-    }
+    m_Scene = Move3DSceneConstructor( environnement, m_Name, m_Robot, global_ActiveRobotName );
 
     // Set the robot by name containing ROBOT to active
     Robot* rob = getRobotByNameContaining( global_ActiveRobotName );
 
-    if (rob != NULL)
+    if( rob != NULL )
     {
         setActiveRobot(rob->getName());
+    }
+
+    for( size_t i=0;i<m_Robot.size(); i++ )
+    {
+        m_Robot[i]->setActiveScene( this );
     }
 
     // Set the active rrt function
@@ -66,20 +73,19 @@ string Scene::getName()
     return m_Name;
 }
 
-void Scene::setActiveRobot(const string &name)
+void Scene::setActiveRobot( const string &name )
 {
-    unsigned int id = getRobotId( name );
-    p3d_sel_desc_id( P3D_ROBOT, m_Scene->robot[id] );
+    Move3DSceneSetActiveRobot( this, m_Scene, name );
 }
 
 Robot* Scene::getActiveRobot()
 {
-    return getRobotByName( m_Scene->cur_robot->name );
+    return Move3DSceneGetActiveRobot( this, m_Scene );
 }
 
 int Scene::getRobotId(const string& str)
 {
-    for (unsigned int i=0; i<m_Robot.size(); i++)
+    for( size_t i=0; i<m_Robot.size(); i++ )
     {
         if ( m_Robot[i]->getName() == str )
         {
@@ -129,19 +135,11 @@ void Scene::insertRobot(Robot* R)
 
 double Scene::getDMax()
 {
-    return m_Scene->dmax;
+    return Move3DSceneGetDMax( m_Scene );
 }
 
 std::vector<double> Scene::getBounds()
 {
-    vector<double> bounds(6);
-    bounds[0] = m_Scene->box.x1;
-    bounds[1] = m_Scene->box.x2;
-    bounds[2] = m_Scene->box.y1;
-    bounds[3] = m_Scene->box.y2;
-    bounds[4] = m_Scene->box.z1;
-    bounds[5] = m_Scene->box.z2;
-
-    return bounds;
+    return Move3DSceneGetBounds( m_Scene );
 }
 

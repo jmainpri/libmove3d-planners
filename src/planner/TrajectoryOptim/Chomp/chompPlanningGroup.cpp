@@ -9,7 +9,8 @@
 #include "chompPlanningGroup.hpp"
 #include "chompUtils.hpp"
 
-#include "P3d-pkg.h"
+// Included for random number
+#include <libmove3d/include/P3d-pkg.h>
 
 using namespace std;
 using namespace Move3D;
@@ -21,9 +22,9 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
 
     cout << "Creating planning group for : " << robot_->getName() << endl;
 
-    for (unsigned int i=0; i<active_joints.size(); i++)
+    for (size_t i=0; i<active_joints.size(); i++)
     {
-        for (unsigned int j=0; j<robot_->getJoint( active_joints[i] )->getNumberOfDof(); j++)
+        for (size_t j=0; j<robot_->getJoint( active_joints[i] )->getNumberOfDof(); j++)
         {
             Joint* move3d_joint = robot_->getJoint( active_joints[i] );
 
@@ -77,7 +78,7 @@ std::vector<int> ChompPlanningGroup::getActiveDofs() const
 bool ChompPlanningGroup::addCollisionPoint(CollisionPoint& collision_point)
 {
     // create the new parent joints indexing vector:
-    std::vector<int> parent_joints(num_joints_, 0);
+    // std::vector<int> parent_joints( num_joints_, 0 );
 
     //ROS_INFO_STREAM("Num joints is " << num_joints_ << " parent size is " << collision_point.getParentJoints().size());
 
@@ -95,7 +96,7 @@ bool ChompPlanningGroup::addCollisionPoint(CollisionPoint& collision_point)
     if (!add_this_point)
         return false;
 
-    collision_points_.push_back(CollisionPoint(collision_point, collision_point.getParentJoints()));
+    collision_points_.push_back( CollisionPoint( collision_point, collision_point.getParentJoints() ));
     return true;
 }
 
@@ -131,4 +132,10 @@ void ChompPlanningGroup::draw(std::vector<std::vector<double> >& segment) const
         collision_points_[i].draw( T );
     }
 }
+
+double Move3D::chomp_random_value( double max, double min )
+{
+    return ((((double)p3d_random(0,RAND_MAX))/RAND_MAX) * (max-min)) + min;
+}
+
 

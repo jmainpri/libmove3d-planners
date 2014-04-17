@@ -206,6 +206,11 @@ void Configuration::setConfiguration(Configuration& C)
     _Configuration = C.getConfigStruct();
 }
 
+void Configuration::setConfigurationCopy(Configuration& C)
+{
+    _Configuration = C.getConfigStructCopy();
+}
+
 /**
  * Computes the distance
  *  between configurations

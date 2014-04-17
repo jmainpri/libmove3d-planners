@@ -11,4 +11,6 @@ void move3d_save_matrix_to_file( const Eigen::MatrixXd& mat, std::string filenam
 //! Returns the files in the folder with argumen extension
 std::vector<std::string>  move3d_get_files_in_folder( std::string foldername, std::string extention, int nb_max_files=-1 );
 
+double move3d_random_integer( int min, int max );
+
 #endif // MISC_FUNCTIONS_HPP

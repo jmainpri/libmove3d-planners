@@ -25,7 +25,7 @@ public:
      * Constructeur de la classe
      * @param WS Le WorkSpace de l'application
      */
-    PRM(Robot* R, Graph* G);
+    PRM( Robot* R, Graph* G);
 
     /**
      * Destructeur de la classe
@@ -54,6 +54,11 @@ public:
      * Function that adds nodes to Graph
      */
     virtual void expandOneStep();
+
+    /**
+     * Post process
+     */
+    virtual void postPocess() { }
 
     /**
      * fonction principale de l'algorithme PRM

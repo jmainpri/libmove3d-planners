@@ -164,7 +164,8 @@ p3d_traj* Replanner::concat_to_current_traj(const vector<p3d_traj*>& trajs)
     int init_id;
     p3d_traj* concatTraj;
     if ( !m_CurrentTraj.isEmpty() ) {
-        concatTraj = m_CurrentTraj.extractSubTrajectoryOfLocalPaths(0,m_switch_id).replaceP3dTraj(NULL);
+        m_CurrentTraj.extractSubTrajectoryOfLocalPaths(0,m_switch_id).replaceP3dTraj();
+        concatTraj = m_robot->getP3dRobotStruct()->tcur;
         init_id = 0;
     }
     else {

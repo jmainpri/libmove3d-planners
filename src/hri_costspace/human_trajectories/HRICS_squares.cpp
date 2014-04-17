@@ -14,7 +14,8 @@
 #include <iomanip>
 #include <sstream>
 
-#include "Graphic-pkg.h"
+#include <libmove3d/include/P3d-pkg.h>
+#include <libmove3d/include/Graphic-pkg.h>
 
 using namespace Move3D;
 using namespace HRICS;
