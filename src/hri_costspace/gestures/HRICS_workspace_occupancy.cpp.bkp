@@ -1,0 +1,215 @@
+#include <GL/glew.h>
+
+#include "HRICS_workspace_occupancy.hpp"
+
+#include "gridsAPI.hpp"
+
+#include <PolyVoxCore/SurfaceMesh.h>
+#include <PolyVoxCore/CubicSurfaceExtractorWithNormals.h>
+#include <PolyVoxCore/MarchingCubesSurfaceExtractor.h>
+#include <PolyVoxCore/SimpleVolume.h>
+
+//#define GL_GLEXT_PROTOTYPES
+//#include <GL/gl.h>
+//#include <GL/glext.h>
+
+
+using namespace std;
+MOVE3D_USING_SHARED_PTR_NAMESPACE
+using namespace HRICS;
+
+// import most common Eigen types
+// USING_PART_OF_NAMESPACE_EIGEN
+using namespace Eigen;
+
+HRICS::WorkspaceOccupancyGrid* global_workspaceGrid = NULL;
+
+WorkspaceOccupancyCell::WorkspaceOccupancyCell()
+{
+
+}
+
+WorkspaceOccupancyCell::WorkspaceOccupancyCell(int i, Vector3i coord , Vector3d corner, WorkspaceOccupancyGrid* grid) :
+    API::ThreeDCell(i,corner,grid)
+{
+
+}
+
+
+WorkspaceOccupancyCell::~WorkspaceOccupancyCell()
+{
+
+}
+
+//void WorkspaceOccupancyCell::draw()
+//{
+////    double Cost = 0.0;
+//    double diagonal = 0.07;
+//    double colorvector[4];
+
+//    colorvector[0] = 0.0;       //red
+//    colorvector[1] = 0.0;       //green
+//    colorvector[2] = 0.0;       //blue
+//    colorvector[3] = 0.01;       //transparency
+
+
+//    Vector3d center = getCenter();
+
+//    g3d_set_color(Any,colorvector);
+//    g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal, 10);
+//}
+
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+WorkspaceOccupancyGrid::WorkspaceOccupancyGrid(double pace, vector<double> envSize) :
+    API::ThreeDGrid( pace ,envSize ), m_drawing(false)
+{
+    cout << "AgentGrid::createAllCells" << endl;
+    createAllCells();
+}
+
+//! @brief Virtual function that creates a new cell
+//! @param integer index
+//! @param integer x position in the grid
+//! @param integer y position in the grid
+//! @param integer z position in the grid
+API::ThreeDCell* WorkspaceOccupancyGrid::createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z )
+{
+    Vector3i pos;
+    pos[0] = x; pos[1] = y; pos[2] = z;
+
+    if ( index == 0 )
+    {
+        return new WorkspaceOccupancyCell( 0, pos ,_originCorner , this );
+    }
+    return new WorkspaceOccupancyCell( index, pos , computeCellCorner(x,y,z) , this );
+}
+
+WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
+{
+
+}
+
+void WorkspaceOccupancyGrid::draw()
+{
+    if(!m_drawing)
+    {
+        m_indexBuffer = glGenLists(1);
+        glNewList(m_indexBuffer, GL_COMPILE);
+
+        // This three-level for loop iterates over every voxel in the volume
+        for( int i=0; i<int(_cells.size()/2); i++)
+        {
+
+            //Eigen::Vector3d center = dynamic_cast<API::ThreeDCell*>(_cells[i])->getCellCenter();
+            dynamic_cast<API::ThreeDCell*>(_cells[i])->draw();
+        }
+
+        glEndList();
+        m_drawing = true;
+    }
+
+    glCallList(m_indexBuffer);
+}
+
+//void WorkspaceOccupancyGrid::draw()
+//{
+//    if(!m_drawing)
+//    {
+//        // Create an empty volume and then place a sphere in it
+//        PolyVox::SimpleVolume<uint8_t> volData(PolyVox::Region(PolyVox::Vector3DInt32(0,0,0), PolyVox::Vector3DInt32(120, 120, 50)));
+
+//        // This three-level for loop iterates over every voxel in the volume
+//        for( int i=0; i<int(_cells.size()/2); i++)
+//        {
+
+//            Eigen::Vector3i center = getCellCoord(dynamic_cast<API::ThreeDCell*>(_cells[i]));
+
+
+//        //    //        //Store our current position as a vector...
+//            PolyVox::Vector3DFloat v3dCurrentPos( center[0], center[1], center[2] );
+//        //  And compute how far the current position is from the center of the volume
+////        float fDistToCenter = (v3dCurrentPos - v3dVolCenter).length();
+//        //            uint8_t uVoxelValue = 0;
+//            uint8_t uVoxelValue = 255;
+
+//            //Wrte the voxel value into the volume
+//            volData.setVoxelAt( center[0], center[1], center[2], uVoxelValue);
+//        }
+
+//        // A mesh object to hold the result of surface extraction
+//        PolyVox::SurfaceMesh<PolyVox::PositionMaterialNormal> mesh;
+
+//        // Create a surface extractor. Comment out one of the following two lines to decide which type gets created.
+//        PolyVox::CubicSurfaceExtractorWithNormals< PolyVox::SimpleVolume<uint8_t> > surfaceExtractor(&volData, volData.getEnclosingRegion(), &mesh);
+//        // MarchingCubesSurfaceExtractor< SimpleVolume<uint8_t> > surfaceExtractor(&volData, volData.getEnclosingRegion(), &mesh);
+
+//        // Execute the surface extractor.
+//        surfaceExtractor.execute();
+
+//        //Convienient access to the vertices and indices
+//        const vector<uint32_t>& vecIndices = mesh.getIndices();
+//        const vector<PolyVox::PositionMaterialNormal>& vecVertices = mesh.getVertices();
+
+//        //Build an OpenGL index buffer
+//        glGenBuffers(1, &m_indexBuffer);
+//        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
+//        const GLvoid* pIndices = static_cast<const GLvoid*>(&(vecIndices[0]));
+//        glBufferData(GL_ELEMENT_ARRAY_BUFFER, vecIndices.size() * sizeof(uint32_t), pIndices, GL_STATIC_DRAW);
+
+//        //Build an OpenGL vertex buffer
+//        glGenBuffers(1, &m_vertexBuffer);
+//        glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
+//        const GLvoid* pVertices = static_cast<const GLvoid*>(&(vecVertices[0]));
+//        glBufferData(GL_ARRAY_BUFFER, vecVertices.size() * sizeof(PolyVox::PositionMaterialNormal), pVertices, GL_STATIC_DRAW);
+
+//        m_uBeginIndex = 0;
+//        m_uEndIndex = vecIndices.size();
+
+//        m_drawing = true;
+//    }
+
+//    cout << "drawing occupancy grid" << endl;
+
+//    //Bind the index buffer
+//    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
+//    //Bind the vertex buffer
+//    glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
+
+//    glVertexPointer(3, GL_FLOAT, sizeof(PolyVox::PositionMaterialNormal), 0);
+//    glNormalPointer(GL_FLOAT, sizeof(PolyVox::PositionMaterialNormal), (GLvoid*)12);
+
+//    glDrawRangeElements(GL_TRIANGLES, m_uBeginIndex, m_uEndIndex-1, m_uEndIndex - m_uBeginIndex, GL_UNSIGNED_INT, 0);
+
+//    GLenum errCode = glGetError();
+
+////    //Make the new VBO active. Repeat here incase changed since initialisation
+////    glBindBuffer(GL_ARRAY_BUFFER, m_triangleVBO);
+
+////    //Establish array contains vertices (not normals, colours, texture coords etc)
+////    glEnableClientState(GL_VERTEX_ARRAY);
+
+////    //Actually draw the triangle, giving the number of vertices provided
+//////    glDrawArrays(GL_TRIANGLES, 0, sizeof(data) / sizeof(float) / 3);
+//////    glDrawArrays(GL_TRIANGLES, 36, data.size()*sizeof(Eigen::Vector3d) / sizeof(double) / 3);
+////    glDrawArrays(GL_TRIANGLES, 0, _cells.size() );
+
+
+////    //Force display to be drawn now
+////    glFlush();
+
+//}
+
+
+
+void WorkspaceOccupancyGrid::setRegressedMotions(const std::vector<motion_t>& motions)
+{
+    m_motions = motions;
+}
+
+void WorkspaceOccupancyGrid::computeOccpancy()
+{
+
+}
