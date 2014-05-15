@@ -15,7 +15,7 @@
 #include "chompTrajectory.hpp"
 #include "chompPlanningGroup.hpp"
 
-#include "collision_space/CollisionSpace.hpp"
+#include "collision_space/collision_space.hpp"
 
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
@@ -71,7 +71,7 @@ namespace Move3D
     //  std::vector<std::vector<KDL::Vector> > collision_point_acc_;
     
     // Frame are stored in a 12 floating point vector
-    std::vector<std::vector<std::vector<double> > > segment_frames_;
+    std::vector<std::vector<Eigen::Transform3d> > segment_frames_;
     std::vector<std::vector<Eigen::Vector3d> >  joint_axis_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  joint_pos_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_pos_eigen_;

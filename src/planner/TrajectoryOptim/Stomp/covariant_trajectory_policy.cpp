@@ -46,7 +46,7 @@
 #include "Util-pkg.h"
 
 #include "planner/planEnvironment.hpp"
-#include "API/misc_functions.hpp"
+#include "utils/misc_functions.hpp"
 
 using namespace std;
 using namespace Move3D;

@@ -50,8 +50,8 @@ typedef MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> confPtr_t;
  @brief Classe représentant une Configuration d'un Robot
  @author Florian Pilardeau,B90,6349 <fpilarde@jolimont>
  */
-class Configuration {
-
+class Configuration
+{
 public:
     //constructor and destructor
     //    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -90,7 +90,7 @@ public:
     /**
      * Acces the configuration
      */
-    double& at(const int &i) { return _Configuration[i]; }
+    double& at( const int &i ) { return _Configuration[i]; }
 
     /**
      * Acces the configuration
@@ -256,6 +256,26 @@ public:
     void setCostAsNotTested();
 
     /**
+     * returns true if the cost is already evaluated
+     */
+    bool areFeaturesEvaluated() { return _phiEvaluated; }
+
+    /**
+     * Set the freature as computed and set the value (suposed to be tested outside
+     */
+    void setFeatures( const Eigen::VectorXd& phi ) { _phi = phi; _phiEvaluated = true; }
+
+    /**
+     * Returns the freature as computed and set the value (suposed to be tested outside
+     */
+    const Eigen::VectorXd& getFeatures() { return _phi; }
+
+    /**
+     * When reset the next feature querry will compute it
+     */
+    void resetFeaturesComputed() { _phiEvaluated = false; }
+
+    /**
      * Sets the configuration to respect robot constraints
      * Leaves the robot in the last configuration
      */
@@ -328,11 +348,17 @@ private:
     int _QuatDof;
     //        Eigen::Quaterniond _Quaternions;
 
+    // Collision
     bool _CollisionTested;
     bool _InCollision;
 
+    // Cost
     bool _CostTested;
     double _Cost;
+
+    // Features
+    bool _phiEvaluated;
+    Eigen::VectorXd _phi;
 
     Robot* _Robot; /*!< Le Robot pour lequel la Configuration est créée*/
     double* _Configuration;/*!< une structure de congitPt contenant les données sur la Configuration*/

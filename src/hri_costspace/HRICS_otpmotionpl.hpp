@@ -10,15 +10,16 @@
  *
  */
 
-#include "HRICS_Workspace.hpp"
+#include "HRICS_workspace.hpp"
 
 #include "API/Trajectory/trajectory.hpp"
 
 #include "planner/planner.hpp"
 #include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
 
-#include "Grid/HRICS_EnvGrid.hpp"
-#include "Grid/HRICS_TwoDGrid.hpp"
+#include "grid/HRICS_env_grid.hpp"
+#include "grid/HRICS_two_d_grid.hpp"
+
 #include "utils/OtpUtils.hpp"
 #include "utils/ConfGenerator.h"
 

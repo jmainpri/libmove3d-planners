@@ -2,7 +2,7 @@
 #define HRICS_RRTPLANEXPANSION_H
 
 #include "planner/Diffusion/Variants/Transition-RRT.hpp"
-#include "hri_costspace/Grid/HRICS_TwoDGrid.hpp"
+#include "hri_costspace/grid/HRICS_two_d_grid.hpp"
 
 namespace HRICS
 {

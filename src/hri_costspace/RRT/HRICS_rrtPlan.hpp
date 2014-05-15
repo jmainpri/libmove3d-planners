@@ -1,8 +1,8 @@
 #ifndef HRICS_RRTPLAN_H
 #define HRICS_RRTPLAN_H
 
-#include "../../Diffusion/RRT.hpp"
-#include "../Grid/HRICS_TwoDGrid.hpp"
+#include "planner/Diffusion/RRT.hpp"
+#include "../grid/HRICS_two_d_grid.hpp"
 
 namespace HRICS {
 

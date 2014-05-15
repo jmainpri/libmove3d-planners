@@ -1,11 +1,15 @@
 #include "HRICS_ioc.hpp"
-#include "HRICS_spheres.hpp"
-#include "HRICS_squares.hpp"
+
 #include "HRICS_parameters.hpp"
 
 #include "API/project.hpp"
-#include "API/misc_functions.hpp"
 #include "API/Trajectory/trajectory.hpp"
+
+#include "utils/misc_functions.hpp"
+#include "utils/NumsAndStrings.hpp"
+
+#include "feature_space/spheres.hpp"
+#include "feature_space/squares.hpp"
 
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
@@ -13,16 +17,17 @@
 #include "planner/planEnvironment.hpp"
 #include "planner/plannerFunctions.hpp"
 
-#include "utils/NumsAndStrings.hpp"
-
 #include <libmove3d/include/Graphic-pkg.h>
 
+#ifdef OWLQN_LIB
 #include <owlqn/OWLQN.h>
 #include <owlqn/leastSquares.h>
 #include <owlqn/logreg.h>
+#endif
 
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 
 #include "Util-pkg.h"
 
@@ -659,6 +664,7 @@ void Ioc::addAllToDraw()
 //////////////////////////////////////////////////////
 // IOC objective
 //////////////////////////////////////////////////////
+#ifdef OWLQN_LIB
 struct IocObjective : public DifferentiableFunction
 {
     IocObjective() { }
@@ -778,6 +784,7 @@ double IocObjective::Eval( const DblVec& w, DblVec& dw )
 
     return loss;
 }
+#endif
 
 Eigen::VectorXd Ioc::solve( const std::vector<Eigen::VectorXd>& phi_demo, const std::vector< std::vector<Eigen::VectorXd> >& phi_k )
 {
@@ -787,11 +794,13 @@ Eigen::VectorXd Ioc::solve( const std::vector<Eigen::VectorXd>& phi_demo, const 
         return Eigen::VectorXd();
     }
 
+#ifdef OWLQN_LIB
     size_t size = phi_demo[0].size();
 
     IocObjective obj;
     obj.phi_demo_ = phi_demo;
     obj.phi_k_ = phi_k;
+
 
     Eigen::VectorXd w0 = Eigen::VectorXd::Zero(size);
     Eigen::VectorXd w1 = Eigen::VectorXd::Zero(size);
@@ -822,6 +831,10 @@ Eigen::VectorXd Ioc::solve( const std::vector<Eigen::VectorXd>& phi_demo, const 
     */
 
     return obj.getEigenVector(ans);
+#else
+
+    return Eigen::VectorXd();
+#endif
 }
 
 // -------------------------------------------------------------

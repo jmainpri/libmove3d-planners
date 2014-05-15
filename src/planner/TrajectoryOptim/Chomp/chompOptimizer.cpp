@@ -618,14 +618,14 @@ void ChompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array)
     {
         Eigen::Transform3d t = joints[j].move3d_joint_->getMatrixPos();
 
-        std::vector<double> vect;
-        eigenTransformToStdVector(t,vect);
+//        std::vector<double> vect;
+//        eigenTransformToStdVector(t,vect);
 
-        segment_frames_[segment][j]  = vect;
+        segment_frames_[segment][j]  = t;
         joint_pos_eigen_[segment][j] = t.translation();
         joint_axis_eigen_[segment][j](0) = t(0,2);
-        joint_axis_eigen_[segment][j](0) = t(1,2);
-        joint_axis_eigen_[segment][j](0) = t(2,2);
+        joint_axis_eigen_[segment][j](1) = t(1,2);
+        joint_axis_eigen_[segment][j](2) = t(2,2);
     }
 }
 
@@ -685,7 +685,7 @@ void ChompOptimizer::performForwardKinematics()
         // calculate the position of every collision point
         for (int j=0; j<num_collision_points_; j++)
         {
-            planning_group_->collision_points_[j].getTransformedPosition(segment_frames_[i], collision_point_pos_eigen_[i][j]);
+            planning_group_->collision_points_[j].getTransformedPosition( segment_frames_[i], collision_point_pos_eigen_[i][j]);
             //cout << "coll_point(" << i << " , "  << j << ") = " << endl << collision_point_pos_eigen_[i][j] << endl;
 
             //int segment_number = planning_group_->collision_points_[j].getSegmentNumber();

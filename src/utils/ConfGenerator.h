@@ -8,7 +8,7 @@
 #include "utils/OtpUtils.hpp"
 #include "utils/ConfGenerator.h"
 
-#include "hri_costspace/HRICS_Natural.hpp"
+#include "hri_costspace/HRICS_natural.hpp"
 
 #include <libmove3d/include/LightPlanner-pkg.h>
 

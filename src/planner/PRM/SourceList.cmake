@@ -5,6 +5,7 @@ BM3D_SRC_SUBDIR_PROCESS(
 ACR.cpp
 PRM.cpp 
 sPRM.cpp
+PRMStar.cpp
 Visibility.cpp
 PerturbationRoadmap.cpp)
 SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME_TMP})

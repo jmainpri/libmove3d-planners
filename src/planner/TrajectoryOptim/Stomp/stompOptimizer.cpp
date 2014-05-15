@@ -50,13 +50,15 @@
 
 #include "API/project.hpp"
 #include "API/Graphic/drawModule.hpp"
+
+#include "feature_space/planar_feature.hpp"
+
 #include "utils/ConfGenerator.h"
 
 #include "hri_costspace/HRICS_costspace.hpp"
-#include "hri_costspace/HRICS_Legibility.hpp"
-#include "hri_costspace/Gestures/HRICS_HumanPredictionCostSpace.hpp"
-#include "hri_costspace/human_trajectories/HRICS_planar_feature.hpp"
+#include "hri_costspace/HRICS_legibility.hpp"
 #include "hri_costspace/HRICS_parameters.hpp"
+#include "hri_costspace/gestures/HRICS_human_prediction_cost_space.hpp"
 
 #include "Graphic-pkg.h"
 #include "P3d-pkg.h"
@@ -91,14 +93,14 @@ std::map< Robot*, std::vector<Eigen::Vector3d> >    global_MultiStomplinesToDraw
 // *******************************************************
 // API FUNCTIONS
 // *******************************************************
-static boost::function<int(void)> Move3DGetNumberOfCollisionPoints;
+static boost::function<int( Move3D::Robot* )> Move3DGetNumberOfCollisionPoints;
 static boost::function<bool( Move3D::Robot*, int i, Eigen::MatrixXd&, std::vector< std::vector<Eigen::Vector3d> >& )> Move3DGetConfigCollisionCost;
 
 // *******************************************************
 // SETTERS
 // *******************************************************
 
-void move3d_set_fct_get_nb_collision_points( boost::function<int(void)> fct ) {  Move3DGetNumberOfCollisionPoints = fct; }
+void move3d_set_fct_get_nb_collision_points( boost::function<int(Move3D::Robot*)> fct ) {  Move3DGetNumberOfCollisionPoints = fct; }
 void move3d_set_fct_get_config_collision_cost( boost::function<bool( Move3D::Robot* robot, int i, Eigen::MatrixXd&, std::vector< std::vector<Eigen::Vector3d> >& )> fct ) {  Move3DGetConfigCollisionCost = fct; }
 
 // *******************************************************
@@ -138,7 +140,7 @@ StompOptimizer::StompOptimizer(ChompTrajectory *trajectory,
 {
     if( use_move3d_functions )
     {
-        move3d_set_fct_get_nb_collision_points( boost::bind( &StompOptimizer::getNumberOfCollisionPoints, this ) );
+        move3d_set_fct_get_nb_collision_points( boost::bind( &StompOptimizer::getNumberOfCollisionPoints, this, _1 ) );
         move3d_set_fct_get_config_collision_cost( boost::bind( &StompOptimizer::getConfigObstacleCost, this, _1, _2, _3, _4 ) );
     }
     else {
@@ -191,7 +193,8 @@ void StompOptimizer::initialize()
     }
 
     // Use costspace
-    use_costspace_ = ( move3d_collision_space_== NULL || use_external_collision_space_ == false );
+    use_costspace_ = ( move3d_collision_space_ == NULL );
+    use_costspace_ |= ( use_costspace_ && ( use_external_collision_space_ == false ));
     
     //clearAnimations();
     
@@ -214,7 +217,7 @@ void StompOptimizer::initialize()
         group_joint_to_move3d_joint_index_[i] = planning_group_->chomp_joints_[i].move3d_joint_index_;
     }
     
-    num_collision_points_ = Move3DGetNumberOfCollisionPoints();
+    num_collision_points_ = Move3DGetNumberOfCollisionPoints( robot_model_ );
     cout << "num of collision points  : " << num_collision_points_ << endl;
     
     // set up the joint costs:
@@ -329,7 +332,7 @@ void StompOptimizer::initialize()
     //  }
 }
 
-int StompOptimizer::getNumberOfCollisionPoints()
+int StompOptimizer::getNumberOfCollisionPoints(Move3D::Robot* R)
 {
     return planning_group_->collision_points_.size();
 }
@@ -620,15 +623,14 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
             doChompOptimization();
         }
 
-        all_move3d_traj_.push_back( Move3D::Trajectory( robot_model_ ) );
-        setGroupTrajectoryToApiTraj( all_move3d_traj_.back() );
-
-        global_trajToDraw.push_back( all_move3d_traj_.back() );
+        // all_move3d_traj_.push_back( Move3D::Trajectory( robot_model_ ) );
+        // setGroupTrajectoryToApiTraj( all_move3d_traj_.back() );
+        // global_trajToDraw.push_back( all_move3d_traj_.back() );
 
         if ( do_draw && (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) &&
              stomp_parameters_->getAnimateEndeffector() )
         {
-            move3d_draw_clear_handles();
+            move3d_draw_clear_handles( robot_model_ );
             robot_model_->setAndUpdate(*q_tmp);
             animateEndeffector();
             //animateTrajectoryPolicy();
@@ -688,12 +690,11 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
                 {
                     best_group_trajectory_in_collision_ = group_trajectory_.getTrajectory();
                     best_group_trajectory_in_collsion_cost_ = cost;
-                    if( print_cost )
+                    if( print_cost && !PlanEnv->getBool(PlanParam::trajStompNoPrint) )
                         cout << "New best in collision" << endl;
                 }
             }
         }
-
 
         //if (iteration_%1==0)
         gettimeofday(&tim, NULL);
@@ -757,7 +758,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
         {
             if( time_ >= stomp_parameters_->max_time_ )
             {
-                cout << "Stopped at time limit (" << time_ << ")" << endl;
+                cout << "Stopped at time limit (" << time_ << "), limit : " << stomp_parameters_->max_time_ << endl;
                 break;
             }
         }
@@ -766,7 +767,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
         {
             if( iteration_ >= stomp_parameters_->max_iterations_ )
             {
-                cout << "Stopped at iteration (" << iteration_ << ")" << endl;
+                cout << "Stopped at iteration (" << iteration_ << "), limit " << stomp_parameters_->max_iterations_ << endl;
                 break;
             }
         }
@@ -801,6 +802,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
     
     if ( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj)  )
     {
+        move3d_draw_clear_handles( robot_model_ );
         animateEndeffector( true );
     }
     
@@ -808,8 +810,8 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
     setGroupTrajectoryToApiTraj( best_traj_ );
     best_traj_.replaceP3dTraj();
     
-    printf("Collision free success iteration = %d (time : %f)\n",
-           stomp_statistics_->collision_success_iteration, stomp_statistics_->success_time);
+    printf("Collision free success iteration = %d for robot %s (time : %f)\n",
+           stomp_statistics_->collision_success_iteration, robot_model_->getName().c_str(), stomp_statistics_->success_time);
     printf("Terminated after %d iterations, using path from iteration %d\n", iteration_, last_improvement_iteration_);
     printf("Best cost = %f\n", best_group_trajectory_cost_);
     printf("Stomp has run for : %f sec\n", time_ );
@@ -1041,7 +1043,7 @@ double StompOptimizer::getTrajectoryCost()
 {
     double cost = getSmoothnessCost();
     if( move3d_collision_space_ || use_external_collision_space_ ) cost += getCollisionCost();
-    if(use_costspace_ ) cost += getGeneralCost();
+    if( use_costspace_ ) cost += getGeneralCost();
     return cost;
 }
 
@@ -1153,8 +1155,7 @@ void StompOptimizer::getCostProfiles( vector<double>& smoothness_cost, vector<do
         noise[d] = VectorXd::Zero( policy_parameters_[d].size() );
     }
 
-    policy_->computeControlCosts(control_cost_matrices, policy_parameters_, noise,
-                                 0.5*stomp_parameters_->getSmoothnessCostWeight(), control_costs );
+    policy_->computeControlCosts (control_cost_matrices, policy_parameters_, noise, 0.5*stomp_parameters_->getSmoothnessCostWeight(), control_costs );
 
     int state = 0;
 
@@ -1386,21 +1387,18 @@ void StompOptimizer::getFrames( int segment, const Eigen::VectorXd& joint_array,
     // Get the collision point position
     for(int j=0; j<planning_group_->num_joints_;j++)
     {
-        Eigen::Transform3d t = joints[j].move3d_joint_->getMatrixPos();
+        segment_frames_[segment][j] = joints[j].move3d_joint_->getMatrixPos();
 
         //cout << "joints[" << j<< "].move3d_joint_ : " << joints[j].move3d_joint_->getName() << endl;
+//        eigenTransformToStdVector( t, segment_frames_[segment][j] );
 
-        std::vector<double> vect;
-        eigenTransformToStdVector(t,vect);
+        joint_pos_eigen_[segment][j] = segment_frames_[segment][j].translation();
 
-        segment_frames_[segment][j]  = vect;
-        joint_pos_eigen_[segment][j] = t.translation();
-
-        if (move3d_collision_space_ )
+        if( move3d_collision_space_ )
         {
-            joint_axis_eigen_[segment][j](0) = t(0,2);
-            joint_axis_eigen_[segment][j](1) = t(1,2);
-            joint_axis_eigen_[segment][j](2) = t(2,2);
+            joint_axis_eigen_[segment][j](0) = segment_frames_[segment][j](0,2);
+            joint_axis_eigen_[segment][j](1) = segment_frames_[segment][j](1,2);
+            joint_axis_eigen_[segment][j](2) = segment_frames_[segment][j](2,2);
         }
     }
 }
@@ -1476,7 +1474,7 @@ bool StompOptimizer::performForwardKinematics()
 
     Eigen::VectorXd joint_array;
 
-    Configuration q(robot_model_);
+    Configuration q( robot_model_ );
 
     if( PlanEnv->getBool(PlanParam::useLegibleCost) )
     {
@@ -1492,17 +1490,16 @@ bool StompOptimizer::performForwardKinematics()
 
         int full_traj_index = group_trajectory_.getFullTrajectoryIndex(i);
         full_trajectory_->getTrajectoryPointP3d( full_traj_index, joint_array );
-
         this->getFrames( i, joint_array, q );
 
-        // current_traj.push_back( confPtr_t(new Configuration(q)) );
+//         current_traj.push_back( confPtr_t(new Configuration(q)) );
 
         if( use_costspace_ )
         {
+//            robot_model_->setAndUpdate( q );
             general_cost_potential_[i] = global_costSpace->cost(q);
         }
-
-        if( PlanEnv->getBool(PlanParam::useLegibleCost) )
+        else if( PlanEnv->getBool(PlanParam::useLegibleCost) )
         {
             general_cost_potential_[i] = HRICS_activeLegi->legibilityCost(i);
         }
@@ -1511,8 +1508,7 @@ bool StompOptimizer::performForwardKinematics()
         {
            state_is_in_collision_[i] = Move3DGetConfigCollisionCost( planning_group_->robot_, i, collision_point_potential_, collision_point_pos_eigen_ );
         }
-
-        if( ( PlanEnv->getBool(PlanParam::useLegibleCost) || use_costspace_ ) && (move3d_collision_space_==NULL) )
+        else if( ( PlanEnv->getBool(PlanParam::useLegibleCost) || use_costspace_ ) && (move3d_collision_space_==NULL) )
         {
             state_is_in_collision_[i] = false;
         }
@@ -1601,7 +1597,7 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
 
     // respect joint limits:
 
-    succeded_joint_limits_ = handleJointLimits();
+//    succeded_joint_limits_ = handleJointLimits();
 
     // Fix joint limits
     //    if( !succeded_joint_limits_ )
@@ -2240,10 +2236,7 @@ void StompOptimizer::drawCollisionPoints()
         for (int j=0; j<num_collision_points_; j++)
         {
             const CollisionPoint& cp = planning_group_->collision_points_[j];
-            Eigen::Transform3d T;
-            //cout << "segment (" << j << ") : " << cp.getSegmentNumber() << endl;
-            stdVectorToEigenTransform( segment_frames_[free_vars_start_][cp.getSegmentNumber()], T );
-            cp.draw( T );
+            cp.draw( segment_frames_[free_vars_start_][cp.getSegmentNumber()] );
         }
     }
 }

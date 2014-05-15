@@ -7,7 +7,7 @@
 
 #include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
 
-#include "collision_space/CollisionSpace.hpp"
+#include "collision_space/collision_space.hpp"
 
 #include <boost/thread/mutex.hpp>
 
@@ -32,6 +32,8 @@ public:
 
     MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> getStompOptimizer() const { return m_stomp; }
 
+    Move3D::Robot* getRobot() { return m_robot; }
+
 private:
 
     Move3D::Robot*                                  m_robot;
@@ -44,7 +46,7 @@ private:
     bool                                    m_use_iteration_limit;
     int                                     m_max_iterations;
     bool                                    m_use_time_limit;
-    int                                     m_max_time;
+    double                                  m_max_time;
     bool                                    m_use_costspace;
     int                                     m_runid;
     std::vector<double>                     m_color;
@@ -60,11 +62,11 @@ private:
 class stompRun
 {
 public:
-    stompRun(const Move3D::CollisionSpace* coll_space, std::vector<int> planner_joints, const std::vector<Move3D::CollisionPoint>& collision_points );
+    stompRun(const Move3D::CollisionSpace* coll_space, std::vector<int> planner_joints, const std::vector<Move3D::CollisionPoint>& collision_points = std::vector<Move3D::CollisionPoint>() );
     ~stompRun();
 
     void setPool( const std::vector<Move3D::Robot*>& robots );
-    void run( int id, Move3D::Trajectory &T );
+    bool run( int id, Move3D::Trajectory &T );
 
     void start();
     void isRunning();

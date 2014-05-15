@@ -30,8 +30,9 @@
 #include "Planner-pkg.h"
 #include "Graphic-pkg.h"
 
-using namespace std;
 using namespace Move3D;
+using std::cout;
+using std::endl;
 
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
@@ -68,7 +69,9 @@ StarExpansion::StarExpansion(Graph* G) : RRTExpansion(G)
 
     if( rob->getName() == "PR2_ROBOT" )
     {
-        m_cspace = new Pr2CSpace();
+        std::vector<Joint*> joints;
+        for( int i=6;i<=12;i++) joints.push_back( rob->getJoint(i) );
+        m_cspace = new ArmCSpace( joints );
         initCSpace();
     }
 
@@ -244,7 +247,7 @@ confPtr_t StarExpansion::getExpansionDirection(Node* expandComp, Node* goalComp,
     return (q);
 }
 
-void StarExpansion::rewireGraph(Node* new_node, Node* min_node, const vector<Node*>& neigh_nodes)
+void StarExpansion::rewireGraph( Node* new_node, Node* min_node, const std::vector<Node*>& neigh_nodes )
 {
     confPtr_t q_new = new_node->getConfiguration();
 
@@ -310,8 +313,10 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
     bool failed(false);
     int nbCreatedNodes(0);
 
-    LocalPath directionLocalpath( expansionNode->getConfiguration(), directionConfig );
-    LocalPath extensionLocalpath = directionLocalpath;
+    pathPtr_t extensionLocalpath( new LocalPath( expansionNode->getConfiguration(), directionConfig ) );
+
+    //    double radius = rrgBallRadius() * m_RrgRadiusFactor;
+    double radius = rrgBallRadius() * PlanEnv->getDouble( PlanParam::starRadius );
 
     if( expansionNode->getConfiguration()->equal( *directionConfig ) )
     {
@@ -321,7 +326,7 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
     {
         // Perform extension toward directionConfig
         // Construct a smaller path from direction path
-        extensionLocalpath = getExtensiontPath (expansionNode->getConfiguration(), directionConfig );
+        extensionLocalpath = getExtensiontPath (expansionNode->getConfiguration(), directionConfig, radius );
     }
 
     Node* node_new = NULL;
@@ -329,17 +334,15 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
     bool is_valid = true;
     if( PlanEnv->getBool(PlanParam::trajComputeCollision) )
     {
-        is_valid = extensionLocalpath.isValid();
+        is_valid = extensionLocalpath->isValid();
     }
 
     if ( is_valid && !failed )
     {
         // Create new node and add it to the graph
-        node_new = new Node( m_Graph, extensionLocalpath.getEnd() );
+        node_new = new Node( m_Graph, extensionLocalpath->getEnd() );
         nbCreatedNodes++;
 
-        //    double radius = rrgBallRadius() * m_RrgRadiusFactor;
-        double radius = rrgBallRadius() * PlanEnv->getDouble( PlanParam::starRadius );
 
         if( print_exploration )
         {
@@ -349,7 +352,7 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
         int K = m_Graph->getNumberOfNodes();
         //int K = m_K_Nearest;
 
-        vector<Node*> near_nodes = m_compco->KNearestWeightNeighbour( node_new->getConfiguration(), K, radius, ENV.getInt(Env::DistConfigChoice) );
+        std::vector<Node*> near_nodes = m_compco->KNearestWeightNeighbour( node_new->getConfiguration(), K, radius, ENV.getInt(Env::DistConfigChoice) );
 
         if( print_exploration )
         {
@@ -363,12 +366,15 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
         std::vector<Node*> valid_nodes;
 
         // Compute the node that minimizes the Sum of Cost
-        double min_path_cost = extensionLocalpath.cost();
-        double min_path_dist = extensionLocalpath.getParamMax();
-        double min_sum_of_cost = expansionNode->sumCost(true)+extensionLocalpath.cost();
+        double min_path_cost = extensionLocalpath->cost();
+        double min_path_dist = extensionLocalpath->getParamMax();
+        double min_sum_of_cost = expansionNode->sumCost(true)+extensionLocalpath->cost();
 
         for (int i=0; i<int(near_nodes.size()); i++)
         {
+            if( near_nodes[i] == node_new )
+                continue;
+
             LocalPath path( near_nodes[i]->getConfiguration(), q_new );
 
             is_valid = true;
@@ -446,21 +452,20 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
 /*!
  * expandProcess
  */
-unsigned StarExpansion::expandProcess(Node* expansionNode,
-                                      confPtr_t directionConfig,
-                                      Node* directionNode,
-                                      Env::expansionMethod method)
+unsigned StarExpansion::expandProcess( Node* expansionNode,
+                                       confPtr_t directionConfig,
+                                       Node* directionNode,
+                                       Env::expansionMethod method )
 {
     switch (method)
     {
-    //		case Env::Connect:
-    //			return connectExpandProcess( expansionNode, directionConfig, directionNode );
-
+    case Env::Connect:
     case Env::Extend:
-        return extendExpandProcess(expansionNode, directionConfig, directionNode);
+
+        return extendExpandProcess( expansionNode, directionConfig, directionNode );
 
     default:
-        cerr << "Error : expand process not implemented" << endl;
+        std::cerr << "Error : expand process not implemented" << endl;
         return 0;
     }
 }
@@ -492,9 +497,9 @@ StarRRT::~StarRRT()
 unsigned StarRRT::init()
 {
     int added = TreePlanner::init();
+
     _expan = new StarExpansion(_Graph);
     dynamic_cast<StarExpansion*>(_expan)->setInitAndGoal( _q_start, _q_goal );
-    //  _expan = _expan = new RRTExpansion(_Graph);
     dynamic_cast<StarExpansion*>(_expan)->setInitialCompco( _Start->getConnectedComponent() );
 
     return added;
@@ -522,7 +527,7 @@ void StarRRT::pruneTreeFromNode(Node* node)
 
         if( compco != NULL )
         {
-            vector<Node*> nodes = compco->getNodes();
+            std::vector<Node*> nodes = compco->getNodes();
 
             for (int i=0; i<int(nodes.size()); i++)
             {
@@ -606,6 +611,7 @@ void StarRRT::saveConvergenceToFile()
 
 void StarRRT::extractTrajectory()
 {
+//    cout << __PRETTY_FUNCTION__ << endl;
 //    Move3D::Trajectory* traj = _Graph->extractBestAStarPathSoFar( _q_start, _q_goal );
     Move3D::Trajectory* traj = _Graph->extractAStarShortestPathsTraj( _q_start, _q_goal );
 
@@ -619,7 +625,7 @@ void StarRRT::extractTrajectory()
 
             cout << "time : " << getTime() << " , traj cost : " << cost << endl;
             //    traj->costDeltaAlongTraj();
-            //    traj->replaceP3dTraj();
+            traj->replaceP3dTraj();
 
             m_convergence_rate.push_back( std::make_pair( getTime(), stat )  );
 

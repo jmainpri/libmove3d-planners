@@ -221,7 +221,7 @@ Node* ConnectedComponent::nearestWeightNeighbour( confPtr_t q, int distConfigCho
 
 Node* ConnectedComponent::searchConf(Configuration& q)
 {
-    for(int i=0;i<int(m_Nodes.size());i++)
+    for(size_t i=0;i<m_Nodes.size();i++)
     {
         if(m_Nodes[i]->getConfiguration()->equal(q))
         {
@@ -231,7 +231,6 @@ Node* ConnectedComponent::searchConf(Configuration& q)
     return NULL;
 }
 
-
 /**
  * Return a node, randomly chosen in the connected component.
  */
@@ -240,7 +239,6 @@ Node* ConnectedComponent::randomNode()
     int RandId = (int) floor(p3d_random(0.0, (double) m_Nodes.size() - EPS6));
     return m_Nodes[RandId];
 }
-
 
 /**
  * Get the temperature of the component.

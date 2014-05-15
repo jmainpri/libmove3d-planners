@@ -102,21 +102,17 @@ public:
     double cost();
 
     /**
-     * Computes the edge cost and returns it
-     */
-
-    /**
      * Get the LocalPath associated
      * with the edge
      */
-    MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> getLocalPath();
+    pathPtr_t getLocalPath();
 
 
     /**
      * Set the LocalPath associated
      * with the edge
      */
-    void setLocalPath(MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> pathPtr);
+    void setLocalPath(pathPtr_t pathPtr);
 
     //--------------------------------------
     // BGL

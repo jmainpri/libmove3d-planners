@@ -1,8 +1,8 @@
 #ifndef HRICS_RRT_H
 #define HRICS_RRT_H
 
-#include "../../Diffusion/RRT.hpp"
-#include "../Grid/HRICS_Grid.hpp"
+#include "planner/Diffusion/RRT.hpp"
+#include "../grid/HRICS_grid.hpp"
 
 /**
   @ingroup HRICS

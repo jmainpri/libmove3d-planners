@@ -46,6 +46,7 @@ TwoDGrid::~TwoDGrid()
 TwoDGrid::TwoDGrid( Vector2i numCell, vector<double> envSize )
 
 {
+    envSize.resize(4);
     setEnvSizeAndNumCell( numCell[0], numCell[1], envSize );
 }
 
@@ -58,6 +59,8 @@ TwoDGrid::TwoDGrid( Vector2i numCell, vector<double> envSize )
  */
 TwoDGrid::TwoDGrid( double samplingRate, vector<double> envSize )
 {
+    envSize.resize(4);
+
     for(unsigned int i= 0; i< envSize.size() ; i++)
     {
         cout << envSize.at(i) << " ";

@@ -5,7 +5,8 @@
 #include <Eigen/Core>
 #include <vector>
 
-#include "HRICS_features.hpp"
+#include "feature_space/features.hpp"
+
 #include "HRICS_run_multiple_planners.hpp"
 
 #include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
@@ -183,8 +184,8 @@ public:
 
 protected:
 
-    std::vector<FeatureVect> addDemonstrations(Ioc& ioc);
-    std::vector< std::vector<FeatureVect> > addSamples(Ioc& ioc);
+    std::vector<Move3D::FeatureVect> addDemonstrations(Ioc& ioc);
+    std::vector< std::vector<Move3D::FeatureVect> > addSamples(Ioc& ioc);
 
     //! Compute the cost of the demos
     Eigen::VectorXd getCostsOfDemonstrations() const;
@@ -194,16 +195,16 @@ protected:
 
     //! Save all the feature in a matrix
     //! that can be read by Matlab
-    void saveToMatrixFile(const std::vector<FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples, std::string name );
+    void saveToMatrixFile(const std::vector<Move3D::FeatureVect>& demos, const std::vector< std::vector<Move3D::FeatureVect> >& samples, std::string name );
 
     //! Save sample trajectories
     void saveTrajectories(const std::vector<Move3D::Trajectory>& trajectories);
 
     // Return the feature gradien norm sum along each trajectory
-    std::vector< std::vector<FeatureVect> > getFeatureCount( const std::vector< std::vector<Move3D::Trajectory> >& all_trajs );
+    std::vector< std::vector<Move3D::FeatureVect> > getFeatureCount( const std::vector< std::vector<Move3D::Trajectory> >& all_trajs );
 
     // Return the feature gradien norm sum along each trajectory
-    std::vector< std::vector<FeatureVect> > getFeatureJacobianSum( const std::vector< std::vector<Move3D::Trajectory> >& all_trajs );
+    std::vector< std::vector<Move3D::FeatureVect> > getFeatureJacobianSum( const std::vector< std::vector<Move3D::Trajectory> >& all_trajs );
 
     //! Plans a motion using the costmap
     Move3D::Trajectory planMotion( planner_t type );
@@ -212,16 +213,16 @@ protected:
     void activateAllFeatures();
 
     //! Compute weights when planning multiple times.
-    WeightVect computeOptimalWeights();
+    Move3D::WeightVect computeOptimalWeights();
 
     //! Compute if samples dominate demonstration
-    bool checkDegeneration( const std::vector< FeatureVect>& demos, const std::vector< std::vector<FeatureVect> >& samples ) const;
+    bool checkDegeneration( const std::vector<Move3D::FeatureVect>& demos, const std::vector< std::vector<Move3D::FeatureVect> >& samples ) const;
 
     //! Returns true if the sample2 is domintated by sample1
-    bool isSampleDominated( const FeatureVect& sample1, const FeatureVect& sample2 ) const;
+    bool isSampleDominated( const Move3D::FeatureVect& sample1, const Move3D::FeatureVect& sample2 ) const;
 
     //! Removes the dominated samples by resampling
-    void removeDominatedSamplesAndResample( Ioc &ioc, std::vector< std::vector<FeatureVect> >& phi_k );
+    void removeDominatedSamplesAndResample( Ioc &ioc, std::vector< std::vector<Move3D::FeatureVect> >& phi_k );
 
     //! Returns trajectory that best fits
     Move3D::Trajectory selectBestSample( double detla_mean, const std::vector<Move3D::Trajectory>& trajs );
@@ -238,23 +239,23 @@ protected:
     std::vector<Move3D::Trajectory> demos_;
     std::vector<Move3D::Trajectory> samples_;
     std::vector<Move3D::Trajectory> learned_;
-    WeightVect learned_vect_;
-    WeightVect original_vect_;
+    Move3D::WeightVect learned_vect_;
+    Move3D::WeightVect original_vect_;
 
     std::vector<int> active_joints_;
-    StackedFeatures* feature_fct_;
+    Move3D::StackedFeatures* feature_fct_;
     std::string feature_type_;
-    TrajectorySmoothness* smoothness_fct_;
+    Move3D::TrajectorySmoothness* smoothness_fct_;
     Move3D::ChompPlanningGroup* plangroup_;
 
     bool load_sample_from_file_;
     MultiplePlanners& planners_;
     int round_id_;
 
-    std::vector<FeatureVect> stored_features_;
+    std::vector<Move3D::FeatureVect> stored_features_;
 
-    std::vector<FeatureVect> phi_demos_;
-    std::vector<FeatureVect> phi_jac_demos_;
+    std::vector<Move3D::FeatureVect> phi_demos_;
+    std::vector<Move3D::FeatureVect> phi_jac_demos_;
 };
 
 }

@@ -399,6 +399,11 @@ public:
     std::vector<Node*> getNodesInTheCompCo(Node* node);
 
     /**
+      * returns the largest connected component
+      */
+    ConnectedComponent* getLargestCompco() const;
+
+    /**
      * ajoute des Edges formant des cycles dans le Graph
      * @param node le nouveau Node ajouté
      * @param step la distance d'expansion
@@ -437,14 +442,44 @@ public:
     bool checkConnectedComponents();
 
     /**
-     * Recompute the Graph cost (Edges and Nodes)
+     * Reset the Graph cost (Edges and Nodes)
      */
-    void recomputeCost();
+    void resetAllEdgesCost();
+
+    /**
+     * Recompute all edges cost (Edges and Nodes)
+     */
+    void computeAllEdgesAndNodesCost();
+
+    /**
+     * Reset the graph features (Edges and Nodes)
+     */
+    void resetAllEdgesFeatures();
+
+    /**
+     * Recompute all edges features (Edges and Nodes)
+     */
+    void computeAllEdgesAndNodesFeatures();
+
+    /**
+     * Reset the Graph Edges validity
+     */
+    void resetAllEdgesValid();
 
     /**
      * Recompute All Edges Valid
      */
     bool checkAllEdgesValid();
+
+    /**
+      * Get number of cost calls per edge
+      */
+    int getNumberOfColTestCalls();
+
+    /**
+      * Get number of cost calls per edge
+      */
+    int getNumberOfCostCalls();
 
     /**
    * Extract best vector of nodes from qi that is closest to q_f
@@ -479,6 +514,12 @@ public:
      * @param the configuration
      */
     Move3D::Trajectory* extractAStarShortestPathsTraj( confPtr_t qi, confPtr_t qf );
+
+    /**
+     * Extract best traj
+     * @param the configuration
+     */
+    Move3D::Trajectory* extractBestAStarPathFromLargestComponent( confPtr_t qi, confPtr_t qf );
 
     /**
      * Extract best traj
@@ -521,7 +562,7 @@ private:
     // ------------------------------------------------------
     void		initBGL();
     void		setAllDescriptorsInvalid();
-    void        drawEdge(BGL_Vertex v1, BGL_Vertex v2);
+    void        drawEdge(BGL_Edge e);
     void        drawNode(BGL_Vertex v);
 
     void        deleteGraphStruct();

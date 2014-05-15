@@ -2,7 +2,7 @@
 #define HRICS_HUMANIOC_HPP
 
 #include "HRICS_ioc.hpp"
-#include "hri_costspace/Gestures/HRICS_RecordMotion.hpp"
+#include "hri_costspace/gestures/HRICS_record_motion.hpp"
 
 namespace HRICS
 {

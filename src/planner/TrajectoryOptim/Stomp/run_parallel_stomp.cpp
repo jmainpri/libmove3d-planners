@@ -2,6 +2,9 @@
 
 #include "planner/planEnvironment.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
+
+#include "collision_space/collision_space_factory.hpp"
+
 #include "API/project.hpp"
 
 #include <libmove3d/include/P3d-pkg.h>
@@ -163,6 +166,7 @@ bool stompRun::setParallelStompEnd(int id)
 {
     if( m_is_thread_running.size() == 1 )
     {
+        m_mtx_multi_end.unlock(); // TODO make sure it's ok
         return m_is_thread_running[id];
     }
 
@@ -209,27 +213,35 @@ Move3D::Trajectory stompRun::getBestTrajectory( int id )
     return m_stomps[id]->getStompOptimizer()->getBestTraj();
 }
 
-void stompRun::run( int id, Move3D::Trajectory& T )
+bool stompRun::run( int id, Move3D::Trajectory& T )
 {
     if( id >= int(m_stomps.size()) )
     {
         cout << "run id does not exist" << endl;
-        return;
+        return false;
     }
 
     // impossible to parallize the localpath class
-    m_mtx_set_end.lock();
+    if( m_stomps[id]->getRobot()->getUseLibmove3dStruct() )
+        m_mtx_set_end.lock();
+
     bool succeed = m_stomps[id]->initRun( T );
-    m_mtx_set_end.unlock();
+
+    if( m_stomps[id]->getRobot()->getUseLibmove3dStruct() )
+        m_mtx_set_end.unlock();
 
     if( succeed )
     {
         m_is_thread_running[id] = true;
         m_stomps[id]->run();
     }
+    else {
+        return false;
+    }
 
     setParallelStompEnd( id );
     cout << "end running thread : " << id << endl;
+    return true;
 }
 
 //----------------------------------------------------------------------------------

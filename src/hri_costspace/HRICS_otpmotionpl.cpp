@@ -8,14 +8,8 @@
  */
 
 #include "HRICS_otpmotionpl.hpp"
-#include "Grid/HRICS_Grid.hpp"
 #include "HRICS_costspace.hpp"
-
-#include "P3d-pkg.h"
-#include "move3d-headless.h"
-#include "Planner-pkg.h"
-#include "Collision-pkg.h"
-#include <libmove3d/hri/HRI_tasks.h>
+#include "grid/HRICS_grid.hpp"
 
 #include "API/project.hpp"
 
@@ -23,6 +17,13 @@
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 #include "planner/planEnvironment.hpp"
 #include "planner/plannerFunctions.hpp"
+
+#include <libmove3d/include/P3d-pkg.h>
+#include <libmove3d/include/move3d-headless.h>
+#include <libmove3d/include/Planner-pkg.h>
+#include <libmove3d/include/Collision-pkg.h>
+#include <libmove3d/hri/HRI_tasks.h>
+
 #include "time.h"
 
 #include <fstream>

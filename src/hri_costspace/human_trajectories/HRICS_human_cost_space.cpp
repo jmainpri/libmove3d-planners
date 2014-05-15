@@ -1,6 +1,6 @@
 #include "HRICS_human_cost_space.hpp"
 
-#include "HRICS_PlayMotion.hpp"
+#include "HRICS_play_motion.hpp"
 #include "API/project.hpp"
 
 #include "planner/cost_space.hpp"

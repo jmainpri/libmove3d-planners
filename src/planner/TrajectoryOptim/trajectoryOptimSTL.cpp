@@ -10,7 +10,7 @@
 
 #include <Eigen/StdVector>
 
-#include "planner/Greedy/CollisionSpace.hpp"
+#include "planner/Greedy/collision_space.hpp"
 
 using namespace std;
 

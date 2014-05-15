@@ -52,8 +52,13 @@ public:
     bool setCost(std::string name);
 
     // Register a new cost function.
-    void addCost(std::string name,
-                 boost::function<double(Configuration&)> f);
+    void addCost(std::string name, boost::function<double(Configuration&)> f);
+
+    // Select the cost function with the given name in the map
+    bool setPathCost(std::string name);
+
+    // Register a new cost function.
+    void addPathCost(std::string name, boost::function<double(LocalPath&,int&)> f);
 
     // Delete a cost function
     void deleteCost(std::string name);
@@ -83,9 +88,17 @@ public:
     double deltaStepCost(double cost1, double cost2, double length);
 
 protected:
+
+    double path_cost_default(LocalPath& path, int& nb_test);
+
     std::string mSelectedCostName;
     boost::function<double(Configuration&)> mSelectedCost;
+
+    std::string mSelectedPathCostName;
+    boost::function<double(LocalPath&,int&)> mSelectedPathCost;
+
     std::map<std::string, boost::function<double(Configuration&)> > mFunctions;
+    std::map<std::string, boost::function<double(LocalPath&,int&)> > mPathFunctions;
 
     void getPr2ArmConfiguration( Eigen::VectorXd& x, confPtr_t q );
     double getPr2ArmDistance( Robot* robot, Eigen::VectorXd& q_i, Eigen::VectorXd& q_f );

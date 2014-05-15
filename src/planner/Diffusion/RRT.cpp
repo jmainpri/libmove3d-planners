@@ -26,7 +26,7 @@ MOVE3D_USING_SHARED_PTR_NAMESPACE
 RRT::RRT(Robot* R, Graph* G) : TreePlanner(R,G)
 {
 #ifdef DEBUG_STATUS
-    cout << "RRT::RRT(R,G)" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
 #endif
 }
 

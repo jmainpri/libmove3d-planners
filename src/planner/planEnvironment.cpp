@@ -96,7 +96,8 @@ void initPlannerParameters()
     myBoolMap.insert( std::make_pair( PlanParam::trajComputeCollision,       new boolContainer(true)));
 
     // Stomp
-    myBoolMap.insert( std::make_pair( PlanParam::trajStompRunMultiple,       new boolContainer(true)));
+    myBoolMap.insert( std::make_pair( PlanParam::trajStompRunParallel,       new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( PlanParam::trajStompRunMultiple,       new boolContainer(false)));
     myBoolMap.insert( std::make_pair( PlanParam::trajStompComputeColl,       new boolContainer(true)));
     myBoolMap.insert( std::make_pair( PlanParam::trajStompWithTimeLimit,     new boolContainer(true)));
     myBoolMap.insert( std::make_pair( PlanParam::trajStompWithIterLimit,     new boolContainer(true)));
@@ -128,6 +129,9 @@ void initPlannerParameters()
     // RRT*
     myBoolMap.insert( std::make_pair( PlanParam::starRRT,                    new boolContainer(false)));
     myBoolMap.insert( std::make_pair( PlanParam::starRewire,                 new boolContainer(false)));
+
+    // RRG
+    myBoolMap.insert( std::make_pair( PlanParam::rrg,                       new boolContainer(false)));
 
     // Stomp/Chomp
     myBoolMap.insert( std::make_pair( PlanParam::withCurrentTraj,            new boolContainer(false)));
@@ -182,6 +186,9 @@ void initPlannerParameters()
     myBoolMap.insert( std::make_pair( PlanParam::env_trajSoftMotion,         new boolContainer(true)));
     myBoolMap.insert( std::make_pair( PlanParam::env_trajRos,                new boolContainer(false)));
 
+    // Collision Space
+    myBoolMap.insert( std::make_pair( PlanParam::initColisionSpace,          new boolContainer(false)));
+
     // Sample Graph
     myBoolMap.insert( std::make_pair( PlanParam::samplegraphMultiLoop,       new boolContainer(false)));
 
@@ -219,6 +226,8 @@ void initPlannerParameters()
     // ------------------------------------------------------------------
     // Double
     // ------------------------------------------------------------------
+    myDoubleMap.insert( std::make_pair( PlanParam::drawScaleFactorNodeSphere, new doubleContainer(1.0)));
+
     myDoubleMap.insert( std::make_pair( PlanParam::timeLimitPlanning,        new doubleContainer(10.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::timeLimitSmoothing,       new doubleContainer(2.0)));
     // Post-processing phaze
@@ -284,9 +293,10 @@ void initPlannerParameters()
     // Vector
     // ------------------------------------------------------------------
     std::vector<double> tutu;
-    tutu.push_back( 1 ); tutu.push_back( 8 );
+    tutu.push_back( 1 );
 
-    myVectorMap.insert(std::make_pair(PlanParam::tutu,                       new vectorContainer(tutu)));
+    myVectorMap.insert(std::make_pair(PlanParam::planner_joints,                new vectorContainer(tutu)));
+    myVectorMap.insert(std::make_pair(PlanParam::active_joints,                new vectorContainer(tutu)));
 
     // Make the new parameter container
     PlanEnv =  new Parameters<

@@ -71,7 +71,8 @@ LocalPath::LocalPath(confPtr_t B, confPtr_t E) :
     _NbColTest(0),
     _costEvaluated(false), _Cost(0.0),
     _ResolEvaluated(false), _Resolution(0.0),
-    _Type(LINEAR)
+    _Type(LINEAR),
+    _phiEvaluated(false)
 {
     if ( _Begin->getRobot() != _End->getRobot() )
     {
@@ -85,7 +86,8 @@ LocalPath::LocalPath(confPtr_t B, confPtr_t E) :
 LocalPath::LocalPath(LocalPath& path, double& p , bool lastValidConfig) :
     _Robot(path.getRobot()),
     _Begin(path._Begin),
-    _LocalPath(NULL)
+    _LocalPath(NULL),
+  _phiEvaluated(false)
 {
     // For extend (Construct a smaller local path)
     // This function is used in Base Expansion
@@ -138,7 +140,9 @@ LocalPath::LocalPath(const LocalPath& path) :
     _Cost(path._Cost),
     _ResolEvaluated(path._ResolEvaluated),
     _Resolution(path._Resolution),
-    _Type(path._Type)
+    _Type(path._Type),
+    _phiEvaluated(path._phiEvaluated),
+    _phi(path._phi)
 {
     _LocalPath = Move3DLocalPathCopy( path, _Robot );
 }
@@ -154,7 +158,8 @@ LocalPath::LocalPath( Robot* R, p3d_localpath* lpPtr ) :
     _costEvaluated(false),
     _Cost(0.0),
     _ResolEvaluated(false),
-    _Resolution(0.0)
+    _Resolution(0.0),
+  _phiEvaluated(false)
 {
 
     _LocalPath = Move3DLocalPathCopyFromStruct( *this, lpPtr, _Begin, _End );
@@ -431,6 +436,9 @@ double LocalPath::cost()
         _costEvaluated = true;
         // cout << "local path cost : " << _Cost << endl;
     }
+//    else {
+//        cout << "already eval" << endl;
+//    }
 
     return _Cost;
 }

@@ -60,6 +60,7 @@ enum boolParameter
     trajComputeCollision,
 
     // Stomp
+    trajStompRunParallel,
     trajStompRunMultiple,
     trajStompWithRRT,
     trajStompComputeColl,
@@ -88,12 +89,18 @@ enum boolParameter
     setRobotIK,
     showExploration,
 
+    // Collision Space
+    initColisionSpace,
+
     // Sample Graph
     samplegraphMultiLoop,
 
     // RRT*
     starRRT,
     starRewire,
+
+    // RRG
+    rrg,
 
     // Stomp/Chomp & trajectory optim
     withCurrentTraj,
@@ -102,7 +109,6 @@ enum boolParameter
 
     // Use Legible Cost
     useLegibleCost,
-
 
     // Drawing (gl) stuff
     drawNaturalColor,
@@ -181,6 +187,9 @@ enum intParameter
 
 enum doubleParameter
 {
+    // Drawing
+    drawScaleFactorNodeSphere,
+
     // Time
     timeLimitSmoothing,
     timeLimitPlanning,
@@ -242,7 +251,8 @@ enum stringParameter
 
 enum vectorParameter
 {
-    tutu
+    planner_joints,
+    active_joints
 };
 
 };

@@ -12,7 +12,7 @@
 #include "scene.hpp"
 
 #include "planEnvironment.hpp"
-#include "hri_costspace/Gestures/HRICS_GestParameters.hpp"
+#include "hri_costspace/gestures/HRICS_gest_parameters.hpp"
 #include "hri_costspace/HRICS_parameters.hpp"
 //#include "SaveContext.hpp"
 

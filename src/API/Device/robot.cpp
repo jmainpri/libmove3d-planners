@@ -89,6 +89,7 @@ Robot::Robot(void* robotPt, bool copy )
     copy_ = copy;
     robot_kin_struct_ = robotPt;
     contains_libmove3d_struct_ = true;
+    object_box_dimentions_ = Eigen::Vector3d::Zero();
     Move3DRobotConstructor( this, robot_kin_struct_, nb_dofs_, copy, name_, joints_ );
 }
 
@@ -100,7 +101,7 @@ Robot::~Robot()
     }
 }
 
-string Robot::getName()
+const string& Robot::getName()
 {
     return name_;
 }
@@ -111,6 +112,7 @@ rob* Robot::getP3dRobotStruct()
     return static_cast<p3d_rob*>(robot_kin_struct_);
 }
 
+
 /**
  * Gets traj
  * @return pointer to structure p3d_traj
@@ -118,6 +120,16 @@ rob* Robot::getP3dRobotStruct()
 void* Robot::getTrajStruct()
 {
     return static_cast<p3d_rob*>(robot_kin_struct_)->tcur;
+}
+
+void Robot::removeCurrentTraj()
+{
+    p3d_traj* traj = static_cast<p3d_traj*>( getTrajStruct() );
+    if( traj != NULL )
+    {
+        p3d_del_traj( traj );
+        traj = NULL;
+    }
 }
 
 Move3D::Trajectory Robot::getCurrentTraj()
@@ -162,20 +174,49 @@ const std::vector<Joint*>& Robot::getAllJoints()
     return joints_;
 }
 
-vector<Vector3d> Robot::getObjectBox()
+bool Robot::isInObjectBox( const Eigen::Vector3d& p0 )
 {
-    //	if (m_ObjectBox.empty()) {
-    //    cout << "Warning : " << __PRETTY_FUNCTION__ << " : no Object Box" << endl;
-    //	}
+    Eigen::Transform3d T( getJoint(1)->getMatrixPos().inverse() );
+    Eigen::Vector3d p = T * p0;
 
-    vector<Vector3d> box(8);
+    Eigen::VectorXd limits(6);
+    limits[0] = object_box_center_[0] + object_box_dimentions_[0] / 2;
+    limits[1] = object_box_center_[0] - object_box_dimentions_[0] / 2;
+    limits[2] = object_box_center_[1] + object_box_dimentions_[1] / 2;
+    limits[3] = object_box_center_[1] - object_box_dimentions_[1] / 2;
+    limits[4] = object_box_center_[2] + object_box_dimentions_[2] / 2;
+    limits[5] = object_box_center_[2] - object_box_dimentions_[2] / 2;
+
+    if( p[0] > limits[0] )
+        return false;
+    if( p[0] < limits[1] )
+        return false;
+    if( p[1] > limits[2] )
+        return false;
+    if( p[1] < limits[3] )
+        return false;
+    if( p[2] > limits[4] )
+        return false;
+    if( p[2] < limits[5] )
+        return false;
+
+    return true;
+}
+
+std::vector<Eigen::Vector3d> Robot::getObjectBox()
+{
+    if( getJoint(1) == NULL || object_box_dimentions_ == Vector3d::Zero() ){
+        return std::vector<Eigen::Vector3d>();
+    }
+
+    std::vector<Eigen::Vector3d> box(8);
 
     box[0][0] = 1;		box[4][0] = -1;
     box[0][1] = -1;		box[4][1] = -1;
     box[0][2] = 1;		box[4][2] = 1;
 
     box[1][0] = 1;		box[5][0] = -1;
-    box[1][1] = 1;		box[5][1] = -1;
+    box[1][1] = 1;		box[5][1] = 1;
     box[1][2] = 1;		box[5][2] = 1;
 
     box[2][0] = 1;		box[6][0] = -1;
@@ -186,34 +227,49 @@ vector<Vector3d> Robot::getObjectBox()
     box[3][1] = 1;		box[7][1] = 1;
     box[3][2] = -1;		box[7][2] = -1;
 
-    /*	vector<Vector3d> box;
-   box.clear();
-   
-   Transform3d T = getJoint(1)->getMatrixPos();
-   
-   for (unsigned int i=0; i<8; i++)
-   {
-   box.push_back(m_ObjectBox[i]);
-   }*/
-
     Matrix3d A = Matrix3d::Zero();
+    A(0,0) = object_box_dimentions_[0] / 2 ;
+    A(1,1) = object_box_dimentions_[1] / 2 ;
+    A(2,2) = object_box_dimentions_[2] / 2 ;
 
-    A(0,0) = object_box_dimentions_[0]/2;
-    A(1,1) = object_box_dimentions_[1]/2;
-    A(2,2) = object_box_dimentions_[2]/2;
+    Transform3d T = getJoint(1)->getMatrixPos();
 
     for (unsigned int i=0; i<8; i++)
     {
-        box[i] = A*box[i];
-        box[i] = object_box_center_+box[i];
+        box[i] = A * box[i];
+        box[i] = object_box_center_ + box[i];
+        box[i] = T * box[i];
     }
 
     return box;
 }
 
-void Robot::initObjectBox()
+void Robot::initObjectBox( const std::vector<double>& dimensions )
 {
-
+    if( dimensions.empty() )
+    {
+        object_box_dimentions_[0] = 1.0;
+        object_box_dimentions_[1] = 1.0;
+        object_box_dimentions_[2] = 1.0;
+        object_box_center_ = Vector3d::Zero();
+    }
+    else if( dimensions.size() == 3 )
+    {
+        object_box_dimentions_[0] = dimensions[0];
+        object_box_dimentions_[1] = dimensions[1];
+        object_box_dimentions_[2] = dimensions[2];
+        object_box_center_ = Vector3d::Zero();
+    }
+    else if( dimensions.size() == 6 )
+    {
+        object_box_dimentions_[0] = dimensions[0];
+        object_box_dimentions_[1] = dimensions[1];
+        object_box_dimentions_[2] = dimensions[2];
+        object_box_center_ = Vector3d::Zero();
+        object_box_center_[0] += dimensions[3];
+        object_box_center_[1] += dimensions[4];
+        object_box_center_[2] += dimensions[5];
+    }
 }
 
 #ifdef LIGHT_PLANNER

@@ -27,18 +27,18 @@ const int HRICS_HUMANj_NECK_TILT= 6;
 const int HRICS_HUMANj_RHAND=     29; /* or 30 or 31 */
 const int HRICS_HUMANj_LHAND=     26; /* or 27 or 28 */
 
-#include "HRICS_Distance.hpp"
-#include "HRICS_Visibility.hpp"
-#include "HRICS_Natural.hpp"
-#include "HRICS_Workspace.hpp"
-#include "HRICS_ConfigSpace.hpp"
+#include "HRICS_distance.hpp"
+#include "HRICS_visibility.hpp"
+#include "HRICS_natural.hpp"
+#include "HRICS_workspace.hpp"
+#include "HRICS_config_space.hpp"
 #include "HRICS_otpmotionpl.hpp"
-#include "HRICS_humanCostSpace.hpp"
-#include "HRICS_Navigation.hpp"
-#include "HRICS_Legibility.hpp"
+#include "HRICS_human_cost_space.hpp"
+#include "HRICS_navigation.hpp"
+#include "HRICS_legibility.hpp"
 
 #ifdef HRI_PLANNER
-#include "HRICS_HAMP.hpp"
+#include "HRICS_hamp.hpp"
 extern HRICS::HriSpaceCost* hriSpace;
 #endif
 

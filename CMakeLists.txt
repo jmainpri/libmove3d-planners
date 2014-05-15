@@ -434,7 +434,7 @@ ADD_DEFINITIONS(-DKCD_MOVE3D -DPRINT_ERROR -DPRINT_INFO)
 IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
   ADD_DEFINITIONS(-g -Wall -Wno-unknown-pragmas -fstack-protector-all)
 ELSEIF(${CMAKE_BUILD_TYPE} MATCHES "Release")
-  ADD_DEFINITIONS(-O2 -Wall -Wno-unknown-pragmas)
+  ADD_DEFINITIONS(-O3 -Wall -Wno-unknown-pragmas)
 ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
 IF(QT_LIBRARY)

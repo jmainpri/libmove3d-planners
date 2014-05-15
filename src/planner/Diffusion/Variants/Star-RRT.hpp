@@ -65,6 +65,28 @@ public:
     bool expandToGoal( Node* expansionNode, confPtr_t directionConfig);
 
     /**
+     * expandProcess
+     *
+     * checks the validity of the local path in one direction and adds nodes
+     * to the trees with a different behaviour depending on the method variable
+     *
+     * @param expansionNode
+     * @param directionConfig
+     * @param directionNode
+     * @param method
+     *
+     * @return the number of nodes created
+     */
+    unsigned expandProcess( Node* expansionNode, confPtr_t directionConfig, Node* directionNode, Env::expansionMethod method);
+
+    /**
+   * Set the initial compco
+   */
+    void setInitialCompco( ConnectedComponent* compco );
+
+private:
+
+    /**
    * Sample in tube
    */
     confPtr_t sampleInTube();
@@ -85,11 +107,6 @@ public:
     int extendExpandProcess( Node* expansionNode, confPtr_t directionConfig, Node* directionNode);
 
     /**
-   * Set the initial compco
-   */
-    void setInitialCompco( ConnectedComponent* compco );
-
-    /**
    * Get the rgg ball raduis
    */
     double rrgBallRadius();
@@ -99,22 +116,6 @@ public:
    */
     void rewireGraph(Node* new_node, Node* min_node, const std::vector<Node*>& neigh_nodes);
 
-    /**
-     * expandProcess
-     *
-     * checks the validity of the local path in one direction and adds nodes
-     * to the trees with a different behaviour depending on the method variable
-     *
-     * @param expansionNode
-     * @param directionConfig
-     * @param directionNode
-     * @param method
-     *
-     * @return the number of nodes created
-     */
-    unsigned expandProcess( Node* expansionNode, confPtr_t directionConfig, Node* directionNode, Env::expansionMethod method);
-
-private:
 
     bool m_goal_bias;
     bool m_start_bias;

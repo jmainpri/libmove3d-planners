@@ -47,7 +47,7 @@
 #include <iostream>
 
 // For random number generator (seed can be passed as argument)
-#include "API/misc_functions.hpp"
+#include "utils/misc_functions.hpp"
 //namespace chomp
 //{
 

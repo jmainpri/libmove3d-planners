@@ -2,7 +2,7 @@
 #define HRICS_RRTEXPANSION_H
 
 #include "Diffusion/Variants/Transition-RRT.hpp"
-#include "hri_costspace/Grid/HRICS_Grid.hpp"
+#include "hri_costspace/grid/HRICS_grid.hpp"
 
 namespace HRICS
 {

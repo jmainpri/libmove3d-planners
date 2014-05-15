@@ -42,8 +42,7 @@ public:
 
 protected:
 
-    confPtr_t qi_;
-    confPtr_t qf_;
+    virtual double computeRadius();
 
     int dist_choice_;
     double radius_;

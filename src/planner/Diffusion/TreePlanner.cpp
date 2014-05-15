@@ -35,7 +35,7 @@ TreePlanner::TreePlanner( Move3D::Robot* R, Move3D::Graph* G ) :
     m_nbFailedExpansion(0)
 {	
 #ifdef DEBUG_STATUS
-    cout << "TreePlanner::TreePlanner(R,G)" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
 #endif
 }
 
@@ -63,15 +63,6 @@ unsigned TreePlanner::init()
  */
 bool TreePlanner::preConditions()
 {
-    //    cout << "Entering preCondition" << endl;
-
-    //	if (ENV.getBool(Env::isCostSpace) && (ENV.getExpansionMethod()
-    //																				== Env::Connect))
-    //	{
-    //		cout
-    //		<< "Warning: Connect expansion strategy is usually unadapted for cost spaces\n"
-    //		<< endl;
-    //	}
     if (!_Robot->setAndUpdate(*_Start->getConfiguration()) )
     {
         cout << "TreePlanner::preConditions => Start config. does not respect kin. constraints" << endl;
@@ -169,8 +160,7 @@ bool TreePlanner::checkStopConditions()
 
     if (/*ENV.getBool(Env::ligandExitTrajectory)*/false)
     {
-        double d(_Start->getConfiguration()->dist(
-                     *_Graph->getLastNode()->getConfiguration()));
+        double d(_Start->getConfiguration()->dist( *_Graph->getLastNode()->getConfiguration()));
 
         if (d > 12.0)
         {
@@ -260,17 +250,15 @@ bool TreePlanner::connectionToTheOtherCompco( Node* toNode )
         bool WeigtedRot = ENV.getBool(Env::isWeightedRotation);
         ENV.setBool(Env::isWeightedRotation,false);
 
-        Node* closestNode = _Graph->nearestWeightNeighbour( toNode, _Graph->getLastNode()->getConfiguration(),
-                                                            ENV.getInt(Env::DistConfigChoice));
+        Node* closestNode = _Graph->nearestWeightNeighbour( toNode, _Graph->getLastNode()->getConfiguration(), ENV.getInt(Env::DistConfigChoice) );
 
         ENV.setBool(Env::isWeightedRotation,WeigtedRot);
 
-        connected = connectNodeToCompco(_Graph->getLastNode(), closestNode );
+        connected = connectNodeToCompco( _Graph->getLastNode(), closestNode );
     }
-
     else if(ENV.getBool(Env::randomConnectionToGoal))
     {
-        connected = connectNodeToCompco( _Graph->getLastNode(), _Graph->randomNodeFromComp(toNode));
+        connected = connectNodeToCompco( _Graph->getLastNode(), _Graph->randomNodeFromComp(toNode) );
     }
     else
     {
@@ -287,7 +275,7 @@ int ith_Graph_Saved = 0;
 //! Bi-Directionality is handled here
 unsigned int TreePlanner::run()
 {
-    shared_ptr<Configuration> tmp = _Robot->getCurrentPos();
+    confPtr_t tmp = _Robot->getCurrentPos();
 
     //	cout << "ENV.getInt(Env::maxNodeCompco) = " << ENV.getInt(Env::maxNodeCompco) << endl;
     if(!preConditions())
@@ -355,7 +343,7 @@ unsigned int TreePlanner::run()
 
                         if( PlanEnv->getBool( PlanParam::rrtExtractShortestPath ) )
                         {
-                            extractTrajectory();
+                            // extractTrajectory();
                         }
                     }
                 }
@@ -388,7 +376,7 @@ unsigned int TreePlanner::run()
         _draw_func();
     }
 
-    ENV.setInt(Env::nbQRand,m_nbExpansion);
+    ENV.setInt( Env::nbQRand, m_nbExpansion );
     _Robot->setAndUpdate(*tmp);
     return (NbTotCreatedNodes);
 }

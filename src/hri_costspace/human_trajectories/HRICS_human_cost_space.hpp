@@ -1,12 +1,12 @@
 #include "API/Device/robot.hpp"
 
 #include "HRICS_human_features.hpp"
-#include "hri_costspace/Gestures/HRICS_RecordMotion.hpp"
+#include "hri_costspace/gestures/HRICS_record_motion.hpp"
 
 namespace HRICS
 {
 
-class HumanTrajCostSpace : public StackedFeatures
+class HumanTrajCostSpace : public Move3D::StackedFeatures
 {
 
 public:
@@ -41,7 +41,7 @@ private:
     ReachabilityFeature reach_feat_;
     LegibilityFeature legib_feat_;
 
-    TrajectorySmoothness smoothness_feat_;
+    Move3D::TrajectorySmoothness smoothness_feat_;
 };
 
 class HumanTrajSimulator

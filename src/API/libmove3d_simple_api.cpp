@@ -13,6 +13,18 @@ using namespace Move3D;
 using std::cout;
 using std::endl;
 
+static bool use_move3d_functions = true;
+
+void move3d_set_api_functions( bool use_move3d_fct )
+{
+    use_move3d_functions = use_move3d_fct;
+}
+
+bool move3d_use_api_functions()
+{
+    return use_move3d_functions;
+}
+
 #define EPS6 0.000001
 #define RTOD(r)      ((r)*180.0/M_PI)
 #define DTOR(d)      ((d)*M_PI/180.0)

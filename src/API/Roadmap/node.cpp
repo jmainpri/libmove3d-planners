@@ -41,7 +41,7 @@ Node::Node() :
 }
 
 //Constructor and destructor
-Node::Node(Graph* G, shared_ptr<Configuration> C, bool newCompco) :
+Node::Node(Graph* G, confPtr_t C, bool newCompco) :
     color_(0),
     m_parent(NULL),
     _SelectCost(0.0),
@@ -84,7 +84,7 @@ Node::Node(Graph* G, p3d_node* N) :
 {
     m_Graph = G;
     m_Robot = G->getRobot();
-    m_Configuration = shared_ptr<Configuration> (new Configuration(m_Robot, N->q));
+    m_Configuration = confPtr_t( new Configuration(m_Robot, N->q) );
 
     _activ = false;
     m_Node = N;
@@ -497,9 +497,9 @@ bool Node::connectNodeToCompco(Node* node, double step)
 }
 
 //place la compco dans la CompCo presente
-void Node::merge(Node* compco)
+void Node::merge( Node* compco, bool compute_edge_cost )
 {
-    m_Graph->mergeComp(this,compco,dist(compco),true);
+    m_Graph->mergeComp( this, compco, dist(compco), compute_edge_cost );
 }
 
 bool Node::equalCompco(Node* compco) const

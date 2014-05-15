@@ -52,7 +52,7 @@ void GlobalCostSpace::initialize()
     global_costSpace->addCost("costIsInCollision",boost::bind(computeInCollisionCost, _1));
     global_costSpace->setCost("costIsInCollision");
 
-    std::cout << "Initializing the collision costmap cost function" << std::endl;
+    std::cout << "Initializing the length cost function" << std::endl;
     global_costSpace->addCost("costLength",boost::bind(computeFlatCost, _1));
     global_costSpace->setCost("costLength");
 
@@ -65,10 +65,16 @@ void GlobalCostSpace::initialize()
 }
 
 //------------------------------------------------------------------------------
-CostSpace::CostSpace() : mSelectedCostName("No Cost"), m_deltaMethod(cs_integral), m_resolution(cs_classic)/* m_resolution(cs_pr2_manip)*/ 
+CostSpace::CostSpace() :
+    mSelectedCostName("No Cost"),
+    mSelectedPathCostName("Default"),
+    m_deltaMethod(cs_integral),
+    m_resolution(cs_classic)/* m_resolution(cs_pr2_manip)*/
 {
     m_dmax = ENV.getDouble(Env::dmax);
 
+    mSelectedPathCost = boost::bind( &CostSpace::path_cost_default, this, _1, _2 );
+    mPathFunctions[ mSelectedCostName ] = mSelectedPathCost;
     //m_resolution = cs_pr2_manip;
 }
 
@@ -91,12 +97,13 @@ std::vector<string> CostSpace::getAllCost()
 }
 
 //------------------------------------------------------------------------------
-bool CostSpace::setCost(string name)
+bool CostSpace::setCost(std::string name)
 {
-    if(mFunctions.find(name) != mFunctions.end())
+    if( mFunctions.find(name) != mFunctions.end() )
     {
         mSelectedCostName = name;
         mSelectedCost = mFunctions[name];
+        setPathCost( name );
         return true;
     }
     else
@@ -106,10 +113,9 @@ bool CostSpace::setCost(string name)
     }
 }
 
-//------------------------------------------------------------------------------
-void CostSpace::addCost(string name, boost::function<double(Configuration&)> f)
+void CostSpace::addCost(std::string name, boost::function<double(Configuration&)> f)
 {
-    if(mFunctions.find(name) == mFunctions.end())
+    if( mFunctions.find(name) == mFunctions.end() )
     {
         mFunctions[name] = f;
     }
@@ -119,6 +125,39 @@ void CostSpace::addCost(string name, boost::function<double(Configuration&)> f)
         mFunctions[name] = f;
     }
 }
+
+
+//------------------------------------------------------------------------------
+// Select the cost function with the given name in the map
+bool CostSpace::setPathCost(std::string name)
+{
+    if( mPathFunctions.find(name) != mPathFunctions.end() )
+    {
+        mSelectedPathCostName = name;
+        mSelectedPathCost = mPathFunctions[name];
+        return true;
+    }
+    else
+    {
+        std::cout << "Warning : in CostSpace::setPathCost(string name), could not find a cost function named " << name  << std::endl;
+        return false;
+    }
+}
+
+// Register a new cost function.
+void CostSpace::addPathCost(std::string name, boost::function<double(LocalPath&,int&)> f)
+{
+    if( mPathFunctions.find(name) == mPathFunctions.end() )
+    {
+        mPathFunctions[name] = f;
+    }
+    else
+    {
+        std::cout << "Warning : in CostSpace::addPathCost, replacing the cost function named " << name << "by another." << std::endl;
+        mPathFunctions[name] = f;
+    }
+}
+
 //------------------------------------------------------------------------------
 void CostSpace::deleteCost(string name)
 {
@@ -138,16 +177,9 @@ void CostSpace::deleteCost(string name)
 //------------------------------------------------------------------------------
 double CostSpace::cost(Configuration& conf)
 {
-    //    shared_ptr<Configuration> q_tmp = conf.copy();
-
     if(!mSelectedCost.empty())
     {
         double cost = mSelectedCost(conf);
-
-//        if( !conf.equal( *q_tmp ) )
-//        {
-//            cout << "Cost function modifies the config" << endl;
-//        }
         return cost;
     }
     else
@@ -338,7 +370,7 @@ double CostSpace::getPr2ArmDistance( Robot* robot, Eigen::VectorXd& q_i, Eigen::
 }
 
 //----------------------------------------------------------------------
-double CostSpace::cost( LocalPath& path, int& nb_test )
+double CostSpace::path_cost_default( LocalPath& path, int& nb_test )
 {
     confPtr_t q_tmp_begin = path.getBegin()->copy();
     confPtr_t q_tmp_end   = path.getEnd()->copy();
@@ -357,36 +389,6 @@ double CostSpace::cost( LocalPath& path, int& nb_test )
         deltaStep = path.getResolution();
         nStep = path.getParamMax()/deltaStep;
         //        }
-
-        if( m_resolution == cs_pr2_manip )
-        {
-            Eigen::VectorXd a( Eigen::VectorXd::Zero(13) );
-            Eigen::VectorXd b( Eigen::VectorXd::Zero(13) );
-
-            path.getP3dLocalpathStruct();
-
-            getPr2ArmConfiguration( a, path.getBegin() );
-            getPr2ArmConfiguration( b, path.getEnd() );
-
-            //      cout << "a : " << endl << a << endl;
-            //      cout << "b : " << endl << b << endl;
-            //
-            //      path.getBegin()->print();
-            //      path.getEnd()->print();
-
-            //      double param_max = ( a - b ).norm();
-            double param_max  = getPr2ArmDistance( path.getRobot(), a, b);
-            nStep = ceil(param_max/(PlanEnv->getDouble(PlanParam::costResolution)*m_dmax));
-            deltaStep = param_max/nStep;
-
-            cout <<  endl;
-            cout << "param_max : " << param_max << endl;
-            cout << "path.getParamMax() : " << path.getParamMax() << endl;
-
-            //      cout << "param_max : " << param_max << " , nStep : " << nStep << endl;
-            //      cout << "a : " << endl << a << endl;
-            //      cout << "b : " << endl << b << endl;
-        }
 
         confPtr_t q;
 
@@ -431,6 +433,19 @@ double CostSpace::cost( LocalPath& path, int& nb_test )
     }
 
     return cost;
+}
+
+double CostSpace::cost( LocalPath& path, int& nb_test )
+{
+    if(!mPathFunctions.empty())
+    {
+        double cost = mSelectedPathCost( path, nb_test );
+        return cost;
+    }
+    else
+    {
+        return path_cost_default( path, nb_test );
+    }
 }
 
 //----------------------------------------------------------------------

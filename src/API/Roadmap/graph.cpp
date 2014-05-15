@@ -31,6 +31,10 @@
 #include "planner/planEnvironment.hpp"
 #include "planner/cost_space.hpp"
 
+#include "feature_space/features.hpp"
+
+#include "utils/misc_functions.hpp"
+
 #include "move3d-headless.h"
 
 #include "P3d-pkg.h"
@@ -521,8 +525,8 @@ Robot* Graph::getRobot() const
 
 unsigned int Graph::getNumberOfNodes()
 {
-    if( init_bgl_ ) {
-
+    if( init_bgl_ )
+    {
         unsigned int nbNodes = num_vertices(boost_graph_);
 
         if ( nbNodes != nodes_.size() )
@@ -538,8 +542,8 @@ unsigned int Graph::getNumberOfNodes()
 
 unsigned int Graph::getNumberOfEdges() const
 {
-    if( init_bgl_ ) {
-
+    if( init_bgl_ )
+    {
         unsigned int nbEdges = num_edges(boost_graph_);
 
         if ( nbEdges != edges_.size() )
@@ -869,7 +873,7 @@ Edge* Graph::addEdge( Node* source, Node* target, bool compute_length, double le
     // Edge is not in the graph
     if ( E == NULL )
     {
-        E = new Edge(this, source, target, compute_length, length , compute_cost, cost );
+        E = new Edge( this, source, target, compute_length, length , compute_cost, cost );
         edges_.push_back(E);
 
         if (init_bgl_)
@@ -970,17 +974,17 @@ void Graph::removeEdges( Node* N1, Node* N2 )
 /**
  * Add basically a node to the graph
  */
-void Graph::addNode(Node* N)
+void Graph::addNode( Node* N )
 {
     nodes_Table.insert( std::pair<p3d_node*, Node*> (N->getNodeStruct(), N));
     nodes_.push_back(N);
 
     BGL_VertexDataMapT NodeData = boost::get( NodeData_t() , boost_graph_ );
-    BGL_Vertex v								= boost::add_vertex( boost_graph_ );
-    NodeData[v]									= N;
+    BGL_Vertex v				= boost::add_vertex( boost_graph_ );
+    NodeData[v]					= N;
     N->setDescriptor(v);
 
-    graph_is_modified_							= true;
+    graph_is_modified_			= true;
 }
 
 
@@ -1641,6 +1645,22 @@ void Graph::updateCompcoFromStruct()
     }
 }
 
+ConnectedComponent* Graph::getLargestCompco() const
+{
+    ConnectedComponent* compco=NULL;
+
+    size_t max_number_of_nodes = 0;
+    for( size_t i=0;i<comp_.size();i++)
+    {
+        if( comp_[i]->getNumberOfNodes() > max_number_of_nodes ) {
+            max_number_of_nodes = comp_[i]->getNumberOfNodes();
+            compco = comp_[i];
+        }
+    }
+
+    return compco;
+}
+
 /**
  * Merge Component by adding an edge between node1 and node2
  * @param node1
@@ -1929,19 +1949,69 @@ void Graph::addCycles(Node* node, double step)
 }
 
 /**
- * Recompute all node and edge
- * cost
+ * Recompute all node and edge cost
  */
-void Graph::recomputeCost()
+void Graph::resetAllEdgesCost()
 {
-    for(unsigned int i=0; i<nodes_.size();i++)
+    for(size_t i=0;i<edges_.size();i++)
+    {
+        edges_[i]->getLocalPath()->resetCostComputed();
+    }
+}
+
+/**
+ * Recompute all node and edge cost
+ */
+void Graph::computeAllEdgesAndNodesCost()
+{
+    for(size_t i=0; i<nodes_.size();i++)
     {
         nodes_[i]->cost();
     }
 
-    for(unsigned int i=0;i<edges_.size();i++)
+    for(size_t i=0;i<edges_.size();i++)
     {
         edges_[i]->cost();
+    }
+}
+
+/**
+ * Reset the graph features (Edges and Nodes)
+ */
+void Graph::resetAllEdgesFeatures()
+{
+    for(size_t i=0; i<nodes_.size();i++)
+    {
+        nodes_[i]->getConfiguration()->resetFeaturesComputed();
+    }
+
+    for(size_t i=0;i<edges_.size();i++)
+    {
+        edges_[i]->getLocalPath()->resetFeaturesComputed();
+    }
+}
+
+/**
+ * Recompute all edges features (Edges and Nodes)
+ */
+void Graph::computeAllEdgesAndNodesFeatures()
+{
+//    for(size_t i=0; i<nodes_.size();i++)
+//    {
+//        nodes_[i]->cost();
+//    }
+
+//    for(size_t i=0;i<edges_.size();i++)
+//    {
+//        edges_[i]->cost();
+//    }
+}
+
+void Graph::resetAllEdgesValid()
+{
+    for(size_t i=0;i<edges_.size();i++)
+    {
+        edges_[i]->getLocalPath()->setLocalpathAsNotTested();
     }
 }
 
@@ -1951,21 +2021,51 @@ void Graph::recomputeCost()
 bool Graph::checkAllEdgesValid()
 {
     int collTest = 0;
-    for(unsigned int i=0;i<edges_.size();i++)
-    {
-        shared_ptr<LocalPath> ptrLP = edges_[i]->getLocalPath();
 
-        if(!(ptrLP->isValid()))
+    for(size_t i=0;i<edges_.size();i++)
+    {
+        pathPtr_t path = edges_[i]->getLocalPath();
+
+        if( !path->isValid() )
         {
+            cout << "ith edge is not valid : " << i << endl;
             return false;
         }
 
-        collTest += ptrLP->getNbColTest();
+        collTest += path->getNbColTest();
     }
 
     cout << "Graph Total Number of coll. test = " << collTest << endl;
 
     return true;
+}
+
+/**
+  * Get number of cost calls per edge
+  */
+int Graph::getNumberOfColTestCalls()
+{
+    int collTest = 0;
+
+    for(size_t i=0;i<edges_.size();i++)
+        if( edges_[i]->getLocalPath()->getEvaluated() )
+            collTest += edges_[i]->getLocalPath()->getNbColTest();
+
+    return collTest;
+}
+
+/**
+  * Get number of cost calls per edge
+  */
+int Graph::getNumberOfCostCalls()
+{
+    int costTest = 0;
+
+    for(size_t i=0;i<edges_.size();i++)
+        if( edges_[i]->getLocalPath()->isCostEvaluated() )
+            costTest += edges_[i]->getLocalPath()->getNbCostTest();
+
+    return costTest;
 }
 
 //---------------------------------------------------------------------
@@ -2033,6 +2133,16 @@ Move3D::Trajectory* Graph::extractDijkstraShortestPathsTraj( confPtr_t qi, confP
 //------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------
 
+// Weight map
+typedef boost::property_map<BGL_Graph, boost::edge_weight_t>::type                  BGL_WeightDataMapT;
+
+// Color map
+//typedef boost::property_map<BGL_Graph, boost::vertex_color_t>::type                 BGL_ColorDataMapT;
+typedef std::vector<boost::default_color_type>                                      BGL_ColorDataMapT;
+
+// Index map
+typedef boost::property_map<BGL_Graph, boost::vertex_index_t>::type                 BGL_IndexDataMapT;
+
 // euclidean distance heuristic
 template <class TGraph, class CostType, class LocMap>
 class distance_heuristic : public boost::astar_heuristic<TGraph, CostType>
@@ -2040,22 +2150,23 @@ class distance_heuristic : public boost::astar_heuristic<TGraph, CostType>
 public:
     typedef typename boost::graph_traits<TGraph>::vertex_descriptor Vertex;
 
-    distance_heuristic(LocMap l, Vertex goal) : m_location(l), m_goal(goal) {}
+    distance_heuristic( const LocMap& l, Vertex goal) : m_location(l), m_goal(goal) {}
 
     CostType operator()(Vertex u)
     {
-        if( ENV.getBool(Env::isCostSpace))
+        if( (!ENV.getBool(Env::isCostSpace)) || (global_costSpace != NULL && global_costSpace->getSelectedCostName() == "costLength") )
         {
-            return 0.0;
-        }
-        else{
+            cout << "use heuristic" << endl;
             confPtr_t q1 = m_location[m_goal]->getConfiguration();
             confPtr_t q2 = m_location[u]->getConfiguration();
             return q1->dist(*q2);
         }
+        else{
+            return 0.0;
+        }
     }
 private:
-    LocMap m_location;
+    const LocMap& m_location;
     Vertex m_goal;
 };
 
@@ -2063,18 +2174,70 @@ private:
 struct found_goal {}; // exception for termination
 
 // visitor that terminates when we find the goal
-template <class Vertex>
+template <class Vertex_t, class VertexMap_t, class Edge_t, class EdgeMap_t, class WeightMap_t, class ColorMap_t, class VertexIndexMap_t>
 class astar_goal_visitor : public boost::default_astar_visitor
 {
 public:
-    astar_goal_visitor(Vertex goal) : m_goal(goal) {}
-    template <class Graph>
-    void examine_vertex(Vertex u, Graph& g) {
-        if(u == m_goal)
+
+    astar_goal_visitor( const Vertex_t& goal, const VertexMap_t& v, const EdgeMap_t& e, WeightMap_t& w, ColorMap_t& c, const VertexIndexMap_t& i ) :
+        m_goal(goal), m_vertices(v), m_edges(e), m_weights(w), m_colors(c), m_indices(i)  {}
+
+//    typedef typename boost::property_traits<ColorMap_t>::value_type ColorValue;
+//    typedef boost::color_traits<ColorValue> Color;
+
+    template <class Graph_t>
+    void discover_vertex( Vertex_t u, Graph_t& g )
+    {
+    }
+
+    template <class Graph_t>
+    void examine_vertex( Vertex_t u, Graph_t& g ) {
+
+        if( u == m_goal )
             throw found_goal();
     }
+
+    template <class Graph_t>
+    void examine_edge( Edge_t e, Graph_t& g )
+    {
+        bool black_list = false;
+
+        Vertex_t v = target(e, g);
+
+        if( API_activeFeatureSpace != NULL )
+        {
+            confPtr_t q = m_vertices[v]->getConfiguration();
+
+            if( !q->areFeaturesEvaluated() )
+            {
+                Move3D::FeatureVect phi = API_activeFeatureSpace->getFeatures( *q );
+                q->setFeatures( phi );
+
+                if( phi.maxCoeff() > 0.513 )
+                {
+                    black_list = true;
+                    m_colors[ m_indices[v] ] = boost::color_traits<boost::default_color_type>::black();
+                }
+            }
+            else if( q->getFeatures().maxCoeff() > 0.513 )
+            {
+                black_list = true;
+                m_colors[ m_indices[v] ] = boost::color_traits<boost::default_color_type>::black();
+            }
+        }
+
+
+        if( ! black_list )
+            m_weights[e] = ENV.getBool(Env::isCostSpace ) ?  m_edges[e]->cost() : m_edges[e]->getLocalPath()->getParamMax();
+    }
+
 private:
-    Vertex m_goal;
+    const Vertex_t& m_goal;
+    const VertexMap_t& m_vertices;
+    const EdgeMap_t& m_edges;
+    WeightMap_t& m_weights;
+    ColorMap_t& m_colors;
+    const VertexIndexMap_t& m_indices;
 };
 
 
@@ -2095,21 +2258,30 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( Node* node_init, Node* 
     BGL_Vertex start = node_init->getDescriptor();
     BGL_Vertex goal = node_goal->getDescriptor();
 
-    BGL_VertexDataMapT NodeData = boost::get(NodeData_t(), boost_graph_);
-    std::vector<BGL_Vertex> p(boost::num_vertices(boost_graph_));
-    std::vector<double> d(boost::num_vertices(boost_graph_));
+    // Node map
+    const BGL_VertexDataMapT& NodeData = boost::get( NodeData_t(), boost_graph_);
 
-    BGL_EdgeDataMapT EdgeData = boost::get(EdgeData_t(), boost_graph_);
-    boost::property_map<BGL_Graph, boost::edge_weight_t>::type weightmap = boost::get(boost::edge_weight, boost_graph_);
+    std::vector<BGL_Vertex> p( boost::num_vertices( boost_graph_) );
+    std::vector<double> d( boost::num_vertices( boost_graph_ ) );
+    std::vector<double> cost_map( boost::num_vertices( boost_graph_ ) );
+
+//     BGL_ColorDataMapT ColorData = boost::get( boost::vertex_color, boost_graph_ );
+    std::vector<boost::default_color_type> ColorData( boost::num_vertices( boost_graph_ ) );
+    const BGL_IndexDataMapT& IndexData = boost::get( boost::vertex_index, boost_graph_ );
+
+    // Edge Map
+    const BGL_EdgeDataMapT& EdgeData = boost::get(EdgeData_t(), boost_graph_);
+    BGL_WeightDataMapT WeightData = boost::get( boost::edge_weight, boost_graph_ );
 
     // int i=0;
-    BOOST_FOREACH(BGL_Edge e, boost::edges(boost_graph_)) {
+    BOOST_FOREACH( BGL_Edge e, boost::edges(boost_graph_) )
+    {
         if( use_cost )
-            weightmap[e] = EdgeData[e]->cost();
+            WeightData[e] = 1.0; // EdgeData[e]->cost();
         else
-            weightmap[e] = EPS6;
+            WeightData[e] = EPS6;
 
-        if ( weightmap[e] == 0.0 )
+        if ( WeightData[e] == 0.0 )
         {
             cout << "weightmap" << e << " == 0.0" << endl;
         }
@@ -2121,15 +2293,40 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( Node* node_init, Node* 
 
     try // call astar named parameter interface
     {
-        astar_search( boost_graph_,
+//        boost::astar_search
+//         ( boost_graph_,
+//           start,
+//           distance_heuristic<BGL_Graph, cost, BGL_VertexDataMapT>( NodeData, goal ),
+//           boost::visitor( astar_goal_visitor<BGL_Vertex, BGL_VertexDataMapT, BGL_Edge, BGL_EdgeDataMapT, BGL_WeightDataMapT, BGL_ColorDataMapT>(
+//           goal, NodeData, EdgeData, WeightData, ColorData ) ),
+//           boost::predecessor_map( &p[0] ),
+//           boost::rank_map( &cost_map[0] ),
+//           boost::distance_map( get( boost::vertex_distance, boost_graph_) ),
+//           boost::weight_map( WeightData ),
+//           boost::vertex_index_map( boost::get( boost::vertex_index, boost_graph_ ) ),
+//           boost::color_map( ColorData ),
+//           boost::distance_compare( std::less<cost>() ),
+//           boost::distance_combine( boost::closed_plus<cost>() ),
+//           boost::distance_inf( std::numeric_limits<cost>::max() ),
+//           boost::distance_zero( cost() ) );
+
+        boost::astar_search( boost_graph_,
+
                       start,
+
                       distance_heuristic<BGL_Graph, cost, BGL_VertexDataMapT>( NodeData, goal ),
-                      boost::weight_map(weightmap).predecessor_map(&p[0]).distance_map(&d[0]).visitor( astar_goal_visitor<BGL_Vertex>(goal) )
-                      //boost::predecessor_map(&p[0]),
+
+                      weight_map( WeightData ).
+                      predecessor_map( &p[0] ).
+                      distance_map( &d[0] ).
+                      color_map( &ColorData[0] ).
+                      visitor( astar_goal_visitor<BGL_Vertex, BGL_VertexDataMapT, BGL_Edge,
+                               BGL_EdgeDataMapT, BGL_WeightDataMapT, BGL_ColorDataMapT, BGL_IndexDataMapT>(
+                                   goal, NodeData, EdgeData, WeightData, ColorData, IndexData ) )
                       );
 
     }
-    catch( found_goal fg)
+    catch( found_goal fg )
     {
         std::list<BGL_Vertex> shortest_path;
         for( BGL_Vertex v = goal;; v = p[v] ) {
@@ -2140,6 +2337,20 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( Node* node_init, Node* 
 
         for( std::list<BGL_Vertex>::iterator spi = shortest_path.begin(); spi != shortest_path.end(); ++spi)
             nodes.push_back(NodeData[*spi]);
+    }
+
+    //#define White 5
+    //#define Grey 6
+    //#define Brown 7
+
+    BOOST_FOREACH( BGL_Vertex v, boost::vertices(boost_graph_) )
+    {
+        if( ColorData[ IndexData[v] ] == boost::color_traits<boost::default_color_type>::black() )
+            NodeData[v]->color_ = 7;
+        else if ( ColorData[ IndexData[v] ] == boost::color_traits<boost::default_color_type>::white() )
+            NodeData[v]->color_ = 5;
+        else if ( ColorData[ IndexData[v] ] == boost::color_traits<boost::default_color_type>::gray() )
+            NodeData[v]->color_ = 6;
     }
 
     return nodes;
@@ -2173,12 +2384,41 @@ std::vector<Node*> Graph::extractAStarShortestNodePaths( confPtr_t qi, confPtr_t
 }
 
 //! This function works for tree type of graphs
+Move3D::Trajectory* Graph::extractBestAStarPathFromLargestComponent( confPtr_t qi, confPtr_t qf )
+{
+    ConnectedComponent* compco = getLargestCompco();
+
+    if( compco->getNumberOfNodes() < 2 ) {
+        cout << "Not enough nodes in source component in " << __PRETTY_FUNCTION__ << endl;
+        return NULL;
+    }
+
+    // Start needs to be in the graph
+    // TODO decide which one to use
+    //    Node* source = searchConf(*qi);
+    Node* source = compco->nearestWeightNeighbour( qi, ENV.getInt(Env::DistConfigChoice) );
+    if( source == NULL ) {
+        cout << "qi not in graph in " << __PRETTY_FUNCTION__ << endl;
+        return NULL;
+    }
+
+    Node* target = compco->nearestWeightNeighbour( qf, ENV.getInt(Env::DistConfigChoice) );
+    if( target == NULL ) {
+        cout << "No goal nearest neighbour in graph in " << __PRETTY_FUNCTION__ << endl;
+        return NULL;
+    }
+
+    std::vector<Node*> nodes = extractAStarShortestNodePaths( source, target );
+    return trajectoryFromNodeVector( nodes );
+}
+
+//! This function works for tree type of graphs
 Move3D::Trajectory* Graph::extractBestAStarPathSoFar( confPtr_t qi, confPtr_t qf )
 {
     // Start needs to be in the graph
     // TODO decide which one to use
     //    Node* source = searchConf(*qi);
-    Node* source = nearestNeighbour(qi);
+    Node* source = nearestNeighbour( qi );
     if( source == NULL ) {
         cout << "qi not in graph in " << __PRETTY_FUNCTION__ << endl;
         return NULL;
@@ -2214,7 +2454,7 @@ Move3D::Trajectory* Graph::trajectoryFromNodeVector( const std::vector<Node*>& n
         return NULL;
     }
 
-    cout << "Trajectory has " << nodes.size() << " nodes" << endl;
+    // cout << "Trajectory has " << nodes.size() << " nodes" << endl;
 
     // Build the trajectory
     Move3D::Trajectory* traj = new Move3D::Trajectory( robot_ );
@@ -2503,7 +2743,7 @@ void Graph::drawNode(BGL_Vertex v)
         }
     }
 
-    BGL_VertexDataMapT NodeData = boost::get( NodeData_t() , boost_graph_ );
+    const BGL_VertexDataMapT& NodeData = boost::get( NodeData_t(), boost_graph_ );
 
     // NodeData[v]->getConfiguration()->print();
 
@@ -2521,15 +2761,20 @@ void Graph::drawNode(BGL_Vertex v)
     int color = NodeData[v]->color_;
     if( color == 0 )
         color = NodeData[v]->getConnectedComponent()->getId();
-    g3d_set_color( color % 34, color_array );
 
-    move3d_draw_sphere( pos[0], pos[1], pos[2], radius );
+    if( robot_->getUseLibmove3dStruct() )
+        g3d_set_color( color % 34, color_array );
+
+    move3d_draw_sphere( pos[0], pos[1], pos[2], PlanEnv->getDouble(PlanParam::drawScaleFactorNodeSphere) * radius );
     // g3d_draw_solid_sphere( pos[0], pos[1], pos[2], radius, 10 );
     // g3d_drawColorSphere(pos[0], pos[1], pos[2], radius, color, NULL);
 }
 
-void Graph::drawEdge(BGL_Vertex v1, BGL_Vertex v2) 
+void Graph::drawEdge( BGL_Edge e )
 {
+    BGL_Vertex v1(boost::source(e, boost_graph_));
+    BGL_Vertex v2(boost::target(e, boost_graph_));
+
     int color=0;
     Joint* 	drawnjnt=NULL;
     int indexjnt = p3d_get_user_drawnjnt();
@@ -2541,7 +2786,7 @@ void Graph::drawEdge(BGL_Vertex v1, BGL_Vertex v2)
         return;
     }
 
-    BGL_VertexDataMapT NodeData = boost::get( NodeData_t() , boost_graph_ );
+    const BGL_VertexDataMapT& NodeData = boost::get( NodeData_t() , boost_graph_ );
 
     robot_->setAndUpdate(*NodeData[v1]->getConfiguration());
     Eigen::Vector3d source_pos = drawnjnt->getVectorPos();
@@ -2549,21 +2794,37 @@ void Graph::drawEdge(BGL_Vertex v1, BGL_Vertex v2)
     robot_->setAndUpdate(*NodeData[v2]->getConfiguration());
     Eigen::Vector3d target_pos = drawnjnt->getVectorPos();
 
+    const BGL_EdgeDataMapT& EdgeData = boost::get( EdgeData_t(), boost_graph_ );
+    if( EdgeData[e]->getLocalPath()->isCostEvaluated() ) {
+        color = Red; // 3
+    }
+
     if( GroundCostObj )
     {
-        double Cost1(0);
-        GHintersectionVerticalLineWithGround(GroundCostObj, source_pos[0], source_pos[1], &Cost1);
-        double Cost2(0);
-        GHintersectionVerticalLineWithGround(GroundCostObj, target_pos[0], target_pos[1], &Cost2);
+        int nb_points = 20;
+        double Cost1(0), Cost2(0);
+        Eigen::Vector3d source_pos_tmp = source_pos;
 
-        move3d_draw_one_line( source_pos[0], source_pos[1], Cost1 + 0.5, target_pos[0], target_pos[1], Cost2 + 0.5, color, NULL);
+        for( int i=0; i<nb_points; i++)
+        {
+            Eigen::Vector3d target_pos_tmp = move3d_lerp( source_pos, target_pos, double(i) / double(nb_points-1) );
+
+            GHintersectionVerticalLineWithGround( GroundCostObj, source_pos_tmp[0], source_pos_tmp[1], &Cost1 );
+            GHintersectionVerticalLineWithGround( GroundCostObj, target_pos_tmp[0], target_pos_tmp[1], &Cost2 );
+
+            move3d_draw_one_line( source_pos_tmp[0], source_pos_tmp[1], Cost1 + 0.5,
+                                  target_pos_tmp[0], target_pos_tmp[1], Cost2 + 0.5, color, NULL);
+
+            source_pos_tmp = target_pos_tmp;
+        }
         // g3d_drawOneLine( source_pos[0], source_pos[1], Cost1 + 0.5, target_pos[0], target_pos[1], Cost2 + 0.5, color, NULL);
     }
     else
     {
-        move3d_draw_one_line( source_pos[0], source_pos[1], source_pos[2], target_pos[0], target_pos[1], target_pos[2], color, NULL);
-        // g3d_drawOneLine( source_pos[0], source_pos[1], source_pos[2],
-        //                  target_pos[0], target_pos[1], target_pos[2], color, NULL);
+        move3d_draw_one_line( source_pos[0], source_pos[1], source_pos[2],
+                              target_pos[0], target_pos[1], target_pos[2], color, NULL);
+
+        // g3d_drawOneLine( source_pos[0], source_pos[1], source_pos[2], target_pos[0], target_pos[1], target_pos[2], color, NULL);
     }
 }
 
@@ -2572,18 +2833,16 @@ void Graph::draw()
     //cout << "Draw BGL Graph , nb of nodes : " << nodes_.size() << endl;
     confPtr_t q = robot_->getCurrentPos();
 
-    BOOST_FOREACH(BGL_Vertex v, boost::vertices(boost_graph_))
+    BOOST_FOREACH( BGL_Vertex v, boost::vertices(boost_graph_) )
     {
-        drawNode(v);
+        drawNode( v );
     }
 
     if( ENV.getBool(Env::drawEdges) )
     {
-        BOOST_FOREACH(BGL_Edge e, boost::edges(boost_graph_))
+        BOOST_FOREACH( BGL_Edge e, boost::edges(boost_graph_) )
         {
-            BGL_Vertex v1(boost::source(e, boost_graph_));
-            BGL_Vertex v2(boost::target(e, boost_graph_));
-            drawEdge(v1, v2);
+            drawEdge( e );
         }
     }
 

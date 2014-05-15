@@ -12,5 +12,6 @@ Costmap-RRT.cpp
 BaseExpansion.cpp 
 ESTExpansion.cpp 
 RRTExpansion.cpp 
+RRG.cpp
 )
 SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME_TMP2})

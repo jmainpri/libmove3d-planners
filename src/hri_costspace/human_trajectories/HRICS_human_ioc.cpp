@@ -1,8 +1,9 @@
 #include "HRICS_human_ioc.hpp"
 #include "HRICS_human_cost_space.hpp"
-#include "HRICS_PlayMotion.hpp"
-#include "HRICS_features.hpp"
+#include "HRICS_play_motion.hpp"
 #include "HRICS_parameters.hpp"
+
+#include "feature_space/features.hpp"
 
 #include "API/project.hpp"
 

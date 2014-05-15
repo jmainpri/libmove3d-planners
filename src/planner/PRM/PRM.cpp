@@ -15,12 +15,13 @@
 #include "API/Roadmap/node.hpp"
 #include "API/Roadmap/graph.hpp"
 
-#include "../p3d/env.hpp"
 #include "planEnvironment.hpp"
 
-#include <iostream>
+#include <libmove3d/p3d/env.hpp>
+#include <libmove3d/include/Planner-pkg.h>
+#include <libmove3d/include/Graphic-pkg.h>
 
-#include "Planner-pkg.h"
+#include <iostream>
 
 using namespace std;
 using namespace Move3D;
@@ -167,10 +168,11 @@ unsigned int PRM::run()
         ChronoTimes( &m_time , &ts );
 
         if( PlanEnv->getBool( PlanParam::rrtExtractShortestPath ) )
-            _Graph->extractBestAStarPathSoFar( _q_start, _q_goal );
+            // _Graph->extractBestAStarPathSoFar( _q_start, _q_goal );
+            _Graph->extractBestAStarPathFromLargestComponent( _q_start, _q_goal );
 
         if (ENV.getBool(Env::drawExploration))
-            (*_draw_func)();
+            g3d_draw_allwin_active();
     }
 
     postPocess();

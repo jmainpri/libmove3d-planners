@@ -7,7 +7,7 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Search/AStar/AStar.hpp"
 
-#include "Grid/HRICS_Grid.hpp"
+#include "hri_costspace/grid/HRICS_grid.hpp"
 
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 #include "planner/TrajectoryOptim/plannarTrajectorySmoothing.hpp"
@@ -29,7 +29,7 @@ MOVE3D_USING_SHARED_PTR_NAMESPACE
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 
-PlanGrid::PlanGrid(Robot* R, double pace, vector<double> env_size) : Move3D::TwoDGrid( pace, env_size ), robot_(R)
+PlanGrid::PlanGrid(Robot* R, double pace, vector<double> env_size, bool print_cost ) : Move3D::TwoDGrid( pace, env_size ), robot_(R), print_cost_(print_cost), use_given_bounds_(false)
 {
     createAllCells();
     cout << "Number total of cells = " << _nbCellsX*_nbCellsY << endl;
@@ -109,15 +109,18 @@ void PlanGrid::draw()
     // glDisable(GL_LIGHT0);
     // glEnable(GL_CULL_FACE);
 
-    std::pair<double,double> min_max = getMinMaxCost();
-    double c_min = min_max.first;
-    double c_max = min_max.second;
+    if( !use_given_bounds_ ) {
+        std::pair<double,double> min_max = getMinMaxCost();
+        min_cost_ = min_max.first;
+        max_cost_ = min_max.second;
+    }
 
     // How to display better
-    if( c_max > 100)
-        c_max = 100;
+    if( max_cost_ > 100 )
+        max_cost_ = 100;
 
-    cout << "c_min : " << c_min << " , c_max : " << c_max << endl;
+    if( print_cost_ )
+        cout << "c_min : " << min_cost_ << " , c_max : " << max_cost_ << endl;
 
     const double height = 0.0;
     // cout << "Drawing 2D Grid"  << endl;
@@ -138,7 +141,7 @@ void PlanGrid::draw()
             // GroundColorMixGreenToRed(colorvector,ENV.getDouble(Env::colorThreshold1)*colorRation/200);
             // GroundColorMixGreenToRed( colorvector, ENV.getDouble(Env::colorThreshold1)*colorRation/10 );
 
-            GroundColorMixGreenToRed( colorvector, (cost-c_min)/(c_max-c_min) );
+            GroundColorMixGreenToRed( colorvector, (cost-min_cost_)/(max_cost_-min_cost_) );
 
             g3d_set_color( Any, colorvector );
 

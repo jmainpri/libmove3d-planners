@@ -15,9 +15,9 @@
 #include "API/Roadmap/graph.hpp"
 #include "API/Roadmap/compco.hpp"
 
-#include "../p3d/env.hpp"
-
-#include "Planner-pkg.h"
+#include <libmove3d/p3d/env.hpp>
+#include <libmove3d/include/Planner-pkg.h>
+#include <libmove3d/include/Graphic-pkg.h>
 
 using namespace std;
 using namespace Move3D;
@@ -38,7 +38,7 @@ Vis_PRM::~Vis_PRM()
 /**
  * Returns vector of nodes that are orphan
  */
-vector<Node*> Vis_PRM::isOrphanLinking(Node* N, int & link)
+vector<Node*> Vis_PRM::isOrphanLinking( Node* N, int& link )
 {
     vector<Node*> vect;
     double dist = 0;
@@ -56,7 +56,7 @@ vector<Node*> Vis_PRM::isOrphanLinking(Node* N, int & link)
         {
             if( N == nodes[i] ) continue;
 
-            if (_Graph->areNodesLinked(nodes[i], N, dist) /*&& (dist < ENV.getDouble(Env::dist) || !ENV.getBool(Env::useDist))*/)
+            if (_Graph->areNodesLinked( nodes[i], N, dist ) /*&& (dist < ENV.getDouble(Env::dist) || !ENV.getBool(Env::useDist))*/)
             {
                 link++;
                 vect.push_back( nodes[i] );
@@ -71,37 +71,37 @@ vector<Node*> Vis_PRM::isOrphanLinking(Node* N, int & link)
 /**
  * Is Linking Orphan node
  */
-bool Vis_PRM::linkOrphanLinking(Node* node, int type, unsigned int& ADDED, int& nb_fail)
+bool Vis_PRM::linkOrphanLinking( Node* node, int type, unsigned int& total_nodes_added, int& nb_fail )
 {
     int link = 0;
     int nodes_added =0;
 
     // All Orphan nodes
-    vector<Node*> vect = isOrphanLinking(node, link);
+    vector<Node*> vect = isOrphanLinking( node, link );
 
     if ((type == 1 || type == 2) && (link > 1))
     {
         //_Graph->insertNode(N);
-        _Graph->addNode(node); ADDED++; nodes_added++;
+        _Graph->addNode(node); total_nodes_added++; nodes_added++;
         nb_fail = 0;
 
         for (int i=0; i<int(vect.size()); i++)
         {
-            _Graph->linkNodeAndMerge(vect[i],node,ENV.getBool(Env::isCostSpace));
+            _Graph->linkNodeAndMerge( vect[i], node, ENV.getBool(Env::isCostSpace) );
         }
 
         return true;
     }
     else if ((type == 0 || type == 2) && (link == 0))
     {
-        _Graph->addNode(node);
-        ADDED++; nodes_added++;
+        _Graph->addNode( node );
+        total_nodes_added++; nodes_added++;
         nb_fail = 0;
         return true;
     }
     else
     {
-        if(nodes_added > 0)
+        if( nodes_added > 0 )
         {
             throw string("Erases a created node");
         }
@@ -114,36 +114,44 @@ bool Vis_PRM::linkOrphanLinking(Node* node, int type, unsigned int& ADDED, int& 
 
 
 /**
- * Create Orphans Linkin node
- */
+ * Create Orphans Linking node
+
 int Vis_PRM::createOrphansLinking(unsigned int nb_node, int type)
 {
-    unsigned int ADDED = 0;
+    unsigned int nodes_added = 0;
     int nb_try = 0;
 
     while ((*_stop_func)() &&  nb_try < ENV.getInt(Env::NbTry) && (_Graph->getGraphStruct()->ncomp > 1 || !type))
     {
-        if (!(_Graph->getNumberOfNodes() < nb_node))
+        if ( !(_Graph->getNumberOfNodes() < nb_node) )
         {
-            return ADDED;
+            return nodes_added;
         }
 
-        createOneOrphanLinking(type, ADDED, nb_try);
+        createOneOrphanLinking( type, nodes_added, nb_try );
     }
-    return ADDED;
+    return nodes_added;
 }
+
+ */
 
 /**
  * Create One Orphan Linking
  */
-void Vis_PRM::createOneOrphanLinking(int type, unsigned int & ADDED, int & nb_fail)
+void Vis_PRM::createOneOrphanLinking( int type, unsigned int& nodes_added, int& nb_fail )
 {
-    shared_ptr<Configuration> q = _Robot->shoot();
+    confPtr_t q = _Robot->shoot();
 
     if ( q->setConstraintsWithSideEffect() && !q->isInCollision() )
     {
         Node* N = new Node( _Graph, q );
-        linkOrphanLinking( N, type, ADDED, nb_fail );
+
+        bool add_node = linkOrphanLinking( N, type, nodes_added, nb_fail );
+
+        if( add_node && ENV.getBool(Env::drawGraph) )
+        {
+            g3d_draw_allwin_active();
+        }
     }
 }
 
@@ -153,5 +161,5 @@ void Vis_PRM::createOneOrphanLinking(int type, unsigned int & ADDED, int & nb_fa
  */
 void Vis_PRM::expandOneStep()
 {
-    createOneOrphanLinking(2,m_nbAddedNode, m_nbConscutiveFailures);
+    createOneOrphanLinking( 2, m_nbAddedNode, m_nbConscutiveFailures );
 }

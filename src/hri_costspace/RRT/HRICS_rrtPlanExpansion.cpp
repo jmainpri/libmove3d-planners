@@ -1,5 +1,5 @@
 #include "HRICS_rrtPlanExpansion.hpp"
-#include "../HRICS_ConfigSpace.hpp"
+#include "../HRICS_config_space.hpp"
 
 #include "API/Grids/PointCloud.hpp"
 #include "API/Roadmap/graph.hpp"

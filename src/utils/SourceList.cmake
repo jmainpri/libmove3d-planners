@@ -10,7 +10,8 @@ ConfGenerator.cpp
 OtpUtils.cpp
 #MultiRun.cpp
 NumsAndStrings.cpp
-
+misc_functions.cpp
+multilocalpath_utils.cpp
 )
 
 IF(QT_LIBRARY)

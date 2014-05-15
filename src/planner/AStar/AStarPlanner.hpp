@@ -14,19 +14,24 @@ namespace Move3D {
 class PlanGrid : public Move3D::TwoDGrid
 {
 public:
-    PlanGrid(Robot* R, double pace, std::vector<double> envSize);
+    PlanGrid(Robot* R, double pace, std::vector<double> envSize, bool print_cost=true);
 
     Move3D::TwoDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y );
 
-    void draw();
     void setRobotToStoredConfig();
     void reset();
     std::pair<double,double> getMinMaxCost();
+    void draw();
+    void setCostBounds(double min, double max) { use_given_bounds_ = true; min_cost_ = min; max_cost_ = max; }
 
-    Robot* getRobot() { return robot_; }
+    Robot* getRobot() { return robot_; }    
 
 private:
     Robot* robot_;
+    bool print_cost_;
+    bool use_given_bounds_;
+    double min_cost_;
+    double max_cost_;
 };
 
 class PlanCell : public Move3D::TwoDCell

@@ -10,11 +10,11 @@
 #ifdef HRI_COSTSPACE
 #include "hri_costspace/HRICS_costspace.hpp"
 #include "hri_costspace/HRICS_otpmotionpl.hpp"
-#include "hri_costspace/HRICS_ConfigSpace.hpp"
-#include "hri_costspace/HRICS_Navigation.hpp"
-#include "hri_costspace/Gestures/HRICS_WorkspaceOccupancy.hpp"
-#include "hri_costspace/Gestures/HRICS_HumanPredictionCostSpace.hpp"
-#include "hri_costspace/Gestures/HRICS_GestParameters.hpp"
+#include "hri_costspace/HRICS_config_space.hpp"
+#include "hri_costspace/HRICS_navigation.hpp"
+#include "hri_costspace/gestures/HRICS_workspace_occupancy.hpp"
+#include "hri_costspace/gestures/HRICS_human_prediction_cost_space.hpp"
+#include "hri_costspace/gestures/HRICS_gest_parameters.hpp"
 #endif
 
 #include "planner/cost_space.hpp"
@@ -27,7 +27,7 @@
 #include "API/project.hpp"
 #include "API/Grids/gridsAPI.hpp"
 
-#include "collision_space/CollisionSpace.hpp"
+#include "collision_space/collision_space.hpp"
 
 #include "P3d-pkg.h"
 #include "Graphic-pkg.h"
@@ -218,7 +218,7 @@ void g3d_draw_costspace()
 }
 
 
-void g3d_draw_bounding_box(Robot* robot)
+void g3d_draw_bounding_box( Robot* robot )
 {
     double box[8][3];
     Eigen::Vector3d p1;
@@ -364,7 +364,7 @@ void g3d_draw_squeleton()
 }
 
 void g3d_draw_grids()
-{    
+{
 #ifdef HRI_COSTSPACE
 
     if( HRICS_humanCostMaps && ENV.getBool(Env::drawDistance) )
@@ -387,7 +387,6 @@ void g3d_draw_grids()
     {
         API_activeGrid->draw();
 
-
         if (ENV.getBool(Env::drawBox))
         {
             CXX_drawBox = API_activeGrid->getBox();
@@ -401,16 +400,41 @@ void g3d_draw_grids()
         }
     }
     //-------------------------------------------------------------
-    //	if (ENV.getBool(Env::drawBox))
-    //	{
-    //		CXX_drawBox = API_activeRobot->getObjectBox();
-    //
-    //		if (!CXX_drawBox.empty())
-    //		{
-    //			g3d_draw_eigen_box(	CXX_drawBox[0], CXX_drawBox[1], CXX_drawBox[2], CXX_drawBox[3],CXX_drawBox[4], CXX_drawBox[5], CXX_drawBox[6], CXX_drawBox[7],
-    //                         Red, 0, 3);
-    //		}
-    //	}
+    if( ENV.getBool(Env::drawBox) )
+    {
+        Robot* robot = global_Project->getActiveScene()->getActiveRobot();
+        CXX_drawBox = robot->getObjectBox();
+
+        if (!CXX_drawBox.empty())
+        {
+            g3d_draw_eigen_box(	CXX_drawBox[0], CXX_drawBox[1], CXX_drawBox[2], CXX_drawBox[3],
+                                CXX_drawBox[4], CXX_drawBox[5], CXX_drawBox[6], CXX_drawBox[7],
+                                Red, 0, 3);
+
+            Joint* jnt = robot->getJoint( "rPalm" );
+            if( /*jnt != NULL*/ false )
+            {
+                Eigen::Vector3d pos = jnt->getVectorPos();
+
+                g3d_draw_solid_sphere( pos[0], pos[1], pos[2], .05, 20 );
+
+                if( robot->isInObjectBox( pos ) )
+                {
+                    g3d_set_custom_color_draw( robot->getP3dRobotStruct(), true );
+
+                    GLdouble color_vect[4];
+                    color_vect[0] = 0;
+                    color_vect[1] = 1;
+                    color_vect[2] = 0;
+                    color_vect[3] = 0;
+                    g3d_set_custom_color_vect( color_vect );
+                }
+                else {
+                    g3d_set_custom_color_draw( robot->getP3dRobotStruct(), false );
+                }
+            }
+        }
+    }
     //-------------------------------------------------------------
     if( HRICS_activeNatu )
     {

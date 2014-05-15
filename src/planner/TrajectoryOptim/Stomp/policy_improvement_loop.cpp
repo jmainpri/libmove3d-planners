@@ -294,7 +294,7 @@ namespace stomp_motion_planner
         if( r < int(parrallel_is_rollout_running_.size())  )
         {
             parrallel_is_rollout_running_[r] = true;
-            cout << "spawns thread : " << r << endl;
+            // cout << "spawns thread : " << r << endl;
             threads_[r] = new boost::thread( &PolicyImprovementLoop::parallelRollout, this, r, iteration_number );
         }
         else
@@ -318,6 +318,9 @@ namespace stomp_motion_planner
     {
         assert(initialized_);
         policy_iteration_counter_++;
+
+        task_->getControlCostWeight( control_cost_weight_ );
+        task_->getStateCostWeight( state_cost_weight_ );
 
         if( write_to_file_ )
         {

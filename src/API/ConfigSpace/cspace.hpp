@@ -70,11 +70,11 @@ public:
   virtual unsigned dimension();
 };
 
-class Pr2CSpace : public CSpace
+class ArmCSpace : public CSpace
 {
 public:
-  Pr2CSpace();
-  ~Pr2CSpace();
+  ArmCSpace( const std::vector<Joint*>& joints );
+  ~ArmCSpace();
   double q_cost(confPtr_t q);
   double lp_cost(confPtr_t q1, confPtr_t q2);
   
@@ -83,6 +83,9 @@ public:
   double volume();
   double unit_sphere();
   unsigned dimension();
+
+private:
+  std::vector<Joint*> joints_;
 };
 
 class GenericCSpace : public CSpace

@@ -76,7 +76,7 @@ public:
      * obtient le nom du Robot
      * @return le nom du Robot
      */
-    std::string getName();
+    const std::string& getName();
 
     /**
      * Gets wether the robot uses libmove3d structures
@@ -109,6 +109,11 @@ public:
      * Gets the current trajectory
      */
     Move3D::Trajectory getCurrentTraj();
+
+    /**
+     * Gets the current trajectory
+     */
+    void removeCurrentTraj();
 
     /**
      * Get the number of dofs
@@ -145,17 +150,21 @@ public:
    */
     const std::vector<Joint*>& getAllJoints();
 
+    /*
+      * Is point in object box
+      */
+    bool isInObjectBox( const Eigen::Vector3d& p0 );
+
     /**
-     * Returns the Object
-     * Box
+     * Returns the Object Box
      */
     std::vector<Eigen::Vector3d> getObjectBox();
 
     /**
-     * Initializes the box in which the FF
-     * Will be sampled
+     * Initializes the box in which the FF Will be sampled
+     * @param dimensions 3 first and offset from robot base 3 others
      */
-    void initObjectBox();
+    void initObjectBox( const std::vector<double>& dimensions = std::vector<double>() );
 
     /**
      * tire une Configuration aléatoire pour le Robot
@@ -174,7 +183,7 @@ public:
     /**
      * shoots the active free flyer inside a box
      */
-    confPtr_t shootFreeFlyer(double* box);
+    confPtr_t shootFreeFlyer( double* box );
 
     /**
      * set and update the active free flyer

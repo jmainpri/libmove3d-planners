@@ -105,12 +105,12 @@ public:
     /**
      * Nearest weithed Neigboor
      */
-    Node* nearestWeightNeighbour(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q, int distConfigChoice);
+    Node* nearestWeightNeighbour( confPtr_t q, int distConfigChoice );
 
     /**
    * KNearest Weight Neighbours
    */
-    std::vector<Node*> KNearestWeightNeighbour(confPtr_t config, int K, double radius, int distConfigChoice);
+    std::vector<Node*> KNearestWeightNeighbour( confPtr_t config, int K, double radius, int distConfigChoice );
 
     /**
    * Search configuration in connected compco

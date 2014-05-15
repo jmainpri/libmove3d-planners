@@ -1,7 +1,7 @@
 #include "HRICS_run_multiple_planners.hpp"
 
 #include "API/project.hpp"
-#include "API/misc_functions.hpp"
+#include "utils/misc_functions.hpp"
 #include "API/Graphic/drawModule.hpp"
 
 #include "planner/plannerFunctions.hpp"
@@ -9,6 +9,8 @@
 #include "planner/TrajectoryOptim/Stomp/run_parallel_stomp.hpp"
 #include "planner/AStar/AStarPlanner.hpp"
 #include "planner/planEnvironment.hpp"
+
+#include "collision_space/collision_space_factory.hpp"
 
 #include <Graphic-pkg.h>
 

@@ -198,10 +198,10 @@ void costComputation::getFrames( int segment, const Eigen::VectorXd& joint_array
         {
             Eigen::Transform3d t = robot_model_->getJoint( joints[j].move3d_joint_->getId() )->getMatrixPos();
 
-            std::vector<double> vect;
-            eigenTransformToStdVector( t, vect );
+//            std::vector<double> vect;
+//            eigenTransformToStdVector( t, vect );
 
-            segment_frames_[segment][j]  = vect;
+            segment_frames_[segment][j]  = t;
             joint_pos_eigen_[segment][j] = t.translation();
 
             joint_axis_eigen_[segment][j](0) = t(0,2);
@@ -325,7 +325,7 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
 
 bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, int iteration )
 {
-    cout << __PRETTY_FUNCTION__ << endl;
+//    cout << __PRETTY_FUNCTION__ << endl;
     iteration_ = iteration;
 
     // copy the parameters into group_trajectory_:

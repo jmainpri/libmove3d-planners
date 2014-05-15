@@ -914,7 +914,7 @@ void move3d_scene_set_active_robot( Scene* sce, void* penv, const std::string& n
 Robot* move3d_scene_get_active_robot( Scene* sce, void* penv )
 {
     p3d_env* scene = static_cast<p3d_env*>( penv );
-    cout << "scene->cur_robot->name : " << scene->cur_robot->name << endl;
+    // cout << "scene->cur_robot->name : " << scene->cur_robot->name << endl;
     return sce->getRobotByName( scene->cur_robot->name );
 }
 

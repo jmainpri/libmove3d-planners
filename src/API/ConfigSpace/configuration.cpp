@@ -17,7 +17,7 @@
 //#include "Localpath-pkg.h"
 
 #include "planner/cost_space.hpp"
-#include "collision_space/CollisionSpace.hpp"
+#include "collision_space/collision_space.hpp"
 
 #include <boost/function.hpp>
 
@@ -87,6 +87,7 @@ Configuration::Configuration(Robot* robot) :
     _InCollision(true),
     _CostTested(false),
     _Cost(0.0),
+    _phiEvaluated(false),
     _Robot( robot )
 {
     if(robot==NULL)
@@ -105,6 +106,7 @@ Configuration::Configuration(Robot* R, double* C, bool noCopy) :
     _InCollision(true),
     _CostTested(false),
     _Cost(0.0),
+    _phiEvaluated(false),
     _Robot(R)
 {
     if(_Robot==NULL)
@@ -123,6 +125,8 @@ Configuration::Configuration(const Configuration& conf) :
     _InCollision(conf._InCollision),
     _CostTested(conf._CostTested),
     _Cost(conf._Cost),
+    _phiEvaluated(conf._phiEvaluated),
+    _phi(conf._phi),
     _Robot(conf._Robot)
 {
     if(_Robot==NULL)
@@ -143,6 +147,8 @@ Configuration& Configuration::operator= (const Configuration& source)
     _CostTested = source._CostTested ;
     _Cost = source._Cost ;
     _Robot =  source._Robot ;
+    _phiEvaluated = source._phiEvaluated;
+    _phi = source._phi;
 
     if(_Robot==NULL)
     {
@@ -389,7 +395,7 @@ void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, int startInd
 
 bool Configuration::setConstraintsWithSideEffect()
 {
-    bool respect = _Robot->setAndUpdate(*this);
+    bool respect = _Robot->setAndUpdate( *this );
 
     if(respect)
     {

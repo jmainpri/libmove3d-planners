@@ -12,7 +12,7 @@
 #include "API/Device/joint.hpp"
 #include "API/Device/robot.hpp"
 
-#include "collision_space/CollisionPoint.hpp"
+#include "collision_space/collision_point.hpp"
 
 namespace Move3D {
 

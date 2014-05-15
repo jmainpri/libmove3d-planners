@@ -8,6 +8,9 @@ class localpath;
 namespace Move3D {
 
 class Robot;
+class LocalPath ;
+
+typedef MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> pathPtr_t;
 
 /**
  @ingroup CONFIG_SPACE
@@ -202,6 +205,11 @@ public:
     double whenCostIntegralPasses(double thresh);
 
     /**
+     * returns true if the cost is already evaluated
+     */
+    double isCostEvaluated() { return _costEvaluated; }
+
+    /**
      * Gets the LocalPath cost
      */
     double cost();
@@ -217,8 +225,28 @@ public:
     void resetCostComputed() { _costEvaluated = false; }
 
     /**
-   * Set the ik sol to be used in the localplanner
-   */
+     * returns true if the cost is already evaluated
+     */
+    bool areFeaturesEvaluated() { return _phiEvaluated; }
+
+    /**
+     * Set the freature as computed and set the value (suposed to be tested outside
+     */
+    void setFeatures( const Eigen::VectorXd& phi ) { _phi = phi; _phiEvaluated = true; }
+
+    /**
+     * Returns the freature as computed and set the value (suposed to be tested outside
+     */
+    const Eigen::VectorXd& getFeatures() { return _phi; }
+
+    /**
+     * When reset the next feature querry will compute it
+     */
+    void resetFeaturesComputed() { _phiEvaluated = false; }
+
+    /**
+     * Set the ik sol to be used in the localplanner
+     */
     void setIkSol(int* iksol) { _ikSol = iksol; }
 
     /**
@@ -261,6 +289,10 @@ private:
 
     // p3d_localpath_type _Type; //type du local path(mahantan, linear ...)
     int _Type;
+
+    // Features
+    bool _phiEvaluated;
+    Eigen::VectorXd _phi;
 };
 
 }

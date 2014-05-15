@@ -19,6 +19,7 @@
 #include "planner/PRM/ACR.hpp"
 #include "planner/PRM/PerturbationRoadmap.hpp"
 #include "planner/PRM/sPRM.hpp"
+#include "planner/PRM/PRMStar.hpp"
 
 #include "planner/Diffusion/RRT.hpp"
 #include "planner/Diffusion/EST.hpp"
@@ -28,6 +29,7 @@
 #include "planner/Diffusion/Variants/Multi-TRRT.hpp"
 #include "planner/Diffusion/Variants/Threshold-RRT.hpp"
 #include "planner/Diffusion/Variants/Star-RRT.hpp"
+#include "planner/Diffusion/Variants/RRG.hpp"
 
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
@@ -136,6 +138,7 @@ p3d_traj* p3d_extract_traj( bool is_traj_found, int nb_added_nodes, Graph* graph
         {
             //traj = graph->extractBestTraj( q_source, q_target ); // Old extract
             traj = graph->extractAStarShortestPathsTraj( q_source, q_target );
+            // traj = graph->extractBestAStarPathFromLargestComponent( q_source, q_target );
         }
     }
 
@@ -191,7 +194,8 @@ p3d_traj* p3d_extract_traj( bool is_traj_found, int nb_added_nodes, Graph* graph
     }
     else
     {
-        cout << __FILE__ << " , " << __PRETTY_FUNCTION__ << " : No traj found" << endl;
+        // cout << __FILE__ << " , "
+        cout << __PRETTY_FUNCTION__ << " : No traj found" << endl;
         return NULL;
     }
 }
@@ -215,33 +219,27 @@ RRT* p3d_allocate_rrt(Robot* rob,Graph* graph)
     {
         rrt = new MultiRRT(rob,graph);
     }
-#ifdef HRI_COSTSPACE
-    else if(ENV.getBool(Env::HRIPlannerWS) && ENV.getBool(Env::HRIPlannerTRRT))
-    {
-        rrt = new HRICS::HRICS_RRT(rob,graph);
-    }
-    else if(ENV.getBool(Env::HRIPlannerCS) && ENV.getBool(Env::HRIPlannerTRRT))
-    {
-        rrt = new HRICS::HRICS_RRTPlan(rob,graph);
-    }
-#endif
     else if(ENV.getBool(Env::isCostSpace) && ENV.getBool(Env::costThresholdRRT) )
     {
         rrt = new ThresholdRRT(rob,graph);
-    }
-    else if(ENV.getBool(Env::isCostSpace) && PlanEnv->getBool(PlanParam::starRRT) )
-    {
-        rrt = new StarRRT(rob,graph);
     }
     else if(ENV.getBool(Env::isCostSpace) && ENV.getBool(Env::useTRRT) )
     {
         rrt = new TransitionRRT(rob,graph);
     }
+    else if(ENV.getBool(Env::isCostSpace) && PlanEnv->getBool(PlanParam::starRRT) )
+    {
+        rrt = new StarRRT(rob,graph);
+    }
+    else if(ENV.getBool(Env::isCostSpace) && PlanEnv->getBool(PlanParam::rrg) )
+    {
+        rrt = new RRG(rob,graph);
+    }
     else
     {
         if( ENV.getBool(Env::isCostSpace) && (!ENV.getBool(Env::useTRRT)) )
         {
-            ENV.setBool(Env::isCostSpace,false);
+            ENV.setBool( Env::isCostSpace, false );
             set_costspace = true;
         }
 
@@ -322,6 +320,9 @@ p3d_traj* p3d_planner_function(p3d_rob* robotPt, configPt qs, configPt qg)
     cout << "NB NODES " << graph->getNumberOfNodes() << endl;
     cout << "NB EXPANSION " << rrt->getNumberOfExpansion() << endl;
     cout << "** ** --------------------------" << endl;
+
+    cout << "av. nb col tests per edge :  " << graph->getNumberOfColTestCalls() / graph->getNumberOfEdges() << endl;
+    cout << "av. nb cost calls per edge :  " << graph->getNumberOfCostCalls() / graph->getNumberOfEdges() << endl;
 
     rrt_statistics.runId = rrt->getRunId();
     rrt_statistics.succeeded = (traj!=NULL);
@@ -486,7 +487,7 @@ int p3d_run_rrt(p3d_rob* robotPt)
         double max_iteration = PlanEnv->getInt(PlanParam::smoothMaxIterations);
         double max_time = PlanEnv->getDouble( PlanParam::timeLimitSmoothing );
 
-        p3d_smoothing_function(rob->getP3dRobotStruct(), path, max_iteration, max_time);
+        p3d_smoothing_function( rob->getP3dRobotStruct(), path, max_iteration, max_time );
     }
 
     return (path != NULL);
@@ -532,28 +533,51 @@ bool p3d_run_est(p3d_rob* robotPt)
     return res;
 }
 
-
 // ---------------------------------------------------------------------------------
 // PRMs
 // ---------------------------------------------------------------------------------
 int p3d_run_prm(p3d_rob* robotPt)
 {	
     // Gets the robot pointer and the 2 configurations
-    Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
+    Robot* rob = global_Project->getActiveScene()->getRobotByName( robotPt->name );
     confPtr_t q_source = rob->getInitPos();
     confPtr_t q_target = rob->getGoalPos();
 
-    // Allocate the p3d_graph if does't exist
-    Graph* graph;
+    // Allocate the graph if does't exist
     if(!API_activeGraph)
-    {
         API_activeGraph =  new Graph(rob);
-    }
-    graph = API_activeGraph;
+
+    Graph* graph = API_activeGraph;
 
     cout << "Initializing PRM " << endl;
     int nb_added_nodes=0;
-    PRM* prm = new PRM(rob, graph);
+
+    PRM* prm;
+
+    switch(ENV.getInt(Env::PRMType))
+    {
+    case 0:
+        prm = new PRM(rob, graph);
+        break;
+    case 1:
+        prm = new Vis_PRM(rob, graph);
+        break;
+    case 2:
+        prm = new ACR( rob, graph );
+        break;
+    case 3:
+        prm = new PerturbationRoadmap( rob, graph );
+        break;
+    case 4:
+        prm = new sPRM( rob, graph );
+        break;
+    case 5:
+        prm = new PRMStar( rob, graph );
+        break;
+    default:
+        return nb_added_nodes;
+    }
+
     nb_added_nodes = prm->init();
     nb_added_nodes += prm->run();
 
@@ -561,6 +585,10 @@ int p3d_run_prm(p3d_rob* robotPt)
     cout << "nb nodes " << graph->getNumberOfNodes() << endl;
 
     p3d_extract_traj( prm->trajFound(), nb_added_nodes, graph, q_source, q_target);
+
+    cout << "av. nb col tests per edge :  " << graph->getNumberOfColTestCalls() / graph->getNumberOfEdges() << endl;
+    cout << "av. nb cost calls per edge :  " << graph->getNumberOfCostCalls() / graph->getNumberOfEdges() << endl;
+
     delete prm;
     return nb_added_nodes;
 }
@@ -601,293 +629,4 @@ int p3d_run_perturb_prm(p3d_rob* robotPt)
     p3d_extract_traj( prm->trajFound(), nb_added_nodes, graph, q_source, q_target);
     delete prm;
     return nb_added_nodes;
-}
-
-int p3d_run_simple_prm(p3d_rob* robotPt)
-{
-    // Gets the robot pointer and the 2 configurations
-    Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-    confPtr_t q_source = rob->getInitPos();
-    confPtr_t q_target = rob->getGoalPos();
-
-    // Allocate the p3d_graph if does't exist
-    // Removes graph if it exists, creates a new graph , Allocate RRT
-    Graph* graph = API_activeGraph =  new Graph(rob);
-
-    cout << "Initializing PRM " << endl;
-    int nb_added_nodes=0;
-    sPRM* prm = new sPRM(rob, graph);
-    nb_added_nodes = prm->init();
-    nb_added_nodes += prm->run();
-
-    cout << "nb added nodes " << nb_added_nodes << endl;
-    cout << "nb nodes " << graph->getNumberOfNodes() << endl;
-
-    p3d_extract_traj( prm->trajFound(), nb_added_nodes, graph, q_source, q_target);
-    delete prm;
-    return nb_added_nodes;
-}
-
-int p3d_run_vis_prm(p3d_rob* robotPt)
-{	
-    // Gets the robot pointer and the 2 configurations
-    Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-    confPtr_t q_source = rob->getInitPos();
-    confPtr_t q_target = rob->getGoalPos();
-
-    // Allocate the p3d_graph if does't exist
-    // Removes graph if it exists, creates a new graph , Allocate RRT
-    Graph* graph = API_activeGraph =  new Graph(rob);
-
-    int nb_added_nodes=0;
-    Vis_PRM* vprm = new Vis_PRM(rob,graph);
-    nb_added_nodes = vprm->init();
-    nb_added_nodes += vprm->run();
-
-    cout << "nb added nodes " << nb_added_nodes << endl;
-    cout << "nb nodes " << graph->getNumberOfNodes() << endl;
-
-    p3d_extract_traj( vprm->trajFound(), nb_added_nodes, graph, q_source, q_target);
-    delete vprm;
-    return nb_added_nodes;
-}
-
-int p3d_run_acr(p3d_rob* robotPt)
-{	
-    // Gets the robot pointer and the 2 configurations
-    Robot* rob = global_Project->getActiveScene()->getRobotByName(robotPt->name);
-    confPtr_t q_source = rob->getInitPos();
-    confPtr_t q_target = rob->getGoalPos();
-
-    // Allocate the p3d_graph if does't exist
-    // Removes graph if it exists, creates a new graph
-    Graph* graph = API_activeGraph =  new Graph(rob);
-
-    int nb_added_nodes=0;
-    ACR* acr = new ACR(rob, graph);
-    nb_added_nodes = acr->init();
-    nb_added_nodes += acr->run();
-
-    cout << "nb added nodes " << nb_added_nodes << endl;
-    cout << "nb nodes " << graph->getNumberOfNodes() << endl;
-
-    p3d_extract_traj( acr->trajFound(), nb_added_nodes, graph, q_source, q_target);
-    delete acr;
-    return nb_added_nodes;
-}
-
-/**
- * Function To replace p3d_Learn in Case of C++ API Use
- */
-void p3d_learn_cxx(int NMAX,
-                   int (*fct_stop)(void), void (*fct_draw)(void)) {
-    p3d_graph *G;
-    int inode, ADDED;
-    double tu, ts;
-    int nbInitGraphNodes, nbGraphNodes;
-
-    ChronoOn();
-
-    if (!XYZ_GRAPH) G = p3d_create_graph();
-    else           G = XYZ_GRAPH;
-    /*debut modif fpilarde*/
-    inode = 0;
-
-    p3d_rob* robotPt = XYZ_GRAPH->rob;
-
-#ifdef P3D_PLANNER
-    p3d_set_planning_type(P3D_GLOBAL);
-#else
-    printf("P3D_PLANNER not compiled in %s in %s",__PRETTY_FUNCTION__,__FILE__);
-#endif
-
-    ENV.setBool(Env::expandToGoal,false);
-
-    if (p3d_get_MOTION_PLANNER() != P3D_DIFFUSION) {
-        //while (inode < NMAX) {
-        /* Call basic PRM or Visibility method */
-        switch (p3d_get_MOTION_PLANNER()) {
-
-        case 1:
-            cout << "CXX_PLANNER c++ API : p3d_run_prm" << endl;
-            ADDED = p3d_run_prm(robotPt);
-            break;
-
-        case 2:
-            cout << "CXX_PLANNER c++ API : p3d_run_vis_prm" << endl;
-            ADDED = p3d_run_vis_prm(robotPt);
-            break;
-
-        case P3D_ALL_PRM:
-            cout << "CXX_PLANNER c++ API : p3d_run_acr" << endl;
-            ADDED = p3d_run_acr(robotPt);
-            break;
-
-        default:
-            PrintInfo(("p3d_learn : ERREUR : pas de planificateur global...\n"));
-            return;
-        }
-        inode += ADDED;
-    }
-
-    else {
-        nbInitGraphNodes = G->nnode;
-        ADDED = p3d_run_rrt(robotPt);
-        nbGraphNodes = G->nnode;
-        inode  = nbGraphNodes - nbInitGraphNodes;
-    }
-
-#ifdef P3D_PLANNER
-    p3d_set_planning_type(P3D_NONE);
-#else
-    printf("P3D_PLANNER not compiled in %s in %s",__PRETTY_FUNCTION__,__FILE__);
-#endif
-
-    PrintInfo(("Pour la creation de %d noeuds : ", inode));
-
-    ChronoTimes(&tu, &ts);
-    G->time = G->time + tu;
-
-#ifdef P3D_PLANNER
-    /* When retrieving statistics;
-     Commit Jim; date: 01/10/2008 */
-    if(getStatStatus()){
-        G->stat->preTime += tu;
-    }
-#endif
-
-    ChronoPrint("");
-    ChronoOff();
-
-    MY_ALLOC_INFO("After p3d_learn");
-    p3d_print_info_graph(G);
-}
-
-/**
- * Function To replace p3d_specific_learn in Case of C++ API Use
- */
-int p3d_specific_learn_cxx(double *qs, double *qg, int *iksols, int *iksolg,
-                           int (*fct_stop)(void), void (*fct_draw)(void)) {
-
-    p3d_graph *G;
-
-    int       inode = 0, fail = 1, ADDED;
-    double    tu, ts;
-
-    int nbInitGraphNodes, nbGraphNodes;
-#ifdef ENERGY
-    int n_coldeg, icoldeg;
-    double *coldeg_qs;
-#endif
-    /* Avoid some stupid errors */
-    if (qs == NULL) {
-        PrintInfo(("p3d_specific_learn : ERREUR : pas de configuration initiale\n"));
-        return(FALSE);
-    }
-
-    if ((qg == NULL) && (ENV.getBool(Env::expandToGoal) == true)) {
-        PrintInfo(("p3d_specific_learn : ERREUR : pas de configuration finale\n"));
-        return(FALSE);
-    }
-
-    ENV.setBool(Env::expandToGoal,true);
-
-    ChronoOn();
-
-    if (!XYZ_GRAPH)  G = p3d_create_graph();
-    else            G = XYZ_GRAPH;
-
-    p3d_rob* robotPt = XYZ_GRAPH->rob;
-
-    if (p3d_GetIsWeightedChoice() == TRUE) {
-        p3d_init_root_weight(G);
-    }
-    if (ENV.getInt(Env::ExpansionNodeMethod) == RANDOM_IN_SHELL_METH) {
-        p3d_init_pb_variables(G);
-
-#ifdef ENERGY
-        if (p3d_get_MOTION_PLANNER() ==  BIO_COLDEG_RRT) {
-            n_coldeg = bio_get_num_collective_degrees();
-            // init coldeg_q in Ns
-            coldeg_qs = bio_alloc_coldeg_config(n_coldeg);
-            for (icoldeg = 0; icoldeg < n_coldeg; icoldeg++) {
-                coldeg_qs[icoldeg] = 0.0;
-            }
-            bio_copy_coldeg_q_in_N(Ns, coldeg_qs, n_coldeg);
-            bio_destroy_coldeg_config(coldeg_qs, n_coldeg);
-            // WARNING : currently Ng is not considered !!!
-        }
-#endif
-
-
-    }
-    ADDED = TRUE;
-    if (p3d_get_MOTION_PLANNER() != P3D_DIFFUSION) {
-        /* While solution does not exists, insert new nodes with basic PRM or Visibility or RRT */
-        //     while ((Ns->numcomp != Ng->numcomp) && !p3d_compco_linked_to_compco(Ns->comp, Ng->comp)) {  modif fpilarde
-        switch (p3d_get_MOTION_PLANNER()) {
-
-        case P3D_BASIC:
-            cout << "CXX_PLANNER c++ API : p3d_run_prm" << endl;
-            ADDED = p3d_run_prm(robotPt);
-            break;
-
-        case P3D_ISOLATE_LINKING:
-            cout << "CXX_PLANNER c++ API : p3d_run_vis_prm" << endl;
-            ADDED = p3d_run_vis_prm(robotPt);
-            break;
-
-        case P3D_ALL_PRM:
-            cout << "CXX_PLANNER c++ API : p3d_run_acr" << endl;
-            ADDED = p3d_run_acr(robotPt);
-            break;
-
-#ifdef ENERGY
-        case BIO_COLDEG_RRT:
-            ADDED = bio_expand_coldeg_rrt(G, fct_stop);
-            break;
-#endif
-        default:
-            PrintInfo(("p3d_specific_learn : ERREUR : pas de planificateur global...\n"));
-            return(FALSE);
-        }
-
-        inode += ADDED;
-
-    } else {
-        nbInitGraphNodes = G->nnode;
-        cout << "CXX_PLANNER c++ API : p3d_run_rrt" << endl;
-        ADDED = p3d_run_rrt(robotPt);
-        nbGraphNodes = G->nnode;
-        inode  = nbGraphNodes - nbInitGraphNodes;
-    }
-
-#ifdef P3D_PLANNER
-    p3d_set_planning_type(P3D_NONE);
-#else
-    printf("P3D_PLANNER not compiled in %s in %s",__PRETTY_FUNCTION__,__FILE__);
-#endif
-
-    PrintInfo(("Pour la creation de %d noeuds : ", inode));
-    ChronoPrint("");
-
-    ChronoTimes(&tu, &ts);
-    G->time = G->time + tu;
-#ifdef P3D_PLANNER
-    /* When retrieving statistics;
-     Commit Jim; date: 01/10/2008 */
-    if(getStatStatus()){
-        G->stat->preTime += tu;
-    }
-    ChronoOff();
-#endif
-
-    p3d_print_info_graph(G);
-    MY_ALLOC_INFO("After p3d_specific_learn");
-    if (p3d_get_saveInfoInFile()) {
-        //    save_infos_in_file(G, ADDED);
-    }
-
-    PrintInfo(("\n"));
-    return(ADDED || !fail);
 }

@@ -665,11 +665,13 @@ namespace stomp_motion_planner
             }
         }
 
-        for (int r=0; r<num_rollouts_gen_; ++r)
-        {
-            // WARNING ADDED FOR IOC
-            simpleJointLimits( rollouts_[r] );
-        }
+        if( true )
+            for (int r=0; r<num_rollouts_gen_; ++r)
+            {
+                // WARNING ADDED FOR IOC
+                simpleJointLimits( rollouts_[r] );
+            }
+
         return true;
     }
 

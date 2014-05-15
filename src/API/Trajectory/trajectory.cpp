@@ -7,6 +7,7 @@
 
 #include "API/Trajectory/trajectory.hpp"
 #include "API/Graphic/drawModule.hpp"
+#include "API/libmove3d_simple_api.hpp"
 
 #include "planEnvironment.hpp"
 
@@ -19,7 +20,7 @@
 #include "cost_space.hpp"
 
 #if defined( HRI_COSTSPACE ) && defined ( HRI_PLANNER )
-#include "hri_costspace/HRICS_HAMP.hpp"
+#include "hri_costspace/HRICS_hamp.hpp"
 #endif
 
 #include "move3d-headless.h"
@@ -1499,6 +1500,9 @@ extern void* GroundCostObj;
 
 void Trajectory::draw( int nbKeyFrame )
 {
+//    cout << __PRETTY_FUNCTION__ << endl;
+//    cout << this << endl;
+
     if( nbKeyFrame == 0 ){
         nbKeyFrame = 100;
     }
@@ -1542,6 +1546,8 @@ void Trajectory::draw( int nbKeyFrame )
         m_Robot->setAndUpdate(*q);
         pf = drawnjnt->getVectorPos();
 
+        // cout << "u : " << u << " , pi : " << pi.transpose() << " , pf : " << pf.transpose() << endl;
+
         if (m_isHighestCostIdSet)
         {
             if (getLocalPathId(u) == m_HighestCostId && !red)
@@ -1565,22 +1571,25 @@ void Trajectory::draw( int nbKeyFrame )
             height_f = pf[2];
         }
         else {
+            cout << "cost space" << endl;
             /*val1 =*/ GHintersectionVerticalLineWithGround( GroundCostObj, pi[0], pi[1], &Cost1 );
             /*val2 =*/ GHintersectionVerticalLineWithGround( GroundCostObj, pf[0], pf[1], &Cost2 );
-            height_i = Cost1 + (ZmaxEnv - ZminEnv) * 0.02;
-            height_f = Cost2 + (ZmaxEnv - ZminEnv) * 0.02;
+            height_i = Cost1 + ( ZmaxEnv - ZminEnv ) * 0.02;
+            height_f = Cost2 + ( ZmaxEnv - ZminEnv ) * 0.02;
         }
 
-        glLineWidth(3.);
+        if( move3d_use_api_functions() ) glLineWidth(3.);
+
         if( !m_use_continuous_color ) {
-            move3d_draw_one_line( pi[0], pi[1], height_i, pf[0], pf[1], height_f, m_Color, NULL );
+            move3d_draw_one_line( pi[0], pi[1], height_i, pf[0], pf[1], height_f, m_Color, NULL, m_Robot );
         }
         else{
             double colorvector[4];
             GroundColorMixGreenToRed( colorvector, m_Color );
-            move3d_draw_one_line( pi[0], pi[1], height_i, pf[0], pf[1], height_f, Any, colorvector );
+            move3d_draw_one_line( pi[0], pi[1], height_i, pf[0], pf[1], height_f, Any, colorvector, m_Robot );
         }
-        glLineWidth(1.);
+
+        if( move3d_use_api_functions() ) glLineWidth(1.);
 
         pi = pf;
         u += du;
@@ -1588,14 +1597,17 @@ void Trajectory::draw( int nbKeyFrame )
 
     if ((ENV.getBool(Env::isCostSpace)) && (GroundCostObj != NULL))
     {
-        for (unsigned int i=0; i<m_Courbe.size(); i++)
+        for(size_t i=0; i<m_Courbe.size(); i++)
         {
             m_Robot->setAndUpdate(*m_Courbe[i]->getEnd());
             pf = drawnjnt->getVectorPos();
             /*val2 =*/ GHintersectionVerticalLineWithGround( GroundCostObj, pf[0], pf[1], &Cost2 );
-            move3d_draw_sphere( pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02, 1. /*, 10*/ );
+            move3d_draw_sphere( pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02, 1. /*, 10*/, m_Robot );
         }
     }
+
+//    cout << "Draw trajectory" << endl;
+//    cout << "Draw joint : " << drawnjnt->getName() << ", index : " << p3d_get_user_drawnjnt() << endl;
 
     m_Robot->setAndUpdate(*qSave);
 }

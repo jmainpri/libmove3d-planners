@@ -157,7 +157,7 @@ public:
     //---------------------------------------------------------
     // Getters & Setters
 
-    void setUseContinuousColors(bool use_continuous_color) { m_use_continuous_color=use_continuous_color; }
+    void setUseContinuousColors(bool use_continuous_color=true) { m_use_continuous_color=use_continuous_color; }
     void setColor(double col) { m_Color=col; }
 
     unsigned int getHighestCostId() const

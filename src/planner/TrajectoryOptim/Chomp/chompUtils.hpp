@@ -81,14 +81,10 @@ inline void stdVectorToEigenTransform(const std::vector<double>& stl, Eigen::Tra
 
 inline void eigenTransformToStdVector(const Eigen::Transform3d& T, std::vector<double>& stl )
 {
-    stl.resize(12);
+//    stl.resize(12);
     for (int j=0; j<4; j++)
-    {
         for (int i=0; i<3; i++)
-        {
             stl[i*4+j] = T(i,j);
-        }
-    }
 }
 
 //  inline void debugJointArray(KDL::JntArray& joint_array)

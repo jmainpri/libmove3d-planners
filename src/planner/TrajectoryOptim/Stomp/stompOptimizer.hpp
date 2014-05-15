@@ -46,7 +46,7 @@
 #include "planner/TrajectoryOptim/Chomp/chompCost.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
-#include "collision_space/CollisionSpace.hpp"
+#include "collision_space/collision_space.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -341,7 +341,7 @@ private:
     //  std::vector<std::vector<KDL::Vector> > collision_point_vel_;
     //  std::vector<std::vector<KDL::Vector> > collision_point_acc_;
 
-    std::vector<std::vector<std::vector<double> > > segment_frames_;
+    std::vector<std::vector<Eigen::Transform3d> > segment_frames_;
     std::vector<std::vector<Eigen::Vector3d> >  joint_axis_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  joint_pos_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_pos_eigen_;
@@ -475,7 +475,7 @@ private:
     void saveCostFromConvergenceTraj();
     void saveOptimToFile(std::string fileName);
 
-    int getNumberOfCollisionPoints();
+    int getNumberOfCollisionPoints(Move3D::Robot* R);
 
     //  void getTorques(int index, std::vector<double>& torques, const std::vector<KDL::Wrench>& wrenches);
 };
@@ -488,7 +488,7 @@ extern MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> global_o
 
 void move3d_set_api_functions_collision_space( bool use_move3d_fct );
 bool move3d_use_api_functions_collision_space();
-void move3d_set_fct_get_nb_collision_points( boost::function<int(void)> fct );
+void move3d_set_fct_get_nb_collision_points( boost::function<int(Move3D::Robot*)> fct );
 void move3d_set_fct_get_config_collision_cost( boost::function<bool( Move3D::Robot* robot, int i, Eigen::MatrixXd&, std::vector< std::vector<Eigen::Vector3d> >& )> fct ) ;
 
 #endif /* STOMP_OPTIMIZER_H_ */

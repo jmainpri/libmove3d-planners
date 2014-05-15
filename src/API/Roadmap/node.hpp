@@ -280,7 +280,7 @@ public:
      * merge deux composantes connexes
      * @param compco la composante connexe à merger
      */
-    void merge(Node* compco);
+    void merge( Node* compco, bool compute_edge_cost=false );
 
     /**
      * teste si deux composante connexe sont égales
@@ -299,12 +299,12 @@ public:
      * Method for EST
      */
     void			setSelectCost(double Cost) { _SelectCost = Cost; }
-    double		getSelectCost() { return _SelectCost; }
+    double          getSelectCost() { return _SelectCost; }
     void			setExpandFailed() { _nbExpan++;  }
     int				getNbExpandFailed() { return _nbExpan; }
 
     std::vector<Node*>& getSortedNodes() {return _SortedNodes;}
-    void								setSortedNodes( std::vector<Node*>& nodes ) { _SortedNodes = nodes;}
+    void			setSortedNodes( std::vector<Node*>& nodes ) { _SortedNodes = nodes;}
 
 
     /**
@@ -339,7 +339,7 @@ private:
     Node* m_parent;
     bool m_is_leaf;
 
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> m_Configuration;
+    confPtr_t m_Configuration;
     bool _activ;
 
     double _SelectCost;

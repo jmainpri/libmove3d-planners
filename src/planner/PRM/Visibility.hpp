@@ -19,7 +19,7 @@ public:
      * Constructeur de la classe
      * @param WS Le WorkSpace de l'application
      */
-    Vis_PRM(Robot* R, Graph* G);
+    Vis_PRM( Robot* R, Graph* G );
 
     /**
      * Destructeur de la classe
@@ -59,7 +59,7 @@ public:
      * @param type le type de Node que l'on veut créé (gradien:0 ou connecteur:1 ou indifférent:2)
      * @return le nombre de Node créés
      */
-    int createOrphansLinking(unsigned int nb_node, int type);
+    // int createOrphansLinking(unsigned int nb_node, int type);
 
 
     /**
@@ -70,6 +70,7 @@ public:
     void expandOneStep();
 
 private:
+
     unsigned int m_nbOfExpand;
 };
 

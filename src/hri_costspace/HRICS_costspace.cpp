@@ -337,14 +337,16 @@ void HRICS_init(HRI_AGENTS* agents)
         GLOBAL_AGENTS = agents = hri_create_agents();
     }
 
-    HRICS_MotionPL = new HRICS::Workspace;
-    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initGrid();
-    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initDistance();
-    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initVisibility();
-    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initNatural();
-    //dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initAgentGrids( ENV.getDouble(Env::CellSize) );
-    //dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->initOtpPlanner();
-    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->setAgents( agents );
+    HRICS::Workspace* workspace = new HRICS::Workspace;
+    workspace->initGrid();
+    workspace->initDistance();
+    workspace->initVisibility();
+    workspace->initNatural();
+    // workspace->initAgentGrids( ENV.getDouble(Env::CellSize) );
+    // workspace->initOtpPlanner();
+    workspace->setAgents( agents );
+
+    HRICS_MotionPL = workspace;
 
     HRICS_MotionPLConfig = new HRICS::OTPMotionPl;
     hrics_otp_fct();
@@ -362,7 +364,7 @@ void HRICS_init(HRI_AGENTS* agents)
             fileName = home + fileName;
 
             // Reads the grid from XML and sets it ti the HRICS_MotionPL
-            HRICS_loadGrid(fileName);
+            HRICS_loadGrid( fileName );
             HRICS_activeNatu->setGrid(dynamic_cast<HRICS::NaturalGrid*>(API_activeGrid));
 
             ENV.setBool(Env::drawGrid,false);
@@ -380,10 +382,7 @@ void HRICS_init(HRI_AGENTS* agents)
     // ------------------------------------------
     // Init global human costspace
     // ------------------------------------------
-    HRICS_humanCostMaps = new HRICS::HumanCostSpace(dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot(),
-                                                    dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHumans(),
-                                                    HRICS_activeNatu,
-                                                    ENV.getDouble(Env::CellSize));
+    HRICS_humanCostMaps = new HRICS::HumanCostSpace( workspace->getRobot(), workspace->getHumans(), HRICS_activeNatu, ENV.getDouble(Env::CellSize) );
 
     std::string home(getenv("HOME_MOVE3D"));
     std::string filename = "/statFiles/Cost3DGrids/human_grids_0.grid";
@@ -394,7 +393,7 @@ void HRICS_init(HRI_AGENTS* agents)
     // Set cost type and cost functions
     // ------------------------------------------
 
-    ENV.setInt(Env::hriCostType,HRICS_Distance);
+    ENV.setInt( Env::hriCostType, HRICS_Distance );
 
     cout << "Initializing the HRI costmap cost function" << endl;
 

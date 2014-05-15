@@ -46,18 +46,18 @@ double CSpaceCostMap2D::q_cost(confPtr_t q)
 double CSpaceCostMap2D::lp_cost(confPtr_t q1, confPtr_t q2)
 {
     LocalPath p(q1, q2);
-//    PathSegments segments(p.getParamMax(), m_cost_step);
-//    double cost(0.);
-//    double cost_q_prev(this->q_cost(q1));
-//    //printf("path length, step : %f, %f\n", p.getParamMax(), m_cost_step);
-//    for(unsigned i(1); i < segments.nbPoints(); ++i)
-//    {
-//        double cost_q_next(this->q_cost(p.configAtParam(segments[i])));
-//        //cost += std::max(cost_q_prev, cost_q_next) * segments.step();
-//        cost += std::max(cost_q_next - cost_q_prev, 0.0) + segments.step() * 0.01;
-//        //printf("cost: %f\n", cost);
-//        cost_q_prev = cost_q_next;
-//    }
+    //    PathSegments segments(p.getParamMax(), m_cost_step);
+    //    double cost(0.);
+    //    double cost_q_prev(this->q_cost(q1));
+    //    //printf("path length, step : %f, %f\n", p.getParamMax(), m_cost_step);
+    //    for(unsigned i(1); i < segments.nbPoints(); ++i)
+    //    {
+    //        double cost_q_next(this->q_cost(p.configAtParam(segments[i])));
+    //        //cost += std::max(cost_q_prev, cost_q_next) * segments.step();
+    //        cost += std::max(cost_q_next - cost_q_prev, 0.0) + segments.step() * 0.01;
+    //        //printf("cost: %f\n", cost);
+    //        cost_q_prev = cost_q_next;
+    //    }
     int nb_test=0;
     return global_costSpace->cost(p,nb_test);
 }
@@ -76,8 +76,8 @@ double CSpaceCostMap2D::volume()
 
     return( fabs( ( vmax_0 - vmin_0 ) * (vmax_1 - vmin_1 ) ) );
 
-//    return(fabs((m_c_robot->joints[1]->dof_data[0].vmax - m_c_robot->joints[1]->dof_data[0].vmin) *
-//                (m_c_robot->joints[1]->dof_data[1].vmax - m_c_robot->joints[1]->dof_data[1].vmin)));
+    //    return(fabs((m_c_robot->joints[1]->dof_data[0].vmax - m_c_robot->joints[1]->dof_data[0].vmin) *
+    //                (m_c_robot->joints[1]->dof_data[1].vmax - m_c_robot->joints[1]->dof_data[1].vmin)));
 }
 
 double CSpaceCostMap2D::unit_sphere()
@@ -92,60 +92,61 @@ unsigned CSpaceCostMap2D::dimension()
 
 //-----------------------------------------------------------
 //-----------------------------------------------------------
-Pr2CSpace::Pr2CSpace()
+ArmCSpace::ArmCSpace( const std::vector<Joint*>& joints ) : joints_(joints)
 {
-  m_connection_radius_flag = true;
+    m_connection_radius_flag = true;
 }
 
-Pr2CSpace::~Pr2CSpace()
+ArmCSpace::~ArmCSpace()
 {
 }
 
-double Pr2CSpace::q_cost(confPtr_t q)
+double ArmCSpace::q_cost(confPtr_t q)
 {
-  return(global_costSpace->cost(*q));
+    return(global_costSpace->cost(*q));
 }
 
-double Pr2CSpace::lp_cost(confPtr_t q1, confPtr_t q2)
+double ArmCSpace::lp_cost(confPtr_t q1, confPtr_t q2)
 {
-  LocalPath p(q1, q2);
-  int nb_test;
-  return global_costSpace->cost(p,nb_test);
+    LocalPath p(q1, q2);
+    int nb_test;
+    return global_costSpace->cost( p, nb_test );
 }
 
-double Pr2CSpace::volume()
+double ArmCSpace::volume()
 {
-  assert( m_robot->getP3dRobotStruct() );
-//  jnt->getName() : right-Arm1(6) , index_dof : 16
-//  jnt->getName() : right-Arm2(7) , index_dof : 17
-//  jnt->getName() : right-Arm3(8) , index_dof : 18
-//  jnt->getName() : right-Arm4(9) , index_dof : 19
-//  jnt->getName() : right-Arm5(10) , index_dof : 20
-//  jnt->getName() : right-Arm6(11) , index_dof : 21
-//  jnt->getName() : right-Arm7(12) , index_dof : 22
+    // PR2
+    //  jnt->getName() : right-Arm1(6) , index_dof : 16
+    //  jnt->getName() : right-Arm2(7) , index_dof : 17
+    //  jnt->getName() : right-Arm3(8) , index_dof : 18
+    //  jnt->getName() : right-Arm4(9) , index_dof : 19
+    //  jnt->getName() : right-Arm5(10) , index_dof : 20
+    //  jnt->getName() : right-Arm6(11) , index_dof : 21
+    //  jnt->getName() : right-Arm7(12) , index_dof : 22
 
-  double volume=1.0;
-  double vmin,vmax;
-  
-  for( int i=6; i<=12; i++) 
-  {
-    Joint* jntPt = m_robot->getJoint(i);
-    jntPt->getDofBounds( 0, vmin, vmax );
-    volume *= jntPt->getDist() * fabs(vmax - vmin);
-  }
-  
-  return volume;
+    double volume=1.0;
+    double vmin,vmax;
+
+    // for( int i=6; i<=12; i++) // PR2
+    for( size_t i=0; i<joints_.size(); i++ )
+    {
+        Joint* jntPt = joints_[i];
+        jntPt->getDofBounds( 0, vmin, vmax );
+        volume *= jntPt->getDist() * fabs( vmax - vmin );
+    }
+
+    return volume;
 }
 
-double Pr2CSpace::unit_sphere()
+double ArmCSpace::unit_sphere()
 {
-  double n = 7;
-  return pow(2,(n+1)/2)*pow(M_PI,(n-1)/2)/boost::math::double_factorial<double>(7);
+    double n = joints_.size();
+    return pow( 2, (n+1) / 2 )* pow( M_PI, (n-1) / 2 ) / boost::math::double_factorial<double>(n);
 }
 
-unsigned Pr2CSpace::dimension()
+unsigned ArmCSpace::dimension()
 {
-  return(7);
+    return( joints_.size() );
 }
 
 //-------------------------------------------------------------
@@ -162,37 +163,37 @@ GenericCSpace::~GenericCSpace()
 
 double GenericCSpace::q_cost(confPtr_t q)
 {
-    return(global_costSpace->cost(*q));
+    return( global_costSpace->cost(*q) );
 }
 
 double GenericCSpace::lp_cost(confPtr_t q1, confPtr_t q2)
 {
     LocalPath p(q1, q2);
-//    PathSegments segments(p.getParamMax(), m_cost_step);
-//    double cost(0.);
-//    double cost_q_prev(this->q_cost(q1));
-//    switch(m_mode)
-//    {
-//    case integral:
-//    {
-//        for(unsigned i(1); i < segments.nbPoints(); ++i)
-//        {
-//            double cost_q_next(this->q_cost(p.configAtParam(segments[i])));
-//            cost += (cost_q_next + cost_q_prev) * 0.5 * segments.step();
-//            cost_q_prev = cost_q_next;
-//        }
-//    }
-//    case work:
-//    {
-//        for(unsigned i(1); i < segments.nbPoints(); ++i)
-//        {
-//            double cost_q_next(this->q_cost(p.configAtParam(segments[i])));
-//            cost += std::max(cost_q_next - cost_q_prev, 0.0) + 0.01 * segments.step();
-//            cost_q_prev = cost_q_next;
-//        }
-//    }
-//    default: {}
-//    }
+    //    PathSegments segments(p.getParamMax(), m_cost_step);
+    //    double cost(0.);
+    //    double cost_q_prev(this->q_cost(q1));
+    //    switch(m_mode)
+    //    {
+    //    case integral:
+    //    {
+    //        for(unsigned i(1); i < segments.nbPoints(); ++i)
+    //        {
+    //            double cost_q_next(this->q_cost(p.configAtParam(segments[i])));
+    //            cost += (cost_q_next + cost_q_prev) * 0.5 * segments.step();
+    //            cost_q_prev = cost_q_next;
+    //        }
+    //    }
+    //    case work:
+    //    {
+    //        for(unsigned i(1); i < segments.nbPoints(); ++i)
+    //        {
+    //            double cost_q_next(this->q_cost(p.configAtParam(segments[i])));
+    //            cost += std::max(cost_q_next - cost_q_prev, 0.0) + 0.01 * segments.step();
+    //            cost_q_prev = cost_q_next;
+    //        }
+    //    }
+    //    default: {}
+    //    }
     int nb_test;
     return global_costSpace->cost(p,nb_test);
 }

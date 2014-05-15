@@ -65,7 +65,7 @@ bool Planner::trajFound()
         return false;
 
     bool inSameCompco  = (_Goal ? _Start->inSameComponent(_Goal) : false);
-    bool isTheSame = _Start->equal(_Goal);
+    bool isTheSame = _Start->equal( _Goal );
 
     return (!isTheSame) && inSameCompco && (!m_fail);
 }
