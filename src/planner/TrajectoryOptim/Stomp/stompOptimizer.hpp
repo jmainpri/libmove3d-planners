@@ -76,7 +76,7 @@ public:
     StompOptimizer( Move3D::ChompTrajectory *trajectory,
                    const StompParameters *parameters,
                    const Move3D::ChompPlanningGroup *planning_group,
-                   const Move3D::CollisionSpace *collision_space);
+                   const Move3D::CollisionSpace *collision_space, int id=0);
 
     //  StompOptimizer(StompTrajectory *trajectory, const StompRobotModel *robot_model,
     //      const StompRobotModel::StompPlanningGroup *planning_group, const StompParameters *parameters,
@@ -276,6 +276,10 @@ public:
     const std::vector<Move3D::Trajectory>& getAllTrajs() const { return all_move3d_traj_; }
 
 private:
+
+    int id_;
+    int collision_space_id_;
+
     Move3D::Robot* robot_model_;
     Move3D::Robot* human_model_;
 
@@ -488,7 +492,7 @@ extern MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> global_o
 
 void move3d_set_api_functions_collision_space( bool use_move3d_fct );
 bool move3d_use_api_functions_collision_space();
-void move3d_set_fct_get_nb_collision_points( boost::function<int(Move3D::Robot*)> fct );
-void move3d_set_fct_get_config_collision_cost( boost::function<bool( Move3D::Robot* robot, int i, Eigen::MatrixXd&, std::vector< std::vector<Eigen::Vector3d> >& )> fct ) ;
+void move3d_set_fct_get_nb_collision_points( boost::function<int(Move3D::Robot*)> fct, int id=0 );
+void move3d_set_fct_get_config_collision_cost( boost::function<bool( Move3D::Robot* robot, int i, Eigen::MatrixXd&, std::vector< std::vector<Eigen::Vector3d> >& )> fct, int id=0 ) ;
 
 #endif /* STOMP_OPTIMIZER_H_ */

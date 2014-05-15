@@ -19,8 +19,10 @@ using std::endl;
 
 stompRun* stomp_motion_planner::global_stompRun = NULL;
 
-stompContext::stompContext(Robot* robot, const CollisionSpace* coll_space,  const std::vector<int>& planner_joints, const std::vector<CollisionPoint>& collision_points )
+stompContext::stompContext( int id, Robot* robot, const CollisionSpace* coll_space,  const std::vector<int>& planner_joints, const std::vector<CollisionPoint>& collision_points )
 {
+    m_id = id;
+
     m_chomptraj = NULL;
     m_chompplangroup = NULL;
     m_stompparams = NULL;
@@ -94,7 +96,7 @@ bool stompContext::initRun( Move3D::Trajectory& T )
     m_stompparams->init();
 
     cout << "Initialize optimizer" << endl;
-    m_stomp.reset(new stomp_motion_planner::StompOptimizer( m_chomptraj, m_stompparams, m_chompplangroup, m_coll_space ));
+    m_stomp.reset(new stomp_motion_planner::StompOptimizer( m_chomptraj, m_stompparams, m_chompplangroup, m_coll_space, m_id ));
     m_stomp->setSource( T.getBegin() );
     m_stomp->setPassiveDofs( passive_dofs );
     m_stomp->setSharedPtr( m_stomp );
@@ -157,7 +159,7 @@ void stompRun::setPool(const std::vector<Robot*>& robots )
 
     for( int i=0; i<int(m_robots.size()); i++ )
     {
-        m_stomps.push_back( new stompContext( m_robots[i], m_coll_space, m_planner_joints, m_collision_points ) );
+        m_stomps.push_back( new stompContext( i, m_robots[i], m_coll_space, m_planner_joints, m_collision_points ) );
         m_is_thread_running.push_back( false );
     }
 }
@@ -225,7 +227,7 @@ bool stompRun::run( int id, Move3D::Trajectory& T )
     if( m_stomps[id]->getRobot()->getUseLibmove3dStruct() )
         m_mtx_set_end.lock();
 
-    bool succeed = m_stomps[id]->initRun( T );
+    bool succeed = m_stomps[id]->initRun(T);
 
     if( m_stomps[id]->getRobot()->getUseLibmove3dStruct() )
         m_mtx_set_end.unlock();

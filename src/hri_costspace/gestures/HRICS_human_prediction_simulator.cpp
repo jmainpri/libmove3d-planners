@@ -385,6 +385,7 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
     }
 
     stompRun* pool = new stompRun( traj_optim_get_collision_space(), traj_optim_get_planner_joints(), traj_optim_get_collision_points() );
+
     pool->setPool( robots );
     pool->start(); // locks the pool
 
@@ -591,10 +592,11 @@ void HumanPredictionSimulator::runVoxelOccupancy()
      int k = 3;
         for(int i=2;i<3;i++) // 5 first motion
         {
-            loadHumanTrajectory( m_recorder->getStoredMotions()[i+25*k] );
+            int human_traj_id = i+25*k;
+            loadHumanTrajectory( m_recorder->getStoredMotions()[human_traj_id] );
 
             cout << "----------------------------------------------------" << endl;
-            cout << "Motion : " << i+25*k << ", size : " << m_motion.size() << endl;
+            cout << "Motion : " << human_traj_id << ", size : " << m_motion.size() << endl;
             m_current_human_traj.resize( 13, 0 );
 
             for(int j=0;(!PlanEnv->getBool(PlanParam::stopPlanner)) && updateMotion();j++)

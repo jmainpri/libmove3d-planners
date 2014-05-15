@@ -21,7 +21,7 @@ namespace stomp_motion_planner
 class stompContext
 {
 public:
-    stompContext( Move3D::Robot* robot, const Move3D::CollisionSpace* coll_space, const std::vector<int>& planner_joints, const std::vector<Move3D::CollisionPoint>& collision_points );
+    stompContext( int id, Move3D::Robot* robot, const Move3D::CollisionSpace* coll_space, const std::vector<int>& planner_joints, const std::vector<Move3D::CollisionPoint>& collision_points );
     ~stompContext();
 
     bool initRun( Move3D::Trajectory& T );
@@ -36,7 +36,8 @@ public:
 
 private:
 
-    Move3D::Robot*                                  m_robot;
+    Move3D::Robot*                          m_robot;
+    int                                     m_id;
     MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer>  m_stomp;
     stomp_motion_planner::StompParameters*  m_stompparams;
     Move3D::ChompPlanningGroup*             m_chompplangroup;
