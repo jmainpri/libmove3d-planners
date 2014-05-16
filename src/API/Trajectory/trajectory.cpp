@@ -1601,8 +1601,9 @@ void Trajectory::draw( int nbKeyFrame )
         {
             m_Robot->setAndUpdate(*m_Courbe[i]->getEnd());
             pf = drawnjnt->getVectorPos();
+            double colorvector[4];
             /*val2 =*/ GHintersectionVerticalLineWithGround( GroundCostObj, pf[0], pf[1], &Cost2 );
-            move3d_draw_sphere( pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02, 1. /*, 10*/, m_Robot );
+            move3d_draw_sphere( pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02, 1. /*, 10*/, colorvector, m_Robot );
         }
     }
 

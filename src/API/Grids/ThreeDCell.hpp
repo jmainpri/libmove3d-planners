@@ -50,8 +50,8 @@ public:
     virtual void draw();
     void drawColorGradient( double value, double min, double max , bool inverse = false );
 
-    bool writeToXml(xmlNodePtr cur);
-    bool readCellFromXml(xmlNodePtr cur);
+    virtual bool writeToXml(xmlNodePtr cur);
+    virtual bool readCellFromXml(xmlNodePtr cur);
     
     bool operator==( ThreeDCell otherCell) { return ((otherCell._index) == (this->_index)); }
     

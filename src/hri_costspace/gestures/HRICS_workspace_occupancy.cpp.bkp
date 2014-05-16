@@ -209,7 +209,7 @@ void WorkspaceOccupancyGrid::setRegressedMotions(const std::vector<motion_t>& mo
     m_motions = motions;
 }
 
-void WorkspaceOccupancyGrid::computeOccpancy()
+bool WorkspaceOccupancyGrid::computeOccpancy()
 {
-
+    return true;
 }

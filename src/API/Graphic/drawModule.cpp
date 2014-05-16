@@ -31,7 +31,7 @@ using namespace std;
 // API FUNCTIONS
 // ****************************************************************************************************
 
-static boost::function<void( double, double, double, double, Move3D::Robot* )> Move3DDrawSphere;
+static boost::function<void( double, double, double, double, double*, Move3D::Robot* )> Move3DDrawSphere;
 static boost::function<void( double ,double ,double, double, double, double, int, double*, Move3D::Robot* )> Move3DDrawOneLine;
 static boost::function<void( Move3D::Robot* )> Move3DDrawClearHandles;
 
@@ -39,7 +39,7 @@ static boost::function<void( Move3D::Robot* )> Move3DDrawClearHandles;
 // SETTERS
 // ****************************************************************************************************
 
-void move3d_set_fct_draw_sphere( boost::function<void( double, double, double, double, Move3D::Robot* )> fct ) {  Move3DDrawSphere = fct; }
+void move3d_set_fct_draw_sphere( boost::function<void( double, double, double, double, double*, Move3D::Robot* )> fct ) {  Move3DDrawSphere = fct; }
 void move3d_set_fct_draw_one_line( boost::function<void( double ,double ,double, double, double, double, int, double*, Move3D::Robot*)> fct ) { Move3DDrawOneLine = fct; }
 void move3d_set_fct_draw_clear_handles( boost::function<void( Move3D::Robot* )> fct ) { Move3DDrawClearHandles = fct; }
 
@@ -47,9 +47,9 @@ void move3d_set_fct_draw_clear_handles( boost::function<void( Move3D::Robot* )> 
 // ----------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------
 
-void move3d_draw_sphere( double x, double y, double z, double radius, Move3D::Robot* R )
+void move3d_draw_sphere( double x, double y, double z, double radius, double* color_vect,  Move3D::Robot* R )
 {
-    Move3DDrawSphere( x, y, z, radius, R );
+    Move3DDrawSphere( x, y, z, radius, color_vect, R );
 }
 
 void move3d_draw_one_line( double x1, double y1, double z1, double x2, double y2, double z2, int color, double *color_vect, Move3D::Robot* R )

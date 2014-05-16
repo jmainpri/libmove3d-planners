@@ -2765,7 +2765,7 @@ void Graph::drawNode(BGL_Vertex v)
     if( robot_->getUseLibmove3dStruct() )
         g3d_set_color( color % 34, color_array );
 
-    move3d_draw_sphere( pos[0], pos[1], pos[2], PlanEnv->getDouble(PlanParam::drawScaleFactorNodeSphere) * radius );
+    move3d_draw_sphere( pos[0], pos[1], pos[2], PlanEnv->getDouble(PlanParam::drawScaleFactorNodeSphere) * radius, color_array );
     // g3d_draw_solid_sphere( pos[0], pos[1], pos[2], radius, 10 );
     // g3d_drawColorSphere(pos[0], pos[1], pos[2], radius, color, NULL);
 }

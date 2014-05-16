@@ -51,6 +51,74 @@ WorkspaceOccupancyCell::~WorkspaceOccupancyCell()
     
 }
 
+bool WorkspaceOccupancyCell::writeToXml(xmlNodePtr _XmlCellNode_)
+{
+    if( !ThreeDCell::writeToXml(_XmlCellNode_) ){
+        return false;
+    }
+
+    stringstream ss;
+    string str;
+
+    str.clear(); ss << m_occupies_class.size(); ss >> str; ss.clear();
+    xmlNewProp (_XmlCellNode_, xmlCharStrdup("NbClasses"), xmlCharStrdup(str.c_str()));
+
+    for( int i=0;i<m_occupies_class.size();i++)
+    {
+        std::stringstream converter;
+        converter << i;
+        str.clear(); ss << m_occupies_class[i] ; ss >> str; ss.clear();
+        xmlNewProp (_XmlCellNode_, xmlCharStrdup(("class_"+converter.str()).c_str()), xmlCharStrdup(str.c_str()));
+    }
+
+    return true;
+}
+
+bool WorkspaceOccupancyCell::readCellFromXml(xmlNodePtr cur)
+{
+    if( !ThreeDCell::readCellFromXml(cur) ){
+        return false;
+    }
+
+    xmlChar* tmp;
+
+    if ((tmp = xmlGetProp(cur, xmlCharStrdup("NbClasses"))) != NULL)
+    {
+        int nb_classes;
+        sscanf((char *) tmp, "%d", &nb_classes);
+        m_occupies_class.resize( nb_classes );
+    }
+    else
+    {
+        cout << "error reading grid" << endl;
+        return false;
+    }
+    xmlFree(tmp);
+
+    int tmp_bool;
+
+    for( int i=0;i<m_occupies_class.size();i++)
+    {
+        std::stringstream converter;
+        converter << i;
+
+        if ((tmp = xmlGetProp(cur, xmlCharStrdup(("class_"+converter.str()).c_str()))) != NULL)
+        {
+            sscanf((char *) tmp, "%d", &tmp_bool );
+            m_occupies_class[i] = tmp_bool;
+
+        }
+        else
+        {
+            cout << "error reading grid" << endl;
+            return false;
+        }
+        xmlFree(tmp);
+    }
+
+    return true;
+}
+
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
 //--------------------------------------------------------------------------
@@ -65,8 +133,11 @@ m_id_class_to_draw(0)
     createAllCells();
     cout << "_cells.size() : " << _cells.size() << endl;
     
-    m_sampler = new BodySurfaceSampler( 0.02 );
-    m_sampler->sampleRobotBodiesSurface( m_human );
+    if( m_human->getUseLibmove3dStruct() )
+    {
+        m_sampler = new BodySurfaceSampler( 0.02 );
+        m_sampler->sampleRobotBodiesSurface( m_human );
+    }
 }
 
 WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
@@ -467,6 +538,11 @@ void WorkspaceOccupancyGrid::simple_draw_current_occupancy()
 
 void WorkspaceOccupancyGrid::simple_draw_combined()
 {
+    if( m_all_occupied_cells.empty() ){
+        cout << "m_all_occupied_cells.empty()" << endl;
+        return;
+    }
+
     for( int i=0; i<int(m_all_occupied_cells.size()); i++)
     {
         double occupancy = 0.0;
@@ -654,11 +730,11 @@ void WorkspaceOccupancyGrid::draw_voxels( const std::vector<unsigned int>& voxel
 
 void WorkspaceOccupancyGrid::draw()
 {
-     //cout << "draw occupancy grid" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
 
     if( GestEnv->getBool(GestParam::draw_current_occupancy) )
     {
-        //cout << "draw current occupancy" << endl;
+//        cout << "draw current occupancy" << endl;
         computeCurrentOccupancy();
         return simple_draw_current_occupancy();
     }
@@ -667,15 +743,22 @@ void WorkspaceOccupancyGrid::draw()
     {
         if(GestEnv->getBool(GestParam::draw_single_class))
         {
+//            cout << "simple_draw_one_class" << endl;
             return simple_draw_one_class();
         }
         else
         {
+//            cout << "simple_draw_combined" << endl;
             return simple_draw_combined();
         }
     }
     else
     {
+        cout << "motion empty" << endl;
+        return;
+    }
+
+    if( !m_human->getUseLibmove3dStruct() ){
         return;
     }
     

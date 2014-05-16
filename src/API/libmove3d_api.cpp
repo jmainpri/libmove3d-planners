@@ -851,8 +851,9 @@ double move3d_joint_get_dist( const Joint* J )
 // ****************************************************************************************************
 // ****************************************************************************************************
 
-void move3d_draw_sphere_fct( double x, double y, double z, double radius )
+void move3d_draw_sphere_fct( double x, double y, double z, double radius, double* color_vect )
 {
+    g3d_set_color_vect( Any, color_vect );
     g3d_draw_solid_sphere( x, y, z, radius, 10 );
 }
 
@@ -1040,7 +1041,7 @@ void move3d_set_api_functions_joint()
 
 void move3d_set_api_functions_draw()
 {
-    move3d_set_fct_draw_sphere( boost::bind( move3d_draw_sphere_fct, _1, _2, _3, _4 ) );
+    move3d_set_fct_draw_sphere( boost::bind( move3d_draw_sphere_fct, _1, _2, _3, _4, _5 ) );
     move3d_set_fct_draw_one_line( boost::bind( move3d_draw_one_line_fct, _1, _2, _3, _4, _5, _6, _7, _8 ) );
     move3d_set_fct_draw_clear_handles( boost::bind( move3d_draw_clear_handles_fct ) );
 }

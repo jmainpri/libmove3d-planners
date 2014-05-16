@@ -9,6 +9,8 @@
 
 #include <Eigen/Array>
 
+#include "API/Graphic/drawModule.hpp"
+
 using namespace std;
 using namespace Move3D;
 
@@ -282,8 +284,11 @@ void ThreeDCell::drawColorGradient( double value, double min, double max, bool i
 
     colorvector[3] = 0.05; //transparency
     GroundColorMixGreenToRed( colorvector, alpha );
-    glColor4dv(colorvector);
-    g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/3, 10);
+
+//    glColor4dv(colorvector);
+//    g3d_draw_solid_sphere(center[0], center[1], center[2], diagonal/3, 10);
+
+    move3d_draw_sphere( center[0], center[1], center[2], diagonal/3, colorvector );
 }
 
 bool ThreeDCell::writeToXml(xmlNodePtr _XmlCellNode_)
@@ -308,6 +313,49 @@ bool ThreeDCell::writeToXml(xmlNodePtr _XmlCellNode_)
 
 bool ThreeDCell::readCellFromXml(xmlNodePtr cur)
 {
+    xmlChar* tmp;
+
+    // Read the corner of the cell
+    // (X,Y,Z)
+    float Corner[3];
+
+    if ((tmp = xmlGetProp(cur, xmlCharStrdup("CornerX"))) != NULL)
+    {
+        sscanf((char *) tmp, "%f", Corner + 0 );
+    }
+    else
+    {
+        cout << "Document error in reading CornerX"<< endl;
+        return false;
+    }
+    xmlFree(tmp);
+
+    if ((tmp = xmlGetProp(cur, xmlCharStrdup("CornerY"))) != NULL)
+    {
+        sscanf((char *) tmp, "%f", Corner + 1 );
+    }
+    else
+    {
+        cout << "Document error in reading CornerY"<< endl;
+        return false;
+    }
+    xmlFree(tmp);
+
+    if ((tmp = xmlGetProp(cur, xmlCharStrdup("CornerZ"))) != NULL)
+    {
+        sscanf((char *) tmp, "%f", Corner + 2 );
+    }
+    else
+    {
+        cout << "Document error in reading CornerZ"<< endl;
+        return false;
+    }
+    xmlFree(tmp);
+
+    _corner[0] = Corner[0];
+    _corner[1] = Corner[1];
+    _corner[2] = Corner[2];
+
 	return true;
 }
 

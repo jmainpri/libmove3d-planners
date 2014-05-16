@@ -39,8 +39,16 @@ void HRICS_initOccupancyPredictionFramework()
 
     std::vector<double> size = global_Project->getActiveScene()->getBounds();
 
-    Robot* robot = global_Project->getActiveScene()->getRobotByName( "PR2_ROBOT" );
-    Robot* human = global_Project->getActiveScene()->getRobotByName( "HERAKLES_HUMAN1" );
+//    std::vector<double> size(6);
+//    size[0] = -2;
+//    size[1] = 2;
+//    size[2] = -2;
+//    size[3] = 2;
+//    size[4] = -2;
+//    size[5] = 2;
+
+    Robot* robot = global_Project->getActiveScene()->getRobotByName( "PR2_ROBOT" ); // PR2_ROBOT ... ABBIE
+    Robot* human = global_Project->getActiveScene()->getRobotByName( "HERAKLES_HUMAN1" ); // HERAKLES_HUMAN1 ... HERAKLES_HUMAN
 
     if( robot == NULL || human == NULL )
     {
@@ -60,7 +68,7 @@ void HRICS_initOccupancyPredictionFramework()
     foldername = home + std::string("regressed/");
     if( recorder->loadRegressedFromCSV( foldername ) )
     {
-        cout << "Motions loaded successfully" << endl;
+        cout << "Motions loaded successfully!!!" << endl;
     }
     else {
          cout << "Error loading motions" << endl;
@@ -73,7 +81,7 @@ void HRICS_initOccupancyPredictionFramework()
     foldername = home + std::string("gmm_data/");
     if( classifier->load_model( foldername ) )
     {
-        cout << "GMMs loaded successfully" << endl;
+        cout << "GMMs loaded successfully!!!" << endl;
     }
     else {
          cout << "Error loading GMMs" << endl;
@@ -85,8 +93,6 @@ void HRICS_initOccupancyPredictionFramework()
     // Translate Regressed motions
     recorder->translateStoredMotions();
 
-    WorkspaceOccupancyGrid* occupancyGrid = new WorkspaceOccupancyGrid( human, 0.05, size );
-
     const std::vector<motion_t>& r_motions = recorder->getStoredMotions();
     if( r_motions.empty() )
     {
@@ -94,14 +100,28 @@ void HRICS_initOccupancyPredictionFramework()
         return;
     }
 
-    occupancyGrid->setRegressedMotions( r_motions );
-    if( !occupancyGrid->computeOccpancy() )
-    {
-        cout << "Could not compute workspace occupancy" << endl;
-        return;
-    }
+    WorkspaceOccupancyGrid* occupancyGrid = new WorkspaceOccupancyGrid( human, 0.05, size );
 
+    occupancyGrid->setRegressedMotions( r_motions );
+
+    bool compute_from_library = false;
+
+    if( compute_from_library )
+    {
+
+        if( !occupancyGrid->computeOccpancy() )
+        {
+            cout << "Could not compute workspace occupancy" << endl;
+            return;
+        }
+        occupancyGrid->writeToXmlFile("saved_grid.xml");
+    }
+    else {
+        occupancyGrid->loadFromXmlFile("saved_grid.xml");
+        occupancyGrid->set_all_occupied_cells();
+    }
     occupancyGrid->setClassToDraw(1);
+
 
     // Create the prediction costspace
     HumanPredictionCostSpace* predictionSpace = new HumanPredictionCostSpace( robot, occupancyGrid );

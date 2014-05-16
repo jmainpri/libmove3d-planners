@@ -136,6 +136,10 @@ void HumanPredictionCostSpace::sampleRobotPoints()
 
 void HumanPredictionCostSpace::draw_sampled_points()
 {
+    if( !m_robot->getUseLibmove3dStruct() ){
+        return;
+    }
+
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
         Joint* jnt = m_robot->getJoint( m_active_joints[i] );

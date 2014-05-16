@@ -28,6 +28,9 @@ public:
     bool m_visited;
     std::vector<bool> m_occupies_class;
     bool m_currently_occupied;
+
+    virtual bool writeToXml(xmlNodePtr cur);
+    virtual bool readCellFromXml(xmlNodePtr cur);
 };
 
 class WorkspaceOccupancyGrid : public Move3D::ThreeDGrid
@@ -48,15 +51,16 @@ public:
     double getOccupancy( const Eigen::Vector3d& point ) const;
     double getOccupancyCombination( const Eigen::Vector3d& point ) const;
     double geCurrentOccupancy( const Eigen::Vector3d& point ) const;
+    void set_all_occupied_cells();
     void drawSampledPoints();
     void draw();
+
 
 private:
 
     void simple_draw_one_class();
     void simple_draw_combined();
     void simple_draw_current_occupancy();
-    void set_all_occupied_cells();
     void set_sorted_cell_ids_to_draw( const std::vector<WorkspaceOccupancyCell*>& occupied_voxels );
     void get_cells_occupied_by_human( std::vector<WorkspaceOccupancyCell*>& occupied_voxels, int id_class, bool checkclass=true );
 //    void draw_all_cubes();
