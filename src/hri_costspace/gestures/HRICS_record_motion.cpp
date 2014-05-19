@@ -1,6 +1,7 @@
 #include "HRICS_record_motion.hpp"
 
 #include "HRICS_gest_parameters.hpp"
+#include "HRICS_openrave_human_map.hpp"
 
 #include "API/project.hpp"
 #include "planner/planEnvironment.hpp"
@@ -22,126 +23,40 @@ using namespace Move3D;
 
 std::vector<RecordMotion*> global_motionRecorders;
 
-std::map<std::string,int> move3d_map;
-std::map<std::string,int> or_map;
+//--------------------------------------------------------
+//--------------------------------------------------------
+//--------------------------------------------------------
 
-void set_maps()
+RecordMotion::RecordMotion() : m_robot(NULL)
 {
-    move3d_map["PelvisTransX"]  =6;
-    move3d_map["PelvisTransY"]  =7;
-    move3d_map["PelvisTransZ"]  =8;
-    move3d_map["PelvisRotX"]    =9;
-    move3d_map["PelvisRotY"]    =10;
-    move3d_map["PelvisRotZ"]    =11;
-    move3d_map["TorsoX"]        =12;
-    move3d_map["TorsoY"]        =13;
-    move3d_map["TorsoZ"]        =14;
-    move3d_map["HeadZ"]         =15;
-    move3d_map["HeadY"]         =16;
-    move3d_map["HeadX"]         =17;
-    move3d_map["rShoulderX"]    =18;
-    move3d_map["rShoulderZ"]    =19;
-    move3d_map["rShoulderY"]    =20;
-    move3d_map["rArmTrans"]     =21;
-    move3d_map["rElbowZ"]       =22;
-    move3d_map["rWristX"]       =24;
-    move3d_map["rWristY"]       =25;
-    move3d_map["rWristZ"]       =26;
-    move3d_map["lShoulderX"]    =27;
-    move3d_map["lShoulderZ"]    =28;
-    move3d_map["lShoulderY"]    =29;
-    move3d_map["lArmTrans"]     =30;
-    move3d_map["lElbowZ"]       =31;
-    move3d_map["lWristX"]       =33;
-    move3d_map["lWristY"]       =34;
-    move3d_map["lWristZ"]       =35;
-    move3d_map["rHipX"]         =36;
-    move3d_map["rHipY"]         =37;
-    move3d_map["rHipZ"]         =38;
-    move3d_map["rKnee"]         =39;
-    move3d_map["rAnkleX"]       =40;
-    move3d_map["rAnkleY"]       =41;
-    move3d_map["rAnkleZ"]       =42;
-    move3d_map["lHipX"]         =43;
-    move3d_map["lHipY"]         =44;
-    move3d_map["lHipZ"]         =45;
-    move3d_map["lKnee"]         =46;
-    move3d_map["lAnkleX"]       =47;
-    move3d_map["lAnkleY"]       =48;
-    move3d_map["lAnkleZ"]       =49;
-
-    or_map["PelvisTransX"] =  0;
-    or_map["PelvisTransY"] =  1;
-    or_map["PelvisTransZ"] =  2;
-    or_map["PelvisRotX"] =    3;
-    or_map["PelvisRotY"] =    4;
-    or_map["PelvisRotZ"] =    5;
-    or_map["TorsoX"] =        6;
-    or_map["TorsoY"] =        7;
-    or_map["TorsoZ"] =        8;
-    or_map["HeadZ"] =         9;
-    or_map["HeadY"] =         10;
-    or_map["HeadX"] =         11;
-    or_map["rShoulderX"] =    12;
-    or_map["rShoulderZ"] =    13;
-    or_map["rShoulderY"] =    14;
-    or_map["rArmTrans"] =     15;
-    or_map["rElbowZ"] =       16;
-    or_map["rWristX"] =       17;
-    or_map["rWristY"] =       18;
-    or_map["rWristZ"] =       19;
-    or_map["lShoulderX"] =    20;
-    or_map["lShoulderZ"] =    21;
-    or_map["lShoulderY"] =    22;
-    or_map["lArmTrans"] =     23;
-    or_map["lElbowZ"] =       24;
-    or_map["lWristX"] =       25;
-    or_map["lWristY"] =       26;
-    or_map["lWristZ"] =       27;
-    or_map["rHipX"] =         28;
-    or_map["rHipY"] =         29;
-    or_map["rHipZ"] =         30;
-    or_map["rKnee"] =         31;
-    or_map["rAnkleX"] =       32;
-    or_map["rAnkleY"] =       33;
-    or_map["rAnkleZ"] =       34;
-    or_map["lHipX"] =         35;
-    or_map["lHipY"] =         36;
-    or_map["lHipZ"] =         37;
-    or_map["lKnee"] =         38;
-    or_map["lAnkleX"] =       39;
-    or_map["lAnkleY"] =       40;
-    or_map["lAnkleZ "] =      41;
+    intialize();
 }
 
-//--------------------------------------------------------
-//--------------------------------------------------------
-//--------------------------------------------------------
-
-RecordMotion::RecordMotion()
+RecordMotion::RecordMotion( Robot* robot ) : m_robot(robot)
 {
-    m_use_or_format = true;
-    m_is_recording = false;
-    m_id_motion = 0;
-    m_robot = NULL;
-    reset();
-    set_maps();
-}
-
-RecordMotion::RecordMotion( Robot* robot )
-{
-    m_use_or_format = true;
-    m_is_recording = false;
-    m_id_motion = 0;
-    m_robot = robot;
-    reset();
-    set_maps();
+    intialize();
 }
 
 RecordMotion::~RecordMotion()
 {
     reset();
 }
+
+void RecordMotion::intialize()
+{
+    m_use_or_format = true;
+    m_is_recording = false;
+    m_id_motion = 0;
+
+    reset();
+    HRICS::set_human_maps();
+
+    m_transX = 0.10; // IROS PAPER GMMs are using this frame
+    m_transY = 0.50;
+    m_transZ = 0.15;
+    m_transR = 0.00;
+}
+
 
 void RecordMotion::setRobot(const std::string &robotname)
 {
@@ -221,7 +136,7 @@ void RecordMotion::saveToXml(const string &filename, const vector< pair<double,c
 
     for (int i=0; i<int(motion.size()); i++)
     {
-        ss << std::setw( floor(log10(motion.size())) ) << std::setfill( '0' ) <<  i; ss >> str; ss.clear();
+        ss << std::setw( ceil(log10(motion.size())) ) << std::setfill( '0' ) <<  i; ss >> str; ss.clear();
         string name = "config_" + str;
         xmlNodePtr cur            = xmlNewChild (root, NULL, xmlCharStrdup(name.c_str()), NULL);
 
@@ -321,9 +236,14 @@ motion_t RecordMotion::loadFromXml(const string& filename)
 
             //cout << "time : " << time << endl;
 
-            configPt q = readXmlConfig( static_cast<p3d_rob*>( m_robot->getP3dRobotStruct() ), cur->xmlChildrenNode->next->next->next );
+            configPt q = NULL;
+
+            if( m_robot->getUseLibmove3dStruct() )
+                q = readXmlConfig( static_cast<p3d_rob*>( m_robot->getP3dRobotStruct() ), cur->xmlChildrenNode->next->next->next );
+
             if( q == NULL ) {
                 cout << "Error : in readXmlConfig" << endl;
+                break;
             }
             confPtr_t q_tmp(new Configuration(m_robot,q,true));
             q_tmp->adaptCircularJointsLimits();
@@ -384,6 +304,8 @@ bool RecordMotion::loadXMLFolder(  const std::string& foldername  )
                 //cout << "Load File : " << filename.str() << endl;
                 motion_t partial_motion = loadFromXml( filename.str() );
                 storeMotion( partial_motion, j == 0 );
+
+                cout << "partial_motion.size() : " << partial_motion.size() << endl;
 
                 if( j == 0 ) {
                     number_of_motions_loaded++;
@@ -746,8 +668,15 @@ motion_t RecordMotion::resample(const motion_t& motion, int nb_sample )
     if( int(motion.size()) == nb_sample )
     {
         resampled_motion = motion;
-        return motion;
+        for (int j=0; j<nb_sample; j++)
+        {
+            resampled_motion[j].second = motion[j].second->copy();
+            resampled_motion[j].second->adaptCircularJointsLimits();
+        }
+        return resampled_motion;
     }
+
+    cout << "RESAMPLE" << endl;
 
     double inc = double(motion.size())/double(nb_sample);
     double k =0;
@@ -763,6 +692,12 @@ motion_t RecordMotion::resample(const motion_t& motion, int nb_sample )
     return resampled_motion;
 }
 
+void RecordMotion::resampleAll( int nb_sample )
+{
+    for( size_t i=0;i<m_stored_motions.size();i++){
+        m_stored_motions[i] = resample( m_stored_motions[i], nb_sample );
+    }
+}
 
 motion_t RecordMotion::getArmTorsoMotion( const motion_t& motion, confPtr_t q )
 {
@@ -791,7 +726,7 @@ motion_t RecordMotion::getArmTorsoMotion( const motion_t& motion, confPtr_t q )
     return result;
 }
 
-void RecordMotion::saveStoredToCSV( const std::string &filename )
+void RecordMotion::saveStoredToCSV( const std::string &filename , bool break_into_files )
 {
     if( m_stored_motions.empty() )
     {
@@ -799,18 +734,20 @@ void RecordMotion::saveStoredToCSV( const std::string &filename )
         return;
     }
 
-    const int samples = 100;
-
-    cout << "Down sampling to " << samples << endl;
-
-    for (int i=0; i<int(m_stored_motions.size()); i++)
-    {
-        m_stored_motions[i] = resample( m_stored_motions[i], samples );
-    }
+    //Breaks the prediction for IROS
+//    const int samples = 100;
+//    cout << "Down sampling to " << samples << endl;
+//    for (int i=0; i<int(m_stored_motions.size()); i++)
+//    {
+//        m_stored_motions[i] = resample( m_stored_motions[i], samples );
+//    }
 
     std::ofstream s;
-    s.open( filename.c_str() );
-    cout << "Opening save file : " << filename << endl;
+    if( !break_into_files )
+    {
+        s.open( filename.c_str() );
+        cout << "Opening save file : " << filename << endl;
+    }
 
     Eigen::Vector3d pos;
     Eigen::Transform3d T;
@@ -819,6 +756,18 @@ void RecordMotion::saveStoredToCSV( const std::string &filename )
 
     for (int i=0; i<int(m_stored_motions.size()); i++)
     {
+        if( break_into_files )
+        {
+            s.close();
+
+            std::stringstream converter;
+            converter << std::setw( ceil(log10(m_stored_motions.size())) ) << std::setfill( '0' ) <<  i;
+            std::string name =  filename + "_" + converter.str() + ".csv" ;
+
+            cout << "Opening save file : " << name << endl;
+            s.open( name.c_str() );
+        }
+
         for (int j=0; j<int(m_stored_motions[i].size()); j++)
         {
             s << j << ",";
@@ -861,11 +810,11 @@ void RecordMotion::saveStoredToCSV( const std::string &filename )
                 s << (*m_stored_motions[i][j].second)[21] << ","; // rArmTrans
                 s << (*m_stored_motions[i][j].second)[22] << endl; // rElbowZ
 
-                //                s << (*m_stored_motions[i][j].second)[27] << ","; // lShoulderX
-                //                s << (*m_stored_motions[i][j].second)[28] << ","; // lShoulderZ
-                //                s << (*m_stored_motions[i][j].second)[29] << ","; // lShoulderY
-                //                s << (*m_stored_motions[i][j].second)[30] << ","; // lArmTrans
-                //                s << (*m_stored_motions[i][j].second)[31] << endl; // lElbowZ
+                // s << (*m_stored_motions[i][j].second)[27] << ","; // lShoulderX
+                // s << (*m_stored_motions[i][j].second)[28] << ","; // lShoulderZ
+                // s << (*m_stored_motions[i][j].second)[29] << ","; // lShoulderY
+                // s << (*m_stored_motions[i][j].second)[30] << ","; // lArmTrans
+                // s << (*m_stored_motions[i][j].second)[31] << endl; // lElbowZ
             }
         }
     }
@@ -881,21 +830,44 @@ void RecordMotion::saveToCSV( const std::string &filename, const motion_t& motio
     s.open( filename.c_str() );
     //cout << "Opening save file : " << oss.str() << endl;
 
-    Eigen::Vector3d pos;
+    bool save_cartesian = false;
 
     for (int i=0; i<int(motion.size()); i++)
     {
-        m_robot->setAndUpdate( *motion[i].second );
+        s << i << ",";
 
-        Eigen::Transform3d T( m_robot->getJoint("Pelvis")->getMatrixPos().inverse() );
+        if( save_cartesian )
+        {
+            Eigen::Vector3d pos;
 
-        pos = T*m_robot->getJoint("rWristX")->getVectorPos();
-        for (int j=0; j<int(pos.size()); j++)
-            s << pos[j] << ",";
+            m_robot->setAndUpdate( *motion[i].second );
 
-        pos = T*m_robot->getJoint("rElbowZ")->getVectorPos();
-        for (int j=0; j<int(pos.size()); j++)
-            s << pos[j] << ",";
+            Eigen::Transform3d T( m_robot->getJoint("Pelvis")->getMatrixPos().inverse() );
+
+            pos = T*m_robot->getJoint("rWristX")->getVectorPos();
+            for (int j=0; j<int(pos.size()); j++)
+                s << pos[j] << ",";
+
+            pos = T*m_robot->getJoint("rElbowZ")->getVectorPos();
+            for (int j=0; j<int(pos.size()); j++)
+                s << pos[j] << ",";
+        }
+        else
+        {
+            s << motion[i].second->at(6) << ","; // PelvisX
+            s << motion[i].second->at(7) << ","; // PelvisY
+            s << motion[i].second->at(8) << ","; // PelvisZ
+            s << motion[i].second->at(11) << ","; // PelvisRX
+            s << motion[i].second->at(12) << ","; // TorsoX
+            s << motion[i].second->at(13) << ","; // TorsoY
+            s << motion[i].second->at(14) << ","; // TorsoZ
+
+            s << motion[i].second->at(18) << ","; // rShoulderX
+            s << motion[i].second->at(19) << ","; // rShoulderZ
+            s << motion[i].second->at(20) << ","; // rShoulderY
+            s << motion[i].second->at(21) << ","; // rArmTrans
+            s << motion[i].second->at(22) ; // rElbowZ
+        }
 
         s << endl;
     }
@@ -904,11 +876,6 @@ void RecordMotion::saveToCSV( const std::string &filename, const motion_t& motio
     //cout << "Closing save file" << endl;
     s.close();
 }
-
-static const double transX = 0.10;
-static const double transY = 0.50;
-static const double transZ = 0.15;
-static const double transT = 0.00;
 
 void RecordMotion::translateStoredMotions()
 {
@@ -919,11 +886,21 @@ void RecordMotion::translateStoredMotions()
         for(int j=0;j<int(m_stored_motions[i].size());j++)
         {
             confPtr_t q = m_stored_motions[i][j].second;
-            (*q)[6]  += transX; // X
-            (*q)[7]  += transY; // Y
-            (*q)[8]  += transZ; // Z
-            (*q)[11] += transT; // theta
+            (*q)[6]  += m_transX; // X
+            (*q)[7]  += m_transY; // Y
+            (*q)[8]  += m_transZ; // Z
+            (*q)[11] += m_transR; // theta
         }
+    }
+}
+
+void RecordMotion::invertTranslationStoredMotions()
+{
+    cout << "Invert translate all stored motions" << endl;
+
+    for(int i=0;i<int(m_stored_motions.size());i++)
+    {
+        m_stored_motions[i] = invertTranslation( m_stored_motions[i] );
     }
 }
 
@@ -934,13 +911,30 @@ motion_t RecordMotion::invertTranslation( const motion_t& motion )
     for(int j=0;j<int(motion_trans.size());j++)
     {
         confPtr_t q = motion_trans[j].second->copy();
-        (*q)[6]  -= transX; // X
-        (*q)[7]  -= transY; // Y
-        (*q)[8]  -= transZ; // Z
-        (*q)[11] -= transT; // theta
+        (*q)[6]  -= m_transX; // X
+        (*q)[7]  -= m_transY; // Y
+        (*q)[8]  -= m_transZ; // Z
+        (*q)[11] -= m_transR; // theta
         motion_trans[j].second = q;
     }
     return motion_trans;
+}
+
+Eigen::Transform3d RecordMotion::getOffsetTransform()
+{
+    Eigen::Transform3d T;
+
+    T.translation()(0) = m_transX;
+    T.translation()(1) = m_transY;
+    T.translation()(2) = m_transZ;
+
+    Eigen::Matrix3d rot = Eigen::Matrix3d( Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX())
+                                         * Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY())
+                                         * Eigen::AngleAxisd(m_transR, Eigen::Vector3d::UnitZ()) );
+
+    T.linear() = rot;
+
+    return T;
 }
 
 bool  RecordMotion::loadRegressedFromCSV( const std::string& foldername )
@@ -1013,9 +1007,9 @@ confPtr_t RecordMotion::getConfigOpenRave( const std::vector<std::string>& confi
 
     confPtr_t q = m_robot->getCurrentPos();
 
-    for( std::map<std::string,int>::iterator it_map=or_map.begin(); it_map!=or_map.end(); it_map++ )
+    for( std::map<std::string,int>::iterator it_map=herakles_openrave_map.begin(); it_map!=herakles_openrave_map.end(); it_map++ )
     {
-        (*q)[ move3d_map[it_map->first] ] = tmp[ it_map->second ];
+        (*q)[ herakles_move3d_map[it_map->first] ] = tmp[ it_map->second ];
     }
 
     return q;
@@ -1085,12 +1079,11 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename, bool quiet )
     //    cout << "m_robot->getNumberOfActiveDoF()" << m_robot->getNumberOfActiveDoF() << endl;
     for (int i=0; i<int(matrix.size()); i++)
     {
-
         confPtr_t q;
 
         if( m_use_or_format )
         {
-            q= getConfigOpenRave( matrix[i] );
+            q = getConfigOpenRave( matrix[i] );
         }
         else
         {

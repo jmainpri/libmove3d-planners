@@ -51,6 +51,17 @@ WorkspaceOccupancyCell::~WorkspaceOccupancyCell()
     
 }
 
+int WorkspaceOccupancyCell::getNumberOfClassesOccupied()
+{
+    int nb_of_classes_occupied=0;
+
+    for(size_t i=0;i<m_occupies_class.size(); i++)
+        if( m_occupies_class[i])
+            nb_of_classes_occupied++;
+
+    return nb_of_classes_occupied;
+}
+
 bool WorkspaceOccupancyCell::writeToXml(xmlNodePtr _XmlCellNode_)
 {
     if( !ThreeDCell::writeToXml(_XmlCellNode_) ){
@@ -106,7 +117,6 @@ bool WorkspaceOccupancyCell::readCellFromXml(xmlNodePtr cur)
         {
             sscanf((char *) tmp, "%d", &tmp_bool );
             m_occupies_class[i] = tmp_bool;
-
         }
         else
         {
@@ -138,6 +148,8 @@ m_id_class_to_draw(0)
         m_sampler = new BodySurfaceSampler( 0.02 );
         m_sampler->sampleRobotBodiesSurface( m_human );
     }
+
+    m_T_draw = Eigen::Transform3d::Identity();
 }
 
 WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
@@ -231,24 +243,27 @@ void WorkspaceOccupancyGrid::get_cells_occupied_by_human( std::vector<WorkspaceO
 //! Set regessed motion
 //! also resets cells occpancy class
 //! @param a vector of motions of each class
-void WorkspaceOccupancyGrid::setRegressedMotions(const std::vector<motion_t>& motions)
+void WorkspaceOccupancyGrid::setRegressedMotions(const std::vector<motion_t>& motions, bool reset_occupied_cells)
 {
     cout << __PRETTY_FUNCTION__ << endl;
-    m_motions.clear();
-    m_occupied_cells.clear();
-    
+    m_motions.clear();    
     m_motions = motions;
-    m_occupied_cells.resize( m_motions.size() );
-    
-    for( int i=0;i<int(_cells.size());i++)
+
+    if( reset_occupied_cells )
     {
-        WorkspaceOccupancyCell* cell = dynamic_cast<WorkspaceOccupancyCell*>(_cells[i]);
-        
-        cell->m_occupies_class.resize( m_motions.size() );
-        
-        for( int j=0;j<int(cell->m_occupies_class.size());j++)
+        m_occupied_cells.clear();
+        m_occupied_cells.resize( m_motions.size() );
+
+        for( int i=0;i<int(_cells.size());i++)
         {
-            cell->m_occupies_class[j]=false;
+            WorkspaceOccupancyCell* cell = dynamic_cast<WorkspaceOccupancyCell*>(_cells[i]);
+
+            cell->m_occupies_class.resize( m_motions.size() );
+
+            for( int j=0;j<int(cell->m_occupies_class.size());j++)
+            {
+                cell->m_occupies_class[j]=false;
+            }
         }
     }
 }
@@ -538,6 +553,8 @@ void WorkspaceOccupancyGrid::simple_draw_current_occupancy()
 
 void WorkspaceOccupancyGrid::simple_draw_combined()
 {
+//    cout << __PRETTY_FUNCTION__ << endl;
+
     if( m_all_occupied_cells.empty() ){
         cout << "m_all_occupied_cells.empty()" << endl;
         return;
@@ -562,11 +579,22 @@ void WorkspaceOccupancyGrid::simple_draw_combined()
 //        if( m_all_occupied_cells[i]->m_occupies_class[m_id_class_to_draw] )
 //        {
         if( GestEnv->getBool(GestParam::draw_null_cost) || (occupancy-0.05 > 0.0) )
-            {
-                m_all_occupied_cells[i]->drawColorGradient( occupancy, m_min_likelihood, m_max_likelihood );
+        {
+            if( true ) {
+//                cout << " m_T_draw " << endl << m_T_draw.matrix() << endl;
+                 m_all_occupied_cells[i]->drawColorGradient( occupancy, m_min_likelihood, m_max_likelihood, m_T_draw );
             }
+            else
+                m_all_occupied_cells[i]->drawColorGradient( occupancy, m_min_likelihood, m_max_likelihood );
+        }
 //        }
     }
+}
+
+void WorkspaceOccupancyGrid::setDrawingTransform( const Eigen::Transform3d& t )
+{
+    m_use_transform_to_draw = !( t.matrix() == Eigen::Transform3d::Identity().matrix() );
+    m_T_draw = t;
 }
 
 void WorkspaceOccupancyGrid::init_drawing()
@@ -730,7 +758,7 @@ void WorkspaceOccupancyGrid::draw_voxels( const std::vector<unsigned int>& voxel
 
 void WorkspaceOccupancyGrid::draw()
 {
-    cout << __PRETTY_FUNCTION__ << endl;
+//    cout << __PRETTY_FUNCTION__ << endl;
 
     if( GestEnv->getBool(GestParam::draw_current_occupancy) )
     {

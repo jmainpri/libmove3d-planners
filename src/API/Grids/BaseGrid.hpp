@@ -1,9 +1,9 @@
 #ifndef BASEGRID_HPP
 #define BASEGRID_HPP
 
-#include "API/Grids/BaseCell.hpp"
-
 #include <vector>
+#include <libxml/parser.h>
+
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 
@@ -12,6 +12,19 @@
   */
 namespace Move3D
 {
+
+class BaseCell
+{
+public:
+    BaseCell();
+    virtual ~BaseCell();
+
+    virtual void draw() = 0;
+
+    virtual bool writeToXml(xmlNodePtr cur);
+    virtual bool readCellFromXml(xmlNodePtr cur);
+};
+
 class BaseGrid
 {
 public:

@@ -1,7 +1,7 @@
 #ifndef HRICELL_H
 #define HRICELL_H
 
-#include "API/Grids/ThreeDCell.hpp"
+#include "API/Grids/ThreeDGrid.hpp"
 
 #include "HRICS_grid.hpp"
 

@@ -1,6 +1,6 @@
 #include "gridtograph.hpp"
 #include "celltonode.hpp"
-#include "../ThreeDCell.hpp"
+#include "../ThreeDGrid.hpp"
 
 #include <vector>
 #include <iostream>

@@ -7,7 +7,9 @@
 
 #include "API/Trajectory/trajectory.hpp"
 
-void HRICS_initOccupancyPredictionFramework();
+#include <string>
+
+void HRICS_initOccupancyPredictionFramework(std::string robot, std::string human);
 
 namespace HRICS
 {
@@ -19,7 +21,10 @@ public:
     void loadHumanTrajectory( const motion_t& motion );
     int classifyMotion( const motion_t& motion );
     void runVoxelOccupancy();
+    void setHumanTransform( const Eigen::Transform3d& t ) { m_T_human = t; }
+    Eigen::Transform3d getHumanPose();
     double run();
+
 
 private:
     bool updateMotion();
@@ -58,6 +63,14 @@ private:
     int m_best_path_id;
     int m_robot_steps_per_exection;
     double m_robot_step;
+
+    bool m_use_openrave;
+
+    // Drawing translation
+    Eigen::Transform3d m_T_human;
+
+    // Human joint mapping
+    std::map<std::string,int> m_human_dof_map;
 };
 }
 

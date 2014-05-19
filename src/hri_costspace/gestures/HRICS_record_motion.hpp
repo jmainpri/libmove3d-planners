@@ -28,6 +28,7 @@ public:
     void loadMotionFromMultipleFiles( const std::string& baseFilename, int number_of_files );
     bool loadRegressedFromCSV( const std::string& foldername );
     void translateStoredMotions();
+    void invertTranslationStoredMotions();
     motion_t invertTranslation( const motion_t& motion );
     Move3D::confPtr_t getConfigOpenRave( const std::vector<std::string>& config );
     Move3D::confPtr_t getConfigTwelveDoF( const std::vector<std::string>& config );
@@ -39,9 +40,11 @@ public:
     void storeMotion( const motion_t& motion, bool new_motion = true);
     void addToCurrentMotion( const motion_t& motion );
     void saveToCSV( const std::string &filename, const motion_t& motion);
-    void saveStoredToCSV( const std::string &filename );
+    void saveStoredToCSV( const std::string &filename, bool break_into_files );
     motion_t resample( const motion_t& motion, int nb_sample );
+    void resampleAll( int nb_sample );
     motion_t getArmTorsoMotion( const motion_t& motion, Move3D::confPtr_t q );
+
 
     void showStoredMotion();
     void showCurrentMotion();
@@ -65,9 +68,15 @@ public:
 
     void useOpenRAVEFormat( bool use_or_format ) { m_use_or_format = use_or_format; }
 
+    void setOffsetValue( double x, double y, double z, double rot ) { m_transX = x; m_transY = y; m_transY = z; m_transR = rot; }
+    Eigen::Transform3d getOffsetTransform();
+
     bool m_is_recording;
 
 private:
+
+    void intialize();
+
     Move3D::Robot* m_robot;
     Move3D::confPtr_t m_init_q;
     double m_time_last_saved;
@@ -79,6 +88,12 @@ private:
     std::vector<motion_t> m_stored_motions;
     int m_ith_shown_motion;
     bool m_use_or_format;
+
+    // offset
+    double m_transX;
+    double m_transY;
+    double m_transZ;
+    double m_transR;
 };
 }
 

@@ -1,7 +1,7 @@
 #ifndef CELLTONODE_H
 #define CELLTONODE_H
 
-#include "API/Grids/ThreeDCell.hpp"
+#include "API/Grids/ThreeDGrid.hpp"
 #include "API/Grids/GridToGraph/gridtograph.hpp"
 
 namespace Move3D {

@@ -90,7 +90,7 @@ public:
     /**
      * Acces the configuration
      */
-    double& at( const int &i ) { return _Configuration[i]; }
+    double at( const int &i ) const { return _Configuration[i]; }
 
     /**
      * Acces the configuration

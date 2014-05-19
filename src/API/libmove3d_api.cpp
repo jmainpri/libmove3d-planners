@@ -145,6 +145,7 @@ void move3d_configuration_adapt_to_circular_joints( Robot* R, double* C )
 {
     configPt q = p3d_alloc_config( (p3d_rob*)R->getP3dRobotStruct() );
     p3d_adaptConfigsForCircularDofs( (p3d_rob*)R->getP3dRobotStruct(), &C, &q );
+//    p3d_copy_config_into(static_cast<p3d_rob*>(R->getP3dRobotStruct()), q, &C);
     p3d_destroy_config( (p3d_rob*)R->getP3dRobotStruct(), q );
 }
 

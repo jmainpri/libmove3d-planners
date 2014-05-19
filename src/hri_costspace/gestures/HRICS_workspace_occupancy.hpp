@@ -29,6 +29,8 @@ public:
     std::vector<bool> m_occupies_class;
     bool m_currently_occupied;
 
+    int getNumberOfClassesOccupied();
+
     virtual bool writeToXml(xmlNodePtr cur);
     virtual bool readCellFromXml(xmlNodePtr cur);
 };
@@ -42,7 +44,7 @@ public:
 
     Move3D::ThreeDCell* createNewCell(unsigned int index,unsigned  int x,unsigned  int y,unsigned  int z );
 
-    void setRegressedMotions( const std::vector<motion_t>& motions );
+    void setRegressedMotions( const std::vector<motion_t>& motions, bool reset_occupied_cells );
     void computeCurrentOccupancy();
     bool computeOccpancy();
     void setClassToDraw( int id_class );
@@ -54,7 +56,7 @@ public:
     void set_all_occupied_cells();
     void drawSampledPoints();
     void draw();
-
+    void setDrawingTransform( const Eigen::Transform3d& t );
 
 private:
 
@@ -93,6 +95,11 @@ private:
     double m_max_likelihood;
     std::vector<WorkspaceOccupancyCell*> m_all_occupied_cells;
     std::vector<WorkspaceOccupancyCell*> m_current_occupied_cells;
+
+    // Drawing translation
+    bool m_use_transform_to_draw;
+    Eigen::Transform3d m_T_draw;
+
 };
 }
 

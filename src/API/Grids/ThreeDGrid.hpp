@@ -5,8 +5,8 @@
 
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
-#include "API/Grids/ThreeDCell.hpp"
 #include "API/Grids/BaseGrid.hpp"
 
 /*!
@@ -21,6 +21,51 @@
  */
 namespace Move3D
 {
+
+class ThreeDGrid;
+
+
+class ThreeDCell : public BaseCell
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    ThreeDCell();
+    ThreeDCell(int i, ThreeDGrid* grid);
+    ThreeDCell(int i, Eigen::Vector3d corner, ThreeDGrid* grid);
+
+    virtual ~ThreeDCell();
+
+    virtual double getCost() { return 0; }
+
+    void getVerticies(std::vector<Eigen::Vector3d>& verticies);
+
+    Eigen::Vector3d getCenter();
+    Eigen::Vector3d getCorner() { return _corner; }
+    Eigen::Vector3d getRandomPoint();
+    Eigen::Vector3d getCellSize();
+
+    int getIndex() { return _index; }
+
+    void setCorner(const Eigen::Vector3d& corner) { _corner = corner; }
+    void setGrid( ThreeDGrid* grid ) { _grid = grid; }
+
+    virtual void draw();
+    void drawColorGradient( double value, double min, double max , bool inverse = false );
+    void drawColorGradient( double value, double min, double max , const Eigen::Transform3d& t, bool inverse = false );
+
+    virtual bool writeToXml(xmlNodePtr cur);
+    virtual bool readCellFromXml(xmlNodePtr cur);
+
+    bool operator==( ThreeDCell otherCell) { return ((otherCell._index) == (this->_index)); }
+
+protected:
+
+    int _index;
+    Eigen::Vector3d _corner;
+    ThreeDGrid* _grid;
+  };
+
 class ThreeDGrid : public BaseGrid
 {
 
@@ -36,7 +81,7 @@ public:
     
     void createAllCells();
     
-    Eigen::Vector3d getCellSize() { return _cellSize; }
+    const Eigen::Vector3d& getCellSize() { return _cellSize; }
 
     unsigned int getXNumberOfCells() const {return _nbCellsX;}
     unsigned int getYNumberOfCells() const {return _nbCellsY;}
@@ -61,6 +106,7 @@ public:
     bool loadFromXmlFile(std::string file);
     
 protected:
+
     virtual ThreeDCell* createNewCell(unsigned int index, unsigned int x, unsigned int y, unsigned int z );
     Eigen::Vector3d computeCellCorner(unsigned int x, unsigned int y, unsigned int z);
     

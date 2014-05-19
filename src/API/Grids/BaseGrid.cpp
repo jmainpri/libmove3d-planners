@@ -7,6 +7,24 @@ using namespace std;
 BaseGrid* API_activeGrid = NULL;
 vector<BaseGrid*> API_allGrids;
 
+BaseCell::BaseCell()
+{
+}
+
+BaseCell::~BaseCell()
+{
+}
+
+bool BaseCell::readCellFromXml(xmlNodePtr cur)
+{
+    return false;
+}
+
+bool BaseCell::writeToXml(xmlNodePtr cur)
+{
+    return false;
+}
+
 // Returns all grids
 vector<BaseGrid*> api_get_all_grids()
 {
