@@ -347,6 +347,7 @@ namespace stomp_motion_planner
         if ( ENV.getBool(Env::drawTrajVector) )
             addRolloutsToDraw( get_reused_ones );
 
+
         //printRollouts();
 
         if( !parrallel_is_rollout_running_.empty() )

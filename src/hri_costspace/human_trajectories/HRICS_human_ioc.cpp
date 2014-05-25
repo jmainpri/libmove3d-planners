@@ -12,6 +12,11 @@ using namespace HRICS;
 using std::cout;
 using std::endl;
 
+static std::string move3d_demo_folder("/home/jmainpri/Dropbox/move3d/assets/IOC/TRAJECTORIES/");
+static std::string move3d_traj_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs_home/per_feature_square/");
+static std::string move3d_tmp_data_folder("matlab/move3d_tmp_data_home/");
+
+
 void HRICS_run_human_ioc_from_recorded_motion()
 {
     std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
@@ -29,7 +34,7 @@ void HRICS_run_human_ioc_from_recorded_motion()
     global_motionRecorders.push_back( new HRICS::RecordMotion( human2 ) );
 
     global_motionRecorders[0]->loadCSVFolder( foldername + "/human0" );
-    global_motionRecorders[1]->loadCSVFolder( foldername + "/human1");
+    global_motionRecorders[1]->loadCSVFolder( foldername + "/human1" );
 
     HRICS::PlayMotion player( global_motionRecorders );
 //    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
@@ -44,7 +49,7 @@ void HRICS_run_human_ioc_from_recorded_motion()
 
     MultiplePlanners planners(human2);
 
-    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points, planners );
+    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points, planners, move3d_demo_folder, move3d_traj_folder, move3d_tmp_data_folder );
     ioc.setDemos( global_motionRecorders[0]->getStoredMotions() );
     ioc.runLearning();
 }
@@ -66,12 +71,14 @@ void HRICS_run_human_ioc_evaluation()
 
     MultiplePlanners planners(human2);
 
-    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points, planners );
+    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points, planners, move3d_demo_folder, move3d_traj_folder, move3d_tmp_data_folder );
     ioc.loadDemonstrations();
     ioc.runLearning();
 }
 
-HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners ) : IocEvaluation( active, nb_demos, nb_samples, nb_way_points, planners )
+HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners,
+                    std::string folder,  std::string traj_folder, std::string tmp_data_folder )
+    :  IocEvaluation( active, nb_demos, nb_samples, nb_way_points, planners, folder, traj_folder, tmp_data_folder )
 {
     nb_demos_ = nb_demos;
     nb_samples_ = nb_samples; // 1000

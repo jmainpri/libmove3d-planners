@@ -141,7 +141,8 @@ private:
 class IocEvaluation
 {
 public:
-    IocEvaluation( Move3D::Robot* rob, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners );
+    IocEvaluation( Move3D::Robot* rob, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners,
+                   std::string folder,  std::string traj_folder, std::string tmp_data_folder );
 
     //! Sample trajectories around the demonstrations
     virtual void runSampling();
@@ -235,7 +236,7 @@ protected:
     int nb_samples_;
     int nb_weights_;
     int nb_way_points_;
-    std::string folder_;
+
     std::vector<Move3D::Trajectory> demos_;
     std::vector<Move3D::Trajectory> samples_;
     std::vector<Move3D::Trajectory> learned_;
@@ -256,10 +257,13 @@ protected:
 
     std::vector<Move3D::FeatureVect> phi_demos_;
     std::vector<Move3D::FeatureVect> phi_jac_demos_;
+
+    // Folders
+    std::string folder_;
+    std::string traj_folder_;
+    std::string tmp_data_folder_;
 };
 
 }
-
-void HRICS_run_sphere_ioc();
 
 #endif // HRICS_IOC_HPP

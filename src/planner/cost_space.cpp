@@ -399,7 +399,8 @@ double CostSpace::path_cost_default( LocalPath& path, int& nb_test )
 
         for (int i=0; i<int(nStep); i++)
         {
-            q = path.configAtParam(currentParam);
+            q = path.configAtParam( currentParam );
+
             currentCost = this->cost(*q);
 
             deltaCost = deltaStepCost( prevCost, currentCost, deltaStep );

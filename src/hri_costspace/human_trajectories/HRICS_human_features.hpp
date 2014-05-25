@@ -18,13 +18,20 @@ public:
     Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
     Move3D::FeatureVect computeDistances() const;
 
+    void draw();
+
 private:
     Move3D::Robot* human_active_;
     Move3D::Robot* human_passive_;
 
     Distance* dist_cost_;
 
-    std::vector<int> active_joints_;
+    std::vector<int> distance_joint_ids_;
+
+    std::vector<std::string> distance_names_;
+
+    std::vector<Move3D::Joint*> human_active_joints_;
+    std::vector<Move3D::Joint*> human_passive_joints_;
 };
 
 class VisibilityFeature : public Move3D::Feature

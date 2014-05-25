@@ -37,7 +37,7 @@ static boost::function<bool(LocalPath&, int&)> Move3DLocalPathIsValid;
 static boost::function<double(LocalPath&)> Move3DLocalPathGetLength;
 static boost::function<double(LocalPath&)> Move3DLocalPathGetParamMax;
 static boost::function<confPtr_t(LocalPath&,double)> Move3DLocalPathConfigAtDist;
-static boost::function<confPtr_t(LocalPath&,double)> Move3DLocalPathConfigAtParam;
+static boost::function<void(LocalPath&,double,confPtr_t&)> Move3DLocalPathConfigAtParam;
 static boost::function<double(LocalPath&,double,bool,double&)> Move3DLocalPathStayWithinDist;
 
 // ****************************************************************************************************
@@ -54,7 +54,7 @@ void move3d_set_fct_localpath_is_valid( boost::function<bool(LocalPath&, int&)> 
 void move3d_set_fct_localpath_get_length( boost::function<double(LocalPath&)> fct ) {  Move3DLocalPathGetLength = fct; }
 void move3d_set_fct_localpath_get_param_max( boost::function<double(LocalPath&)> fct ) {  Move3DLocalPathGetParamMax = fct; }
 void move3d_set_fct_localpath_config_at_dist( boost::function<confPtr_t(LocalPath&,double)> fct ) {  Move3DLocalPathConfigAtDist = fct; }
-void move3d_set_fct_localpath_config_at_param( boost::function<confPtr_t(LocalPath&,double)> fct ) {  Move3DLocalPathConfigAtParam = fct; }
+void move3d_set_fct_localpath_config_at_param( boost::function<void(LocalPath&,double,confPtr_t&)> fct ) {  Move3DLocalPathConfigAtParam = fct; }
 void move3d_set_fct_localpath_stay_within_dist( boost::function<double(LocalPath&,double,bool,double&)> fct ) {  Move3DLocalPathStayWithinDist = fct; }
 
 // ****************************************************************************************************
@@ -300,7 +300,10 @@ confPtr_t LocalPath::configAtDist(double dist)
 
 confPtr_t LocalPath::configAtParam(double param)
 {
-    return Move3DLocalPathConfigAtParam( *this, param );
+    confPtr_t q(new Configuration(_Robot));
+    q.reset();
+    Move3DLocalPathConfigAtParam( *this, param, q );
+    return q;
 }
 
 double LocalPath::stayWithInDistance(double u, bool goForward, double* distance)

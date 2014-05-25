@@ -23,7 +23,7 @@ using namespace Eigen;
 using namespace Move3D;
 
 extern void* move3d_localpath_get_localpath_struct( LocalPath& path, bool multi_sol, int& type );
-extern confPtr_t move3d_localpath_config_at_param( LocalPath& path, double param );
+extern void move3d_localpath_config_at_param( LocalPath& path, double param, confPtr_t& ptrQ );
 extern bool move3d_localpath_is_valid_test( LocalPath& path, int& nb_col_check );
 
 // ****************************************************************************************************
@@ -39,20 +39,14 @@ double* move3d_configuration_constructor(Robot* robot)
     return p3d_alloc_config((p3d_rob*)robot->getP3dRobotStruct());
 }
 
-double* move3d_configuration_constructor_configstruct(Robot* R, double* C, bool noCopy)
+double* move3d_configuration_constructor_configstruct( Robot* R, double* C )
 {
-    double* q;
+    if( C != NULL)
+    {
+        return p3d_copy_config( (p3d_rob*)R->getP3dRobotStruct(), C );
+    }
 
-    if(C==NULL)
-    {
-        q = C;
-    }
-    else
-    {
-        q = noCopy ? C : p3d_copy_config( (p3d_rob*)R->getP3dRobotStruct(), C );
-        // this->initQuaternions();
-    }
-    return q;
+    return NULL;
 }
 
 void move3d_configuration_assignment( const Configuration& q_source, Configuration& q_target )
@@ -309,6 +303,7 @@ void* move3d_localpath_get_localpath_struct( LocalPath& path, bool multi_sol, in
         if ( path_struct )
         {
             type = path_struct->type_lp;
+            path.setP3dLocalpathStructConst( path_struct );
         }
     }
     else {
@@ -423,30 +418,30 @@ confPtr_t move3d_localpath_config_at_dist( LocalPath& path, double dist )
     return confPtr_t(new Configuration(path.getRobot(), q));
 }
 
-confPtr_t move3d_localpath_config_at_param( LocalPath& path, double param )
+void move3d_localpath_config_at_param( LocalPath& path, double param, confPtr_t& ptrQ )
 {
     //fonction variable en fonction du type de local path
-    configPt q;
 
     if( param > path.getParamMax() )
     {
-        return path.getEnd();
+        ptrQ = path.getEnd();
     }
-    if( param <= 0 )
+    else if( param <= 0 )
     {
-        return path.getBegin();
+        ptrQ = path.getBegin();
     }
-
-    q = path.getP3dLocalpathStruct()->config_at_param( static_cast<p3d_rob*>(path.getRobot()->getP3dRobotStruct()), path.getP3dLocalpathStruct(), param);
-
-    if( q == NULL )
+    else
     {
-        throw string("Could not find configuration along path");
-    }
+        configPt q = path.getP3dLocalpathStruct()->config_at_param( static_cast<p3d_rob*>(path.getRobot()->getP3dRobotStruct()), path.getP3dLocalpathStruct(), param);
 
-    confPtr_t ptrQ(new Configuration( path.getRobot(), q, true ));
-    ptrQ->setConstraints();
-    return ptrQ;
+        if( q == NULL )
+        {
+            throw string("Could not find configuration along path");
+        }
+
+        ptrQ = confPtr_t(new Configuration( path.getRobot(), q, true ));
+        ptrQ->setConstraints();
+    }
 }
 
 double move3d_stay_within_dist( LocalPath& path, double u, bool goForward, double distance )
@@ -594,7 +589,7 @@ double move3d_robot_distance_to_robot( Robot* R1 , Robot* R2 )
 
 confPtr_t move3d_robot_get_init_pos( Robot* R )
 {
-    return (confPtr_t (new Configuration(R, static_cast<p3d_rob*>(R->getP3dRobotStruct())->ROBOT_POS)));
+    return confPtr_t(new Configuration(R, static_cast<p3d_rob*>(R->getP3dRobotStruct())->ROBOT_POS));
 }
 
 void move3d_robot_set_init_pos( Robot* R, const Configuration& q )
@@ -605,7 +600,7 @@ void move3d_robot_set_init_pos( Robot* R, const Configuration& q )
 
 confPtr_t move3d_robot_get_goal_pos( Robot* R )
 {
-    return (confPtr_t (new Configuration(R,static_cast<p3d_rob*>(R->getP3dRobotStruct())->ROBOT_GOTO)));
+    return confPtr_t( new Configuration(R, static_cast<p3d_rob*>(R->getP3dRobotStruct())->ROBOT_GOTO) );
 }
 
 void move3d_robot_set_goal_pos( Robot* R, const Configuration& q )
@@ -616,12 +611,14 @@ void move3d_robot_set_goal_pos( Robot* R, const Configuration& q )
 
 confPtr_t move3d_robot_get_current_pos( Robot* R )
 {
-    return (confPtr_t (new Configuration( R, p3d_get_robot_config(static_cast<p3d_rob*>(R->getP3dRobotStruct())),true)));
+    double* q = p3d_get_robot_config(static_cast<p3d_rob*>(R->getP3dRobotStruct()));
+    return confPtr_t( new Configuration( R, q, true ) );
 }
 
 confPtr_t move3d_robot_get_new_pos( Robot* R )
 {
-    return (confPtr_t (new Configuration( R, p3d_alloc_config(static_cast<p3d_rob*>(R->getP3dRobotStruct())),true)));
+    double* q = p3d_get_robot_config(static_cast<p3d_rob*>(R->getP3dRobotStruct()));
+    return confPtr_t( new Configuration( R, q, true) );
 }
 
 unsigned int move3d_robot_get_nb_active_joints( Robot* R )
@@ -961,7 +958,7 @@ void move3d_set_api_scene()
 void move3d_set_api_functions_configuration()
 {
     move3d_set_fct_configuration_constructor_robot( boost::bind( move3d_configuration_constructor, _1 ));
-    move3d_set_fct_configuration_constructor_config_struct( boost::bind( move3d_configuration_constructor_configstruct, _1, _2, _3 ));
+    move3d_set_fct_configuration_constructor_config_struct( boost::bind( move3d_configuration_constructor_configstruct, _1, _2 ));
     move3d_set_fct_configuration_assignment( boost::bind( move3d_configuration_assignment, _1, _2 ) );
     move3d_set_fct_configuration_clear( boost::bind( move3d_configuration_clear, _1, _2 ) );
     move3d_set_fct_configuration_convert_to_radians( boost::bind( move3d_configuration_convert_to_radian, _1, _2 ) );
@@ -994,7 +991,7 @@ void move3d_set_api_functions_localpath()
     move3d_set_fct_localpath_get_length( boost::bind( move3d_localpath_lenth, _1 ) );
     move3d_set_fct_localpath_get_param_max( boost::bind( move3d_localpath_max_param, _1 ) );
     move3d_set_fct_localpath_config_at_dist( boost::bind( move3d_localpath_config_at_dist, _1, _2 ) );
-    move3d_set_fct_localpath_config_at_param( boost::bind( move3d_localpath_config_at_param, _1, _2 ) );
+    move3d_set_fct_localpath_config_at_param( boost::bind( move3d_localpath_config_at_param, _1, _2, _3 ) );
     move3d_set_fct_localpath_stay_within_dist( boost::bind( move3d_stay_within_dist, _1, _2, _3, _4 ) );
 }
 

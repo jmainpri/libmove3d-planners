@@ -64,6 +64,12 @@ public:
     localpath* getP3dLocalpathStructConst() const { return static_cast<localpath*>(_LocalPath); }
 
     /**
+     * obtient la structure p3d_localpath stockée
+     * @return la structure p3d_localpath stockée
+     */
+    void setP3dLocalpathStructConst(localpath* path) { _LocalPath = path; }
+
+    /**
      * obtient la configuration initiale
      * @return la configuration initiale
      */
@@ -307,7 +313,7 @@ void move3d_set_fct_localpath_is_valid( boost::function<bool(Move3D::LocalPath&,
 void move3d_set_fct_localpath_get_length( boost::function<double(Move3D::LocalPath&)> fct );
 void move3d_set_fct_localpath_get_param_max( boost::function<double(Move3D::LocalPath&)> fct );
 void move3d_set_fct_localpath_config_at_dist( boost::function<Move3D::confPtr_t(Move3D::LocalPath&,double)> fct );
-void move3d_set_fct_localpath_config_at_param( boost::function<Move3D::confPtr_t(Move3D::LocalPath&,double)> fct );
+void move3d_set_fct_localpath_config_at_param( boost::function<void(Move3D::LocalPath&,double,Move3D::confPtr_t&)> fct );
 void move3d_set_fct_localpath_stay_within_dist( boost::function<double(Move3D::LocalPath&,double,bool,double&)> fct );
 
 #endif

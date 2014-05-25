@@ -98,26 +98,17 @@ double* move3d_configuration_simple_constructor(Robot* robot)
     return new double[robot->getNumberOfDofs()];
 }
 
-double* move3d_configuration_simple_constructor_configstruct( Robot* R, double* C, bool noCopy )
+double* move3d_configuration_simple_constructor_configstruct( Robot* R, double* C )
 {
-    double* q;
+    if( C != NULL )
+    {
+        int nb_dof = R->getNumberOfDofs();
+        double* q = new double[nb_dof];
+        memcpy((void*)(q), (void*)(C), (size_t)nb_dof*sizeof(double));
+        return q;
+    }
 
-    if(C==NULL)
-    {
-        q = C;
-    }
-    else
-    {
-        if( noCopy) {
-            q = C;
-        }
-        else {
-            int nb_dof = R->getNumberOfDofs();
-            q = new double[nb_dof];
-            memcpy((void*)q, (void*)C, (size_t)nb_dof*sizeof(double));
-        }
-    }
-    return q;
+    return NULL;
 }
 
 void move3d_configuration_simple_assignment( const Configuration& q_source, Configuration& q_target )
@@ -780,7 +771,7 @@ double move3d_localpath_simple_stay_within_dist( LocalPath& path, double u, bool
 void move3d_set_api_functions_configuration_simple()
 {
     move3d_set_fct_configuration_constructor_robot( boost::bind( move3d_configuration_simple_constructor, _1 ));
-    move3d_set_fct_configuration_constructor_config_struct( boost::bind( move3d_configuration_simple_constructor_configstruct, _1, _2, _3 ));
+    move3d_set_fct_configuration_constructor_config_struct( boost::bind( move3d_configuration_simple_constructor_configstruct, _1, _2 ));
     move3d_set_fct_configuration_assignment( boost::bind( move3d_configuration_simple_assignment, _1, _2 ) );
     move3d_set_fct_configuration_clear( boost::bind( move3d_configuration_simple_clear, _1, _2 ) );
     move3d_set_fct_configuration_convert_to_radians( boost::bind( move3d_configuration_simple_convert_to_radian, _1, _2 ) );

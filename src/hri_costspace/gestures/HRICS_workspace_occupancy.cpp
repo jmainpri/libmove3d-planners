@@ -74,7 +74,7 @@ bool WorkspaceOccupancyCell::writeToXml(xmlNodePtr _XmlCellNode_)
     str.clear(); ss << m_occupies_class.size(); ss >> str; ss.clear();
     xmlNewProp (_XmlCellNode_, xmlCharStrdup("NbClasses"), xmlCharStrdup(str.c_str()));
 
-    for( int i=0;i<m_occupies_class.size();i++)
+    for( size_t i=0;i<m_occupies_class.size();i++)
     {
         std::stringstream converter;
         converter << i;
@@ -108,7 +108,7 @@ bool WorkspaceOccupancyCell::readCellFromXml(xmlNodePtr cur)
 
     int tmp_bool;
 
-    for( int i=0;i<m_occupies_class.size();i++)
+    for( size_t i=0;i<m_occupies_class.size();i++)
     {
         std::stringstream converter;
         converter << i;

@@ -52,7 +52,7 @@ void HRICS_run_human_planning()
 
     if( ht_cost_space == NULL)
     {
-        ht_cost_space = new HumanTrajCostSpace(  human2, human1 );
+        ht_cost_space = new HumanTrajCostSpace( human2, human1 );
 
         // Define cost functions
         global_costSpace->addCost( "costHumanTrajecoryCost" , boost::bind( &HumanTrajCostSpace::cost, ht_cost_space, _1) );
@@ -101,6 +101,10 @@ bool HumanTrajSimulator::init()
         q_goal_ = human_active_->getGoalPos();
     }
 
+    // Set humans colors
+    setHumanColor( human_active_, 3 );
+    setHumanColor( human_passive_, 2 );
+
     // Sets the active robot as active for planning
     global_Project->getActiveScene()->setActiveRobot( human_active_->getName() );
 
@@ -115,20 +119,63 @@ bool HumanTrajSimulator::init()
     human_active_->setAndUpdate( *q_init_ );
 
     // Get first joint and change bounds
-    p3d_jnt* joint = human_active_->getJoint(1)->getP3dJointStruct();
+    Joint* joint = human_active_->getJoint(1);
 
-    //take only x, y and z composantes of the base
-    double radius = 0.05;
-    double dof[3][2];
-    for(int i = 0; i < 3; i++) {
-        dof[i][0] = p3d_jnt_get_dof( joint, i) - radius;
-        dof[i][1] = p3d_jnt_get_dof( joint, i) + radius;
+    // take only (x, y, z) components of the base
+    double bound_trans = 0.05;
+    double bound_rotat = 0.1;
+    double dof[6][2];
+    for(int i = 0; i < 3; i++) { // Translation bounds
+        dof[i][0] = joint->getJointDof(i) - bound_trans;
+        dof[i][1] = joint->getJointDof(i) + bound_trans;
     }
-    for(int i = 0; i < 3; i++){
-        p3d_jnt_set_dof_rand_bounds( joint, i, dof[i][0], dof[i][1]);
+    for(int i = 3; i < 6; i++) { // Rotation bounds
+        dof[i][0] = joint->getJointDof(i) - bound_rotat;
+        dof[i][1] = joint->getJointDof(i) + bound_rotat;
+    }
+    for(int i = 0; i < 6; i++){
+        p3d_jnt_set_dof_rand_bounds( joint->getP3dJointStruct(), i, dof[i][0], dof[i][1] );
     }
 
     return true;
+}
+
+void HumanTrajSimulator::setHumanColor(Robot* human, int color)
+{
+    if( !human->getUseLibmove3dStruct() )
+        return;
+
+    for (int i=1; i<= human->getP3dRobotStruct()->njoints; i++)
+    {
+        p3d_obj* obj = human->getP3dRobotStruct()->joints[i]->o;
+
+        if(obj == NULL)
+            continue;
+
+        for(int j = 0; j < obj->np; j++)
+        {
+            p3d_poly* poly = obj->pol[j];
+
+            if(poly->color_vect == NULL)
+                continue;
+
+            if (         poly->color_vect[0] == 0.80
+                      && poly->color_vect[1] == 0.00
+                      && poly->color_vect[2] == 0.01) {
+
+                double color_vect[4];
+
+                g3d_get_color_vect(color, color_vect);
+
+                poly->color = color;
+
+                poly->color_vect[0] = color_vect[0];
+                poly->color_vect[1] = color_vect[1];
+                poly->color_vect[2] = color_vect[2];
+                poly->color_vect[3] = color_vect[3];
+            }
+        }
+    }
 }
 
 bool HumanTrajSimulator::run()
@@ -140,10 +187,10 @@ bool HumanTrajSimulator::run()
     //        traj_optim_initScenario();
     //    }
 
-    int nb_trajectories = 10;
+    int nb_trajectories = 1;
     int max_iter = 100;
 
-    traj_folder_ = "/home/jmainpri/workspace/move3d/assets/Collaboration/TRAJECTORIES/";
+    traj_folder_ = std::string(getenv("HOME")) + "/Dropbox/move3d/assets/Collaboration/TRAJECTORIES/";
 
     for( int i=0;i<nb_trajectories;i++)
     {
@@ -153,8 +200,11 @@ bool HumanTrajSimulator::run()
 
         std::stringstream ss;
         ss << "trajectory" << std::setw(3) << std::setfill( '0' ) << i << ".traj";
+        std::string filename = traj_folder_ + ss.str();
 
-        p3d_save_traj( ( traj_folder_ + ss.str() ).c_str(), human_active_->getP3dRobotStruct()->tcur );
+        p3d_save_traj( filename.c_str(), human_active_->getP3dRobotStruct()->tcur );
+
+        cout << "save trajectory to : " << filename << endl;
     }
     return true;
 }
@@ -178,6 +228,8 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     }
 
     addFeatureFunction( &dist_feat_ );
+
+    cout << "HUMAN FEATURE SPACE : " << w_.size() << endl;
 }
 
 HumanTrajCostSpace::~HumanTrajCostSpace()

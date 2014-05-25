@@ -367,7 +367,7 @@ private:
 }
 
 void move3d_set_fct_configuration_constructor_robot( boost::function<double*(Move3D::Robot*)> fct );
-void move3d_set_fct_configuration_constructor_config_struct( boost::function<double*(Move3D::Robot*, double*, bool)> fct );
+void move3d_set_fct_configuration_constructor_config_struct( boost::function<double*(Move3D::Robot*, double*)> fct );
 void move3d_set_fct_configuration_assignment( boost::function<void(const Move3D::Configuration& q_s, Move3D::Configuration& q_t)> fct );
 void move3d_set_fct_configuration_clear( boost::function<void(Move3D::Robot*,double*)> fct );
 void move3d_set_fct_configuration_convert_to_radians( boost::function<void(Move3D::Robot*,double*)> fct );

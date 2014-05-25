@@ -659,8 +659,6 @@ double CollisionSpace::cost( const Configuration& q ) const
     double distance = 0.0;
     double potential = 0.0;
 
-    m_Robot->setAndUpdate( q );
-
 //    colliding =
 //    isRobotColliding( distance, potential );
 

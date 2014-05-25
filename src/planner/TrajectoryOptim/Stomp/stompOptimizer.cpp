@@ -179,6 +179,9 @@ StompOptimizer::StompOptimizer(ChompTrajectory *trajectory,
 
 void StompOptimizer::initialize()
 {
+    cout << "-----------------------------------------------" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
+
     Scene* sce = global_Project->getActiveScene();
     
     //    robot_model_ = group_trajectory_.getRobot();
@@ -1525,8 +1528,7 @@ bool StompOptimizer::performForwardKinematics()
 
         if( use_costspace_ )
         {
-//            robot_model_->setAndUpdate( q );
-            general_cost_potential_[i] = global_costSpace->cost(q);
+            general_cost_potential_[i] = global_costSpace->cost(q); // no set and update
         }
         else if( PlanEnv->getBool(PlanParam::useLegibleCost) )
         {

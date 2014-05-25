@@ -12,6 +12,8 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/ConfigSpace/localpath.hpp"
 
+#include <iostream>
+
 #ifndef _TRAJ_H
 struct traj;
 #endif
@@ -30,12 +32,25 @@ namespace Move3D
 struct TrajectoryStatistics
 {
     double length;
+    double min;
     double max;
     double sum;
     double average;
     double integral;
     double mecha_work;
     bool is_valid;
+
+    void print()
+    {
+        std::cout << "--- stats on traj ---" << std::endl;
+        std::cout << " length = " << length << std::endl;
+        std::cout << " min = " << min << std::endl;
+        std::cout << " max = " << max << std::endl;
+        std::cout << " average = " << average << std::endl;
+        std::cout << " integral = " << integral << std::endl;
+        std::cout << " mecha_work = " << mecha_work << std::endl;
+        std::cout << "---------------------" << std::endl;
+    }
 };
 
 class Trajectory
@@ -94,7 +109,7 @@ public:
     std::vector< std::pair<double,double > > getCostProfile();
     double computeSubPortionIntergralCost(const std::vector<LocalPath*>& portion);
     double computeSubPortionCost(const std::vector<LocalPath*>& portion) const;
-    double computeSubPortionMaxCost(std::vector<LocalPath*>& portion);
+    std::pair<double,double> computeSubPortionMinAndMaxCost(std::vector<LocalPath*>& portion);
     double reComputeSubPortionCost(std::vector<LocalPath*>& portion, int& nb_cost_tests);
     double computeSubPortionCostVisib( std::vector<LocalPath*>& portion );
     double costOfPortion(double param1,double param2);

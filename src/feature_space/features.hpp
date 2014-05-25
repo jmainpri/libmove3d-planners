@@ -21,7 +21,7 @@ typedef Eigen::VectorXd WeightVect;
 class Feature
 {
 public:
-    Feature() {}
+    Feature() : is_stacked_(false) {}
 
     virtual FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_features = std::vector<int>(0)) = 0;
     virtual FeatureProfile getFeatureProfile(const Move3D::Trajectory& t);
@@ -57,6 +57,7 @@ protected:
     std::vector<int> active_dofs_;
     std::vector<int> active_features_;
     FeatureVect w_;
+    bool is_stacked_;
 };
 
 ////////////////////////////////////////

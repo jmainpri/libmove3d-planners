@@ -468,7 +468,7 @@ void traj_optim_hrics_human_trajectory_manip_init_joints()
     m_planner_joints.push_back( 8 );
     m_planner_joints.push_back( 9 );
     m_planner_joints.push_back( 10 );
-    m_planner_joints.push_back( 11 );
+//    m_planner_joints.push_back( 11 );
     m_planner_joints.push_back( 12 );
 //    m_planner_joints.push_back( 13 );
 

@@ -435,6 +435,7 @@ confPtr_t Trajectory::configAtParam(double param, unsigned int* id_localpath) co
     for ( ; i<m_Courbe.size(); i++)
     {
         soFar = soFar + m_Courbe.at(i)->getParamMax();
+//        soFar = soFar + p3d_get_env_dmax();
 
         // Parameter lies in the previous local path
         // return configuration inside previous LP
@@ -627,20 +628,22 @@ vector< pair<double,double > > Trajectory::getCostProfile()
     return vectOfCost;
 }
 
-double Trajectory::computeSubPortionMaxCost(vector<LocalPath*>& portion)
+std::pair<double,double> Trajectory::computeSubPortionMinAndMaxCost(vector<LocalPath*>& portion)
 {
     double maxCost(0.0);
+    double minCost(std::numeric_limits<double>::max());
 
     for (int i=0; i<int(portion.size()); i++)
     {
         double cost =  portion[i]->cost();
 
         if( cost > maxCost )
-        {
             maxCost = cost;
-        }
+        if( cost < minCost )
+            minCost = cost;
+
     }
-    return maxCost;
+    return std::make_pair( minCost, maxCost );
 }
 
 double Trajectory::computeSubPortionCost(const vector<LocalPath*>& portion) const
@@ -867,8 +870,11 @@ double Trajectory::costStatistics(TrajectoryStatistics& stat)
 
         global_costSpace->setDeltaStepMethod( cs_max );
         reComputeSubPortionCost( m_Courbe, nb_cost_tests );
-        stat.max = computeSubPortionMaxCost( m_Courbe );
         total_cost_tests += nb_cost_tests;
+
+        std::pair<double,double> min_max = computeSubPortionMinAndMaxCost( m_Courbe );
+        stat.min = min_max.first;
+        stat.max = min_max.second;
 
         global_costSpace->setDeltaStepMethod( cs_average );
         stat.average = reComputeSubPortionCost( m_Courbe, nb_cost_tests );
@@ -885,6 +891,7 @@ double Trajectory::costStatistics(TrajectoryStatistics& stat)
     }
     else
     {
+        stat.min = 0.0;
         stat.max = 0.0;
         stat.average = 0.0;
         stat.integral = 0.0;
@@ -1543,7 +1550,10 @@ void Trajectory::draw( int nbKeyFrame )
 
         /* position of the robot corresponding to parameter u */
         q = configAtParam(u);
+//        q = m_Robot->getCurrentPos();
+
         m_Robot->setAndUpdate(*q);
+
         pf = drawnjnt->getVectorPos();
 
         // cout << "u : " << u << " , pi : " << pi.transpose() << " , pf : " << pf.transpose() << endl;

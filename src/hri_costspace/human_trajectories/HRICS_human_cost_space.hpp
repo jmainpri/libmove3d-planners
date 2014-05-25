@@ -54,6 +54,8 @@ public:
 
 private:
 
+    void setHumanColor( Move3D::Robot* human, int color);
+
     HumanTrajCostSpace* cost_space_;
 
     Move3D::Robot* human_active_;

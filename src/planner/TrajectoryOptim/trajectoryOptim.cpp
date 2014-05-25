@@ -382,9 +382,11 @@ bool traj_optim_initStomp()
         m_stompparams->max_time_ = PlanEnv->getDouble(PlanParam::trajStompTimeLimit);
     }
 
-    if( (m_sce == traj_optim::HumanAwareManip && m_robot->getName() == "PR2_ROBOT") || (m_sce == traj_optim::CostMap) )
+    if(     (m_sce == traj_optim::HumanAwareManip && m_robot->getName() == "PR2_ROBOT") ||
+            (m_sce == traj_optim::HumanSimulation ) ||
+            (m_sce == traj_optim::CostMap) )
     {
-        global_optimizer->setUseCostSpace(true);
+        global_optimizer->setUseCostSpace( true );
     }
 
     cout << "Optimizer created" << endl;

@@ -25,7 +25,7 @@ Move3D::Feature* API_activeFeatureSpace = NULL;
 double Feature::cost( Configuration& q )
 {
     FeatureVect phi = getFeatures( q );
-    double cost = w_.transpose()*phi;
+    double cost = is_stacked_ ? this->getWeights().transpose()*phi : w_.transpose()*phi;
 
     if( GestEnv->getBool(GestParam::print_debug) )
     {
@@ -35,6 +35,8 @@ double Feature::cost( Configuration& q )
         cout << "w : " << endl;
         cout << w.transpose() << endl;
         cout << endl;
+        cout << "cost : " << cost << endl;
+        cout << "is_stacked_ : " << is_stacked_ << endl;
     }
 
 //    cout << __PRETTY_FUNCTION__ << endl;
@@ -317,6 +319,7 @@ std::vector<Move3D::Trajectory*> Feature::extractAllTrajectories( Move3D::Graph*
 
 StackedFeatures::StackedFeatures()
 {
+    is_stacked_ = true;
     nb_features_ = 0;
 }
 
@@ -346,6 +349,8 @@ FeatureVect StackedFeatures::getFeatures(const Configuration& q, std::vector<int
         f.segment( height, fi.size() ) = fi;
         height += fi.size();
     }
+
+//    cout << "f : " << f.transpose() << endl;
 
     return f;
 }

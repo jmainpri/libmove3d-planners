@@ -32,7 +32,7 @@ MOVE3D_USING_SHARED_PTR_NAMESPACE
 // ****************************************************************************************************
 
 static boost::function<double*(Robot*)> Move3DConfigurationConstructorRobot;
-static boost::function<double*(Robot*, double*, bool)> Move3DConfigurationConstructorConfigStruct;
+static boost::function<double*(Robot*, double*)> Move3DConfigurationConstructorConfigStruct;
 static boost::function<void(const Configuration& q_s, Configuration& q_t)> Move3DConfigurationAssignment;
 static boost::function<void(Robot*,double*)> Move3DConfigurationClear;
 static boost::function<void(Robot*,double*)> Move3DConfigurationConvertToRadians;
@@ -57,7 +57,7 @@ static boost::function<void(Robot* R, double*, bool)> Move3DConfigurationPrint;
 // ****************************************************************************************************
 
 void move3d_set_fct_configuration_constructor_robot( boost::function<double*(Robot*)> fct ) {  Move3DConfigurationConstructorRobot = fct; }
-void move3d_set_fct_configuration_constructor_config_struct( boost::function<double*(Robot*, double*, bool)> fct ) { Move3DConfigurationConstructorConfigStruct = fct; }
+void move3d_set_fct_configuration_constructor_config_struct( boost::function<double*(Robot*, double*)> fct ) { Move3DConfigurationConstructorConfigStruct = fct; }
 void move3d_set_fct_configuration_assignment( boost::function<void(const Configuration& q_s, Configuration& q_t)> fct ) { Move3DConfigurationAssignment = fct; }
 void move3d_set_fct_configuration_clear( boost::function<void(Robot*,double*)> fct ) { Move3DConfigurationClear = fct; }
 void move3d_set_fct_configuration_convert_to_radians( boost::function<void(Robot*,double*)> fct ) { Move3DConfigurationConvertToRadians = fct; }
@@ -115,7 +115,8 @@ Configuration::Configuration(Robot* R, double* C, bool noCopy) :
     }
     else
     {
-        _Configuration = Move3DConfigurationConstructorConfigStruct( R, C, noCopy );
+         _Configuration = noCopy ? C : Move3DConfigurationConstructorConfigStruct( R, C );
+//        _Configuration = Move3DConfigurationConstructorConfigStruct( R, C );
     }
 }
 
@@ -135,7 +136,7 @@ Configuration::Configuration(const Configuration& conf) :
     }
     else
     {
-        _Configuration = Move3DConfigurationConstructorConfigStruct( _Robot, conf._Configuration, false );
+        _Configuration = Move3DConfigurationConstructorConfigStruct( _Robot, conf._Configuration );
     }
 }
 
@@ -169,7 +170,7 @@ Configuration::~Configuration()
 
 void Configuration::Clear()
 {
-    if(_Configuration != NULL)
+    if( _Configuration != NULL )
     {
         Move3DConfigurationClear( _Robot, _Configuration );
     }
@@ -442,7 +443,8 @@ double Configuration::cost()
     {
         if( global_costSpace )
         {
-            _Cost = global_costSpace->cost(*this);
+            _Robot->setAndUpdate( *this );
+            _Cost = global_costSpace->cost( *this );
         }
 
         _CostTested = true;
