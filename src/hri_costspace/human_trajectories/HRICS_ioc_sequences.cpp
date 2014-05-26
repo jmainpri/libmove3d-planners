@@ -2,6 +2,8 @@
 
 #include "HRICS_parameters.hpp"
 #include "HRICS_ioc.hpp"
+#include "HRICS_human_ioc.hpp"
+#include "HRICS_human_cost_space.hpp"
 
 #include "API/project.hpp"
 #include "API/Trajectory/trajectory.hpp"
@@ -15,19 +17,37 @@
 #include "planner/planEnvironment.hpp"
 
 #include <libmove3d/include/Graphic-pkg.h>
+#include <libmove3d/include/Util-pkg.h>
 
 using namespace Move3D;
 using namespace HRICS;
 using std::cout;
 using std::endl;
 
-static std::string move3d_demo_folder("/home/jmainpri/Dropbox/move3d/assets/IOC/TRAJECTORIES/");
-static std::string move3d_traj_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs_home/per_feature_square/");
-static std::string move3d_tmp_data_folder("matlab/move3d_tmp_data_home/");
+// Folders for sphere (and plannar) type of features
+static std::string move3d_spheres_demo_folder("/home/jmainpri/Dropbox/move3d/assets/IOC/TRAJECTORIES/");
+static std::string move3d_spheres_traj_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs_home/per_feature_square/");
+static std::string move3d_spheres_tmp_data_folder("matlab/move3d_tmp_data_home/");
+
+// Folders for human trajs features
+static std::string move3d_human_trajs_demo_folder("/home/jmainpri/Dropbox/move3d/assets/Collaboration/TRAJECTORIES/");
+static std::string move3d_human_trajs_traj_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs/per_feature_human_traj/");
+static std::string move3d_human_trajs_tmp_data_folder("matlab/move3d_tmp_data_human_trajs/");
 
 IocSequences::IocSequences()
 {
+    cout << __PRETTY_FUNCTION__ << endl;
 
+    features_type_ = no_features;
+
+    if(  HriEnv->getBool(HricsParam::init_spheres_cost) )
+    {
+        features_type_ = spheres;
+    }
+    else if(  HriEnv->getBool(HricsParam::init_human_trajectory_cost) )
+    {
+        features_type_ = human_trajs;
+    }
 }
 
 bool IocSequences::run()
@@ -36,12 +56,21 @@ bool IocSequences::run()
     cout << __PRETTY_FUNCTION__ << endl;
     cout << "************************************************************" << endl;
 
-    Robot* rob = global_Project->getActiveScene()->getActiveRobot();
+    if( features_type_ == no_features )
+    {
+        cout << "Error: No feature selected!!!" << endl;
+        return false;
+    }
+
+    Scene* sce = global_Project->getActiveScene();
+    Robot* rob = sce->getActiveRobot();
     if (!rob) {
         cout << "robot not initialized in file "
              << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
+
+    cout << "Active robot is : " << rob->getName() << endl;
 
     confPtr_t q_init( rob->getInitPos() );
     confPtr_t q_goal( rob->getGoalPos() );
@@ -52,15 +81,30 @@ bool IocSequences::run()
         return false;
     }
 
-    if( global_PlanarCostFct == NULL )
+    if( features_type_ == spheres && global_PlanarCostFct == NULL )
     {
         cout << "global_PlanarCostFct not initialized in file "
              << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
-    // IOC PHASES
-    enum phase_t { generate=0, sample=1, compare=2, run_planner=3, default_phase=4, monte_carlo=5 };
+    Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );
+    Robot* human2 = sce->getRobotByName( "HERAKLES_HUMAN2" );
+    if( features_type_ == human_trajs )
+    {
+        if( human1 == NULL || human2 == NULL )
+        {
+            cout << "No humans HERAKLES in the the scene" << endl;
+            return false;
+        }
+
+        if( global_ht_cost_space == NULL )
+        {
+            cout << "global_ht_cost_space not initialized in file "
+                 << __FILE__ << " ,  " << __PRETTY_FUNCTION__ << endl;
+            return false;
+        }
+    }
 
     // LOAD PARAMETERS FROM SETTING FILE
     int nb_way_points       = HriEnv->getInt(HricsParam::ioc_nb_of_way_points);
@@ -68,9 +112,10 @@ bool IocSequences::run()
     int nb_iterations       = HriEnv->getInt(HricsParam::ioc_sample_iteration);
     bool sample_from_file   = HriEnv->getBool(HricsParam::ioc_load_samples_from_file);
     int file_offset         = HriEnv->getInt(HricsParam::ioc_from_file_offset);
-    phase_t phase           = (phase_t)HriEnv->getInt(HricsParam::ioc_phase);
+    phase_                  = (phase_t)HriEnv->getInt(HricsParam::ioc_phase);
 
-    cout << "ioc phase : " << phase << endl;
+//    phase_ = (phase_t)1;
+    cout << "ioc phase : " << phase_ << endl;
 
     int nb_demos = 1;
     int nb_sampling_phase = 10;
@@ -83,14 +128,21 @@ bool IocSequences::run()
 
     MultiplePlanners planners(rob);
     if( sample_from_file )
-    // planners.loadTrajsFromFile( move3d_traj_folder + "FIRST_TRY" );
-    // planners.loadTrajsFromFile( move3d_traj_folder + "THIRD_TRY" );
-    // planners.loadTrajsFromFile( move3d_traj_folder + "STOMP_LARGE" );
-    // planners.loadTrajsFromFile( move3d_traj_folder + "GENERAL_COSTMAP");
-    // planners.loadTrajsFromFile( move3d_traj_folder + "STOMP_COMBINE" );
-    planners.loadTrajsFromFile( move3d_traj_folder + "STOMP_VARIANCE_F1" );
-    // planners.loadTrajsFromFile( move3d_traj_folder + "RANDOM_05" );
+        // planners.loadTrajsFromFile( move3d_spheres_traj_folder + "FIRST_TRY" );
+        // planners.loadTrajsFromFile( move3d_spheres_traj_folder + "THIRD_TRY" );
+        // planners.loadTrajsFromFile( move3d_spheres_traj_folder + "STOMP_LARGE" );
+        // planners.loadTrajsFromFile( move3d_spheres_traj_folder + "GENERAL_COSTMAP");
+        // planners.loadTrajsFromFile( move3d_spheres_traj_folder + "STOMP_COMBINE" );
+        planners.loadTrajsFromFile( move3d_spheres_traj_folder + "STOMP_VARIANCE_F1" );
+    // planners.loadTrajsFromFile( move3d_spheres_traj_folder + "RANDOM_05" );
 
+    // folder for tmp data
+    std::string move3d_tmp_data_folder;
+
+    // Set feature function
+    set_features();
+
+    // Main loop
     for(int i=0; i<nb_sampling_phase && !StopRun; i++)
     {
         // iteration = i; // 2, 5, 30, 50
@@ -100,6 +152,10 @@ bool IocSequences::run()
         else
             iteration = i;
 
+        cout << "------------------------------" << endl;
+        cout << " RUN : " << iteration << endl;
+        cout << "------------------------------" << endl;
+
         // interpolation for the number of sampling phase
         // int nb_samples = min_samples + double(iteration)*(max_samples-min_samples)/double(nb_sampling_phase-1);
         // int nb_samples = (iteration*100+1);
@@ -108,58 +164,82 @@ bool IocSequences::run()
 
         cout << "NB SAMPLES : " << nb_samples << endl;
 
-        IocEvaluation eval( rob, nb_demos, nb_samples, nb_way_points, planners, move3d_demo_folder, move3d_traj_folder, move3d_tmp_data_folder );
+        IocEvaluation* eval = NULL;
 
-        cout << "------------------------------" << endl;
-        cout << " RUN : " << iteration << endl;
-        cout << "------------------------------" << endl;
+        if( HriEnv->getBool(HricsParam::init_spheres_cost) )
+        {
+            move3d_tmp_data_folder = move3d_spheres_tmp_data_folder;
 
-        switch( phase )
+            eval = new IocEvaluation( rob, nb_demos, nb_samples, nb_way_points,
+                                      planners, feature_fct_, active_joints_,
+                                      move3d_spheres_demo_folder, move3d_spheres_traj_folder, move3d_tmp_data_folder );
+            eval->setPlannerType( astar );
+        }
+        else
+        {
+            move3d_tmp_data_folder = move3d_human_trajs_tmp_data_folder;
+
+            // Human 2 is the planned human, Human 1 is the recorded motion
+            eval = new HumanIoc( human2, human1, nb_demos, nb_samples, nb_way_points,
+                                 planners, feature_fct_, active_joints_,
+                                 move3d_human_trajs_demo_folder, move3d_human_trajs_traj_folder, move3d_tmp_data_folder );
+            eval->setPlannerType( stomp );
+        }
+
+        if( eval == NULL){
+            cout << "Error initilizing ioc evaluation module" << endl;
+            return false;
+        }
+
+        switch( phase_ )
         {
         case generate:
             cout << "GENERATE" << endl;
-            eval.generateDemonstrations();
+            eval->generateDemonstrations();
             g3d_draw_allwin_active();
             break;
 
         case sample:
             cout << "SAMPLE" << endl;
-            eval.loadDemonstrations();
+            eval->loadDemonstrations();
             // eval.runLearning();
 
             if( sample_from_file )
-                eval.runFromFileSampling( file_offset );
-            else
-                eval.runSampling();
+                eval->runFromFileSampling( file_offset );
+            else cout << "sampling" << endl;
+//                eval->runSampling();
 
             g3d_draw_allwin_active();
             break;
 
         case compare:
             cout << "COMPARE" << endl;
-            results.push_back( eval.compareDemosAndPlanned() );
+            results.push_back( eval->compareDemosAndPlanned() );
             g3d_draw_allwin_active();
             break;
 
         case run_planner:
             cout << "RUN MULTI-PLANNER" << endl;
-            eval.loadDemonstrations();
+            eval->loadDemonstrations();
             // eval.runPlannerMultipleFeature( 50 ); // 10
-            eval.runPlannerWeightedFeature( 50 ); // 50 * 16 = 800
+            eval->runPlannerWeightedFeature( 50 ); // 50 * 16 = 800
             StopRun = true;
             break;
 
         case monte_carlo:
-            eval.loadDemonstrations();
-            eval.monteCarloSampling( 10.0, 10 );
+            eval->loadDemonstrations();
+            eval->monteCarloSampling( 10.0, 10 );
             break;
 
         default:
             cout << "DEFAULT : LOAD TRAJECTORIES" << endl;
-            eval.loadPlannerTrajectories( 16, 16*i, 0 );
+            eval->loadPlannerTrajectories( 16, 16*i, 0 );
             // StopRun = true;
             break;
         }
+
+        cout << "delete eval" << endl;
+        delete eval;
 
         if( single_iteration )
             break;
@@ -181,4 +261,78 @@ bool IocSequences::run()
     }
 
     return true;
+}
+
+void IocSequences::set_features()
+{
+    if( features_type_ == spheres && global_PlanarCostFct != NULL )
+    {
+        feature_fct_ = new StackedFeatures;
+
+        std::vector<int> aj(1); aj[0] = 1;
+        active_joints_ = aj;
+
+        //fct->addFeatureFunction( smoothness_fct_ );
+
+        // TODO becareful with this
+//        global_PlanarCostFct->setActiveDoFs( plangroup_->getActiveDofs() );
+
+        if( !feature_fct_->addFeatureFunction( global_PlanarCostFct ) )
+        {
+            cout << "ERROR : could not add feature function!!!!" << endl;
+        }
+        else
+        {
+            feature_fct_->setWeights( global_PlanarCostFct->getWeights() );
+            feature_fct_->printStackInfo();
+
+            cout << "original_vect : " << endl;
+            feature_fct_->printWeights();
+
+            // Save costmap to matlab with original weights
+            ChronoTimeOfDayOn();
+
+            std::vector<int> active_feature;
+            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
+            {
+                // active_feature.clear();
+                active_feature.push_back(i);
+                // feature_fct_->setActiveFeatures( active_feature );
+                // global_PlanarCostFct->produceCostMap(i);
+                // global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
+            }
+
+            feature_fct_->setActiveFeatures( active_feature );
+            // global_PlanarCostFct->produceCostMap(0);
+            // global_PlanarCostFct->produceDerivativeFeatureCostMap(0);
+
+            double time;
+            ChronoTimeOfDayTimes( &time );
+            ChronoTimeOfDayOff();
+            cout << "time to compute costmaps : " << time << endl;
+        }
+    }
+
+    if( features_type_ == human_trajs && global_ht_cost_space != NULL )
+    {
+        feature_fct_ = global_ht_cost_space;
+
+        feature_fct_ = global_ht_cost_space;
+        feature_fct_->printStackInfo();
+
+        cout << "original_vect : " << endl;
+        feature_fct_->printWeights();
+
+        HumanTrajSimulator sim( global_ht_cost_space );
+        sim.init();
+        active_joints_ = sim.getActiveJoints();
+
+        cout << "active_joints_.size() : " << active_joints_.size() << endl;
+//        std::vector<int> active_feature;
+//        for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
+//        {
+//            active_feature.push_back(i);
+//        }
+//        feature_fct_->setActiveFeatures( active_feature );
+    }
 }

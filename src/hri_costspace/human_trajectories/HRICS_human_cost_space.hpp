@@ -52,9 +52,12 @@ public:
     bool init();
     bool run();
 
+    std::vector<int> getActiveJoints() { return active_joints_; }
+
 private:
 
     void setHumanColor( Move3D::Robot* human, int color);
+    void setActiveJoints();
 
     HumanTrajCostSpace* cost_space_;
 
@@ -68,9 +71,14 @@ private:
 
     std::string traj_folder_;
 
+    std::vector<int> active_joints_;
+
 };
 
 }
 
+extern HRICS::HumanTrajCostSpace* global_ht_cost_space;
+
 //! main test function for human planning
 void HRICS_run_human_planning();
+bool HRICS_init_human_trajectory_cost();

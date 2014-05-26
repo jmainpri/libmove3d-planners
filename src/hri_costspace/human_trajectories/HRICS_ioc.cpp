@@ -1,6 +1,7 @@
 #include "HRICS_ioc.hpp"
 
 #include "HRICS_parameters.hpp"
+#include "HRICS_human_cost_space.hpp"
 
 #include "API/project.hpp"
 #include "API/Trajectory/trajectory.hpp"
@@ -256,7 +257,10 @@ bool Ioc::addDemonstration( const Eigen::MatrixXd& demo )
 {
     if( num_joints_ != demo.rows() || num_vars_ != demo.cols() )
     {
-        cout << "Error in add demonstration" << endl;
+        cout << "Error in add demonstration ";
+        cout << "(num_joints : " << num_joints_ << " , " << demo.rows() << " ) " ;
+        cout << "(num_vars_ : " << num_vars_ << " , " << demo.cols() << " )" ;
+        cout << endl;
         return false;
     }
 
@@ -681,7 +685,7 @@ Eigen::VectorXd Ioc::solve( const std::vector<Eigen::VectorXd>& phi_demo, const 
 // -------------------------------------------------------------
 // -------------------------------------------------------------
 
-IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners,
+IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners, StackedFeatures* features, std::vector<int> active_joints,
                              std::string folder,  std::string traj_folder, std::string tmp_data_folder )
     : robot_(rob), planners_(planners)
 {
@@ -697,68 +701,36 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
 
     load_sample_from_file_ = HriEnv->getBool(HricsParam::ioc_load_samples_from_file);
 
-    std::vector<int> aj(1); aj[0] = 1;
-    active_joints_ = aj;
+    active_joints_ = active_joints;
 
     plangroup_ = new ChompPlanningGroup( robot_, active_joints_ );
+
+    feature_fct_ = features;
+
+    nb_weights_ = feature_fct_->getNumberOfFeatures();
+    original_vect_ = feature_fct_->getWeights();
+
+    feature_type_ = "";
 
     // Active dofs are set when the planning group is created
     smoothness_fct_ = new TrajectorySmoothness;
     smoothness_fct_->setActiveDoFs( plangroup_->getActiveDofs() );
 
-    if( global_PlanarCostFct != NULL )
-    {
-        feature_fct_ = new StackedFeatures;
-
-        //fct->addFeatureFunction( smoothness_fct_ );
-        global_PlanarCostFct->setActiveDoFs( plangroup_->getActiveDofs() );
-
-        if( !feature_fct_->addFeatureFunction( global_PlanarCostFct ) )
-        {
-            cout << "ERROR : could not add feature function!!!!" << endl;
-        }
-        else
-        {
-            feature_fct_->setWeights( global_PlanarCostFct->getWeights() );
-            feature_fct_->printStackInfo();
-
-            nb_weights_ = feature_fct_->getNumberOfFeatures();
-            original_vect_ = feature_fct_->getWeights();
-
-            cout << "original_vect : " << endl;
-            feature_fct_->printWeights();
-
-            // Save costmap to matlab with original weights
-            ChronoTimeOfDayOn();
-
-            std::vector<int> active_feature;
-            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
-            {
-                // active_feature.clear();
-                active_feature.push_back(i);
-                // feature_fct_->setActiveFeatures( active_feature );
-                // global_PlanarCostFct->produceCostMap(i);
-                // global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
-            }
-
-            feature_fct_->setActiveFeatures( active_feature );
-            // global_PlanarCostFct->produceCostMap(0);
-            // global_PlanarCostFct->produceDerivativeFeatureCostMap(0);
-
-            double time;
-            ChronoTimeOfDayTimes( &time );
-            ChronoTimeOfDayOff();
-            cout << "time to compute costmaps : " << time << endl;
-        }
-    }
-
-    feature_type_ = "";
-
+    // Set the feature type
     if( dynamic_cast<Spheres*>( feature_fct_->getFeatureFunction(0)) != NULL )
         feature_type_ = "spheres";
 
     if( dynamic_cast<Squares*>( feature_fct_->getFeatureFunction(0)) != NULL )
         feature_type_ = "squares";
+
+    if( dynamic_cast<HumanTrajCostSpace*>( feature_fct_ ) != NULL )
+        feature_type_ = "human_trajs";
+
+    // Set active dofs
+    if( feature_type_ == "spheres" || feature_type_ == "squares ")
+    {
+        global_PlanarCostFct->setActiveDoFs( plangroup_->getActiveDofs() );
+    }
 }
 
 // Types are : astar, rrt, stomp
@@ -1040,23 +1012,31 @@ void IocEvaluation::generateDemonstrations()
 
     for(int i=0;i<nb_demos_;i++)
     {
-        demos.push_back( planMotion( astar ) );
+        demos.push_back( planMotion( planner_type_ ) );
     }
 
-    for(int i=0;i<int(demos.size());i++)
+    cout << "nb_demos_ : " << nb_demos_ << endl;
+
+    for(size_t i=0;i<demos.size();i++)
     {
-        demos[i].replaceP3dTraj();
+        if( demos[i].replaceP3dTraj() ){
+            cout << "has replaced p3d traj" << endl;
+            cout << robot_->getP3dRobotStruct()->tcur << endl;
+            cout << robot_->getName() << endl;
+        }
 
         // Set file names
         std::stringstream ss;
         ss << folder_ << "trajectory_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << i << ".traj";
 
-        p3d_save_traj( ss.str().c_str(), robot_->getP3dRobotStruct()->tcur );
         cout << "save demo " << i << " : " << ss.str() << endl;
+        p3d_save_traj( ss.str().c_str(), robot_->getP3dRobotStruct()->tcur );
 
         saveTrajToMatlab( demos[i], i );
         cout << "save traj to matlab format!!!!" << endl;
     }
+
+    cout << "exit generate demo" << endl;
 }
 
 void IocEvaluation::loadDemonstrations()
@@ -1088,18 +1068,18 @@ void IocEvaluation::loadDemonstrations()
 
         Move3D::Trajectory T = robot_->getCurrentTraj();
 
-        confPtr_t q_beg = T.configAtParam(0.0);
-        confPtr_t q_end = T.configAtParam(1000.0);
+//        confPtr_t q_beg = T.configAtParam(0.0);
+//        confPtr_t q_end = T.configAtParam(1000.0);
 
         T.computeSubPortionIntergralCost( T.getCourbe() );
 
         T.cutTrajInSmallLP(nb_way_points_-1);
 
-        q_beg->print();
-        T.configAtParam(0.0)->print();
+//        q_beg->print();
+//        T.configAtParam(0.0)->print();
 
-        q_end->print();
-        T.configAtParam(1000.0)->print();
+//        q_end->print();
+//        T.configAtParam(1000.0)->print();
 
         T.computeSubPortionIntergralCost( T.getCourbe() );
 
@@ -1206,7 +1186,8 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
         demos_[i].cutTrajInSmallLP( nb_way_points_-1 );
         FeatureVect phi = feature_fct_->getFeatureCount( demos_[i] );
         // cout << "Feature Demo : " << phi.transpose() << endl;
-        ioc.addDemonstration( demos_[i].getEigenMatrix(6,7) );
+//        ioc.addDemonstration( demos_[i].getEigenMatrix(6,7) );
+        ioc.addDemonstration( demos_[i].getEigenMatrix( plangroup_->getActiveDofs() ));
         phi_demo[i] = phi;
     }
 
@@ -1219,8 +1200,11 @@ std::vector< std::vector<FeatureVect> > IocEvaluation::addSamples(HRICS::Ioc& io
     for(int i=0;i<int(samples_.size());i++)
     {
         samples_[i].cutTrajInSmallLP( nb_way_points_-1 );
-        ioc.addSample( 0, samples_[i].getEigenMatrix(6,7) );
-        ioc.setNominalSampleValue( 0, i, samples_[i].getEigenMatrix(6,7)  );
+//        ioc.addSample( 0, samples_[i].getEigenMatrix(6,7) );
+        ioc.addSample( 0, samples_[i].getEigenMatrix( plangroup_->getActiveDofs() ) );
+//        ioc.setNominalSampleValue( 0, i, samples_[i].getEigenMatrix(6,7)  );
+        ioc.setNominalSampleValue( 0, i, samples_[i].getEigenMatrix( plangroup_->getActiveDofs() ) );
+
 
         // FeatureProfile p = feature_fct_->getFeatureJacobianProfile( samples_[i] );
         // ioc.setTotalCostsSampleValue( 0, i, p );
@@ -1290,7 +1274,11 @@ void IocEvaluation::removeDominatedSamplesAndResample( HRICS::Ioc& ioc, std::vec
 
 void IocEvaluation::runSampling()
 {
+    cout << "Create Ioc" << endl;
+
     HRICS::Ioc ioc( nb_way_points_, plangroup_ );
+
+    cout << "Add demonstrations" << endl;
 
     // Get demos features
     phi_demos_ = addDemonstrations( ioc );
@@ -1299,6 +1287,8 @@ void IocEvaluation::runSampling()
 //    std::vector< std::vector< Move3D::Trajectory > > trajs_tmp; trajs_tmp.push_back( demos_ );
 //    std::vector< std::vector<FeatureVect> > jac_sum_demos = getFeatureJacobianSum( trajs_tmp );
 //    phi_jac_demos_ = jac_sum_demos.back();
+
+    cout << "Generate samples" << endl;
 
     // Generate samples by random sampling
     ioc.generateSamples( nb_samples_ );
@@ -1318,6 +1308,9 @@ void IocEvaluation::runSampling()
             FeatureVect phi = feature_fct_->getFeatureCount( samples[d][i] );
             // cout << "Feature Sample : " << phi.transpose() << endl;
             phi_k[d].push_back( phi );
+
+            global_trajToDraw.push_back( samples[d][i] );
+
             // gradient_sum += feature_fct_->getJacobianSum( samples[d][i] );
             // cout << "Sample(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
             // cout << "Smoothness(" << d << "," <<  i << ") : " << phi_k[d][i][0] << endl;
@@ -1330,8 +1323,8 @@ void IocEvaluation::runSampling()
 
 
 
-    ioc.addAllToDraw();
-    saveToMatrixFile( phi_demos_, phi_k, "spheres_features" );
+//    ioc.addAllToDraw();
+//    saveToMatrixFile( phi_demos_, phi_k, "spheres_features" );
 
 
 
@@ -1662,7 +1655,8 @@ void IocEvaluation::saveTrajToMatlab(const Move3D::Trajectory& t, int id) const
     int nb_way_points=100;
     saved_traj.cutTrajInSmallLP(nb_way_points-1);
 
-    Eigen::MatrixXd mat = saved_traj.getEigenMatrix(6,7);
+//    Eigen::MatrixXd mat = saved_traj.getEigenMatrix(6,7);
+    Eigen::MatrixXd mat = saved_traj.getEigenMatrix( plangroup_->getActiveDofs() );
 
     // Save traj to file
     move3d_save_matrix_to_file( mat, std::string( "matlab/traj_" + num_to_string<int>(id) + ".txt" ) );

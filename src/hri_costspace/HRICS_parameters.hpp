@@ -26,6 +26,7 @@ namespace HricsParam
         enum boolParameter
         {
             init_spheres_cost,
+            init_human_trajectory_cost,
             ioc_single_iteration,
             ioc_load_samples_from_file,
             ioc_draw_demonstrations,

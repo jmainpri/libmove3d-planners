@@ -52,7 +52,7 @@ Move3D::Scene::Scene( void* environnement )
 
     if( rob != NULL )
     {
-        setActiveRobot(rob->getName());
+        setActiveRobot( rob->getName() );
     }
 
     for( size_t i=0;i<m_Robot.size(); i++ )

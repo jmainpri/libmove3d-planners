@@ -168,7 +168,8 @@ bool stompRun::setParallelStompEnd(int id)
 {
     if( m_is_thread_running.size() == 1 )
     {
-        m_mtx_multi_end.unlock(); // TODO make sure it's ok
+        // See for openrave may need to comment back in
+        // m_mtx_multi_end.unlock(); // TODO make sure it's ok
         return m_is_thread_running[id];
     }
 

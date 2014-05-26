@@ -16,52 +16,61 @@ using namespace HRICS;
 using std::cout;
 using std::endl;
 
-static HumanTrajCostSpace* ht_cost_space = NULL;
+HRICS::HumanTrajCostSpace* global_ht_cost_space = NULL;
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 
-void HRICS_run_human_planning()
+bool HRICS_init_human_trajectory_cost()
 {
-    std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
-
-    Scene* sce = global_Project->getActiveScene();
-    Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );
-    Robot* human2 = sce->getRobotByName( "HERAKLES_HUMAN2" );
-    if( human1 == NULL || human2 == NULL )
+    if( global_ht_cost_space == NULL )
     {
-        cout << "No humans HERAKLES in the the scene" << endl;
-        return;
-    }
+        std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
 
-    global_motionRecorders.push_back( new HRICS::RecordMotion( human1 ) );
-    global_motionRecorders.push_back( new HRICS::RecordMotion( human2 ) );
+        Scene* sce = global_Project->getActiveScene();
+        Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );
+        Robot* human2 = sce->getRobotByName( "HERAKLES_HUMAN2" );
+        if( human1 == NULL || human2 == NULL )
+        {
+            cout << "No humans HERAKLES in the the scene" << endl;
+            return false;
+        }
 
-    // Set this bool to false is you want to print file names as they are loaded
-    bool quiet = true;
-    global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
-    global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
+        global_motionRecorders.push_back( new HRICS::RecordMotion( human1 ) );
+        global_motionRecorders.push_back( new HRICS::RecordMotion( human2 ) );
 
-    // Uncomment the following to play the motion
-    //    PlayMotion player( global_motionRecorders );
-    ////    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
-    //    for(int i=0;i<int(1);i++)
-    //    {
-    //        player.play(i);
-    //    }
+        // Set this bool to false is you want to print file names as they are loaded
+        bool quiet = true;
+        global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
+        global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
 
-    if( ht_cost_space == NULL)
-    {
-        ht_cost_space = new HumanTrajCostSpace( human2, human1 );
+        // Uncomment the following to play the motion
+        //    PlayMotion player( global_motionRecorders );
+        ////    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
+        //    for(int i=0;i<int(1);i++)
+        //    {
+        //        player.play(i);
+        //    }
+
+        global_ht_cost_space = new HumanTrajCostSpace( human2, human1 );
 
         // Define cost functions
-        global_costSpace->addCost( "costHumanTrajecoryCost" , boost::bind( &HumanTrajCostSpace::cost, ht_cost_space, _1) );
+        global_costSpace->addCost( "costHumanTrajecoryCost" , boost::bind( &HumanTrajCostSpace::cost, global_ht_cost_space, _1) );
     }
 
     ENV.setBool( Env::isCostSpace, true );
     global_costSpace->setCost( "costHumanTrajecoryCost" );
 
-    HumanTrajSimulator sim( ht_cost_space );
+    cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
+
+    return true;
+}
+
+void HRICS_run_human_planning()
+{
+    HRICS_init_human_trajectory_cost();
+
+    HumanTrajSimulator sim( global_ht_cost_space );
     sim.init();
     sim.run();
 }
@@ -118,6 +127,14 @@ bool HumanTrajSimulator::init()
     // Set to init pose
     human_active_->setAndUpdate( *q_init_ );
 
+    // Set bounds and dofs
+    setActiveJoints();
+
+    return true;
+}
+
+void HumanTrajSimulator::setActiveJoints()
+{
     // Get first joint and change bounds
     Joint* joint = human_active_->getJoint(1);
 
@@ -137,7 +154,18 @@ bool HumanTrajSimulator::init()
         p3d_jnt_set_dof_rand_bounds( joint->getP3dJointStruct(), i, dof[i][0], dof[i][1] );
     }
 
-    return true;
+    active_joints_.push_back( 1 ); // Pelvis
+//    active_joints_.push_back( 2 ); // TorsoX
+//    active_joints_.push_back( 3 ); // TorsoY
+    active_joints_.push_back( 4 ); // TorsoZ
+//    active_joints_.push_back( 8 ); // rShoulderX
+//    active_joints_.push_back( 9 ); // rShoulderZ
+    active_joints_.push_back( 10 ); // rShoulderY
+//    active_joints_.push_back( 11 ); // rArmTrans
+    active_joints_.push_back( 12 ); // rElbowZ
+//    active_joints_.push_back(14); // joint name : rWristX
+//    active_joints_.push_back(15); // joint name : rWristY
+    active_joints_.push_back(16); // joint name : rWristZ
 }
 
 void HumanTrajSimulator::setHumanColor(Robot* human, int color)

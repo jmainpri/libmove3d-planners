@@ -141,7 +141,8 @@ private:
 class IocEvaluation
 {
 public:
-    IocEvaluation( Move3D::Robot* rob, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners,
+    IocEvaluation( Move3D::Robot* rob, int nb_demos, int nb_samples, int nb_way_points,
+                   MultiplePlanners& planners, Move3D::StackedFeatures* features, std::vector<int> active_joints,
                    std::string folder,  std::string traj_folder, std::string tmp_data_folder );
 
     //! Sample trajectories around the demonstrations
@@ -182,6 +183,9 @@ public:
 
     //! Generate a distribution that maximizes entropy
     void monteCarloSampling( double factor, int nb_tries );
+
+    //! Set planner type for the generation phase
+    void setPlannerType( planner_t planner_type ) { planner_type_ = planner_type; }
 
 protected:
 
@@ -262,6 +266,9 @@ protected:
     std::string folder_;
     std::string traj_folder_;
     std::string tmp_data_folder_;
+
+    // Planner type
+    planner_t planner_type_;
 };
 
 }

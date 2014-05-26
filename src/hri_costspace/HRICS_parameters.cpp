@@ -49,6 +49,7 @@ void initHricsParameters()
     // Bool
     // ------------------------------------------------------------------
     myBoolMap.insert( std::make_pair( HricsParam::init_spheres_cost, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::init_human_trajectory_cost, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_single_iteration, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_load_samples_from_file, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_draw_demonstrations, new boolContainer(false) ));

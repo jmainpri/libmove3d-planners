@@ -49,7 +49,15 @@ void HRICS_run_human_ioc_from_recorded_motion()
 
     MultiplePlanners planners(human2);
 
-    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points, planners, move3d_demo_folder, move3d_traj_folder, move3d_tmp_data_folder );
+    // feature_matrix_name_ = "matlab/features.txt";
+    Move3D::StackedFeatures* feature_fct = new HRICS::HumanTrajCostSpace( human2, human1 );
+
+    std::vector<int> active_joints;
+
+    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points,
+                  planners, feature_fct, active_joints,
+                  move3d_demo_folder, move3d_traj_folder, move3d_tmp_data_folder );
+
     ioc.setDemos( global_motionRecorders[0]->getStoredMotions() );
     ioc.runLearning();
 }
@@ -71,43 +79,55 @@ void HRICS_run_human_ioc_evaluation()
 
     MultiplePlanners planners(human2);
 
-    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points, planners, move3d_demo_folder, move3d_traj_folder, move3d_tmp_data_folder );
+    // feature_matrix_name_ = "matlab/features.txt";
+    Move3D::StackedFeatures* feature_fct = new HRICS::HumanTrajCostSpace( human2, human1 );
+
+     std::vector<int> active_joints;
+
+    HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points,
+                  planners, feature_fct, active_joints,
+                  move3d_demo_folder, move3d_traj_folder, move3d_tmp_data_folder );
+
     ioc.loadDemonstrations();
     ioc.runLearning();
 }
 
-HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples, int nb_way_points, MultiplePlanners& planners,
+HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples, int nb_way_points,
+                    MultiplePlanners& planners, StackedFeatures* features, std::vector<int> active_joints,
                     std::string folder,  std::string traj_folder, std::string tmp_data_folder )
-    :  IocEvaluation( active, nb_demos, nb_samples, nb_way_points, planners, folder, traj_folder, tmp_data_folder )
+    :  IocEvaluation( active, nb_demos, nb_samples, nb_way_points, planners, features, active_joints, folder, traj_folder, tmp_data_folder )
 {
-    nb_demos_ = nb_demos;
-    nb_samples_ = nb_samples; // 1000
-    nb_way_points_ = 15;
-    folder_ = "/home/jmainpri/workspace/move3d/assets/Collaboration/TRAJECTORIES/";
+//    nb_demos_ = nb_demos;
+//    nb_samples_ = nb_samples; // 1000
+//    nb_way_points_ = 15;
+//    folder_ = "/home/jmainpri/workspace/move3d/assets/Collaboration/TRAJECTORIES/";
 
-    // feature_matrix_name_ = "matlab/features.txt";
-    feature_fct_ = new HRICS::HumanTrajCostSpace( active, passive );
+//    original_vect_ = feature_fct_->getWeights();
+//    nb_weights_ = original_vect_.size();
 
-    original_vect_ = feature_fct_->getWeights();
-    nb_weights_ = original_vect_.size();
+    // Sets the joint limits
+//    HumanTrajSimulator sim( global_ht_cost_space );
+//    sim.init();
+//    sim.getActiveJoints();
 
-    setPlanningGroup();
+    // Set active joints
+//    setPlanningGroup();
 }
 
 void HumanIoc::setPlanningGroup()
 {
     // traj_optim_hrics_human_trajectory_manip_init_joints()
     // Set the planner joints
-    active_joints_.clear();
-    active_joints_.push_back( 1 );
-    active_joints_.push_back( 2 );
-    active_joints_.push_back( 3 );
-    active_joints_.push_back( 4 );
-    active_joints_.push_back( 8 );
-    active_joints_.push_back( 9 );
-    active_joints_.push_back( 10 );
-    active_joints_.push_back( 11 );
-    active_joints_.push_back( 12 );
+//    active_joints_.clear();
+//    active_joints_.push_back( 1 );
+//    active_joints_.push_back( 2 );
+//    active_joints_.push_back( 3 );
+//    active_joints_.push_back( 4 );
+//    active_joints_.push_back( 8 );
+//    active_joints_.push_back( 9 );
+//    active_joints_.push_back( 10 );
+//    active_joints_.push_back( 11 );
+//    active_joints_.push_back( 12 );
 
     // Set the active joints (links)
 //    active_joints_.clear();
@@ -151,6 +171,7 @@ Move3D::Trajectory HumanIoc::getTrajectoryFromMotion( const motion_t& m ) const
     return t;
 }
 
+/**
 void HumanIoc::runSampling()
 {
     // Comment it to generate less demos
@@ -199,3 +220,4 @@ void HumanIoc::runSampling()
 //        cout << "w : " << w.transpose() << endl;
 //    }
 }
+*/
