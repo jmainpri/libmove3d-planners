@@ -233,8 +233,8 @@ bool IocSequences::run()
 
             if( sample_from_file )
                 eval->runFromFileSampling( file_offset );
-            else cout << "sampling" << endl;
-//                eval->runSampling();
+            else //cout << "sampling" << endl;
+                eval->runSampling();
 
             g3d_draw_allwin_active();
             break;

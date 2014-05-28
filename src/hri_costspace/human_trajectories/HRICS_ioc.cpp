@@ -469,7 +469,7 @@ void Ioc::generateSamples( int nb_samples )
                 samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j].cwiseProduct(samples_[d][ns].total_costs_[j]);
             }
 
-            jointLimits( samples_[d][ns] );
+            //jointLimits( samples_[d][ns] );
         }
     }
 }
@@ -1301,14 +1301,30 @@ void IocEvaluation::removeDominatedSamplesAndResample( HRICS::Ioc& ioc, std::vec
 
 void IocEvaluation::runSampling()
 {
-    cout << "Create Ioc" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
 
+    global_trajToDraw.clear();
+
+//    print_joint_mapping( robot_ );
+
+//    for( int i=0; i<plangroup_->chomp_joints_.size();i++){
+//        cout << " group joint name : "  << plangroup_->chomp_joints_[i].joint_name_ << endl;
+//        cout << "              min : "  << plangroup_->chomp_joints_[i].joint_limit_min_ << endl;
+//        cout << "              max : "  << plangroup_->chomp_joints_[i].joint_limit_max_ << endl;
+//    }
+
+    cout << "Create Ioc" << endl;
     HRICS::Ioc ioc( nb_way_points_, plangroup_ );
 
     cout << "Add demonstrations" << endl;
 
     // Get demos features
     phi_demos_ = addDemonstrations( ioc );
+
+//    std::vector<Move3D::Trajectory> traj = ioc.getDemonstrations();
+//    traj[0].replaceP3dTraj();
+
+//     return;
 
     // Jac sum of demos
 //    std::vector< std::vector< Move3D::Trajectory > > trajs_tmp; trajs_tmp.push_back( demos_ );

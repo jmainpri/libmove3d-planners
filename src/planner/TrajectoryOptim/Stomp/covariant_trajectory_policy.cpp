@@ -294,7 +294,7 @@ bool CovariantTrajectoryPolicy::initializeCosts()
 
         for (int i=0; i<NUM_DIFF_RULES; ++i)
         {
-            cout << "derivative cost : " << i << " , " << derivative_costs_[i] << endl;
+            // cout << "derivative cost : " << i << " , " << derivative_costs_[i] << endl;
             cost_all += derivative_costs_[i] * (differentiation_matrices_[i].transpose() * differentiation_matrices_[i]);
         }
         control_costs_all_.push_back( cost_all );

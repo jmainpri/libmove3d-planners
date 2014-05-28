@@ -114,3 +114,24 @@ double move3d_random_integer( int min, int max )
 {
     return p3d_random_integer( min, max );
 }
+
+//! This function prints the joint mapping of a robot
+void print_joint_mapping( Move3D::Robot* robot )
+{
+    if( robot == NULL)
+        return;
+
+    cout << "print joint mapping" << endl;
+
+    for( size_t i=0; i<robot->getNumberOfJoints(); i++)
+    {
+//        cout << i << " , joint name : " << rob->getJoint(i)->getName() << endl;
+
+        for( size_t j=0; j<robot->getJoint(i)->getNumberOfDof(); j++)
+        {
+            cout << "jnt->getName() : " << robot->getJoint(i)->getName() << "(" <<i<< ") , ";
+            cout << "index_dof : " << robot->getJoint(i)->getIndexOfFirstDof()+j << endl;
+            //cout << "move3d_map[\"" << rob->getJoint(i)->getName() << "\"]=" << rob->getJoint(i)->getIndexOfFirstDof()+j << ";" << endl;
+        }
+    }
+}

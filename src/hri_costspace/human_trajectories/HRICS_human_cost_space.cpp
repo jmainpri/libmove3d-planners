@@ -181,18 +181,50 @@ void HumanTrajSimulator::setActiveJoints()
         p3d_jnt_set_dof_rand_bounds( joint->getP3dJointStruct(), i, dof[i][0], dof[i][1] );
     }
 
+//    Joint(0), Dof : 6, Pelvis
+//    Is dof user : (min = 0.94, max = 1.04)
+//    Joint(1), Dof : 7, Pelvis
+//    Is dof user : (min = 0.61, max = 0.71)
+//    Joint(2), Dof : 8, Pelvis
+//    Is dof user : (min = 0.92, max = 1.02)
+//    Joint(3), Dof : 9, Pelvis
+//    Is dof user : (min = -0.10, max = 0.10)
+//    Joint(4), Dof : 10, Pelvis
+//    Is dof user : (min = -0.10, max = 0.10)
+//    Joint(5), Dof : 11, Pelvis
+
+//    Is dof user : (min = -0.77, max = -0.57)
+//    Joint(0), Dof : 12, TorsoX
+//    Is dof user : (min = -0.79, max = 0.79)
+//    Joint(0), Dof : 13, TorsoY
+//    Is dof user : (min = -0.35, max = 0.70)
+//    Joint(0), Dof : 14, TorsoZ
+
+//    Is dof user : (min = -0.79, max = 0.79)
+//    Joint(0), Dof : 18, rShoulderX
+//    Is dof user : (min = -3.14, max = 3.14)
+//    Joint(0), Dof : 19, rShoulderZ
+//    Is dof user : (min = -3.14, max = 3.14)
+//    Joint(0), Dof : 20, rShoulderY
+
+//    Is dof user : (min = -3.14, max = 3.14)
+//    Joint(0), Dof : 22, rElbowZ
+//    Is dof user : (min = -3.14, max = 3.14)
+
     active_joints_.push_back( 1 ); // Pelvis
-//    active_joints_.push_back( 2 ); // TorsoX
-//    active_joints_.push_back( 3 ); // TorsoY
+
+    active_joints_.push_back( 2 ); // TorsoX
+    active_joints_.push_back( 3 ); // TorsoY
     active_joints_.push_back( 4 ); // TorsoZ
-//    active_joints_.push_back( 8 ); // rShoulderX
-//    active_joints_.push_back( 9 ); // rShoulderZ
+
+    active_joints_.push_back( 8 ); // rShoulderX
+    active_joints_.push_back( 9 ); // rShoulderZ
     active_joints_.push_back( 10 ); // rShoulderY
 //    active_joints_.push_back( 11 ); // rArmTrans
     active_joints_.push_back( 12 ); // rElbowZ
 //    active_joints_.push_back(14); // joint name : rWristX
 //    active_joints_.push_back(15); // joint name : rWristY
-    active_joints_.push_back(16); // joint name : rWristZ
+//    active_joints_.push_back(16); // joint name : rWristZ
 }
 
 void HumanTrajSimulator::setHumanColor(Robot* human, int color)

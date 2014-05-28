@@ -69,7 +69,7 @@ std::vector<int> ChompPlanningGroup::getActiveDofs() const
     for(int i=0;i<int(chomp_joints_.size());i++)
     {
         active_joints.push_back( chomp_joints_[i].move3d_dof_index_ );
-//        cout << "move3d_dof_index_ : " << chomp_joints_[i].move3d_dof_index_ << endl;
+        cout << "name : " << chomp_joints_[i].joint_name_ << ", dof_index_ : " << chomp_joints_[i].move3d_dof_index_ << endl;
     }
 
     return active_joints;

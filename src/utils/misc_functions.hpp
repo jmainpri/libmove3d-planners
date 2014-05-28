@@ -30,7 +30,8 @@
 
 #include <string>
 #include <vector>
-#include <Eigen/Core>
+
+#include "API/Device/robot.hpp"
 
 //! Save Eigen matrix to file (can be loaded with matlab)
 void move3d_save_matrix_to_file( const Eigen::MatrixXd& mat, std::string filename );
@@ -38,10 +39,16 @@ void move3d_save_matrix_to_file( const Eigen::MatrixXd& mat, std::string filenam
 //! Returns the files in the folder with argumen extension
 std::vector<std::string>  move3d_get_files_in_folder( std::string foldername, std::string extention, int nb_max_files=-1 );
 
+//! Get a random interger
 double move3d_random_integer( int min, int max );
 
+//! Change number basis
 std::vector<int> move3d_change_basis( int number , int basis );
 
+//! Linear interpolation between two vectors
 Eigen::VectorXd move3d_lerp( const Eigen::VectorXd& v0, const Eigen::VectorXd& v1, double t );
+
+//! Print the joint mapping of a given robot
+void print_joint_mapping( Move3D::Robot* robot );
 
 #endif // MISC_FUNCTIONS_HPP
