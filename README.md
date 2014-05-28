@@ -3,7 +3,7 @@ libmove3d-planners
 
 Motion planning and geometric reasoning C++ library based on libmove3d
 
-### Stand allone install
+### Stand alone install
 
 Depends on libmove3d and libmove3d-hri
 
