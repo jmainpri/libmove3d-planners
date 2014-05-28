@@ -10,15 +10,24 @@
 ## Check for the header files
 
 find_path (LIBMOVE3D_P3D_INCLUDE_DIR env.hpp
- PATHS $ENV{ROBOTPKG_BASE}/include/libmove3d/p3d/ $ENV{HOME}/workspace/libmove3d/p3d  
+ PATHS 
+ $ENV{ROBOTPKG_BASE}/include/libmove3d/p3d/ 
+ $ENV{MOVE3D_INSTALL_DIR}/include/libmove3d/p3d/ 
+ $ENV{HOME}/workspace/libmove3d/p3d/
  )
 
 find_path (LIBMOVE3D_INCLUDE_DIR P3d-pkg.h
- PATHS $ENV{ROBOTPKG_BASE}/include/libmove3d/include/ $ENV{HOME}/workspace/libmove3d/p3d  
+ PATHS
+ $ENV{ROBOTPKG_BASE}/include/libmove3d/include/
+ $ENV{MOVE3D_INSTALL_DIR}/include/libmove3d/include/
+ $ENV{HOME}/workspace/libmove3d/include/  
  )
 
 find_library (LIBMOVE3D_LIBRARIES move3d
-  PATHS ${LIBMOVE3D_LIB} $ENV{ROBOTPKG_BASE}/lib/ $ENV{HOME}/workspace/libmove3d/build_lib/Debug/lib/$ENV{HOSTTYPE}
+  PATHS ${LIBMOVE3D_LIB} 
+  $ENV{ROBOTPKG_BASE}/lib/ 
+  $ENV{{MOVE3D_INSTALL_DIR}/lib/ 
+  $ENV{HOME}/workspace/libmove3d/build_lib/Debug/lib/$ENV{HOSTTYPE}
   )
 
 #message(${LIBMOVE3D_P3D_INCLUDE_DIR})

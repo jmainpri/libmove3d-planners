@@ -9,11 +9,15 @@
 ## -----------------------------------------------------------------------------
 ## Check for the header files
 
-find_package(PkgConfig)
-pkg_check_modules(PC_GBM QUIET gbM)
-
 find_path (GBM_INCLUDE_DIR gbM/gb.h
-  PATHS ${GBM_INC} $ENV{ROBOTPKG_BASE}/include /usr/local/include /usr/include /sw/include /opt/local/include $ENV{HOME}/include ${PC_GBM_INCLUDEDIR} ${PC_GBM_INCLUDE_DIRS}
+  PATHS ${GBM_INC} 
+  /usr/local/include 
+  /usr/include 
+  /sw/include 
+  /opt/local/include 
+  ${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/install/include 
+  $ENV{ROBOTPKG_BASE}/include
+  $ENV{MOVE3D_INSTALL_DIR}/include
   )
 #if(${GBM_INCLUDE_DIR} MATCHES "GBM_INCLUDE_DIR-NOTFOUND")
 #add_subdirectory(${BioMove3D_SOURCE_DIR}/other_libraries/gbM)
@@ -26,7 +30,14 @@ find_path (GBM_INCLUDE_DIR gbM/gb.h
 ## Check for the library
 
 find_library (GBM_LIBRARIES gb
-  PATHS ${GBM_LIB} $ENV{ROBOTPKG_BASE}/lib /usr/local/lib /usr/lib /lib /sw/lib /opt/local/lib $ENV{HOME}/lib ${PC_GBM_LIBRARY_DIRS}
+  PATHS ${GBM_LIB} 
+  /usr/local/lib 
+  /usr/lib /lib 
+  /sw/lib 
+  /opt/local/lib 
+  ${CMAKE_CURRENT_SOURCE_DIR}/../dependencies/install/lib 
+  $ENV{ROBOTPKG_BASE}/lib
+  $ENV{MOVE3D_INSTALL_DIR}/lib
   )
 
 ## -----------------------------------------------------------------------------
@@ -57,7 +68,8 @@ else (HAVE_GBM)
     libs")
     SET(GBM_INC "" CACHE PATH "Paths where to additionally look for
     includes")
-    message (FATAL_ERROR "Could not find GBM!: install in $ENV{ROBOTPKG_BASE}/{include,lib,bin}")
+    message (FATAL_ERROR "Could not find GBM!")
+#: install in ${CMAKE_CURRENT_SOURCE_DIR}/other_libraries/gbM/build/install/{include,lib,bin}")
   endif (GBM_FIND_REQUIRED)
 endif (HAVE_GBM)
 
