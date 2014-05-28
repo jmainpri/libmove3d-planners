@@ -7,7 +7,7 @@ Motion planning and geometric reasoning C++ library based on libmove3d
 
 Depends on libmove3d and libmove3d-hri
 
-    mkdir build
+    mkdir build && cd build
     cmake ..
     make install
     
