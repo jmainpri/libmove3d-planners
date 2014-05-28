@@ -778,6 +778,7 @@ confPtr_t move3d_localpath_simple_config_at_dist( LocalPath& path, double dist )
 
 void move3d_localpath_simple_config_at_param( LocalPath& path, double param, confPtr_t& q )
 {
+    // TODO set back the way it was
     q = move3d_localpath_simple_config_at_dist( path, param );
 }
 

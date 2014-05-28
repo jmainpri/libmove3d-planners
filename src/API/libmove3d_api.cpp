@@ -447,6 +447,7 @@ confPtr_t move3d_localpath_config_at_dist( LocalPath& path, double dist )
 
 void move3d_localpath_config_at_param( LocalPath& path, double param, confPtr_t& ptrQ )
 {
+    // TODO set back the way it was (return configPtr_)
     //fonction variable en fonction du type de local path
 
     if( param > path.getParamMax() )
