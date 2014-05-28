@@ -776,9 +776,9 @@ confPtr_t move3d_localpath_simple_config_at_dist( LocalPath& path, double dist )
     return q;
 }
 
-confPtr_t move3d_localpath_simple_config_at_param( LocalPath& path, double param )
+void move3d_localpath_simple_config_at_param( LocalPath& path, double param, confPtr_t& q )
 {
-    return move3d_localpath_simple_config_at_dist( path, param );
+    q = move3d_localpath_simple_config_at_dist( path, param );
 }
 
 double move3d_localpath_simple_stay_within_dist( LocalPath& path, double u, bool goForward, double distance )
@@ -841,6 +841,6 @@ void move3d_set_api_functions_localpath_simple()
     move3d_set_fct_localpath_get_length( boost::bind( move3d_localpath_simple_length, _1 ) );
     move3d_set_fct_localpath_get_param_max( boost::bind( move3d_localpath_simple_max_param, _1 ) );
     move3d_set_fct_localpath_config_at_dist( boost::bind( move3d_localpath_simple_config_at_dist, _1, _2 ) );
-    move3d_set_fct_localpath_config_at_param( boost::bind( move3d_localpath_simple_config_at_param, _1, _2 ) );
+    move3d_set_fct_localpath_config_at_param( boost::bind( move3d_localpath_simple_config_at_param, _1, _2, _3 ) );
     move3d_set_fct_localpath_stay_within_dist( boost::bind( move3d_localpath_simple_stay_within_dist, _1, _2, _3, _4 ) );
 }

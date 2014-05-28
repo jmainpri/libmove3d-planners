@@ -62,6 +62,10 @@ bool RRT::preConditions()
                 return true;
             }
 
+            cout << "print start and goal" << endl;
+            _Start->print();
+            _Goal->print();
+
             if(!ENV.getBool(Env::isCostSpace))
             {
                 LocalPath direct(_Start->getConfiguration(), _Goal->getConfiguration());
