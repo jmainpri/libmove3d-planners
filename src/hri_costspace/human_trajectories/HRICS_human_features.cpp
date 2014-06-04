@@ -27,7 +27,6 @@
  */
 #include "HRICS_human_features.hpp"
 #include "API/Graphic/drawModule.hpp"
-#include "planner/planEnvironment.hpp"
 
 #include <boost/bind.hpp>
 #include <iomanip>
@@ -46,18 +45,26 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
     human_active_(active),
     human_passive_(passive)
 {
-    distance_joint_ids_.push_back( human_active_->getJoint("Pelvix")->getId() );       // joint name : Pelvis
-    distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );   // joint name : rWristX
-    distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );      // joint name : rElbowZ
-
-//    distance_joint_ids_.push_back(1); // joint name : Pelvis
-//    distance_joint_ids_.push_back(8); // joint name : rShoulderX
-//    distance_joint_ids_.push_back(12); // joint name : rElbowZ
-//    distance_joint_ids_.push_back(14); // joint name : rWristX
-//    distance_joint_ids_.push_back(17); // joint name : lShoulderX
-//    distance_joint_ids_.push_back(21); // joint name : lElbowZ
-//    distance_joint_ids_.push_back(23); // joint name : lWristX
-
+    if ( !active->getUseLibmove3dStruct() ) //We're using OpenRAVE, use different joints
+    {
+        distance_joint_ids_.push_back( human_active_->getJoint('PelvisRotX')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint('rShoulderX')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint('rElbowZ')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint('rWristX')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint('lShoulderX')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint('lElbowZ')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint('lWristX')->getId() );
+    }
+    else    //Using Move3D
+    {
+        distance_joint_ids_.push_back( human_active_->getJoint('Pelvis')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint('rShoulderX')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint('rElbowZ')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint('rWristX')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint('lShoulderX')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint('lElbowZ')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint('lWristX')->getId() );
+    }
 //    distance_joint_ids_.push_back(0); // joint name : J0
 //    distance_joint_ids_.push_back(1); // joint name : Pelvis
 //    distance_joint_ids_.push_back(2); // joint name : TorsoX // USED
@@ -107,6 +114,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 //    distance_joint_ids_.push_back(46); // joint name : Eyes
 //    distance_joint_ids_.push_back(47); // joint name : HriLookJoint
 
+
     for( size_t i=0;i<distance_joint_ids_.size();i++)
     {
         human_active_joints_.push_back( human_active_->getJoint(distance_joint_ids_[i]) );
@@ -143,8 +151,6 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
                 0.20, 0.20, 0.30, 0.20, 0.20, 1.00, 1.00, 1.00, 1.00, 1.00,
                 1.00, 0.80, 1.00, 1.00, 1.00, 0.50, 0.80, 0.80, 0.10;
     }
-
-//    w_ = Eigen::VectorXd::Ones(49);
 
     // Print feature names and weights
     for(size_t i=0; i<distance_names_.size(); i++) {
