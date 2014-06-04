@@ -212,7 +212,7 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t)
     //	cout << "m_Source:" << endl;
     //	m_Source->print();
 
-    m_Target = confPtr_t (new Configuration(m_Robot,p3d_config_at_param_along_traj(t, getRangeMax())));
+    m_Target = confPtr_t (new Configuration(m_Robot,p3d_config_at_param_along_traj(t, getParamMax())));
     m_Target->setConstraints();
     //	cout << "m_Target:" << endl;
     //	m_Target->print();
@@ -226,12 +226,12 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t)
         cout << "Error in constructor : !getBegin()->equal(*configAtParam(0))" << endl;
     }
 
-    if (!getEnd()->equal(*configAtParam(getRangeMax())))
+    if (!getEnd()->equal(*configAtParam(getParamMax())))
     {
         cout << "------------------------------------------" << endl;
-        cout << "Error in constructor : !getEnd()->equal(*configAtParam(getRangeMax()))" << endl;
+        cout << "Error in constructor : !getEnd()->equal(*configAtParam(getParamMax()))" << endl;
         getEnd()->print();
-        configAtParam(getRangeMax())->print();
+        configAtParam(getParamMax())->print();
     }
 }
 
@@ -242,7 +242,7 @@ bool Trajectory::operator==( const Trajectory& t ) const
         return false;
     }
 
-    if( getRangeMax() != t.getRangeMax())
+    if( getParamMax() != t.getParamMax())
     {
         return false;
     }
@@ -885,7 +885,7 @@ double Trajectory::costStatistics(TrajectoryStatistics& stat)
 {
     int nb_cost_tests=0; int total_cost_tests=0;
 
-    stat.length = getRangeMax();
+    stat.length = getParamMax();
 
     if( global_costSpace != NULL )
     {
@@ -951,7 +951,7 @@ double Trajectory::costNPoints(const int n_points)
 {
     double s = 0.0;
     double cost = 0.0;
-    double delta = getRangeMax()/double(n_points-1);
+    double delta = getParamMax()/double(n_points-1);
 
     for (int i=0; i<n_points; i++)
     {
@@ -1101,7 +1101,7 @@ vector<confPtr_t> Trajectory::getTowConfigurationAtParam(double param1, double p
     {
         cout << "Error: the parameter is out of band" << endl;
     }
-    if (param2 > getRangeMax() )
+    if (param2 > getParamMax() )
     {
         cout << "Error: the parameter is out of band" << endl;
     }
@@ -1540,7 +1540,7 @@ void Trajectory::draw( int nbKeyFrame )
     if( nbKeyFrame == 0 ){
         nbKeyFrame = 100;
     }
-    double du = getRangeMax() / (nbKeyFrame - 1);
+    double du = getParamMax() / (nbKeyFrame - 1);
     if( du == 0.0 )
         return;
 
@@ -1568,7 +1568,7 @@ void Trajectory::draw( int nbKeyFrame )
     int saveColor;
     bool red = false;
 
-    double range_max = getRangeMax();
+    double range_max = getParamMax();
 
     while ( u <= range_max )
     {
@@ -1608,7 +1608,6 @@ void Trajectory::draw( int nbKeyFrame )
             height_f = pf[2];
         }
         else {
-            cout << "cost space" << endl;
             /*val1 =*/ GHintersectionVerticalLineWithGround( GroundCostObj, pi[0], pi[1], &Cost1 );
             /*val2 =*/ GHintersectionVerticalLineWithGround( GroundCostObj, pf[0], pf[1], &Cost2 );
             height_i = Cost1 + ( ZmaxEnv - ZminEnv ) * 0.02;
@@ -1632,17 +1631,17 @@ void Trajectory::draw( int nbKeyFrame )
         u += du;
     }
 
-    if ((ENV.getBool(Env::isCostSpace)) && (GroundCostObj != NULL))
-    {
-        for(size_t i=0; i<m_Courbe.size(); i++)
-        {
-            m_Robot->setAndUpdate(*m_Courbe[i]->getEnd());
-            pf = drawnjnt->getVectorPos();
-            double colorvector[4];
-            /*val2 =*/ GHintersectionVerticalLineWithGround( GroundCostObj, pf[0], pf[1], &Cost2 );
-            move3d_draw_sphere( pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02, 1. /*, 10*/, colorvector, m_Robot );
-        }
-    }
+//    if ((ENV.getBool(Env::isCostSpace)) && (GroundCostObj != NULL))
+//    {
+//        for(size_t i=0; i<m_Courbe.size(); i++)
+//        {
+//            m_Robot->setAndUpdate(*m_Courbe[i]->getEnd());
+//            pf = drawnjnt->getVectorPos();
+//            double colorvector[4];
+//            /*val2 =*/ GHintersectionVerticalLineWithGround( GroundCostObj, pf[0], pf[1], &Cost2 );
+//            move3d_draw_sphere( pf[0], pf[1], Cost2 + (ZmaxEnv - ZminEnv) * 0.02, 1. /*, 10*/, colorvector, m_Robot );
+//        }
+//    }
 
 //    cout << "Draw trajectory" << endl;
 //    cout << "Draw joint : " << drawnjnt->getName() << ", index : " << p3d_get_user_drawnjnt() << endl;
@@ -1947,11 +1946,11 @@ bool Trajectory::cutTrajInSmallLP(unsigned int nLP)
     //        return false;
     //    }
 
-    //    if (!m_Target->equal(*configAtParam(getRangeMax())))
+    //    if (!m_Target->equal(*configAtParam(getParamMax())))
     //    {
     //        m_Source->print();
     //        m_Target->print();
-    //        configAtParam( getRangeMax() )->print();
+    //        configAtParam( getParamMax() )->print();
     //        cout << "Error" << endl;
     //        return false;
     //    }
@@ -2052,7 +2051,7 @@ bool Trajectory::replacePortion( double param1, double param2, vector<LocalPath*
             break;
         }
         prevSoFar = soFar;
-        if (i == (getRangeMax() - 1))
+        if (i == (getParamMax() - 1))
         {
             cout << "Warning: first parameter not found on trajectory" << endl;
             //			return;
@@ -2169,9 +2168,9 @@ bool Trajectory::replaceBegin( double param, const vector<LocalPath*>& paths )
 {
     uint first(0); uint last(0);
     vector<LocalPath*> new_courbe;
-    cout << "Replace begining at " << param << " over (" << getRangeMax() << ")" << endl;
+    cout << "Replace begining at " << param << " over (" << getParamMax() << ")" << endl;
 
-    pair<bool, vector<LocalPath*> > valid_portion = extractSubPortion( param, getRangeMax(), first, last, false );
+    pair<bool, vector<LocalPath*> > valid_portion = extractSubPortion( param, getParamMax(), first, last, false );
 
     if( valid_portion.first )
     {
@@ -2259,11 +2258,11 @@ int Trajectory::meanCollTest()
 vector<double> Trajectory::getCostAlongTrajectory(int nbSample)
 {
 
-    double step = this->getRangeMax() / (double) nbSample;
+    double step = this->getParamMax() / (double) nbSample;
 
     vector<double> cost;
 
-    for( double param=0; param<this->getRangeMax(); param = param + step)
+    for( double param=0; param<this->getParamMax(); param = param + step)
     {
         cost.push_back(this->configAtParam(param)->cost());
         //        cout << this->configAtParam(param)->cost() << endl;
@@ -2363,7 +2362,7 @@ void Trajectory::print() const
 {
     cout << "-------------- Trajectory --------------" << endl;
     cout << " Number of LP " << m_Courbe.size() << endl;
-    cout << " Range Parameter " << this->getRangeMax() << endl;
+    cout << " Range Parameter " << this->getParamMax() << endl;
 
     Eigen::MatrixXd mat = getEigenMatrix();
     cout << mat << endl;

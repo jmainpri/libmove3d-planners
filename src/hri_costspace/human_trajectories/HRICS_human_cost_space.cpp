@@ -50,6 +50,10 @@ HRICS::HumanTrajCostSpace* global_ht_cost_space = NULL;
 
 bool HRICS_init_human_trajectory_cost()
 {
+    cout << "---------------------------------------------" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
+    cout << "---------------------------------------------" << endl;
+
     if( global_ht_cost_space == NULL )
     {
         std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
@@ -82,11 +86,12 @@ bool HRICS_init_human_trajectory_cost()
         global_ht_cost_space = new HumanTrajCostSpace( human2, human1 );
 
         // Define cost functions
-        global_costSpace->addCost( "costHumanTrajecoryCost" , boost::bind( &HumanTrajCostSpace::cost, global_ht_cost_space, _1) );
+        cout << " add cost : " << "costHumanTrajectoryCost" << endl;
+        global_costSpace->addCost( "costHumanTrajectoryCost" , boost::bind( &HumanTrajCostSpace::cost, global_ht_cost_space, _1) );
     }
 
     ENV.setBool( Env::isCostSpace, true );
-    global_costSpace->setCost( "costHumanTrajecoryCost" );
+    global_costSpace->setCost( "costHumanTrajectoryCost" );
 
     cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
 
@@ -309,12 +314,15 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
 
     w_ = getFeatures(*human_active_->getCurrentPos());
 
-    for(int i=0;i<w_.size();i++)
-    {
-        w_[i] = 1;
-    }
+//    for(int i=0;i<w_.size();i++)
+//    {
+//        w_[i] = 1;
+//    }
 
+    addFeatureFunction( &smoothness_feat_ );
     addFeatureFunction( &dist_feat_ );
+
+    w_ = getWeights();
 
     cout << "HUMAN FEATURE SPACE : " << w_.size() << endl;
 }

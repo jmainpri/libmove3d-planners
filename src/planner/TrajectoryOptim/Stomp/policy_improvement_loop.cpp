@@ -134,6 +134,7 @@ namespace stomp_motion_planner
         num_reused_rollouts_ = 5;
 
 
+
         noise_decay_.clear();
         noise_decay_.resize(num_dimensions_,.99);
 
@@ -158,7 +159,7 @@ namespace stomp_motion_planner
         // node_handle_.param("use_cumulative_costs", use_cumulative_costs_, true);
 
         num_rollouts_ = 10;
-        num_reused_rollouts_ = 0;
+        num_reused_rollouts_ = 5;
         //num_time_steps_ = 51;
 
 
@@ -460,7 +461,7 @@ namespace stomp_motion_planner
 
         Move3D::Trajectory traj(confs);
 
-        double step = traj.getRangeMax() / num_time_steps_;
+        double step = traj.getParamMax() / num_time_steps_;
         double param = step;
         for ( int j=1; j<num_time_steps_-1; ++j)
         {
@@ -562,7 +563,7 @@ namespace stomp_motion_planner
 
         traj.runShortCut(15);
 
-        double step = traj.getRangeMax() / num_time_steps_;
+        double step = traj.getParamMax() / num_time_steps_;
         double param = step;
         for ( int j=1; j<num_time_steps_-1; ++j)
         {

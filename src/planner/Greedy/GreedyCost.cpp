@@ -118,7 +118,7 @@ bool GreedyCost::run()
         p3d_col_get_dmax(&dmax);
         dmax = ENV.getDouble(Env::dmax);
         cout << "dmax = " << dmax << endl;
-        cout << "RangeMax = " << optimTrj->getRangeMax() << endl;
+        cout << "RangeMax = " << optimTrj->getParamMax() << endl;
 
         cout << "Traj Cost = " << optimTrj->cost() << endl;
 

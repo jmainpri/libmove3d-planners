@@ -135,3 +135,46 @@ void print_joint_mapping( Move3D::Robot* robot )
         }
     }
 }
+
+void print_joint_anchors( Move3D::Robot* robot )
+{
+    if( robot == NULL)
+        return;
+
+    cout << "print joint mapping" << endl;
+
+    for( size_t i=0; i<robot->getNumberOfJoints(); i++)
+    {
+        Move3D::Joint* j = robot->getJoint(i);
+        Move3D::Joint* j_prev = j->getPreviousJoint();
+        if( j_prev == NULL )
+            continue;
+
+//        Eigen::Transform3d T( j_prev->getMatrixPos().inverse() );
+        Eigen::Vector3d v( j_prev->getVectorPos() );
+
+        cout << "j : " << j->getName() << " , j_prev : " << j_prev->getName() << " \t" << ( j->getVectorPos() - v ) .transpose() << endl;
+    }
+
+    for( size_t j=0; j<robot->getNumberOfJoints(); j++)
+    {
+        p3d_obj* o = robot->getJoint(j)->getP3dJointStruct()->o;
+
+        if( o == NULL )
+            continue;
+
+        cout << "j : " << robot->getJoint(j)->getName() << endl;
+
+        for( int i=0; i <o->np; i++ )
+        {
+            cout << "name : " << o->name << endl;
+//            cout << i  << ": " << o->jnt->abs_pos[0][3] << " " << o->jnt->abs_pos[1][3] << " " << o->jnt->abs_pos[2][3] << endl;
+            cout << i  << ": " <<  o->pol[i]->pos_rel_jnt[0][3] << " " << o->pol[i]->pos_rel_jnt[1][3] << " " << o->pol[i]->pos_rel_jnt[2][3] << endl;
+            cout << i  << ": " <<  o->pol[i]->pos0[0][3] << " " << o->pol[i]->pos0[1][3] << " " << o->pol[i]->pos0[2][3] << endl;
+
+            p3d_matrix4 t;
+            p3d_matMultXform( o->jnt->abs_pos, o->pol[i]->pos_rel_jnt, t );
+            cout << i  << ": " << t[0][3] << " " << t[1][3]<< " " << t[2][3] << endl;
+        }
+    }
+}

@@ -503,7 +503,7 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
 
             if( g == m_best_path_id )
             {
-                stomp_trajs[g] = current_traj.extractSubTrajectory( parameter, current_traj.getRangeMax(), false );
+                stomp_trajs[g] = current_traj.extractSubTrajectory( parameter, current_traj.getParamMax(), false );
             }
             else
             {
@@ -604,7 +604,7 @@ void HumanPredictionSimulator::runParallelStomp( int iter, int id_goal )
 
         if( id_goal == m_best_path_id )
         {
-            stomp_traj = current_traj.extractSubTrajectory( parameter, current_traj.getRangeMax(), false );
+            stomp_traj = current_traj.extractSubTrajectory( parameter, current_traj.getParamMax(), false );
         }
         else
         {
@@ -669,7 +669,7 @@ void HumanPredictionSimulator::runStandardStomp( int iter, int id_goal  )
 
         if( id_goal == m_best_path_id )
         {
-            optimi_traj = current_traj.extractSubTrajectory( parameter, current_traj.getRangeMax(), false );
+            optimi_traj = current_traj.extractSubTrajectory( parameter, current_traj.getParamMax(), false );
         }
         else
         {
@@ -729,7 +729,7 @@ void HumanPredictionSimulator::execute(const Move3D::Trajectory& path, bool to_e
     for( int i=0;
          (!to_end) ?
          ((i<m_robot_steps_per_exection) && (!PlanEnv->getBool(PlanParam::stopPlanner) )) :
-         (s<path.getRangeMax() && (!PlanEnv->getBool(PlanParam::stopPlanner)));
+         (s<path.getParamMax() && (!PlanEnv->getBool(PlanParam::stopPlanner)));
          i++ )
     {
         q = path.configAtParam( s ); m_executed_path.push_back( q );
@@ -857,7 +857,7 @@ double HumanPredictionSimulator::run()
         {
             const Move3D::Trajectory& traj = m_paths[m_best_path_id];
             const double parameter =  m_robot_steps_per_exection*m_robot_step;
-            execute( traj.extractSubTrajectory( parameter, traj.getRangeMax(), false ), true );
+            execute( traj.extractSubTrajectory( parameter, traj.getParamMax(), false ), true );
         }
     }
 

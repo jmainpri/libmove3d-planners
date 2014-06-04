@@ -155,7 +155,7 @@ bool traj_optim_set_scenario_type()
         }
     }
     else if ( ENV.getBool(Env::isCostSpace) &&
-              global_costSpace->getSelectedCostName() == "costHumanTrajecoryCost" )
+              global_costSpace->getSelectedCostName() == "costHumanTrajectoryCost" )
     {
         if( m_planning_type == MANIPULATION )
         {
@@ -231,6 +231,11 @@ bool traj_optim_initScenario()
     m_robot = global_Project->getActiveScene()->getActiveRobot();
     // m_robot = global_Project->getActiveScene()->getRobotByNameContaining("ROBOT");
 
+    if( global_costSpace )
+        cout << "COST FUNCTION is : " << global_costSpace->getSelectedCostName() << endl;
+    else
+        cout << "NO COST FUNCTION" << endl;
+
     if(!traj_optim_init_collision_spaces( m_sce, m_robot )){
         cout << "Not well initialized" << endl;
         return false;
@@ -273,7 +278,7 @@ bool traj_optim_InitTraj( Move3D::Trajectory& T )
 
     if( m_discretize )
     {
-        nb_points = floor(T.getRangeMax() / m_discretization );
+        nb_points = floor(T.getParamMax() / m_discretization );
     }
     else
     {

@@ -102,7 +102,7 @@ unsigned PerturbationRoadmap::init()
 
 void PerturbationRoadmap::addTrajectory( const Move3D::Trajectory& T )
 {
-    double range_max = T.getRangeMax();
+    double range_max = T.getParamMax();
     m_delta = range_max/20;
 
     Node* node_1 = m_main_compco = _Start;

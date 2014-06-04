@@ -51,4 +51,7 @@ Eigen::VectorXd move3d_lerp( const Eigen::VectorXd& v0, const Eigen::VectorXd& v
 //! Print the joint mapping of a given robot
 void print_joint_mapping( Move3D::Robot* robot );
 
+//! Print joint achors
+void print_joint_anchors( Move3D::Robot* robot );
+
 #endif // MISC_FUNCTIONS_HPP

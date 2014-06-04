@@ -376,7 +376,7 @@ bool StompOptimizer::initializeFromNewTrajectory(const Move3D::Trajectory& traj)
         return false;
     }
     
-    double s(0.0), param_max(traj.getRangeMax()), step(param_max/num_vars_free_);
+    double s(0.0), param_max(traj.getParamMax()), step(param_max/num_vars_free_);
     
     vector<confPtr_t> configs;
     
@@ -2192,7 +2192,7 @@ bool StompOptimizer::replaceEndWithNewConfiguration()
     // Generate new trajectory
     Move3D::CostOptimization T( robot_model_ );
     setGroupTrajectoryToApiTraj( T );
-    double step = T.getRangeMax()/20;
+    double step = T.getParamMax()/20;
     
     // Try connection
     if( T.connectConfigurationToEnd( target_new_, step ) )
@@ -2209,7 +2209,7 @@ bool StompOptimizer::replaceEndWithNewConfiguration()
         }
 
         double param = 0.0;
-        double step = T.getRangeMax()/(num_vars_free_-1);
+        double step = T.getParamMax()/(num_vars_free_-1);
 
         vector<confPtr_t> vect(num_vars_all_);
         for (int i=start; i<=end; ++i)
@@ -2363,7 +2363,7 @@ double StompOptimizer::computeMove3DCost()
         ith_point++;
     }
     
-    // cout << "T.getRangeMax() : " << T.getRangeMax() << endl;
+    // cout << "T.getParamMax() : " << T.getParamMax() << endl;
     // cout << "T.getNbOfPaths() : " << T.getNbOfPaths() << endl;
     // cout << "T.cost() : " << T.cost() << endl;
     // T.print();
@@ -2414,7 +2414,7 @@ double StompOptimizer::resampleParameters(std::vector<Eigen::VectorXd>& paramete
     PlanEnv->setBool(PlanParam::trajStompComputeColl, true );
     
     // calculate the forward kinematics for the fixed states only in the first iteration:
-    double step = traj.getRangeMax() / (num_vars_free_-1);
+    double step = traj.getParamMax() / (num_vars_free_-1);
     double param = step;
     for (int j=0; j<num_vars_free_; ++j)
     {

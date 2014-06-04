@@ -27,6 +27,7 @@
  */
 #include "HRICS_human_features.hpp"
 #include "API/Graphic/drawModule.hpp"
+#include "planner/planEnvironment.hpp"
 
 #include <boost/bind.hpp>
 #include <iomanip>
@@ -45,30 +46,42 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
     human_active_(active),
     human_passive_(passive)
 {
+    distance_joint_ids_.push_back( human_active_->getJoint("Pelvix")->getId() );       // joint name : Pelvis
+    distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );   // joint name : rWristX
+    distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );      // joint name : rElbowZ
+
+//    distance_joint_ids_.push_back(1); // joint name : Pelvis
+//    distance_joint_ids_.push_back(8); // joint name : rShoulderX
+//    distance_joint_ids_.push_back(12); // joint name : rElbowZ
+//    distance_joint_ids_.push_back(14); // joint name : rWristX
+//    distance_joint_ids_.push_back(17); // joint name : lShoulderX
+//    distance_joint_ids_.push_back(21); // joint name : lElbowZ
+//    distance_joint_ids_.push_back(23); // joint name : lWristX
+
 //    distance_joint_ids_.push_back(0); // joint name : J0
-    distance_joint_ids_.push_back(1); // joint name : Pelvis
+//    distance_joint_ids_.push_back(1); // joint name : Pelvis
 //    distance_joint_ids_.push_back(2); // joint name : TorsoX // USED
 //    distance_joint_ids_.push_back(3); // joint name : TorsoY
 //    distance_joint_ids_.push_back(4); // joint name : TorsoZ
 //    distance_joint_ids_.push_back(5); // joint name : HeadZ
 //    distance_joint_ids_.push_back(6); // joint name : HeadY
 //    distance_joint_ids_.push_back(7); // joint name : HeadX // USED
-    distance_joint_ids_.push_back(8); // joint name : rShoulderX
+//    distance_joint_ids_.push_back(8); // joint name : rShoulderX
 //    distance_joint_ids_.push_back(9); // joint name : rShoulderZ
 //    distance_joint_ids_.push_back(10); // joint name : rShoulderY
 //    distance_joint_ids_.push_back(11); // joint name : rArmTrans
-    distance_joint_ids_.push_back(12); // joint name : rElbowZ
+//    distance_joint_ids_.push_back(12); // joint name : rElbowZ
 //    distance_joint_ids_.push_back(13); // joint name : lPoint
-    distance_joint_ids_.push_back(14); // joint name : rWristX
+//    distance_joint_ids_.push_back(14); // joint name : rWristX
 //    distance_joint_ids_.push_back(15); // joint name : rWristY
 //    distance_joint_ids_.push_back(16); // joint name : rWristZ
-    distance_joint_ids_.push_back(17); // joint name : lShoulderX
+//    distance_joint_ids_.push_back(17); // joint name : lShoulderX
 //    distance_joint_ids_.push_back(18); // joint name : lShoulderZ
 //    distance_joint_ids_.push_back(19); // joint name : lShoulderY
 //    distance_joint_ids_.push_back(20); // joint name : lArmTrans
-    distance_joint_ids_.push_back(21); // joint name : lElbowZ
+//    distance_joint_ids_.push_back(21); // joint name : lElbowZ
 //    distance_joint_ids_.push_back(22); // joint name : lPoint
-    distance_joint_ids_.push_back(23); // joint name : lWristX
+//    distance_joint_ids_.push_back(23); // joint name : lWristX
 //    distance_joint_ids_.push_back(24); // joint name : lWristY
 //    distance_joint_ids_.push_back(25); // joint name : lWristZ
 //    distance_joint_ids_.push_back(26); // joint name : rHipX // USED
@@ -131,6 +144,8 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
                 1.00, 0.80, 1.00, 1.00, 1.00, 0.50, 0.80, 0.80, 0.10;
     }
 
+//    w_ = Eigen::VectorXd::Ones(49);
+
     // Print feature names and weights
     for(size_t i=0; i<distance_names_.size(); i++) {
         cout.precision(2);
@@ -154,12 +169,6 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs )
 {
     FeatureVect count = computeDistances();
-    return count;
-}
-
-FeatureVect DistanceFeature::getFeatureCount(const Move3D::Trajectory& t)
-{
-    FeatureVect count;
     return count;
 }
 
@@ -211,6 +220,108 @@ void DistanceFeature::draw()
 
             move3d_draw_one_line( pos_a[0], pos_a[1], pos_a[2], pos_p[0], pos_p[1], pos_p[2], Blue, NULL );
         }
+}
+
+//-------------------------------------------------------------------
+//-------------------------------------------------------------------
+
+VelocityFeature::VelocityFeature( Move3D::Robot* active ) :
+    Feature(),
+    human_active_(active)
+{
+    human_active_joints_.push_back( human_active_->getJoint("Pelvis") );
+    human_active_joints_.push_back( human_active_->getJoint("rShoulderX") );
+    human_active_joints_.push_back( human_active_->getJoint("rElbowZ") );
+
+    for( int i=0;i<human_active_joints_.size();i++)
+        veclocity_joint_ids_.push_back( human_active_joints_[i]->getId() );
+}
+
+// Compute velocity between two configurations
+std::vector<Eigen::Vector3d> VelocityFeature::getVelocity(const Move3D::Configuration& q_0, const Move3D::Configuration& q_1, double dt )
+{
+    std::vector<Eigen::Vector3d> velocities(veclocity_joint_ids_.size());
+    std::vector<Eigen::Vector3d> pos_0(veclocity_joint_ids_.size());
+    std::vector<Eigen::Vector3d> pos_1(veclocity_joint_ids_.size());
+
+    human_active_->setAndUpdate(q_0);
+
+    for( int i=0;i<veclocity_joint_ids_.size();i++)
+        pos_0[i] = human_active_joints_[i]->getVectorPos();
+
+    human_active_->setAndUpdate(q_1);
+
+    for( int i=0;i<veclocity_joint_ids_.size();i++)
+        pos_1[i] = human_active_joints_[i]->getVectorPos();
+
+    // Get velocities
+    for( int i=0;i<veclocity_joint_ids_.size();i++)
+    {
+        velocities[i] = ( pos_0[i] - pos_1[i] ) / dt;
+    }
+
+    return velocities;
+}
+
+void VelocityFeature::stackVelocities( Move3D::FeatureVect& stack , const std::vector<Eigen::Vector3d>& velocities )
+{
+    stack.resize( veclocity_joint_ids_.size() * 3 );
+
+    if( veclocity_joint_ids_.size() != velocities.size() )
+        return;
+
+    for( int i=0; i<velocities.size(); i++ )
+    {
+
+    }
+}
+
+void VelocityFeature::draw()
+{
+//    for( int i=0;i<veclocity_joint_ids_.size();i++)
+//        pos_0[i] = human_active_joints_[i]->getVectorPos();
+//    q_last_
+}
+
+FeatureVect VelocityFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
+{
+    FeatureVect count;
+    return count;
+}
+
+FeatureVect VelocityFeature::getFeatureCount(const Move3D::Trajectory& traj)
+{
+    FeatureVect count( veclocity_joint_ids_.size() * 3 );
+    FeatureVect feat1( veclocity_joint_ids_.size() * 3 );
+    FeatureVect feat2( veclocity_joint_ids_.size() * 3 );
+
+    double t = 0.0;
+    double t_max = traj.getParamMax();
+    double step = ENV.getDouble(Env::dmax)*PlanEnv->getDouble(PlanParam::costResolution);
+    int n_step = int(t_max/step);
+    if( n_step < 100 ){ // minumum of 100 steps
+        n_step = 100;
+        step = t_max / double(n_step);
+    }
+
+    std::vector<Eigen::Vector3d> velocities(veclocity_joint_ids_.size());
+
+    confPtr_t q_0 = traj.configAtParam(0);
+    confPtr_t q_1 = traj.configAtParam(step);
+
+    for ( int i=0; i<(n_step-1); i++ )
+    {
+        t += step;
+        q_0 = traj.configAtParam(t);
+        q_1 = traj.configAtParam(t+step);
+
+        velocities = getVelocity( *q_0, *q_1, step );
+
+        count += ( (feat1 + feat2) / 2 )  * step;
+        feat1 = feat2;
+    }
+
+    return count;
 }
 
 //-------------------------------------------------------------------

@@ -227,7 +227,7 @@ public:
         return m_Courbe;
     }
     
-    double getRangeMax() const {
+    double getParamMax() const {
         return computeSubPortionRange(m_Courbe);
     }
 

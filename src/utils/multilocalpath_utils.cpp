@@ -265,7 +265,7 @@ bool generatePointsOnTraj()
     double param=0.0;
     double delta = 0.0;
     double density = 4;
-    double step = traj.getRangeMax()/(nb_points*density);
+    double step = traj.getParamMax()/(nb_points*density);
 
     for (int i=0; i<traj.getNbOfPaths(); i++ )
     {
@@ -328,7 +328,7 @@ bool generateSoftMotion()
     //smTraj.plot();
 
     T = m_robot->getCurrentTraj();
-    double delta = T.getRangeMax() / (100-1) ;
+    double delta = T.getParamMax() / (100-1) ;
 
     p3d_multiLocalPath_disable_all_groupToPlan(m_robot->getP3dRobotStruct(), FALSE);
     p3d_multiLocalPath_set_groupToPlan(m_robot->getP3dRobotStruct(), m_UpBodyMLP, 1, FALSE);

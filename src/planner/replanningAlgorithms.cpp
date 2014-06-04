@@ -133,15 +133,15 @@ std::pair<bool,Move3D::Trajectory>  Replanner::concat_to_current_traj(const Move
 
     Move3D::Trajectory concatTraj = m_CurrentTraj.extractSubTrajectory( 0, m_s_switch, false );
 
-    cout << "concatTraj.getRangeMax() : " << concatTraj.getRangeMax() << endl;
+    cout << "concatTraj.getParamMax() : " << concatTraj.getParamMax() << endl;
     cout << "newPortion.getNbOfPaths() : " << newPortion.getNbOfPaths() << endl;
-    cout << "newPortion.getRangeMax() : " << newPortion.getRangeMax() << endl;
+    cout << "newPortion.getParamMax() : " << newPortion.getParamMax() << endl;
 
     if( concatTraj.concat( newPortion ) ) {
         pair.first = true;
         pair.second = concatTraj;
     }
-    cout << "concatTraj.getRangeMax() : " << concatTraj.getRangeMax() << endl;
+    cout << "concatTraj.getParamMax() : " << concatTraj.getParamMax() << endl;
     return pair;
 }
 
@@ -231,7 +231,7 @@ bool SimpleReplanner::init()
         }
         else {
             m_CurrentTraj = p3d_get_last_trajectory();
-            cout << "m_CurrentTraj.getRangeMax() : " << m_CurrentTraj.getRangeMax() << endl;
+            cout << "m_CurrentTraj.getParamMax() : " << m_CurrentTraj.getParamMax() << endl;
         }
     }
         break;
@@ -242,7 +242,7 @@ bool SimpleReplanner::init()
     }
     }
 
-    global_rePlanningEnv->setDrawStep( m_CurrentTraj.getRangeMax()/30 );
+    global_rePlanningEnv->setDrawStep( m_CurrentTraj.getParamMax()/30 );
     global_rePlanningEnv->store_traj_to_draw( m_CurrentTraj, 0 );
     return true;
 }
@@ -408,11 +408,11 @@ void SimpleReplanner::run()
     PlanEnv->setDouble( PlanParam::timeLimitSmoothing, m_t_rep-0.3 );
     cout << "m_t_rep : " << m_t_rep << endl;
     cout << "m_s_switch : " << m_s_switch << endl;
-    cout << "m_CurrentTraj.getRangeMax() : " << m_CurrentTraj.getRangeMax() << endl;
+    cout << "m_CurrentTraj.getParamMax() : " << m_CurrentTraj.getParamMax() << endl;
 
-    Move3D::Trajectory newPortion = m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false);
+    Move3D::Trajectory newPortion = m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getParamMax(), false);
     cout << "newPortion.getNbOfPaths() : " << newPortion.getNbOfPaths() << endl;
-    cout << "newPortion.getRangeMax() : " << newPortion.getRangeMax() << endl;
+    cout << "newPortion.getParamMax() : " << newPortion.getParamMax() << endl;
 
     Move3D::CostOptimization optimTrj( newPortion );
     optimTrj.setStep( m_initial_step/PlanEnv->getDouble(PlanParam::MaxFactor) );
@@ -468,7 +468,7 @@ void RRTReplanner::run()
     PlanEnv->setBool( PlanParam::planWithTimeLimit, true );
     PlanEnv->setDouble(PlanParam::timeLimitPlanning, m_t_rep-0.3 );
 
-    Move3D::Trajectory traj(m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false) );
+    Move3D::Trajectory traj(m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getParamMax(), false) );
 
     double t_init = 0.0;
     double time = 0.0;
@@ -502,7 +502,7 @@ void RRTReplanner::run()
     if( path ) {
         // Cutt the new trajectory in lp average piecese
         Move3D::Trajectory path_( m_robot, path );
-        path_.cutTrajInSmallLPSimple( traj.getRangeMax() / m_lp_avera_length );
+        path_.cutTrajInSmallLPSimple( traj.getParamMax() / m_lp_avera_length );
         concated_traj = concat_to_current_traj( path_ );
         m_planningSucceded = concated_traj.first;
     }
@@ -664,7 +664,7 @@ void HandoverReplanner::run()
     {
         // Cut the new trajectory in lp average piecese
         Move3D::Trajectory final_traj( m_robot, path );
-        cout << "final_traj.getRangeMax() : " << final_traj.getRangeMax() << endl;
+        cout << "final_traj.getParamMax() : " << final_traj.getParamMax() << endl;
 
         std::pair<bool,Move3D::Trajectory> concated_traj = concat_to_current_traj( final_traj );
         global_rePlanningEnv->store_traj_to_draw( final_traj, 0 );
@@ -714,7 +714,7 @@ void StompReplanner::run()
 
     m_idRun++;
     
-    Move3D::Trajectory newPortion = m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false);
+    Move3D::Trajectory newPortion = m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getParamMax(), false);
     if( newPortion.getNbOfPaths() != 0 )
     {
         // Set 0.3 seconds to do the concat traj
@@ -727,7 +727,7 @@ void StompReplanner::run()
 
         // Get the new trajectory and store to draw
         Move3D::Trajectory final_traj = global_optimizer->getBestTraj();
-        cout << "final_traj.getRangeMax() : " << final_traj.getRangeMax() << endl;
+        cout << "final_traj.getParamMax() : " << final_traj.getParamMax() << endl;
         global_rePlanningEnv->store_traj_to_draw( final_traj, 0 );
 
         std::pair<bool,Move3D::Trajectory> concated_traj = concat_to_current_traj( final_traj );
@@ -785,11 +785,11 @@ void AStarReplanner::run()
     timeval tim;
     gettimeofday(&tim, NULL); double t_init=tim.tv_sec+(tim.tv_usec/1000000.0);
 
-    Move3D::Trajectory traj( m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getRangeMax(), false) );
+    Move3D::Trajectory traj( m_CurrentTraj.extractSubTrajectory( m_s_switch, m_CurrentTraj.getParamMax(), false) );
     m_navigation->reset();
 
     Move3D::Trajectory* path_ = m_navigation->computeRobotTrajectory( traj.getBegin(), traj.getEnd() );
-    //  cout << "path length : " << path_->getRangeMax() << endl;
+    //  cout << "path length : " << path_->getParamMax() << endl;
 
     gettimeofday(&tim, NULL); double time=tim.tv_sec+(tim.tv_usec/1000000.0) - t_init;
 
@@ -808,9 +808,9 @@ void AStarReplanner::run()
     {
         // Cut the new trajectory in lp average piecese
         Move3D::Trajectory final_traj = m_robot->getCurrentTraj();
-        final_traj.cutTrajInSmallLPSimple( traj.getRangeMax() / m_lp_avera_length );
+        final_traj.cutTrajInSmallLPSimple( traj.getParamMax() / m_lp_avera_length );
         std::pair<bool,Move3D::Trajectory> concated_traj = concat_to_current_traj( final_traj );
-        cout << "path length : " << concated_traj.second.getRangeMax() << endl;
+        cout << "path length : " << concated_traj.second.getParamMax() << endl;
         global_rePlanningEnv->store_traj_to_draw( *path_, 0 );
         delete path_;
 

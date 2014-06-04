@@ -181,6 +181,9 @@ namespace stomp_motion_planner
         //assert(preAllocateTempVariables());
         //assert(preComputeProjectionMatrices());
 
+
+        cout << "num_reused_rollouts : " << num_reused_rollouts << endl;
+
         preAllocateMultivariateGaussianSampler();
         setNumRollouts( num_rollouts, num_reused_rollouts, num_extra_rollouts );
         preAllocateTempVariables();
@@ -522,9 +525,9 @@ namespace stomp_motion_planner
                 //  cout << "rollouts_(" << r << ") cost : " << rollouts_[r].getCost() << " , stored cost : "  << rollout_costs_total_[r] << endl;
 
                 // discard out of bounds rollouts
-                if ( rollouts_[r].out_of_bounds_ ) {
-                    cost = std::numeric_limits<double>::max();
-                }
+//                if ( rollouts_[r].out_of_bounds_ ) {
+//                    cost = std::numeric_limits<double>::max();
+//                }
                 // cout << "rollout_cost_sorter_(" << r << ") cost : " << cost << endl;
                 rollout_cost_sorter_.push_back(std::make_pair(cost,r));
             }
@@ -546,10 +549,8 @@ namespace stomp_motion_planner
             }
             std::sort(rollout_cost_sorter_.begin(), rollout_cost_sorter_.end());
 
-            //      for (int r=0; r<num_rollouts_reused_; r++)
-            //      {
-            //        cout << "reused_rollouts_(" << r << ") cost : " << reused_rollouts_[r].getCost() << endl;
-            //      }
+//            for (int r=0; r<num_rollouts_reused_; r++)
+//                cout << "reused_rollouts_(" << r << ") cost : " << reused_rollouts_[r].getCost() << endl;
 
             // use the best ones: (copy them into reused_rollouts)
             for (int r=0; r<num_rollouts_reused_; ++r)
@@ -557,7 +558,7 @@ namespace stomp_motion_planner
                 double reuse_index = rollout_cost_sorter_[r].second;
                 // double reuse_cost = rollout_cost_sorter_[r].first;
 
-                // cout <<  "Reuse "<< r << ", cost = " << rollout_cost_sorter_[r].first << endl;
+//                cout <<  "Reuse "<< r << ", cost = " << rollout_cost_sorter_[r].first << endl;
 
                 if (reuse_index >=0)
                     reused_rollouts_[r] = rollouts_[reuse_index];
@@ -864,7 +865,7 @@ namespace stomp_motion_planner
             traj.push_back(q);
         }
 
-        double step = traj.getRangeMax() / num_time_steps_;
+        double step = traj.getParamMax() / num_time_steps_;
         double param = step;
         for ( int j=1; j<num_time_steps_-1; ++j)
         {

@@ -270,7 +270,7 @@ Move3D::Trajectory* CostmapPlanner::getTrajectoryAndComputeCost()
 		(*_draw_func)();
 	}
 	
-	//traj->getRangeMax()/;
+	//traj->getParamMax()/;
 	
 	return traj;
 }

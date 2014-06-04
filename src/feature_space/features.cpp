@@ -165,17 +165,19 @@ FeatureVect Feature::getFeatureCount( const Move3D::Trajectory& traj )
 //    for(; t <= t_max; i++ )
 //    {
 //        confPtr_t q = traj.configAtParam( t );
-
 //        double powerOnIntegral = 1.0;
-
 //        phi += getFeatures( *q )*step;
 //        t += step;
 //    }
 
     double t = 0.0;
-    double t_max = traj.getRangeMax();
+    double t_max = traj.getParamMax();
     double step = ENV.getDouble(Env::dmax)*PlanEnv->getDouble(PlanParam::costResolution);
     int n_step = int(t_max/step);
+    if( n_step < 100 ){ // minumum of 100 steps
+        n_step = 100;
+        step = t_max / double(n_step);
+    }
 
     confPtr_t q = traj.configAtParam(0.0);
     FeatureVect feat1 = getFeatures( *q );
@@ -192,8 +194,7 @@ FeatureVect Feature::getFeatureCount( const Move3D::Trajectory& traj )
 //    cout << "Range = " << t_max << endl;
 //    cout << "step = " << step << endl;
 //    cout << "n_step = " << n_step << endl;
-
-    // cout << "ith computation for integral : " << i << endl;
+//    cout << "phi : " << phi.transpose() << endl;
 
     return phi;
 }
@@ -206,6 +207,10 @@ FeatureVect Feature::getFeatureCount( Move3D::LocalPath& path, int& nb_calls )
     double t_max = path.getParamMax();
     double step = ENV.getDouble(Env::dmax)*PlanEnv->getDouble(PlanParam::costResolution);
     int n_step = int(t_max/step);
+    if( n_step < 5 ){ // minumum of 5 steps
+        n_step = 5;
+        step = t_max / double(n_step);
+    }
 
     confPtr_t q = path.configAtParam(0.0);
     FeatureVect feat1 = getFeatures( *q );
@@ -360,6 +365,7 @@ FeatureVect StackedFeatures::getFeatureCount(const Move3D::Trajectory& t)
         FeatureVect fi = feature_stack_[i]->getFeatureCount(t);
         f.segment( height, fi.size() ) = fi;
         height += fi.size();
+//        cout << "feature i : " << fi.transpose() << endl;
     }
 
     return f;

@@ -168,7 +168,7 @@ bool Smoothing::oneLoopShortCut( )
                 cout << "ERROR in " << __PRETTY_FUNCTION__ << endl;
 			}
 			
-			if (!getEnd()->equal(*configAtParam(getRangeMax()))) {
+			if (!getEnd()->equal(*configAtParam(getParamMax()))) {
                 cout << "ERROR in " << __PRETTY_FUNCTION__<< endl;
 			}
 			
@@ -261,7 +261,7 @@ bool Smoothing::oneLoopShortCutRecompute()
           cout << "ERROR" << endl;
         }
         
-        if (!getEnd()->equal(*configAtParam(getRangeMax())))
+        if (!getEnd()->equal(*configAtParam(getParamMax())))
         {
           cout << "ERROR" << endl;
         }
@@ -579,7 +579,7 @@ void Smoothing::debugShowTraj(double lPrev,double lNext)
 	global_trajToDraw.at(0) = extractSubTrajectory(0,lPrev);
 	global_trajToDraw.at(1) = extractSubTrajectory(lPrev,lNext);
 	global_trajToDraw.at(2) = *new Trajectory(vectConf);
-	global_trajToDraw.at(3) = extractSubTrajectory(lNext,getRangeMax());
+	global_trajToDraw.at(3) = extractSubTrajectory(lNext,getParamMax());
 	
 	global_trajToDraw.at(0).setColor(0);
 	global_trajToDraw.at(1).setColor(2);
@@ -709,8 +709,8 @@ vector<shared_ptr<Configuration> > Smoothing::get2RandomConf(double step, double
 				if ( firstDist < 0.0 ) {
 					firstDist = 0.0;
 				}
-				if ( secondDist > getRangeMax() ) {
-					secondDist = getRangeMax();
+				if ( secondDist > getParamMax() ) {
+					secondDist = getParamMax();
 				}
 			}
 			else 
@@ -718,7 +718,7 @@ vector<shared_ptr<Configuration> > Smoothing::get2RandomConf(double step, double
 				// If param is closer to the end of the traj
         // then choose the first dist between the start and the random param
         // else choose the second dist between tne end and the random param
-				if (fabs(param - getRangeMax()) < fabs(param))
+				if (fabs(param - getParamMax()) < fabs(param))
 				{
 					secondDist = param;
 					firstDist = p3d_random( 0 , secondDist );
@@ -726,14 +726,14 @@ vector<shared_ptr<Configuration> > Smoothing::get2RandomConf(double step, double
 				else
 				{
 					firstDist = param;
-					secondDist = p3d_random( firstDist , getRangeMax()) ;
+					secondDist = p3d_random( firstDist , getParamMax()) ;
 				}
 			}
 		}
 		else
 		{
-			firstDist = p3d_random( 0, getRangeMax() );
-			secondDist = p3d_random( firstDist , getRangeMax() );
+			firstDist = p3d_random( 0, getParamMax() );
+			secondDist = p3d_random( firstDist , getParamMax() );
 		}
 		
 		id1 = getLocalPathId(firstDist);
@@ -828,7 +828,7 @@ confPtr_t Smoothing::getRandConfAlongTraj(double& randDist, bool use_bias)
 		randDist = getBiasedParamOnTraj();
 	}
 	else {
-		randDist = p3d_random(0, getRangeMax());
+		randDist = p3d_random(0, getParamMax());
 	}
 	
 	return configAtParam(randDist);
@@ -1015,7 +1015,7 @@ void Smoothing::runShortCut( int nbIteration, int idRun )
 	// Fix the step
   if( m_useAutoStep )
   {
-    m_step = getRangeMax() / PlanEnv->getDouble(PlanParam::MaxFactor) ;
+    m_step = getParamMax() / PlanEnv->getDouble(PlanParam::MaxFactor) ;
   }
 	
   timeval tim;

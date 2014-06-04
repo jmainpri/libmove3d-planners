@@ -223,8 +223,8 @@ void IocSampler::initPolicy()
 
     std::vector<double> derivative_costs(3);
     derivative_costs[0] = 0.0; // velocity
-    derivative_costs[1] = 0.0; // acceleration
-    derivative_costs[2] = 1.0; // smoothness
+    derivative_costs[1] = 1.0; // acceleration
+    derivative_costs[2] = 0.0; // smoothness
 
     // initializes the policy
     policy_.initialize( num_vars_free_, num_joints_, 1.0, 0.0, derivative_costs );
@@ -374,6 +374,8 @@ bool Ioc::setTotalCostsSampleValue( int d, int i, const Eigen::VectorXd& total_c
 
 bool Ioc::jointLimits( IocTrajectory& traj ) const
 {
+    bool is_in_joint_limits = true;
+
     for( int j=0;j<num_joints_;j++)
     {
         double coeff = 1.0;
@@ -388,6 +390,7 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
                 coeff *= 0.90; // 90 percent
                 traj.noise_[j] *= coeff;
                 traj.parameters_[j] = traj.nominal_parameters_[j] +  traj.noise_[j];
+//                is_in_joint_limits = false;
             }
 
             // cout << "Joint limit coefficient : " << coeff << endl;
@@ -398,7 +401,7 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
         traj.parameters_[j].end(1) = traj.nominal_parameters_[j].end(1);
     }
 
-    return true;
+    return is_in_joint_limits;
 }
 
 //void Ioc::pureRandomSampling( int nb_samples )
@@ -452,24 +455,27 @@ void Ioc::generateSamples( int nb_samples )
 
         for (int ns=0; ns<int(samples_[d].size()); ++ns )
         {
-            samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
+//            do
+                samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
 
-            // Sample noisy trajectory
-            Eigen::MatrixXd noisy_traj = sampler_.sample(noise_stddev_);
+                // Sample noisy trajectory
+                Eigen::MatrixXd noisy_traj = sampler_.sample(noise_stddev_);
 
-            for (int j=0; j<num_joints_; ++j)
-            {
-                // Change to generate samples around demonstration
-                if( HriEnv->getBool(HricsParam::ioc_sample_around_demo))
-                    samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].parameters_[j];
-                else
-                    samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].straight_line_[j]; // TODO why commented
+                for (int j=0; j<num_joints_; ++j)
+                {
+                    // Change to generate samples around demonstration
+                    if( HriEnv->getBool(HricsParam::ioc_sample_around_demo))
+                        samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].parameters_[j];
+                    else
+                        samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].straight_line_[j]; // TODO why commented
 
-                samples_[d][ns].noise_[j] = noisy_traj.row(j);
-                samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j].cwiseProduct(samples_[d][ns].total_costs_[j]);
-            }
+                    samples_[d][ns].noise_[j] = noisy_traj.row(j);
+                    samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j].cwiseProduct(samples_[d][ns].total_costs_[j]);
+                }
 
-            //jointLimits( samples_[d][ns] );
+            jointLimits( samples_[d][ns] ) ;
+            // Commented for humans
+//            while( !jointLimits( samples_[d][ns] ) );
         }
     }
 }
@@ -1339,7 +1345,18 @@ void IocEvaluation::runSampling()
     // Compute the sum of gradient
     // double gradient_sum = 0.0;
 
+    cout << "nb_demos : " << demos_.size() << endl;
     cout << "nb_samples : " << nb_samples_ << endl;
+
+    double demo_cost = feature_fct_->getWeights().transpose()*phi_demos_[0];
+
+    cout << "cost " << int(0) << " : " <<  demo_cost << endl;
+    cout << "dist wrist " << phi_demos_[0][0] << endl; //24
+    cout << "length : " << demos_[0].getParamMax() << endl;
+
+    int nb_lower_cost = 0;
+    int nb_lower_feature = 0;
+    int nb_shorter = 0;
 
     // Get samples features
     std::vector< std::vector<Move3D::Trajectory> > samples = ioc.getSamples();
@@ -1352,7 +1369,21 @@ void IocEvaluation::runSampling()
             // cout << "Feature Sample : " << phi.transpose() << endl;
             phi_k[d].push_back( phi );
 
-            global_trajToDraw.push_back( samples[d][i] );
+            double cost = feature_fct_->getWeights().transpose()*phi;
+
+            if( cost < demo_cost )
+                nb_lower_cost++;
+            if( samples[d][i].getParamMax() < demos_[d].getParamMax() )
+                nb_shorter++;
+
+            //cout << "cost " << i << " : " << cost << endl;
+//            cout << "dist wrist " << phi[0] << endl; //24
+//            cout << "length : " << samples[d][i].getParamMax() << endl;
+
+            for( int j=0; j<phi_demos_[d].size(); j++ ){
+                if( phi[j] - phi_demos_[d][j] < 0 )
+                     nb_lower_feature++;
+            }
 
             // gradient_sum += feature_fct_->getJacobianSum( samples[d][i] );
             // cout << "Sample(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
@@ -1360,18 +1391,18 @@ void IocEvaluation::runSampling()
         }
     }
 
+    cout << "nb_lower_cost : " << nb_lower_cost << endl;
+    cout << "nb_lower_feature : " << nb_lower_feature << endl;
+    cout << "nb_shorter : " << nb_shorter << endl;
+
 //    removeDominatedSamplesAndResample( ioc, phi_k );
 
     // checkStartAndGoal( samples );
 
+    ioc.addAllToDraw();
+    saveToMatrixFile( phi_demos_, phi_k, "spheres_features" ); // TODO change name to motion...
 
-
-//    ioc.addAllToDraw();
-//    saveToMatrixFile( phi_demos_, phi_k, "spheres_features" );
-
-
-
-
+    g3d_draw_allwin_active();
 
 //    samples_ = samples[0];
 //    saveTrajectories( samples_ );
@@ -1603,7 +1634,7 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
     {
         setLearnedWeights();
 
-        learned_[i] = planMotion( astar );
+        learned_[i] = planMotion( planner_type_ );
 
         global_trajToDraw.clear();
         global_trajToDraw.push_back( learned_[i] );

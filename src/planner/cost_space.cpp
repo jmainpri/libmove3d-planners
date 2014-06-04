@@ -135,6 +135,14 @@ bool CostSpace::setCost(std::string name)
     }
     else
     {
+        typedef std::map< std::string, boost::function<double(Configuration&) > >::const_iterator MapIterator;
+
+        cout << name << " is : " << mFunctions.count(name) << endl;
+
+        for (MapIterator iter = mFunctions.begin();
+             iter != mFunctions.end(); iter++)
+            cout << "Key: " << iter->first << endl; // << "Values:" << endl;
+
         std::cout << "Warning : in CostSpace::setCost(string name), could not find a cost function named " << name  << std::endl;
         return false;
     }

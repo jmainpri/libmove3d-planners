@@ -344,7 +344,13 @@ void IocSequences::set_features()
     {
         feature_fct_ = global_ht_cost_space;
 
-        feature_fct_ = global_ht_cost_space;
+        // Set all feature active
+        std::vector<int> active_feature;
+        for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
+            active_feature.push_back(i);
+        feature_fct_->setActiveFeatures( active_feature );
+
+        cout << "stack info" << endl;
         feature_fct_->printStackInfo();
 
         cout << "original_vect : " << endl;

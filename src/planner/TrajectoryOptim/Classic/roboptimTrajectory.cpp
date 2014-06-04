@@ -258,7 +258,7 @@ LinearTrajectory* RoboptimFactory::make_Roboptim(Move3D::Trajectory& traj)
 	
 	try
 	{
-			timeRange = LinearTrajectory::makeInterval (0., traj.getRangeMax());
+			timeRange = LinearTrajectory::makeInterval (0., traj.getParamMax());
 	}
 	catch (...)
 	{

@@ -222,11 +222,11 @@ bool CostOptimization::oneLoopDeform()
                     cout << "Error in oneLoopDeform : !getBegin()->equal(*configAtParam(0))" << endl;
                 }
 
-                if (! (*getEnd() == *configAtParam(getRangeMax()))) {
+                if (! (*getEnd() == *configAtParam(getParamMax()))) {
                     cout << "------------------------------------------" << endl;
-                    cout << "Error in oneLoopDeform : !getEnd()->equal(*configAtParam(getRangeMax()))" << endl;
+                    cout << "Error in oneLoopDeform : !getEnd()->equal(*configAtParam(getParamMax()))" << endl;
                     getEnd()->print();
-                    configAtParam(getRangeMax())->print();
+                    configAtParam(getParamMax())->print();
                 }
 
                 isOptimSuccess = true;
@@ -377,9 +377,9 @@ bool CostOptimization::oneLoopDeformRecompute()
                         cout << "Error in oneLoopDeform : !getBegin()->equal(*configAtParam(0))" << endl;
                     }
 
-                    if ( *getEnd() != *configAtParam(getRangeMax()) )
+                    if ( *getEnd() != *configAtParam(getParamMax()) )
                     {
-                        cout << "Error in oneLoopDeform : !getEnd()->equal(*configAtParam(getRangeMax()))" << endl;
+                        cout << "Error in oneLoopDeform : !getEnd()->equal(*configAtParam(getParamMax()))" << endl;
                     }
 
                     isOptimSuccess = true;
@@ -564,7 +564,7 @@ void CostOptimization::debugShowTraj(double lPrev, double lNext, confPtr_t qNew,
     global_trajToDraw.at(0) = extractSubTrajectory(0, lPrev);
     global_trajToDraw.at(1) = extractSubTrajectory(lPrev, lNext);
     global_trajToDraw.at(2) = *new Trajectory(vectConf);
-    global_trajToDraw.at(3) = extractSubTrajectory(lNext, getRangeMax());
+    global_trajToDraw.at(3) = extractSubTrajectory(lNext, getParamMax());
 
     int color_base_traj;
 
@@ -657,7 +657,7 @@ int nb_runs = 0;
 vector<confPtr_t> CostOptimization::getClosestConfOnTraj(double& prevDistPt, double& randDistPt, double& nextDistPt, confPtr_t ptrConf, double step)
 {
     const int N = 30;
-    double delta = this->getRangeMax() / (double)N;
+    double delta = this->getParamMax() / (double)N;
 
     // Gets 30 configurations at a step delta
     vector<confPtr_t> vectConf = getNConfAtParam(delta);
@@ -725,14 +725,14 @@ vector<confPtr_t> CostOptimization::getClosestConfOnTraj(double& prevDistPt, dou
         prevDistPt = 0;
 
     nextDistPt = randDistPt + step;
-    if (nextDistPt > getRangeMax())
-        nextDistPt = getRangeMax();
+    if (nextDistPt > getParamMax())
+        nextDistPt = getParamMax();
 
     if (ENV.getBool(Env::debugCostOptim))
     {
         cout << "nbOfDelta = " << nbOfDelta << endl;
         cout << "step = " << step << endl;
-        cout << "getRangeMax() = " << getRangeMax() << endl;
+        cout << "getParamMax() = " << getParamMax() << endl;
         cout << "prevDistPt = " << prevDistPt << endl;
         cout << "randDistPt = " << randDistPt << endl;
         cout << "nextDistPt = " << nextDistPt << endl;
@@ -758,7 +758,7 @@ vector<confPtr_t> CostOptimization::get3RandSuccesConfAlongTraj(double& prevDist
     // The other configuration are selected at a given
     // step before and after the random configuration
     prevDist = std::max( 0.0, randDist - step/2 );
-    nextDist = std::min( getRangeMax(), randDist + step/2);
+    nextDist = std::min( getParamMax(), randDist + step/2);
 
     vectConf[0] = configAtParam(prevDist);
     vectConf[2] = configAtParam(nextDist);
@@ -776,7 +776,7 @@ vector<confPtr_t> CostOptimization::get3RandSuccesConfAlongTraj(double& prevDist
 bool CostOptimization::connectConfigurationToClosestAtBegin( confPtr_t q, double step, bool consider_valid )
 {
     double param=0.0;
-    double range_max = getRangeMax();
+    double range_max = getParamMax();
     std::pair<double,LocalPath*> best_so_far;
     best_so_far.first = std::numeric_limits<double>::max();
     best_so_far.second = NULL;
@@ -824,7 +824,7 @@ bool CostOptimization::connectConfigurationToClosestAtBegin( confPtr_t q, double
 bool CostOptimization::connectConfigurationToBegin( confPtr_t q, double step, bool consider_cost )
 {
     double param=0.0;
-    double range_max = getRangeMax();
+    double range_max = getParamMax();
     std::pair<double,LocalPath*> best_so_far;
     best_so_far.first = 0.0;
     best_so_far.second = NULL;
@@ -882,7 +882,7 @@ bool CostOptimization::connectConfigurationToBegin( confPtr_t q, double step, bo
 bool CostOptimization::connectConfigurationToEnd( confPtr_t q, double step, bool consider_cost )
 {
     double param=step;
-    double range_max = getRangeMax();
+    double range_max = getParamMax();
     std::pair<double,LocalPath*> best_so_far;
     best_so_far.first = 0.0;
     best_so_far.second = NULL;
@@ -958,7 +958,7 @@ void CostOptimization::runDeformation( int nbIteration, int idRun )
     }
 
     double costBeforeDeformation = this->cost();
-    double initalRange = getRangeMax();
+    double initalRange = getParamMax();
 
     if(PlanEnv->getBool(PlanParam::trajSaveCost))
         storeCostAndGain( costBeforeDeformation, costBeforeDeformation );

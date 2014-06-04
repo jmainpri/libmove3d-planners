@@ -418,7 +418,7 @@ void p3d_smoothing_function( p3d_rob* robotPt, p3d_traj* traj, int nbSteps, doub
 
         optimTrj.replaceP3dTraj();
         optimTrj.resetCostComputed();
-        cout << "optimTrj.getRangeMax() : " << optimTrj.getRangeMax()  << endl;
+        cout << "optimTrj.getParamMax() : " << optimTrj.getParamMax()  << endl;
 
         if( PlanEnv->getBool(PlanParam::trajComputeCostAfterPlannif) )
         {

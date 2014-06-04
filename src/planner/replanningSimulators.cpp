@@ -461,9 +461,9 @@ void ReplanningSimulator::store_traj_to_vect(Move3D::Trajectory& traj, double st
     // print_point( point );
     m_currentLine.push_back( point );
 
-    step = traj.getRangeMax()/20;
+    step = traj.getParamMax()/20;
 
-    for( double t=step; t<traj.getRangeMax(); t += step)
+    for( double t=step; t<traj.getParamMax(); t += step)
     {
         q = *traj.configAtParam(t);
         point[0] = q[6];
@@ -518,8 +518,8 @@ void ReplanningSimulator::store_traj_to_draw(const Move3D::Trajectory& traj, dou
         //    }
 
         double step = m_draw_step;
-        //double step = traj.getRangeMax()/20;
-        double range_max = traj.getRangeMax();
+        //double step = traj.getParamMax()/20;
+        double range_max = traj.getParamMax();
 
         for( double t=0.0; t<(range_max+step); t += step)
         {
@@ -937,7 +937,7 @@ int ReplanningSimulator::execute_softmotion_simulation( int (*fct)(p3d_rob* robo
                 p3d_getMidCVSTimeOnTraj( m_switch_id, t_switch );
 
                 cout << "q switch id : " << m_switch_id << endl;
-                cout << "m_CurrentTraj.geMaxParam() : " << CurrentTraj.getRangeMax() << endl;
+                cout << "m_CurrentTraj.geMaxParam() : " << CurrentTraj.getParamMax() << endl;
 
                 if ( m_switch_id < (CurrentTraj.getNbOfViaPoints()-1) )
                 {
@@ -1073,7 +1073,7 @@ int ReplanningSimulator::execute_simple_simulation( int (*fct)(p3d_rob* robot, p
     // Retreive Current traj & q_switch from replanner
     confPtr_t q_switch;
     Move3D::Trajectory& CurrentTraj = m_replanner->getCurrentTraj();
-    initial_step = CurrentTraj.getRangeMax()/1;
+    initial_step = CurrentTraj.getParamMax()/1;
     m_q_end = CurrentTraj.getEnd();
 
     // Set the executed traj & multi-thread display mode
@@ -1082,9 +1082,9 @@ int ReplanningSimulator::execute_simple_simulation( int (*fct)(p3d_rob* robot, p
 
     // we want the trajectory to execute in 30 seconds
     // the replanning window is estimated with the param factor
-    double paramFactor = CurrentTraj.getRangeMax() / t_total;
+    double paramFactor = CurrentTraj.getParamMax() / t_total;
     s_rep = t_rep * paramFactor;
-    s_max = CurrentTraj.getRangeMax();
+    s_max = CurrentTraj.getParamMax();
     s_switch = s+s_rep;
 
     cout << "q switch id : " << m_switch_id << endl;
@@ -1110,7 +1110,7 @@ int ReplanningSimulator::execute_simple_simulation( int (*fct)(p3d_rob* robot, p
             {
                 if( set_executed_traj_to_current(CurrentTraj) ) {
                     do_switch = true;
-                    s_max = m_ExecuteTraj.getRangeMax();
+                    s_max = m_ExecuteTraj.getParamMax();
                 }
                 else {
                     cout << "Executed traj and current traj differ" << endl;
