@@ -27,6 +27,7 @@
  */
 #include "HRICS_human_features.hpp"
 #include "API/Graphic/drawModule.hpp"
+#include "planner/planEnvironment.hpp"
 
 #include <boost/bind.hpp>
 #include <iomanip>
@@ -47,23 +48,23 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 {
     if ( !active->getUseLibmove3dStruct() ) //We're using OpenRAVE, use different joints
     {
-        distance_joint_ids_.push_back( human_active_->getJoint('PelvisRotX')->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint('rShoulderX')->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint('rElbowZ')->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint('rWristX')->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint('lShoulderX')->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint('lElbowZ')->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint('lWristX')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("PelvisRotX")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("rWristX")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("lShoulderX")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("lElbowZ")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("lWristX")->getId() );
     }
     else    //Using Move3D
     {
-        distance_joint_ids_.push_back( human_active_->getJoint('Pelvis')->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint('rShoulderX')->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint('rElbowZ')->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint('rWristX')->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint('lShoulderX')->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint('lElbowZ')->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint('lWristX')->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("Pelvis")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("rWristX")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("lShoulderX")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("lElbowZ")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("lWristX")->getId() );
     }
 //    distance_joint_ids_.push_back(0); // joint name : J0
 //    distance_joint_ids_.push_back(1); // joint name : Pelvis
