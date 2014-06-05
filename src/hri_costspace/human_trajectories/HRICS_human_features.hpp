@@ -43,6 +43,7 @@ public:
     DistanceFeature( Move3D::Robot* active, Move3D::Robot* passive );
     Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
     Move3D::FeatureVect computeDistances() const;
+    std::vector<std::string> getDistanceNames() { return distance_names_; }
 
     void draw();
 
@@ -72,6 +73,8 @@ public:
 
     // Draw velocities
     void draw();
+
+    Move3D::Robot* getRobot() { return human_active_; }
 
 private:
 

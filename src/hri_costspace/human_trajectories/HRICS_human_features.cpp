@@ -48,23 +48,23 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 {
     if ( !active->getUseLibmove3dStruct() ) //We're using OpenRAVE, use different joints
     {
-        distance_joint_ids_.push_back( human_active_->getJoint("PelvisRotX")->getId() );
+//        distance_joint_ids_.push_back( human_active_->getJoint("PelvisRotX")->getId() );
         distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );
         distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );
         distance_joint_ids_.push_back( human_active_->getJoint("rWristX")->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint("lShoulderX")->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint("lElbowZ")->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint("lWristX")->getId() );
+//        distance_joint_ids_.push_back( human_active_->getJoint("lShoulderX")->getId() );
+//        distance_joint_ids_.push_back( human_active_->getJoint("lElbowZ")->getId() );
+//        distance_joint_ids_.push_back( human_active_->getJoint("lWristX")->getId() );
     }
     else    //Using Move3D
     {
-        distance_joint_ids_.push_back( human_active_->getJoint("Pelvis")->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );
+//        distance_joint_ids_.push_back( human_active_->getJoint("Pelvis")->getId() );
+//        distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );
+//        distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );
         distance_joint_ids_.push_back( human_active_->getJoint("rWristX")->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint("lShoulderX")->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint("lElbowZ")->getId() );
-        distance_joint_ids_.push_back( human_active_->getJoint("lWristX")->getId() );
+//        distance_joint_ids_.push_back( human_active_->getJoint("lShoulderX")->getId() );
+//        distance_joint_ids_.push_back( human_active_->getJoint("lElbowZ")->getId() );
+//        distance_joint_ids_.push_back( human_active_->getJoint("lWristX")->getId() );
     }
 //    distance_joint_ids_.push_back(0); // joint name : J0
 //    distance_joint_ids_.push_back(1); // joint name : Pelvis
@@ -137,7 +137,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
             distance_names_.push_back( name );
         }
 
-    int nb_of_features = distance_joint_ids_.size() * distance_joint_ids_.size();
+    int nb_of_features = distance_names_.size();
 
     w_ = Eigen::VectorXd::Ones( nb_of_features );
 
@@ -179,10 +179,11 @@ FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int
     return count;
 }
 
+
 FeatureVect DistanceFeature::computeDistances() const
 {
-    FeatureVect dist( distance_joint_ids_.size() * distance_joint_ids_.size() );
-    FeatureVect joints_dist( distance_joint_ids_.size() * distance_joint_ids_.size() );
+    FeatureVect dist( distance_names_.size() );
+    FeatureVect joints_dist( distance_names_.size() );
 
     int k=0;
 
@@ -214,7 +215,8 @@ FeatureVect DistanceFeature::computeDistances() const
 //    cout << "dist is : " << dist.transpose() << endl;
 //    cout << "joint dist : " << joints_dist.transpose() << endl;
 
-    return dist;
+    // Careful return joint dist
+    return joints_dist;
 }
 
 void DistanceFeature::draw()
@@ -222,6 +224,7 @@ void DistanceFeature::draw()
     for(size_t i=0; i<distance_joint_ids_.size(); i++)
         for(size_t j=0; j<distance_joint_ids_.size(); j++)
         {
+
             Eigen::Vector3d pos_a = human_active_joints_[i]->getVectorPos();
             Eigen::Vector3d pos_p = human_passive_joints_[j]->getVectorPos();
 
@@ -236,9 +239,11 @@ VelocityFeature::VelocityFeature( Move3D::Robot* active ) :
     Feature(),
     human_active_(active)
 {
-    human_active_joints_.push_back( human_active_->getJoint("Pelvis") );
-    human_active_joints_.push_back( human_active_->getJoint("rShoulderX") );
-    human_active_joints_.push_back( human_active_->getJoint("rElbowZ") );
+//    human_active_joints_.push_back( human_active_->getJoint("Pelvis") );
+//    human_active_joints_.push_back( human_active_->getJoint("rShoulderX") );
+//    human_active_joints_.push_back( human_active_->getJoint("rElbowZ") );
+
+    human_active_joints_.push_back( human_active_->getJoint("rWristX") );
 
     for( int i=0;i<human_active_joints_.size();i++)
         veclocity_joint_ids_.push_back( human_active_joints_[i]->getId() );
