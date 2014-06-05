@@ -73,7 +73,7 @@ namespace stomp_motion_planner
     
     double getCost();   /**< Gets the rollout cost = state cost + control costs per dimension */
     
-    void printCost();
+    void printCost(double weight=1.0);
     void printProbabilities();
   };
   

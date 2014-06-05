@@ -92,7 +92,7 @@ bool stompContext::initRun( Move3D::Trajectory& T )
         return false;
     }
 
-    if( !T.cutTrajInSmallLP( m_nb_points ) )
+    if( !T.cutTrajInSmallLP( m_nb_points-1 ) )
     {
         cout << "Error in cutTrajInSmallLP" << endl;
         return false;

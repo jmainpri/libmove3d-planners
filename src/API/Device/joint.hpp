@@ -135,6 +135,11 @@ public:
     unsigned int getIndexOfFirstDof() const;
 
     /**
+     * Get Dof Pos in Configuration
+     */
+    std::vector<unsigned int> getDofIndices() const;
+
+    /**
    * Get the id in the joint structure of the robot
    */
     int getId() const { return m_id; }

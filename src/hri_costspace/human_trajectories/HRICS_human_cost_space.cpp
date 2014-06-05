@@ -32,6 +32,7 @@
 
 #include "planner/cost_space.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
+#include "planner/planEnvironment.hpp"
 
 #include "p3d/env.hpp"
 
@@ -82,6 +83,8 @@ bool HRICS_init_human_trajectory_cost()
         //    {
         //        player.play(i);
         //    }
+
+        cout << "create human traj cost space" << endl;
 
         global_ht_cost_space = new HumanTrajCostSpace( human2, human1 );
 
@@ -168,7 +171,7 @@ bool HumanTrajSimulator::init()
 void HumanTrajSimulator::setActiveJoints()
 {
     // Get first joint and change bounds
-    Joint* joint = human_active_->getJoint(1);
+    Joint* joint = human_active_->getJoint( "Pelvis" );
 
     // take only (x, y, z) components of the base
     double bound_trans = 0.05;
@@ -216,20 +219,35 @@ void HumanTrajSimulator::setActiveJoints()
 //    Joint(0), Dof : 22, rElbowZ
 //    Is dof user : (min = -3.14, max = 3.14)
 
-    active_joints_.push_back( 1 ); // Pelvis
+    active_joints_.push_back( human_active_->getJoint( "Pelvis" )->getId() ); // Pelvis
 
-    active_joints_.push_back( 2 ); // TorsoX
-    active_joints_.push_back( 3 ); // TorsoY
-    active_joints_.push_back( 4 ); // TorsoZ
+    active_joints_.push_back( human_active_->getJoint( "TorsoX" )->getId() ); // TorsoX
+    active_joints_.push_back( human_active_->getJoint( "TorsoY" )->getId() ); // TorsoY
+    active_joints_.push_back( human_active_->getJoint( "TorsoZ" ) ->getId()); // TorsoZ
 
-    active_joints_.push_back( 8 ); // rShoulderX
-    active_joints_.push_back( 9 ); // rShoulderZ
-    active_joints_.push_back( 10 ); // rShoulderY
+    active_joints_.push_back( human_active_->getJoint( "rShoulderX" )->getId() ); // rShoulderX
+    active_joints_.push_back( human_active_->getJoint( "rShoulderZ" )->getId() ); // rShoulderZ
+    active_joints_.push_back( human_active_->getJoint( "rShoulderY" )->getId() ); // rShoulderY
 //    active_joints_.push_back( 11 ); // rArmTrans
-    active_joints_.push_back( 12 ); // rElbowZ
+    active_joints_.push_back( human_active_->getJoint( "rElbowZ" )->getId() ); // rElbowZ
 //    active_joints_.push_back(14); // joint name : rWristX
 //    active_joints_.push_back(15); // joint name : rWristY
 //    active_joints_.push_back(16); // joint name : rWristZ
+
+    // SET COST SPACE ACTIVE DOFS
+
+    std::vector<int> active_dofs;
+
+    for( size_t i=0; i<active_joints_.size(); i++ ) // get all active dofs
+    {
+        std::vector<unsigned int> jnt_active_dofs = human_active_->getJoint(active_joints_[i])->getDofIndices();
+        active_dofs.insert( active_dofs.end(), jnt_active_dofs.begin(), jnt_active_dofs.end() );
+    }
+
+    for( size_t i=0; i<cost_space_->getNumberOfFeatureFunctions(); i++ ) // set all features active dofs
+    {
+        cost_space_->getFeatureFunction(i)->setActiveDoFs( active_dofs );
+    }
 }
 
 void HumanTrajSimulator::setHumanColor(Robot* human, int color)
@@ -308,23 +326,39 @@ bool HumanTrajSimulator::run()
 HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     human_active_(active),
     human_passive_(passive),
+    smoothness_feat_(),
     dist_feat_( active, passive )
 {
+    cout << "---------------------------------------------" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
+
     nb_way_points_ = 20;
 
-    w_ = getFeatures(*human_active_->getCurrentPos());
+//    w_ = getFeatures( *human_active_->getCurrentPos() );
+//    smoothness_feat_.setActiveDoFs( acti);
 
-//    for(int i=0;i<w_.size();i++)
-//    {
-//        w_[i] = 1;
-//    }
+    active_dofs_ = std::vector<int>(1,1);
 
-    addFeatureFunction( &smoothness_feat_ );
-    addFeatureFunction( &dist_feat_ );
+    smoothness_feat_.setActiveDoFs( active_dofs_ );
+    smoothness_feat_.setWeights( 0.5*PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight)*WeightVect::Ones(1) );
+
+    dist_feat_.setActiveDoFs( active_dofs_ );
+    dist_feat_.setWeights( PlanEnv->getDouble(PlanParam::trajOptimObstacWeight)*WeightVect::Ones(dist_feat_.getNumberOfFeatures()) );
+
+    if(!addFeatureFunction( &smoothness_feat_ ) ){
+        cout << "Error adding feature smoothness" << endl;
+    }
+    if(!addFeatureFunction( &dist_feat_ )){
+        cout << "Error adding feature distance feature" << endl;
+    }
 
     w_ = getWeights();
 
-    cout << "HUMAN FEATURE SPACE : " << w_.size() << endl;
+    cout << "w_ = " << w_.transpose() << endl;
+
+    printStackInfo();
+
+    cout << "---------------------------------------------" << endl;
 }
 
 HumanTrajCostSpace::~HumanTrajCostSpace()

@@ -102,6 +102,7 @@ public:
     void setActiveFeatures( const std::vector<int>& active_features );
 
     bool addFeatureFunction( Feature* fct );
+    int getNumberOfFeatureFunctions() { return feature_stack_.size(); }
     int getNumberOfFeatures() { return nb_features_; }
 
     void printWeights() const;

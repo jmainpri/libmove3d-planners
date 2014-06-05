@@ -133,6 +133,17 @@ unsigned int Joint::getIndexOfFirstDof() const
     return Move3DJointGetIndexOfFirstDoF( this );
 }
 
+std::vector<unsigned int> Joint::getDofIndices() const
+{
+    std::vector<unsigned int> indices( getNumberOfDof() );
+    int index_of_first_dof = getIndexOfFirstDof();
+
+    for( size_t i=0;i<indices.size();i++)
+        indices[i] = index_of_first_dof+i;
+
+    return indices;
+}
+
 void Joint::setConfigFromDofValues(Configuration& q)
 {
     int nb_of_dofs = getNumberOfDof();

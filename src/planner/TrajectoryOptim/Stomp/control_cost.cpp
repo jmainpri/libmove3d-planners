@@ -49,8 +49,7 @@ const double DIFF_RULES[NUM_DIFF_RULES][DIFF_RULE_LENGTH] = {
 ControlCost::ControlCost()
 {
     diff_rule_length_ = DIFF_RULE_LENGTH;
-    //type_ = vel;
-    type_ = acc;
+    type_ = acc; // Becareful to match covariant_trajectory_policy
     scaling_ = 100;
 }
 
@@ -65,7 +64,8 @@ double ControlCost::cost( const std::vector<Eigen::VectorXd>& control_costs )
     for ( int d=0; d<int(control_costs.size()); ++d )
     {
         Eigen::VectorXd cost_vect =  control_costs[d].segment( diff_rule_length_-1, control_costs[d].size() - 2*(diff_rule_length_-1));
-        // cout << "cost_vect : " << cost_vect.transpose() << endl;
+//        cout.precision(2);
+//         cout << "cost_vect : " << cost_vect.transpose() << endl;
         // cout << "cost_vect.size() : " << cost_vect.size() << endl;
         cost += cost_vect.sum();
     }
@@ -128,7 +128,7 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
 
         control_costs[d] = weight * ( acc_all.cwise()*acc_all );
 
-        // cout << "control_costs[" << d << "] : " << endl << control_costs[d].transpose() << endl;
+//        cout << "control_costs[" << d << "] : " << endl << control_costs[d].transpose() << endl;
     }
 
     return control_costs; // scaling

@@ -285,7 +285,7 @@ bool traj_optim_InitTraj( Move3D::Trajectory& T )
         nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
     }
 
-    T.cutTrajInSmallLP( nb_points );
+    T.cutTrajInSmallLP( nb_points-1 );
     T.replaceP3dTraj();
 
     cout << "End Init traj" << endl;
@@ -304,7 +304,7 @@ bool traj_optim_runChomp()
 
     int nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
 
-    T.cutTrajInSmallLP( nb_points );
+    T.cutTrajInSmallLP( nb_points-1 );
     T.replaceP3dTraj();
 
     g3d_draw_allwin_active();

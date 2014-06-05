@@ -46,7 +46,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
     human_active_(active),
     human_passive_(passive)
 {
-    distance_joint_ids_.push_back( human_active_->getJoint("Pelvix")->getId() );       // joint name : Pelvis
+    distance_joint_ids_.push_back( human_active_->getJoint("Pelvis")->getId() );       // joint name : Pelvis
     distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );   // joint name : rWristX
     distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );      // joint name : rElbowZ
 
@@ -130,11 +130,10 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 
     int nb_of_features = distance_joint_ids_.size() * distance_joint_ids_.size();
 
+    // Default value is 1
     w_ = Eigen::VectorXd::Ones( nb_of_features );
 
-    for( int i=0;i<w_.size();i++)
-        w_[i] = 1.0;
-
+    // Case when w_ is 49 dimensional
     if( w_.size() == 49 )
     {
         w_ <<   0.50, 0.20, 0.60, 1.00, 0.60, 0.30, 1.00, 0.20, 0.70, 0.60,

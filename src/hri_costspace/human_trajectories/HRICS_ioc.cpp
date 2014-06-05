@@ -223,8 +223,8 @@ void IocSampler::initPolicy()
 
     std::vector<double> derivative_costs(3);
     derivative_costs[0] = 0.0; // velocity
-    derivative_costs[1] = 1.0; // acceleration
-    derivative_costs[2] = 0.0; // smoothness
+    derivative_costs[1] = 0.0; // acceleration
+    derivative_costs[2] = 1.0; // smoothness
 
     // initializes the policy
     policy_.initialize( num_vars_free_, num_joints_, 1.0, 0.0, derivative_costs );
@@ -385,12 +385,18 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
 
         for( int i=0;i<num_vars_;i++)
         {
+            int nb_attempt = 0;
             while( traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max )
             {
                 coeff *= 0.90; // 90 percent
                 traj.noise_[j] *= coeff;
                 traj.parameters_[j] = traj.nominal_parameters_[j] +  traj.noise_[j];
-//                is_in_joint_limits = false;
+
+                if( nb_attempt++ > 100 ){
+                    is_in_joint_limits = false;
+                    break;
+                    cout << "not in limits" << endl;
+                }
             }
 
             // cout << "Joint limit coefficient : " << coeff << endl;
@@ -455,9 +461,10 @@ void Ioc::generateSamples( int nb_samples )
 
         for (int ns=0; ns<int(samples_[d].size()); ++ns )
         {
-//            do
-                samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
+            samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
 
+            do
+            {
                 // Sample noisy trajectory
                 Eigen::MatrixXd noisy_traj = sampler_.sample(noise_stddev_);
 
@@ -472,10 +479,9 @@ void Ioc::generateSamples( int nb_samples )
                     samples_[d][ns].noise_[j] = noisy_traj.row(j);
                     samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j].cwiseProduct(samples_[d][ns].total_costs_[j]);
                 }
-
-            jointLimits( samples_[d][ns] ) ;
+            }
             // Commented for humans
-//            while( !jointLimits( samples_[d][ns] ) );
+            while( !jointLimits( samples_[d][ns] ) );
         }
     }
 }
@@ -1063,6 +1069,7 @@ void IocEvaluation::generateDemonstrations()
         ss << folder_ << "trajectory_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << i << ".traj";
 
         cout << "save demo " << i << " : " << ss.str() << endl;
+        cout << "nb of via points  : " << demos[i].getNbOfViaPoints() << endl;
         p3d_save_traj( ss.str().c_str(), robot_->getP3dRobotStruct()->tcur );
 
         saveTrajToMatlab( demos[i], i );
@@ -1096,25 +1103,19 @@ void IocEvaluation::loadDemonstrations()
             return;
         }
         else {
-            cout << "p3d trajectory loaded correctly, cuttin in " << nb_way_points_ << " way points" << endl;
+            cout << "p3d trajectory loaded correctly" << endl;
         }
 
         Move3D::Trajectory T = robot_->getCurrentTraj();
 
-//        confPtr_t q_beg = T.configAtParam(0.0);
-//        confPtr_t q_end = T.configAtParam(1000.0);
-
         T.computeSubPortionIntergralCost( T.getCourbe() );
 
-        T.cutTrajInSmallLP(nb_way_points_-1);
-
-//        q_beg->print();
-//        T.configAtParam(0.0)->print();
-
-//        q_end->print();
-//        T.configAtParam(1000.0)->print();
-
-        T.computeSubPortionIntergralCost( T.getCourbe() );
+        if( T.getNbOfViaPoints() != nb_way_points_ ) // Only cut of needed
+        {
+            cout << "cuttin in " << nb_way_points_ << " way points" << endl;
+            T.cutTrajInSmallLP(nb_way_points_-1);
+            T.computeSubPortionIntergralCost( T.getCourbe() );
+        }
 
         T.setColor( i%8 ); cout << "color : " << i%8 << endl;
         global_trajToDraw.push_back(T);

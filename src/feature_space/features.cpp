@@ -396,12 +396,13 @@ bool StackedFeatures::addFeatureFunction( Feature* fct )
     }
     else
     {
+        if( fct->getActiveDoFs().empty() )
+            return false;
+
         for( int i=0;i<int(active_dofs_.size()); i++ )
         {
             if( active_dofs_[i] != fct->getActiveDoFs()[i] )
-            {
                 return false;
-            }
         }
     }
     feature_stack_.push_back( fct );
@@ -468,7 +469,7 @@ void StackedFeatures::printWeights() const
 
 void StackedFeatures::printStackInfo() const
 {
-    cout << "------------------------------" << endl;
+    //cout << "------------------------------" << endl;
     cout << "stack of features : nb of fct ( " << feature_stack_.size() << " )" << endl;
 
     for(int i=0;i<int(feature_stack_.size());i++)
@@ -484,7 +485,7 @@ void StackedFeatures::printStackInfo() const
                                                         feature_stack_[i]->getActiveFeatures().end(),
                                                         j );
 
-            cout << "\t( " << ( it != feature_stack_[i]->getActiveFeatures().end() ) << " , " << w_[j] << " ) ; ";
+            cout << "\t( " << ( it != feature_stack_[i]->getActiveFeatures().end() ) << " , " << w[j] << " ) ; ";
 
             if( (j+1) % 5 == 0 )
                 cout << endl;
@@ -492,7 +493,7 @@ void StackedFeatures::printStackInfo() const
 
         cout << endl;
     }
-    cout << "------------------------------" << endl;
+//    cout << "------------------------------" << endl;
 }
 
 //----------------------------------------------------------------------
@@ -501,35 +502,54 @@ void StackedFeatures::printStackInfo() const
 
 TrajectorySmoothness::TrajectorySmoothness()
 {
-    w_ = Eigen::VectorXd::Zero( 1 ); // Sets the number of feature in the base class
+    w_ = Eigen::VectorXd::Ones( 1 ); // Sets the number of feature in the base class
 }
 
 FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 {
-    FeatureVect f;
+    FeatureVect f(1); // f = Eigen::VectorXd::Zero( 1 );
+
+//    cout << "active_dofs_ : ";
+//    for(int i=0;i<active_dofs_.size();i++) cout << active_dofs_[i] << " ";
+//    cout << endl;
 
     int rows = active_dofs_.size();
     int cols = t.getNbOfViaPoints();
 
-    int diff_rule_length = control_cost_.getDiffRuleLength();
+    cout << "cols : " << cols << endl;
 
-    Eigen::MatrixXd mat( rows, cols + 2*(diff_rule_length-1) );
+    int diff_rule_length = control_cost_.getDiffRuleLength();
 
     Eigen::VectorXd q_init = t.getBegin()->getEigenVector( active_dofs_ );
     Eigen::VectorXd q_goal = t.getEnd()->getEigenVector( active_dofs_ );
 
-    mat.block( 0, diff_rule_length-1, rows, cols ) = t.getEigenMatrix( active_dofs_ );
+    Eigen::MatrixXd mat1 = t.getEigenMatrix( active_dofs_ );
+//    cout << "motion matrix 1" << endl;
+//    cout.precision(2);
+//    cout << mat1 << endl;
 
-    // cout << mat << endl;
+    Eigen::MatrixXd mat2( rows, cols + 2*(diff_rule_length-1) );
+    mat2.block( 0, diff_rule_length-1, rows, cols ) = mat1;
 
-    control_cost_.fillTrajectory( q_init, q_goal, mat );
-    std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat );
+//    cout << "motion matrix 2" << endl;
+//    cout.precision(2);
+//    cout << mat2 << endl;
 
-    // printControlCosts( control_cost );
+    control_cost_.fillTrajectory( q_init, q_goal, mat2 );
 
-    f = Eigen::VectorXd::Zero( 1 );
+//    cout << "motion matrix 3" << endl;
+//    cout.precision(4);
+//    cout << mat2 << endl;
+
+    std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat2 );
+
+//    printControlCosts( control_cost );
+
     f[0] = control_cost_.cost( control_cost );
-    // cout << f << endl;
+
+    cout.precision(6);
+    cout << "size (" << mat2.rows() << ", " << mat2.cols() << ") , control cost : "  << f << endl;
+
     return f;
 }
 
@@ -548,6 +568,7 @@ void TrajectorySmoothness::printControlCosts( const std::vector<Eigen::VectorXd>
         f_tmp += control_cost[i].segment( diff_rule_length-1, size );
     }
 
+    cout.precision(6);
     cout << f_tmp.transpose() << endl;
 }
 

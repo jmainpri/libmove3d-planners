@@ -165,17 +165,22 @@ public:
     bool writeToDisc(const std::string abs_file_name);
     std::string getFileName(const int trial_id);
 
+
     double movement_dt_;
+
+    int num_vars_free_;
+    int num_vars_all_;
 
 private:
 //    ros::NodeHandle node_handle_;
+
+    enum cost_type { vel=0, acc=1, jerk=2 } type_;
 
     std::string file_name_base_;
     bool print_debug_;
 
     int num_time_steps_;
-    int num_vars_free_;
-    int num_vars_all_;
+
     int free_vars_start_index_;
     int free_vars_end_index_;
     int num_dimensions_;
