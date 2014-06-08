@@ -57,8 +57,6 @@ bool HRICS_init_human_trajectory_cost()
 
     if( global_ht_cost_space == NULL )
     {
-        std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
-
         Scene* sce = global_Project->getActiveScene();
         Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );
         Robot* human2 = sce->getRobotByName( "HERAKLES_HUMAN2" );
@@ -71,18 +69,19 @@ bool HRICS_init_human_trajectory_cost()
         global_motionRecorders.push_back( new HRICS::RecordMotion( human1 ) );
         global_motionRecorders.push_back( new HRICS::RecordMotion( human2 ) );
 
+        // std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
         // Set this bool to false is you want to print file names as they are loaded
-        bool quiet = true;
-        global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
-        global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
+//        bool quiet = true;
+//        global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
+//        global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
 
-        // Uncomment the following to play the motion
-        //    PlayMotion player( global_motionRecorders );
-        ////    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
-        //    for(int i=0;i<int(1);i++)
-        //    {
-        //        player.play(i);
-        //    }
+        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/quan_motion";
+        global_motionRecorders[0]->useOpenRAVEFormat( true );
+        global_motionRecorders[1]->useOpenRAVEFormat( true );
+        motion_t traj1 = global_motionRecorders[0]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00000_00000.csv" );
+        motion_t traj2 = global_motionRecorders[1]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00001_00000.csv" );
+        global_motionRecorders[0]->storeMotion( traj1 );
+        global_motionRecorders[1]->storeMotion( traj2 );
 
         cout << "create human traj cost space" << endl;
 
@@ -103,6 +102,16 @@ bool HRICS_init_human_trajectory_cost()
     API_activeFeatureSpace = global_ht_cost_space;
 
     return true;
+}
+
+void HRICS_play_motions()
+{
+    PlayMotion player( global_motionRecorders );
+    //    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
+    for( int i=0; i<int(1); i++ )
+    {
+        player.play(i);
+    }
 }
 
 void HRICS_run_human_planning()

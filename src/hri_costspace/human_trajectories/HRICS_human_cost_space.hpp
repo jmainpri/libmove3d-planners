@@ -113,3 +113,4 @@ extern HRICS::HumanTrajCostSpace* global_ht_cost_space;
 //! main test function for human planning
 void HRICS_run_human_planning();
 bool HRICS_init_human_trajectory_cost();
+void HRICS_play_motions();
