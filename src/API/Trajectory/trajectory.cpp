@@ -721,6 +721,7 @@ double Trajectory::reComputeSubPortionCost(vector<LocalPath*>& portion, int& nb_
 
 double Trajectory::computeSubPortionIntergralCost(const vector<LocalPath*>& portion)
 {
+    cout << __PRETTY_FUNCTION__ << endl;
     double cost(0.0);
     double step = ENV.getDouble(Env::dmax)*PlanEnv->getDouble(PlanParam::costResolution);
     double currentParam(0.0), currentCost, prevCost;
@@ -735,11 +736,13 @@ double Trajectory::computeSubPortionIntergralCost(const vector<LocalPath*>& port
     cout << "step = " << step << endl;
     cout << "n_step = " << n_step << endl;
 
-    for (int i=0; i<n_step;i++ )
+    global_costSpace->setDeltaStepMethod( cs_integral );
+
+    for( int i=0; i<n_step; i++ )
     {
         currentParam += step;
 
-        q = configAtParam(currentParam);
+        q = configAtParam( currentParam );
         currentCost = q->cost();
 
         double delta_cost = global_costSpace->deltaStepCost( prevCost, currentCost, step );
@@ -748,7 +751,23 @@ double Trajectory::computeSubPortionIntergralCost(const vector<LocalPath*>& port
         prevCost = currentCost;
     }
 
-    cout << "cost : " << cost << endl;
+    cout << "cost (1) : " << cost << endl;
+
+    cost = 0.0;
+
+    if( !portion.empty() ) // Approximation if points are dense enough
+    {
+        confPtr_t q_prev = portion[0]->getBegin();
+
+        for( size_t i=0; i<portion.size(); i++ )
+        {
+            confPtr_t q = portion[i]->getEnd();
+            cost += q->cost() * q->dist( *q_prev );
+            q_prev = q;
+        }
+
+        cout << "cost (2) : " << cost << endl;
+    }
 
     return cost;
 }

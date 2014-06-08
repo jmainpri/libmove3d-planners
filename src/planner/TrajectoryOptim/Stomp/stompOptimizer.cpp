@@ -196,7 +196,9 @@ void StompOptimizer::initialize()
     use_handover_auto_ = true;
     recompute_handover_cell_list_ = true;
     handoverGenerator_ = NULL;
-    
+
+    use_collision_free_limit_limit_ = true;
+
     human_has_moved_ = false;
     last_human_pos_.resize(4);
     last_human_pos_[0] = 0;
@@ -280,6 +282,7 @@ void StompOptimizer::initialize()
     }
     
     general_cost_potential_ = Eigen::VectorXd::Zero(num_vars_all_);
+    dt_ = Eigen::VectorXd::Zero(num_vars_all_);
     
     // allocate memory for matrices:
     smoothness_increments_ = Eigen::MatrixXd::Zero(num_vars_free_, num_joints_);
@@ -510,7 +513,7 @@ void StompOptimizer::doChompOptimization()
         {
             for (int j=0; j<num_collision_points_; j++)
             {
-                cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
+                cumulative += collision_point_potential_(i,j) /* collision_point_vel_mag_(i,j)*/;
                 state_collision_cost += cumulative;
             }
         }
@@ -541,7 +544,7 @@ void StompOptimizer::doChompOptimization()
 }
 
 //void StompOptimizer::optimize()
-void StompOptimizer::runDeformation( int nbIteration , int idRun )
+void StompOptimizer::runDeformation( int nbIteration, int idRun )
 {
     ChronoTimeOfDayOn();
     
@@ -715,7 +718,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
         {
             if( cost < best_group_trajectory_cost_ )
             {
-                if ( is_collision_free_)
+                if ( is_collision_free_ )
                 {
                     if( !PlanEnv->getBool(PlanParam::trajStompNoPrint) )
                         cout << "New best" << endl;
@@ -744,6 +747,7 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
             ith_save++;
         }
 
+//        cout << "move3d_cost : " << computeMove3DCost() << endl;
         //last_move3d_cost_ = computeMove3DCost();
 
         double move3d_cost =0.0;
@@ -807,6 +811,15 @@ void StompOptimizer::runDeformation( int nbIteration , int idRun )
             if( iteration_ >= stomp_parameters_->max_iterations_ )
             {
                 cout << "Stopped at iteration (" << iteration_ << "), limit " << stomp_parameters_->max_iterations_ << endl;
+                break;
+            }
+        }
+
+        if( use_collision_free_limit_limit_ )
+        {
+            if( is_collision_free_ )
+            {
+                cout << "Stopped at iteration (" << iteration_ << "), because found collision free" << endl;
                 break;
             }
         }
@@ -1162,13 +1175,13 @@ double StompOptimizer::getCollisionCost()
             double cumulative = 0.0;
             for (int j=0; j<num_collision_points_; j++)
             {
-                cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
+                cumulative += collision_point_potential_(i,j) /* collision_point_vel_mag_(i,j)*/;
                 state_collision_cost += cumulative;
                 // state_collision_cost += collision_point_potential_(i,j);
             }
         }
 
-        collision_cost += state_collision_cost;
+        collision_cost += ( state_collision_cost * dt_[i] );
 
         if (state_collision_cost > worst_collision_cost)
         {
@@ -1191,7 +1204,7 @@ double StompOptimizer::getGeneralCost()
 
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
-        general_cost += pow( general_cost_potential_(i) , hack_tweek );
+        general_cost += (pow( general_cost_potential_(i) , hack_tweek )  * dt_[i] );
     }
 
     // cout << "use_costspace : " << use_costspace_ << endl;
@@ -1238,7 +1251,7 @@ void StompOptimizer::getCostProfiles( vector<double>& smoothness_cost, vector<do
             double cumulative = 0.0;
             for (int j=0; j<num_collision_points_; j++)
             {
-                cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
+                cumulative += collision_point_potential_(i,j) /* collision_point_vel_mag_(i,j) */;
                 state_collision_cost += cumulative;
                 //                state_collision_cost += collision_point_potential_(i,j);
             }
@@ -1539,6 +1552,7 @@ bool StompOptimizer::performForwardKinematics()
     Eigen::VectorXd joint_array;
 
     Configuration q( *robot_model_->getCurrentPos() );
+    Configuration q_prev( robot_model_ );
 
     if( PlanEnv->getBool(PlanParam::useLegibleCost) )
     {
@@ -1580,7 +1594,13 @@ bool StompOptimizer::performForwardKinematics()
         {
             is_collision_free_ = false;
         }
+
+        dt_[i] = ( i == start ) ? group_trajectory_.getDiscretization() : q.dist( q_prev ); // TODO have time here
+        q_prev = q; // store configuration
     }
+
+//    cout << "dt : " << dt_.transpose() << endl;
+//    cout << "dt size : " << dt_.size() << endl;
 
     // Set true for spetial IOC cost
     //    if( /*!HriEnv->getBool(HricsParam::ioc_use_stomp_spetial_cost)*/ true )
@@ -1698,6 +1718,8 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     last_trajectory_collision_free_ = performForwardKinematics();
     last_trajectory_constraints_satisfied_ = true;
 
+    double cost;
+
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
         double state_collision_cost = 0.0;
@@ -1708,7 +1730,7 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
         {
             for (int j=0; j<num_collision_points_; j++)
             {
-                cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
+                cumulative += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j); // Becarful ... with velocity breaks of taken off
                 state_collision_cost += cumulative;
             }
         }
@@ -1717,7 +1739,12 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
             state_general_cost = ( pow( general_cost_potential_(i) , hack_tweek ) /* ( q_f - q_i ).norm() */) ;
         }
 
-        costs(i-free_vars_start_) = stomp_parameters_->getObstacleCostWeight() * state_collision_cost + stomp_parameters_->getGeneralCostWeight() * state_general_cost;
+        cost = 0.0;
+        cost += stomp_parameters_->getObstacleCostWeight() * state_collision_cost;
+        cost += stomp_parameters_->getGeneralCostWeight() * state_general_cost;
+        cost *= dt_[i];
+
+        costs(i-free_vars_start_) = cost;
 
         //cout << "state_collision_cost : " << state_collision_cost << endl;
     }
@@ -1751,7 +1778,7 @@ void StompOptimizer::getTrajectoryCost( std::vector<double>& cost, double step )
         {
             for (int j=0; j<num_collision_points_; j++)
             {
-                state_collision_cost += collision_point_potential_(i,j) * collision_point_vel_mag_(i,j);
+                state_collision_cost += collision_point_potential_(i,j) /* collision_point_vel_mag_(i,j) */;
             }
         }
         else
@@ -2055,7 +2082,7 @@ void StompOptimizer::animateEndeffector(bool print_cost)
     
     if( print_cost )
     {
-        cout << "Move3D Trajectory Cost : " << T.cost() ;
+        cout << "Move3D Trajectory, nb via points : " << T.getNbOfViaPoints() << ", cost : " << T.cost() ;
         if( T.isValid() )
             cout << " and is valid" << endl;
         else
@@ -2395,7 +2422,7 @@ double StompOptimizer::computeMove3DCost()
     // for each point in the trajectory
     for (int i=free_vars_start_; i<=free_vars_end_; ++i)
     {
-        T.push_back(getConfigurationOnGroupTraj(i));
+        T.push_back( getConfigurationOnGroupTraj(i) );
         ith_point++;
     }
     
@@ -2406,7 +2433,8 @@ double StompOptimizer::computeMove3DCost()
     // T.replaceP3dTraj();
     // return T.cost();
     // return T.costNPoints(ith_point);
-    return T.costSum();
+//    return T.costSum();
+    return T.costDeltaAlongTraj();
 }
 
 double StompOptimizer::resampleParameters(std::vector<Eigen::VectorXd>& parameters)

@@ -234,7 +234,7 @@ void initPlannerParameters()
     myDoubleMap.insert( std::make_pair( PlanParam::MaxFactor,                new doubleContainer(3.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::MinStep,                  new doubleContainer(2.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::costTraj,                 new doubleContainer(1.0)));
-    myDoubleMap.insert( std::make_pair( PlanParam::costResolution,           new doubleContainer(0.5)));
+    myDoubleMap.insert( std::make_pair( PlanParam::costResolution,           new doubleContainer(1.0)));
 
     myDoubleMap.insert( std::make_pair( PlanParam::distMinToDraw,            new doubleContainer(0.3)));
     myDoubleMap.insert( std::make_pair( PlanParam::trajStompTimeLimit,       new doubleContainer(7.0)));

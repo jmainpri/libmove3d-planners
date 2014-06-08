@@ -52,7 +52,7 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
     //num_joints_ = robot_model_->getNumberOfJoints();
     num_joints_ = active_joints_.num_joints_;
 
-    duration_ = T.getParamMax();
+    duration_ = T.getParamMax(); // TODO, this should be replaced by time
 
     int number_inital_points = T.getNbOfPaths()+1;
 

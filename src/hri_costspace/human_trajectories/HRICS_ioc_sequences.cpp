@@ -233,7 +233,7 @@ bool IocSequences::run()
             setSamplingFeatures();
 
             eval->loadWeightVector();
-            eval->setLearnedWeights();
+//            eval->setLearnedWeights();
             eval->loadDemonstrations();
             // eval.runLearning();
 

@@ -155,7 +155,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
                         0.50, 0.20, 0.50, 0.50, // 08 -> 11
                         0.50, 0.50, 0.50, 0.20; // 12 -> 15
 
-    w_distance_16 *= 0.0005;
+    w_distance_16 *= 0.005;
 
     if( w_.size() == 16 )
     {
