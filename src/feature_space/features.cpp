@@ -349,7 +349,7 @@ std::vector<Move3D::Trajectory*> Feature::extractAllTrajectories( Move3D::Graph*
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 
-StackedFeatures::StackedFeatures()
+StackedFeatures::StackedFeatures() : Feature("")
 {
     is_stacked_ = true;
     nb_features_ = 0;
@@ -362,7 +362,8 @@ FeatureVect StackedFeatures::getFeatureCount(const Move3D::Trajectory& t)
     int height = 0;
     for( int i=0;i<int(feature_stack_.size()); i++)
     {
-        FeatureVect fi = feature_stack_[i]->getFeatureCount(t);
+        FeatureVect fi ( feature_stack_[i]->is_active_ ? feature_stack_[i]->getFeatureCount( t ) :
+                                                         FeatureVect::Zero(feature_stack_[i]->getNumberOfFeatures() ) );
         f.segment( height, fi.size() ) = fi;
         height += fi.size();
 //        cout << "feature i : " << fi.transpose() << endl;
@@ -378,7 +379,8 @@ FeatureVect StackedFeatures::getFeatures(const Configuration& q, std::vector<int
     int height = 0;
     for( int i=0;i<int(feature_stack_.size()); i++)
     {
-        FeatureVect fi = feature_stack_[i]->getFeatures(q);
+        FeatureVect fi ( feature_stack_[i]->is_active_ ? feature_stack_[i]->getFeatures( q ) :
+                                                         FeatureVect::Zero(feature_stack_[i]->getNumberOfFeatures() ) );
         f.segment( height, fi.size() ) = fi;
         height += fi.size();
     }
@@ -425,12 +427,12 @@ void StackedFeatures::setWeights( const WeightVect& w )
     w_= w;
 }
 
-WeightVect StackedFeatures::getWeights()
+WeightVect StackedFeatures::getWeights() const
 {
     WeightVect w = Eigen::VectorXd::Zero( nb_features_ );
 
     int height = 0;
-    for( int i=0;i<int(feature_stack_.size()); i++)
+    for( size_t i=0;i<feature_stack_.size(); i++)
     {
         WeightVect wi = feature_stack_[i]->getWeights();
         w.segment( height, wi.size() ) = wi;
@@ -440,23 +442,46 @@ WeightVect StackedFeatures::getWeights()
     return w;
 }
 
-void StackedFeatures::setActiveFeatures( const std::vector<int>& active_features )
+void StackedFeatures::setActiveFeatures( const std::vector<int>& features_ids )
 {
-// TODO active feature acros stack
-//    int height = 0;
-//    for( int i=0;i<int(feature_stack_.size()); i++)
-//    {
-//        int num = feature_stack_[i]->getActiveFeatures().size();
-//        Eigen::VectorXd weights = active_features.segment( height, num );
-//        feature_stack_[i]->setWeights( weights );
-//        height += num;
-//    }
+    active_features_= features_ids;
 
-    if( feature_stack_.empty() )
-        return;
+    for( size_t i=0; i<feature_stack_.size(); i++ )
+    {
+        if( std::find( active_features_.begin(), active_features_.end(), i ) != active_features_.end()  )
+        {
+            feature_stack_[i]->is_active_ = true;
+        }
+        else {
+            feature_stack_[i]->is_active_ = false;
+        }
+    }
+}
 
-    feature_stack_[0]->setActiveFeatures( active_features );
-    active_features_= active_features;
+void StackedFeatures::setActiveFeatures( const std::vector<std::string>& active_features_names )
+{
+    std::vector<int> features_ids;
+
+    for( size_t i=0; i<feature_stack_.size(); i++ )
+    {
+        if( std::find( active_features_names.begin(), active_features_names.end(), feature_stack_[i]->getName() )
+                != active_features_names.end()  )
+        {
+            features_ids.push_back( i );
+        }
+    }
+
+    setActiveFeatures( features_ids );
+}
+
+void StackedFeatures::setAllFeaturesActive()
+{
+    std::vector<int> features_ids;
+
+    for( size_t i=0; i<feature_stack_.size(); i++ )
+        features_ids.push_back( i );
+
+    setActiveFeatures( features_ids );
 }
 
 void StackedFeatures::printWeights() const
@@ -467,7 +492,7 @@ void StackedFeatures::printWeights() const
     }
 }
 
-void StackedFeatures::printStackInfo() const
+void StackedFeatures::printInfo() const
 {
     //cout << "------------------------------" << endl;
     cout << "stack of features : nb of fct ( " << feature_stack_.size() << " )" << endl;
@@ -476,7 +501,9 @@ void StackedFeatures::printStackInfo() const
     {
         WeightVect w = feature_stack_[i]->getWeights();
 
-        cout << " -- feature fct " << i << " contains : " << w.size() << " features with ( active, weight ) :" ;
+        cout << " -- feature fct " << i << " " <<  feature_stack_[i]->getName();
+        cout << " is " << ( feature_stack_[i]->is_active_ ? "active" : "deactivated" ) ;
+        cout << ", it contains : " << w.size() << " features with ( active, weight ) :" ;
         cout << endl;
 
         for(int j=0;j<w.size();j++)
@@ -493,14 +520,28 @@ void StackedFeatures::printStackInfo() const
 
         cout << endl;
     }
+
+    cout.precision(10);
+    cout << "w : " << getWeights().transpose() << endl;
 //    cout << "------------------------------" << endl;
+}
+
+Feature* StackedFeatures::getFeatureFunction(std::string name)
+{
+    for(size_t i=0; i<feature_stack_.size(); i++)
+    {
+        if( feature_stack_[i]->getName() == name )
+            return feature_stack_[i];
+    }
+
+    return NULL;
 }
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 // Smoothness cost
 
-TrajectorySmoothness::TrajectorySmoothness()
+TrajectorySmoothness::TrajectorySmoothness() : Feature("Smoothness")
 {
     w_ = Eigen::VectorXd::Ones( 1 ); // Sets the number of feature in the base class
 }
@@ -516,7 +557,7 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
     int rows = active_dofs_.size();
     int cols = t.getNbOfViaPoints();
 
-    cout << "cols : " << cols << endl;
+//    cout << "cols : " << cols << endl;
 
     int diff_rule_length = control_cost_.getDiffRuleLength();
 
@@ -545,12 +586,19 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 
 //    printControlCosts( control_cost );
 
-    f[0] = control_cost_.cost( control_cost );
+    double smoothness_factor = PlanEnv->getDouble( PlanParam::trajOptimSmoothFactor ); // * 1000.0; // for IOC, scale the features between 0.1
+    f[0] = smoothness_factor * control_cost_.cost( control_cost );
 
-    cout.precision(6);
-    cout << "size (" << mat2.rows() << ", " << mat2.cols() << ") , control cost : "  << f << endl;
+//    cout.precision(6);
+//    cout << "size (" << mat2.rows() << ", " << mat2.cols() << ") , control cost : "  << f << endl;
 
     return f;
+}
+
+void TrajectorySmoothness::setWeights( const WeightVect& w )
+{
+    w_ = w;
+    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
 }
 
 void TrajectorySmoothness::printControlCosts( const std::vector<Eigen::VectorXd>& control_cost )
@@ -574,6 +622,7 @@ void TrajectorySmoothness::printControlCosts( const std::vector<Eigen::VectorXd>
 
 FeatureVect TrajectorySmoothness::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
-    FeatureVect count;
+    FeatureVect count(1);
+//    cout << "Get feature smoothness" << endl;
     return count;
 }

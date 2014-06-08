@@ -46,6 +46,9 @@ public:
 
 private:
 
+    void setSamplingFeatures();
+    void setGenerationFeatures();
+
     // IOC PHASES
     enum phase_t { generate=0,
                    sample=1,

@@ -86,7 +86,7 @@ bool FEATURES_init_Clearance_cost()
 // ------------------------------------------------------
 // ------------------------------------------------------
 
-Clearance::Clearance()
+Clearance::Clearance() : Feature("Clearance")
 {
 
 }

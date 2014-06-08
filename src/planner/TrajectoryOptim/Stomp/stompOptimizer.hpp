@@ -481,6 +481,8 @@ private:
 
     int getNumberOfCollisionPoints(Move3D::Robot* R);
 
+
+
     //  void getTorques(int index, std::vector<double>& torques, const std::vector<KDL::Wrench>& wrenches);
 };
 

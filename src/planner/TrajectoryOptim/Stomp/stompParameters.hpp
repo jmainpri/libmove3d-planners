@@ -57,6 +57,7 @@ public:
   int getMaxBestIterations() const;
   double getSmoothnessCostWeight() const;
   double getObstacleCostWeight() const;
+  double getGeneralCostWeight() const;
   double getConstraintCostWeight() const;
   double getTorqueCostWeight() const;
   bool getAnimatePath() const;
@@ -83,8 +84,6 @@ public:
 private:
   int max_iterations_after_collision_free_;
   int max_best_iterations_;
-  double smoothness_cost_weight_;
-  double obstacle_cost_weight_;
   double constraint_cost_weight_;
   double torque_cost_weight_;
   double learning_rate_;
@@ -103,6 +102,9 @@ private:
   bool animate_endeffector_;
   std::string animate_endeffector_segment_;
   bool use_chomp_;
+
+  double smoothness_factor_;
+  double collision_factor_;
 
 };
 

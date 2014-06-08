@@ -37,6 +37,8 @@
 namespace HRICS
 {
 
+extern Move3D::FeatureVect w_distance_16;
+
 class DistanceFeature : public Move3D::Feature
 {
 public:
@@ -83,10 +85,33 @@ private:
     Move3D::confPtr_t q_last_;
 };
 
+class CollisionFeature : public Move3D::Feature
+{
+public:
+    CollisionFeature( Move3D::Robot* robot );
+    Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
+
+    // Set weights
+    void setWeights( const Move3D::WeightVect& w );
+
+    // Compute collision between two configurations
+    double getCollisionCost( const Move3D::Configuration& q );
+
+    //! init collision space
+    bool init();
+
+    // Draw collision
+    void draw();
+
+private:
+
+    Move3D::Robot* robot_;
+};
+
 class VisibilityFeature : public Move3D::Feature
 {
 public:
-    VisibilityFeature() : Feature() {}
+    VisibilityFeature() : Feature("Visbility") {}
     Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
     Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
 };
@@ -94,7 +119,7 @@ public:
 class MuskuloskeletalFeature : public Move3D::Feature
 {
 public:
-    MuskuloskeletalFeature() : Feature() {}
+    MuskuloskeletalFeature() : Feature("Muskuloskeletal") {}
     Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
     Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
 };
@@ -102,7 +127,7 @@ public:
 class ReachabilityFeature : public Move3D::Feature
 {
 public:
-    ReachabilityFeature() : Feature() {}
+    ReachabilityFeature() : Feature("Reachability") {}
     Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
     Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
 };
@@ -110,7 +135,7 @@ public:
 class LegibilityFeature : public Move3D::Feature
 {
 public:
-    LegibilityFeature() : Feature() {}
+    LegibilityFeature() : Feature("Legibility") {}
     Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
     Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
 };

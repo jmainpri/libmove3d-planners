@@ -72,7 +72,7 @@ USING_PART_OF_NAMESPACE_EIGEN
 namespace stomp_motion_planner
 {
     //! Computes the cost the rollout
-    //! the function sums the control costs of all dumensions
+    //! the function sums the control costs of all dimensions
     double Rollout::getCost()
     {
         double cost = state_costs_.sum();
@@ -726,7 +726,7 @@ namespace stomp_motion_planner
     bool PolicyImprovement::computeRolloutControlCosts(Rollout& rollout)
     {
         policy_->computeControlCosts(control_costs_, rollout.parameters_,
-                                     rollout.noise_projected_, 0.5*control_cost_weight_, rollout.control_costs_);
+                                     rollout.noise_projected_, control_cost_weight_, rollout.control_costs_);
         return true;
     }
 
@@ -735,7 +735,7 @@ namespace stomp_motion_planner
         for (int r=0; r<num_rollouts_; ++r)
         {
             computeRolloutControlCosts(rollouts_[r]);
-            rollouts_[r].printCost(0.5*control_cost_weight_);
+            rollouts_[r].printCost(control_cost_weight_);
         }
         return true;
     }

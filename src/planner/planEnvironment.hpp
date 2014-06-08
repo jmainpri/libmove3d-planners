@@ -205,6 +205,9 @@ enum doubleParameter
     trajOptimStdDev,
     trajOptimSmoothWeight,
     trajOptimObstacWeight,
+    trajOptimGlobalWeight,
+    trajOptimSmoothFactor,
+    trajOptimObstacFactor,
     trajReplanningWindow,
     trajReplanningTotalTime,
 

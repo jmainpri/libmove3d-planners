@@ -449,7 +449,7 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
 //    }
 //}
 
-void Ioc::generateSamples( int nb_samples )
+bool Ioc::generateSamples( int nb_samples )
 {
     int nb_demos = getNbOfDemonstrations();
 
@@ -484,6 +484,8 @@ void Ioc::generateSamples( int nb_samples )
             while( !jointLimits( samples_[d][ns] ) );
         }
     }
+
+    return true; // TODO return false when out of bounds
 }
 
 std::vector< std::vector<Move3D::Trajectory> > Ioc::getSamples()
@@ -1205,9 +1207,12 @@ void IocEvaluation::loadWeightVector()
             iss >> learned_vect_[i++];
         }
     }
+    else {
+        cout << "ERROR could not load weights" << endl;
+    }
     file.close();
 
-    // cout << " w : " << learned_vect_.transpose() << endl;
+    cout << " LEARNED weight : " << learned_vect_.transpose() << endl;
 }
 
 std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
@@ -1320,10 +1325,14 @@ void IocEvaluation::runSampling()
 //        cout << "              max : "  << plangroup_->chomp_joints_[i].joint_limit_max_ << endl;
 //    }
 
+    // For human
+    feature_fct_->setAllFeaturesActive();
+
     cout << "Create Ioc" << endl;
     HRICS::Ioc ioc( nb_way_points_, plangroup_ );
 
     cout << "Add demonstrations" << endl;
+
 
     // Get demos features
     phi_demos_ = addDemonstrations( ioc );
@@ -1367,7 +1376,10 @@ void IocEvaluation::runSampling()
         for( int i=0;i<int(samples[d].size());i++)
         {
             FeatureVect phi = feature_fct_->getFeatureCount( samples[d][i] );
-            // cout << "Feature Sample : " << phi.transpose() << endl;
+
+//            cout.precision(4);
+//            cout << "Feature Sample : " << i << " , " << phi.transpose() << endl;
+
             phi_k[d].push_back( phi );
 
             double cost = feature_fct_->getWeights().transpose()*phi;

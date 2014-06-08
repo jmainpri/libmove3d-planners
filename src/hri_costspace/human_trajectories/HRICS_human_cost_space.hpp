@@ -54,6 +54,9 @@ public:
     Move3D::Robot* getActiveHuman() { return human_active_; }
     Move3D::Robot* getPassiveHuman() { return human_passive_; }
 
+    //! init collision space
+    bool initCollisionSpace() { collision_feat_.init(); }
+
 private:
 
     Move3D::Robot* human_active_;
@@ -67,6 +70,7 @@ private:
     MuskuloskeletalFeature musk_feat_;
     ReachabilityFeature reach_feat_;
     LegibilityFeature legib_feat_;
+    CollisionFeature collision_feat_;
 
     Move3D::TrajectorySmoothness smoothness_feat_;
 };

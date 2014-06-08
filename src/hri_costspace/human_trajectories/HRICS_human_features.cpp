@@ -28,6 +28,8 @@
 #include "HRICS_human_features.hpp"
 #include "API/Graphic/drawModule.hpp"
 #include "planner/planEnvironment.hpp"
+#include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
+#include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 
 #include <boost/bind.hpp>
 #include <iomanip>
@@ -38,17 +40,21 @@ using namespace Move3D;
 using std::cout;
 using std::endl;
 
+// Declaration of constant vectors
+namespace HRICS { Move3D::FeatureVect w_distance_16; }
+
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
 
 DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
-    Feature(),
+    Feature("Distance"),
     human_active_(active),
     human_passive_(passive)
 {
     distance_joint_ids_.push_back( human_active_->getJoint("Pelvis")->getId() );       // joint name : Pelvis
-    distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );   // joint name : rWristX
+    distance_joint_ids_.push_back( human_active_->getJoint("rWristX")->getId() );   // joint name : rWristX
     distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );      // joint name : rElbowZ
+    distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );      // joint name : rShoulderX
 
 //    distance_joint_ids_.push_back(1); // joint name : Pelvis
 //    distance_joint_ids_.push_back(8); // joint name : rShoulderX
@@ -143,6 +149,19 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
                 1.00, 0.80, 1.00, 1.00, 1.00, 0.50, 0.80, 0.80, 0.10;
     }
 
+    w_distance_16 = Eigen::VectorXd::Ones( 16 );
+    w_distance_16  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
+                        0.50, 0.20, 0.20, 0.50, // 04 -> 07
+                        0.50, 0.20, 0.50, 0.50, // 08 -> 11
+                        0.50, 0.50, 0.50, 0.20; // 12 -> 15
+
+    w_distance_16 *= 0.0005;
+
+    if( w_.size() == 16 )
+    {
+        w_ =  w_distance_16;
+    }
+
 //    w_ = Eigen::VectorXd::Ones(49);
 
     // Print feature names and weights
@@ -206,7 +225,9 @@ FeatureVect DistanceFeature::computeDistances() const
 //    cout << "dist is : " << dist.transpose() << endl;
 //    cout << "joint dist : " << joints_dist.transpose() << endl;
 
-    return dist;
+    double factor = 3.0 ;
+
+    return factor * dist; // Scaling factor
 }
 
 void DistanceFeature::draw()
@@ -225,7 +246,7 @@ void DistanceFeature::draw()
 //-------------------------------------------------------------------
 
 VelocityFeature::VelocityFeature( Move3D::Robot* active ) :
-    Feature(),
+    Feature("Velocity"),
     human_active_(active)
 {
     human_active_joints_.push_back( human_active_->getJoint("Pelvis") );
@@ -321,6 +342,56 @@ FeatureVect VelocityFeature::getFeatureCount(const Move3D::Trajectory& traj)
     }
 
     return count;
+}
+
+//-------------------------------------------------------------------
+//-------------------------------------------------------------------
+
+CollisionFeature::CollisionFeature( Move3D::Robot* robot ) : Feature("Collision"), robot_(robot)
+{
+    w_ = Eigen::VectorXd::Ones( 1 );
+}
+
+FeatureVect CollisionFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
+{
+    FeatureVect phi(FeatureVect::Zero( 1 ));
+    phi[0] = getCollisionCost( q );
+    return phi;
+}
+
+void CollisionFeature::setWeights( const WeightVect& w )
+{
+    w_ = w;
+    PlanEnv->setDouble( PlanParam::trajOptimObstacWeight, w(0) );
+}
+
+
+bool CollisionFeature::init()
+{
+    return traj_optim_initStomp(); // SUPER UGLY
+}
+
+// Compute collision cost at a certain configuration
+// Suposes the robot is already in configuration
+double CollisionFeature::getCollisionCost( const Move3D::Configuration& q )
+{
+    double cost = 0.0;
+
+    if( ( global_optimizer.get() != NULL ) && ( global_optimizer->getRobot() == robot_ ) )
+    {
+        cost = global_optimizer->getCollisionSpaceCost( *robot_->getCurrentPos() );
+    }
+    else
+    {
+        if( global_optimizer.get() == NULL ){
+            cout << "Error : collision space not initialized" << endl;
+        }
+        else{
+            cout << "Error : robot is not default robot in costspace, " << global_optimizer->getRobot()->getName() << " , " <<  robot_->getName() << endl;
+        }
+    }
+
+    return cost;
 }
 
 //-------------------------------------------------------------------

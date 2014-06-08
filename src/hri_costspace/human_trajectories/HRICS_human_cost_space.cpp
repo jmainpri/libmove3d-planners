@@ -90,13 +90,17 @@ bool HRICS_init_human_trajectory_cost()
 
         // Define cost functions
         cout << " add cost : " << "costHumanTrajectoryCost" << endl;
-        global_costSpace->addCost( "costHumanTrajectoryCost" , boost::bind( &HumanTrajCostSpace::cost, global_ht_cost_space, _1) );
+        global_costSpace->addCost( "costHumanTrajectoryCost", boost::bind( &HumanTrajCostSpace::cost, global_ht_cost_space, _1) );
     }
 
     ENV.setBool( Env::isCostSpace, true );
     global_costSpace->setCost( "costHumanTrajectoryCost" );
 
+    if( !global_ht_cost_space->initCollisionSpace() )
+        cout << "Error : could not init collision space" << endl;
+
     cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
+    API_activeFeatureSpace = global_ht_cost_space;
 
     return true;
 }
@@ -327,7 +331,8 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     human_active_(active),
     human_passive_(passive),
     smoothness_feat_(),
-    dist_feat_( active, passive )
+    dist_feat_( active, passive ),
+    collision_feat_( active )
 {
     cout << "---------------------------------------------" << endl;
     cout << __PRETTY_FUNCTION__ << endl;
@@ -340,13 +345,19 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     active_dofs_ = std::vector<int>(1,1);
 
     smoothness_feat_.setActiveDoFs( active_dofs_ );
-    smoothness_feat_.setWeights( 0.5*PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight)*WeightVect::Ones(1) );
+    smoothness_feat_.setWeights( WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
 
     dist_feat_.setActiveDoFs( active_dofs_ );
-    dist_feat_.setWeights( PlanEnv->getDouble(PlanParam::trajOptimObstacWeight)*WeightVect::Ones(dist_feat_.getNumberOfFeatures()) );
+    // dist_feat_.setWeights( WeightVect::Ones(dist_feat_.getNumberOfFeatures()) );
+
+    collision_feat_.setActiveDoFs( active_dofs_ );
+    collision_feat_.setWeights( WeightVect::Ones(collision_feat_.getNumberOfFeatures()) );
 
     if(!addFeatureFunction( &smoothness_feat_ ) ){
         cout << "Error adding feature smoothness" << endl;
+    }
+    if(!addFeatureFunction( &collision_feat_ )){
+        cout << "Error adding feature distance feature" << endl;
     }
     if(!addFeatureFunction( &dist_feat_ )){
         cout << "Error adding feature distance feature" << endl;
@@ -356,7 +367,8 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
 
     cout << "w_ = " << w_.transpose() << endl;
 
-    printStackInfo();
+    setAllFeaturesActive();
+    printInfo();
 
     cout << "---------------------------------------------" << endl;
 }
