@@ -77,6 +77,7 @@ enum boolParameter
     trajNPoints,
     trajComputeCostAfterPlannif,
     trajOptimTestMultiGauss,
+    trajOptimStopWhenCollisionFree,
 
     withMaxIteration,
     withGainLimit,

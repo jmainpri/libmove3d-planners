@@ -1072,7 +1072,8 @@ void IocEvaluation::generateDemonstrations()
 
         cout << "save demo " << i << " : " << ss.str() << endl;
         cout << "nb of via points  : " << demos[i].getNbOfViaPoints() << endl;
-        p3d_save_traj( ss.str().c_str(), robot_->getP3dRobotStruct()->tcur );
+        // p3d_save_traj( ss.str().c_str(), robot_->getP3dRobotStruct()->tcur );
+        demos[i].saveToFile( ss.str() );
 
         saveTrajToMatlab( demos[i], i );
         cout << "save traj to matlab format!!!!" << endl;
@@ -1099,7 +1100,9 @@ void IocEvaluation::loadDemonstrations()
 
         cout << "Loading demonstration from : " << ss.str() << endl;
 
-        if ( !p3d_read_traj( ss.str().c_str() ) )
+        Move3D::Trajectory T( robot_ );
+
+        if ( !T.loadFromFile( ss.str() ) )//!p3d_read_traj( ss.str().c_str() ) )
         {
             cout << "could not load trajectory" << endl;
             return;
@@ -1108,7 +1111,7 @@ void IocEvaluation::loadDemonstrations()
             cout << "p3d trajectory loaded correctly" << endl;
         }
 
-        Move3D::Trajectory T = robot_->getCurrentTraj();
+        // Move3D::Trajectory T = robot_->getCurrentTraj();
 
         T.computeSubPortionIntergralCost( T.getCourbe() );
 
@@ -1364,6 +1367,14 @@ void IocEvaluation::runSampling()
     cout << "dist wrist " << phi_demos_[0][0] << endl; //24
     cout << "length : " << demos_[0].getParamMax() << endl;
 
+    FeatureVect phi = feature_fct_->getFeatureCount( demos_[0] );
+    cout << "cost : " << feature_fct_->getWeights().transpose()*phi << " , ";
+    cout << "Feature Sample : " << int(-1) << " , " << phi.transpose() << endl;
+
+    Feature* fct = feature_fct_->getFeatureFunction("Distance");
+    if( fct != NULL )
+        cout << "distance cost : " << fct->costTraj( demos_[0] ) << endl;
+
     int nb_lower_cost = 0;
     int nb_lower_feature = 0;
     int nb_shorter = 0;
@@ -1375,10 +1386,7 @@ void IocEvaluation::runSampling()
     {
         for( int i=0;i<int(samples[d].size());i++)
         {
-            FeatureVect phi = feature_fct_->getFeatureCount( samples[d][i] );
-
-//            cout.precision(4);
-//            cout << "Feature Sample : " << i << " , " << phi.transpose() << endl;
+            phi = feature_fct_->getFeatureCount( samples[d][i] );
 
             phi_k[d].push_back( phi );
 
@@ -1389,7 +1397,9 @@ void IocEvaluation::runSampling()
             if( samples[d][i].getParamMax() < demos_[d].getParamMax() )
                 nb_shorter++;
 
-            //cout << "cost " << i << " : " << cost << endl;
+            cout << "cost : " << cost << " , ";
+            //            cout.precision(4);
+            cout << "Feature Sample : " << i << " , " << phi.transpose() << endl;
 //            cout << "dist wrist " << phi[0] << endl; //24
 //            cout << "length : " << samples[d][i].getParamMax() << endl;
 

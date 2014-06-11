@@ -67,6 +67,8 @@ public:
     bool getParametersAll(std::vector<Eigen::VectorXd>& parameters);
     void setFileNameBase(const std::string& file_name_base);
     void setPrintDebug(bool print_debug) { print_debug_ = print_debug; }
+    // Fill the trajectory with start and goal
+    bool fillBufferStartAndGoal();
 
     // Functions inherited from Policy:
 
@@ -201,6 +203,9 @@ private:
     std::vector<Eigen::MatrixXd> differentiation_matrices_;
 
     const Move3D::ChompPlanningGroup* planning_group_;
+
+    Eigen::VectorXd start_;
+    Eigen::VectorXd goal_;
 
     void createDifferentiationMatrices();
     bool readParameters();

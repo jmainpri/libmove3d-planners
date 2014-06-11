@@ -252,7 +252,7 @@ public:
     /**
       * Get Group traj
       */
-    void setGroupTrajectoryToApiTraj(Move3D::Trajectory& traj);
+    void setGroupTrajectoryToMove3DTraj(Move3D::Trajectory& traj);
 
     /**
       * Returns cost profiles

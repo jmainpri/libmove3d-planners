@@ -62,6 +62,7 @@ public:
   double getTorqueCostWeight() const;
   bool getAnimatePath() const;
   double getLearningRate() const;
+  bool getStopWhenCollisionFree() const;
   double getSmoothnessCostVelocity() const;
   double getSmoothnessCostAcceleration() const;
   double getSmoothnessCostJerk() const;
@@ -105,6 +106,7 @@ private:
 
   double smoothness_factor_;
   double collision_factor_;
+  bool stop_when_collision_free_;
 
 };
 
@@ -133,6 +135,11 @@ inline double StompParameters::getTorqueCostWeight() const
 inline double StompParameters::getLearningRate() const
 {
   return learning_rate_;
+}
+
+inline bool StompParameters::getStopWhenCollisionFree()  const
+{
+    return stop_when_collision_free_;
 }
 
 inline bool StompParameters::getAnimatePath() const

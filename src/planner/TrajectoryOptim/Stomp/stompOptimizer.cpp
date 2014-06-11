@@ -183,6 +183,8 @@ void StompOptimizer::initialize()
     cout << "-----------------------------------------------" << endl;
     cout << __PRETTY_FUNCTION__ << endl;
 
+    use_collision_free_limit_limit_ = stomp_parameters_->getStopWhenCollisionFree();
+
     Scene* sce = global_Project->getActiveScene();
     
     //    robot_model_ = group_trajectory_.getRobot();
@@ -196,8 +198,6 @@ void StompOptimizer::initialize()
     use_handover_auto_ = true;
     recompute_handover_cell_list_ = true;
     handoverGenerator_ = NULL;
-
-    use_collision_free_limit_limit_ = true;
 
     human_has_moved_ = false;
     last_human_pos_.resize(4);
@@ -842,7 +842,7 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
 
     // convert to move3d trajectory
     best_traj_ = Move3D::Trajectory( robot_model_ );
-    setGroupTrajectoryToApiTraj( best_traj_ );
+    setGroupTrajectoryToMove3DTraj( best_traj_ );
     best_traj_.replaceP3dTraj();
 
     // Best path cost
@@ -863,7 +863,8 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
 
     TrajectorySmoothness smooth;
     smooth.setActiveDoFs( planning_group_->getActiveDofs() );
-    cout << "smooth.getFeatureCount( best_traj_ ) = " << (stomp_parameters_->getSmoothnessCostWeight()) * smooth.getFeatureCount( best_traj_ ) << endl;
+    cout << "smooth.getFeatureCount( best_traj_ ) = " << ((stomp_parameters_->getSmoothnessCostWeight()/PlanEnv->getDouble( PlanParam::trajOptimSmoothFactor ))
+            * smooth.getFeatureCount( best_traj_ )) << endl;
 
     // Set this anywhere
     //    if( PlanEnv->getBool(PlanParam::drawParallelTraj) && ( global_stompRun != NULL ))
@@ -1143,7 +1144,7 @@ double StompOptimizer::getSmoothnessCost()
     for (int d=0; d<num_joints_; ++d)
     {
         //policy_parameters_[d] = group_trajectory_.getFreeTrajectoryBlock();
-        policy_parameters_[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
+        policy_parameters_[d].segment(1,policy_parameters_[d].size()-2) = group_trajectory_.getFreeJointTrajectoryBlock(d);
         noise[d] = VectorXd::Zero( policy_parameters_[d].size() );
     }
 
@@ -1204,7 +1205,7 @@ double StompOptimizer::getGeneralCost()
 
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
-        general_cost += (pow( general_cost_potential_(i) , hack_tweek )  * dt_[i] );
+        general_cost += ( pow( general_cost_potential_(i) , hack_tweek )  * dt_[i] );
     }
 
     // cout << "use_costspace : " << use_costspace_ << endl;
@@ -1227,7 +1228,7 @@ void StompOptimizer::getCostProfiles( vector<double>& smoothness_cost, vector<do
     for (int d=0; d<num_joints_; ++d)
     {
         //policy_parameters_[d] = group_trajectory_.getFreeTrajectoryBlock();
-        policy_parameters_[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
+        policy_parameters_[d].segment(1,policy_parameters_[d].size()-2) = group_trajectory_.getFreeJointTrajectoryBlock(d);
         noise[d] = VectorXd::Zero( policy_parameters_[d].size() );
     }
 
@@ -1366,7 +1367,8 @@ bool StompOptimizer::handleJointLimits()
                 int free_var_index = max_violation_index - free_vars_start_;
                 double multiplier = max_violation / joint_costs_[joint].getQuadraticCostInverse()(free_var_index,free_var_index);
 
-                group_trajectory_.getFreeJointTrajectoryBlock(joint) += multiplier * joint_costs_[joint].getQuadraticCostInverse().col(free_var_index);
+                group_trajectory_.getFreeJointTrajectoryBlock(joint) +=
+                        (( multiplier * joint_costs_[joint].getQuadraticCostInverse().col(free_var_index)).segment(1,num_vars_free_-2));
                 //                double offset = ( joint_max + joint_min )  / 2 ;
 
                 //                cout << "multiplier : " << multiplier << endl;
@@ -1674,7 +1676,7 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
 
     // copy the parameters into group_trajectory_:
     for (int d=0; d<num_joints_; ++d) {
-        group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
+        group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d].segment(1,parameters[d].size()-2); // The use of segment prevents the dift
     }
     //cout << "group_trajectory_ = " << endl << group_trajectory_.getTrajectory() << endl;
 
@@ -1697,7 +1699,7 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     {
         //cout << "return with joint limits" << endl;
         for (int d=0; d<num_joints_; ++d) {
-            parameters[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
+            parameters[d].segment(1,parameters[d].size()-2) = group_trajectory_.getFreeJointTrajectoryBlock(d);
         }
     }
 
@@ -1707,7 +1709,7 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
         last_move3d_cost_ = resampleParameters( parameters );
 
         for (int d=0; d<num_joints_; ++d) {
-            group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
+            group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d].segment(1,parameters[d].size()-2); // The use of segment prevents the dift
         }
     }
 
@@ -1931,7 +1933,7 @@ void StompOptimizer::setGroupTrajectoryToVectorConfig(vector<confPtr_t>& traj)
     }
 }
 
-void StompOptimizer::setGroupTrajectoryToApiTraj( Move3D::Trajectory& traj )
+void StompOptimizer::setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj )
 {
     int start = free_vars_start_;
     int end = free_vars_end_;
@@ -2254,7 +2256,7 @@ bool StompOptimizer::replaceEndWithNewConfiguration()
     
     // Generate new trajectory
     Move3D::CostOptimization T( robot_model_ );
-    setGroupTrajectoryToApiTraj( T );
+    setGroupTrajectoryToMove3DTraj( T );
     double step = T.getParamMax()/20;
     
     // Try connection
@@ -2561,7 +2563,7 @@ void StompOptimizer::copyPolicyToGroupTrajectory()
     {
         //cout << "group_trajectory_ : " << endl << group_trajectory_.getFreeJointTrajectoryBlock(d) << endl;
         //cout << "policy_parameters_ : " << endl << policy_parameters_[d] << endl;
-        group_trajectory_.getFreeJointTrajectoryBlock(d) = policy_parameters_[d];
+        group_trajectory_.getFreeJointTrajectoryBlock(d) = policy_parameters_[d].segment(1,num_vars_free_-2);
     }
 }
 
@@ -2570,7 +2572,7 @@ void StompOptimizer::copyGroupTrajectoryToPolicy()
     for (int d=0; d<num_joints_; ++d)
     {
         //policy_parameters_[d] = group_trajectory_.getFreeTrajectoryBlock();
-        policy_parameters_[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
+        policy_parameters_[d].segment(1,num_vars_free_-2) = group_trajectory_.getFreeJointTrajectoryBlock(d);
     }
     
     // draw traj
@@ -2593,7 +2595,7 @@ void StompOptimizer::copyGroupTrajectoryToPolicy()
     //    g3d_draw_allwin_active();
     //    cout << "num_time_steps_ : " << policy_parameters_[0].size() << endl;
     
-    policy_->setParameters(policy_parameters_);
+    policy_->setParameters( policy_parameters_ );
 }
 
 void StompOptimizer::setSharedPtr( MOVE3D_BOOST_PTR_NAMESPACE<StompOptimizer>& ptr )

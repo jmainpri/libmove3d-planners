@@ -149,13 +149,16 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
                 1.00, 0.80, 1.00, 1.00, 1.00, 0.50, 0.80, 0.80, 0.10;
     }
 
+
+
     w_distance_16 = Eigen::VectorXd::Ones( 16 );
     w_distance_16  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
                         0.50, 0.20, 0.20, 0.50, // 04 -> 07
                         0.50, 0.20, 0.50, 0.50, // 08 -> 11
                         0.50, 0.50, 0.50, 0.20; // 12 -> 15
 
-    w_distance_16 *= 0.005;
+    w_distance_16 /= 2;
+//    w_distance_16 *= 0.005;
 
     if( w_.size() == 16 )
     {

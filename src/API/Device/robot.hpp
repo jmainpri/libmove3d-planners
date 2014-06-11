@@ -311,6 +311,11 @@ public:
      */
     Joint* getIthActiveDoFJoint(unsigned int ithActiveDoF , unsigned int& ithDofOnJoint  );
 
+    /*
+      * Get all dof ids
+      */
+    std::vector<int> getAllDofIds();
+
 
 #ifdef LIGHT_PLANNER
     /**

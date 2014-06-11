@@ -133,18 +133,15 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
 
     return control_costs; // scaling
 }
+
 void ControlCost::fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj )
 {
-    // we need diff_rule_length-1 extra points on either side
-    // Copy on the left side
-    for (int i=0; i<diff_rule_length_-1; i++)
+    // set the start and end of the trajectory
+    cout  << "diff_rule_length_ : " << diff_rule_length_ << endl;
+    for (int i=0; i<diff_rule_length_-1; ++i)
     {
         traj.col(i) = a;
-    }
-    // Copy on the right side
-    for (int i=(traj.cols()-diff_rule_length_+1); i<traj.cols(); i++)
-    {
-        traj.col(i) = b;
+        traj.col(traj.cols()-1-i) = b;
     }
 }
 

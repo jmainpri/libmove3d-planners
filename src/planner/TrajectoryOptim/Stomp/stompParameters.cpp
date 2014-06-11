@@ -81,6 +81,8 @@ void StompParameters::init()
   // Scaling features for IOC ...
   smoothness_factor_ = PlanEnv->getDouble(PlanParam::trajOptimSmoothFactor); //100.0; // for IOC, scale the features between 0.1
   collision_factor_ = PlanEnv->getDouble(PlanParam::trajOptimObstacFactor);
+
+  stop_when_collision_free_ = PlanEnv->getBool(PlanParam::trajOptimStopWhenCollisionFree);
   
   //smoothness_cost_weight_ = 0.1;
 //  smoothness_cost_weight_ = 0.05;

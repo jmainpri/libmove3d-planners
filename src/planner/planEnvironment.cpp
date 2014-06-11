@@ -105,6 +105,7 @@ void initPlannerParameters()
     myBoolMap.insert( std::make_pair( PlanParam::trajStompWithRRT,           new boolContainer(false)));
     myBoolMap.insert( std::make_pair( PlanParam::trajStompMatrixAdaptation,  new boolContainer(false)));
     myBoolMap.insert( std::make_pair( PlanParam::trajStompNoPrint,           new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( PlanParam::trajOptimStopWhenCollisionFree, new boolContainer(false)));
 
     myBoolMap.insert( std::make_pair( PlanParam::trajBiasOptim,              new boolContainer(false)));
     myBoolMap.insert( std::make_pair( PlanParam::trajMoveHuman,              new boolContainer(false)));

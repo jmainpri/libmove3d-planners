@@ -25,18 +25,14 @@
  *
  *                                               Jim Mainprice Tue 27 May 2014 
  */
-/*
- * trajectory.cpp
- *
- *  Created on: Jun 17, 2009
- *      Author: jmainpri
- */
 
 #include "API/Trajectory/trajectory.hpp"
 #include "API/Graphic/drawModule.hpp"
 #include "API/libmove3d_simple_api.hpp"
 
 #include "planEnvironment.hpp"
+
+#include "utils/misc_functions.hpp"
 
 #include "P3d-pkg.h"
 #include "Graphic-pkg.h"
@@ -2359,6 +2355,43 @@ Eigen::MatrixXd Trajectory::getEigenMatrix(const std::vector<int>& incides) cons
     else{
         return Eigen::MatrixXd(0,0);
     }
+}
+
+bool Trajectory::setFromEigenMatrix(const Eigen::MatrixXd& mat, const std::vector<int>& incides)
+{
+    m_Courbe.clear();
+
+    for (int j=0; j<mat.cols(); j++)
+    {
+        confPtr_t q(new Configuration(m_Robot));
+
+        for (int i=0; i<incides.size(); i++)
+        {
+            (*q)[incides[i]] = mat( i, j );
+        }
+
+        push_back( q );
+    }
+
+    return true;
+}
+
+bool Trajectory::saveToFile(std::string filename)
+{
+    std::vector<int> r_dof_indices = m_Robot->getAllDofIds();
+    Eigen::MatrixXd mat = getEigenMatrix( r_dof_indices );
+    // cout << mat << endl;
+    move3d_save_matrix_to_csv_file( mat, filename );
+    return true;
+}
+
+bool Trajectory::loadFromFile(std::string filename)
+{
+    std::vector<int> r_dof_indices = m_Robot->getAllDofIds();
+    Eigen::MatrixXd mat = move3d_load_matrix_from_csv_file( filename );
+    // cout << mat << endl;
+    setFromEigenMatrix( mat, r_dof_indices );
+    return true;
 }
 
 void Trajectory::printAllLocalpathCost()

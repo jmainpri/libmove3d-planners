@@ -150,24 +150,28 @@ bool CovariantTrajectoryPolicy::readParameters()
     return true;
 }
 
-//! compute the minmal control costs
-//! given a start and goal state
-bool CovariantTrajectoryPolicy::setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal)
+bool CovariantTrajectoryPolicy::fillBufferStartAndGoal()
 {
-    //cerr << "0 : " << endl;
     for (int d=0; d<num_dimensions_; ++d)
     {
         // set the start and end of the trajectory
         for (int i=0; i<DIFF_RULE_LENGTH-1; ++i)
         {
-            //        cerr << "start : " << start << endl;
-            //        cerr << "goal : " << goal << endl;
-            //        cerr << "parameters_all_ : " << parameters_all_[d] << endl;
-            //        cerr << "parameters_all_ (" << d << " , " << i << ")" << endl;
-            parameters_all_[d](i) = start(d);
-            parameters_all_[d](num_vars_all_-1-i) = goal(d);
+            parameters_all_[d](i) = start_(d);
+            parameters_all_[d](num_vars_all_-1-i) = goal_(d);
         }
     }
+}
+
+//! compute the minmal control costs
+//! given a start and goal state
+bool CovariantTrajectoryPolicy::setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal)
+{
+    // Store start and goal
+    start_ = start;
+    goal_ = goal;
+
+    fillBufferStartAndGoal();
     
     //cerr << "1 : " << endl;
     //printParameters();
@@ -371,6 +375,8 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
                                                     const std::vector<Eigen::VectorXd>& noise,
                                                     const double weight, std::vector<Eigen::VectorXd>& control_costs)
 {
+    fillBufferStartAndGoal();
+
     // this measures the accelerations and squares them
     for (int d=0; d<num_dimensions_; ++d)
     {

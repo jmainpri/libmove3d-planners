@@ -582,6 +582,7 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 //    cout.precision(4);
 //    cout << mat2 << endl;
 
+
     std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat2 );
 
 //    printControlCosts( control_cost );
@@ -590,7 +591,7 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
     f[0] = smoothness_factor * control_cost_.cost( control_cost );
 
 //    cout.precision(6);
-//    cout << "size (" << mat2.rows() << ", " << mat2.cols() << ") , control cost : "  << f << endl;
+    cout << "size (" << mat2.rows() << ", " << mat2.cols() << ") , control cost : "  << f << endl;
 
     return f;
 }

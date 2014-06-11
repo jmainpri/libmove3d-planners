@@ -75,13 +75,13 @@ bool HRICS_init_human_trajectory_cost()
 //        global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
 //        global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
 
-        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/quan_motion";
-        global_motionRecorders[0]->useOpenRAVEFormat( true );
-        global_motionRecorders[1]->useOpenRAVEFormat( true );
-        motion_t traj1 = global_motionRecorders[0]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00000_00000.csv" );
-        motion_t traj2 = global_motionRecorders[1]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00001_00000.csv" );
-        global_motionRecorders[0]->storeMotion( traj1 );
-        global_motionRecorders[1]->storeMotion( traj2 );
+//        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/quan_motion";
+//        global_motionRecorders[0]->useOpenRAVEFormat( true );
+//        global_motionRecorders[1]->useOpenRAVEFormat( true );
+//        motion_t traj1 = global_motionRecorders[0]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00000_00000.csv" );
+//        motion_t traj2 = global_motionRecorders[1]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00001_00000.csv" );
+//        global_motionRecorders[0]->storeMotion( traj1 );
+//        global_motionRecorders[1]->storeMotion( traj2 );
 
         cout << "create human traj cost space" << endl;
 

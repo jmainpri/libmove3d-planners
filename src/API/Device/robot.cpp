@@ -618,6 +618,21 @@ std::vector<int> Robot::getActiveDoFsFromJoints( const std::vector<int>& joint_i
     return dof_ids;
 }
 
+std::vector<int> Robot::getAllDofIds()
+{
+    std::vector<int> r_dof_indices;
+
+    for( size_t i=0; i<joints_.size(); i++)
+    {
+        std::vector<unsigned int> j_indices = joints_[i]->getDofIndices();
+
+        for( size_t j=0; j<j_indices.size(); j++)
+            r_dof_indices.push_back( j_indices[j] );
+    }
+
+    return r_dof_indices;
+}
+
 /**
  * Returns the number of DoF active in the planning phase
  * @return Number of Active DoFs
