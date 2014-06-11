@@ -44,7 +44,7 @@ using namespace Move3D;
 using std::cout;
 using std::endl;
 
-Move3D::Feature* API_activeFeatureSpace = NULL;
+Move3D::Feature* global_activeFeatureFunction = NULL;
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -75,12 +75,9 @@ double Feature::costTraj( const Move3D::Trajectory& t )
 {
     FeatureVect  phi = getFeatureCount(t);
 
-    cout << w_.size() << endl;
-    cout << phi.size() << endl;
-
     double cost = w_.transpose()*phi;
-    // cout << " w_.transpose() : " << w_.transpose() << endl;
-    // cout << " phi.transpose() : " << phi.transpose() << endl;
+    cout << " w_.transpose() : " << w_.transpose() << endl;
+    cout << " phi.transpose() : " << phi.transpose() << endl;
     // cout << "cost : " << cost << endl;
     return cost;
 }
@@ -155,11 +152,27 @@ FeatureVect Feature::getFeatureCount( const Move3D::Trajectory& traj )
 //    {
 //        confPtr_t q_1 = t[i-1];
 //        confPtr_t q_2 = t[i];
-//        Eigen::VectorXd pos1 = q_1->getEigenVector(6,7);
+//        Eigen::VectorXd pos1 = q_1->;
 //        Eigen::VectorXd pos2 = q_2->getEigenVector(6,7);
 //        double dist = ( pos1 - pos2 ).norm();
 //        phi += getFeatures( *q_1 )*dist;
 //    }
+
+    confPtr_t q_1, q_2;
+    int nb_via_points = traj.getNbOfViaPoints();
+    double dist = traj[0]->dist( *traj[1] );
+
+    for (int i=1; i<nb_via_points+1; i++)
+    {
+        q_1 = traj[i-1];
+        phi += ( getFeatures( *q_1 ) * dist );
+
+        if( i < nb_via_points )
+        {
+            q_2 = traj[i];
+            dist = q_1->dist( *q_2 );
+        }
+    }
 
 //    int i=0;
 //    for(; t <= t_max; i++ )
@@ -170,26 +183,26 @@ FeatureVect Feature::getFeatureCount( const Move3D::Trajectory& traj )
 //        t += step;
 //    }
 
-    double t = 0.0;
-    double t_max = traj.getParamMax();
-    double step = ENV.getDouble(Env::dmax)*PlanEnv->getDouble(PlanParam::costResolution);
-    int n_step = int(t_max/step);
-    if( n_step < 100 ){ // minumum of 100 steps
-        n_step = 100;
-        step = t_max / double(n_step);
-    }
+//    double t = 0.0;
+//    double t_max = traj.getParamMax();
+//    double step = ENV.getDouble(Env::dmax)*PlanEnv->getDouble(PlanParam::costResolution);
+//    int n_step = int(t_max/step);
+//    if( n_step < 100 ){ // minumum of 100 steps
+//        n_step = 100;
+//        step = t_max / double(n_step);
+//    }
 
-    confPtr_t q = traj.configAtParam(0.0);
-    FeatureVect feat1 = getFeatures( *q );
+//    confPtr_t q = traj.configAtParam(0.0);
+//    FeatureVect feat1 = getFeatures( *q );
 
-    for ( int i=0; i<n_step; i++ )
-    {
-        t += step;
-        q = traj.configAtParam(t);
-        FeatureVect feat2 = getFeatures( *q );
-        phi += ( (feat1 + feat2) / 2 )  * step;
-        feat1 = feat2;
-    }
+//    for ( int i=0; i<n_step; i++ )
+//    {
+//        t += step;
+//        q = traj.configAtParam(t);
+//        FeatureVect feat2 = getFeatures( *q );
+//        phi += ( (feat1 + feat2) / 2 )  * step;
+//        feat1 = feat2;
+//    }
 //    cout << "--------- Integral ----------------" << endl;
 //    cout << "Range = " << t_max << endl;
 //    cout << "step = " << step << endl;
@@ -543,12 +556,12 @@ Feature* StackedFeatures::getFeatureFunction(std::string name)
 
 TrajectorySmoothness::TrajectorySmoothness() : Feature("Smoothness")
 {
-    w_ = Eigen::VectorXd::Ones( 1 ); // Sets the number of feature in the base class
+    w_ = WeightVect::Ones( 1 ); // Sets the number of feature in the base class
 }
 
 FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 {
-    FeatureVect f(1); // f = Eigen::VectorXd::Zero( 1 );
+    FeatureVect f( Eigen::VectorXd::Zero( 1 ) );
 
 //    cout << "active_dofs_ : ";
 //    for(int i=0;i<active_dofs_.size();i++) cout << active_dofs_[i] << " ";
@@ -610,7 +623,7 @@ void TrajectorySmoothness::printControlCosts( const std::vector<Eigen::VectorXd>
     int diff_rule_length = control_cost_.getDiffRuleLength();
     int size = control_cost[0].size() - 2*(diff_rule_length-1);
 
-    FeatureVect f_tmp = Eigen::VectorXd::Zero( size );
+    FeatureVect f_tmp = FeatureVect::Zero( size );
 
     for( int i=0; i<int(control_cost.size()); i++ )
     {
@@ -623,7 +636,6 @@ void TrajectorySmoothness::printControlCosts( const std::vector<Eigen::VectorXd>
 
 FeatureVect TrajectorySmoothness::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
-    FeatureVect count(1);
 //    cout << "Get feature smoothness" << endl;
-    return count;
+    return FeatureVect::Zero( 1 );
 }

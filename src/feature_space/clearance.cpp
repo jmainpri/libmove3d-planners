@@ -64,7 +64,7 @@ bool FEATURES_init_Clearance_cost()
 
     if( global_ClearanceCostFct->getNumberOfFeatures() > 0 )
     {
-        API_activeFeatureSpace = global_ClearanceCostFct;
+        global_activeFeatureFunction = global_ClearanceCostFct;
 
         cout << "add cost functions : " << "costClearance" << endl;
 

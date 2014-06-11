@@ -99,7 +99,7 @@ bool HRICS_init_human_trajectory_cost()
         cout << "Error : could not init collision space" << endl;
 
     cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
-    API_activeFeatureSpace = global_ht_cost_space;
+    global_activeFeatureFunction = global_ht_cost_space;
 
     return true;
 }

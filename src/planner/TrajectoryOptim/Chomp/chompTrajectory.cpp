@@ -66,7 +66,7 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
     start_index_ = diff_rule_length - 1;
     end_index_ = (num_points_ - 1) - (diff_rule_length - 1);
     //duration_ = (num_points_ - 1)*discretization_;
-    discretization_ = duration_/(num_points_-1);
+    discretization_ = duration_/double(num_points_-1);
 
     // allocate the memory:
     init();

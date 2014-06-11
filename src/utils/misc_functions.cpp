@@ -73,15 +73,15 @@ inline size_t word_count(std::stringstream& is)  // can pass an open std::ifstre
 {
     cout << is.str() << endl;
     size_t c = 0;
-    for(std::string w; std::getline( is, w, ',' ); ++c)
-        cout << "found word : " << w << endl;
+    for(std::string w; std::getline( is, w, ',' ); ++c);
+//        cout << "found word : " << w << endl;
     return c;
 }
 
 // simple string interface
 inline size_t word_count(const std::string& str)
 {
-    cout << "line is : " << str << endl;
+//    cout << "line is : " << str << endl;
     std::stringstream ss(str);
     return word_count(ss);
 }

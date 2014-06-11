@@ -1115,7 +1115,7 @@ void IocEvaluation::loadDemonstrations()
 
         T.computeSubPortionIntergralCost( T.getCourbe() );
 
-        if( T.getNbOfViaPoints() != nb_way_points_ ) // Only cut of needed
+        if( T.getNbOfViaPoints() != nb_way_points_ ) // Only cut if needed
         {
             cout << "cuttin in " << nb_way_points_ << " way points" << endl;
             T.cutTrajInSmallLP(nb_way_points_-1);
@@ -1124,6 +1124,7 @@ void IocEvaluation::loadDemonstrations()
 
         T.setColor( i%8 ); cout << "color : " << i%8 << endl;
         global_trajToDraw.push_back(T);
+
         demos_.push_back( T );
     }
 }
@@ -1161,18 +1162,18 @@ void IocEvaluation::loadPlannerTrajectories( int nb_trajs, int offset, int rando
         // cout << "nb of sequences : " << nb_sequences << endl;
         for(int i=0;i<nb_trajs;i++)
         {
-            int id = i + nb_trajs*p3d_random_integer( 0, nb_big_sequence-1 );
+            int id = i + nb_trajs * p3d_random_integer( 0, nb_big_sequence-1 );
             // cout << "Add id : " << id << endl;
             samples_.push_back( planners_.getBestTrajs()[id] );
         }
     }
 
     global_trajToDraw.clear();
-    for(int i=0;i<int(samples_.size());i++)
+    for( size_t i=0; i<samples_.size(); i++ )
     {
         double color = (double(i%sequence_size)/sequence_size);
         // cout << "i : " << i << ", color : " << color << endl;
-        samples_[i].cutTrajInSmallLP(nb_way_points_-1);
+        samples_[i].cutTrajInSmallLP( nb_way_points_-1 );
         samples_[i].setUseContinuousColors(true);
         samples_[i].setColor( color );
 
@@ -1223,9 +1224,11 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
     // Get features of demos
     std::vector<FeatureVect> phi_demo(demos_.size());
 
-    for(int i=0;i<int(demos_.size());i++)
+    for( size_t i=0; i<demos_.size(); i++ )
     {
-        demos_[i].cutTrajInSmallLP( nb_way_points_-1 );
+        if( demos_[i].getNbOfViaPoints() != nb_way_points_ ) // Only cut of needed
+            demos_[i].cutTrajInSmallLP( nb_way_points_-1 );
+
         FeatureVect phi = feature_fct_->getFeatureCount( demos_[i] );
         // cout << "Feature Demo : " << phi.transpose() << endl;
 //        ioc.addDemonstration( demos_[i].getEigenMatrix(6,7) );
@@ -1239,9 +1242,10 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
 std::vector< std::vector<FeatureVect> > IocEvaluation::addSamples(HRICS::Ioc& ioc)
 {
     // Get features of demos
-    for(int i=0;i<int(samples_.size());i++)
+    for( size_t i=0; i<samples_.size(); i++ )
     {
-        samples_[i].cutTrajInSmallLP( nb_way_points_-1 );
+        if( samples_[i].getNbOfViaPoints() != nb_way_points_ ) // Only cut of needed
+            samples_[i].cutTrajInSmallLP( nb_way_points_-1 );
 //        ioc.addSample( 0, samples_[i].getEigenMatrix(6,7) );
         ioc.addSample( 0, samples_[i].getEigenMatrix( plangroup_->getActiveDofs() ) );
 //        ioc.setNominalSampleValue( 0, i, samples_[i].getEigenMatrix(6,7)  );
@@ -1328,6 +1332,7 @@ void IocEvaluation::runSampling()
 //        cout << "              max : "  << plangroup_->chomp_joints_[i].joint_limit_max_ << endl;
 //    }
 
+
     // For human
     feature_fct_->setAllFeaturesActive();
 
@@ -1336,9 +1341,12 @@ void IocEvaluation::runSampling()
 
     cout << "Add demonstrations" << endl;
 
+    demos_[0].saveToFile( "tmp_demo_save_to_file_3.csv" );
 
     // Get demos features
     phi_demos_ = addDemonstrations( ioc );
+
+    demos_[0].saveToFile( "tmp_demo_save_to_file_4.csv" );
 
 //    std::vector<Move3D::Trajectory> traj = ioc.getDemonstrations();
 //    traj[0].replaceP3dTraj();
@@ -1750,6 +1758,7 @@ void IocEvaluation::saveTrajToMatlab(const Move3D::Trajectory& t, int id) const
 {
     Move3D::Trajectory saved_traj(t);
     int nb_way_points=100;
+
     saved_traj.cutTrajInSmallLP(nb_way_points-1);
 
 //    Eigen::MatrixXd mat = saved_traj.getEigenMatrix(6,7);

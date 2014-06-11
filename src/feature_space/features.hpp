@@ -99,8 +99,8 @@ class StackedFeatures : public Feature
 public:
     StackedFeatures();
 
-    virtual FeatureVect getFeatureCount(const Move3D::Trajectory& t);
     virtual FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
+    virtual FeatureVect getFeatureCount(const Move3D::Trajectory& t);
 
     void setWeights( const WeightVect& w );
     WeightVect getWeights() const;
@@ -131,8 +131,8 @@ public:
     TrajectorySmoothness();
 
     //! Returns a smoothness cost for the trajectory
-    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
     FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
+    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
 
     void setWeights(const WeightVect &w);
 
@@ -146,6 +146,6 @@ private:
 
 }
 
-extern Move3D::Feature* API_activeFeatureSpace;
+extern Move3D::Feature* global_activeFeatureFunction;
 
 #endif // HRICS_FEATURES_HPP

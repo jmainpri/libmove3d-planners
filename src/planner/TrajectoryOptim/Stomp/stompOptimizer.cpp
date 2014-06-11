@@ -554,9 +554,9 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     time_ = 0.0;
 
     // Print the active feature space out
-    if( use_costspace_ &&  API_activeFeatureSpace != NULL )
+    if( use_costspace_ &&  global_activeFeatureFunction != NULL )
     {
-        API_activeFeatureSpace->printInfo();
+        global_activeFeatureFunction->printInfo();
     }
     
     stomp_statistics_ = MOVE3D_BOOST_PTR_NAMESPACE<StompStatistics>(new StompStatistics());
@@ -865,6 +865,40 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     smooth.setActiveDoFs( planning_group_->getActiveDofs() );
     cout << "smooth.getFeatureCount( best_traj_ ) = " << ((stomp_parameters_->getSmoothnessCostWeight()/PlanEnv->getDouble( PlanParam::trajOptimSmoothFactor ))
             * smooth.getFeatureCount( best_traj_ )) << endl;
+
+    StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+
+    if( fct != NULL && fct->getFeatureFunction("Distance") != NULL )
+    {
+        fct->printInfo();
+
+        cout << "distance cost : " << fct->getFeatureFunction("Distance")->costTraj( best_traj_ );
+        cout << " , Features " << fct->getFeatureFunction("Distance")->getFeatureCount( best_traj_ ).transpose() << endl;
+    }
+
+    double general_cost = 0.0;
+    FeatureVect phi(FeatureVect::Zero(fct->getFeatureFunction("Distance")->getNumberOfFeatures()));
+
+    for (int i=0; i<best_traj_.getNbOfViaPoints()-1; i++)
+    {
+        confPtr_t q_1 = best_traj_[i];
+        confPtr_t q_2 = best_traj_[i+1];
+
+        double dist = ( i != (best_traj_.getNbOfViaPoints()-2) ) ? ( i != (best_traj_.getNbOfViaPoints()-2) ) : q_1->dist( *best_traj_[i-1] );
+
+        if
+        {
+            general_cost += ( q_1->cost() * dist );
+            phi += fct->getFeatureFunction("Distance")->getFeatures(*q_1);
+        }
+        else {
+            general_cost += ;
+            phi += fct->getFeatureFunction("Distance")->getFeatures(*q_1);
+        }
+    }
+
+    cout << "general cost : " << general_cost << endl;
+    cout << "general features : " << phi.transpose() << endl;
 
     // Set this anywhere
     //    if( PlanEnv->getBool(PlanParam::drawParallelTraj) && ( global_stompRun != NULL ))
