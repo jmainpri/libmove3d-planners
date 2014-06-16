@@ -463,6 +463,7 @@ bool Ioc::generateSamples( int nb_samples )
         {
             samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
 
+            int nb_failed = 0;
             do
             {
                 // Sample noisy trajectory
@@ -481,7 +482,7 @@ bool Ioc::generateSamples( int nb_samples )
                 }
             }
             // Commented for humans
-            while( !jointLimits( samples_[d][ns] ) );
+            while( (!jointLimits( samples_[d][ns] )) && ( nb_failed++ < 10 ) );
         }
     }
 
@@ -1058,9 +1059,17 @@ void IocEvaluation::generateDemonstrations()
 
     cout << "nb_demos_ : " << nb_demos_ << endl;
 
+    saveDemoToFile( demos );
+
+    cout << "exit generate demo" << endl;
+}
+
+void IocEvaluation::saveDemoToFile(std::vector<Move3D::Trajectory>& demos)
+{
     for(size_t i=0;i<demos.size();i++)
     {
-        if( demos[i].replaceP3dTraj() ){
+        if( demos[i].replaceP3dTraj() )
+        {
             cout << "has replaced p3d traj" << endl;
             cout << robot_->getP3dRobotStruct()->tcur << endl;
             cout << robot_->getName() << endl;
@@ -1078,8 +1087,6 @@ void IocEvaluation::generateDemonstrations()
         saveTrajToMatlab( demos[i], i );
         cout << "save traj to matlab format!!!!" << endl;
     }
-
-    cout << "exit generate demo" << endl;
 }
 
 void IocEvaluation::loadDemonstrations()
@@ -1244,7 +1251,7 @@ std::vector< std::vector<FeatureVect> > IocEvaluation::addSamples(HRICS::Ioc& io
     // Get features of demos
     for( size_t i=0; i<samples_.size(); i++ )
     {
-        if( samples_[i].getNbOfViaPoints() != nb_way_points_ ) // Only cut of needed
+//        if( samples_[i].getNbOfViaPoints() != nb_way_points_ ) // Only cut of needed
             samples_[i].cutTrajInSmallLP( nb_way_points_-1 );
 //        ioc.addSample( 0, samples_[i].getEigenMatrix(6,7) );
         ioc.addSample( 0, samples_[i].getEigenMatrix( plangroup_->getActiveDofs() ) );
@@ -1347,6 +1354,7 @@ void IocEvaluation::runSampling()
     phi_demos_ = addDemonstrations( ioc );
 
     demos_[0].saveToFile( "tmp_demo_save_to_file_4.csv" );
+    demos_[0].replaceP3dTraj();
 
 //    std::vector<Move3D::Trajectory> traj = ioc.getDemonstrations();
 //    traj[0].replaceP3dTraj();
@@ -1405,7 +1413,7 @@ void IocEvaluation::runSampling()
             if( samples[d][i].getParamMax() < demos_[d].getParamMax() )
                 nb_shorter++;
 
-            cout << "cost : " << cost << " , ";
+            // cout << "cost : " << cost << " , ";
             //            cout.precision(4);
             cout << "Feature Sample : " << i << " , " << phi.transpose() << endl;
 //            cout << "dist wrist " << phi[0] << endl; //24
@@ -1651,6 +1659,7 @@ void IocEvaluation::setOriginalWeights()
 Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
 {
     loadDemonstrations();
+
     setOriginalWeights();
 
     Eigen::VectorXd costs_demo = getCostsOfDemonstrations();
@@ -1689,8 +1698,10 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
     double sq_sum_learned = costs_learned.transpose()*costs_learned;
     double stdev_learned = std::sqrt( (sq_sum_learned / double(costs_learned.size())) - (mean_learned * mean_learned) );
 
-    cout << ( costs_demo    ).transpose() << endl;
-    cout << ( costs_learned ).transpose() << endl;
+    cout << "--------------------------------------" << endl;
+
+    cout << "cost of demos : " << ( costs_demo    ).transpose() << endl;
+    cout << "cost of learned : " << ( costs_learned ).transpose() << endl;
 
     cout << "mean_demo : " << mean_demo << " , stdev_demo : " << stdev_demo << endl;
     cout << "mean_learned : " << mean_learned << " , stdev_learned : " << stdev_learned << endl;

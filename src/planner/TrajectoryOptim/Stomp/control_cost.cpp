@@ -137,7 +137,7 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
 void ControlCost::fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj )
 {
     // set the start and end of the trajectory
-    cout  << "diff_rule_length_ : " << diff_rule_length_ << endl;
+    // cout  << "diff_rule_length_ : " << diff_rule_length_ << endl;
     for (int i=0; i<diff_rule_length_-1; ++i)
     {
         traj.col(i) = a;

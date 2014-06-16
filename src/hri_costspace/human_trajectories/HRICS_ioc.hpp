@@ -214,6 +214,9 @@ public:
     //! Set planner type for the generation phase
     void setPlannerType( planner_t planner_type ) { planner_type_ = planner_type; }
 
+    //! Save demo to file
+    void saveDemoToFile(std::vector<Move3D::Trajectory>& demos);
+
     virtual void setLearnedWeights();
     virtual void setOriginalWeights();
 

@@ -552,6 +552,26 @@ Feature* StackedFeatures::getFeatureFunction(std::string name)
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
+
+LengthFeature::LengthFeature() : Feature("Length")
+{
+    w_ = WeightVect::Ones( 1 ); // Sets the number of feature in the base class
+}
+
+FeatureVect LengthFeature::getFeatureCount( const Move3D::Trajectory& t )
+{
+    FeatureVect feature_count = t.getParamMax() * FeatureVect::Ones( 1 );
+    cout << "length : " << feature_count.transpose() << endl;
+    return feature_count;
+}
+
+FeatureVect LengthFeature::getFeatures( const Move3D::Configuration& q, std::vector<int> active_dofs )
+{
+    return FeatureVect::Ones( 1 );
+}
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
 // Smoothness cost
 
 TrajectorySmoothness::TrajectorySmoothness() : Feature("Smoothness")
@@ -595,7 +615,6 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 //    cout.precision(4);
 //    cout << mat2 << endl;
 
-
     std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat2 );
 
 //    printControlCosts( control_cost );
@@ -604,7 +623,7 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
     f[0] = smoothness_factor * control_cost_.cost( control_cost );
 
 //    cout.precision(6);
-    cout << "size (" << mat2.rows() << ", " << mat2.cols() << ") , control cost : "  << f << endl;
+//    cout << "size (" << mat2.rows() << ", " << mat2.cols() << ") , control cost : "  << f << endl;
 
     return f;
 }

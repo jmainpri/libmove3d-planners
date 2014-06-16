@@ -72,6 +72,7 @@ private:
     LegibilityFeature legib_feat_;
     CollisionFeature collision_feat_;
 
+    Move3D::LengthFeature length_feat_;
     Move3D::TrajectorySmoothness smoothness_feat_;
 };
 

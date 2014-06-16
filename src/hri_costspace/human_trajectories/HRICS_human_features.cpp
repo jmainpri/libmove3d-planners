@@ -157,8 +157,8 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
                         0.50, 0.20, 0.50, 0.50, // 08 -> 11
                         0.50, 0.50, 0.50, 0.20; // 12 -> 15
 
-    w_distance_16 /= 2;
-//    w_distance_16 *= 0.005;
+//    w_distance_16 /= 100;
+    w_distance_16 *= 1;
 
     if( w_.size() == 16 )
     {
@@ -189,6 +189,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 
 FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs )
 {
+    human_active_->setAndUpdate( q );
     FeatureVect count = computeDistances();
     return count;
 }
@@ -228,8 +229,7 @@ FeatureVect DistanceFeature::computeDistances() const
 //    cout << "dist is : " << dist.transpose() << endl;
 //    cout << "joint dist : " << joints_dist.transpose() << endl;
 
-    double factor = 3.0 ;
-
+    double factor = 10 ;
     return factor * dist; // Scaling factor
 }
 

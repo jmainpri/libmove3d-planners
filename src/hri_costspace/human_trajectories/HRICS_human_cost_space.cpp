@@ -75,13 +75,13 @@ bool HRICS_init_human_trajectory_cost()
 //        global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
 //        global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
 
-//        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/quan_motion";
-//        global_motionRecorders[0]->useOpenRAVEFormat( true );
-//        global_motionRecorders[1]->useOpenRAVEFormat( true );
-//        motion_t traj1 = global_motionRecorders[0]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00000_00000.csv" );
-//        motion_t traj2 = global_motionRecorders[1]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00001_00000.csv" );
-//        global_motionRecorders[0]->storeMotion( traj1 );
-//        global_motionRecorders[1]->storeMotion( traj2 );
+        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/quan_motion";
+        global_motionRecorders[0]->useOpenRAVEFormat( true );
+        global_motionRecorders[1]->useOpenRAVEFormat( true );
+        motion_t traj1 = global_motionRecorders[0]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00000_00000.csv" );
+        motion_t traj2 = global_motionRecorders[1]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00001_00000.csv" );
+        global_motionRecorders[0]->storeMotion( traj1 );
+        global_motionRecorders[1]->storeMotion( traj2 );
 
         cout << "create human traj cost space" << endl;
 
@@ -139,24 +139,24 @@ HumanTrajSimulator::HumanTrajSimulator( HumanTrajCostSpace* cost_space )  :
 
 bool HumanTrajSimulator::init()
 {
-    if( !global_motionRecorders[0]->getStoredMotions().empty() )
-    {
-        cout << "Load init and goal from file" << endl;
-        const motion_t& motion_pas = global_motionRecorders[0]->getStoredMotions()[0];
-        const motion_t& motion_act = global_motionRecorders[1]->getStoredMotions()[0];
+//    if( !global_motionRecorders[0]->getStoredMotions().empty() )
+//    {
+//        cout << "Load init and goal from file" << endl;
+//        const motion_t& motion_pas = global_motionRecorders[0]->getStoredMotions()[0];
+//        const motion_t& motion_act = global_motionRecorders[1]->getStoredMotions()[0];
 
-        q_init_ = motion_act[0].second;
-        q_goal_ = motion_act.back().second;
+//        q_init_ = motion_act[0].second;
+//        q_goal_ = motion_act.back().second;
 
-        // Adds the trajectory from the passive robot
-        // to the cost space
-        cost_space_->setPassiveTrajectory( motion_pas );
-    }
-    else
-    {
+//        // Adds the trajectory from the passive robot
+//        // to the cost space
+//        cost_space_->setPassiveTrajectory( motion_pas );
+//    }
+//    else
+//    {
         q_init_ = human_active_->getInitPos();
         q_goal_ = human_active_->getGoalPos();
-    }
+//    }
 
     // Set humans colors
     setHumanColor( human_active_, 3 );
@@ -353,6 +353,9 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
 
     active_dofs_ = std::vector<int>(1,1);
 
+    length_feat_.setActiveDoFs( active_dofs_ );
+    length_feat_.setWeights( WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
+
     smoothness_feat_.setActiveDoFs( active_dofs_ );
     smoothness_feat_.setWeights( WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
 
@@ -362,15 +365,18 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     collision_feat_.setActiveDoFs( active_dofs_ );
     collision_feat_.setWeights( WeightVect::Ones(collision_feat_.getNumberOfFeatures()) );
 
+    if(!addFeatureFunction( &length_feat_ ) ){
+        cout << "Error adding feature length" << endl;
+    }
     if(!addFeatureFunction( &smoothness_feat_ ) ){
         cout << "Error adding feature smoothness" << endl;
     }
     if(!addFeatureFunction( &collision_feat_ )){
-        cout << "Error adding feature distance feature" << endl;
+        cout << "Error adding feature distance collision" << endl;
     }
-    if(!addFeatureFunction( &dist_feat_ )){
-        cout << "Error adding feature distance feature" << endl;
-    }
+//    if(!addFeatureFunction( &dist_feat_ )){
+//        cout << "Error adding feature distance feature" << endl;
+//    }
 
     w_ = getWeights();
 

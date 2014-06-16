@@ -221,9 +221,21 @@ bool IocSequences::run()
         switch( phase_ )
         {
         case generate:
+
             cout << "GENERATE" << endl;
             setGenerationFeatures();
-            eval->generateDemonstrations();
+
+//            if( !global_motionRecorders.empty() && !global_motionRecorders[0]->getStoredMotions().empty() )
+//            {
+//                std::vector<Move3D::Trajectory> trajs;
+//                trajs.push_back( HRICS::motion_to_traj( global_motionRecorders[0]->getStoredMotions()[0], human2, 60 ) );
+//                human1->setAndUpdate( *global_motionRecorders[1]->getStoredMotions()[0][0].second );
+//                eval->saveDemoToFile( trajs );
+//            }
+//            else {
+                eval->generateDemonstrations();
+//            }
+
             g3d_draw_allwin_active();
             break;
 
@@ -250,6 +262,9 @@ bool IocSequences::run()
 
         case compare:
             cout << "COMPARE" << endl;
+
+            setCompareFeatures();
+
             results.push_back( eval->compareDemosAndPlanned() );
             g3d_draw_allwin_active();
             break;
@@ -371,6 +386,7 @@ void IocSequences::setGenerationFeatures()
     if( features_type_ == human_trajs && global_ht_cost_space != NULL )
     {
         std::vector<std::string> active_features;
+        active_features.push_back("Length");
         active_features.push_back("Distance");
 //        active_features.push_back("Smoothness");
 //        active_features.push_back("Collision");
@@ -391,8 +407,9 @@ void IocSequences::setSamplingFeatures()
     if( features_type_ == human_trajs && global_ht_cost_space != NULL )
     {
         std::vector<std::string> active_features;
+        active_features.push_back("Length");
         active_features.push_back("Distance");
-        active_features.push_back("Smoothness");
+//        active_features.push_back("Smoothness");
         active_features.push_back("Collision");
 
         feature_fct_->setActiveFeatures( active_features );
@@ -410,6 +427,26 @@ void IocSequences::setSamplingFeatures()
 //        feature_fct_->getFeatureFunction("Distance")->setWeights( w_dist * w_distance_16 );
 
 
+
+        cout << "stack info" << endl;
+        feature_fct_->printInfo();
+
+        cout << "original_vect : " << endl;
+        feature_fct_->printWeights();
+    }
+}
+
+void IocSequences::setCompareFeatures()
+{
+    if( features_type_ == human_trajs && global_ht_cost_space != NULL )
+    {
+        std::vector<std::string> active_features;
+        active_features.push_back("Length");
+//        active_features.push_back("Smoothness");
+        active_features.push_back("Distance");
+        active_features.push_back("Collision");
+
+        feature_fct_->setActiveFeatures( active_features );
 
         cout << "stack info" << endl;
         feature_fct_->printInfo();

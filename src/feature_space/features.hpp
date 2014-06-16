@@ -125,6 +125,15 @@ protected:
 };
 
 ////////////////////////////////////////
+class LengthFeature : public Move3D::Feature
+{
+public:
+    LengthFeature();
+    Move3D::FeatureVect getFeatureCount( const Move3D::Trajectory& t );
+    Move3D::FeatureVect getFeatures( const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0) );
+};
+
+////////////////////////////////////////
 class TrajectorySmoothness : public Feature
 {
 public:

@@ -142,12 +142,12 @@ Configuration::Configuration(const Configuration& conf) :
 
 Configuration& Configuration::operator= (const Configuration& source)
 {
-    _flagInitQuaternions = source._flagInitQuaternions ;
-    _CollisionTested = source._CollisionTested ;
-    _InCollision = source._InCollision ;
-    _CostTested = source._CostTested ;
-    _Cost = source._Cost ;
-    _Robot =  source._Robot ;
+    _flagInitQuaternions = source._flagInitQuaternions;
+    _CollisionTested = source._CollisionTested;
+    _InCollision = source._InCollision;
+    _CostTested = source._CostTested;
+    _Cost = source._Cost;
+    _Robot =  source._Robot;
     _phiEvaluated = source._phiEvaluated;
     _phi = source._phi;
 

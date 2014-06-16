@@ -784,11 +784,11 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         {
             if( (!ENV.getBool(Env::drawDisabled)) && ( ENV.getBool(Env::drawTraj) || PlanEnv->getBool(PlanParam::drawParallelTraj) ))
             {
-                printf("%3d, time: %3f, cost: %f (s=%f, c=%f, g=%f), move3d cost: %f\n", iteration_, time_, cost,
-                       getSmoothnessCost(), getCollisionCost(), getGeneralCost(), move3d_cost );
+                printf( "%3d, time: %3f, cost: %f (s=%f, c=%f, g=%f), move3d cost: %f\n", iteration_, time_, cost,
+                        getSmoothnessCost(), getCollisionCost(), getGeneralCost(), move3d_cost );
             }
             else {
-                printf("%3d, time: %3f, cost: %f\n", iteration_, time_, cost );
+                printf( "%3d, time: %3f, cost: %f\n", iteration_, time_, cost );
                 //          printf("%3d, time: %3f, cost: %f (s=%f, c=%f, g=%f), move3d cost: %f\n", iteration_, time_, cost,
                 //                 getSmoothnessCost(), getCollisionCost(), getGeneralCost(), move3d_cost );
             }
@@ -876,29 +876,39 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         cout << " , Features " << fct->getFeatureFunction("Distance")->getFeatureCount( best_traj_ ).transpose() << endl;
     }
 
-    double general_cost = 0.0;
     FeatureVect phi(FeatureVect::Zero(fct->getFeatureFunction("Distance")->getNumberOfFeatures()));
 
-    for (int i=0; i<best_traj_.getNbOfViaPoints()-1; i++)
+    confPtr_t q_1, q_2;
+    int nb_via_points = best_traj_.getNbOfViaPoints();
+    double dist = best_traj_[0]->dist( *best_traj_[1] );
+
+    Eigen::VectorXd costs( Eigen::VectorXd::Zero( nb_via_points ) );
+    Eigen::VectorXd dts( Eigen::VectorXd::Zero( nb_via_points ) );
+
+    for (int i=1; i<nb_via_points+1; i++)
     {
-        confPtr_t q_1 = best_traj_[i];
-        confPtr_t q_2 = best_traj_[i+1];
+        q_1 = best_traj_[i-1];
+        phi += ( fct->getFeatureFunction( "Distance" )->getFeatures( *q_1 ) * dist );
 
-        double dist = ( i != (best_traj_.getNbOfViaPoints()-2) ) ? ( i != (best_traj_.getNbOfViaPoints()-2) ) : q_1->dist( *best_traj_[i-1] );
+        costs[i-1] = ( fct->getFeatureFunction("Distance")->getWeights().transpose() * fct->getFeatureFunction( "Distance" )->getFeatures( *q_1 ) );
+        costs[i-1] *= dist;
 
-        if
+        dts[i-1] = dist;
+
+        if( i < nb_via_points )
         {
-            general_cost += ( q_1->cost() * dist );
-            phi += fct->getFeatureFunction("Distance")->getFeatures(*q_1);
-        }
-        else {
-            general_cost += ;
-            phi += fct->getFeatureFunction("Distance")->getFeatures(*q_1);
+            q_2 = best_traj_[i];
+            dist = q_1->dist( *q_2 );
         }
     }
 
-    cout << "general cost : " << general_cost << endl;
-    cout << "general features : " << phi.transpose() << endl;
+    performForwardKinematics();
+
+    // cout << "costs 2 : " << costs.transpose() << endl;
+    // cout << "dts 2 : " << dts.transpose() << endl;
+    // cout << "general features : " <<  phi.transpose() << endl;
+    cout << "general cost 1 : " << getGeneralCost() << endl;
+    cout << "general cost 2 : " << fct->getFeatureFunction("Distance")->getWeights().transpose() * phi << endl;
 
     // Set this anywhere
     //    if( PlanEnv->getBool(PlanParam::drawParallelTraj) && ( global_stompRun != NULL ))
@@ -1237,10 +1247,18 @@ double StompOptimizer::getGeneralCost()
 
     double general_cost = 0.0;
 
+    Eigen::VectorXd costs( Eigen::VectorXd::Zero( dt_.size() ) );
+
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
-        general_cost += ( pow( general_cost_potential_(i) , hack_tweek )  * dt_[i] );
+        // general_cost += ( pow( general_cost_potential_(i) , hack_tweek )  * dt_[i] );
+        costs[i] = general_cost_potential_(i) * dt_[i];
+        general_cost += costs[i];
     }
+
+    // cout << "dt : " << dt_.transpose() << endl;
+    // cout << "dt : " << dt_.segment( free_vars_start_, free_vars_end_-free_vars_start_ ).transpose() << endl;
+    // cout << "costs : " << costs.segment(free_vars_start_,free_vars_end_-free_vars_start_).transpose() << endl;
 
     // cout << "use_costspace : " << use_costspace_ << endl;
     // cout << "move3d_collision_space_ : " << move3d_collision_space_ << endl;
@@ -1587,7 +1605,7 @@ bool StompOptimizer::performForwardKinematics()
 
     Eigen::VectorXd joint_array;
 
-    Configuration q( *robot_model_->getCurrentPos() );
+    Configuration q( *source_ );
     Configuration q_prev( robot_model_ );
 
     if( PlanEnv->getBool(PlanParam::useLegibleCost) )
@@ -1610,7 +1628,7 @@ bool StompOptimizer::performForwardKinematics()
 
         if( use_costspace_ )
         {
-            general_cost_potential_[i] = global_costSpace->cost(q); // no set and update
+            general_cost_potential_[i] = global_costSpace->cost( q ); // no set and update
         }
         else if( PlanEnv->getBool(PlanParam::useLegibleCost) )
         {
@@ -1633,6 +1651,7 @@ bool StompOptimizer::performForwardKinematics()
 
         dt_[i] = ( i == start ) ? group_trajectory_.getDiscretization() : q.dist( q_prev ); // TODO have time here
         q_prev = q; // store configuration
+        q = *source_; // Make sure dofs are set to source
     }
 
 //    cout << "dt : " << dt_.transpose() << endl;
@@ -1981,13 +2000,16 @@ void StompOptimizer::setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj )
     // Get the map fro move3d index to group trajectory
     const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
     
-    confPtr_t q = robot_model_->getCurrentPos();
+    confPtr_t q (new Configuration(*source_));
     // source_->setConstraints();
     
-    traj.push_back( source_ );
+    //traj.push_back( source_ );
     
-    for (int i=start+1; i<end; ++i) // Because we add source and target we start later
+    for (int i=start; i<=end; ++i) // Because we add source and target we start later
     {
+        // Set passive dofs as source
+        *q = *source_;
+
         Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(i).transpose();
 
         for(int j=0; j<planning_group_->num_joints_;j++)
@@ -1997,7 +2019,7 @@ void StompOptimizer::setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj )
         traj.push_back( confPtr_t(new Configuration(*q)) );
     }
 
-    traj.push_back( target_ );
+//    traj.push_back( target_ );
 }
 
 void StompOptimizer::animateTrajectoryPolicy()
