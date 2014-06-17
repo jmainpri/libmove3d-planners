@@ -105,6 +105,7 @@ void initPlannerParameters()
     myBoolMap.insert( std::make_pair( PlanParam::trajStompWithRRT,           new boolContainer(false)));
     myBoolMap.insert( std::make_pair( PlanParam::trajStompMatrixAdaptation,  new boolContainer(false)));
     myBoolMap.insert( std::make_pair( PlanParam::trajStompNoPrint,           new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( PlanParam::trajOptimStopWhenCollisionFree, new boolContainer(false)));
 
     myBoolMap.insert( std::make_pair( PlanParam::trajBiasOptim,              new boolContainer(false)));
     myBoolMap.insert( std::make_pair( PlanParam::trajMoveHuman,              new boolContainer(false)));
@@ -234,16 +235,21 @@ void initPlannerParameters()
     myDoubleMap.insert( std::make_pair( PlanParam::MaxFactor,                new doubleContainer(3.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::MinStep,                  new doubleContainer(2.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::costTraj,                 new doubleContainer(1.0)));
-    myDoubleMap.insert( std::make_pair( PlanParam::costResolution,           new doubleContainer(0.5)));
+    myDoubleMap.insert( std::make_pair( PlanParam::costResolution,           new doubleContainer(1.0)));
 
     myDoubleMap.insert( std::make_pair( PlanParam::distMinToDraw,            new doubleContainer(0.3)));
     myDoubleMap.insert( std::make_pair( PlanParam::trajStompTimeLimit,       new doubleContainer(7.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::trajDuration,             new doubleContainer(5.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::trajOptimStdDev,          new doubleContainer(2.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::trajOptimSmoothWeight,    new doubleContainer(0.1)));
-    myDoubleMap.insert( std::make_pair( PlanParam::trajOptimObstacWeight,    new doubleContainer(1.0)));
+    myDoubleMap.insert( std::make_pair( PlanParam::trajOptimObstacWeight,    new doubleContainer(0.1)));
+    myDoubleMap.insert( std::make_pair( PlanParam::trajOptimGlobalWeight,    new doubleContainer(1.0)));
+    myDoubleMap.insert( std::make_pair( PlanParam::trajOptimSmoothFactor,    new doubleContainer(1.0)));
+    myDoubleMap.insert( std::make_pair( PlanParam::trajOptimObstacFactor,    new doubleContainer(1.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::trajReplanningWindow,     new doubleContainer(1.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::trajReplanningTotalTime,  new doubleContainer(30.0)));
+    myDoubleMap.insert( std::make_pair( PlanParam::trajReplanningTotalTime,  new doubleContainer(30.0)));
+
 
     // RRT*
     myDoubleMap.insert( std::make_pair( PlanParam::starRadius,               new doubleContainer(1.0)));

@@ -49,8 +49,7 @@ const double DIFF_RULES[NUM_DIFF_RULES][DIFF_RULE_LENGTH] = {
 ControlCost::ControlCost()
 {
     diff_rule_length_ = DIFF_RULE_LENGTH;
-    //type_ = vel;
-    type_ = acc;
+    type_ = acc; // Becareful to match covariant_trajectory_policy
     scaling_ = 100;
 }
 
@@ -65,7 +64,8 @@ double ControlCost::cost( const std::vector<Eigen::VectorXd>& control_costs )
     for ( int d=0; d<int(control_costs.size()); ++d )
     {
         Eigen::VectorXd cost_vect =  control_costs[d].segment( diff_rule_length_-1, control_costs[d].size() - 2*(diff_rule_length_-1));
-        // cout << "cost_vect : " << cost_vect.transpose() << endl;
+//        cout.precision(2);
+//         cout << "cost_vect : " << cost_vect.transpose() << endl;
         // cout << "cost_vect.size() : " << cost_vect.size() << endl;
         cost += cost_vect.sum();
     }
@@ -128,23 +128,20 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
 
         control_costs[d] = weight * ( acc_all.cwise()*acc_all );
 
-        // cout << "control_costs[" << d << "] : " << endl << control_costs[d].transpose() << endl;
+//        cout << "control_costs[" << d << "] : " << endl << control_costs[d].transpose() << endl;
     }
 
     return control_costs; // scaling
 }
+
 void ControlCost::fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj )
 {
-    // we need diff_rule_length-1 extra points on either side
-    // Copy on the left side
-    for (int i=0; i<diff_rule_length_-1; i++)
+    // set the start and end of the trajectory
+    // cout  << "diff_rule_length_ : " << diff_rule_length_ << endl;
+    for (int i=0; i<diff_rule_length_-1; ++i)
     {
         traj.col(i) = a;
-    }
-    // Copy on the right side
-    for (int i=(traj.cols()-diff_rule_length_+1); i<traj.cols(); i++)
-    {
-        traj.col(i) = b;
+        traj.col(traj.cols()-1-i) = b;
     }
 }
 

@@ -267,12 +267,12 @@ inline Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic> ChompTrajec
     //  std::cout << "getNumFreePoints() = " << getNumFreePoints() << std::endl;
     //  std::cout << "getNumJoints() = " << getNumJoints()  << std::endl;
 
-    return trajectory_.block(start_index_, 0, getNumFreePoints(), getNumJoints());
+    return trajectory_.block(start_index_+1, 0, getNumFreePoints()-2, getNumJoints()); // TODO change everywhere
 }
 
 inline Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic> ChompTrajectory::getFreeJointTrajectoryBlock(int joint)
 {
-    return trajectory_.block(start_index_, joint, getNumFreePoints(), 1);
+    return trajectory_.block(start_index_+1, joint, getNumFreePoints()-2, 1);
 }
 
 //inline void ChompTrajectory::getTrajectoryPointKDL(int traj_point, KDL::JntArray& kdl_jnt_array) const

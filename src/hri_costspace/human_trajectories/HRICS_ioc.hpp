@@ -135,7 +135,7 @@ public:
 
     //! Generate the sampled trajectories
     //! around the demonstrations
-    void generateSamples(int nb_samples);
+    bool generateSamples(int nb_samples);
 
     //! Returns Move3D trajectories
     std::vector< std::vector<Move3D::Trajectory> > getSamples();
@@ -214,6 +214,12 @@ public:
     //! Set planner type for the generation phase
     void setPlannerType( planner_t planner_type ) { planner_type_ = planner_type; }
 
+    //! Save demo to file
+    void saveDemoToFile(std::vector<Move3D::Trajectory>& demos);
+
+    virtual void setLearnedWeights();
+    virtual void setOriginalWeights();
+
 protected:
 
     std::vector<Move3D::FeatureVect> addDemonstrations(Ioc& ioc);
@@ -258,9 +264,6 @@ protected:
 
     //! Returns trajectory that best fits
     Move3D::Trajectory selectBestSample( double detla_mean, const std::vector<Move3D::Trajectory>& trajs );
-
-    virtual void setLearnedWeights();
-    virtual void setOriginalWeights();
 
     Move3D::Robot* robot_;
     int nb_demos_;

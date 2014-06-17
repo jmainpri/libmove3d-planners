@@ -25,18 +25,14 @@
  *
  *                                               Jim Mainprice Tue 27 May 2014 
  */
-/*
- * trajectory.cpp
- *
- *  Created on: Jun 17, 2009
- *      Author: jmainpri
- */
 
 #include "API/Trajectory/trajectory.hpp"
 #include "API/Graphic/drawModule.hpp"
 #include "API/libmove3d_simple_api.hpp"
 
 #include "planEnvironment.hpp"
+
+#include "utils/misc_functions.hpp"
 
 #include "P3d-pkg.h"
 #include "Graphic-pkg.h"
@@ -721,6 +717,7 @@ double Trajectory::reComputeSubPortionCost(vector<LocalPath*>& portion, int& nb_
 
 double Trajectory::computeSubPortionIntergralCost(const vector<LocalPath*>& portion)
 {
+    cout << __PRETTY_FUNCTION__ << endl;
     double cost(0.0);
     double step = ENV.getDouble(Env::dmax)*PlanEnv->getDouble(PlanParam::costResolution);
     double currentParam(0.0), currentCost, prevCost;
@@ -735,11 +732,13 @@ double Trajectory::computeSubPortionIntergralCost(const vector<LocalPath*>& port
     cout << "step = " << step << endl;
     cout << "n_step = " << n_step << endl;
 
-    for (int i=0; i<n_step;i++ )
+    global_costSpace->setDeltaStepMethod( cs_integral );
+
+    for( int i=0; i<n_step; i++ )
     {
         currentParam += step;
 
-        q = configAtParam(currentParam);
+        q = configAtParam( currentParam );
         currentCost = q->cost();
 
         double delta_cost = global_costSpace->deltaStepCost( prevCost, currentCost, step );
@@ -748,7 +747,23 @@ double Trajectory::computeSubPortionIntergralCost(const vector<LocalPath*>& port
         prevCost = currentCost;
     }
 
-    cout << "cost : " << cost << endl;
+    cout << "cost (1) : " << cost << endl;
+
+    cost = 0.0;
+
+    if( !portion.empty() ) // Approximation if points are dense enough
+    {
+        confPtr_t q_prev = portion[0]->getBegin();
+
+        for( size_t i=0; i<portion.size(); i++ )
+        {
+            confPtr_t q = portion[i]->getEnd();
+            cost += q->cost() * q->dist( *q_prev );
+            q_prev = q;
+        }
+
+        cout << "cost (2) : " << cost << endl;
+    }
 
     return cost;
 }
@@ -2340,6 +2355,43 @@ Eigen::MatrixXd Trajectory::getEigenMatrix(const std::vector<int>& incides) cons
     else{
         return Eigen::MatrixXd(0,0);
     }
+}
+
+bool Trajectory::setFromEigenMatrix(const Eigen::MatrixXd& mat, const std::vector<int>& incides)
+{
+    m_Courbe.clear();
+
+    for (int j=0; j<mat.cols(); j++)
+    {
+        confPtr_t q(new Configuration(m_Robot));
+
+        for (int i=0; i<incides.size(); i++)
+        {
+            (*q)[incides[i]] = mat( i, j );
+        }
+
+        push_back( q );
+    }
+
+    return true;
+}
+
+bool Trajectory::saveToFile(std::string filename)
+{
+    std::vector<int> r_dof_indices = m_Robot->getAllDofIds();
+    Eigen::MatrixXd mat = getEigenMatrix( r_dof_indices );
+    // cout << mat << endl;
+    move3d_save_matrix_to_csv_file( mat, filename );
+    return true;
+}
+
+bool Trajectory::loadFromFile(std::string filename)
+{
+    std::vector<int> r_dof_indices = m_Robot->getAllDofIds();
+    Eigen::MatrixXd mat = move3d_load_matrix_from_csv_file( filename );
+    // cout << mat << endl;
+    setFromEigenMatrix( mat, r_dof_indices );
+    return true;
 }
 
 void Trajectory::printAllLocalpathCost()

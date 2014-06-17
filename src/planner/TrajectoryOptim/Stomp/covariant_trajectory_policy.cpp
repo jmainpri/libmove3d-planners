@@ -82,6 +82,8 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
                                            const std::vector<double>& derivative_costs,
                                            const ChompPlanningGroup* planning_group)
 {
+    type_ = acc; // Match control cost
+
     //node_handle_ = node_handle;
     //print_debug_ = true;
     
@@ -148,24 +150,28 @@ bool CovariantTrajectoryPolicy::readParameters()
     return true;
 }
 
-//! compute the minmal control costs
-//! given a start and goal state
-bool CovariantTrajectoryPolicy::setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal)
+bool CovariantTrajectoryPolicy::fillBufferStartAndGoal()
 {
-    //cerr << "0 : " << endl;
     for (int d=0; d<num_dimensions_; ++d)
     {
         // set the start and end of the trajectory
         for (int i=0; i<DIFF_RULE_LENGTH-1; ++i)
         {
-            //        cerr << "start : " << start << endl;
-            //        cerr << "goal : " << goal << endl;
-            //        cerr << "parameters_all_ : " << parameters_all_[d] << endl;
-            //        cerr << "parameters_all_ (" << d << " , " << i << ")" << endl;
-            parameters_all_[d](i) = start(d);
-            parameters_all_[d](num_vars_all_-1-i) = goal(d);
+            parameters_all_[d](i) = start_(d);
+            parameters_all_[d](num_vars_all_-1-i) = goal_(d);
         }
     }
+}
+
+//! compute the minmal control costs
+//! given a start and goal state
+bool CovariantTrajectoryPolicy::setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal)
+{
+    // Store start and goal
+    start_ = start;
+    goal_ = goal;
+
+    fillBufferStartAndGoal();
     
     //cerr << "1 : " << endl;
     //printParameters();
@@ -369,6 +375,8 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
                                                     const std::vector<Eigen::VectorXd>& noise,
                                                     const double weight, std::vector<Eigen::VectorXd>& control_costs)
 {
+    fillBufferStartAndGoal();
+
     // this measures the accelerations and squares them
     for (int d=0; d<num_dimensions_; ++d)
     {
@@ -376,7 +384,7 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
         Eigen::VectorXd costs_all  = Eigen::VectorXd::Zero( num_vars_all_ );
         Eigen::VectorXd acc_all    = Eigen::VectorXd::Zero( num_vars_all_ );
 
-        params_all.segment( free_vars_start_index_, num_vars_free_) = parameters[d] + noise[d];
+        params_all.segment( free_vars_start_index_, num_vars_free_ ) = parameters[d] + noise[d];
 
 //        bool is_circular_joint = planning_group_->chomp_joints_[d].wrap_around_;
 
@@ -391,19 +399,22 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
                 if (index >= num_vars_all_)
                     continue;
 
-                if( /*is_circular_joint*/ false )
-                {
-                    acc_all[i] = angle_limit_PI( acc_all[i] + params_all[index]*DIFF_RULES[1][j+DIFF_RULE_LENGTH/2] );
-                }
-                else {
-                    acc_all[i] += (params_all[index]*DIFF_RULES[1][j+DIFF_RULE_LENGTH/2]);
-                }
+//                if( is_circular_joint )
+//                {
+//                    acc_all[i] = angle_limit_PI( acc_all[i] + params_all[index]*DIFF_RULES[1][j+DIFF_RULE_LENGTH/2] );
+//                }
+//                else {
+                acc_all[i] += (params_all[index]*DIFF_RULES[(int)type_][j+DIFF_RULE_LENGTH/2]);
+//                }
             }
         }
 
-        costs_all = weight * ( acc_all.cwise()*acc_all );
+        costs_all = ( acc_all.cwise()*acc_all );
+        costs_all *= weight;
 
         control_costs[d] = costs_all.segment( free_vars_start_index_, num_vars_free_ );
+
+//        cout.precision(2);
 //        cout << "params_all.transpose() [" << d <<  "] =" <<  params_all.transpose() << endl;
 //        cout << "acc_all.transpose() [" << d <<  "] =" << acc_all.transpose() << endl;
 //        cout << "control_costs.transpose() [" << d <<  "] =" << control_costs[d].transpose() << endl;

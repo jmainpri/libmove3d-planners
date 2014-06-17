@@ -252,7 +252,7 @@ public:
     /**
       * Get Group traj
       */
-    void setGroupTrajectoryToApiTraj(Move3D::Trajectory& traj);
+    void setGroupTrajectoryToMove3DTraj(Move3D::Trajectory& traj);
 
     /**
       * Returns cost profiles
@@ -317,6 +317,7 @@ private:
     bool use_time_limit_;
     double time_limit_;
     bool use_iteration_limit_;
+    bool use_collision_free_limit_limit_;
 
     std::vector<Move3D::confPtr_t> passive_dofs_;
 
@@ -353,6 +354,7 @@ private:
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_acc_eigen_;
 
     Eigen::VectorXd general_cost_potential_;
+    Eigen::VectorXd dt_;
 
     Eigen::MatrixXd collision_point_potential_;
     Eigen::MatrixXd collision_point_vel_mag_;
@@ -480,6 +482,8 @@ private:
     void saveOptimToFile(std::string fileName);
 
     int getNumberOfCollisionPoints(Move3D::Robot* R);
+
+
 
     //  void getTorques(int index, std::vector<double>& torques, const std::vector<KDL::Wrench>& wrenches);
 };

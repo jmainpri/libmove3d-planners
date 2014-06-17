@@ -32,6 +32,7 @@
 
 #include "planner/cost_space.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
+#include "planner/planEnvironment.hpp"
 
 #include "p3d/env.hpp"
 
@@ -56,8 +57,6 @@ bool HRICS_init_human_trajectory_cost()
 
     if( global_ht_cost_space == NULL )
     {
-        std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
-
         Scene* sce = global_Project->getActiveScene();
         Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );
         Robot* human2 = sce->getRobotByName( "HERAKLES_HUMAN2" );
@@ -70,32 +69,49 @@ bool HRICS_init_human_trajectory_cost()
         global_motionRecorders.push_back( new HRICS::RecordMotion( human1 ) );
         global_motionRecorders.push_back( new HRICS::RecordMotion( human2 ) );
 
+        // std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
         // Set this bool to false is you want to print file names as they are loaded
-        bool quiet = true;
-        global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
-        global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
+//        bool quiet = true;
+//        global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
+//        global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
 
-        // Uncomment the following to play the motion
-        //    PlayMotion player( global_motionRecorders );
-        ////    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
-        //    for(int i=0;i<int(1);i++)
-        //    {
-        //        player.play(i);
-        //    }
+        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/quan_motion";
+        global_motionRecorders[0]->useOpenRAVEFormat( true );
+        global_motionRecorders[1]->useOpenRAVEFormat( true );
+        motion_t traj1 = global_motionRecorders[0]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00000_00000.csv" );
+        motion_t traj2 = global_motionRecorders[1]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00001_00000.csv" );
+        global_motionRecorders[0]->storeMotion( traj1 );
+        global_motionRecorders[1]->storeMotion( traj2 );
+
+        cout << "create human traj cost space" << endl;
 
         global_ht_cost_space = new HumanTrajCostSpace( human2, human1 );
 
         // Define cost functions
         cout << " add cost : " << "costHumanTrajectoryCost" << endl;
-        global_costSpace->addCost( "costHumanTrajectoryCost" , boost::bind( &HumanTrajCostSpace::cost, global_ht_cost_space, _1) );
+        global_costSpace->addCost( "costHumanTrajectoryCost", boost::bind( &HumanTrajCostSpace::cost, global_ht_cost_space, _1) );
     }
 
     ENV.setBool( Env::isCostSpace, true );
     global_costSpace->setCost( "costHumanTrajectoryCost" );
 
+    if( !global_ht_cost_space->initCollisionSpace() )
+        cout << "Error : could not init collision space" << endl;
+
     cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
+    global_activeFeatureFunction = global_ht_cost_space;
 
     return true;
+}
+
+void HRICS_play_motions()
+{
+    PlayMotion player( global_motionRecorders );
+    //    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
+    for( int i=0; i<int(1); i++ )
+    {
+        player.play(i);
+    }
 }
 
 void HRICS_run_human_planning()
@@ -123,24 +139,24 @@ HumanTrajSimulator::HumanTrajSimulator( HumanTrajCostSpace* cost_space )  :
 
 bool HumanTrajSimulator::init()
 {
-    if( !global_motionRecorders[0]->getStoredMotions().empty() )
-    {
-        cout << "Load init and goal from file" << endl;
-        const motion_t& motion_pas = global_motionRecorders[0]->getStoredMotions()[0];
-        const motion_t& motion_act = global_motionRecorders[1]->getStoredMotions()[0];
+//    if( !global_motionRecorders[0]->getStoredMotions().empty() )
+//    {
+//        cout << "Load init and goal from file" << endl;
+//        const motion_t& motion_pas = global_motionRecorders[0]->getStoredMotions()[0];
+//        const motion_t& motion_act = global_motionRecorders[1]->getStoredMotions()[0];
 
-        q_init_ = motion_act[0].second;
-        q_goal_ = motion_act.back().second;
+//        q_init_ = motion_act[0].second;
+//        q_goal_ = motion_act.back().second;
 
-        // Adds the trajectory from the passive robot
-        // to the cost space
-        cost_space_->setPassiveTrajectory( motion_pas );
-    }
-    else
-    {
+//        // Adds the trajectory from the passive robot
+//        // to the cost space
+//        cost_space_->setPassiveTrajectory( motion_pas );
+//    }
+//    else
+//    {
         q_init_ = human_active_->getInitPos();
         q_goal_ = human_active_->getGoalPos();
-    }
+//    }
 
     // Set humans colors
     setHumanColor( human_active_, 3 );
@@ -168,7 +184,7 @@ bool HumanTrajSimulator::init()
 void HumanTrajSimulator::setActiveJoints()
 {
     // Get first joint and change bounds
-    Joint* joint = human_active_->getJoint(1);
+    Joint* joint = human_active_->getJoint( "Pelvis" );
 
     // take only (x, y, z) components of the base
     double bound_trans = 0.05;
@@ -216,20 +232,35 @@ void HumanTrajSimulator::setActiveJoints()
 //    Joint(0), Dof : 22, rElbowZ
 //    Is dof user : (min = -3.14, max = 3.14)
 
-    active_joints_.push_back( 1 ); // Pelvis
+    active_joints_.push_back( human_active_->getJoint( "Pelvis" )->getId() ); // Pelvis
 
-    active_joints_.push_back( 2 ); // TorsoX
-    active_joints_.push_back( 3 ); // TorsoY
-    active_joints_.push_back( 4 ); // TorsoZ
+    active_joints_.push_back( human_active_->getJoint( "TorsoX" )->getId() ); // TorsoX
+    active_joints_.push_back( human_active_->getJoint( "TorsoY" )->getId() ); // TorsoY
+    active_joints_.push_back( human_active_->getJoint( "TorsoZ" ) ->getId()); // TorsoZ
 
-    active_joints_.push_back( 8 ); // rShoulderX
-    active_joints_.push_back( 9 ); // rShoulderZ
-    active_joints_.push_back( 10 ); // rShoulderY
+    active_joints_.push_back( human_active_->getJoint( "rShoulderX" )->getId() ); // rShoulderX
+    active_joints_.push_back( human_active_->getJoint( "rShoulderZ" )->getId() ); // rShoulderZ
+    active_joints_.push_back( human_active_->getJoint( "rShoulderY" )->getId() ); // rShoulderY
 //    active_joints_.push_back( 11 ); // rArmTrans
-    active_joints_.push_back( 12 ); // rElbowZ
+    active_joints_.push_back( human_active_->getJoint( "rElbowZ" )->getId() ); // rElbowZ
 //    active_joints_.push_back(14); // joint name : rWristX
 //    active_joints_.push_back(15); // joint name : rWristY
 //    active_joints_.push_back(16); // joint name : rWristZ
+
+    // SET COST SPACE ACTIVE DOFS
+
+    std::vector<int> active_dofs;
+
+    for( size_t i=0; i<active_joints_.size(); i++ ) // get all active dofs
+    {
+        std::vector<unsigned int> jnt_active_dofs = human_active_->getJoint(active_joints_[i])->getDofIndices();
+        active_dofs.insert( active_dofs.end(), jnt_active_dofs.begin(), jnt_active_dofs.end() );
+    }
+
+    for( size_t i=0; i<cost_space_->getNumberOfFeatureFunctions(); i++ ) // set all features active dofs
+    {
+        cost_space_->getFeatureFunction(i)->setActiveDoFs( active_dofs );
+    }
 }
 
 void HumanTrajSimulator::setHumanColor(Robot* human, int color)
@@ -308,23 +339,53 @@ bool HumanTrajSimulator::run()
 HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     human_active_(active),
     human_passive_(passive),
-    dist_feat_( active, passive )
+    smoothness_feat_(),
+    dist_feat_( active, passive ),
+    collision_feat_( active )
 {
+    cout << "---------------------------------------------" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
+
     nb_way_points_ = 20;
 
-    w_ = getFeatures(*human_active_->getCurrentPos());
+//    w_ = getFeatures( *human_active_->getCurrentPos() );
+//    smoothness_feat_.setActiveDoFs( acti);
 
-//    for(int i=0;i<w_.size();i++)
-//    {
-//        w_[i] = 1;
+    active_dofs_ = std::vector<int>(1,1);
+
+    length_feat_.setActiveDoFs( active_dofs_ );
+    length_feat_.setWeights( WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
+
+    smoothness_feat_.setActiveDoFs( active_dofs_ );
+    smoothness_feat_.setWeights( WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
+
+    dist_feat_.setActiveDoFs( active_dofs_ );
+    // dist_feat_.setWeights( WeightVect::Ones(dist_feat_.getNumberOfFeatures()) );
+
+    collision_feat_.setActiveDoFs( active_dofs_ );
+    collision_feat_.setWeights( WeightVect::Ones(collision_feat_.getNumberOfFeatures()) );
+
+    if(!addFeatureFunction( &length_feat_ ) ){
+        cout << "Error adding feature length" << endl;
+    }
+    if(!addFeatureFunction( &smoothness_feat_ ) ){
+        cout << "Error adding feature smoothness" << endl;
+    }
+    if(!addFeatureFunction( &collision_feat_ )){
+        cout << "Error adding feature distance collision" << endl;
+    }
+//    if(!addFeatureFunction( &dist_feat_ )){
+//        cout << "Error adding feature distance feature" << endl;
 //    }
-
-    addFeatureFunction( &smoothness_feat_ );
-    addFeatureFunction( &dist_feat_ );
 
     w_ = getWeights();
 
-    cout << "HUMAN FEATURE SPACE : " << w_.size() << endl;
+    cout << "w_ = " << w_.transpose() << endl;
+
+    setAllFeaturesActive();
+    printInfo();
+
+    cout << "---------------------------------------------" << endl;
 }
 
 HumanTrajCostSpace::~HumanTrajCostSpace()

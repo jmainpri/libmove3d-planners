@@ -25,12 +25,6 @@
  *
  *                                               Jim Mainprice Tue 27 May 2014 
  */
-/*
- * trajectory.hpp
- *
- *  Created on: Jun 17, 2009
- *      Author: jmainpri
- */
 
 #ifndef TRAJECTORY_HPP_
 #define TRAJECTORY_HPP_
@@ -184,6 +178,7 @@ public:
 
     Eigen::MatrixXd getEigenMatrix(int startIndex=0, int endIndex=0) const;
     Eigen::MatrixXd getEigenMatrix(const std::vector<int>& incides) const;
+    bool setFromEigenMatrix(const Eigen::MatrixXd& mat, const std::vector<int>& incides);
 
     void printAllLocalpathCost();
     void draw(int nbKeyFrame = 0);
@@ -195,6 +190,10 @@ public:
     // B-Spline
     bool makeBSplineTrajectory();
 
+    //---------------------------------------------------------
+    // Save and Load from File
+    bool saveToFile(std::string filename);
+    bool loadFromFile(std::string filename);
 
     //---------------------------------------------------------
     // Getters & Setters

@@ -28,6 +28,8 @@
 #include "HRICS_human_features.hpp"
 #include "API/Graphic/drawModule.hpp"
 #include "planner/planEnvironment.hpp"
+#include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
+#include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 
 #include <boost/bind.hpp>
 #include <iomanip>
@@ -38,11 +40,14 @@ using namespace Move3D;
 using std::cout;
 using std::endl;
 
+// Declaration of constant vectors
+namespace HRICS { Move3D::FeatureVect w_distance_16; }
+
 //-------------------------------------------------------------------
 //-------------------------------------------------------------------
 
 DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
-    Feature(),
+    Feature("Distance"),
     human_active_(active),
     human_passive_(passive)
 {
@@ -66,6 +71,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 //        distance_joint_ids_.push_back( human_active_->getJoint("lElbowZ")->getId() );
 //        distance_joint_ids_.push_back( human_active_->getJoint("lWristX")->getId() );
     }
+
 //    distance_joint_ids_.push_back(0); // joint name : J0
 //    distance_joint_ids_.push_back(1); // joint name : Pelvis
 //    distance_joint_ids_.push_back(2); // joint name : TorsoX // USED
@@ -139,11 +145,10 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 
     int nb_of_features = distance_names_.size();
 
+    // Default value is 1
     w_ = Eigen::VectorXd::Ones( nb_of_features );
 
-    for( int i=0;i<w_.size();i++)
-        w_[i] = 1.0;
-
+    // Case when w_ is 49 dimensional
     if( w_.size() == 49 )
     {
         w_ <<   0.50, 0.20, 0.60, 1.00, 0.60, 0.30, 1.00, 0.20, 0.70, 0.60,
@@ -151,6 +156,20 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
                 0.50, 1.00, 0.90, 0.70, 0.10, 0.70, 0.80, 0.80, 0.50, 0.30,
                 0.20, 0.20, 0.30, 0.20, 0.20, 1.00, 1.00, 1.00, 1.00, 1.00,
                 1.00, 0.80, 1.00, 1.00, 1.00, 0.50, 0.80, 0.80, 0.10;
+    }
+
+    w_distance_16 = Eigen::VectorXd::Ones( 16 );
+    w_distance_16  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
+                        0.50, 0.20, 0.20, 0.50, // 04 -> 07
+                        0.50, 0.20, 0.50, 0.50, // 08 -> 11
+                        0.50, 0.50, 0.50, 0.20; // 12 -> 15
+
+//    w_distance_16 /= 100;
+    w_distance_16 *= 1;
+
+    if( w_.size() == 16 )
+    {
+        w_ =  w_distance_16;
     }
 
     // Print feature names and weights
@@ -175,6 +194,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 
 FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs )
 {
+    human_active_->setAndUpdate( q );
     FeatureVect count = computeDistances();
     return count;
 }
@@ -217,6 +237,9 @@ FeatureVect DistanceFeature::computeDistances() const
 
     // Careful return joint dist
     return joints_dist;
+
+    // double factor = 10 ;
+    // return factor * dist; // Scaling factor
 }
 
 void DistanceFeature::draw()
@@ -236,7 +259,7 @@ void DistanceFeature::draw()
 //-------------------------------------------------------------------
 
 VelocityFeature::VelocityFeature( Move3D::Robot* active ) :
-    Feature(),
+    Feature("Velocity"),
     human_active_(active)
 {
 //    human_active_joints_.push_back( human_active_->getJoint("Pelvis") );
@@ -334,6 +357,56 @@ FeatureVect VelocityFeature::getFeatureCount(const Move3D::Trajectory& traj)
     }
 
     return count;
+}
+
+//-------------------------------------------------------------------
+//-------------------------------------------------------------------
+
+CollisionFeature::CollisionFeature( Move3D::Robot* robot ) : Feature("Collision"), robot_(robot)
+{
+    w_ = Eigen::VectorXd::Ones( 1 );
+}
+
+FeatureVect CollisionFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
+{
+    FeatureVect phi(FeatureVect::Zero( 1 ));
+    phi[0] = getCollisionCost( q );
+    return phi;
+}
+
+void CollisionFeature::setWeights( const WeightVect& w )
+{
+    w_ = w;
+    PlanEnv->setDouble( PlanParam::trajOptimObstacWeight, w(0) );
+}
+
+
+bool CollisionFeature::init()
+{
+    return traj_optim_initStomp(); // SUPER UGLY
+}
+
+// Compute collision cost at a certain configuration
+// Suposes the robot is already in configuration
+double CollisionFeature::getCollisionCost( const Move3D::Configuration& q )
+{
+    double cost = 0.0;
+
+    if( ( global_optimizer.get() != NULL ) && ( global_optimizer->getRobot() == robot_ ) )
+    {
+        cost = global_optimizer->getCollisionSpaceCost( *robot_->getCurrentPos() );
+    }
+    else
+    {
+        if( global_optimizer.get() == NULL ){
+            cout << "Error : collision space not initialized" << endl;
+        }
+        else{
+            cout << "Error : robot is not default robot in costspace, " << global_optimizer->getRobot()->getName() << " , " <<  robot_->getName() << endl;
+        }
+    }
+
+    return cost;
 }
 
 //-------------------------------------------------------------------

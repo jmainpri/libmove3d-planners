@@ -67,6 +67,8 @@ public:
     bool getParametersAll(std::vector<Eigen::VectorXd>& parameters);
     void setFileNameBase(const std::string& file_name_base);
     void setPrintDebug(bool print_debug) { print_debug_ = print_debug; }
+    // Fill the trajectory with start and goal
+    bool fillBufferStartAndGoal();
 
     // Functions inherited from Policy:
 
@@ -165,17 +167,22 @@ public:
     bool writeToDisc(const std::string abs_file_name);
     std::string getFileName(const int trial_id);
 
+
     double movement_dt_;
+
+    int num_vars_free_;
+    int num_vars_all_;
 
 private:
 //    ros::NodeHandle node_handle_;
+
+    enum cost_type { vel=0, acc=1, jerk=2 } type_;
 
     std::string file_name_base_;
     bool print_debug_;
 
     int num_time_steps_;
-    int num_vars_free_;
-    int num_vars_all_;
+
     int free_vars_start_index_;
     int free_vars_end_index_;
     int num_dimensions_;
@@ -196,6 +203,9 @@ private:
     std::vector<Eigen::MatrixXd> differentiation_matrices_;
 
     const Move3D::ChompPlanningGroup* planning_group_;
+
+    Eigen::VectorXd start_;
+    Eigen::VectorXd goal_;
 
     void createDifferentiationMatrices();
     bool readParameters();

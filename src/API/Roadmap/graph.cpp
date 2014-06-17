@@ -2204,13 +2204,13 @@ public:
 
         Vertex_t v = target(e, g);
 
-        if( API_activeFeatureSpace != NULL )
+        if( global_activeFeatureFunction != NULL )
         {
             confPtr_t q = m_vertices[v]->getConfiguration();
 
             if( !q->areFeaturesEvaluated() )
             {
-                Move3D::FeatureVect phi = API_activeFeatureSpace->getFeatures( *q );
+                Move3D::FeatureVect phi = global_activeFeatureFunction->getFeatures( *q );
                 q->setFeatures( phi );
 
                 if( phi.maxCoeff() > 0.513 )

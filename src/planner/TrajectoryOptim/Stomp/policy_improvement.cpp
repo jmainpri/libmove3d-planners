@@ -72,7 +72,7 @@ USING_PART_OF_NAMESPACE_EIGEN
 namespace stomp_motion_planner
 {
     //! Computes the cost the rollout
-    //! the function sums the control costs of all dumensions
+    //! the function sums the control costs of all dimensions
     double Rollout::getCost()
     {
         double cost = state_costs_.sum();
@@ -82,14 +82,15 @@ namespace stomp_motion_planner
         return cost;
     }
 
-    void Rollout::printCost()
+    void Rollout::printCost(double weight)
     {
         double control_cost = 0.0;
 
         for (int d=0; d<int(control_costs_.size()); ++d)
-            control_cost += control_costs_[d].sum();
+            control_cost += ( control_costs_[d].sum() / weight );
 
-        cout << "control cost : " << control_cost << " , state cost : " << state_costs_.sum() << endl;
+//        cout.precision(6);
+//        cout << "control cost : " << control_cost << " , state cost : " << state_costs_.sum() << endl;
 
         //        cout << "state_costs_ : ";
         //        for (int i=0; i<state_costs_.size(); i++) {
@@ -725,7 +726,7 @@ namespace stomp_motion_planner
     bool PolicyImprovement::computeRolloutControlCosts(Rollout& rollout)
     {
         policy_->computeControlCosts(control_costs_, rollout.parameters_,
-                                     rollout.noise_projected_, 0.5*control_cost_weight_, rollout.control_costs_);
+                                     rollout.noise_projected_, control_cost_weight_, rollout.control_costs_);
         return true;
     }
 
@@ -734,6 +735,7 @@ namespace stomp_motion_planner
         for (int r=0; r<num_rollouts_; ++r)
         {
             computeRolloutControlCosts(rollouts_[r]);
+            rollouts_[r].printCost(control_cost_weight_);
         }
         return true;
     }

@@ -48,7 +48,9 @@ typedef Eigen::VectorXd WeightVect;
 class Feature
 {
 public:
-    Feature() : is_stacked_(false) {}
+    Feature(std::string name) : is_stacked_(false), name_(name) {}
+
+    std::string getName() { return name_; }
 
     virtual FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_features = std::vector<int>(0)) = 0;
     virtual FeatureProfile getFeatureProfile(const Move3D::Trajectory& t);
@@ -67,7 +69,7 @@ public:
     virtual double costPath( Move3D::LocalPath& p, int& nb_calls );
 
     virtual void setWeights( const WeightVect& w );
-    virtual WeightVect getWeights() { return w_; }
+    virtual WeightVect getWeights() const { return w_; }
 
     virtual void setActiveFeatures( const std::vector<int>& active_features ) { active_features_ = active_features; }
     virtual const std::vector<int>& getActiveFeatures() const { return active_features_; }
@@ -77,14 +79,18 @@ public:
 
     virtual int getNumberOfFeatures() const { return w_.size(); }
     virtual void printWeights() const { std::cout << " w_.transpose() : " << w_.transpose() << std::endl; }
+    virtual void printInfo() const { }
 
     std::vector<Move3D::Trajectory*> extractAllTrajectories( Move3D::Graph* g, Move3D::confPtr_t q_init, Move3D::confPtr_t q_goal, int nb_divisions );
+
+    bool is_active_;
 
 protected:
     std::vector<int> active_dofs_;
     std::vector<int> active_features_;
     FeatureVect w_;
     bool is_stacked_;
+    std::string name_;
 };
 
 ////////////////////////////////////////
@@ -93,25 +99,38 @@ class StackedFeatures : public Feature
 public:
     StackedFeatures();
 
-    virtual FeatureVect getFeatureCount(const Move3D::Trajectory& t);
     virtual FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
+    virtual FeatureVect getFeatureCount(const Move3D::Trajectory& t);
 
     void setWeights( const WeightVect& w );
-    WeightVect getWeights();
+    WeightVect getWeights() const;
 
     void setActiveFeatures( const std::vector<int>& active_features );
+    void setActiveFeatures( const std::vector<std::string>& active_features );
+    void setAllFeaturesActive();
 
     bool addFeatureFunction( Feature* fct );
+    int getNumberOfFeatureFunctions() { return feature_stack_.size(); }
     int getNumberOfFeatures() { return nb_features_; }
 
     void printWeights() const;
-    void printStackInfo() const;
+    void printInfo() const;
 
     Feature* getFeatureFunction(int i) { return feature_stack_[i]; }
+    Feature* getFeatureFunction(std::string name);
 
 protected:
     int nb_features_;
     std::vector<Feature*> feature_stack_;
+};
+
+////////////////////////////////////////
+class LengthFeature : public Move3D::Feature
+{
+public:
+    LengthFeature();
+    Move3D::FeatureVect getFeatureCount( const Move3D::Trajectory& t );
+    Move3D::FeatureVect getFeatures( const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0) );
 };
 
 ////////////////////////////////////////
@@ -121,8 +140,10 @@ public:
     TrajectorySmoothness();
 
     //! Returns a smoothness cost for the trajectory
-    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
     FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
+    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+
+    void setWeights(const WeightVect &w);
 
     //! Prints the control cost along the trajectory
     void printControlCosts( const std::vector<Eigen::VectorXd>& control_cost  );
@@ -134,6 +155,6 @@ private:
 
 }
 
-extern Move3D::Feature* API_activeFeatureSpace;
+extern Move3D::Feature* global_activeFeatureFunction;
 
 #endif // HRICS_FEATURES_HPP

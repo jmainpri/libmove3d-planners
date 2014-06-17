@@ -67,7 +67,7 @@ bool HRICS_init_sphere_cost()
 
         global_costSpace->addCost( "costSpheresJacobian", boost::bind( &PlanarFeature::jacobianCost, global_SphereCostFct, _1) );
 
-        API_activeFeatureSpace = global_SphereCostFct;
+        global_activeFeatureFunction = global_SphereCostFct;
 
         // global_costSpace->setCost( cost_function );
         return true;

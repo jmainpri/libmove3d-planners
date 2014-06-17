@@ -46,7 +46,7 @@ Move3D::PlanarFeature* global_PlanarCostFct=NULL;
 
 std::string cost_map_folder = "matlab/cost_maps/";
 
-PlanarFeature::PlanarFeature()
+PlanarFeature::PlanarFeature() : Feature("Planar")
 {
     balance_cumul_jac_ = 0.0;
     cur_min_diff_ = 0.0;

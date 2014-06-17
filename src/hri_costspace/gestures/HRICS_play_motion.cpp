@@ -17,13 +17,13 @@
  * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
  * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                                  
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001). 
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
  * Move3d: A generic platform for path planning. In in 4th Int. Symp.
  * on Assembly and Task Planning.
  *
- *                                               Jim Mainprice Tue 27 May 2014 
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 #include "HRICS_play_motion.hpp"
 #include "planEnvironment.hpp"
@@ -105,10 +105,10 @@ void PlayMotion::runRealTime(int id)
 
         g3d_draw_allwin_active();
 
-//        if( _current_frame == 1 )
-//        {
-//            StopRun = true;
-//        }
+        //        if( _current_frame == 1 )
+        //        {
+        //            StopRun = true;
+        //        }
 
         if ( PlanEnv->getBool(PlanParam::stopPlanner) ) {
             StopRun = true;
@@ -124,7 +124,7 @@ void PlayMotion::runRealTime(int id)
     return;
 }
 
-void PlayMotion::runControlled() //TODO weird implementation. should be fixed at some point, but definitely working.
+void PlayMotion::runControlled() // TODO weird implementation. should be fixed at some point, but definitely working.
 {
     int numFrames = int(_motion_recorders[0]->getStoredMotions()[0].size());
 

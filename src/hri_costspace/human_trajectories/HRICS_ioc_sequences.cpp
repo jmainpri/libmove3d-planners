@@ -54,12 +54,12 @@ using std::endl;
 // Folders for sphere (and plannar) type of features
 static std::string move3d_spheres_demo_folder("/home/jmainpri/Dropbox/move3d/assets/IOC/TRAJECTORIES/");
 static std::string move3d_spheres_traj_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs_home/per_feature_square/");
-static std::string move3d_spheres_tmp_data_folder("matlab/move3d_tmp_data_home/");
+static std::string move3d_spheres_tmp_data_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/move3d_tmp_data_home/");
 
 // Folders for human trajs features
 static std::string move3d_human_trajs_demo_folder("/home/jmainpri/Dropbox/move3d/assets/Collaboration/TRAJECTORIES/");
 static std::string move3d_human_trajs_traj_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs/per_feature_human_traj/");
-static std::string move3d_human_trajs_tmp_data_folder("matlab/move3d_tmp_data_human_trajs/");
+static std::string move3d_human_trajs_tmp_data_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/move3d_tmp_data_human_trajs/");
 
 IocSequences::IocSequences()
 {
@@ -221,15 +221,36 @@ bool IocSequences::run()
         switch( phase_ )
         {
         case generate:
+
             cout << "GENERATE" << endl;
-            eval->generateDemonstrations();
+            setGenerationFeatures();
+
+//            if( !global_motionRecorders.empty() && !global_motionRecorders[0]->getStoredMotions().empty() )
+//            {
+//                std::vector<Move3D::Trajectory> trajs;
+//                trajs.push_back( HRICS::motion_to_traj( global_motionRecorders[0]->getStoredMotions()[0], human2, 60 ) );
+//                human1->setAndUpdate( *global_motionRecorders[1]->getStoredMotions()[0][0].second );
+//                eval->saveDemoToFile( trajs );
+//            }
+//            else {
+                eval->generateDemonstrations();
+//            }
+
             g3d_draw_allwin_active();
             break;
 
         case sample:
             cout << "SAMPLE" << endl;
+
+            setSamplingFeatures();
+
+            eval->loadWeightVector();
+//            eval->setLearnedWeights();
             eval->loadDemonstrations();
             // eval.runLearning();
+
+            cout << "stack info" << endl;
+            feature_fct_->printInfo();
 
             if( sample_from_file )
                 eval->runFromFileSampling( file_offset );
@@ -241,6 +262,9 @@ bool IocSequences::run()
 
         case compare:
             cout << "COMPARE" << endl;
+
+            setCompareFeatures();
+
             results.push_back( eval->compareDemosAndPlanned() );
             g3d_draw_allwin_active();
             break;
@@ -311,7 +335,7 @@ void IocSequences::set_features()
         else
         {
             feature_fct_->setWeights( global_PlanarCostFct->getWeights() );
-            feature_fct_->printStackInfo();
+            feature_fct_->printInfo();
 
             cout << "original_vect : " << endl;
             feature_fct_->printWeights();
@@ -319,17 +343,19 @@ void IocSequences::set_features()
             // Save costmap to matlab with original weights
             ChronoTimeOfDayOn();
 
-            std::vector<int> active_feature;
-            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
-            {
-                // active_feature.clear();
-                active_feature.push_back(i);
-                // feature_fct_->setActiveFeatures( active_feature );
-                // global_PlanarCostFct->produceCostMap(i);
-                // global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
-            }
+            feature_fct_->setAllFeaturesActive();
 
-            feature_fct_->setActiveFeatures( active_feature );
+//            std::vector<int> active_feature;
+//            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
+//            {
+//                // active_feature.clear();
+//                active_feature.push_back(i);
+//                // feature_fct_->setActiveFeatures( active_feature );
+//                // global_PlanarCostFct->produceCostMap(i);
+//                // global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
+//            }
+
+//            feature_fct_->setActiveFeatures( active_feature );
             // global_PlanarCostFct->produceCostMap(0);
             // global_PlanarCostFct->produceDerivativeFeatureCostMap(0);
 
@@ -345,27 +371,87 @@ void IocSequences::set_features()
         feature_fct_ = global_ht_cost_space;
 
         // Set all feature active
-        std::vector<int> active_feature;
-        for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
-            active_feature.push_back(i);
-        feature_fct_->setActiveFeatures( active_feature );
+        feature_fct_->setAllFeaturesActive();
 
-        cout << "stack info" << endl;
-        feature_fct_->printStackInfo();
-
-        cout << "original_vect : " << endl;
-        feature_fct_->printWeights();
-
+        // Set active joints and joint bounds
         HumanTrajSimulator sim( global_ht_cost_space );
         sim.init();
         active_joints_ = sim.getActiveJoints();
-
         cout << "active_joints_.size() : " << active_joints_.size() << endl;
-//        std::vector<int> active_feature;
-//        for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
-//        {
-//            active_feature.push_back(i);
-//        }
-//        feature_fct_->setActiveFeatures( active_feature );
+    }
+}
+
+void IocSequences::setGenerationFeatures()
+{
+    if( features_type_ == human_trajs && global_ht_cost_space != NULL )
+    {
+        std::vector<std::string> active_features;
+        active_features.push_back("Length");
+        active_features.push_back("Distance");
+//        active_features.push_back("Smoothness");
+//        active_features.push_back("Collision");
+        feature_fct_->setActiveFeatures( active_features );
+
+        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
+
+        cout << "stack info" << endl;
+        feature_fct_->printInfo();
+
+        cout << "original_vect : " << endl;
+        feature_fct_->printWeights();
+    }
+}
+
+void IocSequences::setSamplingFeatures()
+{
+    if( features_type_ == human_trajs && global_ht_cost_space != NULL )
+    {
+        std::vector<std::string> active_features;
+        active_features.push_back("Length");
+        active_features.push_back("Distance");
+//        active_features.push_back("Smoothness");
+        active_features.push_back("Collision");
+
+        feature_fct_->setActiveFeatures( active_features );
+
+//        double w_smoo = PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight);
+//        double w_obst = PlanEnv->getDouble(PlanParam::trajOptimObstacWeight);
+//        double w_dist = PlanEnv->getDouble(PlanParam::trajOptimGlobalWeight);
+
+//        PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,1.0);
+//        PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,w_obst);
+//        PlanEnv->setDouble(PlanParam::trajOptimGlobalWeight,w_dist);
+
+//        feature_fct_->getFeatureFunction("Smoothness")->setWeights( w_smoo * FeatureVect::Ones(1) );
+//        feature_fct_->getFeatureFunction("Collision")->setWeights( w_obst * FeatureVect::Ones(1) );
+//        feature_fct_->getFeatureFunction("Distance")->setWeights( w_dist * w_distance_16 );
+
+
+
+        cout << "stack info" << endl;
+        feature_fct_->printInfo();
+
+        cout << "original_vect : " << endl;
+        feature_fct_->printWeights();
+    }
+}
+
+void IocSequences::setCompareFeatures()
+{
+    if( features_type_ == human_trajs && global_ht_cost_space != NULL )
+    {
+        std::vector<std::string> active_features;
+        active_features.push_back("Length");
+//        active_features.push_back("Smoothness");
+        active_features.push_back("Distance");
+        active_features.push_back("Collision");
+
+        feature_fct_->setActiveFeatures( active_features );
+
+        cout << "stack info" << endl;
+        feature_fct_->printInfo();
+
+        cout << "original_vect : " << endl;
+        feature_fct_->printWeights();
     }
 }
