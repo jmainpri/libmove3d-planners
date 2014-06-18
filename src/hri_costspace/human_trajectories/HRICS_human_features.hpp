@@ -37,7 +37,8 @@
 namespace HRICS
 {
 
-extern Move3D::FeatureVect w_distance_16;
+extern Move3D::FeatureVect w_distance_16_distance;
+extern Move3D::FeatureVect w_distance_16_visility;
 
 class DistanceFeature : public Move3D::Feature
 {
@@ -111,9 +112,16 @@ private:
 class VisibilityFeature : public Move3D::Feature
 {
 public:
-    VisibilityFeature() : Feature("Visbility") {}
-    Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+    VisibilityFeature( Move3D::Robot* active, Move3D::Robot* passive );
     Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
+    Move3D::FeatureVect computeVisibility() const;
+
+    void draw();
+
+private:
+
+    Visibility* visib_cost_;
+    std::vector<Move3D::Joint*> human_active_joints_;
 };
 
 class MuskuloskeletalFeature : public Move3D::Feature

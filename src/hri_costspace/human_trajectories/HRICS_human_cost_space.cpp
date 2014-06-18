@@ -341,6 +341,7 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     human_passive_(passive),
     smoothness_feat_(),
     dist_feat_( active, passive ),
+    visi_feat_(active, passive),
     collision_feat_( active )
 {
     cout << "---------------------------------------------" << endl;
@@ -354,13 +355,13 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     active_dofs_ = std::vector<int>(1,1);
 
     length_feat_.setActiveDoFs( active_dofs_ );
-    length_feat_.setWeights( WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
+    length_feat_.setWeights( 0.008 * WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
 
     smoothness_feat_.setActiveDoFs( active_dofs_ );
     smoothness_feat_.setWeights( WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
 
     dist_feat_.setActiveDoFs( active_dofs_ );
-    // dist_feat_.setWeights( WeightVect::Ones(dist_feat_.getNumberOfFeatures()) );
+    dist_feat_.setWeights( w_distance_16_distance );
 
     collision_feat_.setActiveDoFs( active_dofs_ );
     collision_feat_.setWeights( WeightVect::Ones(collision_feat_.getNumberOfFeatures()) );
@@ -368,15 +369,15 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     if(!addFeatureFunction( &length_feat_ ) ){
         cout << "Error adding feature length" << endl;
     }
-    if(!addFeatureFunction( &smoothness_feat_ ) ){
-        cout << "Error adding feature smoothness" << endl;
-    }
-    if(!addFeatureFunction( &collision_feat_ )){
-        cout << "Error adding feature distance collision" << endl;
-    }
-//    if(!addFeatureFunction( &dist_feat_ )){
-//        cout << "Error adding feature distance feature" << endl;
+//    if(!addFeatureFunction( &smoothness_feat_ ) ){
+//        cout << "Error adding feature smoothness" << endl;
 //    }
+//    if(!addFeatureFunction( &collision_feat_ )){
+//        cout << "Error adding feature distance collision" << endl;
+//    }
+    if(!addFeatureFunction( &dist_feat_ )){
+        cout << "Error adding feature distance feature" << endl;
+    }
 
     w_ = getWeights();
 

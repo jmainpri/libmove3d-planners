@@ -556,18 +556,19 @@ Feature* StackedFeatures::getFeatureFunction(std::string name)
 LengthFeature::LengthFeature() : Feature("Length")
 {
     w_ = WeightVect::Ones( 1 ); // Sets the number of feature in the base class
+    scaling_ = 100;
 }
 
 FeatureVect LengthFeature::getFeatureCount( const Move3D::Trajectory& t )
 {
-    FeatureVect feature_count = t.getParamMax() * FeatureVect::Ones( 1 );
+    FeatureVect feature_count = scaling_ * t.getParamMax() * FeatureVect::Ones( 1 );
     cout << "length : " << feature_count.transpose() << endl;
     return feature_count;
 }
 
 FeatureVect LengthFeature::getFeatures( const Move3D::Configuration& q, std::vector<int> active_dofs )
 {
-    return FeatureVect::Ones( 1 );
+    return scaling_ * FeatureVect::Ones( 1 );
 }
 
 //----------------------------------------------------------------------
@@ -631,7 +632,7 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 void TrajectorySmoothness::setWeights( const WeightVect& w )
 {
     w_ = w;
-    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
+//    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
 }
 
 void TrajectorySmoothness::printControlCosts( const std::vector<Eigen::VectorXd>& control_cost )

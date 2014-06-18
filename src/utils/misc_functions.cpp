@@ -71,7 +71,7 @@ void move3d_save_matrix_to_csv_file( const Eigen::MatrixXd& matrix, std::string 
 // general case, stream interface
 inline size_t word_count(std::stringstream& is)  // can pass an open std::ifstream() to this if required
 {
-    cout << is.str() << endl;
+//    cout << is.str() << endl;
     size_t c = 0;
     for(std::string w; std::getline( is, w, ',' ); ++c);
 //        cout << "found word : " << w << endl;

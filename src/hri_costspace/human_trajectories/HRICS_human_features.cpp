@@ -41,10 +41,15 @@ using std::cout;
 using std::endl;
 
 // Declaration of constant vectors
-namespace HRICS { Move3D::FeatureVect w_distance_16; }
+namespace HRICS {
 
-//-------------------------------------------------------------------
-//-------------------------------------------------------------------
+Move3D::FeatureVect w_distance_16_distance;
+Move3D::FeatureVect w_distance_16_visility;
+
+}
+
+//------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
 
 DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
     Feature("Distance"),
@@ -151,18 +156,18 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 
 
 
-    w_distance_16 = Eigen::VectorXd::Ones( 16 );
-    w_distance_16  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
-                        0.50, 0.20, 0.20, 0.50, // 04 -> 07
+    w_distance_16_distance = Eigen::VectorXd::Ones( 16 );
+    w_distance_16_distance  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
+                        0.50, 0.10, 0.20, 0.50, // 04 -> 07
                         0.50, 0.20, 0.50, 0.50, // 08 -> 11
                         0.50, 0.50, 0.50, 0.20; // 12 -> 15
 
-//    w_distance_16 /= 100;
-    w_distance_16 *= 1;
+    w_distance_16_distance /= 100;
+//    w_distance_16_distance *= 1;
 
     if( w_.size() == 16 )
     {
-        w_ =  w_distance_16;
+        w_ =  w_distance_16_distance;
     }
 
 //    w_ = Eigen::VectorXd::Ones(49);
@@ -191,21 +196,37 @@ FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int
 {
     human_active_->setAndUpdate( q );
     FeatureVect count = computeDistances();
-    return count;
+
+    const double base = 20; // Using exp usualy ....
+    const double max_distance = 0.80; // distance limit when the feature vanishes
+    const double factor_distance = 0.16; // max_distance / ( 5 ~ 6 ) -> when the exp(-x) reaches 0
+
+    for(int i=0; i<count.size(); i++) // For all features
+    {
+        if( count[i] < max_distance )
+            count[i] = std::pow( base, -count[i]/factor_distance ); // 1e-3/j_dist;
+        else
+            count[i] = 0.0;
+    }
+
+    //    cout.setf( std::ios::fixed, std:: ios::floatfield );
+    //    cout.precision(2);
+    //    cout.width(1);
+    //    cout << "dist is : " << dist.transpose() << endl;
+    //    cout << "joint dist : " << joints_dist.transpose() << endl;
+
+    double factor = 5000;
+    return factor * count; // Scaling factor
 }
 
 FeatureVect DistanceFeature::computeDistances() const
 {
     FeatureVect dist( distance_joint_ids_.size() * distance_joint_ids_.size() );
-    FeatureVect joints_dist( distance_joint_ids_.size() * distance_joint_ids_.size() );
 
     int k=0;
 
     Eigen::Vector3d pos_a;
     Eigen::Vector3d pos_p;
-
-    const double max_distance = 0.80; // distance limit when the feature vanishes
-    const double factor_distance = 0.16; // max_distance / ( 5 ~ 6 ) -> when the exp(-x) reaches 0
 
     for(size_t i=0; i<distance_joint_ids_.size(); i++)
         for(size_t j=0; j<distance_joint_ids_.size(); j++)
@@ -213,24 +234,10 @@ FeatureVect DistanceFeature::computeDistances() const
             pos_a = human_active_joints_[i]->getVectorPos();
             pos_p = human_passive_joints_[j]->getVectorPos();
 
-            double j_dist = ( pos_a - pos_p ).norm();
-
-            joints_dist[k] = j_dist;
-
-            if( j_dist < max_distance )
-                dist[k++] = std::exp( -j_dist/factor_distance ); // 1e-3/j_dist;
-            else
-                dist[k++] = 0.0;
+            dist[k++] = ( pos_a - pos_p ).norm();
         }
 
-//    cout.setf( std::ios::fixed, std:: ios::floatfield );
-//    cout.precision(2);
-//    cout.width(1);
-//    cout << "dist is : " << dist.transpose() << endl;
-//    cout << "joint dist : " << joints_dist.transpose() << endl;
-
-    double factor = 10 ;
-    return factor * dist; // Scaling factor
+    return dist;
 }
 
 void DistanceFeature::draw()
@@ -245,8 +252,8 @@ void DistanceFeature::draw()
         }
 }
 
-//-------------------------------------------------------------------
-//-------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
 
 VelocityFeature::VelocityFeature( Move3D::Robot* active ) :
     Feature("Velocity"),
@@ -347,8 +354,8 @@ FeatureVect VelocityFeature::getFeatureCount(const Move3D::Trajectory& traj)
     return count;
 }
 
-//-------------------------------------------------------------------
-//-------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
 
 CollisionFeature::CollisionFeature( Move3D::Robot* robot ) : Feature("Collision"), robot_(robot)
 {
@@ -397,23 +404,113 @@ double CollisionFeature::getCollisionCost( const Move3D::Configuration& q )
     return cost;
 }
 
-//-------------------------------------------------------------------
-//-------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
+
+VisibilityFeature::VisibilityFeature( Robot* active, Robot* passive ) :
+    Feature("Visbility"),
+    visib_cost_( new Visibility(passive) )
+{
+    human_active_joints_.push_back( active->getJoint("Pelvis") );       // joint name : Pelvis
+    human_active_joints_.push_back( active->getJoint("rWristX") );      // joint name : rWristX
+    human_active_joints_.push_back( active->getJoint("rElbowZ") );      // joint name : rElbowZ
+    human_active_joints_.push_back( active->getJoint("rShoulderX") );   // joint name : rShoulderX
+
+    // Print active joints
+    for(size_t i=0; i<human_active_joints_.size(); i++) {
+        cout << std::setw( ceil(log10(human_active_joints_.size())) ) << std::setfill( '0' ) <<  i;
+        cout << " , human active joint name : " << human_active_joints_[i]->getName() << endl;
+    }
+
+    int nb_of_features = human_active_joints_.size();
+
+    // Default value is 1
+    w_ = Eigen::VectorXd::Ones( nb_of_features );
+
+
+    w_distance_16_visility = Eigen::VectorXd::Ones( 16 );
+    w_distance_16_visility  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
+                                 0.50, 0.10, 0.20, 0.50, // 04 -> 07
+                                 0.50, 0.20, 0.50, 0.50, // 08 -> 11
+                                 0.50, 0.50, 0.50, 0.20; // 12 -> 15
+
+    w_distance_16_visility /= 100;
+//    w_distance_16_visility *= 1;
+
+    if( w_.size() == 16 )
+    {
+        w_ =  w_distance_16_visility;
+    }
+
+//    w_ = Eigen::VectorXd::Ones(49);
+
+    // Print feature names and weights
+    for( size_t i=0; i<human_active_joints_.size(); i++ )
+    {
+        cout.precision(2);
+        cout.setf( std::ios::fixed, std:: ios::floatfield );
+        cout  << std::setw( ceil(log10(human_active_joints_.size())) ) << std::setfill( '0' ) <<  i;
+        cout << " , w : " << w_[i] << " , visiblility name : " << human_active_joints_[i]->getName() <<  endl;
+//        cout << "( " << distance_names_[i] << " ) , " ;
+//        if( (i+1)%10 == 0 ){
+//            cout << endl;
+//        }
+    }
+    cout << endl;
+
+    if( global_DrawModule )
+    {
+        global_DrawModule->addDrawFunction( "HumanVisibility", boost::bind( &VisibilityFeature::draw, this) );
+        global_DrawModule->enableDrawFunction( "HumanVisibility" );
+    }
+}
 
 FeatureVect VisibilityFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
-    FeatureVect count;
+    FeatureVect count( computeVisibility() );
+
+    const double base = 20; // Using exp usually ....
+    const double max_distance = 0.80; // distance limit when the feature vanishes
+    const double factor_distance = 0.16; // max_distance / ( 5 ~ 6 ) -> when the exp(-x) reaches 0
+
+    for( int i=0; i<count.size(); i++ )
+    {
+        if( count[i] < max_distance )
+            count[i] = std::pow( base, -count[i]/factor_distance ); // 1e-3/j_dist;
+        else
+            count[i] = 0.0;
+    }
+
     return count;
 }
 
-FeatureVect VisibilityFeature::getFeatureCount(const Move3D::Trajectory& t)
+FeatureVect VisibilityFeature::computeVisibility() const
 {
-    FeatureVect count;
-    return count;
+    FeatureVect visib( human_active_joints_.size() );
+
+    Eigen::Vector3d pos;
+
+    for(int i=0; i<visib.size(); i++)
+    {
+        visib[i] = visib_cost_->getWorkspaceCost( human_active_joints_[i]->getVectorPos() );
+    }
+
+//    cout.setf( std::ios::fixed, std:: ios::floatfield );
+//    cout.precision(2);
+//    cout.width(1);
+//    cout << "dist is : " << dist.transpose() << endl;
+//    cout << "joint dist : " << joints_dist.transpose() << endl;
+
+    return visib; // Scaling factor
 }
 
-//-------------------------------------------------------------------
-//-------------------------------------------------------------------
+void VisibilityFeature::draw()
+{
+
+}
+
+//------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
 
 FeatureVect MuskuloskeletalFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
@@ -427,8 +524,8 @@ FeatureVect MuskuloskeletalFeature::getFeatureCount(const Move3D::Trajectory& t)
     return count;
 }
 
-//-------------------------------------------------------------------
-//-------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
 
 FeatureVect LegibilityFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
@@ -442,8 +539,8 @@ FeatureVect LegibilityFeature::getFeatureCount(const Move3D::Trajectory& t)
     return count;
 }
 
-//-------------------------------------------------------------------
-//-------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
 
 FeatureVect ReachabilityFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
