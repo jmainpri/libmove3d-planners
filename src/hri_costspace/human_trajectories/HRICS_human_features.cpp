@@ -17,13 +17,13 @@
  * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
  * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                                  
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001). 
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
  * Move3d: A generic platform for path planning. In in 4th Int. Symp.
  * on Assembly and Task Planning.
  *
- *                                               Jim Mainprice Tue 27 May 2014 
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 #include "HRICS_human_features.hpp"
 #include "API/Graphic/drawModule.hpp"
@@ -61,62 +61,62 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
     distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );      // joint name : rElbowZ
     distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );      // joint name : rShoulderX
 
-//    distance_joint_ids_.push_back(1); // joint name : Pelvis
-//    distance_joint_ids_.push_back(8); // joint name : rShoulderX
-//    distance_joint_ids_.push_back(12); // joint name : rElbowZ
-//    distance_joint_ids_.push_back(14); // joint name : rWristX
-//    distance_joint_ids_.push_back(17); // joint name : lShoulderX
-//    distance_joint_ids_.push_back(21); // joint name : lElbowZ
-//    distance_joint_ids_.push_back(23); // joint name : lWristX
+    //    distance_joint_ids_.push_back(1); // joint name : Pelvis
+    //    distance_joint_ids_.push_back(8); // joint name : rShoulderX
+    //    distance_joint_ids_.push_back(12); // joint name : rElbowZ
+    //    distance_joint_ids_.push_back(14); // joint name : rWristX
+    //    distance_joint_ids_.push_back(17); // joint name : lShoulderX
+    //    distance_joint_ids_.push_back(21); // joint name : lElbowZ
+    //    distance_joint_ids_.push_back(23); // joint name : lWristX
 
-//    distance_joint_ids_.push_back(0); // joint name : J0
-//    distance_joint_ids_.push_back(1); // joint name : Pelvis
-//    distance_joint_ids_.push_back(2); // joint name : TorsoX // USED
-//    distance_joint_ids_.push_back(3); // joint name : TorsoY
-//    distance_joint_ids_.push_back(4); // joint name : TorsoZ
-//    distance_joint_ids_.push_back(5); // joint name : HeadZ
-//    distance_joint_ids_.push_back(6); // joint name : HeadY
-//    distance_joint_ids_.push_back(7); // joint name : HeadX // USED
-//    distance_joint_ids_.push_back(8); // joint name : rShoulderX
-//    distance_joint_ids_.push_back(9); // joint name : rShoulderZ
-//    distance_joint_ids_.push_back(10); // joint name : rShoulderY
-//    distance_joint_ids_.push_back(11); // joint name : rArmTrans
-//    distance_joint_ids_.push_back(12); // joint name : rElbowZ
-//    distance_joint_ids_.push_back(13); // joint name : lPoint
-//    distance_joint_ids_.push_back(14); // joint name : rWristX
-//    distance_joint_ids_.push_back(15); // joint name : rWristY
-//    distance_joint_ids_.push_back(16); // joint name : rWristZ
-//    distance_joint_ids_.push_back(17); // joint name : lShoulderX
-//    distance_joint_ids_.push_back(18); // joint name : lShoulderZ
-//    distance_joint_ids_.push_back(19); // joint name : lShoulderY
-//    distance_joint_ids_.push_back(20); // joint name : lArmTrans
-//    distance_joint_ids_.push_back(21); // joint name : lElbowZ
-//    distance_joint_ids_.push_back(22); // joint name : lPoint
-//    distance_joint_ids_.push_back(23); // joint name : lWristX
-//    distance_joint_ids_.push_back(24); // joint name : lWristY
-//    distance_joint_ids_.push_back(25); // joint name : lWristZ
-//    distance_joint_ids_.push_back(26); // joint name : rHipX // USED
-//    distance_joint_ids_.push_back(27); // joint name : rHipY
-//    distance_joint_ids_.push_back(28); // joint name : rHipZ
-//    distance_joint_ids_.push_back(29); // joint name : rKnee // USED
-//    distance_joint_ids_.push_back(30); // joint name : rAnkleX // USED
-//    distance_joint_ids_.push_back(31); // joint name : rAnkleY
-//    distance_joint_ids_.push_back(32); // joint name : rAnkleZ
-//    distance_joint_ids_.push_back(33); // joint name : lHipX // USED
-//    distance_joint_ids_.push_back(34); // joint name : lHipY
-//    distance_joint_ids_.push_back(35); // joint name : lHipZ
-//    distance_joint_ids_.push_back(36); // joint name : lKnee // USED
-//    distance_joint_ids_.push_back(37); // joint name : lAnkleX // USED
-//    distance_joint_ids_.push_back(38); // joint name : lAnkleY
-//    distance_joint_ids_.push_back(39); // joint name : lAnkleZ
-//    distance_joint_ids_.push_back(40); // joint name : rPalm // USED
-//    distance_joint_ids_.push_back(41); // joint name : lPalm // USED
-//    distance_joint_ids_.push_back(42); // joint name : rPoint
-//    distance_joint_ids_.push_back(43); // joint name : lPoint
-//    distance_joint_ids_.push_back(44); // joint name : lefthandgest
-//    distance_joint_ids_.push_back(45); // joint name : righthandgest
-//    distance_joint_ids_.push_back(46); // joint name : Eyes
-//    distance_joint_ids_.push_back(47); // joint name : HriLookJoint
+    //    distance_joint_ids_.push_back(0); // joint name : J0
+    //    distance_joint_ids_.push_back(1); // joint name : Pelvis
+    //    distance_joint_ids_.push_back(2); // joint name : TorsoX // USED
+    //    distance_joint_ids_.push_back(3); // joint name : TorsoY
+    //    distance_joint_ids_.push_back(4); // joint name : TorsoZ
+    //    distance_joint_ids_.push_back(5); // joint name : HeadZ
+    //    distance_joint_ids_.push_back(6); // joint name : HeadY
+    //    distance_joint_ids_.push_back(7); // joint name : HeadX // USED
+    //    distance_joint_ids_.push_back(8); // joint name : rShoulderX
+    //    distance_joint_ids_.push_back(9); // joint name : rShoulderZ
+    //    distance_joint_ids_.push_back(10); // joint name : rShoulderY
+    //    distance_joint_ids_.push_back(11); // joint name : rArmTrans
+    //    distance_joint_ids_.push_back(12); // joint name : rElbowZ
+    //    distance_joint_ids_.push_back(13); // joint name : lPoint
+    //    distance_joint_ids_.push_back(14); // joint name : rWristX
+    //    distance_joint_ids_.push_back(15); // joint name : rWristY
+    //    distance_joint_ids_.push_back(16); // joint name : rWristZ
+    //    distance_joint_ids_.push_back(17); // joint name : lShoulderX
+    //    distance_joint_ids_.push_back(18); // joint name : lShoulderZ
+    //    distance_joint_ids_.push_back(19); // joint name : lShoulderY
+    //    distance_joint_ids_.push_back(20); // joint name : lArmTrans
+    //    distance_joint_ids_.push_back(21); // joint name : lElbowZ
+    //    distance_joint_ids_.push_back(22); // joint name : lPoint
+    //    distance_joint_ids_.push_back(23); // joint name : lWristX
+    //    distance_joint_ids_.push_back(24); // joint name : lWristY
+    //    distance_joint_ids_.push_back(25); // joint name : lWristZ
+    //    distance_joint_ids_.push_back(26); // joint name : rHipX // USED
+    //    distance_joint_ids_.push_back(27); // joint name : rHipY
+    //    distance_joint_ids_.push_back(28); // joint name : rHipZ
+    //    distance_joint_ids_.push_back(29); // joint name : rKnee // USED
+    //    distance_joint_ids_.push_back(30); // joint name : rAnkleX // USED
+    //    distance_joint_ids_.push_back(31); // joint name : rAnkleY
+    //    distance_joint_ids_.push_back(32); // joint name : rAnkleZ
+    //    distance_joint_ids_.push_back(33); // joint name : lHipX // USED
+    //    distance_joint_ids_.push_back(34); // joint name : lHipY
+    //    distance_joint_ids_.push_back(35); // joint name : lHipZ
+    //    distance_joint_ids_.push_back(36); // joint name : lKnee // USED
+    //    distance_joint_ids_.push_back(37); // joint name : lAnkleX // USED
+    //    distance_joint_ids_.push_back(38); // joint name : lAnkleY
+    //    distance_joint_ids_.push_back(39); // joint name : lAnkleZ
+    //    distance_joint_ids_.push_back(40); // joint name : rPalm // USED
+    //    distance_joint_ids_.push_back(41); // joint name : lPalm // USED
+    //    distance_joint_ids_.push_back(42); // joint name : rPoint
+    //    distance_joint_ids_.push_back(43); // joint name : lPoint
+    //    distance_joint_ids_.push_back(44); // joint name : lefthandgest
+    //    distance_joint_ids_.push_back(45); // joint name : righthandgest
+    //    distance_joint_ids_.push_back(46); // joint name : Eyes
+    //    distance_joint_ids_.push_back(47); // joint name : HriLookJoint
 
     for( size_t i=0;i<distance_joint_ids_.size();i++)
     {
@@ -158,19 +158,19 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 
     w_distance_16_distance = Eigen::VectorXd::Ones( 16 );
     w_distance_16_distance  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
-                        0.50, 0.10, 0.20, 0.50, // 04 -> 07
-                        0.50, 0.20, 0.50, 0.50, // 08 -> 11
-                        0.50, 0.50, 0.50, 0.20; // 12 -> 15
+            0.50, 0.10, 0.20, 0.50, // 04 -> 07
+            0.50, 0.20, 0.50, 0.50, // 08 -> 11
+            0.50, 0.50, 0.50, 0.20; // 12 -> 15
 
     w_distance_16_distance /= 100;
-//    w_distance_16_distance *= 1;
+    //    w_distance_16_distance *= 1;
 
     if( w_.size() == 16 )
     {
         w_ =  w_distance_16_distance;
     }
 
-//    w_ = Eigen::VectorXd::Ones(49);
+    //    w_ = Eigen::VectorXd::Ones(49);
 
     // Print feature names and weights
     for(size_t i=0; i<distance_names_.size(); i++) {
@@ -178,10 +178,10 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
         cout.setf( std::ios::fixed, std:: ios::floatfield );
         cout  << std::setw( ceil(log10(distance_names_.size())) ) << std::setfill( '0' ) <<  i;
         cout << " , w : " << w_[i] << " , distance name : " << distance_names_[i] <<  endl;
-//        cout << "( " << distance_names_[i] << " ) , " ;
-//        if( (i+1)%10 == 0 ){
-//            cout << endl;
-//        }
+        //        cout << "( " << distance_names_[i] << " ) , " ;
+        //        if( (i+1)%10 == 0 ){
+        //            cout << endl;
+        //        }
     }
     cout << endl;
 
@@ -308,9 +308,9 @@ void VelocityFeature::stackVelocities( Move3D::FeatureVect& stack , const std::v
 
 void VelocityFeature::draw()
 {
-//    for( int i=0;i<veclocity_joint_ids_.size();i++)
-//        pos_0[i] = human_active_joints_[i]->getVectorPos();
-//    q_last_
+    //    for( int i=0;i<veclocity_joint_ids_.size();i++)
+    //        pos_0[i] = human_active_joints_[i]->getVectorPos();
+    //    q_last_
 }
 
 FeatureVect VelocityFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
@@ -409,6 +409,7 @@ double CollisionFeature::getCollisionCost( const Move3D::Configuration& q )
 
 VisibilityFeature::VisibilityFeature( Robot* active, Robot* passive ) :
     Feature("Visbility"),
+    active_robot_(active),
     visib_cost_( new Visibility(passive) )
 {
     human_active_joints_.push_back( active->getJoint("Pelvis") );       // joint name : Pelvis
@@ -430,19 +431,19 @@ VisibilityFeature::VisibilityFeature( Robot* active, Robot* passive ) :
 
     w_distance_16_visility = Eigen::VectorXd::Ones( 16 );
     w_distance_16_visility  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
-                                 0.50, 0.10, 0.20, 0.50, // 04 -> 07
-                                 0.50, 0.20, 0.50, 0.50, // 08 -> 11
-                                 0.50, 0.50, 0.50, 0.20; // 12 -> 15
+            0.50, 0.10, 0.20, 0.50, // 04 -> 07
+            0.50, 0.20, 0.50, 0.50, // 08 -> 11
+            0.50, 0.50, 0.50, 0.20; // 12 -> 15
 
     w_distance_16_visility /= 100;
-//    w_distance_16_visility *= 1;
+    //    w_distance_16_visility *= 1;
 
     if( w_.size() == 16 )
     {
         w_ =  w_distance_16_visility;
     }
 
-//    w_ = Eigen::VectorXd::Ones(49);
+    //    w_ = Eigen::VectorXd::Ones(49);
 
     // Print feature names and weights
     for( size_t i=0; i<human_active_joints_.size(); i++ )
@@ -451,10 +452,10 @@ VisibilityFeature::VisibilityFeature( Robot* active, Robot* passive ) :
         cout.setf( std::ios::fixed, std:: ios::floatfield );
         cout  << std::setw( ceil(log10(human_active_joints_.size())) ) << std::setfill( '0' ) <<  i;
         cout << " , w : " << w_[i] << " , visiblility name : " << human_active_joints_[i]->getName() <<  endl;
-//        cout << "( " << distance_names_[i] << " ) , " ;
-//        if( (i+1)%10 == 0 ){
-//            cout << endl;
-//        }
+        //        cout << "( " << distance_names_[i] << " ) , " ;
+        //        if( (i+1)%10 == 0 ){
+        //            cout << endl;
+        //        }
     }
     cout << endl;
 
@@ -469,17 +470,17 @@ FeatureVect VisibilityFeature::getFeatures(const Configuration& q, std::vector<i
 {
     FeatureVect count( computeVisibility() );
 
-    const double base = 20; // Using exp usually ....
-    const double max_distance = 0.80; // distance limit when the feature vanishes
-    const double factor_distance = 0.16; // max_distance / ( 5 ~ 6 ) -> when the exp(-x) reaches 0
+//    const double base = 20; // Using exp usually ....
+//    const double max_distance = 0.80; // distance limit when the feature vanishes
+//    const double factor_distance = 0.16; // max_distance / ( 5 ~ 6 ) -> when the exp(-x) reaches 0
 
-    for( int i=0; i<count.size(); i++ )
-    {
-        if( count[i] < max_distance )
-            count[i] = std::pow( base, -count[i]/factor_distance ); // 1e-3/j_dist;
-        else
-            count[i] = 0.0;
-    }
+//    for( int i=0; i<count.size(); i++ )
+//    {
+//        if( count[i] < max_distance )
+//            count[i] = std::pow( base, -count[i]/factor_distance ); // 1e-3/j_dist;
+//        else
+//            count[i] = 0.0;
+//    }
 
     return count;
 }
@@ -495,33 +496,61 @@ FeatureVect VisibilityFeature::computeVisibility() const
         visib[i] = visib_cost_->getWorkspaceCost( human_active_joints_[i]->getVectorPos() );
     }
 
-//    cout.setf( std::ios::fixed, std:: ios::floatfield );
-//    cout.precision(2);
-//    cout.width(1);
-//    cout << "dist is : " << dist.transpose() << endl;
-//    cout << "joint dist : " << joints_dist.transpose() << endl;
+    //    cout.setf( std::ios::fixed, std:: ios::floatfield );
+    //    cout.precision(2);
+    //    cout.width(1);
+    //    cout << "dist is : " << dist.transpose() << endl;
+    //    cout << "joint dist : " << joints_dist.transpose() << endl;
 
     return visib; // Scaling factor
 }
 
 void VisibilityFeature::draw()
 {
+    confPtr_t q = active_robot_->getCurrentPos();
+    FeatureVect phi = getFeatures( *q );
 
+    Eigen::Vector3d pos;
+
+    for( size_t i=0; i<human_active_joints_.size(); i++ )
+    {
+        pos = human_active_joints_[i]->getVectorPos();
+        double color[4];
+        GroundColorMixGreenToRed( color, phi[i] );
+        move3d_draw_sphere( pos[0], pos[1], pos[2], 0.10, color );
+    }
 }
 
 //------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------
 
-FeatureVect MuskuloskeletalFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
+MusculoskeletalFeature::MusculoskeletalFeature( Move3D::Robot* active ) :
+    Feature("Muskuloskeletal"),
+    natural_cost_(new Natural(active))
 {
-    FeatureVect count = Eigen::VectorXd::Zero(1);
+    if( global_DrawModule )
+    {
+        global_DrawModule->addDrawFunction( "HumanMusculoskeletal", boost::bind( &MusculoskeletalFeature::draw, this) );
+        global_DrawModule->enableDrawFunction( "HumanMusculoskeletal" );
+    }
+}
+
+FeatureVect MusculoskeletalFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
+{
+    FeatureVect count( computeMusculoskeletalEffort() );
     return count;
 }
 
-FeatureVect MuskuloskeletalFeature::getFeatureCount(const Move3D::Trajectory& t)
+Move3D::FeatureVect MusculoskeletalFeature::computeMusculoskeletalEffort() const
 {
-    FeatureVect count;
-    return count;
+    FeatureVect phi( Eigen::VectorXd::Zero(3) );
+    natural_cost_->getConfigCostFeatures( phi );
+    return phi;
+}
+
+void MusculoskeletalFeature::draw()
+{
+    natural_cost_->setRobotColorFromConfiguration();
 }
 
 //------------------------------------------------------------------------------------------------

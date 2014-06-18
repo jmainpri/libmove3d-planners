@@ -342,6 +342,7 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     smoothness_feat_(),
     dist_feat_( active, passive ),
     visi_feat_(active, passive),
+    musc_feat_( active ),
     collision_feat_( active )
 {
     cout << "---------------------------------------------" << endl;

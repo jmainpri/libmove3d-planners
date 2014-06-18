@@ -67,7 +67,7 @@ private:
 
     DistanceFeature dist_feat_;
     VisibilityFeature visi_feat_;
-    MuskuloskeletalFeature musk_feat_;
+    MusculoskeletalFeature musc_feat_;
     ReachabilityFeature reach_feat_;
     LegibilityFeature legib_feat_;
     CollisionFeature collision_feat_;

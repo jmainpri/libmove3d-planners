@@ -82,7 +82,7 @@ void Natural::initGeneral()
         m_KinType = OldDude;
     }
 
-    shared_ptr<Configuration> q_curr = m_Robot->getCurrentPos();
+    confPtr_t q_curr = m_Robot->getCurrentPos();
 
     switch (m_KinType)
     {
@@ -216,7 +216,7 @@ void Natural::initNaturalJustin()
     q[24] = 62.000000;
     q[25] = 29.000000;
 
-    m_q_Confort = shared_ptr<Configuration>(new Configuration(
+    m_q_Confort = confPtr_t(new Configuration(
                                                 m_Robot,
                                                 p3d_copy_config_deg_to_rad(m_Robot->getP3dRobotStruct(),q)));
 
@@ -347,7 +347,7 @@ void Natural::initNaturalAchile()
     q[44] = 0;
     q[45] = 0;
 
-    m_q_Confort = shared_ptr<Configuration>(
+    m_q_Confort = confPtr_t(
                 new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
 
     m_Robot->setAndUpdate( *m_q_Confort );
@@ -420,7 +420,7 @@ void Natural::initNaturalAchile()
     q[m_CONFIG_INDEX_ARM_LEFT_WRIST+1] = 1;
     q[m_CONFIG_INDEX_ARM_LEFT_WRIST+2] = 1;
 
-    m_q_ConfortWeigths = shared_ptr<Configuration>(
+    m_q_ConfortWeigths = confPtr_t(
                 new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
 
     m_mg.push_back( 30 );
@@ -561,7 +561,7 @@ void Natural::initNaturalHerakles()
     q[63] = 0;
     q[64] = 0;
 
-    m_q_Confort = shared_ptr<Configuration>(
+    m_q_Confort = confPtr_t(
                 new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
 
     m_Robot->setAndUpdate( *m_q_Confort );
@@ -606,7 +606,7 @@ void Natural::initNaturalHerakles()
     q[m_CONFIG_INDEX_ARM_LEFT_WRIST+1] = 1;
     q[m_CONFIG_INDEX_ARM_LEFT_WRIST+2] = 1;
 
-    m_q_ConfortWeigths = shared_ptr<Configuration>(
+    m_q_ConfortWeigths = confPtr_t(
                 new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
 
     m_mg.push_back( 30 );
@@ -724,7 +724,7 @@ void Natural::initNaturalOldDude()
     q[44] = 0;
     q[45] = 0;
 
-    m_q_Confort = shared_ptr<Configuration>(
+    m_q_Confort = confPtr_t(
                 new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
 
     m_Robot->setAndUpdate( *m_q_Confort );
@@ -770,8 +770,7 @@ void Natural::initNaturalOldDude()
     q[m_CONFIG_INDEX_ARM_LEFT_WRIST+1] = 1;
     q[m_CONFIG_INDEX_ARM_LEFT_WRIST+2] = 1;
 
-    m_q_ConfortWeigths = shared_ptr<Configuration>(
-                new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
+    m_q_ConfortWeigths = confPtr_t(new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
 
     m_mg.push_back( 30 );
     m_mg.push_back(  4 );
@@ -834,7 +833,7 @@ void Natural::printBodyPos()
 
 void Natural::setRobotToConfortPosture()
 {
-    shared_ptr<Configuration> q_cur = m_Robot->getCurrentPos();
+    confPtr_t q_cur = m_Robot->getCurrentPos();
 
     m_IndexObjectDof = 6;
     (*m_q_Confort)[m_IndexObjectDof+0] = (*q_cur)[m_IndexObjectDof+0];
@@ -847,15 +846,11 @@ void Natural::setRobotToConfortPosture()
     m_Robot->setAndUpdate(*m_q_Confort);
 }
 
-/*!
- * Compute the Natural cost for a configuration
- * with weight
- */
-double Natural::getConfigCost()
+//! Get the elemetary cost features
+void Natural::getConfigCostFeatures( Eigen::VectorXd& features )
 {
-    double c_natural = 0.0;
-
-    //shared_ptr<Configuration> q_Actual = m_Robot->getCurrentPos();
+    features = Eigen::VectorXd::Zero( 3 );
+    //confPtr_t q_Actual = m_Robot->getCurrentPos();
 
     //cout << "-------------------------------" << endl;
     //---------------------------------------------------
@@ -872,6 +867,22 @@ double Natural::getConfigCost()
     //	cout << "Disc = " << c_f_Discomfort << endl;
     //---------------------------------------------------
 
+    features[0] = c_f_Joint_displacement;
+    features[1] = c_f_Energy;
+    features[2] = c_f_Discomfort;
+}
+
+/*!
+ * Compute the Natural cost for a configuration
+ * with weight
+ */
+double Natural::getConfigCost()
+{
+    double c_natural = 0.0;
+
+    Eigen::VectorXd phi( Eigen::VectorXd::Zero(3) );
+
+    getConfigCostFeatures( phi );
 
     /**
      * Wieghted sum
@@ -880,7 +891,7 @@ double Natural::getConfigCost()
     double W_en = ENV.getDouble(Env::coeffEnerg);
     double W_di = ENV.getDouble(Env::coeffConfo);
 
-    c_natural = W_jd*c_f_Joint_displacement + W_en*c_f_Energy + W_di*c_f_Discomfort;
+    c_natural = W_jd*phi[0] + W_en*phi[1] + W_di*phi[2];
 
     //m_leftArmCost = true;
     //c_natural = basicNaturalArmCost(m_leftArmCost);
@@ -1035,7 +1046,7 @@ double Natural::getJointLimits(Configuration& q)
 
             double q_min,q_max;
 
-            jntPt->getDofBounds(j,q_min,q_max);
+            jntPt->getDofBounds( j, q_min, q_max );
 
             if (q_max == q_min) {
                 continue;
@@ -1107,7 +1118,7 @@ double Natural::basicNaturalArmCost(bool useLeftvsRightArm)
     //	q[20] = -0.12706;	min = -1.57;	max = 2.09; (max) dist = 4.88
     //	q[21] = 0.525519;	min = 0;		max = 2.44; (max) dist = 3.68
 
-    shared_ptr<Configuration> q = m_Robot->getCurrentPos();
+    confPtr_t q = m_Robot->getCurrentPos();
 
     deltaJoint = (SQR((*q)[ShoulderIndex+0]-restq1) +
                   SQR((*q)[ShoulderIndex+1]-restq2) +
@@ -1137,7 +1148,7 @@ double Natural::akinRightArmReachCost()
     double restq3 = (*m_q_Confort)[ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER+2];
     double restq4 = (*m_q_Confort)[ACHILE_CONFIG_INDEX_ARM_RIGTH_ELBOW+0];
 
-    shared_ptr<Configuration> q = m_Robot->getCurrentPos();
+    confPtr_t q = m_Robot->getCurrentPos();
 
     cost = (SQR((*q)[ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER+0]-restq1) +
             SQR((*q)[ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER+1]-restq2) +
@@ -1159,7 +1170,7 @@ double Natural::akinLeftArmReachCost()
     double restq3 = (*m_q_Confort)[ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER+2];
     double restq4 = (*m_q_Confort)[ACHILE_CONFIG_INDEX_ARM_LEFT_ELBOW+0];
 
-    shared_ptr<Configuration> q = m_Robot->getCurrentPos();
+    confPtr_t q = m_Robot->getCurrentPos();
 
     cost = (SQR((*q)[ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER+0]-restq1) +
             SQR((*q)[ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER+1]-restq2) +
@@ -1247,7 +1258,7 @@ bool Natural::getWorkspaceIsReachable(const Eigen::Vector3d& WSPoint)
  */
 double Natural::getNumberOfIKCost(const Vector3d& WSPoint)
 {
-    shared_ptr<Configuration> q;
+    confPtr_t q;
 
     double Cost = 0.0;
     const unsigned int NbDirections = 360;
@@ -1287,7 +1298,7 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
 {
 #ifdef HRI_PLANNER
     //        cout << "Natural::computeIsReachableAndMove" << endl;
-    shared_ptr<Configuration> configStored = m_Robot->getCurrentPos();
+    confPtr_t configStored = m_Robot->getCurrentPos();
 
     bool IKSucceded=false;
     const bool withSideEffect = true;
@@ -1326,7 +1337,7 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
             q = p3d_get_robot_config(m_Agents->humans[0]->robotPt);
             IKSucceded = hri_agent_single_task_manip_move(m_Agents->humans[0], task, &Tcoord, distance_tolerance, &q);
 
-            shared_ptr<Configuration> ptrQ(new Configuration(m_Robot,q));
+            confPtr_t ptrQ(new Configuration(m_Robot,q));
 
             if (IKSucceded)
             {
@@ -1383,7 +1394,7 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
 
 bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRightArm)
 {
-    shared_ptr<Configuration> configStored = m_Robot->getCurrentPos();
+    confPtr_t configStored = m_Robot->getCurrentPos();
     bool IKSucceded=false;
     HRI_GIK_TASK_TYPE task;
 
@@ -1409,7 +1420,7 @@ bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRight
             q = p3d_get_robot_config(m_Agents->humans[0]->robotPt);
             cout << "agents->humans[0]->robotPt->name = " << m_Agents->humans[0]->robotPt->name << endl;
             IKSucceded = hri_agent_single_task_manip_move(m_Agents->humans[0], task, &Tcoord, distance_tolerance, &q);
-            shared_ptr<Configuration> ptrQ(new Configuration(m_Robot,q));
+            confPtr_t ptrQ(new Configuration(m_Robot,q));
 
             if (IKSucceded){
                 if(! ptrQ->isInCollision())
@@ -1539,6 +1550,9 @@ vector< pair<double,Vector3d> > Natural::getReachableWSPoint()
 
 void Natural::setRobotColorFromConfiguration(bool toSet)
 {
+    if( !m_Robot->getUseLibmove3dStruct() )
+        return;
+
     if (toSet)
     {
         double cost = this->getConfigCost();
@@ -1550,23 +1564,13 @@ void Natural::setRobotColorFromConfiguration(bool toSet)
         colorvector[2] = 0.0;       //blue
         colorvector[3] = 0.01;      //transparency
 
-        GroundColorMixGreenToRed(colorvector,cost);
+        GroundColorMixGreenToRed( colorvector, cost );
 
-        g3d_set_custom_color_draw(m_Robot->getP3dRobotStruct(),toSet);
-        g3d_set_custom_color_vect(colorvector);
+        g3d_set_custom_color_draw( m_Robot->getP3dRobotStruct(), toSet );
+        g3d_set_custom_color_vect( colorvector );
     }
     else
     {
-        g3d_set_custom_color_draw(m_Robot->getP3dRobotStruct(),toSet);
+        g3d_set_custom_color_draw( m_Robot->getP3dRobotStruct(), toSet );
     }
 }
-
-
-
-
-/*!
- *
- */
-//void Natural::compute
-
-
