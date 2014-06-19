@@ -292,7 +292,7 @@ std::vector<Eigen::Vector3d> VelocityFeature::getVelocity(const Move3D::Configur
     // Get velocities
     for( int i=0;i<veclocity_joint_ids_.size();i++)
     {
-        velocities[i] = ( pos_0[i] - pos_1[i] ) / dt;
+        velocities[i] = ( pos_1[i] - pos_0[i] ) / dt;
     }
 
     return velocities;
