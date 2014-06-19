@@ -370,19 +370,32 @@ void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet )
         //cout << extension << endl;
         if( extension == "csv" )
         {
-            if( !quiet ) {
-                cout << "add : " << filename << endl;
+            char id = filename.at( filename.find_last_of(".")-1 );
+            if( id == '0' ){
+                if( !quiet ) {
+                    cout << "add : " << filename << endl;
+                }
+                files.push_back( filename );
             }
-            files.push_back( filename );
         }
     }
     pclose(fp);
 
-    m_stored_motions.resize( files.size() );
+    m_stored_motions.clear();
 
-    for(int i=0;i<int(files.size());i++)
+    for(size_t i=0; i<files.size(); i++)
     {
-        m_stored_motions[i] = loadFromCSV( foldername + "/" + files[i], quiet );
+        motion_t motion = loadFromCSV( foldername + "/" + files[i], quiet );
+        m_stored_motions.push_back( motion );
+
+        std::string filename( files[i].substr( 0, files[i].find_last_of(".") - 1 ) + "1.csv" );
+        std::string path = foldername + "/" + filename;
+        std::ifstream file_exists( path.c_str() );
+        if( file_exists )
+        {
+            motion_t motion1 = loadFromCSV( path, quiet );
+            m_stored_motions.back().insert( m_stored_motions.back().end(), motion1.begin(), motion1.end() );
+        }
     }
 
     if( !quiet ) {
@@ -441,24 +454,18 @@ bool RecordMotion::setRobotToConfiguration(int ith)
 
 bool RecordMotion::setRobotToStoredMotionConfig(int motion_id, int config_id)
 {
-    if( motion_id < 0 || ( motion_id > int(m_stored_motions[motion_id].size())))
+    if( motion_id < 0 || ( motion_id > int(m_stored_motions.size())))
     {
         cout << "index out of stored motion range in " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
-    if( config_id < 0 || config_id >= int(m_stored_motions[motion_id].size()) ) {
+    if( config_id < 0 || ( config_id >= int(m_stored_motions[motion_id].size()))) {
         cout << "index out of range in " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
-
     m_robot->setAndUpdate( *m_stored_motions[motion_id][config_id].second );
-
-    //    if(use_camera_)
-    //    {
-    //        _camera->pubImage(m_times[config_id]);
-    //    }
 
     return true;
 }

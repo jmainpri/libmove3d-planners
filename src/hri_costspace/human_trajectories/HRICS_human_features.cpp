@@ -43,8 +43,9 @@ using std::endl;
 // Declaration of constant vectors
 namespace HRICS {
 
-Move3D::FeatureVect w_distance_16_distance;
-Move3D::FeatureVect w_distance_16_visility;
+Move3D::FeatureVect w_distance_16;
+Move3D::FeatureVect w_visibility_04;
+Move3D::FeatureVect w_musculo_03;
 
 }
 
@@ -57,9 +58,14 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
     human_passive_(passive)
 {
     distance_joint_ids_.push_back( human_active_->getJoint("Pelvis")->getId() );       // joint name : Pelvis
+
     distance_joint_ids_.push_back( human_active_->getJoint("rWristX")->getId() );   // joint name : rWristX
     distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );      // joint name : rElbowZ
     distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );      // joint name : rShoulderX
+
+    distance_joint_ids_.push_back( human_active_->getJoint("lWristX")->getId() );   // joint name : rWristX
+    distance_joint_ids_.push_back( human_active_->getJoint("lElbowZ")->getId() );      // joint name : rElbowZ
+    distance_joint_ids_.push_back( human_active_->getJoint("lShoulderX")->getId() );      // joint name : rShoulderX
 
     //    distance_joint_ids_.push_back(1); // joint name : Pelvis
     //    distance_joint_ids_.push_back(8); // joint name : rShoulderX
@@ -156,18 +162,18 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 
 
 
-    w_distance_16_distance = Eigen::VectorXd::Ones( 16 );
-    w_distance_16_distance  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
+    w_distance_16 = Eigen::VectorXd::Ones( 16 );
+    w_distance_16  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
             0.50, 0.10, 0.20, 0.50, // 04 -> 07
             0.50, 0.20, 0.50, 0.50, // 08 -> 11
             0.50, 0.50, 0.50, 0.20; // 12 -> 15
 
-    w_distance_16_distance /= 100;
-    //    w_distance_16_distance *= 1;
+    w_distance_16 /= 100;
+    //    w_distance_16 *= 1;
 
     if( w_.size() == 16 )
     {
-        w_ =  w_distance_16_distance;
+        w_ =  w_distance_16;
     }
 
     //    w_ = Eigen::VectorXd::Ones(49);
@@ -375,7 +381,6 @@ void CollisionFeature::setWeights( const WeightVect& w )
     PlanEnv->setDouble( PlanParam::trajOptimObstacWeight, w(0) );
 }
 
-
 bool CollisionFeature::init()
 {
     return traj_optim_initStomp(); // SUPER UGLY
@@ -413,9 +418,12 @@ VisibilityFeature::VisibilityFeature( Robot* active, Robot* passive ) :
     visib_cost_( new Visibility(passive) )
 {
     human_active_joints_.push_back( active->getJoint("Pelvis") );       // joint name : Pelvis
-    human_active_joints_.push_back( active->getJoint("rWristX") );      // joint name : rWristX
-    human_active_joints_.push_back( active->getJoint("rElbowZ") );      // joint name : rElbowZ
     human_active_joints_.push_back( active->getJoint("rShoulderX") );   // joint name : rShoulderX
+    human_active_joints_.push_back( active->getJoint("rElbowZ") );      // joint name : rElbowZ
+    human_active_joints_.push_back( active->getJoint("rWristX") );      // joint name : rWristX
+    human_active_joints_.push_back( active->getJoint("lShoulderX") );   // joint name : rShoulderX
+    human_active_joints_.push_back( active->getJoint("lElbowZ") );      // joint name : rElbowZ
+    human_active_joints_.push_back( active->getJoint("lWristX") );      // joint name : rWristX
 
     // Print active joints
     for(size_t i=0; i<human_active_joints_.size(); i++) {
@@ -429,18 +437,15 @@ VisibilityFeature::VisibilityFeature( Robot* active, Robot* passive ) :
     w_ = Eigen::VectorXd::Ones( nb_of_features );
 
 
-    w_distance_16_visility = Eigen::VectorXd::Ones( 16 );
-    w_distance_16_visility  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
-            0.50, 0.10, 0.20, 0.50, // 04 -> 07
-            0.50, 0.20, 0.50, 0.50, // 08 -> 11
-            0.50, 0.50, 0.50, 0.20; // 12 -> 15
+    w_visibility_04 = Eigen::VectorXd::Ones( 4 );
+    w_visibility_04 << 0.01, 0.20, 0.30, 0.90; // 00 -> 03
 
-    w_distance_16_visility /= 100;
+    w_visibility_04 /= 100;
     //    w_distance_16_visility *= 1;
 
-    if( w_.size() == 16 )
+    if( w_.size() == 4 )
     {
-        w_ =  w_distance_16_visility;
+        w_ =  w_visibility_04;
     }
 
     //    w_ = Eigen::VectorXd::Ones(49);
@@ -469,6 +474,13 @@ VisibilityFeature::VisibilityFeature( Robot* active, Robot* passive ) :
 FeatureVect VisibilityFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
     FeatureVect count( computeVisibility() );
+
+    const double base = 2; // Using exp usualy ....
+
+    for(int i=0; i<count.size(); i++) // For all features
+    {
+        count[i] = std::pow( base, count[i] ) - 1; // 1e-3/j_dist;
+    }
 
 //    const double base = 20; // Using exp usually ....
 //    const double max_distance = 0.80; // distance limit when the feature vanishes
@@ -507,8 +519,8 @@ FeatureVect VisibilityFeature::computeVisibility() const
 
 void VisibilityFeature::draw()
 {
-    confPtr_t q = active_robot_->getCurrentPos();
-    FeatureVect phi = getFeatures( *q );
+//    confPtr_t q = active_robot_->getCurrentPos();
+    FeatureVect phi = computeVisibility();
 
     Eigen::Vector3d pos;
 
@@ -528,6 +540,13 @@ MusculoskeletalFeature::MusculoskeletalFeature( Move3D::Robot* active ) :
     Feature("Muskuloskeletal"),
     natural_cost_(new Natural(active))
 {
+    w_musculo_03 = Eigen::VectorXd::Ones( 4 );
+    w_musculo_03 << 0.01, 0.20, 0.30, 0.90; // 00 -> 03
+
+    w_musculo_03 /= 100;
+
+    w_ = w_musculo_03;
+
     if( global_DrawModule )
     {
         global_DrawModule->addDrawFunction( "HumanMusculoskeletal", boost::bind( &MusculoskeletalFeature::draw, this) );
@@ -538,6 +557,14 @@ MusculoskeletalFeature::MusculoskeletalFeature( Move3D::Robot* active ) :
 FeatureVect MusculoskeletalFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
     FeatureVect count( computeMusculoskeletalEffort() );
+
+    const double base = 2; // Using exp usualy ....
+
+    for(int i=0; i<count.size(); i++) // For all features
+    {
+        count[i] = std::pow( base, count[i] ) - 1; // 1e-3/j_dist;
+    }
+
     return count;
 }
 

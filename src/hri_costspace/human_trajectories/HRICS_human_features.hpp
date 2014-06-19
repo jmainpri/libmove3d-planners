@@ -37,8 +37,9 @@
 namespace HRICS
 {
 
-extern Move3D::FeatureVect w_distance_16_distance;
-extern Move3D::FeatureVect w_distance_16_visility;
+extern Move3D::FeatureVect w_distance_16;
+extern Move3D::FeatureVect w_visibility_04;
+extern Move3D::FeatureVect w_musculo_03;
 
 class DistanceFeature : public Move3D::Feature
 {

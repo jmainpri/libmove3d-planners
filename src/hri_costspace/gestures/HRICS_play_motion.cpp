@@ -26,6 +26,7 @@
  *                                               Jim Mainprice Tue 27 May 2014
  */
 #include "HRICS_play_motion.hpp"
+#include "HRICS_record_motion.hpp"
 #include "planEnvironment.hpp"
 
 #include <libmove3d/include/Graphic-pkg.h>
@@ -94,7 +95,7 @@ void PlayMotion::runRealTime(int id)
 
         if ( dt>=0.025 )
         {
-            for (int j=0; j<int(_motion_recorders.size()); j++)
+            for (size_t j=0; j<_motion_recorders.size(); j++)
             {
                 _motion_recorders[j]->setRobotToStoredMotionConfig( id, _current_frame );
             }
@@ -114,9 +115,12 @@ void PlayMotion::runRealTime(int id)
             StopRun = true;
         }
 
-        if ( _current_frame >= int(_motion_recorders[0]->getStoredMotions()[id].size()))
+        for (size_t j=0; j<_motion_recorders.size(); j++)
         {
-            StopRun = true;
+            if ( _current_frame >= int(_motion_recorders[j]->getStoredMotions()[id].size()))
+            {
+                StopRun = true;
+            }
         }
     }
 

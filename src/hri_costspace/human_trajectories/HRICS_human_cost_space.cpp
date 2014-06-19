@@ -75,13 +75,19 @@ bool HRICS_init_human_trajectory_cost()
 //        global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
 //        global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
 
-        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/quan_motion";
+
         global_motionRecorders[0]->useOpenRAVEFormat( true );
         global_motionRecorders[1]->useOpenRAVEFormat( true );
-        motion_t traj1 = global_motionRecorders[0]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00000_00000.csv" );
-        motion_t traj2 = global_motionRecorders[1]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00001_00000.csv" );
-        global_motionRecorders[0]->storeMotion( traj1 );
-        global_motionRecorders[1]->storeMotion( traj2 );
+
+//        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/quan_motion";
+//        motion_t traj1 = global_motionRecorders[0]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00000_00000.csv" );
+//        motion_t traj2 = global_motionRecorders[1]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00001_00000.csv" );
+//        global_motionRecorders[0]->storeMotion( traj1 );
+//        global_motionRecorders[1]->storeMotion( traj2 );
+
+        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/kinect_good_motions/good_lib/";
+        global_motionRecorders[0]->loadCSVFolder( foldername + "human_one/" );
+        global_motionRecorders[1]->loadCSVFolder( foldername + "human_two/" );
 
         cout << "create human traj cost space" << endl;
 
@@ -362,7 +368,7 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     smoothness_feat_.setWeights( WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
 
     dist_feat_.setActiveDoFs( active_dofs_ );
-    dist_feat_.setWeights( w_distance_16_distance );
+    dist_feat_.setWeights( w_distance_16 );
 
     collision_feat_.setActiveDoFs( active_dofs_ );
     collision_feat_.setWeights( WeightVect::Ones(collision_feat_.getNumberOfFeatures()) );

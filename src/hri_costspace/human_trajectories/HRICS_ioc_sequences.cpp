@@ -395,7 +395,7 @@ void IocSequences::setGenerationFeatures()
         feature_fct_->setActiveFeatures( active_features );
 
 //        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.7 );
-//        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16_distance );
+//        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
 
         cout << "stack info" << endl;
         feature_fct_->printInfo();
@@ -418,7 +418,7 @@ void IocSequences::setSamplingFeatures()
         feature_fct_->setActiveFeatures( active_features );
 
 //        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.7 );
-//        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16_distance );
+//        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
 
 //        double w_smoo = PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight);
 //        double w_obst = PlanEnv->getDouble(PlanParam::trajOptimObstacWeight);
@@ -430,7 +430,7 @@ void IocSequences::setSamplingFeatures()
 
 //        feature_fct_->getFeatureFunction("Smoothness")->setWeights( w_smoo * FeatureVect::Ones(1) );
 //        feature_fct_->getFeatureFunction("Collision")->setWeights( w_obst * FeatureVect::Ones(1) );
-//        feature_fct_->getFeatureFunction("Distance")->setWeights( w_dist * w_distance_16_distance );
+//        feature_fct_->getFeatureFunction("Distance")->setWeights( w_dist * w_distance_16 );
 
 
         cout << "stack info" << endl;
@@ -454,7 +454,7 @@ void IocSequences::setCompareFeatures()
         feature_fct_->setActiveFeatures( active_features );
 
         feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.7 );
-        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16_distance );
+        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
 
         cout << "stack info" << endl;
         feature_fct_->printInfo();
