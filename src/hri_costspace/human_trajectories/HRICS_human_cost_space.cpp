@@ -85,9 +85,11 @@ bool HRICS_init_human_trajectory_cost()
 //        global_motionRecorders[0]->storeMotion( traj1 );
 //        global_motionRecorders[1]->storeMotion( traj2 );
 
-        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/kinect_good_motions/good_lib/";
-        global_motionRecorders[0]->loadCSVFolder( foldername + "human_one/" );
-        global_motionRecorders[1]->loadCSVFolder( foldername + "human_two/" );
+//        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/kinect_good_motions/good_lib/";
+        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/kinect_good_motions/human_one_good/";
+
+        global_motionRecorders[0]->loadCSVFolder( foldername + "human_one/", false, +0.5 );
+        global_motionRecorders[1]->loadCSVFolder( foldername + "human_two/", false, -0.5 );
 
         cout << "create human traj cost space" << endl;
 
@@ -199,6 +201,7 @@ void HumanTrajSimulator::setActiveJoints()
     for(int i = 0; i < 3; i++) { // Translation bounds
         dof[i][0] = joint->getJointDof(i) - bound_trans;
         dof[i][1] = joint->getJointDof(i) + bound_trans;
+        cout << "PELVIS DOF: " << joint->getJointDof(i) << endl;
     }
     for(int i = 3; i < 6; i++) { // Rotation bounds
         dof[i][0] = joint->getJointDof(i) - bound_rotat;
@@ -362,7 +365,7 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     active_dofs_ = std::vector<int>(1,1);
 
     length_feat_.setActiveDoFs( active_dofs_ );
-    length_feat_.setWeights( 0.008 * WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
+    length_feat_.setWeights( 0.8 * WeightVect::Ones(length_feat_.getNumberOfFeatures()) );
 
     smoothness_feat_.setActiveDoFs( active_dofs_ );
     smoothness_feat_.setWeights( WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );

@@ -187,7 +187,7 @@ bool IocSequences::run()
         // int nb_samples = (iteration*100+1);
 //        int nb_samples = (16*(iteration+1))
         // int nb_samples = (160*(iteration+1));
-        int nb_samples = samples.row(0)(i);
+        int nb_samples = samples.row(0)(iteration);
 
         cout << "------------------------------" << endl;
         cout << " RUN, NB SAMPLES : " << nb_samples << endl;
@@ -283,6 +283,11 @@ bool IocSequences::run()
             eval->loadDemonstrations();
             eval->monteCarloSampling( 10.0, 10 );
             break;
+
+        case default_phase:
+
+            eval->loadDemonstrations();
+            feature_fct_->printInfo();
 
         default:
             cout << "DEFAULT : LOAD TRAJECTORIES" << endl;

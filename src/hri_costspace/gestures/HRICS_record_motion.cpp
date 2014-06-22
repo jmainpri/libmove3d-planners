@@ -347,7 +347,7 @@ bool RecordMotion::loadXMLFolder(  const std::string& foldername  )
     return true;
 }
 
-void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet )
+void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet, double threshold )
 {
     if( !quiet ) {
         cout << "Load Folder : " << foldername << endl;
@@ -371,7 +371,7 @@ void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet )
         if( extension == "csv" )
         {
             char id = filename.at( filename.find_last_of(".")-1 );
-            if( id == '0' ){
+            if( true /*id == '0'*/ ){
                 if( !quiet ) {
                     cout << "add : " << filename << endl;
                 }
@@ -382,20 +382,41 @@ void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet )
     pclose(fp);
 
     m_stored_motions.clear();
+    m_stored_motions_names.clear();
 
     for(size_t i=0; i<files.size(); i++)
     {
         motion_t motion = loadFromCSV( foldername + "/" + files[i], quiet );
-        m_stored_motions.push_back( motion );
 
-        std::string filename( files[i].substr( 0, files[i].find_last_of(".") - 1 ) + "1.csv" );
-        std::string path = foldername + "/" + filename;
-        std::ifstream file_exists( path.c_str() );
-        if( file_exists )
+        if( threshold != 0.0 )
         {
-            motion_t motion1 = loadFromCSV( path, quiet );
-            m_stored_motions.back().insert( m_stored_motions.back().end(), motion1.begin(), motion1.end() );
+            if( threshold < 0.0 )
+            {
+                if( (*motion[0].second)[6] < fabs(threshold) )
+                {
+                    m_stored_motions.push_back( motion );
+                    m_stored_motions_names.push_back( files[i] );
+                }
+            }
+
+            if( threshold > 0.0 )
+            {
+                if( (*motion[0].second)[6] > fabs(threshold) )
+                {
+                    m_stored_motions.push_back( motion );
+                    m_stored_motions_names.push_back( files[i] );
+                }
+            }
         }
+
+//        std::string filename( files[i].substr( 0, files[i].find_last_of(".") - 1 ) + "1.csv" );
+//        std::string path = foldername + "/" + filename;
+//        std::ifstream file_exists( path.c_str() );
+//        if( file_exists )
+//        {
+//            motion_t motion1 = loadFromCSV( path, quiet );
+//            m_stored_motions.back().insert( m_stored_motions.back().end(), motion1.begin(), motion1.end() );
+//        }
     }
 
     if( !quiet ) {

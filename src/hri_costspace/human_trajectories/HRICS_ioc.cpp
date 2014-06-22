@@ -393,7 +393,8 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
                 if( nb_attempt++ > 10 )
                 {
                     is_in_joint_limits = false;
-                    cout << "not in limits" << endl;
+                    cout << "not in limits, name : " << planning_group_->chomp_joints_[j].joint_name_ << endl;
+                    cout << j << " : upper : " << j_max << ", lower : " << j_min << ", value : " << traj.parameters_[j][i] << endl;
                     if( traj.parameters_[j][i] < j_min )
                         traj.parameters_[j][i] = j_min + 10e-6;
                     if( traj.parameters_[j][i] > j_max )
@@ -752,7 +753,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
     nb_demos_ = nb_demos;
     nb_samples_ = nb_samples;
     nb_way_points_ = nb_way_points;
-    nb_planning_test_ = 4;
+    nb_planning_test_ = 3;
 
     // Folders
     folder_ = folder; // move3d_demo_folder; // static
@@ -1070,6 +1071,9 @@ void IocEvaluation::runPlannerWeightedFeature( int nb_runs )
 void IocEvaluation::generateDemonstrations()
 {
     std::vector<Move3D::Trajectory> demos;
+
+    cout << "nb_demos : " << nb_demos_ << endl;
+    cout << "nb_planning_test_ : " << nb_planning_test_ << endl;
 
     for(int i=0; i<nb_demos_; i++ )
     {

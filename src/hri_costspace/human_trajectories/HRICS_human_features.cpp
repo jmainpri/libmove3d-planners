@@ -57,15 +57,15 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
     human_active_(active),
     human_passive_(passive)
 {
-    distance_joint_ids_.push_back( human_active_->getJoint("Pelvis")->getId() );       // joint name : Pelvis
+    distance_joint_ids_.push_back( human_active_->getJoint("Pelvis")->getId() );
 
-    distance_joint_ids_.push_back( human_active_->getJoint("rWristX")->getId() );   // joint name : rWristX
-    distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );      // joint name : rElbowZ
-    distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );      // joint name : rShoulderX
+    distance_joint_ids_.push_back( human_active_->getJoint("rWristX")->getId() );
+    distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );
+    distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );
 
-    distance_joint_ids_.push_back( human_active_->getJoint("lWristX")->getId() );   // joint name : rWristX
-    distance_joint_ids_.push_back( human_active_->getJoint("lElbowZ")->getId() );      // joint name : rElbowZ
-    distance_joint_ids_.push_back( human_active_->getJoint("lShoulderX")->getId() );      // joint name : rShoulderX
+//    distance_joint_ids_.push_back( human_active_->getJoint("lWristX")->getId() );
+//    distance_joint_ids_.push_back( human_active_->getJoint("lElbowZ")->getId() );
+//    distance_joint_ids_.push_back( human_active_->getJoint("lShoulderX")->getId() );
 
     //    distance_joint_ids_.push_back(1); // joint name : Pelvis
     //    distance_joint_ids_.push_back(8); // joint name : rShoulderX
@@ -168,7 +168,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
             0.50, 0.20, 0.50, 0.50, // 08 -> 11
             0.50, 0.50, 0.50, 0.20; // 12 -> 15
 
-    w_distance_16 /= 100;
+    w_distance_16 /= 1;
     //    w_distance_16 *= 1;
 
     if( w_.size() == 16 )
@@ -203,7 +203,7 @@ FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int
     human_active_->setAndUpdate( q );
     FeatureVect count = computeDistances();
 
-    const double base = 20; // Using exp usualy ....
+    const double base = 10; // Using exp usualy ....
     const double max_distance = 0.80; // distance limit when the feature vanishes
     const double factor_distance = 0.16; // max_distance / ( 5 ~ 6 ) -> when the exp(-x) reaches 0
 

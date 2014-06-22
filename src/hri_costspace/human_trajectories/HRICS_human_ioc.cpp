@@ -60,8 +60,8 @@ void HRICS_run_human_ioc_from_recorded_motion()
     global_motionRecorders.push_back( new HRICS::RecordMotion( human1 ) );
     global_motionRecorders.push_back( new HRICS::RecordMotion( human2 ) );
 
-    global_motionRecorders[0]->loadCSVFolder( foldername + "/human0" );
-    global_motionRecorders[1]->loadCSVFolder( foldername + "/human1" );
+    global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", false, +0.5 );
+    global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", false, -0.5 );
 
     HRICS::PlayMotion player( global_motionRecorders );
 //    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)

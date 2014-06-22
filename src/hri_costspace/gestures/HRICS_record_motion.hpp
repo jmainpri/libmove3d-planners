@@ -80,7 +80,7 @@ public:
     motion_t loadFromCSV( const std::string& filename, bool quiet = false );
     void loadXMLFolder();
     bool loadXMLFolder( const std::string& foldername  );
-    void loadCSVFolder( const std::string& foldername, bool quiet = false );
+    void loadCSVFolder( const std::string& foldername, bool quiet = false, double threshold=0.0 );
 
     void storeMotion( const motion_t& motion, bool new_motion = true);
     void addToCurrentMotion( const motion_t& motion );
@@ -111,6 +111,13 @@ public:
 
     const std::vector<motion_t>& getStoredMotions() { return m_stored_motions; }
 
+    std::string getStoredMotionName(size_t i)
+    {
+        if( i < m_stored_motions_names.size() )
+            return m_stored_motions_names[i];
+        return "";
+    }
+
     void useOpenRAVEFormat( bool use_or_format ) { m_use_or_format = use_or_format; }
 
     void setOffsetValue( double x, double y, double z, double rot ) { m_transX = x; m_transY = y; m_transY = z; m_transR = rot; }
@@ -131,6 +138,7 @@ private:
     int m_id_motion;
     motion_t m_motion;
     std::vector<motion_t> m_stored_motions;
+    std::vector<std::string> m_stored_motions_names;
     int m_ith_shown_motion;
     bool m_use_or_format;
 
