@@ -55,7 +55,7 @@ public:
     Move3D::Robot* getPassiveHuman() { return human_passive_; }
 
     //! init collision space
-    bool initCollisionSpace() { collision_feat_.init(); }
+    bool initCollisionSpace() { return collision_feat_.init(); }
 
 private:
 

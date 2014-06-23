@@ -49,7 +49,7 @@ inline Move3D::Trajectory motion_to_traj( const motion_t& traj, Move3D::Robot* r
 
     Move3D::Trajectory tmp( robot );
 
-    for( size_t i=0; i<traj.size() && i<max_index; i++ )
+    for( int i=0; i<int(traj.size()) && i<max_index; i++ )
         tmp.push_back( Move3D::confPtr_t( new Move3D::Configuration( robot, traj[i].second->getConfigStruct() )) );
 
     return tmp;
