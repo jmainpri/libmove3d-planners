@@ -42,6 +42,12 @@ PlayMotion::PlayMotion( const std::vector<HRICS::RecordMotion*>& recorders )
     _motion_recorders = recorders;
 }
 
+PlayMotion::PlayMotion( const std::vector<std::vector<motion_t> >& motions)
+{
+    _play_controlled = false;
+    _stored_motions = motions;
+}
+
 //void PlayMotion::setDirection(const bool dir) { _play_dir = dir; }
 void PlayMotion::setStep(const int step) { _step_size = step; }
 void PlayMotion::setControlled(const bool controlled) { _play_controlled = controlled; }
@@ -49,6 +55,19 @@ void PlayMotion::setRecentInput(const bool input) { _recent_input = input;}
 bool PlayMotion::getRecentInput() { return _recent_input;}
 int PlayMotion::getCurrentFrame() { return _current_frame; }
 
+int PlayMotion::getNumberOfMotions() const
+{
+    if( _stored_motions.empty() && _motion_recorders.empty() )
+        return 0;
+
+    if( _stored_motions.empty() )
+        return _motion_recorders[0]->getStoredMotions().size();
+
+    if( _motion_recorders.empty() )
+        return _stored_motions[0].size();
+
+    return 0;
+}
 
 void PlayMotion::play( const std::vector<std::string>& filepaths )
 {
@@ -76,7 +95,7 @@ void PlayMotion::play(int id)
 
 void PlayMotion::runRealTime(int id)
 {
-    if( _motion_recorders.empty() ) {
+    if( _motion_recorders.empty() && _stored_motions.empty() ) {
         return;
     }
 
@@ -95,9 +114,21 @@ void PlayMotion::runRealTime(int id)
 
         if ( dt>=0.025 )
         {
-            for (size_t j=0; j<_motion_recorders.size(); j++)
+            if( _stored_motions.empty() )
             {
-                _motion_recorders[j]->setRobotToStoredMotionConfig( id, _current_frame );
+                for (size_t j=0; j<_motion_recorders.size(); j++)
+                {
+                    _motion_recorders[j]->setRobotToStoredMotionConfig( id, _current_frame );
+                }
+            }
+            else if( _motion_recorders.empty() )
+            {
+                for (size_t j=0; j<_stored_motions.size(); j++)
+                {
+                    Move3D::confPtr_t q = _stored_motions[j][id][_current_frame].second;
+                    Move3D::Robot* robot = q->getRobot();
+                    robot->setAndUpdate( *q );
+                }
             }
 
             dt = 0.0;
@@ -115,11 +146,24 @@ void PlayMotion::runRealTime(int id)
             StopRun = true;
         }
 
-        for (size_t j=0; j<_motion_recorders.size(); j++)
+        if( _stored_motions.empty() )
         {
-            if ( _current_frame >= int(_motion_recorders[j]->getStoredMotions()[id].size()))
+            for (size_t j=0; j<_motion_recorders.size(); j++)
             {
-                StopRun = true;
+                if ( _current_frame >= int(_motion_recorders[j]->getStoredMotions()[id].size()))
+                {
+                    StopRun = true;
+                }
+            }
+        }
+        else if( _motion_recorders.empty() )
+        {
+            for (size_t j=0; j<_stored_motions.size(); j++)
+            {
+                if ( _current_frame >= int(_stored_motions[j][id].size()))
+                {
+                    StopRun = true;
+                }
             }
         }
     }

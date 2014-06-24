@@ -86,7 +86,11 @@ public:
 
     std::vector<int> getActiveJoints() { return active_joints_; }
 
+    std::vector< std::vector<motion_t> > getMotions();
+
 private:
+
+    void setReplanningDemonstrations();
 
     void setHumanColor( Move3D::Robot* human, int color);
     void setActiveJoints();
@@ -105,13 +109,16 @@ private:
 
     std::vector<int> active_joints_;
 
+    std::vector<HRICS::RecordMotion*> motion_recorders_;
+    std::vector<motion_t> human_1_motions_;
+    std::vector<motion_t> human_2_motions_;
 };
 
 }
 
 extern HRICS::HumanTrajCostSpace* global_ht_cost_space;
+extern HRICS::HumanTrajSimulator* global_ht_simulator;
 
 //! main test function for human planning
 void HRICS_run_human_planning();
 bool HRICS_init_human_trajectory_cost();
-void HRICS_play_motions();

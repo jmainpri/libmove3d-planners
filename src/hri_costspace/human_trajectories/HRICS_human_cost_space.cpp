@@ -45,6 +45,7 @@ using std::cout;
 using std::endl;
 
 HRICS::HumanTrajCostSpace* global_ht_cost_space = NULL;
+HRICS::HumanTrajSimulator* global_ht_simulator = NULL;
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -112,16 +113,6 @@ bool HRICS_init_human_trajectory_cost()
     return true;
 }
 
-void HRICS_play_motions()
-{
-    PlayMotion player( global_motionRecorders );
-    //    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
-    for( int i=0; i<int(1); i++ )
-    {
-        player.play(i);
-    }
-}
-
 void HRICS_run_human_planning()
 {
     HRICS_init_human_trajectory_cost();
@@ -186,7 +177,45 @@ bool HumanTrajSimulator::init()
     // Set bounds and dofs
     setActiveJoints();
 
+    // set the pointers to the motion recorder
+    motion_recorders_ = global_motionRecorders;
+
     return true;
+}
+
+void HumanTrajSimulator::setReplanningDemonstrations()
+{
+    std::vector<std::string> good_motions_names;
+    good_motions_names.push_back( "[0551-0602]motion_saved_00000_00000.csv" );
+    good_motions_names.push_back( "[1186-1245]motion_saved_00000_00001.csv" );
+    good_motions_names.push_back( "[1552-1581]motion_saved_00000_00000.csv" );
+    good_motions_names.push_back( "[1873-1929]motion_saved_00000_00001.csv" );
+    good_motions_names.push_back( "[3191-3234]motion_saved_00000_00000.csv" );
+    good_motions_names.push_back( "[3913-3950]motion_saved_00000_00000.csv" );
+    good_motions_names.push_back( "[4125-4169]motion_saved_00000_00001.csv" );
+    good_motions_names.push_back( "[4422-4476]motion_saved_00000_00000.csv" );
+    good_motions_names.push_back( "[4591-4640]motion_saved_00000_00000.csv" );
+    good_motions_names.push_back( "[4753-4802]motion_saved_00000_00000.csv" );
+
+    for( size_t k=0; k<good_motions_names.size(); k++)
+    {
+        for(size_t j=0; j<motion_recorders_[0]->getStoredMotions().size(); j++)
+        {
+            if( motion_recorders_[0]->getStoredMotionName(j) == good_motions_names[k] )
+            {
+                human_1_motions_.push_back( motion_recorders_[0]->getStoredMotions()[j] );
+                human_2_motions_.push_back( motion_recorders_[1]->getStoredMotions()[j] );
+            }
+        }
+    }
+}
+
+std::vector< std::vector<motion_t> > HumanTrajSimulator::getMotions()
+{
+    std::vector< std::vector<motion_t> > motions;
+    motions.push_back( human_1_motions_ );
+    motions.push_back( human_2_motions_ );
+    return motions;
 }
 
 void HumanTrajSimulator::setActiveJoints()

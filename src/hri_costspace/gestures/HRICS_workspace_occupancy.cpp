@@ -789,25 +789,23 @@ void WorkspaceOccupancyGrid::draw()
 
     if( GestEnv->getBool(GestParam::draw_current_occupancy) )
     {
-//        cout << "draw current occupancy" << endl;
+        //        cout << "draw current occupancy" << endl;
         computeCurrentOccupancy();
         return simple_draw_current_occupancy();
     }
 
-    if( !m_motions.empty() )
+    if(GestEnv->getBool(GestParam::draw_single_class))
     {
-        if(GestEnv->getBool(GestParam::draw_single_class))
-        {
-//            cout << "simple_draw_one_class" << endl;
-            return simple_draw_one_class();
-        }
-        else
-        {
-//            cout << "simple_draw_combined" << endl;
-            return simple_draw_combined();
-        }
+        // cout << "simple_draw_one_class" << endl;
+        return simple_draw_one_class();
     }
     else
+    {
+        // cout << "simple_draw_combined" << endl;
+        return simple_draw_combined();
+    }
+
+    if( m_motions.empty() )
     {
         cout << "motion empty" << endl;
         return;
