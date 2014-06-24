@@ -37,6 +37,10 @@
 void move3d_save_matrix_to_file( const Eigen::MatrixXd& mat, std::string filename );
 void move3d_save_matrix_to_csv_file( const Eigen::MatrixXd& mat, std::string filename );
 
+//! Save scenario to file
+std::vector<Move3D::confPtr_t> move3d_load_context_from_csv_file( std::string filename );
+void move3d_save_context_to_csv_file( const std::vector<Move3D::confPtr_t>& context, std::string filename );
+
 //! Returns the files in the folder with argumen extension
 std::vector<std::string>  move3d_get_files_in_folder( std::string foldername, std::string extention, int nb_max_files=-1 );
 

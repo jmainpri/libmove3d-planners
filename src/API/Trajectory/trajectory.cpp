@@ -2376,7 +2376,7 @@ bool Trajectory::setFromEigenMatrix(const Eigen::MatrixXd& mat, const std::vecto
     return true;
 }
 
-bool Trajectory::saveToFile(std::string filename)
+bool Trajectory::saveToFile(std::string filename) const
 {
     std::vector<int> r_dof_indices = m_Robot->getAllDofIds();
     Eigen::MatrixXd mat = getEigenMatrix( r_dof_indices );

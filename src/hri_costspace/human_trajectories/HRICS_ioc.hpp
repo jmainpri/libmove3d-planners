@@ -215,7 +215,7 @@ public:
     void setPlannerType( planner_t planner_type ) { planner_type_ = planner_type; }
 
     //! Save demo to file
-    void saveDemoToFile(std::vector<Move3D::Trajectory>& demos);
+    void saveDemoToFile(const std::vector<Move3D::Trajectory>& demos, std::vector<Move3D::confPtr_t> context = std::vector<Move3D::confPtr_t>());
 
     virtual void setLearnedWeights();
     virtual void setOriginalWeights();
@@ -227,6 +227,9 @@ protected:
 
     //! Compute the cost of the demos
     Eigen::VectorXd getCostsOfDemonstrations() const;
+
+    //! Saves the configurations of humands and objects in the scene
+    void saveContextToFile(const std::vector<Move3D::confPtr_t>& context) const;
 
     //! Save trajectory to matrix
     void saveTrajToMatlab(const Move3D::Trajectory& t, int id) const;

@@ -314,7 +314,7 @@ public:
     /*
       * Get all dof ids
       */
-    std::vector<int> getAllDofIds();
+    std::vector<int> getAllDofIds() const;
 
 
 #ifdef LIGHT_PLANNER

@@ -192,7 +192,7 @@ public:
 
     //---------------------------------------------------------
     // Save and Load from File
-    bool saveToFile(std::string filename);
+    bool saveToFile(std::string filename) const;
     bool loadFromFile(std::string filename);
 
     //---------------------------------------------------------

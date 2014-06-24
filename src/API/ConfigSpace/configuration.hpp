@@ -363,6 +363,7 @@ public:
      */
     void setFromEigenVector(const Eigen::VectorXd& conf);
     void setFromEigenVector(const Eigen::VectorXd& conf, int startIndex, int endIndex);
+    void setFromEigenVector(const Eigen::VectorXd& conf, const std::vector<int>& indices);
 
     /**
      *

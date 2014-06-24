@@ -1099,7 +1099,7 @@ void IocEvaluation::generateDemonstrations()
     cout << "exit generate demo" << endl;
 }
 
-void IocEvaluation::saveDemoToFile(std::vector<Move3D::Trajectory>& demos)
+void IocEvaluation::saveDemoToFile(const std::vector<Move3D::Trajectory>& demos, std::vector<Move3D::confPtr_t> context )
 {
     for(size_t i=0;i<demos.size();i++)
     {
@@ -1118,6 +1118,11 @@ void IocEvaluation::saveDemoToFile(std::vector<Move3D::Trajectory>& demos)
         cout << "nb of via points  : " << demos[i].getNbOfViaPoints() << endl;
         // p3d_save_traj( ss.str().c_str(), robot_->getP3dRobotStruct()->tcur );
         demos[i].saveToFile( ss.str() );
+
+        if( !context.empty() )
+        {
+
+        }
 
         saveTrajToMatlab( demos[i], i );
         cout << "save traj to matlab format!!!!" << endl;
@@ -1810,6 +1815,11 @@ std::vector< std::vector<FeatureVect> > IocEvaluation::getFeatureCount( const st
 void IocEvaluation::saveDemoToMatlab()
 {
     saveTrajToMatlab( demos_[0], 0 );
+}
+
+void IocEvaluation::saveContextToFile(const std::vector<Move3D::confPtr_t>& context) const
+{
+
 }
 
 void IocEvaluation::saveTrajToMatlab(const Move3D::Trajectory& t, int id) const

@@ -89,12 +89,18 @@ bool HRICS_init_human_trajectory_cost()
 //        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/kinect_good_motions/good_lib/";
         std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/kinect_good_motions/human_one_good/";
 
-        global_motionRecorders[0]->loadCSVFolder( foldername + "human_one/", false, +0.5 );
-        global_motionRecorders[1]->loadCSVFolder( foldername + "human_two/", false, -0.5 );
+        bool quiet = true;
+
+        global_motionRecorders[0]->loadCSVFolder( foldername + "human_one/", quiet, +0.5 );
+        global_motionRecorders[1]->loadCSVFolder( foldername + "human_two/", quiet, -0.5 );
 
         cout << "create human traj cost space" << endl;
 
-        global_ht_cost_space = new HumanTrajCostSpace( human2, human1 );
+        global_ht_cost_space = new HRICS::HumanTrajCostSpace( human2, human1 );
+
+        // Set active joints and joint bounds
+        global_ht_simulator = new HRICS::HumanTrajSimulator( global_ht_cost_space );
+        global_ht_simulator->init();
 
         // Define cost functions
         cout << " add cost : " << "costHumanTrajectoryCost" << endl;
@@ -179,6 +185,10 @@ bool HumanTrajSimulator::init()
 
     // set the pointers to the motion recorder
     motion_recorders_ = global_motionRecorders;
+    setReplanningDemonstrations();
+
+    // Set the planning bounds
+    setPelvisBounds();
 
     return true;
 }
@@ -187,15 +197,19 @@ void HumanTrajSimulator::setReplanningDemonstrations()
 {
     std::vector<std::string> good_motions_names;
     good_motions_names.push_back( "[0551-0602]motion_saved_00000_00000.csv" );
-    good_motions_names.push_back( "[1186-1245]motion_saved_00000_00001.csv" );
-    good_motions_names.push_back( "[1552-1581]motion_saved_00000_00000.csv" );
-    good_motions_names.push_back( "[1873-1929]motion_saved_00000_00001.csv" );
-    good_motions_names.push_back( "[3191-3234]motion_saved_00000_00000.csv" );
-    good_motions_names.push_back( "[3913-3950]motion_saved_00000_00000.csv" );
-    good_motions_names.push_back( "[4125-4169]motion_saved_00000_00001.csv" );
-    good_motions_names.push_back( "[4422-4476]motion_saved_00000_00000.csv" );
-    good_motions_names.push_back( "[4591-4640]motion_saved_00000_00000.csv" );
-    good_motions_names.push_back( "[4753-4802]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[1186-1245]motion_saved_00000_00001.csv" );
+//    good_motions_names.push_back( "[1552-1581]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[1873-1929]motion_saved_00000_00001.csv" );
+//    good_motions_names.push_back( "[3191-3234]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[3913-3950]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[4125-4169]motion_saved_00000_00001.csv" );
+//    good_motions_names.push_back( "[4422-4476]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[4591-4640]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[4753-4802]motion_saved_00000_00000.csv" );
+
+    pelvis_max_ = Eigen::VectorXd::Zero(6);
+    pelvis_min_ = Eigen::VectorXd::Zero(6);
+    bool initialized = false;
 
     for( size_t k=0; k<good_motions_names.size(); k++)
     {
@@ -203,8 +217,37 @@ void HumanTrajSimulator::setReplanningDemonstrations()
         {
             if( motion_recorders_[0]->getStoredMotionName(j) == good_motions_names[k] )
             {
+                cout << "Add motion : " << good_motions_names[k] << endl;
                 human_1_motions_.push_back( motion_recorders_[0]->getStoredMotions()[j] );
                 human_2_motions_.push_back( motion_recorders_[1]->getStoredMotions()[j] );
+
+                for( size_t s=0; s<human_2_motions_.back().size(); s++) // Only set active dofs on the configuration
+                {
+                    Move3D::confPtr_t q = human_2_motions_.back()[s].second;
+                    Move3D::confPtr_t q_tmp = q->getRobot()->getInitPos();
+                    q_tmp->setFromEigenVector( q->getEigenVector(active_dofs_), active_dofs_ );
+                    human_2_motions_.back()[s].second = q_tmp;
+
+                    if(s == 0)
+                    {
+                        for( size_t i=0; i<6; i++)
+                        {
+                            if( initialized )
+                            {
+                                if( pelvis_max_[i] < (*q_tmp)[6+i] )
+                                    pelvis_max_[i] = (*q_tmp)[6+i];
+                                if( pelvis_min_[i] > (*q_tmp)[6+i] )
+                                    pelvis_min_[i] = (*q_tmp)[6+i];
+                            }
+                            else
+                            {
+                                pelvis_max_[i] = (*q_tmp)[6+i];
+                                pelvis_min_[i] = (*q_tmp)[6+i];
+                            }
+                        }
+                        initialized = true;
+                    }
+                }
             }
         }
     }
@@ -218,24 +261,59 @@ std::vector< std::vector<motion_t> > HumanTrajSimulator::getMotions()
     return motions;
 }
 
-void HumanTrajSimulator::setActiveJoints()
+std::vector<Move3D::Trajectory> HumanTrajSimulator::getDemoTrajectories()
+{
+    std::vector<Move3D::Trajectory> trajs;
+    return trajs;
+
+}
+
+std::vector<Move3D::confPtr_t> HumanTrajSimulator::getContext()
+{
+    std::vector<Move3D::confPtr_t> context;
+    return context;
+}
+
+void HumanTrajSimulator::setPelvisBounds()
 {
     // Get first joint and change bounds
     Joint* joint = human_active_->getJoint( "Pelvis" );
 
-    // take only (x, y, z) components of the base
-    double bound_trans = 0.05;
-    double bound_rotat = 0.1;
+    bool use_user_defined = false;
+
     double dof[6][2];
-    for(int i = 0; i < 3; i++) { // Translation bounds
-        dof[i][0] = joint->getJointDof(i) - bound_trans;
-        dof[i][1] = joint->getJointDof(i) + bound_trans;
-        cout << "PELVIS DOF: " << joint->getJointDof(i) << endl;
+
+    if( use_user_defined )
+    {
+        // take only (x, y, z) components of the base
+        double bound_trans = 0.05;
+        double bound_rotat = 0.1;
+
+        for(int i = 0; i < 3; i++) { // Translation bounds
+            dof[i][0] = joint->getJointDof(i) - bound_trans;
+            dof[i][1] = joint->getJointDof(i) + bound_trans;
+            cout << "PELVIS DOF: " << joint->getJointDof(i) << endl;
+        }
+        for(int i = 3; i < 6; i++) { // Rotation bounds
+            dof[i][0] = joint->getJointDof(i) - bound_rotat;
+            dof[i][1] = joint->getJointDof(i) + bound_rotat;
+        }
     }
-    for(int i = 3; i < 6; i++) { // Rotation bounds
-        dof[i][0] = joint->getJointDof(i) - bound_rotat;
-        dof[i][1] = joint->getJointDof(i) + bound_rotat;
+    else
+    {
+        double bound_trans = 0.02;
+        double bound_rotat = 0.05;
+
+        for(int i = 0; i < 3; i++) { // Translation bounds
+            dof[i][0] = pelvis_min_(i) - bound_trans;
+            dof[i][1] = pelvis_max_(i) + bound_trans;
+        }
+        for(int i = 3; i < 6; i++) { // Rotation bounds
+            dof[i][0] = pelvis_min_(i) - bound_rotat;
+            dof[i][1] = pelvis_max_(i) + bound_rotat;
+        }
     }
+
     for(int i = 0; i < 6; i++){
         p3d_jnt_set_dof_rand_bounds( joint->getP3dJointStruct(), i, dof[i][0], dof[i][1] );
     }
@@ -269,7 +347,10 @@ void HumanTrajSimulator::setActiveJoints()
 //    Is dof user : (min = -3.14, max = 3.14)
 //    Joint(0), Dof : 22, rElbowZ
 //    Is dof user : (min = -3.14, max = 3.14)
+}
 
+void HumanTrajSimulator::setActiveJoints()
+{
     active_joints_.push_back( human_active_->getJoint( "Pelvis" )->getId() ); // Pelvis
 
     active_joints_.push_back( human_active_->getJoint( "TorsoX" )->getId() ); // TorsoX
@@ -279,7 +360,9 @@ void HumanTrajSimulator::setActiveJoints()
     active_joints_.push_back( human_active_->getJoint( "rShoulderX" )->getId() ); // rShoulderX
     active_joints_.push_back( human_active_->getJoint( "rShoulderZ" )->getId() ); // rShoulderZ
     active_joints_.push_back( human_active_->getJoint( "rShoulderY" )->getId() ); // rShoulderY
-//    active_joints_.push_back( 11 ); // rArmTrans
+
+    active_joints_.push_back( human_active_->getJoint( "rArmTrans" )->getId() ); // rArmTrans
+
     active_joints_.push_back( human_active_->getJoint( "rElbowZ" )->getId() ); // rElbowZ
 //    active_joints_.push_back(14); // joint name : rWristX
 //    active_joints_.push_back(15); // joint name : rWristY
@@ -287,17 +370,17 @@ void HumanTrajSimulator::setActiveJoints()
 
     // SET COST SPACE ACTIVE DOFS
 
-    std::vector<int> active_dofs;
+    active_dofs_.clear();
 
     for( size_t i=0; i<active_joints_.size(); i++ ) // get all active dofs
     {
         std::vector<unsigned int> jnt_active_dofs = human_active_->getJoint(active_joints_[i])->getDofIndices();
-        active_dofs.insert( active_dofs.end(), jnt_active_dofs.begin(), jnt_active_dofs.end() );
+        active_dofs_.insert( active_dofs_.end(), jnt_active_dofs.begin(), jnt_active_dofs.end() );
     }
 
     for( size_t i=0; i<cost_space_->getNumberOfFeatureFunctions(); i++ ) // set all features active dofs
     {
-        cost_space_->getFeatureFunction(i)->setActiveDoFs( active_dofs );
+        cost_space_->getFeatureFunction(i)->setActiveDoFs( active_dofs_ );
     }
 }
 

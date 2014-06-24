@@ -70,6 +70,7 @@ private:
 
     std::vector<int> active_joints_;
     Move3D::StackedFeatures* feature_fct_;
+    bool use_human_simulation_demo_;
 
 };
 

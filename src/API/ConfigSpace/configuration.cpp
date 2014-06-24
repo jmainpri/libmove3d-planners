@@ -394,6 +394,15 @@ void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, int startInd
     }
 }
 
+void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, const std::vector<int>& indices)
+{
+    // Get the values of the dofs
+    for ( size_t i=0; i<indices.size(); i++)
+    {
+        _Configuration[ indices[i] ] = conf(i);
+    }
+}
+
 bool Configuration::setConstraintsWithSideEffect()
 {
     bool respect = _Robot->setAndUpdate( *this );

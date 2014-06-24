@@ -87,13 +87,17 @@ public:
     std::vector<int> getActiveJoints() { return active_joints_; }
 
     std::vector< std::vector<motion_t> > getMotions();
+    std::vector<Move3D::Trajectory> getDemoTrajectories();
+    std::vector<Move3D::confPtr_t> getContext();
 
 private:
 
+    void setPelvisBounds();
     void setReplanningDemonstrations();
 
     void setHumanColor( Move3D::Robot* human, int color);
     void setActiveJoints();
+
 
     HumanTrajCostSpace* cost_space_;
 
@@ -108,10 +112,13 @@ private:
     std::string traj_folder_;
 
     std::vector<int> active_joints_;
+    std::vector<int> active_dofs_;
 
     std::vector<HRICS::RecordMotion*> motion_recorders_;
     std::vector<motion_t> human_1_motions_;
     std::vector<motion_t> human_2_motions_;
+    Eigen::VectorXd pelvis_max_;
+    Eigen::VectorXd pelvis_min_;
 };
 
 }

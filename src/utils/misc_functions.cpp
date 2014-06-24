@@ -27,6 +27,7 @@
  */
 #include "misc_functions.hpp"
 #include "NumsAndStrings.hpp"
+#include "API/project.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -263,4 +264,80 @@ void print_joint_anchors( Move3D::Robot* robot )
             cout << i  << ": " << t[0][3] << " " << t[1][3]<< " " << t[2][3] << endl;
         }
     }
+}
+
+std::vector<Move3D::confPtr_t> move3d_load_context_from_csv_file( std::string filename )
+{
+    Move3D::Scene* sce = Move3D::global_Project->getActiveScene();
+    std::vector<Move3D::confPtr_t> context;
+    std::ifstream file( filename.c_str(), std::ifstream::in );
+
+    cout << "load context from : " << filename << endl;
+
+    if (file.is_open())
+    {
+        std::string line;
+        std::string cell;
+        std::string robot_name;
+
+        int n_rows = std::count(std::istreambuf_iterator<char>(file),
+                                std::istreambuf_iterator<char>(), '\n');
+
+        context.resize( n_rows );
+
+        int i=0, j=0;
+
+        file.clear() ;
+        file.seekg(0, std::ios::beg );
+
+        while( file.good() )
+        {
+            std::getline( file, line );
+            std::stringstream lineStream( line );
+
+            Eigen::VectorXd  q( Eigen::VectorXd::Zero( word_count( line )-1 ));
+
+            std::getline( lineStream, robot_name, ',' );
+            Move3D::Robot* robot = sce->getRobotByName( robot_name );
+
+            j = 0;
+
+            while( std::getline( lineStream, cell, ',' ) )
+            {
+                convert_text_to_num<double>( q( j++), cell, std::dec );
+            }
+
+            context[i] = Move3D::confPtr_t(new Move3D::Configuration(robot));
+            context[i]->setFromEigenVector( q );
+
+            i++;
+        }
+
+        file.close();
+    }
+    else {
+        cout << "could not open file : " << filename << endl;
+    }
+
+    return context;
+}
+
+void move3d_save_context_to_csv_file( const std::vector<Move3D::confPtr_t>& context, std::string filename )
+{
+    std::ofstream s;
+    s.open( filename.c_str() );
+
+    for( size_t k=0;k<context.size(); k++ )
+    {
+        s << context[k]->getRobot()->getName() << ",";
+
+        Eigen::VectorXd q = context[k]->getEigenVector();
+
+        for (int i=0; i<q.size(); i++)
+            s << q( i ) << ",";
+
+        s << endl;
+    }
+
+    s.close();
 }

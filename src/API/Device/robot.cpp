@@ -618,7 +618,7 @@ std::vector<int> Robot::getActiveDoFsFromJoints( const std::vector<int>& joint_i
     return dof_ids;
 }
 
-std::vector<int> Robot::getAllDofIds()
+std::vector<int> Robot::getAllDofIds() const
 {
     std::vector<int> r_dof_indices;
 

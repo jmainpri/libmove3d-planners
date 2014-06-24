@@ -227,16 +227,17 @@ bool IocSequences::run()
             cout << "GENERATE" << endl;
             setGenerationFeatures();
 
-//            if( !global_motionRecorders.empty() && !global_motionRecorders[0]->getStoredMotions().empty() )
-//            {
-//                std::vector<Move3D::Trajectory> trajs;
+            if( use_human_simulation_demo_ )
+            {
+                std::vector<Move3D::Trajectory> trajs = global_ht_simulator->getDemoTrajectories();
+                std::vector<Move3D::confPtr_t> context = global_ht_simulator->getContext();
 //                trajs.push_back( HRICS::motion_to_traj( global_motionRecorders[0]->getStoredMotions()[0], human2, 60 ) );
 //                human1->setAndUpdate( *global_motionRecorders[1]->getStoredMotions()[0][0].second );
-//                eval->saveDemoToFile( trajs );
-//            }
-//            else {
+                eval->saveDemoToFile( trajs, context );
+            }
+            else {
                 eval->generateDemonstrations();
-//            }
+            }
 
             g3d_draw_allwin_active();
             break;
@@ -380,10 +381,8 @@ void IocSequences::set_features()
         // Set all feature active
         feature_fct_->setAllFeaturesActive();
 
-        // Set active joints and joint bounds
-        HumanTrajSimulator sim( global_ht_cost_space );
-        sim.init();
-        active_joints_ = sim.getActiveJoints();
+        // Get active joints
+        active_joints_ = global_ht_simulator->getActiveJoints();
         cout << "active_joints_.size() : " << active_joints_.size() << endl;
     }
 }
