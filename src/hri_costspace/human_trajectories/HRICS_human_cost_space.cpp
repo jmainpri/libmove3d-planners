@@ -66,8 +66,8 @@ bool HRICS_init_human_trajectory_cost()
             return false;
         }
 
-        global_motionRecorders.push_back( new HRICS::RecordMotion( human1 ) );
         global_motionRecorders.push_back( new HRICS::RecordMotion( human2 ) );
+//        global_motionRecorders.push_back( new HRICS::RecordMotion( human2 ) );
 
         // std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
         // Set this bool to false is you want to print file names as they are loaded
@@ -75,13 +75,21 @@ bool HRICS_init_human_trajectory_cost()
 //        global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
 //        global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
 
-        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/quan_motion";
+
         global_motionRecorders[0]->useOpenRAVEFormat( true );
-        global_motionRecorders[1]->useOpenRAVEFormat( true );
-        motion_t traj1 = global_motionRecorders[0]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00000_00000.csv" );
-        motion_t traj2 = global_motionRecorders[1]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00001_00000.csv" );
-        global_motionRecorders[0]->storeMotion( traj1 );
-        global_motionRecorders[1]->storeMotion( traj2 );
+//        global_motionRecorders[1]->useOpenRAVEFormat( true );
+
+//        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/quan_motion";
+//        motion_t traj1 = global_motionRecorders[0]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00000_00000.csv" );
+//        motion_t traj2 = global_motionRecorders[1]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00001_00000.csv" );
+//        global_motionRecorders[0]->storeMotion( traj1 );
+//        global_motionRecorders[1]->storeMotion( traj2 );
+
+//        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/kinect_good_motions/good_lib/";
+//        std::string foldername = "/human_one_good/";
+
+//        global_motionRecorders[0]->loadCSVFolder( foldername + "human_one/", false, +0.5 );
+//        global_motionRecorders[1]->loadCSVFolder( foldername + "human_two/", false, -0.5 );
 
         cout << "create human traj cost space" << endl;
 
@@ -193,6 +201,7 @@ void HumanTrajSimulator::setActiveJoints()
     for(int i = 0; i < 3; i++) { // Translation bounds
         dof[i][0] = joint->getJointDof(i) - bound_trans;
         dof[i][1] = joint->getJointDof(i) + bound_trans;
+        cout << "PELVIS DOF: " << joint->getJointDof(i) << endl;
     }
     for(int i = 3; i < 6; i++) { // Rotation bounds
         dof[i][0] = joint->getJointDof(i) - bound_rotat;
@@ -341,6 +350,8 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     human_passive_(passive),
     smoothness_feat_(),
     dist_feat_( active, passive ),
+    visi_feat_(active, passive),
+    musc_feat_( active ),
     collision_feat_( active )
 {
     cout << "---------------------------------------------" << endl;
@@ -354,13 +365,13 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     active_dofs_ = std::vector<int>(1,1);
 
     length_feat_.setActiveDoFs( active_dofs_ );
-    length_feat_.setWeights( WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
+    length_feat_.setWeights( 0.8 * WeightVect::Ones(length_feat_.getNumberOfFeatures()) );
 
     smoothness_feat_.setActiveDoFs( active_dofs_ );
     smoothness_feat_.setWeights( WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
 
     dist_feat_.setActiveDoFs( active_dofs_ );
-    // dist_feat_.setWeights( WeightVect::Ones(dist_feat_.getNumberOfFeatures()) );
+    dist_feat_.setWeights( w_distance_16 );
 
     collision_feat_.setActiveDoFs( active_dofs_ );
     collision_feat_.setWeights( WeightVect::Ones(collision_feat_.getNumberOfFeatures()) );
@@ -368,15 +379,15 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     if(!addFeatureFunction( &length_feat_ ) ){
         cout << "Error adding feature length" << endl;
     }
-    if(!addFeatureFunction( &smoothness_feat_ ) ){
-        cout << "Error adding feature smoothness" << endl;
-    }
-    if(!addFeatureFunction( &collision_feat_ )){
-        cout << "Error adding feature distance collision" << endl;
-    }
-//    if(!addFeatureFunction( &dist_feat_ )){
-//        cout << "Error adding feature distance feature" << endl;
+//    if(!addFeatureFunction( &smoothness_feat_ ) ){
+//        cout << "Error adding feature smoothness" << endl;
 //    }
+//    if(!addFeatureFunction( &collision_feat_ )){
+//        cout << "Error adding feature distance collision" << endl;
+//    }
+    if(!addFeatureFunction( &dist_feat_ )){
+        cout << "Error adding feature distance feature" << endl;
+    }
 
     w_ = getWeights();
 

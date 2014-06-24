@@ -135,7 +135,7 @@ public:
 
     //! Generate the sampled trajectories
     //! around the demonstrations
-    bool generateSamples(int nb_samples);
+    bool generateSamples(int nb_samples, bool check_in_collision);
 
     //! Returns Move3D trajectories
     std::vector< std::vector<Move3D::Trajectory> > getSamples();
@@ -284,6 +284,7 @@ protected:
     Move3D::ChompPlanningGroup* plangroup_;
 
     bool load_sample_from_file_;
+    bool remove_samples_in_collision_;
     MultiplePlanners& planners_;
     int round_id_;
 
@@ -299,6 +300,7 @@ protected:
 
     // Planner type
     planner_t planner_type_;
+    int nb_planning_test_;
 };
 
 }

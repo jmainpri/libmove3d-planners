@@ -38,6 +38,8 @@ namespace HRICS
 {
 
 extern Move3D::FeatureVect w_distance_16;
+extern Move3D::FeatureVect w_visibility_04;
+extern Move3D::FeatureVect w_musculo_03;
 
 class DistanceFeature : public Move3D::Feature
 {
@@ -114,17 +116,30 @@ private:
 class VisibilityFeature : public Move3D::Feature
 {
 public:
-    VisibilityFeature() : Feature("Visbility") {}
-    Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+    VisibilityFeature( Move3D::Robot* active, Move3D::Robot* passive );
     Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
+    Move3D::FeatureVect computeVisibility() const;
+
+    void draw();
+
+private:
+
+    Move3D::Robot* active_robot_;
+    Visibility* visib_cost_;
+    std::vector<Move3D::Joint*> human_active_joints_;
 };
 
-class MuskuloskeletalFeature : public Move3D::Feature
+class MusculoskeletalFeature : public Move3D::Feature
 {
 public:
-    MuskuloskeletalFeature() : Feature("Muskuloskeletal") {}
-    Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+    MusculoskeletalFeature( Move3D::Robot* active );
     Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
+    Move3D::FeatureVect computeMusculoskeletalEffort() const;
+
+    void draw();
+
+private:
+    Natural* natural_cost_;
 };
 
 class ReachabilityFeature : public Move3D::Feature

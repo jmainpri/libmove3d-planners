@@ -145,7 +145,7 @@ bool IocSequences::run()
     cout << "ioc phase : " << phase_ << endl;
 
     int nb_demos = 1;
-    int nb_sampling_phase = 10;
+    int nb_sampling_phase = nb_iterations;
     //    int min_samples = 10;
     //    int max_samples = 100;
 
@@ -169,8 +169,11 @@ bool IocSequences::run()
     // Set feature function
     set_features();
 
+    Eigen::MatrixXd samples = move3d_load_matrix_from_csv_file( move3d_human_trajs_tmp_data_folder + "samples_tmp.txt" );
+    cout << "SAMPLING SEQUENCE : " << samples.row(0) << endl;
+
     // Main loop
-    for(int i=0; i<nb_sampling_phase && !StopRun; i++)
+    for(int i=0; i<samples.row(0).size() && !StopRun; i++)
     {
         // iteration = i; // 2, 5, 30, 50
 
@@ -179,17 +182,16 @@ bool IocSequences::run()
         else
             iteration = i;
 
-        cout << "------------------------------" << endl;
-        cout << " RUN : " << iteration << endl;
-        cout << "------------------------------" << endl;
-
         // interpolation for the number of sampling phase
         // int nb_samples = min_samples + double(iteration)*(max_samples-min_samples)/double(nb_sampling_phase-1);
         // int nb_samples = (iteration*100+1);
-        int nb_samples = (16*(iteration+1));
+//        int nb_samples = (16*(iteration+1))
         // int nb_samples = (160*(iteration+1));
+        int nb_samples = samples.row(0)(iteration);
 
-        cout << "NB SAMPLES : " << nb_samples << endl;
+        cout << "------------------------------" << endl;
+        cout << " RUN, NB SAMPLES : " << nb_samples << endl;
+        cout << "------------------------------" << endl;
 
         IocEvaluation* eval = NULL;
 
@@ -244,7 +246,7 @@ bool IocSequences::run()
 
             setSamplingFeatures();
 
-            eval->loadWeightVector();
+//            eval->loadWeightVector();
 //            eval->setLearnedWeights();
             eval->loadDemonstrations();
             // eval.runLearning();
@@ -281,6 +283,11 @@ bool IocSequences::run()
             eval->loadDemonstrations();
             eval->monteCarloSampling( 10.0, 10 );
             break;
+
+        case default_phase:
+
+            eval->loadDemonstrations();
+            feature_fct_->printInfo();
 
         default:
             cout << "DEFAULT : LOAD TRAJECTORIES" << endl;
@@ -392,7 +399,8 @@ void IocSequences::setGenerationFeatures()
 //        active_features.push_back("Collision");
         feature_fct_->setActiveFeatures( active_features );
 
-        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
+//        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.7 );
+//        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
 
         cout << "stack info" << endl;
         feature_fct_->printInfo();
@@ -410,9 +418,12 @@ void IocSequences::setSamplingFeatures()
         active_features.push_back("Length");
         active_features.push_back("Distance");
 //        active_features.push_back("Smoothness");
-        active_features.push_back("Collision");
+//        active_features.push_back("Collision");
 
         feature_fct_->setActiveFeatures( active_features );
+
+//        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.7 );
+//        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
 
 //        double w_smoo = PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight);
 //        double w_obst = PlanEnv->getDouble(PlanParam::trajOptimObstacWeight);
@@ -425,7 +436,6 @@ void IocSequences::setSamplingFeatures()
 //        feature_fct_->getFeatureFunction("Smoothness")->setWeights( w_smoo * FeatureVect::Ones(1) );
 //        feature_fct_->getFeatureFunction("Collision")->setWeights( w_obst * FeatureVect::Ones(1) );
 //        feature_fct_->getFeatureFunction("Distance")->setWeights( w_dist * w_distance_16 );
-
 
 
         cout << "stack info" << endl;
@@ -444,9 +454,12 @@ void IocSequences::setCompareFeatures()
         active_features.push_back("Length");
 //        active_features.push_back("Smoothness");
         active_features.push_back("Distance");
-        active_features.push_back("Collision");
+//        active_features.push_back("Collision");
 
         feature_fct_->setActiveFeatures( active_features );
+
+        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.7 );
+        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
 
         cout << "stack info" << endl;
         feature_fct_->printInfo();

@@ -372,6 +372,7 @@ bool Ioc::setTotalCostsSampleValue( int d, int i, const Eigen::VectorXd& total_c
     return true;
 }
 
+//! returns true if in joint limits
 bool Ioc::jointLimits( IocTrajectory& traj ) const
 {
     bool is_in_joint_limits = true;
@@ -383,19 +384,27 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
         double j_max = planning_group_->chomp_joints_[j].joint_limit_max_;
         double j_min = planning_group_->chomp_joints_[j].joint_limit_min_;
 
+        int nb_attempt = 0;
+
         for( int i=0;i<num_vars_;i++)
         {
-            int nb_attempt = 0;
             while( traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max )
             {
-                coeff *= 0.90; // 90 percent
-                traj.noise_[j] *= coeff;
-                traj.parameters_[j] = traj.nominal_parameters_[j] +  traj.noise_[j];
-
-                if( nb_attempt++ > 100 ){
+                if( nb_attempt++ > 10 )
+                {
                     is_in_joint_limits = false;
-                    break;
-                    cout << "not in limits" << endl;
+                    cout << "not in limits, name : " << planning_group_->chomp_joints_[j].joint_name_ << endl;
+                    cout << j << " : upper : " << j_max << ", lower : " << j_min << ", value : " << traj.parameters_[j][i] << endl;
+                    if( traj.parameters_[j][i] < j_min )
+                        traj.parameters_[j][i] = j_min + 10e-6;
+                    if( traj.parameters_[j][i] > j_max )
+                        traj.parameters_[j][i] = j_max - 10e-6;
+                }
+                else
+                {
+                    coeff *= 0.90; // 90 percent
+                    traj.noise_[j] *= coeff;
+                    traj.parameters_[j] = traj.nominal_parameters_[j] +  traj.noise_[j];
                 }
             }
 
@@ -449,7 +458,7 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
 //    }
 //}
 
-bool Ioc::generateSamples( int nb_samples )
+bool Ioc::generateSamples( int nb_samples, bool check_in_collision )
 {
     int nb_demos = getNbOfDemonstrations();
 
@@ -463,6 +472,7 @@ bool Ioc::generateSamples( int nb_samples )
         {
             samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
 
+            bool is_valid = true;
             int nb_failed = 0;
             do
             {
@@ -480,9 +490,17 @@ bool Ioc::generateSamples( int nb_samples )
                     samples_[d][ns].noise_[j] = noisy_traj.row(j);
                     samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j].cwiseProduct(samples_[d][ns].total_costs_[j]);
                 }
+
+                /*is_valid =*/ jointLimits( samples_[d][ns] );
+
+                if( check_in_collision )
+                    is_valid = samples_[d][ns].getMove3DTrajectory( planning_group_ ).isValid();
             }
             // Commented for humans
-            while( (!jointLimits( samples_[d][ns] )) && ( nb_failed++ < 10 ) );
+            while( (!is_valid) && ( nb_failed++ < 1000 ) );
+
+            // The sample trajectory is not valid
+            if( !is_valid ) cout << "WARNING: generating invalid sample" << endl;
         }
     }
 
@@ -735,6 +753,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
     nb_demos_ = nb_demos;
     nb_samples_ = nb_samples;
     nb_way_points_ = nb_way_points;
+    nb_planning_test_ = 3;
 
     // Folders
     folder_ = folder; // move3d_demo_folder; // static
@@ -742,6 +761,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
     tmp_data_folder_ = tmp_data_folder;
 
     load_sample_from_file_ = HriEnv->getBool(HricsParam::ioc_load_samples_from_file);
+    remove_samples_in_collision_ = true;
 
     active_joints_ = active_joints;
 
@@ -1052,9 +1072,24 @@ void IocEvaluation::generateDemonstrations()
 {
     std::vector<Move3D::Trajectory> demos;
 
-    for(int i=0;i<nb_demos_;i++)
+    cout << "nb_demos : " << nb_demos_ << endl;
+    cout << "nb_planning_test_ : " << nb_planning_test_ << endl;
+
+    for(int i=0; i<nb_demos_; i++ )
     {
-        demos.push_back( planMotion( planner_type_ ) );
+        std::vector< std::pair<double,Move3D::Trajectory> > demos_tmp( nb_planning_test_ );
+
+        for( int j=0; j<nb_planning_test_; j++ )
+        {
+            demos_tmp[j].second = planMotion( planner_type_ );
+            demos_tmp[j].first = feature_fct_->costTraj( demos_tmp[j].second );
+        }
+
+        for( int j=0; j<nb_planning_test_; j++ )
+            cout << "cost[" << j << "] : " << demos_tmp[j].first << endl;
+
+        cout << "min cost : " << std::min_element(demos_tmp.begin(), demos_tmp.end() )->first << endl;
+        demos.push_back( std::min_element(demos_tmp.begin(), demos_tmp.end() )->second );
     }
 
     cout << "nb_demos_ : " << nb_demos_ << endl;
@@ -1310,7 +1345,7 @@ void IocEvaluation::removeDominatedSamplesAndResample( HRICS::Ioc& ioc, std::vec
         {
             while( isSampleDominated( phi_demos_[d], phi_k[d][i]) )
             {
-                ioc.generateSamples( 1 );
+                ioc.generateSamples( 1, remove_samples_in_collision_ );
                 std::vector< std::vector<Move3D::Trajectory> > samples = ioc.getSamples();
 
                 for( int dd=0;dd<int(samples.size());dd++)
@@ -1366,10 +1401,10 @@ void IocEvaluation::runSampling()
 //    std::vector< std::vector<FeatureVect> > jac_sum_demos = getFeatureJacobianSum( trajs_tmp );
 //    phi_jac_demos_ = jac_sum_demos.back();
 
-    cout << "Generate samples" << endl;
+    cout << "Generate samples (" << nb_samples_ << ")" << endl;
 
     // Generate samples by random sampling
-    ioc.generateSamples( nb_samples_ );
+    ioc.generateSamples( nb_samples_, remove_samples_in_collision_ );
 
     // Compute the sum of gradient
     // double gradient_sum = 0.0;
@@ -1532,7 +1567,7 @@ void IocEvaluation::monteCarloSampling( double factor, int nb_tries )
 
     while( sampling_done == false )
     {
-        ioc.generateSamples( nb_samples_ );
+        ioc.generateSamples( nb_samples_, remove_samples_in_collision_ );
 
         std::vector< std::vector<Move3D::Trajectory> > samples = ioc.getSamples();
 
@@ -1668,23 +1703,34 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
 
     cout << ( costs_demo ).transpose() << endl;
 
-    loadWeightVector();
+    loadWeightVector(); // Load learned from file
 
-    for( int i=0;i<costs_demo.size();i++)
+    for( int i=0; i<costs_demo.size(); i++ )
     {
-        setLearnedWeights();
+         costs_learned[i] = 0.0;
 
-        learned_[i] = planMotion( planner_type_ );
+         global_trajToDraw.clear();
 
-        global_trajToDraw.clear();
+         std::vector< std::pair<double,Move3D::Trajectory> > traj_tmp( nb_planning_test_ );
+
+         setLearnedWeights(); // Plan under the learned weights
+
+        for( int j=0; j<nb_planning_test_; j++ )
+        {
+            traj_tmp[j].second  = planMotion( planner_type_ );
+            traj_tmp[j].first = feature_fct_->costTraj( traj_tmp[j].second );
+        }
+
+        for( int j=0; j<nb_planning_test_; j++ )
+            cout << "cost[" << j << "] : " << traj_tmp[j].first << endl;
+
+        // Min over the number of planning sequence (for radomized planners)
+        learned_[i] = std::min_element( traj_tmp.begin(), traj_tmp.end() )->second;
         global_trajToDraw.push_back( learned_[i] );
-
         g3d_draw_allwin_active();
 
-        setOriginalWeights();
-
+        setOriginalWeights(); // Evaluate under the true weights
         learned_[i].resetCostComputed();
-
         costs_learned[i] = feature_fct_->costTraj( learned_[i] );
     }
 
@@ -1700,21 +1746,22 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
 
     cout << "--------------------------------------" << endl;
 
-    cout << "cost of demos : " << ( costs_demo    ).transpose() << endl;
-    cout << "cost of learned : " << ( costs_learned ).transpose() << endl;
-
+    cout << "weight dist : " << weight_dist << endl;
+    cout << "cost of demos : " << costs_demo.transpose() << endl;
+    cout << "cost of learned : " << costs_learned.transpose() << endl;
     cout << "mean_demo : " << mean_demo << " , stdev_demo : " << stdev_demo << endl;
     cout << "mean_learned : " << mean_learned << " , stdev_learned : " << stdev_learned << endl;
-
     cout << "mean diff : " << mean_learned - mean_demo << " , stdev diff : " << stdev_learned - stdev_demo  << endl;
+    cout << "min diff : " << ( costs_learned - costs_demo ).minCoeff() << endl;
+    cout << "max diff : " << ( costs_learned - costs_demo ).maxCoeff() << endl;
 
-    cout << "weight dist : " << weight_dist << endl;
-
-    Eigen::VectorXd result(4);
+    Eigen::VectorXd result(6);
     result[0] = mean_demo;
     result[1] = mean_learned;
     result[2] = mean_learned - mean_demo;
     result[3] = weight_dist;
+    result[4] = ( costs_learned - costs_demo ).minCoeff();
+    result[5] = ( costs_learned - costs_demo ).maxCoeff();
     return result;
 }
 

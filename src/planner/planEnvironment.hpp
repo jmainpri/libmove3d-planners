@@ -112,6 +112,7 @@ enum boolParameter
     useLegibleCost,
 
     // Drawing (gl) stuff
+    drawModule,
     drawNaturalColor,
     drawParallelTraj,
     drawColorConfig,

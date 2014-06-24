@@ -607,7 +607,7 @@ void WorkspaceOccupancyGrid::simple_draw_combined()
 //        {
         if( GestEnv->getBool(GestParam::draw_null_cost) || (occupancy-0.05 > 0.0) )
         {
-            if( true ) {
+            if( false ) {
 //                cout << " m_T_draw " << endl << m_T_draw.matrix() << endl;
                  m_all_occupied_cells[i]->drawColorGradient( occupancy, m_min_likelihood, m_max_likelihood, m_T_draw );
             }

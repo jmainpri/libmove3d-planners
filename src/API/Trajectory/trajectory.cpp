@@ -807,7 +807,7 @@ double Trajectory::computeSubPortionCostVisib( vector<LocalPath*>& portion )
     {
         currentParam += dmax;
 
-        shared_ptr<Configuration> currentConf = configAtParam(currentParam);
+        confPtr_t currentConf = configAtParam(currentParam);
 
         prevCost = currentCost;
         prevPos = currentPos;
@@ -1025,8 +1025,8 @@ double Trajectory::costOfPortion(double param1, double param2)
 //	double prevSoFar(0.0);
 //	uint id_start;
 //	uint id_end;
-//	shared_ptr<Configuration> confPtrStart;
-//	shared_ptr<Configuration> confPtrEnd;
+//	confPtr_t confPtrStart;
+//	confPtr_t confPtrEnd;
 //
 //	// TODO change that function
 //
@@ -1134,8 +1134,8 @@ vector<confPtr_t> Trajectory::getTowConfigurationAtParam(double param1, double p
     double soFar(0.0);
     double prevSoFar(0.0);
 
-    shared_ptr<Configuration> q1;
-    shared_ptr<Configuration> q2;
+    confPtr_t q1;
+    confPtr_t q2;
 
     for (uint i = 0; i < m_Courbe.size(); i++)
     {
@@ -1792,8 +1792,8 @@ unsigned int Trajectory::cutPortionInSmallLP(vector<LocalPath*>& portion, unsign
     cout << "NB Of LP = " << portion.size() << endl;
     cout << "NB Of LP = " << nLP << endl;
 
-    shared_ptr<Configuration> confPtr;
-    shared_ptr<Configuration> confPtrTmp;
+    confPtr_t confPtr;
+    confPtr_t confPtrTmp;
 
     prevSoFar			= 0.0;
     soFar					= portion[0]->getParamMax();
