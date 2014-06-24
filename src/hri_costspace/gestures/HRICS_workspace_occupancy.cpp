@@ -394,7 +394,12 @@ bool WorkspaceOccupancyGrid::computeOccpancy()
 //! 
 void WorkspaceOccupancyGrid::set_all_occupied_cells()
 {
+    if(_cells.empty() )
+        return;
+
     m_all_occupied_cells.clear();
+    m_occupied_cells.clear();
+    m_occupied_cells.resize( static_cast<WorkspaceOccupancyCell*>(_cells[0])->m_occupies_class.size() );
     
     for(int i=0;i<int(_cells.size());i++)
     {
@@ -405,6 +410,12 @@ void WorkspaceOccupancyGrid::set_all_occupied_cells()
             if( cell->m_occupies_class[j] )
             {
                 m_all_occupied_cells.push_back( cell );
+
+                if( find (m_occupied_cells[j].begin(), m_occupied_cells[j].end(), cell)
+                        == m_occupied_cells[j].end() )
+                {
+                    m_occupied_cells[j].push_back( cell );
+                }
                 break;
             }
         }
@@ -563,6 +574,8 @@ void WorkspaceOccupancyGrid::setClassToDraw(int id_class)
 void WorkspaceOccupancyGrid::simple_draw_one_class()
 {    
     std::vector<WorkspaceOccupancyCell*>& occupied_voxels = m_occupied_cells[m_id_class_to_draw];
+
+    cout << m_occupied_cells.size() << endl;
 
     for( int i=0;i<int(occupied_voxels.size());i++)
     {
@@ -796,7 +809,7 @@ void WorkspaceOccupancyGrid::draw()
 
     if(GestEnv->getBool(GestParam::draw_single_class))
     {
-        // cout << "simple_draw_one_class" << endl;
+         cout << "simple_draw_one_class" << endl;
         return simple_draw_one_class();
     }
     else
