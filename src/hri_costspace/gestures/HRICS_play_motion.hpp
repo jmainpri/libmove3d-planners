@@ -37,6 +37,7 @@ class PlayMotion {
 
 public:
     PlayMotion( const std::vector<HRICS::RecordMotion*>& recorders);
+    PlayMotion( const std::vector<std::vector<motion_t> >& motions);
 
     void play(int id);
     void play(const std::vector<std::string>& filepaths);
@@ -47,6 +48,7 @@ public:
     void setRecentInput(const bool input);
     bool getRecentInput();
     int getCurrentFrame();
+    int getNumberOfMotions() const;
 
 private:
 
@@ -54,6 +56,7 @@ private:
     void runControlled();
 
     std::vector<HRICS::RecordMotion*> _motion_recorders;
+    std::vector< std::vector<motion_t> >_stored_motions;
 
     int _current_frame;
     int _step_size;
