@@ -185,7 +185,15 @@ bool HumanTrajSimulator::init()
 
     // set the pointers to the motion recorder
     motion_recorders_ = global_motionRecorders;
+
+    // Set minimal demonstration size
+    minimal_demo_size_ = 10;
+    trajectories_cut_ = false;
+
+    // Store demonstrations, compute pelvis bounds
+    // add cut motions
     setReplanningDemonstrations();
+    addCutMotions();
 
     // Set the planning bounds
     setPelvisBounds();
@@ -261,16 +269,87 @@ std::vector< std::vector<motion_t> > HumanTrajSimulator::getMotions()
     return motions;
 }
 
-std::vector<Move3D::Trajectory> HumanTrajSimulator::getDemoTrajectories()
+void HumanTrajSimulator::addCutMotions()
 {
-    std::vector<Move3D::Trajectory> trajs;
-    return trajs;
+    cout << "size 1 before adding cut motions : " << human_1_motions_.size() << endl;
+    cout << "size 2 before adding cut motions : " << human_2_motions_.size() << endl;
 
+    std::vector<motion_t> human_1_motion_tmp;
+    std::vector<motion_t> human_2_motion_tmp;
+
+    for( size_t i=0; i<human_2_motions_.size(); i++ )
+    {
+        if( human_2_motions_[i].empty() )
+            continue;
+        if( human_2_motions_[i].size() != human_1_motions_[i].size() )
+            continue;
+
+        int max_nb_of_removed_frames = int(human_2_motions_[i].size()) - minimal_demo_size_;
+
+        motion_t::const_iterator init_1 = human_1_motions_[i].begin();
+        motion_t::const_iterator goal_1 = human_1_motions_[i].end();
+
+        motion_t::const_iterator init_2 = human_2_motions_[i].begin();
+        motion_t::const_iterator goal_2 = human_2_motions_[i].end();
+
+        cout << "motion 2 size : " << human_2_motions_[i].size() << endl;
+        cout << "min demo size : " << minimal_demo_size_ << endl;
+        cout << "max_nb_of_removed_frames : " << max_nb_of_removed_frames << endl;
+
+        // Add samler cut trajectories on smaller chunks
+        for( int j=0; j<max_nb_of_removed_frames; j++ )
+        {
+            motion_t motion_1( init_1++, goal_1 );
+            motion_t motion_2( init_2++, goal_2 );
+
+            human_1_motion_tmp.push_back( motion_1 );
+            human_2_motion_tmp.push_back( motion_2 );
+        }
+
+        trajectories_cut_ = true;
+    }
+
+    if( trajectories_cut_ )
+    {
+        human_1_motions_ = human_1_motion_tmp;
+        human_2_motions_ = human_2_motion_tmp;
+    }
+
+    cout << "size 1 after adding cut motions : " << human_1_motions_.size() << endl;
+    cout << "size 2 after adding cut motions : " << human_2_motions_.size() << endl;
 }
 
-std::vector<Move3D::confPtr_t> HumanTrajSimulator::getContext()
+std::vector<Move3D::Trajectory> HumanTrajSimulator::getDemoTrajectories() const
+{
+    std::vector<Move3D::Trajectory> trajs;
+
+    if( human_2_motions_.empty() )
+        return trajs;
+
+    for( size_t i=0; i<human_2_motions_.size(); i++ )
+    {
+        if( human_2_motions_[i].empty() )
+            continue;
+
+        Move3D::Robot* robot = human_2_motions_[i][0].second->getRobot();
+        trajs.push_back( motion_to_traj( human_2_motions_[i], robot ) );
+    }
+
+    return trajs;
+}
+
+std::vector<Move3D::confPtr_t> HumanTrajSimulator::getContext() const
 {
     std::vector<Move3D::confPtr_t> context;
+
+    for( size_t i=0; i<human_1_motions_.size(); i++ )
+    {
+        if( human_1_motions_[i].empty() )
+            continue;
+
+        context.push_back( human_1_motions_[i][0].second->copy() );
+    }
+
     return context;
 }
 

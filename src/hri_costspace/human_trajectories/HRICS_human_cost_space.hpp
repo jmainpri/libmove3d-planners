@@ -87,8 +87,8 @@ public:
     std::vector<int> getActiveJoints() { return active_joints_; }
 
     std::vector< std::vector<motion_t> > getMotions();
-    std::vector<Move3D::Trajectory> getDemoTrajectories();
-    std::vector<Move3D::confPtr_t> getContext();
+    std::vector<Move3D::Trajectory> getDemoTrajectories() const;
+    std::vector<Move3D::confPtr_t> getContext() const;
 
 private:
 
@@ -98,6 +98,7 @@ private:
     void setHumanColor( Move3D::Robot* human, int color);
     void setActiveJoints();
 
+    void addCutMotions();
 
     HumanTrajCostSpace* cost_space_;
 
@@ -119,6 +120,8 @@ private:
     std::vector<motion_t> human_2_motions_;
     Eigen::VectorXd pelvis_max_;
     Eigen::VectorXd pelvis_min_;
+    int minimal_demo_size_;
+    bool trajectories_cut_;
 };
 
 }

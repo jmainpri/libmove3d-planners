@@ -39,7 +39,7 @@ typedef std::vector< std::pair<double,Move3D::confPtr_t> > motion_t;
 namespace HRICS
 {
 
-inline Move3D::Trajectory motion_to_traj( const motion_t& traj, Move3D::Robot* robot, int max_index=1 )
+inline Move3D::Trajectory motion_to_traj( const motion_t& traj, Move3D::Robot* robot, int max_index=-1 )
 {
     if( traj.empty() )
         return Move3D::Trajectory();
