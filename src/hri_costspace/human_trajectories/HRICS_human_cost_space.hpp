@@ -25,6 +25,10 @@
  *
  *                                               Jim Mainprice Tue 27 May 2014 
  */
+
+#ifndef HRICS_HUMAN_COSTSPACE_HPP
+#define HRICS_HUMAN_COSTSPACE_HPP
+
 #include "API/Device/robot.hpp"
 
 #include "HRICS_human_features.hpp"
@@ -76,59 +80,12 @@ private:
     Move3D::TrajectorySmoothness smoothness_feat_;
 };
 
-class HumanTrajSimulator
-{
-public:
-    HumanTrajSimulator( HumanTrajCostSpace* cost_space );
-
-    bool init();
-    bool run();
-
-    std::vector<int> getActiveJoints() { return active_joints_; }
-
-    std::vector< std::vector<motion_t> > getMotions();
-    std::vector<Move3D::Trajectory> getDemoTrajectories() const;
-    std::vector<Move3D::confPtr_t> getContext() const;
-
-private:
-
-    void setPelvisBounds();
-    void setReplanningDemonstrations();
-
-    void setHumanColor( Move3D::Robot* human, int color);
-    void setActiveJoints();
-
-    void addCutMotions();
-
-    HumanTrajCostSpace* cost_space_;
-
-    Move3D::Robot* human_active_;
-    Move3D::Robot* human_passive_;
-
-    Move3D::confPtr_t q_init_;
-    Move3D::confPtr_t q_goal_;
-
-    bool init_scenario_;
-
-    std::string traj_folder_;
-
-    std::vector<int> active_joints_;
-    std::vector<int> active_dofs_;
-
-    std::vector<HRICS::RecordMotion*> motion_recorders_;
-    std::vector<motion_t> human_1_motions_;
-    std::vector<motion_t> human_2_motions_;
-    Eigen::VectorXd pelvis_max_;
-    Eigen::VectorXd pelvis_min_;
-    int minimal_demo_size_;
-    bool trajectories_cut_;
-};
-
 }
 
 extern HRICS::HumanTrajCostSpace* global_ht_cost_space;
-extern HRICS::HumanTrajSimulator* global_ht_simulator;
 
 //! main test function for human planning
 void HRICS_run_human_planning();
 bool HRICS_init_human_trajectory_cost();
+
+#endif // HRICS_HUMAN_COSTSPACE_HPP

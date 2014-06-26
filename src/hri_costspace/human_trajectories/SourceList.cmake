@@ -8,6 +8,7 @@ HRICS_human_cost_space.cpp
 HRICS_detours.cpp
 HRICS_run_multiple_planners.cpp
 HRICS_ioc_sequences.cpp
+HRICS_human_simulator.cpp
 )
 
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})

@@ -1259,7 +1259,7 @@ double StompOptimizer::getGeneralCost()
         general_cost += costs[i];
     }
 
-    cout << "time length : " << time << " , general_cost : " << general_cost << endl;
+    // cout << "time length : " << time << " , general_cost : " << general_cost << endl;
 
     // cout << "dt : " << dt_.transpose() << endl;
     // cout << "dt : " << dt_.segment( free_vars_start_, free_vars_end_-free_vars_start_ ).transpose() << endl;

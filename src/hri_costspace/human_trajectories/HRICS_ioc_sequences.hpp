@@ -56,7 +56,8 @@ private:
                    compare=2,
                    run_planner=3,
                    default_phase=4,
-                   monte_carlo=5 };
+                   monte_carlo=5,
+                   simulation=6};
 
     // TYPE OF FEATURES
     enum feature_t {

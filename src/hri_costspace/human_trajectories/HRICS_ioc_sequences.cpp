@@ -31,6 +31,7 @@
 #include "HRICS_ioc.hpp"
 #include "HRICS_human_ioc.hpp"
 #include "HRICS_human_cost_space.hpp"
+#include "HRICS_human_simulator.hpp"
 
 #include "API/project.hpp"
 #include "API/Trajectory/trajectory.hpp"
@@ -280,6 +281,12 @@ bool IocSequences::run()
             StopRun = true;
             break;
 
+        case simulation:
+            cout << "RUN SIMULATION" << endl;
+            global_ht_simulator->run();
+            StopRun = true;
+            break;
+
         case monte_carlo:
             eval->loadDemonstrations();
             eval->monteCarloSampling( 10.0, 10 );
@@ -382,7 +389,11 @@ void IocSequences::set_features()
         feature_fct_->setAllFeaturesActive();
 
         // Get active joints
-        active_joints_ = global_ht_simulator->getActiveJoints();
+        std::vector<Move3D::Joint*> joints = global_ht_simulator->getActiveJoints();
+        active_joints_.clear();
+        for( size_t i=0; i<joints.size(); i++)
+            active_joints_.push_back( joints[i]->getId() );
+
         cout << "active_joints_.size() : " << active_joints_.size() << endl;
     }
 }
