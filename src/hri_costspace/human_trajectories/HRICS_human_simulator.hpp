@@ -66,6 +66,7 @@ private:
     // ------------------------------------------------------------------------
 
     void setPelvisBounds();
+    void updateDofBounds(bool& initialized, Move3D::confPtr_t q_tmp);
     void setReplanningDemonstrations();
     void setHumanColor( Move3D::Robot* human, int color);
     void setActiveJoints();
@@ -73,12 +74,20 @@ private:
 
     // ------------------------------------------------------------------------
 
+    double time_step_;
+
+    double motion_duration_;
+    double current_motion_duration_;
+    double current_discretization_;
+    double current_time_;
+    int current_id_on_path_;
+
     int id_of_demonstration_;
     motion_t human_passive_motion_;
     Eigen::MatrixXd current_human_traj_;
     Move3D::confPtr_t q_init_;
     Move3D::confPtr_t q_goal_;
-    Move3D::Trajectory executed_path_;
+    motion_t executed_trajectory_;
     Move3D::Trajectory path_;
 
     std::vector<double> cost_;
@@ -109,8 +118,11 @@ private:
     std::vector<motion_t> human_2_motions_;
     Eigen::VectorXd pelvis_max_;
     Eigen::VectorXd pelvis_min_;
+    double arm_min_;
+    double arm_max_;
     int minimal_demo_size_;
     bool trajectories_cut_;
+    int cut_step_;
 };
 
 }

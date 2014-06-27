@@ -137,7 +137,7 @@ Eigen::MatrixXd move3d_load_matrix_from_csv_file( std::string filename )
     return matrix;
 }
 
-std::vector<std::string>  move3d_get_files_in_folder( std::string foldername, std::string extension, int nb_max_files )
+std::vector<std::string> move3d_get_files_in_folder( std::string foldername, std::string extension, int nb_max_files )
 {
     bool quiet = true;
     std::vector<std::string> files;
@@ -295,10 +295,18 @@ std::vector<Move3D::confPtr_t> move3d_load_context_from_csv_file( std::string fi
             std::getline( file, line );
             std::stringstream lineStream( line );
 
-            Eigen::VectorXd  q( Eigen::VectorXd::Zero( word_count( line )-1 ));
+            int nb_of_cell_on_line = word_count( line );
+            if( nb_of_cell_on_line < 2 ){
+                break;
+            }
+
+            Eigen::VectorXd q( Eigen::VectorXd::Zero( nb_of_cell_on_line-1 ));
 
             std::getline( lineStream, robot_name, ',' );
             Move3D::Robot* robot = sce->getRobotByName( robot_name );
+
+//            cout << "robot name : " << robot_name << endl;
+//            cout << "q size : " << q.size() << endl;
 
             j = 0;
 
@@ -309,6 +317,8 @@ std::vector<Move3D::confPtr_t> move3d_load_context_from_csv_file( std::string fi
 
             context[i] = Move3D::confPtr_t(new Move3D::Configuration(robot));
             context[i]->setFromEigenVector( q );
+//            cout << q.transpose() << endl;
+//            context[i]->print();
 
             i++;
         }

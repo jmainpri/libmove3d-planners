@@ -45,14 +45,15 @@ MOVE3D_USING_SHARED_PTR_NAMESPACE
 //namespace chomp
 //{
 
-ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_)
+ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_, double duration )
 //planning_group_(planning_group),
 //discretization_(source_traj.discretization_)
 {
     //num_joints_ = robot_model_->getNumberOfJoints();
     num_joints_ = active_joints_.num_joints_;
 
-    duration_ = T.getParamMax(); // TODO, this should be replaced by time
+    // Set duration to external parameter if different from 0.0
+    duration_ = duration != 0.0  ? duration :  T.getParamMax();
 
     int number_inital_points = T.getNbOfPaths()+1;
 

@@ -146,7 +146,7 @@ bool IocSequences::run()
     cout << "ioc phase : " << phase_ << endl;
 
     int nb_demos = 1;
-    int nb_sampling_phase = nb_iterations;
+//    int nb_sampling_phase = nb_iterations;
     //    int min_samples = 10;
     //    int max_samples = 100;
 
@@ -170,53 +170,62 @@ bool IocSequences::run()
     // Set feature function
     set_features();
 
-    Eigen::MatrixXd samples = move3d_load_matrix_from_csv_file( move3d_human_trajs_tmp_data_folder + "samples_tmp.txt" );
-    cout << "SAMPLING SEQUENCE : " << samples.row(0) << endl;
+    Eigen::MatrixXd samples( Eigen::MatrixXd::Zero(0,0) );
+
+    if( !single_iteration )
+    {
+        samples = move3d_load_matrix_from_csv_file( move3d_human_trajs_tmp_data_folder + "samples_tmp.txt" );
+        cout << "SAMPLING SEQUENCE : " << samples.row(0) << endl;
+    }
+    else {
+        samples = Eigen::MatrixXd::Zero(1,1);
+        samples(0,0) = nb_iterations;
+    }
 
     // Main loop
     for(int i=0; i<samples.row(0).size() && !StopRun; i++)
     {
         // iteration = i; // 2, 5, 30, 50
 
-        if( single_iteration )
-            iteration = nb_iterations;
-        else
-            iteration = i;
+//        if( single_iteration )
+//            iteration = nb_iterations;
+//        else
+//            iteration = i;
 
         // interpolation for the number of sampling phase
         // int nb_samples = min_samples + double(iteration)*(max_samples-min_samples)/double(nb_sampling_phase-1);
         // int nb_samples = (iteration*100+1);
 //        int nb_samples = (16*(iteration+1))
         // int nb_samples = (160*(iteration+1));
-        int nb_samples = samples.row(0)(iteration);
+        int nb_samples = samples.row(0)(i);
 
         cout << "------------------------------" << endl;
         cout << " RUN, NB SAMPLES : " << nb_samples << endl;
         cout << "------------------------------" << endl;
 
-        IocEvaluation* eval = NULL;
+        eval_ = NULL;
 
         if( HriEnv->getBool(HricsParam::init_spheres_cost) )
         {
             move3d_tmp_data_folder = move3d_spheres_tmp_data_folder;
 
-            eval = new IocEvaluation( rob, nb_demos, nb_samples, nb_way_points,
+            eval_ = new IocEvaluation( rob, nb_demos, nb_samples, nb_way_points,
                                       planners, feature_fct_, active_joints_,
                                       move3d_spheres_demo_folder, move3d_spheres_traj_folder, move3d_tmp_data_folder );
-            eval->setPlannerType( astar );
+            eval_->setPlannerType( astar );
         }
         else
         {
             move3d_tmp_data_folder = move3d_human_trajs_tmp_data_folder;
 
             // Human 2 is the planned human, Human 1 is the recorded motion
-            eval = new HumanIoc( human2, human1, nb_demos, nb_samples, nb_way_points,
+            eval_ = new HumanIoc( human2, human1, nb_demos, nb_samples, nb_way_points,
                                  planners, feature_fct_, active_joints_,
                                  move3d_human_trajs_demo_folder, move3d_human_trajs_traj_folder, move3d_tmp_data_folder );
-            eval->setPlannerType( stomp );
+            eval_->setPlannerType( stomp );
         }
 
-        if( eval == NULL){
+        if( eval_ == NULL){
             cout << "Error initilizing ioc evaluation module" << endl;
             return false;
         }
@@ -234,10 +243,10 @@ bool IocSequences::run()
                 std::vector<Move3D::confPtr_t> context = global_ht_simulator->getContext();
 //                trajs.push_back( HRICS::motion_to_traj( global_motionRecorders[0]->getStoredMotions()[0], human2, 60 ) );
 //                human1->setAndUpdate( *global_motionRecorders[1]->getStoredMotions()[0][0].second );
-                eval->saveDemoToFile( trajs, context );
+                eval_->saveDemoToFile( trajs, context );
             }
             else {
-                eval->generateDemonstrations();
+                eval_->generateDemonstrations();
             }
 
             g3d_draw_allwin_active();
@@ -250,16 +259,16 @@ bool IocSequences::run()
 
 //            eval->loadWeightVector();
 //            eval->setLearnedWeights();
-            eval->loadDemonstrations();
+            eval_->loadDemonstrations();
             // eval.runLearning();
 
             cout << "stack info" << endl;
             feature_fct_->printInfo();
 
             if( sample_from_file )
-                eval->runFromFileSampling( file_offset );
+                eval_->runFromFileSampling( file_offset );
             else //cout << "sampling" << endl;
-                eval->runSampling();
+                eval_->runSampling();
 
             g3d_draw_allwin_active();
             break;
@@ -269,15 +278,15 @@ bool IocSequences::run()
 
             setCompareFeatures();
 
-            results.push_back( eval->compareDemosAndPlanned() );
+            results.push_back( eval_->compareDemosAndPlanned() );
             g3d_draw_allwin_active();
             break;
 
         case run_planner:
             cout << "RUN MULTI-PLANNER" << endl;
-            eval->loadDemonstrations();
+            eval_->loadDemonstrations();
             // eval.runPlannerMultipleFeature( 50 ); // 10
-            eval->runPlannerWeightedFeature( 50 ); // 50 * 16 = 800
+            eval_->runPlannerWeightedFeature( 50 ); // 50 * 16 = 800
             StopRun = true;
             break;
 
@@ -288,24 +297,24 @@ bool IocSequences::run()
             break;
 
         case monte_carlo:
-            eval->loadDemonstrations();
-            eval->monteCarloSampling( 10.0, 10 );
+            eval_->loadDemonstrations();
+            eval_->monteCarloSampling( 10.0, 10 );
             break;
 
         case default_phase:
 
-            eval->loadDemonstrations();
+            eval_->loadDemonstrations();
             feature_fct_->printInfo();
 
         default:
             cout << "DEFAULT : LOAD TRAJECTORIES" << endl;
-            eval->loadPlannerTrajectories( 16, 16*i, 0 );
+            eval_->loadPlannerTrajectories( 16, 16*i, 0 );
             // StopRun = true;
             break;
         }
 
         cout << "delete eval" << endl;
-        delete eval;
+        delete eval_;
 
         if( single_iteration )
             break;
@@ -453,6 +462,11 @@ void IocSequences::setSamplingFeatures()
 
         cout << "original_vect : " << endl;
         feature_fct_->printWeights();
+    }
+
+    if( use_human_simulation_demo_ )
+    {
+        eval_->setUseContext( true );
     }
 }
 

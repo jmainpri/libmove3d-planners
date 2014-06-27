@@ -393,7 +393,7 @@ bool StompOptimizer::initializeFromNewTrajectory(const Move3D::Trajectory& traj)
     Move3D::Trajectory T( configs );
 
     delete full_trajectory_;
-    full_trajectory_ = new ChompTrajectory( T, DIFF_RULE_LENGTH, *planning_group_);
+    full_trajectory_ = new ChompTrajectory( T, DIFF_RULE_LENGTH, *planning_group_, 0.0); // No Duration
     group_trajectory_= ChompTrajectory(*full_trajectory_,DIFF_RULE_LENGTH);
     
     // initialize the policy trajectory
@@ -983,7 +983,7 @@ void StompOptimizer::generateNoisyTrajectory(const Move3D::Trajectory& traj, vec
 {
     // Set the full and group trajectory
     if( full_trajectory_ != NULL ) delete full_trajectory_;
-    full_trajectory_ = new ChompTrajectory( traj, DIFF_RULE_LENGTH, *planning_group_ );
+    full_trajectory_ = new ChompTrajectory( traj, DIFF_RULE_LENGTH, *planning_group_, 0.0 );
     group_trajectory_ = *full_trajectory_;
     
     stomp_statistics_ = MOVE3D_BOOST_PTR_NAMESPACE<StompStatistics>(new StompStatistics());

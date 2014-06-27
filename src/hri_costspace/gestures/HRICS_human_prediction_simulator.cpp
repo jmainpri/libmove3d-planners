@@ -565,7 +565,7 @@ void HumanPredictionSimulator::runMultipleStomp( int iter )
         static_cast<p3d_rob*>( robots[g]->getP3dRobotStruct() )->display_mode = P3D_ROB_NO_DISPLAY;
         p3d_col_deactivate_rob_rob( static_cast<p3d_rob*>( robots[g]->getP3dRobotStruct() ), m_robot->getP3dRobotStruct() );
 
-        boost::thread( &stompRun::run, pool, g, stomp_trajs[g] );
+        boost::thread( &stompRun::run, pool, g, stomp_trajs[g], 0.0 );
     }
 
     pool->isRunning(); // wait on lock until pool is finished
@@ -648,7 +648,7 @@ void HumanPredictionSimulator::runParallelStomp( int iter, int id_goal )
 
     cout << "run pool" << endl;
 
-    pool->run( 0, stomp_traj );
+    pool->run( 0, stomp_traj, 0.0 );
     m_paths[id_goal] = pool->getBestTrajectory( 0 );
     delete pool;
 }

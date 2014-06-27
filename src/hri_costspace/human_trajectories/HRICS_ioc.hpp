@@ -43,6 +43,8 @@
 namespace HRICS
 {
 
+typedef std::vector<std::vector<Move3D::confPtr_t> > context_t;
+
 //! Trajectory structure
 struct IocTrajectory
 {
@@ -135,7 +137,7 @@ public:
 
     //! Generate the sampled trajectories
     //! around the demonstrations
-    bool generateSamples(int nb_samples, bool check_in_collision);
+    bool generateSamples(int nb_samples, bool check_in_collision, context_t context = context_t() );
 
     //! Returns Move3D trajectories
     std::vector< std::vector<Move3D::Trajectory> > getSamples();
@@ -213,6 +215,9 @@ public:
 
     //! Set planner type for the generation phase
     void setPlannerType( planner_t planner_type ) { planner_type_ = planner_type; }
+
+    //! Set use of saved context
+    void setUseContext( bool use_context ) { use_context_ = use_context; }
 
     //! Save demo to file
     void saveDemoToFile(const std::vector<Move3D::Trajectory>& demos, std::vector<Move3D::confPtr_t> context = std::vector<Move3D::confPtr_t>());
@@ -304,6 +309,10 @@ protected:
     // Planner type
     planner_t planner_type_;
     int nb_planning_test_;
+
+    // Context
+    bool use_context_;
+    context_t context_;
 };
 
 }

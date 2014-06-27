@@ -99,15 +99,54 @@ bool HumanTrajSimulator::init()
     return true;
 }
 
+void HumanTrajSimulator::updateDofBounds( bool& initialized, Move3D::confPtr_t q_tmp )
+{
+//                    if(s == 0)
+//                    {
+    for( size_t i=0; i<6; i++)
+    {
+        if( initialized )
+        {
+            if( pelvis_max_[i] < (*q_tmp)[6+i] )
+                pelvis_max_[i] = (*q_tmp)[6+i];
+            if( pelvis_min_[i] > (*q_tmp)[6+i] )
+                pelvis_min_[i] = (*q_tmp)[6+i];
+        }
+        else
+        {
+            pelvis_max_[i] = (*q_tmp)[6+i];
+            pelvis_min_[i] = (*q_tmp)[6+i];
+        }
+    }
+
+    Move3D::Joint* arm_joint = human_active_->getJoint( "rArmTrans" );
+
+    if( initialized )
+    {
+        if( arm_max_ < (*q_tmp)[arm_joint->getIndexOfFirstDof()] )
+            arm_max_ = (*q_tmp)[arm_joint->getIndexOfFirstDof()];
+        if( arm_min_ > (*q_tmp)[arm_joint->getIndexOfFirstDof()] )
+            arm_min_ = (*q_tmp)[arm_joint->getIndexOfFirstDof()];
+    }
+    else
+    {
+        arm_max_ = (*q_tmp)[arm_joint->getIndexOfFirstDof()];
+        arm_min_ = (*q_tmp)[arm_joint->getIndexOfFirstDof()];
+    }
+
+    initialized = true;
+//                    }
+}
+
 void HumanTrajSimulator::setReplanningDemonstrations()
 {
     std::vector<std::string> good_motions_names;
-    good_motions_names.push_back( "[0551-0602]motion_saved_00000_00000.csv" );
-    good_motions_names.push_back( "[1186-1245]motion_saved_00000_00001.csv" );
-    good_motions_names.push_back( "[1552-1581]motion_saved_00000_00000.csv" );
-    good_motions_names.push_back( "[1873-1929]motion_saved_00000_00001.csv" );
-    good_motions_names.push_back( "[3191-3234]motion_saved_00000_00000.csv" );
-    good_motions_names.push_back( "[3913-3950]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[0551-0602]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[1186-1245]motion_saved_00000_00001.csv" );
+//    good_motions_names.push_back( "[1552-1581]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[1873-1929]motion_saved_00000_00001.csv" );
+//    good_motions_names.push_back( "[3191-3234]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[3913-3950]motion_saved_00000_00000.csv" );
     good_motions_names.push_back( "[4125-4169]motion_saved_00000_00001.csv" );
     good_motions_names.push_back( "[4422-4476]motion_saved_00000_00000.csv" );
     good_motions_names.push_back( "[4591-4640]motion_saved_00000_00000.csv" );
@@ -117,9 +156,9 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     pelvis_min_ = Eigen::VectorXd::Zero(6);
     bool initialized = false;
 
-    for( size_t k=0; k<good_motions_names.size(); k++)
+    for( size_t k=0; k<good_motions_names.size(); k++ )
     {
-        for(size_t j=0; j<motion_recorders_[0]->getStoredMotions().size(); j++)
+        for( size_t j=0; j<motion_recorders_[0]->getStoredMotions().size(); j++ )
         {
             if( motion_recorders_[0]->getStoredMotionName(j) == good_motions_names[k] )
             {
@@ -132,27 +171,9 @@ void HumanTrajSimulator::setReplanningDemonstrations()
                     Move3D::confPtr_t q = human_2_motions_.back()[s].second;
                     Move3D::confPtr_t q_tmp = q->getRobot()->getInitPos();
                     q_tmp->setFromEigenVector( q->getEigenVector(active_dofs_), active_dofs_ );
+                    q_tmp->adaptCircularJointsLimits();
                     human_2_motions_.back()[s].second = q_tmp;
-
-                    if(s == 0)
-                    {
-                        for( size_t i=0; i<6; i++)
-                        {
-                            if( initialized )
-                            {
-                                if( pelvis_max_[i] < (*q_tmp)[6+i] )
-                                    pelvis_max_[i] = (*q_tmp)[6+i];
-                                if( pelvis_min_[i] > (*q_tmp)[6+i] )
-                                    pelvis_min_[i] = (*q_tmp)[6+i];
-                            }
-                            else
-                            {
-                                pelvis_max_[i] = (*q_tmp)[6+i];
-                                pelvis_min_[i] = (*q_tmp)[6+i];
-                            }
-                        }
-                        initialized = true;
-                    }
+                    updateDofBounds( initialized, q_tmp );
                 }
             }
         }
@@ -174,6 +195,9 @@ void HumanTrajSimulator::addCutMotions()
 
     std::vector<motion_t> human_1_motion_tmp;
     std::vector<motion_t> human_2_motion_tmp;
+
+    cut_step_ = 5;
+    minimal_demo_size_ = 20;
 
     for( size_t i=0; i<human_2_motions_.size(); i++ )
     {
@@ -197,8 +221,15 @@ void HumanTrajSimulator::addCutMotions()
         // Add smaler cut trajectories on smaller chunks
         for( int j=0; j<max_nb_of_removed_frames; j++ )
         {
-            motion_t motion_1( init_1++, goal_1 );
-            motion_t motion_2( init_2++, goal_2 );
+            init_1++;
+            init_2++;
+
+            if( j % cut_step_ != 0 ){
+                continue;
+            }
+
+            motion_t motion_1( init_1, goal_1 );
+            motion_t motion_2( init_2, goal_2 );
 
             human_1_motion_tmp.push_back( motion_1 );
             human_2_motion_tmp.push_back( motion_2 );
@@ -275,6 +306,9 @@ void HumanTrajSimulator::setPelvisBounds()
             dof[i][0] = joint->getJointDof(i) - bound_rotat;
             dof[i][1] = joint->getJointDof(i) + bound_rotat;
         }
+
+        arm_min_ = -.10;
+        arm_max_ =  .10;
     }
     else
     {
@@ -294,6 +328,9 @@ void HumanTrajSimulator::setPelvisBounds()
     for(int i = 0; i < 6; i++){
         p3d_jnt_set_dof_rand_bounds( joint->getP3dJointStruct(), i, dof[i][0], dof[i][1] );
     }
+
+    Move3D::Joint* arm_joint = human_active_->getJoint( "rArmTrans" );
+    p3d_jnt_set_dof_rand_bounds( arm_joint->getP3dJointStruct(), 0, arm_min_ - .02, arm_max_ + .02 );
 
 //    Joint(0), Dof : 6, Pelvis
 //    Is dof user : (min = 0.94, max = 1.04)
@@ -399,32 +436,35 @@ void HumanTrajSimulator::setHumanColor(Move3D::Robot* human, int color)
     }
 }
 
-bool HumanTrajSimulator::updateMotion()
-{
-    // Advance on passive trajectory
-    current_frame_ += human_passive_increment_;
-
-    // If the current frame is farther than current motion
-    // Return false and stop the simulation
-    if( current_frame_ > int(human_passive_motion_.size()))
-        return false;
-
-    Move3D::confPtr_t q_cur = human_passive_motion_[ current_frame_ ].second;
-    human_passive_->setAndUpdate(*q_cur);
-
-    return true;
-}
-
 bool HumanTrajSimulator::loadActiveHumanGoalConfig()
 {
     if( id_of_demonstration_ >= human_2_motions_.size()  )
         return false;
 
+    // INITIALIZE SIMULATION
+    current_human_traj_.resize( 0, 0 );
+    executed_trajectory_.clear();
+    best_path_id_ = -1;
+    current_frame_ = 0;
+    current_time_ = 0;
+    human_passive_increment_ = 1;
+    current_time_ = 0.0;
+    time_step_ = 0.1; // Simulation step
+
+    // LOAD ACTIVE HUMAN MOTION
     q_init_ = human_2_motions_[ id_of_demonstration_ ][0].second;
     q_goal_ = human_2_motions_[ id_of_demonstration_ ].back().second;
 
     human_active_increments_per_exection_ = 10;
-    human_active_step_ =  q_init_->dist( *q_goal_ ) / 200;
+    human_active_step_ = q_init_->dist( *q_goal_ ) / 200;
+
+    motion_duration_ = 0.0;
+    for( size_t i=0;i<human_2_motions_[ id_of_demonstration_ ].size(); i++)
+        motion_duration_ += human_2_motions_[ id_of_demonstration_ ][i].first;
+    current_motion_duration_ = motion_duration_;
+
+    // Set human passive motion
+    human_passive_motion_ = human_1_motions_[ id_of_demonstration_ ];
 
     return true;
 }
@@ -457,9 +497,11 @@ void HumanTrajSimulator::runStandardStomp( int iter )
         const double parameter = human_active_increments_per_exection_*human_active_step_;
         Move3D::Trajectory optimi_traj;
 
+        optimi_traj = current_traj.extractSubTrajectoryOfLocalPaths( current_id_on_path_, current_traj.getNbOfPaths() - 1 );
+
 //        if( id_goal == best_path_id_ )
 //        {
-            optimi_traj = current_traj.extractSubTrajectory( parameter, path_.getParamMax(), false );
+//            optimi_traj = current_traj.extractSubTrajectory( parameter, path_.getParamMax(), false );
 //        }
 //        else
 //        {
@@ -480,31 +522,75 @@ void HumanTrajSimulator::runStandardStomp( int iter )
 
     traj_optim_set_use_iteration_limit(true);
     traj_optim_set_iteration_limit( PlanEnv->getInt(PlanParam::stompMaxIteration) );
+    traj_optim_set_traj_duration( current_motion_duration_ );
     traj_optim_runStomp(0);
 
     path_ = global_optimizer->getBestTraj();
 }
 
+bool HumanTrajSimulator::updateMotion()
+{
+    cout << "CURRENT TIME : " << current_time_ << endl;
+    cout << "MOTION DURATION : " << motion_duration_ << endl;
+
+    if( current_time_ > motion_duration_ ){
+        return false;
+    }
+
+    // Find closest configuration at current time
+    // along motion trajectory
+    double time_along_traj = 0.0;
+
+    current_frame_ = -1;
+
+    for( size_t i=0; i<human_passive_motion_.size(); i++ )
+    {
+        time_along_traj +=  human_passive_motion_[i].first;
+        if ( time_along_traj > current_time_ )
+        {
+            Move3D::confPtr_t q_cur = human_passive_motion_[i].second;
+            human_passive_->setAndUpdate(*q_cur);
+            current_frame_ = i;
+            break;
+        }
+    }
+
+    if( current_frame_ == -1 ){
+        return false;
+    }
+
+    return true;
+}
+
 void HumanTrajSimulator::execute(const Move3D::Trajectory& path, bool to_end)
 {
-    double s = 0.0;
-
     path.replaceP3dTraj();
+
+    current_discretization_ = current_motion_duration_ / double( path.getNbOfPaths() );
 
     Move3D::confPtr_t q;
 
-    for( int i=0;
-         (!to_end) ?
-         ((i<human_active_increments_per_exection_) && (!PlanEnv->getBool(PlanParam::stopPlanner) )) :
-         (s<path.getParamMax() && (!PlanEnv->getBool(PlanParam::stopPlanner)));
-         i++ )
+    double time_factor = 10; // Slow down execution by factor
+    double time_elapsed = 0.0;
+
+    for( int i=0; (!to_end) ? true : (i<path.getNbOfViaPoints() && (!PlanEnv->getBool(PlanParam::stopPlanner))); i++ )
     {
-        q = path.configAtParam( s ); executed_path_.push_back( q );
+        q = i > path.getNbOfViaPoints() ? path.getEnd() : path[i];
         human_active_->setAndUpdate( *q );
+        executed_trajectory_.push_back( std::make_pair( current_discretization_, q ) );
+
+        if( time_elapsed > time_step_ ) {
+            current_id_on_path_ = i;
+            break;
+        }
+
+        time_elapsed += current_discretization_;
         g3d_draw_allwin_active();
-        usleep(25000);
-        s += human_active_step_;
+        usleep( floor( current_discretization_ * 1e6 * time_factor ) );
     }
+
+    current_time_ += time_elapsed;
+    current_motion_duration_ -= time_elapsed;
 
     q_init_ = q;
 }
@@ -522,21 +608,12 @@ void HumanTrajSimulator::printCosts() const
 
 double HumanTrajSimulator::run()
 {
-    current_human_traj_.resize( 0, 0 );
-    executed_path_ = Move3D::Trajectory( human_active_ );
-    best_path_id_ = -1;
-    current_frame_ = 0;
-    human_passive_increment_ = 1;
-
     id_of_demonstration_ = 0; // TODO add global variable
 
     if( !loadActiveHumanGoalConfig() ) {
         cout << "Error could not load active human start and goal configurations" << endl;
         return 0.0;
     }
-
-    // Set human passive motion
-    human_passive_motion_ = human_1_motions_[ id_of_demonstration_ ];
 
     cout << "Load human traj id  : " << GestEnv->getInt(GestParam::human_traj_id) << endl;
 
@@ -560,17 +637,17 @@ double HumanTrajSimulator::run()
         }
     }
 
-    if( !PlanEnv->getBool(PlanParam::stopPlanner) )
-    {
-        const double parameter =  double(human_active_increments_per_exection_) * human_active_step_;
-        execute( path_.extractSubTrajectory( parameter, path_.getParamMax(), false ), true );
-    }
+//    if( !PlanEnv->getBool(PlanParam::stopPlanner) )
+//    {
+//        const double parameter =  double(human_active_increments_per_exection_) * human_active_step_;
+//        execute( path_.extractSubTrajectory( parameter, path_.getParamMax(), false ), true );
+//    }
 
     ENV.setBool( Env::isCostSpace, true );
 
     printCosts();
 
-    cout << "executed_path_.cost() : " << executed_path_.cost() << endl;
-    executed_path_.replaceP3dTraj();
-    return executed_path_.cost();
+//    cout << "executed_path_.cost() : " << executed_path_.cost() << endl;
+//    executed_trajectory_.replaceP3dTraj();
+    return 0.0;
 }

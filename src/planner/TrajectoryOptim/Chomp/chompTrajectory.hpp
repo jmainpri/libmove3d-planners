@@ -64,7 +64,7 @@ public:
     /**
    * \brief Constructs a trajectory for a given robot model, trajectory duration, and discretization
    */
-    ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_);
+    ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_, double duration );
 
     /**
    * \brief Constructs a trajectory for a given robot model, number of trajectory points, and discretization

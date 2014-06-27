@@ -62,6 +62,7 @@ using namespace Move3D;
 using namespace HRICS;
 using std::cout;
 using std::endl;
+using std::cin;
 
 // -------------------------------------------------------------
 // -------------------------------------------------------------
@@ -393,8 +394,8 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
                 if( nb_attempt++ > 10 )
                 {
                     is_in_joint_limits = false;
-                    cout << "not in limits, name : " << planning_group_->chomp_joints_[j].joint_name_ << endl;
-                    cout << j << " : upper : " << j_max << ", lower : " << j_min << ", value : " << traj.parameters_[j][i] << endl;
+//                    cout << "not in limits, name : " << planning_group_->chomp_joints_[j].joint_name_ << endl;
+//                    cout << j << " : upper : " << j_max << ", lower : " << j_min << ", value : " << traj.parameters_[j][i] << endl;
                     if( traj.parameters_[j][i] < j_min )
                         traj.parameters_[j][i] = j_min + 10e-6;
                     if( traj.parameters_[j][i] > j_max )
@@ -410,6 +411,10 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
 
             // cout << "Joint limit coefficient : " << coeff << endl;
         }
+
+//        if( nb_attempt > 10 ){
+//            cout << "capping joint : " << planning_group_->chomp_joints_[j].joint_name_ << endl;
+//        }
 
         // Set the start and end values constant
         traj.parameters_[j].start(1) = traj.nominal_parameters_[j].start(1);
@@ -458,7 +463,7 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
 //    }
 //}
 
-bool Ioc::generateSamples( int nb_samples, bool check_in_collision )
+bool Ioc::generateSamples( int nb_samples, bool check_in_collision, context_t context )
 {
     int nb_demos = getNbOfDemonstrations();
 
@@ -466,7 +471,15 @@ bool Ioc::generateSamples( int nb_samples, bool check_in_collision )
 
     for (int d=0; d<nb_demos; ++d)
     {
+        cout << "Generating samples for demonstration : " << d << endl;
+
         samples_[d].resize( nb_samples );
+
+        for( int i=0;i<int(context.size());i++)
+        {
+            Move3D::Robot* entity = context[i][d]->getRobot();
+            entity->setAndUpdate( *context[i][d] );
+        }
 
         for (int ns=0; ns<int(samples_[d].size()); ++ns )
         {
@@ -497,10 +510,10 @@ bool Ioc::generateSamples( int nb_samples, bool check_in_collision )
                     is_valid = samples_[d][ns].getMove3DTrajectory( planning_group_ ).isValid();
             }
             // Commented for humans
-            while( (!is_valid) && ( nb_failed++ < 1000 ) );
+            while( (!is_valid) && ( nb_failed++ < 10 ) );
 
             // The sample trajectory is not valid
-            if( !is_valid ) cout << "WARNING: generating invalid sample" << endl;
+            if( !is_valid ) cout << "WARNING: generating invalid sample, in collision : " << check_in_collision << endl;
         }
     }
 
@@ -793,6 +806,8 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
     {
         global_PlanarCostFct->setActiveDoFs( plangroup_->getActiveDofs() );
     }
+
+    use_context_ = false;
 }
 
 // Types are : astar, rrt, stomp
@@ -1121,7 +1136,11 @@ void IocEvaluation::saveDemoToFile(const std::vector<Move3D::Trajectory>& demos,
 
         if( !context.empty() )
         {
+            ss.str("");
+            ss << folder_ << "context_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << i << ".configs";
 
+            cout << "save context " << i << " : " << ss.str() << endl;
+            move3d_save_context_to_csv_file( context, ss.str() );
         }
 
         saveTrajToMatlab( demos[i], i );
@@ -1137,13 +1156,33 @@ void IocEvaluation::loadDemonstrations()
     }
 
     demos_.clear();
+    context_.clear();
     global_trajToDraw.clear();
     std::stringstream ss;
 
-    for(int i=0;i<nb_demos_;i++)
+    if( use_context_ )
+    {
+        ss.str("");
+        ss << folder_ << "context_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << int(0) << ".configs";
+        context_.push_back( move3d_load_context_from_csv_file( ss.str() ) );
+
+        nb_demos_ = context_[0].size();
+
+//        Move3D::Robot* robot = context_[0][0]->getRobot();
+
+//        for( size_t d=0; d<context_.size(); d++)
+//        {
+//            robot->setAndUpdate( *context_[0][d] );
+//            g3d_draw_allwin_active();
+//            cout << "Type enter to exit : " << endl;
+//            std::cin.ignore();
+//        }
+    }
+
+    for(int d=0;d<nb_demos_;d++)
     {
         ss.str(""); // clear stream
-        ss << folder_ << "trajectory_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << i << ".traj";
+        ss << folder_ << "trajectory_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << d << ".traj";
 
         cout << "Loading demonstration from : " << ss.str() << endl;
 
@@ -1169,7 +1208,7 @@ void IocEvaluation::loadDemonstrations()
             T.computeSubPortionIntergralCost( T.getCourbe() );
         }
 
-        T.setColor( i%8 ); cout << "color : " << i%8 << endl;
+        T.setColor( d%8 ); cout << "color : " << d%8 << endl;
         global_trajToDraw.push_back(T);
 
         demos_.push_back( T );
@@ -1271,16 +1310,16 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
     // Get features of demos
     std::vector<FeatureVect> phi_demo(demos_.size());
 
-    for( size_t i=0; i<demos_.size(); i++ )
+    for( size_t d=0; d<demos_.size(); d++ )
     {
-        if( demos_[i].getNbOfViaPoints() != nb_way_points_ ) // Only cut of needed
-            demos_[i].cutTrajInSmallLP( nb_way_points_-1 );
+        if( demos_[d].getNbOfViaPoints() != nb_way_points_ ) // Only cut of needed
+            demos_[d].cutTrajInSmallLP( nb_way_points_-1 );
 
-        FeatureVect phi = feature_fct_->getFeatureCount( demos_[i] );
+        FeatureVect phi = feature_fct_->getFeatureCount( demos_[d] );
         // cout << "Feature Demo : " << phi.transpose() << endl;
 //        ioc.addDemonstration( demos_[i].getEigenMatrix(6,7) );
-        ioc.addDemonstration( demos_[i].getEigenMatrix( plangroup_->getActiveDofs() ));
-        phi_demo[i] = phi;
+        ioc.addDemonstration( demos_[d].getEigenMatrix( plangroup_->getActiveDofs() ));
+        phi_demo[d] = phi;
     }
 
     return phi_demo;
@@ -1314,6 +1353,15 @@ std::vector< std::vector<FeatureVect> > IocEvaluation::addSamples(HRICS::Ioc& io
     std::vector< std::vector<FeatureVect> > phi_k( samples.size() );
     for( int d=0;d<int(samples.size());d++)
     {
+        if( use_context_ ){
+
+            for( int i=0;i<int(context_.size());i++)
+            {
+                Move3D::Robot* entity = context_[i][d]->getRobot();
+                entity->setAndUpdate( *context_[i][d] );
+            }
+        }
+
         for( int i=0;i<int(samples[d].size());i++)
         {
             FeatureVect phi = feature_fct_->getFeatureCount( samples[d][i] );
@@ -1346,6 +1394,15 @@ void IocEvaluation::removeDominatedSamplesAndResample( HRICS::Ioc& ioc, std::vec
 {
     for( int d=0;d<int(phi_k.size());d++)
     {
+        if( use_context_ ){ // TODO VERIFY THIS FUNCTION FOR CONTEXT
+
+            for( int i=0;i<int(context_.size());i++)
+            {
+                Move3D::Robot* entity = context_[i][d]->getRobot();
+                entity->setAndUpdate( *context_[i][d] );
+            }
+        }
+
         for( int i=0;i<int(phi_k[d].size());i++)
         {
             while( isSampleDominated( phi_demos_[d], phi_k[d][i]) )
@@ -1388,13 +1445,13 @@ void IocEvaluation::runSampling()
 
     cout << "Add demonstrations" << endl;
 
-    demos_[0].saveToFile( "tmp_demo_save_to_file_3.csv" );
+//    demos_[0].saveToFile( "tmp_demo_save_to_file_3.csv" );
 
     // Get demos features
     phi_demos_ = addDemonstrations( ioc );
 
-    demos_[0].saveToFile( "tmp_demo_save_to_file_4.csv" );
-    demos_[0].replaceP3dTraj();
+//    demos_[0].saveToFile( "tmp_demo_save_to_file_4.csv" );
+//    demos_[0].replaceP3dTraj();
 
 //    std::vector<Move3D::Trajectory> traj = ioc.getDemonstrations();
 //    traj[0].replaceP3dTraj();
@@ -1409,7 +1466,7 @@ void IocEvaluation::runSampling()
     cout << "Generate samples (" << nb_samples_ << ")" << endl;
 
     // Generate samples by random sampling
-    ioc.generateSamples( nb_samples_, remove_samples_in_collision_ );
+    ioc.generateSamples( nb_samples_, remove_samples_in_collision_, context_ );
 
     // Compute the sum of gradient
     // double gradient_sum = 0.0;
@@ -1438,8 +1495,19 @@ void IocEvaluation::runSampling()
     // Get samples features
     std::vector< std::vector<Move3D::Trajectory> > samples = ioc.getSamples();
     std::vector< std::vector<FeatureVect> > phi_k( samples.size() );
+
+    // For each demonstration
     for( int d=0;d<int(samples.size());d++)
     {
+        if( use_context_ ){
+
+            for( int i=0;i<int(context_.size());i++)
+            {
+                Move3D::Robot* entity = context_[i][d]->getRobot();
+                entity->setAndUpdate( *context_[i][d] );
+            }
+        }
+
         for( int i=0;i<int(samples[d].size());i++)
         {
             phi = feature_fct_->getFeatureCount( samples[d][i] );

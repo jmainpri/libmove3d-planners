@@ -29,6 +29,7 @@
 #define HRICS_IOC_SEQUENCES_HPP
 
 #include "feature_space/features.hpp"
+#include "HRICS_human_ioc.hpp"
 
 #include <iostream>
 
@@ -72,6 +73,7 @@ private:
     std::vector<int> active_joints_;
     Move3D::StackedFeatures* feature_fct_;
     bool use_human_simulation_demo_;
+    HRICS::IocEvaluation* eval_;
 
 };
 
