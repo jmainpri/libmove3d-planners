@@ -140,6 +140,9 @@ void HumanTrajSimulator::updateDofBounds( bool& initialized, Move3D::confPtr_t q
 
 void HumanTrajSimulator::setReplanningDemonstrations()
 {
+    cout << "---------------------------------------------" << endl;
+    cout << "Set replanning demonstrations" << endl;
+
     std::vector<std::string> good_motions_names;
 //    good_motions_names.push_back( "[0551-0602]motion_saved_00000_00000.csv" );
 //    good_motions_names.push_back( "[1186-1245]motion_saved_00000_00001.csv" );
@@ -147,6 +150,7 @@ void HumanTrajSimulator::setReplanningDemonstrations()
 //    good_motions_names.push_back( "[1873-1929]motion_saved_00000_00001.csv" );
 //    good_motions_names.push_back( "[3191-3234]motion_saved_00000_00000.csv" );
 //    good_motions_names.push_back( "[3913-3950]motion_saved_00000_00000.csv" );
+
     good_motions_names.push_back( "[4125-4169]motion_saved_00000_00001.csv" );
     good_motions_names.push_back( "[4422-4476]motion_saved_00000_00000.csv" );
     good_motions_names.push_back( "[4591-4640]motion_saved_00000_00000.csv" );
@@ -178,6 +182,8 @@ void HumanTrajSimulator::setReplanningDemonstrations()
             }
         }
     }
+
+    cout << "---------------------------------------------" << endl;
 }
 
 std::vector< std::vector<motion_t> > HumanTrajSimulator::getMotions()

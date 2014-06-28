@@ -117,15 +117,18 @@ Move3D::Trajectory IocTrajectory::getMove3DTrajectory( const ChompPlanningGroup*
 
     const std::vector<ChompJoint>& joints = p_g->chomp_joints_;
 
+    // Create move3d trajectory
     Move3D::Trajectory T( rob );
+
     for ( int j=0; j<parameters_[0].size(); ++j )
     {
-         confPtr_t q = rob->getCurrentPos();
+        confPtr_t q = rob->getCurrentPos();
 
-        for ( int i=0; i<int(parameters_.size()); ++i )
+        for ( size_t i=0; i<parameters_.size(); ++i ) {
             (*q)[joints[i].move3d_dof_index_] = parameters_[i][j];
+        }
 
-        T.push_back( q );
+        T.push_back( q->copy() );
     }
 
     return T;
@@ -378,6 +381,9 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
 {
     bool is_in_joint_limits = true;
 
+//    cout << "num_vars_ : " << num_joints_ << endl;
+//    cout << "num_vars_ : " << num_vars_ << endl;
+
     for( int j=0;j<num_joints_;j++)
     {
         double coeff = 1.0;
@@ -387,39 +393,60 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
 
         int nb_attempt = 0;
 
-        for( int i=0;i<num_vars_;i++)
+        for( int i=0; i<num_vars_; i++ )
         {
-            while( traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max )
+            while( ( traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max ) && ( nb_attempt < 10 ) )
             {
-                if( nb_attempt++ > 10 )
-                {
-                    is_in_joint_limits = false;
-//                    cout << "not in limits, name : " << planning_group_->chomp_joints_[j].joint_name_ << endl;
-//                    cout << j << " : upper : " << j_max << ", lower : " << j_min << ", value : " << traj.parameters_[j][i] << endl;
-                    if( traj.parameters_[j][i] < j_min )
-                        traj.parameters_[j][i] = j_min + 10e-6;
-                    if( traj.parameters_[j][i] > j_max )
-                        traj.parameters_[j][i] = j_max - 10e-6;
-                }
-                else
-                {
-                    coeff *= 0.90; // 90 percent
-                    traj.noise_[j] *= coeff;
-                    traj.parameters_[j] = traj.nominal_parameters_[j] +  traj.noise_[j];
-                }
+                coeff *= 0.90; // 90 percent (10 * 0.9 = 0.3)
+                traj.noise_[j] *= coeff;
+                traj.parameters_[j] = traj.nominal_parameters_[j] + traj.noise_[j];
+                nb_attempt++;
+
+//                if( "rShoulderY" == planning_group_->chomp_joints_[j].joint_name_ )
+//                {
+//                    cout << "limits => name : " << planning_group_->chomp_joints_[j].joint_name_;
+//                    cout << ",  value : " << traj.parameters_[j][i] << endl;
+//                }
             }
 
-            // cout << "Joint limit coefficient : " << coeff << endl;
+            if( nb_attempt >= 10 ) {
+                is_in_joint_limits = false;
+                break;
+            }
         }
 
-//        if( nb_attempt > 10 ){
-//            cout << "capping joint : " << planning_group_->chomp_joints_[j].joint_name_ << endl;
-//        }
+        if( nb_attempt >= 10 ) // If not in joint limits make sure to cap
+        {
+            cout << "capping joint : " << planning_group_->chomp_joints_[j].joint_name_ << endl;
+
+            for( int i=0; i<num_vars_; i++ )
+            {
+                if( traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max )
+                {
+//                    cout << "not in limits, name : " << planning_group_->chomp_joints_[j].joint_name_ << endl;
+//                    cout << j << " : upper : " << j_max << ", lower : " << j_min << ", value : " << traj.parameters_[j][i] << endl;
+
+                    if( traj.parameters_[j][i] < j_min )
+                        traj.parameters_[j][i] = j_min + 1e-6;
+                    if( traj.parameters_[j][i] > j_max )
+                        traj.parameters_[j][i] = j_max - 1e-6;
+                }
+            }
+        }
 
         // Set the start and end values constant
         traj.parameters_[j].start(1) = traj.nominal_parameters_[j].start(1);
         traj.parameters_[j].end(1) = traj.nominal_parameters_[j].end(1);
+
+//        if( "rShoulderY" == planning_group_->chomp_joints_[j].joint_name_ )
+//            for( int i=0; i<num_vars_; i++ )
+//                if( traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max ) {
+//                    cout << "limits => name : " << planning_group_->chomp_joints_[j].joint_name_;
+//                    cout << ",  value : " << traj.parameters_[j][i] << endl;
+//                }
     }
+
+    cout << "is_in_joint_limits : " << is_in_joint_limits << endl;
 
     return is_in_joint_limits;
 }
@@ -501,13 +528,14 @@ bool Ioc::generateSamples( int nb_samples, bool check_in_collision, context_t co
                         samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].straight_line_[j]; // TODO why commented
 
                     samples_[d][ns].noise_[j] = noisy_traj.row(j);
-                    samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j].cwiseProduct(samples_[d][ns].total_costs_[j]);
+                    samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j]; //.cwiseProduct(samples_[d][ns].total_costs_[j]);
                 }
 
                 /*is_valid =*/ jointLimits( samples_[d][ns] );
 
-                if( check_in_collision )
+                if( check_in_collision ) {
                     is_valid = samples_[d][ns].getMove3DTrajectory( planning_group_ ).isValid();
+                }
             }
             // Commented for humans
             while( (!is_valid) && ( nb_failed++ < 10 ) );
@@ -1491,6 +1519,7 @@ void IocEvaluation::runSampling()
     int nb_lower_cost = 0;
     int nb_lower_feature = 0;
     int nb_shorter = 0;
+    int nb_in_collision = 0;
 
     // Get samples features
     std::vector< std::vector<Move3D::Trajectory> > samples = ioc.getSamples();
@@ -1516,10 +1545,13 @@ void IocEvaluation::runSampling()
 
             double cost = feature_fct_->getWeights().transpose()*phi;
 
+            // Compute stats ...
             if( cost < demo_cost )
                 nb_lower_cost++;
             if( samples[d][i].getParamMax() < demos_[d].getParamMax() )
                 nb_shorter++;
+            if( !samples[d][i].isValid() )
+                nb_in_collision++;
 
             // cout << "cost : " << cost << " , ";
             //            cout.precision(4);
@@ -1541,6 +1573,7 @@ void IocEvaluation::runSampling()
     cout << "nb_lower_cost : " << nb_lower_cost << endl;
     cout << "nb_lower_feature : " << nb_lower_feature << endl;
     cout << "nb_shorter : " << nb_shorter << endl;
+    cout << "nb_in_collision : " << nb_in_collision << endl;
 
 //    removeDominatedSamplesAndResample( ioc, phi_k );
 

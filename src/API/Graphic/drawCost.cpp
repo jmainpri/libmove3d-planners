@@ -907,16 +907,24 @@ void g3d_draw_hrics(int opengl_context)
 //#endif
 
 
-void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
+void computeConfigCostOnTraj (p3d_rob* rob, configPt q )
 {
+    if( rob == NULL){
+        return;
+    }
+
+    Robot* robot( global_Project->getActiveScene()->getRobotByName(rob->name) );
+
     if(ENV.getBool(Env::isCostSpace))
     {
-        p3d_rob* costRobot = rob;
+#ifdef HRI_COSTSPACE
+
         configPt cost_q = q;
 
-#ifdef HRI_COSTSPACE
         if ( ENV.getBool(Env::enableHri) )
         {
+            p3d_rob* costRobot = rob;
+
             std::string robotName(costRobot->name);
 
             if( robotName.find( global_ActiveRobotName ) == std::string::npos ) // Does not contain Robot
@@ -924,14 +932,15 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
                 costRobot = p3d_get_robot_by_name_containing( global_ActiveRobotName.c_str() );
                 cost_q = p3d_get_robot_config(costRobot);
             }
+
+            robot = global_Project->getActiveScene()->getRobotByName(costRobot->name);
         }
 #endif
 
-        Robot* r_Cost( global_Project->getActiveScene()->getRobotByName(costRobot->name) );
-        Configuration	q_Cost(r_Cost,cost_q);
+//        Configuration q( robot, cost_q );
+//        std::cout << "Cost for " << robot->getName() << " = " << global_costSpace->cost(q) << std::endl;
 
-        std::cout << "Cost for " << r_Cost->getName() << " = " << global_costSpace->cost(q_Cost) << std::endl;
-        //        std::cout << "Cost for " << r_Cost->getName() << " = " << HRICS_getPredictionOccupancyCost(q_Cost) << endl;
+        // std::cout << "Cost for " << r_Cost->getName() << " = " << HRICS_getPredictionOccupancyCost(q_Cost) << endl;
     }
 
     if( global_collisionSpace )

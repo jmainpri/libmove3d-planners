@@ -562,7 +562,7 @@ LengthFeature::LengthFeature() : Feature("Length")
 FeatureVect LengthFeature::getFeatureCount( const Move3D::Trajectory& t )
 {
     FeatureVect feature_count = scaling_ * t.getParamMax() * FeatureVect::Ones( 1 );
-    cout << "length : " << feature_count.transpose() << endl;
+//    cout << "length : " << feature_count.transpose() << endl;
     return feature_count;
 }
 

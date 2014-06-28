@@ -62,7 +62,8 @@ void move3d_set_fct_localpath_stay_within_dist( boost::function<double(LocalPath
 
 LocalPath::LocalPath(confPtr_t B, confPtr_t E) :
     _Robot(B->getRobot()),
-    _Begin(B), _End(E),
+    _Begin(B),
+    _End(E),
     _LocalPath(NULL),
     _Valid(false),
     _Evaluated(false),
@@ -87,7 +88,7 @@ LocalPath::LocalPath(LocalPath& path, double& p , bool lastValidConfig) :
     _Robot(path.getRobot()),
     _Begin(path._Begin),
     _LocalPath(NULL),
-  _phiEvaluated(false)
+    _phiEvaluated(false)
 {
     // For extend (Construct a smaller local path)
     // This function is used in Base Expansion
@@ -159,7 +160,7 @@ LocalPath::LocalPath( Robot* R, p3d_localpath* lpPtr ) :
     _Cost(0.0),
     _ResolEvaluated(false),
     _Resolution(0.0),
-  _phiEvaluated(false)
+    _phiEvaluated(false)
 {
 
     _LocalPath = Move3DLocalPathCopyFromStruct( *this, lpPtr, _Begin, _End );
@@ -237,9 +238,27 @@ bool LocalPath::classicTest()
 
 bool LocalPath::isValid()
 {
-    if (!_Evaluated)
+    if( !_Evaluated )
     {
-        if ( _End->isInCollision() || _Begin->isInCollision() || _End->isOutOfBounds() || _Begin->isOutOfBounds() )
+        // Classic changes the configurations
+        // So they might be changed from the call from
+        // another local path
+        // _Begin->adaptCircularJointsLimits();
+        // _End->adaptCircularJointsLimits();
+
+        if ( _End->isOutOfBounds() || _Begin->isOutOfBounds() )
+        {
+            _Valid = false;
+
+            cout << "Start or goal out of bounds" << endl;
+
+            cout << "begin : " << endl;
+            _Begin->isOutOfBounds( true );
+            cout << "end : " << endl;
+            _End->isOutOfBounds( true );
+
+        }
+        else if ( _End->isInCollision() || _Begin->isInCollision() )
         {
             _Valid = false;
         }

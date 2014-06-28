@@ -605,13 +605,13 @@ double Trajectory::computeSubPortionRange(const vector<LocalPath*>& portion) con
 
 bool Trajectory::isValid() const
 {
-    for (int i=0; i<int(m_Courbe.size()); i++)
+    for (size_t i=0; i< m_Courbe.size(); i++)
     {
         if (!m_Courbe[i]->isValid())
         {
+            cout <<"LocalPath["<<i<<"] = "<< m_Courbe[i]->getNbColTest()  << ", size : " << m_Courbe.size() << endl;
             return false;
         }
-        // cout <<"LocalPath["<<i<<"] = "<< m_Courbe[i]->getNbColTest() << endl;
     }
 
     return true;
@@ -1700,7 +1700,7 @@ void Trajectory::push_back( confPtr_t q )
         {
             if ( !m_Source->equal(*q) )
             {
-                m_Courbe.push_back(new LocalPath(m_Source,q));
+                m_Courbe.push_back( new LocalPath( m_Source, q ));
                 m_Target = q;
             }
         }
@@ -1709,7 +1709,7 @@ void Trajectory::push_back( confPtr_t q )
     {
         if ( !m_Target->equal(*q) )
         {
-            m_Courbe.push_back(new LocalPath(m_Target,q));
+            m_Courbe.push_back( new LocalPath( m_Target, q ));
             m_Target = q;
         }
     }

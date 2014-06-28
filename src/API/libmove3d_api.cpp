@@ -159,7 +159,7 @@ bool move3d_configuration_in_collision(Robot* R)
 
 bool move3d_configuration_is_out_of_bounds( Robot* R, double* C, bool print )
 {
-    return p3d_isOutOfBounds( (p3d_rob*)R->getP3dRobotStruct(), C, print);
+    return p3d_is_out_of_bounds( (p3d_rob*)R->getP3dRobotStruct(), C, print);
 }
 
 void move3d_configuration_adapt_to_circular_joints( Robot* R, double* C )
@@ -320,11 +320,18 @@ void* move3d_localpath_get_localpath_struct( LocalPath& path, bool multi_sol, in
     {
         if( !multi_sol )
         {
-            path_struct = p3d_local_planner( (p3d_rob*) path.getRobot()->getP3dRobotStruct(), path.getBegin()->getConfigStruct(), path.getEnd()->getConfigStruct() );
+            // USE COPY because locaplanner modifies circular joints
+            path_struct = p3d_local_planner( (p3d_rob*) path.getRobot()->getP3dRobotStruct(),
+                                             path.getBegin()->copy()->getConfigStruct(),
+                                             path.getEnd()->copy()->getConfigStruct() );
         }
         else
         {
-            path_struct = p3d_local_planner_multisol( (p3d_rob*) path.getRobot()->getP3dRobotStruct(), path.getBegin()->getConfigStruct(), path.getEnd()->getConfigStruct(), path.getIkSol() );
+            // USE COPY because locaplanner modifies circular joints
+            path_struct = p3d_local_planner_multisol( (p3d_rob*) path.getRobot()->getP3dRobotStruct(),
+                                                      path.getBegin()->copy()->getConfigStruct(),
+                                                      path.getEnd()->copy()->getConfigStruct(),
+                                                      path.getIkSol() );
         }
 
         if ( path_struct )

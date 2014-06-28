@@ -276,7 +276,7 @@ bool move3d_configuration_simple_in_collision(Robot* R)
 
 bool move3d_configuration_simple_is_out_of_bounds( Robot* R, double* C, bool print )
 {
-    // return p3d_isOutOfBounds( (p3d_rob*)R->getP3dRobotStruct(), C, print);
+    // return p3d_is_out_of_bounds( (p3d_rob*)R->getP3dRobotStruct(), C, print);
     int is_out_of_bounds = false;
 
     // double EPS6 = 1e-6;
