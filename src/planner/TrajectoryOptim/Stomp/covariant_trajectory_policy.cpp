@@ -386,7 +386,11 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
 
         params_all.segment( free_vars_start_index_, num_vars_free_ ) = parameters[d] + noise[d];
 
-//        bool is_circular_joint = planning_group_->chomp_joints_[d].wrap_around_;
+        // Smooth the curve before computing the control cost
+        bool is_circular_joint = planning_group_->chomp_joints_[d].is_circular_;
+        if( is_circular_joint ){
+            move3d_smooth_circular_parameters( params_all );
+        }
 
         for (int i=0; i<num_vars_all_; i++)
         {
@@ -399,12 +403,17 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
                 if (index >= num_vars_all_)
                     continue;
 
-//                if( is_circular_joint )
-//                {
+                if( is_circular_joint && ( i < num_vars_all_-1) )
+                {
+                    double diff = params_all[i] - params_all[i+1];
+                    if( std::fabs( diff_angle( params_all[i+1] , params_all[i] ) - diff ) > 1e-6 ){
+                        cout << "control cost breaks for : " << planning_group_->chomp_joints_[d].joint_name_ << endl;
+                    }
+                }
 //                    acc_all[i] = angle_limit_PI( acc_all[i] + params_all[index]*DIFF_RULES[1][j+DIFF_RULE_LENGTH/2] );
 //                }
 //                else {
-                acc_all[i] += (params_all[index]*DIFF_RULES[(int)type_][j+DIFF_RULE_LENGTH/2]);
+                    acc_all[i] += (params_all[index]*DIFF_RULES[(int)type_][j+DIFF_RULE_LENGTH/2]);
 //                }
             }
         }

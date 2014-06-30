@@ -56,6 +56,11 @@ std::vector<int> move3d_change_basis( int number , int basis );
 //! Linear interpolation between two vectors
 Eigen::VectorXd move3d_lerp( const Eigen::VectorXd& v0, const Eigen::VectorXd& v1, double t );
 
+//! this function makes sure the curve in param
+//! is continus for compting sum of acceleration
+//! on circular joints
+void move3d_smooth_circular_parameters( Eigen::VectorXd& params );
+
 //! Print the joint mapping of a given robot
 void print_joint_mapping( Move3D::Robot* robot );
 

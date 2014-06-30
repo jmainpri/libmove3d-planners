@@ -149,7 +149,7 @@ public:
     /**
    * Get the current configuration collision cost
    */
-    double getCollisionSpaceCost( Move3D::Configuration& q );
+    double getCollisionSpaceCost( const Move3D::Configuration& q );
 
     /**
    * Get the current trajectory cost profile

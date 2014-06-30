@@ -50,7 +50,7 @@ class Feature
 public:
     Feature(std::string name) : is_stacked_(false), name_(name) {}
 
-    std::string getName() { return name_; }
+    std::string getName() const { return name_; }
 
     virtual FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_features = std::vector<int>(0)) = 0;
     virtual FeatureProfile getFeatureProfile(const Move3D::Trajectory& t);

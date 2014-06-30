@@ -29,6 +29,8 @@
 
 #include <iostream>
 
+#include <libmove3d/include/Util-pkg.h>
+
 using std::cout;
 using std::endl;
 
@@ -107,6 +109,15 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
 
         for (int i=0; i<params_all.size(); i++)
         {
+            if( i < params_all.size()-1 ) // Check for jumps on circular joints (MAY ACTIVATE FOR TRANSLATION JOINTS (diff > 3.14)
+            {
+                double diff = params_all[i] - params_all[i+1];
+                double error = std::fabs( diff_angle( params_all[i+1] , params_all[i] ) - diff );
+                if( error > 1e-6 ){
+                    cout << "control cost breaks at row "  << d << " and col  " << i << " by " << error << " in " << __PRETTY_FUNCTION__ << endl;
+                }
+            }
+
             // TODO change to velocity
             for (int j=-diff_rule_length_/2; j<=diff_rule_length_/2; j++)
             {

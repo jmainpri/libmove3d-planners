@@ -609,7 +609,7 @@ bool Trajectory::isValid() const
     {
         if (!m_Courbe[i]->isValid())
         {
-            cout <<"LocalPath["<<i<<"] = "<< m_Courbe[i]->getNbColTest()  << ", size : " << m_Courbe.size() << endl;
+//            cout <<"LocalPath["<<i<<"] = "<< m_Courbe[i]->getNbColTest()  << ", size : " << m_Courbe.size() << endl;
             return false;
         }
     }

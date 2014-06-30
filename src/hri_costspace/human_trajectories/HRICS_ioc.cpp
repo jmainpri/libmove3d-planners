@@ -395,18 +395,17 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
 
         for( int i=0; i<num_vars_; i++ )
         {
+            // TODO SEE PROBLEM WITH smoothness
+            if( planning_group_->chomp_joints_[j].is_circular_ && j_max == M_PI && j_min == -M_PI ) {
+                traj.parameters_[j][i] =  angle_limit_PI( traj.parameters_[j][i] );
+            }
+
             while( ( traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max ) && ( nb_attempt < 10 ) )
             {
                 coeff *= 0.90; // 90 percent (10 * 0.9 = 0.3)
                 traj.noise_[j] *= coeff;
                 traj.parameters_[j] = traj.nominal_parameters_[j] + traj.noise_[j];
                 nb_attempt++;
-
-//                if( "rShoulderY" == planning_group_->chomp_joints_[j].joint_name_ )
-//                {
-//                    cout << "limits => name : " << planning_group_->chomp_joints_[j].joint_name_;
-//                    cout << ",  value : " << traj.parameters_[j][i] << endl;
-//                }
             }
 
             if( nb_attempt >= 10 ) {
@@ -437,16 +436,9 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
         // Set the start and end values constant
         traj.parameters_[j].start(1) = traj.nominal_parameters_[j].start(1);
         traj.parameters_[j].end(1) = traj.nominal_parameters_[j].end(1);
-
-//        if( "rShoulderY" == planning_group_->chomp_joints_[j].joint_name_ )
-//            for( int i=0; i<num_vars_; i++ )
-//                if( traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max ) {
-//                    cout << "limits => name : " << planning_group_->chomp_joints_[j].joint_name_;
-//                    cout << ",  value : " << traj.parameters_[j][i] << endl;
-//                }
     }
 
-    cout << "is_in_joint_limits : " << is_in_joint_limits << endl;
+//    cout << "is_in_joint_limits : " << is_in_joint_limits << endl;
 
     return is_in_joint_limits;
 }
@@ -1344,7 +1336,7 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
             demos_[d].cutTrajInSmallLP( nb_way_points_-1 );
 
         FeatureVect phi = feature_fct_->getFeatureCount( demos_[d] );
-        // cout << "Feature Demo : " << phi.transpose() << endl;
+        cout << "Feature Demo : " << phi.transpose() << endl;
 //        ioc.addDemonstration( demos_[i].getEigenMatrix(6,7) );
         ioc.addDemonstration( demos_[d].getEigenMatrix( plangroup_->getActiveDofs() ));
         phi_demo[d] = phi;
@@ -1951,11 +1943,13 @@ void IocEvaluation::saveToMatrixFile( const std::vector<FeatureVect>& demos, con
 
     Eigen::MatrixXd mat(demos.size()+nb_samples,demos[0].size());
 
+    // FIRST ADD DEMOS
     for( int d=0;d<int(demos.size());d++)
     {
         mat.row(d) = demos[d];
     }
 
+    // THEN ADD EACH SET OF SAMPLES AS A ROW, STARTING WITH DEMO 1..N
     int k=0;
     for( int d=0;d<int(samples.size());d++)
     {

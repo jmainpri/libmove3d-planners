@@ -1460,22 +1460,23 @@ bool StompOptimizer::handleJointLimits()
     return succes_joint_limits;
 }
 
-
-double StompOptimizer::getCollisionSpaceCost( Configuration& q )
+double StompOptimizer::getCollisionSpaceCost( const Configuration& q )
 {
     const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
 
     bool quiet = true;
+
+    Configuration q_tmp = q;
     
     // Get the configuration dof values in the joint array
     Eigen::VectorXd joint_array( planning_group_->num_joints_ );
     
     for(int j=0; j<planning_group_->num_joints_;j++)
     {
-        joint_array[j] = q[ joints[j].move3d_dof_index_ ];
+        joint_array[j] = q_tmp[ joints[j].move3d_dof_index_ ];
     }
     
-    getFrames( free_vars_start_, joint_array, q );
+    getFrames( free_vars_start_, joint_array, q_tmp );
     
     double state_collision_cost=0.0;
     bool colliding = false;

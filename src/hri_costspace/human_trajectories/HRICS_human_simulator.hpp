@@ -48,6 +48,9 @@ public:
     std::vector<Move3D::Trajectory> getDemoTrajectories() const;
     std::vector<Move3D::confPtr_t> getContext() const;
 
+    void setDemonstrationId(int demo_id) { id_of_demonstration_ = demo_id; }
+    int getNumberOfDemos() { return human_2_demos_.size(); }
+
 private:
 
     // ------------------------------------------------------------------------
@@ -116,6 +119,8 @@ private:
     std::vector<HRICS::RecordMotion*> motion_recorders_;
     std::vector<motion_t> human_1_motions_;
     std::vector<motion_t> human_2_motions_;
+    std::vector<motion_t> human_1_demos_;
+    std::vector<motion_t> human_2_demos_;
     Eigen::VectorXd pelvis_max_;
     Eigen::VectorXd pelvis_min_;
     double arm_min_;

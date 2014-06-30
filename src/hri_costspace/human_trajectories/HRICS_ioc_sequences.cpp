@@ -291,8 +291,17 @@ bool IocSequences::run()
             break;
 
         case simulation:
+
             cout << "RUN SIMULATION" << endl;
-            global_ht_simulator->run();
+            eval_->loadWeightVector();
+            eval_->setLearnedWeights();
+
+            for( int j=0; j<global_ht_simulator->getNumberOfDemos(); j++ )
+            {
+                global_ht_simulator->setDemonstrationId( j );
+                global_ht_simulator->run();
+            }
+
             StopRun = true;
             break;
 

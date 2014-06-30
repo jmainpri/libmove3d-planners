@@ -95,6 +95,7 @@ bool HumanTrajSimulator::init()
 
     // Set the current frame to 0
     current_frame_ = 0;
+    id_of_demonstration_ = 0;
 
     return true;
 }
@@ -156,6 +157,9 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     good_motions_names.push_back( "[4591-4640]motion_saved_00000_00000.csv" );
     good_motions_names.push_back( "[4753-4802]motion_saved_00000_00000.csv" );
 
+    human_1_demos_.clear();
+    human_2_demos_.clear();
+
     pelvis_max_ = Eigen::VectorXd::Zero(6);
     pelvis_min_ = Eigen::VectorXd::Zero(6);
     bool initialized = false;
@@ -169,6 +173,9 @@ void HumanTrajSimulator::setReplanningDemonstrations()
                 cout << "Add motion : " << good_motions_names[k] << endl;
                 human_1_motions_.push_back( motion_recorders_[0]->getStoredMotions()[j] );
                 human_2_motions_.push_back( motion_recorders_[1]->getStoredMotions()[j] );
+
+                human_1_demos_.push_back( human_1_motions_.back() );
+                human_2_demos_.push_back( human_2_motions_.back() );
 
                 for( size_t s=0; s<human_2_motions_.back().size(); s++) // Only set active dofs on the configuration
                 {
@@ -458,19 +465,19 @@ bool HumanTrajSimulator::loadActiveHumanGoalConfig()
     time_step_ = 0.1; // Simulation step
 
     // LOAD ACTIVE HUMAN MOTION
-    q_init_ = human_2_motions_[ id_of_demonstration_ ][0].second;
-    q_goal_ = human_2_motions_[ id_of_demonstration_ ].back().second;
+    q_init_ = human_2_demos_[ id_of_demonstration_ ][0].second;
+    q_goal_ = human_2_demos_[ id_of_demonstration_ ].back().second;
 
     human_active_increments_per_exection_ = 10;
     human_active_step_ = q_init_->dist( *q_goal_ ) / 200;
 
     motion_duration_ = 0.0;
-    for( size_t i=0;i<human_2_motions_[ id_of_demonstration_ ].size(); i++)
-        motion_duration_ += human_2_motions_[ id_of_demonstration_ ][i].first;
+    for( size_t i=0;i<human_2_demos_[ id_of_demonstration_ ].size(); i++)
+        motion_duration_ += human_2_demos_[ id_of_demonstration_ ][i].first;
     current_motion_duration_ = motion_duration_;
 
     // Set human passive motion
-    human_passive_motion_ = human_1_motions_[ id_of_demonstration_ ];
+    human_passive_motion_ = human_1_demos_[ id_of_demonstration_ ];
 
     return true;
 }
@@ -614,7 +621,7 @@ void HumanTrajSimulator::printCosts() const
 
 double HumanTrajSimulator::run()
 {
-    id_of_demonstration_ = 0; // TODO add global variable
+//    id_of_demonstration_ = 0; // TODO add global variable
 
     if( !loadActiveHumanGoalConfig() ) {
         cout << "Error could not load active human start and goal configurations" << endl;

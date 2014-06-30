@@ -203,7 +203,7 @@ FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int
     human_active_->setAndUpdate( q );
     FeatureVect count = computeDistances();
 
-    const double base = 10; // Using exp usualy ....
+    const double base = 15; // Using exp usualy ....
     const double max_distance = 0.80; // distance limit when the feature vanishes
     const double factor_distance = 0.16; // max_distance / ( 5 ~ 6 ) -> when the exp(-x) reaches 0
 
@@ -221,7 +221,7 @@ FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int
     //    cout << "dist is : " << dist.transpose() << endl;
     //    cout << "joint dist : " << joints_dist.transpose() << endl;
 
-    double factor = 5000;
+    double factor = 7000;
     return factor * count; // Scaling factor
 }
 
@@ -370,9 +370,19 @@ CollisionFeature::CollisionFeature( Move3D::Robot* robot ) : Feature("Collision"
 
 FeatureVect CollisionFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
-    FeatureVect phi(FeatureVect::Zero( 1 ));
-    phi[0] = getCollisionCost( q );
-    return phi;
+//    cout << __PRETTY_FUNCTION__ << endl;
+    FeatureVect count( FeatureVect::Zero( 1 ) );
+    count[0] = getCollisionCost( q );
+
+    const double base = 2; // Using exp usualy ....
+
+    for(int i=0; i<count.size(); i++) // For all features
+        count[i] = std::pow( base, count[0] );
+
+    double factor = 10;
+    return factor * count; // Scaling factor
+
+    return count;
 }
 
 void CollisionFeature::setWeights( const WeightVect& w )
@@ -394,7 +404,8 @@ double CollisionFeature::getCollisionCost( const Move3D::Configuration& q )
 
     if( ( global_optimizer.get() != NULL ) && ( global_optimizer->getRobot() == robot_ ) )
     {
-        cost = global_optimizer->getCollisionSpaceCost( *robot_->getCurrentPos() );
+        cost = global_optimizer->getCollisionSpaceCost( q );
+//        cout << "collision cost : " << cost << endl;
     }
     else
     {
@@ -475,12 +486,14 @@ FeatureVect VisibilityFeature::getFeatures(const Configuration& q, std::vector<i
 {
     FeatureVect count( computeVisibility() );
 
-    const double base = 2; // Using exp usualy ....
+    const double base = 4; // Using exp usualy ....
 
     for(int i=0; i<count.size(); i++) // For all features
-    {
         count[i] = std::pow( base, count[i] ) - 1; // 1e-3/j_dist;
-    }
+
+
+    double factor = 5;
+    return factor * count; // Scaling factor
 
 //    const double base = 20; // Using exp usually ....
 //    const double max_distance = 0.80; // distance limit when the feature vanishes
@@ -540,8 +553,8 @@ MusculoskeletalFeature::MusculoskeletalFeature( Move3D::Robot* active ) :
     Feature("Muskuloskeletal"),
     natural_cost_(new Natural(active))
 {
-    w_musculo_03 = Eigen::VectorXd::Ones( 4 );
-    w_musculo_03 << 0.01, 0.20, 0.30, 0.90; // 00 -> 03
+    w_musculo_03 = Eigen::VectorXd::Ones( 3 );
+    w_musculo_03 << 0.01, 0.20, 0.30; // 00 -> 03
 
     w_musculo_03 /= 100;
 
@@ -558,12 +571,13 @@ FeatureVect MusculoskeletalFeature::getFeatures(const Configuration& q, std::vec
 {
     FeatureVect count( computeMusculoskeletalEffort() );
 
-    const double base = 2; // Using exp usualy ....
+    const double base = 10; // Using exp usualy ....
 
     for(int i=0; i<count.size(); i++) // For all features
-    {
         count[i] = std::pow( base, count[i] ) - 1; // 1e-3/j_dist;
-    }
+
+    double factor = 100;
+    return factor * count; // Scaling factor
 
     return count;
 }

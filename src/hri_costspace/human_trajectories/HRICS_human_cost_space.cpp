@@ -151,28 +151,40 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     active_dofs_ = std::vector<int>(1,1);
 
     length_feat_.setActiveDoFs( active_dofs_ );
-    length_feat_.setWeights( 0.8 * WeightVect::Ones(length_feat_.getNumberOfFeatures()) );
+    length_feat_.setWeights( 0.8 * WeightVect::Ones( length_feat_.getNumberOfFeatures() ) );
 
     smoothness_feat_.setActiveDoFs( active_dofs_ );
-    smoothness_feat_.setWeights( WeightVect::Ones(smoothness_feat_.getNumberOfFeatures()) );
+    smoothness_feat_.setWeights( WeightVect::Ones( smoothness_feat_.getNumberOfFeatures() ) );
 
     dist_feat_.setActiveDoFs( active_dofs_ );
     dist_feat_.setWeights( w_distance_16 );
 
     collision_feat_.setActiveDoFs( active_dofs_ );
-    collision_feat_.setWeights( WeightVect::Ones(collision_feat_.getNumberOfFeatures()) );
+    collision_feat_.setWeights( WeightVect::Ones( collision_feat_.getNumberOfFeatures() ) );
+
+    visi_feat_.setActiveDoFs( active_dofs_ );
+    visi_feat_.setWeights( WeightVect::Ones( visi_feat_.getNumberOfFeatures() ) );
+
+    musc_feat_.setActiveDoFs( active_dofs_ );
+    musc_feat_.setWeights( WeightVect::Ones( musc_feat_.getNumberOfFeatures() ) );
 
     if(!addFeatureFunction( &length_feat_ ) ){
         cout << "Error adding feature length" << endl;
     }
-//    if(!addFeatureFunction( &smoothness_feat_ ) ){
-//        cout << "Error adding feature smoothness" << endl;
-//    }
-//    if(!addFeatureFunction( &collision_feat_ )){
-//        cout << "Error adding feature distance collision" << endl;
-//    }
+    if(!addFeatureFunction( &smoothness_feat_ ) ){
+        cout << "Error adding feature smoothness" << endl;
+    }
+    if(!addFeatureFunction( &collision_feat_ )){
+        cout << "Error adding feature distance collision" << endl;
+    }
     if(!addFeatureFunction( &dist_feat_ )){
         cout << "Error adding feature distance feature" << endl;
+    }
+    if(!addFeatureFunction( &visi_feat_ )){
+        cout << "Error adding feature visbility feature" << endl;
+    }
+    if(!addFeatureFunction( &musc_feat_ )){
+        cout << "Error adding feature musculoskeletal feature" << endl;
     }
 
     w_ = getWeights();

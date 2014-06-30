@@ -29,7 +29,7 @@ struct ChompJoint
     int chomp_joint_index_;                                     /**< Joint index for CHOMP */
     std::string joint_name_;                                    /**< Name of the joint */
     std::string link_name_;                                     /**< Name of the corresponding link (from planning.yaml) */
-    bool wrap_around_;                                          /**< Does this joint wrap-around? */
+    bool is_circular_;                                          /**< Does this joint wrap-around? */
     bool has_joint_limits_;                                     /**< Are there joint limits? */
     double joint_limit_min_;                                    /**< Minimum joint angle value */
     double joint_limit_max_;                                    /**< Maximum joint angle value */

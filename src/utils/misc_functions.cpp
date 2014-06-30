@@ -34,6 +34,7 @@
 
 // For random number generator (seed can be passed as argument)
 #include <libmove3d/include/P3d-pkg.h>
+#include <libmove3d/include/Util-pkg.h>
 
 using std::cout;
 using std::endl;
@@ -195,6 +196,34 @@ std::vector<int> move3d_change_basis( int number, int basis )
 Eigen::VectorXd move3d_lerp( const Eigen::VectorXd& v0, const Eigen::VectorXd& v1, double t ) // t \in [0 1]
 {
     return v0+(v1-v0)*t; // v0*(1-t)+v1*t
+}
+
+void move3d_smooth_circular_parameters( Eigen::VectorXd& params )
+{
+    double previous = params[0];
+
+    for (int i=1; i<params.size(); i++)
+    {
+        double diff = previous - params[i];
+        double angle_diff = diff_angle( params[i], previous );
+
+        while( std::fabs( angle_diff - diff ) > 1e-12 )
+        {
+            if( diff > 0 )
+                params[i] += 2*M_PI;
+            else
+                params[i] -= 2*M_PI;
+
+            diff = previous - params[i];
+            angle_diff = diff_angle( params[i], previous );
+
+//            cout << "i : " << i << endl;
+//            cout << "diff : "  << diff << endl;
+//            cout << "angle_diff : "  << angle_diff << endl;
+        }
+
+        previous = params[i];
+    }
 }
 
 double move3d_random_integer( int min, int max )

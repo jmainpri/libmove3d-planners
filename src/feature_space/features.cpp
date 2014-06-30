@@ -375,11 +375,12 @@ FeatureVect StackedFeatures::getFeatureCount(const Move3D::Trajectory& t)
     int height = 0;
     for( int i=0;i<int(feature_stack_.size()); i++)
     {
+//        cout << "Get features : " << feature_stack_[i]->getName() << endl;
         FeatureVect fi ( feature_stack_[i]->is_active_ ? feature_stack_[i]->getFeatureCount( t ) :
                                                          FeatureVect::Zero(feature_stack_[i]->getNumberOfFeatures() ) );
+
         f.segment( height, fi.size() ) = fi;
         height += fi.size();
-//        cout << "feature i : " << fi.transpose() << endl;
     }
 
     return f;
@@ -508,7 +509,8 @@ void StackedFeatures::printWeights() const
 void StackedFeatures::printInfo() const
 {
     //cout << "------------------------------" << endl;
-    cout << "stack of features : nb of fct ( " << feature_stack_.size() << " )" << endl;
+    cout << "stack of features : nb of fct ( " << feature_stack_.size() << " )";
+    cout << " and nb of features ( "  << getWeights().size() << " )" << endl;
 
     for(int i=0;i<int(feature_stack_.size());i++)
     {
@@ -584,6 +586,8 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 {
     FeatureVect f( Eigen::VectorXd::Zero( 1 ) );
 
+    Robot* robot = t.getRobot();
+
 //    cout << "active_dofs_ : ";
 //    for(int i=0;i<active_dofs_.size();i++) cout << active_dofs_[i] << " ";
 //    cout << endl;
@@ -611,6 +615,29 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 //    cout << mat2 << endl;
 
     control_cost_.fillTrajectory( q_init, q_goal, mat2 );
+
+    // Smooth circular curves before cost computation
+    // must be after the mat2 construction
+    int r=0;
+    for( int i=0; i<robot->getNumberOfJoints(); i++ )
+    {
+        Joint* joint = robot->getJoint(i);
+
+        for( int k=0; k<joint->getNumberOfDof(); k++ ) {
+
+            if( std::find( active_dofs_.begin(), active_dofs_.end(), joint->getIndexOfFirstDof() + k ) != active_dofs_.end() )
+            {
+                if( joint->isJointDofCircular(k) )
+                {
+                    Eigen::VectorXd row = mat2.row( r );
+//                    cout << "dof : " << r << " is circula , " << joint->getName() << endl;
+                    move3d_smooth_circular_parameters( row );
+                    mat2.row( r ) = row;
+                }
+                r++;
+            }
+        }
+    }
 
 //    cout << "motion matrix 3" << endl;
 //    cout.precision(4);

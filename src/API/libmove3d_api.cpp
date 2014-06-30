@@ -165,7 +165,7 @@ bool move3d_configuration_is_out_of_bounds( Robot* R, double* C, bool print )
 void move3d_configuration_adapt_to_circular_joints( Robot* R, double* C )
 {
     configPt q = p3d_alloc_config( (p3d_rob*)R->getP3dRobotStruct() );
-    p3d_adaptConfigsForCircularDofs( (p3d_rob*)R->getP3dRobotStruct(), &C, &q );
+    p3d_adapt_configs_for_circular_dofs( (p3d_rob*)R->getP3dRobotStruct(), &C, &q );
 //    p3d_copy_config_into(static_cast<p3d_rob*>(R->getP3dRobotStruct()), q, &C);
     p3d_destroy_config( (p3d_rob*)R->getP3dRobotStruct(), q );
 }
@@ -318,21 +318,26 @@ void* move3d_localpath_get_localpath_struct( LocalPath& path, bool multi_sol, in
 
     if ( !path.getP3dLocalpathStructConst() )
     {
+        confPtr_t q_init = path.getBegin()->copy();
+        confPtr_t q_goal = path.getEnd()->copy();
+
         if( !multi_sol )
         {
             // USE COPY because locaplanner modifies circular joints
             path_struct = p3d_local_planner( (p3d_rob*) path.getRobot()->getP3dRobotStruct(),
-                                             path.getBegin()->copy()->getConfigStruct(),
-                                             path.getEnd()->copy()->getConfigStruct() );
+                                             q_init->getConfigStruct(),
+                                             q_goal->getConfigStruct() );
         }
         else
         {
             // USE COPY because locaplanner modifies circular joints
             path_struct = p3d_local_planner_multisol( (p3d_rob*) path.getRobot()->getP3dRobotStruct(),
-                                                      path.getBegin()->copy()->getConfigStruct(),
-                                                      path.getEnd()->copy()->getConfigStruct(),
+                                                      q_init->getConfigStruct(),
+                                                      q_goal->getConfigStruct(),
                                                       path.getIkSol() );
         }
+
+
 
         if ( path_struct )
         {
