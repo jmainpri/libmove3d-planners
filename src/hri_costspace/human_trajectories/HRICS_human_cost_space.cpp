@@ -192,6 +192,16 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     cout << "w_ = " << w_.transpose() << endl;
 
     setAllFeaturesActive();
+
+    std::vector<std::string> active_features_names;
+//    active_features_names.push_back("Smoothness");
+    active_features_names.push_back("Length");
+    active_features_names.push_back("Distance");
+    active_features_names.push_back("Visibility");
+    active_features_names.push_back("Musculoskeletal");
+
+    setActiveFeatures( active_features_names );
+
     printInfo();
 
     cout << "---------------------------------------------" << endl;

@@ -17,13 +17,13 @@
  * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
  * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                                  
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001). 
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
  * Move3d: A generic platform for path planning. In in 4th Int. Symp.
  * on Assembly and Task Planning.
  *
- *                                               Jim Mainprice Tue 27 May 2014 
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 #include "HRICS_record_motion.hpp"
 
@@ -409,14 +409,14 @@ void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet, dou
             }
         }
 
-//        std::string filename( files[i].substr( 0, files[i].find_last_of(".") - 1 ) + "1.csv" );
-//        std::string path = foldername + "/" + filename;
-//        std::ifstream file_exists( path.c_str() );
-//        if( file_exists )
-//        {
-//            motion_t motion1 = loadFromCSV( path, quiet );
-//            m_stored_motions.back().insert( m_stored_motions.back().end(), motion1.begin(), motion1.end() );
-//        }
+        //        std::string filename( files[i].substr( 0, files[i].find_last_of(".") - 1 ) + "1.csv" );
+        //        std::string path = foldername + "/" + filename;
+        //        std::ifstream file_exists( path.c_str() );
+        //        if( file_exists )
+        //        {
+        //            motion_t motion1 = loadFromCSV( path, quiet );
+        //            m_stored_motions.back().insert( m_stored_motions.back().end(), motion1.begin(), motion1.end() );
+        //        }
     }
 
     if( !quiet ) {
@@ -558,14 +558,14 @@ void RecordMotion::showMotion( const motion_t& motion )
 
         if ( dt>=motion[i].first ) {
 
-            //            cout << "-------------------------------" << endl;
-            //            q_cur->equal( *motion[i].second, true );
+            // cout << "-------------------------------" << endl;
+            // q_cur->equal( *motion[i].second, true );
             q_cur = motion[i].second;
             m_robot->setAndUpdate( *q_cur );
-            //            cout << "dt : " << dt << " , m_motion[i].first : " << motion[i].first << endl;
-            //            motion[i].second->print();
-            //            motion[i].second->adaptCircularJointsLimits();
-            //            cout << (*motion[i].second)[11] << endl;
+            // cout << "dt : " << dt << " , m_motion[i].first : " << motion[i].first << endl;
+            // motion[i].second->print();
+            // motion[i].second->adaptCircularJointsLimits();
+            // cout << (*motion[i].second)[11] << endl;
             g3d_draw_allwin_active();
             dt = 0.0;
             i++;
@@ -581,7 +581,7 @@ void RecordMotion::showMotion( const motion_t& motion )
     }
 }
 
-void RecordMotion::drawMotion( const motion_t& motion )
+void RecordMotion::drawMotion( const motion_t& motion, int nb_frames=-1 )
 {
     if( motion.empty() ) {
         return;
@@ -592,7 +592,9 @@ void RecordMotion::drawMotion( const motion_t& motion )
     static_cast<p3d_rob*>( m_robot->getP3dRobotStruct() )->draw_transparent = false;
     p3d_rob* rob = (p3d_rob*)(p3d_get_desc_curid( P3D_ROBOT ));
 
-    for ( int i=0; i<int(motion.size()); i++ )
+    int delta = nb_frames > 0 ? int( double(motion.size()) / double(nb_frames)) : 1;
+
+    for ( int i=0; i<int(motion.size()); i += delta )
     {
         win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
 
@@ -790,12 +792,12 @@ void RecordMotion::saveStoredToCSV( const std::string &filename , bool break_int
     }
 
     //Breaks the prediction for IROS
-//    const int samples = 100;
-//    cout << "Down sampling to " << samples << endl;
-//    for (int i=0; i<int(m_stored_motions.size()); i++)
-//    {
-//        m_stored_motions[i] = resample( m_stored_motions[i], samples );
-//    }
+    //    const int samples = 100;
+    //    cout << "Down sampling to " << samples << endl;
+    //    for (int i=0; i<int(m_stored_motions.size()); i++)
+    //    {
+    //        m_stored_motions[i] = resample( m_stored_motions[i], samples );
+    //    }
 
     std::ofstream s;
     if( !break_into_files )
@@ -984,8 +986,8 @@ Eigen::Transform3d RecordMotion::getOffsetTransform()
     T.translation()(2) = m_transZ;
 
     Eigen::Matrix3d rot = Eigen::Matrix3d( Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX())
-                                         * Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY())
-                                         * Eigen::AngleAxisd(m_transR, Eigen::Vector3d::UnitZ()) );
+                                           * Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY())
+                                           * Eigen::AngleAxisd(m_transR, Eigen::Vector3d::UnitZ()) );
 
     T.linear() = rot;
 

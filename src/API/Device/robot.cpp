@@ -570,6 +570,24 @@ confPtr_t Robot::getNewConfig()
     return Move3DRobotGetNewPos( this );
 }
 
+/**
+  * Get stored vector config
+  */
+std::vector<confPtr_t> Robot::getStoredConfigs()
+{
+    std::vector<confPtr_t> configs;
+
+    if( !contains_libmove3d_struct_ )
+        return configs;
+
+    p3d_rob* robot = static_cast<p3d_rob*>(robot_kin_struct_);
+
+    for( int i=0; i<robot->nconf; i++ )
+        configs.push_back( confPtr_t( new Configuration( this, robot->conf[i]->q )));
+
+    return configs;
+}
+
 std::vector<int> Robot::getActiveJointsIds()
 {
     std::vector<int> joint_ids;

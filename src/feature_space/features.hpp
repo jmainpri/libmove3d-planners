@@ -48,7 +48,7 @@ typedef Eigen::VectorXd WeightVect;
 class Feature
 {
 public:
-    Feature(std::string name) : is_stacked_(false), name_(name) {}
+    Feature(std::string name) : is_config_dependent_(false), is_stacked_(false), name_(name) {}
 
     std::string getName() const { return name_; }
 
@@ -84,6 +84,7 @@ public:
     std::vector<Move3D::Trajectory*> extractAllTrajectories( Move3D::Graph* g, Move3D::confPtr_t q_init, Move3D::confPtr_t q_goal, int nb_divisions );
 
     bool is_active_;
+    bool is_config_dependent_; //! true if get features is used
 
 protected:
     std::vector<int> active_dofs_;
@@ -115,7 +116,9 @@ public:
 
     void printWeights() const;
     void printInfo() const;
+    void print(FeatureVect& phi) const;
 
+    Feature* getFeatureFunctionAtIndex(int idx);
     Feature* getFeatureFunction(int i) { return feature_stack_[i]; }
     Feature* getFeatureFunction(std::string name);
 

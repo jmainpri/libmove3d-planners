@@ -55,6 +55,27 @@ inline Move3D::Trajectory motion_to_traj( const motion_t& traj, Move3D::Robot* r
     return tmp;
 }
 
+inline double motion_duration( const motion_t& traj )
+{
+    double time=0.0;
+    for( size_t i=0; i<traj.size()-1; i++ )
+    {
+        time += traj[i].first;
+    }
+    return time;
+}
+
+inline motion_t traj_to_motion( Move3D::Trajectory& traj, double duration )
+{
+    motion_t motion;
+    double dt = duration / double(traj.getNbOfPaths());
+
+    for( int i=0; i<traj.getNbOfViaPoints(); i++)
+        motion.push_back( std::make_pair( dt, traj[i] ) );
+
+    return motion;
+}
+
 class RecordMotion {
 
 public:
@@ -99,7 +120,7 @@ public:
     bool setRobotToConfiguration(int ith);
     bool setShowMotion(int ith);
 
-    void drawMotion( const motion_t& motion );
+    void drawMotion( const motion_t& motion, int nb_frames );
     void dawColorSkinedCylinder( const Eigen::Vector3d& p1, const Eigen::Vector3d& p2);
     void drawHeraklesArms();
     void draw();

@@ -32,6 +32,8 @@
 #include "HRICS_human_ioc.hpp"
 #include "HRICS_human_cost_space.hpp"
 #include "HRICS_human_simulator.hpp"
+#include "HRICS_record_motion.hpp"
+#include "HRICS_dynamic_time_warping.hpp"
 
 #include "API/project.hpp"
 #include "API/Trajectory/trajectory.hpp"
@@ -52,15 +54,20 @@ using namespace HRICS;
 using std::cout;
 using std::endl;
 
+static std::string move3d_root("/home/jmainpri/Dropbox/move3d/");
+
 // Folders for sphere (and plannar) type of features
-static std::string move3d_spheres_demo_folder("/home/jmainpri/Dropbox/move3d/assets/IOC/TRAJECTORIES/");
-static std::string move3d_spheres_traj_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs_home/per_feature_square/");
-static std::string move3d_spheres_tmp_data_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/move3d_tmp_data_home/");
+static std::string move3d_spheres_demo_folder( move3d_root + "assets/IOC/TRAJECTORIES/");
+static std::string move3d_spheres_traj_folder( move3d_root + "move3d-launch/matlab/stomp_trajs_home/per_feature_square/");
+static std::string move3d_spheres_tmp_data_folder( move3d_root + "move3d-launch/matlab/move3d_tmp_data_home/");
 
 // Folders for human trajs features
-static std::string move3d_human_trajs_demo_folder("/home/jmainpri/Dropbox/move3d/assets/Collaboration/TRAJECTORIES/");
-static std::string move3d_human_trajs_traj_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs/per_feature_human_traj/");
-static std::string move3d_human_trajs_tmp_data_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/move3d_tmp_data_human_trajs/");
+static std::string move3d_human_trajs_demo_folder_originals( move3d_root + "assets/Collaboration/TRAJECTORIES/");
+//static std::string move3d_human_trajs_demo_folder_originals( move3d_root + "assets/Collaboration/TRAJECTORIES/originals/");
+//static std::string move3d_human_trajs_demo_folder( move3d_root + "assets/Collaboration/TRAJECTORIES/cut_demos/");
+static std::string move3d_human_trajs_demo_folder = move3d_human_trajs_demo_folder_originals;
+static std::string move3d_human_trajs_traj_folder( move3d_root + "move3d-launch/matlab/stomp_trajs/per_feature_human_traj/");
+static std::string move3d_human_trajs_tmp_data_folder( move3d_root + "move3d-launch/matlab/move3d_tmp_data_human_trajs/");
 
 IocSequences::IocSequences()
 {
@@ -76,6 +83,8 @@ IocSequences::IocSequences()
     {
         features_type_ = human_trajs;
     }
+
+    use_human_simulation_demo_ = false;
 }
 
 bool IocSequences::run()
@@ -203,6 +212,10 @@ bool IocSequences::run()
         cout << " RUN, NB SAMPLES : " << nb_samples << endl;
         cout << "------------------------------" << endl;
 
+//        TODO remove evalutation
+//        if( eval_ != NULL){
+//            delete eval_;
+//        }
         eval_ = NULL;
 
         if( HriEnv->getBool(HricsParam::init_spheres_cost) )
@@ -278,7 +291,22 @@ bool IocSequences::run()
 
             setCompareFeatures();
 
+            if( use_human_simulation_demo_ )
+            {
+                cout << "RUN SIMULATION" << endl;
+                eval_->loadWeightVector();
+                eval_->setLearnedWeights();
+                eval_->setOriginalDemoFolder( move3d_human_trajs_demo_folder_originals );
+                eval_->setUseSimulator( true );
+            }
+            else {
+                eval_->setUseSimulator( false );
+            }
+
             results.push_back( eval_->compareDemosAndPlanned() );
+
+            eval_->setUseSimulator( false ); // Set use simulator back to false
+
             g3d_draw_allwin_active();
             break;
 
@@ -291,20 +319,69 @@ bool IocSequences::run()
             break;
 
         case simulation:
-
+        {
             cout << "RUN SIMULATION" << endl;
+            eval_->setUseContext( true );
             eval_->loadWeightVector();
             eval_->setLearnedWeights();
+            eval_->loadDemonstrations();
+
+            const std::vector<motion_t>& demos = global_ht_simulator->getDemonstrations();
+
+            // Get sample trajectories around demos
+            std::vector<std::vector<Move3D::Trajectory> > samples = eval_->runSampling();
+            std::vector<std::vector<motion_t> > sample_trajs(samples.size());
+
+            for( int d=0; d<samples.size(); d++ )
+            {
+                double duration = motion_duration( demos[d] );
+
+                for( int k=0; k<samples[d].size(); k++ )
+                    sample_trajs[d].push_back( traj_to_motion( samples[d][k] , duration) );
+            }
+
+            std::vector<std::string> active_features_names;
+        //    active_features_names.push_back("Smoothness");
+            active_features_names.push_back("Length");
+            active_features_names.push_back("Distance");
+            active_features_names.push_back("Visibility");
+            active_features_names.push_back("Musculoskeletal");
+
+            global_ht_simulator->getCostSpace()->setActiveFeatures( active_features_names );
+
+            std::vector<motion_t> trajs;
 
             for( int j=0; j<global_ht_simulator->getNumberOfDemos(); j++ )
             {
                 global_ht_simulator->setDemonstrationId( j );
                 global_ht_simulator->run();
+                trajs.push_back( global_ht_simulator->getExecutedTrajectory() );
             }
+
+            for( int j=0; j<global_ht_simulator->getNumberOfDemos(); j++ )
+            {
+                global_ht_simulator->setDemonstrationId( j );
+                cout << " cost of demonstration : " << j << " " << global_ht_simulator->getCost( demos[j] ) << endl;
+                cout << " cost of executed trajectory : " << j << " " << global_ht_simulator->getCost( trajs[i] ) << endl;
+            }
+
+            for( int d=0; d<samples.size(); d++ )
+            {
+                global_ht_simulator->setDemonstrationId( d );
+
+                for( int k=0; k<samples[d].size(); k++ )
+                {
+                    cout << " cost of sample  for demo : " << d << " , k " << k << " : " << global_ht_simulator->getCost( sample_trajs[d][k] ) << endl;
+                }
+            }
+
+//            dtw_compare_performance(100,30);
+
+            global_ht_simulator->setDemonstrations( trajs );
 
             StopRun = true;
             break;
-
+        }
         case monte_carlo:
             eval_->loadDemonstrations();
             eval_->monteCarloSampling( 10.0, 10 );

@@ -314,6 +314,8 @@ std::vector<Move3D::confPtr_t> move3d_load_context_from_csv_file( std::string fi
 
         context.resize( n_rows );
 
+        cout << "nb of lines : "  << n_rows << endl;
+
         int i=0, j=0;
 
         file.clear() ;

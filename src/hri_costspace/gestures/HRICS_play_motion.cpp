@@ -93,6 +93,7 @@ void PlayMotion::play(int id)
         runRealTime(id);
 }
 
+//! id is the motion
 void PlayMotion::runRealTime(int id)
 {
     if( _motion_recorders.empty() && _stored_motions.empty() ) {
@@ -103,8 +104,9 @@ void PlayMotion::runRealTime(int id)
     _current_frame=0;
     double tu_last = 0.0;
     double dt = 0.0;
+    double time = 0.0;
 
-    while ( !StopRun )
+    while( !StopRun )
     {
         timeval tim;
         gettimeofday(&tim, NULL);
@@ -116,6 +118,7 @@ void PlayMotion::runRealTime(int id)
         {
             if( _stored_motions.empty() )
             {
+                // TODO switch to time
                 for (size_t j=0; j<_motion_recorders.size(); j++)
                 {
                     _motion_recorders[j]->setRobotToStoredMotionConfig( id, _current_frame );
@@ -123,17 +126,36 @@ void PlayMotion::runRealTime(int id)
             }
             else if( _motion_recorders.empty() )
             {
-                for (size_t j=0; j<_stored_motions.size(); j++)
+                for (size_t j=0; j<_stored_motions.size(); j++) // for each human or robot
                 {
-                    Move3D::confPtr_t q = _stored_motions[j][id][_current_frame].second;
-                    Move3D::Robot* robot = q->getRobot();
-                    robot->setAndUpdate( *q );
+                    int i =0;
+                    double time_traj = 0.0;
+
+                    while( i < _stored_motions[j][id].size() )
+                    {
+                        time_traj += _stored_motions[j][id][i].first; // compute time along trajectory
+
+                        if( time_traj >= time )
+                        {
+                            Move3D::confPtr_t q = _stored_motions[j][id][i].second;
+                            Move3D::Robot* robot = q->getRobot();
+                            robot->setAndUpdate( *q );
+                            break;
+                        }
+
+                        i++;
+                    }
+                    if( i >= _stored_motions[j][id].size() ){
+                        StopRun = true;
+                    }
                 }
             }
 
             dt = 0.0;
             _current_frame++;
         }
+
+        time += dt;
 
         g3d_draw_allwin_active();
 
@@ -146,26 +168,28 @@ void PlayMotion::runRealTime(int id)
             StopRun = true;
         }
 
-        if( _stored_motions.empty() )
-        {
-            for (size_t j=0; j<_motion_recorders.size(); j++)
-            {
-                if ( _current_frame >= int(_motion_recorders[j]->getStoredMotions()[id].size()))
-                {
-                    StopRun = true;
-                }
-            }
-        }
-        else if( _motion_recorders.empty() )
-        {
-            for (size_t j=0; j<_stored_motions.size(); j++)
-            {
-                if ( _current_frame >= int(_stored_motions[j][id].size()))
-                {
-                    StopRun = true;
-                }
-            }
-        }
+
+        // USING FRAMES
+//        if( _stored_motions.empty() )
+//        {
+//            for (size_t j=0; j<_motion_recorders.size(); j++)
+//            {
+//                if ( _current_frame >= int(_motion_recorders[j]->getStoredMotions()[id].size()))
+//                {
+//                    StopRun = true;
+//                }
+//            }
+//        }
+//        else if( _motion_recorders.empty() )
+//        {
+//            for (size_t j=0; j<_stored_motions.size(); j++)
+//            {
+//                if ( _current_frame >= int(_stored_motions[j][id].size()))
+//                {
+//                    StopRun = true;
+//                }
+//            }
+//        }
     }
 
     cout << "End play motion" << endl;
@@ -193,7 +217,7 @@ void PlayMotion::runControlled() // TODO weird implementation. should be fixed a
             _motion_recorders[j]->setRobotToStoredMotionConfig(0,_current_frame);
         }
 
-        if (_recent_input) _current_frame+=_step_size; //I don't it working like this.  Shouldn't constantly be updatin to current frame.
+        if (_recent_input) _current_frame += _step_size; //I don't it working like this.  Shouldn't constantly be updatin to current frame.
 
         if (_current_frame >= numFrames) _current_frame = numFrames; //Bounds check
         if (_current_frame < 0) _current_frame = 0; //Bounds check

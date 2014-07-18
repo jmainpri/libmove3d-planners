@@ -292,6 +292,11 @@ public:
     confPtr_t getNewConfig();
 
     /**
+      * Get stored vector config
+      */
+    std::vector<confPtr_t> getStoredConfigs();
+
+    /**
      * Returns an array of dof ids
      */
     std::vector<int> getActiveJointsIds();
@@ -383,9 +388,7 @@ private:
     bool copy_; /*!< Is true if the p3d_jnt copies and not only points to the structure */
     bool contains_libmove3d_struct_;
     unsigned int nb_dofs_;
-
     std::vector<Joint*> joints_;
-
     Eigen::Vector3d object_box_center_;
     Eigen::Vector3d object_box_dimentions_;
 };

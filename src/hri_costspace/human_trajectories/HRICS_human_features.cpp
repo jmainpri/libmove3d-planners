@@ -40,6 +40,8 @@ using namespace Move3D;
 using std::cout;
 using std::endl;
 
+static const bool draw_features = false;
+
 // Declaration of constant vectors
 namespace HRICS {
 
@@ -57,6 +59,8 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
     human_active_(active),
     human_passive_(passive)
 {
+    is_config_dependent_ = true;
+
     distance_joint_ids_.push_back( human_active_->getJoint("Pelvis")->getId() );
 
     distance_joint_ids_.push_back( human_active_->getJoint("rWristX")->getId() );
@@ -191,7 +195,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
     }
     cout << endl;
 
-    if( global_DrawModule )
+    if( global_DrawModule && draw_features )
     {
         global_DrawModule->addDrawFunction( "HumanDistance", boost::bind( &DistanceFeature::draw, this) );
         global_DrawModule->enableDrawFunction( "HumanDistance" );
@@ -428,6 +432,8 @@ VisibilityFeature::VisibilityFeature( Robot* active, Robot* passive ) :
     active_robot_(active),
     visib_cost_( new Visibility(passive) )
 {
+    is_config_dependent_ = true;
+
     human_active_joints_.push_back( active->getJoint("Pelvis") );       // joint name : Pelvis
     human_active_joints_.push_back( active->getJoint("rShoulderX") );   // joint name : rShoulderX
     human_active_joints_.push_back( active->getJoint("rElbowZ") );      // joint name : rElbowZ
@@ -475,7 +481,7 @@ VisibilityFeature::VisibilityFeature( Robot* active, Robot* passive ) :
     }
     cout << endl;
 
-    if( global_DrawModule )
+    if( global_DrawModule && draw_features )
     {
         global_DrawModule->addDrawFunction( "HumanVisibility", boost::bind( &VisibilityFeature::draw, this) );
         global_DrawModule->enableDrawFunction( "HumanVisibility" );
@@ -550,9 +556,11 @@ void VisibilityFeature::draw()
 //------------------------------------------------------------------------------------------------
 
 MusculoskeletalFeature::MusculoskeletalFeature( Move3D::Robot* active ) :
-    Feature("Muskuloskeletal"),
+    Feature("Musculoskeletal"),
     natural_cost_(new Natural(active))
 {
+    is_config_dependent_ = true;
+
     w_musculo_03 = Eigen::VectorXd::Ones( 3 );
     w_musculo_03 << 0.01, 0.20, 0.30; // 00 -> 03
 
@@ -560,7 +568,7 @@ MusculoskeletalFeature::MusculoskeletalFeature( Move3D::Robot* active ) :
 
     w_ = w_musculo_03;
 
-    if( global_DrawModule )
+    if( global_DrawModule && draw_features )
     {
         global_DrawModule->addDrawFunction( "HumanMusculoskeletal", boost::bind( &MusculoskeletalFeature::draw, this) );
         global_DrawModule->enableDrawFunction( "HumanMusculoskeletal" );

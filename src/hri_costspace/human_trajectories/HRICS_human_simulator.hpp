@@ -48,8 +48,16 @@ public:
     std::vector<Move3D::Trajectory> getDemoTrajectories() const;
     std::vector<Move3D::confPtr_t> getContext() const;
 
+    void setDemonstrations( const std::vector<motion_t>& demos ) { human_2_motions_ = demos; }
     void setDemonstrationId(int demo_id) { id_of_demonstration_ = demo_id; }
-    int getNumberOfDemos() { return human_2_demos_.size(); }
+    const std::vector<motion_t>& getDemonstrations() { return human_2_motions_; }
+    int getNumberOfDemos() { return human_2_motions_.size(); }
+
+    Move3D::Trajectory getExecutedPath() const;
+    motion_t getExecutedTrajectory() const;
+    double getCost( const motion_t& traj ) const;
+
+    HumanTrajCostSpace* getCostSpace() { return cost_space_; }
 
 private:
 
@@ -65,6 +73,7 @@ private:
     Move3D::Trajectory setTrajectoryToMainRobot(const Move3D::Trajectory& traj) const;
     void runStandardStomp( int iter );
     void execute(const Move3D::Trajectory& path, bool to_end = true);
+    void draw();
 
     // ------------------------------------------------------------------------
 
@@ -101,6 +110,8 @@ private:
     int human_active_increments_per_exection_;
     double human_active_step_;
     bool is_scenario_init_;
+    bool draw_execute_motion_;
+    bool draw_trace_;
 
     // ------------------------------------------------------------------------
 
@@ -117,10 +128,15 @@ private:
     std::vector<int> active_dofs_;
 
     std::vector<HRICS::RecordMotion*> motion_recorders_;
+
+    // Limited to only active dofs
     std::vector<motion_t> human_1_motions_;
     std::vector<motion_t> human_2_motions_;
+
+    // original recorded motions
     std::vector<motion_t> human_1_demos_;
     std::vector<motion_t> human_2_demos_;
+
     Eigen::VectorXd pelvis_max_;
     Eigen::VectorXd pelvis_min_;
     double arm_min_;

@@ -1,9 +1,13 @@
 #include "HRICS_human_simulator.hpp"
 
-#include "HRICS_play_motion.hpp"
+#include "HRICS_parameters.hpp"
+
+#include "gestures/HRICS_play_motion.hpp"
 #include "gestures/HRICS_gest_parameters.hpp"
 
 #include "API/project.hpp"
+#include "API/Graphic/drawModule.hpp"
+
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Stomp/run_parallel_stomp.hpp"
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
@@ -88,7 +92,7 @@ bool HumanTrajSimulator::init()
     // Store demonstrations, compute pelvis bounds
     // add cut motions
     setReplanningDemonstrations();
-    addCutMotions();
+//    addCutMotions();
 
     // Set the planning bounds
     setPelvisBounds();
@@ -97,7 +101,30 @@ bool HumanTrajSimulator::init()
     current_frame_ = 0;
     id_of_demonstration_ = 0;
 
+    draw_execute_motion_ = false;
+    draw_trace_ = true;
+
+    if( global_DrawModule )
+    {
+        global_DrawModule->addDrawFunction( "HumanSimulator", boost::bind( &HumanTrajSimulator::draw, this) );
+        global_DrawModule->enableDrawFunction( "HumanSimulator" );
+    }
+
     return true;
+}
+
+void HumanTrajSimulator::draw()
+{
+    if( draw_trace_ && GestEnv->getBool(GestParam::draw_recorded_motion))
+    {
+        int nb_frames = 15;
+        int id_of_demo_to_draw = HriEnv->getInt(HricsParam::ioc_spheres_to_draw);
+
+        cout << "id_of_demonstration_ : " << id_of_demo_to_draw << endl;
+
+        motion_recorders_[0]->drawMotion( human_1_motions_[id_of_demo_to_draw], nb_frames );
+        motion_recorders_[1]->drawMotion( human_2_motions_[id_of_demo_to_draw], nb_frames );
+    }
 }
 
 void HumanTrajSimulator::updateDofBounds( bool& initialized, Move3D::confPtr_t q_tmp )
@@ -449,6 +476,79 @@ void HumanTrajSimulator::setHumanColor(Move3D::Robot* human, int color)
     }
 }
 
+Move3D::Trajectory HumanTrajSimulator::getExecutedPath() const
+{
+    return HRICS::motion_to_traj( executed_trajectory_, human_active_ );
+}
+
+motion_t HumanTrajSimulator::getExecutedTrajectory() const
+{
+    return executed_trajectory_;
+}
+
+//! HACKISH TODO have time trajectories
+double HumanTrajSimulator::getCost( const motion_t& traj ) const
+{
+//    cout << "Get cost of traj" << endl;
+//    cost_space_->printInfo();
+
+    // get smoothness feature
+    Move3D::Trajectory t = motion_to_traj( traj, human_active_ );
+    Move3D::FeatureVect phi = cost_space_->getFeatureCount( t );
+
+    // reset config dependent features
+    for( int i=0; i<phi.size(); i++)
+    {
+//        cout << " feature at " << i << " : " << cost_space_->getFeatureFunctionAtIndex(i)->getName() << endl;
+        if( cost_space_->getFeatureFunctionAtIndex(i)->is_config_dependent_ )
+            phi[i] = 0;
+    }
+
+    // get configuration dependent features
+    Move3D::confPtr_t q_1, q_2;
+    int nb_via_points = traj.size();
+    double dist = traj[0].second->dist( *traj[1].second );
+    double time=0;
+
+    for (int i=1; i<nb_via_points+1; i++)
+    {
+        int j =0;
+        double time_traj = 0.0;
+        while( j < human_1_motions_[id_of_demonstration_].size() ) // set passive human at time along motion
+        {
+            time_traj += human_1_motions_[id_of_demonstration_][j].first;
+
+            if( time_traj >= time )
+            {
+                Move3D::confPtr_t q = human_1_motions_[id_of_demonstration_][j].second;
+                human_passive_->setAndUpdate( *q );
+                break;
+            }
+
+            j++;
+        }
+
+        q_1 = traj[i-1].second;
+
+        human_active_->setAndUpdate( *q_1 );
+
+        phi += ( cost_space_->getFeatures( *q_1 ) * dist );
+
+        if( i < nb_via_points )
+        {
+            q_2 = traj[i].second;
+            dist = q_1->dist( *q_2 );
+        }
+
+        time += traj[i].first;
+    }
+
+
+//    cost_space_->print( phi );
+
+    return cost_space_->getWeights().transpose() * phi;
+}
+
 bool HumanTrajSimulator::loadActiveHumanGoalConfig()
 {
     if( id_of_demonstration_ >= human_2_motions_.size()  )
@@ -464,9 +564,15 @@ bool HumanTrajSimulator::loadActiveHumanGoalConfig()
     current_time_ = 0.0;
     time_step_ = 0.1; // Simulation step
 
+    // GET STORED CONFIGURATIONS
+    std::vector<Move3D::confPtr_t> configs = human_active_->getStoredConfigs();
+
     // LOAD ACTIVE HUMAN MOTION
     q_init_ = human_2_demos_[ id_of_demonstration_ ][0].second;
-    q_goal_ = human_2_demos_[ id_of_demonstration_ ].back().second;
+//    q_goal_ = human_2_demos_[ id_of_demonstration_ ].back().second;
+    cout << "size of stored config : " << configs.size() << endl;
+    cout << "id_of_demonstration_ : " << id_of_demonstration_ << endl;
+    q_goal_ = configs[ id_of_demonstration_ ];
 
     human_active_increments_per_exection_ = 10;
     human_active_step_ = q_init_->dist( *q_goal_ ) / 200;
@@ -598,8 +704,12 @@ void HumanTrajSimulator::execute(const Move3D::Trajectory& path, bool to_end)
         }
 
         time_elapsed += current_discretization_;
-        g3d_draw_allwin_active();
-        usleep( floor( current_discretization_ * 1e6 * time_factor ) );
+
+        if( draw_execute_motion_ )
+        {
+            g3d_draw_allwin_active();
+            usleep( floor( current_discretization_ * 1e6 * time_factor ) );
+        }
     }
 
     current_time_ += time_elapsed;

@@ -29,6 +29,7 @@
 
 #include "HRICS_parameters.hpp"
 #include "HRICS_human_cost_space.hpp"
+#include "HRICS_human_simulator.hpp"
 
 #include "API/project.hpp"
 #include "API/Trajectory/trajectory.hpp"
@@ -828,21 +829,33 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
     }
 
     use_context_ = false;
+    use_simulator_ = false;
 }
 
 // Types are : astar, rrt, stomp
 Move3D::Trajectory IocEvaluation::planMotion( planner_t type )
 {
-    planners_.clearTrajs();
-    planners_.setPlannerType( type );
-
-    if( planners_.run() ){
-
-        return planners_.getBestTrajs()[0];
-    }
-    else{
-        Move3D::Trajectory traj(robot_);
+    if( use_simulator_ )
+    {
+        cout << "RUN SIMULATOR FOR DEMO : " << demo_id_ << endl;
+        global_ht_simulator->setDemonstrationId( demo_id_ );
+        global_ht_simulator->run();
+        Move3D::Trajectory traj = global_ht_simulator->getExecutedPath();
         return traj;
+    }
+    else
+    {
+        planners_.clearTrajs();
+        planners_.setPlannerType( type );
+
+        if( planners_.run() )
+        {
+            return planners_.getBestTrajs()[0];
+        }
+        else{
+            Move3D::Trajectory traj(robot_);
+            return traj;
+        }
     }
 }
 
@@ -1180,10 +1193,12 @@ void IocEvaluation::loadDemonstrations()
     global_trajToDraw.clear();
     std::stringstream ss;
 
+    std::string folder = use_simulator_ ? original_demo_folder_ : folder_;
+
     if( use_context_ )
     {
         ss.str("");
-        ss << folder_ << "context_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << int(0) << ".configs";
+        ss << folder << "context_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << int(0) << ".configs";
         context_.push_back( move3d_load_context_from_csv_file( ss.str() ) );
 
         nb_demos_ = context_[0].size();
@@ -1202,7 +1217,7 @@ void IocEvaluation::loadDemonstrations()
     for(int d=0;d<nb_demos_;d++)
     {
         ss.str(""); // clear stream
-        ss << folder_ << "trajectory_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << d << ".traj";
+        ss << folder << "trajectory_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << d << ".traj";
 
         cout << "Loading demonstration from : " << ss.str() << endl;
 
@@ -1297,7 +1312,8 @@ void IocEvaluation::loadWeightVector()
 
     // Load vector from file
     std::stringstream ss;
-    ss << tmp_data_folder_ << "spheres_weights_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
+//    ss << tmp_data_folder_ << "spheres_weights_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
+    ss << tmp_data_folder_ << "spheres_weights_" << std::setw(3) << std::setfill( '0' ) << int(600) << ".txt";
 
     cout << "LOADING LEARNED WEIGHTS : " << ss.str() << endl;
 
@@ -1442,7 +1458,7 @@ void IocEvaluation::removeDominatedSamplesAndResample( HRICS::Ioc& ioc, std::vec
     }
 }
 
-void IocEvaluation::runSampling()
+std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
 {
     cout << __PRETTY_FUNCTION__ << endl;
 
@@ -1581,6 +1597,8 @@ void IocEvaluation::runSampling()
 
 //    std::vector< std::vector<FeatureVect> > jac_sum_samples = getFeatureJacobianSum( ioc.getSamples() );
 //    saveToMatrixFile( phi_jac_demos_, jac_sum_samples, "spheres_jac_sum" );
+
+    return samples;
 }
 
 void IocEvaluation::runFromFileSampling(int offset)
@@ -1803,6 +1821,8 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
 
     loadWeightVector(); // Load learned from file
 
+    cout << "NB OF DEMOS : " << costs_demo.size() << endl;
+
     for( int i=0; i<costs_demo.size(); i++ )
     {
          costs_learned[i] = 0.0;
@@ -1815,6 +1835,7 @@ Eigen::VectorXd IocEvaluation::compareDemosAndPlanned()
 
         for( int j=0; j<nb_planning_test_; j++ )
         {
+            demo_id_ = j;
             traj_tmp[j].second  = planMotion( planner_type_ );
             traj_tmp[j].first = feature_fct_->costTraj( traj_tmp[j].second );
         }

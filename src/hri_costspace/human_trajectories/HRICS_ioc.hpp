@@ -175,7 +175,7 @@ public:
                    std::string folder,  std::string traj_folder, std::string tmp_data_folder );
 
     //! Sample trajectories around the demonstrations
-    virtual void runSampling();
+    virtual std::vector<std::vector<Move3D::Trajectory> > runSampling();
 
     //! Run learning using the C++ library
     virtual void runLearning();
@@ -216,14 +216,17 @@ public:
     //! Set planner type for the generation phase
     void setPlannerType( planner_t planner_type ) { planner_type_ = planner_type; }
 
-    //! Set use of saved context
-    void setUseContext( bool use_context ) { use_context_ = use_context; }
-
     //! Save demo to file
     void saveDemoToFile(const std::vector<Move3D::Trajectory>& demos, std::vector<Move3D::confPtr_t> context = std::vector<Move3D::confPtr_t>());
 
     virtual void setLearnedWeights();
     virtual void setOriginalWeights();
+
+    //! Set use of saved context
+    void setUseContext( bool use_context ) { use_context_ = use_context; }
+    void setUseSimulator(bool use_simulator) { use_simulator_ = use_simulator; }
+    void setDemoId(int demo_id) { demo_id_ = demo_id; }
+    void setOriginalDemoFolder(std::string folder) { original_demo_folder_ = folder; }
 
 protected:
 
@@ -296,6 +299,9 @@ protected:
     MultiplePlanners& planners_;
     int round_id_;
 
+    bool use_simulator_;
+    int demo_id_;
+
     std::vector<Move3D::FeatureVect> stored_features_;
 
     std::vector<Move3D::FeatureVect> phi_demos_;
@@ -305,6 +311,7 @@ protected:
     std::string folder_;
     std::string traj_folder_;
     std::string tmp_data_folder_;
+    std::string original_demo_folder_;
 
     // Planner type
     planner_t planner_type_;

@@ -78,7 +78,7 @@ public:
     /**
      * Returns the robot by id
      */
-    Robot* getRobot(unsigned int i) { return m_Robot[i]; }
+    Robot* getRobot(unsigned int i) { return m_robot[i]; }
 
     /**
      * Returns the robot ID
@@ -105,7 +105,7 @@ public:
      * Returns the number of Robots in the
      * Scene
      */
-    unsigned int getNumberOfRobots() { return m_Robot.size(); }
+    unsigned int getNumberOfRobots() { return m_robot.size(); }
 
     /**
      * Returns the scene resolution step DMax
@@ -118,10 +118,9 @@ public:
     std::vector<double> getBounds();
 
 private:
-    std::vector<Robot*> m_Robot;/*!< All Robots in the scene */
-    std::string m_Name;/*!< The environnement name */
-
-    void* m_Scene;
+    std::vector<Robot*> m_robot;/*!< All Robots in the scene */
+    std::string m_name;/*!< The environnement name */
+    void* m_scene; /*!< The scene which holds this */
 
 };
 
