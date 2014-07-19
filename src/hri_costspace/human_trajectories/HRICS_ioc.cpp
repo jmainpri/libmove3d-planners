@@ -1243,6 +1243,8 @@ void IocEvaluation::loadDemonstrations()
             T.computeSubPortionIntergralCost( T.getCourbe() );
         }
 
+        T.replaceP3dTraj();
+
         T.setColor( d%8 ); cout << "color : " << d%8 << endl;
         global_trajToDraw.push_back(T);
 
@@ -1500,6 +1502,8 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
 //    phi_jac_demos_ = jac_sum_demos.back();
 
     cout << "Generate samples (" << nb_samples_ << ")" << endl;
+
+    remove_samples_in_collision_ = false;
 
     // Generate samples by random sampling
     ioc.generateSamples( nb_samples_, remove_samples_in_collision_, context_ );

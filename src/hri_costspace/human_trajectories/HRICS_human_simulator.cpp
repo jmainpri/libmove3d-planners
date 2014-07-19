@@ -39,6 +39,8 @@ HumanTrajSimulator::HumanTrajSimulator( HumanTrajCostSpace* cost_space )  :
 {
     cout << "Human active : " << human_active_->getName() << endl;
     cout << "Human passive : " << human_passive_->getName() << endl;
+
+    is_pelvis_bound_user_defined_ = false;
 }
 
 bool HumanTrajSimulator::init()
@@ -327,11 +329,9 @@ void HumanTrajSimulator::setPelvisBounds()
     // Get first joint and change bounds
     Move3D::Joint* joint = human_active_->getJoint( "Pelvis" );
 
-    bool use_user_defined = false;
-
     double dof[6][2];
 
-    if( use_user_defined )
+    if( is_pelvis_bound_user_defined_ )
     {
         // take only (x, y, z) components of the base
         double bound_trans = 0.05;
@@ -371,6 +371,15 @@ void HumanTrajSimulator::setPelvisBounds()
 
     Move3D::Joint* arm_joint = human_active_->getJoint( "rArmTrans" );
     p3d_jnt_set_dof_rand_bounds( arm_joint->getP3dJointStruct(), 0, arm_min_ - .02, arm_max_ + .02 );
+
+    // Active joint
+    for( int i=0; i<human_active_->getNumberOfJoints(); i++) {
+        p3d_jnt_set_is_user( human_active_->getJoint(i)->getP3dJointStruct(), FALSE );
+    }
+
+    for( size_t i=0; i<active_joints_.size(); i++){
+        p3d_jnt_set_is_user( active_joints_[i]->getP3dJointStruct(), TRUE );
+    }
 
 //    Joint(0), Dof : 6, Pelvis
 //    Is dof user : (min = 0.94, max = 1.04)

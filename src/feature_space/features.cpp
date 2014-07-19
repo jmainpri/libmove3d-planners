@@ -556,7 +556,7 @@ void StackedFeatures::printInfo() const
 //    cout << "------------------------------" << endl;
 }
 
-void StackedFeatures::print(FeatureVect& phi) const
+void StackedFeatures::printFeatureVector(FeatureVect& phi) const
 {
     cout << "------------------------------" << endl;
     cout << "stack of features : nb of fct ( " << feature_stack_.size() << " )";
@@ -610,7 +610,7 @@ Feature* StackedFeatures::getFeatureFunction(std::string name)
 LengthFeature::LengthFeature() : Feature("Length")
 {
     w_ = WeightVect::Ones( 1 ); // Sets the number of feature in the base class
-    scaling_ = 100;
+    scaling_ = 1;
     is_config_dependent_ = true;
 }
 

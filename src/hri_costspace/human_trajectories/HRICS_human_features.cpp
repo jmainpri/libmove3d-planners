@@ -40,7 +40,7 @@ using namespace Move3D;
 using std::cout;
 using std::endl;
 
-static const bool draw_features = false;
+static const bool draw_features = true;
 
 // Declaration of constant vectors
 namespace HRICS {
@@ -172,8 +172,8 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
             0.50, 0.20, 0.50, 0.50, // 08 -> 11
             0.50, 0.50, 0.50, 0.20; // 12 -> 15
 
-    w_distance_16 /= 1;
-    //    w_distance_16 *= 1;
+//    w_distance_16 /= 1;
+    w_distance_16 *= 10;
 
     if( w_.size() == 16 )
     {
@@ -207,7 +207,7 @@ FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int
     human_active_->setAndUpdate( q );
     FeatureVect count = computeDistances();
 
-    const double base = 15; // Using exp usualy ....
+    const double base = 2; // Using exp usualy ....
     const double max_distance = 0.80; // distance limit when the feature vanishes
     const double factor_distance = 0.16; // max_distance / ( 5 ~ 6 ) -> when the exp(-x) reaches 0
 
@@ -225,8 +225,10 @@ FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int
     //    cout << "dist is : " << dist.transpose() << endl;
     //    cout << "joint dist : " << joints_dist.transpose() << endl;
 
-    double factor = 7000;
-    return factor * count; // Scaling factor
+//    double factor = 7000;
+//    return factor * count; // Scaling factor
+
+    return count;
 }
 
 FeatureVect DistanceFeature::computeDistances() const
@@ -383,8 +385,8 @@ FeatureVect CollisionFeature::getFeatures(const Configuration& q, std::vector<in
     for(int i=0; i<count.size(); i++) // For all features
         count[i] = std::pow( base, count[0] );
 
-    double factor = 10;
-    return factor * count; // Scaling factor
+//    double factor = 10;
+//    return factor * count; // Scaling factor
 
     return count;
 }
@@ -428,7 +430,7 @@ double CollisionFeature::getCollisionCost( const Move3D::Configuration& q )
 //------------------------------------------------------------------------------------------------
 
 VisibilityFeature::VisibilityFeature( Robot* active, Robot* passive ) :
-    Feature("Visbility"),
+    Feature("Visibility"),
     active_robot_(active),
     visib_cost_( new Visibility(passive) )
 {
@@ -492,14 +494,21 @@ FeatureVect VisibilityFeature::getFeatures(const Configuration& q, std::vector<i
 {
     FeatureVect count( computeVisibility() );
 
-    const double base = 4; // Using exp usualy ....
+    count = count - 0.8 * FeatureVect::Ones( count.size() );
 
-    for(int i=0; i<count.size(); i++) // For all features
-        count[i] = std::pow( base, count[i] ) - 1; // 1e-3/j_dist;
+    for(int i=0; i<count.size(); i++)
+        if( count[i] > 1.0 )
+            count[i] = 1.0;
 
 
-    double factor = 5;
-    return factor * count; // Scaling factor
+//    const double base = 4; // Using exp usualy ....
+
+//    for(int i=0; i<count.size(); i++) // For all features
+//        count[i] = std::pow( base, count[i] ) - 1; // 1e-3/j_dist;
+
+
+//    double factor = 5;
+//    return factor * count; // Scaling factor
 
 //    const double base = 20; // Using exp usually ....
 //    const double max_distance = 0.80; // distance limit when the feature vanishes
@@ -512,6 +521,8 @@ FeatureVect VisibilityFeature::getFeatures(const Configuration& q, std::vector<i
 //        else
 //            count[i] = 0.0;
 //    }
+
+//    cout << "visib : " << count.transpose() << endl;
 
     return count;
 }
@@ -579,13 +590,15 @@ FeatureVect MusculoskeletalFeature::getFeatures(const Configuration& q, std::vec
 {
     FeatureVect count( computeMusculoskeletalEffort() );
 
-    const double base = 10; // Using exp usualy ....
+//    cout << "muskulo : " << count.transpose() << endl;
 
-    for(int i=0; i<count.size(); i++) // For all features
-        count[i] = std::pow( base, count[i] ) - 1; // 1e-3/j_dist;
+//    const double base = 10; // Using exp usualy ....
 
-    double factor = 100;
-    return factor * count; // Scaling factor
+//    for(int i=0; i<count.size(); i++) // For all features
+//        count[i] = std::pow( base, count[i] ) - 1; // 1e-3/j_dist;
+
+//    double factor = 100;
+//    return factor * count; // Scaling factor
 
     return count;
 }

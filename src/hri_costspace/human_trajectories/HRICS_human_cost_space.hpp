@@ -61,6 +61,8 @@ public:
     //! init collision space
     bool initCollisionSpace() { return collision_feat_.init(); }
 
+    Move3D::FeatureVect normalizing_by_sampling();
+
 private:
 
     Move3D::Robot* human_active_;

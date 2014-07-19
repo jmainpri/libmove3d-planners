@@ -116,7 +116,7 @@ public:
 
     void printWeights() const;
     void printInfo() const;
-    void print(FeatureVect& phi) const;
+    void printFeatureVector(FeatureVect& phi) const;
 
     Feature* getFeatureFunctionAtIndex(int idx);
     Feature* getFeatureFunction(int i) { return feature_stack_[i]; }

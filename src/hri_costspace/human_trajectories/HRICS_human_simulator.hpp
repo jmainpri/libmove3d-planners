@@ -52,6 +52,7 @@ public:
     void setDemonstrationId(int demo_id) { id_of_demonstration_ = demo_id; }
     const std::vector<motion_t>& getDemonstrations() { return human_2_motions_; }
     int getNumberOfDemos() { return human_2_motions_.size(); }
+    void setPelvisBoundsByUser(bool user_defined) { is_pelvis_bound_user_defined_ = user_defined; }
 
     Move3D::Trajectory getExecutedPath() const;
     motion_t getExecutedTrajectory() const;
@@ -137,6 +138,7 @@ private:
     std::vector<motion_t> human_1_demos_;
     std::vector<motion_t> human_2_demos_;
 
+    bool is_pelvis_bound_user_defined_;
     Eigen::VectorXd pelvis_max_;
     Eigen::VectorXd pelvis_min_;
     double arm_min_;

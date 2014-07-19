@@ -99,6 +99,8 @@ bool HRICS_init_human_trajectory_cost()
 
         // Set active joints and joint bounds
         global_ht_simulator = new HRICS::HumanTrajSimulator( global_ht_cost_space );
+        // Set the sampling bounds for the human simulator
+        global_ht_simulator->setPelvisBoundsByUser( true );
         global_ht_simulator->init();
 
         // Define cost functions
@@ -168,24 +170,24 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     musc_feat_.setActiveDoFs( active_dofs_ );
     musc_feat_.setWeights( WeightVect::Ones( musc_feat_.getNumberOfFeatures() ) );
 
-    if(!addFeatureFunction( &length_feat_ ) ){
-        cout << "Error adding feature length" << endl;
-    }
-    if(!addFeatureFunction( &smoothness_feat_ ) ){
-        cout << "Error adding feature smoothness" << endl;
-    }
-    if(!addFeatureFunction( &collision_feat_ )){
-        cout << "Error adding feature distance collision" << endl;
-    }
+//    if(!addFeatureFunction( &length_feat_ ) ){
+//        cout << "Error adding feature length" << endl;
+//    }
+//    if(!addFeatureFunction( &smoothness_feat_ ) ){
+//        cout << "Error adding feature smoothness" << endl;
+//    }
+//    if(!addFeatureFunction( &collision_feat_ )){
+//        cout << "Error adding feature distance collision" << endl;
+//    }
     if(!addFeatureFunction( &dist_feat_ )){
         cout << "Error adding feature distance feature" << endl;
     }
-    if(!addFeatureFunction( &visi_feat_ )){
-        cout << "Error adding feature visbility feature" << endl;
-    }
-    if(!addFeatureFunction( &musc_feat_ )){
-        cout << "Error adding feature musculoskeletal feature" << endl;
-    }
+//    if(!addFeatureFunction( &visi_feat_ )){
+//        cout << "Error adding feature visbility feature" << endl;
+//    }
+//    if(!addFeatureFunction( &musc_feat_ )){
+//        cout << "Error adding feature musculoskeletal feature" << endl;
+//    }
 
     w_ = getWeights();
 
@@ -205,6 +207,66 @@ HumanTrajCostSpace::HumanTrajCostSpace( Robot* active, Robot* passive ) :
     printInfo();
 
     cout << "---------------------------------------------" << endl;
+}
+
+FeatureVect HumanTrajCostSpace::normalizing_by_sampling()
+{
+    cout << "---------------------------------------------" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
+
+    int nb_samples = 10000;
+
+    std::vector<std::string> active_features_names;
+//    active_features_names.push_back("Smoothness");
+//    active_features_names.push_back("Length");
+    active_features_names.push_back("Distance");
+    active_features_names.push_back("Visibility");
+    active_features_names.push_back("Musculoskeletal");
+
+    setActiveFeatures( active_features_names );
+
+    FeatureVect phi( FeatureVect::Zero(nb_features_) );
+    FeatureVect phi_sum( FeatureVect::Zero(nb_features_) );
+    FeatureVect phi_max( FeatureVect::Zero(nb_features_) );
+    FeatureVect phi_min( std::numeric_limits<double>::max() * FeatureVect::Ones(nb_features_) );
+
+    for (int i=0; i<nb_samples; i++)
+    {
+        confPtr_t q = human_active_->shoot();
+        human_active_->setAndUpdate(*q);
+        phi = getFeatures(*q);
+        phi_sum += phi;
+
+        for( int j=0; j<phi.size(); j++ )
+        {
+            if( phi[j] < phi_min[j] )
+                phi_min[j] = phi[j];
+
+            if( phi[j] > phi_max[j] )
+                phi_max[j] = phi[j];
+        }
+//        g3d_draw_allwin_active();
+    }
+
+    phi_sum /= double(nb_samples);
+
+    cout << std::scientific;
+
+//    for (int i=0; i<nb_features_; i++) {
+//        cout << "phi[" << i << "] : " << phi_sum[i] << endl;
+//    }
+
+    cout << "MAX VALUES : " << endl;
+    printFeatureVector( phi_max );
+
+    cout << "MIN VALUES : " << endl;
+    printFeatureVector( phi_min );
+
+    cout << "MEAN VALUES : " << endl;
+    printFeatureVector( phi_sum );
+
+    exit(1);
+    return phi_sum;
 }
 
 HumanTrajCostSpace::~HumanTrajCostSpace()

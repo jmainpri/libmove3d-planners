@@ -75,11 +75,11 @@ IocSequences::IocSequences()
 
     features_type_ = no_features;
 
-    if(  HriEnv->getBool(HricsParam::init_spheres_cost) )
+    if( HriEnv->getBool(HricsParam::init_spheres_cost) )
     {
         features_type_ = spheres;
     }
-    else if(  HriEnv->getBool(HricsParam::init_human_trajectory_cost) )
+    else if( HriEnv->getBool(HricsParam::init_human_trajectory_cost) )
     {
         features_type_ = human_trajs;
     }
@@ -248,6 +248,9 @@ bool IocSequences::run()
         case generate:
 
             cout << "GENERATE" << endl;
+
+//            global_ht_cost_space->normalizing_by_sampling();
+
             setGenerationFeatures();
 
             if( use_human_simulation_demo_ )
@@ -498,14 +501,14 @@ void IocSequences::setGenerationFeatures()
     if( features_type_ == human_trajs && global_ht_cost_space != NULL )
     {
         std::vector<std::string> active_features;
-        active_features.push_back("Length");
+//        active_features.push_back("Length");
         active_features.push_back("Distance");
 //        active_features.push_back("Smoothness");
 //        active_features.push_back("Collision");
         feature_fct_->setActiveFeatures( active_features );
 
-//        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.7 );
-//        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
+//        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.0001 );
+        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
 
         cout << "stack info" << endl;
         feature_fct_->printInfo();
@@ -520,12 +523,15 @@ void IocSequences::setSamplingFeatures()
     if( features_type_ == human_trajs && global_ht_cost_space != NULL )
     {
         std::vector<std::string> active_features;
-        active_features.push_back("Length");
+//        active_features.push_back("Length");
         active_features.push_back("Distance");
 //        active_features.push_back("Smoothness");
 //        active_features.push_back("Collision");
 
         feature_fct_->setActiveFeatures( active_features );
+
+//        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.001 );
+        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
 
 //        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.7 );
 //        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
