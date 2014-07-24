@@ -214,7 +214,7 @@ FeatureVect Spheres::getFeatures( const Configuration& q, std::vector<int> activ
         phi[k] = std::pow( std::exp( -dist/factor_distance ), factor_height );
     }
 
-   // cout << "phi : " << phi.transpose() << endl;
+//    cout << "phi : " << phi.transpose() << endl;
 
     return phi;
 }

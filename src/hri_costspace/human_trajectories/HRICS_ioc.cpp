@@ -1521,6 +1521,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
     cout << "length : " << demos_[0].getParamMax() << endl;
 
     FeatureVect phi = feature_fct_->getFeatureCount( demos_[0] );
+    cout << "weight : " << feature_fct_->getWeights().transpose() << endl;
     cout << "cost : " << feature_fct_->getWeights().transpose()*phi << " , ";
     cout << "Feature Sample : " << int(-1) << " , " << phi.transpose() << endl;
 
@@ -1938,6 +1939,15 @@ void IocEvaluation::saveDemoToMatlab()
 void IocEvaluation::saveContextToFile(const std::vector<Move3D::confPtr_t>& context) const
 {
 
+}
+
+void IocEvaluation::saveNbDemoAndNbFeatures()
+{
+    Eigen::MatrixXd mat( Eigen::MatrixXd::Zero( 2, 1 ));
+    mat(0, 0) = nb_demos_;
+    mat(1, 0) = feature_fct_->getNumberOfFeatures();
+
+    move3d_save_matrix_to_file( mat, std::string( "matlab/problem.txt" ) );
 }
 
 void IocEvaluation::saveTrajToMatlab(const Move3D::Trajectory& t, int id) const

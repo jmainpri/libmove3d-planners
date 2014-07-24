@@ -52,13 +52,15 @@ private:
     void setCompareFeatures();
 
     // IOC PHASES
-    enum phase_t { generate=0,
-                   sample=1,
-                   compare=2,
-                   run_planner=3,
-                   default_phase=4,
-                   monte_carlo=5,
-                   simulation=6};
+    enum phase_t {
+        generate=0,
+        sample=1,
+        compare=2,
+        run_planner=3,
+        default_phase=4,
+        monte_carlo=5,
+        simulation=6,
+        save_feature_and_demo_size=7};
 
     // TYPE OF FEATURES
     enum feature_t {

@@ -204,6 +204,9 @@ public:
     //! Save 2D traj to file for Matlab
     void saveDemoToMatlab();
 
+    //! Save nb of demos and nb of features
+    void saveNbDemoAndNbFeatures();
+
     //! Compute costs using the original costs and the learned costs
     Eigen::VectorXd compareDemosAndPlanned();
 

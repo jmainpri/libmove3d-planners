@@ -57,17 +57,33 @@ using std::endl;
 static std::string move3d_root("/home/jmainpri/Dropbox/move3d/");
 
 // Folders for sphere (and plannar) type of features
-static std::string move3d_spheres_demo_folder( move3d_root + "assets/IOC/TRAJECTORIES/");
-static std::string move3d_spheres_traj_folder( move3d_root + "move3d-launch/matlab/stomp_trajs_home/per_feature_square/");
-static std::string move3d_spheres_tmp_data_folder( move3d_root + "move3d-launch/matlab/move3d_tmp_data_home/");
+static std::string move3d_demo_folder;
+static std::string move3d_traj_folder;
+static std::string move3d_tmp_data_folder;
 
 // Folders for human trajs features
-static std::string move3d_human_trajs_demo_folder_originals( move3d_root + "assets/Collaboration/TRAJECTORIES/");
+static std::string move3d_demo_folder_originals;
 //static std::string move3d_human_trajs_demo_folder_originals( move3d_root + "assets/Collaboration/TRAJECTORIES/originals/");
 //static std::string move3d_human_trajs_demo_folder( move3d_root + "assets/Collaboration/TRAJECTORIES/cut_demos/");
-static std::string move3d_human_trajs_demo_folder = move3d_human_trajs_demo_folder_originals;
-static std::string move3d_human_trajs_traj_folder( move3d_root + "move3d-launch/matlab/stomp_trajs/per_feature_human_traj/");
-static std::string move3d_human_trajs_tmp_data_folder( move3d_root + "move3d-launch/matlab/move3d_tmp_data_human_trajs/");
+
+void ioc_set_sphere_paths()
+{
+    // Folders for sphere (and plannar) type of features
+    move3d_demo_folder = move3d_root + "assets/IOC/TRAJECTORIES/";
+    move3d_traj_folder = move3d_root + "move3d-launch/matlab/stomp_trajs_home/per_feature_square/";
+    move3d_tmp_data_folder = move3d_root + "move3d-launch/matlab/move3d_tmp_data_home/";
+}
+
+void ioc_set_human_paths()
+{
+    // Folders for human trajs features
+    move3d_demo_folder_originals = move3d_root + "assets/Collaboration/TRAJECTORIES/";
+    //static std::string move3d_human_trajs_demo_folder_originals( move3d_root + "assets/Collaboration/TRAJECTORIES/originals/");
+    //static std::string move3d_human_trajs_demo_folder( move3d_root + "assets/Collaboration/TRAJECTORIES/cut_demos/");
+    move3d_demo_folder = move3d_demo_folder_originals;
+    move3d_traj_folder = move3d_root + "move3d-launch/matlab/stomp_trajs/per_feature_human_traj/";
+    move3d_tmp_data_folder =  move3d_root + "move3d-launch/matlab/move3d_tmp_data_human_trajs/";
+}
 
 IocSequences::IocSequences()
 {
@@ -77,14 +93,16 @@ IocSequences::IocSequences()
 
     if( HriEnv->getBool(HricsParam::init_spheres_cost) )
     {
+        ioc_set_sphere_paths();
         features_type_ = spheres;
     }
     else if( HriEnv->getBool(HricsParam::init_human_trajectory_cost) )
     {
         features_type_ = human_trajs;
+        ioc_set_human_paths();
     }
 
-    use_human_simulation_demo_ = false;
+    use_human_simulation_demo_ = HriEnv->getBool(HricsParam::ioc_use_simulation_demos);
 }
 
 bool IocSequences::run()
@@ -146,12 +164,11 @@ bool IocSequences::run()
     // LOAD PARAMETERS FROM SETTING FILE
     int nb_way_points       = HriEnv->getInt(HricsParam::ioc_nb_of_way_points);
     bool single_iteration   = HriEnv->getBool(HricsParam::ioc_single_iteration);
-    int nb_iterations       = HriEnv->getInt(HricsParam::ioc_sample_iteration);
     bool sample_from_file   = HriEnv->getBool(HricsParam::ioc_load_samples_from_file);
     int file_offset         = HriEnv->getInt(HricsParam::ioc_from_file_offset);
-    phase_                  = (phase_t)HriEnv->getInt(HricsParam::ioc_phase);
 
-//    phase_ = (phase_t)1;
+    // Modify widget when adding a phase
+    phase_                  = (phase_t)HriEnv->getInt(HricsParam::ioc_phase);
     cout << "ioc phase : " << phase_ << endl;
 
     int nb_demos = 1;
@@ -170,11 +187,11 @@ bool IocSequences::run()
         // planners.loadTrajsFromFile( move3d_spheres_traj_folder + "STOMP_LARGE" );
         // planners.loadTrajsFromFile( move3d_spheres_traj_folder + "GENERAL_COSTMAP");
         // planners.loadTrajsFromFile( move3d_spheres_traj_folder + "STOMP_COMBINE" );
-        planners.loadTrajsFromFile( move3d_spheres_traj_folder + "STOMP_VARIANCE_F1" );
+        planners.loadTrajsFromFile( move3d_traj_folder + "STOMP_VARIANCE_F1" );
     // planners.loadTrajsFromFile( move3d_spheres_traj_folder + "RANDOM_05" );
 
     // folder for tmp data
-    std::string move3d_tmp_data_folder;
+//    std::string move3d_tmp_data_folder;
 
     // Set feature function
     set_features();
@@ -183,12 +200,12 @@ bool IocSequences::run()
 
     if( !single_iteration )
     {
-        samples = move3d_load_matrix_from_csv_file( move3d_human_trajs_tmp_data_folder + "samples_tmp.txt" );
+        samples = move3d_load_matrix_from_csv_file( move3d_tmp_data_folder + "samples_tmp.txt" );
         cout << "SAMPLING SEQUENCE : " << samples.row(0) << endl;
     }
     else {
         samples = Eigen::MatrixXd::Zero(1,1);
-        samples(0,0) = nb_iterations;
+        samples(0,0) = HriEnv->getInt(HricsParam::ioc_sample_iteration);
     }
 
     // Main loop
@@ -220,21 +237,17 @@ bool IocSequences::run()
 
         if( HriEnv->getBool(HricsParam::init_spheres_cost) )
         {
-            move3d_tmp_data_folder = move3d_spheres_tmp_data_folder;
-
             eval_ = new IocEvaluation( rob, nb_demos, nb_samples, nb_way_points,
                                       planners, feature_fct_, active_joints_,
-                                      move3d_spheres_demo_folder, move3d_spheres_traj_folder, move3d_tmp_data_folder );
+                                      move3d_demo_folder, move3d_traj_folder, move3d_tmp_data_folder );
             eval_->setPlannerType( astar );
         }
         else
         {
-            move3d_tmp_data_folder = move3d_human_trajs_tmp_data_folder;
-
             // Human 2 is the planned human, Human 1 is the recorded motion
             eval_ = new HumanIoc( human2, human1, nb_demos, nb_samples, nb_way_points,
                                  planners, feature_fct_, active_joints_,
-                                 move3d_human_trajs_demo_folder, move3d_human_trajs_traj_folder, move3d_tmp_data_folder );
+                                 move3d_demo_folder, move3d_traj_folder, move3d_tmp_data_folder );
             eval_->setPlannerType( stomp );
         }
 
@@ -245,6 +258,14 @@ bool IocSequences::run()
 
         switch( phase_ )
         {
+        case save_feature_and_demo_size:
+
+            cout << "SAVE FEATURES AND DEMO SIZE" << endl;
+            eval_->loadDemonstrations();
+            cout << "save problem" << endl;
+            eval_->saveNbDemoAndNbFeatures();
+            break;
+
         case generate:
 
             cout << "GENERATE" << endl;
@@ -299,7 +320,7 @@ bool IocSequences::run()
                 cout << "RUN SIMULATION" << endl;
                 eval_->loadWeightVector();
                 eval_->setLearnedWeights();
-                eval_->setOriginalDemoFolder( move3d_human_trajs_demo_folder_originals );
+                eval_->setOriginalDemoFolder( move3d_demo_folder_originals );
                 eval_->setUseSimulator( true );
             }
             else {
