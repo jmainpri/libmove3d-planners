@@ -1,19 +1,24 @@
 #include "HRICS_human_simulator.hpp"
-
+#include "HRICS_human_cost_space.hpp"
+#include "HRICS_play_motion.hpp"
 #include "HRICS_parameters.hpp"
-
-#include "gestures/HRICS_play_motion.hpp"
-#include "gestures/HRICS_gest_parameters.hpp"
+#include "HRICS_play_motion.hpp"
+#include "HRICS_gest_parameters.hpp"
 
 #include "API/project.hpp"
 #include "API/Graphic/drawModule.hpp"
 
+#include "planner/cost_space.hpp"
+#include "planner/planEnvironment.hpp"
 #include "planner/TrajectoryOptim/trajectoryOptim.hpp"
 #include "planner/TrajectoryOptim/Stomp/run_parallel_stomp.hpp"
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 #include "planner/planEnvironment.hpp"
 
 #include "collision_space/collision_space_factory.hpp"
+
+#include <boost/bind.hpp>
+#include <iomanip>
 
 #include <libmove3d/p3d/env.hpp>
 #include <libmove3d/include/Graphic-pkg.h>
@@ -26,6 +31,260 @@ using std::cout;
 using std::endl;
 
 HRICS::HumanTrajSimulator* global_ht_simulator = NULL;
+
+HRICS::HumanTrajCostSpace* global_ht_cost_space = NULL;
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+
+bool HRICS_init_human_trajectory_cost()
+{
+    cout << "---------------------------------------------" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
+    cout << "---------------------------------------------" << endl;
+
+    if( global_ht_cost_space == NULL )
+    {
+        Move3D::Scene* sce = Move3D::global_Project->getActiveScene();
+        Move3D::Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );
+        Move3D::Robot* human2 = sce->getRobotByName( "HERAKLES_HUMAN2" );
+        if( human1 == NULL || human2 == NULL )
+        {
+            cout << "No humans HERAKLES in the the scene" << endl;
+            return false;
+        }
+
+        global_motionRecorders.push_back( new HRICS::RecordMotion( human1 ) );
+        global_motionRecorders.push_back( new HRICS::RecordMotion( human2 ) );
+
+        // std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
+        // Set this bool to false is you want to print file names as they are loaded
+//        bool quiet = true;
+//        global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
+//        global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
+
+
+        global_motionRecorders[0]->useOpenRAVEFormat( true );
+        global_motionRecorders[1]->useOpenRAVEFormat( true );
+
+//        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/quan_motion";
+//        motion_t traj1 = global_motionRecorders[0]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00000_00000.csv" );
+//        motion_t traj2 = global_motionRecorders[1]->loadFromCSV( foldername + "/[1016#-#1112]#motion_saved_00001_00000.csv" );
+//        global_motionRecorders[0]->storeMotion( traj1 );
+//        global_motionRecorders[1]->storeMotion( traj2 );
+
+//        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/kinect_good_motions/good_lib/";
+        std::string foldername = "/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/kinect_good_motions/human_one_good/";
+
+        bool quiet = true;
+
+        global_motionRecorders[0]->loadCSVFolder( foldername + "human_one/", quiet, +0.5 );
+        global_motionRecorders[1]->loadCSVFolder( foldername + "human_two/", quiet, -0.5 );
+
+        cout << "create human traj cost space" << endl;
+
+        global_ht_cost_space = new HRICS::HumanTrajCostSpace( human2, human1 );
+
+        // Set active joints and joint bounds
+        global_ht_simulator = new HRICS::HumanTrajSimulator( global_ht_cost_space );
+        // Set the sampling bounds for the human simulator
+        global_ht_simulator->setPelvisBoundsByUser( HriEnv->getBool(HricsParam::ioc_user_set_pelvis_bounds) );
+        global_ht_simulator->init();
+
+        // Define cost functions
+        cout << " add cost : " << "costHumanTrajectoryCost" << endl;
+        Move3D::global_costSpace->addCost( "costHumanTrajectoryCost", boost::bind( &HumanTrajCostSpace::cost, global_ht_cost_space, _1) );
+    }
+
+    ENV.setBool( Env::isCostSpace, true );
+    Move3D::global_costSpace->setCost( "costHumanTrajectoryCost" );
+
+    if( !global_ht_cost_space->initCollisionSpace() )
+        cout << "Error : could not init collision space" << endl;
+
+    cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
+    global_activeFeatureFunction = global_ht_cost_space;
+
+    return true;
+}
+
+void HRICS_run_human_planning()
+{
+    HRICS_init_human_trajectory_cost();
+
+    HumanTrajSimulator sim( global_ht_cost_space );
+    sim.init();
+    sim.run();
+}
+
+//----------------------------------------------------------------------
+//----------------------------------------------------------------------
+// Human Trajectory Cost Space
+
+HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* passive ) :
+    human_active_(active),
+    human_passive_(passive),
+    smoothness_feat_(),
+    dist_feat_( active, passive ),
+    visi_feat_(active, passive),
+    musc_feat_( active ),
+    collision_feat_( active )
+{
+    cout << "---------------------------------------------" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
+
+    nb_way_points_ = 20;
+
+//    w_ = getFeatures( *human_active_->getCurrentPos() );
+//    smoothness_feat_.setActiveDoFs( acti);
+
+    active_dofs_ = std::vector<int>(1,1);
+
+    length_feat_.setActiveDoFs( active_dofs_ );
+    length_feat_.setWeights( 0.8 * Move3D::WeightVect::Ones( length_feat_.getNumberOfFeatures() ) );
+
+    smoothness_feat_.setActiveDoFs( active_dofs_ );
+    smoothness_feat_.setWeights( Move3D::WeightVect::Ones( smoothness_feat_.getNumberOfFeatures() ) );
+
+    dist_feat_.setActiveDoFs( active_dofs_ );
+    dist_feat_.setWeights( w_distance_16 );
+
+    collision_feat_.setActiveDoFs( active_dofs_ );
+    collision_feat_.setWeights( Move3D::WeightVect::Ones( collision_feat_.getNumberOfFeatures() ) );
+
+    visi_feat_.setActiveDoFs( active_dofs_ );
+    visi_feat_.setWeights( Move3D::WeightVect::Ones( visi_feat_.getNumberOfFeatures() ) );
+
+    musc_feat_.setActiveDoFs( active_dofs_ );
+    musc_feat_.setWeights( Move3D::WeightVect::Ones( musc_feat_.getNumberOfFeatures() ) );
+
+//    if(!addFeatureFunction( &length_feat_ ) ){
+//        cout << "Error adding feature length" << endl;
+//    }
+    if(!addFeatureFunction( &smoothness_feat_ ) ){
+        cout << "Error adding feature smoothness" << endl;
+    }
+//    if(!addFeatureFunction( &collision_feat_ )){
+//        cout << "Error adding feature distance collision" << endl;
+//    }
+    if(!addFeatureFunction( &dist_feat_ )){
+        cout << "Error adding feature distance feature" << endl;
+    }
+//    if(!addFeatureFunction( &visi_feat_ )){
+//        cout << "Error adding feature visbility feature" << endl;
+//    }
+//    if(!addFeatureFunction( &musc_feat_ )){
+//        cout << "Error adding feature musculoskeletal feature" << endl;
+//    }
+
+    w_ = getWeights();
+
+    cout << "w_ = " << w_.transpose() << endl;
+
+    setAllFeaturesActive();
+
+    std::vector<std::string> active_features_names;
+//    active_features_names.push_back("Smoothness");
+    active_features_names.push_back("Length");
+    active_features_names.push_back("Distance");
+    active_features_names.push_back("Visibility");
+    active_features_names.push_back("Musculoskeletal");
+
+    setActiveFeatures( active_features_names );
+
+    printInfo();
+
+    cout << "---------------------------------------------" << endl;
+}
+
+Move3D::FeatureVect HumanTrajCostSpace::normalizing_by_sampling()
+{
+    cout << "---------------------------------------------" << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
+
+    int nb_samples = 10000;
+
+    std::vector<std::string> active_features_names;
+//    active_features_names.push_back("Smoothness");
+//    active_features_names.push_back("Length");
+    active_features_names.push_back("Distance");
+    active_features_names.push_back("Visibility");
+    active_features_names.push_back("Musculoskeletal");
+
+    setActiveFeatures( active_features_names );
+
+    Move3D::FeatureVect phi( Move3D::FeatureVect::Zero(nb_features_) );
+    Move3D::FeatureVect phi_sum( Move3D::FeatureVect::Zero(nb_features_) );
+    Move3D::FeatureVect phi_max( Move3D::FeatureVect::Zero(nb_features_) );
+    Move3D::FeatureVect phi_min( std::numeric_limits<double>::max() * Move3D::FeatureVect::Ones(nb_features_) );
+
+    for (int i=0; i<nb_samples; i++)
+    {
+        Move3D::confPtr_t q = human_active_->shoot();
+        human_active_->setAndUpdate(*q);
+        phi = getFeatures(*q);
+        phi_sum += phi;
+
+        for( int j=0; j<phi.size(); j++ )
+        {
+            if( phi[j] < phi_min[j] )
+                phi_min[j] = phi[j];
+
+            if( phi[j] > phi_max[j] )
+                phi_max[j] = phi[j];
+        }
+//        g3d_draw_allwin_active();
+    }
+
+    phi_sum /= double(nb_samples);
+
+    cout << std::scientific;
+
+//    for (int i=0; i<nb_features_; i++) {
+//        cout << "phi[" << i << "] : " << phi_sum[i] << endl;
+//    }
+
+    cout << "MAX VALUES : " << endl;
+    printFeatureVector( phi_max );
+
+    cout << "MIN VALUES : " << endl;
+    printFeatureVector( phi_min );
+
+    cout << "MEAN VALUES : " << endl;
+    printFeatureVector( phi_sum );
+
+    exit(1);
+    return phi_sum;
+}
+
+HumanTrajCostSpace::~HumanTrajCostSpace()
+{
+
+}
+
+void HumanTrajCostSpace::setPassiveConfig( const Move3D::Configuration& q )
+{
+    human_passive_->setAndUpdate(q);
+}
+
+void HumanTrajCostSpace::setPassiveTrajectory( const motion_t& motion )
+{
+    Move3D::Trajectory t( human_passive_ );
+
+    for(int i=0;i<int(motion.size());i++)
+    {
+        t.push_back( motion[i].second->copy() );
+    }
+    t.cutTrajInSmallLP( nb_way_points_-1 );
+    passive_traj_ = t;
+    passive_traj_.replaceP3dTraj();
+}
+
+//FeatureVect HumanTrajCostSpace::getFeatures(const Configuration& q)
+//{
+//    FeatureVect vect = dist_feat_.getFeatures(q);
+//    return vect;
+//}
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -94,7 +353,7 @@ bool HumanTrajSimulator::init()
     // Store demonstrations, compute pelvis bounds
     // add cut motions
     setReplanningDemonstrations();
-//    addCutMotions();
+    addCutMotions();
 
     // Set the planning bounds
     setPelvisBounds();
@@ -111,6 +370,9 @@ bool HumanTrajSimulator::init()
         global_DrawModule->addDrawFunction( "HumanSimulator", boost::bind( &HumanTrajSimulator::draw, this) );
         global_DrawModule->enableDrawFunction( "HumanSimulator" );
     }
+
+    cout << "pelvis_max_ : " << pelvis_max_.transpose() << endl;
+    cout << "pelvis_min_ : " << pelvis_min_.transpose() << endl;
 
     return true;
 }

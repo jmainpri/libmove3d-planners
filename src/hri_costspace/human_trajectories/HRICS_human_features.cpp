@@ -207,7 +207,7 @@ FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int
     human_active_->setAndUpdate( q );
     FeatureVect count = computeDistances();
 
-    const double base = 2; // Using exp usualy ....
+    const double base = 6; // Using exp usualy ....
     const double max_distance = 0.80; // distance limit when the feature vanishes
     const double factor_distance = 0.16; // max_distance / ( 5 ~ 6 ) -> when the exp(-x) reaches 0
 
@@ -225,8 +225,8 @@ FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int
     //    cout << "dist is : " << dist.transpose() << endl;
     //    cout << "joint dist : " << joints_dist.transpose() << endl;
 
-//    double factor = 7000;
-//    return factor * count; // Scaling factor
+    double factor = 20;
+    return factor * count; // Scaling factor
 
     return count;
 }
@@ -597,8 +597,8 @@ FeatureVect MusculoskeletalFeature::getFeatures(const Configuration& q, std::vec
 //    for(int i=0; i<count.size(); i++) // For all features
 //        count[i] = std::pow( base, count[i] ) - 1; // 1e-3/j_dist;
 
-//    double factor = 100;
-//    return factor * count; // Scaling factor
+    double factor = 8;
+    return factor * count; // Scaling factor
 
     return count;
 }

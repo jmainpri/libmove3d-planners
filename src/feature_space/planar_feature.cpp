@@ -55,6 +55,9 @@ PlanarFeature::PlanarFeature() : Feature("Planar")
     phi_cumul_ = FeatureVect::Ones( getNumberOfFeatures() );
     phi_jac_cumul_ = FeatureVect::Ones( getNumberOfFeatures() );
 
+    scaling_features_ = 1.0;
+    scaling_weight_ = 1.0;
+
     cout << "phi_cumul : " << phi_cumul_.transpose() << endl;
     cout << "phi_cumul_jac : " << phi_jac_cumul_.transpose() << endl;
 }

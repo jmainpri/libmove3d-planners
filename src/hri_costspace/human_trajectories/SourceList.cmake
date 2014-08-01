@@ -4,7 +4,6 @@ BM3D_SRC_SUBDIR_PROCESS(
 HRICS_ioc.cpp
 HRICS_human_features.cpp
 HRICS_human_ioc.cpp
-HRICS_human_cost_space.cpp
 HRICS_detours.cpp
 HRICS_run_multiple_planners.cpp
 HRICS_ioc_sequences.cpp

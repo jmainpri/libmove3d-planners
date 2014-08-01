@@ -85,6 +85,7 @@ void initHricsParameters()
     myBoolMap.insert( std::make_pair( HricsParam::ioc_exit_after_run, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_use_stomp_spetial_cost, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_use_simulation_demos, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_user_set_pelvis_bounds, new boolContainer(false) ));
 
     // Int
     // ------------------------------------------------------------------

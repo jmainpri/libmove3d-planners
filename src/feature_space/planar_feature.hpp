@@ -71,6 +71,9 @@ class PlanarFeature : public Feature
 
         int iter_;
 
+        double scaling_features_;
+        double scaling_weight_;
+
     protected:
         Move3D::Robot* robot_;
         std::vector<Move3D::Robot*> centers_;

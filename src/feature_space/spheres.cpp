@@ -125,6 +125,9 @@ void Spheres::initialize()
         w_[i++] = 8; w_[i++] = 1;  w_[i++] = 30; w_[i++] = 99;  w_[i++] = 99; w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
         w_[i++] =50; w_[i++] = 1; w_[i++] = 1; w_[i++] = 1; w_[i++] = 3; w_[i++] = 1; w_[i++] = 1; w_[i++] = 10;
         w_[i++] = 100; w_[i++] = 100;  w_[i++] = 12; w_[i++] = 10;  w_[i++] = 10; w_[i++] = 10;  w_[i++] = 12; w_[i++] = 10;
+
+        scaling_features_ = 0.1;
+        scaling_weight_ = 1;
     }
 
     if( nb_spheres == 4 )
@@ -135,6 +138,9 @@ void Spheres::initialize()
         w_[i++] = 5;
         w_[i++] = 10;
         w_[i++] = 5;
+
+        scaling_features_ = 1;
+        scaling_weight_ = 1;
     }
 
     if( nb_spheres == 3 )
@@ -153,19 +159,26 @@ void Spheres::initialize()
         w_[i++] = 3;
         w_[i++] = 10;
         w_[i++] = 5;
+
+        scaling_features_ = 3;
+        scaling_weight_ = 1;
     }
 
     if( nb_spheres == 16 )
     {
         placeCenterGrid( true );
-        w_[i++] = 100; w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
-        w_[i++] = 100; w_[i++] = 50;  w_[i++] = 8; w_[i++] = 100;
-        w_[i++] = 100; w_[i++] = 30; w_[i++] = 50; w_[i++] = 100;
-        w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100; w_[i++] = 100;
+        w_[i++] = 100; w_[i++] = 100;   w_[i++] = 100; w_[i++] = 100;
+        w_[i++] = 100; w_[i++] = 50;    w_[i++] = 8; w_[i++] = 100;
+        w_[i++] = 100; w_[i++] = 30;    w_[i++] = 50; w_[i++] = 100;
+        w_[i++] = 100;  w_[i++] = 100;  w_[i++] = 100; w_[i++] = 100;
+
+        scaling_features_ = 1;
+        scaling_weight_ = 1;
     }
 
     double max = w_.maxCoeff();
     w_ /= max;
+    w_ *= scaling_weight_;
 
     setWeights( w_ ); // sets active featues
 
@@ -202,7 +215,7 @@ FeatureVect Spheres::getFeatures( const Configuration& q, std::vector<int> activ
     Eigen::VectorXd x = q.getEigenVector(6,7);
 
     // The factor distance when larger
-    const double factor_distance = 0.3; // 10
+    const double factor_distance = features.size() == 3 ? 0.3 : 10; // 10
     const double factor_height = HriEnv->getDouble(HricsParam::ioc_spheres_power);
 
     for( int i=0; i< int(features.size()); i++ )
@@ -215,6 +228,7 @@ FeatureVect Spheres::getFeatures( const Configuration& q, std::vector<int> activ
     }
 
 //    cout << "phi : " << phi.transpose() << endl;
+//    cout << "w_ : " << w_.transpose() << endl;
 
-    return phi;
+    return FeatureVect( scaling_features_ * phi );
 }

@@ -63,8 +63,8 @@ static std::string move3d_tmp_data_folder;
 
 // Folders for human trajs features
 static std::string move3d_demo_folder_originals;
-//static std::string move3d_human_trajs_demo_folder_originals( move3d_root + "assets/Collaboration/TRAJECTORIES/originals/");
-//static std::string move3d_human_trajs_demo_folder( move3d_root + "assets/Collaboration/TRAJECTORIES/cut_demos/");
+static std::string move3d_human_trajs_demo_folder_originals;
+static std::string move3d_human_trajs_demo_folder_cut;
 
 void ioc_set_sphere_paths()
 {
@@ -78,9 +78,9 @@ void ioc_set_human_paths()
 {
     // Folders for human trajs features
     move3d_demo_folder_originals = move3d_root + "assets/Collaboration/TRAJECTORIES/";
-    //static std::string move3d_human_trajs_demo_folder_originals( move3d_root + "assets/Collaboration/TRAJECTORIES/originals/");
-    //static std::string move3d_human_trajs_demo_folder( move3d_root + "assets/Collaboration/TRAJECTORIES/cut_demos/");
-    move3d_demo_folder = move3d_demo_folder_originals;
+    move3d_human_trajs_demo_folder_originals = move3d_root + "assets/Collaboration/TRAJECTORIES/originals/";
+    move3d_human_trajs_demo_folder_cut = move3d_root + "assets/Collaboration/TRAJECTORIES/cut_demos/";
+    move3d_demo_folder = move3d_human_trajs_demo_folder_cut; // move3d_demo_folder_originals;
     move3d_traj_folder = move3d_root + "move3d-launch/matlab/stomp_trajs/per_feature_human_traj/";
     move3d_tmp_data_folder =  move3d_root + "move3d-launch/matlab/move3d_tmp_data_human_trajs/";
 }
@@ -171,11 +171,6 @@ bool IocSequences::run()
     phase_                  = (phase_t)HriEnv->getInt(HricsParam::ioc_phase);
     cout << "ioc phase : " << phase_ << endl;
 
-    int nb_demos = 1;
-//    int nb_sampling_phase = nb_iterations;
-    //    int min_samples = 10;
-    //    int max_samples = 100;
-
     bool StopRun = false;
     std::vector<Eigen::VectorXd> results;
     int iteration = 0;
@@ -211,18 +206,6 @@ bool IocSequences::run()
     // Main loop
     for(int i=0; i<samples.row(0).size() && !StopRun; i++)
     {
-        // iteration = i; // 2, 5, 30, 50
-
-//        if( single_iteration )
-//            iteration = nb_iterations;
-//        else
-//            iteration = i;
-
-        // interpolation for the number of sampling phase
-        // int nb_samples = min_samples + double(iteration)*(max_samples-min_samples)/double(nb_sampling_phase-1);
-        // int nb_samples = (iteration*100+1);
-//        int nb_samples = (16*(iteration+1))
-        // int nb_samples = (160*(iteration+1));
         int nb_samples = samples.row(0)(i);
 
         cout << "------------------------------" << endl;
@@ -234,6 +217,8 @@ bool IocSequences::run()
 //            delete eval_;
 //        }
         eval_ = NULL;
+
+        int nb_demos = 20;
 
         if( HriEnv->getBool(HricsParam::init_spheres_cost) )
         {
@@ -249,6 +234,9 @@ bool IocSequences::run()
                                  planners, feature_fct_, active_joints_,
                                  move3d_demo_folder, move3d_traj_folder, move3d_tmp_data_folder );
             eval_->setPlannerType( stomp );
+
+            if( use_human_simulation_demo_ )
+                eval_->setUseContext( true );
         }
 
         if( eval_ == NULL){
@@ -283,7 +271,8 @@ bool IocSequences::run()
                 eval_->saveDemoToFile( trajs, context );
             }
             else {
-                eval_->generateDemonstrations();
+                int nb_demos = 20;
+                eval_->generateDemonstrations( nb_demos );
             }
 
             g3d_draw_allwin_active();
@@ -291,6 +280,8 @@ bool IocSequences::run()
 
         case sample:
             cout << "SAMPLE" << endl;
+
+            cout << "global_ht_simulator : " << global_ht_simulator << endl;
 
             setSamplingFeatures();
 
@@ -304,7 +295,7 @@ bool IocSequences::run()
 
             if( sample_from_file )
                 eval_->runFromFileSampling( file_offset );
-            else //cout << "sampling" << endl;
+            else // cout << "sampling" << endl;
                 eval_->runSampling();
 
             g3d_draw_allwin_active();
@@ -524,11 +515,12 @@ void IocSequences::setGenerationFeatures()
         std::vector<std::string> active_features;
 //        active_features.push_back("Length");
         active_features.push_back("Distance");
-//        active_features.push_back("Smoothness");
+        active_features.push_back("Smoothness");
 //        active_features.push_back("Collision");
         feature_fct_->setActiveFeatures( active_features );
 
 //        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.0001 );
+        feature_fct_->getFeatureFunction("Smoothness")->setWeights( PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight) * WeightVect::Ones(1) );
         feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
 
         cout << "stack info" << endl;
@@ -546,13 +538,18 @@ void IocSequences::setSamplingFeatures()
         std::vector<std::string> active_features;
 //        active_features.push_back("Length");
         active_features.push_back("Distance");
-//        active_features.push_back("Smoothness");
-//        active_features.push_back("Collision");
+        active_features.push_back("Smoothness");
+//        active_features.push_back("Visibility");
+////        active_features.push_back("Collision");
+//        active_features.push_back("Musculoskeletal");
 
         feature_fct_->setActiveFeatures( active_features );
 
-//        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.001 );
+        feature_fct_->getFeatureFunction("Smoothness")->setWeights( PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight) * WeightVect::Ones(1) );
         feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
+
+//        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.001 );
+//        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
 
 //        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.7 );
 //        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
@@ -576,11 +573,6 @@ void IocSequences::setSamplingFeatures()
         cout << "original_vect : " << endl;
         feature_fct_->printWeights();
     }
-
-    if( use_human_simulation_demo_ )
-    {
-        eval_->setUseContext( true );
-    }
 }
 
 void IocSequences::setCompareFeatures()
@@ -588,14 +580,15 @@ void IocSequences::setCompareFeatures()
     if( features_type_ == human_trajs && global_ht_cost_space != NULL )
     {
         std::vector<std::string> active_features;
-        active_features.push_back("Length");
-//        active_features.push_back("Smoothness");
+//        active_features.push_back("Length");
+        active_features.push_back("Smoothness");
         active_features.push_back("Distance");
 //        active_features.push_back("Collision");
 
         feature_fct_->setActiveFeatures( active_features );
 
-        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.7 );
+//        feature_fct_->getFeatureFunction("Length")->setWeights( WeightVect::Ones(1) * 0.7 );
+        feature_fct_->getFeatureFunction("Smoothness")->setWeights( PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight) * WeightVect::Ones(1) );
         feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
 
         cout << "stack info" << endl;

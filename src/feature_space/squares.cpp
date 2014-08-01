@@ -380,6 +380,9 @@ FeatureVect Squares::getFeatures( const Configuration& q, std::vector<int> activ
         // cout << "features[" << k << "] = " << features[k] << endl;
     }
 
+    double factor = 0.05;
+    features =  factor * features; // Scaling factor
+
     //    cout << "features.norm() : " << features.norm() << endl;
 
     return features;

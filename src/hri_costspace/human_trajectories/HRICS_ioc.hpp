@@ -137,7 +137,7 @@ public:
 
     //! Generate the sampled trajectories
     //! around the demonstrations
-    bool generateSamples(int nb_samples, bool check_in_collision, context_t context = context_t() );
+    int generateSamples(int nb_samples, bool check_in_collision, context_t context = context_t() );
 
     //! Returns Move3D trajectories
     std::vector< std::vector<Move3D::Trajectory> > getSamples();
@@ -190,7 +190,7 @@ public:
     void runPlannerWeightedFeature( int nb_runs=1 );
 
     //! Generate demonstration using optimal planning
-    void generateDemonstrations();
+    void generateDemonstrations( int nb_demos );
 
     //! Load recorded traectories in the move3d format
     void loadDemonstrations();

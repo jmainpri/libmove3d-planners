@@ -703,7 +703,11 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 //    printControlCosts( control_cost );
 
     double smoothness_factor = PlanEnv->getDouble( PlanParam::trajOptimSmoothFactor ); // * 1000.0; // for IOC, scale the features between 0.1
-    f[0] = smoothness_factor * control_cost_.cost( control_cost );
+    double smoothness_cost = control_cost_.cost( control_cost );
+    f[0] = smoothness_factor * smoothness_cost;
+
+//    cout.precision(6);
+//    cout << "smoothness_cost : " << smoothness_cost << " , smoothness_factor : " << PlanEnv->getDouble( PlanParam::trajOptimSmoothFactor ) << endl;
 
 //    cout.precision(6);
 //    cout << "size (" << mat2.rows() << ", " << mat2.cols() << ") , control cost : "  << f << endl;
@@ -714,7 +718,7 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 void TrajectorySmoothness::setWeights( const WeightVect& w )
 {
     w_ = w;
-//    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
+    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
 }
 
 void TrajectorySmoothness::printControlCosts( const std::vector<Eigen::VectorXd>& control_cost )

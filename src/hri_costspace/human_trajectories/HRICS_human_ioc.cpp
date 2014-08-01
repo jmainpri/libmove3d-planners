@@ -26,7 +26,7 @@
  *                                               Jim Mainprice Tue 27 May 2014 
  */
 #include "HRICS_human_ioc.hpp"
-#include "HRICS_human_cost_space.hpp"
+#include "HRICS_human_simulator.hpp"
 #include "HRICS_play_motion.hpp"
 #include "HRICS_parameters.hpp"
 
@@ -197,54 +197,3 @@ Move3D::Trajectory HumanIoc::getTrajectoryFromMotion( const motion_t& m ) const
 
     return t;
 }
-
-/**
-void HumanIoc::runSampling()
-{
-    // Comment it to generate less demos
-    nb_demos_ = 10;
-
-    ChompPlanningGroup* plangroup = new ChompPlanningGroup( robot_, active_joints_ );
-    std::vector<int> active_dofs = plangroup->getActiveDofs();
-
-    // Create IOC sampling object
-    HRICS::Ioc ioc( nb_way_points_, plangroup );
-
-//    demos_[0].getBegin()->equal( *demos_[0].getEnd(), true );
-
-    // Get features of demos
-    std::vector<FeatureVect> phi_demo( nb_demos_ );
-    for(int i=0;i<nb_demos_;i++)
-    {
-        demos_[i].cutTrajInSmallLP( nb_way_points_-1 );
-        FeatureVect phi = feature_fct_->getFeatureCount( demos_[i] );
-        cout << "Feature Demo : " << endl << phi.transpose() << endl;
-        ioc.addDemonstration( demos_[i].getEigenMatrix( active_dofs ) );
-        cout << "demo : " << endl <<  demos_[i].getEigenMatrix( active_dofs ) << endl;
-        phi_demo[i] = phi;
-    }
-
-    return;
-
-    // Get features of samples
-    ioc.generateSamples( nb_samples_ );
-    std::vector< std::vector<Move3D::Trajectory> > samples = ioc.getSamples();
-    std::vector< std::vector<FeatureVect> > phi_k( samples.size() );
-    for( int d=0;d<int(samples.size());d++)
-    {
-        for( int i=0;i<int(samples[d].size());i++)
-        {
-            phi_k[d].push_back( feature_fct_->getFeatureCount( samples[d][i] ) );
-            cout << "Feature(" << d << "," <<  i << ") : " << phi_k[d].back().transpose() << endl;
-        }
-    }
-
-//    saveToMatrix( phi_demo, phi_k );
-
-//    for( int i=0;i<1;i++)
-//    {
-//        Eigen::VectorXd w = ioc.solve( phi_demo, phi_k );
-//        cout << "w : " << w.transpose() << endl;
-//    }
-}
-*/

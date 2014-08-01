@@ -109,15 +109,15 @@ void PlanGrid::draw()
     // glDisable(GL_LIGHT0);
     // glEnable(GL_CULL_FACE);
 
-    if( !use_given_bounds_ ) {
+//    if( !use_given_bounds_ ) {
         std::pair<double,double> min_max = getMinMaxCost();
         min_cost_ = min_max.first;
         max_cost_ = min_max.second;
-    }
+//    }
 
     // How to display better
-    if( max_cost_ > 100 )
-        max_cost_ = 100;
+//    if( max_cost_ > 100 )
+//        max_cost_ = 100;
 
     if( print_cost_ )
         cout << "c_min : " << min_cost_ << " , c_max : " << max_cost_ << endl;
