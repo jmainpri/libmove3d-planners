@@ -330,7 +330,7 @@ bool RecordMotion::loadXMLFolder(  const std::string& foldername  )
             {
                 //cout << "Load File : " << filename.str() << endl;
                 motion_t partial_motion = loadFromXml( filename.str() );
-                storeMotion( partial_motion, j == 0 );
+                storeMotion( partial_motion, "", j == 0 );
 
                 cout << "partial_motion.size() : " << partial_motion.size() << endl;
 
@@ -445,10 +445,11 @@ void RecordMotion::addToCurrentMotion( const motion_t& motion )
     m_motion.insert( m_motion.end(), motion.begin(), motion.end() );
 }
 
-void RecordMotion::storeMotion( const motion_t& motion, bool new_motion )
+void RecordMotion::storeMotion( const motion_t& motion, std::string name, bool new_motion )
 {
     if( new_motion )
     {
+        m_stored_motions_names.push_back( name );
         m_stored_motions.push_back( motion );
     }
     else
@@ -1058,18 +1059,50 @@ confPtr_t RecordMotion::getConfigOpenRave( const std::vector<std::string>& confi
     std::vector<double> tmp(config.size());
 
     for(int i=0;i<int(config.size());i++)
-    {
         convert_text_to_num<double>( tmp[i], config[i], std::dec );
-    }
 
     confPtr_t q = m_robot->getCurrentPos();
 
-    for( std::map<std::string,int>::iterator it_map=herakles_openrave_map.begin(); it_map!=herakles_openrave_map.end(); it_map++ )
+    for( std::map<std::string,int>::iterator it_map=herakles_openrave_map.begin();
+         it_map!=herakles_openrave_map.end(); it_map++ )
     {
         (*q)[ herakles_move3d_map[it_map->first] ] = tmp[ it_map->second ];
     }
 
     return q;
+}
+
+std::pair<double,confPtr_t> RecordMotion::getConfigBio( const std::vector<std::string>& config )
+{
+    std::vector<double> tmp(config.size());
+
+    for(int i=0;i<int(config.size());i++)
+        convert_text_to_num<double>( tmp[i], config[i], std::dec );
+
+    std::pair<double,confPtr_t> time_config;
+
+    time_config.first = tmp[0];
+
+    confPtr_t q = m_robot->getCurrentPos();
+
+    for( std::map<std::string,int>::iterator it_map=herakles_bio_openrave_map.begin();
+         it_map!=herakles_bio_openrave_map.end(); it_map++ )
+    {
+        (*q)[ herakles_bio_move3d_map[it_map->first] ] = tmp[ it_map->second+1 ]; // Add one for time
+
+//        if ( it_map->first == "rShoulderTransY" ) {
+//            cout << it_map->first << " : " << tmp[ it_map->second+1 ] << endl;
+//        }
+        // TODO REMOVE THAT SHOULDER HACK
+        // Should work on left arm model to avoid seting the shoulder in the parser
+//        if ( it_map->first == "lShoulderX" ) {
+//            (*q)[ herakles_bio_move3d_map[it_map->first] ] = -M_PI/2; // Add one for time
+//        }
+    }
+
+    time_config.second = q;
+
+    return time_config;
 }
 
 confPtr_t RecordMotion::getConfigTwelveDoF( const std::vector<std::string>& config )
@@ -1136,23 +1169,34 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename, bool quiet )
     //    cout << "m_robot->getNumberOfActiveDoF()" << m_robot->getNumberOfActiveDoF() << endl;
     for (int i=0; i<int(matrix.size()); i++)
     {
-        confPtr_t q;
+        std::pair<double,confPtr_t> config;
 
-        if( m_use_or_format )
+        if( m_use_bio_format )
         {
-            q = getConfigOpenRave( matrix[i] );
+             config = getConfigBio( matrix[i] );
+        }
+        else if( m_use_or_format )
+        {
+            confPtr_t q = getConfigOpenRave( matrix[i] );
+            config.first = 0.02;
+            config.second = q;
+            q->adaptCircularJointsLimits();
         }
         else
         {
-            q = getConfigTwelveDoF( matrix[i] );
+            confPtr_t q = getConfigTwelveDoF( matrix[i] );
+            config.first = 0.02;
+            config.second = q;
+            q->adaptCircularJointsLimits();
         }
 
-        // This is because the data was recorded near limits
-        q->adaptCircularJointsLimits();
-        //q->print();
+//        cout << "dt : " << config.first << endl;
+//        config.second->print();
 
-        motion.push_back( std::make_pair(0.02,q) );
+        motion.push_back( config );
     }
+
+//    exit(0);
 
     return motion;
 }

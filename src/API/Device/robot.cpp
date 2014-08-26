@@ -137,6 +137,22 @@ Move3D::Trajectory Robot::getCurrentTraj()
     return Move3DRobotGetCurrentTrajectory(this);
 }
 
+
+const Move3D::Trajectory& Robot::getCurrentMove3DTraj()
+{
+
+}
+
+void Robot::setCurrentMove3DTraj(const Move3D::Trajectory& traj)
+{
+
+}
+
+void Robot::removeCurrentMove3DTraj()
+{
+
+}
+
 unsigned int Robot::getNumberOfDofs() const
 {
     return nb_dofs_;

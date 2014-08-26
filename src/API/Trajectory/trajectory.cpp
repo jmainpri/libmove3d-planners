@@ -67,7 +67,11 @@ Trajectory::Trajectory() :
     m_file(""),
     m_use_continuous_color(false),
     m_Color(0),
-    m_Source(new Configuration(m_Robot,NULL))
+    m_Source(new Configuration(m_Robot,NULL)),
+    m_use_time_parameter(false),
+    m_use_constant_dt(true),
+    m_dt(0.),
+    m_dts(std::vector<double>())
 {
 
 }
@@ -81,7 +85,11 @@ Trajectory::Trajectory(Robot* R) :
     m_file(""),
     m_use_continuous_color(false),
     m_Color(0),
-    m_Source(new Configuration(m_Robot,NULL))
+    m_Source(new Configuration(m_Robot,NULL)),
+    m_use_time_parameter(false),
+    m_use_constant_dt(true),
+    m_dt(0.),
+    m_dts(std::vector<double>())
 {
 
 }
@@ -96,7 +104,11 @@ Trajectory::Trajectory(const Trajectory& T) :
     m_use_continuous_color(T.m_use_continuous_color),
     m_Color(T.m_Color),
     m_Source(T.m_Source),
-    m_Target(T.m_Target)
+    m_Target(T.m_Target),
+    m_use_time_parameter(T.m_use_time_parameter),
+    m_use_constant_dt(T.m_use_constant_dt),
+    m_dt(T.m_dt),
+    m_dts(T.m_dts)
 {
 
     for (size_t i = 0; i<T.m_Courbe.size(); i++)
@@ -134,6 +146,10 @@ Trajectory& Trajectory::operator=(const Trajectory& T)
     m_Color = T.m_Color;
     m_HighestCostId = T.m_HighestCostId;
     m_isHighestCostIdSet = T.m_isHighestCostIdSet;
+    m_use_time_parameter = T.m_use_time_parameter;
+    m_use_constant_dt = T.m_use_constant_dt;
+    m_dt = T.m_dt;
+    m_dts = T.m_dts;
 
     return *this;
 }
@@ -141,7 +157,11 @@ Trajectory& Trajectory::operator=(const Trajectory& T)
 Trajectory::Trajectory( std::vector<confPtr_t>& configs) :
     m_HighestCostId(0),
     m_isHighestCostIdSet(false),
-    m_use_continuous_color(false)
+    m_use_continuous_color(false),
+    m_use_time_parameter(false),
+    m_use_constant_dt(true),
+    m_dt(0.),
+    m_dts(std::vector<double>())
 {
     if ( !configs.empty() )
     {
@@ -178,7 +198,11 @@ Trajectory::Trajectory( std::vector<confPtr_t>& configs) :
     m_Color = 1;
 }
 
-Trajectory::Trajectory(Robot* R, p3d_traj* t)
+Trajectory::Trajectory(Robot* R, p3d_traj* t) :
+    m_use_time_parameter(false),
+    m_use_constant_dt(true),
+    m_dt(0.),
+    m_dts(std::vector<double>())
 {
     m_Courbe.clear();
 
@@ -362,7 +386,7 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt) const
     //	print()
 }
 
-void Trajectory::copyPaths( vector<LocalPath*>& vect )
+void Trajectory::copyPaths( std::vector<LocalPath*>& vect )
 {
     vector<LocalPath*>::iterator it;
 
@@ -445,42 +469,68 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
     //	print()
 }
 
-confPtr_t Trajectory::configAtParam(double param, unsigned int* id_localpath) const
+double Trajectory::getTimeLength() const
 {
-    if(m_Courbe.empty()) {
+    if( m_use_time_parameter &&  m_use_constant_dt )
+    {
+        return m_dt * double(m_Courbe.size());
+    }
+    else {
+        cout << "Not yet implemented" << endl;
+        return 0.;
+    }
+}
+
+confPtr_t Trajectory::configAtTime(double time, unsigned int* id_localpath) const
+{
+    if( m_Courbe.empty() || !m_use_time_parameter )
+        return confPtr_t(new Configuration(m_Robot,NULL));
+
+    if( m_use_constant_dt )
+    {
+        unsigned int path_id = time / m_dt;
+        double alpha = time - double(path_id) * m_dt;
+
+        if( id_localpath != NULL)
+           *id_localpath = path_id;
+
+        return m_Courbe[path_id]->configAtParam( alpha * m_Courbe[path_id]->getParamMax() );
+    }
+    else {
+        cout << "Error: Not yet implemented, " << __PRETTY_FUNCTION__ << endl;
         return confPtr_t(new Configuration(m_Robot,NULL));
     }
+}
+
+confPtr_t Trajectory::configAtParam(double param, unsigned int* id_localpath) const
+{
+    if( m_Courbe.empty() )
+        return confPtr_t(new Configuration(m_Robot,NULL));
 
     double soFar(0.0);
     double prevSoFar(0.0);
-    unsigned int i=0;
 
-    for ( ; i<m_Courbe.size(); i++)
+    for (size_t i; i<m_Courbe.size(); i++)
     {
-        soFar = soFar + m_Courbe.at(i)->getParamMax();
-//        soFar = soFar + p3d_get_env_dmax();
+        soFar = soFar + m_Courbe[i]->getParamMax();
 
-        // Parameter lies in the previous local path
-        // return configuration inside previous LP
+        // Parameter lies in the previous LP return configuration inside previous LP
         if ( param < soFar )
         {
             if ( param < prevSoFar )
-            {
                 cout << "Error: getting Configuration at parameter in trajectory" << endl;
-            }
 
-            if( id_localpath != NULL ) {
+            if ( id_localpath != NULL )
                 *id_localpath = i;
-            }
 
-            return m_Courbe.at(i)->configAtParam( param - prevSoFar );
+            return m_Courbe[i]->configAtParam( param - prevSoFar );
         }
         prevSoFar = soFar;
     }
 
-    if( id_localpath != NULL ) {
+    if( id_localpath != NULL )
         *id_localpath = m_Courbe.size()-1;
-    }
+
     return m_Courbe.back()->configAtParam(param);
 }
 
@@ -850,23 +900,10 @@ double Trajectory::computeSubPortionCostVisib( vector<LocalPath*>& portion )
     return cost;
 }
 
-double Trajectory::collisionCost() const
-{  
-    if (isValid())
-    {
-        return 0.0;
-    }
-    else {
-        return 1000.0;
-    }
-}
-
 double Trajectory::cost() const
 {
     if( !ENV.getBool(Env::isCostSpace) )
-    {
-        return collisionCost();
-    }
+        return isValid() ? 0. : 1000.;
 
     double cost(0.0);
     cost = computeSubPortionCost(m_Courbe);
@@ -878,9 +915,7 @@ double Trajectory::cost() const
 double Trajectory::costRecomputed()
 {
     if( !ENV.getBool(Env::isCostSpace) )
-    {
-        return collisionCost();
-    }
+        return isValid() ? 0. : 1000.;
 
     int nb_test=0;
     return reComputeSubPortionCost(m_Courbe,nb_test);
@@ -889,9 +924,7 @@ double Trajectory::costRecomputed()
 double Trajectory::costNoRecompute()
 {
     if( !ENV.getBool(Env::isCostSpace) )
-    {
-        return collisionCost();
-    }
+        return isValid() ? 0. : 1000.;
 
     return computeSubPortionCost(m_Courbe);
 }
@@ -946,9 +979,7 @@ double Trajectory::costStatistics(TrajectoryStatistics& stat)
 double Trajectory::costDeltaAlongTraj()
 {
     if( !ENV.getBool(Env::isCostSpace) )
-    {
-        return collisionCost();
-    }
+        return isValid() ? 0. : 1000.;
 
     cout << "Sum of LP cost = " << computeSubPortionCost(m_Courbe) << endl;
     Trajectory tmp(*this);

@@ -346,7 +346,7 @@ private:
     //  std::vector<std::vector<KDL::Vector> > collision_point_vel_;
     //  std::vector<std::vector<KDL::Vector> > collision_point_acc_;
 
-    std::vector<std::vector<Eigen::Transform3d> > segment_frames_;
+    std::vector<std::vector<Eigen::Transform3d, Eigen::aligned_allocator<Eigen::Transform3d> > > segment_frames_;
     std::vector<std::vector<Eigen::Vector3d> >  joint_axis_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  joint_pos_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_pos_eigen_;

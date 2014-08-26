@@ -52,22 +52,26 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
     //num_joints_ = robot_model_->getNumberOfJoints();
     num_joints_ = active_joints_.num_joints_;
 
-    // Set duration to external parameter if different from 0.0
-    duration_ = duration != 0.0  ? duration :  T.getParamMax();
+    // Set duration to external parameter if not equal 0.0
+    uses_time_ = ( duration != 0.0 ) ;
+    duration_ = uses_time_ ? duration : T.getParamMax();
 
-    int number_inital_points = T.getNbOfPaths()+1;
+    int number_inital_points = T.getNbOfViaPoints();
 
     // figure out the num_points_:
     // we need diff_rule_length-1 extra points on either side:
     int start_extra = (diff_rule_length - 1);
     int end_extra = (diff_rule_length - 1);
 
-    num_points_ = (T.getNbOfPaths()+1) + start_extra + end_extra;
+    num_points_ = number_inital_points + start_extra + end_extra;
 
     start_index_ = diff_rule_length - 1;
     end_index_ = (num_points_ - 1) - (diff_rule_length - 1);
     //duration_ = (num_points_ - 1)*discretization_;
-    discretization_ = duration_/double(num_points_-1);
+
+    // WARNING, integration is performed over number of points and not paths...
+    // each point is supposed centered on an interval
+    discretization_ = duration_ / double( T.getNbOfViaPoints() ); // getNbOfPaths
 
     // allocate the memory:
     init();

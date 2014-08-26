@@ -863,7 +863,7 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
 
     TrajectorySmoothness smooth;
     smooth.setActiveDoFs( planning_group_->getActiveDofs() );
-    cout << "smooth.getFeatureCount( best_traj_ ) = " << ((stomp_parameters_->getSmoothnessCostWeight()/PlanEnv->getDouble( PlanParam::trajOptimSmoothFactor ))
+    cout << "smooth.getFeatureCount( best_traj_ ) = " << (( stomp_parameters_->getSmoothnessCostWeight() / PlanEnv->getDouble( PlanParam::trajOptimSmoothFactor ) )
             * smooth.getFeatureCount( best_traj_ )) << endl;
 
     StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
@@ -874,41 +874,41 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
 
         cout << "distance cost : " << fct->getFeatureFunction("Distance")->costTraj( best_traj_ );
         cout << " , Features " << fct->getFeatureFunction("Distance")->getFeatureCount( best_traj_ ).transpose() << endl;
-    }
 
-    FeatureVect phi(FeatureVect::Zero(fct->getFeatureFunction("Distance")->getNumberOfFeatures()));
+        FeatureVect phi(FeatureVect::Zero(fct->getFeatureFunction("Distance")->getNumberOfFeatures()));
 
-    confPtr_t q_1, q_2;
-    int nb_via_points = best_traj_.getNbOfViaPoints();
-    double dist = best_traj_[0]->dist( *best_traj_[1] );
+        confPtr_t q_1, q_2;
+        int nb_via_points = best_traj_.getNbOfViaPoints();
+        double dist = best_traj_[0]->dist( *best_traj_[1] );
 
-    Eigen::VectorXd costs( Eigen::VectorXd::Zero( nb_via_points ) );
-    Eigen::VectorXd dts( Eigen::VectorXd::Zero( nb_via_points ) );
+        Eigen::VectorXd costs( Eigen::VectorXd::Zero( nb_via_points ) );
+        Eigen::VectorXd dts( Eigen::VectorXd::Zero( nb_via_points ) );
 
-    for (int i=1; i<nb_via_points+1; i++)
-    {
-        q_1 = best_traj_[i-1];
-        phi += ( fct->getFeatureFunction( "Distance" )->getFeatures( *q_1 ) * dist );
-
-        costs[i-1] = ( fct->getFeatureFunction("Distance")->getWeights().transpose() * fct->getFeatureFunction( "Distance" )->getFeatures( *q_1 ) );
-        costs[i-1] *= dist;
-
-        dts[i-1] = dist;
-
-        if( i < nb_via_points )
+        for (int i=1; i<nb_via_points+1; i++)
         {
-            q_2 = best_traj_[i];
-            dist = q_1->dist( *q_2 );
+            q_1 = best_traj_[i-1];
+            phi += ( fct->getFeatureFunction( "Distance" )->getFeatures( *q_1 ) * dist );
+
+            costs[i-1] = ( fct->getFeatureFunction("Distance")->getWeights().transpose() * fct->getFeatureFunction( "Distance" )->getFeatures( *q_1 ) );
+            costs[i-1] *= dist;
+
+            dts[i-1] = dist;
+
+            if( i < nb_via_points )
+            {
+                q_2 = best_traj_[i];
+                dist = q_1->dist( *q_2 );
+            }
         }
+
+        performForwardKinematics();
+
+        // cout << "costs 2 : " << costs.transpose() << endl;
+        // cout << "dts 2 : " << dts.transpose() << endl;
+        // cout << "general features : " <<  phi.transpose() << endl;
+        cout << "general cost 1 : " << getGeneralCost() << endl;
+        cout << "general cost 2 : " << fct->getFeatureFunction("Distance")->getWeights().transpose() * phi << endl;
     }
-
-    performForwardKinematics();
-
-    // cout << "costs 2 : " << costs.transpose() << endl;
-    // cout << "dts 2 : " << dts.transpose() << endl;
-    // cout << "general features : " <<  phi.transpose() << endl;
-    cout << "general cost 1 : " << getGeneralCost() << endl;
-    cout << "general cost 2 : " << fct->getFeatureFunction("Distance")->getWeights().transpose() * phi << endl;
 
     // Set this anywhere
     //    if( PlanEnv->getBool(PlanParam::drawParallelTraj) && ( global_stompRun != NULL ))
@@ -1208,9 +1208,13 @@ double StompOptimizer::getCollisionCost()
     
     double worst_collision_cost = 0.0;
     worst_collision_cost_state_ = -1;
+
+    double time = 0.;
+    int nb_points = 0;
     
     // collision costs:
-    for (int i=free_vars_start_; i<=free_vars_end_; i++)
+    // WARNING, integration is performed over number of points and not paths...
+    for (int i=free_vars_start_; i <= free_vars_end_; i++)
     {
         double state_collision_cost = 0.0;
 
@@ -1228,12 +1232,18 @@ double StompOptimizer::getCollisionCost()
 
         collision_cost += ( state_collision_cost * dt_[i] );
 
+        nb_points++;
+        time +=  dt_[i];
+
         if (state_collision_cost > worst_collision_cost)
         {
             worst_collision_cost = state_collision_cost;
             worst_collision_cost_state_ = i;
         }
     }
+
+    cout << "time length : " << time << " , collision_cost : " << collision_cost << ", nb of points : " << nb_points << endl;
+//    cout << "dt : " << dt_.transpose() << endl;
     
     return stomp_parameters_->getObstacleCostWeight() * collision_cost;
 }
@@ -1251,6 +1261,7 @@ double StompOptimizer::getGeneralCost()
 
     double time = 0.0;
 
+    // WARNING, integration is performed over number of points and not paths...
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
         // general_cost += ( pow( general_cost_potential_(i) , hack_tweek )  * dt_[i] );
@@ -1259,7 +1270,7 @@ double StompOptimizer::getGeneralCost()
         general_cost += costs[i];
     }
 
-    // cout << "time length : " << time << " , general_cost : " << general_cost << endl;
+//    cout << "time length : " << time << " , general_cost : " << general_cost << endl;
 
     // cout << "dt : " << dt_.transpose() << endl;
     // cout << "dt : " << dt_.segment( free_vars_start_, free_vars_end_-free_vars_start_ ).transpose() << endl;
@@ -1298,6 +1309,7 @@ void StompOptimizer::getCostProfiles( vector<double>& smoothness_cost, vector<do
     general_cost.resize(free_vars_end_-free_vars_start_,0.0);
 
     // collision and general costs
+    // WARNING, integration is performed over number of points and not paths...
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
         double state_smoothness_cost = 0.0;
@@ -1655,7 +1667,8 @@ bool StompOptimizer::performForwardKinematics()
             is_collision_free_ = false;
         }
 
-        dt_[i] = ( i == start ) ? group_trajectory_.getDiscretization() : q.dist( q_prev ); // TODO have time here
+        dt_[i] = group_trajectory_.getUseTime() || ( i == start ) ? group_trajectory_.getDiscretization() : q.dist( q_prev );
+
         q_prev = q; // store configuration
         q = *source_; // Make sure dofs are set to source
     }
@@ -2010,6 +2023,12 @@ void StompOptimizer::setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj )
     // source_->setConstraints();
     
     //traj.push_back( source_ );
+
+    if( group_trajectory_.getUseTime() ) {
+        traj.setUseTimeParameter( true );
+        traj.setUseConstantTime( true );
+        traj.setDeltaTime( group_trajectory_.getDiscretization() ); // WARNING here use detla time
+    }
     
     for (int i=start; i<=end; ++i) // Because we add source and target we start later
     {

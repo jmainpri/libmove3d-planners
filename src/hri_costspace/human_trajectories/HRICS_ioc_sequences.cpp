@@ -218,7 +218,7 @@ bool IocSequences::run()
 //        }
         eval_ = NULL;
 
-        int nb_demos = 20;
+        int nb_demos = 1;
 
         if( HriEnv->getBool(HricsParam::init_spheres_cost) )
         {
@@ -271,7 +271,6 @@ bool IocSequences::run()
                 eval_->saveDemoToFile( trajs, context );
             }
             else {
-                int nb_demos = 20;
                 eval_->generateDemonstrations( nb_demos );
             }
 

@@ -79,7 +79,7 @@ void PlayMotion::play( const std::vector<std::string>& filepaths )
 
     for (int i=0; i<int(filepaths.size()); i++)
     {
-        _motion_recorders[i]->storeMotion( _motion_recorders[i]->loadFromCSV(filepaths[i]), true );
+        _motion_recorders[i]->storeMotion( _motion_recorders[i]->loadFromCSV(filepaths[i]), "", true );
     }
 
     play(0);
@@ -97,6 +97,7 @@ void PlayMotion::play(int id)
 void PlayMotion::runRealTime(int id)
 {
     if( _motion_recorders.empty() && _stored_motions.empty() ) {
+        cout << "no stored motions to play" << endl;
         return;
     }
 
@@ -105,6 +106,8 @@ void PlayMotion::runRealTime(int id)
     double tu_last = 0.0;
     double dt = 0.0;
     double time = 0.0;
+
+    cout << "start playback" << endl;
 
     while( !StopRun )
     {
@@ -146,6 +149,7 @@ void PlayMotion::runRealTime(int id)
                         i++;
                     }
                     if( i >= _stored_motions[j][id].size() ){
+                        cout << "reach end of trajectory" << endl;
                         StopRun = true;
                     }
                 }
@@ -165,6 +169,7 @@ void PlayMotion::runRealTime(int id)
         //        }
 
         if ( PlanEnv->getBool(PlanParam::stopPlanner) ) {
+            cout << "stopped by user" << endl;
             StopRun = true;
         }
 

@@ -8,6 +8,8 @@
 // Copyright: See COPYING file that comes with this distribution
 //
 //
+#include "localpath.hpp"
+
 #include "planner/cost_space.hpp"
 #include "planner/planEnvironment.hpp"
 

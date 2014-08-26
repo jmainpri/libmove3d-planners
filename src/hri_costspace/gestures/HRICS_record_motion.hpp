@@ -98,12 +98,13 @@ public:
     motion_t invertTranslation( const motion_t& motion );
     Move3D::confPtr_t getConfigOpenRave( const std::vector<std::string>& config );
     Move3D::confPtr_t getConfigTwelveDoF( const std::vector<std::string>& config );
+    std::pair<double,Move3D::confPtr_t> getConfigBio( const std::vector<std::string>& config );
     motion_t loadFromCSV( const std::string& filename, bool quiet = false );
     void loadXMLFolder();
     bool loadXMLFolder( const std::string& foldername  );
     void loadCSVFolder( const std::string& foldername, bool quiet = false, double threshold=0.0 );
 
-    void storeMotion( const motion_t& motion, bool new_motion = true);
+    void storeMotion( const motion_t& motion, std::string name, bool new_motion = true);
     void addToCurrentMotion( const motion_t& motion );
     void saveToCSV( const std::string &filename, const motion_t& motion);
     void saveStoredToCSV( const std::string &filename, bool break_into_files );
@@ -140,6 +141,7 @@ public:
     }
 
     void useOpenRAVEFormat( bool use_or_format ) { m_use_or_format = use_or_format; }
+    void useBioFormat( bool use_bio_format ) { m_use_bio_format = use_bio_format; }
 
     void setOffsetValue( double x, double y, double z, double rot ) { m_transX = x; m_transY = y; m_transY = z; m_transR = rot; }
     Eigen::Transform3d getOffsetTransform();
@@ -162,6 +164,7 @@ private:
     std::vector<std::string> m_stored_motions_names;
     int m_ith_shown_motion;
     bool m_use_or_format;
+    bool m_use_bio_format;
 
     // offset
     double m_transX;

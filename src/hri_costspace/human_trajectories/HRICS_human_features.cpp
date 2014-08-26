@@ -579,7 +579,7 @@ MusculoskeletalFeature::MusculoskeletalFeature( Move3D::Robot* active ) :
 
     w_ = w_musculo_03;
 
-    if( global_DrawModule && draw_features )
+    if( global_DrawModule && draw_features && ( active->getJoint("rShoulderZ") != NULL ) ) // TODO fix for bio models if not a bio model
     {
         global_DrawModule->addDrawFunction( "HumanMusculoskeletal", boost::bind( &MusculoskeletalFeature::draw, this) );
         global_DrawModule->enableDrawFunction( "HumanMusculoskeletal" );
@@ -613,6 +613,7 @@ Move3D::FeatureVect MusculoskeletalFeature::computeMusculoskeletalEffort() const
 void MusculoskeletalFeature::draw()
 {
     natural_cost_->setRobotColorFromConfiguration();
+    cout << "draw natural cost" << endl;
 }
 
 //------------------------------------------------------------------------------------------------

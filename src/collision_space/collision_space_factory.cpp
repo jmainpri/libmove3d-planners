@@ -472,32 +472,76 @@ void traj_optim_hrics_human_trajectory_manip_init_joints()
 {
     // Set the active joints (links)
 
-    m_active_joints.clear();
-    m_active_joints.push_back( 1 ); // Pelvis
-//    m_active_joints.push_back( 2 ); // TorsoX
-//    m_active_joints.push_back( 3 ); // TorsoY
-    m_active_joints.push_back( 4 ); // TorsoZ
-    m_active_joints.push_back( 8 ); // rShoulderX
-    m_active_joints.push_back( 9 ); // rShoulderZ
-    m_active_joints.push_back( 10 ); // rShoulderY
-//    m_active_joints.push_back( 11 ); // rArmTrans
-    m_active_joints.push_back( 12 ); // rElbowZ
-//    active_joints_.push_back(14); // joint name : rWristX
-//    active_joints_.push_back(15); // joint name : rWristY
-    m_active_joints.push_back(16); // joint name : rWristZ
+    if( m_robot->getJoint("rShoulderZ") != NULL ) // Kinect case
+    {
+        m_active_joints.clear();
+        m_active_joints.push_back( 1 ); // Pelvis
+        //    m_active_joints.push_back( 2 ); // TorsoX
+        //    m_active_joints.push_back( 3 ); // TorsoY
+        m_active_joints.push_back( 4 ); // TorsoZ
+        m_active_joints.push_back( 8 ); // rShoulderX
+        m_active_joints.push_back( 9 ); // rShoulderZ
+        m_active_joints.push_back( 10 ); // rShoulderY
+        //    m_active_joints.push_back( 11 ); // rArmTrans
+        m_active_joints.push_back( 12 ); // rElbowZ
+        //    active_joints_.push_back(14); // joint name : rWristX
+        //    active_joints_.push_back(15); // joint name : rWristY
+        m_active_joints.push_back(16); // joint name : rWristZ
 
-    // Set the planner joints
-    m_planner_joints.clear();
-    m_planner_joints.push_back( 1 );
-    m_planner_joints.push_back( 2 );
-    m_planner_joints.push_back( 3 );
-    m_planner_joints.push_back( 4 );
-    m_planner_joints.push_back( 8 );
-    m_planner_joints.push_back( 9 );
-    m_planner_joints.push_back( 10 );
-    m_planner_joints.push_back( 11 );
-    m_planner_joints.push_back( 12 );
-//    m_planner_joints.push_back( 13 );
+        // Set the planner joints
+        m_planner_joints.clear();
+        m_planner_joints.push_back( 1 );
+        m_planner_joints.push_back( 2 );
+        m_planner_joints.push_back( 3 );
+        m_planner_joints.push_back( 4 );
+        m_planner_joints.push_back( 8 );
+        m_planner_joints.push_back( 9 );
+        m_planner_joints.push_back( 10 );
+        m_planner_joints.push_back( 11 );
+        m_planner_joints.push_back( 12 );
+        //    m_planner_joints.push_back( 13 );
+    }
+    else {
+        m_active_joints.clear();
+        m_active_joints.push_back( m_robot->getJoint( "Pelvis" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "TorsoX" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "TorsoZ" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "TorsoY" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rShoulderY1" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rShoulderX" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rShoulderY2" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rShoulderTransX" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rShoulderTransY" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rShoulderTransZ" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rArmTrans" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rElbowZ" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rElbowX" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rElbowY" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "lPoint" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rWristZ" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rWristX" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rWristY" )->getId() );
+
+        m_planner_joints.clear();
+        m_planner_joints.push_back( m_robot->getJoint( "Pelvis" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "TorsoX" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "TorsoZ" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "TorsoY" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rShoulderY1" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rShoulderX" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rShoulderY2" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rShoulderTransX" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rShoulderTransY" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rShoulderTransZ" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rArmTrans" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rElbowZ" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rElbowX" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rElbowY" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "lPoint" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rWristZ" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rWristX" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rWristY" )->getId() );
+    }
 
     global_collSpace = NULL;
 }

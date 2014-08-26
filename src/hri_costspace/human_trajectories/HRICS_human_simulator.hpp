@@ -81,6 +81,8 @@ private:
 
     Move3D::LengthFeature length_feat_;
     Move3D::TrajectorySmoothness smoothness_feat_;
+
+    bool use_bio_models_;
 };
 
 }
@@ -142,6 +144,7 @@ private:
     void setPelvisBounds();
     void updateDofBounds(bool& initialized, Move3D::confPtr_t q_tmp);
     void setReplanningDemonstrations();
+    void setInitAndGoalConfig();
     void setHumanColor( Move3D::Robot* human, int color);
     void setActiveJoints();
     void addCutMotions();
@@ -202,11 +205,18 @@ private:
     bool is_pelvis_bound_user_defined_;
     Eigen::VectorXd pelvis_max_;
     Eigen::VectorXd pelvis_min_;
+    Eigen::VectorXd shoulder_trans_max_;
+    Eigen::VectorXd shoulder_trans_min_;
     double arm_min_;
     double arm_max_;
+    double forearm_min_;
+    double forearm_max_;
+
     int minimal_demo_size_;
     bool trajectories_cut_;
     int cut_step_;
+
+    bool use_bio_models_;
 };
 
 }

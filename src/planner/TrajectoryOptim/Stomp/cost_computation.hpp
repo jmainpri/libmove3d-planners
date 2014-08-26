@@ -75,7 +75,7 @@ private:
 
     bool use_costspace_;
     std::vector<int> state_is_in_collision_;
-    std::vector< std::vector< Eigen::Transform3d > > segment_frames_;
+    std::vector< std::vector< Eigen::Transform3d, Eigen::aligned_allocator<Eigen::Transform3d> > > segment_frames_;
     std::vector< std::vector<Eigen::Vector3d> >  joint_axis_eigen_;
     std::vector< std::vector<Eigen::Vector3d> >  joint_pos_eigen_;
     std::vector< std::vector<Eigen::Vector3d> >  collision_point_pos_eigen_;

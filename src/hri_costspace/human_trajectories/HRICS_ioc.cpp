@@ -504,13 +504,13 @@ int Ioc::generateSamples( int nb_samples, bool check_in_collision, context_t con
 
     int nb_of_invalid_samples = 0;
 
-    for (int d=0; d<nb_demos; ++d)
+    for( int d=0; d<nb_demos; ++d )
     {
         cout << "Generating samples for demonstration : " << d << endl;
 
         samples_[d].resize( nb_samples );
 
-        for( int i=0;i<int(context.size());i++)
+        for( int i=0; i<int(context.size()); i++ )
         {
             Move3D::Robot* entity = context[i][d]->getRobot();
             entity->setAndUpdate( *context[i][d] );
@@ -528,12 +528,12 @@ int Ioc::generateSamples( int nb_samples, bool check_in_collision, context_t con
             do
             {
                 // Sample noisy trajectory
-                Eigen::MatrixXd noisy_traj = sampler_.sample(noise_stddev_);
+                Eigen::MatrixXd noisy_traj = sampler_.sample( noise_stddev_ );
 
-                for (int j=0; j<num_joints_; ++j)
+                for( int j=0; j<num_joints_; ++j )
                 {
                     // Change to generate samples around demonstration
-                    if( HriEnv->getBool(HricsParam::ioc_sample_around_demo))
+                    if( HriEnv->getBool(HricsParam::ioc_sample_around_demo) )
                         samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].parameters_[j];
                     else
                         samples_[d][ns].nominal_parameters_[j] = demonstrations_[d].straight_line_[j]; // TODO why commented
@@ -544,9 +544,9 @@ int Ioc::generateSamples( int nb_samples, bool check_in_collision, context_t con
 
                 /*is_valid =*/ jointLimits( samples_[d][ns] );
 
-                if( check_in_collision ) {
-                    is_valid = samples_[d][ns].getMove3DTrajectory( planning_group_ ).isValid();
-                }
+//                if( check_in_collision ) {
+//                    is_valid = samples_[d][ns].getMove3DTrajectory( planning_group_ ).isValid();
+//                }
             }
             // Commented for humans
             while( (!is_valid) && ( nb_failed++ < 10 ) );
@@ -1396,6 +1396,8 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
         phi_demo[d] = phi;
     }
 
+    demos_[0].replaceP3dTraj();
+
     return phi_demo;
 }
 
@@ -1524,6 +1526,9 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
     // Get demos features
     phi_demos_ = addDemonstrations( ioc );
 
+//    cout << "Set demo" << endl;
+//    return std::vector< std::vector<Move3D::Trajectory> >();
+
 //    demos_[0].saveToFile( "tmp_demo_save_to_file_4.csv" );
 //    demos_[0].replaceP3dTraj();
 
@@ -1583,7 +1588,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
     {
         if( use_context_ ){
 
-            for( int i=0;i<int(context_.size());i++)
+            for( int i=0; i<int(context_.size()); i++ )
             {
                 Move3D::Robot* entity = context_[i][d]->getRobot();
                 entity->setAndUpdate( *context_[i][d] );
@@ -1603,8 +1608,8 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
                 nb_lower_cost++;
             if( samples[d][i].getParamMax() < demos_[d].getParamMax() )
                 nb_shorter++;
-            if( !samples[d][i].isValid() )
-                nb_in_collision++;
+//            if( !samples[d][i].isValid() )
+//                nb_in_collision++;
 
             // cout << "cost : " << cost << " , ";
             //            cout.precision(4);

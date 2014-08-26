@@ -245,9 +245,9 @@ void print_joint_mapping( Move3D::Robot* robot )
 
         for( size_t j=0; j<robot->getJoint(i)->getNumberOfDof(); j++)
         {
-            cout << "jnt->getName() : " << robot->getJoint(i)->getName() << "(" <<i<< ") , ";
-            cout << "index_dof : " << robot->getJoint(i)->getIndexOfFirstDof()+j << endl;
-            //cout << "move3d_map[\"" << rob->getJoint(i)->getName() << "\"]=" << rob->getJoint(i)->getIndexOfFirstDof()+j << ";" << endl;
+//            cout << "jnt->getName() : " << robot->getJoint(i)->getName() << "(" <<i<< ") , ";
+//            cout << "index_dof : " << robot->getJoint(i)->getIndexOfFirstDof()+j << endl;
+            cout << "move3d_map[\"" << robot->getJoint(i)->getName() << "\"]=" << robot->getJoint(i)->getIndexOfFirstDof()+j << ";" << endl;
         }
     }
 }

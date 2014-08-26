@@ -170,12 +170,20 @@ public:
     int getFullTrajectoryIndex(int i) const;
 
     /**
-   * \brief Gets the joint velocities at the given trajectory point
-   */
+     * \brief Gets the joint velocities at the given trajectory point
+     */
     template <typename Derived>
     void getJointVelocities(int traj_point, Eigen::MatrixBase<Derived>& velocities);
 
+    /**
+     * \brief Gets the duration of the trajectory
+     */
     double getDuration() const;
+
+    /**
+     * \brief Returns true if the trajectory is time parametrized
+     */
+    bool getUseTime() const { return uses_time_; }
 
     // Returns the Move3d robot
     //  Robot* getRobot() { return robot_model_; }
@@ -197,6 +205,7 @@ private:
     int start_index_;                                     /**< Start index (inclusive) of trajectory to be optimized (everything before it will not be modified) */
     int end_index_;                                       /**< End index (inclusive) of trajectory to be optimized (everything after it will not be modified) */
     std::vector<int> full_trajectory_index_;              /**< If this is a "group" trajectory, the index from the original traj which each element here was copied */
+    bool uses_time_;                                      /**< True if the trajectory is defined with time */
 };
 
 ///////////////////////// inline functions follow //////////////////////

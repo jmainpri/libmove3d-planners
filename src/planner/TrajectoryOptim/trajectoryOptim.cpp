@@ -77,8 +77,6 @@ static Move3D::Trajectory m_external_trajectory;
 static bool m_discretize=false;
 static double m_discretization=0.0;
 
-static double m_duration=0.0;
-
 // Extern collision space
 extern CollisionSpace* global_collSpace;
 
@@ -319,7 +317,7 @@ bool traj_optim_runChomp()
     m_chompplangroup = new ChompPlanningGroup( m_robot, traj_optim_get_planner_joints() );
     m_chompplangroup->collision_points_ = traj_optim_get_collision_points();
 
-    m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup, m_duration );
+    m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup, PlanEnv->getDouble(PlanParam::trajDuration) );
     m_chomptraj->print();
     cout << "chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
     cout << "Initialize optimizer" << endl;
@@ -365,7 +363,7 @@ bool traj_optim_initStomp()
     m_chompplangroup = new ChompPlanningGroup( m_robot, traj_optim_get_planner_joints() );
     m_chompplangroup->collision_points_ = traj_optim_get_collision_points();
 
-    m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup, m_duration );
+    m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup, PlanEnv->getDouble(PlanParam::trajDuration) );
     //m_chomptraj->print();
     cout << "Chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
 
@@ -510,11 +508,6 @@ void traj_optim_set_discretize( bool discretize )
 void traj_optim_set_discretization( double discretization )
 {
     m_discretization = discretization;
-}
-
-void traj_optim_set_traj_duration(double duration)
-{
-    m_duration = duration;
 }
 
 // --------------------------------------------------------
