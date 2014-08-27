@@ -25,12 +25,6 @@
  *
  *                                               Jim Mainprice Tue 27 May 2014 
  */
-/*
- * smoothing.hpp
- *
- *  Created on: Jun 26, 2009
- *      Author: jmainpri
- */
 
 #ifndef BASEOPTIMIZATION_HPP_
 #define BASEOPTIMIZATION_HPP_
