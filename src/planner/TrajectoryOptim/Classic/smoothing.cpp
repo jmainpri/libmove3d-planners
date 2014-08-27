@@ -25,12 +25,6 @@
  *
  *                                               Jim Mainprice Tue 27 May 2014 
  */
-/*
- * Smoothing.cpp
- *
- *  Created on: Jun 26, 2009
- *      Author: jmainpri
- */
 #include "smoothing.hpp"
 
 #include "API/Device/robot.hpp"
