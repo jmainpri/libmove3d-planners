@@ -25,12 +25,6 @@
  *
  *                                               Jim Mainprice Tue 27 May 2014 
  */
-/*
- * CostOptimization.cpp
- *
- *  Created on: Jun 25, 2009
- *      Author: jmainpri
- */
 
 #include "costOptimization.hpp"
 

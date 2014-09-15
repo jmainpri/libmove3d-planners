@@ -25,12 +25,6 @@
  *
  *                                               Jim Mainprice Tue 27 May 2014 
  */
-/*
- * costOptimization.hpp
- *
- *  Created on: Jun 25, 2009
- *      Author: jmainpri
- */
 
 #ifndef COST_OPTIMIZATION_HPP_
 #define COST_OPTIMIZATION_HPP_
