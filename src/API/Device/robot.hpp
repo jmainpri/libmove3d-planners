@@ -271,6 +271,12 @@ public:
     bool isInCollisionWithOthersAndEnv();
 
     /**
+     * Returns true if the robot is
+     * in colision with robots
+     */
+    bool isInCollisionWithOthers( std::vector<Move3D::Robot*>& others );
+
+    /**
       * Robot to environment distance
       */
     double distanceToEnviroment();
@@ -417,6 +423,7 @@ void move3d_set_fct_robot_set_and_update_multi_sol( boost::function<bool( Move3D
 void move3d_set_fct_robot_without_constraints( boost::function<void( Move3D::Robot*, const Move3D::Configuration& q )> fct );
 void move3d_set_fct_robot_is_in_collision( boost::function<bool( Move3D::Robot* )> fct );
 void move3d_set_fct_robot_is_in_collision_with_others_and_env( boost::function<bool( Move3D::Robot* )> fct );
+void move3d_set_fct_robot_is_in_collision_with_others( boost::function<bool( Move3D::Robot*, std::vector<Move3D::Robot*>& )> fct );
 void move3d_set_fct_robot_distance_to_env( boost::function<double( Move3D::Robot* )> fct ) ;
 void move3d_set_fct_robot_distance_to_robot( boost::function<double( Move3D::Robot*, Move3D::Robot* )> fct );
 void move3d_set_fct_robot_get_init_pos( boost::function<Move3D::confPtr_t( Move3D::Robot* )> fct );

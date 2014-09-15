@@ -155,7 +155,7 @@ public:
                                      const double weight, std::vector<Eigen::VectorXd>& control_costs);
 
     bool computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices, const std::vector<Eigen::VectorXd>& parameters,
-                             const std::vector<Eigen::VectorXd>& noise, const double weight, std::vector<Eigen::VectorXd>& control_costs);
+                             const std::vector<Eigen::VectorXd>& noise, const double weight, std::vector<Eigen::VectorXd>& control_costs, double dt = 0.0);
 
     // Functions inherited from LibraryItem:
 
@@ -166,6 +166,16 @@ public:
     bool readFromDisc(const std::string abs_file_name);
     bool writeToDisc(const std::string abs_file_name);
     std::string getFileName(const int trial_id);
+
+    //! Save all costs profiles
+    void saveProfiles( const std::vector<Eigen::VectorXd>& parameters, std::string filename );
+
+    //! Return all costs
+    Eigen::VectorXd getAllCosts( const std::vector<Eigen::VectorXd>& parameters, double dt=0.0 );
+
+    //! set buffer with previous trajectory
+    void setBuffer( const std::vector<Eigen::VectorXd>& buffer ) { buffer_ = buffer; use_buffer_ = true; }
+    void clearBuffer() { use_buffer_ = false; }
 
 
     double movement_dt_;
@@ -206,6 +216,8 @@ private:
 
     Eigen::VectorXd start_;
     Eigen::VectorXd goal_;
+    bool use_buffer_;
+    std::vector<Eigen::VectorXd> buffer_;
 
     void createDifferentiationMatrices();
     bool readParameters();

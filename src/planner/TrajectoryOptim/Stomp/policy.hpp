@@ -131,7 +131,7 @@ public:
                                      const double weight, std::vector<Eigen::VectorXd>& control_costs) = 0;
 
     virtual bool computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices, const std::vector<Eigen::VectorXd>& parameters,
-                             const std::vector<Eigen::VectorXd>& noise, const double weight, std::vector<Eigen::VectorXd>& control_costs) = 0;
+                             const std::vector<Eigen::VectorXd>& noise, const double weight, std::vector<Eigen::VectorXd>& control_costs, double dt=0.0) = 0;
 
 };
 

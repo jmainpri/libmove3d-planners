@@ -380,10 +380,10 @@ FeatureVect CollisionFeature::getFeatures(const Configuration& q, std::vector<in
     FeatureVect count( FeatureVect::Zero( 1 ) );
     count[0] = getCollisionCost( q );
 
-    const double base = 2; // Using exp usualy ....
+//    const double base = 2; // Using exp usualy ....
 
-    for(int i=0; i<count.size(); i++) // For all features
-        count[i] = std::pow( base, count[0] );
+//    for(int i=0; i<count.size(); i++) // For all features
+//        count[i] = std::pow( base, count[0] );
 
 //    double factor = 10;
 //    return factor * count; // Scaling factor

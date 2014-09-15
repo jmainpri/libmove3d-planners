@@ -51,8 +51,13 @@ const double DIFF_RULES[NUM_DIFF_RULES][DIFF_RULE_LENGTH] = {
 ControlCost::ControlCost()
 {
     diff_rule_length_ = DIFF_RULE_LENGTH;
-    type_ = acc; // Becareful to match covariant_trajectory_policy
+    type_ = vel; // Becareful to match covariant_trajectory_policy
     scaling_ = 100;
+}
+
+void ControlCost::setType(int type)
+{
+    type_ = cost_type(type);
 }
 
 int ControlCost::getDiffRuleLength()
@@ -82,7 +87,7 @@ double ControlCost::cost( const Eigen::MatrixXd& traj )
 }
 
 
-std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::MatrixXd& traj )
+std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::MatrixXd& traj, double dt )
 {
     // num of collums is the dimension of state space
     // num of rows is the length of the trajectory
@@ -98,8 +103,6 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
     // cout << "traj : " << endl << traj << endl;
 
     const double weight = 1.0;
-
-    int type = type_;
 
     // this measures the velocity and squares them
     for ( int d=0; d<traj.rows(); ++d )
@@ -129,8 +132,11 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
                     continue;
 
                 // 0 should be velocity
-                acc_all[i] += (params_all[index]*DIFF_RULES[type][j+diff_rule_length_/2]);
+                acc_all[i] += (params_all[index]*DIFF_RULES[type_][j+diff_rule_length_/2]);
             }
+
+            if( dt != 0.0 )
+                acc_all[i] /= std::pow( dt, double(type_+1) );
         }
 
         // cout << "params_all.size() : " << params_all.size() << endl;
@@ -143,6 +149,16 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
     }
 
     return control_costs; // scaling
+}
+
+void ControlCost::fillTrajectoryWithBuffer( const Eigen::VectorXd& b, Eigen::MatrixXd& traj )
+{
+    // set the start and end of the trajectory
+    for (int i=0; i<diff_rule_length_-1; ++i)
+    {
+        traj.col(i) = buffer_.col(i);
+        traj.col(traj.cols()-1-i) = b;
+    }
 }
 
 void ControlCost::fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj )

@@ -82,12 +82,12 @@ namespace stomp_motion_planner
         return cost;
     }
 
-    void Rollout::printCost(double weight)
+    void Rollout::printCost( double weight )
     {
         double control_cost = 0.0;
 
         for (int d=0; d<int(control_costs_.size()); ++d)
-            control_cost += ( control_costs_[d].sum() / weight );
+            control_cost += ( control_costs_[d].sum() );
 
 //        cout.precision(6);
 //        cout << "control cost : " << control_cost << " , state cost : " << state_costs_.sum() << endl;
@@ -162,6 +162,7 @@ namespace stomp_motion_planner
                                        const int num_extra_rollouts,
                                        MOVE3D_BOOST_PTR_NAMESPACE<Policy> policy,
                                        MOVE3D_BOOST_PTR_NAMESPACE<Task>   task,
+                                       double discretization,
                                        bool use_cumulative_costs)
     {
         num_time_steps_ = num_time_steps;
@@ -169,6 +170,7 @@ namespace stomp_motion_planner
         use_multiplication_by_m_ = PlanEnv->getBool(PlanParam::trajStompMultiplyM);
         policy_ = policy;
         task_ = task;
+        discretization_ = discretization;
 
         policy_->setNumTimeSteps(num_time_steps_);
         policy_->getControlCosts(control_costs_);
@@ -183,7 +185,7 @@ namespace stomp_motion_planner
         //assert(preComputeProjectionMatrices());
 
 
-        cout << "num_reused_rollouts : " << num_reused_rollouts << endl;
+//        cout << "num_reused_rollouts : " << num_reused_rollouts << endl;
 
         preAllocateMultivariateGaussianSampler();
         setNumRollouts( num_rollouts, num_reused_rollouts, num_extra_rollouts );
@@ -726,7 +728,7 @@ namespace stomp_motion_planner
     bool PolicyImprovement::computeRolloutControlCosts(Rollout& rollout)
     {
         policy_->computeControlCosts(control_costs_, rollout.parameters_,
-                                     rollout.noise_projected_, control_cost_weight_, rollout.control_costs_);
+                                     rollout.noise_projected_, control_cost_weight_ / 1e9, rollout.control_costs_, discretization_ );
         return true;
     }
 

@@ -40,13 +40,16 @@
 #include <Eigen/LU>
 #include <Eigen/Core>
 #include <Eigen/Array>
-#include <sstream>
-#include <stdio.h>
 
 #include "Util-pkg.h"
 
 #include "planner/planEnvironment.hpp"
 #include "utils/misc_functions.hpp"
+
+#include <sstream>
+#include <stdio.h>
+#include <iomanip>
+#include <fstream>
 
 using namespace std;
 using namespace Move3D;
@@ -82,13 +85,17 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
                                            const std::vector<double>& derivative_costs,
                                            const ChompPlanningGroup* planning_group)
 {
-    type_ = acc; // Match control cost
+//    type_ = vel; // Match control cost
+    type_ = acc;
+//    type_ = jerk;
 
     //node_handle_ = node_handle;
     //print_debug_ = true;
     
     num_time_steps_ = num_time_steps;
     num_dimensions_ = num_dimensions;
+
+    use_buffer_ = false;
     
     if(PlanEnv->getBool(PlanParam::useSelectedDuration))
     {
@@ -157,7 +164,12 @@ bool CovariantTrajectoryPolicy::fillBufferStartAndGoal()
         // set the start and end of the trajectory
         for (int i=0; i<DIFF_RULE_LENGTH-1; ++i)
         {
-            parameters_all_[d](i) = start_(d);
+            if( use_buffer_ ){
+                parameters_all_[d](i) = buffer_[i](d);
+            }
+            else
+                parameters_all_[d](i) = start_(d);
+
             parameters_all_[d](num_vars_all_-1-i) = goal_(d);
         }
     }
@@ -243,8 +255,8 @@ bool CovariantTrajectoryPolicy::initializeVariables()
     for (int d=0; d<num_dimensions_; ++d)
         num_parameters_.push_back(num_time_steps_);
     
-    cerr << "parameters_all_.resize : num_dimensions_ : " << num_dimensions_ << endl;
-    cerr << "parameters_all_.resize : num_vars_all_ : " << num_vars_all_ << endl;
+//    cerr << "parameters_all_.resize : num_dimensions_ : " << num_dimensions_ << endl;
+//    cerr << "parameters_all_.resize : num_vars_all_ : " << num_vars_all_ << endl;
     parameters_all_.resize(num_dimensions_, Eigen::VectorXd::Zero(num_vars_all_));
     
     return true;
@@ -255,6 +267,7 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices()
     double multiplier = 1.0;
     differentiation_matrices_.clear();
     differentiation_matrices_.resize( NUM_DIFF_RULES, Eigen::MatrixXd::Zero(num_vars_all_, num_vars_all_) );
+
     for (int d=0; d<NUM_DIFF_RULES; ++d)
     {
         if( print_debug_ )
@@ -283,7 +296,7 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices()
 //        }
     }
 
-    move3d_save_matrix_to_file( differentiation_matrices_[0], "matlab/vel_diff_matrix.txt" );
+//    move3d_save_matrix_to_file( differentiation_matrices_[0], "matlab/vel_diff_matrix.txt" );
 }
 
 bool CovariantTrajectoryPolicy::initializeCosts()
@@ -373,7 +386,7 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
 bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices,
                                                     const std::vector<Eigen::VectorXd>& parameters,
                                                     const std::vector<Eigen::VectorXd>& noise,
-                                                    const double weight, std::vector<Eigen::VectorXd>& control_costs)
+                                                    const double weight, std::vector<Eigen::VectorXd>& control_costs, double dt)
 {
     fillBufferStartAndGoal();
 
@@ -416,12 +429,19 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
                     acc_all[i] += (params_all[index]*DIFF_RULES[(int)type_][j+DIFF_RULE_LENGTH/2]);
 //                }
             }
+
+            if( dt != 0.0 ) // Devide by time step
+                acc_all[i] /= std::pow( dt, double(type_+1) );
         }
 
         costs_all = ( acc_all.cwise()*acc_all );
         costs_all *= weight;
 
         control_costs[d] = costs_all.segment( free_vars_start_index_, num_vars_free_ );
+
+
+//        control_costs[d][0] = 0.0;
+//        control_costs[d].tail(1) = Eigen::VectorXd::Zero( 1 );
 
 //        cout.precision(2);
 //        cout << "params_all.transpose() [" << d <<  "] =" <<  params_all.transpose() << endl;
@@ -528,6 +548,87 @@ bool CovariantTrajectoryPolicy::updateParameters(const std::vector<Eigen::Matrix
     //    }
     
     return true;
+}
+
+Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen::VectorXd>& parameters, double dt )
+{
+    std::vector<Eigen::MatrixXd> control_cost_matrices;
+    std::vector<Eigen::VectorXd> noise( parameters.size() );
+    std::vector<Eigen::VectorXd> control_costs( parameters.size() );
+    Eigen::VectorXd costs( Eigen::VectorXd::Zero(4) );
+
+    for (int d=0; d<parameters.size(); ++d)
+        noise[d] = Eigen::VectorXd::Zero( parameters[d].size() );
+
+    cost_type type_tmp = type_;
+
+    type_ = vel;
+    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs, dt );
+    for (int d=0; d<parameters.size(); ++d)
+        costs[1] += control_costs[d].sum();
+    costs[1] /= 1e4;
+
+    type_ = acc;
+    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs, dt );
+    for (int d=0; d<parameters.size(); ++d)
+        costs[2] += control_costs[d].sum();
+    costs[2] /= 1e9;
+
+    type_ = jerk;
+    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs, dt );
+    for (int d=0; d<parameters.size(); ++d)
+        costs[3] += control_costs[d].sum();
+    costs[3] /= 1e13;
+
+    type_ = type_tmp;
+
+    return costs;
+}
+
+void CovariantTrajectoryPolicy::saveProfiles( const std::vector<Eigen::VectorXd>& parameters, std::string foldername )
+{
+
+    std::vector<Eigen::MatrixXd> control_cost_matrices;
+    std::vector<Eigen::VectorXd> noise( parameters.size() );
+    std::vector<Eigen::VectorXd> control_costs( parameters.size() );
+
+    for (int d=0; d<parameters.size(); ++d)
+    {
+        noise[d] = Eigen::VectorXd::Zero( parameters[d].size() );
+    }
+
+    cost_type type_tmp = type_;
+
+    foldername += "/";
+
+    type_ = vel;
+    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs );
+    for (int d=0; d<parameters.size(); ++d)
+    {
+        std::stringstream ss;
+        ss << "stomp_vel_"  << std::setw(3) << std::setfill( '0' ) << d << ".txt";
+        move3d_save_matrix_to_file( control_costs[d], foldername + ss.str() );
+    }
+
+    type_ = acc;
+    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs );
+    for (int d=0; d<parameters.size(); ++d)
+    {
+        std::stringstream ss;
+        ss << "stomp_acc_"  << std::setw(3) << std::setfill( '0' ) << d << ".txt";
+        move3d_save_matrix_to_file( control_costs[d], foldername + ss.str() );
+    }
+
+    type_ = jerk;
+    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs );
+    for (int d=0; d<parameters.size(); ++d)
+    {
+        std::stringstream ss;
+        ss << "stomp_jerk_"  << std::setw(3) << std::setfill( '0' ) << d << ".txt";
+        move3d_save_matrix_to_file( control_costs[d], foldername + ss.str() );
+    }
+
+    type_ = type_tmp;
 }
 
 bool CovariantTrajectoryPolicy::readFromDisc(const std::string directory_name, const int item_id, const int trial_id)

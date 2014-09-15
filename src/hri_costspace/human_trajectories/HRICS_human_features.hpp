@@ -29,6 +29,7 @@
 #define HRICS_HUMANFEATURES_HPP
 
 #include "feature_space/features.hpp"
+#include "feature_space/smoothness.hpp"
 
 #include "hri_costspace/HRICS_distance.hpp"
 #include "hri_costspace/HRICS_visibility.hpp"

@@ -88,6 +88,7 @@ std::pair<double,double> PlanGrid::getMinMaxCost()
 
 void PlanGrid::draw()
 {
+//    return;
     if( robot_ == 0x00 )
     {
         std::cout << "Error : PlanGrid::draw() => No Robot "  << std::endl;

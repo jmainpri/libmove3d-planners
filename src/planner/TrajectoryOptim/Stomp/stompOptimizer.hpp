@@ -275,6 +275,12 @@ public:
       */
     const std::vector<Move3D::Trajectory>& getAllTrajs() const { return all_move3d_traj_; }
 
+    /**
+      * Set trajectory buffer
+      */
+    void setBuffer(const std::vector<Eigen::VectorXd>& buffer) { buffer_ = buffer; use_buffer_ = true; }
+    void clearBuffer() { use_buffer_ = false ; }
+
 private:
 
     int id_;
@@ -288,6 +294,7 @@ private:
     std::vector<Move3D::Trajectory> all_move3d_traj_;
     Move3D::Trajectory move3d_traj_;
     Move3D::Trajectory best_traj_;
+    Move3D::Trajectory last_traj_;
 
     int num_joints_;
     int num_vars_free_;
@@ -352,6 +359,9 @@ private:
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_pos_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_vel_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_acc_eigen_;
+
+    std::vector<Eigen::VectorXd> buffer_;
+    bool use_buffer_;
 
     Eigen::VectorXd general_cost_potential_;
     Eigen::VectorXd dt_;

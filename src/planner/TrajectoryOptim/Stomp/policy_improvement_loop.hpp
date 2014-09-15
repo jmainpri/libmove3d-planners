@@ -62,7 +62,7 @@ public:
 
 //    bool initializeAndRunTaskByName(/*ros::NodeHandle& node_handle,*/ std::string& task_name);
 
-    bool initialize(MOVE3D_BOOST_PTR_NAMESPACE<Task> task, bool singleRollout);
+    bool initialize(MOVE3D_BOOST_PTR_NAMESPACE<Task> task, bool singleRollout, double discretization );
     bool runSingleIteration(int iteration_number);
   
     /**

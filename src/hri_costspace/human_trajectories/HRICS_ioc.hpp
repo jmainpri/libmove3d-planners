@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "feature_space/features.hpp"
+#include "feature_space/smoothness.hpp"
 
 #include "HRICS_run_multiple_planners.hpp"
 
@@ -48,19 +49,19 @@ typedef std::vector<std::vector<Move3D::confPtr_t> > context_t;
 //! Trajectory structure
 struct IocTrajectory
 {
-    IocTrajectory() { }
-    IocTrajectory( int nb_joints, int nb_var );
+    IocTrajectory() : discretization_(0.0) { }
+    IocTrajectory( int nb_joints, int nb_var, double discretization );
 
     std::vector<Eigen::VectorXd> nominal_parameters_;               /**< [num_dimensions] num_parameters */
     std::vector<Eigen::VectorXd> parameters_;                       /**< [num_dimensions] num_parameters */
     std::vector<Eigen::VectorXd> noise_;                            /**< [num_dimensions] num_parameters */
-    std::vector<Eigen::VectorXd> noise_projected_;                  /**< [num_dimensions][num_time_steps] num_parameters */
-    std::vector<Eigen::VectorXd> parameters_noise_projected_;       /**< [num_dimensions][num_time_steps] num_parameters */
     std::vector<Eigen::VectorXd> control_costs_;                    /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> total_costs_;                      /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> cumulative_costs_;                 /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> probabilities_;                    /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> straight_line_;                    /**< [num_dimensions] num_parameters */
+
+    double discretization_;                                         /**< time discretization */
 
     Eigen::VectorXd state_costs_;                                   /**< num_time_steps */
     Eigen::VectorXd feature_count_;                                 /**< num_features */
@@ -119,7 +120,7 @@ public:
     Ioc( int num_vars, const Move3D::ChompPlanningGroup* planning_group );
 
     //! Add a trajectory to the set of demonstrated trajectories
-    bool addDemonstration(const Eigen::MatrixXd& demo);
+    bool addDemonstration( const Eigen::MatrixXd& demo, double discretization );
 
     //! Add a trajectory to the set of sample trajectories
     //! @param d is the id of the demonstration
@@ -156,6 +157,9 @@ public:
     int getNbOfDemonstrations() { return demonstrations_.size(); }
 
 private:
+
+    bool isTrajectoryValid( const IocTrajectory& traj );
+
     std::vector< IocTrajectory > demonstrations_;
     std::vector< std::vector<IocTrajectory> > samples_;
     double noise_stddev_;
@@ -222,6 +226,9 @@ public:
     //! Save demo to file
     void saveDemoToFile(const std::vector<Move3D::Trajectory>& demos, std::vector<Move3D::confPtr_t> context = std::vector<Move3D::confPtr_t>());
 
+    //! Save samples to files
+    void saveSamplesToFile(const std::vector< std::vector<Move3D::Trajectory> >& samples ) const;
+
     virtual void setLearnedWeights();
     virtual void setOriginalWeights();
 
@@ -278,6 +285,9 @@ protected:
 
     //! Returns trajectory that best fits
     Move3D::Trajectory selectBestSample( double detla_mean, const std::vector<Move3D::Trajectory>& trajs );
+
+    //! Returns true if the trajectory is valid
+    bool isTrajectoryValid( Move3D::Trajectory& path );
 
     Move3D::Robot* robot_;
     int nb_demos_;

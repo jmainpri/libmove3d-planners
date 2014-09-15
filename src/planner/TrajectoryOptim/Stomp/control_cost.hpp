@@ -38,6 +38,9 @@ class ControlCost
 public:
     ControlCost();
 
+    //! Set type of quantity
+    void setType(int type);
+
     //! Returns the diff rule between
     int getDiffRuleLength();
 
@@ -48,10 +51,13 @@ public:
     double cost( const std::vector<Eigen::VectorXd>& control_costs );
 
     //! Returns the squared vel, acc or jerk
-    std::vector<Eigen::VectorXd> getSquaredQuantities( const Eigen::MatrixXd& traj );
+    std::vector<Eigen::VectorXd> getSquaredQuantities( const Eigen::MatrixXd& traj, double dt=0.0 );
 
     //! sets the start and end points in the trajectory
     void fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj );
+
+    //! set buffer with previous trajectory
+    void fillTrajectoryWithBuffer( const Eigen::VectorXd& b, Eigen::MatrixXd& traj );
 
     //! resample the matrix rows
     Eigen::MatrixXd resample( const Eigen::MatrixXd& m, int nb_points ) const;
@@ -62,10 +68,14 @@ public:
     //! interpolate between configurations
     Eigen::VectorXd interpolate( const Eigen::VectorXd& a, const Eigen::VectorXd& b, double u ) const;
 
+    //! Set buffer with initial trajectory
+    void setBuffer( const Eigen::MatrixXd& buffer ) { buffer_ = buffer; }
+
 protected:
     enum cost_type { vel=0, acc=1, jerk=2 } type_;
     int diff_rule_length_;
     double scaling_;
+    Eigen::MatrixXd buffer_;
 };
 
 #endif // CONTROL_COST_HPP

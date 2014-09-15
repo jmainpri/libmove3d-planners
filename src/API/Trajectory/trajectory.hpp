@@ -118,7 +118,7 @@ public:
     bool cutTrajInSmallLPSimple(unsigned int nLP);
     uint cutPortionInSmallLP(std::vector<LocalPath*>& portion, uint nLP);
 
-    void push_back(confPtr_t q);
+    bool push_back(confPtr_t q);
     bool push_back(MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> path);
 
     //---------------------------------------------------------
@@ -154,7 +154,7 @@ public:
         m_use_time_parameter = use_time;
     }
 
-    bool getUseTimeParameter() {
+    bool getUseTimeParameter() const {
         return m_use_time_parameter;
     }
 
@@ -162,7 +162,7 @@ public:
         m_use_constant_dt = use_cst_time;
     }
 
-    bool getUseConstantTime() {
+    bool getUseConstantTime() const {
         return m_use_constant_dt;
     }
 
@@ -170,8 +170,8 @@ public:
         m_dt = dt;
     }
 
-    double getDeltaTime() {
-        return m_dt;
+    double getDeltaTime() const {
+        return m_use_time_parameter && m_use_constant_dt ? m_dt : 0.0;
     }
 
     void setDeltaTimes(const std::vector<double>& dts) {

@@ -486,10 +486,15 @@ confPtr_t Trajectory::configAtTime(double time, unsigned int* id_localpath) cons
     if( m_Courbe.empty() || !m_use_time_parameter )
         return confPtr_t(new Configuration(m_Robot,NULL));
 
+    if( time >= getTimeLength() )
+        return m_Target;
+
     if( m_use_constant_dt )
     {
         unsigned int path_id = time / m_dt;
         double alpha = time - double(path_id) * m_dt;
+
+//        cout << time << " , " << getTimeLength() << " , "  <<  path_id << endl;
 
         if( id_localpath != NULL)
            *id_localpath = path_id;
@@ -657,7 +662,7 @@ bool Trajectory::isValid() const
 {
     for (size_t i=0; i< m_Courbe.size(); i++)
     {
-        if (!m_Courbe[i]->isValid())
+        if( !m_Courbe[i]->isValid() )
         {
 //            cout <<"LocalPath["<<i<<"] = "<< m_Courbe[i]->getNbColTest()  << ", size : " << m_Courbe.size() << endl;
             return false;
@@ -1719,13 +1724,16 @@ bool Trajectory::push_back(shared_ptr<LocalPath> path)
     return true;
 }
 
-void Trajectory::push_back( confPtr_t q )
+bool Trajectory::push_back( confPtr_t q )
 {
+    bool add_config = false;
+
     if( m_Courbe.empty() )
     {
         if( m_Source->getConfigStruct() == NULL )
         {
             m_Source = q;
+            add_config = true;
         }
         else
         {
@@ -1733,7 +1741,10 @@ void Trajectory::push_back( confPtr_t q )
             {
                 m_Courbe.push_back( new LocalPath( m_Source, q ));
                 m_Target = q;
+                add_config = true;
             }
+//            else
+//                cout << "source equal q" << endl;
         }
     }
     else
@@ -1742,8 +1753,13 @@ void Trajectory::push_back( confPtr_t q )
         {
             m_Courbe.push_back( new LocalPath( m_Target, q ));
             m_Target = q;
+            add_config = true;
         }
+//        else
+//            cout << "target equal q" << endl;
     }
+
+    return add_config;
 }
 
 bool Trajectory::cutTrajInSmallLPSimple(unsigned int nLP)
@@ -2411,15 +2427,49 @@ bool Trajectory::saveToFile(std::string filename) const
 {
     std::vector<int> r_dof_indices = m_Robot->getAllDofIds();
     Eigen::MatrixXd mat = getEigenMatrix( r_dof_indices );
+
+    Eigen::MatrixXd mat_time( mat.rows(), mat.cols() + 1 );
+    mat_time.block( 0,  1, mat.rows(), mat.cols() ) = mat;
+
+    for( int i=0; i<mat.rows(); i++ )
+    {
+        if( m_use_time_parameter && m_use_constant_dt )
+            mat_time(i,0) = m_dt;
+        else
+            mat_time(i,0) = -1.;
+    }
+
     // cout << mat << endl;
-    move3d_save_matrix_to_csv_file( mat, filename );
+    move3d_save_matrix_to_csv_file( mat_time, filename );
     return true;
+}
+
+void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove)
+{
+    unsigned int numRows = matrix.rows();
+    unsigned int numCols = matrix.cols()-1;
+
+    if( colToRemove < numCols )
+        matrix.block(0,colToRemove,numRows,numCols-colToRemove) = matrix.block(0,colToRemove+1,numRows,numCols-colToRemove);
+
+    matrix.conservativeResize(numRows,numCols);
 }
 
 bool Trajectory::loadFromFile(std::string filename)
 {
     std::vector<int> r_dof_indices = m_Robot->getAllDofIds();
+
     Eigen::MatrixXd mat = move3d_load_matrix_from_csv_file( filename );
+
+    if( mat(0,0) != -1. ){
+        m_use_time_parameter = true;
+        m_use_constant_dt = true;
+        m_dt = mat(0,0);
+        removeColumn( mat, 0 );
+    }
+
+    cout << "mat(0,0) : " << mat(0,0) << endl;
+
     // cout << mat << endl;
     setFromEigenMatrix( mat, r_dof_indices );
     return true;

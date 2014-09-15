@@ -408,6 +408,10 @@ void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet, dou
                 }
             }
         }
+        else {
+            m_stored_motions.push_back( motion );
+            m_stored_motions_names.push_back( files[i] );
+        }
 
         //        std::string filename( files[i].substr( 0, files[i].find_last_of(".") - 1 ) + "1.csv" );
         //        std::string path = foldername + "/" + filename;

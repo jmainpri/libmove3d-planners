@@ -77,6 +77,9 @@ static Move3D::Trajectory m_external_trajectory;
 static bool m_discretize=false;
 static double m_discretization=0.0;
 
+static bool m_use_buffer;
+static std::vector<Eigen::VectorXd> m_buffer;
+
 // Extern collision space
 extern CollisionSpace* global_collSpace;
 
@@ -394,6 +397,11 @@ bool traj_optim_initStomp()
         global_optimizer->setUseCostSpace( true );
     }
 
+    if( m_use_buffer )
+    {
+        global_optimizer->setBuffer( m_buffer );
+    }
+
     cout << "Optimizer created" << endl;
 
     GlobalCostSpace::initialize();
@@ -508,6 +516,17 @@ void traj_optim_set_discretize( bool discretize )
 void traj_optim_set_discretization( double discretization )
 {
     m_discretization = discretization;
+}
+
+void traj_optim_clear_buffer()
+{
+    m_use_buffer = false;
+}
+
+void traj_optim_set_buffer( const std::vector<Eigen::VectorXd>& buffer )
+{
+    m_use_buffer = true;
+    m_buffer = buffer;
 }
 
 // --------------------------------------------------------

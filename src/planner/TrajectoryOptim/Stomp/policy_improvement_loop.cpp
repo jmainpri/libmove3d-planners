@@ -77,7 +77,7 @@ namespace stomp_motion_planner
 
     }
 
-    bool PolicyImprovementLoop::initialize(MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Task> task, bool singleRollout )
+    bool PolicyImprovementLoop::initialize(MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Task> task, bool singleRollout, double discretization )
     {
         //node_handle_ = node_handle;
         task->getPolicy(policy_);
@@ -110,7 +110,11 @@ namespace stomp_motion_planner
         //    int num_extra_rollouts = 2;
         int num_extra_rollouts = 1;
 
-        policy_improvement_.initialize( num_rollouts_, num_time_steps_, num_reused_rollouts_, num_extra_rollouts, policy_, task_, use_cumulative_costs_);
+//        cout << "wait for key" << endl;
+//        std::cin.ignore();
+
+        policy_improvement_.initialize( num_rollouts_, num_time_steps_, num_reused_rollouts_,
+                                        num_extra_rollouts, policy_, task_, discretization, use_cumulative_costs_ );
 
         tmp_rollout_cost_ = Eigen::VectorXd::Zero(num_time_steps_);
         rollout_costs_ = Eigen::MatrixXd::Zero( num_rollouts_, num_time_steps_ );

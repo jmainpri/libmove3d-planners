@@ -70,37 +70,26 @@ using std::cin;
 // -------------------------------------------------------------
 // -------------------------------------------------------------
 
-IocTrajectory::IocTrajectory( int nb_joints, int nb_var  )
+IocTrajectory::IocTrajectory( int nb_joints, int nb_var, double discretization )
 {
     //    cout << "nb_joints : " << nb_joints << endl;
     //    cout << "nb_var : " << nb_var << endl;
 
+    discretization_ = discretization;
+
     nominal_parameters_.clear();
     parameters_.clear();
     noise_.clear();
-    noise_projected_.clear();
-    parameters_noise_projected_.clear();
-
     control_costs_.clear();
     total_costs_.clear();
-    cumulative_costs_.clear();
-    probabilities_.clear();
 
     for (int d=0; d<nb_joints; ++d)
     {
         nominal_parameters_.push_back( Eigen::VectorXd::Zero( nb_var ) );
         parameters_.push_back( Eigen::VectorXd::Zero( nb_var ) );
-        noise_projected_.push_back( Eigen::VectorXd::Zero( nb_var ) );
         noise_.push_back( Eigen::VectorXd::Zero( nb_var ) );
-        parameters_noise_projected_.push_back( Eigen::VectorXd::Zero(nb_var) );
-
         control_costs_.push_back( Eigen::VectorXd::Zero(nb_var) );
-        // Todo use own structure
         total_costs_.push_back( 0.2 * Eigen::VectorXd::Ones(nb_var) );
-        cumulative_costs_.push_back( Eigen::VectorXd::Zero(nb_var) );
-        probabilities_.push_back( Eigen::VectorXd::Zero(nb_var) );
-
-        //        cout << "init parameters : " << parameters_.back().transpose() << endl;
     }
     state_costs_ = Eigen::VectorXd::Zero(nb_var);
     out_of_bounds_ = false;
@@ -120,6 +109,12 @@ Move3D::Trajectory IocTrajectory::getMove3DTrajectory( const ChompPlanningGroup*
 
     // Create move3d trajectory
     Move3D::Trajectory T( rob );
+
+    if( discretization_ != 0.0 ){
+        T.setUseTimeParameter( true );
+        T.setUseConstantTime( true );
+        T.setDeltaTime( discretization_ );
+    }
 
     for ( int j=0; j<parameters_[0].size(); ++j )
     {
@@ -285,7 +280,7 @@ Ioc::Ioc( int num_vars, const ChompPlanningGroup* planning_group ) :
     sampler_.initialize();
 }
 
-bool Ioc::addDemonstration( const Eigen::MatrixXd& demo )
+bool Ioc::addDemonstration( const Eigen::MatrixXd& demo, double discretization )
 {
     if( num_joints_ != demo.rows() || num_vars_ != demo.cols() )
     {
@@ -296,7 +291,7 @@ bool Ioc::addDemonstration( const Eigen::MatrixXd& demo )
         return false;
     }
 
-    IocTrajectory t( num_joints_, num_vars_ );
+    IocTrajectory t( num_joints_, num_vars_, discretization );
 
     for(int i=0;i<int(t.parameters_.size());i++)
     {
@@ -326,7 +321,7 @@ bool Ioc::addSample( int d, const Eigen::MatrixXd& sample )
         return false;
     }
 
-    IocTrajectory t( num_joints_, num_vars_ );
+    IocTrajectory t( num_joints_, num_vars_, demonstrations_[d].discretization_ );
 
     for(int i=0;i<int(t.parameters_.size());i++)
     {
@@ -496,6 +491,35 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
 //    }
 //}
 
+bool Ioc::isTrajectoryValid( const IocTrajectory& traj )
+{
+    Move3D::Trajectory path = traj.getMove3DTrajectory( planning_group_ );
+    Move3D::Robot* robot = path.getRobot();
+    Move3D::Scene* sce = global_Project->getActiveScene();
+
+
+    std::vector<Move3D::Robot*> others;
+    for( int i=0; i<sce->getNumberOfRobots(); i++ )
+    {
+        std::string robot_name = sce->getRobot(i)->getName();
+
+        if( robot_name != robot->getName() && robot_name.find("HUMAN") == std::string::npos) {
+            others.push_back( sce->getRobot(i) );
+//            cout << "Add robot " << robot_name << " to others" << endl;
+        }
+    }
+
+    for( int i=0; i<path.getNbOfViaPoints(); i++ )
+    {
+        robot->setAndUpdate( *path[i] );
+        if( robot->isInCollisionWithOthers( others ) ){
+            return false;
+        }
+    }
+
+    return true;
+}
+
 int Ioc::generateSamples( int nb_samples, bool check_in_collision, context_t context )
 {
     int nb_demos = getNbOfDemonstrations();
@@ -514,14 +538,17 @@ int Ioc::generateSamples( int nb_samples, bool check_in_collision, context_t con
         {
             Move3D::Robot* entity = context[i][d]->getRobot();
             entity->setAndUpdate( *context[i][d] );
+//            g3d_draw_allwin_active();
+//            cout << "wait for key" << endl;
+//            std::cin.ignore();
         }
 
         for (int ns=0; ns<int(samples_[d].size()); ++ns )
         {
-            cout.flush();
-            cout << "generating for demo " << d << " sample : " << int(ns+1) << "\r";
+//            cout.flush();
+//            cout << "generating for demo " << d << " sample : " << int(ns+1) << "\r";
 
-            samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
+            samples_[d][ns] = IocTrajectory( num_joints_, num_vars_, demonstrations_[d].discretization_ );
 
             bool is_valid = true;
             int nb_failed = 0;
@@ -544,9 +571,10 @@ int Ioc::generateSamples( int nb_samples, bool check_in_collision, context_t con
 
                 /*is_valid =*/ jointLimits( samples_[d][ns] );
 
-//                if( check_in_collision ) {
+                if( check_in_collision ) {
+                    is_valid = isTrajectoryValid( samples_[d][ns] );
 //                    is_valid = samples_[d][ns].getMove3DTrajectory( planning_group_ ).isValid();
-//                }
+                }
             }
             // Commented for humans
             while( (!is_valid) && ( nb_failed++ < 10 ) );
@@ -1220,6 +1248,24 @@ void IocEvaluation::saveDemoToFile(const std::vector<Move3D::Trajectory>& demos,
     }
 }
 
+void IocEvaluation::saveSamplesToFile(const std::vector< std::vector<Move3D::Trajectory> >& samples ) const
+{
+    for(size_t d=0; d<samples.size(); d++)
+    {
+        for(size_t i=0; i<samples[d].size(); i++)
+        {
+            std::stringstream ss;
+            ss << folder_ << "samples/" << "trajectory_sample_" << feature_type_ <<
+                  "_"  << std::setw(3) << std::setfill( '0' ) << d <<
+                  "_"  << std::setw(3) << std::setfill( '0' ) << i << ".traj";
+
+            cout << "save sample : " << i << " : " << ss.str() << endl;
+
+            samples[d][i].saveToFile( ss.str() );
+        }
+    }
+}
+
 void IocEvaluation::loadDemonstrations()
 {
     if( nb_way_points_ <= 0 ){
@@ -1392,7 +1438,7 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
         FeatureVect phi = feature_fct_->getFeatureCount( demos_[d] );
         cout << "Feature Demo : " << phi.transpose() << endl;
 //        ioc.addDemonstration( demos_[i].getEigenMatrix(6,7) );
-        ioc.addDemonstration( demos_[d].getEigenMatrix( plangroup_->getActiveDofs() ));
+        ioc.addDemonstration( demos_[d].getEigenMatrix( plangroup_->getActiveDofs() ), demos_[d].getDeltaTime() );
         phi_demo[d] = phi;
     }
 
@@ -1498,6 +1544,33 @@ void IocEvaluation::removeDominatedSamplesAndResample( HRICS::Ioc& ioc, std::vec
     }
 }
 
+
+bool IocEvaluation::isTrajectoryValid( Move3D::Trajectory& path )
+{
+    Move3D::Robot* robot = path.getRobot();
+    Move3D::Scene* sce = global_Project->getActiveScene();
+
+
+    std::vector<Move3D::Robot*> others;
+    for( int i=0; i<sce->getNumberOfRobots(); i++ )
+    {
+        std::string robot_name = sce->getRobot(i)->getName();
+        if( robot_name != robot->getName() &&
+                robot_name.find("HUMAN") == std::string::npos)
+            others.push_back( sce->getRobot(i) );
+    }
+
+    for( int i=0; i<path.getNbOfViaPoints(); i++ )
+    {
+        robot->setAndUpdate( *path[i] );
+        if( robot->isInCollisionWithOthers( others ) ){
+            return false;
+        }
+    }
+
+    return true;
+}
+
 std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
 {
     cout << __PRETTY_FUNCTION__ << endl;
@@ -1516,41 +1589,6 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
     // For human
     feature_fct_->setAllFeaturesActive();
 
-    cout << "Create Ioc" << endl;
-    HRICS::Ioc ioc( nb_way_points_, plangroup_ );
-
-    cout << "Add demonstrations" << endl;
-
-//    demos_[0].saveToFile( "tmp_demo_save_to_file_3.csv" );
-
-    // Get demos features
-    phi_demos_ = addDemonstrations( ioc );
-
-//    cout << "Set demo" << endl;
-//    return std::vector< std::vector<Move3D::Trajectory> >();
-
-//    demos_[0].saveToFile( "tmp_demo_save_to_file_4.csv" );
-//    demos_[0].replaceP3dTraj();
-
-//    std::vector<Move3D::Trajectory> traj = ioc.getDemonstrations();
-//    traj[0].replaceP3dTraj();
-
-//     return;
-
-    // Jac sum of demos
-//    std::vector< std::vector< Move3D::Trajectory > > trajs_tmp; trajs_tmp.push_back( demos_ );
-//    std::vector< std::vector<FeatureVect> > jac_sum_demos = getFeatureJacobianSum( trajs_tmp );
-//    phi_jac_demos_ = jac_sum_demos.back();
-
-    cout << "Generate samples (" << nb_samples_ << ")" << endl;
-
-    remove_samples_in_collision_ = true;
-
-    // Generate samples by random sampling
-    int nb_invalid_samples = ioc.generateSamples( nb_samples_, remove_samples_in_collision_, context_ );
-
-    cout << "percentage of invalid samples : " << (100 * double(nb_invalid_samples) / double(nb_samples_)) << " \%" << endl;
-
     // Compute the sum of gradient
     // double gradient_sum = 0.0;
 
@@ -1558,6 +1596,36 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
 
     cout << "nb_demos : " << demos_.size() << endl;
     cout << "nb_samples : " << nb_samples_ << endl;
+
+    std::vector< std::vector<Move3D::Trajectory> > samples;
+
+    bool generate = true;
+    if( generate )
+    {
+        cout << "Create Ioc" << endl;
+        HRICS::Ioc ioc( nb_way_points_, plangroup_ );
+
+        // Get demos features
+        cout << "Add demonstrations" << endl;
+        phi_demos_ = addDemonstrations( ioc );
+
+        // Generate samples by random sampling
+        cout << "Generate samples (" << nb_samples_ << ")" << endl;
+        remove_samples_in_collision_ = true;
+        int nb_invalid_samples = ioc.generateSamples( nb_samples_, remove_samples_in_collision_, context_ );
+
+        cout << "percentage of invalid samples : " << (100 * double(nb_invalid_samples) / double(nb_samples_)) << " \%" << endl;
+
+        samples = ioc.getSamples();
+
+        //
+        ioc.addAllToDraw();
+
+        saveSamplesToFile( samples );
+    }
+    else { // load from file
+
+    }
 
     double demo_cost = feature_fct_->getWeights().transpose()*phi_demos_[0];
 
@@ -1580,7 +1648,6 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
     int nb_in_collision = 0;
 
     // Get samples features
-    std::vector< std::vector<Move3D::Trajectory> > samples = ioc.getSamples();
     std::vector< std::vector<FeatureVect> > phi_k( samples.size() );
 
     // For each demonstration
@@ -1595,7 +1662,14 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
             }
         }
 
-        for( int i=0;i<int(samples[d].size());i++)
+        Feature* smoothness = feature_fct_->getFeatureFunction("Smoothness");
+        if( ( smoothness != NULL ) && ( d > 0 ) )
+        {
+            Eigen::MatrixXd buffer;
+            static_cast<TrajectorySmoothness*>(smoothness)->setBuffer( buffer );
+        }
+
+        for( int i=0; i<int(samples[d].size()); i++)
         {
             phi = feature_fct_->getFeatureCount( samples[d][i] );
 
@@ -1608,8 +1682,8 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
                 nb_lower_cost++;
             if( samples[d][i].getParamMax() < demos_[d].getParamMax() )
                 nb_shorter++;
-//            if( !samples[d][i].isValid() )
-//                nb_in_collision++;
+            if( /*!samples[d][i].isValid()*/ !isTrajectoryValid( samples[d][i] ) )
+                nb_in_collision++;
 
             // cout << "cost : " << cost << " , ";
             //            cout.precision(4);
@@ -1637,7 +1711,6 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
 
     // checkStartAndGoal( samples );
 
-    ioc.addAllToDraw();
     saveToMatrixFile( phi_demos_, phi_k, "spheres_features" ); // TODO change name to motion...
 
     g3d_draw_allwin_active();

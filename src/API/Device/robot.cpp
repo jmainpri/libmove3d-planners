@@ -47,6 +47,7 @@ static boost::function<bool( Robot*, const Configuration& q )> Move3DRobotSetAnd
 static boost::function<void( Robot*, const Configuration& q )> Move3DRobotSetAndUpdateWithoutConstraints;
 static boost::function<bool( Robot* )> Move3DRobotIsInCollision;
 static boost::function<bool( Robot* )> Move3DRobotIsInCollisionWithOthersAndEnv;
+static boost::function<bool( Robot*, std::vector<Robot*>& )> Move3DRobotIsInCollisionWithOthers;
 static boost::function<double( Robot* )> Move3DRobotDistanceEnv;
 static boost::function<double( Robot*, Robot* )> Move3DRobotDistanceToRobot;
 static boost::function<confPtr_t( Robot* )> Move3DRobotGetInitPos;
@@ -71,6 +72,7 @@ void move3d_set_fct_robot_set_and_update_multi_sol( boost::function<bool( Robot*
 void move3d_set_fct_robot_without_constraints( boost::function<void( Robot*, const Configuration& q )> fct ) {  Move3DRobotSetAndUpdateWithoutConstraints = fct; }
 void move3d_set_fct_robot_is_in_collision( boost::function<bool( Robot* )> fct ) {  Move3DRobotIsInCollision = fct; }
 void move3d_set_fct_robot_is_in_collision_with_others_and_env( boost::function<bool( Robot* )> fct ) {  Move3DRobotIsInCollisionWithOthersAndEnv = fct; }
+void move3d_set_fct_robot_is_in_collision_with_others( boost::function<bool( Robot*, std::vector<Robot*>& )> fct ) {  Move3DRobotIsInCollisionWithOthers = fct; }
 void move3d_set_fct_robot_distance_to_env( boost::function<double( Robot* )> fct ) {  Move3DRobotDistanceEnv = fct; }
 void move3d_set_fct_robot_distance_to_robot( boost::function<double( Robot*, Robot* )> fct ) {  Move3DRobotDistanceToRobot = fct; }
 void move3d_set_fct_robot_get_init_pos( boost::function<confPtr_t( Robot* )> fct ) {  Move3DRobotGetInitPos = fct; }
@@ -91,6 +93,9 @@ Robot::Robot(void* robotPt, bool copy )
     contains_libmove3d_struct_ = true;
     object_box_dimentions_ = Eigen::Vector3d::Zero();
     Move3DRobotConstructor( this, robot_kin_struct_, nb_dofs_, copy, name_, joints_ );
+
+    current_trajectory_ = Move3D::Trajectory(this);
+    current_trajectory_.clear();
 }
 
 Robot::~Robot()
@@ -140,12 +145,12 @@ Move3D::Trajectory Robot::getCurrentTraj()
 
 const Move3D::Trajectory& Robot::getCurrentMove3DTraj()
 {
-
+    return current_trajectory_;
 }
 
 void Robot::setCurrentMove3DTraj(const Move3D::Trajectory& traj)
 {
-
+    current_trajectory_ = traj;
 }
 
 void Robot::removeCurrentMove3DTraj()
@@ -543,6 +548,11 @@ bool Robot::isInCollision()
 bool Robot::isInCollisionWithOthersAndEnv()
 {
     return Move3DRobotIsInCollisionWithOthersAndEnv( this );
+}
+
+bool Robot::isInCollisionWithOthers( std::vector<Move3D::Robot*>& others )
+{
+    return Move3DRobotIsInCollisionWithOthers( this, others );
 }
 
 double Robot::distanceToEnviroment()

@@ -30,6 +30,7 @@
 
 #include <vector>
 #include <string.h>
+#include <iostream>
 
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Trajectory/trajectory.hpp"
@@ -49,19 +50,24 @@ inline Move3D::Trajectory motion_to_traj( const motion_t& traj, Move3D::Robot* r
 
     Move3D::Trajectory tmp( robot );
 
-    for( int i=0; i<int(traj.size()) && i<max_index; i++ )
-        tmp.push_back( Move3D::confPtr_t( new Move3D::Configuration( robot, traj[i].second->getConfigStruct() )) );
-
+    for( int i=0; i<int(traj.size()) && i<max_index; i++ ) {
+        if( traj[i].second->getConfigStruct() == NULL ){
+            std::cout << "NULL configuration in " << __PRETTY_FUNCTION__ << std::endl;
+        }
+        tmp.push_back( Move3D::confPtr_t( new Move3D::Configuration( robot, traj[i].second->getConfigStruct() )));
+//            std::cout << "No configuration added in " << __PRETTY_FUNCTION__ << std::endl;
+    }
+    tmp.setUseConstantTime( true );
+    tmp.setUseTimeParameter( true );
+    tmp.setDeltaTime( traj[0].first );
     return tmp;
 }
 
 inline double motion_duration( const motion_t& traj )
 {
     double time=0.0;
-    for( size_t i=0; i<traj.size()-1; i++ )
-    {
+    for( size_t i=1; i<traj.size(); i++ )
         time += traj[i].first;
-    }
     return time;
 }
 
@@ -111,7 +117,6 @@ public:
     motion_t resample( const motion_t& motion, int nb_sample );
     void resampleAll( int nb_sample );
     motion_t getArmTorsoMotion( const motion_t& motion, Move3D::confPtr_t q );
-
 
     void showStoredMotion();
     void showCurrentMotion();

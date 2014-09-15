@@ -615,6 +615,22 @@ bool move3d_robot_is_in_collision_with_env( Robot* R )
     return pqp_robot_all_no_self_collision_test(static_cast<p3d_rob*>(R->getP3dRobotStruct()));
 }
 
+bool move3d_robot_is_in_collision_with_others( Robot* R, std::vector<Robot*>& others )
+{
+    bool in_collision = false;
+
+    for( int i=0; i<others.size(); i++)
+        if( pqp_robot_robot_collision_test(static_cast<p3d_rob*>(R->getP3dRobotStruct()),
+                                           static_cast<p3d_rob*>(others[i]->getP3dRobotStruct()) ) ) {
+            in_collision = true;
+                break;
+        }
+
+//    cout << "robot in collision : " << in_collision << endl;
+    return in_collision;
+}
+
+
 double move3d_robot_distance_to_env( Robot* R )
 {
     p3d_vector3 closest_point_rob, closest_point_obst;
@@ -1046,6 +1062,7 @@ void move3d_set_api_functions_robot()
     move3d_set_fct_robot_without_constraints( boost::bind( move3d_robot_set_and_update_with_constraints, _1, _2 ) );
     move3d_set_fct_robot_is_in_collision( boost::bind( move3d_robot_is_in_collision, _1 ));
     move3d_set_fct_robot_is_in_collision_with_others_and_env( boost::bind( move3d_robot_is_in_collision_with_env, _1 ) );
+    move3d_set_fct_robot_is_in_collision_with_others( boost::bind( move3d_robot_is_in_collision_with_others, _1, _2 ) );
     move3d_set_fct_robot_distance_to_env( boost::bind( move3d_robot_distance_to_env, _1 ) ) ;
     move3d_set_fct_robot_distance_to_robot( boost::bind( move3d_robot_distance_to_robot, _1, _2 ) );
     move3d_set_fct_robot_get_init_pos( boost::bind( move3d_robot_get_init_pos, _1 ) );

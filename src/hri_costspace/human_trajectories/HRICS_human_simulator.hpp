@@ -80,7 +80,8 @@ private:
     CollisionFeature collision_feat_;
 
     Move3D::LengthFeature length_feat_;
-    Move3D::TrajectorySmoothness smoothness_feat_;
+//    Move3D::TrajectorySmoothness smoothness_feat_;
+    Move3D::SmoothnessFeature smoothness_feat_;
 
     bool use_bio_models_;
 };
@@ -111,9 +112,10 @@ public:
     std::vector<Move3D::Trajectory> getDemoTrajectories() const;
     std::vector<Move3D::confPtr_t> getContext() const;
 
-    void setDemonstrations( const std::vector<motion_t>& demos ) { human_2_motions_ = demos; }
+    void setDemonstrations( const std::vector<motion_t>& demos ); // { human_2_motions_ = demos; }
     void setDemonstrationId(int demo_id) { id_of_demonstration_ = demo_id; }
-    const std::vector<motion_t>& getDemonstrations() { return human_2_motions_; }
+    const std::vector<motion_t>& getCurrentMotions() { return human_2_motions_; }
+    const std::vector<motion_t>& getDemonstrations() { return human_2_demos_; }
     int getNumberOfDemos() { return human_2_motions_.size(); }
     void setPelvisBoundsByUser(bool user_defined) { is_pelvis_bound_user_defined_ = user_defined; }
 
@@ -123,6 +125,8 @@ public:
 
     HumanTrajCostSpace* getCostSpace() { return cost_space_; }
 
+    void setDrawExecution(bool draw_execution ) { draw_execute_motion_ = draw_execution; }
+
 private:
 
     // ------------------------------------------------------------------------
@@ -131,7 +135,7 @@ private:
     Eigen::Transform3d getHumanPose();
     void setPassiveHumanConfig( Move3D::confPtr_t q );
     void setMatrixCol(Eigen::MatrixXd& matrix, int j, Move3D::confPtr_t q) const;
-    bool updateMotion();
+    bool updatePassiveMotion();
     bool loadActiveHumanGoalConfig();
     void printCosts() const;
     Move3D::Trajectory setTrajectoryToMainRobot(const Move3D::Trajectory& traj) const;
@@ -153,6 +157,7 @@ private:
 
     double time_step_;
 
+    double global_discretization_;
     double motion_duration_;
     double current_motion_duration_;
     double current_discretization_;
@@ -161,6 +166,7 @@ private:
 
     int id_of_demonstration_;
     motion_t human_passive_motion_;
+    motion_t human_active_motion_;
     Eigen::MatrixXd current_human_traj_;
     Move3D::confPtr_t q_init_;
     Move3D::confPtr_t q_goal_;

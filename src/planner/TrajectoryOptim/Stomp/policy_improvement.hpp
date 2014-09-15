@@ -102,6 +102,7 @@ namespace stomp_motion_planner
                     const int num_extra_rollouts, 
                     MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy,
                     MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Task>   task,
+                    double discretization,
                     bool use_cumulative_costs=true);
     
     /**
@@ -187,6 +188,7 @@ namespace stomp_motion_planner
     std::vector<Eigen::MatrixXd> control_costs_;                            /**< [num_dimensions] num_parameters x num_parameters */
     std::vector<Eigen::MatrixXd> inv_control_costs_;                        /**< [num_dimensions] num_parameters x num_parameters */
     double control_cost_weight_;
+    double discretization_;
     
     std::vector<Eigen::MatrixXd> basis_functions_;                          /**< [num_dimensions] num_time_steps x num_parameters */
 

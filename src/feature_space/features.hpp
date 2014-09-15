@@ -35,8 +35,6 @@
 #include "API/Trajectory/trajectory.hpp"
 #include "API/Roadmap/graph.hpp"
 
-#include "planner/TrajectoryOptim/Stomp/control_cost.hpp"
-
 namespace Move3D
 {
 typedef Eigen::VectorXd FeatureProfile;
@@ -125,36 +123,6 @@ public:
 protected:
     int nb_features_;
     std::vector<Feature*> feature_stack_;
-};
-
-////////////////////////////////////////
-class LengthFeature : public Move3D::Feature
-{
-public:
-    LengthFeature();
-    Move3D::FeatureVect getFeatureCount( const Move3D::Trajectory& t );
-    Move3D::FeatureVect getFeatures( const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0) );
-    double scaling_;
-};
-
-////////////////////////////////////////
-class TrajectorySmoothness : public Feature
-{
-public:
-    TrajectorySmoothness();
-
-    //! Returns a smoothness cost for the trajectory
-    FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
-    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
-
-    void setWeights(const WeightVect &w);
-
-    //! Prints the control cost along the trajectory
-    void printControlCosts( const std::vector<Eigen::VectorXd>& control_cost  );
-
-private:
-    double computeControlCost( const Eigen::MatrixXd& traj );
-    ControlCost control_cost_;
 };
 
 }

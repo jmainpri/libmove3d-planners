@@ -53,8 +53,10 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
     num_joints_ = active_joints_.num_joints_;
 
     // Set duration to external parameter if not equal 0.0
-    uses_time_ = ( duration != 0.0 ) ;
+    uses_time_ =  duration != 0.0 ? true : false ;
     duration_ = uses_time_ ? duration : T.getParamMax();
+
+    cout << "Chomp trajectory uses time : " << uses_time_ << endl;
 
     int number_inital_points = T.getNbOfViaPoints();
 
@@ -71,7 +73,8 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
 
     // WARNING, integration is performed over number of points and not paths...
     // each point is supposed centered on an interval
-    discretization_ = duration_ / double( T.getNbOfViaPoints() ); // getNbOfPaths
+//    discretization_ = duration_ / double( T.getNbOfViaPoints() ); // getNbOfPaths
+    discretization_ = duration_ / double( T.getNbOfPaths() );
 
     // allocate the memory:
     init();
@@ -110,7 +113,8 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
 }
 
 ChompTrajectory::ChompTrajectory(const ChompTrajectory& source_traj,  int diff_rule_length) :
-    discretization_(source_traj.discretization_)
+    discretization_(source_traj.discretization_),
+    uses_time_(source_traj.uses_time_)
 {
     num_joints_ = source_traj.num_joints_;
 
@@ -121,9 +125,9 @@ ChompTrajectory::ChompTrajectory(const ChompTrajectory& source_traj,  int diff_r
 
     num_points_ = source_traj.num_points_ + start_extra + end_extra;
 
-    cout << "source_traj.num_points_ = " << source_traj.num_points_ << endl;
-    cout << "start_extra = " << start_extra << endl;
-    cout << "end_extra = " << end_extra << endl;
+//    cout << "source_traj.num_points_ = " << source_traj.num_points_ << endl;
+//    cout << "start_extra = " << start_extra << endl;
+//    cout << "end_extra = " << end_extra << endl;
 
     start_index_ = diff_rule_length - 1;
     end_index_ = (num_points_ - 1) - (diff_rule_length - 1);
