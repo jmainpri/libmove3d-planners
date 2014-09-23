@@ -456,6 +456,7 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
         if( !PlanEnv->getBool(PlanParam::trajStompNoPrint) )
             if( type_ == vel )
             {
+                cout << "control param for joint name : " << planning_group_->chomp_joints_[d].joint_name_ << endl;
                 cout << "control_costs[d].size() : " << control_costs[d].size() << endl;
                 cout << "free_vars_start_index_ : " << free_vars_start_index_ << endl;
                 cout << "free_vars_end_index_ : " << free_vars_end_index_ << endl;

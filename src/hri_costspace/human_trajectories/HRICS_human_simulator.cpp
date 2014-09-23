@@ -928,7 +928,7 @@ void HumanTrajSimulator::setActiveJoints()
     {
         std::vector<unsigned int> jnt_active_dofs = active_joints_[i]->getDofIndices();
         active_dofs_.insert( active_dofs_.end(), jnt_active_dofs.begin(), jnt_active_dofs.end() );
-        cout << " active joints dof : [" << i << "] : " << active_joints_[i]->getIndexOfFirstDof() << endl;
+        cout << " active joints dof (" << active_joints_[i]->getName() << ") [" << i << "] : " << active_joints_[i]->getIndexOfFirstDof() << endl;
     }
 
     for( size_t i=0; i<active_dofs_.size(); i++ ) // print all active dofs
