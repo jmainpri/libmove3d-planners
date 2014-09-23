@@ -44,7 +44,7 @@ void move3d_save_matrix_to_file( const Eigen::MatrixXd& matrix, std::string file
     cout << "save matrix to : " << filename << endl;
     std::ofstream file( filename.c_str() );
     if (file.is_open())
-        file << matrix << '\n';
+        file << std::scientific << matrix << '\n';
     //        for( int i=0;i<mat.rows();i++){
     //            for( int j=0;j<mat.cols();j++)
     //                file << mat(i,j) << " ";

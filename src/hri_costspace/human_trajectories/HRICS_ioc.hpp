@@ -197,7 +197,7 @@ public:
     void generateDemonstrations( int nb_demos );
 
     //! Load recorded traectories in the move3d format
-    void loadDemonstrations();
+    bool loadDemonstrations();
 
     //! Load trajectories in planner class
     void loadPlannerTrajectories( int nb_trajs=-1, int offset=-1, int random=0 );
@@ -224,7 +224,7 @@ public:
     void setPlannerType( planner_t planner_type ) { planner_type_ = planner_type; }
 
     //! Save demo to file
-    void saveDemoToFile(const std::vector<Move3D::Trajectory>& demos, std::vector<Move3D::confPtr_t> context = std::vector<Move3D::confPtr_t>());
+    void saveDemoToFile(const std::vector<Move3D::Trajectory>& demos,  const std::vector<int>& demo_ids, std::vector<Move3D::confPtr_t> context = std::vector<Move3D::confPtr_t>() );
 
     //! Save samples to files
     void saveSamplesToFile(const std::vector< std::vector<Move3D::Trajectory> >& samples ) const;

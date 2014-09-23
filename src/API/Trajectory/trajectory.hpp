@@ -115,7 +115,7 @@ public:
     bool replaceEnd( double param, const std::vector<LocalPath*>& paths );
 
     bool cutTrajInSmallLP(unsigned int nLP);
-    bool cutTrajInSmallLPSimple(unsigned int nLP);
+    bool cutTrajInSmallLPSimple(unsigned int nLP, bool use_time=false);
     uint cutPortionInSmallLP(std::vector<LocalPath*>& portion, uint nLP);
 
     bool push_back(confPtr_t q);

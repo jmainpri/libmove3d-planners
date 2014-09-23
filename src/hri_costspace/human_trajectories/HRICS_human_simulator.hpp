@@ -127,6 +127,9 @@ public:
 
     void setDrawExecution(bool draw_execution ) { draw_execute_motion_ = draw_execution; }
 
+    std::vector<std::string> getMotionsNames() const { return motions_1_names_; }
+    std::vector<int> getDemoIds() const { return motions_demo_ids_; }
+
 private:
 
     // ------------------------------------------------------------------------
@@ -162,6 +165,7 @@ private:
     double current_motion_duration_;
     double current_discretization_;
     double current_time_;
+    double time_along_current_path_;
     int current_id_on_path_;
 
     int id_of_demonstration_;
@@ -207,6 +211,11 @@ private:
     // original recorded motions
     std::vector<motion_t> human_1_demos_;
     std::vector<motion_t> human_2_demos_;
+
+    std::vector<std::string> motions_1_names_;
+    std::vector<std::string> motions_2_names_;
+
+    std::vector<int> motions_demo_ids_;
 
     bool is_pelvis_bound_user_defined_;
     Eigen::VectorXd pelvis_max_;

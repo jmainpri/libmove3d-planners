@@ -53,6 +53,7 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Trajectory/trajectory.hpp"
 #include "planner/planEnvironment.hpp"
+#include "feature_space/smoothness.hpp"
 #include "Graphic-pkg.h"
 #include "P3d-pkg.h"
 
@@ -79,6 +80,7 @@ namespace stomp_motion_planner
         int num_dim = control_costs_.size();
         for (int d=0; d<num_dim; ++d)
             cost += control_costs_[d].sum();
+        cost += length_cost_;
         return cost;
     }
 
@@ -90,7 +92,7 @@ namespace stomp_motion_planner
             control_cost += ( control_costs_[d].sum() );
 
 //        cout.precision(6);
-//        cout << "control cost : " << control_cost << " , state cost : " << state_costs_.sum() << endl;
+//        cout << "control cost : " << control_cost + length_cost_ << " , state cost : " << state_costs_.sum() << endl;
 
         //        cout << "state_costs_ : ";
         //        for (int i=0; i<state_costs_.size(); i++) {
@@ -191,6 +193,8 @@ namespace stomp_motion_planner
         setNumRollouts( num_rollouts, num_reused_rollouts, num_extra_rollouts );
         preAllocateTempVariables();
         preComputeProjectionMatrices();
+
+        multiple_smoothness_ = true;
 
         return (initialized_ = true);
     }
@@ -727,8 +731,31 @@ namespace stomp_motion_planner
 
     bool PolicyImprovement::computeRolloutControlCosts(Rollout& rollout)
     {
-        policy_->computeControlCosts(control_costs_, rollout.parameters_,
-                                     rollout.noise_projected_, control_cost_weight_ / 1e9, rollout.control_costs_, discretization_ );
+        if( multiple_smoothness_ )
+        {
+            std::vector<Eigen::VectorXd> parameters( num_dimensions_ );
+            for (int d=0; d<num_dimensions_; ++d)
+                parameters[d] = rollout.parameters_[d] + rollout.noise_projected_[d];
+
+//            cout << "compute control costs" << endl;
+            std::vector< std::vector<Eigen::VectorXd> > control_costs;
+            Eigen::VectorXd costs = static_cast<CovariantTrajectoryPolicy*>(policy_.get())->getAllCosts( parameters, control_costs, discretization_ );
+
+//            cout << "sum control costs" << endl;
+            rollout.control_costs_ = std::vector<Eigen::VectorXd>( num_dimensions_, Eigen::VectorXd::Zero(num_time_steps_) );
+            for (int c=0; c<control_costs.size() ; ++c)
+                for (int d=0; d<num_dimensions_; ++d)
+                    rollout.control_costs_[d] += ( control_cost_weights_[c] * control_costs[c][d] );
+
+            rollout.length_cost_ = control_cost_weights_[0] * costs[0];
+//             rollout.length_cost_ = 0.0;
+        }
+        else
+        {
+            policy_->computeControlCosts(control_costs_, rollout.parameters_,
+                                         rollout.noise_projected_, control_cost_weight_ , rollout.control_costs_, discretization_ );
+        }
+
         return true;
     }
 
@@ -748,12 +775,27 @@ namespace stomp_motion_planner
 
         control_cost_weight_ = control_cost_weight;
 
+        if( multiple_smoothness_ )
+        {
+            Move3D::StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+
+            if( fct != NULL && fct->getFeatureFunction("SmoothnessAll") != NULL )
+            {
+                control_cost_weights_ = fct->getFeatureFunction("SmoothnessAll")->getWeights();
+//                cout << "control_cost_weights_ : " << control_cost_weights_.transpose() << endl;
+            }
+            else{
+                multiple_smoothness_ = false;
+            }
+        }
+
         // set control costs
         computeRolloutControlCosts();
 
         for (int r=0; r<num_rollouts_gen_; ++r)
         {
             rollouts_[r].state_costs_ = costs.row(r).transpose();
+//            cout << "rollouts_[" << r << "].state_costs_ : " << rollouts_[r].state_costs_.transpose() << endl;
         }
 
         // set the total costs

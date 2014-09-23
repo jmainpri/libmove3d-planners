@@ -160,19 +160,28 @@ FeatureVect Feature::getFeatureCount( const Move3D::Trajectory& traj )
 
     confPtr_t q_1, q_2;
     int nb_via_points = traj.getNbOfViaPoints();
-    double dist = traj[0]->dist( *traj[1] );
+
+    double dt = traj.getUseTimeParameter() ? traj.getDeltaTime() : traj[0]->dist( *traj[1] );
+
+//    cout << "time parameter : " << traj.getUseTimeParameter() << " , dt  : " << dt << endl;
+
+    int k = 0;
 
     for (int i=1; i<nb_via_points+1; i++)
     {
         q_1 = traj[i-1];
-        phi += ( getFeatures( *q_1 ) * dist );
+        phi += ( getFeatures( *q_1 ) * dt );
 
-        if( i < nb_via_points )
+        if( (i < nb_via_points) && !traj.getUseTimeParameter() )
         {
             q_2 = traj[i];
-            dist = q_1->dist( *q_2 );
+            dt =  q_1->dist( *q_2 );
         }
+
+        k++;
     }
+
+//    cout << "nb of points : " << k << endl;
 
 //    int i=0;
 //    for(; t <= t_max; i++ )

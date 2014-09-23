@@ -4,6 +4,7 @@
 #include "HRICS_parameters.hpp"
 #include "HRICS_play_motion.hpp"
 #include "HRICS_gest_parameters.hpp"
+#include "HRICS_human_prediction_cost_space.hpp"
 
 #include "API/project.hpp"
 #include "API/Graphic/drawModule.hpp"
@@ -113,6 +114,12 @@ bool HRICS_init_human_trajectory_cost()
 
         cout << "create human traj cost space" << endl;
 
+        // Workspace Occupancy costspace
+        std::vector<double> size = Move3D::global_Project->getActiveScene()->getBounds();
+        HRICS::WorkspaceOccupancyGrid* occupancyGrid = new WorkspaceOccupancyGrid( human1, 0.03, size );
+        global_humanPredictionCostSpace = new HRICS::HumanPredictionCostSpace( human2, occupancyGrid );
+
+        // Human trajectory costspace
         global_ht_cost_space = new HRICS::HumanTrajCostSpace( human2, human1 );
 
         // Set active joints and joint bounds
@@ -123,6 +130,7 @@ bool HRICS_init_human_trajectory_cost()
 
         // Define cost functions
         cout << " add cost : " << "costHumanTrajectoryCost" << endl;
+        Move3D::global_costSpace->addCost( "costHumanPredictionOccupancy", boost::bind( &HRICS::HumanPredictionCostSpace::getCurrentOccupationCost, global_humanPredictionCostSpace, _1) );
         Move3D::global_costSpace->addCost( "costHumanTrajectoryCost", boost::bind( &HumanTrajCostSpace::cost, global_ht_cost_space, _1) );
     }
 
@@ -393,8 +401,9 @@ bool HumanTrajSimulator::init()
         // Store demonstrations, compute pelvis bounds
         // add cut motions
         setReplanningDemonstrations();
+        addCutMotions();
 //        setInitAndGoalConfig(); // For simulation
-//        addCutMotions();
+
     }
 
     // Set the planning bounds
@@ -404,7 +413,6 @@ bool HumanTrajSimulator::init()
     current_frame_ = 0;
     id_of_demonstration_ = 0;
 
-    draw_execute_motion_ = false;
     draw_trace_ = true;
 
     if( global_DrawModule )
@@ -557,18 +565,27 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     good_motions_names.push_back( "[1460-1620]_human2_.csv" );
 
     // TEN MOTIONS
-    good_motions_names.push_back("[0408-0491]_human2_.csv");
-    good_motions_names.push_back("[0408-0491]_human1_.csv");
+
+    // BAD...
+    //    good_motions_names.push_back("[1188-1256]_human2_.csv");
+    //    good_motions_names.push_back("[1188-1256]_human1_.csv");
+    //    good_motions_names.push_back("[2172-2249]_human2_.csv");
+    //    good_motions_names.push_back("[2172-2249]_human1_.csv");
+    //    good_motions_names.push_back("[2018-2099]_human2_.csv");
+    //    good_motions_names.push_back("[2018-2099]_human1_.csv");
+    //    good_motions_names.push_back("[1064-1140]_human2_.csv");
+    //    good_motions_names.push_back("[1064-1140]_human1_.csv");
+    //    good_motions_names.push_back("[0408-0491]_human2_.csv");
+    //    good_motions_names.push_back("[0408-0491]_human1_.csv");
+
+    // GOOD...
     good_motions_names.push_back("[0446-0578]_human2_.csv");
     good_motions_names.push_back("[0446-0578]_human1_.csv");
+
     good_motions_names.push_back("[0525-0657]_human2_.csv");
     good_motions_names.push_back("[0525-0657]_human1_.csv");
-    good_motions_names.push_back("[1064-1140]_human2_.csv");
-    good_motions_names.push_back("[1064-1140]_human1_.csv");
     good_motions_names.push_back("[1342-1451]_human2_.csv");
     good_motions_names.push_back("[1342-1451]_human1_.csv");
-    good_motions_names.push_back("[2018-2099]_human2_.csv");
-    good_motions_names.push_back("[2018-2099]_human1_.csv");
     good_motions_names.push_back("[2197-2343]_human2_.csv");
     good_motions_names.push_back("[2197-2343]_human1_.csv");
     good_motions_names.push_back("[0444-0585]_human2_.csv");
@@ -577,12 +594,8 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     good_motions_names.push_back("[0489-0589]_human1_.csv");
     good_motions_names.push_back("[0780-0871]_human2_.csv");
     good_motions_names.push_back("[0780-0871]_human1_.csv");
-    good_motions_names.push_back("[1188-1256]_human2_.csv");
-    good_motions_names.push_back("[1188-1256]_human1_.csv");
     good_motions_names.push_back("[1537-1608]_human2_.csv");
     good_motions_names.push_back("[1537-1608]_human1_.csv");
-    good_motions_names.push_back("[2172-2249]_human2_.csv");
-    good_motions_names.push_back("[2172-2249]_human1_.csv");
     good_motions_names.push_back("[2711-2823]_human2_.csv");
     good_motions_names.push_back("[2711-2823]_human1_.csv");
 
@@ -595,6 +608,8 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     shoulder_trans_max_ = Eigen::VectorXd::Zero(3);
     shoulder_trans_min_ = Eigen::VectorXd::Zero(3);
 
+    motions_demo_ids_.clear();
+
     bool initialized = false;
 
     for( size_t k=0; k<good_motions_names.size(); k++ )
@@ -605,8 +620,14 @@ void HumanTrajSimulator::setReplanningDemonstrations()
                 human_1_motions_.push_back( motion_recorders_[0]->getStoredMotions()[j] );
                 human_2_motions_.push_back( motion_recorders_[1]->getStoredMotions()[j] );
 
+                motions_1_names_.push_back( motion_recorders_[0]->getStoredMotionName(j) );
+                motions_2_names_.push_back( motion_recorders_[1]->getStoredMotionName(j) );
+
                 human_1_demos_.push_back( human_1_motions_.back() );
                 human_2_demos_.push_back( human_2_motions_.back() );
+
+                int demo_id = motions_demo_ids_.size();
+                motions_demo_ids_.push_back( demo_id );
 
                 bool only_set_active_dofs = true;
                 if( only_set_active_dofs )
@@ -661,8 +682,8 @@ void HumanTrajSimulator::addCutMotions()
     std::vector<motion_t> human_1_motion_tmp;
     std::vector<motion_t> human_2_motion_tmp;
 
-    cut_step_ = 5;
-    minimal_demo_size_ = 20;
+    cut_step_ = 10; // 10 * 0.01 = 0.1 sec
+    minimal_demo_size_ = 80; // 70 * 0.01 = 0.7 sec
 
     for( size_t i=0; i<human_2_motions_.size(); i++ )
     {
@@ -698,6 +719,8 @@ void HumanTrajSimulator::addCutMotions()
 
             human_1_motion_tmp.push_back( motion_1 );
             human_2_motion_tmp.push_back( motion_2 );
+
+            motions_demo_ids_.push_back( i );
         }
 
         trajectories_cut_ = true;
@@ -905,7 +928,11 @@ void HumanTrajSimulator::setActiveJoints()
     {
         std::vector<unsigned int> jnt_active_dofs = active_joints_[i]->getDofIndices();
         active_dofs_.insert( active_dofs_.end(), jnt_active_dofs.begin(), jnt_active_dofs.end() );
+        cout << " active joints dof : [" << i << "] : " << active_joints_[i]->getIndexOfFirstDof() << endl;
     }
+
+    for( size_t i=0; i<active_dofs_.size(); i++ ) // print all active dofs
+        cout << " active dofs [" << i << "] : " << active_dofs_[i] << endl;
 
     for( size_t i=0; i<cost_space_->getNumberOfFeatureFunctions(); i++ ) // set all features active dofs
     {
@@ -1037,7 +1064,10 @@ bool HumanTrajSimulator::loadActiveHumanGoalConfig()
     human_passive_increment_ = 1;
     current_time_ = 0.0;
     time_step_ = 0.1; // Simulation step
-    global_discretization_ = 0.005; // time betweem configurations (choose a number that divides the simulation time step)
+    global_discretization_ = 0.01; // time betweem configurations (choose a number that divides the simulation time step)
+    time_along_current_path_ = 0.0;
+
+    draw_execute_motion_ = true;
 
     // GET STORED CONFIGURATIONS
 //    std::vector<Move3D::confPtr_t> configs = human_active_->getStoredConfigs();
@@ -1123,37 +1153,51 @@ void HumanTrajSimulator::runStandardStomp( int iter )
     else
     {
         traj_optim_set_use_extern_trajectory( false );
+
+        // TEST WITH CURRENT DEMONSTRATION
+//        traj_optim_set_use_extern_trajectory( true );
+//        Move3D::Trajectory traj( motion_to_traj( human_active_motion_, human_active_ ) );
+//        traj_optim_set_extern_trajectory( traj );
     }
 
     traj_optim_set_use_iteration_limit(true);
     traj_optim_set_iteration_limit( PlanEnv->getInt(PlanParam::stompMaxIteration) );
-    PlanEnv->setDouble( PlanParam::trajDuration, current_motion_duration_ );
+    PlanEnv->setDouble( PlanParam::trajDuration, current_motion_duration_ > 0.0 ? current_motion_duration_ : 0.1  );
 
-    if( path_.size() > 0 )
+    // Set buffer
+    if( path_.size() > 0 && time_along_current_path_ > 0.0)
     {
         double dt = current_motion_duration_ / double(nb_way_points);
-        cout << "DT : " << dt << endl;
-        double t_length = path_.getTimeLength();
         std::vector<Eigen::VectorXd> buffer;
         int nb_config = 7;
         for(int i=0; i<nb_config; i++){
-            Move3D::confPtr_t q = path_.configAtTime( t_length-double(nb_config-i)*dt );
+            Move3D::confPtr_t q = path_.configAtTime( time_along_current_path_-double(nb_config-i)*dt );
             buffer.push_back( q->getEigenVector( active_dofs_ ) );
         }
         traj_optim_set_buffer( buffer );
+
+        if( !q_init_->equal( *path_.configAtTime( time_along_current_path_ ) ) ){
+            cout << "ERROR IN INIT CONFIG" << endl;
+            exit(0);
+        }
     }
 
     traj_optim_runStomp(0);
 
+//    exit(0);
+
     path_ = global_optimizer->getBestTraj();
+    cout << "path.getUseTimeParameter() : " << path_.getUseTimeParameter() << endl;
 }
 
 bool HumanTrajSimulator::updatePassiveMotion()
 {
-    cout << "CURRENT TIME : " << current_time_ << endl;
     cout << "MOTION DURATION : " << motion_duration_ << endl;
+    cout << "CURRENT TIME : " << current_time_ << endl;
+    cout << "TIME LEFT : " << current_motion_duration_ << endl;
+    cout << "TIME ALONG CURRENT TRAJ : " << time_along_current_path_ << endl;
 
-    if( std::abs( current_time_ - motion_duration_ ) <= 1e-6 )
+    if( current_time_ - motion_duration_ >= 1e-6 )
         return false;
 
     // Find closest configuration at current time
@@ -1193,81 +1237,54 @@ void HumanTrajSimulator::execute(const Move3D::Trajectory& path, bool to_end)
     Move3D::confPtr_t q;
 
     double time_factor = 10; // Slow down execution by factor
-    double time_elapsed = 0.0;
 
-    if( !path.getUseTimeParameter() )
+    int nb_configs = time_step_ / global_discretization_; // global_discretization_ must be a multiple of time step
+    double t = 0;
+
+    for( int i=0; i<nb_configs; i++ )
     {
-        for( int i=0; (!to_end) ? true : (i<path.getNbOfViaPoints() && (!PlanEnv->getBool(PlanParam::stopPlanner))); i++ )
+        // Find configurations of active human along the trajectory
+        t = double(i+1) * global_discretization_;
+        q = path.configAtTime( t );
+        human_active_->setAndUpdate( *q );
+
+        if( ( t + current_time_ ) > motion_duration_ ) // if the time exceeds the trajectory length
         {
-            q = ( i >= path.getNbOfViaPoints() ) ? path.getEnd() : path[i];
-
-            human_active_->setAndUpdate( *q );
-
-            executed_trajectory_.push_back( std::make_pair( current_discretization_, q ) );
-
-            time_elapsed += current_discretization_;
-
-            if( draw_execute_motion_ )
-            {
-                g3d_draw_allwin_active();
-                usleep( floor( current_discretization_ * 1e6 * time_factor ) );
-            }
-
-            if( time_elapsed > time_step_ ) {
-                current_id_on_path_ = i;
-                break;
-            }
-        }
-
-        cout << "ERROR in " << __PRETTY_FUNCTION__ << endl;
-        exit(0);
-    }
-    else
-    {
-        int nb_configs = time_step_ / global_discretization_; // global_discretization_ must be a multiple of time step
-        time_elapsed = time_step_;
-        double t = 0;
-
-        for( int i=0; i<nb_configs; i++ )
-        {
-            t = double(i) * global_discretization_;
+            double dt = motion_duration_ - motion_duration( executed_trajectory_ );
+            t = motion_duration_ - current_time_;
             q = path.configAtTime( t );
-            human_active_->setAndUpdate( *q );
-
-            if( ( t + current_time_ ) > motion_duration_ ) // if the time exceeds the trajectory length
-            {
-                double dt = motion_duration_ - motion_duration( executed_trajectory_ );
-                executed_trajectory_.push_back( std::make_pair( dt, q ) );
-
-                if( i > 0 )
-                {
-                    time_elapsed = double(i-1) * global_discretization_ + dt ;
-                }
-                else {
-                    time_elapsed = dt;
-                }
-
-                cout << "OUT OF TIME" << endl;
-                cout << "t : " << t << endl;
-                cout << "current_time_ : " << current_time_ << endl;
-                cout << "motion_duration_ : " << motion_duration_ << endl;
-                break;
-            }
-
-            executed_trajectory_.push_back( std::make_pair( global_discretization_, q ) );
+            executed_trajectory_.push_back( std::make_pair( dt, q ) );
 
             if( draw_execute_motion_ )
             {
                 g3d_draw_allwin_active();
                 usleep( floor( global_discretization_ * 1e6 * time_factor ) );
             }
+
+            cout << "OUT OF TIME" << endl;
+            cout << "t : " << t << endl;
+            cout << "current_time_ : " << current_time_ << endl;
+            cout << "motion_duration_ : " << motion_duration_ << endl;
+            break;
+        }
+        else {
+            executed_trajectory_.push_back( std::make_pair( global_discretization_, q ) );
+        }
+
+        if( draw_execute_motion_ )
+        {
+            g3d_draw_allwin_active();
+            usleep( floor( global_discretization_ * 1e6 * time_factor ) );
         }
     }
 
-    current_time_ += time_elapsed;
-    current_motion_duration_ -= time_elapsed;
+    time_along_current_path_ = t;
+    current_time_ += time_along_current_path_;
+    current_motion_duration_ -= time_along_current_path_;
 
     q_init_ = q;
+
+    cout << "End execute" << endl;
 }
 
 void HumanTrajSimulator::printCosts() const

@@ -225,7 +225,7 @@ FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int
     //    cout << "dist is : " << dist.transpose() << endl;
     //    cout << "joint dist : " << joints_dist.transpose() << endl;
 
-    double factor = 20;
+    double factor = 5;
     return factor * count; // Scaling factor
 
     return count;

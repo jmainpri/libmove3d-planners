@@ -271,9 +271,10 @@ bool IocSequences::run()
             {
                 std::vector<Move3D::Trajectory> trajs = global_ht_simulator->getDemoTrajectories();
                 std::vector<Move3D::confPtr_t> context = global_ht_simulator->getContext();
+                std::vector<int> ids = global_ht_simulator->getDemoIds();
 //                trajs.push_back( HRICS::motion_to_traj( global_motionRecorders[0]->getStoredMotions()[0], human2, 60 ) );
 //                human1->setAndUpdate( *global_motionRecorders[1]->getStoredMotions()[0][0].second );
-                eval_->saveDemoToFile( trajs, context );
+                eval_->saveDemoToFile( trajs, ids, context );
             }
             else {
                 eval_->generateDemonstrations( nb_demos );
@@ -291,7 +292,10 @@ bool IocSequences::run()
 
 //            eval->loadWeightVector();
 //            eval->setLearnedWeights();
-            eval_->loadDemonstrations();
+            if( !eval_->loadDemonstrations() ){
+                cout << "ERROR LOADING DEMONSTRATIONS" << endl;
+                return false;
+            }
             // eval.runLearning();
 
             cout << "stack info" << endl;

@@ -498,6 +498,8 @@ confPtr_t Trajectory::configAtTime(double time, unsigned int* id_localpath) cons
 
         if( id_localpath != NULL)
            *id_localpath = path_id;
+        if( path_id >= m_Courbe.size() )
+            return m_Target;
 
         return m_Courbe[path_id]->configAtParam( alpha * m_Courbe[path_id]->getParamMax() );
     }
@@ -1762,29 +1764,35 @@ bool Trajectory::push_back( confPtr_t q )
     return add_config;
 }
 
-bool Trajectory::cutTrajInSmallLPSimple(unsigned int nLP)
+bool Trajectory::cutTrajInSmallLPSimple(unsigned int nLP, bool use_time)
 {
-    double range = computeSubPortionRange(m_Courbe);
+    double range = use_time ? getTimeLength() : computeSubPortionRange( m_Courbe );
     double delta = range/double(nLP);
 
     vector<LocalPath*> portion;
     bool null_length_local_path = false;
     double length = 0.0;
-    double s=0.0;
-    //    cout << "range : " << range << " , delta : " << delta << endl;
+    double t=0.0;
+    cout << "use_time : " << use_time << " (" << m_dt << "), range : " << range << " , delta : " << delta << endl;
 
     for( unsigned int i=0; i<nLP; i++ )
     {
-        confPtr_t q_init = configAtParam(s);
-        confPtr_t q_goal = configAtParam(s+delta);
-        portion.push_back(new LocalPath(q_init,q_goal));
-        s += delta;
+        confPtr_t q_init = use_time ? configAtTime(t) : configAtParam(t);
+        confPtr_t q_goal = use_time ? configAtTime(t+delta) : configAtParam(t+delta);
+        portion.push_back( new LocalPath( q_init, q_goal ));
+        t += delta;
 
         double path_length = portion.back()->getParamMax();
         if( path_length == 0.0 )
             null_length_local_path = true;
 
         length += portion.back()->getParamMax();
+//        cout << "length : " << length << endl;
+    }
+
+    if( use_time ) { // TODO make this work for all types of time
+        m_dt = delta;
+        cout << "set dt to : " << std::scientific << m_dt << endl;
     }
 
     m_Courbe = portion;
@@ -1981,7 +1989,7 @@ bool Trajectory::cutTrajInSmallLP(unsigned int nLP)
     try
     {
         // cutPortionInSmallLP(m_Courbe, nLP);
-        succeed = cutTrajInSmallLPSimple(nLP);
+        succeed = cutTrajInSmallLPSimple( nLP, m_use_time_parameter );
     }
     catch(string str)
     {

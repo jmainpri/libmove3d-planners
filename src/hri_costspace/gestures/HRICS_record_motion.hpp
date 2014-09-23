@@ -59,7 +59,7 @@ inline Move3D::Trajectory motion_to_traj( const motion_t& traj, Move3D::Robot* r
     }
     tmp.setUseConstantTime( true );
     tmp.setUseTimeParameter( true );
-    tmp.setDeltaTime( traj[0].first );
+    tmp.setDeltaTime( traj[1].first ); // Set index 1 because 0 is often 0.0
     return tmp;
 }
 

@@ -109,16 +109,27 @@ void PlayMotion::runRealTime(int id)
 
     cout << "start playback" << endl;
 
+    if( id < _motions_names.size() && _motion_recorders.empty() ){
+        cout << " motion : " << _motions_names[id] << " , duration : " << motion_duration( _stored_motions[0][id] ) <<  endl;
+    }
+
     while( !StopRun )
     {
         timeval tim;
         gettimeofday(&tim, NULL);
         double tu = tim.tv_sec+(tim.tv_usec/1000000.0);
+        if( tu_last == 0.0 ) tu_last = tu;
+
         dt += ( tu - tu_last );
         tu_last = tu;
 
         if ( dt>=0.025 )
         {
+//            cout << "dt >= 0.025 : " << dt << endl;
+
+            time += dt;
+            dt = 0.0;
+
             if( _stored_motions.empty() )
             {
                 // TODO switch to time
@@ -140,6 +151,8 @@ void PlayMotion::runRealTime(int id)
 
                         if( time_traj >= time )
                         {
+                            cout << "i : " << i << " , :  _stored_motions[j][id].size() "  << _stored_motions[j][id].size() << " , time_traj : " << time_traj << " , time : " << time  << endl;
+
                             Move3D::confPtr_t q = _stored_motions[j][id][i].second;
                             Move3D::Robot* robot = q->getRobot();
                             robot->setAndUpdate( *q );
@@ -154,12 +167,8 @@ void PlayMotion::runRealTime(int id)
                     }
                 }
             }
-
-            dt = 0.0;
             _current_frame++;
         }
-
-        time += dt;
 
         g3d_draw_allwin_active();
 

@@ -52,8 +52,8 @@ public:
     Eigen::Transform3d getHumanPose();
     double run();
 
-
 private:
+
     bool updateMotion();
     void predictVoxelOccupancy();
     void loadGoalConfig();

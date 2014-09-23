@@ -171,11 +171,13 @@ public:
     void saveProfiles( const std::vector<Eigen::VectorXd>& parameters, std::string filename );
 
     //! Return all costs
-    Eigen::VectorXd getAllCosts( const std::vector<Eigen::VectorXd>& parameters, double dt=0.0 );
+    Eigen::VectorXd getAllCosts( const std::vector<Eigen::VectorXd>& parameters, std::vector< std::vector<Eigen::VectorXd> >& control_costs, double dt=0.0 );
 
     //! set buffer with previous trajectory
     void setBuffer( const std::vector<Eigen::VectorXd>& buffer ) { buffer_ = buffer; use_buffer_ = true; }
     void clearBuffer() { use_buffer_ = false; }
+
+    void setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj,  const std::vector<Eigen::VectorXd>& parameters, double dt=0.0 );
 
 
     double movement_dt_;
@@ -186,7 +188,8 @@ public:
 private:
 //    ros::NodeHandle node_handle_;
 
-    enum cost_type { vel=0, acc=1, jerk=2 } type_;
+    enum cost_type { vel=0, acc=1, jerk=2, dist=3 } type_;
+    bool is_dist_;
 
     std::string file_name_base_;
     bool print_debug_;

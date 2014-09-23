@@ -607,6 +607,12 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         cout << "segment_frames_.size() : " << segment_frames_.size() << endl;
 
     performForwardKinematics();
+
+
+    // Print smoothness cost
+    getSmoothnessCost();
+    getGeneralCost();
+
     //group_trajectory_.print();
     
     //    last_move3d_cost_ = computeMove3DCost();
@@ -619,6 +625,9 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     if( PlanEnv->getBool(PlanParam::trajSaveCost) ) {
         saveTrajectoryCostStats();
     }
+
+    cout << "wait for key" << endl;
+    cin.ignore();
     
     double intitialization_time=0.0;
     ChronoTimeOfDayTimes(&intitialization_time);
@@ -1241,15 +1250,20 @@ double StompOptimizer::getSmoothnessCost()
     if( ( classic == false ) && ( fct != NULL ) && ( fct->getFeatureFunction("SmoothnessAll") != NULL ) )
     {
 //        cout << "compute smoothness " << endl;
-        Eigen::VectorXd costs = policy_->getAllCosts( policy_parameters_, discretization );
+        std::vector< std::vector<Eigen::VectorXd> > control_costs;
+
+        Eigen::VectorXd costs = policy_->getAllCosts( policy_parameters_, control_costs, discretization );
 
         Move3D::Trajectory traj( robot_model_ );
         setGroupTrajectoryToMove3DTraj( traj );
-//        cout << "costs : " << costs.transpose() << endl;
-        costs[0] = traj.getParamMax();
+
+//        cout  << "cost 1 : " << costs[0] << endl;
+//        cout  << "cost 2 : " << traj.getParamMax() << endl;
 
         Move3D::WeightVect w = fct->getFeatureFunction("SmoothnessAll")->getWeights();
         smoothness_cost = w.transpose() * costs;
+
+//        cout << "phi : " << std::scientific << costs.transpose() << endl;
 //        cout << "smoothness_w : " << w.transpose() << endl;
     }
     else
@@ -1690,11 +1704,11 @@ bool StompOptimizer::performForwardKinematics()
     // calculate the forward kinematics for the fixed states only in the first iteration:
     int start = free_vars_start_;
     int end = free_vars_end_;
-    if ( iteration_==0)
-    {
-        start = 0;
-        end = num_vars_all_-1;
-    }
+//    if ( iteration_==0 )
+//    {
+//        start = 0;
+//        end = num_vars_all_-1;
+//    }
 
     is_collision_free_ = true;
 
@@ -1709,6 +1723,14 @@ bool StompOptimizer::performForwardKinematics()
     }
 
     // Move3D::Trajectory current_traj( robot_model_ );
+
+//    int nb_features = 0;
+//    StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+//    if( ( fct != NULL ) && ( fct->getFeatureFunction("Distance") != NULL ) )
+//        nb_features = fct->getFeatureFunction("Distance")->getNumberOfFeatures();
+//    Eigen::VectorXd phi (Eigen::VectorXd::Zero(nb_features) );
+
+    int k = 0;
 
     // for each point in the trajectory
     for (int i=start; i<=end; ++i)
@@ -1746,9 +1768,20 @@ bool StompOptimizer::performForwardKinematics()
 
         dt_[i] = group_trajectory_.getUseTime() || ( i == start ) ? group_trajectory_.getDiscretization() : q.dist( q_prev );
 
+//        cout << "dt_[i] : " << dt_[i] << endl;
+
+//        if (( fct != NULL ) && ( fct->getFeatureFunction("Distance") != NULL ) )
+//            phi += ( fct->getFeatureFunction( "Distance" )->getFeatures( q ) * dt_[i] );
+
         q_prev = q; // store configuration
         q = *source_; // Make sure dofs are set to source
+
+        k++;
     }
+
+//    cout << "phi : " << std::scientific << phi.transpose() << endl;
+//    cout << "dt_[start] : " << std::scientific << dt_[start] << endl;
+//    cout << "nb of points : " << k << endl;
 
 //    cout << "dt : " << dt_.transpose() << endl;
 //    cout << "dt size : " << dt_.size() << endl;
@@ -2086,10 +2119,10 @@ void StompOptimizer::setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj )
 {
     int start = free_vars_start_;
     int end = free_vars_end_;
-    if (iteration_==0) {
-        start = 0;
-        end = num_vars_all_-1;
-    }
+//    if (iteration_==0) {
+//        start = 0;
+//        end = num_vars_all_-1;
+//    }
     
     traj.clear();
     

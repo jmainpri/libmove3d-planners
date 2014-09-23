@@ -1175,6 +1175,8 @@ void IocEvaluation::generateDemonstrations( int nb_demos )
 
     feature_fct_->printInfo();
 
+    std::vector<int> demos_id;
+
     for(int i=0; i<nb_demos_; i++ )
     {
         std::vector< std::pair<double,Move3D::Trajectory> > demos_tmp( nb_planning_test_ );
@@ -1203,19 +1205,26 @@ void IocEvaluation::generateDemonstrations( int nb_demos )
         cout << "nb of via points : " << std::min_element(demos_tmp.begin(), demos_tmp.end() )->second.getNbOfViaPoints() << endl;
 
         demos.push_back( std::min_element(demos_tmp.begin(), demos_tmp.end() )->second );
+        demos_id.push_back(i);
 
         g3d_draw_allwin_active();
     }
 
     cout << "nb_demos_ : " << nb_demos_ << endl;
 
-    saveDemoToFile( demos );
+    saveDemoToFile( demos, demos_id );
 
     cout << "exit generate demo" << endl;
 }
 
-void IocEvaluation::saveDemoToFile(const std::vector<Move3D::Trajectory>& demos, std::vector<Move3D::confPtr_t> context )
+void IocEvaluation::saveDemoToFile(const std::vector<Move3D::Trajectory>& demos, const std::vector<int>& demos_ids, std::vector<Move3D::confPtr_t> context )
 {
+    int id = 0;
+
+    // Create a buffer to keep track of demo ids being saved
+    // each demo is incremented when saved
+    std::vector<int> saved_id( *std::max_element( demos_ids.begin(), demos_ids.end() )+1, 0 );
+
     for(size_t i=0;i<demos.size();i++)
     {
         if( demos[i].replaceP3dTraj() )
@@ -1225,27 +1234,38 @@ void IocEvaluation::saveDemoToFile(const std::vector<Move3D::Trajectory>& demos,
             cout << robot_->getName() << endl;
         }
 
+        // Ids
+        std::stringstream ss_id;
+        ss_id << "_"  << std::setw(3) << std::setfill( '0' ) << demos_ids[i] << "_"  << std::setw(3) << std::setfill( '0' ) << saved_id[ demos_ids[i] ]++ ;
+
         // Set file names
         std::stringstream ss;
-        ss << folder_ << "trajectory_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << i << ".traj";
+        ss << folder_ << "trajectory_" << feature_type_ << ss_id.str() << ".traj";
 
         cout << "save demo " << i << " : " << ss.str() << endl;
         cout << "nb of via points  : " << demos[i].getNbOfViaPoints() << endl;
         // p3d_save_traj( ss.str().c_str(), robot_->getP3dRobotStruct()->tcur );
         demos[i].saveToFile( ss.str() );
 
-        if( !context.empty() )
-        {
-            ss.str("");
-            ss << folder_ << "context_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << i << ".configs";
-
-            cout << "save context " << i << " : " << ss.str() << endl;
-            move3d_save_context_to_csv_file( context, ss.str() );
-        }
-
         saveTrajToMatlab( demos[i], i );
         cout << "save traj to matlab format!!!!" << endl;
     }
+
+    if( !context.empty() )
+    {
+        // Ids
+        std::stringstream ss_id;
+        ss_id << "_"  << std::setw(3) << std::setfill( '0' ) << int(0) << "_"  << std::setw(3) << std::setfill( '0' ) << int(0) ;
+
+        std::stringstream ss;
+        ss.str("");
+        ss << folder_ << "context_" << feature_type_ << ss_id.str() << ".configs" ;
+
+        cout << "save context " << ss.str() << endl;
+        move3d_save_context_to_csv_file( context, ss.str() );
+    }
+
+    cout  << "DEMO SIZE : " << demos.size() << endl;
 }
 
 void IocEvaluation::saveSamplesToFile(const std::vector< std::vector<Move3D::Trajectory> >& samples ) const
@@ -1266,11 +1286,22 @@ void IocEvaluation::saveSamplesToFile(const std::vector< std::vector<Move3D::Tra
     }
 }
 
-void IocEvaluation::loadDemonstrations()
+bool file_exists_test(const std::string& name) {
+    std::ifstream f( name.c_str() );
+    if (f.good()) {
+        f.close();
+        return true;
+    } else {
+        f.close();
+        return false;
+    }
+}
+
+bool IocEvaluation::loadDemonstrations()
 {
     if( nb_way_points_ <= 0 ){
         cout << "Error in : " << __PRETTY_FUNCTION__ << "can not load demonstration be cause number of way point not set " <<  endl;
-        return;
+        return false;
     }
 
     demos_.clear();
@@ -1280,10 +1311,15 @@ void IocEvaluation::loadDemonstrations()
 
     std::string folder = use_simulator_ ? original_demo_folder_ : folder_;
 
+    int demo_id = 0;
+    int instance_id = 0;
+
     if( use_context_ )
     {
+        std::stringstream ss_id;
+        ss_id << "_"  << std::setw(3) << std::setfill( '0' ) << demo_id << "_"  << std::setw(3) << std::setfill( '0' ) << instance_id ;
         ss.str("");
-        ss << folder << "context_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << int(0) << ".configs";
+        ss << folder << "context_" << feature_type_ << ss_id.str() << ".configs";
         context_.push_back( move3d_load_context_from_csv_file( ss.str() ) );
 
         nb_demos_ = context_[0].size();
@@ -1299,19 +1335,43 @@ void IocEvaluation::loadDemonstrations()
 //        }
     }
 
+    demo_id = 0;
+    instance_id = 0;
+
+    int discarded_demo = -1;
+    std::vector<int> demos_to_remove;
+
     for(int d=0;d<nb_demos_;d++)
     {
-        ss.str(""); // clear stream
-        ss << folder << "trajectory_" << feature_type_ << "_"  << std::setw(3) << std::setfill( '0' ) << d << ".traj";
+        bool file_exists = false;
 
-        cout << "Loading demonstration from : " << ss.str() << endl;
+        do {
+            std::stringstream ss_id;
+            ss_id << "_"  << std::setw(3) << std::setfill( '0' ) << demo_id << "_"  << std::setw(3) << std::setfill( '0' ) << instance_id ;
+            ss.str("");
+            ss << folder << "trajectory_" << feature_type_ << ss_id.str() << ".traj";
+
+            file_exists = file_exists_test( ss.str() );
+
+            if( !file_exists )
+            {
+                demo_id++;
+                instance_id = 0;
+            }
+        }
+        while( !file_exists );
+
+        if( discarded_demo == demo_id )
+            demos_to_remove.push_back( d );
+
+        cout << "Loading demonstration (" << d << ") from : " << ss.str() << endl;
 
         Move3D::Trajectory T( robot_ );
 
-        if ( !T.loadFromFile( ss.str() ) )//!p3d_read_traj( ss.str().c_str() ) )
+        if( !T.loadFromFile( ss.str() ) )//!p3d_read_traj( ss.str().c_str() ) )
         {
             cout << "could not load trajectory" << endl;
-            return;
+            return false;
         }
         else {
             cout << "p3d trajectory loaded correctly" << endl;
@@ -1322,7 +1382,7 @@ void IocEvaluation::loadDemonstrations()
 
         if( T.getNbOfViaPoints() != nb_way_points_ ) // Only cut if needed
         {
-            cout << "cuttin in " << nb_way_points_ << " way points" << endl;
+            cout << "ring in " << nb_way_points_ << " way points" << endl;
             T.cutTrajInSmallLP(nb_way_points_-1);
 //            T.computeSubPortionIntergralCost( T.getCourbe() );
         }
@@ -1333,7 +1393,20 @@ void IocEvaluation::loadDemonstrations()
         global_trajToDraw.push_back(T);
 
         demos_.push_back( T );
+
+        instance_id++;
     }
+
+    context_t context(1);
+    for(int i=0; i<context_[0].size(); i++){
+        if( std::find( demos_to_remove.begin(), demos_to_remove.end(), i ) == demos_to_remove.end() )
+            context[0].push_back( context_[0][i] );
+    }
+    context_ = context;
+
+    cout << "End loading demonstrations" << endl;
+
+    return true;
 }
 
 void IocEvaluation::loadPlannerTrajectories( int nb_trajs, int offset, int random )
@@ -1434,6 +1507,15 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
     {
         if( demos_[d].getNbOfViaPoints() != nb_way_points_ ) // Only cut of needed
             demos_[d].cutTrajInSmallLP( nb_way_points_-1 );
+
+        if( use_context_ ){
+
+            for( int i=0; i<int(context_.size()); i++ )
+            {
+                Move3D::Robot* entity = context_[i][d]->getRobot();
+                entity->setAndUpdate( *context_[i][d] );
+            }
+        }
 
         FeatureVect phi = feature_fct_->getFeatureCount( demos_[d] );
         cout << "Feature Demo : " << phi.transpose() << endl;
@@ -1621,7 +1703,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
         //
         ioc.addAllToDraw();
 
-        saveSamplesToFile( samples );
+//        saveSamplesToFile( samples );
     }
     else { // load from file
 
@@ -1662,7 +1744,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
             }
         }
 
-        Feature* smoothness = feature_fct_->getFeatureFunction("Smoothness");
+        Feature* smoothness = feature_fct_->getFeatureFunction("SmoothnessAll");
         if( ( smoothness != NULL ) && ( d > 0 ) )
         {
             Eigen::MatrixXd buffer;

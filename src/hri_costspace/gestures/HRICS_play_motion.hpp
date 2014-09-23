@@ -50,6 +50,9 @@ public:
     int getCurrentFrame();
     int getNumberOfMotions() const;
 
+    void setMotionsNames( const std::vector< std::string >& names ) { _motions_names = names; }
+
+
 private:
 
     void runRealTime(int id);
@@ -57,6 +60,8 @@ private:
 
     std::vector<HRICS::RecordMotion*> _motion_recorders;
     std::vector< std::vector<motion_t> >_stored_motions;
+
+    std::vector< std::string > _motions_names;
 
     int _current_frame;
     int _step_size;

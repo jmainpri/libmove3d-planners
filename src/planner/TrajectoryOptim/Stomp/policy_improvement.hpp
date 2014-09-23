@@ -70,6 +70,7 @@ namespace stomp_motion_planner
     std::vector<Eigen::VectorXd> nominal_parameters_;                    /**< [num_dimensions] num_time_steps */
     
     bool out_of_bounds_; /**< Wether the rollout is violating dof limits */
+    double length_cost_;
     
     double getCost();   /**< Gets the rollout cost = state cost + control costs per dimension */
     
@@ -187,6 +188,9 @@ namespace stomp_motion_planner
     
     std::vector<Eigen::MatrixXd> control_costs_;                            /**< [num_dimensions] num_parameters x num_parameters */
     std::vector<Eigen::MatrixXd> inv_control_costs_;                        /**< [num_dimensions] num_parameters x num_parameters */
+
+    bool multiple_smoothness_;
+    Eigen::VectorXd control_cost_weights_;
     double control_cost_weight_;
     double discretization_;
     

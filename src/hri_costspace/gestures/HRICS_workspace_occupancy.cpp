@@ -39,11 +39,13 @@
 
 #include "planner/planEnvironment.hpp"
 
+#include "API/Graphic/drawModule.hpp"
 #include "API/Grids/gridsAPI.hpp"
 #include "API/project.hpp"
 
 #include <libmove3d/p3d/env.hpp>
 
+#include <boost/bind.hpp>
 #include <sys/time.h>
 
 //#include <PolyVoxCore/SurfaceMesh.h>
@@ -177,6 +179,12 @@ m_id_class_to_draw(0)
     }
 
     m_T_draw = Eigen::Transform3d::Identity();
+
+    if( global_DrawModule )
+    {
+        global_DrawModule->addDrawFunction( "WorkspaceOccupancyGrid", boost::bind( &WorkspaceOccupancyGrid::draw, this) );
+        global_DrawModule->enableDrawFunction( "WorkspaceOccupancyGrid" );
+    }
 }
 
 WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
@@ -583,7 +591,7 @@ void WorkspaceOccupancyGrid::simple_draw_combined()
 //    cout << __PRETTY_FUNCTION__ << endl;
 
     if( m_all_occupied_cells.empty() ){
-        cout << "m_all_occupied_cells.empty()" << endl;
+//        cout << "m_all_occupied_cells.empty()" << endl;
         return;
     }
 
@@ -789,20 +797,23 @@ void WorkspaceOccupancyGrid::draw()
 
     if( GestEnv->getBool(GestParam::draw_current_occupancy) )
     {
-        //        cout << "draw current occupancy" << endl;
+//        cout << "draw current occupancy" << endl;
         computeCurrentOccupancy();
-        return simple_draw_current_occupancy();
+        simple_draw_current_occupancy();
+        return;
     }
 
     if(GestEnv->getBool(GestParam::draw_single_class))
     {
         // cout << "simple_draw_one_class" << endl;
-        return simple_draw_one_class();
+        simple_draw_one_class();
+        return;
     }
     else
     {
         // cout << "simple_draw_combined" << endl;
-        return simple_draw_combined();
+        simple_draw_combined();
+        return;
     }
 
     if( m_motions.empty() )
