@@ -360,8 +360,8 @@ double TaskSmoothnessFeature::getDist( const Move3D::Trajectory& t, Eigen::Vecto
         x_0 = getTaskPose( t[i] );
         x_1 = getTaskPose( t[i+1] );
 
-        Eigen::VectorXd diff = ( x_0 - x_1 );
-        Eigen::VectorXd costs = diff.cwise() * diff;
+        Eigen::VectorXd delta = ( x_0 - x_1 );
+        Eigen::VectorXd costs = delta.cwise() * delta;
 
         control_costs[i] = costs.sum();
 
@@ -402,14 +402,17 @@ Eigen::MatrixXd TaskSmoothnessFeature::getTaskTrajectory( const Move3D::Trajecto
     Eigen::MatrixXd mat2( rows, cols + 2*(diff_rule_length-1) );
     mat2.block( 0, diff_rule_length-1, rows, cols ) = mat1;
 
-    //    cout << "motion matrix 2" << endl;
-    //    cout.precision(2);
-    //    cout << mat2 << endl;
-
     if( buffer_is_filled_ )
         control_cost_.fillTrajectoryWithBuffer( x_goal, mat2 );
     else
         control_cost_.fillTrajectory( x_init, x_goal, mat2 );
+
+//    if( !PlanEnv->getBool(PlanParam::trajStompNoPrint))
+//    {
+//        cout << "motion matrix 2" << endl;
+//        cout.precision(5);
+//        cout << mat2 << endl;
+//    }
 
     return mat2;
 }
@@ -490,6 +493,12 @@ void TaskSmoothnessFeature::setBuffer(const std::vector<Eigen::VectorXd>& buffer
         x_buffer[i] = getTaskPose( q );
     }
 
+//    if( !PlanEnv->getBool(PlanParam::trajStompNoPrint))
+//    {
+//        for( int i=0; i<buffer.size(); i++)
+//            cout << "x_buffer[" << i << "] : " << x_buffer[i].transpose() << endl;
+//    }
+
     control_cost_.setBuffer( x_buffer );
     buffer_is_filled_=true;
 }
@@ -547,7 +556,7 @@ FeatureVect SmoothnessFeature::getFeatureCount( const Move3D::Trajectory& t )
     phi[3] = jerk_.getFeatureCount(t)[0] * 1e-15;
 
     FeatureVect phi_task = task_features_.getFeatureCount( t );
-    phi[4] = phi_task[0];
+    phi[4] = phi_task[0] * 1e+01;
     phi[5] = phi_task[1] * 1e-03;
     phi[6] = phi_task[2] * 1e-09;
     phi[7] = phi_task[3] * 1e-13;
@@ -576,7 +585,7 @@ void SmoothnessFeature::setBuffer(const std::vector<Eigen::VectorXd>& buffer)
     acceleration_.setBuffer( buffer );
     jerk_.setBuffer( buffer );
     task_features_.setBuffer( buffer );
-}
+ }
 
 void SmoothnessFeature::clearBuffer()
 {

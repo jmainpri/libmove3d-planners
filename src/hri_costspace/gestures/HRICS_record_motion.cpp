@@ -54,6 +54,60 @@ std::vector<RecordMotion*> global_motionRecorders;
 //--------------------------------------------------------
 //--------------------------------------------------------
 
+Move3D::Trajectory HRICS::motion_to_traj( const motion_t& traj, Move3D::Robot* robot, int max_index )
+{
+    if( traj.empty() )
+        return Move3D::Trajectory();
+
+    if( max_index < 0 )
+        max_index = traj.size();
+
+    Move3D::Trajectory traj1( robot );
+    std::vector<double> dts;
+
+    for( int i=0; i<int(traj.size()) && i<max_index; i++ ) {
+        if( traj[i].second->getConfigStruct() == NULL ){
+            std::cout << "NULL configuration in " << __PRETTY_FUNCTION__ << std::endl;
+        }
+        dts.push_back( traj[i].first );
+        traj1.push_back( Move3D::confPtr_t( new Move3D::Configuration( robot, traj[i].second->getConfigStruct() )));
+    }
+    traj1.setUseTimeParameter( true );
+    traj1.setUseConstantTime( false );
+    traj1.setDeltaTimes( dts );
+
+    // Resample
+    Move3D::Trajectory traj2( robot );
+    const double dt = 0.01; // 100Hz
+    double t = 0.0;
+    int ith=0;
+
+    while(1)
+    {
+        if(!traj2.push_back( traj1.configAtTime(t) ) )
+            cout << "no configuration added at : " << ith << endl;
+
+        t += dt;
+
+        ith++;
+
+        if( ( t - traj1.getTimeLength() ) > 1e-3 ) {
+            cout << "break in motion_to_traj,  t : " << t << ", traj1.getTimeLength() : " << traj1.getTimeLength() << endl;
+            cout << " i : " << traj2.getNbOfViaPoints() << endl;
+            cout << " ith : " << ith << endl;
+            break;
+        }
+    }
+    traj2.setUseTimeParameter( true );
+    traj2.setUseConstantTime( true );
+    traj2.setDeltaTime( dt ); // Set index 1 because 0 is often 0.0
+    return traj2;
+}
+
+//--------------------------------------------------------
+//--------------------------------------------------------
+//--------------------------------------------------------
+
 RecordMotion::RecordMotion() : m_robot(NULL)
 {
     intialize();

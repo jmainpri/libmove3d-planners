@@ -190,7 +190,7 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
     dist_feat_.setWeights( w_distance_16 );
 
     collision_feat_.setActiveDoFs( active_dofs_ );
-    collision_feat_.setWeights( Move3D::WeightVect::Ones( collision_feat_.getNumberOfFeatures() ) );
+//    collision_feat_.setWeights( Move3D::WeightVect::Ones( collision_feat_.getNumberOfFeatures() ) );
 
     visi_feat_.setActiveDoFs( active_dofs_ );
     visi_feat_.setWeights( Move3D::WeightVect::Ones( visi_feat_.getNumberOfFeatures() ) );
@@ -404,8 +404,8 @@ bool HumanTrajSimulator::init()
         // add cut motions
         setReplanningDemonstrations();
 
-//        if( !use_one_traj_ )
-//            addCutMotions();
+        if( !use_one_traj_ )
+            addCutMotions();
 //        setInitAndGoalConfig(); // For simulation
 
     }
@@ -1200,13 +1200,13 @@ void HumanTrajSimulator::runStandardStomp( int iter )
     {
         traj_optim_set_use_extern_trajectory( false );
 
-        if( use_one_traj_)
-        {
-            // TEST WITH CURRENT DEMONSTRATION
-            traj_optim_set_use_extern_trajectory( true );
-            Move3D::Trajectory traj( motion_to_traj( human_active_motion_, human_active_ ) );
-            traj_optim_set_extern_trajectory( traj );
-        }
+//        if( use_one_traj_)
+//        {
+//            // TEST WITH CURRENT DEMONSTRATION
+//            traj_optim_set_use_extern_trajectory( true );
+//            Move3D::Trajectory traj( motion_to_traj( human_active_motion_, human_active_ ) );
+//            traj_optim_set_extern_trajectory( traj );
+//        }
     }
 
     traj_optim_set_use_iteration_limit(true);

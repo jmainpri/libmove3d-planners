@@ -40,28 +40,7 @@ typedef std::vector< std::pair<double,Move3D::confPtr_t> > motion_t;
 namespace HRICS
 {
 
-inline Move3D::Trajectory motion_to_traj( const motion_t& traj, Move3D::Robot* robot, int max_index=-1 )
-{
-    if( traj.empty() )
-        return Move3D::Trajectory();
-
-    if( max_index < 0 )
-        max_index = traj.size();
-
-    Move3D::Trajectory tmp( robot );
-
-    for( int i=0; i<int(traj.size()) && i<max_index; i++ ) {
-        if( traj[i].second->getConfigStruct() == NULL ){
-            std::cout << "NULL configuration in " << __PRETTY_FUNCTION__ << std::endl;
-        }
-        tmp.push_back( Move3D::confPtr_t( new Move3D::Configuration( robot, traj[i].second->getConfigStruct() )));
-//            std::cout << "No configuration added in " << __PRETTY_FUNCTION__ << std::endl;
-    }
-    tmp.setUseConstantTime( true );
-    tmp.setUseTimeParameter( true );
-    tmp.setDeltaTime( traj[1].first ); // Set index 1 because 0 is often 0.0
-    return tmp;
-}
+Move3D::Trajectory motion_to_traj( const motion_t& traj, Move3D::Robot* robot, int max_index=-1 );
 
 inline double motion_duration( const motion_t& traj )
 {

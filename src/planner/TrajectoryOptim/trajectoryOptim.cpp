@@ -20,6 +20,7 @@
 #include "collision_space/collision_space_factory.hpp"
 #include "planner/planEnvironment.hpp"
 #include "planner/cost_space.hpp"
+#include "feature_space/smoothness.hpp"
 
 #include "utils/multilocalpath_utils.hpp"
 
@@ -400,6 +401,10 @@ bool traj_optim_initStomp()
     if( m_use_buffer )
     {
         global_optimizer->setBuffer( m_buffer );
+
+        Move3D::StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+        if( fct != NULL && fct->getFeatureFunction("SmoothnessAll") != NULL )
+            static_cast<SmoothnessFeature*>(fct->getFeatureFunction("SmoothnessAll"))->setBuffer( m_buffer );
     }
 
     cout << "Optimizer created" << endl;

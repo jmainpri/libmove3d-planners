@@ -471,14 +471,20 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
 
 double Trajectory::getTimeLength() const
 {
-    if( m_use_time_parameter &&  m_use_constant_dt )
+    if( m_use_time_parameter )
     {
-        return m_dt * double(m_Courbe.size());
+        if(  m_use_constant_dt )
+        {
+            return m_dt * double(m_Courbe.size());
+        }
+        else {
+            double t=0.0;
+            for( int i=0; i<m_dts.size(); i++)
+                t += m_dts[i];
+            return t;
+        }
     }
-    else {
-        cout << "Not yet implemented" << endl;
-        return 0.;
-    }
+    return 0.0;
 }
 
 confPtr_t Trajectory::configAtTime(double time, unsigned int* id_localpath) const
@@ -489,24 +495,49 @@ confPtr_t Trajectory::configAtTime(double time, unsigned int* id_localpath) cons
     if( time >= getTimeLength() )
         return m_Target;
 
+    double alpha_local = 0.0;
+    unsigned int path_id = 0;
+
     if( m_use_constant_dt )
     {
-        unsigned int path_id = time / m_dt;
-        double alpha = time - double(path_id) * m_dt;
-
-//        cout << time << " , " << getTimeLength() << " , "  <<  path_id << endl;
-
-        if( id_localpath != NULL)
-           *id_localpath = path_id;
-        if( path_id >= m_Courbe.size() )
-            return m_Target;
-
-        return m_Courbe[path_id]->configAtParam( alpha * m_Courbe[path_id]->getParamMax() );
+        double alpha_traj = time / m_dt;
+        path_id = alpha_traj;
+        alpha_local = alpha_traj - double(path_id);
     }
     else {
-        cout << "Error: Not yet implemented, " << __PRETTY_FUNCTION__ << endl;
-        return confPtr_t(new Configuration(m_Robot,NULL));
+        // the dt refers to the time at which the confuration is along the traj
+        // in the constant dt it is simply the length of the local path
+
+        double t0=0.0;
+        path_id=0;
+        for(; path_id<m_dts.size(); path_id++){
+            t0 += m_dts[path_id];
+            if( time < t0 ) {
+                t0 -= m_dts[path_id]; // time on traj, considers that the initial configuration is set at t=0.0 sec
+                break;
+            }
+        }
+
+        alpha_local = ( time - t0 ) / m_dts[path_id];
+
+        path_id--;
+
+//        cout << "alpha_local : "  << alpha_local << endl;
+//        cout << "path_id : "  << path_id << endl;
+//        cout << "m_dts[path_id] : "  << m_dts[path_id] << endl;
+
+//        if( path_id >= m_Courbe.size() )
+//            cout << "return m_Target" << endl;
     }
+
+    if( id_localpath != NULL)
+       *id_localpath = path_id;
+    if( alpha_local > 1.0 )
+        alpha_local = 1.0;
+    if( path_id >= m_Courbe.size() )
+        return m_Target;
+
+    return m_Courbe[path_id]->configAtParam( alpha_local * m_Courbe[path_id]->getParamMax() );
 }
 
 confPtr_t Trajectory::configAtParam(double param, unsigned int* id_localpath) const

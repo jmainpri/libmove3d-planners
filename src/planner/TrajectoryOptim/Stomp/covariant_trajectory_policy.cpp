@@ -673,7 +673,7 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen:
         Move3D::Trajectory traj( planning_group_->robot_ );
         setGroupTrajectoryToMove3DTraj( traj,  parameters, dt );
 
-        const double factor_task_dist = 1.;
+        const double factor_task_dist = 1e+01;
         const double factor_task_vel  = 1e-03;
         const double factor_task_acc  = 1e-09;
         const double factor_task_jerk = 1e-13;

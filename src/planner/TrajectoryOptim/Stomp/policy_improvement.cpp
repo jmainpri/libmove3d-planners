@@ -80,7 +80,6 @@ namespace stomp_motion_planner
         int num_dim = control_costs_.size();
         for (int d=0; d<num_dim; ++d)
             cost += control_costs_[d].sum();
-        cost += length_cost_;
         return cost;
     }
 
@@ -739,21 +738,20 @@ namespace stomp_motion_planner
 
 //            cout << "compute control costs" << endl;
             std::vector< std::vector<Eigen::VectorXd> > control_costs;
-            Eigen::VectorXd costs = static_cast<CovariantTrajectoryPolicy*>(policy_.get())->getAllCosts( parameters, control_costs, discretization_ );
+            static_cast<CovariantTrajectoryPolicy*>(policy_.get())->getAllCosts( parameters, control_costs, discretization_ );
 
 //            cout << "sum control costs" << endl;
             rollout.control_costs_ = std::vector<Eigen::VectorXd>( num_dimensions_, Eigen::VectorXd::Zero(num_time_steps_) );
 
-
-            for (int c=0; c<control_costs.size() ; ++c)
+            for (int c=0; c<4 ; ++c)
                 for (int d=0; d<num_dimensions_; ++d) {
 //                    cout << "control_costs[" << c << "][d].size() : " << control_costs[c][d].size() << endl;
 //                    cout << "rollout.control_costs_[d].size() : " << rollout.control_costs_[d].size() << endl;
                     rollout.control_costs_[d] += ( control_cost_weights_[c] * control_costs[c][d] );
                 }
 
-            rollout.length_cost_ = control_cost_weights_[0] * costs[0];
-//             rollout.length_cost_ = 0.0;
+            for (int c=4; c<8 ; ++c)
+                rollout.state_costs_ += ( control_cost_weights_[c] * control_costs[c][0] );
         }
         else
         {
@@ -794,14 +792,14 @@ namespace stomp_motion_planner
             }
         }
 
-        // set control costs
-        computeRolloutControlCosts();
-
+        // Warning some control costs may be added to the state costs
         for (int r=0; r<num_rollouts_gen_; ++r)
         {
             rollouts_[r].state_costs_ = costs.row(r).transpose();
-//            cout << "rollouts_[" << r << "].state_costs_ : " << rollouts_[r].state_costs_.transpose() << endl;
         }
+
+        // set control costs
+        computeRolloutControlCosts();
 
         // set the total costs
         rollout_costs_total.resize(num_rollouts_);
