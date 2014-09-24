@@ -28,10 +28,12 @@
 #ifndef CONTROL_COST_HPP
 #define CONTROL_COST_HPP
 
+
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
-#include <Eigen/Core>
 
 #include <vector>
+
+#include <Eigen/Core>
 
 class ControlCost
 {
@@ -43,6 +45,9 @@ public:
 
     //! Returns the diff rule between
     int getDiffRuleLength();
+
+    //! Returns segment of active controls
+    Eigen::VectorXd getInnerSegment( const Eigen::VectorXd& control ) const;
 
     //! Returns the cost of a given trajectory
     double cost( const Eigen::MatrixXd& t );
@@ -69,13 +74,17 @@ public:
     Eigen::VectorXd interpolate( const Eigen::VectorXd& a, const Eigen::VectorXd& b, double u ) const;
 
     //! Set buffer with initial trajectory
-    void setBuffer( const Eigen::MatrixXd& buffer ) { buffer_ = buffer; }
+    void setBuffer( const std::vector<Eigen::VectorXd>& buffer ) { buffer_ = buffer; }
+
+    //! Save velocity cost to file
+    void saveProfiles( const Eigen::MatrixXd& traj, std::string foldername, double dt=0.0 );
 
 protected:
     enum cost_type { vel=0, acc=1, jerk=2 } type_;
     int diff_rule_length_;
     double scaling_;
-    Eigen::MatrixXd buffer_;
+    std::vector<Eigen::VectorXd> buffer_;
+
 };
 
 #endif // CONTROL_COST_HPP

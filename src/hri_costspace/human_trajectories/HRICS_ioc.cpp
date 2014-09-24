@@ -1286,6 +1286,31 @@ void IocEvaluation::saveSamplesToFile(const std::vector< std::vector<Move3D::Tra
     }
 }
 
+std::vector< std::vector< Move3D::Trajectory> > IocEvaluation::loadSamplesFromFile( int nb_demos, int nb_samples ) const
+{
+    std::vector< std::vector< Move3D::Trajectory> > samples( nb_demos );
+
+    for(size_t d=0; d<nb_demos; d++)
+    {
+        cout << "Load samples of demo : " << d << endl;
+
+        for(size_t i=0; i<nb_samples; i++)
+        {
+            std::stringstream ss;
+            ss << folder_ << "samples/" << "trajectory_sample_" << feature_type_ <<
+                  "_"  << std::setw(3) << std::setfill( '0' ) << d <<
+                  "_"  << std::setw(3) << std::setfill( '0' ) << i << ".traj";
+
+//            cout << "load sample : " << i << " : " << ss.str() << endl;
+
+            samples[d].push_back( Move3D::Trajectory( robot_ ) );
+            samples[d][i].loadFromFile( ss.str() );
+        }
+    }
+
+    return samples;
+}
+
 bool file_exists_test(const std::string& name) {
     std::ifstream f( name.c_str() );
     if (f.good()) {
@@ -1498,6 +1523,41 @@ void IocEvaluation::loadWeightVector()
     cout << " LEARNED weight : " << learned_vect_.transpose() << endl;
 }
 
+void IocEvaluation::setContext(int d)
+{
+    for( int i=0; i<int(context_.size()); i++ )
+    {
+        Move3D::Robot* entity = context_[i][d]->getRobot();
+        entity->setAndUpdate( *context_[i][d] );
+    }
+}
+
+void IocEvaluation::setBuffer(int d)
+{
+    if( ( d > 0 ) && (demo_ids_[d] != d ) )
+    {
+        if( !demo_ids_.empty() && demos_[ demo_ids_[d] ].getUseTimeParameter() )
+        {
+            double time_along_original_demo = demos_[ demo_ids_[d] ].getTimeLength() - demos_[d].getTimeLength();
+
+//            cout << "demos_[ demo_ids_[d] ].getTimeLength() : " << demos_[ demo_ids_[d] ].getTimeLength() << endl;
+//            cout << "demos_[d].getTimeLength() : " << demos_[d].getTimeLength() << endl;
+//            cout << "time_along_original_demo : " << time_along_original_demo << endl;
+
+            double dt = demos_[d].getDeltaTime();
+            std::vector<Eigen::VectorXd> buffer;
+            int nb_config = 7;
+            for(int i=0; i<nb_config; i++){
+                double t = time_along_original_demo-double(nb_config-i)*dt;
+                Move3D::confPtr_t q = demos_[ demo_ids_[d] ].configAtTime( t );
+                buffer.push_back( q->getEigenVector( plangroup_->getActiveDofs() ) );
+                // cout << "buffer " << d << " [" << i << "] " << t << " : " << buffer[i].transpose() << endl;
+            }
+            static_cast<SmoothnessFeature*>(feature_fct_->getFeatureFunction("SmoothnessAll"))->setBuffer( buffer );
+        }
+    }
+}
+
 std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
 {
     // Get features of demos
@@ -1508,14 +1568,11 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
         if( demos_[d].getNbOfViaPoints() != nb_way_points_ ) // Only cut of needed
             demos_[d].cutTrajInSmallLP( nb_way_points_-1 );
 
-        if( use_context_ ){
+        if( use_context_ )
+            setContext(d);
 
-            for( int i=0; i<int(context_.size()); i++ )
-            {
-                Move3D::Robot* entity = context_[i][d]->getRobot();
-                entity->setAndUpdate( *context_[i][d] );
-            }
-        }
+        if( feature_fct_->getFeatureFunction("SmoothnessAll") )
+            setBuffer(d);
 
         FeatureVect phi = feature_fct_->getFeatureCount( demos_[d] );
         cout << "Feature Demo : " << phi.transpose() << endl;
@@ -1524,7 +1581,7 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
         phi_demo[d] = phi;
     }
 
-    demos_[0].replaceP3dTraj();
+//    demos_[0].replaceP3dTraj();
 
     return phi_demo;
 }
@@ -1667,6 +1724,11 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
 //        cout << "              max : "  << plangroup_->chomp_joints_[i].joint_limit_max_ << endl;
 //    }
 
+    for( int i=0;i<demo_ids_.size();i++)
+    {
+        cout << "demo_ids_[" << i << "] : " << demo_ids_[i] << endl;
+    }
+
 
     // For human
     feature_fct_->setAllFeaturesActive();
@@ -1681,32 +1743,34 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
 
     std::vector< std::vector<Move3D::Trajectory> > samples;
 
+    cout << "Create Ioc" << endl;
+    HRICS::Ioc ioc( nb_way_points_, plangroup_ );
+
+    // Get demos features
+    cout << "Add demonstrations" << endl;
+    phi_demos_ = addDemonstrations( ioc );
+
+//    cout << "wait for key" << endl;
+//    std::cin.ignore();
+
     bool generate = true;
+
     if( generate )
     {
-        cout << "Create Ioc" << endl;
-        HRICS::Ioc ioc( nb_way_points_, plangroup_ );
-
-        // Get demos features
-        cout << "Add demonstrations" << endl;
-        phi_demos_ = addDemonstrations( ioc );
-
         // Generate samples by random sampling
         cout << "Generate samples (" << nb_samples_ << ")" << endl;
         remove_samples_in_collision_ = true;
         int nb_invalid_samples = ioc.generateSamples( nb_samples_, remove_samples_in_collision_, context_ );
 
         cout << "percentage of invalid samples : " << (100 * double(nb_invalid_samples) / double(nb_samples_)) << " \%" << endl;
-
         samples = ioc.getSamples();
 
-        //
         ioc.addAllToDraw();
 
 //        saveSamplesToFile( samples );
     }
     else { // load from file
-
+        samples = loadSamplesFromFile( demos_.size(), nb_samples_ );
     }
 
     double demo_cost = feature_fct_->getWeights().transpose()*phi_demos_[0];
@@ -1735,25 +1799,21 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
     // For each demonstration
     for( int d=0;d<int(samples.size());d++)
     {
-        if( use_context_ ){
+        if( use_context_ )
+            setContext(d);
 
-            for( int i=0; i<int(context_.size()); i++ )
-            {
-                Move3D::Robot* entity = context_[i][d]->getRobot();
-                entity->setAndUpdate( *context_[i][d] );
-            }
-        }
-
-        Feature* smoothness = feature_fct_->getFeatureFunction("SmoothnessAll");
-        if( ( smoothness != NULL ) && ( d > 0 ) )
-        {
-            Eigen::MatrixXd buffer;
-            static_cast<TrajectorySmoothness*>(smoothness)->setBuffer( buffer );
-        }
+        if( feature_fct_->getFeatureFunction("SmoothnessAll") )
+            setBuffer(d);
 
         for( int i=0; i<int(samples[d].size()); i++)
         {
             phi = feature_fct_->getFeatureCount( samples[d][i] );
+
+//            if( d == 8 )
+//            {
+//                cout << "wait for key" << endl;
+//                std::cin.ignore();
+//            }
 
             phi_k[d].push_back( phi );
 

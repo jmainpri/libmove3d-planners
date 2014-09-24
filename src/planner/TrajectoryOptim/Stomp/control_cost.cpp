@@ -27,7 +27,10 @@
  */
 #include "control_cost.hpp"
 
+#include "utils/misc_functions.hpp"
+
 #include <iostream>
+#include <iomanip>
 
 #include <libmove3d/include/Util-pkg.h>
 
@@ -65,12 +68,17 @@ int ControlCost::getDiffRuleLength()
     return diff_rule_length_;
 }
 
+Eigen::VectorXd ControlCost::getInnerSegment( const Eigen::VectorXd& control ) const
+{
+    return control.segment( diff_rule_length_-1, control.size() - 2*(diff_rule_length_-1));;
+}
+
 double ControlCost::cost( const std::vector<Eigen::VectorXd>& control_costs )
 {
     double cost=0.0;
     for ( int d=0; d<int(control_costs.size()); ++d )
     {
-        Eigen::VectorXd cost_vect =  control_costs[d].segment( diff_rule_length_-1, control_costs[d].size() - 2*(diff_rule_length_-1));
+        Eigen::VectorXd cost_vect = getInnerSegment( control_costs[d] );
 //        cout.precision(2);
 //         cout << "cost_vect : " << cost_vect.transpose() << endl;
         // cout << "cost_vect.size() : " << cost_vect.size() << endl;
@@ -104,7 +112,7 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
 
     const double weight = 1.0;
 
-    // this measures the velocity and squares them
+    // this measures the velocity and squares them (for each DoF)
     for ( int d=0; d<traj.rows(); ++d )
     {
         Eigen::VectorXd params_all = traj.row(d);
@@ -156,7 +164,7 @@ void ControlCost::fillTrajectoryWithBuffer( const Eigen::VectorXd& b, Eigen::Mat
     // set the start and end of the trajectory
     for (int i=0; i<diff_rule_length_-1; ++i)
     {
-        traj.col(i) = buffer_.col(i);
+        traj.col(i) = buffer_[i];
         traj.col(traj.cols()-1-i) = b;
     }
 }
@@ -240,4 +248,23 @@ Eigen::VectorXd ControlCost::interpolate( const Eigen::VectorXd& a, const Eigen:
         out[i] += u*(b[i]-a[i]);
     }
     return out;
+}
+
+void ControlCost::saveProfiles( const Eigen::MatrixXd& traj, std::string foldername, double dt )
+{
+    cost_type tmp = type_;
+
+    type_ = vel;
+
+    std::vector<Eigen::VectorXd> control_costs = getSquaredQuantities( traj, dt );
+
+    for (int d=0; d<control_costs.size(); ++d)
+    {
+        Eigen::VectorXd cost_vect = control_costs[d].segment( diff_rule_length_-1, control_costs[d].size() - 2*(diff_rule_length_-1));
+        std::stringstream ss;
+        ss << "stomp_vel_"  << std::setw(3) << std::setfill( '0' ) << d << ".txt";
+        move3d_save_matrix_to_file( cost_vect.transpose(), foldername + ss.str() );
+    }
+
+    type_ = tmp;
 }

@@ -29,7 +29,7 @@
 #define HRICS_HUMANFEATURES_HPP
 
 #include "feature_space/features.hpp"
-#include "feature_space/smoothness.hpp"
+//#include "feature_space/smoothness.hpp"
 
 #include "hri_costspace/HRICS_distance.hpp"
 #include "hri_costspace/HRICS_visibility.hpp"
@@ -63,29 +63,6 @@ private:
 
     std::vector<Move3D::Joint*> human_active_joints_;
     std::vector<Move3D::Joint*> human_passive_joints_;
-};
-
-class VelocityFeature : public Move3D::Feature
-{
-public:
-    VelocityFeature( Move3D::Robot* active );
-    Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
-    Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
-
-    // Compute velocity between two configurations
-    std::vector<Eigen::Vector3d> getVelocity(const Move3D::Configuration& q_0, const Move3D::Configuration& q_1, double dt);
-
-    // Draw velocities
-    void draw();
-
-private:
-
-    void stackVelocities( Move3D::FeatureVect& stack , const std::vector<Eigen::Vector3d>& velocities );
-
-    Move3D::Robot* human_active_;
-    std::vector<int> veclocity_joint_ids_;
-    std::vector<Move3D::Joint*> human_active_joints_;
-    Move3D::confPtr_t q_last_;
 };
 
 class CollisionFeature : public Move3D::Feature

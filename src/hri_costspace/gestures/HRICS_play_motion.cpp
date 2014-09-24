@@ -151,7 +151,7 @@ void PlayMotion::runRealTime(int id)
 
                         if( time_traj >= time )
                         {
-                            cout << "i : " << i << " , :  _stored_motions[j][id].size() "  << _stored_motions[j][id].size() << " , time_traj : " << time_traj << " , time : " << time  << endl;
+//                            cout << "i : " << i << " , :  _stored_motions[j][id].size() "  << _stored_motions[j][id].size() << " , time_traj : " << time_traj << " , time : " << time  << endl;
 
                             Move3D::confPtr_t q = _stored_motions[j][id][i].second;
                             Move3D::Robot* robot = q->getRobot();

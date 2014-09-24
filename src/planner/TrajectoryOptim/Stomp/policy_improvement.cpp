@@ -743,9 +743,14 @@ namespace stomp_motion_planner
 
 //            cout << "sum control costs" << endl;
             rollout.control_costs_ = std::vector<Eigen::VectorXd>( num_dimensions_, Eigen::VectorXd::Zero(num_time_steps_) );
+
+
             for (int c=0; c<control_costs.size() ; ++c)
-                for (int d=0; d<num_dimensions_; ++d)
+                for (int d=0; d<num_dimensions_; ++d) {
+//                    cout << "control_costs[" << c << "][d].size() : " << control_costs[c][d].size() << endl;
+//                    cout << "rollout.control_costs_[d].size() : " << rollout.control_costs_[d].size() << endl;
                     rollout.control_costs_[d] += ( control_cost_weights_[c] * control_costs[c][d] );
+                }
 
             rollout.length_cost_ = control_cost_weights_[0] * costs[0];
 //             rollout.length_cost_ = 0.0;

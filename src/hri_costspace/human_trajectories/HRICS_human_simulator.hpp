@@ -32,6 +32,7 @@
 #include "HRICS_human_cost_space.hpp"
 #include "HRICS_human_features.hpp"
 #include "hri_costspace/gestures/HRICS_record_motion.hpp"
+#include "feature_space/smoothness.hpp"
 
 #include "API/Device/robot.hpp"
 
@@ -229,6 +230,7 @@ private:
 
     int minimal_demo_size_;
     bool trajectories_cut_;
+    bool use_one_traj_;
     int cut_step_;
 
     bool use_bio_models_;

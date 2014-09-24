@@ -260,10 +260,10 @@ bool IocSequences::run()
             break;
 
         case generate:
-
+        {
             cout << "GENERATE" << endl;
 
-//            global_ht_cost_space->normalizing_by_sampling();
+            // global_ht_cost_space->normalizing_by_sampling();
 
             setGenerationFeatures();
 
@@ -272,8 +272,8 @@ bool IocSequences::run()
                 std::vector<Move3D::Trajectory> trajs = global_ht_simulator->getDemoTrajectories();
                 std::vector<Move3D::confPtr_t> context = global_ht_simulator->getContext();
                 std::vector<int> ids = global_ht_simulator->getDemoIds();
-//                trajs.push_back( HRICS::motion_to_traj( global_motionRecorders[0]->getStoredMotions()[0], human2, 60 ) );
-//                human1->setAndUpdate( *global_motionRecorders[1]->getStoredMotions()[0][0].second );
+                // trajs.push_back( HRICS::motion_to_traj( global_motionRecorders[0]->getStoredMotions()[0], human2, 60 ) );
+                // human1->setAndUpdate( *global_motionRecorders[1]->getStoredMotions()[0][0].second );
                 eval_->saveDemoToFile( trajs, ids, context );
             }
             else {
@@ -281,9 +281,11 @@ bool IocSequences::run()
             }
 
             g3d_draw_allwin_active();
+        }
             break;
 
         case sample:
+        {
             cout << "SAMPLE" << endl;
 
             cout << "global_ht_simulator : " << global_ht_simulator << endl;
@@ -301,12 +303,17 @@ bool IocSequences::run()
             cout << "stack info" << endl;
             feature_fct_->printInfo();
 
+            // Set what demo correspond to what sample
+            std::vector<int> ids = global_ht_simulator->getDemoIds();
+            eval_->setDemoIds( ids );
+
             if( sample_from_file )
                 eval_->runFromFileSampling( file_offset );
             else // cout << "sampling" << endl;
                 eval_->runSampling();
 
             g3d_draw_allwin_active();
+        }
             break;
 
         case compare:

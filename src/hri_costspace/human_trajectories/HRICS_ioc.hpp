@@ -229,6 +229,9 @@ public:
     //! Save samples to files
     void saveSamplesToFile(const std::vector< std::vector<Move3D::Trajectory> >& samples ) const;
 
+    //! Load samples from files
+    std::vector< std::vector< Move3D::Trajectory> > loadSamplesFromFile( int nb_demos, int nb_samples ) const;
+
     virtual void setLearnedWeights();
     virtual void setOriginalWeights();
 
@@ -237,6 +240,7 @@ public:
     void setUseSimulator(bool use_simulator) { use_simulator_ = use_simulator; }
     void setDemoId(int demo_id) { demo_id_ = demo_id; }
     void setOriginalDemoFolder(std::string folder) { original_demo_folder_ = folder; }
+    void setDemoIds( const std::vector<int>& ids ) { demo_ids_ = ids; }
 
 protected:
 
@@ -289,6 +293,12 @@ protected:
     //! Returns true if the trajectory is valid
     bool isTrajectoryValid( Move3D::Trajectory& path );
 
+    //! Set the context for that trajectory
+    void setContext(int d);
+
+    //! Set the buffer for that trajectory
+    void setBuffer(int d);
+
     Move3D::Robot* robot_;
     int nb_demos_;
     int nb_samples_;
@@ -300,6 +310,8 @@ protected:
     std::vector<Move3D::Trajectory> learned_;
     Move3D::WeightVect learned_vect_;
     Move3D::WeightVect original_vect_;
+
+    std::vector<int> demo_ids_;
 
     std::vector<int> active_joints_;
     Move3D::StackedFeatures* feature_fct_;

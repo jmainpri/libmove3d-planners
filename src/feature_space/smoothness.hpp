@@ -32,6 +32,13 @@
 #include "features.hpp"
 #include "planner/TrajectoryOptim/Stomp/control_cost.hpp"
 
+//! Ugly...
+#include "hri_costspace/human_trajectories/HRICS_human_features.hpp"
+
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+
+#include <vector>
+
 namespace Move3D
 {
 
@@ -54,15 +61,16 @@ public:
     Eigen::MatrixXd getSmoothedTrajectory( const Move3D::Trajectory& t );
 
     //! Set Buffer
-    void setBuffer(const Eigen::MatrixXd& buffer) { control_cost_.setBuffer(buffer); buffer_is_filled_=true; }
+    virtual void setBuffer(const std::vector<Eigen::VectorXd>& buffer);
+
     void clearBuffer() { buffer_is_filled_=false; }
 
 protected:
     ControlCost control_cost_;
+    bool buffer_is_filled_;
 
 private:
     double computeControlCost( const Eigen::MatrixXd& traj );
-    bool buffer_is_filled_;
 
 };
 
@@ -101,18 +109,52 @@ public:
 };
 
 ////////////////////////////////////////
+class TaskSmoothnessFeature : public TrajectorySmoothness
+{
+public:
+    TaskSmoothnessFeature( Move3D::Robot* active );
+    Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+    Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
+
+    Eigen::MatrixXd getTaskTrajectory( const Move3D::Trajectory& t );
+    Eigen::VectorXd getTaskPose( Move3D::confPtr_t _q );
+
+    // Compute velocity between two configurations
+    double getDist( const Move3D::Trajectory& t,Eigen::VectorXd& control_costs );
+    double getVelocity( const Move3D::Trajectory& t,Eigen::VectorXd& control_costs );
+    double getAcceleration( const Move3D::Trajectory& t, Eigen::VectorXd& control_costs );
+    double getJerk( const Move3D::Trajectory& t, Eigen::VectorXd& control_costs );
+
+    Eigen::VectorXd getControlCosts(int size, std::vector<Eigen::VectorXd>& control_cost ) const;
+
+    //! Set Task buffer
+    void setBuffer( const std::vector<Eigen::VectorXd>& buffer );
+
+    // Draw velocities
+    void draw();
+
+private:
+
+    Move3D::Robot* robot_;
+    std::vector<int> veclocity_joint_ids_;
+    std::vector<Move3D::Joint*> task_joints_;
+};
+
+////////////////////////////////////////
 class SmoothnessFeature : public Move3D::Feature
 {
 public:
-    SmoothnessFeature();
+    SmoothnessFeature(Move3D::Robot* robot);
     Move3D::FeatureVect getFeatureCount( const Move3D::Trajectory& t );
     Move3D::FeatureVect getFeatures( const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0) );
     void setActiveDoFs( const std::vector<int>& active_dofs );
     void setWeights(const WeightVect &w);
 
     //! Set Buffer
-    void setBuffer(const Eigen::MatrixXd& buffer);
+    void setBuffer(const std::vector<Eigen::VectorXd>& buffer);
     void clearBuffer();
+
+    TaskSmoothnessFeature task_features_;
 
 private:
     LengthFeature length_;
@@ -120,6 +162,8 @@ private:
     AccelerationSmoothness acceleration_;
     JerkSmoothness jerk_;
 };
+
+
 
 }
 

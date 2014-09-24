@@ -162,7 +162,7 @@ void HRICS_run_human_planning()
 HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* passive ) :
     human_active_(active),
     human_passive_(passive),
-    smoothness_feat_(),
+    smoothness_feat_( active ),
     dist_feat_( active, passive ),
     visi_feat_(active, passive),
     musc_feat_( active ),
@@ -396,12 +396,16 @@ bool HumanTrajSimulator::init()
     minimal_demo_size_ = 10;
     trajectories_cut_ = false;
 
+    use_one_traj_ = false;
+
     if( !motion_recorders_.empty() )
     {
         // Store demonstrations, compute pelvis bounds
         // add cut motions
         setReplanningDemonstrations();
-        addCutMotions();
+
+//        if( !use_one_traj_ )
+//            addCutMotions();
 //        setInitAndGoalConfig(); // For simulation
 
     }
@@ -582,22 +586,50 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     good_motions_names.push_back("[0446-0578]_human2_.csv");
     good_motions_names.push_back("[0446-0578]_human1_.csv");
 
-    good_motions_names.push_back("[0525-0657]_human2_.csv");
-    good_motions_names.push_back("[0525-0657]_human1_.csv");
-    good_motions_names.push_back("[1342-1451]_human2_.csv");
-    good_motions_names.push_back("[1342-1451]_human1_.csv");
-    good_motions_names.push_back("[2197-2343]_human2_.csv");
-    good_motions_names.push_back("[2197-2343]_human1_.csv");
-    good_motions_names.push_back("[0444-0585]_human2_.csv");
-    good_motions_names.push_back("[0444-0585]_human1_.csv");
-    good_motions_names.push_back("[0489-0589]_human2_.csv");
-    good_motions_names.push_back("[0489-0589]_human1_.csv");
-    good_motions_names.push_back("[0780-0871]_human2_.csv");
-    good_motions_names.push_back("[0780-0871]_human1_.csv");
-    good_motions_names.push_back("[1537-1608]_human2_.csv");
-    good_motions_names.push_back("[1537-1608]_human1_.csv");
-    good_motions_names.push_back("[2711-2823]_human2_.csv");
-    good_motions_names.push_back("[2711-2823]_human1_.csv");
+//    good_motions_names.push_back("[0525-0657]_human2_.csv");
+//    good_motions_names.push_back("[0525-0657]_human1_.csv");
+
+//    good_motions_names.push_back("[0444-0585]_human2_.csv");
+//    good_motions_names.push_back("[0444-0585]_human1_.csv");
+
+//    good_motions_names.push_back("[0489-0589]_human2_.csv");
+//    good_motions_names.push_back("[0489-0589]_human1_.csv");
+
+//    good_motions_names.push_back("[0780-0871]_human2_.csv");
+//    good_motions_names.push_back("[0780-0871]_human1_.csv");
+
+//    good_motions_names.push_back("[1537-1608]_human2_.csv");
+//    good_motions_names.push_back("[1537-1608]_human1_.csv");
+
+//    good_motions_names.push_back("[2711-2823]_human2_.csv");
+//    good_motions_names.push_back("[2711-2823]_human1_.csv");
+
+
+    if( !use_one_traj_ )
+    {
+        good_motions_names.push_back("[0525-0657]_human2_.csv");
+        good_motions_names.push_back("[0525-0657]_human1_.csv");
+
+        good_motions_names.push_back("[0444-0585]_human2_.csv");
+        good_motions_names.push_back("[0444-0585]_human1_.csv");
+
+        good_motions_names.push_back("[0489-0589]_human2_.csv");
+        good_motions_names.push_back("[0489-0589]_human1_.csv");
+
+        good_motions_names.push_back("[0780-0871]_human2_.csv");
+        good_motions_names.push_back("[0780-0871]_human1_.csv");
+
+        good_motions_names.push_back("[1537-1608]_human2_.csv");
+        good_motions_names.push_back("[1537-1608]_human1_.csv");
+
+        good_motions_names.push_back("[2711-2823]_human2_.csv");
+        good_motions_names.push_back("[2711-2823]_human1_.csv");
+
+//        good_motions_names.push_back("[1342-1451]_human2_.csv");
+//        good_motions_names.push_back("[1342-1451]_human1_.csv");
+//        good_motions_names.push_back("[2197-2343]_human2_.csv");
+//        good_motions_names.push_back("[2197-2343]_human1_.csv");
+    }
 
     human_1_demos_.clear();
     human_2_demos_.clear();
@@ -626,6 +658,7 @@ void HumanTrajSimulator::setReplanningDemonstrations()
                 human_1_demos_.push_back( human_1_motions_.back() );
                 human_2_demos_.push_back( human_2_motions_.back() );
 
+                //
                 int demo_id = motions_demo_ids_.size();
                 motions_demo_ids_.push_back( demo_id );
 
@@ -682,6 +715,15 @@ void HumanTrajSimulator::addCutMotions()
     std::vector<motion_t> human_1_motion_tmp;
     std::vector<motion_t> human_2_motion_tmp;
 
+    motions_demo_ids_.clear();
+
+    for( size_t i=0; i<human_1_motions_.size(); i++ ) // Add original motions
+    {
+        human_1_motion_tmp.push_back( human_1_motions_[i] );
+        human_2_motion_tmp.push_back( human_2_motions_[i] );
+        motions_demo_ids_.push_back( i );
+    }
+
     cut_step_ = 10; // 10 * 0.01 = 0.1 sec
     minimal_demo_size_ = 80; // 70 * 0.01 = 0.7 sec
 
@@ -704,7 +746,7 @@ void HumanTrajSimulator::addCutMotions()
         cout << "min demo size : " << minimal_demo_size_ << endl;
         cout << "max_nb_of_removed_frames : " << max_nb_of_removed_frames << endl;
 
-        // Add smaler cut trajectories on smaller chunks
+        // Add smaller cut trajectories
         for( int j=0; j<max_nb_of_removed_frames; j++ )
         {
             init_1++;
@@ -734,6 +776,10 @@ void HumanTrajSimulator::addCutMotions()
 
     cout << "size 1 after adding cut motions : " << human_1_motions_.size() << endl;
     cout << "size 2 after adding cut motions : " << human_2_motions_.size() << endl;
+
+    for( int i=0; i<human_1_motions_.size(); i++ ){
+        cout << "time length [" << motions_demo_ids_[i] << "][" << i << "] : " << motion_duration( human_1_motions_[i] ) << endl;
+    }
 }
 
 std::vector<Move3D::Trajectory> HumanTrajSimulator::getDemoTrajectories() const
@@ -1154,10 +1200,13 @@ void HumanTrajSimulator::runStandardStomp( int iter )
     {
         traj_optim_set_use_extern_trajectory( false );
 
-        // TEST WITH CURRENT DEMONSTRATION
-//        traj_optim_set_use_extern_trajectory( true );
-//        Move3D::Trajectory traj( motion_to_traj( human_active_motion_, human_active_ ) );
-//        traj_optim_set_extern_trajectory( traj );
+        if( use_one_traj_)
+        {
+            // TEST WITH CURRENT DEMONSTRATION
+            traj_optim_set_use_extern_trajectory( true );
+            Move3D::Trajectory traj( motion_to_traj( human_active_motion_, human_active_ ) );
+            traj_optim_set_extern_trajectory( traj );
+        }
     }
 
     traj_optim_set_use_iteration_limit(true);

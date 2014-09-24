@@ -45,6 +45,7 @@
 
 #include "planner/planEnvironment.hpp"
 #include "utils/misc_functions.hpp"
+#include "feature_space/smoothness.hpp"
 
 #include <sstream>
 #include <stdio.h>
@@ -417,7 +418,9 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
             if( type_ == dist )
             {
                 if( (i >= free_vars_start_index_) && (i <= free_vars_end_index_ ))
-                    acc_all[i] = ( std::pow( params_all[i], 2. ) - std::pow( params_all[i+1], 2. ) );
+                {
+                    acc_all[i] = std::pow( params_all[i] - params_all[i+1], 2. );
+                }
             }
             else
             {
@@ -448,22 +451,24 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
 
         if( type_ != dist )
             costs_all = ( acc_all.cwise()*acc_all );
+        else
+            costs_all = acc_all;
 
         costs_all *= weight;
 
         control_costs[d] = costs_all.segment( free_vars_start_index_, num_vars_free_ );
 
-        if( !PlanEnv->getBool(PlanParam::trajStompNoPrint) )
-            if( type_ == vel )
-            {
-                cout << "control param for joint name : " << planning_group_->chomp_joints_[d].joint_name_ << endl;
-                cout << "control_costs[d].size() : " << control_costs[d].size() << endl;
-                cout << "free_vars_start_index_ : " << free_vars_start_index_ << endl;
-                cout << "free_vars_end_index_ : " << free_vars_end_index_ << endl;
-                cout << "params_all : " << params_all.transpose() << endl;
-                cout << "acc_all : "  << acc_all.transpose() << endl;
-                cout << "costs_all : "  << costs_all.transpose() << endl;
-            }
+//        if( !PlanEnv->getBool(PlanParam::trajStompNoPrint) )
+//            if( type_ == vel )
+//            {
+//                cout << "control param for joint name : " << planning_group_->chomp_joints_[d].joint_name_ << endl;
+//                cout << "control_costs[d].size() : " << control_costs[d].size() << endl;
+//                cout << "free_vars_start_index_ : " << free_vars_start_index_ << endl;
+//                cout << "free_vars_end_index_ : " << free_vars_end_index_ << endl;
+//                cout << "params_all : " << params_all.transpose() << endl;
+//                cout << "acc_all : "  << acc_all.transpose() << endl;
+//                cout << "costs_all : "  << costs_all.transpose() << endl;
+//            }
 
 
 //        control_costs[d][0] = 0.0;
@@ -477,21 +482,17 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
 
 //    if( type_ == dist ) // TODO FINISH
 //    {
-//        double length = 0.0;
-
-//        for (int i=diff_rule_length; i<traj_smooth.cols()-diff_rule_length; i++)
+//        for (int i=free_vars_start_index_; i<= free_vars_end_index_; i++)
 //        {
 //            double tmp = 0.0;
 
-//            for ( int d=0; d<traj_smooth.rows(); ++d )
+//            for ( int d=0; d<control_costs.size(); ++d )
 //                tmp += control_costs[d][i];
 
-//            acc_all[i] = std::sqrt(tmp); // Sum of squarred lengths
+//            for ( int d=0; d<control_costs.size(); ++d ) // Distances are the same for each state
+//                control_costs[d][i] = tmp; // Sum of squarred lengths
 //        }
-
-//        costs_all = acc_all;
 //    }
-
     return true;
 }
 
@@ -595,14 +596,18 @@ bool CovariantTrajectoryPolicy::updateParameters(const std::vector<Eigen::Matrix
 
 Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen::VectorXd>& parameters, std::vector< std::vector<Eigen::VectorXd> >& control_costs, double dt )
 {
+    const int nb_costs = 8;
+
     std::vector<Eigen::MatrixXd> control_cost_matrices;
     std::vector<Eigen::VectorXd> noise( parameters.size() );
     std::vector<Eigen::VectorXd> control_costs_tmp( parameters.size() );
-    Eigen::VectorXd costs( Eigen::VectorXd::Zero(4) );
+    Eigen::VectorXd costs( Eigen::VectorXd::Zero(nb_costs) );
 
-    control_costs.resize(4);
+    control_costs.resize(nb_costs);
     for (int i=0; i<control_costs.size(); ++i) {
         control_costs[i].resize( parameters.size() );
+        for (int d=0; d<control_costs[i].size(); ++d)
+            control_costs[i][d] = Eigen::VectorXd::Zero( parameters[d].size() );
     }
 
     for (int d=0; d<parameters.size(); ++d) {
@@ -661,6 +666,48 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen:
 
     type_ = type_tmp;
 
+    Move3D::StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+
+    if( fct != NULL && fct->getFeatureFunction("SmoothnessAll") != NULL )
+    {
+        Move3D::Trajectory traj( planning_group_->robot_ );
+        setGroupTrajectoryToMove3DTraj( traj,  parameters, dt );
+
+        const double factor_task_dist = 1.;
+        const double factor_task_vel  = 1e-03;
+        const double factor_task_acc  = 1e-09;
+        const double factor_task_jerk = 1e-13;
+
+        double cost_t;
+
+        Eigen::VectorXd control_costs_t;
+        TaskSmoothnessFeature& task = static_cast<SmoothnessFeature*>(fct->getFeatureFunction("SmoothnessAll"))->task_features_;
+
+        cost_t = task.getDist( traj, control_costs_t );
+        costs[4] = factor_task_dist * cost_t;
+
+        for (int d=0; d<control_costs[4].size(); ++d)
+            control_costs[4][d] = factor_task_dist * control_costs_t;
+
+        cost_t = task.getVelocity( traj, control_costs_t );
+        costs[5] = factor_task_vel * cost_t;
+
+        for (int d=0; d<control_costs[5].size(); ++d)
+            control_costs[5][d] = factor_task_vel * control_costs_t;
+
+        cost_t = task.getAcceleration( traj, control_costs_t );
+        costs[6] = factor_task_acc * cost_t;
+
+        for (int d=0; d<control_costs[6].size(); ++d)
+            control_costs[6][d] = factor_task_acc * control_costs_t;
+
+        cost_t = task.getJerk( traj, control_costs_t );
+        costs[7] = factor_task_jerk * cost_t;
+
+        for (int d=0; d<control_costs[7].size(); ++d)
+            control_costs[7][d] = factor_task_jerk * control_costs_t;
+    }
+
     return costs;
 }
 
@@ -708,6 +755,8 @@ void CovariantTrajectoryPolicy::saveProfiles( const std::vector<Eigen::VectorXd>
     }
 
     type_ = type_tmp;
+
+
 }
 
 void CovariantTrajectoryPolicy::setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj,  const std::vector<Eigen::VectorXd>& parameters, double dt )
@@ -721,13 +770,13 @@ void CovariantTrajectoryPolicy::setGroupTrajectoryToMove3DTraj( Move3D::Trajecto
 
     traj.clear();
 
-    std::vector< Eigen::VectorXd> params_all(num_dimensions_);
+//    std::vector< Eigen::VectorXd> params_all(num_dimensions_);
 
-    for( int d=0; d<num_dimensions_; ++d )
-    {
-        params_all[d] = parameters_all_[d];
-        params_all[d].segment( free_vars_start_index_, num_vars_free_ ) = parameters[d];
-    }
+//    for( int d=0; d<num_dimensions_; ++d )
+//    {
+//        params_all[d] = parameters_all_[d];
+//        params_all[d].segment( free_vars_start_index_, num_vars_free_ ) = parameters[d];
+//    }
 
     // Get the map from move3d index to group trajectory
     const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
@@ -740,11 +789,14 @@ void CovariantTrajectoryPolicy::setGroupTrajectoryToMove3DTraj( Move3D::Trajecto
         traj.setDeltaTime( dt ); // WARNING here use detla time
     }
 
-    for (int i=0; i<num_vars_all_; ++i) // Because we add source and target we start later
+
+//        cout << "parameters[d].transpose() : " << parameters[d].transpose() << endl;
+
+    for (int i=0; i<parameters[0].size(); ++i) // Because we add source and target we start later
     {
         for (int d=0; d<num_dimensions_; ++d)
         {
-           (*q)[ joints[d].move3d_dof_index_] = params_all[d][i];
+            (*q)[ joints[d].move3d_dof_index_] = parameters[d][i];
         }
 
         traj.push_back( confPtr_t(new Configuration(*q)) );

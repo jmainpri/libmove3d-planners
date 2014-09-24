@@ -865,7 +865,7 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     last_traj_ = Move3D::Trajectory( robot_model_ );
     setGroupTrajectoryToMove3DTraj( last_traj_ );
 
-    policy_->saveProfiles( policy_parameters_, "." );
+//    policy_->saveProfiles( policy_parameters_, "." );
 
     if( best_group_trajectory_in_collsion_cost_ < best_group_trajectory_cost_ )
 
@@ -957,6 +957,11 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
 
         cout << "general collision cost 1 : " << getCollisionCost() << endl;
         cout << "general collision cost 2 : " << fct->getFeatureFunction("Collision")->getWeights().transpose() * phi << endl;
+    }
+
+    if( fct != NULL && fct->getFeatureFunction("SmoothnessAll") != NULL )
+    {
+        Eigen::VectorXd phi =  fct->getFeatureFunction("SmoothnessAll")->getFeatureCount( best_traj_ );
     }
 
     // Set this anywhere

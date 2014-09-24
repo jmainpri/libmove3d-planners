@@ -91,7 +91,7 @@ inline size_t word_count(const std::string& str)
 Eigen::MatrixXd move3d_load_matrix_from_csv_file( std::string filename )
 {
     Eigen::MatrixXd matrix;
-    cout << "load matrix from : " << filename << endl;
+//    cout << "load matrix from : " << filename << endl;
 
     std::ifstream file( filename.c_str(), std::ifstream::in );
 
@@ -116,7 +116,7 @@ Eigen::MatrixXd move3d_load_matrix_from_csv_file( std::string filename )
             if( i == 0 ) {
                 int n_cols = word_count( line );
                 matrix = Eigen::MatrixXd( n_rows, n_cols );
-                cout << "size : ( " << n_rows << " , " << n_cols << " )" << endl;
+//                cout << "size : ( " << n_rows << " , " << n_cols << " )" << endl;
             }
 
             j = 0;

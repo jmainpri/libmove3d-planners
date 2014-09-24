@@ -2470,13 +2470,15 @@ bool Trajectory::loadFromFile(std::string filename)
     Eigen::MatrixXd mat = move3d_load_matrix_from_csv_file( filename );
 
     if( mat(0,0) != -1. ){
+
         m_use_time_parameter = true;
         m_use_constant_dt = true;
         m_dt = mat(0,0);
         removeColumn( mat, 0 );
-    }
 
-    cout << "mat(0,0) : " << mat(0,0) << endl;
+//        cout << "mat(0,0) : " << mat(0,0) << endl;
+//        cout << "dt : " << m_dt << endl;
+    }
 
     // cout << mat << endl;
     setFromEigenMatrix( mat, r_dof_indices );
