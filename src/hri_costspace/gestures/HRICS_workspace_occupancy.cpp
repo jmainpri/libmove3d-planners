@@ -71,6 +71,8 @@ WorkspaceOccupancyCell::WorkspaceOccupancyCell(int i, Eigen::Vector3i coord , Ei
 Move3D::ThreeDCell(i,corner,grid), m_visited(false)
 {
     m_center = getCenter();
+    m_times_occupied = 0;
+
 }
 
 WorkspaceOccupancyCell::~WorkspaceOccupancyCell()
@@ -209,7 +211,7 @@ Move3D::ThreeDCell* WorkspaceOccupancyGrid::createNewCell(unsigned int index,uns
 }
 
 //! Creates a list of cells occupied by the human in current conf
-//! by processing the sampled points on each body 
+//! by processing the sampled points on each body
 //! using the cells to store if they belong to the class given as input
 //! If so, does not add the cell twice to the list and update the cell class
 void WorkspaceOccupancyGrid::get_cells_occupied_by_human( std::vector<WorkspaceOccupancyCell*>& occupied_voxels, int id_class, bool checkclass )
@@ -235,6 +237,7 @@ void WorkspaceOccupancyGrid::get_cells_occupied_by_human( std::vector<WorkspaceO
                 
                 if( !cell->m_visited )
                 {
+                    cell->m_times_occupied++;
                     cell->m_visited = true;
                     
                     if( !checkclass )
@@ -257,6 +260,8 @@ void WorkspaceOccupancyGrid::get_cells_occupied_by_human( std::vector<WorkspaceO
                         }
                     }
                 }
+                else
+                    cell->m_times_occupied++;
             }
         }
     }
@@ -358,7 +363,8 @@ bool WorkspaceOccupancyGrid::computeOccpancy()
 
         // Warning, set to 100 in the normal case
         // const motion_t& swept_volume_motion = m_motions[i];
-        const motion_t& swept_volume_motion = m_motion_recorder->resample( m_motions[i], 10 );
+//        const motion_t& swept_volume_motion = m_motion_recorder->resample( m_motions[i], 10 );
+        const motion_t& swept_volume_motion = m_motion_recorder->resample( m_motions[i], m_motions[i].size() );
 
         for(int j=0;j<int(swept_volume_motion.size());j++)
         {
@@ -366,13 +372,20 @@ bool WorkspaceOccupancyGrid::computeOccpancy()
             m_human->setAndUpdate( *swept_volume_motion[j].second );
 
             std::vector<WorkspaceOccupancyCell*> cells; get_cells_occupied_by_human( cells, i );
-            cout << " Frame : " << j << endl;
+//            cout << " Frame : " << j << endl;
+
+//            for (int c; c < cells.size(); c++)
+//            {
+//                if ( cells[c]->m_visted   )
+//                    cout << "visited : " << c << endl;
+//            }
             m_occupied_cells[i].insert(  m_occupied_cells[i].end(), cells.begin(), cells.end() );
         }
 
         for( int j=0; j<int(m_occupied_cells[i].size()); j++)
         {
             m_occupied_cells[i][j]->m_visited =false;
+//            cout << "times occupied : " << m_occupied_cells[i][j]->m_times_occupied << endl;
         }
 
         cout << "m_occupied_cells[" << i << "].size() : "  << m_occupied_cells[i].size() << endl;
@@ -573,14 +586,43 @@ void WorkspaceOccupancyGrid::setClassToDraw(int id_class)
 
 void WorkspaceOccupancyGrid::simple_draw_one_class()
 {    
+    static int nb_draws = 0;
+
     std::vector<WorkspaceOccupancyCell*>& occupied_voxels = m_occupied_cells[m_id_class_to_draw];
 
     cout << m_occupied_cells.size() << endl;
 
+//      Find min and max times occupied :
+    int min = occupied_voxels[0]->m_times_occupied;
+    int max = occupied_voxels[0]->m_times_occupied;
+//    for (int i = 1; i < occupied_voxels.size(); i++)
+//    {
+//        int times_occupied = occupied_voxels[i]->m_times_occupied;
+
+//        if (min > times_occupied)
+//            min = times_occupied;
+//        if (max < times_occupied)
+//            max = times_occupied;
+//    }
+
+
     for( int i=0;i<int(occupied_voxels.size());i++)
     {
-        occupied_voxels[i]->drawColorGradient( 0.5, 0.0, 1.0 );
+        double value = occupied_voxels[i]->m_times_occupied;
+        //TODO Normalize the values.  Alpha was tuned by hand.  should be scaled intelligently
+        value = 1-exp(-0.0001*value);
+
+//        occupied_voxels[i]->drawColorGradient( 0.001, 0.0, 1.0 );
+//        occupied_voxels[i]->drawColorGradient( occupied_voxels[i]->m_times_occupied, min, max );
+//        occupied_voxels[i]->drawColorGradient( value, 0, 1 );
+
+        if (nb_draws > 0)
+            occupied_voxels[i]->drawColorGradient( 0.5, 0, 1 );
+        else
+            occupied_voxels[i]->drawColorGradient( 1, 0, 1 );
+
     }
+    nb_draws++;
 }
 
 void WorkspaceOccupancyGrid::simple_draw_current_occupancy()

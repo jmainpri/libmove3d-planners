@@ -332,6 +332,9 @@ void ThreeDCell::drawColorGradient( double value, double min, double max, bool i
     if ( inverse )
     { alpha = 1 - alpha; }
 
+//    if (alpha < 0.05)
+//        return;
+
     colorvector[3] = 0.05; //transparency
     GroundColorMixGreenToRed( colorvector, alpha );
 

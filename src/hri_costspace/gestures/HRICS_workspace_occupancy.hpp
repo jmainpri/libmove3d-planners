@@ -55,6 +55,7 @@ public:
     bool m_visited;
     std::vector<bool> m_occupies_class;
     bool m_currently_occupied;
+    int m_times_occupied;
 
     int getNumberOfClassesOccupied();
 
