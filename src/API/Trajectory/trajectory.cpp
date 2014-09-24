@@ -520,14 +520,21 @@ confPtr_t Trajectory::configAtTime(double time, unsigned int* id_localpath) cons
 
         alpha_local = ( time - t0 ) / m_dts[path_id];
 
+        if( path_id == 0){
+            cout << " m_dts[0] : " << m_dts[path_id] << endl;
+            exit(0);
+        }
         path_id--;
+
+
+
 
 //        cout << "alpha_local : "  << alpha_local << endl;
 //        cout << "path_id : "  << path_id << endl;
 //        cout << "m_dts[path_id] : "  << m_dts[path_id] << endl;
 
-//        if( path_id >= m_Courbe.size() )
-//            cout << "return m_Target" << endl;
+        if( path_id >= m_Courbe.size() )
+            cout << "return m_Target" << endl;
     }
 
     if( id_localpath != NULL)

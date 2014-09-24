@@ -1268,10 +1268,10 @@ double StompOptimizer::getSmoothnessCost()
         Move3D::WeightVect w = fct->getFeatureFunction("SmoothnessAll")->getWeights();
         smoothness_cost = w.transpose() * costs;
 
-        cout.precision(4);
-//        cout << "phi smooth: " << std::scientific << costs.transpose() << endl;
-//        cout << "smoothness_w : " << w.transpose() << endl;
-        cout << "smoothness_cost : " << std::scientific <<  w.cwise() * costs  << endl;
+//        cout.precision(4);
+//        cout << "smoothness_phi  : " << std::scientific << costs.transpose() << endl;
+//        cout << "smoothness_w    : " << w.transpose() << endl;
+//        cout << "smoothness_cost : " << std::scientific <<  ( w.cwise() * costs ).transpose()  << endl;
     }
     else
     {

@@ -625,6 +625,10 @@ void HumanTrajSimulator::setReplanningDemonstrations()
         good_motions_names.push_back("[2711-2823]_human2_.csv");
         good_motions_names.push_back("[2711-2823]_human1_.csv");
 
+
+
+
+
 //        good_motions_names.push_back("[1342-1451]_human2_.csv");
 //        good_motions_names.push_back("[1342-1451]_human1_.csv");
 //        good_motions_names.push_back("[2197-2343]_human2_.csv");
@@ -758,6 +762,9 @@ void HumanTrajSimulator::addCutMotions()
 
             motion_t motion_1( init_1, goal_1 );
             motion_t motion_2( init_2, goal_2 );
+
+            motion_1[0].first = 0.0;
+            motion_2[0].first = 0.0;
 
             human_1_motion_tmp.push_back( motion_1 );
             human_2_motion_tmp.push_back( motion_2 );
@@ -1136,6 +1143,7 @@ bool HumanTrajSimulator::loadActiveHumanGoalConfig()
     // LOAD ACTIVE HUMAN MOTION SCENARIO
     q_init_ = human_active_motion_[0].second;
     q_goal_ = human_active_motion_.back().second;
+
     // q_goal_ = configs[ id_of_demonstration_ ];
 
     human_active_increments_per_exection_ = 10;
@@ -1144,6 +1152,9 @@ bool HumanTrajSimulator::loadActiveHumanGoalConfig()
     // Use passive motion because active changes when set at the end of simulation
     motion_duration_ = motion_duration( human_passive_motion_ );
     current_motion_duration_ = motion_duration_;
+
+    // Iniitialize with 0.0
+    executed_trajectory_.push_back( std::make_pair( 0.0, q_init_ ) );
 
     return true;
 }
@@ -1246,7 +1257,7 @@ bool HumanTrajSimulator::updatePassiveMotion()
     cout << "TIME LEFT : " << current_motion_duration_ << endl;
     cout << "TIME ALONG CURRENT TRAJ : " << time_along_current_path_ << endl;
 
-    if( current_time_ - motion_duration_ >= 1e-6 )
+    if( motion_duration_ - current_time_ < 1e-6 )
         return false;
 
     // Find closest configuration at current time
@@ -1297,7 +1308,7 @@ void HumanTrajSimulator::execute(const Move3D::Trajectory& path, bool to_end)
         q = path.configAtTime( t );
         human_active_->setAndUpdate( *q );
 
-        if( ( t + current_time_ ) > motion_duration_ ) // if the time exceeds the trajectory length
+        if( ( motion_duration_ - ( t + current_time_ ) ) < 1e-6  ) // if the time exceeds the trajectory length
         {
             double dt = motion_duration_ - motion_duration( executed_trajectory_ );
             t = motion_duration_ - current_time_;
@@ -1363,7 +1374,6 @@ double HumanTrajSimulator::run()
 
     cost_.clear();
     human_active_->setAndUpdate( *q_init_ );
-
     ENV.setBool( Env::isCostSpace, true );
 
     for(int i=0;(!PlanEnv->getBool(PlanParam::stopPlanner)) && updatePassiveMotion(); i++ )

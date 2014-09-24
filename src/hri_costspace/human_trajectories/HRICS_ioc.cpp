@@ -630,6 +630,7 @@ void Ioc::addAllToDraw()
     {
         for ( int d=0; d<int(demonstrations_.size()); ++d)
         {
+            cout << "adding to draw demo [" << d << "]" << endl;
             addTrajectoryToDraw( demonstrations_[d], d%8 );
         }
     }
@@ -640,6 +641,7 @@ void Ioc::addAllToDraw()
         {
             for ( int k=0; k<int(samples_[d].size()); ++k)
             {
+                cout << "adding to draw sample [" << d << "][" << k << "]" <<endl;
                 addTrajectoryToDraw( samples_[d][k], k%8 );
             }
         }
@@ -1225,14 +1227,18 @@ void IocEvaluation::saveDemoToFile(const std::vector<Move3D::Trajectory>& demos,
     // each demo is incremented when saved
     std::vector<int> saved_id( *std::max_element( demos_ids.begin(), demos_ids.end() )+1, 0 );
 
+    global_trajToDraw.clear();
+
     for(size_t i=0;i<demos.size();i++)
     {
-        if( demos[i].replaceP3dTraj() )
-        {
-            cout << "has replaced p3d traj" << endl;
-            cout << robot_->getP3dRobotStruct()->tcur << endl;
-            cout << robot_->getName() << endl;
-        }
+//        if( demos[i].replaceP3dTraj() )
+//        {
+//            cout << "has replaced p3d traj" << endl;
+//            cout << robot_->getP3dRobotStruct()->tcur << endl;
+//            cout << robot_->getName() << endl;
+//        }
+
+        global_trajToDraw.push_back( demos[i] );
 
         // Ids
         std::stringstream ss_id;
@@ -1412,7 +1418,7 @@ bool IocEvaluation::loadDemonstrations()
 //            T.computeSubPortionIntergralCost( T.getCourbe() );
         }
 
-        T.replaceP3dTraj();
+//        T.replaceP3dTraj();
 
         T.setColor( d%8 ); cout << "color : " << d%8 << endl;
         global_trajToDraw.push_back(T);
@@ -1765,8 +1771,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
         cout << "percentage of invalid samples : " << (100 * double(nb_invalid_samples) / double(nb_samples_)) << " \%" << endl;
         samples = ioc.getSamples();
 
-        ioc.addAllToDraw();
-
+//        ioc.addAllToDraw();
 //        saveSamplesToFile( samples );
     }
     else { // load from file
