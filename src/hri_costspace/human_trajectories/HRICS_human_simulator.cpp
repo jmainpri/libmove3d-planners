@@ -396,7 +396,7 @@ bool HumanTrajSimulator::init()
     minimal_demo_size_ = 10;
     trajectories_cut_ = false;
 
-    use_one_traj_ = false;
+    use_one_traj_ = true;
 
     if( !motion_recorders_.empty() )
     {
@@ -1187,25 +1187,14 @@ void HumanTrajSimulator::runStandardStomp( int iter )
 
     if( iter>0 )
     {
-//        const Move3D::Trajectory& current_traj = path_;
-//        const double parameter = human_active_increments_per_exection_*human_active_step_;
-//        Move3D::Trajectory optimi_traj;
-//        optimi_traj = current_traj.extractSubTrajectoryOfLocalPaths( current_id_on_path_, current_traj.getNbOfPaths() - 1 );
+        Move3D::Trajectory optimi_traj( human_active_ );
+        double dt = current_motion_duration_ / double(nb_way_points);
+        for(int i=0; i<nb_way_points; i++){
+            optimi_traj.push_back( path_.configAtTime( time_along_current_path_ + double(i) * dt ) );
+        }
 
-//        if( id_goal == best_path_id_ )
-//        {
-//            optimi_traj = current_traj.extractSubTrajectory( parameter, path_.getParamMax(), false );
-//        }
-//        else
-//        {
-//            Move3D::CostOptimization traj( paths_[id_goal] );
-//            traj.connectConfigurationToBegin( path_.configAtParam( parameter ), parameter/5, true );
-//            optimi_traj = traj;
-//        }
-
-
-        traj_optim_set_use_extern_trajectory( false );
-//        traj_optim_set_extern_trajectory( optimi_traj );
+        traj_optim_set_use_extern_trajectory( true );
+        traj_optim_set_extern_trajectory( optimi_traj );
     }
     else
     {

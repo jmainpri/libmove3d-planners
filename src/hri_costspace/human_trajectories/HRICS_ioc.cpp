@@ -30,6 +30,7 @@
 #include "HRICS_parameters.hpp"
 #include "HRICS_human_cost_space.hpp"
 #include "HRICS_human_simulator.hpp"
+#include "HRICS_dynamic_time_warping.hpp"
 
 #include "API/project.hpp"
 #include "API/Trajectory/trajectory.hpp"
@@ -1809,6 +1810,11 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
 
         if( feature_fct_->getFeatureFunction("SmoothnessAll") )
             setBuffer(d);
+
+//        std::vector<Move3D::Trajectory> demo;
+//        demo.push_back( demos_[d] );
+//        dtw_compare_performance( plangroup_->getActiveDofs(), demos_[d], demo );
+//        dtw_compare_performance( plangroup_->getActiveDofs(), demos_[d], samples[d] );
 
         for( int i=0; i<int(samples[d].size()); i++)
         {

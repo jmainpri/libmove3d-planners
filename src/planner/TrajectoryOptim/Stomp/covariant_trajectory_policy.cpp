@@ -617,54 +617,11 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen:
 //        control_costs[2][d] = Eigen::VectorXd::Zero( parameters[d].size() );
     }
 
-    cost_type type_tmp = type_;
-
     const double factor_dist = 1e-01;
     const double factor_vel  = 1e-05;
     const double factor_acc  = 1e-10;
     const double factor_jerk = 1e-15;
 
-//    Move3D::Trajectory traj( planning_group_->robot_ );
-//    setGroupTrajectoryToMove3DTraj( traj, parameters, dt );
-
-    type_ = dist;
-    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs_tmp, dt );
-    for (int d=0; d<parameters.size(); ++d)
-    {
-        costs[0] += control_costs_tmp[d].sum();
-        control_costs[0][d] = control_costs_tmp[d];
-    }
-    costs[0] *= factor_dist;
-
-    type_ = vel;
-    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs_tmp, dt );
-    for (int d=0; d<parameters.size(); ++d)
-    {
-        costs[1] += control_costs_tmp[d].sum();
-        control_costs[1][d] = ( factor_vel * control_costs_tmp[d]  );
-    }
-    costs[1] *= factor_vel;
-
-    type_ = acc;
-    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs_tmp, dt );
-    for (int d=0; d<parameters.size(); ++d)
-    {
-        costs[2] += control_costs_tmp[d].sum();
-        control_costs[2][d] = ( factor_acc * control_costs_tmp[d] );
-    }
-    costs[2] *= factor_acc;
-
-
-    type_ = jerk;
-    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs_tmp, dt );
-    for (int d=0; d<parameters.size(); ++d)
-    {
-        costs[3] += control_costs_tmp[d].sum();
-        control_costs[3][d] = ( factor_jerk * control_costs_tmp[d] );
-    }
-    costs[3] *= factor_jerk;
-
-    type_ = type_tmp;
 
     Move3D::StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
 
@@ -678,10 +635,46 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen:
         const double factor_task_acc  = 1e-09;
         const double factor_task_jerk = 1e-13;
 
-        double cost_t;
+        SmoothnessFeature* smoothnes = static_cast<SmoothnessFeature*>(fct->getFeatureFunction("SmoothnessAll"));
 
+        LengthFeature& length           = smoothnes->length_;
+        VelocitySmoothness& velocity    = smoothnes->velocity_;
+        AccelerationSmoothness& accel   = smoothnes->acceleration_;
+        JerkSmoothness& jerk            = smoothnes->jerk_;
+
+
+        Eigen::MatrixXd traj_smooth = length.getSmoothedTrajectory( traj );
+
+        double dist = length.getControlCosts( traj_smooth, control_costs_tmp );
+
+        for (int d=0; d<parameters.size(); ++d)
+            control_costs[0][d] = factor_dist * control_costs_tmp[d];
+        costs[0] = dist * factor_dist;
+
+        double vel = velocity.getControlCosts( traj_smooth, control_costs_tmp, dt );
+
+        for (int d=0; d<parameters.size(); ++d)
+            control_costs[1][d] = factor_vel * control_costs_tmp[d];
+        costs[1] = vel * factor_vel;
+
+        double acc = accel.getControlCosts( traj_smooth, control_costs_tmp, dt );
+
+        for (int d=0; d<parameters.size(); ++d)
+            control_costs[2][d] = factor_acc * control_costs_tmp[d];
+        costs[2] = acc * factor_acc;
+
+        double jer = jerk.getControlCosts( traj_smooth, control_costs_tmp, dt );
+
+        for (int d=0; d<parameters.size(); ++d)
+            control_costs[3][d] = factor_jerk * control_costs_tmp[d];
+        costs[3] = jer * factor_jerk;
+
+        //-------------------------------------------------------------------------
+
+        TaskSmoothnessFeature& task     = smoothnes->task_features_;
+
+        double cost_t;
         Eigen::VectorXd control_costs_t;
-        TaskSmoothnessFeature& task = static_cast<SmoothnessFeature*>(fct->getFeatureFunction("SmoothnessAll"))->task_features_;
 
         cost_t = task.getDist( traj, control_costs_t );
         costs[4] = factor_task_dist * cost_t;
@@ -706,6 +699,54 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen:
 
         for (int d=0; d<control_costs[7].size(); ++d)
             control_costs[7][d] = factor_task_jerk * control_costs_t;
+
+//        cout << "GET ALL CONTROL COSTS" << endl;
+    }
+    else
+    {
+        cost_type type_tmp = type_;
+
+    //    Move3D::Trajectory traj( planning_group_->robot_ );
+    //    setGroupTrajectoryToMove3DTraj( traj, parameters, dt );
+
+        type_ = dist;
+        computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs_tmp, dt );
+        for (int d=0; d<parameters.size(); ++d)
+        {
+            costs[0] += control_costs_tmp[d].sum();
+            control_costs[0][d] = control_costs_tmp[d];
+        }
+        costs[0] *= factor_dist;
+
+        type_ = vel;
+        computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs_tmp, dt );
+        for (int d=0; d<parameters.size(); ++d)
+        {
+            costs[1] += control_costs_tmp[d].sum();
+            control_costs[1][d] = ( factor_vel * control_costs_tmp[d]  );
+        }
+        costs[1] *= factor_vel;
+
+        type_ = acc;
+        computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs_tmp, dt );
+        for (int d=0; d<parameters.size(); ++d)
+        {
+            costs[2] += control_costs_tmp[d].sum();
+            control_costs[2][d] = ( factor_acc * control_costs_tmp[d] );
+        }
+        costs[2] *= factor_acc;
+
+
+        type_ = jerk;
+        computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs_tmp, dt );
+        for (int d=0; d<parameters.size(); ++d)
+        {
+            costs[3] += control_costs_tmp[d].sum();
+            control_costs[3][d] = ( factor_jerk * control_costs_tmp[d] );
+        }
+        costs[3] *= factor_jerk;
+
+        type_ = type_tmp;
     }
 
     return costs;

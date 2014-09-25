@@ -184,6 +184,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 
     // Print feature names and weights
     for(size_t i=0; i<distance_names_.size(); i++) {
+        cout << " ACTIVE - PASSIVE " << endl;
         cout.precision(2);
         cout.setf( std::ios::fixed, std:: ios::floatfield );
         cout  << std::setw( ceil(log10(distance_names_.size())) ) << std::setfill( '0' ) <<  i;

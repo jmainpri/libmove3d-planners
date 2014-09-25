@@ -142,6 +142,9 @@ void PlayMotion::runRealTime(int id)
             {
                 for (size_t j=0; j<_stored_motions.size(); j++) // for each human or robot
                 {
+                    if( id >= _stored_motions[j].size() ) // no motion of that id
+                        return;
+
                     int i =0;
                     double time_traj = 0.0;
 

@@ -520,7 +520,7 @@ void traj_optim_hrics_human_trajectory_manip_init_joints()
         m_active_joints.push_back( m_robot->getJoint( "lPoint" )->getId() );
 //        m_active_joints.push_back( m_robot->getJoint( "rWristZ" )->getId() );
 //        m_active_joints.push_back( m_robot->getJoint( "rWristX" )->getId() );
-//        m_active_joints.push_back( m_robot->getJoint( "rWristY" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rWristY" )->getId() );
 
         m_planner_joints.clear();
         m_planner_joints.push_back( m_robot->getJoint( "Pelvis" )->getId() );

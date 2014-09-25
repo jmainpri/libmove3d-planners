@@ -626,8 +626,8 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         saveTrajectoryCostStats();
     }
 
-    cout << "wait for key" << endl;
-    cin.ignore();
+//    cout << "wait for key" << endl;
+//    cin.ignore();
     
     double intitialization_time=0.0;
     ChronoTimeOfDayTimes(&intitialization_time);
@@ -1222,75 +1222,6 @@ double StompOptimizer::getTrajectoryCost()
     return cost;
 }
 
-double StompOptimizer::getSmoothnessCost()
-{
-    bool use_weight = true;
-    double weight = use_weight ? stomp_parameters_->getSmoothnessCostWeight() : 1.0;
-    double smoothness_cost = 0.0;
-    //    double joint_cost = 0.0;
-    //    // joint costs:
-    //    for ( int i=0; i<num_joints_; i++ )
-    //    {
-    //        joint_cost = joint_costs_[i].getCost(group_trajectory_.getJointTrajectory(i));
-    //        smoothness_cost += joint_cost;
-    //    }
-    //    return stomp_parameters_->getSmoothnessCostWeight() * smoothness_cost;
-
-    std::vector<Eigen::MatrixXd> control_cost_matrices;
-    std::vector<Eigen::VectorXd> noise(num_joints_);
-    std::vector<Eigen::VectorXd> control_costs(num_joints_);
-
-    for (int d=0; d<num_joints_; ++d)
-    {
-        //policy_parameters_[d] = group_trajectory_.getFreeTrajectoryBlock();
-        policy_parameters_[d].segment(1,policy_parameters_[d].size()-2) = group_trajectory_.getFreeJointTrajectoryBlock(d);
-        noise[d] = VectorXd::Zero( policy_parameters_[d].size() );
-    }
-
-    double discretization = group_trajectory_.getUseTime() ? group_trajectory_.getDiscretization() : 0.0;
-
-    bool classic = false;
-    StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
-
-    if( ( classic == false ) && ( fct != NULL ) && ( fct->getFeatureFunction("SmoothnessAll") != NULL ) )
-    {
-//        cout << "compute smoothness " << endl;
-        std::vector< std::vector<Eigen::VectorXd> > control_costs;
-
-        Eigen::VectorXd costs = policy_->getAllCosts( policy_parameters_, control_costs, discretization );
-
-        Move3D::Trajectory traj( robot_model_ );
-        setGroupTrajectoryToMove3DTraj( traj );
-
-//        cout  << "cost 1 : " << costs[0] << endl;
-//        cout  << "cost 2 : " << traj.getParamMax() << endl;
-
-        Move3D::WeightVect w = fct->getFeatureFunction("SmoothnessAll")->getWeights();
-        smoothness_cost = w.transpose() * costs;
-
-//        cout.precision(4);
-//        cout << "smoothness_phi  : " << std::scientific << costs.transpose() << endl;
-//        cout << "smoothness_w    : " << w.transpose() << endl;
-//        cout << "smoothness_cost : " << std::scientific <<  ( w.cwise() * costs ).transpose()  << endl;
-    }
-    else
-    {
-        // TODO remove weight multiplication
-        policy_->computeControlCosts( control_cost_matrices, policy_parameters_, noise, weight, control_costs, discretization );
-
-        Eigen::VectorXd costs = Eigen::VectorXd::Zero( control_costs[0].size() );
-        for (int d=0; d<int(control_costs.size()); ++d) {
-            smoothness_cost += control_costs[d].sum();
-            costs += control_costs[d];
-        }
-    }
-    //    smoothness_cost *= weight;
-
-//    cout << "control cost : " << costs.transpose() << endl;
-
-    return smoothness_cost;
-}
-
 double StompOptimizer::getCollisionCost()
 {
     double collision_cost = 0.0;
@@ -1359,6 +1290,26 @@ double StompOptimizer::getGeneralCost()
         general_cost += costs[i];
     }
 
+    // TEST FOR DISTANCE FEATURE
+//    StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+
+//    if( ( fct != NULL ) && ( fct->getFeatureFunction("Distance") != NULL ) )
+//    {
+//        Move3D::Trajectory traj( robot_model_ );
+//        setGroupTrajectoryToMove3DTraj( traj );
+
+//        Move3D::FeatureVect costs = fct->getFeatureFunction("Distance")->getFeatureCount( traj );
+//        Move3D::WeightVect w = fct->getFeatureFunction("Distance")->getWeights();
+
+//        cout.precision(4);
+//        cout << "distance_phi  : " << std::scientific << costs.transpose() << endl;
+//        cout << "distance_w    : " << w.transpose() << endl;
+//        cout << "distance_cost : " << std::scientific <<  ( w.cwise() * costs ).transpose()  << endl;
+//        cout << "distance total cost : " << w.transpose() * costs << endl;
+//        cout << "general cost : " << general_cost << endl;
+//    }
+
+
 //    cout << "time length : " << time << " , general_cost : " << general_cost << endl;
 
     // cout << "dt : " << dt_.transpose() << endl;
@@ -1370,6 +1321,71 @@ double StompOptimizer::getGeneralCost()
     // cout << general_cost_potential_.segment(free_vars_start_,free_vars_end_-free_vars_start_).transpose() << endl;
 
     return stomp_parameters_->getGeneralCostWeight() * general_cost;
+}
+
+double StompOptimizer::getSmoothnessCost()
+{
+    bool use_weight = true;
+    double weight = use_weight ? stomp_parameters_->getSmoothnessCostWeight() : 1.0;
+    double smoothness_cost = 0.0;
+    //    double joint_cost = 0.0;
+    //    // joint costs:
+    //    for ( int i=0; i<num_joints_; i++ )
+    //    {
+    //        joint_cost = joint_costs_[i].getCost(group_trajectory_.getJointTrajectory(i));
+    //        smoothness_cost += joint_cost;
+    //    }
+    //    return stomp_parameters_->getSmoothnessCostWeight() * smoothness_cost;
+
+    std::vector<Eigen::MatrixXd> control_cost_matrices;
+    std::vector<Eigen::VectorXd> noise(num_joints_);
+    std::vector<Eigen::VectorXd> control_costs(num_joints_);
+
+    for (int d=0; d<num_joints_; ++d)
+    {
+        //policy_parameters_[d] = group_trajectory_.getFreeTrajectoryBlock();
+        policy_parameters_[d].segment(1,policy_parameters_[d].size()-2) = group_trajectory_.getFreeJointTrajectoryBlock(d);
+        noise[d] = VectorXd::Zero( policy_parameters_[d].size() );
+    }
+
+    double discretization = group_trajectory_.getUseTime() ? group_trajectory_.getDiscretization() : 0.0;
+
+    bool classic = false;
+    StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+
+    if( ( classic == false ) && ( fct != NULL ) && ( fct->getFeatureFunction("SmoothnessAll") != NULL ) )
+    {
+        std::vector< std::vector<Eigen::VectorXd> > control_costs;
+
+        Eigen::VectorXd costs = policy_->getAllCosts( policy_parameters_, control_costs, discretization );
+
+        Move3D::Trajectory traj( robot_model_ );
+        setGroupTrajectoryToMove3DTraj( traj );
+
+        Move3D::WeightVect w = fct->getFeatureFunction("SmoothnessAll")->getWeights();
+
+        smoothness_cost = w.transpose() * costs;
+
+//        cout.precision(4);
+//        cout << "smoothness_phi  : " << std::scientific << costs.transpose() << endl;
+//        cout << "smoothness_w    : " << w.transpose() << endl;
+//        cout << "smoothness_cost : " << std::scientific <<  ( w.cwise() * costs ).transpose()  << endl;
+    }
+    else
+    {
+        // TODO remove weight multiplication
+        policy_->computeControlCosts( control_cost_matrices, policy_parameters_, noise, weight, control_costs, discretization );
+
+        Eigen::VectorXd costs = Eigen::VectorXd::Zero( control_costs[0].size() );
+        for (int d=0; d<int(control_costs.size()); ++d) {
+            smoothness_cost += control_costs[d].sum();
+            costs += control_costs[d];
+        }
+    }
+
+//    cout << "control cost : " << costs.transpose() << endl;
+
+    return smoothness_cost;
 }
 
 void StompOptimizer::getCostProfiles( vector<double>& smoothness_cost, vector<double>& collision_cost, vector<double>& general_cost )

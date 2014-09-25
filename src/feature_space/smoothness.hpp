@@ -60,6 +60,9 @@ public:
     //! get smoothed trajectory as matrix
     Eigen::MatrixXd getSmoothedTrajectory( const Move3D::Trajectory& t );
 
+    //! returns the control costs
+    double getControlCosts(const Eigen::MatrixXd& traj_smooth, std::vector<Eigen::VectorXd>& control_costs, double dt);
+
     //! Set Buffer
     virtual void setBuffer(const std::vector<Eigen::VectorXd>& buffer);
 
@@ -81,6 +84,7 @@ public:
     LengthFeature();
     Move3D::FeatureVect getFeatureCount( const Move3D::Trajectory& t );
     Move3D::FeatureVect getFeatures( const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0) );
+    double getControlCosts(const Eigen::MatrixXd& traj_smooth, std::vector<Eigen::VectorXd>& control_costs);
     double scaling_;
 };
 
@@ -154,13 +158,11 @@ public:
     void setBuffer(const std::vector<Eigen::VectorXd>& buffer);
     void clearBuffer();
 
-    TaskSmoothnessFeature task_features_;
-
-private:
     LengthFeature length_;
     VelocitySmoothness velocity_;
     AccelerationSmoothness acceleration_;
     JerkSmoothness jerk_;
+    TaskSmoothnessFeature task_features_;
 };
 
 

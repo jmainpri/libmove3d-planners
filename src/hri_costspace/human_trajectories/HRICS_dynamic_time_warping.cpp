@@ -100,7 +100,7 @@ double SimpleDTW::EvaluateWarpingCost(std::vector< std::vector<double> > sequenc
         SimpleDTW::Initialize(sequence_1.size(), sequence_2.size());
     }
 
-    //Compute DTW cost for the two sequences
+    // Compute DTW cost for the two sequences
     for (unsigned int i = 1; i <= sequence_1.size(); i++)
     {
         for (unsigned int j = 1; j <= sequence_2.size(); j++)
@@ -125,11 +125,11 @@ double SimpleDTW::EvaluateWarpingCost(std::vector< std::vector<double> > sequenc
                 prev_cost = im1jm1;
             }
             // Update the value in the matrix
-            SetInDTWMatrix(i, j, index_cost + prev_cost);
+            SetInDTWMatrix( i, j, index_cost + prev_cost );
         }
     }
-    //Return total path cost
-    return GetFromDTWMatrix(sequence_1.size(), sequence_2.size());
+    // Return total path cost
+    return GetFromDTWMatrix( sequence_1.size(), sequence_2.size() );
 }
 
 
@@ -138,7 +138,7 @@ double euclidean_distance(std::vector<double> P1, std::vector<double> P2)
     double total = 0.0;
     for (unsigned int i = 0; i < P1.size(); i++)
     {
-        total = total + pow((P1[i] - P2[i]), 2);
+        total = total + pow( (P1[i] - P2[i]), 2 );
     }
     return sqrt(total);
 }
@@ -190,6 +190,78 @@ int dtw_compare_performance(int traj_length, int iterations)
     printf("Final cost: %f\n", scost);
     printf("SINGLE (vector): %f\n", bsecsv);
     return 0;
+}
+
+std::vector< std::vector<double> > get_vector_from_matrix( const Eigen::MatrixXd& mat )
+{
+    std::vector< std::vector<double> > test_vec( mat.cols() );
+
+    for (int j=0; j<mat.cols(); j++)
+    {
+        std::vector<double> state( mat.rows() );
+
+        for (int i=0; i<mat.rows(); i++)
+            state[i] = mat(i,j);
+
+        test_vec[j] = state;
+    }
+
+    return test_vec;
+}
+
+std::vector<double> dtw_compare_performance( const std::vector<int>& active_dofs, const Move3D::Trajectory& t0, const std::vector<Move3D::Trajectory>& t_tests )
+{
+    std::vector<double> scost;
+
+    struct timespec bstv, betv;
+    printf("Building test arrays\n");
+
+//    for (int i=0; i<active_dofs.size(); i++)
+//        cout << "active dofs : " << active_dofs[i] << endl;
+
+    // Store initial trajectory
+    std::vector< std::vector<double> > test_vec_0;
+    Eigen::MatrixXd mat = t0.getEigenMatrix( active_dofs );
+    test_vec_0 = get_vector_from_matrix(mat);
+
+    // Store all other trajectories
+    std::vector< std::vector< std::vector<double> > > test_vec_1;
+    for (int i=0; i<t_tests.size(); i++)
+    {
+        mat = t_tests[i].getEigenMatrix( active_dofs );
+
+        if( mat.cols() != test_vec_0.size() ) { // Check that the trajectories have the same number of waypoints
+            cout << "ERROR in dtw computations" << endl;
+            return scost;
+        }
+
+        test_vec_1.push_back( get_vector_from_matrix(mat) );
+    }
+
+    DTW::SimpleDTW my_eval = DTW::SimpleDTW( test_vec_0.size(), test_vec_0.size(), euclidean_distance );
+    cout << "Evaluating\n";
+    //Run tests
+    cout << "-----Test single-threaded version-----\n";
+    cout << "Testing vector variant\n";
+
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &bstv);
+
+    scost.resize( test_vec_1.size() );
+
+    for (int i=0; i<scost.size(); i++)
+    {
+        scost[i] = my_eval.EvaluateWarpingCost( test_vec_0, test_vec_1[i] );
+        cout << "scost[" << i << "] : " << scost[i] << endl;
+    }
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &betv);
+    //---------------------------------------------
+    //-----Compute runtimes (single-threaded)--------;
+    float bsecsv = (float)(betv.tv_sec - bstv.tv_sec);
+    bsecsv = bsecsv + (float)(betv.tv_nsec - bstv.tv_nsec) / 1000000000.0;
+
+    cout << "SINGLE (vector): " << bsecsv << endl;
+
+    return scost;
 }
 
 //int main()

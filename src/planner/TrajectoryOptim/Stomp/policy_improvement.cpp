@@ -743,15 +743,37 @@ namespace stomp_motion_planner
 //            cout << "sum control costs" << endl;
             rollout.control_costs_ = std::vector<Eigen::VectorXd>( num_dimensions_, Eigen::VectorXd::Zero(num_time_steps_) );
 
+//            for (int c=0; c<control_costs.size() ; c++)
+//                for (int d=0; d<num_dimensions_; d++)
+//                    cout << "rollout.control_costs_[d].transpose()  : "  << rollout.control_costs_[d].transpose() << endl;
+//                    cout << "control_costs[" << c << "][" << d << "].size() : " << control_costs[c][d].size() << endl;
+
+//            cout << "control_cost_weights_ : " << control_cost_weights_.transpose() << endl;
+//            cout << "rollout.state_costs_.size() : " << rollout.state_costs_.size() << endl;
+//            cout << "rollout.state_costs_ : " << rollout.state_costs_.transpose() << endl;
+
+//            for (int c=0; c<8 ; ++c) {
+//                cout << "control_costs[" << c << "][0].size() : " << control_costs[c][0].size() << endl;
+//               cout << "control_costs[" << c << "][0].transpose() : " << ( control_cost_weights_[c] * control_costs[c][0].transpose() )<< endl;
+//            }
+
+//            for (int d=0; d<num_dimensions_; ++d) {
+////                cout << "rollout.control_costs_[" << d << "].size() : " << rollout.control_costs_[d].size() << endl;
+//                 cout << "rollout.control_costs_[" << d << "] : " << rollout.control_costs_[d].transpose() << endl;
+//            }
+
+//            exit(0);
+
             for (int c=0; c<4 ; ++c)
                 for (int d=0; d<num_dimensions_; ++d) {
 //                    cout << "control_costs[" << c << "][d].size() : " << control_costs[c][d].size() << endl;
 //                    cout << "rollout.control_costs_[d].size() : " << rollout.control_costs_[d].size() << endl;
-                    rollout.control_costs_[d] += ( control_cost_weights_[c] * control_costs[c][d] );
+                    rollout.control_costs_[d] += ( control_costs[c][d] );
                 }
 
-            for (int c=4; c<8 ; ++c)
+            for (int c=4; c<8 ; ++c) {
                 rollout.state_costs_ += ( control_cost_weights_[c] * control_costs[c][0] );
+            }
         }
         else
         {

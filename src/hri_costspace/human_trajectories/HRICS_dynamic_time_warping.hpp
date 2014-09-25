@@ -24,6 +24,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// Modified by Jim Mainprice
+
 #ifndef HRICS_DYNAMIC_TIME_WARPING_HPP
 #define HRICS_DYNAMIC_TIME_WARPING_HPP
 
@@ -31,11 +33,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <vector>
 
+#include "API/Trajectory/trajectory.hpp"
+
 namespace DTW
 {
 
 class SimpleDTW
 {
+
+public:
+
+    SimpleDTW(size_t x_dim, size_t y_dim, double (*distance_fn)(std::vector<double> p1, std::vector<double> p2));
+
+    SimpleDTW(double (*distance_fn)(std::vector<double> p1, std::vector<double> p2));
+
+    SimpleDTW();
+
+    ~SimpleDTW() {}
+
+    double EvaluateWarpingCost(std::vector< std::vector<double> > sequence_1, std::vector< std::vector<double> > sequence_2);
+
 private:
 
     double (*distance_fn_)(std::vector<double> p1, std::vector<double> p2);
@@ -60,23 +77,11 @@ private:
     {
         data_[GetDataIndex(x, y)] = val;
     }
-
-public:
-
-    SimpleDTW(size_t x_dim, size_t y_dim, double (*distance_fn)(std::vector<double> p1, std::vector<double> p2));
-
-    SimpleDTW(double (*distance_fn)(std::vector<double> p1, std::vector<double> p2));
-
-    SimpleDTW();
-
-    ~SimpleDTW() {}
-
-    double EvaluateWarpingCost(std::vector<std::vector<double> > sequence_1, std::vector<std::vector<double> > sequence_2);
-
 };
 
 }
 
 int dtw_compare_performance(int traj_length, int iterations);
+std::vector<double> dtw_compare_performance( const std::vector<int>& active_dofs, const Move3D::Trajectory& t1, const std::vector<Move3D::Trajectory>& t_all );
 
 #endif // HRICS_DYNAMIC_TIME_WARPING_HPP

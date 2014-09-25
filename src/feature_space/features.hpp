@@ -85,6 +85,7 @@ public:
     bool is_config_dependent_; //! true if get features is used
 
 protected:
+
     std::vector<int> active_dofs_;
     std::vector<int> active_features_;
     FeatureVect w_;
@@ -121,6 +122,7 @@ public:
     Feature* getFeatureFunction(std::string name);
 
 protected:
+
     int nb_features_;
     std::vector<Feature*> feature_stack_;
 };

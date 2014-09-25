@@ -61,18 +61,15 @@ FeatureVect LengthFeature::getFeatures( const Move3D::Configuration& q, std::vec
 //    return scaling_ * FeatureVect::Ones( 1 );
 }
 
-FeatureVect LengthFeature::getFeatureCount( const Move3D::Trajectory& t )
+double LengthFeature::getControlCosts(const Eigen::MatrixXd& traj_smooth, std::vector<Eigen::VectorXd>& control_costs)
 {
-    Eigen::MatrixXd traj_smooth = getSmoothedTrajectory( t );
-
     // num of collums is the dimension of state space
     // num of rows is the length of the trajectory
-    std::vector<Eigen::VectorXd> control_costs( traj_smooth.rows() );
 
     if( traj_smooth.cols() == 0 || traj_smooth.rows() == 0 || traj_smooth.cols() == 1 )
     {
         cout << "ERROR IN MAT" << endl;
-        return FeatureVect::Zero( 1 );
+        return 0.0;
     }
 
     int diff_rule_length = control_cost_.getDiffRuleLength();
@@ -116,6 +113,18 @@ FeatureVect LengthFeature::getFeatureCount( const Move3D::Trajectory& t )
 //        length += std::sqrt(tmp); // Sum of squarred lengths
     }
 
+    // Set inner segments
+    for ( int d=0; d<int(control_costs.size()); ++d )
+        control_costs[d] = control_cost_.getInnerSegment( control_costs[d] );
+
+    return length;
+}
+
+FeatureVect LengthFeature::getFeatureCount( const Move3D::Trajectory& t )
+{
+    Eigen::MatrixXd traj_smooth = getSmoothedTrajectory( t );
+    std::vector<Eigen::VectorXd> control_costs( traj_smooth.rows() );
+    double length = getControlCosts( traj_smooth, control_costs);
     return WeightVect::Ones( 1 ) * length; // scaling
 }
 
@@ -240,36 +249,46 @@ Eigen::MatrixXd TrajectorySmoothness::getSmoothedTrajectory( const Move3D::Traje
     return mat2;
 }
 
+double TrajectorySmoothness::getControlCosts(const Eigen::MatrixXd& traj_smooth, std::vector<Eigen::VectorXd>& control_costs, double dt)
+{
+    // Compute the squared profile of quantities
+    control_costs = control_cost_.getSquaredQuantities( traj_smooth, dt );
+
+//    printControlCosts( control_costs );
+    double cost = control_cost_.cost( control_costs );
+
+    // Set inner segments
+    for ( int d=0; d<int(control_costs.size()); ++d )
+        control_costs[d] = control_cost_.getInnerSegment( control_costs[d] );
+
+    return cost;
+}
+
 FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 {
     FeatureVect f( Eigen::VectorXd::Zero( 1 ) );
 
-    Eigen::MatrixXd mat2 = getSmoothedTrajectory( t );
+    Eigen::MatrixXd traj_smooth = getSmoothedTrajectory( t );
 //    cout << "motion matrix 3" << endl;
 //    cout.precision(4);
-//    cout << mat2 << endl;
+//    cout << traj_smooth << endl;
+
+    std::vector<Eigen::VectorXd> control_costs( traj_smooth.rows() );
 
     double dt = t.getUseTimeParameter() && t.getUseConstantTime() ? t.getDeltaTime() : 0.0;
-
 //    cout << "dt : " << dt << endl;
 
-
-    // Compute the squared profile of quantities
-    std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat2, dt );
-
-//    printControlCosts( control_cost );
-
     double smoothness_factor = PlanEnv->getDouble( PlanParam::trajOptimSmoothFactor ); // * 1000.0; // for IOC, scale the features between 0.1
-    double smoothness_cost = control_cost_.cost( control_cost );
+    double smoothness_cost = getControlCosts( traj_smooth, control_costs, dt );
     f[0] = smoothness_factor * smoothness_cost;
 
-//    cout.precision(6);
-//    cout << "smoothness_cost : " << smoothness_cost << " , smoothness_factor : " << PlanEnv->getDouble( PlanParam::trajOptimSmoothFactor ) << endl;
+    //    cout.precision(6);
+    //    cout << "smoothness_cost : " << smoothness_cost << " , smoothness_factor : " << PlanEnv->getDouble( PlanParam::trajOptimSmoothFactor ) << endl;
 
-//    cout.precision(6);
-//    cout << "size (" << mat2.rows() << ", " << mat2.cols() << ") , control cost : "  << f << endl;
+    //    cout.precision(6);
+    //    cout << "size (" << mat2.rows() << ", " << mat2.cols() << ") , control cost : "  << f << endl;
 
-//    control_cost_.saveProfiles( mat2, "/home/jmainpri/Dropbox/move3d/move3d-launch/launch_files/" , dt );
+    //    control_cost_.saveProfiles( mat2, "/home/jmainpri/Dropbox/move3d/move3d-launch/launch_files/" , dt );
 
     return f;
 }

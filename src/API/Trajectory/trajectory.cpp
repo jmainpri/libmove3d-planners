@@ -2424,6 +2424,9 @@ Eigen::MatrixXd Trajectory::getEigenMatrix(int startIndex, int endIndex) const
     }
 }
 
+// Returns a matrix with the waypoints of the trajectory
+// The number of rows is the number of dofs
+// The number of cols is the number of waypoints
 Eigen::MatrixXd Trajectory::getEigenMatrix(const std::vector<int>& incides) const
 {
     if( m_Courbe.size() > 0 )
