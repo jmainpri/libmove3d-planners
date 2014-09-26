@@ -180,11 +180,11 @@ m_id_class_to_draw(0)
 
     m_T_draw = Eigen::Transform3d::Identity();
 
-    if( global_DrawModule )
-    {
-        global_DrawModule->addDrawFunction( "WorkspaceOccupancyGrid", boost::bind( &WorkspaceOccupancyGrid::draw, this) );
-        global_DrawModule->enableDrawFunction( "WorkspaceOccupancyGrid" );
-    }
+//    if( global_DrawModule )
+//    {
+//        global_DrawModule->addDrawFunction( "WorkspaceOccupancyGrid", boost::bind( &WorkspaceOccupancyGrid::draw, this) );
+//        global_DrawModule->enableDrawFunction( "WorkspaceOccupancyGrid" );
+//    }
 }
 
 WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()

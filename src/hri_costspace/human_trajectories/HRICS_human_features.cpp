@@ -40,7 +40,7 @@ using namespace Move3D;
 using std::cout;
 using std::endl;
 
-static const bool draw_features = true;
+static const bool draw_features = false;
 
 // Declaration of constant vectors
 namespace HRICS {
@@ -383,11 +383,11 @@ VisibilityFeature::VisibilityFeature( Robot* active, Robot* passive ) :
     }
     cout << endl;
 
-    if( global_DrawModule && draw_features )
-    {
-        global_DrawModule->addDrawFunction( "HumanVisibility", boost::bind( &VisibilityFeature::draw, this) );
-        global_DrawModule->enableDrawFunction( "HumanVisibility" );
-    }
+//    if( global_DrawModule && draw_features )
+//    {
+//        global_DrawModule->addDrawFunction( "HumanVisibility", boost::bind( &VisibilityFeature::draw, this) );
+//        global_DrawModule->enableDrawFunction( "HumanVisibility" );
+//    }
 }
 
 FeatureVect VisibilityFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)

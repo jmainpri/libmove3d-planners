@@ -258,7 +258,7 @@ std::vector<double> dtw_compare_performance( const std::vector<int>& active_dofs
         mat = t_tests[i].getEigenMatrix( active_dofs );
 
         if( mat.cols() != test_vec_0.size() ) { // Check that the trajectories have the same number of waypoints
-            cout << "ERROR in dtw computations" << endl;
+            cout << "ERROR in dtw computations ( " <<mat.cols() << " , " << test_vec_0.size()  << ")" << endl;
             return scost;
         }
 
