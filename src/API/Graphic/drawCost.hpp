@@ -31,11 +31,22 @@
 
 #include <libmove3d/include/device.h>
 
+#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+
+#include <Eigen/Core>
+#define EIGEN_USE_NEW_STDVECTOR
+#include <Eigen/StdVector>
+#include <Eigen/Geometry>
+
 void g3d_draw_costspace();
 void g3d_draw_grids();
 #ifdef HRI_COSTSPACE
 void g3d_draw_hrics(int opengl_context);
 #endif
+
+extern std::vector< std::pair<Eigen::Vector3d, Eigen::MatrixXd> > global_linesToDraw;
+
+void g3d_draw_3d_lines();
 
 //void drawGauge(int number, double cost);
 void computeConfigCostOnTraj( p3d_rob* rob, configPt q );

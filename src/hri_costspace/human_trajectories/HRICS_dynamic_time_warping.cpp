@@ -101,16 +101,17 @@ double SimpleDTW::EvaluateWarpingCost(std::vector< std::vector<double> > sequenc
     }
 
     // Compute DTW cost for the two sequences
-    for (unsigned int i = 1; i <= sequence_1.size(); i++)
+    for (unsigned int i=1; i <= sequence_1.size(); i++)
     {
-        for (unsigned int j = 1; j <= sequence_2.size(); j++)
+        for (unsigned int j=1; j <= sequence_2.size(); j++)
         {
             double index_cost = distance_fn_(sequence_1[i - 1], sequence_2[j - 1]);
             double prev_cost = 0.0;
+
             // Get the three neighboring values from the matrix to use for the update
-            double im1j = GetFromDTWMatrix(i - 1, j);
+            double im1j   = GetFromDTWMatrix(i - 1, j);
             double im1jm1 = GetFromDTWMatrix(i - 1, j - 1);
-            double ijm1 = GetFromDTWMatrix(i, j - 1);
+            double ijm1   = GetFromDTWMatrix(i, j - 1);
             // Start the update step
             if (im1j < im1jm1 && im1j < ijm1)
             {
@@ -136,11 +137,37 @@ double SimpleDTW::EvaluateWarpingCost(std::vector< std::vector<double> > sequenc
 double euclidean_distance(std::vector<double> P1, std::vector<double> P2)
 {
     double total = 0.0;
-    for (unsigned int i = 0; i < P1.size(); i++)
+    for (unsigned int i=0; i<P1.size(); i++)
     {
         total = total + pow( (P1[i] - P2[i]), 2 );
     }
     return sqrt(total);
+}
+
+double tansform_distance(std::vector<double> P1, std::vector<double> P2)
+{
+    if( P1.size() != 7 || P2.size() != 7 ){
+        return 0;
+    }
+
+    double alpha = 1.0;
+
+    double p_total = 0.0;
+    for (unsigned int i=0; i<3; i++)
+    {
+        p_total = p_total + pow( (P1[i] - P2[i]), 2 );
+    }
+    p_total = sqrt(p_total);
+
+
+    double r_total = 0.0;
+    for (unsigned int i=3; i<7; i++)
+    {
+        r_total = r_total + pow( (P1[i] - P2[i]), 2 );
+    }
+    r_total = sqrt(r_total);
+
+    return p_total + alpha * r_total;
 }
 
 int dtw_compare_performance(int traj_length, int iterations)
@@ -209,7 +236,7 @@ std::vector< std::vector<double> > get_vector_from_matrix( const Eigen::MatrixXd
     return test_vec;
 }
 
-std::vector<double> dtw_compare_performance( const std::vector<int>& active_dofs, const Move3D::Trajectory& t0, const std::vector<Move3D::Trajectory>& t_tests )
+std::vector<double> dtw_compare_performance( const std::vector<int>& active_dofs, const Move3D::Trajectory& t0, const std::vector<Move3D::Trajectory>& t_tests, bool use_transform_dist )
 {
     std::vector<double> scost;
 
@@ -238,7 +265,8 @@ std::vector<double> dtw_compare_performance( const std::vector<int>& active_dofs
         test_vec_1.push_back( get_vector_from_matrix(mat) );
     }
 
-    DTW::SimpleDTW my_eval = DTW::SimpleDTW( test_vec_0.size(), test_vec_0.size(), euclidean_distance );
+    DTW::SimpleDTW my_eval( test_vec_0.size(), test_vec_0.size(), use_transform_dist ? tansform_distance : euclidean_distance );
+
     cout << "Evaluating\n";
     //Run tests
     cout << "-----Test single-threaded version-----\n";

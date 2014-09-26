@@ -863,7 +863,7 @@ int ReplanningSimulator::execute_softmotion_simulation( int (*fct)(p3d_rob* robo
     p3d_localpath* localpathPt=NULL;
     SM_TRAJ smTraj;
 
-//    bool RunShowTraj=true;
+    //    bool RunShowTraj=true;
 
     Configuration q(m_rosim);
 
@@ -1053,7 +1053,7 @@ int ReplanningSimulator::execute_simple_simulation( int (*fct)(p3d_rob* robot, p
         //return false;
     }
 
-//    bool RunShowTraj=true;
+    //    bool RunShowTraj=true;
     bool StopRun=false;
     bool isFirstLoop=true;
     bool do_switch=false;
