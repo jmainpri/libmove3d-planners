@@ -150,6 +150,39 @@ void g3d_draw_eigen_box(	const Eigen::Vector3d& v1, const Eigen::Vector3d& v2, c
 }
 //#endif
 
+std::vector< std::pair<Eigen::Vector3d, Eigen::MatrixXd> > global_linesToDraw;
+
+void g3d_draw_3d_lines()
+{
+    double color[4];
+    color[0] = 1.0;
+    color[1] = 0.8;
+    color[2] = 0.2;
+    color[3] = 1.0;
+
+    const double size = 0.005;
+
+    for( int l=0; l<int(global_linesToDraw.size()); l++)
+        for( int i=0; i<int(global_linesToDraw[l].second.cols()-1); i++)
+        {
+            color[0] = global_linesToDraw[l].first[0];
+            color[1] = global_linesToDraw[l].first[1];
+            color[2] = global_linesToDraw[l].first[2];
+
+            g3d_set_color( Any, color );
+
+            g3d_draw_solid_sphere( global_linesToDraw[l].second(0, i+0), global_linesToDraw[l].second(1, i+0), global_linesToDraw[l].second(2, i+0), size, 10 );
+
+            g3d_drawOneLine( global_linesToDraw[l].second(0, i+0), global_linesToDraw[l].second(1, i+0), global_linesToDraw[l].second(2, i+0),
+                             global_linesToDraw[l].second(0, i+1), global_linesToDraw[l].second(1, i+1), global_linesToDraw[l].second(2, i+1), Any, color);
+
+            if( i == int(global_linesToDraw[l].second.cols()-2))
+            {
+                g3d_draw_solid_sphere( global_linesToDraw[l].second(0, i+1), global_linesToDraw[l].second(1, i+1), global_linesToDraw[l].second(2, i+1), size, 10);
+            }
+        }
+}
+
 void g3d_draw_multistomp_lines()
 {
     std::map< Robot*, std::vector<Eigen::Vector3d> >::const_iterator itr;

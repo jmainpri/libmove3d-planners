@@ -82,6 +82,6 @@ private:
 }
 
 int dtw_compare_performance(int traj_length, int iterations);
-std::vector<double> dtw_compare_performance( const std::vector<int>& active_dofs, const Move3D::Trajectory& t1, const std::vector<Move3D::Trajectory>& t_all );
+std::vector<double> dtw_compare_performance( const std::vector<int>& active_dofs, const Move3D::Trajectory& t1, const std::vector<Move3D::Trajectory>& t_all, bool use_transform_dist=false );
 
 #endif // HRICS_DYNAMIC_TIME_WARPING_HPP
