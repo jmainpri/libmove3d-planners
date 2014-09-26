@@ -29,7 +29,7 @@
 #ifndef HRICS_HUMAN_SIMULATOR_HPP
 #define HRICS_HUMAN_SIMULATOR_HPP
 
-#include "HRICS_human_cost_space.hpp"
+//#include "HRICS_human_cost_space.hpp"
 #include "HRICS_human_features.hpp"
 #include "hri_costspace/gestures/HRICS_record_motion.hpp"
 #include "feature_space/smoothness.hpp"
