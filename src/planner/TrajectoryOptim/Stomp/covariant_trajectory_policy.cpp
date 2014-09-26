@@ -449,14 +449,22 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
             }
         }
 
-        if( type_ != dist )
-            costs_all = ( acc_all.cwise()*acc_all );
-        else
+        if( type_ == dist )
             costs_all = acc_all;
+        else
+            costs_all = ( acc_all.cwise()*acc_all );
+
+
+//        cout << "TYPE : " << type_ << endl;
 
         costs_all *= weight;
 
         control_costs[d] = costs_all.segment( free_vars_start_index_, num_vars_free_ );
+
+        if( type_ == acc )
+            for (int d=0; d<num_dimensions_; ++d) {
+                control_costs[d] *= 1e-3;
+            }
 
 //        if( !PlanEnv->getBool(PlanParam::trajStompNoPrint) )
 //            if( type_ == vel )

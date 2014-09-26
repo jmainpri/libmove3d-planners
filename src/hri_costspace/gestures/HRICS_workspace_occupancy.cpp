@@ -325,12 +325,12 @@ bool WorkspaceOccupancyGrid::are_all_cells_blank(int id)
 
 void WorkspaceOccupancyGrid::computeCurrentOccupancy()
 {
-    m_current_occupied_cells.clear();
-
     for(int i=0;i<int(m_current_occupied_cells.size());i++)
     {
         m_current_occupied_cells[i]->m_currently_occupied = false;
     }
+
+    m_current_occupied_cells.clear();
 
     get_cells_occupied_by_human( m_current_occupied_cells, -1, false );
 
@@ -433,14 +433,22 @@ double WorkspaceOccupancyGrid::getOccupancy(const Eigen::Vector3d &point) const
 
 double WorkspaceOccupancyGrid::geCurrentOccupancy(const Eigen::Vector3d &point) const
 {
-    if( m_all_occupied_cells.empty() )
+    if( m_current_occupied_cells.empty() )
     {
-        cout << "occupied cells not loaded" << endl;
-        exit(0);
+//        cout << "occupied cells not loaded" << endl;
+//        exit(0);
         return 0.0;
     }
 
-    return double(static_cast<WorkspaceOccupancyCell*>(getCell( point ))->m_currently_occupied);
+    WorkspaceOccupancyCell* cell = static_cast<WorkspaceOccupancyCell*>(getCell( point ));
+
+    if( cell == NULL ) {
+        //return 0.0;
+        cout << "Null cell" << endl;
+        return 0.0;
+    }
+
+    return double(cell->m_currently_occupied);
 }
 
 double WorkspaceOccupancyGrid::getOccupancyCombination( const Eigen::Vector3d &point ) const

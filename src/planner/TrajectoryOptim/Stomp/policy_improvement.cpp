@@ -777,6 +777,7 @@ namespace stomp_motion_planner
         }
         else
         {
+//            cout << "NORMAL COMPUTATION" << endl;
             policy_->computeControlCosts(control_costs_, rollout.parameters_,
                                          rollout.noise_projected_, control_cost_weight_ , rollout.control_costs_, discretization_ );
         }

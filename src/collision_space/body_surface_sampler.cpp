@@ -19,7 +19,7 @@ using namespace Move3D;
 
 BodySurfaceSampler::BodySurfaceSampler(double step) : 
     m_step(step),
-    m_collision_clearance_default(0.20)
+    m_collision_clearance_default(0.05)
 {
 
 }

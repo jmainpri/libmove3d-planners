@@ -606,8 +606,10 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     if( !PlanEnv->getBool(PlanParam::trajStompNoPrint) )
         cout << "segment_frames_.size() : " << segment_frames_.size() << endl;
 
-    performForwardKinematics();
+    if( global_costSpace->getSelectedCostName() == "costHumanWorkspaceOccupancy" )
+        global_humanPredictionCostSpace->computeCurrentOccupancy();
 
+    performForwardKinematics();
 
     // Print smoothness cost
     getSmoothnessCost();
@@ -654,6 +656,9 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         if( PlanEnv->getInt(PlanParam::stompDrawIteration) >  0) {
             do_draw = (iteration_!=0) && (iteration_%PlanEnv->getInt(PlanParam::stompDrawIteration) == 0);
         }
+
+        if( global_costSpace->getSelectedCostName() == "costHumanWorkspaceOccupancy" )
+            global_humanPredictionCostSpace->computeCurrentOccupancy();
 
         reset_reused_rollouts_ = false;
         if( (!handover_has_been_recomputed_) && humanHasMoved() )
@@ -1374,6 +1379,9 @@ double StompOptimizer::getSmoothnessCost()
     else
     {
         // TODO remove weight multiplication
+
+//        cout << "NORMAL COMPUTATION" << endl;
+
         policy_->computeControlCosts( control_cost_matrices, policy_parameters_, noise, weight, control_costs, discretization );
 
         Eigen::VectorXd costs = Eigen::VectorXd::Zero( control_costs[0].size() );

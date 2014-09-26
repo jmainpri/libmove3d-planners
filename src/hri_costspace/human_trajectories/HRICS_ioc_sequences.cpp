@@ -49,6 +49,8 @@
 #include <libmove3d/include/Graphic-pkg.h>
 #include <libmove3d/include/Util-pkg.h>
 
+#include <iomanip>
+
 using namespace Move3D;
 using namespace HRICS;
 using std::cout;
@@ -359,22 +361,22 @@ bool IocSequences::run()
             const std::vector<motion_t>& demos = global_ht_simulator->getDemonstrations();
 
             // Get sample trajectories around demos
-            std::vector<std::vector<motion_t> > sample_trajs(samples.size());
-            std::vector<std::vector<Move3D::Trajectory> > samples;
+//            std::vector<std::vector<motion_t> > sample_trajs(samples.size());
+//            std::vector<std::vector<Move3D::Trajectory> > samples;
 
-            bool perform_sampling = false;
-            if( perform_sampling )
-            {
-                samples = eval_->runSampling();
+//            bool perform_sampling = false;
+//            if( perform_sampling )
+//            {
+//                samples = eval_->runSampling();
 
-                for( int d=0; d<samples.size(); d++ )
-                {
-                    double duration = motion_duration( demos[d] );
+//                for( int d=0; d<samples.size(); d++ )
+//                {
+//                    double duration = motion_duration( demos[d] );
 
-                    for( int k=0; k<samples[d].size(); k++ )
-                        sample_trajs[d].push_back( traj_to_motion( samples[d][k] , duration) );
-                }
-            }
+//                    for( int k=0; k<samples[d].size(); k++ )
+//                        sample_trajs[d].push_back( traj_to_motion( samples[d][k] , duration) );
+//                }
+//            }
 
             global_ht_simulator->setDrawExecution( false );
 
@@ -392,11 +394,25 @@ bool IocSequences::run()
             for( int j=0; j<global_ht_simulator->getNumberOfDemos(); j++ )
             {
                 global_ht_simulator->setDemonstrationId( j );
-                global_ht_simulator->run();
-                trajs.push_back( global_ht_simulator->getExecutedTrajectory() );
-//                cout << "wait for key" << endl;
-//                std::cin.ignore();
-                break;
+
+                for( int k=0; k<10; k++ )
+                {
+                    global_ht_simulator->run();
+
+                    std::stringstream ss;
+                    ss.str("");
+                    ss << "run_simulator_" << std::setw(3) << std::setfill( '0' ) << j;
+                    ss <<              "_" << std::setw(3) << std::setfill( '0' ) << k << ".traj";
+
+                    global_ht_simulator->getExecutedPath().saveToFile( ss.str() );
+
+                    trajs.push_back( global_ht_simulator->getExecutedTrajectory() );
+                }
+
+                //                cout << "wait for key" << endl;
+                //                std::cin.ignore();
+
+//                break;
             }
 
 //            for( int j=0; j<global_ht_simulator->getNumberOfDemos(); j++ )
