@@ -87,8 +87,9 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
                                            const ChompPlanningGroup* planning_group)
 {
 //    type_ = vel; // Match control cost
-    type_ = acc;
+//    type_ = acc;
 //    type_ = jerk;
+    type_ = dist;
 
     //node_handle_ = node_handle;
     //print_debug_ = true;

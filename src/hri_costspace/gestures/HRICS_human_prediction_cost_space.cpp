@@ -78,6 +78,8 @@ double HumanPredictionCostSpace::getCurrentOccupationCost(Configuration& q) cons
 
     int nb_points = 0;
 
+    double factor = 10.0;
+
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
         p3d_obj* obj = m_active_joints[i]->getP3dJointStruct()->o;
@@ -92,7 +94,7 @@ double HumanPredictionCostSpace::getCurrentOccupationCost(Configuration& q) cons
 
             for( int j=0; j<int(pc.size()); j++ )
             {
-                cost += (4*m_ws_occupancy->geCurrentOccupancy( T*pc[j] ));
+                cost += (factor*m_ws_occupancy->geCurrentOccupancy( T*pc[j] ));
                 nb_points++;
             }
         }

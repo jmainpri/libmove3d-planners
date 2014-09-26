@@ -238,6 +238,8 @@ private:
     int cut_step_;
 
     bool use_bio_models_;
+
+    bool end_simulation_;
 };
 
 }

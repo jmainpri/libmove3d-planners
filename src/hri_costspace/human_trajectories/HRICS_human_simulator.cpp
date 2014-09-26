@@ -566,8 +566,8 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     good_motions_names.push_back( "[4753-4802]motion_saved_00000_00000.csv" );
 
     // MOCAP GOOD
-    good_motions_names.push_back( "[1460-1620]_human1_.csv" );
-    good_motions_names.push_back( "[1460-1620]_human2_.csv" );
+//    good_motions_names.push_back( "[1460-1620]_human1_.csv" );
+//    good_motions_names.push_back( "[1460-1620]_human2_.csv" );
 
     // TEN MOTIONS
 
@@ -1124,6 +1124,7 @@ bool HumanTrajSimulator::loadActiveHumanGoalConfig()
     time_step_ = 0.1; // Simulation step
     global_discretization_ = 0.01; // time betweem configurations (choose a number that divides the simulation time step)
     time_along_current_path_ = 0.0;
+    end_simulation_ = false;
 
     draw_execute_motion_ = false;
 
@@ -1298,33 +1299,19 @@ void HumanTrajSimulator::execute(const Move3D::Trajectory& path, bool to_end)
     for( int i=0; i<nb_configs; i++ )
     {
         // Find configurations of active human along the trajectory
-        t = double(i+1) * global_discretization_;
+        t += global_discretization_;
         q = path.configAtTime( t );
         human_active_->setAndUpdate( *q );
 
+        // Add the configuration to the trajectory
+        executed_trajectory_.push_back( std::make_pair( global_discretization_, q ) );
+
         // if the time exceeds the trajectory length
         // inferior to a hundredth of a second
-        if( ( motion_duration_ - ( t + current_time_ ) ) < 1e-2  )
+        if( ( motion_duration_ - ( t + current_time_ ) ) < global_discretization_  )
         {
-            double dt = motion_duration_ - motion_duration( executed_trajectory_ );
-            t = motion_duration_ - current_time_;
-            q = path.configAtTime( t );
-            executed_trajectory_.push_back( std::make_pair( dt, q ) );
-
-            if( draw_execute_motion_ )
-            {
-                g3d_draw_allwin_active();
-                usleep( floor( global_discretization_ * 1e6 * time_factor ) );
-            }
-
-            cout << "OUT OF TIME" << endl;
-            cout << "t : " << t << endl;
-            cout << "current_time_ : " << current_time_ << endl;
-            cout << "motion_duration_ : " << motion_duration_ << endl;
+            end_simulation_ = true;
             break;
-        }
-        else {
-            executed_trajectory_.push_back( std::make_pair( global_discretization_, q ) );
         }
 
         if( draw_execute_motion_ )
@@ -1332,6 +1319,25 @@ void HumanTrajSimulator::execute(const Move3D::Trajectory& path, bool to_end)
             g3d_draw_allwin_active();
             usleep( floor( global_discretization_ * 1e6 * time_factor ) );
         }
+    }
+
+    // If duration left is inferior to half a time step do not replan
+    if( ( motion_duration_ - ( t + current_time_ ) ) <= (time_step_/2.) )
+    {
+        while( motion_duration_ - ( t + current_time_ ) > global_discretization_ )
+        {
+            t += global_discretization_;
+            q = path.configAtTime( t );
+            executed_trajectory_.push_back( std::make_pair( global_discretization_, q ) );
+        }
+        end_simulation_ = true;
+    }
+
+    // Add the end configuration
+    if( end_simulation_ ){
+        double dt = motion_duration_ - ( t + current_time_ );
+        t += dt;
+        executed_trajectory_.push_back( std::make_pair( dt, q_goal_ ) );
     }
 
     time_along_current_path_ = t;
