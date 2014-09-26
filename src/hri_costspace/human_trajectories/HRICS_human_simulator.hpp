@@ -131,6 +131,9 @@ public:
     std::vector<std::string> getMotionsNames() const { return motions_1_names_; }
     std::vector<int> getDemoIds() const { return motions_demo_ids_; }
 
+    //! Returns the active degree of freedom
+    std::vector<int> getActiveDofs() const;
+
 private:
 
     // ------------------------------------------------------------------------

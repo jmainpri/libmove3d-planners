@@ -931,6 +931,10 @@ void HumanTrajSimulator::setPelvisBounds()
 //    Joint(0), Dof : 22, rElbowZ
 //    Is dof user : (min = -3.14, max = 3.14)
 }
+std::vector<int> HumanTrajSimulator::getActiveDofs() const
+{
+    return active_dofs_;
+}
 
 void HumanTrajSimulator::setActiveJoints()
 {
