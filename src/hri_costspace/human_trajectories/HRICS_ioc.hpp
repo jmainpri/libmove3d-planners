@@ -203,7 +203,7 @@ public:
     void loadPlannerTrajectories( int nb_trajs=-1, int offset=-1, int random=0 );
 
     //! Load weight vector from CSV format
-    void loadWeightVector();
+    void loadWeightVector(std::string filename = "");
 
     //! Save 2D traj to file for Matlab
     void saveDemoToMatlab();

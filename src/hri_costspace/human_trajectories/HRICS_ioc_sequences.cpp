@@ -56,7 +56,7 @@ using namespace HRICS;
 using std::cout;
 using std::endl;
 
-static std::string move3d_root("/home/jmainpri/Dropbox/move3d/");
+static std::string move3d_root("/home/rafi/workspace/move3d/");
 
 // Folders for sphere (and plannar) type of features
 static std::string move3d_demo_folder;
@@ -391,9 +391,28 @@ bool IocSequences::run()
 
             std::vector<motion_t> trajs;
 
+            std::vector<std::string> good_motions_names;
+            good_motions_names.push_back("[0446-0578]_human2_.csv");
+            good_motions_names.push_back("[0525-0657]_human2_.csv");
+            good_motions_names.push_back("[0444-0585]_human2_.csv");
+            good_motions_names.push_back("[0489-0589]_human2_.csv");
+            good_motions_names.push_back("[0780-0871]_human2_.csv");
+            good_motions_names.push_back("[1537-1608]_human2_.csv");
+            good_motions_names.push_back("[2711-2823]_human2_.csv");
+
             for( int j=0; j<global_ht_simulator->getNumberOfDemos(); j++ )
             {
                 global_ht_simulator->setDemonstrationId( j );
+
+                std::string demo_split = good_motions_names[ j ].substr( 0, 11 );
+
+                std::stringstream ss;
+                ss << demo_split << "_spheres_weights_700.txt";
+
+                 eval_->loadWeightVector( ss.str() );
+                 eval_->setLearnedWeights();
+
+//                 exit(0);
 
                 for( int k=0; k<10; k++ )
                 {

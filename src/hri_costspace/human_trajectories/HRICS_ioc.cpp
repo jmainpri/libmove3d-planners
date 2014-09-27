@@ -1495,7 +1495,7 @@ void IocEvaluation::loadPlannerTrajectories( int nb_trajs, int offset, int rando
     g3d_draw_allwin_active();
 }
 
-void IocEvaluation::loadWeightVector()
+void IocEvaluation::loadWeightVector(std::string filename)
 {
     cout << "Load Weight Vector" << endl;
 
@@ -1503,7 +1503,11 @@ void IocEvaluation::loadWeightVector()
 
     // Load vector from file
     std::stringstream ss;
-    ss << tmp_data_folder_ << "spheres_weights_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
+
+    if( filename == "")
+        ss << tmp_data_folder_ << "spheres_weights_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
+    else
+        ss << tmp_data_folder_ << filename;
 
     cout << "LOADING LEARNED WEIGHTS : " << ss.str() << endl;
     std::ifstream file( ss.str().c_str() );
@@ -1524,6 +1528,7 @@ void IocEvaluation::loadWeightVector()
     }
     else {
         cout << "ERROR could not load weights" << endl;
+        exit(0);
     }
     file.close();
 
@@ -1779,9 +1784,9 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
         samples = loadSamplesFromFile( demos_.size(), nb_samples_ );
     }
 
-    double demo_cost = feature_fct_->getWeights().transpose()*phi_demos_[0];
-
-    cout << "cost " << int(0) << " : " <<  demo_cost << endl;
+    double demo_cost = 0.0;
+//    double demo_cost = feature_fct_->getWeights().transpose()*phi_demos_[0];
+//    cout << "cost " << int(0) << " : " <<  demo_cost << endl;
     cout << "dist wrist " << phi_demos_[0][0] << endl; //24
     cout << "length : " << demos_[0].getParamMax() << endl;
 

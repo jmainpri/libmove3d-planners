@@ -98,7 +98,7 @@ bool HRICS_init_human_trajectory_cost()
 //                global_motionRecorders[0]->storeMotion( traj1, "[1460-1620]_human2_.csv" );
 //                global_motionRecorders[1]->storeMotion( traj2, "[1460-1620]_human1_.csv" );
 
-                std::string foldername = "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/ten_motions/";
+                std::string foldername = "/home/rafi/logging_jim/ten_motions/";
                 bool quiet = true;
                 global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet, -1.5 );
                 global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet, +1.5 );
@@ -141,8 +141,8 @@ bool HRICS_init_human_trajectory_cost()
         cout << "Error : could not init collision space" << endl;
 
     // WARNING COMMENT TO GET BASE LINE
-//    cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
-//    global_activeFeatureFunction = global_ht_cost_space;
+    cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
+    global_activeFeatureFunction = global_ht_cost_space;
 
     return true;
 }
@@ -397,7 +397,7 @@ bool HumanTrajSimulator::init()
     minimal_demo_size_ = 10;
     trajectories_cut_ = false;
 
-    use_one_traj_ = true;
+    use_one_traj_ = false;
 
     if( !motion_recorders_.empty() )
     {
@@ -405,8 +405,8 @@ bool HumanTrajSimulator::init()
         // add cut motions
         setReplanningDemonstrations();
 
-        if( !use_one_traj_ )
-            addCutMotions();
+//        if( !use_one_traj_ )
+//            addCutMotions();
 //        setInitAndGoalConfig(); // For simulation
 
     }
@@ -560,10 +560,10 @@ void HumanTrajSimulator::setReplanningDemonstrations()
 //    good_motions_names.push_back( "[3913-3950]motion_saved_00000_00000.csv" );
 
     // QUAN GOOD
-    good_motions_names.push_back( "[4125-4169]motion_saved_00000_00001.csv" );
-    good_motions_names.push_back( "[4422-4476]motion_saved_00000_00000.csv" );
-    good_motions_names.push_back( "[4591-4640]motion_saved_00000_00000.csv" );
-    good_motions_names.push_back( "[4753-4802]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[4125-4169]motion_saved_00000_00001.csv" );
+//    good_motions_names.push_back( "[4422-4476]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[4591-4640]motion_saved_00000_00000.csv" );
+//    good_motions_names.push_back( "[4753-4802]motion_saved_00000_00000.csv" );
 
     // MOCAP GOOD
 //    good_motions_names.push_back( "[1460-1620]_human1_.csv" );
@@ -584,6 +584,7 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     //    good_motions_names.push_back("[0408-0491]_human1_.csv");
 
     // GOOD...
+
 //    good_motions_names.push_back("[0446-0578]_human2_.csv");
 //    good_motions_names.push_back("[0446-0578]_human1_.csv");
 
@@ -606,25 +607,29 @@ void HumanTrajSimulator::setReplanningDemonstrations()
 //    good_motions_names.push_back("[2711-2823]_human1_.csv");
 
 
+
     if( !use_one_traj_ )
     {
-        good_motions_names.push_back("[0525-0657]_human2_.csv");
-        good_motions_names.push_back("[0525-0657]_human1_.csv");
+//        good_motions_names.push_back("[0446-0578]_human2_.csv");
+//        good_motions_names.push_back("[0446-0578]_human1_.csv");
 
-        good_motions_names.push_back("[0444-0585]_human2_.csv");
-        good_motions_names.push_back("[0444-0585]_human1_.csv");
+//        good_motions_names.push_back("[0525-0657]_human2_.csv");
+//        good_motions_names.push_back("[0525-0657]_human1_.csv");
 
-        good_motions_names.push_back("[0489-0589]_human2_.csv");
-        good_motions_names.push_back("[0489-0589]_human1_.csv");
+//        good_motions_names.push_back("[0444-0585]_human2_.csv");
+//        good_motions_names.push_back("[0444-0585]_human1_.csv");
 
-        good_motions_names.push_back("[0780-0871]_human2_.csv");
-        good_motions_names.push_back("[0780-0871]_human1_.csv");
+//        good_motions_names.push_back("[0489-0589]_human2_.csv");
+//        good_motions_names.push_back("[0489-0589]_human1_.csv");
 
-        good_motions_names.push_back("[1537-1608]_human2_.csv");
-        good_motions_names.push_back("[1537-1608]_human1_.csv");
+//        good_motions_names.push_back("[0780-0871]_human2_.csv");
+//        good_motions_names.push_back("[0780-0871]_human1_.csv");
 
-        good_motions_names.push_back("[2711-2823]_human2_.csv");
-        good_motions_names.push_back("[2711-2823]_human1_.csv");
+//        good_motions_names.push_back("[1537-1608]_human2_.csv");
+//        good_motions_names.push_back("[1537-1608]_human1_.csv");
+
+//        good_motions_names.push_back("[2711-2823]_human2_.csv");
+//        good_motions_names.push_back("[2711-2823]_human1_.csv");
 
 
 
