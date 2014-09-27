@@ -584,26 +584,26 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     //    good_motions_names.push_back("[0408-0491]_human1_.csv");
 
     // GOOD...
-    good_motions_names.push_back("[0446-0578]_human2_.csv");
-    good_motions_names.push_back("[0446-0578]_human1_.csv");
+//    good_motions_names.push_back("[0446-0578]_human2_.csv");
+//    good_motions_names.push_back("[0446-0578]_human1_.csv");
 
-    good_motions_names.push_back("[0525-0657]_human2_.csv");
-    good_motions_names.push_back("[0525-0657]_human1_.csv");
+//    good_motions_names.push_back("[0525-0657]_human2_.csv");
+//    good_motions_names.push_back("[0525-0657]_human1_.csv");
 
     good_motions_names.push_back("[0444-0585]_human2_.csv");
     good_motions_names.push_back("[0444-0585]_human1_.csv");
 
-    good_motions_names.push_back("[0489-0589]_human2_.csv");
-    good_motions_names.push_back("[0489-0589]_human1_.csv");
+//    good_motions_names.push_back("[0489-0589]_human2_.csv");
+//    good_motions_names.push_back("[0489-0589]_human1_.csv");
 
-    good_motions_names.push_back("[0780-0871]_human2_.csv");
-    good_motions_names.push_back("[0780-0871]_human1_.csv");
+//    good_motions_names.push_back("[0780-0871]_human2_.csv");
+//    good_motions_names.push_back("[0780-0871]_human1_.csv");
 
-    good_motions_names.push_back("[1537-1608]_human2_.csv");
-    good_motions_names.push_back("[1537-1608]_human1_.csv");
+//    good_motions_names.push_back("[1537-1608]_human2_.csv");
+//    good_motions_names.push_back("[1537-1608]_human1_.csv");
 
-    good_motions_names.push_back("[2711-2823]_human2_.csv");
-    good_motions_names.push_back("[2711-2823]_human1_.csv");
+//    good_motions_names.push_back("[2711-2823]_human2_.csv");
+//    good_motions_names.push_back("[2711-2823]_human1_.csv");
 
 
     if( !use_one_traj_ )
@@ -1188,16 +1188,17 @@ void HumanTrajSimulator::runStandardStomp( int iter )
 
     human_active_->setAndUpdate( *q_init_ );
 
-    human_active_->setInitPos( *q_init_ );
-    human_active_->setGoalPos( *q_goal_ );
+    human_active_->setInitPos( *q_init_->copy() );
+    human_active_->setGoalPos( *q_goal_->copy() );
 
     if( iter>0 )
     {
         Move3D::Trajectory optimi_traj( human_active_ );
-        double dt = current_motion_duration_ / double(nb_way_points);
-        for(int i=0; i<nb_way_points; i++){
+        double dt = current_motion_duration_ / double(nb_way_points-1);
+        for(int i=0; i<nb_way_points-1; i++) {
             optimi_traj.push_back( path_.configAtTime( time_along_current_path_ + double(i) * dt ) );
         }
+        optimi_traj.push_back( path_.getEnd() );
 
         traj_optim_set_use_extern_trajectory( true );
         traj_optim_set_extern_trajectory( optimi_traj );
@@ -1337,7 +1338,7 @@ void HumanTrajSimulator::execute(const Move3D::Trajectory& path, bool to_end)
     if( end_simulation_ ){
         double dt = motion_duration_ - ( t + current_time_ );
         t += dt;
-        executed_trajectory_.push_back( std::make_pair( dt, q_goal_ ) );
+        executed_trajectory_.push_back( std::make_pair( dt, q_goal_->copy() ) );
     }
 
     time_along_current_path_ = t;
