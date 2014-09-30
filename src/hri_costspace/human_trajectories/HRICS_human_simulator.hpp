@@ -107,7 +107,17 @@ public:
     bool init();
     double run();
 
+    //! Returns the active degree of freedom
+    Move3D::Robot* getActiveHuman() const { return human_active_; }
+
+    //! Returns the active degree of freedom
+    Move3D::Robot* getPassiveHuman() const { return human_passive_; }
+
+    //! Returns active joints
     std::vector<Move3D::Joint*> getActiveJoints() { return active_joints_; }
+
+    //! Returns the active degree of freedom
+    std::vector<int> getActiveDofs() const;
 
     std::vector< std::vector<motion_t> > getMotions();
     std::vector<Move3D::Trajectory> getDemoTrajectories() const;
@@ -121,6 +131,7 @@ public:
     int getNumberOfDemos() { return human_2_motions_.size(); }
     void setPelvisBoundsByUser(bool user_defined) { is_pelvis_bound_user_defined_ = user_defined; }
 
+    Move3D::Trajectory getCurrentPath() const;
     Move3D::Trajectory getExecutedPath() const;
     motion_t getExecutedTrajectory() const;
     double getCost( const motion_t& traj ) const;
@@ -131,9 +142,6 @@ public:
 
     std::vector<std::string> getMotionsNames() const { return motions_1_names_; }
     std::vector<int> getDemoIds() const { return motions_demo_ids_; }
-
-    //! Returns the active degree of freedom
-    std::vector<int> getActiveDofs() const;
 
 private:
 

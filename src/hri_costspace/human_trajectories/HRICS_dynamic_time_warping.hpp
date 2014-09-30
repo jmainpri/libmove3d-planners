@@ -32,8 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <stdio.h>
 #include <vector>
+#include <boost/function.hpp>
 
 #include "API/Trajectory/trajectory.hpp"
+#include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
 
 namespace DTW
 {
@@ -43,23 +45,20 @@ class SimpleDTW
 
 public:
 
-    SimpleDTW(size_t x_dim, size_t y_dim, double (*distance_fn)(std::vector<double> p1, std::vector<double> p2));
-
-    SimpleDTW(double (*distance_fn)(std::vector<double> p1, std::vector<double> p2));
-
+    SimpleDTW(size_t x_dim, size_t y_dim, const Move3D::ChompPlanningGroup* planning_group = NULL);
+    SimpleDTW(boost::function<double(const std::vector<double>&, const std::vector<double>&)> f);
     SimpleDTW();
 
     ~SimpleDTW() {}
 
-    double EvaluateWarpingCost(std::vector< std::vector<double> > sequence_1, std::vector< std::vector<double> > sequence_2);
+    void setDistFunction( boost::function<double(const std::vector<double>&, const std::vector<double>&)> f ) { distance_fn_ = f; }
+    double EvaluateWarpingCost(const std::vector< std::vector<double> >& sequence_1, const std::vector< std::vector<double> >& sequence_2);
+
+    double euclidean_distance(const std::vector<double>&, const std::vector<double>&);
+    double tansform_distance(const std::vector<double>&, const std::vector<double>&);
+    double centers_distance(const std::vector<double>& P1, const std::vector<double>& P2);
 
 private:
-
-    double (*distance_fn_)(std::vector<double> p1, std::vector<double> p2);
-    std::vector<double> data_;
-    size_t x_dim_;
-    size_t y_dim_;
-    bool initialized_;
 
     void Initialize(size_t x_size, size_t y_size);
 
@@ -77,11 +76,22 @@ private:
     {
         data_[GetDataIndex(x, y)] = val;
     }
+
+    boost::function<double(const std::vector<double>&, const std::vector<double>&)> distance_fn_;
+    std::vector<double> data_;
+    size_t x_dim_;
+    size_t y_dim_;
+    bool initialized_;
+
+    const Move3D::ChompPlanningGroup* planning_group_;
 };
 
 }
 
 int dtw_compare_performance(int traj_length, int iterations);
-std::vector<double> dtw_compare_performance( const std::vector<int>& active_dofs, const Move3D::Trajectory& t1, const std::vector<Move3D::Trajectory>& t_all, bool use_transform_dist=false );
+
+std::vector<double> dtw_compare_performance(  const Move3D::ChompPlanningGroup* planning_group,
+                                              const Move3D::Trajectory& t1, const std::vector<Move3D::Trajectory>& t_all,
+                                              std::vector<Move3D::Joint*> joint = std::vector<Move3D::Joint*>() );
 
 #endif // HRICS_DYNAMIC_TIME_WARPING_HPP

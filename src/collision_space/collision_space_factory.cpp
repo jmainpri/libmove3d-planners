@@ -50,7 +50,7 @@ using namespace Move3D;
 using std::cout;
 using std::endl;
 
-CollisionSpace* global_collSpace=NULL;
+CollisionSpace* m_collspace=NULL;
 
 static std::vector<int> m_active_joints;
 static std::vector<int> m_planner_joints;
@@ -61,6 +61,22 @@ static bool m_init=false;
 
 static Robot* m_robot=NULL;
 
+void traj_optim_reset_collision_space()
+{
+    if( global_collisionSpace )
+        delete global_collisionSpace;
+    global_collisionSpace = NULL;
+
+//    if( m_collspace )
+//        delete m_collspace;
+    m_collspace = NULL;
+
+    m_active_joints.clear();
+    m_planner_joints.clear();
+    m_collision_points.clear();
+    m_init = false;
+}
+
 void traj_optim_add_human_to_collision_space(bool add)
 {
     m_add_human = add;
@@ -68,7 +84,7 @@ void traj_optim_add_human_to_collision_space(bool add)
 
 const CollisionSpace* traj_optim_get_collision_space()
 {
-    return global_collSpace;
+    return m_collspace;
 }
 
 std::vector<CollisionPoint> traj_optim_get_collision_points()
@@ -91,7 +107,7 @@ std::vector<int> traj_optim_get_planner_joints()
 bool traj_optim_init_collision_points()
 {
     // Generate Bounding volumes for active joints
-    BodySurfaceSampler* sampler = global_collSpace->getBodySampler();
+    BodySurfaceSampler* sampler = m_collspace->getBodySampler();
 
     // Get all joints active in the motion planning
     // and compute bounding cylinders
@@ -115,7 +131,7 @@ bool traj_optim_init_collision_points()
     cout << "nb of collision point are " << m_collision_points.size() << endl;
 
     // Set the collision space as global (drawing)
-    global_collisionSpace = global_collSpace;
+    global_collisionSpace = m_collspace;
     return true;
 }
 
@@ -132,8 +148,8 @@ void traj_optim_init_collision_space()
 
     //    ChronoTimeOfDayOn();
 
-    global_collSpace = new CollisionSpace( m_robot, double(ENV.getInt(Env::nbCells))/100, global_Project->getActiveScene()->getBounds() );
-    global_collSpace->resetPoints();
+    m_collspace = new CollisionSpace( m_robot, double(ENV.getInt(Env::nbCells))/100, global_Project->getActiveScene()->getBounds() );
+    m_collspace->resetPoints();
 
     // Warning
     // If not human not add bodies
@@ -146,7 +162,7 @@ void traj_optim_init_collision_space()
         {
             if ( find( m_active_joints.begin(), m_active_joints.end(), joint_id ) == m_active_joints.end() )
             {
-                global_collSpace->addRobotBody( m_robot->getJoint(joint_id) );
+                m_collspace->addRobotBody( m_robot->getJoint(joint_id) );
             }
         }
     }
@@ -161,16 +177,16 @@ void traj_optim_init_collision_space()
 
             if (  ( m_robot != rob ) && rob->getName().find("HERAKLES") != std::string::npos )
             {
-                global_collSpace->addRobot( rob );
+                m_collspace->addRobot( rob );
             }
         }
     }
 
     // Add all moving and static obstacles
-    global_collSpace->addEnvPoints();
+    m_collspace->addEnvPoints();
 
     // Adds the sampled points to the distance field
-    global_collSpace->propagateDistance();
+    m_collspace->propagateDistance();
 
     //    double time=0.0;
     //    ChronoTimeOfDayTimes(&time);
@@ -205,7 +221,7 @@ bool traj_optim_default_init()
 //        m_planner_joints.push_back( i );
 //    }
 
-    global_collSpace = NULL;
+    m_collspace = NULL;
 
     if( ENV.getBool(Env::isCostSpace) )
     {
@@ -219,7 +235,7 @@ bool traj_optim_default_init()
             traj_optim_init_collision_points();
         }
         else {
-            global_collSpace = global_collisionSpace;
+            m_collspace = global_collisionSpace;
         }
     }
 
@@ -250,7 +266,7 @@ bool traj_optim_simple_init()
 
     ENV.setInt( Env::jntToDraw, 1 );
 
-    global_collSpace = NULL;
+    m_collspace = NULL;
     return (global_costSpace != NULL);
 }
 
@@ -278,7 +294,7 @@ bool traj_optim_costmap_init()
 
     ENV.setInt( Env::jntToDraw, 1 );
 
-    global_collSpace = NULL;
+    m_collspace = NULL;
 
     bool valid_costspace = global_costSpace->setCost("costMap2D");
     return valid_costspace;
@@ -301,7 +317,7 @@ void traj_optim_navigation_generate_points()
     m_planner_joints.push_back( 1 );
 
     // Generate Bounding volumes for active joints
-    BodySurfaceSampler* sampler = global_collSpace->getBodySampler();
+    BodySurfaceSampler* sampler = m_collspace->getBodySampler();
 
     // Get all joints active in the motion planning
     // and compute bounding cylinders
@@ -341,7 +357,7 @@ void traj_optim_hrics_generate_points()
     m_planner_joints.push_back( 1 );
 
     // Generate Bounding volumes for active joints
-    BodySurfaceSampler* sampler = global_collSpace->getBodySampler();
+    BodySurfaceSampler* sampler = m_collspace->getBodySampler();
 
     // Get all joints active in the motion planning
     // and compute bounding cylinders
@@ -369,7 +385,7 @@ void traj_optim_hrics_generate_points()
 // --------------------------------------------------------
 void traj_optim_manip_init_joints()
 {
-    global_collSpace = NULL;
+    m_collspace = NULL;
 
     if( m_robot->getName() == "PR2_ROBOT" ) {
         // Set the active joints (links)
@@ -462,7 +478,7 @@ void traj_optim_hrics_mobile_manip_init_joints()
     m_planner_joints.push_back( 11 );
     m_planner_joints.push_back( 12 );
 
-    global_collSpace = NULL;
+    m_collspace = NULL;
 }
 
 //! initializes the collision space
@@ -543,7 +559,7 @@ void traj_optim_hrics_human_trajectory_manip_init_joints()
         m_planner_joints.push_back( m_robot->getJoint( "rWristY" )->getId() );
     }
 
-    global_collSpace = NULL;
+    m_collspace = NULL;
 }
 
 //****************************************************************
@@ -613,7 +629,7 @@ bool traj_optim_init_collision_spaces( traj_optim::ScenarioType sce, Robot* rob 
                 traj_optim_init_collision_points();
             }
             else {
-                global_collSpace = global_collisionSpace;
+                m_collspace = global_collisionSpace;
             }
         }
         else {
@@ -646,7 +662,7 @@ bool traj_optim_init_collision_spaces( traj_optim::ScenarioType sce, Robot* rob 
             return false;
         }
         else {
-            global_collSpace = global_collisionSpace;
+            m_collspace = global_collisionSpace;
             traj_optim_navigation_generate_points();
         }
 
@@ -677,7 +693,7 @@ bool traj_optim_init_collision_spaces( traj_optim::ScenarioType sce, Robot* rob 
                 traj_optim_init_collision_points();
             }
             else {
-                global_collSpace = global_collisionSpace;
+                m_collspace = global_collisionSpace;
             }
         }
         else {
@@ -716,8 +732,10 @@ bool traj_optim_init_collision_spaces( traj_optim::ScenarioType sce, Robot* rob 
             traj_optim_init_collision_points();
         }
         else {
-            global_collSpace = global_collisionSpace;
+            m_collspace = global_collisionSpace;
         }
+
+//        exit(0);
 
         break;
 
@@ -738,7 +756,7 @@ bool traj_optim_init_collision_spaces( traj_optim::ScenarioType sce, Robot* rob 
         }
         else
         {
-            global_collSpace = global_collisionSpace;
+            m_collspace = global_collisionSpace;
             traj_optim_navigation_generate_points();
         }
 

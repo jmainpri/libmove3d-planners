@@ -16,6 +16,7 @@
 #include "planner/TrajectoryOptim/Classic/costOptimization.hpp"
 #include "planner/planEnvironment.hpp"
 
+#include "collision_space/collision_space.hpp"
 #include "collision_space/collision_space_factory.hpp"
 
 #include <boost/bind.hpp>
@@ -34,6 +35,9 @@ using std::cin;
 
 HRICS::HumanTrajSimulator* global_ht_simulator = NULL;
 HRICS::HumanTrajCostSpace* global_ht_cost_space = NULL;
+
+extern bool hrics_set_baseline;
+extern bool hrics_one_iteration;
 
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
@@ -98,7 +102,7 @@ bool HRICS_init_human_trajectory_cost()
 //                global_motionRecorders[0]->storeMotion( traj1, "[1460-1620]_human2_.csv" );
 //                global_motionRecorders[1]->storeMotion( traj2, "[1460-1620]_human1_.csv" );
 
-                std::string foldername = "/home/rafi/logging_jim/ten_motions/";
+                std::string foldername = "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/ten_motions/";
                 bool quiet = true;
                 global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet, -1.5 );
                 global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet, +1.5 );
@@ -132,6 +136,11 @@ bool HRICS_init_human_trajectory_cost()
         cout << " add cost : " << "costHumanTrajectoryCost" << endl;
         Move3D::global_costSpace->addCost( "costHumanWorkspaceOccupancy", boost::bind( &HRICS::HumanPredictionCostSpace::getCurrentOccupationCost, global_humanPredictionCostSpace, _1) );
         Move3D::global_costSpace->addCost( "costHumanTrajectoryCost", boost::bind( &HumanTrajCostSpace::cost, global_ht_cost_space, _1) );
+
+        // SET BASELINE HERE
+        hrics_set_baseline = false;
+        hrics_one_iteration = false;
+        PlanEnv->setDouble( PlanParam::trajOptimSmoothFactor, hrics_set_baseline ? 0.0001 : 1.0000 );
     }
 
     ENV.setBool( Env::isCostSpace, true );
@@ -140,7 +149,6 @@ bool HRICS_init_human_trajectory_cost()
     if( !global_ht_cost_space->initCollisionSpace() )
         cout << "Error : could not init collision space" << endl;
 
-    // WARNING COMMENT TO GET BASE LINE
     cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
     global_activeFeatureFunction = global_ht_cost_space;
 
@@ -202,18 +210,25 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
         musc_feat_.setWeights( Move3D::WeightVect::Ones( musc_feat_.getNumberOfFeatures() ) );
     }
 
-//    if(!addFeatureFunction( &length_feat_ ) ){
-//        cout << "Error adding feature length" << endl;
-//    }
-    if(!addFeatureFunction( &smoothness_feat_ ) ){
-        cout << "Error adding feature smoothness" << endl;
+
+    if( !hrics_set_baseline )
+    {
+        if(!addFeatureFunction( &smoothness_feat_ ) ){
+            cout << "Error adding feature smoothness" << endl;
+        }
     }
-//    if(!addFeatureFunction( &collision_feat_ ) ){
-//        cout << "Error adding feature distance collision" << endl;
-//    }
     if(!addFeatureFunction( &dist_feat_ ) ){
         cout << "Error adding feature distance feature" << endl;
     }
+
+//    if(!addFeatureFunction( &length_feat_ ) ){
+//        cout << "Error adding feature length" << endl;
+//    }
+
+//    if(!addFeatureFunction( &collision_feat_ ) ){
+//        cout << "Error adding feature distance collision" << endl;
+//    }
+
 //    if(!addFeatureFunction( &visi_feat_ )){
 //        cout << "Error adding feature visbility feature" << endl;
 //    }
@@ -371,8 +386,9 @@ bool HumanTrajSimulator::init()
 //    }
 
     // Set humans colors
-    setHumanColor( human_active_, 3 );
-    setHumanColor( human_passive_, 2 );
+    setHumanColor( human_active_, 0 ); // 3 // 0
+    setHumanColor( human_passive_, 3 ); // 3 // 3
+
 
     // Sets the active robot as active for planning
     Move3D::global_Project->getActiveScene()->setActiveRobot( human_active_->getName() );
@@ -584,28 +600,26 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     //    good_motions_names.push_back("[0408-0491]_human1_.csv");
 
     // GOOD...
+    good_motions_names.push_back("[0446-0578]_human2_.csv");
+    good_motions_names.push_back("[0446-0578]_human1_.csv");
 
-//    good_motions_names.push_back("[0446-0578]_human2_.csv");
-//    good_motions_names.push_back("[0446-0578]_human1_.csv");
-
-//    good_motions_names.push_back("[0525-0657]_human2_.csv");
-//    good_motions_names.push_back("[0525-0657]_human1_.csv");
+    good_motions_names.push_back("[0525-0657]_human2_.csv");
+    good_motions_names.push_back("[0525-0657]_human1_.csv");
 
     good_motions_names.push_back("[0444-0585]_human2_.csv");
     good_motions_names.push_back("[0444-0585]_human1_.csv");
 
-//    good_motions_names.push_back("[0489-0589]_human2_.csv");
-//    good_motions_names.push_back("[0489-0589]_human1_.csv");
+    good_motions_names.push_back("[0489-0589]_human2_.csv");
+    good_motions_names.push_back("[0489-0589]_human1_.csv");
 
-//    good_motions_names.push_back("[0780-0871]_human2_.csv");
-//    good_motions_names.push_back("[0780-0871]_human1_.csv");
+    good_motions_names.push_back("[0780-0871]_human2_.csv");
+    good_motions_names.push_back("[0780-0871]_human1_.csv");
 
-//    good_motions_names.push_back("[1537-1608]_human2_.csv");
-//    good_motions_names.push_back("[1537-1608]_human1_.csv");
+    good_motions_names.push_back("[1537-1608]_human2_.csv");
+    good_motions_names.push_back("[1537-1608]_human1_.csv");
 
-//    good_motions_names.push_back("[2711-2823]_human2_.csv");
-//    good_motions_names.push_back("[2711-2823]_human1_.csv");
-
+    good_motions_names.push_back("[2711-2823]_human2_.csv");
+    good_motions_names.push_back("[2711-2823]_human1_.csv");
 
 
     if( !use_one_traj_ )
@@ -1046,6 +1060,13 @@ Move3D::Trajectory HumanTrajSimulator::getExecutedPath() const
     return HRICS::motion_to_traj( executed_trajectory_, human_active_ );
 }
 
+Move3D::Trajectory HumanTrajSimulator::getCurrentPath() const
+{
+    Move3D::Trajectory traj( path_ );
+    traj.cutTrajInSmallLP( human_passive_motion_.size()- 1 );
+    return traj;
+}
+
 motion_t HumanTrajSimulator::getExecutedTrajectory() const
 {
     return executed_trajectory_;
@@ -1243,6 +1264,10 @@ void HumanTrajSimulator::runStandardStomp( int iter )
         }
     }
 
+    traj_optim_resetInit();
+    traj_optim_reset_collision_space();
+    traj_optim_add_human_to_collision_space(true);
+
     traj_optim_runStomp(0);
 
 //    exit(0);
@@ -1398,6 +1423,8 @@ double HumanTrajSimulator::run()
 
 //        path_.replaceP3dTraj();
 
+        if( hrics_one_iteration && i == 0 ) // test no replanning
+            break;
     }
 
 //    if( !PlanEnv->getBool(PlanParam::stopPlanner) )
@@ -1411,7 +1438,9 @@ double HumanTrajSimulator::run()
     printCosts();
 
 //    cout << "executed_path_.cost() : " << executed_path_.cost() << endl;
-    Move3D::Trajectory path = motion_to_traj( executed_trajectory_, human_active_ );
+
+    Move3D::Trajectory path( hrics_one_iteration ? path_ : motion_to_traj( executed_trajectory_, human_active_ ));
+
     human_active_->setCurrentMove3DTraj( path );
 
     path.replaceP3dTraj();

@@ -36,6 +36,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+
+#include <libmove3d/include/Util-pkg.h>
 
 using namespace DTW;
 using std::cout;
@@ -47,15 +51,16 @@ SimpleDTW::SimpleDTW()
     initialized_ = false;
 }
 
-SimpleDTW::SimpleDTW(size_t x_size, size_t y_size, double (*distance_fn)(std::vector<double> p1, std::vector<double> p2))
+SimpleDTW::SimpleDTW(size_t x_size, size_t y_size, const Move3D::ChompPlanningGroup* planning_group)
 {
-    distance_fn_ = distance_fn;
-    SimpleDTW::Initialize(x_size, y_size);
+    distance_fn_ = boost::bind( &SimpleDTW::euclidean_distance, this, _1, _2 );
+    planning_group_ = planning_group;
+    SimpleDTW::Initialize( x_size, y_size );
 }
 
-SimpleDTW::SimpleDTW(double (*distance_fn)(std::vector<double> p1, std::vector<double> p2))
+SimpleDTW::SimpleDTW(boost::function<double(const std::vector<double>&, const std::vector<double>&)> f)
 {
-    distance_fn_ = distance_fn;
+    distance_fn_ = f;
     initialized_ = false;
 }
 
@@ -64,21 +69,21 @@ void SimpleDTW::Initialize(size_t x_size, size_t y_size)
     x_dim_ = x_size + 1;
     y_dim_ = y_size + 1;
     // Resize the data
-    data_.resize(x_dim_ * y_dim_, 0.0);
+    data_.resize( x_dim_ * y_dim_, 0.0 );
     //Populate matrix with starting values
     SetInDTWMatrix(0, 0, 0.0);
     for (size_t i = 1; i < x_dim_; i++)
     {
-        SetInDTWMatrix(i, 0, INFINITY);
+        SetInDTWMatrix( i, 0, INFINITY );
     }
     for (size_t i = 1; i < y_dim_; i++)
     {
-        SetInDTWMatrix(0, i, INFINITY);
+        SetInDTWMatrix( 0, i, INFINITY );
     }
     initialized_ = true;
 }
 
-double SimpleDTW::EvaluateWarpingCost(std::vector< std::vector<double> > sequence_1, std::vector< std::vector<double> > sequence_2)
+double SimpleDTW::EvaluateWarpingCost(const std::vector< std::vector<double> >& sequence_1, const std::vector< std::vector<double> >& sequence_2)
 {
     // Sanity checks
     if (sequence_1.size() == 0 || sequence_2.size() == 0)
@@ -112,6 +117,7 @@ double SimpleDTW::EvaluateWarpingCost(std::vector< std::vector<double> > sequenc
             double im1j   = GetFromDTWMatrix(i - 1, j);
             double im1jm1 = GetFromDTWMatrix(i - 1, j - 1);
             double ijm1   = GetFromDTWMatrix(i, j - 1);
+
             // Start the update step
             if (im1j < im1jm1 && im1j < ijm1)
             {
@@ -125,32 +131,51 @@ double SimpleDTW::EvaluateWarpingCost(std::vector< std::vector<double> > sequenc
             {
                 prev_cost = im1jm1;
             }
+
             // Update the value in the matrix
             SetInDTWMatrix( i, j, index_cost + prev_cost );
         }
     }
+
     // Return total path cost
     return GetFromDTWMatrix( sequence_1.size(), sequence_2.size() );
 }
 
 
-double euclidean_distance(std::vector<double> P1, std::vector<double> P2)
+double SimpleDTW::euclidean_distance(const std::vector<double>& P1, const std::vector<double>& P2)
 {
     double total = 0.0;
     for (unsigned int i=0; i<P1.size(); i++)
     {
-        total = total + pow( (P1[i] - P2[i]), 2 );
+        double diff;
+        if( planning_group_ )
+        {
+            diff = planning_group_->chomp_joints_[i].is_circular_ ? dist_circle( P2[i], P1[i] ) : P1[i] - P2[i];
+        }
+        else {
+            diff = P1[i] - P2[i];
+        }
+        double dist = pow( diff, 2 );
+
+        if( diff > 2*M_PI ){
+            cout << "dist[" << i << "] : " << dist << endl;
+            cout << "joint name : " <<  planning_group_->chomp_joints_[i].joint_name_ << endl;
+            cout << "is_circular_ : " <<  planning_group_->chomp_joints_[i].is_circular_ << endl;
+        }
+        total += dist;
     }
+
     return sqrt(total);
 }
 
-double tansform_distance(std::vector<double> P1, std::vector<double> P2)
+double SimpleDTW::tansform_distance(const std::vector<double>& P1, const std::vector<double>& P2)
 {
     if( P1.size() != 7 || P2.size() != 7 ){
         return 0;
     }
 
-    double alpha = 1.0;
+//    double alpha = 0.2;
+    double alpha = 0.1;
 
     double p_total = 0.0;
     for (unsigned int i=0; i<3; i++)
@@ -160,14 +185,38 @@ double tansform_distance(std::vector<double> P1, std::vector<double> P2)
     p_total = sqrt(p_total);
 
 
+    double dot_product = 1 - (P1[3] * P2[3]) + (P1[4] * P2[4]) + (P1[5] * P2[5]) + (P1[6] * P2[6]);
     double r_total = 0.0;
-    for (unsigned int i=3; i<7; i++)
+    if( dot_product < 0.99999999 )
     {
-        r_total = r_total + pow( (P1[i] - P2[i]), 2 );
+        r_total = acos(2 * pow(dot_product, 2) - 1);
     }
-    r_total = sqrt(r_total);
 
     return p_total + alpha * r_total;
+}
+
+double SimpleDTW::centers_distance(const std::vector<double>& P1, const std::vector<double>& P2)
+{
+    if( P1.size() != P2.size() ){
+        return 0.;
+    }
+    if( (unsigned int)( P1.size() % 3 ) != 0 ){
+        cout << "P1.size() : " << P1.size() << endl;
+        return 0.;
+    }
+
+    double p_total = 0.0;
+    for (unsigned int j=0; j< (unsigned int)(P1.size()/3); j++)
+    {
+        double dist = 0.0;
+        for (unsigned int i=0; i<3; i++)
+        {
+            dist += pow( (P1[i+j*3] - P2[i+j*3]), 2 );
+        }
+        p_total += sqrt( dist );
+    }
+
+    return p_total;
 }
 
 int dtw_compare_performance(int traj_length, int iterations)
@@ -197,7 +246,7 @@ int dtw_compare_performance(int traj_length, int iterations)
         }
         test_vec_2.push_back(traj);
     }
-    DTW::SimpleDTW my_eval = DTW::SimpleDTW(traj_length, traj_length, euclidean_distance);
+    DTW::SimpleDTW my_eval = DTW::SimpleDTW( traj_length, traj_length );
     printf("Evaluating\n");
     //Run tests
     printf("-----Test single-threaded version-----\n");
@@ -236,7 +285,10 @@ std::vector< std::vector<double> > get_vector_from_matrix( const Eigen::MatrixXd
     return test_vec;
 }
 
-std::vector<double> dtw_compare_performance( const std::vector<int>& active_dofs, const Move3D::Trajectory& t0, const std::vector<Move3D::Trajectory>& t_tests, bool use_transform_dist )
+std::vector<double> dtw_compare_performance( const Move3D::ChompPlanningGroup* planning_group,
+                                             const Move3D::Trajectory& t0,
+                                             const std::vector<Move3D::Trajectory>& t_tests,
+                                             std::vector<Move3D::Joint*> joints )
 {
     std::vector<double> scost;
 
@@ -248,24 +300,70 @@ std::vector<double> dtw_compare_performance( const std::vector<int>& active_dofs
 
     // Store initial trajectory
     std::vector< std::vector<double> > test_vec_0;
-    Eigen::MatrixXd mat = t0.getEigenMatrix( active_dofs );
-    test_vec_0 = get_vector_from_matrix(mat);
-
-    // Store all other trajectories
     std::vector< std::vector< std::vector<double> > > test_vec_1;
-    for (int i=0; i<t_tests.size(); i++)
+
+    if( joints.empty() )
     {
-        mat = t_tests[i].getEigenMatrix( active_dofs );
+        Eigen::MatrixXd mat = t0.getEigenMatrix( planning_group->getActiveDofs() );
+        test_vec_0 = get_vector_from_matrix(mat);
 
-        if( mat.cols() != test_vec_0.size() ) { // Check that the trajectories have the same number of waypoints
-            cout << "ERROR in dtw computations ( " <<mat.cols() << " , " << test_vec_0.size()  << ")" << endl;
-            return scost;
+        // Store all other trajectories
+        for (int i=0; i<t_tests.size(); i++)
+        {
+            mat = t_tests[i].getEigenMatrix( planning_group->getActiveDofs() );
+
+            if( mat.cols() != test_vec_0.size() ) { // Check that the trajectories have the same number of waypoints
+                cout << "ERROR in dtw computations ( " <<mat.cols() << " , " << test_vec_0.size()  << ")" << endl;
+                return scost;
+            }
+
+            test_vec_1.push_back( get_vector_from_matrix(mat) );
         }
+    }
+    else if (joints.size() == 1 )
+    {
+        Eigen::MatrixXd mat = t0.getJointPoseTrajectory( joints[0] );
+        test_vec_0 = get_vector_from_matrix(mat);
 
-        test_vec_1.push_back( get_vector_from_matrix(mat) );
+        // Store all other trajectories
+        for (int i=0; i<t_tests.size(); i++)
+        {
+            mat = t_tests[i].getJointPoseTrajectory( joints[0] );
+
+            if( mat.cols() != test_vec_0.size() ) { // Check that the trajectories have the same number of waypoints
+                cout << "ERROR in dtw computations ( " <<mat.cols() << " , " << test_vec_0.size()  << ")" << endl;
+                return scost;
+            }
+
+            test_vec_1.push_back( get_vector_from_matrix(mat) );
+        }
+    }
+    else {
+        Eigen::MatrixXd mat = t0.getJointPoseTrajectory( joints );
+        test_vec_0 = get_vector_from_matrix(mat);
+
+        // Store all other trajectories
+        for (int i=0; i<t_tests.size(); i++)
+        {
+            mat = t_tests[i].getJointPoseTrajectory( joints );
+
+            if( mat.cols() != test_vec_0.size() ) { // Check that the trajectories have the same number of waypoints
+                cout << "ERROR in dtw computations ( " <<mat.cols() << " , " << test_vec_0.size()  << ")" << endl;
+                return scost;
+            }
+
+            test_vec_1.push_back( get_vector_from_matrix(mat) );
+        }
     }
 
-    DTW::SimpleDTW my_eval( test_vec_0.size(), test_vec_0.size(), use_transform_dist ? tansform_distance : euclidean_distance );
+    DTW::SimpleDTW my_eval( test_vec_0.size(), test_vec_0.size(), planning_group );
+
+    if ( joints.size() == 1 ) {
+        my_eval.setDistFunction( boost::bind( &SimpleDTW::tansform_distance, &my_eval, _1, _2) );
+    }
+    if ( joints.size() > 1 ) {
+        my_eval.setDistFunction( boost::bind( &SimpleDTW::centers_distance, &my_eval, _1, _2) );
+    }
 
     cout << "Evaluating\n";
     //Run tests

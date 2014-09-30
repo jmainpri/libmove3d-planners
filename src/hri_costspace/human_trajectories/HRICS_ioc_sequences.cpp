@@ -56,7 +56,7 @@ using namespace HRICS;
 using std::cout;
 using std::endl;
 
-static std::string move3d_root("/home/rafi/workspace/move3d/");
+static std::string move3d_root("/home/jmainpri/Dropbox/move3d/");
 
 // Folders for sphere (and plannar) type of features
 static std::string move3d_demo_folder;
@@ -69,6 +69,9 @@ static std::string move3d_human_trajs_demo_folder_originals;
 static std::string move3d_human_trajs_demo_folder_cut;
 
 static bool original_demos = false;
+
+extern bool hrics_set_baseline = false;
+extern bool hrics_one_iteration = false;
 
 void ioc_set_sphere_paths()
 {
@@ -354,8 +357,10 @@ bool IocSequences::run()
         {
             cout << "RUN SIMULATION" << endl;
             eval_->setUseContext( true );
-            eval_->loadWeightVector();
-            eval_->setLearnedWeights();
+
+//            eval_->loadWeightVector();
+//            eval_->setLearnedWeights();
+
             eval_->loadDemonstrations();
 
             const std::vector<motion_t>& demos = global_ht_simulator->getDemonstrations();
@@ -381,13 +386,21 @@ bool IocSequences::run()
             global_ht_simulator->setDrawExecution( false );
 
             std::vector<std::string> active_features_names;
-            active_features_names.push_back("SmoothnessAll");
-//            active_features_names.push_back("Length");
+
+            // BECARFUL (Comment for basekline)
+            if( !hrics_set_baseline )
+                active_features_names.push_back("SmoothnessAll");
+
             active_features_names.push_back("Distance");
+//            active_features_names.push_back("Length");
 //            active_features_names.push_back("Visibility");
 //            active_features_names.push_back("Musculoskeletal");
 
-            global_ht_simulator->getCostSpace()->setActiveFeatures( active_features_names );
+            if( hrics_set_baseline )
+            {
+                global_ht_simulator->getCostSpace()->setActiveFeatures( active_features_names );
+                global_ht_simulator->getCostSpace()->setWeights( WeightVect::Ones(16) );
+            }
 
             std::vector<motion_t> trajs;
 
@@ -404,15 +417,17 @@ bool IocSequences::run()
             {
                 global_ht_simulator->setDemonstrationId( j );
 
-                std::string demo_split = good_motions_names[ j ].substr( 0, 11 );
+                if( !hrics_set_baseline ) // SET BASELINE HERE
+                {
+                    std::string demo_split = good_motions_names[ j ].substr( 0, 11 );
 
-                std::stringstream ss;
-                ss << demo_split << "_spheres_weights_700.txt";
+                    std::stringstream ss;
+                    ss << demo_split << "_spheres_weights_700.txt";
 
-                 eval_->loadWeightVector( ss.str() );
-                 eval_->setLearnedWeights();
+                    eval_->loadWeightVector( ss.str() );
+                    eval_->setLearnedWeights();
+                }
 
-//                 exit(0);
 
                 for( int k=0; k<10; k++ )
                 {
@@ -423,13 +438,14 @@ bool IocSequences::run()
                     ss << "run_simulator_" << std::setw(3) << std::setfill( '0' ) << j;
                     ss <<              "_" << std::setw(3) << std::setfill( '0' ) << k << ".traj";
 
-                    global_ht_simulator->getExecutedPath().saveToFile( ss.str() );
+                    Move3D::Trajectory traj( hrics_one_iteration ? global_ht_simulator->getCurrentPath() : global_ht_simulator->getExecutedPath() );
+                    traj.saveToFile( ss.str() );
 
                     trajs.push_back( global_ht_simulator->getExecutedTrajectory() );
                 }
 
-                //                cout << "wait for key" << endl;
-                //                std::cin.ignore();
+                // cout << "wait for key" << endl;
+                // std::cin.ignore();
 
 //                break;
             }

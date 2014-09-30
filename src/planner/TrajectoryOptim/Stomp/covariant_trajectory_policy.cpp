@@ -89,7 +89,7 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
 //    type_ = vel; // Match control cost
 //    type_ = acc;
 //    type_ = jerk;
-    type_ = dist;
+    type_ = vel;
 
     //node_handle_ = node_handle;
     //print_debug_ = true;
@@ -811,6 +811,11 @@ void CovariantTrajectoryPolicy::saveProfiles( const std::vector<Eigen::VectorXd>
 
 void CovariantTrajectoryPolicy::setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj,  const std::vector<Eigen::VectorXd>& parameters, double dt )
 {
+    if( parameters.empty() ){
+        cout << "Error in parameter empty " << endl;
+//        exit(0);
+    }
+
 //    int start = free_vars_start_;
 //    int end = free_vars_end_;
 //    if (iteration_==0) {

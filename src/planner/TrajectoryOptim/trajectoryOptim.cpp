@@ -81,8 +81,6 @@ static double m_discretization=0.0;
 static bool m_use_buffer;
 static std::vector<Eigen::VectorXd> m_buffer;
 
-// Extern collision space
-extern CollisionSpace* global_collSpace;
 
 //! Create an initial Move3D trajectory
 //! it generates a straigt line between the two configuration init 
@@ -222,6 +220,11 @@ void traj_optim_init_planning_type(int type)
 //*   Run Functions 
 //****************************************************************
 
+bool traj_optim_resetInit()
+{
+    m_init = false;
+}
+
 bool traj_optim_initScenario()
 {
     traj_optim_init_planning_type( ENV.getInt(Env::setOfActiveJoints) );
@@ -254,14 +257,6 @@ bool traj_optim_initScenario()
 // --------------------------------------------------------
 bool traj_optim_InitTraj( Move3D::Trajectory& T )
 {
-    if( !m_init )
-    {
-        if(!traj_optim_initScenario())
-        {
-            return false;
-        }
-    }
-
     if( m_use_external_trajectory )
     {
         T = m_external_trajectory;
@@ -300,6 +295,14 @@ bool traj_optim_InitTraj( Move3D::Trajectory& T )
 // --------------------------------------------------------
 bool traj_optim_runChomp()
 {
+    if( !m_init )
+    {
+        if(!traj_optim_initScenario())
+        {
+            return false;
+        }
+    }
+
     Move3D::Trajectory T(m_robot);
 
     if( !traj_optim_InitTraj(T) ){
@@ -326,7 +329,7 @@ bool traj_optim_runChomp()
     cout << "chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
     cout << "Initialize optimizer" << endl;
 
-    ChompOptimizer optimizer( m_chomptraj, m_chompparams, m_chompplangroup, global_collSpace );
+    ChompOptimizer optimizer( m_chomptraj, m_chompparams, m_chompplangroup, traj_optim_get_collision_space() );
     cout << "Optimizer created" << endl;
 
     optimizer.runDeformation(0,0);
@@ -339,6 +342,15 @@ bool traj_optim_initStomp()
 {
     cout << "----------------------------------" << endl;
     cout << " Init Stomp ----------------------" << endl;
+
+    if( !m_init )
+    {
+        if(!traj_optim_initScenario())
+        {
+            return false;
+        }
+    }
+
     Move3D::Trajectory T(m_robot);
 
     if( !traj_optim_InitTraj(T) )
@@ -372,7 +384,7 @@ bool traj_optim_initStomp()
     cout << "Chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
 
     cout << "Initialize optimizer" << endl;
-    global_optimizer.reset( new stomp_motion_planner::StompOptimizer( m_chomptraj, m_stompparams, m_chompplangroup, global_collSpace ));
+    global_optimizer.reset( new stomp_motion_planner::StompOptimizer( m_chomptraj, m_stompparams, m_chompplangroup, traj_optim_get_collision_space() ));
     global_optimizer->setSource( T.getBegin() );
     global_optimizer->setSharedPtr( global_optimizer );
     global_optimizer->setPassiveDofs( passive_dofs );

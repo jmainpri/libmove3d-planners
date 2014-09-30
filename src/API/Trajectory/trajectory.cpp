@@ -2386,6 +2386,50 @@ vector<double> Trajectory::getCostAlongTrajectory(int nbSample)
 // Returns a matrix with the waypoints of the trajectory
 // The number of rows is the number of dofs
 // The number of cols is the number of waypoints
+Eigen::MatrixXd Trajectory::getJointPoseTrajectory( const std::vector<Move3D::Joint*>& joints ) const
+{
+    if( m_Courbe.size() > 0 )
+    {
+        int rows = int(joints.size()) * 3;
+        int cols = m_Courbe.size()+1;
+
+        Eigen::MatrixXd mat( rows, cols );
+
+        for (int j=0; j<int(m_Courbe.size()); j++)
+        {
+            m_Robot->setAndUpdate( *m_Courbe[j]->getBegin() );
+
+            for (int i=0; i<int(joints.size()); i++)
+            {
+                Eigen::Vector3d p( joints[i]->getVectorPos() );
+                mat.col(j)[0+3*i] = p[0];
+                mat.col(j)[1+3*i] = p[1];
+                mat.col(j)[2+3*i] = p[2];
+            }
+        }
+
+        if( m_Courbe.size()-1 >= 0 )
+        {
+            m_Robot->setAndUpdate( *m_Courbe.back()->getEnd() );
+            for (int i=0; i<int(joints.size()); i++)
+            {
+                Eigen::Vector3d p( joints[i]->getVectorPos() );
+                mat.col(m_Courbe.size())[0+3*i] = p[0];
+                mat.col(m_Courbe.size())[1+3*i] = p[1];
+                mat.col(m_Courbe.size())[2+3*i] = p[2];
+            }
+        }
+
+        return mat;
+    }
+    else{
+        return Eigen::MatrixXd(0,0);
+    }
+}
+
+// Returns a matrix with the waypoints of the trajectory
+// The number of rows is the number of dofs
+// The number of cols is the number of waypoints
 Eigen::MatrixXd Trajectory::getJointPoseTrajectory( const Move3D::Joint* joint ) const
 {
     if( m_Courbe.size() > 0 )

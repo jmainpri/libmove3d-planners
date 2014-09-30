@@ -479,11 +479,11 @@ MusculoskeletalFeature::MusculoskeletalFeature( Move3D::Robot* active ) :
 
     w_ = w_musculo_03;
 
-    if( global_DrawModule && draw_features && ( active->getJoint("rShoulderZ") != NULL ) ) // TODO fix for bio models if not a bio model
-    {
-        global_DrawModule->addDrawFunction( "HumanMusculoskeletal", boost::bind( &MusculoskeletalFeature::draw, this) );
-        global_DrawModule->enableDrawFunction( "HumanMusculoskeletal" );
-    }
+//    if( global_DrawModule && draw_features && ( active->getJoint("rShoulderZ") != NULL ) ) // TODO fix for bio models if not a bio model
+//    {
+//        global_DrawModule->addDrawFunction( "HumanMusculoskeletal", boost::bind( &MusculoskeletalFeature::draw, this) );
+//        global_DrawModule->enableDrawFunction( "HumanMusculoskeletal" );
+//    }
 }
 
 FeatureVect MusculoskeletalFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)

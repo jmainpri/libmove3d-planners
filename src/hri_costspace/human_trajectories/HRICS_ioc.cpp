@@ -34,6 +34,8 @@
 
 #include "API/project.hpp"
 #include "API/Trajectory/trajectory.hpp"
+#include "API/Graphic/drawCost.hpp"
+#include "API/Graphic/drawModule.hpp"
 
 #include "utils/misc_functions.hpp"
 #include "utils/NumsAndStrings.hpp"
@@ -621,11 +623,21 @@ void Ioc::addTrajectoryToDraw( const IocTrajectory& t, int color )
     Move3D::Trajectory T = t.getMove3DTrajectory( planning_group_ );
     T.setColor( color );
     global_trajToDraw.push_back( T );
+//    Eigen::Vector3d color_traj;
+//    Eigen::Vector3d color_traj(Eigen::Vector3d::Random());
+//    global_linesToDraw.push_back( std::make_pair( color_traj, T.getJointPoseTrajectory( planning_group_->robot_->getJoint(45) ) ) );
 }
 
 void Ioc::addAllToDraw()
 {
     global_trajToDraw.clear();
+    global_linesToDraw.clear();
+
+    if( global_DrawModule )
+    {
+        global_DrawModule->addDrawFunction( "Draw3DTrajs", boost::bind( &g3d_draw_3d_lines ) );
+        global_DrawModule->enableDrawFunction( "Draw3DTrajs" );
+    }
 
     if( HriEnv->getBool(HricsParam::ioc_draw_demonstrations) )
     {
@@ -1777,7 +1789,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
         cout << "percentage of invalid samples : " << (100 * double(nb_invalid_samples) / double(nb_samples_)) << " \%" << endl;
         samples = ioc.getSamples();
 
-//        ioc.addAllToDraw();
+        ioc.addAllToDraw();
 //        saveSamplesToFile( samples );
     }
     else { // load from file
@@ -1816,10 +1828,8 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
         if( feature_fct_->getFeatureFunction("SmoothnessAll") )
             setBuffer(d);
 
-//        std::vector<Move3D::Trajectory> demo;
-//        demo.push_back( demos_[d] );
 //        dtw_compare_performance( plangroup_->getActiveDofs(), demos_[d], demo );
-//        dtw_compare_performance( plangroup_->getActiveDofs(), demos_[d], samples[d] );
+        dtw_compare_performance( plangroup_, demos_[d], samples[d] );
 
         for( int i=0; i<int(samples[d].size()); i++)
         {

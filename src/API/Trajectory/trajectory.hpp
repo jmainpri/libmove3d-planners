@@ -214,6 +214,7 @@ public:
     traj* 	replaceP3dTraj(traj* trajPt) const;
     traj* 	replaceHumanP3dTraj(Robot* robot, traj* trajPt);
 
+    Eigen::MatrixXd getJointPoseTrajectory( const std::vector<Move3D::Joint*>& joints ) const;
     Eigen::MatrixXd getJointPoseTrajectory( const Move3D::Joint* joint ) const;
     Eigen::MatrixXd getEigenMatrix(int startIndex=0, int endIndex=0) const;
     Eigen::MatrixXd getEigenMatrix(const std::vector<int>& incides) const;

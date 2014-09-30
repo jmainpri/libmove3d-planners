@@ -16,6 +16,7 @@
 
 Move3D::Trajectory traj_optim_create_sraight_line_traj();
 
+bool traj_optim_resetInit();
 bool traj_optim_initStomp();
 bool traj_optim_runChomp();
 bool traj_optim_runStomp(int runId);
