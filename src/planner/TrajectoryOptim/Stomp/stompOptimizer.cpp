@@ -881,10 +881,11 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     // convert to move3d trajectory
     best_traj_ = Move3D::Trajectory( robot_model_ );
     setGroupTrajectoryToMove3DTraj( best_traj_ );
+    robot_model_->getCurrentMove3DTraj().replaceP3dTraj();
 
     // Set the current move3d traj
     robot_model_->setCurrentMove3DTraj( last_traj_ );
-    robot_model_->getCurrentMove3DTraj().replaceP3dTraj();
+//    robot_model_->getCurrentMove3DTraj().replaceP3dTraj();
 
     // Best path cost
     printf("Best trajectory : iter=%3d, cost (s=%f, c=%f, g=%f)\n", last_improvement_iteration_, getSmoothnessCost(), getCollisionCost(), getGeneralCost() );

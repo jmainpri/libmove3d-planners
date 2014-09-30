@@ -102,7 +102,7 @@ bool HRICS_init_human_trajectory_cost()
 //                global_motionRecorders[0]->storeMotion( traj1, "[1460-1620]_human2_.csv" );
 //                global_motionRecorders[1]->storeMotion( traj2, "[1460-1620]_human1_.csv" );
 
-                std::string foldername = "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/ten_motions/";
+                std::string foldername = "/home/rafi/logging_jim/ten_motions/";
                 bool quiet = true;
                 global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet, -1.5 );
                 global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet, +1.5 );
@@ -117,6 +117,11 @@ bool HRICS_init_human_trajectory_cost()
         }
 
         cout << "create human traj cost space" << endl;
+
+        // SET BASELINE HERE
+        hrics_set_baseline = true;
+        hrics_one_iteration = true;
+        PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, hrics_set_baseline ? 100. : 1.0000 );
 
         // Workspace Occupancy costspace
         std::vector<double> size = Move3D::global_Project->getActiveScene()->getBounds();
@@ -136,11 +141,6 @@ bool HRICS_init_human_trajectory_cost()
         cout << " add cost : " << "costHumanTrajectoryCost" << endl;
         Move3D::global_costSpace->addCost( "costHumanWorkspaceOccupancy", boost::bind( &HRICS::HumanPredictionCostSpace::getCurrentOccupationCost, global_humanPredictionCostSpace, _1) );
         Move3D::global_costSpace->addCost( "costHumanTrajectoryCost", boost::bind( &HumanTrajCostSpace::cost, global_ht_cost_space, _1) );
-
-        // SET BASELINE HERE
-        hrics_set_baseline = false;
-        hrics_one_iteration = false;
-        PlanEnv->setDouble( PlanParam::trajOptimSmoothFactor, hrics_set_baseline ? 0.0001 : 1.0000 );
     }
 
     ENV.setBool( Env::isCostSpace, true );
@@ -190,10 +190,7 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
     active_dofs_ = std::vector<int>(1,1);
 
     length_feat_.setActiveDoFs( active_dofs_ );
-    length_feat_.setWeights( 0.8 * Move3D::WeightVect::Ones( length_feat_.getNumberOfFeatures() ) );
-
-    smoothness_feat_.setActiveDoFs( active_dofs_ );
-    smoothness_feat_.setWeights( Move3D::WeightVect::Ones( smoothness_feat_.getNumberOfFeatures() ) );
+//    length_feat_.setWeights( 0.8 * Move3D::WeightVect::Ones( length_feat_.getNumberOfFeatures() ) );
 
     dist_feat_.setActiveDoFs( active_dofs_ );
     dist_feat_.setWeights( w_distance_16 );
@@ -210,12 +207,16 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
         musc_feat_.setWeights( Move3D::WeightVect::Ones( musc_feat_.getNumberOfFeatures() ) );
     }
 
+    smoothness_feat_.setActiveDoFs( active_dofs_ );
 
     if( !hrics_set_baseline )
     {
+        smoothness_feat_.setWeights( Move3D::WeightVect::Ones( smoothness_feat_.getNumberOfFeatures() ) );
+
         if(!addFeatureFunction( &smoothness_feat_ ) ){
             cout << "Error adding feature smoothness" << endl;
         }
+        exit(0);
     }
     if(!addFeatureFunction( &dist_feat_ ) ){
         cout << "Error adding feature distance feature" << endl;

@@ -56,7 +56,7 @@ using namespace HRICS;
 using std::cout;
 using std::endl;
 
-static std::string move3d_root("/home/jmainpri/Dropbox/move3d/");
+static std::string move3d_root("/home/rafi/workspace/move3d/");
 
 // Folders for sphere (and plannar) type of features
 static std::string move3d_demo_folder;
@@ -399,7 +399,8 @@ bool IocSequences::run()
             if( hrics_set_baseline )
             {
                 global_ht_simulator->getCostSpace()->setActiveFeatures( active_features_names );
-                global_ht_simulator->getCostSpace()->setWeights( WeightVect::Ones(16) );
+                WeightVect w( 10 * WeightVect::Ones(16));
+                global_ht_simulator->getCostSpace()->setWeights( w );
             }
 
             std::vector<motion_t> trajs;
