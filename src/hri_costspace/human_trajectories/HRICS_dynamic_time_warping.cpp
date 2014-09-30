@@ -174,8 +174,8 @@ double SimpleDTW::tansform_distance(const std::vector<double>& P1, const std::ve
         return 0;
     }
 
-//    double alpha = 0.2;
-    double alpha = 0.1;
+    double alpha = 0.2;
+//    double alpha = 0.1;
 
     double p_total = 0.0;
     for (unsigned int i=0; i<3; i++)

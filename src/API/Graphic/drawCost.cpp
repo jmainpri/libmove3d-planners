@@ -160,7 +160,7 @@ void g3d_draw_3d_lines()
     color[2] = 0.2;
     color[3] = 1.0;
 
-    const double size = 0.001; // 0.005
+    const double size = 0.005; // 0.005
 
     for( int l=0; l<int(global_linesToDraw.size()); l++)
         for( int i=0; i<int(global_linesToDraw[l].second.cols()-1); i++)

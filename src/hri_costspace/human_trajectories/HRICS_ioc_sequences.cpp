@@ -291,6 +291,29 @@ bool IocSequences::run()
 
         case sample:
         {
+            {
+                cout << "GENERATE" << endl;
+
+                // global_ht_cost_space->normalizing_by_sampling();
+
+                setGenerationFeatures();
+
+                if( use_human_simulation_demo_ )
+                {
+                    std::vector<Move3D::Trajectory> trajs = global_ht_simulator->getDemoTrajectories();
+                    std::vector<Move3D::confPtr_t> context = global_ht_simulator->getContext();
+                    std::vector<int> ids = global_ht_simulator->getDemoIds();
+                    // trajs.push_back( HRICS::motion_to_traj( global_motionRecorders[0]->getStoredMotions()[0], human2, 60 ) );
+                    // human1->setAndUpdate( *global_motionRecorders[1]->getStoredMotions()[0][0].second );
+                    eval_->saveDemoToFile( trajs, ids, context );
+                }
+                else {
+                    eval_->generateDemonstrations( nb_demos );
+                }
+
+                g3d_draw_allwin_active();
+            }
+
             cout << "SAMPLE" << endl;
 
             cout << "global_ht_simulator : " << global_ht_simulator << endl;
@@ -425,7 +448,7 @@ bool IocSequences::run()
                     std::stringstream ss;
                     ss << demo_split << "_spheres_weights_700.txt";
 
-                    eval_->loadWeightVector( ss.str() );
+                    eval_->loadWeightVector( "single_weight/" + ss.str() );
                     eval_->setLearnedWeights();
                 }
 

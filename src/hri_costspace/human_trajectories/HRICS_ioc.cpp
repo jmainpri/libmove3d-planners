@@ -1789,7 +1789,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
         cout << "percentage of invalid samples : " << (100 * double(nb_invalid_samples) / double(nb_samples_)) << " \%" << endl;
         samples = ioc.getSamples();
 
-        ioc.addAllToDraw();
+//        ioc.addAllToDraw();
 //        saveSamplesToFile( samples );
     }
     else { // load from file
@@ -1828,8 +1828,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
         if( feature_fct_->getFeatureFunction("SmoothnessAll") )
             setBuffer(d);
 
-//        dtw_compare_performance( plangroup_->getActiveDofs(), demos_[d], demo );
-        dtw_compare_performance( plangroup_, demos_[d], samples[d] );
+//        dtw_compare_performance( plangroup_, demos_[d], samples[d] );
 
         for( int i=0; i<int(samples[d].size()); i++)
         {
@@ -1854,7 +1853,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
                 nb_in_collision++;
 
             // cout << "cost : " << cost << " , ";
-            //            cout.precision(4);
+//            cout.precision(4);
 //            cout << "Feature Sample : " << i << " , " << phi.transpose() << endl;
 //            cout << "dist wrist " << phi[0] << endl; //24
 //            cout << "length : " << samples[d][i].getParamMax() << endl;

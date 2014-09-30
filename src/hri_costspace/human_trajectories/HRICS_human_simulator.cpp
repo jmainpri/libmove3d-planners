@@ -119,7 +119,7 @@ bool HRICS_init_human_trajectory_cost()
         cout << "create human traj cost space" << endl;
 
         // SET BASELINE HERE
-        hrics_set_baseline = true;
+        hrics_set_baseline = false;
         hrics_one_iteration = true;
         PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, hrics_set_baseline ? 100. : 1.0000 );
 
@@ -216,7 +216,6 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
         if(!addFeatureFunction( &smoothness_feat_ ) ){
             cout << "Error adding feature smoothness" << endl;
         }
-        exit(0);
     }
     if(!addFeatureFunction( &dist_feat_ ) ){
         cout << "Error adding feature distance feature" << endl;
@@ -388,7 +387,7 @@ bool HumanTrajSimulator::init()
 
     // Set humans colors
     setHumanColor( human_active_, 0 ); // 3 // 0
-    setHumanColor( human_passive_, 3 ); // 3 // 3
+    setHumanColor( human_passive_, 2 ); // 3 // 3
 
 
     // Sets the active robot as active for planning
@@ -424,7 +423,8 @@ bool HumanTrajSimulator::init()
 
 //        if( !use_one_traj_ )
 //            addCutMotions();
-//        setInitAndGoalConfig(); // For simulation
+
+        // setInitAndGoalConfig(); // For simulation
 
     }
 
@@ -621,6 +621,10 @@ void HumanTrajSimulator::setReplanningDemonstrations()
 
     good_motions_names.push_back("[2711-2823]_human2_.csv");
     good_motions_names.push_back("[2711-2823]_human1_.csv");
+
+    /// REPLANNING MOTION
+    good_motions_names.push_back("[0629-0768]_human2_.csv");
+    good_motions_names.push_back("[0629-0768]_human1_.csv");
 
 
     if( !use_one_traj_ )
