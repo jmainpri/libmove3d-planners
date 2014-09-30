@@ -102,7 +102,7 @@ bool HRICS_init_human_trajectory_cost()
 //                global_motionRecorders[0]->storeMotion( traj1, "[1460-1620]_human2_.csv" );
 //                global_motionRecorders[1]->storeMotion( traj2, "[1460-1620]_human1_.csv" );
 
-                std::string foldername = "/home/rafi/logging_jim/ten_motions/";
+                std::string foldername = "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/ten_motions/";
                 bool quiet = true;
                 global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet, -1.5 );
                 global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet, +1.5 );
