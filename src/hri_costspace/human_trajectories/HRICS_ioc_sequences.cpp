@@ -429,12 +429,12 @@ bool IocSequences::run()
             std::vector<motion_t> trajs;
 
             std::vector<std::string> good_motions_names;
-            good_motions_names.push_back("[0446-0578]_human2_.csv");
-            good_motions_names.push_back("[0525-0657]_human2_.csv");
-            good_motions_names.push_back("[0444-0585]_human2_.csv");
-            good_motions_names.push_back("[0489-0589]_human2_.csv");
-            good_motions_names.push_back("[0780-0871]_human2_.csv");
-            good_motions_names.push_back("[1537-1608]_human2_.csv");
+//            good_motions_names.push_back("[0446-0578]_human2_.csv");
+//            good_motions_names.push_back("[0525-0657]_human2_.csv");
+//            good_motions_names.push_back("[0444-0585]_human2_.csv");
+//            good_motions_names.push_back("[0489-0589]_human2_.csv");
+//            good_motions_names.push_back("[0780-0871]_human2_.csv");
+//            good_motions_names.push_back("[1537-1608]_human2_.csv");
             good_motions_names.push_back("[2711-2823]_human2_.csv");
 
             for( int j=0; j<global_ht_simulator->getNumberOfDemos(); j++ )
@@ -448,12 +448,12 @@ bool IocSequences::run()
                     std::stringstream ss;
                     ss << demo_split << "_spheres_weights_700.txt";
 
-                    eval_->loadWeightVector( "single_weight/" + ss.str() );
+                    eval_->loadWeightVector( "single_weight/dynamic/" + ss.str() );
                     eval_->setLearnedWeights();
                 }
 
 
-                for( int k=0; k<10; k++ )
+                for( int k=0; k<1; k++ )
                 {
                     global_ht_simulator->run();
 

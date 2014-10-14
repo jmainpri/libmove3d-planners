@@ -127,7 +127,7 @@ public:
     void setDemonstrationId(int demo_id) { id_of_demonstration_ = demo_id; }
     const std::vector<motion_t>& getCurrentMotions() { return human_2_motions_; }
     const std::vector<motion_t>& getDemonstrations() { return human_2_demos_; }
-    const std::vector<motion_t>& getDemonstrationsPassive() { return human_1_demos_; }
+    const std::vector<motion_t>& getDemonstrationsPassive() { return human_1_motions_; }
     int getNumberOfDemos() { return human_2_motions_.size(); }
     void setPelvisBoundsByUser(bool user_defined) { is_pelvis_bound_user_defined_ = user_defined; }
 

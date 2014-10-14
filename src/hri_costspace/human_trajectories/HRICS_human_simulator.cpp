@@ -102,7 +102,7 @@ bool HRICS_init_human_trajectory_cost()
 //                global_motionRecorders[0]->storeMotion( traj1, "[1460-1620]_human2_.csv" );
 //                global_motionRecorders[1]->storeMotion( traj2, "[1460-1620]_human1_.csv" );
 
-                std::string foldername = "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/ten_motions/";
+                std::string foldername = "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/ten_motions_last/";
                 bool quiet = true;
                 global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet, -1.5 );
                 global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet, +1.5 );
@@ -120,7 +120,7 @@ bool HRICS_init_human_trajectory_cost()
 
         // SET BASELINE HERE
         hrics_set_baseline = false;
-        hrics_one_iteration = true;
+        hrics_one_iteration = false;
         PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, hrics_set_baseline ? 100. : 1.0000 );
 
         // Workspace Occupancy costspace
@@ -386,8 +386,8 @@ bool HumanTrajSimulator::init()
 //    }
 
     // Set humans colors
-    setHumanColor( human_active_, 0 ); // 3 // 0
-    setHumanColor( human_passive_, 2 ); // 3 // 3
+    setHumanColor( human_active_, 0 ); // 3 // 0 Black
+    setHumanColor( human_passive_, 2 ); // 2 Yellow // 3 Red
 
 
     // Sets the active robot as active for planning
@@ -601,30 +601,35 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     //    good_motions_names.push_back("[0408-0491]_human1_.csv");
 
     // GOOD...
-    good_motions_names.push_back("[0446-0578]_human2_.csv");
-    good_motions_names.push_back("[0446-0578]_human1_.csv");
+//    good_motions_names.push_back("[0446-0578]_human2_.csv");
+//    good_motions_names.push_back("[0446-0578]_human1_.csv");
 
-    good_motions_names.push_back("[0525-0657]_human2_.csv");
-    good_motions_names.push_back("[0525-0657]_human1_.csv");
+//    good_motions_names.push_back("[0525-0657]_human2_.csv");
+//    good_motions_names.push_back("[0525-0657]_human1_.csv");
 
-    good_motions_names.push_back("[0444-0585]_human2_.csv");
-    good_motions_names.push_back("[0444-0585]_human1_.csv");
+//    good_motions_names.push_back("[0444-0585]_human2_.csv");
+//    good_motions_names.push_back("[0444-0585]_human1_.csv");
 
-    good_motions_names.push_back("[0489-0589]_human2_.csv");
-    good_motions_names.push_back("[0489-0589]_human1_.csv");
+//    good_motions_names.push_back("[0489-0589]_human2_.csv");
+//    good_motions_names.push_back("[0489-0589]_human1_.csv");
 
-    good_motions_names.push_back("[0780-0871]_human2_.csv");
-    good_motions_names.push_back("[0780-0871]_human1_.csv");
+//    good_motions_names.push_back("[0780-0871]_human2_.csv");
+//    good_motions_names.push_back("[0780-0871]_human1_.csv");
 
-    good_motions_names.push_back("[1537-1608]_human2_.csv");
-    good_motions_names.push_back("[1537-1608]_human1_.csv");
+//    good_motions_names.push_back("[1537-1608]_human2_.csv");
+//    good_motions_names.push_back("[1537-1608]_human1_.csv");
 
-    good_motions_names.push_back("[2711-2823]_human2_.csv");
-    good_motions_names.push_back("[2711-2823]_human1_.csv");
+//    good_motions_names.push_back("[2711-2823]_human2_.csv");
+//    good_motions_names.push_back("[2711-2823]_human1_.csv");
 
-    /// REPLANNING MOTION
-    good_motions_names.push_back("[0629-0768]_human2_.csv");
-    good_motions_names.push_back("[0629-0768]_human1_.csv");
+    // REPLANNING MOTION last
+
+    good_motions_names.push_back("[7395-7595]_human2_.csv");
+    good_motions_names.push_back("[7395-7595]_human1_.csv");
+
+    // REPLANNING MOTION first
+//    good_motions_names.push_back("[0629-0768]_human2_.csv");
+//    good_motions_names.push_back("[0629-0768]_human1_.csv");
 
 
     if( !use_one_traj_ )

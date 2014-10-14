@@ -2293,11 +2293,22 @@ void StompOptimizer::animateEndeffector(bool print_cost)
     // cout << group_trajectory_.getTrajectory() << endl;
     
     const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+
+    Move3D::ChompTrajectory group_trajectory( group_trajectory_, 7 );
+
+    if (iteration_!=0)
+    {
+        if( best_group_trajectory_in_collsion_cost_ < best_group_trajectory_cost_ )
+
+            group_trajectory.getTrajectory() = best_group_trajectory_in_collision_;
+        else
+            group_trajectory.getTrajectory() = best_group_trajectory_;
+    }
     
     // for each point in the trajectory
     for (int i=start; i<=end; ++i)
     {
-        Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(i).transpose();
+        Eigen::VectorXd point = group_trajectory.getTrajectoryPoint(i).transpose();
 
         for(int j=0; j<planning_group_->num_joints_;j++)
             (*q)[joints[j].move3d_dof_index_] = point[j];

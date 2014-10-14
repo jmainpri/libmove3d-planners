@@ -192,6 +192,8 @@ double SimpleDTW::tansform_distance(const std::vector<double>& P1, const std::ve
         r_total = acos(2 * pow(dot_product, 2) - 1);
     }
 
+//    cout << std::scientific << " p_total : " << p_total << "  , r_total : " <<  alpha * r_total << endl;
+
     return p_total + alpha * r_total;
 }
 
@@ -211,7 +213,10 @@ double SimpleDTW::centers_distance(const std::vector<double>& P1, const std::vec
         double dist = 0.0;
         for (unsigned int i=0; i<3; i++)
         {
-            dist += pow( (P1[i+j*3] - P2[i+j*3]), 2 );
+            int dof_id = i+j*3;
+            double dist_dof = pow( (P1[dof_id] - P2[dof_id]), 2 );
+            dist += dist_dof;
+//            cout << std::scientific << "dist [" << dof_id << "] = " << dist_dof << endl;
         }
         p_total += sqrt( dist );
     }

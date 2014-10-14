@@ -73,7 +73,7 @@ Trajectory::Trajectory() :
     m_dt(0.),
     m_dts(std::vector<double>())
 {
-
+    m_Courbe.clear();
 }
 
 Trajectory::Trajectory(Robot* R) :
@@ -91,7 +91,7 @@ Trajectory::Trajectory(Robot* R) :
     m_dt(0.),
     m_dts(std::vector<double>())
 {
-
+    m_Courbe.clear();
 }
 
 Trajectory::Trajectory(const Trajectory& T) :

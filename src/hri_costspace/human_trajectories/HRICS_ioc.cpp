@@ -401,8 +401,8 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
 
             while( ( traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max ) && ( nb_attempt < 10 ) )
             {
-//                cout << "not in limits, name : " << planning_group_->chomp_joints_[j].joint_name_ << endl;
-//                cout << j << " : upper : " << j_max << ", lower : " << j_min << ", value : " << traj.parameters_[j][i] << endl;
+                cout << "not in limits, name : " << planning_group_->chomp_joints_[j].joint_name_ << endl;
+                cout << j << " : upper : " << j_max << ", lower : " << j_min << ", value : " << traj.parameters_[j][i] << endl;
 
                 coeff *= 0.90; // 90 percent (10 * 0.9 = 0.3)
                 traj.noise_[j] *= coeff;
@@ -541,6 +541,8 @@ int Ioc::generateSamples( int nb_samples, bool check_in_collision, context_t con
         {
             Move3D::Robot* entity = context[i][d]->getRobot();
             entity->setAndUpdate( *context[i][d] );
+
+
 //            g3d_draw_allwin_active();
 //            cout << "wait for key" << endl;
 //            std::cin.ignore();
@@ -572,7 +574,8 @@ int Ioc::generateSamples( int nb_samples, bool check_in_collision, context_t con
                     samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j]; //.cwiseProduct(samples_[d][ns].total_costs_[j]);
                 }
 
-                /*is_valid =*/ jointLimits( samples_[d][ns] );
+//                /*is_valid =*/ jointLimits( samples_[d][ns] );
+
 
                 if( check_in_collision ) {
                     is_valid = isTrajectoryValid( samples_[d][ns] );
@@ -622,10 +625,18 @@ void Ioc::addTrajectoryToDraw( const IocTrajectory& t, int color )
 {
     Move3D::Trajectory T = t.getMove3DTrajectory( planning_group_ );
     T.setColor( color );
-    global_trajToDraw.push_back( T );
+//    global_trajToDraw.push_back( T );
 //    Eigen::Vector3d color_traj;
-//    Eigen::Vector3d color_traj(Eigen::Vector3d::Random());
-//    global_linesToDraw.push_back( std::make_pair( color_traj, T.getJointPoseTrajectory( planning_group_->robot_->getJoint(45) ) ) );
+
+    double color_vect[4];
+    g3d_get_color_vect( color, color_vect );
+
+    Eigen::Vector3d color_traj;
+    color_traj[0] = color_vect[0];
+    color_traj[1] = color_vect[1];
+    color_traj[2] = color_vect[2];
+
+    global_linesToDraw.push_back( std::make_pair( color_traj, T.getJointPoseTrajectory( planning_group_->robot_->getJoint(45) ) ) );
 }
 
 void Ioc::addAllToDraw()
@@ -1789,7 +1800,8 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
         cout << "percentage of invalid samples : " << (100 * double(nb_invalid_samples) / double(nb_samples_)) << " \%" << endl;
         samples = ioc.getSamples();
 
-//        ioc.addAllToDraw();
+        robot_->getP3dRobotStruct()->tcur = NULL;
+        ioc.addAllToDraw();
 //        saveSamplesToFile( samples );
     }
     else { // load from file

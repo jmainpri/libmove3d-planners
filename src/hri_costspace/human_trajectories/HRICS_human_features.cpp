@@ -299,6 +299,7 @@ void CollisionFeature::setWeights( const WeightVect& w )
 
 bool CollisionFeature::init()
 {
+    traj_optim_add_human_to_collision_space(true);
     return traj_optim_initStomp(); // SUPER UGLY
 }
 
