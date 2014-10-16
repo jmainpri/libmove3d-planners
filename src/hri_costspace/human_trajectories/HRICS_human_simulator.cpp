@@ -36,9 +36,6 @@ using std::cin;
 HRICS::HumanTrajSimulator* global_ht_simulator = NULL;
 HRICS::HumanTrajCostSpace* global_ht_cost_space = NULL;
 
-extern bool hrics_set_baseline;
-extern bool hrics_one_iteration;
-
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 
@@ -119,9 +116,9 @@ bool HRICS_init_human_trajectory_cost()
         cout << "create human traj cost space" << endl;
 
         // SET BASELINE HERE
-        hrics_set_baseline = false;
-        hrics_one_iteration = false;
-        PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, hrics_set_baseline ? 100. : 1.0000 );
+        HriEnv->setBool(HricsParam::ioc_use_baseline, false);
+        HriEnv->setBool(HricsParam::ioc_use_one_iteration, false);
+        PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, HriEnv->getBool(HricsParam::ioc_use_baseline) ? 100. : 1.0000 );
 
         // Workspace Occupancy costspace
         std::vector<double> size = Move3D::global_Project->getActiveScene()->getBounds();
@@ -209,7 +206,7 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
 
     smoothness_feat_.setActiveDoFs( active_dofs_ );
 
-    if( !hrics_set_baseline )
+    if( !HriEnv->getBool(HricsParam::ioc_use_baseline) )
     {
         smoothness_feat_.setWeights( Move3D::WeightVect::Ones( smoothness_feat_.getNumberOfFeatures() ) );
 
@@ -1433,7 +1430,7 @@ double HumanTrajSimulator::run()
 
 //        path_.replaceP3dTraj();
 
-        if( hrics_one_iteration && i == 0 ) // test no replanning
+        if( HriEnv->getBool(HricsParam::ioc_use_one_iteration) && i == 0 ) // test no replanning
             break;
     }
 
@@ -1449,7 +1446,7 @@ double HumanTrajSimulator::run()
 
 //    cout << "executed_path_.cost() : " << executed_path_.cost() << endl;
 
-    Move3D::Trajectory path( hrics_one_iteration ? path_ : motion_to_traj( executed_trajectory_, human_active_ ));
+    Move3D::Trajectory path( HriEnv->getBool(HricsParam::ioc_use_one_iteration) ? path_ : motion_to_traj( executed_trajectory_, human_active_ ));
 
     human_active_->setCurrentMove3DTraj( path );
 

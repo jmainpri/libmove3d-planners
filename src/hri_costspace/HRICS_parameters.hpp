@@ -62,7 +62,9 @@ namespace HricsParam
             ioc_exit_after_run,
             ioc_use_stomp_spetial_cost,
             ioc_use_simulation_demos,
-            ioc_user_set_pelvis_bounds
+            ioc_user_set_pelvis_bounds,
+            ioc_use_baseline,
+            ioc_use_one_iteration
         };
 
         enum intParameter

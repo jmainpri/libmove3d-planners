@@ -70,9 +70,6 @@ static std::string move3d_human_trajs_demo_folder_cut;
 
 static bool original_demos = false;
 
-extern bool hrics_set_baseline = false;
-extern bool hrics_one_iteration = false;
-
 void ioc_set_sphere_paths()
 {
     // Folders for sphere (and plannar) type of features
@@ -411,7 +408,7 @@ bool IocSequences::run()
             std::vector<std::string> active_features_names;
 
             // BECARFUL (Comment for basekline)
-            if( !hrics_set_baseline )
+            if( !HriEnv->getBool(HricsParam::ioc_use_baseline) )
                 active_features_names.push_back("SmoothnessAll");
 
             active_features_names.push_back("Distance");
@@ -419,7 +416,7 @@ bool IocSequences::run()
 //            active_features_names.push_back("Visibility");
 //            active_features_names.push_back("Musculoskeletal");
 
-            if( hrics_set_baseline )
+            if( HriEnv->getBool(HricsParam::ioc_use_baseline) )
             {
                 global_ht_simulator->getCostSpace()->setActiveFeatures( active_features_names );
                 WeightVect w( 10 * WeightVect::Ones(16));
@@ -441,7 +438,7 @@ bool IocSequences::run()
             {
                 global_ht_simulator->setDemonstrationId( j );
 
-                if( !hrics_set_baseline ) // SET BASELINE HERE
+                if( !HriEnv->getBool(HricsParam::ioc_use_baseline) ) // SET BASELINE HERE
                 {
                     std::string demo_split = good_motions_names[ j ].substr( 0, 11 );
 
@@ -462,7 +459,7 @@ bool IocSequences::run()
                     ss << "run_simulator_" << std::setw(3) << std::setfill( '0' ) << j;
                     ss <<              "_" << std::setw(3) << std::setfill( '0' ) << k << ".traj";
 
-                    Move3D::Trajectory traj( hrics_one_iteration ? global_ht_simulator->getCurrentPath() : global_ht_simulator->getExecutedPath() );
+                    Move3D::Trajectory traj( HriEnv->getBool(HricsParam::ioc_use_one_iteration) ? global_ht_simulator->getCurrentPath() : global_ht_simulator->getExecutedPath() );
                     traj.saveToFile( ss.str() );
 
                     trajs.push_back( global_ht_simulator->getExecutedTrajectory() );
