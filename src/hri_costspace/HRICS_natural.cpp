@@ -37,6 +37,71 @@ extern Move3D::TwoDGrid* API_activeRobotGrid;
 //    initGeneral();
 //}
 
+/***********************************************/
+/* JUSTIN NORMAL */
+#define JUSTIN_JOINT_SPINE 1;					//  1, 2,  3,  4
+#define JUSTIN_JOINT_HEAD 6;					//  6,  7,  8
+
+#define JUSTIN_JOINT_ARM_RIGTH_SHOULDER 9;		//  9,  10, 11
+#define JUSTIN_JOINT_ARM_RIGTH_ELBOW 12;		// 12 , 13
+#define JUSTIN_JOINT_ARM_RIGTH_WRIST 14;		// 14, 15, 16
+
+#define JUSTIN_JOINT_ARM_LEFT_SHOULDER 17;		// 17, 18, 19
+#define JUSTIN_JOINT_ARM_LEFT_ELBOW 20;			// 20, 21
+#define JUSTIN_JOINT_ARM_LEFT_WRIST 22;			// 22, 23, 24
+
+/***********************************************/
+/* Achile NORMAL */
+#define ACHILE_JOINT_SPINE 2;					//  2,  3,  4
+#define ACHILE_JOINT_HEAD 5;					//  5,  6,  7
+
+#define ACHILE_JOINT_ARM_RIGTH_SHOULDER 8;		//  8,  9, 10
+#define ACHILE_JOINT_ARM_RIGTH_ELBOW 11;		// 11
+#define ACHILE_JOINT_ARM_RIGTH_WRIST 12;		// 12, 13, 14
+
+#define ACHILE_JOINT_ARM_LEFT_SHOULDER 15;		// 15, 16, 17
+#define ACHILE_JOINT_ARM_LEFT_ELBOW 18;			// 18
+#define ACHILE_JOINT_ARM_LEFT_WRIST 19;			// 19, 20, 21
+
+/***********************************************/
+// KINECT
+#define HERAKLES_JOINT_SPINE 2;					//  2,  3,  4
+#define HERAKLES_JOINT_HEAD 5;					//  5,  6,  7
+
+#define HERAKLES_JOINT_ARM_RIGTH_SHOULDER 8;		//  8,  9, 10
+#define HERAKLES_JOINT_ARM_RIGTH_ELBOW 12;		// 11
+#define HERAKLES_JOINT_ARM_RIGTH_WRIST 14;		// 12, 13, 14
+
+#define HERAKLES_JOINT_ARM_LEFT_SHOULDER 17;		// 15, 16, 17
+#define HERAKLES_JOINT_ARM_LEFT_ELBOW 21;			// 18
+#define HERAKLES_JOINT_ARM_LEFT_WRIST 23;			// 19, 20, 21
+
+/***********************************************/
+// BIOMECH
+#define BIOMECH_JOINT_SPINE 2;					//  2,  3,  4
+#define BIOMECH_JOINT_HEAD 5;					//  5,  6,  7
+
+#define BIOMECH_JOINT_ARM_RIGTH_SHOULDER 11;   //  11,  12, 13
+#define BIOMECH_JOINT_ARM_RIGTH_ELBOW 15;		// 15, 16, 17
+#define BIOMECH_JOINT_ARM_RIGTH_WRIST 19;		// 19, 20, 21
+
+#define BIOMECH_JOINT_ARM_LEFT_SHOULDER 22;	// 22, 23, 24
+#define BIOMECH_JOINT_ARM_LEFT_ELBOW 26;		// 26
+#define BIOMECH_JOINT_ARM_LEFT_WRIST 28;		// 28, 29, 30
+
+/***********************************************/
+/* OLDDUDE NORMAL */
+#define OLDDUDE_JOINT_SPINE 2;					//  2,  3,  4
+#define OLDDUDE_JOINT_HEAD 5;					//  5,  6,  7
+
+#define OLDDUDE_JOINT_ARM_RIGTH_SHOULDER 8;		//  8,  9, 10
+#define OLDDUDE_JOINT_ARM_RIGTH_ELBOW 11;		// 11
+#define OLDDUDE_JOINT_ARM_RIGTH_WRIST 12;		// 12, 13, 14
+
+#define OLDDUDE_JOINT_ARM_LEFT_SHOULDER 15;		// 15, 16, 17
+#define OLDDUDE_JOINT_ARM_LEFT_ELBOW 18;			// 18
+#define OLDDUDE_JOINT_ARM_LEFT_WRIST 19;			// 19, 20, 21
+
 Natural::Natural( Move3D::Robot* R ) :
     m_debug(false),
     m_leftArmCost(false),
@@ -64,6 +129,7 @@ void Natural::initGeneral()
     kinos["ROBOT_JUSTIN"] = Justin;
     kinos["ACHILE"] = Achile;
     kinos["HERAKLES"] = Herakles;
+    kinos["BIOMECH"] = Biomech;
 
     if ( m_Robot->getName().find( "ROBOT_JUSTIN" ) != string::npos )
     {
@@ -81,6 +147,15 @@ void Natural::initGeneral()
     {
         m_KinType = OldDude;
     }
+    else if (m_Robot->getName().find( "OLDDUDE" ) !=string::npos)
+    {
+        m_KinType = OldDude;
+    }
+    else if (m_Robot->getName().find( "BIOMECH" ) !=string::npos)
+    {
+        m_KinType = Biomech;
+    }
+
 
     confPtr_t q_curr = m_Robot->getCurrentPos();
 
@@ -115,6 +190,15 @@ void Natural::initGeneral()
         m_Agents = hri_create_agents();
         break;
 
+    case Biomech:
+        cout << "KinType of HRICS::Natural is Biomech ( " << m_Robot->getName() << " ) "<< endl;
+        initNaturalBiomech();
+        m_IndexObjectDof = 0;
+        m_computeNbOfIK = false;
+        m_IsHuman = true;
+        m_Agents = hri_create_agents();
+        break;
+
     case OldDude:
         cout << "KinType of HRICS::Natural is OldDude ( " << m_Robot->getName() << " ) "<< endl;
         initNaturalOldDude();
@@ -136,33 +220,22 @@ void Natural::initGeneral()
     cout << "Object Dof is " << m_IndexObjectDof << endl;
 }
 
-/***********************************************/
-const int JUSTIN_JOINT_SPINE = 1;					//  1, 2,  3,  4
-const int JUSTIN_JOINT_HEAD = 6;					//  6,  7,  8
+void Natural::initConfigIndices()
+{
+    m_CONFIG_INDEX_SPINE = m_Robot->getJoint(m_JOINT_SPINE)->getIndexOfFirstDof();
+    m_CONFIG_INDEX_HEAD = m_Robot->getJoint(m_JOINT_HEAD)->getIndexOfFirstDof();
 
-const int JUSTIN_JOINT_ARM_RIGTH_SHOULDER = 9;		//  9,  10, 11
-const int JUSTIN_JOINT_ARM_RIGTH_ELBOW = 12;		// 12 , 13
-const int JUSTIN_JOINT_ARM_RIGTH_WRIST = 14;		// 14, 15, 16
+    m_CONFIG_INDEX_ARM_RIGTH_SHOULDER = m_Robot->getJoint(m_JOINT_ARM_RIGTH_SHOULDER)->getIndexOfFirstDof();
+    m_CONFIG_INDEX_ARM_RIGTH_ELBOW = m_Robot->getJoint(m_JOINT_ARM_RIGTH_ELBOW)->getIndexOfFirstDof();
+    m_CONFIG_INDEX_ARM_RIGTH_WRIST = m_Robot->getJoint(m_JOINT_ARM_RIGTH_WRIST)->getIndexOfFirstDof();
 
-const int JUSTIN_JOINT_ARM_LEFT_SHOULDER = 17;		// 17, 18, 19
-const int JUSTIN_JOINT_ARM_LEFT_ELBOW = 20;			// 20, 21
-const int JUSTIN_JOINT_ARM_LEFT_WRIST = 22;			// 22, 23, 24 
-
-/***********************************************/
-const int JUSTIN_CONFIG_INDEX_SPINE = 18;					//  2,  3,  4
-const int JUSTIN_CONFIG_INDEX_HEAD = 15;					//  5,  6,  7
-
-const int JUSTIN_CONFIG_INDEX_ARM_RIGTH_SHOULDER = 18;		//  8,  9, 10
-const int JUSTIN_CONFIG_INDEX_ARM_RIGTH_ELBOW = 21;			// 11
-const int JUSTIN_CONFIG_INDEX_ARM_RIGTH_WRIST = 22;			// 12, 13, 14
-
-const int JUSTIN_CONFIG_INDEX_ARM_LEFT_SHOULDER = 25;		// 15, 16, 17
-const int JUSTIN_CONFIG_INDEX_ARM_LEFT_ELBOW = 28;			// 18
-const int JUSTIN_CONFIG_INDEX_ARM_LEFT_WRIST = 29;			// 19, 20, 21 
+    m_CONFIG_INDEX_ARM_LEFT_SHOULDER = m_Robot->getJoint(m_JOINT_ARM_LEFT_SHOULDER)->getIndexOfFirstDof();
+    m_CONFIG_INDEX_ARM_LEFT_ELBOW = m_Robot->getJoint(m_JOINT_ARM_LEFT_ELBOW)->getIndexOfFirstDof();
+    m_CONFIG_INDEX_ARM_LEFT_WRIST = m_Robot->getJoint(m_JOINT_ARM_LEFT_WRIST)->getIndexOfFirstDof();
+}
 
 void Natural::initNaturalJustin()
 {
-    /***********************************************/
     m_JOINT_SPINE = JUSTIN_JOINT_SPINE;
     m_JOINT_HEAD = JUSTIN_JOINT_HEAD;
 
@@ -174,27 +247,11 @@ void Natural::initNaturalJustin()
     m_JOINT_ARM_LEFT_ELBOW = JUSTIN_JOINT_ARM_LEFT_ELBOW;
     m_JOINT_ARM_LEFT_WRIST = JUSTIN_JOINT_ARM_LEFT_WRIST;
 
-    /***********************************************/
-    m_CONFIG_INDEX_SPINE = JUSTIN_CONFIG_INDEX_SPINE;
-    m_CONFIG_INDEX_HEAD = JUSTIN_CONFIG_INDEX_HEAD;
-
-    m_CONFIG_INDEX_ARM_RIGTH_SHOULDER = JUSTIN_CONFIG_INDEX_ARM_RIGTH_SHOULDER;
-    m_CONFIG_INDEX_ARM_RIGTH_ELBOW = JUSTIN_CONFIG_INDEX_ARM_RIGTH_ELBOW;
-    m_CONFIG_INDEX_ARM_RIGTH_WRIST = JUSTIN_CONFIG_INDEX_ARM_RIGTH_WRIST;
-
-    m_CONFIG_INDEX_ARM_LEFT_SHOULDER = JUSTIN_CONFIG_INDEX_ARM_LEFT_SHOULDER;
-    m_CONFIG_INDEX_ARM_LEFT_ELBOW = JUSTIN_CONFIG_INDEX_ARM_LEFT_ELBOW;
-    m_CONFIG_INDEX_ARM_LEFT_WRIST = JUSTIN_CONFIG_INDEX_ARM_LEFT_WRIST;
+    initConfigIndices();
 
     configPt q;
     q = p3d_alloc_config(m_Robot->getP3dRobotStruct());
 
-    q[0] = 0.000000;
-    q[1] = 0.000000;
-    q[2] = 0.000000;
-    q[3] = 0.000000;
-    q[4] = 0.000000;
-    q[5] = 0.000000;
     q[6] = 1.573257;
     q[7] = -22.123896;
     q[8] = 31.659294;
@@ -217,34 +274,11 @@ void Natural::initNaturalJustin()
     q[25] = 29.000000;
 
     m_q_Confort = confPtr_t(new Configuration(
-                                                m_Robot,
-                                                p3d_copy_config_deg_to_rad(m_Robot->getP3dRobotStruct(),q)));
+                                m_Robot,
+                                p3d_copy_config_deg_to_rad(m_Robot->getP3dRobotStruct(),q)));
 
 }
-/***********************************************/
-/* Achile NORMAL */
-const int ACHILE_JOINT_SPINE = 2;					//  2,  3,  4
-const int ACHILE_JOINT_HEAD = 5;					//  5,  6,  7
 
-const int ACHILE_JOINT_ARM_RIGTH_SHOULDER = 8;		//  8,  9, 10
-const int ACHILE_JOINT_ARM_RIGTH_ELBOW = 11;		// 11
-const int ACHILE_JOINT_ARM_RIGTH_WRIST = 12;		// 12, 13, 14
-
-const int ACHILE_JOINT_ARM_LEFT_SHOULDER = 15;		// 15, 16, 17
-const int ACHILE_JOINT_ARM_LEFT_ELBOW = 18;			// 18
-const int ACHILE_JOINT_ARM_LEFT_WRIST = 19;			// 19, 20, 21 
-
-// ---------------------------------------------
-const int ACHILE_CONFIG_INDEX_SPINE = 12;					//  2,  3,  4
-const int ACHILE_CONFIG_INDEX_HEAD = 15;					//  5,  6,  7
-
-const int ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER = 18;		//  8,  9, 10
-const int ACHILE_CONFIG_INDEX_ARM_RIGTH_ELBOW = 21;		// 11
-const int ACHILE_CONFIG_INDEX_ARM_RIGTH_WRIST = 22;		// 12, 13, 14
-
-const int ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER = 25;		// 15, 16, 17
-const int ACHILE_CONFIG_INDEX_ARM_LEFT_ELBOW = 28;			// 18
-const int ACHILE_CONFIG_INDEX_ARM_LEFT_WRIST = 29;			// 19, 20, 21 	
 
 void Natural::initNaturalAchile()
 {
@@ -260,53 +294,14 @@ void Natural::initNaturalAchile()
     m_JOINT_ARM_LEFT_ELBOW = ACHILE_JOINT_ARM_LEFT_ELBOW;
     m_JOINT_ARM_LEFT_WRIST = ACHILE_JOINT_ARM_LEFT_WRIST;
 
-    /***********************************************/
-    m_CONFIG_INDEX_SPINE = ACHILE_CONFIG_INDEX_SPINE;
-    m_CONFIG_INDEX_HEAD = ACHILE_CONFIG_INDEX_HEAD;
-
-    m_CONFIG_INDEX_ARM_RIGTH_SHOULDER = ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER;
-    m_CONFIG_INDEX_ARM_RIGTH_ELBOW = ACHILE_CONFIG_INDEX_ARM_RIGTH_ELBOW;
-    m_CONFIG_INDEX_ARM_RIGTH_WRIST = ACHILE_CONFIG_INDEX_ARM_RIGTH_WRIST;
-
-    m_CONFIG_INDEX_ARM_LEFT_SHOULDER = ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER;
-    m_CONFIG_INDEX_ARM_LEFT_ELBOW = ACHILE_CONFIG_INDEX_ARM_LEFT_ELBOW;
-    m_CONFIG_INDEX_ARM_LEFT_WRIST = ACHILE_CONFIG_INDEX_ARM_LEFT_WRIST;
+    initConfigIndices();
 
     configPt q;
     q = p3d_alloc_config(m_Robot->getP3dRobotStruct());
 
-    /***********************************************
-     * Neutral Position NORMAL
-     */
-
-    q[0] = 0;
-    q[1] = 0;
-    q[2] = 0;
-    q[3] = 0;
-    q[4] = 0;
-    q[5] = 0;
-
-    q[6] = 0;
-    q[7] = 0;
-    q[8] = 0;
-    q[9] = 0;
-    q[10] = 0;
-    q[11] = 0;
-
-    q[12] = 0;
-    q[13] = 0;
-    q[14] = 0;
-    q[15] = 0;
-    q[16] = 0;
-    q[17] = 0;
+    // Neutral Position NORMAL
 
     q[18] = 1.39626;
-    q[19] = 0;
-    q[20] = 0;
-    q[21] = 0;
-    q[22] = 0;
-    q[23] = 0;
-    q[24] = 0;
 
     //	q[18] = 1.33012;
     //	q[19] = 0.365646;
@@ -317,12 +312,6 @@ void Natural::initNaturalAchile()
     //	q[24] = 0.0233874;
 
     q[25] = -1.39626;
-    q[26] = 0;
-    q[27] = 0;
-    q[28] = 0;
-    q[29] = 0;
-    q[30] = 0;
-    q[31] = 0;
 
     //	q[25] = -1.22784;
     //	q[26] = 0.482584;
@@ -332,24 +321,7 @@ void Natural::initNaturalAchile()
     //	q[30] = 0;
     //	q[31] = -0.0935496;
 
-    q[32] = 0;
-    q[33] = 0;
-    q[34] = 0;
-    q[35] = 0;
-    q[36] = 0;
-    q[37] = 0;
-    q[38] = 0;
-    q[39] = 0;
-    q[40] = 0;
-    q[41] = 0;
-    q[42] = 0;
-    q[43] = 0;
-    q[44] = 0;
-    q[45] = 0;
-
-    m_q_Confort = confPtr_t(
-                new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
-
+    m_q_Confort = confPtr_t(new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
     m_Robot->setAndUpdate( *m_q_Confort );
 
     // Compute the rest posture heights
@@ -438,30 +410,6 @@ void Natural::initNaturalAchile()
  ACHILE_JOINT_ARM_LEFT_WRIST =  29
  */
 
-// KINECT
-const int HERAKLES_JOINT_SPINE = 2;					//  2,  3,  4
-const int HERAKLES_JOINT_HEAD = 5;					//  5,  6,  7
-
-const int HERAKLES_JOINT_ARM_RIGTH_SHOULDER = 8;		//  8,  9, 10
-const int HERAKLES_JOINT_ARM_RIGTH_ELBOW = 12;		// 11
-const int HERAKLES_JOINT_ARM_RIGTH_WRIST = 14;		// 12, 13, 14
-
-const int HERAKLES_JOINT_ARM_LEFT_SHOULDER = 17;		// 15, 16, 17
-const int HERAKLES_JOINT_ARM_LEFT_ELBOW = 21;			// 18
-const int HERAKLES_JOINT_ARM_LEFT_WRIST = 23;			// 19, 20, 21 
-
-//// ---------------------------------------------
-const int HERAKLES_CONFIG_INDEX_SPINE = 12;					
-const int HERAKLES_CONFIG_INDEX_HEAD = 15;					
-
-const int HERAKLES_CONFIG_INDEX_ARM_RIGTH_SHOULDER = 18;	
-const int HERAKLES_CONFIG_INDEX_ARM_RIGTH_ELBOW = 22;		
-const int HERAKLES_CONFIG_INDEX_ARM_RIGTH_WRIST = 24;		
-
-const int HERAKLES_CONFIG_INDEX_ARM_LEFT_SHOULDER = 27;	
-const int HERAKLES_CONFIG_INDEX_ARM_LEFT_ELBOW = 31;		
-const int HERAKLES_CONFIG_INDEX_ARM_LEFT_WRIST = 33;	
-
 void Natural::initNaturalHerakles()
 {
     /***********************************************/
@@ -476,52 +424,17 @@ void Natural::initNaturalHerakles()
     m_JOINT_ARM_LEFT_ELBOW = HERAKLES_JOINT_ARM_LEFT_ELBOW;
     m_JOINT_ARM_LEFT_WRIST = HERAKLES_JOINT_ARM_LEFT_WRIST;
 
-    /***********************************************/
-    m_CONFIG_INDEX_SPINE = HERAKLES_CONFIG_INDEX_SPINE;
-    m_CONFIG_INDEX_HEAD = HERAKLES_CONFIG_INDEX_HEAD;
-
-    m_CONFIG_INDEX_ARM_RIGTH_SHOULDER = HERAKLES_CONFIG_INDEX_ARM_RIGTH_SHOULDER;
-    m_CONFIG_INDEX_ARM_RIGTH_ELBOW = HERAKLES_CONFIG_INDEX_ARM_RIGTH_ELBOW;
-    m_CONFIG_INDEX_ARM_RIGTH_WRIST = HERAKLES_CONFIG_INDEX_ARM_RIGTH_WRIST;
-
-    m_CONFIG_INDEX_ARM_LEFT_SHOULDER = HERAKLES_CONFIG_INDEX_ARM_LEFT_SHOULDER;
-    m_CONFIG_INDEX_ARM_LEFT_ELBOW = HERAKLES_CONFIG_INDEX_ARM_LEFT_ELBOW;
-    m_CONFIG_INDEX_ARM_LEFT_WRIST = HERAKLES_CONFIG_INDEX_ARM_LEFT_WRIST;
+    initConfigIndices();
 
     configPt q;
     q = p3d_alloc_config(m_Robot->getP3dRobotStruct());
 
-    /***********************************************
-     * Neutral Position NORMAL
-     */
-    /****** KINECT *****/
-    q[0] = 0;
-    q[1] = 0;
-    q[2] = 0;
-    q[3] = 0;
-    q[4] = 0;
-    q[5] = 0;
-    q[6] = 0;
-    q[7] = 0;
-    q[8] = 0;
-    q[9] = 0;
-    q[10] = 0;
-    q[11] = 0;
-    q[12] = 0;
-    q[13] = 0;
-    q[14] = 0;
-    q[15] = 0;
-    q[16] = 0;
-    q[17] = 0;
+    // Neutral Position NORMAL
     q[18] = 1.19817;
     q[19] = 0.106116;
     q[20] = -0.346273;
     q[21] = 0;
     q[22] = 0.479442;
-    q[23] = 0;
-    q[24] = 0;
-    q[25] = 0;
-    q[26] = 0;
     q[27] = -1.25158;
     q[28] = -0.106116;
     q[29] = -0.266337;
@@ -529,41 +442,8 @@ void Natural::initNaturalHerakles()
     q[31] = -0.452389;
     q[32] = 0;
     q[33] = -0.252898;
-    q[34] = 0;
-    q[35] = 0;
-    q[36] = 0;
-    q[37] = 0;
-    q[38] = 0;
-    q[39] = 0;
-    q[40] = 0;
-    q[41] = 0;
-    q[42] = 0;
-    q[43] = 0;
-    q[44] = 0;
-    q[45] = 0;
-    q[46] = 0;
-    q[47] = 0;
-    q[48] = 0;
-    q[49] = 0;
-    q[50] = 0;
-    q[51] = 0;
-    q[52] = 0;
-    q[53] = 0;
-    q[54] = 0;
-    q[55] = 0;
-    q[56] = 0;
-    q[57] = 0;
-    q[58] = 0;
-    q[59] = 0;
-    q[60] = 0;
-    q[61] = 0;
-    q[62] = 0;
-    q[63] = 0;
-    q[64] = 0;
 
-    m_q_Confort = confPtr_t(
-                new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
-
+    m_q_Confort = confPtr_t(new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
     m_Robot->setAndUpdate( *m_q_Confort );
 
     // Compute the rest posture heights
@@ -571,10 +451,7 @@ void Natural::initNaturalHerakles()
     m_leftArmCost = false;  m_armHeightR = getUpperBodyHeigth(false);
 
 
-    /***********************************************
-     * Wieghts for the Configuration Distance
-     */
-
+    // Wieghts for the Configuration Distance
     p3d_destroy_config(m_Robot->getP3dRobotStruct(),q);
     q = p3d_alloc_config(m_Robot->getP3dRobotStruct());
 
@@ -614,30 +491,87 @@ void Natural::initNaturalHerakles()
     m_mg.push_back(  1 );
 }
 
-/***********************************************/
-/* Achile NORMAL */
-const int OLDDUDE_JOINT_SPINE = 2;					//  2,  3,  4
-const int OLDDUDE_JOINT_HEAD = 5;					//  5,  6,  7
+void Natural::initNaturalBiomech()
+{
+    /***********************************************/
+    m_JOINT_SPINE = BIOMECH_JOINT_SPINE;
+    m_JOINT_HEAD = BIOMECH_JOINT_HEAD;
 
-const int OLDDUDE_JOINT_ARM_RIGTH_SHOULDER = 8;		//  8,  9, 10
-const int OLDDUDE_JOINT_ARM_RIGTH_ELBOW = 11;		// 11
-const int OLDDUDE_JOINT_ARM_RIGTH_WRIST = 12;		// 12, 13, 14
+    m_JOINT_ARM_RIGTH_SHOULDER = BIOMECH_JOINT_ARM_RIGTH_SHOULDER;
+    m_JOINT_ARM_RIGTH_ELBOW = BIOMECH_JOINT_ARM_RIGTH_ELBOW;
+    m_JOINT_ARM_RIGTH_WRIST = BIOMECH_JOINT_ARM_RIGTH_WRIST;
 
-const int OLDDUDE_JOINT_ARM_LEFT_SHOULDER = 15;		// 15, 16, 17
-const int OLDDUDE_JOINT_ARM_LEFT_ELBOW = 18;			// 18
-const int OLDDUDE_JOINT_ARM_LEFT_WRIST = 19;			// 19, 20, 21
+    m_JOINT_ARM_LEFT_SHOULDER = BIOMECH_JOINT_ARM_LEFT_SHOULDER;
+    m_JOINT_ARM_LEFT_ELBOW = BIOMECH_JOINT_ARM_LEFT_ELBOW;
+    m_JOINT_ARM_LEFT_WRIST = BIOMECH_JOINT_ARM_LEFT_WRIST;
 
-// ---------------------------------------------
-const int OLDDUDE_CONFIG_INDEX_SPINE = 12;					//  2,  3,  4
-const int OLDDUDE_CONFIG_INDEX_HEAD = 15;					//  5,  6,  7
+    initConfigIndices();
 
-const int OLDDUDE_CONFIG_INDEX_ARM_RIGTH_SHOULDER = 18;		//  8,  9, 10
-const int OLDDUDE_CONFIG_INDEX_ARM_RIGTH_ELBOW = 21;		// 11
-const int OLDDUDE_CONFIG_INDEX_ARM_RIGTH_WRIST = 22;		// 12, 13, 14
+    Configuration q(*m_Robot->getNewConfig());
 
-const int OLDDUDE_CONFIG_INDEX_ARM_LEFT_SHOULDER = 25;		// 15, 16, 17
-const int OLDDUDE_CONFIG_INDEX_ARM_LEFT_ELBOW = 28;			// 18
-const int OLDDUDE_CONFIG_INDEX_ARM_LEFT_WRIST = 29;			// 19, 20, 21
+    // Neutral Position NORMAL
+    q[18] = 0.018;
+    q[19] = 0.326;
+    q[20] = 0.255;
+    q[21] = 0.311646;
+    q[22] = -0.133832;
+    q[23] = 1.22522;
+    q[24] = 0.396;
+    q[25] = 0.0666018;
+    q[26] = -0.267664;
+    q[27] = -0.245044;
+    q[28] = 0.246;
+    q[29] = 0.0892212;
+    q[30] = -0.155823;
+    q[31] = 0.111212;
+    q[32] = -1.38796;
+
+    m_q_Confort = q.copy();
+    m_Robot->setAndUpdate( *m_q_Confort );
+
+    // Compute the rest posture heights
+    m_leftArmCost = true;   m_armHeightL = getUpperBodyHeigth(false);
+    m_leftArmCost = false;  m_armHeightR = getUpperBodyHeigth(false);
+
+    // Wieghts for the Configuration Distance
+    q = *m_Robot->getNewConfig();
+
+    q[m_CONFIG_INDEX_SPINE+0] = 100;	// Torso
+    q[m_CONFIG_INDEX_SPINE+1] = 100;
+    q[m_CONFIG_INDEX_SPINE+2] = 100;
+
+    q[m_CONFIG_INDEX_HEAD+0] = 0;		// Head
+    q[m_CONFIG_INDEX_HEAD+1] = 0;
+    q[m_CONFIG_INDEX_HEAD+2] = 0;
+
+    q[m_CONFIG_INDEX_ARM_RIGTH_SHOULDER+0] = 5;		// Right Shoulder
+    q[m_CONFIG_INDEX_ARM_RIGTH_SHOULDER+1] = 1;
+    q[m_CONFIG_INDEX_ARM_RIGTH_SHOULDER+2] = 1;
+
+    q[m_CONFIG_INDEX_ARM_RIGTH_ELBOW+0] = 1;		// Right Elbow
+    q[m_CONFIG_INDEX_ARM_RIGTH_ELBOW+1] = 1;
+    q[m_CONFIG_INDEX_ARM_RIGTH_ELBOW+2] = 1;
+
+    q[m_CONFIG_INDEX_ARM_RIGTH_WRIST+0] = 1;		// Right Wrist
+    q[m_CONFIG_INDEX_ARM_RIGTH_WRIST+1] = 1;
+    q[m_CONFIG_INDEX_ARM_RIGTH_WRIST+2] = 1;
+
+    q[m_CONFIG_INDEX_ARM_LEFT_SHOULDER+0] = 5;		// Left Shoulder
+    q[m_CONFIG_INDEX_ARM_LEFT_SHOULDER+1] = 1;
+    q[m_CONFIG_INDEX_ARM_LEFT_SHOULDER+2] = 1;
+
+    q[m_CONFIG_INDEX_ARM_LEFT_ELBOW] = 1;		// Left Elbow
+
+    q[m_CONFIG_INDEX_ARM_LEFT_WRIST+0] = 1;		// Right Wrist
+    q[m_CONFIG_INDEX_ARM_LEFT_WRIST+1] = 1;
+    q[m_CONFIG_INDEX_ARM_LEFT_WRIST+2] = 1;
+
+    m_q_ConfortWeigths = q.copy();
+
+    m_mg.push_back( 30 );
+    m_mg.push_back(  4 );
+    m_mg.push_back(  1 );
+}
 
 void Natural::initNaturalOldDude()
 {
@@ -653,80 +587,17 @@ void Natural::initNaturalOldDude()
     m_JOINT_ARM_LEFT_ELBOW = OLDDUDE_JOINT_ARM_LEFT_ELBOW;
     m_JOINT_ARM_LEFT_WRIST = OLDDUDE_JOINT_ARM_LEFT_WRIST;
 
-    /***********************************************/
-    m_CONFIG_INDEX_SPINE = OLDDUDE_CONFIG_INDEX_SPINE;
-    m_CONFIG_INDEX_HEAD = OLDDUDE_CONFIG_INDEX_HEAD;
-
-    m_CONFIG_INDEX_ARM_RIGTH_SHOULDER = OLDDUDE_CONFIG_INDEX_ARM_RIGTH_SHOULDER;
-    m_CONFIG_INDEX_ARM_RIGTH_ELBOW = OLDDUDE_CONFIG_INDEX_ARM_RIGTH_ELBOW;
-    m_CONFIG_INDEX_ARM_RIGTH_WRIST = OLDDUDE_CONFIG_INDEX_ARM_RIGTH_WRIST;
-
-    m_CONFIG_INDEX_ARM_LEFT_SHOULDER = OLDDUDE_CONFIG_INDEX_ARM_LEFT_SHOULDER;
-    m_CONFIG_INDEX_ARM_LEFT_ELBOW = OLDDUDE_CONFIG_INDEX_ARM_LEFT_ELBOW;
-    m_CONFIG_INDEX_ARM_LEFT_WRIST = OLDDUDE_CONFIG_INDEX_ARM_LEFT_WRIST;
+    initConfigIndices();
 
     configPt q;
     q = p3d_alloc_config(m_Robot->getP3dRobotStruct());
 
-    /***********************************************
-     * Neutral Position NORMAL
-     */
-
-    q[0] = 0;
-    q[1] = 0;
-    q[2] = 0;
-    q[3] = 0;
-    q[4] = 0;
-    q[5] = 0;
-
-    q[6] = 0;
-    q[7] = 0;
-    q[8] = 0;
-    q[9] = 0;
-    q[10] = 0;
-    q[11] = 0;
-
-    q[12] = 0;
-    q[13] = 0;
-    q[14] = 0;
-    q[15] = 0;
-    q[16] = 0;
-    q[17] = 0;
+    // Neutral Position NORMAL
 
     q[18] = 1.39626;
-    q[19] = 0;
-    q[20] = 0;
-    q[21] = 0;
-    q[22] = 0;
-    q[23] = 0;
-    q[24] = 0;
-
     q[25] = -1.39626;
-    q[26] = 0;
-    q[27] = 0;
-    q[28] = 0;
-    q[29] = 0;
-    q[30] = 0;
-    q[31] = 0;
 
-    q[32] = 0;
-    q[33] = 0;
-    q[34] = 0;
-    q[35] = 0;
-    q[36] = 0;
-    q[37] = 0;
-    q[38] = 0;
-    q[39] = 0;
-    q[40] = 0;
-    q[41] = 0;
-    q[42] = 0;
-    q[43] = 0;
-    q[44] = 0;
-    q[45] = 0;
-
-    m_q_Confort = confPtr_t(
-                new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
-
+    m_q_Confort = confPtr_t(new Configuration(m_Robot,p3d_copy_config(m_Robot->getP3dRobotStruct(),q)));
     m_Robot->setAndUpdate( *m_q_Confort );
 
     // Compute the rest posture heights
@@ -734,10 +605,7 @@ void Natural::initNaturalOldDude()
     m_leftArmCost = false;  m_armHeightR = getUpperBodyHeigth(false);
 
 
-    /***********************************************
-     * Wieghts for the Configuration Distance
-     */
-
+    // Wieghts for the Configuration Distance
     p3d_destroy_config(m_Robot->getP3dRobotStruct(),q);
     q = p3d_alloc_config(m_Robot->getP3dRobotStruct());
 
@@ -816,16 +684,16 @@ void Natural::printBodyPos()
             {
                 //Vector3d point(Vector3d::Zero());
 
-                PointsToDraw->push_back( m_Robot->getJoint( ACHILE_JOINT_SPINE )->getVectorPos() );
-                PointsToDraw->push_back( m_Robot->getJoint( ACHILE_JOINT_HEAD )->getVectorPos() );
+                PointsToDraw->push_back( m_Robot->getJoint( m_JOINT_SPINE )->getVectorPos() );
+                PointsToDraw->push_back( m_Robot->getJoint( m_JOINT_HEAD )->getVectorPos() );
 
-                PointsToDraw->push_back( m_Robot->getJoint( ACHILE_JOINT_ARM_RIGTH_SHOULDER )->getVectorPos() );
-                PointsToDraw->push_back( m_Robot->getJoint( ACHILE_JOINT_ARM_RIGTH_ELBOW )->getVectorPos() );
-                PointsToDraw->push_back( m_Robot->getJoint( ACHILE_JOINT_ARM_RIGTH_WRIST )->getVectorPos() );
+                PointsToDraw->push_back( m_Robot->getJoint( m_JOINT_ARM_RIGTH_SHOULDER )->getVectorPos() );
+                PointsToDraw->push_back( m_Robot->getJoint( m_JOINT_ARM_RIGTH_ELBOW )->getVectorPos() );
+                PointsToDraw->push_back( m_Robot->getJoint( m_JOINT_ARM_RIGTH_WRIST )->getVectorPos() );
 
-                PointsToDraw->push_back( m_Robot->getJoint( ACHILE_JOINT_ARM_LEFT_SHOULDER )->getVectorPos() );
-                PointsToDraw->push_back( m_Robot->getJoint( ACHILE_JOINT_ARM_LEFT_ELBOW )->getVectorPos() );
-                PointsToDraw->push_back( m_Robot->getJoint( ACHILE_JOINT_ARM_LEFT_WRIST )->getVectorPos() );
+                PointsToDraw->push_back( m_Robot->getJoint( m_JOINT_ARM_LEFT_SHOULDER )->getVectorPos() );
+                PointsToDraw->push_back( m_Robot->getJoint( m_JOINT_ARM_LEFT_ELBOW )->getVectorPos() );
+                PointsToDraw->push_back( m_Robot->getJoint( m_JOINT_ARM_LEFT_WRIST )->getVectorPos() );
             }
         }
     }
@@ -856,15 +724,15 @@ void Natural::getConfigCostFeatures( Eigen::VectorXd& features )
     //---------------------------------------------------
     // Joints Displacement
     double c_f_Joint_displacement = getJointDisplacement();
-    //	cout << "JDis = " << c_f_Joint_displacement << endl;
+    cout << "JDis = " << c_f_Joint_displacement << endl;
     //---------------------------------------------------
     // Energy
     double c_f_Energy = getEnergy();
-    //	cout << "Ener = " << c_f_Energy << endl;
+    cout << "Ener = " << c_f_Energy << endl;
     //---------------------------------------------------
     // Discomfort
     double c_f_Discomfort = getDiscomfort();
-    //	cout << "Disc = " << c_f_Discomfort << endl;
+    cout << "Disc = " << c_f_Discomfort << endl;
     //---------------------------------------------------
 
     features[0] = c_f_Joint_displacement;
@@ -905,7 +773,7 @@ double Natural::getConfigCost()
  */
 double Natural::getJointDisplacement()
 {
-    return 0.1*getCustomDistConfig(*m_Robot->getCurrentPos());
+    return getCustomDistConfig(*m_Robot->getCurrentPos());
 }
 
 /*!
@@ -1006,24 +874,23 @@ vector<double> Natural::getUpperBodyHeigth(bool useReference)
 double Natural::getCustomDistConfig(Configuration& q) 
 {
     double l = 0., ljnt = 0.;
-    int njnt = m_Robot->getP3dRobotStruct()->njoints;
 
-    for (int i=0; i<=njnt; i++)
+    for (int i=0; i<int(m_Robot->getJoints().size()); i++)
     {
-        p3d_jnt* jntPt = m_Robot->getP3dRobotStruct()->joints[i];
+        Joint* jntPt = m_Robot->getJoint(i);
 
-        for (int j=0; j<jntPt->dof_equiv_nbr; j++)
+        for (int j=0; j<jntPt->getNumberOfDof(); j++)
         {
-            double W = (*m_q_ConfortWeigths)[jntPt->index_dof+j];
-
-            double dof_dist = p3d_jnt_calc_dof_dist(jntPt, j,
-                                                    m_q_Confort->getConfigStruct(),
-                                                    q.getConfigStruct());
-            //printf("dof_dist[%d] = %f\n",jntPt->index_dof + j,dof_dist);
-            ljnt += W*SQR(dof_dist);
+            double W = (*m_q_ConfortWeigths)[jntPt->getIndexOfFirstDof()+j];
+            double dof_dist = p3d_jnt_calc_dof_dist( jntPt->getP3dJointStruct(), j, m_q_Confort->getConfigStruct(), q.getConfigStruct());
+            dof_dist = W*SQR(dof_dist);
+            ljnt += dof_dist;
+            printf( "dof %s dist[%d] = %f\n",jntPt->getName().c_str(), jntPt->getIndexOfFirstDof()+j, dof_dist);
         }
     }
     l = sqrt(ljnt);
+
+    printf( "total dist = %f\n", l );
 
     return l;
 }
@@ -1294,64 +1161,51 @@ double Natural::getNumberOfIKCost(const Vector3d& WSPoint)
 /*! 
  * Compute Wether a point is reachable for a human
  */
-bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRightArm)
+bool Natural::computeIsReachableAndMove( const Vector3d& WSPoint, bool useLeftvsRightArm )
 {
-#ifdef HRI_PLANNER
-    //        cout << "Natural::computeIsReachableAndMove" << endl;
+    //#ifdef HRI_PLANNER
+
     confPtr_t configStored = m_Robot->getCurrentPos();
 
-    bool IKSucceded=false;
+    bool ik_succeed=false;
     const bool withSideEffect = true;
-
-    // 2 - Select Task
-    HRI_GIK_TASK_TYPE task;
-
-    if (useLeftvsRightArm == true)
-    {
-        //task = GIK_LAREACH; // Left Arm GIK
-        task = GIK_LATREACH;
-    }
-    else
-    {
-        //task = GIK_RAREACH; // Left Arm GIK
-        task = GIK_RATREACH;
-    }
-
-
-    p3d_vector3 Tcoord;
-
-    global_DrawnSphere = WSPoint;
-
-    Tcoord[0] = WSPoint[0];
-    Tcoord[1] = WSPoint[1];
-    Tcoord[2] = WSPoint[2];
 
     if((m_IsHuman && (m_Agents->humans_no > 0)) || ( (!m_IsHuman) && (m_Agents->robots_no > 0))) // Humans ot Robots
     {
+        // 2 - Select Task
+        HRI_GIK_TASK_TYPE task = useLeftvsRightArm ? GIK_LATREACH : /*GIK_RAREACH*/GIK_RATREACH;
+
+        p3d_vector3 Tcoord;
+        global_DrawnSphere = WSPoint;
+        Tcoord[0] = WSPoint[0];
+        Tcoord[1] = WSPoint[1];
+        Tcoord[2] = WSPoint[2];
+
         configPt q;
+        double distance_tolerance = 0.005;
 
-        double distance_tolerance = 0.05;
+        m_Robot->setAndUpdate( *m_q_Confort );
 
-        if(m_IsHuman) // Humans
+        if( m_IsHuman ) // Humans
         {
-            q = p3d_get_robot_config(m_Agents->humans[0]->robotPt);
-            IKSucceded = hri_agent_single_task_manip_move(m_Agents->humans[0], task, &Tcoord, distance_tolerance, &q);
+            q = p3d_get_robot_config( m_Agents->humans[0]->robotPt );
+            ik_succeed = hri_agent_single_task_manip_move( m_Agents->humans[0], task, &Tcoord, distance_tolerance, &q );
+            Configuration Q( m_Robot, q );
 
-            confPtr_t ptrQ(new Configuration(m_Robot,q));
-
-            if (IKSucceded)
+            if( true /*ik_succeed*/ )
             {
-                m_Robot->setAndUpdate(*ptrQ);
-                if( !m_Robot->isInCollisionWithOthersAndEnv() )
+                m_Robot->setAndUpdate(Q);
+
+                if( !m_Robot->isInCollision() )
                 {
-                    cout << "Configuration is OK in computeIsReachableAndMove" << endl;
-                    //          m_Robot->setAndUpdate(*ptrQ);
+                    cout << "Config is OK in " << __PRETTY_FUNCTION__ << endl;
                 }
                 else
                 {
-                    IKSucceded = false;
-                    m_Robot->setAndUpdate(*configStored);
                     cout << "Config in collision in " << __PRETTY_FUNCTION__ << endl;
+                    ik_succeed = false;
+                    m_Robot->setAndUpdate(*configStored);
+
                 }
             }
             else
@@ -1363,7 +1217,7 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
         else // Robots
         {
             q = p3d_get_robot_config(m_Agents->robots[0]->robotPt);
-            IKSucceded = hri_agent_single_task_manip_move(m_Agents->robots[0], task, &Tcoord, distance_tolerance, &q);
+            ik_succeed = hri_agent_single_task_manip_move(m_Agents->robots[0], task, &Tcoord, distance_tolerance, &q);
             p3d_set_and_update_this_robot_conf(m_Agents->robots[0]->robotPt,q);
         }
 
@@ -1372,7 +1226,7 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
     //	if ( m_Agents->robots_no > 0) // Robots
     //	{
     //		q = p3d_get_robot_config(m_Agents->robots[0]->robotPt);
-    //		IKSucceded = hri_agent_single_task_manip_move(m_Agents->robots[0], task, Tcoord, &q);
+    //		ik_succeed = hri_agent_single_task_manip_move(m_Agents->robots[0], task, Tcoord, &q);
     //		//p3d_set_and_update_this_robot_conf(m_Agents->robots[0]->robotPt,q);
     //	}
     else
@@ -1385,11 +1239,11 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,bool useLeftvsRi
         m_Robot->setAndUpdate(*configStored);
     }
 
-    return IKSucceded;
-#else
-    cout << "HRI_GIK : " << "not compiled" << endl;
-    return false;
-#endif
+    return ik_succeed;
+    //#else
+    //    cout << "HRI_GIK : " << "not compiled" << endl;
+    //    return false;
+    //#endif
 }
 
 bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,bool useLeftvsRightArm)

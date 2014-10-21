@@ -67,4 +67,7 @@ void print_joint_mapping( Move3D::Robot* robot );
 //! Print joint achors
 void print_joint_anchors( Move3D::Robot* robot );
 
+//! Matrix pseudo inverse
+Eigen::MatrixXd move3d_pinv( const Eigen::MatrixXd &b, double rcond );
+
 #endif // MISC_FUNCTIONS_HPP

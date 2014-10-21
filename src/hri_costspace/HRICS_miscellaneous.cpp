@@ -64,6 +64,7 @@ void HRICS::printPr2Config()
     if( rob == NULL )
     {
         cout << "No robot named PR2_ROBOT in env" << endl;
+        return;
     }
 
     confPtr_t q = rob->getCurrentPos();

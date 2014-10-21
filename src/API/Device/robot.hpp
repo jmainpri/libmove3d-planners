@@ -332,10 +332,15 @@ public:
      */
     Joint* getIthActiveDoFJoint(unsigned int ithActiveDoF , unsigned int& ithDofOnJoint  );
 
-    /*
-      * Get all dof ids
-      */
+    /**
+     * Get all dof ids
+     */
     std::vector<int> getAllDofIds() const;
+
+    /**
+     * Get Jacobian
+     */
+    Eigen::MatrixXd getJacobian(const std::vector<Joint*>& active_joints, Joint* eef, bool with_rotations) const;
 
 
 #ifdef LIGHT_PLANNER

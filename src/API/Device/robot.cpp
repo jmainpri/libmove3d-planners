@@ -25,6 +25,7 @@
 #endif
 
 #include <boost/function.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
 
 using namespace std;
 using namespace Move3D;
@@ -692,4 +693,54 @@ unsigned int Robot::getNumberOfActiveDoF()
 Joint* Robot::getIthActiveDoFJoint(unsigned int ithActiveDoF , unsigned int& ithDofOnJoint )
 {
     return Move3DRobotGetIthActiveDofJoint( this, ithActiveDoF, ithDofOnJoint );
+}
+
+/**
+ * Get Jacobian
+ */
+Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints, Joint* eef, bool with_rotations) const
+{
+    int nb_dofs = 0;
+    for(int j=0; j<active_joints.size(); j++)
+        nb_dofs += active_joints[j]->getNumberOfDof();
+
+    Eigen::MatrixXd J( Eigen::MatrixXd::Zero( with_rotations ? 6 : 3, nb_dofs ) );
+    Eigen::Transform3d T_eef( eef->getMatrixPos() );
+    Eigen::Vector3d p,z;
+
+    int id=0;
+
+    for(int j=0; j<active_joints.size(); j++)
+    {
+        Eigen::Transform3d T( active_joints[j]->getMatrixPos() );
+
+        for(int i=0; i<3; i++) // position offset
+            p(i) = T_eef(i,3) - T(i,3);
+        for(int i=0; i<3; i++) // rotation axis (Z axis)
+            z(i) = T(i,2);
+
+        if( active_joints[j]->getP3dJointStruct()->type == P3D_ROTATE ){
+            // CROSS PRODUCT
+            Eigen::Vector3d J_pi = z.cross( p );
+            J(0,id) = J_pi(0);
+            J(1,id) = J_pi(1);
+            J(2,id) = J_pi(2);
+            if( boost::math::isnan(J(0,id)) ){
+                printf("NAN VALUE\n");
+            }
+            if( with_rotations ){
+                J(3,id) = z(0);
+                J(4,id) = z(1);
+                J(5,id) = z(2);
+            }
+        }
+        if( active_joints[j]->getP3dJointStruct()->type == P3D_TRANSLATE ){
+            J(0,id) = z(0);
+            J(1,id) = z(1);
+            J(2,id) = z(2);
+        }
+        id++;
+    }
+
+    return J;
 }

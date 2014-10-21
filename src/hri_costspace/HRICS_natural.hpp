@@ -50,6 +50,7 @@ namespace HRICS
 class Natural
 {
 public:
+
     Natural( Move3D::Robot* R );
     ~Natural();
 
@@ -58,6 +59,7 @@ public:
     void initNaturalJustin();
     void initNaturalAchile();
     void initNaturalHerakles();
+    void initNaturalBiomech();
     void initNaturalOldDude();
     void initHumanBaseGrid(std::vector<double> box);
 
@@ -152,6 +154,8 @@ private:
     void computeAllCellCost();
     void computeAllReachableCellCost();
 
+    void initConfigIndices();
+
 
     bool                m_debug;
     int                 m_IndexObjectDof;
@@ -167,6 +171,7 @@ private:
         Justin,
         Achile,
         Herakles,
+        Biomech,
         OldDude
     };
 
