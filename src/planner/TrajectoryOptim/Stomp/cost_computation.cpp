@@ -79,8 +79,8 @@ costComputation::costComputation(Robot* robot,
 
     for(int i=0; i<num_vars_all_;i++)
     {
-        segment_frames_[i].resize(planning_group_->num_joints_);
-        joint_pos_eigen_[i].resize(planning_group_->num_joints_);
+        segment_frames_[i].resize(planning_group_->num_dofs_);
+        joint_pos_eigen_[i].resize(planning_group_->num_dofs_);
     }
 
     if (num_collision_points_ > 0)
@@ -112,13 +112,13 @@ bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
 
     for (int joint=0; joint<num_joints_; joint++)
     {
-        if (!planning_group_->chomp_joints_[joint].has_joint_limits_)
+        if (!planning_group_->chomp_dofs_[joint].has_joint_limits_)
             continue;
 
         // Added by jim for pr2 free flyer
         if( planning_group_->robot_->getName() == "PR2_ROBOT" )
         {
-            int index = planning_group_->chomp_joints_[joint].move3d_dof_index_;
+            int index = planning_group_->chomp_dofs_[joint].move3d_dof_index_;
 
             if( index == 8 || index == 9 || index == 10 ) {
                 group_traj.getFreeJointTrajectoryBlock(joint) = Eigen::VectorXd::Zero(num_vars_free_);
@@ -126,8 +126,8 @@ bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
             }
         }
 
-        double joint_max = planning_group_->chomp_joints_[joint].joint_limit_max_;
-        double joint_min = planning_group_->chomp_joints_[joint].joint_limit_min_;
+        double joint_max = planning_group_->chomp_dofs_[joint].joint_limit_max_;
+        double joint_min = planning_group_->chomp_dofs_[joint].joint_limit_min_;
 
         int count = 0;
         bool violation = false;
@@ -199,10 +199,10 @@ void costComputation::getFrames( int segment, const Eigen::VectorXd& joint_array
 {
     q = *robot_model_->getCurrentPos();
 
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
     // Set the configuration to the joint array value
-    for(int j=0; j<planning_group_->num_joints_;j++)
+    for(int j=0; j<planning_group_->num_dofs_;j++)
     {
         int dof = joints[j].move3d_dof_index_;
 
@@ -221,7 +221,7 @@ void costComputation::getFrames( int segment, const Eigen::VectorXd& joint_array
     if( collision_space_ )
     {
         // Get the collision point position
-        for(int j=0; j<planning_group_->num_joints_;j++)
+        for(int j=0; j<planning_group_->num_dofs_;j++)
         {
             Eigen::Transform3d t = robot_model_->getJoint( joints[j].move3d_joint_->getId() )->getMatrixPos();
 

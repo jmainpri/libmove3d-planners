@@ -21,9 +21,9 @@ double chomp_random_value( double max, double min );
 /**
  * \brief Contains information about a single joint for CHOMP planning
  */
-struct ChompJoint
+struct ChompDof
 {
-    const Joint* move3d_joint_;                                 /**< Pointer to the Move3D joint in the tree */
+    Joint* move3d_joint_;                                       /**< Pointer to the Move3D joint in the tree */
     int move3d_joint_index_;                                    /**< Index for use in a Move3D joint array */
     int move3d_dof_index_;                                       /**< Index in the configuration */
     int chomp_joint_index_;                                     /**< Joint index for CHOMP */
@@ -49,8 +49,8 @@ public:
     Robot* robot_;                                            /** Move3D robot which is planned **/
 
     std::string name_;                                          /**< Name of the planning group */
-    int num_joints_;                                            /**< Number of joints used in planning */
-    std::vector<ChompJoint> chomp_joints_;                      /**< Joints used in planning */
+    int num_dofs_;                                            /**< Number of joints used in planning */
+    std::vector<ChompDof> chomp_dofs_;                      /**< Joints used in planning */
     std::vector<std::string> link_names_;                       /**< Links used in planning */
     std::vector<std::string> collision_link_names_;             /**< Links used in collision checking */
     std::vector<CollisionPoint> collision_points_;              /**< Ordered list of collision checking points (from root to tip) */
@@ -72,6 +72,7 @@ public:
       * Returns the Move3d active dofs
       */
     std::vector<int> getActiveDofs() const;
+    std::vector<Move3D::Joint*> getActiveJoints() const;
 
     /**
    * Displays all bounding spheres
@@ -84,12 +85,12 @@ public:
 template <typename Derived>
 void ChompPlanningGroup::ChompPlanningGroup::getRandomState(Eigen::MatrixBase<Derived>& state_vec) const
 {
-    for (int i=0; i<num_joints_; i++)
+    for (int i=0; i<num_dofs_; i++)
     {
-        double min = chomp_joints_[i].joint_limit_min_;
-        double max = chomp_joints_[i].joint_limit_max_;
+        double min = chomp_dofs_[i].joint_limit_min_;
+        double max = chomp_dofs_[i].joint_limit_max_;
 
-        if (!chomp_joints_[i].has_joint_limits_)
+        if (!chomp_dofs_[i].has_joint_limits_)
         {
             min = -M_PI/2.0;
             max = M_PI/2.0;

@@ -150,6 +150,22 @@ void g3d_draw_eigen_box(	const Eigen::Vector3d& v1, const Eigen::Vector3d& v2, c
 }
 //#endif
 
+std::vector<Move3D::confPtr_t> global_configToDraw;
+
+void g3d_draw_configurations()
+{
+    G3D_Window *win = g3d_get_cur_win();
+    p3d_numcoll = false;
+    for( int i=0; i<int(global_configToDraw.size()); i++)
+    {
+        Move3D::Robot* robot = global_configToDraw[i]->getRobot();
+        robot->setAndUpdate( *global_configToDraw[i] );
+        win->vs.transparency_mode = G3D_TRANSPARENT_AND_OPAQUE;
+        g3d_draw_robot( robot->getP3dRobotStruct()->num, win, 0 );
+        win->vs.transparency_mode = G3D_TRANSPARENT_AND_OPAQUE;
+    }
+}
+
 std::vector< std::pair<Eigen::Vector3d, Eigen::MatrixXd> > global_linesToDraw;
 
 void g3d_draw_3d_lines()

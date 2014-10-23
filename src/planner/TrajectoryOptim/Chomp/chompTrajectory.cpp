@@ -50,7 +50,7 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
 //discretization_(source_traj.discretization_)
 {
     //num_joints_ = robot_model_->getNumberOfJoints();
-    num_joints_ = active_joints_.num_joints_;
+    num_joints_ = active_joints_.num_dofs_;
 
     // Set duration to external parameter if not equal 0.0
     uses_time_ =  duration != 0.0 ? true : false ;
@@ -96,7 +96,7 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
 
         for(int j=0; j<num_joints_; j++)
         {
-            int source_joint = active_joints_.chomp_joints_[j].move3d_dof_index_;
+            int source_joint = active_joints_.chomp_dofs_[j].move3d_dof_index_;
 
             confPtr_t q;
 

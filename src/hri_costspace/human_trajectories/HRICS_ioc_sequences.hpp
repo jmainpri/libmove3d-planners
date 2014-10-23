@@ -68,9 +68,15 @@ private:
         spheres,
         human_trajs };
 
+    // SAMPLE IK
+    enum sample_ik_t {
+        no_ik=0,
+        only_ik=1,
+        ik_and_traj=2 };
 
     phase_t phase_;
     feature_t features_type_;
+    sample_ik_t sample_ik_;
 
     std::vector<int> active_joints_;
     Move3D::StackedFeatures* feature_fct_;

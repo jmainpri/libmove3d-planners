@@ -229,6 +229,9 @@ void g3d_draw_cost_features()
     if( global_DrawModule != NULL )
         global_DrawModule->draw();
 
+    // Draws a set of configurations
+    g3d_draw_configurations();
+
 #ifdef HRI_COSTSPACE
     g3d_draw_costspace();
     g3d_draw_hrics(0);

@@ -178,6 +178,10 @@ bool IocSequences::run()
     phase_                  = (phase_t)HriEnv->getInt(HricsParam::ioc_phase);
     cout << "ioc phase : " << phase_ << endl;
 
+    // Modify sample ik
+    sample_ik_              = (sample_ik_t)HriEnv->getInt(HricsParam::ioc_ik);
+    cout << "ioc sample ik : " << sample_ik_ << endl;
+
     bool StopRun = false;
     std::vector<Eigen::VectorXd> results;
     int iteration = 0;
@@ -333,9 +337,16 @@ bool IocSequences::run()
             eval_->setDemoIds( ids );
 
             if( sample_from_file )
-                eval_->runFromFileSampling( file_offset );
+
+                    eval_->runFromFileSampling( file_offset );
+
             else // cout << "sampling" << endl;
-                eval_->runSampling();
+            {
+                if( sample_ik_ == no_ik )
+                    eval_->runSampling();
+                if( sample_ik_ == only_ik )
+                    eval_->runIKSampling();
+            }
 
             g3d_draw_allwin_active();
         }

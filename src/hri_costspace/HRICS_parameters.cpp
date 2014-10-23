@@ -97,11 +97,13 @@ void initHricsParameters()
     myIntMap.insert( std::make_pair( HricsParam::ioc_planner_type, new intContainer(0) ));
     myIntMap.insert( std::make_pair( HricsParam::ioc_spheres_to_draw, new intContainer(-1) ));
     myIntMap.insert( std::make_pair( HricsParam::ioc_from_file_offset, new intContainer(-1) ));
+    myIntMap.insert( std::make_pair( HricsParam::ioc_ik, new intContainer(-1) ));
 
     // Double
     // ------------------------------------------------------------------
     myDoubleMap.insert( std::make_pair( HricsParam::ioc_spheres_power, new doubleContainer(2.0) ));
     myDoubleMap.insert( std::make_pair( HricsParam::ioc_sample_std_dev, new doubleContainer(2.0) ));
+    myDoubleMap.insert( std::make_pair( HricsParam::ioc_sample_std_dev_ik, new doubleContainer(2.0) ));
     myDoubleMap.insert( std::make_pair( HricsParam::ioc_cost_factor, new doubleContainer(2.0) ));
 
     //cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble( PlanParam::env_objectNessecity ) << endl;

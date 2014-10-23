@@ -63,6 +63,9 @@ public:
     void initNaturalOldDude();
     void initHumanBaseGrid(std::vector<double> box);
 
+    //! get the robot
+    Move3D::Robot* getRobot() { return m_Robot; }
+
     //! returns true of the robot is a human
     bool IsHuman() { return m_IsHuman; }
 
@@ -90,6 +93,9 @@ public:
     //! Set the robot to the comfort posture
     void setRobotToConfortPosture();
 
+    //! Return the comfort posture
+    Move3D::confPtr_t getComfortPosture() { return m_q_Confort->copy(); }
+
     //! get the cost of a point in the workspace
     double getCost(const Eigen::Vector3d& WSPoint, bool useLeftvsRightArm, bool withEffect = false);
 
@@ -114,9 +120,6 @@ public:
 
     //! get the object index dof
     int getObjectDof() { return m_IndexObjectDof; }
-
-    //! get the robot
-    Move3D::Robot* getRobot() { return m_Robot; }
 
     //! get the grid
     NaturalGrid* getGrid() { return m_Grid; }

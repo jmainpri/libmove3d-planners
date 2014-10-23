@@ -257,7 +257,7 @@ void StompOptimizer::initialize()
     group_joint_to_move3d_joint_index_.resize(num_joints_);
     for (int i=0; i<num_joints_; ++i)
     {
-        group_joint_to_move3d_joint_index_[i] = planning_group_->chomp_joints_[i].move3d_joint_index_;
+        group_joint_to_move3d_joint_index_[i] = planning_group_->chomp_dofs_[i].move3d_joint_index_;
     }
     
     num_collision_points_ = Move3DGetNumberOfCollisionPoints[collision_space_id_]( robot_model_ );
@@ -271,7 +271,7 @@ void StompOptimizer::initialize()
     for (int i=0; i<num_joints_; i++)
     {
         double joint_cost = 1.0;
-        // std::string joint_name = planning_group_->chomp_joints_[i].joint_name_;
+        // std::string joint_name = planning_group_->chomp_dofs_[i].joint_name_;
         //    nh.param("joint_costs/"+joint_name, joint_cost, 1.0);
         std::vector<double> derivative_costs(3);
         derivative_costs[0] = joint_cost*stomp_parameters_->getSmoothnessCostVelocity();
@@ -323,8 +323,8 @@ void StompOptimizer::initialize()
     
     for(int i=0; i<num_vars_all_;i++)
     {
-        segment_frames_[i].resize(planning_group_->num_joints_);
-        joint_pos_eigen_[i].resize(planning_group_->num_joints_);
+        segment_frames_[i].resize(planning_group_->num_dofs_);
+        joint_pos_eigen_[i].resize(planning_group_->num_dofs_);
     }
     
     if (num_collision_points_ > 0)
@@ -1195,8 +1195,8 @@ void StompOptimizer::addIncrementsToTrajectory()
         double scale = 1.0;
         double max = final_increments_.col(i).maxCoeff();
         double min = final_increments_.col(i).minCoeff();
-        double max_scale = planning_group_->chomp_joints_[i].joint_update_limit_ / fabs(max);
-        double min_scale = planning_group_->chomp_joints_[i].joint_update_limit_ / fabs(min);
+        double max_scale = planning_group_->chomp_dofs_[i].joint_update_limit_ / fabs(max);
+        double min_scale = planning_group_->chomp_dofs_[i].joint_update_limit_ / fabs(min);
         if (max_scale < scale)
             scale = max_scale;
         if (min_scale < scale)
@@ -1472,13 +1472,13 @@ bool StompOptimizer::handleJointLimits()
 
     for (int joint=0; joint<num_joints_; joint++)
     {
-        if (!planning_group_->chomp_joints_[joint].has_joint_limits_)
+        if (!planning_group_->chomp_dofs_[joint].has_joint_limits_)
             continue;
 
         // Added by jim for pr2 free flyer
         if( planning_group_->robot_->getName() == "PR2_ROBOT" )
         {
-            int index = planning_group_->chomp_joints_[joint].move3d_dof_index_;
+            int index = planning_group_->chomp_dofs_[joint].move3d_dof_index_;
 
             if( index == 8 || index == 9 || index == 10 ) {
                 group_trajectory_.getFreeJointTrajectoryBlock(joint) = Eigen::VectorXd::Zero(num_vars_free_);
@@ -1486,8 +1486,8 @@ bool StompOptimizer::handleJointLimits()
             }
         }
 
-        double joint_max = planning_group_->chomp_joints_[joint].joint_limit_max_;
-        double joint_min = planning_group_->chomp_joints_[joint].joint_limit_min_;
+        double joint_max = planning_group_->chomp_dofs_[joint].joint_limit_max_;
+        double joint_min = planning_group_->chomp_dofs_[joint].joint_limit_min_;
 
         // cout << "Joint max : " << joint_max << endl;
         // cout << "Joint min : " << joint_min << endl;
@@ -1597,16 +1597,16 @@ bool StompOptimizer::handleJointLimits()
 
 double StompOptimizer::getCollisionSpaceCost( const Configuration& q )
 {
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
     bool quiet = true;
 
     Configuration q_tmp = q;
     
     // Get the configuration dof values in the joint array
-    Eigen::VectorXd joint_array( planning_group_->num_joints_ );
+    Eigen::VectorXd joint_array( planning_group_->num_dofs_ );
     
-    for(int j=0; j<planning_group_->num_joints_;j++)
+    for(int j=0; j<planning_group_->num_dofs_;j++)
     {
         joint_array[j] = q_tmp[ joints[j].move3d_dof_index_ ];
     }
@@ -1636,10 +1636,10 @@ double StompOptimizer::getCollisionSpaceCost( const Configuration& q )
 
 void StompOptimizer::getFrames( int segment, const Eigen::VectorXd& joint_array, Configuration& q )
 {
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
     // Set the configuration to the joint array value
-    for(int j=0; j<planning_group_->num_joints_;j++)
+    for(int j=0; j<planning_group_->num_dofs_;j++)
     {
         int dof = joints[j].move3d_dof_index_;
 
@@ -1657,7 +1657,7 @@ void StompOptimizer::getFrames( int segment, const Eigen::VectorXd& joint_array,
     // g3d_draw_allwin_active();
 
     // Get the collision point position
-    for(int j=0; j<planning_group_->num_joints_;j++)
+    for(int j=0; j<planning_group_->num_dofs_;j++)
     {
         segment_frames_[segment][j] = joints[j].move3d_joint_->getMatrixPos();
 
@@ -2109,11 +2109,11 @@ void StompOptimizer::setGroupTrajectoryFromVectorConfig(const vector<confPtr_t>&
     }
     
     // Get the map from move3d index to group trajectory
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
     for (int i=start; i<=end; ++i)
     {
-        for(int j=0; j<planning_group_->num_joints_;j++)
+        for(int j=0; j<planning_group_->num_dofs_;j++)
         {
             double point = (*traj[i])[joints[j].move3d_dof_index_];
             group_trajectory_.getTrajectoryPoint(i).transpose()[j] = point;
@@ -2132,7 +2132,7 @@ void StompOptimizer::setGroupTrajectoryToVectorConfig(vector<confPtr_t>& traj)
     }
     
     // Get the map fro move3d index to group trajectory
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
     confPtr_t q = robot_model_->getCurrentPos();
     
@@ -2140,7 +2140,7 @@ void StompOptimizer::setGroupTrajectoryToVectorConfig(vector<confPtr_t>& traj)
     {
         Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(i).transpose();
 
-        for(int j=0; j<planning_group_->num_joints_;j++) {
+        for(int j=0; j<planning_group_->num_dofs_;j++) {
             (*q)[joints[j].move3d_dof_index_] = point[j];
         }
         traj.push_back( confPtr_t(new Configuration(*q)) );
@@ -2159,7 +2159,7 @@ void StompOptimizer::setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj )
     traj.clear();
     
     // Get the map fro move3d index to group trajectory
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
     
     confPtr_t q (new Configuration(*source_));
     // source_->setConstraints();
@@ -2181,7 +2181,7 @@ void StompOptimizer::setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj )
 
         Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(i).transpose();
 
-        for(int j=0; j<planning_group_->num_joints_;j++)
+        for(int j=0; j<planning_group_->num_dofs_;j++)
             (*q)[joints[j].move3d_dof_index_] = point[j];
 
         // q->setConstraints();
@@ -2194,7 +2194,7 @@ void StompOptimizer::setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj )
 void StompOptimizer::animateTrajectoryPolicy()
 {
     //    Move3D::Trajectory T(robot_model_);
-    //    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    //    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
     //    std::vector<Eigen::VectorXd> parameters;
     //
     //    policy_->getParameters(parameters);
@@ -2239,14 +2239,14 @@ void StompOptimizer::saveEndeffectorTraj()
 
     confPtr_t q = robot_model_->getCurrentPos();
 
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
     // for each point in the trajectory
     for (int i=start; i<=end; ++i)
     {
         Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(i).transpose();
 
-        for(int j=0; j<planning_group_->num_joints_;j++)
+        for(int j=0; j<planning_group_->num_dofs_;j++)
             (*q)[joints[j].move3d_dof_index_] = point[j];
 
         T.push_back( confPtr_t(new Configuration(*q)) );
@@ -2292,7 +2292,7 @@ void StompOptimizer::animateEndeffector(bool print_cost)
     // cout << "group_trajectory : " << endl;
     // cout << group_trajectory_.getTrajectory() << endl;
     
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
     Move3D::ChompTrajectory group_trajectory( group_trajectory_, 7 );
 
@@ -2310,7 +2310,7 @@ void StompOptimizer::animateEndeffector(bool print_cost)
     {
         Eigen::VectorXd point = group_trajectory.getTrajectoryPoint(i).transpose();
 
-        for(int j=0; j<planning_group_->num_joints_;j++)
+        for(int j=0; j<planning_group_->num_dofs_;j++)
             (*q)[joints[j].move3d_dof_index_] = point[j];
 
         // q->print();
@@ -2345,7 +2345,7 @@ void StompOptimizer::animateEndeffector(bool print_cost)
     // Set the robot to the first configuration
     Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(1).transpose();
     
-    for(int j=0; j<planning_group_->num_joints_;j++)
+    for(int j=0; j<planning_group_->num_dofs_;j++)
         (*q)[joints[j].move3d_dof_index_] = point[j];
 
     //    robot_model_->setAndUpdate( *q_tmp );
@@ -2548,14 +2548,14 @@ void StompOptimizer::draw()
 
 void StompOptimizer::drawCollisionPoints()
 {
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
     confPtr_t q = robot_model_->getCurrentPos();
 
     // Get the configuration dof values in the joint array
-    Eigen::VectorXd joint_array(planning_group_->num_joints_);
+    Eigen::VectorXd joint_array(planning_group_->num_dofs_);
 
-    for(int j=0; j<planning_group_->num_joints_;j++)
+    for(int j=0; j<planning_group_->num_dofs_;j++)
     {
         joint_array[j] = (*q)[ joints[j].move3d_dof_index_ ];
     }
@@ -2640,11 +2640,11 @@ confPtr_t StompOptimizer::getConfigurationOnGroupTraj(int ith)
 {
     confPtr_t q = planning_group_->robot_->getCurrentPos();
 
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
     Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(ith).transpose();
     
-    for(int j=0; j<planning_group_->num_joints_;j++)
+    for(int j=0; j<planning_group_->num_dofs_;j++)
         (*q)[joints[j].move3d_dof_index_] = point[j];
 
     return q;
@@ -2654,7 +2654,7 @@ double StompOptimizer::computeMove3DCost()
 {
     // calculate the forward kinematics for the fixed states only in the first iteration:
     Move3D::Trajectory T(robot_model_);
-    //const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    //const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
     int ith_point=0;
     
     // for each point in the trajectory
@@ -2677,7 +2677,7 @@ double StompOptimizer::computeMove3DCost()
 
 double StompOptimizer::resampleParameters(std::vector<Eigen::VectorXd>& parameters)
 {
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
     Move3D::Smoothing traj(planning_group_->robot_);
     Eigen::MatrixXd parameters_tmp(num_joints_,num_vars_free_);
     
@@ -2702,7 +2702,7 @@ double StompOptimizer::resampleParameters(std::vector<Eigen::VectorXd>& paramete
             //q = passive_dofs_[j];
             q = planning_group_->robot_->getCurrentPos();
 
-            for ( int i=0; i<planning_group_->num_joints_; ++i)
+            for ( int i=0; i<planning_group_->num_dofs_; ++i)
             {
                 (*q)[joints[i].move3d_dof_index_] = parameters_tmp(i,j);
             }
@@ -2722,7 +2722,7 @@ double StompOptimizer::resampleParameters(std::vector<Eigen::VectorXd>& paramete
     {
         confPtr_t q = traj.configAtParam(param);
 
-        for ( int i=0; i<this->getPlanningGroup()->num_joints_; ++i )
+        for ( int i=0; i<this->getPlanningGroup()->num_dofs_; ++i )
         {
             parameters_tmp(i,j) = (*q)[joints[i].move3d_dof_index_];
         }
@@ -2812,7 +2812,7 @@ void StompOptimizer::copyGroupTrajectoryToPolicy()
     }
     
     // draw traj
-    //    const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
+    //    const std::vector<ChompDof>& joints = optimizer->getPlanningGroup()->chomp_dofs_;
     //    Robot* robot = optimizer->getPlanningGroup()->robot_;
     //    Move3D::Trajectory traj(robot);
     //

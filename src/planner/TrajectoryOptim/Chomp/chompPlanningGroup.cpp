@@ -18,7 +18,7 @@ using namespace Move3D;
 ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& active_joints )
 {
     robot_ = rob;
-    chomp_joints_.clear();
+    chomp_dofs_.clear();
 
     bool print_group = false;
 
@@ -50,7 +50,7 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
             if (min == max)
                 continue;
 
-            ChompJoint jnt;
+            ChompDof jnt;
 
             jnt.move3d_joint_ = move3d_joint;
             jnt.move3d_joint_index_ = active_joints[i];
@@ -63,20 +63,42 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
             jnt.joint_limit_max_ = max;
             jnt.joint_update_limit_ = 0.10;
 
-            chomp_joints_.push_back( jnt );
+            chomp_dofs_.push_back( jnt );
         }
     }
 
-    num_joints_ = chomp_joints_.size();
+    num_dofs_ = chomp_dofs_.size();
 }
 
 std::vector<int> ChompPlanningGroup::getActiveDofs() const
 {
     std::vector<int> active_joints;
-    for(int i=0;i<int(chomp_joints_.size());i++)
+    for(int i=0;i<int(chomp_dofs_.size());i++)
     {
-        active_joints.push_back( chomp_joints_[i].move3d_dof_index_ );
-//        cout << "name : " << chomp_joints_[i].joint_name_ << ", dof_index_ : " << chomp_joints_[i].move3d_dof_index_ << endl;
+        active_joints.push_back( chomp_dofs_[i].move3d_dof_index_ );
+//        cout << "name : " << chomp_dofs_[i].joint_name_ << ", dof_index_ : " << chomp_dofs_[i].move3d_dof_index_ << endl;
+    }
+
+    return active_joints;
+}
+
+std::vector<Move3D::Joint*> ChompPlanningGroup::getActiveJoints() const
+{
+    std::vector<Move3D::Joint*> active_joints;
+    for(int i=0;i<int(chomp_dofs_.size());i++)
+    {
+        Move3D::Joint* joint = chomp_dofs_[i].move3d_joint_;
+
+        bool add_to_vector = true; // only add if not already in vector
+        for(int j=0;j<int(active_joints.size());j++)
+        {
+            if( joint == active_joints[j] ){
+                add_to_vector = false;
+                break;
+            }
+        }
+        if( add_to_vector )
+            active_joints.push_back( joint );
     }
 
     return active_joints;
@@ -91,9 +113,9 @@ bool ChompPlanningGroup::addCollisionPoint(CollisionPoint& collision_point)
 
     // check if this collision point is controlled by any joints which belong to the group
     bool add_this_point=false;
-    for (int i=0; i<num_joints_; i++)
+    for (int i=0; i<num_dofs_; i++)
     {
-        if (collision_point.isParentJoint(chomp_joints_[i].move3d_joint_index_))
+        if (collision_point.isParentJoint(chomp_dofs_[i].move3d_joint_index_))
         {
             add_this_point = true;
             break;

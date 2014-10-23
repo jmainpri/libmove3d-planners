@@ -150,7 +150,7 @@ double SimpleDTW::euclidean_distance(const std::vector<double>& P1, const std::v
         double diff;
         if( planning_group_ )
         {
-            diff = planning_group_->chomp_joints_[i].is_circular_ ? dist_circle( P2[i], P1[i] ) : P1[i] - P2[i];
+            diff = planning_group_->chomp_dofs_[i].is_circular_ ? dist_circle( P2[i], P1[i] ) : P1[i] - P2[i];
         }
         else {
             diff = P1[i] - P2[i];
@@ -159,8 +159,8 @@ double SimpleDTW::euclidean_distance(const std::vector<double>& P1, const std::v
 
         if( diff > 2*M_PI ){
             cout << "dist[" << i << "] : " << dist << endl;
-            cout << "joint name : " <<  planning_group_->chomp_joints_[i].joint_name_ << endl;
-            cout << "is_circular_ : " <<  planning_group_->chomp_joints_[i].is_circular_ << endl;
+            cout << "joint name : " <<  planning_group_->chomp_dofs_[i].joint_name_ << endl;
+            cout << "is_circular_ : " <<  planning_group_->chomp_dofs_[i].is_circular_ << endl;
         }
         total += dist;
     }

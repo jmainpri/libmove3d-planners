@@ -38,6 +38,8 @@
 #include <Eigen/StdVector>
 #include <Eigen/Geometry>
 
+#include "API/ConfigSpace/configuration.hpp"
+
 void g3d_draw_costspace();
 void g3d_draw_grids();
 #ifdef HRI_COSTSPACE
@@ -45,8 +47,10 @@ void g3d_draw_hrics(int opengl_context);
 #endif
 
 extern std::vector< std::pair<Eigen::Vector3d, Eigen::MatrixXd> > global_linesToDraw;
+extern std::vector<Move3D::confPtr_t> global_configToDraw;
 
 void g3d_draw_3d_lines();
+void g3d_draw_configurations();
 
 //void drawGauge(int number, double cost);
 void computeConfigCostOnTraj( p3d_rob* rob, configPt q );

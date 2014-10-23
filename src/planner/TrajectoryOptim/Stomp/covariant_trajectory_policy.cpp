@@ -409,7 +409,7 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
         params_all.segment( free_vars_start_index_, num_vars_free_ ) = parameters[d] + noise[d];
 
         // Smooth the curve before computing the control cost
-        bool is_circular_joint = planning_group_->chomp_joints_[d].is_circular_;
+        bool is_circular_joint = planning_group_->chomp_dofs_[d].is_circular_;
         if( is_circular_joint ){
             move3d_smooth_circular_parameters( params_all );
         }
@@ -438,7 +438,7 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
                     {
                         double diff = params_all[i] - params_all[i+1];
                         if( std::fabs( diff_angle( params_all[i+1] , params_all[i] ) - diff ) > 1e-6 ){
-                            cout << "control cost breaks for : " << planning_group_->chomp_joints_[d].joint_name_ << endl;
+                            cout << "control cost breaks for : " << planning_group_->chomp_dofs_[d].joint_name_ << endl;
                         }
                     }
 
@@ -834,7 +834,7 @@ void CovariantTrajectoryPolicy::setGroupTrajectoryToMove3DTraj( Move3D::Trajecto
 //    }
 
     // Get the map from move3d index to group trajectory
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
     confPtr_t q (new Configuration(*planning_group_->robot_->getCurrentPos()));
 

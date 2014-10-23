@@ -113,6 +113,36 @@ private:
     Eigen::VectorXd tmp_noise_;
 };
 
+//! Ioc structure
+struct IocIk
+{
+    IocIk() { }
+    IocIk( int nb_joints );
+
+    Eigen::VectorXd nominal_parameters_;               /**< [num_dimensions] num_parameters */
+    Eigen::VectorXd parameters_;                       /**< [num_dimensions] num_parameters */
+    Eigen::VectorXd noise_;                       /**< [num_dimensions] num_parameters */
+
+    bool out_of_bounds_; /**< Wether the rollout is violating dof limits */
+
+    Move3D::confPtr_t getMove3DConfig( const Move3D::ChompPlanningGroup* planning_group ) const;
+};
+
+//! Sampler of noisy trajectories
+class IocIkSampler
+{
+public:
+    IocIkSampler();
+    IocIkSampler( int nb_joints );
+
+    //! Samples a noisy configuration
+    IocIk sample( double std_dev );
+
+private:
+    int nb_joints_;
+
+};
+
 //! Main IOC class
 class Ioc
 {
@@ -135,16 +165,23 @@ public:
 
     //! Reduces the trajectory magnitude
     bool jointLimits( IocTrajectory& traj ) const;
+    bool jointLimits( IocIk& q ) const;
 
     //! Generate the sampled trajectories
     //! around the demonstrations
     int generateSamples(int nb_samples, bool check_in_collision, context_t context = context_t() );
 
-    //! Returns Move3D trajectories
-    std::vector< std::vector<Move3D::Trajectory> > getSamples();
+    //! Generates samples around configuration
+    int generateIKSamples( int nb_samples, bool check_in_collision, context_t context );
 
     //! Returns Move3D trajectories
-    std::vector< Move3D::Trajectory > getDemonstrations();
+    std::vector< std::vector<Move3D::Trajectory> > getSamples() const;
+
+    //! Returns configurations
+    std::vector< std::vector<Move3D::confPtr_t> > getSamplesIk() const;
+
+    //! Returns Move3D trajectories
+    std::vector<Move3D::Trajectory> getDemonstrations() const;
 
     //! Drawing function
     void addTrajectoryToDraw( const IocTrajectory& t, int color );
@@ -159,15 +196,25 @@ public:
 private:
 
     bool isTrajectoryValid( const IocTrajectory& traj );
+    bool isIkValid( const IocIk& ik );
+    IocIk getLastConfigOfDemo(int d) const;
+    bool projectConfiguration( IocIk& q, int d );
 
     std::vector< IocTrajectory > demonstrations_;
+
     std::vector< std::vector<IocTrajectory> > samples_;
     double noise_stddev_;
 
+    std::vector< std::vector<IocIk> > samples_ik_;
+    double noise_stddev_ik_;
+
     const Move3D::ChompPlanningGroup* planning_group_;
+
     int num_vars_;
     int num_joints_;
+
     IocSampler sampler_;
+    IocIkSampler sampler_ik_;
 };
 
 //! Evaluation Class
@@ -180,6 +227,9 @@ public:
 
     //! Sample trajectories around the demonstrations
     virtual std::vector<std::vector<Move3D::Trajectory> > runSampling();
+
+    //! Sample ik around the demonstrations
+    virtual std::vector<std::vector<Move3D::confPtr_t> > runIKSampling();
 
     //! Run learning using the C++ library
     virtual void runLearning();

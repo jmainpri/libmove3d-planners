@@ -74,13 +74,15 @@ namespace HricsParam
             ioc_nb_of_way_points,
             ioc_planner_type,
             ioc_spheres_to_draw,
-            ioc_from_file_offset
+            ioc_from_file_offset,
+            ioc_ik
         };
 
         enum doubleParameter
         {
             ioc_spheres_power,
             ioc_sample_std_dev,
+            ioc_sample_std_dev_ik,
             ioc_cost_factor
         };
 

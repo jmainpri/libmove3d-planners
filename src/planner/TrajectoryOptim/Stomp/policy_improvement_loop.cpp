@@ -443,7 +443,7 @@ namespace stomp_motion_planner
         shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
         shared_ptr<CovariantTrajectoryPolicy> policy = static_pointer_cast<CovariantTrajectoryPolicy>(policy_);
 
-        const std::vector<Move3D::ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
+        const std::vector<Move3D::ChompDof>& joints = optimizer->getPlanningGroup()->chomp_dofs_;
 
         Eigen::MatrixXd parameters( num_dimensions_, num_time_steps_ );
 
@@ -455,11 +455,11 @@ namespace stomp_motion_planner
         confs[0] = optimizer->getPlanningGroup()->robot_->getCurrentPos();
         confs[1] = optimizer->getPlanningGroup()->robot_->getCurrentPos();
 
-        for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+        for ( int i=0; i<optimizer->getPlanningGroup()->num_dofs_; ++i)
             (*confs[0])[joints[i].move3d_dof_index_] = parameters(i,0);
 
 
-        for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+        for ( int i=0; i<optimizer->getPlanningGroup()->num_dofs_; ++i)
             (*confs[1])[joints[i].move3d_dof_index_] = parameters(i,num_time_steps_-1);
 
 
@@ -471,7 +471,7 @@ namespace stomp_motion_planner
         {
             confPtr_t q = traj.configAtParam(param);
 
-            for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i )
+            for ( int i=0; i<optimizer->getPlanningGroup()->num_dofs_; ++i )
                 parameters(i,j) = (*q)[joints[i].move3d_dof_index_];
 
             param += step;
@@ -497,7 +497,7 @@ namespace stomp_motion_planner
         shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
         shared_ptr<CovariantTrajectoryPolicy> policy = static_pointer_cast<CovariantTrajectoryPolicy>(policy_);
 
-        const std::vector<Move3D::ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
+        const std::vector<Move3D::ChompDof>& joints = optimizer->getPlanningGroup()->chomp_dofs_;
         Move3D::Smoothing traj(optimizer->getPlanningGroup()->robot_);
         Eigen::MatrixXd parameters(num_dimensions_,num_time_steps_);
 
@@ -558,7 +558,7 @@ namespace stomp_motion_planner
 
             confPtr_t q = optimizer->getPlanningGroup()->robot_->getCurrentPos();
 
-            for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+            for ( int i=0; i<optimizer->getPlanningGroup()->num_dofs_; ++i)
             {
                 (*q)[joints[i].move3d_dof_index_] = parameters(i,j);
             }
@@ -573,7 +573,7 @@ namespace stomp_motion_planner
         {
             confPtr_t q = traj.configAtParam(param);
 
-            for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i )
+            for ( int i=0; i<optimizer->getPlanningGroup()->num_dofs_; ++i )
             {
                 parameters(i,j) = (*q)[joints[i].move3d_dof_index_];
             }
@@ -628,7 +628,7 @@ namespace stomp_motion_planner
     void PolicyImprovementLoop::getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<confPtr_t>& traj)
     {
         shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
-        const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
+        const std::vector<ChompDof>& joints = optimizer->getPlanningGroup()->chomp_dofs_;
         Robot* robot = optimizer->getPlanningGroup()->robot_;
 
         traj.clear();
@@ -642,7 +642,7 @@ namespace stomp_motion_planner
         {
             confPtr_t q = robot->getCurrentPos();
 
-            for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+            for ( int i=0; i<optimizer->getPlanningGroup()->num_dofs_; ++i)
             {
                 (*q)[joints[i].move3d_dof_index_] = rollout[i][j];
             }
