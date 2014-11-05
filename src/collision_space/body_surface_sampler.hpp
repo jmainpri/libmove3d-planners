@@ -55,7 +55,7 @@ public:
     //-----------------------------------------------------
     std::vector<CollisionPoint> getLinksCollisionPoints(Joint* jnt, int segment_number , const std::vector<int>& parent_joints );
     std::vector<CollisionPoint> generateJointCollisionPoints(Robot* robot, int id, const std::vector<int>& active_joints, const std::vector<int>& planner_joints);
-    std::vector<CollisionPoint> generateRobotCollisionPoints(Robot* robot, const std::vector<int>& active_joints, const std::vector<int>& planner_joints);
+    std::vector<CollisionPoint> generateRobotCollisionPoints(Robot* robot, const std::vector<int>& active_joints, const std::vector<int>& planner_joints, int id_first_active_joint=2);
     std::vector<CollisionPoint> generateAllRobotCollisionPoints(Robot* robot);
 
     // Access a collision point vector

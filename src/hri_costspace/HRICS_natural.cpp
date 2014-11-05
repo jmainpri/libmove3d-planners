@@ -723,21 +723,25 @@ void Natural::getConfigCostFeatures( Eigen::VectorXd& features )
     //cout << "-------------------------------" << endl;
     //---------------------------------------------------
     // Joints Displacement
-    double c_f_Joint_displacement = getJointDisplacement();
-    cout << "JDis = " << c_f_Joint_displacement << endl;
+    double c_f_Joint_displacement   = 0.1*getJointDisplacement();
+
     //---------------------------------------------------
     // Energy
-    double c_f_Energy = getEnergy();
-    cout << "Ener = " << c_f_Energy << endl;
+    double c_f_Energy               = 0.1*getEnergy();
+
     //---------------------------------------------------
     // Discomfort
-    double c_f_Discomfort = getDiscomfort();
-    cout << "Disc = " << c_f_Discomfort << endl;
+    double c_f_Discomfort           = 0.1*getDiscomfort();
+
     //---------------------------------------------------
 
     features[0] = c_f_Joint_displacement;
     features[1] = c_f_Energy;
     features[2] = c_f_Discomfort;
+
+//    cout << "JDis = " << c_f_Joint_displacement << endl;
+//    cout << "Ener = " << c_f_Energy << endl;
+//    cout << "Disc = " << c_f_Discomfort << endl;
 }
 
 /*!
@@ -795,7 +799,7 @@ double Natural::getEnergy()
         }
     }
 
-    return 0.2*Energy;
+    return Energy;
 }
 
 /*!
@@ -804,7 +808,7 @@ double Natural::getEnergy()
  */
 double Natural::getDiscomfort()
 {
-    return 0.005*getJointLimits(*m_Robot->getCurrentPos());
+    return getJointLimits(*m_Robot->getCurrentPos());
 }
 
 /*!
@@ -885,12 +889,12 @@ double Natural::getCustomDistConfig(Configuration& q)
             double dof_dist = p3d_jnt_calc_dof_dist( jntPt->getP3dJointStruct(), j, m_q_Confort->getConfigStruct(), q.getConfigStruct());
             dof_dist = W*SQR(dof_dist);
             ljnt += dof_dist;
-            printf( "dof %s dist[%d] = %f\n",jntPt->getName().c_str(), jntPt->getIndexOfFirstDof()+j, dof_dist);
+//            printf( "dof %s dist[%d] = %f\n",jntPt->getName().c_str(), jntPt->getIndexOfFirstDof()+j, dof_dist);
         }
     }
     l = sqrt(ljnt);
 
-    printf( "total dist = %f\n", l );
+//    printf( "total dist = %f\n", l );
 
     return l;
 }
@@ -1004,52 +1008,6 @@ double Natural::basicNaturalArmCost(bool useLeftvsRightArm)
     //cout << "Cost = " << Cost << endl;
     return Cost;
 }
-
-/*
-double Natural::akinRightArmReachCost()
-{
-    double cost=0, potential = 0;
-
-    double restq1 = (*m_q_Confort)[ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER+0];
-    double restq2 = (*m_q_Confort)[ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER+1];
-    double restq3 = (*m_q_Confort)[ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER+2];
-    double restq4 = (*m_q_Confort)[ACHILE_CONFIG_INDEX_ARM_RIGTH_ELBOW+0];
-
-    confPtr_t q = m_Robot->getCurrentPos();
-
-    cost = (SQR((*q)[ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER+0]-restq1) +
-            SQR((*q)[ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER+1]-restq2) +
-            SQR((*q)[ACHILE_CONFIG_INDEX_ARM_RIGTH_SHOULDER+2]-restq3) +
-            SQR((*q)[ACHILE_CONFIG_INDEX_ARM_RIGTH_ELBOW]-restq4)-0.76)/23.4;
-
-    potential = (m_Robot->getJoint(ACHILE_JOINT_ARM_RIGTH_ELBOW)->getVectorPos()(2) +
-                 m_Robot->getJoint(ACHILE_JOINT_ARM_RIGTH_WRIST)->getVectorPos()(2)-2.43)/0.67;
-
-    return cost+potential/2;
-}
-
-double Natural::akinLeftArmReachCost()
-{
-    double cost=0, potential = 0;
-
-    double restq1 = (*m_q_Confort)[ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER+0];
-    double restq2 = (*m_q_Confort)[ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER+1];
-    double restq3 = (*m_q_Confort)[ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER+2];
-    double restq4 = (*m_q_Confort)[ACHILE_CONFIG_INDEX_ARM_LEFT_ELBOW+0];
-
-    confPtr_t q = m_Robot->getCurrentPos();
-
-    cost = (SQR((*q)[ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER+0]-restq1) +
-            SQR((*q)[ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER+1]-restq2) +
-            SQR((*q)[ACHILE_CONFIG_INDEX_ARM_LEFT_SHOULDER+2]-restq3) +
-            SQR((*q)[ACHILE_CONFIG_INDEX_ARM_LEFT_ELBOW]-restq4)-0.76)/23.4;
-
-    potential = (m_Robot->getJoint(ACHILE_JOINT_ARM_LEFT_ELBOW)->getVectorPos()(2) +
-                 m_Robot->getJoint(ACHILE_JOINT_ARM_LEFT_WRIST)->getVectorPos()(2)-2.43)/0.67;
-
-    return cost+potential/2;
-}
-*/
 
 /*!
  * Computes the cost for a

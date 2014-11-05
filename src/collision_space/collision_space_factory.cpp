@@ -61,6 +61,8 @@ static bool m_init=false;
 
 static Robot* m_robot=NULL;
 
+static int m_id_of_first_active_joint=2;
+
 void traj_optim_reset_collision_space()
 {
     if( global_collisionSpace )
@@ -126,7 +128,7 @@ bool traj_optim_init_collision_points()
     {
         planner_joints_id.push_back( m_planner_joints[i] );
     }
-    m_collision_points = sampler->generateRobotCollisionPoints( m_robot, m_active_joints, planner_joints_id );
+    m_collision_points = sampler->generateRobotCollisionPoints( m_robot, m_active_joints, planner_joints_id, m_id_of_first_active_joint );
 
     cout << "nb of collision point are " << m_collision_points.size() << endl;
 
@@ -156,7 +158,7 @@ void traj_optim_init_collision_space()
     if( m_robot->getName().find("HERAKLES") == std::string::npos )
     {
 //        cout << "robot name : " << m_robot->getName() << endl;
-//        cout << "Add robot bodies exit " << endl; exit(0);
+//        cout << "Add robot bodies exit " << endl; // exit(0);
 
         for (unsigned int joint_id=0; joint_id<m_robot->getNumberOfJoints(); joint_id++)
         {
@@ -211,6 +213,13 @@ bool traj_optim_default_init()
 
     m_active_joints = m_robot->getActiveJointsIds();
     m_planner_joints = m_active_joints;
+
+    m_id_of_first_active_joint = 0;
+
+    for( int i=0; i<m_planner_joints.size(); i++)
+    {
+        cout << "Active joints : " << m_planner_joints[i] << endl;
+    }
 
 //    for (int i=1; i<int(m_robot->getNumberOfJoints()); i++)
 //    {

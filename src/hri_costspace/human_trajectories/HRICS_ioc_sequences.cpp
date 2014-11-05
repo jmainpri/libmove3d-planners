@@ -297,7 +297,10 @@ bool IocSequences::run()
 
                 // global_ht_cost_space->normalizing_by_sampling();
 
-                setGenerationFeatures();
+                if( sample_ik_ == no_ik || sample_ik_ == ik_and_traj  )
+                    setGenerationFeatures();
+                else if( sample_ik_ == only_ik )
+                    setSamplingFeaturesIk();
 
                 if( use_human_simulation_demo_ )
                 {
@@ -319,7 +322,10 @@ bool IocSequences::run()
 
             cout << "global_ht_simulator : " << global_ht_simulator << endl;
 
-            setSamplingFeatures();
+            if( sample_ik_ == no_ik || sample_ik_ == ik_and_traj  )
+                setSamplingFeatures();
+            else if( sample_ik_ == only_ik )
+                setSamplingFeaturesIk();
 
 //            eval->loadWeightVector();
 //            eval->setLearnedWeights();
@@ -332,13 +338,16 @@ bool IocSequences::run()
             cout << "stack info" << endl;
             feature_fct_->printInfo();
 
-            // Set what demo correspond to what sample
-            std::vector<int> ids = global_ht_simulator->getDemoIds();
-            eval_->setDemoIds( ids );
+            if( global_ht_simulator )
+            {
+                // Set what demo correspond to what sample
+                std::vector<int> ids = global_ht_simulator->getDemoIds();
+                eval_->setDemoIds( ids );
+            }
 
             if( sample_from_file )
 
-                    eval_->runFromFileSampling( file_offset );
+                eval_->runFromFileSampling( file_offset );
 
             else // cout << "sampling" << endl;
             {
@@ -681,6 +690,30 @@ void IocSequences::setSamplingFeatures()
 //        feature_fct_->getFeatureFunction("Smoothness")->setWeights( w_smoo * FeatureVect::Ones(1) );
 //        feature_fct_->getFeatureFunction("Collision")->setWeights( w_obst * FeatureVect::Ones(1) );
 //        feature_fct_->getFeatureFunction("Distance")->setWeights( w_dist * w_distance_16 );
+
+
+        cout << "stack info" << endl;
+        feature_fct_->printInfo();
+
+        cout << "original_vect : " << endl;
+        feature_fct_->printWeights();
+    }
+}
+
+void IocSequences::setSamplingFeaturesIk()
+{
+    if( features_type_ == human_trajs && global_ht_cost_space != NULL )
+    {
+        cout << "Set human features for sampling" << endl;
+
+        std::vector<std::string> active_features;
+        active_features.push_back("Distance");
+        active_features.push_back("Musculoskeletal");
+
+        feature_fct_->setActiveFeatures( active_features );
+
+        feature_fct_->getFeatureFunction("Distance")->setWeights( w_distance_16 );
+        feature_fct_->getFeatureFunction("Musculoskeletal")->setWeights( w_musculo_03 );
 
 
         cout << "stack info" << endl;

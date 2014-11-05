@@ -542,19 +542,23 @@ void StackedFeatures::printInfo() const
 
         cout << " -- feature fct " << i << " " <<  feature_stack_[i]->getName();
         cout << " is " << ( feature_stack_[i]->is_active_ ? "active" : "deactivated" ) ;
-        cout << ", it contains : " << w.size() << " features with ( active, weight ) :" ;
-        cout << endl;
 
-        for(int j=0;j<w.size();j++)
+        if( feature_stack_[i]->is_active_ )
         {
-            std::vector<int>::const_iterator it = find( feature_stack_[i]->getActiveFeatures().begin(),
-                                                        feature_stack_[i]->getActiveFeatures().end(),
-                                                        j );
+            cout << ", it contains : " << w.size() << " features with ( active, weight ) :" ;
+            cout << endl;
 
-            cout << "\t( " << ( it != feature_stack_[i]->getActiveFeatures().end() ) << " , " << w[j] << " ) ; ";
+            for(int j=0;j<w.size();j++)
+            {
+                std::vector<int>::const_iterator it = find( feature_stack_[i]->getActiveFeatures().begin(),
+                                                            feature_stack_[i]->getActiveFeatures().end(),
+                                                            j );
 
-            if( (j+1) % 5 == 0 )
-                cout << endl;
+                cout << "\t( " << ( it != feature_stack_[i]->getActiveFeatures().end() ) << " , " << w[j] << " ) ; ";
+
+                if( (j+1) % 5 == 0 )
+                    cout << endl;
+            }
         }
 
         cout << endl;

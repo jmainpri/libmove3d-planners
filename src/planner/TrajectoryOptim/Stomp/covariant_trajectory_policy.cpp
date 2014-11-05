@@ -86,16 +86,20 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
                                            const std::vector<double>& derivative_costs,
                                            const ChompPlanningGroup* planning_group)
 {
-//    type_ = vel; // Match control cost
+    type_ = vel; // Match control cost
 //    type_ = acc;
 //    type_ = jerk;
-    type_ = vel;
+//    type_ = vel;
 
     //node_handle_ = node_handle;
     //print_debug_ = true;
     
     num_time_steps_ = num_time_steps;
     num_dimensions_ = num_dimensions;
+
+    // Computes a control matrices that allow motion of the end part
+    // Should be set to 2 for the normal case
+    free_offset_ = PlanEnv->getBool(PlanParam::trajStompMoveEndConfig) ? int( num_time_steps_ / 3 ) : 0;
 
     use_buffer_ = false;
     
@@ -275,7 +279,7 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices()
 {
     double multiplier = 1.0;
     differentiation_matrices_.clear();
-    differentiation_matrices_.resize( NUM_DIFF_RULES, Eigen::MatrixXd::Zero(num_vars_all_, num_vars_all_) );
+    differentiation_matrices_.resize( NUM_DIFF_RULES, Eigen::MatrixXd::Zero( num_vars_all_ + free_offset_, num_vars_all_ + free_offset_) );
 
     for (int d=0; d<NUM_DIFF_RULES; ++d)
     {
@@ -287,14 +291,14 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices()
         // multiplier /= movement_dt_;
         // multiplier /= 0.03815;
 
-        for (int i=0; i<num_vars_all_; i++)
+        for (int i=0; i<num_vars_all_+ free_offset_; i++)
         {
             for (int j=-DIFF_RULE_LENGTH/2; j<=DIFF_RULE_LENGTH/2; j++)
             {
                 int index = i+j;
                 if (index < 0)
                     continue;
-                if (index >= num_vars_all_)
+                if (index >= (num_vars_all_+ free_offset_))
                     continue;
                 differentiation_matrices_[d](i,index) = multiplier * DIFF_RULES[d][j+DIFF_RULE_LENGTH/2];
             }
@@ -315,10 +319,12 @@ bool CovariantTrajectoryPolicy::initializeCosts()
     control_costs_all_.clear();
     control_costs_.clear();
     inv_control_costs_.clear();
+    covariances_.clear();
+
     for (int d=0; d<num_dimensions_; ++d)
     {
         // Construct the quadratic cost matrices (for all variables)
-        Eigen::MatrixXd cost_all = Eigen::MatrixXd::Identity(num_vars_all_, num_vars_all_) * cost_ridge_factor_;
+        Eigen::MatrixXd cost_all = Eigen::MatrixXd::Identity( num_vars_all_ + free_offset_, num_vars_all_ + free_offset_ ) * cost_ridge_factor_;
 
         for (int i=0; i<NUM_DIFF_RULES; ++i)
         {
@@ -329,14 +335,24 @@ bool CovariantTrajectoryPolicy::initializeCosts()
 
         // Extract the quadratic cost just for the free variables
         Eigen::MatrixXd cost_free = cost_all.block( DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_, num_vars_free_ );
+        Eigen::MatrixXd cost_free2 = cost_all.block( DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_+ free_offset_, num_vars_free_+ free_offset_ );
 
         // cout << "cost_free("<<d<<") = " << endl << cost_free << endl;
 
         control_costs_.push_back( cost_free );
         inv_control_costs_.push_back( cost_free.inverse() );
+//        covariances_.push_back( cost_free.inverse() );
+        covariances_.push_back( cost_free2.inverse().block( 0, 0, num_vars_free_, num_vars_free_ ) );
+
+//        move3d_save_matrix_to_file( cost_all, "../matlab/cost_all.txt" );
 
         //cout << "control_costs["<< d <<"]  = " << endl << control_costs_[d] << endl;
     }
+
+//    exit(0);
+
+//    move3d_save_matrix_to_file( control_costs_[0], "../matlab/cost_free.txt" );
+//    move3d_save_matrix_to_file( covariances_[0], "../matlab/invcost_matrix.txt" );
     return true;
 }
 

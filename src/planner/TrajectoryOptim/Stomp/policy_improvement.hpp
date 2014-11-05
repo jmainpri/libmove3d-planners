@@ -187,6 +187,7 @@ namespace stomp_motion_planner
     
     std::vector<Eigen::MatrixXd> control_costs_;                            /**< [num_dimensions] num_parameters x num_parameters */
     std::vector<Eigen::MatrixXd> inv_control_costs_;                        /**< [num_dimensions] num_parameters x num_parameters */
+//    std::vector<Eigen::MatrixXd> covariances_;
 
     bool multiple_smoothness_;
     Eigen::VectorXd control_cost_weights_;

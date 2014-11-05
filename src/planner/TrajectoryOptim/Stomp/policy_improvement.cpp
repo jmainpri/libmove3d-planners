@@ -175,6 +175,7 @@ namespace stomp_motion_planner
 
         policy_->setNumTimeSteps(num_time_steps_);
         policy_->getControlCosts(control_costs_);
+        policy_->getCovariances(inv_control_costs_);
         policy_->getNumDimensions(num_dimensions_);
         policy_->getNumParameters(num_parameters_);
         policy_->getBasisFunctions(basis_functions_);
@@ -203,14 +204,16 @@ namespace stomp_motion_planner
     bool PolicyImprovement::preAllocateMultivariateGaussianSampler()
     {
         // invert the control costs, initialize noise generators:
-        inv_control_costs_.clear();
+//        inv_control_costs_.clear();
         noise_generators_.clear();
 
         for (int d=0; d<num_dimensions_; ++d)
         {
             //cout << "control_costs_[" << d << "] = " << endl << control_costs_[d] << endl;
             //cout << "inv_control_costs_[" << d << "] = " << endl << control_costs_[d].inverse() << endl;
-            inv_control_costs_.push_back(control_costs_[d].inverse());
+//            inv_control_costs_.push_back(control_costs_[d].inverse());
+
+            move3d_save_matrix_to_file( inv_control_costs_[d], "../matlab/invcost_matrix.txt" );
 
             if( !PlanEnv->getBool(PlanParam::trajStompMatrixAdaptation) )
             {
@@ -333,6 +336,7 @@ namespace stomp_motion_planner
             for (int p=0; p<num_parameters_[d]; ++p)
             {
                 double column_max = inv_control_costs_[d](0,p);
+
                 for (int p2 = 1; p2 < num_parameters_[d]; ++p2)
                 {
                     if (inv_control_costs_[d](p2,p) > column_max)

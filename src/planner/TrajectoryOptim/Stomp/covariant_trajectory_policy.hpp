@@ -118,6 +118,16 @@ public:
     bool getControlCosts(std::vector<Eigen::MatrixXd>& control_costs);
 
     /**
+    * Gets the positive semi-definite matrix of the quadratic control cost
+    * The weight of this control cost is provided by the task
+    * is equal to the inverse of the control cost matrices in the general case
+    *
+    * @param control_cost_matrix (output) Array of square, positive semi-definite matrix: num_params x num_params
+    * @return true on success, false on failure
+    */
+   bool getCovariances(std::vector<Eigen::MatrixXd>& covariances);
+
+    /**
      * Update the policy parameters based on the updates per timestep
      * @param updates (input) parameter updates per time-step, num_time_steps x num_parameters
      * @return true on success, false on failure
@@ -195,6 +205,7 @@ private:
     bool print_debug_;
 
     int num_time_steps_;
+    int free_offset_;
 
     int free_vars_start_index_;
     int free_vars_end_index_;
@@ -207,6 +218,7 @@ private:
     std::vector<Eigen::MatrixXd> basis_functions_;
     std::vector<Eigen::MatrixXd> control_costs_;
     std::vector<Eigen::MatrixXd> inv_control_costs_;
+    std::vector<Eigen::MatrixXd> covariances_;
     std::vector<Eigen::MatrixXd> control_costs_all_;
 
     std::vector<Eigen::VectorXd> linear_control_costs_;
@@ -285,6 +297,12 @@ inline bool CovariantTrajectoryPolicy::getBasisFunctions(std::vector<Eigen::Matr
 inline bool CovariantTrajectoryPolicy::getControlCosts(std::vector<Eigen::MatrixXd>& control_costs)
 {
     control_costs = control_costs_;
+    return true;
+}
+
+inline bool CovariantTrajectoryPolicy::getCovariances(std::vector<Eigen::MatrixXd>& covariances)
+{
+    covariances = covariances_;
     return true;
 }
 

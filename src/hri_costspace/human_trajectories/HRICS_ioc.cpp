@@ -227,9 +227,9 @@ void IocSampler::initPolicy()
     policy_.setPrintDebug( false );
 
     std::vector<double> derivative_costs(3);
-    derivative_costs[0] = 0.0; // velocity
+    derivative_costs[0] = 1.0; // velocity
     derivative_costs[1] = 0.0; // acceleration
-    derivative_costs[2] = 1.0; // smoothness
+    derivative_costs[2] = 0.0; // smoothness
 
     // initializes the policy
     policy_.initialize( num_vars_free_, num_joints_, 1.0, 0.0, derivative_costs );
@@ -244,6 +244,8 @@ bool IocSampler::preAllocateMultivariateGaussianSampler()
     for (int j=0; j<num_joints_; ++j)
     {
         inv_control_costs_.push_back( control_costs_[j].inverse() );
+
+        move3d_save_matrix_to_file( inv_control_costs_[0], "../matlab/invcost_matrix.txt" );
 
         // Uncomment to print the precision Matrix
         // cout << endl << control_costs_[j] << endl;
@@ -678,34 +680,27 @@ IocIk Ioc::getLastConfigOfDemo(int d) const
 bool Ioc::projectConfiguration( IocIk& q, int d )
 {
     Move3D::Robot* robot = planning_group_->robot_;
+
     Move3D::confPtr_t q_demo = getLastConfigOfDemo(d).getMove3DConfig(planning_group_);
-//    robot->setAndUpdate(*q_demo);
-
-//    g3d_draw_allwin_active();
-////    cout << "wait for key" << endl;
-////    std::cin.ignore();
-
     Move3D::confPtr_t q_proj = q.getMove3DConfig(planning_group_);
 
+    // Get active joints
     std::vector<Move3D::Joint*> active_joints = planning_group_->getActiveJoints();
-    std::vector<int> active_dofs = planning_group_->getActiveDofs();
+    active_joints.erase(active_joints.begin()); // Remove Free Flyer
 
+    // Get task pose
     Move3D::Joint* eef = robot->getJoint("rPalm");
-
-    active_joints.erase(active_joints.begin()); // remove FF
-
     robot->setAndUpdate(*q_demo);
     Eigen::VectorXd xdes = eef->getXYZPose();
 
+    // Perform General IK
     robot->setAndUpdate(*q_proj);
-
     Move3D::GeneralIK ik( robot );
     ik.initialize( active_joints, eef );
-    bool succeed = ik.solve( 200, xdes );
+    bool succeed = ik.solve( xdes );
 
-    active_dofs = planning_group_->getActiveDofs();
-    q.parameters_ = robot->getCurrentPos()->getEigenVector( active_dofs );
-
+    // Retreive configuration
+    q.parameters_ = robot->getCurrentPos()->getEigenVector( planning_group_->getActiveDofs() );
     return succeed;
 }
 
@@ -826,7 +821,7 @@ int Ioc::generateSamples( int nb_samples, bool check_in_collision, context_t con
                     samples_[d][ns].parameters_[j] = samples_[d][ns].nominal_parameters_[j] + samples_[d][ns].noise_[j]; //.cwiseProduct(samples_[d][ns].total_costs_[j]);
                 }
 
-//                /*is_valid =*/ jointLimits( samples_[d][ns] );
+                is_valid = jointLimits( samples_[d][ns] );
 
 
                 if( check_in_collision ) {
@@ -894,7 +889,11 @@ void Ioc::addTrajectoryToDraw( const IocTrajectory& t, int color )
     color_traj[1] = color_vect[1];
     color_traj[2] = color_vect[2];
 
-    global_linesToDraw.push_back( std::make_pair( color_traj, T.getJointPoseTrajectory( planning_group_->robot_->getJoint(45) ) ) );
+    if( planning_group_->robot_->getNumberOfJoints() > 44 )
+
+        global_linesToDraw.push_back( std::make_pair( color_traj, T.getJointPoseTrajectory( planning_group_->robot_->getJoint(45) ) ) );
+    else
+        global_trajToDraw.push_back( T );
 }
 
 void Ioc::addAllToDraw()
@@ -1708,12 +1707,15 @@ bool IocEvaluation::loadDemonstrations()
         instance_id++;
     }
 
-    context_t context(1);
-    for(int i=0; i<context_[0].size(); i++){
-        if( std::find( demos_to_remove.begin(), demos_to_remove.end(), i ) == demos_to_remove.end() )
-            context[0].push_back( context_[0][i] );
+    if( !context_.empty() )
+    {
+        context_t context(1);
+        for(int i=0; i<context_[0].size(); i++){
+            if( std::find( demos_to_remove.begin(), demos_to_remove.end(), i ) == demos_to_remove.end() )
+                context[0].push_back( context_[0][i] );
+        }
+        context_ = context;
     }
-    context_ = context;
 
     cout << "End loading demonstrations" << endl;
 
@@ -1847,6 +1849,27 @@ void IocEvaluation::setBuffer(int d)
             static_cast<SmoothnessFeature*>(feature_fct_->getFeatureFunction("SmoothnessAll"))->setBuffer( buffer );
         }
     }
+}
+
+std::vector<FeatureVect> IocEvaluation::addDemonstrationsIk(HRICS::Ioc& ioc)
+{
+    // Get features of demos
+    std::vector<FeatureVect> phi_demo(demos_.size());
+
+    for( size_t d=0; d<demos_.size(); d++ )
+    {
+        if( use_context_ )
+            setContext(d);
+
+        ioc.addDemonstration( demos_[d].getEigenMatrix( plangroup_->getActiveDofs() ), demos_[d].getDeltaTime() );
+
+        FeatureVect phi = feature_fct_->getFeatures( *ioc.getLastConfigOfDemo(d).getMove3DConfig(plangroup_) );
+        cout << "Feature Demo : " << phi.transpose() << endl;
+
+        phi_demo[d] = phi;
+    }
+
+    return phi_demo;
 }
 
 std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc)
@@ -2008,25 +2031,10 @@ std::vector<std::vector<Move3D::confPtr_t> > IocEvaluation::runIKSampling()
 
     global_configToDraw.clear();
 
-//    print_joint_mapping( robot_ );
-
-//    for( int i=0; i<plangroup_->chomp_dofs_.size();i++){
-//        cout << " group joint name : "  << plangroup_->chomp_dofs_[i].joint_name_ << endl;
-//        cout << "              min : "  << plangroup_->chomp_dofs_[i].joint_limit_min_ << endl;
-//        cout << "              max : "  << plangroup_->chomp_dofs_[i].joint_limit_max_ << endl;
-//    }
-
     for( int i=0;i<demo_ids_.size();i++)
     {
         cout << "demo_ids_[" << i << "] : " << demo_ids_[i] << endl;
     }
-
-
-    // For human
-    feature_fct_->setAllFeaturesActive();
-
-    // Compute the sum of gradient
-    // double gradient_sum = 0.0;
 
     feature_fct_->printInfo();
 
@@ -2040,7 +2048,7 @@ std::vector<std::vector<Move3D::confPtr_t> > IocEvaluation::runIKSampling()
 
     // Get demos features
     cout << "Add demonstrations" << endl;
-    phi_demos_ = addDemonstrations( ioc );
+    phi_demos_ = addDemonstrationsIk( ioc );
 
 //    cout << "wait for key" << endl;
 //    std::cin.ignore();
@@ -2061,24 +2069,13 @@ std::vector<std::vector<Move3D::confPtr_t> > IocEvaluation::runIKSampling()
 //        ioc.addAllToDraw();
 //        saveSamplesToFile( samples );
     }
-//    else { // load from file
-//        samples = loadSamplesFromFile( demos_.size(), nb_samples_ );
-//    }
 
     double demo_cost = 0.0;
-//    double demo_cost = feature_fct_->getWeights().transpose()*phi_demos_[0];
-//    cout << "cost " << int(0) << " : " <<  demo_cost << endl;
-    cout << "dist wrist " << phi_demos_[0][0] << endl; //24
-    cout << "length : " << demos_[0].getParamMax() << endl;
 
-    FeatureVect phi = feature_fct_->getFeatureCount( demos_[0] );
+    FeatureVect phi = feature_fct_->getFeatures( *ioc.getLastConfigOfDemo(0).getMove3DConfig(plangroup_) );
     cout << "weight : " << feature_fct_->getWeights().transpose() << endl;
     cout << "cost : " << feature_fct_->getWeights().transpose()*phi << " , ";
     cout << "Feature Sample : " << int(-1) << " , " << phi.transpose() << endl;
-
-    Feature* fct = feature_fct_->getFeatureFunction("Distance");
-    if( fct != NULL )
-        cout << "distance cost : " << fct->costTraj( demos_[0] ) << endl;
 
     int nb_lower_cost = 0;
     int nb_lower_feature = 0;
@@ -2094,20 +2091,11 @@ std::vector<std::vector<Move3D::confPtr_t> > IocEvaluation::runIKSampling()
         if( use_context_ )
             setContext(d);
 
-        if( feature_fct_->getFeatureFunction("SmoothnessAll") )
-            setBuffer(d);
-
 //        dtw_compare_performance( plangroup_, demos_[d], samples[d] );
 
         for( int i=0; i<int(samples[d].size()); i++)
         {
             phi = feature_fct_->getFeatures( *samples[d][i] );
-
-//            if( d == 8 )
-//            {
-//                cout << "wait for key" << endl;
-//                std::cin.ignore();
-//            }
 
             phi_k[d].push_back( phi );
 
@@ -2124,24 +2112,17 @@ std::vector<std::vector<Move3D::confPtr_t> > IocEvaluation::runIKSampling()
 
             // cout << "cost : " << cost << " , ";
 //            cout.precision(4);
-//            cout << "Feature Sample : " << i << " , " << phi.transpose() << endl;
-//            cout << "dist wrist " << phi[0] << endl; //24
-//            cout << "length : " << samples[d][i].getParamMax() << endl;
+            cout << "Feature Sample : " << i << " , " << phi.transpose() << endl;
 
             for( int j=0; j<phi_demos_[d].size(); j++ ){
                 if( phi[j] - phi_demos_[d][j] < 0 )
                      nb_lower_feature++;
             }
-
-            // gradient_sum += feature_fct_->getJacobianSum( samples[d][i] );
-            // cout << "Sample(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
-//             cout << "Smoothness(" << d << "," <<  i << ") : " << phi_k[d][i][0] << endl;
         }
     }
 
     cout << "nb_lower_cost : " << nb_lower_cost << endl;
     cout << "nb_lower_feature : " << nb_lower_feature << endl;
-    cout << "nb_shorter : " << nb_shorter << endl;
     cout << "nb_in_collision : " << nb_in_collision << endl;
 
 //    removeDominatedSamplesAndResample( ioc, phi_k );

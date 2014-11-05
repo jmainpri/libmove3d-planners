@@ -99,6 +99,15 @@ public:
     virtual bool getControlCosts(std::vector<Eigen::MatrixXd>& control_costs) = 0;
 
     /**
+     * Gets the positive semi-definite matrix of the quadratic control cost
+     * The weight of this control cost is provided by the task
+     *
+     * @param control_cost_matrix (output) Array of square, positive semi-definite matrix: num_params x num_params
+     * @return true on success, false on failure
+     */
+    virtual bool getCovariances(std::vector<Eigen::MatrixXd>& covariances) = 0;
+
+    /**
      * Update the policy parameters based on the updates per timestep
      * @param updates (input) parameter updates per time-step, num_time_steps x num_parameters
      * @return true on success, false on failure

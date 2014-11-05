@@ -49,6 +49,8 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
 //planning_group_(planning_group),
 //discretization_(source_traj.discretization_)
 {
+    id_fixed_ = 2; // Fixed end configuration
+
     //num_joints_ = robot_model_->getNumberOfJoints();
     num_joints_ = active_joints_.num_dofs_;
 
@@ -114,7 +116,8 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
 
 ChompTrajectory::ChompTrajectory(const ChompTrajectory& source_traj,  int diff_rule_length) :
     discretization_(source_traj.discretization_),
-    uses_time_(source_traj.uses_time_)
+    uses_time_(source_traj.uses_time_),
+    id_fixed_(source_traj.id_fixed_)
 {
     num_joints_ = source_traj.num_joints_;
 

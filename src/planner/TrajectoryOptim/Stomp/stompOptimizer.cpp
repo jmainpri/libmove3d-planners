@@ -234,8 +234,16 @@ void StompOptimizer::initialize()
     // Use costspace
     use_costspace_ = ( move3d_collision_space_ == NULL );
     use_costspace_ |= ( use_costspace_ && ( use_external_collision_space_ == false ));
-    
-    //clearAnimations();
+
+    // Move the end configuration in the trajectory
+    id_fixed_ = 2;
+    allow_end_configuration_motion_ = PlanEnv->getBool(PlanParam::trajStompMoveEndConfig);
+    if( allow_end_configuration_motion_ )
+    {
+        id_fixed_ = 1;
+    }
+    full_trajectory_->setFixedId( id_fixed_ );
+    group_trajectory_.setFixedId( id_fixed_ );
     
     // init some variables:
     num_vars_free_ = group_trajectory_.getNumFreePoints();
@@ -644,6 +652,7 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     target_ = getTarget();
 
     best_iteration_=0;
+    last_improvement_iteration_ = -1;
     best_group_trajectory_cost_ = numeric_limits<double>::max();
     best_group_trajectory_in_collsion_cost_ = numeric_limits<double>::max();
 
@@ -702,8 +711,7 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         // setGroupTrajectoryToApiTraj( all_move3d_traj_.back() );
         // global_trajToDraw.push_back( all_move3d_traj_.back() );
 
-        if ( do_draw && (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) &&
-             stomp_parameters_->getAnimateEndeffector() )
+        if ( do_draw && (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && stomp_parameters_->getAnimateEndeffector() )
         {
             move3d_draw_clear_handles( robot_model_ );
             robot_model_->setAndUpdate(*q_tmp);
@@ -749,7 +757,9 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         }
         else
         {
-            if( cost < best_group_trajectory_cost_ )
+            if( cost < best_group_trajectory_cost_ ||
+              ( PlanEnv->getBool(PlanParam::trajStompDrawImprovement) && (
+                cost < best_group_trajectory_in_collsion_cost_ )))
             {
                 if ( is_collision_free_ )
                 {
@@ -763,10 +773,11 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
                 }
                 else
                 {
-                    best_group_trajectory_in_collision_ = group_trajectory_.getTrajectory();
-                    best_group_trajectory_in_collsion_cost_ = cost;
                     if( !PlanEnv->getBool(PlanParam::trajStompNoPrint) )
                         cout << "New best in collision" << endl;
+
+                    best_group_trajectory_in_collision_ = group_trajectory_.getTrajectory();
+                    best_group_trajectory_in_collsion_cost_ = cost;
                 }
             }
         }
@@ -784,22 +795,6 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         //last_move3d_cost_ = computeMove3DCost();
 
         double move3d_cost =0.0;
-        if ( do_draw && (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) )
-        {
-            //        move3d_cost = computeMove3DCost();
-            //
-            //        if( move3d_cost < last_move3d_cost )
-            //        {
-            //          last_move3d_cost = move3d_cost;
-
-            if ( stomp_parameters_->getAnimateEndeffector() )
-            {
-                robot_model_->setAndUpdate(*q_tmp);
-                animateEndeffector();
-                //animateTrajectoryPolicy();
-            }
-            //        }
-        }
 
         if( PlanEnv->getBool(PlanParam::drawParallelTraj) && ( global_stompRun != NULL ))
         {
@@ -831,39 +826,41 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         //cout << "We think the path is collision free: " << last_trajectory_collision_free_ << endl;
 
         if( use_time_limit_ )
-        {
+
             if( time_ >= stomp_parameters_->max_time_ )
             {
                 cout << "Stopped at time limit (" << time_ << "), limit : " << stomp_parameters_->max_time_ << endl;
                 break;
             }
-        }
+
 
         if( use_iteration_limit_ )
-        {
+
             if( iteration_ >= stomp_parameters_->max_iterations_ )
             {
                 cout << "Stopped at iteration (" << iteration_ << "), limit " << stomp_parameters_->max_iterations_ << endl;
                 break;
             }
-        }
+
 
         if( use_collision_free_limit_limit_ )
-        {
+
             if( is_collision_free_ )
             {
                 cout << "Stopped at iteration (" << iteration_ << "), because found collision free" << endl;
                 break;
             }
-        }
     }
 
     cout << " -------------------------------------- " << endl;
 
+    if (best_iteration_ > 0)
+        cout << "Found a collision free path!!! " << endl;
+    else
+        cout << "NO collision free path found!!! " << endl;
 
     if (last_improvement_iteration_>-1)
-        cout << "We think the path is collision free: " << is_collision_free_ << endl;
-
+        cout << "We think the last path is collision free: " << is_collision_free_ << endl;
 
     // Set the last trajectory
     // Convert to move3d trajectory
@@ -872,19 +869,25 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
 
 //    policy_->saveProfiles( policy_parameters_, "." );
 
-    if( best_group_trajectory_in_collsion_cost_ < best_group_trajectory_cost_ )
+    if( best_iteration_ > 0)
 
-        group_trajectory_.getTrajectory() = best_group_trajectory_in_collision_;
-    else
         group_trajectory_.getTrajectory() = best_group_trajectory_;
+    else
+        group_trajectory_.getTrajectory() = best_group_trajectory_in_collision_;
+
+//    if( best_group_trajectory_in_collsion_cost_ < best_group_trajectory_cost_ )
+
+//        group_trajectory_.getTrajectory() = best_group_trajectory_in_collision_;
+//    else
+//        group_trajectory_.getTrajectory() = best_group_trajectory_;
 
     // convert to move3d trajectory
     best_traj_ = Move3D::Trajectory( robot_model_ );
     setGroupTrajectoryToMove3DTraj( best_traj_ );
+    robot_model_->setCurrentMove3DTraj( best_traj_ );
     robot_model_->getCurrentMove3DTraj().replaceP3dTraj();
 
     // Set the current move3d traj
-    robot_model_->setCurrentMove3DTraj( last_traj_ );
 //    robot_model_->getCurrentMove3DTraj().replaceP3dTraj();
 
     // Best path cost
@@ -983,12 +986,6 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     //group_trajectory_.print();
     //updateFullTrajectory();
     //performForwardKinematics();
-    
-    if ( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj)  )
-    {
-        move3d_draw_clear_handles( robot_model_ );
-        animateEndeffector( true );
-    }
     
     printf("Collision free success iteration = %d for robot %s (time : %f)\n",
            stomp_statistics_->collision_success_iteration, robot_model_->getName().c_str(), stomp_statistics_->success_time);
@@ -1350,7 +1347,7 @@ double StompOptimizer::getSmoothnessCost()
     for (int d=0; d<num_joints_; ++d)
     {
         //policy_parameters_[d] = group_trajectory_.getFreeTrajectoryBlock();
-        policy_parameters_[d].segment(1,policy_parameters_[d].size()-2) = group_trajectory_.getFreeJointTrajectoryBlock(d);
+        policy_parameters_[d].segment(1,policy_parameters_[d].size()-id_fixed_) = group_trajectory_.getFreeJointTrajectoryBlock(d);
         noise[d] = VectorXd::Zero( policy_parameters_[d].size() );
     }
 
@@ -1410,7 +1407,7 @@ void StompOptimizer::getCostProfiles( vector<double>& smoothness_cost, vector<do
     for (int d=0; d<num_joints_; ++d)
     {
         //policy_parameters_[d] = group_trajectory_.getFreeTrajectoryBlock();
-        policy_parameters_[d].segment(1,policy_parameters_[d].size()-2) = group_trajectory_.getFreeJointTrajectoryBlock(d);
+        policy_parameters_[d].segment(1,policy_parameters_[d].size()-id_fixed_) = group_trajectory_.getFreeJointTrajectoryBlock(d);
         noise[d] = VectorXd::Zero( policy_parameters_[d].size() );
     }
 
@@ -1560,7 +1557,7 @@ bool StompOptimizer::handleJointLimits()
                 double multiplier = max_violation / joint_costs_[joint].getQuadraticCostInverse()(free_var_index,free_var_index);
 
                 group_trajectory_.getFreeJointTrajectoryBlock(joint) +=
-                        (( multiplier * joint_costs_[joint].getQuadraticCostInverse().col(free_var_index)).segment(1,num_vars_free_-2));
+                        (( multiplier * joint_costs_[joint].getQuadraticCostInverse().col(free_var_index)).segment(1,num_vars_free_-id_fixed_));
                 //                double offset = ( joint_max + joint_min )  / 2 ;
 
                 //                cout << "multiplier : " << multiplier << endl;
@@ -1787,6 +1784,7 @@ bool StompOptimizer::performForwardKinematics()
         if( move3d_collision_space_ || use_external_collision_space_ )
         {
             state_is_in_collision_[i] = Move3DGetConfigCollisionCost[collision_space_id_]( planning_group_->robot_, i, collision_point_potential_, collision_point_pos_eigen_ );
+//            cout << "state_is_in_collision_[" << i << "] : " << state_is_in_collision_[i] << endl;
         }
         else if( ( PlanEnv->getBool(PlanParam::useLegibleCost) || use_costspace_ ) && (move3d_collision_space_==NULL) )
         {
@@ -1810,6 +1808,8 @@ bool StompOptimizer::performForwardKinematics()
 
         k++;
     }
+
+//    cout << "is_collision_free_ : " << is_collision_free_  << endl;
 
 //    cout << "phi : " << std::scientific << phi.transpose() << endl;
 //    cout << "dt_[start] : " << std::scientific << dt_[start] << endl;
@@ -1889,8 +1889,9 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     //cout << "size : " << parameters.size() << " , " << parameters[0].size() <<  endl;
 
     // copy the parameters into group_trajectory_:
+
     for (int d=0; d<num_joints_; ++d) {
-        group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d].segment(1,parameters[d].size()-2); // The use of segment prevents the drift
+        group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d].segment(1,parameters[d].size()-id_fixed_); // The use of segment prevents the drift
     }
     //cout << "group_trajectory_ = " << endl << group_trajectory_.getTrajectory() << endl;
 
@@ -1913,7 +1914,7 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     {
         //cout << "return with joint limits" << endl;
         for (int d=0; d<num_joints_; ++d) {
-            parameters[d].segment(1,parameters[d].size()-2) = group_trajectory_.getFreeJointTrajectoryBlock(d);
+            parameters[d].segment(1,parameters[d].size()-id_fixed_) = group_trajectory_.getFreeJointTrajectoryBlock(d);
         }
     }
 
@@ -1923,7 +1924,7 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
         last_move3d_cost_ = resampleParameters( parameters );
 
         for (int d=0; d<num_joints_; ++d) {
-            group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d].segment(1,parameters[d].size()-2); // The use of segment prevents the drift
+            group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d].segment(1,parameters[d].size()-id_fixed_); // The use of segment prevents the drift
         }
     }
 
@@ -2286,8 +2287,8 @@ void StompOptimizer::animateEndeffector(bool print_cost)
         end = num_vars_all_-1;
     }
     
-    confPtr_t q_tmp = robot_model_->getCurrentPos();
-    confPtr_t q     = robot_model_->getCurrentPos();
+    Move3D::confPtr_t q_tmp = robot_model_->getCurrentPos();
+    Move3D::confPtr_t q     = robot_model_->getCurrentPos();
     // cout << "animateEndeffector()" << endl;
     // cout << "group_trajectory : " << endl;
     // cout << group_trajectory_.getTrajectory() << endl;
@@ -2296,13 +2297,16 @@ void StompOptimizer::animateEndeffector(bool print_cost)
 
     Move3D::ChompTrajectory group_trajectory( group_trajectory_, 7 );
 
-    if (iteration_!=0)
+    if( iteration_!=0 )
     {
-        if( best_group_trajectory_in_collsion_cost_ < best_group_trajectory_cost_ )
+        if( PlanEnv->getInt(PlanParam::stompDrawIteration) != 1 )
+        {
+            if( best_group_trajectory_in_collsion_cost_ < best_group_trajectory_cost_ )
 
-            group_trajectory.getTrajectory() = best_group_trajectory_in_collision_;
-        else
-            group_trajectory.getTrajectory() = best_group_trajectory_;
+                group_trajectory.getTrajectory() = best_group_trajectory_in_collision_;
+            else
+                group_trajectory.getTrajectory() = best_group_trajectory_;
+        }
     }
     
     // for each point in the trajectory
@@ -2799,7 +2803,7 @@ void StompOptimizer::copyPolicyToGroupTrajectory()
     {
         //cout << "group_trajectory_ : " << endl << group_trajectory_.getFreeJointTrajectoryBlock(d) << endl;
         //cout << "policy_parameters_ : " << endl << policy_parameters_[d] << endl;
-        group_trajectory_.getFreeJointTrajectoryBlock(d) = policy_parameters_[d].segment(1,num_vars_free_-2);
+        group_trajectory_.getFreeJointTrajectoryBlock(d) = policy_parameters_[d].segment(1,num_vars_free_-id_fixed_);
     }
 }
 
@@ -2808,7 +2812,7 @@ void StompOptimizer::copyGroupTrajectoryToPolicy()
     for (int d=0; d<num_joints_; ++d)
     {
         //policy_parameters_[d] = group_trajectory_.getFreeTrajectoryBlock();
-        policy_parameters_[d].segment(1,num_vars_free_-2) = group_trajectory_.getFreeJointTrajectoryBlock(d);
+        policy_parameters_[d].segment(1,num_vars_free_-id_fixed_) = group_trajectory_.getFreeJointTrajectoryBlock(d);
     }
     
     // draw traj

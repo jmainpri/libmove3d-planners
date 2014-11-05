@@ -489,6 +489,7 @@ MusculoskeletalFeature::MusculoskeletalFeature( Move3D::Robot* active ) :
 
 FeatureVect MusculoskeletalFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
+    natural_cost_->getRobot()->setAndUpdate(q);
     FeatureVect count( computeMusculoskeletalEffort() );
 
 //    cout << "muskulo : " << count.transpose() << endl;
@@ -498,8 +499,8 @@ FeatureVect MusculoskeletalFeature::getFeatures(const Configuration& q, std::vec
 //    for(int i=0; i<count.size(); i++) // For all features
 //        count[i] = std::pow( base, count[i] ) - 1; // 1e-3/j_dist;
 
-    double factor = 8;
-    return factor * count; // Scaling factor
+//    double factor = 8;
+//    return factor * count; // Scaling factor
 
     return count;
 }

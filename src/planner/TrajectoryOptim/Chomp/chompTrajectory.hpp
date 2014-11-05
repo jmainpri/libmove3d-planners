@@ -185,6 +185,11 @@ public:
      */
     bool getUseTime() const { return uses_time_; }
 
+
+    //! Set to 1 for motion of the end configuration
+    //! Set to 2 for no motion
+    void setFixedId(int id_fixed) { id_fixed_ = id_fixed; }
+
     // Returns the Move3d robot
     //  Robot* getRobot() { return robot_model_; }
 
@@ -206,6 +211,7 @@ private:
     int end_index_;                                       /**< End index (inclusive) of trajectory to be optimized (everything after it will not be modified) */
     std::vector<int> full_trajectory_index_;              /**< If this is a "group" trajectory, the index from the original traj which each element here was copied */
     bool uses_time_;                                      /**< True if the trajectory is defined with time */
+    int id_fixed_;                                        // Specifies if the end of the trajectory is fixed
 };
 
 ///////////////////////// inline functions follow //////////////////////
@@ -276,12 +282,12 @@ inline Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic> ChompTrajec
     //  std::cout << "getNumFreePoints() = " << getNumFreePoints() << std::endl;
     //  std::cout << "getNumJoints() = " << getNumJoints()  << std::endl;
 
-    return trajectory_.block(start_index_+1, 0, getNumFreePoints()-2, getNumJoints()); // TODO change everywhere
+    return trajectory_.block(start_index_+1, 0, getNumFreePoints()-id_fixed_, getNumJoints()); // TODO change everywhere
 }
 
 inline Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic> ChompTrajectory::getFreeJointTrajectoryBlock(int joint)
 {
-    return trajectory_.block(start_index_+1, joint, getNumFreePoints()-2, 1);
+    return trajectory_.block(start_index_+1, joint, getNumFreePoints()-id_fixed_, 1);
 }
 
 //inline void ChompTrajectory::getTrajectoryPointKDL(int traj_point, KDL::JntArray& kdl_jnt_array) const

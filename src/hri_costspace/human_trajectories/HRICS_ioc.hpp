@@ -193,11 +193,13 @@ public:
     // Returns the number of demonstrations
     int getNbOfDemonstrations() { return demonstrations_.size(); }
 
+    //! Rethe the last configuration of demo
+    IocIk getLastConfigOfDemo(int d) const;
+
 private:
 
     bool isTrajectoryValid( const IocTrajectory& traj );
     bool isIkValid( const IocIk& ik );
-    IocIk getLastConfigOfDemo(int d) const;
     bool projectConfiguration( IocIk& q, int d );
 
     std::vector< IocTrajectory > demonstrations_;
@@ -294,6 +296,7 @@ public:
 
 protected:
 
+    std::vector<Move3D::FeatureVect> addDemonstrationsIk(HRICS::Ioc& ioc);
     std::vector<Move3D::FeatureVect> addDemonstrations(Ioc& ioc);
     std::vector< std::vector<Move3D::FeatureVect> > addSamples(Ioc& ioc);
 

@@ -22,10 +22,12 @@ bool GeneralIK::initialize( const std::vector<Move3D::Joint*>& joints, Move3D::J
         active_dofs_.push_back( joints[i]->getIndexOfFirstDof() );
     }
     magnitude_ = 0.05;
+    check_joint_limits_ = true;
+    nb_steps_ = 200;
     return succeed;
 }
 
-bool GeneralIK::solve(int steps, const Eigen::VectorXd& xdes)
+bool GeneralIK::solve(const Eigen::VectorXd& xdes)
 {
     Move3D::confPtr_t q_proj = robot_->getCurrentPos();
     robot_->setAndUpdate(*q_proj);
@@ -33,10 +35,17 @@ bool GeneralIK::solve(int steps, const Eigen::VectorXd& xdes)
     Move3D::confPtr_t q_cur = robot_->getCurrentPos();
     double dist=.0;
     bool succeed = false;
-    for( int i=0; i<steps; i++) // IK LOOP
+    Eigen::VectorXd q_new;
+
+    for( int i=0; i<nb_steps_; i++) // IK LOOP
     {
         Eigen::VectorXd q = q_cur->getEigenVector( active_dofs_ );
-        Eigen::VectorXd q_new = q + single_step_joint_limits(xdes);
+
+        if( check_joint_limits_ )
+            q_new = q + single_step_joint_limits(xdes);
+        else
+            q_new = q + single_step(xdes);
+
         q_cur->setFromEigenVector( q_new, active_dofs_ );
         robot_->setAndUpdate( *q_cur );
         dist = ( xdes - eef_->getXYZPose() ).norm();
@@ -54,10 +63,10 @@ bool GeneralIK::solve(int steps, const Eigen::VectorXd& xdes)
 Eigen::VectorXd GeneralIK::single_step( const Eigen::VectorXd& xdes )
 {
     Eigen::MatrixXd J = robot_->getJacobian( active_joints_, eef_, true );
-    Eigen::MatrixXd Jt = move3d_pinv( J, 1e-3 );
+    Eigen::MatrixXd Jplus = move3d_pinv( J, 1e-3 );
     // cout << "Jt : " << endl << Jt << endl;
     Eigen::VectorXd x_error = ( xdes - eef_->getXYZPose() );
-    Eigen::VectorXd dq = Jt * magnitude_ * x_error;
+    Eigen::VectorXd dq = Jplus * magnitude_ * x_error;
     return dq;
 }
 
@@ -79,11 +88,16 @@ Eigen::VectorXd GeneralIK::single_step_joint_limits( const Eigen::VectorXd& xdes
             for(int k = 0; k < xdes.size(); k++)
                 J( k, badjointinds[j] ) = 0;
 
+        /*
+        // Damped Least-Squares (DLS)
+        // Jplus = Jt * [(Jt * J ) + lambda * diag(I)]^{-1}
         Eigen::MatrixXd Reg(Eigen::MatrixXd::Zero(J.rows(), J.rows()));
         Reg.diagonal() = 0.0001 * Eigen::VectorXd::Ones(Reg.diagonal().size());
-//        cout << "Reg : " << endl << Reg << endl;
         Eigen::MatrixXd M = (J*J.transpose())+Reg;
         Eigen::MatrixXd Jplus = J.transpose()*M.inverse();
+        */
+
+        Eigen::MatrixXd Jplus = move3d_pinv( J, 1e-3 );
 
         dq = Jplus * magnitude_ * x_error;
 

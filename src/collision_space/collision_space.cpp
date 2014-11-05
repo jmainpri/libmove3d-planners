@@ -589,6 +589,8 @@ bool CollisionSpace::getCollisionPointPotentialGradient(const CollisionPoint& co
         potential = -d + 0.5 * collision_point.getClearance();
     }
 
+//    cout << "field_distance : " << field_distance << ", radius : "  << collision_point.getRadius() << endl;
+
     return (field_distance <= collision_point.getRadius()); // true if point is in collision
 }
 
@@ -659,8 +661,8 @@ double CollisionSpace::cost( const Configuration& q ) const
     double distance = 0.0;
     double potential = 0.0;
 
-//    colliding =
-//    isRobotColliding( distance, potential );
+    //    colliding =
+    //    isRobotColliding( distance, potential );
 
     double cost = 0.0;
 

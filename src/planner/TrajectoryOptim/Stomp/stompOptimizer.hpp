@@ -421,6 +421,9 @@ private:
     std::vector<double> last_human_pos_;
     bool reset_reused_rollouts_;
 
+    bool allow_end_configuration_motion_;
+    int id_fixed_;
+
     Move3D::confPtr_t source_;
     Move3D::confPtr_t target_;
     Move3D::confPtr_t target_new_;

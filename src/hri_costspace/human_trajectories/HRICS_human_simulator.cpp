@@ -198,22 +198,20 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
     visi_feat_.setActiveDoFs( active_dofs_ );
     visi_feat_.setWeights( Move3D::WeightVect::Ones( visi_feat_.getNumberOfFeatures() ) );
 
-    if(!use_bio_models_)
-    {
-        musc_feat_.setActiveDoFs( active_dofs_ );
-        musc_feat_.setWeights( Move3D::WeightVect::Ones( musc_feat_.getNumberOfFeatures() ) );
-    }
+    musc_feat_.setActiveDoFs( active_dofs_ );
+    musc_feat_.setWeights( Move3D::WeightVect::Ones( musc_feat_.getNumberOfFeatures() ) );
 
     smoothness_feat_.setActiveDoFs( active_dofs_ );
 
-    if( !HriEnv->getBool(HricsParam::ioc_use_baseline) )
-    {
-        smoothness_feat_.setWeights( Move3D::WeightVect::Ones( smoothness_feat_.getNumberOfFeatures() ) );
+    if( HriEnv->getInt(HricsParam::ioc_ik) != 1 )
+        if( !HriEnv->getBool(HricsParam::ioc_use_baseline) )
+        {
+            smoothness_feat_.setWeights( Move3D::WeightVect::Ones( smoothness_feat_.getNumberOfFeatures() ) );
 
-        if(!addFeatureFunction( &smoothness_feat_ ) ){
-            cout << "Error adding feature smoothness" << endl;
+            if(!addFeatureFunction( &smoothness_feat_ ) ){
+                cout << "Error adding feature smoothness" << endl;
+            }
         }
-    }
     if(!addFeatureFunction( &dist_feat_ ) ){
         cout << "Error adding feature distance feature" << endl;
     }
@@ -229,9 +227,10 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
 //    if(!addFeatureFunction( &visi_feat_ )){
 //        cout << "Error adding feature visbility feature" << endl;
 //    }
-//    if(!addFeatureFunction( &musc_feat_ )){
-//        cout << "Error adding feature musculoskeletal feature" << endl;
-//    }
+
+    if(!addFeatureFunction( &musc_feat_ )){
+        cout << "Error adding feature musculoskeletal feature" << endl;
+    }
 
     w_ = getWeights();
 
