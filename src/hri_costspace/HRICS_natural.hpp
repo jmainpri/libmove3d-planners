@@ -76,6 +76,9 @@ public:
     void getConfigCostFeatures( Eigen::VectorXd& features );
 
     //! Get the cost of the current configuration
+    double cost(Move3D::Configuration& q);
+
+    //! Returns the current config cost
     double getConfigCost();
 
     //! Get the cost of a point in the grid

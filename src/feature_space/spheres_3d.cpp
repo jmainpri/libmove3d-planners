@@ -189,8 +189,7 @@ void Spheres3D::initialize()
     }
 
     // Generate collision points
-    sampler_ = new BodySurfaceSampler(0.1);
-
+    sampler_ = new BodySurfaceSampler(0.1, 0.05);
     sampler_->generateRobotBoudingCylinder( robot_, joints );
 
     for ( int id=0; id<int(active_joints_.size()); id++ )

@@ -174,7 +174,7 @@ m_id_class_to_draw(0)
     
     if( m_human->getUseLibmove3dStruct() )
     {
-        m_sampler = new BodySurfaceSampler( 0.02 );
+        m_sampler = new BodySurfaceSampler( 0.02, 0.05 );
         m_sampler->sampleRobotBodiesSurface( m_human );
     }
 

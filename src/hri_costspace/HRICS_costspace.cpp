@@ -197,7 +197,7 @@ double HRICS_getConfigCost(Configuration& Conf)
 
 
     case NatuSpace: // Natural Class ----------------------------------
-        Cost = HRICS_activeNatu->getConfigCost();
+        Cost = HRICS_activeNatu->cost(Conf);
         break;
 
     default:

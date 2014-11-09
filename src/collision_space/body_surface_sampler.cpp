@@ -17,9 +17,9 @@
 using namespace std;
 using namespace Move3D;
 
-BodySurfaceSampler::BodySurfaceSampler(double step) : 
+BodySurfaceSampler::BodySurfaceSampler(double step, double clearance) :
     m_step(step),
-    m_collision_clearance_default(0.05)
+    m_collision_clearance_default(clearance)
 {
 
 }
@@ -182,11 +182,9 @@ BoundingCylinder* BodySurfaceSampler::generateBoudingCylinder(p3d_obj* obj)
 
     if ( pqp_get_OBB_first_level(obj,box) )
     {
-        for (unsigned int i=0; i<8; i++) {
-            for(unsigned int j=0; j<3; j++) {
+        for (unsigned int i=0; i<8; i++)
+            for(unsigned int j=0; j<3; j++)
                 cuboide[i][j] = box[i][j];
-            }
-        }
 
         p1 = 0.5*(cuboide[1]+cuboide[2]);
         p2 = 0.5*(cuboide[5]+cuboide[6]);

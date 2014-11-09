@@ -231,7 +231,7 @@ public:
     }
 
     void setColor(double col) {
-        m_Color=col;
+        m_Color = col;
     }
 
     unsigned int getHighestCostId() const {

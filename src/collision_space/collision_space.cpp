@@ -88,10 +88,10 @@ CollisionSpace::CollisionSpace( Robot* rob, double pace, const std::vector<doubl
 {
     this->createAllCells();
 
-    //unvalid cells for each robot except current one ?
+    // unvalid cells for each robot except current one ?
     m_size = std::max( std::max(  _cellSize[0]*_nbCellsX , _cellSize[1]*_nbCellsY ), _cellSize[2]*_nbCellsZ  );
 
-    //Build the meshes env edges
+    // Build the meshes env edges
     if( XYZ_ENV->o )
     {
         if( XYZ_ENV->o[0]->pol[0]->poly->the_edges == NULL )
@@ -111,7 +111,7 @@ CollisionSpace::CollisionSpace( Robot* rob, double pace, const std::vector<doubl
     //m_Robot = global_Project->getActiveScene()->getActiveRobot();
     m_Robot = rob;
 
-    init();
+    initialize();
 
     cout << "pace : " << pace << endl;
     cout << "nb cells : " << _cells.size() << endl;
@@ -135,9 +135,10 @@ Move3D::ThreeDCell* CollisionSpace::createNewCell(unsigned int index,unsigned  i
     return new CollisionSpaceCell( index, computeCellCorner(x,y,z) , this );
 }
 
-void CollisionSpace::init()
+void CollisionSpace::initialize()
 {
-    m_sampler = new BodySurfaceSampler( _cellSize[0]*0.25 );
+    double diagonal = _cellSize.norm();
+    m_sampler = new BodySurfaceSampler( diagonal*0.25, diagonal*1.25 );
     m_sampler->sampleStaticObjectsSurface();
     m_sampler->sampleAllRobotsBodiesSurface();
 
@@ -157,7 +158,7 @@ void CollisionSpace::init()
     m_invTwiceResolution = 1.0/(2.0*resolution);
     initNeighborhoods();
 }
-#include "API/project.hpp"
+
 void CollisionSpace::resetOccupationCells()
 {
     for(unsigned int i = 0; i < getNumberOfCells(); i++)
@@ -449,10 +450,9 @@ void CollisionSpace::addRobotBody(Joint* jnt)
 
 void CollisionSpace::addRobot(Robot* rob)
 {
-    for (unsigned int joint_id=0;
-         joint_id<rob->getNumberOfJoints(); joint_id++)
+    for (unsigned int j=0; j<rob->getNumberOfJoints(); j++)
     {
-        addRobotBody( rob->getJoint( joint_id ) );
+        addRobotBody( rob->getJoint( j ) );
     }
 }
 

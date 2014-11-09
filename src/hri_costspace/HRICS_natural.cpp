@@ -9,9 +9,12 @@
 
 #include "HRICS_natural.hpp"
 #include "API/Grids/gridsAPI.hpp"
+#include "planner/cost_space.hpp"
 
 #include "P3d-pkg.h"
 #include "Planner-pkg.h"
+
+#include <boost/bind.hpp>
 
 using namespace std;
 using namespace HRICS;
@@ -213,6 +216,10 @@ void Natural::initGeneral()
         cout << "No proper robot has been selected in Natural cost function" << endl;
         break;
     }
+
+    // Define cost functions
+    cout << " add cost : " << "costHumanNatural" << endl;
+    Move3D::global_costSpace->addCost( "costNatural", boost::bind( &HRICS::Natural::cost, this, _1) );
 
     m_Robot->setAndUpdate( *q_curr );
 
@@ -739,16 +746,23 @@ void Natural::getConfigCostFeatures( Eigen::VectorXd& features )
     features[1] = c_f_Energy;
     features[2] = c_f_Discomfort;
 
-//    cout << "JDis = " << c_f_Joint_displacement << endl;
-//    cout << "Ener = " << c_f_Energy << endl;
-//    cout << "Disc = " << c_f_Discomfort << endl;
+//    cout.precision(3);
+//    cout << std::scientific << "JDis = " << c_f_Joint_displacement;
+//    cout << std::scientific << " , Ener = " << c_f_Energy;
+//    cout << std::scientific << " , Disc = " << c_f_Discomfort << endl;
+}
+
+double Natural::getConfigCost()
+{
+    Move3D::confPtr_t q = m_Robot->getCurrentPos();
+    return cost(*q);
 }
 
 /*!
  * Compute the Natural cost for a configuration
  * with weight
  */
-double Natural::getConfigCost()
+double Natural::cost(Move3D::Configuration& q)
 {
     double c_natural = 0.0;
 
@@ -1023,7 +1037,7 @@ double Natural::getCost(const Vector3d& WSPoint, bool useLeftvsRightArm , bool w
         if(!m_computeNbOfIK)
         {
             m_leftArmCost = useLeftvsRightArm;
-            return getConfigCost();
+            return cost(*m_Robot->getCurrentPos());
         }
         else
         {
@@ -1038,7 +1052,7 @@ double Natural::getCost(const Vector3d& WSPoint, bool useLeftvsRightArm , bool w
         if( computeIsReachableOnly(WSPoint,useLeftvsRightArm) )
         {
             m_leftArmCost = useLeftvsRightArm;
-            return getConfigCost();
+            return cost(*m_Robot->getCurrentPos());
         }
         else
         {
@@ -1367,7 +1381,7 @@ void Natural::setRobotColorFromConfiguration(bool toSet)
 
     if (toSet)
     {
-        double cost = this->getConfigCost();
+        double cost = this->cost(*m_Robot->getCurrentPos());
 
         double colorvector[4];
 

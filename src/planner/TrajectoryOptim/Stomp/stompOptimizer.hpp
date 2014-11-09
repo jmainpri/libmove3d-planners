@@ -186,7 +186,7 @@ public:
    * @param costs Vector of num_time_steps, state space cost per timestep (do not include control costs)
    * @return
    */
-    bool execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample );
+    bool execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample, bool is_rollout );
 
     /**
    * Get the Policy object of this Task
@@ -468,7 +468,7 @@ private:
     bool getCollisionPointObstacleCost( int segment, int coll_point, double& collion_point_potential, Eigen::Vector3d& pos );
     bool getConfigObstacleCost( Move3D::Robot* robot, int i, Eigen::MatrixXd& collision_point_potential, std::vector< std::vector<Eigen::Vector3d> >& collision_point_pos );
 
-    bool performForwardKinematics();
+    bool performForwardKinematics(bool is_rollout);
     void doChompOptimization();
 
     void copyPolicyToGroupTrajectory();

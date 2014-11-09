@@ -180,7 +180,7 @@ void Boxes::initialize()
         joints.push_back( robot_->getJoint( active_joints_[i] ) );
 
     // Generate collision points
-    sampler_ = new BodySurfaceSampler(0.1);
+    sampler_ = new BodySurfaceSampler(0.1, 0.05);
     sampler_->generateRobotBoudingCylinder( robot_, joints );
     sampler_->generateRobotCollisionPoints( robot_, active_joints_, active_joints_ );
 }

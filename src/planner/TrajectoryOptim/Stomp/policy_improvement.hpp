@@ -47,6 +47,7 @@
 #include "task.hpp"
 
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
+#include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -160,7 +161,9 @@ namespace stomp_motion_planner
      * Reset extra rollouts
      */
     bool resetReusedRollouts();
-    
+
+
+
     std::vector<Eigen::MatrixXd> projection_matrix_;                        /**< [num_dimensions] num_parameters x num_parameters */
     
   private:
@@ -181,6 +184,7 @@ namespace stomp_motion_planner
     
     bool use_multiplication_by_m_;
     bool use_cumulative_costs_;                                             /**< Use cumulative costs or state costs? */
+
     
     MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy_;
     MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Task>   task_;

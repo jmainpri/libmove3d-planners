@@ -50,9 +50,11 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Trajectory/trajectory.hpp"
+#include "API/Device/generalik.hpp"
+
 #include "TrajectoryOptim/Classic/smoothing.hpp"
 
-#include "../p3d/env.hpp"
+#include <libmove3d/p3d/env.hpp>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/thread.hpp>
@@ -98,6 +100,7 @@ namespace stomp_motion_planner
         task_->getControlCostWeight( control_cost_weight_ );
         task_->getStateCostWeight( state_cost_weight_ );
 
+
         assert( num_dimensions_ == static_cast<int>(noise_decay_.size()));
         assert( num_dimensions_ == static_cast<int>(noise_stddev_.size()));
 
@@ -113,10 +116,41 @@ namespace stomp_motion_planner
 //        cout << "wait for key" << endl;
 //        std::cin.ignore();
 
+
+        ///--------------------------------------------------------------------------
+
+        // ADD A GOAL TO THE POLICY IMPROVEMENT LOOP
+
+        project_last_config_ = PlanEnv->getBool(PlanParam::trajStompMoveEndConfig);
+        const Move3D::ChompPlanningGroup* planning_group = static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup();
+
+        if( project_last_config_ && ( planning_group != NULL ) )
+        {
+            ratio_projected_ = 1.0; // 1.0 = all along the trajectory
+
+            Move3D::Robot* robot = planning_group->robot_;
+            eef_ = robot->getJoint( "J4" ); // plannar J4
+
+            if( eef_ != NULL )
+            {
+                Move3D::confPtr_t q_goal = robot->getGoalPos();
+                robot->setAndUpdate(*q_goal);
+                x_task_goal_ = eef_->getVectorPos().head(3); // head(2) only (x,y)
+            }
+            else {
+                project_last_config_ = false;
+                x_task_goal_ = Eigen::VectorXd::Zero(0);
+            }
+        }
+
+        ///--------------------------------------------------------------------------
+
+        // INITIALIZE POLICY IMPROVEMENT LOOP
         policy_improvement_.initialize( num_rollouts_, num_time_steps_, num_reused_rollouts_,
                                         num_extra_rollouts, policy_, task_, discretization, use_cumulative_costs_ );
 
-        tmp_rollout_cost_ = Eigen::VectorXd::Zero(num_time_steps_);
+
+        tmp_rollout_cost_ = Eigen::VectorXd::Zero( num_time_steps_ );
         rollout_costs_ = Eigen::MatrixXd::Zero( num_rollouts_, num_time_steps_ );
 
         reused_rollouts_.clear();
@@ -136,8 +170,6 @@ namespace stomp_motion_planner
     {
         num_rollouts_ = 10;
         num_reused_rollouts_ = 5;
-
-
 
         noise_decay_.clear();
         noise_decay_.resize(num_dimensions_,.99);
@@ -163,12 +195,12 @@ namespace stomp_motion_planner
         // node_handle_.param("use_cumulative_costs", use_cumulative_costs_, true);
 
         num_rollouts_ = 10;
-        num_reused_rollouts_ = 5;
+        num_reused_rollouts_ = 0;
         //num_time_steps_ = 51;
 
 
         noise_decay_.clear();
-        noise_decay_.resize(num_dimensions_,.99);
+        noise_decay_.resize( num_dimensions_, .99 );
 
         // noise is now recomputed dynamicaly
         noise_stddev_.clear();
@@ -231,7 +263,7 @@ namespace stomp_motion_planner
 
         for (int r=0; r<int(rollouts_.size()); ++r)
         {
-            task_->execute(rollouts_[r], tmp_rollout_cost_, iteration_number, true, false );
+            task_->execute(rollouts_[r], tmp_rollout_cost_, iteration_number, true, false, false );
 
             rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
             //printf("Rollout %d, cost = %lf\n", r+1, tmp_rollout_cost_.sum());
@@ -249,7 +281,7 @@ namespace stomp_motion_planner
         policy_->getParameters(parameters_);
 
         // get the trajectory cost
-        assert(task_->execute(parameters_, tmp_rollout_cost_, iteration_number, true, false ));
+        assert(task_->execute(parameters_, tmp_rollout_cost_, iteration_number, true, false, false ));
 
         // add the noiseless rollout into policy_improvement:
         std::vector<std::vector<Eigen::VectorXd> > extra_rollout;
@@ -306,7 +338,7 @@ namespace stomp_motion_planner
         {
             shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
             bool joint_limits = false;
-            optimizer->execute( rollouts_[r], tmp_rollout_cost_, iteration_number, joint_limits, false );
+            optimizer->execute( rollouts_[r], tmp_rollout_cost_, iteration_number, joint_limits, false, true );
             rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
             policy_improvement_.setRolloutOutOfBounds( r, !optimizer->getJointLimitViolationSuccess() );
 
@@ -405,7 +437,15 @@ namespace stomp_motion_planner
         // Warning!!!!
         // not return the modified trajectory when is out of bounds
         bool joint_limits = true;
-        task_->execute( parameters_, tmp_rollout_cost_, iteration_number, joint_limits, resample );
+        task_->execute( parameters_, tmp_rollout_cost_, iteration_number, joint_limits, resample, false );
+
+        // PROJECT TO CONSTRAINT
+        if( project_last_config_ )
+        {
+            projectToConstraints( parameters_ );
+            bool joint_limits = true;
+            task_->execute( parameters_, tmp_rollout_cost_, iteration_number, joint_limits, resample, false );
+        }
         //printf("Noiseless cost = %lf\n", stats_msg.noiseless_cost);
 
         // Only set parameters for the changed chase
@@ -435,6 +475,46 @@ namespace stomp_motion_planner
     void PolicyImprovementLoop::resetReusedRollouts()
     {
         policy_improvement_.resetReusedRollouts();
+    }
+
+    void PolicyImprovementLoop::projectToConstraints( std::vector<Eigen::VectorXd>& parameters )
+    {
+        const Move3D::ChompPlanningGroup* planning_group = static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup();
+        const std::vector<ChompDof>& joints = planning_group->chomp_dofs_;
+        Robot* robot = planning_group->robot_;
+
+        Move3D::confPtr_t q_end = robot->getCurrentPos();
+        for ( int i=0; i<planning_group->num_dofs_; ++i)
+            (*q_end)[joints[i].move3d_dof_index_] = parameters[i][num_time_steps_-1];
+
+        Move3D::GeneralIK ik( robot );
+        robot->setAndUpdate( *q_end );
+
+        ik.initialize( planning_group->getActiveJoints(), eef_ );
+
+        // cout << "x_task_goal_.size() : " << x_task_goal_.size() << endl;
+
+//        ik.solve( x_task_goal_ );
+//        Move3D::confPtr_t q_cur = robot->getCurrentPos();
+//        const std::vector<int> active_dofs = ik.getActiveDofs();
+//        Eigen::VectorXd q_1 = q_end->getEigenVector( active_dofs );
+//        Eigen::VectorXd q_2 = q_cur->getEigenVector( active_dofs );
+//        Eigen::VectorXd dq = q_2 - q_1;
+
+        // Get dq through J+
+        ik.magnitude_ = 1.0;
+        Eigen::VectorXd dq = ik.single_step_joint_limits( x_task_goal_ );
+
+        int start = double(1. - ratio_projected_) * num_time_steps_;
+        double alpha = 0.0;
+        double delta = 1.0 / double(num_time_steps_-start);
+        for( int j=start; j<num_time_steps_; j++ )
+        {
+            for ( int i=0; i<parameters.size(); ++i)
+                parameters[i][j] += alpha * dq[i];
+
+            alpha += delta;
+        }
     }
 
     void PolicyImprovementLoop::addStraightLineRollout(std::vector<std::vector<Eigen::VectorXd> >& extra_rollout,
@@ -484,7 +564,7 @@ namespace stomp_motion_planner
         }
 
         int iteration_number=1;
-        task_->execute(extra_rollout[0], tmp_rollout_cost_, iteration_number, false, false );
+        task_->execute(extra_rollout[0], tmp_rollout_cost_, iteration_number, false, false, false );
         //    cout << "Cost" << tmp_rollout_cost_[0] << endl;
 
         extra_rollout_cost[0] = tmp_rollout_cost_;
@@ -661,7 +741,7 @@ namespace stomp_motion_planner
             T.push_back( traj[i] );
         }
         //T.print();
-        T.setColor(color);
+        T.setColor( color );
         global_trajToDraw.push_back( T );
     }
 
@@ -674,13 +754,13 @@ namespace stomp_motion_planner
 
         for ( int k=0; k<int(rollouts_.size()); ++k)
         {
-            //cout << "Add rollout(" << k << ") to draw" << endl;
+//            cout << "Add rollout(" << k << ") to draw" << endl;
             addSingleRolloutsToDraw( rollouts_[k], k );
         }
 
         for ( int k=0; k<int(reused_rollouts_.size()); ++k)
         {
-            //cout << "Add reused rollout(" << k << ") to draw" << endl;
+//            cout << "Add reused rollout(" << k << ") to draw" << endl;
             addSingleRolloutsToDraw( reused_rollouts_[k], k+int(rollouts_.size()) );
         }
     }
@@ -707,46 +787,4 @@ namespace stomp_motion_planner
             printSingleRollout( reused_rollouts_[k], id++ );
         }
     }
-
-    /*
-   bool PolicyImprovementLoop::writePolicyImprovementStatistics(const policy_improvement_loop::PolicyImprovementStatistics& stats_msg)
-   {
-   
-   std::string directory_name = std::string("/tmp/pi2_statistics/");
-   std::string file_name = directory_name;
-   file_name.append(std::string("pi2_statistics.bag"));
-   
-   if (!boost::filesystem::exists(directory_name))
-   {
-   if(stats_msg.iteration == 1)
-   {
-   boost::filesystem::remove_all(directory_name);
-   }
-   ROS_INFO("Creating directory %s...", directory_name.c_str());
-   assert(boost::filesystem::create_directories(directory_name));
-   }
-   
-   try
-   {
-   if(stats_msg.iteration == 1)
-   {
-   rosbag::Bag bag(file_name, rosbag::bagmode::Write);
-   bag.write(PI_STATISTICS_TOPIC_NAME, ros::Time::now(), stats_msg);
-   bag.close();
-   }
-   else
-   {
-   rosbag::Bag bag(file_name, rosbag::bagmode::Append);
-   bag.write(PI_STATISTICS_TOPIC_NAME, ros::Time::now(), stats_msg);
-   bag.close();
-   }
-   }
-   catch (rosbag::BagIOException ex)
-   {
-   ROS_ERROR("Could write to bag file %s: %s", file_name.c_str(), ex.what());
-   return false;
-   }
-   return true;
-   }
-   */
 }

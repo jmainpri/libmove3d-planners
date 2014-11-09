@@ -12,6 +12,7 @@ OtpUtils.cpp
 NumsAndStrings.cpp
 misc_functions.cpp
 multilocalpath_utils.cpp
+ik_generator.cpp
 )
 
 IF(QT_LIBRARY)

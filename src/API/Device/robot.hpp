@@ -340,7 +340,7 @@ public:
     /**
      * Get Jacobian
      */
-    Eigen::MatrixXd getJacobian(const std::vector<Joint*>& active_joints, Joint* eef, bool with_rotations) const;
+    Eigen::MatrixXd getJacobian(const std::vector<Joint*>& active_joints, Joint* eef, bool with_rotations, bool with_height = false) const;
 
 
 #ifdef LIGHT_PLANNER

@@ -52,6 +52,7 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Trajectory/trajectory.hpp"
+
 #include "planner/planEnvironment.hpp"
 #include "feature_space/smoothness.hpp"
 #include "Graphic-pkg.h"
@@ -193,6 +194,16 @@ namespace stomp_motion_planner
         setNumRollouts( num_rollouts, num_reused_rollouts, num_extra_rollouts );
         preAllocateTempVariables();
         preComputeProjectionMatrices();
+
+//        project_last_config_ = true;
+
+//        if( project_last_config_ && ( planning_group_ != NULL ) )
+//        {
+//            Move3D::Robot* robot = planning_group_->robot_;
+//            Move3D::confPtr_t q_goal = robot->getGoalPos();
+//            robot->setAndUpdate(*q_goal);
+//            task_goal_ = robot->getJoint( "J3" )->getVectorPos();
+//        }
 
         multiple_smoothness_ = true;
 

@@ -29,7 +29,7 @@ namespace Move3D
 class BodySurfaceSampler 
 {
 public:
-    BodySurfaceSampler(double step);
+    BodySurfaceSampler(double step, double clearance);
     ~BodySurfaceSampler();
 
     //-----------------------------------------------------

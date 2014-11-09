@@ -99,7 +99,7 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
 
     // Computes a control matrices that allow motion of the end part
     // Should be set to 2 for the normal case
-    free_offset_ = PlanEnv->getBool(PlanParam::trajStompMoveEndConfig) ? int( num_time_steps_ / 3 ) : 0;
+    free_offset_ = PlanEnv->getBool(PlanParam::trajStompMoveEndConfig) ? int( num_time_steps_ / 2. ) : 0;
 
     use_buffer_ = false;
     

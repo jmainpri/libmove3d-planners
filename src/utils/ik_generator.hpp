@@ -26,50 +26,23 @@
  *                                               Jim Mainprice Tue 27 May 2014
  */
 
-#ifndef GENERALIK_HPP
-#define GENERALIK_HPP
+#ifndef IK_GENERATOR_HPP
+#define IK_GENERATOR_HPP
 
-#include "robot.hpp"
+#include "API/Device/generalik.hpp"
 
-namespace Move3D {
+namespace Move3D
+{
 
-class GeneralIK
+class IKGenerator : public GeneralIK
 {
 public:
-    GeneralIK(Move3D::Robot* robot);
+    IKGenerator(Move3D::Robot* robot);
+    bool generate(const Eigen::VectorXd& xdes);
+    Move3D::confPtr_t sample(Move3D::confPtr_t q, double variance_factor);
 
-    //! Initialize with a set of joints and Joint for the end effector
-    bool initialize( const std::vector<Move3D::Joint*>& joints, Move3D::Joint* eef );
-
-    //! Solve for a given task (6Dof)
-    bool solve(const Eigen::VectorXd& xdes) const;
-
-    //! single step, Jacobian transpose (6Dof)
-    Eigen::VectorXd single_step( const Eigen::VectorXd& xdes ) const;
-
-    //! single step with joint limits (6Dof)
-    Eigen::VectorXd single_step_joint_limits( const Eigen::VectorXd& xdes ) const;
-
-    //! Returns the active dofs
-    const std::vector<int>& getActiveDofs() { return active_dofs_; }
-
-    //! Magnitude applied to the gradient (set to 1. to get Jacobian Pseudo inverse X task des)
-    double magnitude_;
-
-protected:
-
-    Move3D::Robot* robot_;
-    Move3D::Joint* eef_;
-    std::vector<Move3D::Joint*> active_joints_;
-    std::vector<int> active_dofs_;
-
-private:
-
-    bool limits_;
-    bool check_joint_limits_;
-    int nb_steps_;
 };
 
 }
 
-#endif // GENERALIK_HPP
+#endif // IK_GENERATOR_HPP

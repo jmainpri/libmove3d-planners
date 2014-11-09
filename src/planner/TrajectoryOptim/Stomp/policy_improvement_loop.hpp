@@ -93,6 +93,12 @@ private:
     bool use_annealing_;
     int limits_violations_;
     double K_;
+
+    bool project_last_config_;
+    double ratio_projected_;
+    Eigen::VectorXd x_task_goal_;
+    Move3D::Joint* eef_;
+
   
     MOVE3D_BOOST_PTR_NAMESPACE<Task> task_;
     MOVE3D_BOOST_PTR_NAMESPACE<Policy> policy_;
@@ -130,6 +136,8 @@ private:
     void parallelRollout(int i, int iteration_number);
 
     void executeRollout(int r, int iteration_number);
+
+    void projectToConstraints( std::vector<Eigen::VectorXd>& parameters );
 
     int policy_iteration_counter_;
     bool readPolicy(const int iteration_number);

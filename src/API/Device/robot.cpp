@@ -698,13 +698,18 @@ Joint* Robot::getIthActiveDoFJoint(unsigned int ithActiveDoF , unsigned int& ith
 /**
  * Get Jacobian
  */
-Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints, Joint* eef, bool with_rotations) const
+Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints, Joint* eef, bool with_rotations, bool with_height) const
 {
     int nb_dofs = 0;
     for(int j=0; j<active_joints.size(); j++)
         nb_dofs += active_joints[j]->getNumberOfDof();
 
-    Eigen::MatrixXd J( Eigen::MatrixXd::Zero( with_rotations ? 6 : 3, nb_dofs ) );
+    if( with_rotations )
+        with_height = true;
+    with_height = true;
+    int nb_task_trans = with_height ? 3 : 2;
+
+    Eigen::MatrixXd J( Eigen::MatrixXd::Zero( with_rotations ? 6 : nb_task_trans, nb_dofs ) );
     Eigen::Transform3d T_eef( eef->getMatrixPos() );
     Eigen::Vector3d p,z;
 
@@ -714,17 +719,23 @@ Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints, Joi
     {
         Eigen::Transform3d T( active_joints[j]->getMatrixPos() );
 
-        for(int i=0; i<3; i++) // position offset
+        for(int i=0; i<nb_task_trans; i++) // position offset
             p(i) = T_eef(i,3) - T(i,3);
-        for(int i=0; i<3; i++) // rotation axis (Z axis)
+        for(int i=0; i<nb_task_trans; i++) // rotation axis (Z axis)
             z(i) = T(i,2);
 
-        if( active_joints[j]->getP3dJointStruct()->type == P3D_ROTATE ){
+        if( active_joints[j]->getP3dJointStruct()->type == P3D_ROTATE )
+        {
             // CROSS PRODUCT
-            Eigen::Vector3d J_pi = z.cross( p );
+            Eigen::Vector3d J_pi;
+
+            J_pi = z.cross( p );
+
             J(0,id) = J_pi(0);
             J(1,id) = J_pi(1);
-            J(2,id) = J_pi(2);
+            if( with_height )
+                J(2,id) = J_pi(2);
+
             if( boost::math::isnan(J(0,id)) ){
                 printf("NAN VALUE\n");
             }
@@ -737,7 +748,8 @@ Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints, Joi
         if( active_joints[j]->getP3dJointStruct()->type == P3D_TRANSLATE ){
             J(0,id) = z(0);
             J(1,id) = z(1);
-            J(2,id) = z(2);
+            if( with_height )
+                J(2,id) = z(2);
         }
 //        if( active_joints[j]->getP3dJointStruct()->type == P3D_FREEFLYER ){ // TODO
 //            J(0,id) = 1;

@@ -1708,7 +1708,7 @@ void Trajectory::draw( int nbKeyFrame )
         if( move3d_use_api_functions() ) glLineWidth(3.);
 
         if( !m_use_continuous_color ) {
-            move3d_draw_one_line( pi[0], pi[1], height_i, pf[0], pf[1], height_f, m_Color, NULL, m_Robot );
+            move3d_draw_one_line( pi[0], pi[1], height_i, pf[0], pf[1], height_f, int(m_Color) % 8, NULL, m_Robot );
         }
         else{
             double colorvector[4];
