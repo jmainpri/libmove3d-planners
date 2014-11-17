@@ -195,7 +195,7 @@ namespace stomp_motion_planner
         // node_handle_.param("use_cumulative_costs", use_cumulative_costs_, true);
 
         num_rollouts_ = 10;
-        num_reused_rollouts_ = 0;
+        num_reused_rollouts_ = 5;
         //num_time_steps_ = 51;
 
 

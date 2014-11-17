@@ -8,7 +8,9 @@
  */
 
 #include "body_surface_sampler.hpp"
-#include "project.hpp"
+
+#include "API/project.hpp"
+#include "planner/planEnvironment.hpp"
 
 #include "P3d-pkg.h"
 #include "Collision-pkg.h"
@@ -255,17 +257,19 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* j
 
     Eigen::Vector3d p;
 
-    double spacing = radius / 2.0;
+    double spacing = radius / PlanEnv->getDouble(PlanParam::ratioCollRadiusSpacing); // 2.0
     int num_points = ceil( length / spacing ) + 1;
     spacing = length / ( num_points - 1.0 );
 
-    cout << "segment number : " << segment_number << endl;
+    cout << "segment id : " << segment_number << " , nb of coll points : " << num_points << endl;
 
     for (int i=0; i<num_points; ++i)
     {
-        Eigen::Vector3d p = p1 + ((double)i/(double)num_points)*( p2 - p1 );
+        Eigen::Vector3d p = p1 + (double(i)/double(num_points))*( p2 - p1 );
+        cout << "p : " << p.transpose() << endl;
         collision_points.push_back(CollisionPoint(parent_joints, radius, m_collision_clearance_default, segment_number, p));
     }
+
 
     return collision_points;
 }
@@ -303,7 +307,7 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateJointCollisionPoints(Rob
         if ( active_joints[j] <= joint )
         {
             parent_joints.push_back( active_joints[j] );
-            cout << "parent joint : " << parent_joints[j] << endl;
+            // cout << "parent joint : " << parent_joints[j] << endl;
         }
     }
 

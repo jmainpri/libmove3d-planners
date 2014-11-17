@@ -68,6 +68,11 @@ int ControlCost::getDiffRuleLength()
     return diff_rule_length_;
 }
 
+int ControlCost::getInnerSegmentSize( const Eigen::VectorXd& control ) const
+{
+    return control.size() - 2*(diff_rule_length_-1);
+}
+
 Eigen::VectorXd ControlCost::getInnerSegment( const Eigen::VectorXd& control ) const
 {
     return control.segment( diff_rule_length_-1, control.size() - 2*(diff_rule_length_-1));;

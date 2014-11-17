@@ -205,7 +205,8 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 
 FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs )
 {
-    human_active_->setAndUpdate( q );
+//    human_active_->setAndUpdate( q );
+
     FeatureVect count = computeDistances();
 
     const double base = 6; // Using exp usualy ....
@@ -489,7 +490,8 @@ MusculoskeletalFeature::MusculoskeletalFeature( Move3D::Robot* active ) :
 
 FeatureVect MusculoskeletalFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
-    natural_cost_->getRobot()->setAndUpdate(q);
+//    natural_cost_->getRobot()->setAndUpdate(q);
+
     FeatureVect count( computeMusculoskeletalEffort() );
 
 //    cout << "muskulo : " << count.transpose() << endl;

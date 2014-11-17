@@ -349,48 +349,8 @@ Eigen::VectorXd TaskSmoothnessFeature::getTaskPose( Move3D::confPtr_t q )
     Eigen::VectorXd pose = task_joints_[0]->getVectorPos();
     return pose;
 }
-
-// Compute velocity between two configurations
-double TaskSmoothnessFeature::getDist( const Move3D::Trajectory& t, Eigen::VectorXd& control_costs )
-{
-//    std::vector<Eigen::Vector3d> dist(veclocity_joint_ids_.size());
-
-//    std::vector<Eigen::Vector3d> pos_0(veclocity_joint_ids_.size());
-//    std::vector<Eigen::Vector3d> pos_1(veclocity_joint_ids_.size());
-
-//    human_active_->setAndUpdate(*t[i_q-1]);
-
-//    for( int i=0;i<veclocity_joint_ids_.size();i++)
-//        pos_0[i] = human_active_joints_[i]->getVectorPos();
-
-//    human_active_->setAndUpdate(*t[i_q]);
-
-//    for( int i=0;i<veclocity_joint_ids_.size();i++)
-//        pos_1[i] = human_active_joints_[i]->getVectorPos();
-
-    double dist=0.0;
-
-    Eigen::VectorXd x_0, x_1;
-
-    control_costs = Eigen::VectorXd::Zero( t.getNbOfViaPoints() );
-
-    for( int i=0;i<t.getNbOfPaths();i++)
-    {
-        x_0 = getTaskPose( t[i] );
-        x_1 = getTaskPose( t[i+1] );
-
-        Eigen::VectorXd delta = ( x_0 - x_1 );
-        Eigen::VectorXd costs = delta.cwise() * delta;
-
-        control_costs[i] = costs.sum();
-
-        dist += control_costs[i];
-    }
-
-    return dist;
-}
-
-
+//! Returns a matrix m with m.col() (i.e., number of collumns)
+//! being the number of configuration in the trajectory
 Eigen::MatrixXd TaskSmoothnessFeature::getTaskTrajectory( const Move3D::Trajectory& t )
 {
     //    cout << "active_dofs_ : ";
@@ -436,17 +396,93 @@ Eigen::MatrixXd TaskSmoothnessFeature::getTaskTrajectory( const Move3D::Trajecto
     return mat2;
 }
 
-Eigen::VectorXd TaskSmoothnessFeature::getControlCosts(int size, std::vector<Eigen::VectorXd>& control_cost ) const
+double TaskSmoothnessFeature::getDist( const Eigen::MatrixXd& mat, Eigen::VectorXd& costs )
 {
-    Eigen::VectorXd costs = Eigen::VectorXd::Zero( size );
 
-    for( int d=0; d<control_cost.size(); d ++) {
+}
+
+double TaskSmoothnessFeature::getVelocity( const Eigen::MatrixXd& mat, Eigen::VectorXd& costs, double dt )
+{
+    control_cost_.setType(0);
+
+    std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat, dt );
+    costs = getControlCosts( control_cost );
+    return control_cost_.cost( control_cost );
+}
+
+double TaskSmoothnessFeature::getAcceleration( const Eigen::MatrixXd& mat, Eigen::VectorXd& costs, double dt )
+{
+    control_cost_.setType(1);
+
+    std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat, dt );
+    costs = getControlCosts( control_cost );
+    return control_cost_.cost( control_cost );
+}
+
+double TaskSmoothnessFeature::getJerk( const Eigen::MatrixXd& mat, Eigen::VectorXd& costs, double dt )
+{
+    control_cost_.setType(2);
+
+    std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat, dt );
+    costs = getControlCosts( control_cost );
+    return control_cost_.cost( control_cost );
+}
+
+Eigen::VectorXd TaskSmoothnessFeature::getControlCosts( std::vector<Eigen::VectorXd>& control_cost ) const
+{
+    if( control_cost.empty() )
+        return Eigen::VectorXd::Zero(0);
+
+    Eigen::VectorXd costs = Eigen::VectorXd::Zero( control_cost_.getInnerSegmentSize( control_cost[0] ) );
+
+    for( int d=0; d<control_cost.size(); d ++)
+    {
         Eigen::VectorXd control_cost_tmp = control_cost_.getInnerSegment( control_cost[d] );
         for( int i=0; i<control_cost_tmp.size(); i ++){
             costs[i] += control_cost_tmp[i];
         }
     }
     return costs;
+}
+
+// Compute velocity between two configurations
+double TaskSmoothnessFeature::getDist( const Move3D::Trajectory& t, Eigen::VectorXd& control_costs )
+{
+//    std::vector<Eigen::Vector3d> dist(veclocity_joint_ids_.size());
+
+//    std::vector<Eigen::Vector3d> pos_0(veclocity_joint_ids_.size());
+//    std::vector<Eigen::Vector3d> pos_1(veclocity_joint_ids_.size());
+
+//    human_active_->setAndUpdate(*t[i_q-1]);
+
+//    for( int i=0;i<veclocity_joint_ids_.size();i++)
+//        pos_0[i] = human_active_joints_[i]->getVectorPos();
+
+//    human_active_->setAndUpdate(*t[i_q]);
+
+//    for( int i=0;i<veclocity_joint_ids_.size();i++)
+//        pos_1[i] = human_active_joints_[i]->getVectorPos();
+
+    double dist=0.0;
+
+    Eigen::VectorXd x_0, x_1;
+
+    control_costs = Eigen::VectorXd::Zero( t.getNbOfViaPoints() );
+
+    for( int i=0;i<t.getNbOfPaths();i++)
+    {
+        x_0 = getTaskPose( t[i] );
+        x_1 = getTaskPose( t[i+1] );
+
+        Eigen::VectorXd delta = ( x_0 - x_1 );
+        Eigen::VectorXd costs = delta.cwise() * delta;
+
+        control_costs[i] = costs.sum();
+
+        dist += control_costs[i];
+    }
+
+    return dist;
 }
 
 // Compute velocity between two configurations
@@ -457,10 +493,7 @@ double TaskSmoothnessFeature::getVelocity(const Move3D::Trajectory& t, Eigen::Ve
     Eigen::MatrixXd mat = getTaskTrajectory( t );
 
     // Compute the squared profile of quantities
-    control_cost_.setType(0);
-
-    std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat, dt );
-    costs = getControlCosts( t.getNbOfViaPoints(), control_cost );
+   double cost = getVelocity( mat, costs, dt );
 
 //    cout << "number of via points : " << t.getNbOfViaPoints() << endl;
 //    cout << "control_cost[0].size() : " << control_cost[0].size() << endl;
@@ -469,7 +502,7 @@ double TaskSmoothnessFeature::getVelocity(const Move3D::Trajectory& t, Eigen::Ve
 
 //    control_cost_.saveProfiles( mat, "/home/jmainpri/Dropbox/move3d/move3d-launch/launch_files/task_vel/" , dt );
 
-    return control_cost_.cost( control_cost );
+    return cost;
 }
 
 double TaskSmoothnessFeature::getAcceleration(const Move3D::Trajectory& t, Eigen::VectorXd& costs )
@@ -479,11 +512,8 @@ double TaskSmoothnessFeature::getAcceleration(const Move3D::Trajectory& t, Eigen
     Eigen::MatrixXd mat = getTaskTrajectory( t );
 
     // Compute the squared profile of quantities
-    control_cost_.setType(1);
-
-    std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat, dt );
-    costs = getControlCosts( t.getNbOfViaPoints(), control_cost );
-    return control_cost_.cost( control_cost );
+    double cost = getAcceleration( mat, costs, dt );
+    return cost;
 }
 
 double TaskSmoothnessFeature::getJerk( const Move3D::Trajectory& t, Eigen::VectorXd& costs )
@@ -493,11 +523,8 @@ double TaskSmoothnessFeature::getJerk( const Move3D::Trajectory& t, Eigen::Vecto
     Eigen::MatrixXd mat = getTaskTrajectory( t );
 
     // Compute the squared profile of quantities
-    control_cost_.setType(2);
-
-    std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat, dt );
-    costs = getControlCosts( t.getNbOfViaPoints(), control_cost );
-    return control_cost_.cost( control_cost );
+    double cost = getJerk( mat, costs, dt );
+    return cost;
 }
 
 void TaskSmoothnessFeature::setBuffer(const std::vector<Eigen::VectorXd>& buffer )

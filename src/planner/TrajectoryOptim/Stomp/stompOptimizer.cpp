@@ -411,7 +411,7 @@ bool StompOptimizer::initializeFromNewTrajectory(const Move3D::Trajectory& traj)
     Move3D::Trajectory T( configs );
 
     delete full_trajectory_;
-    full_trajectory_ = new ChompTrajectory( T, DIFF_RULE_LENGTH, *planning_group_, 0.0); // No Duration
+    full_trajectory_ = new ChompTrajectory( T, DIFF_RULE_LENGTH, *planning_group_, PlanEnv->getDouble(PlanParam::trajDuration) ); // No Duration
     group_trajectory_= ChompTrajectory(*full_trajectory_,DIFF_RULE_LENGTH);
     
     // initialize the policy trajectory
@@ -614,14 +614,16 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     if( !PlanEnv->getBool(PlanParam::trajStompNoPrint) )
         cout << "segment_frames_.size() : " << segment_frames_.size() << endl;
 
-    if( global_costSpace->getSelectedCostName() == "costHumanWorkspaceOccupancy" )
+    if( global_costSpace != NULL && global_costSpace->getSelectedCostName() == "costHumanWorkspaceOccupancy" )
         global_humanPredictionCostSpace->computeCurrentOccupancy();
+
 
     performForwardKinematics(false);
 
     // Print smoothness cost
     getSmoothnessCost();
     getGeneralCost();
+
 
     //group_trajectory_.print();
     
@@ -657,6 +659,9 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     best_group_trajectory_in_collsion_cost_ = numeric_limits<double>::max();
 
     confPtr_t q_tmp = robot_model_->getCurrentPos();
+
+    cout << "Start loop" << endl;
+
     // iterate
     for ( iteration_=0; !PlanEnv->getBool(PlanParam::stopPlanner); iteration_++)
     {
@@ -666,7 +671,7 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
             do_draw = (iteration_!=0) && (iteration_%PlanEnv->getInt(PlanParam::stompDrawIteration) == 0);
         }
 
-        if( global_costSpace->getSelectedCostName() == "costHumanWorkspaceOccupancy" )
+        if( global_costSpace != NULL && global_costSpace->getSelectedCostName() == "costHumanWorkspaceOccupancy" )
             global_humanPredictionCostSpace->computeCurrentOccupancy();
 
         reset_reused_rollouts_ = false;
@@ -869,17 +874,14 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
 
 //    policy_->saveProfiles( policy_parameters_, "." );
 
-    if( best_iteration_ > 0)
+    if( best_iteration_ > 0 )
 
         group_trajectory_.getTrajectory() = best_group_trajectory_;
-    else
+
+    else if( last_improvement_iteration_ > -1 )
+
         group_trajectory_.getTrajectory() = best_group_trajectory_in_collision_;
 
-//    if( best_group_trajectory_in_collsion_cost_ < best_group_trajectory_cost_ )
-
-//        group_trajectory_.getTrajectory() = best_group_trajectory_in_collision_;
-//    else
-//        group_trajectory_.getTrajectory() = best_group_trajectory_;
 
     // convert to move3d trajectory
     best_traj_ = Move3D::Trajectory( robot_model_ );
@@ -1353,7 +1355,8 @@ double StompOptimizer::getSmoothnessCost()
 
     double discretization = group_trajectory_.getUseTime() ? group_trajectory_.getDiscretization() : 0.0;
 
-    bool classic = false;
+    bool classic = HriEnv->getBool(HricsParam::ioc_use_baseline);
+
     StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
 
     if( ( classic == false ) && ( fct != NULL ) && ( fct->getFeatureFunction("SmoothnessAll") != NULL ) )
@@ -1770,7 +1773,7 @@ bool StompOptimizer::performForwardKinematics(bool is_rollout)
 
         int full_traj_index = group_trajectory_.getFullTrajectoryIndex(i);
         full_trajectory_->getTrajectoryPointP3d( full_traj_index, joint_array );
-        this->getFrames( i, joint_array, q );
+        this->getFrames( i, joint_array, q ); // Perform FK
 
         // current_traj.push_back( confPtr_t(new Configuration(q)) );
         if( false && is_rollout && ( i%way_point_ratio != 0 ) && ( i != start ) && (i != end ) )
@@ -1914,7 +1917,7 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
 
     // respect joint limits:
 
-    //    succeded_joint_limits_ = handleJointLimits();
+    succeded_joint_limits_ = handleJointLimits();
 
     // Fix joint limits
     //    if( !succeded_joint_limits_ )

@@ -89,7 +89,6 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
     type_ = vel; // Match control cost
 //    type_ = acc;
 //    type_ = jerk;
-//    type_ = vel;
 
     //node_handle_ = node_handle;
     //print_debug_ = true;
@@ -667,7 +666,6 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen:
         AccelerationSmoothness& accel   = smoothnes->acceleration_;
         JerkSmoothness& jerk            = smoothnes->jerk_;
 
-
         Eigen::MatrixXd traj_smooth = length.getSmoothedTrajectory( traj );
 
         double dist = length.getControlCosts( traj_smooth, control_costs_tmp );
@@ -701,29 +699,37 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen:
         double cost_t;
         Eigen::VectorXd control_costs_t;
 
+        Eigen::MatrixXd traj_task = task.getTaskTrajectory( traj );
+
+        // DIST
         cost_t = task.getDist( traj, control_costs_t );
         costs[4] = factor_task_dist * cost_t;
 
         for (int d=0; d<control_costs[4].size(); ++d)
             control_costs[4][d] = factor_task_dist * control_costs_t;
 
-        cost_t = task.getVelocity( traj, control_costs_t );
+        // VEL
+        cost_t = task.getVelocity( traj_task, control_costs_t, dt );
         costs[5] = factor_task_vel * cost_t;
 
         for (int d=0; d<control_costs[5].size(); ++d)
             control_costs[5][d] = factor_task_vel * control_costs_t;
 
-        cost_t = task.getAcceleration( traj, control_costs_t );
+        // ACC
+        cost_t = task.getAcceleration( traj_task, control_costs_t, dt );
         costs[6] = factor_task_acc * cost_t;
 
         for (int d=0; d<control_costs[6].size(); ++d)
             control_costs[6][d] = factor_task_acc * control_costs_t;
 
-        cost_t = task.getJerk( traj, control_costs_t );
+        // JERK
+        cost_t = task.getJerk( traj_task, control_costs_t, dt );
         costs[7] = factor_task_jerk * cost_t;
+
 
         for (int d=0; d<control_costs[7].size(); ++d)
             control_costs[7][d] = factor_task_jerk * control_costs_t;
+
 
 //        cout << "GET ALL CONTROL COSTS" << endl;
     }

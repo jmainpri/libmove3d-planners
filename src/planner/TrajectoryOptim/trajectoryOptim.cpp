@@ -450,7 +450,8 @@ bool traj_optim_runStomp( int runId )
         global_optimizer->testMultiVariateGaussianSampler();
     }
 
-    global_optimizer->resetSharedPtr();
+    // WHY IS THIS HERE
+//    global_optimizer->resetSharedPtr();
     return true;
 }
 

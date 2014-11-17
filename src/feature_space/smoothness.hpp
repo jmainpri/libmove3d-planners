@@ -129,7 +129,12 @@ public:
     double getAcceleration( const Move3D::Trajectory& t, Eigen::VectorXd& control_costs );
     double getJerk( const Move3D::Trajectory& t, Eigen::VectorXd& control_costs );
 
-    Eigen::VectorXd getControlCosts(int size, std::vector<Eigen::VectorXd>& control_cost ) const;
+    double getDist( const Eigen::MatrixXd& t,Eigen::VectorXd& control_costs );
+    double getVelocity( const Eigen::MatrixXd& t,Eigen::VectorXd& control_costs, double dt );
+    double getAcceleration(const  Eigen::MatrixXd& t, Eigen::VectorXd& control_costs, double dt );
+    double getJerk( const Eigen::MatrixXd& t, Eigen::VectorXd& control_costs, double dt );
+
+    Eigen::VectorXd getControlCosts( std::vector<Eigen::VectorXd>& control_cost ) const;
 
     //! Set Task buffer
     void setBuffer( const std::vector<Eigen::VectorXd>& buffer );

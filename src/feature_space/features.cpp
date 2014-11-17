@@ -167,9 +167,12 @@ FeatureVect Feature::getFeatureCount( const Move3D::Trajectory& traj )
 
     int k = 0;
 
+    Move3D::Robot* robot = traj.getRobot();
+
     for (int i=1; i<nb_via_points+1; i++)
     {
         q_1 = traj[i-1];
+        robot->setAndUpdate( *q_1 );
         phi += ( getFeatures( *q_1 ) * dt );
 
         if( (i < nb_via_points) && !traj.getUseTimeParameter() )
@@ -461,10 +464,13 @@ void StackedFeatures::setWeights( const WeightVect& w )
     int height = 0;
     for( int i=0;i<int(feature_stack_.size()); i++)
     {
-        int num = feature_stack_[i]->getNumberOfFeatures();
-        Eigen::VectorXd weights = w.segment( height, num );
-        feature_stack_[i]->setWeights( weights );
-        height += num;
+        if( feature_stack_[i]->is_active_ )
+        {
+            int num = feature_stack_[i]->getNumberOfFeatures();
+            Eigen::VectorXd weights = w.segment( height, num );
+            feature_stack_[i]->setWeights( weights );
+            height += num;
+        }
     }
 
     w_= w;

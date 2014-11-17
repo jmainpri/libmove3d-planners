@@ -64,7 +64,7 @@ namespace HricsParam
             ioc_use_simulation_demos,
             ioc_user_set_pelvis_bounds,
             ioc_use_baseline,
-            ioc_use_one_iteration
+            ioc_no_replanning
         };
 
         enum intParameter

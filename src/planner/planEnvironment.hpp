@@ -226,6 +226,9 @@ enum doubleParameter
     // Pace
     grid_pace,
 
+    // Collision Space
+    ratioCollRadiusSpacing,
+
     // Object TransfertPoint variable
     env_randomXMinLimit,
     env_randomXMaxLimit,

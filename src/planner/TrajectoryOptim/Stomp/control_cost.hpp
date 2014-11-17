@@ -46,6 +46,9 @@ public:
     //! Returns the diff rule between
     int getDiffRuleLength();
 
+    //! Returns size segment of active controls
+    int getInnerSegmentSize( const Eigen::VectorXd& control ) const;
+
     //! Returns segment of active controls
     Eigen::VectorXd getInnerSegment( const Eigen::VectorXd& control ) const;
 

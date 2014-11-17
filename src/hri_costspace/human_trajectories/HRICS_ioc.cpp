@@ -245,7 +245,7 @@ bool IocSampler::preAllocateMultivariateGaussianSampler()
     {
         inv_control_costs_.push_back( control_costs_[j].inverse() );
 
-        move3d_save_matrix_to_file( inv_control_costs_[0], "../matlab/invcost_matrix.txt" );
+//        move3d_save_matrix_to_file( inv_control_costs_[0], "../matlab/invcost_matrix.txt" );
 
         // Uncomment to print the precision Matrix
         // cout << endl << control_costs_[j] << endl;

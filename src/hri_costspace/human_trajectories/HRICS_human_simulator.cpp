@@ -116,9 +116,8 @@ bool HRICS_init_human_trajectory_cost()
         cout << "create human traj cost space" << endl;
 
         // SET BASELINE HERE
-        HriEnv->setBool(HricsParam::ioc_use_baseline, false);
-        HriEnv->setBool(HricsParam::ioc_use_one_iteration, false);
-        PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, HriEnv->getBool(HricsParam::ioc_use_baseline) ? 100. : 1.0000 );
+        // OVERRIDE THE SMOOTH WEIGHTS
+        // PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, HriEnv->getBool(HricsParam::ioc_use_baseline) ? 100. : 1.0000 ); // USED TO BE 100 on baseline
 
         // Workspace Occupancy costspace
         std::vector<double> size = Move3D::global_Project->getActiveScene()->getBounds();
@@ -1429,7 +1428,7 @@ double HumanTrajSimulator::run()
 
 //        path_.replaceP3dTraj();
 
-        if( HriEnv->getBool(HricsParam::ioc_use_one_iteration) && i == 0 ) // test no replanning
+        if( HriEnv->getBool(HricsParam::ioc_no_replanning) && i == 0 ) // test no replanning
             break;
     }
 
@@ -1445,10 +1444,9 @@ double HumanTrajSimulator::run()
 
 //    cout << "executed_path_.cost() : " << executed_path_.cost() << endl;
 
-    Move3D::Trajectory path( HriEnv->getBool(HricsParam::ioc_use_one_iteration) ? path_ : motion_to_traj( executed_trajectory_, human_active_ ));
+    Move3D::Trajectory path( HriEnv->getBool(HricsParam::ioc_no_replanning) ? path_ : motion_to_traj( executed_trajectory_, human_active_ ));
 
     human_active_->setCurrentMove3DTraj( path );
-
     path.replaceP3dTraj();
 
     g3d_draw_allwin_active();

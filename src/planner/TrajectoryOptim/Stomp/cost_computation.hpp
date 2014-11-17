@@ -73,6 +73,7 @@ private:
     bool is_collision_free_;
     bool succeded_joint_limits_;
 
+    bool allow_end_configuration_motion_;
     bool use_costspace_;
     std::vector<int> state_is_in_collision_;
     std::vector< std::vector< Eigen::Transform3d, Eigen::aligned_allocator<Eigen::Transform3d> > > segment_frames_;
@@ -90,6 +91,7 @@ private:
     int free_vars_end_;
     int num_vars_all_;
     int num_vars_free_;
+    int id_fixed_;
     int iteration_;
     int num_collision_points_;
     int num_joints_;

@@ -479,7 +479,7 @@ bool IocSequences::run()
                     ss << "run_simulator_" << std::setw(3) << std::setfill( '0' ) << j;
                     ss <<              "_" << std::setw(3) << std::setfill( '0' ) << k << ".traj";
 
-                    Move3D::Trajectory traj( HriEnv->getBool(HricsParam::ioc_use_one_iteration) ? global_ht_simulator->getCurrentPath() : global_ht_simulator->getExecutedPath() );
+                    Move3D::Trajectory traj( HriEnv->getBool(HricsParam::ioc_no_replanning) ? global_ht_simulator->getCurrentPath() : global_ht_simulator->getExecutedPath() );
                     traj.saveToFile( ss.str() );
 
                     trajs.push_back( global_ht_simulator->getExecutedTrajectory() );
@@ -513,7 +513,8 @@ bool IocSequences::run()
 
 //            dtw_compare_performance(100,30);
 
-            global_ht_simulator->setDemonstrations( trajs );
+            if( !HriEnv->getBool(HricsParam::ioc_no_replanning ) )
+                global_ht_simulator->setDemonstrations( trajs );
 
             StopRun = true;
             break;

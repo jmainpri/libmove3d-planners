@@ -113,6 +113,7 @@ bool stompContext::initRun( Move3D::Trajectory& T, double duration )
 
     m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup, duration );
     cout << "Chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
+    cout << "Chomp Trajectory duration : " << duration << endl;
 
     // Save passive dof to generate the Move3D trajectory
     std::vector<confPtr_t> passive_dofs = T.getVectorOfConfiguration();
@@ -316,7 +317,7 @@ void stomp_motion_planner::srompRun_MultipleParallel()
 
     for( int i=0;i<int(robots.size()); i++)
     {
-        boost::thread( &stompRun::run, pool, i, trajs[i], 0.0 );
+        boost::thread( &stompRun::run, pool, i, trajs[i], PlanEnv->getDouble(PlanParam::trajDuration) );
         //global_MultiStomplinesToDraw[robots[i]].clear();
         robots[i]->getP3dRobotStruct()->display_mode = P3D_ROB_NO_DISPLAY;
     }
@@ -355,5 +356,5 @@ void stomp_motion_planner::srompRun_OneParallel()
     T.push_back( robots[0]->getInitPos() );
     T.push_back( robots[0]->getGoalPos() );
 
-    pool->run( 0, T, 0.0 );
+    pool->run( 0, T, PlanEnv->getDouble(PlanParam::trajDuration) );
 }

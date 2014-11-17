@@ -265,6 +265,10 @@ void initPlannerParameters()
     // AStar
     myDoubleMap.insert( std::make_pair( PlanParam::grid_pace,               new doubleContainer(1.0)));
 
+    // Collspace
+    myDoubleMap.insert( std::make_pair( PlanParam::ratioCollRadiusSpacing,  new doubleContainer(2.0)));
+
+
     // Object TransfertPoint variable
     myDoubleMap.insert( std::make_pair( PlanParam::env_randomXMinLimit,      new doubleContainer(-3.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::env_randomXMaxLimit,      new doubleContainer(3.0)));

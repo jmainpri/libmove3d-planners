@@ -27,6 +27,7 @@
  */
 #include "cost_computation.hpp"
 
+#include "planEnvironment.hpp"
 #include "cost_space.hpp"
 
 using namespace stomp_motion_planner;
@@ -98,6 +99,15 @@ costComputation::costComputation(Robot* robot,
             collision_point_acc_eigen_[i].resize(num_collision_points_);
         }
     }
+
+    // Move the end configuration in the trajectory
+    id_fixed_ = 2;
+    allow_end_configuration_motion_ = PlanEnv->getBool(PlanParam::trajStompMoveEndConfig);
+    if( allow_end_configuration_motion_ )
+    {
+        id_fixed_ = 1;
+    }
+    group_trajectory_.setFixedId( id_fixed_ );
 }
 
 costComputation::~costComputation()
@@ -180,7 +190,7 @@ bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
                 double multiplier = max_violation / joint_costs_[joint].getQuadraticCostInverse()(free_var_index,free_var_index);
 
                 group_traj.getFreeJointTrajectoryBlock(joint) +=
-                        multiplier * joint_costs_[joint].getQuadraticCostInverse().col(free_var_index);
+                        multiplier * joint_costs_[joint].getQuadraticCostInverse().col(free_var_index).segment(1,num_vars_free_-id_fixed_);
             }
             if (++count > 10)
             {
@@ -357,7 +367,7 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::V
 
     // copy the parameters into group_trajectory_:
     for (int d=0; d<num_joints_; ++d) {
-        group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d];
+        group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d].segment(1,num_vars_free_-id_fixed_);
     }
     //    group_trajectory_.print();
 
@@ -395,7 +405,7 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::V
 
     // copy the parameters into group_trajectory_:
     for (int d=0; d<num_joints_; ++d) {
-        parameters[d] = group_trajectory_.getFreeJointTrajectoryBlock(d);
+        parameters[d].segment(1,num_vars_free_-id_fixed_) = group_trajectory_.getFreeJointTrajectoryBlock(d);
     }
 
     return true;
