@@ -24,6 +24,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <sys/time.h>
+//#include <time.h>
+
 #include "HRICS_dynamic_time_warping.hpp"
 
 #include <stdio.h>
@@ -253,6 +256,7 @@ int dtw_compare_performance(int traj_length, int iterations)
     }
     DTW::SimpleDTW my_eval = DTW::SimpleDTW( traj_length, traj_length );
     printf("Evaluating\n");
+#ifndef MACOSX
     //Run tests
     printf("-----Test single-threaded version-----\n");
     printf("Testing vector variant\n");
@@ -270,6 +274,7 @@ int dtw_compare_performance(int traj_length, int iterations)
     bsecsv = bsecsv + (float)(betv.tv_nsec - bstv.tv_nsec) / 1000000000.0;
     printf("Final cost: %f\n", scost);
     printf("SINGLE (vector): %f\n", bsecsv);
+#endif
     return 0;
 }
 
@@ -375,6 +380,7 @@ std::vector<double> dtw_compare_performance( const Move3D::ChompPlanningGroup* p
     cout << "-----Test single-threaded version-----\n";
     cout << "Testing vector variant\n";
 
+#ifndef MACOSX
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &bstv);
 
     scost.resize( test_vec_1.size() );
@@ -391,7 +397,8 @@ std::vector<double> dtw_compare_performance( const Move3D::ChompPlanningGroup* p
     bsecsv = bsecsv + (float)(betv.tv_nsec - bstv.tv_nsec) / 1000000000.0;
 
     cout << "SINGLE (vector): " << bsecsv << endl;
-
+#endif
+    
     return scost;
 }
 

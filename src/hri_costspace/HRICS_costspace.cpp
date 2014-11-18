@@ -80,7 +80,7 @@ double HRICS_getPlanarHumanGridCost(Configuration& q)
 double HRICS_getConfigCost(Configuration& Conf)
 {	
     Robot* rob = Conf.getRobot();
-    shared_ptr<Configuration> q_Saved = rob->getCurrentPos();
+    confPtr_t q_Saved = rob->getCurrentPos();
 
     rob->setAndUpdate(Conf);
 

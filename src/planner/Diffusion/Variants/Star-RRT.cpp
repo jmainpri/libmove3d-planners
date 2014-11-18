@@ -144,7 +144,7 @@ void StarExpansion::setInitialCompco( ConnectedComponent* compco )
  * Expand the localpath
  */
 bool StarExpansion::expandToGoal(Node* expansionNode, 
-                                 shared_ptr<Configuration> directionConfig)
+                                 MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig)
 {
     return false;
 }

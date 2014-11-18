@@ -304,9 +304,15 @@ nDimCell* nDimGrid<_nDimGrid_Dimension_>::createNewCell(int index, const Matrix<
 {
     if (index == 0)
     {
-        return new nDimCell( 0, m_originCorner , this );
+//        // TODO DEFINE FUNCTION
+//        return new nDimCell( 0, m_originCorner , this );
     }
-    nDimCell* newCell = new nDimCell( index, computeCellCorner(coordinate) , this );
+    
+    // TODO DEFINE FUNCTION
+    nDimCell* newCell;
+//    nDimCell* newCell = new nDimCell( index, computeCellCorner(coordinate) , this );
+    
+    
 	// Matrix< double, _nDimGrid_Dimension_ , 1 > corner = newCell->getCorner();
 	//    cout << " = (" << corner[0] <<"," << corner[1] << "," << corner[2] << ")" << endl;
     return newCell;
@@ -372,15 +378,17 @@ nDimCell* nDimGrid<_nDimGrid_Dimension_>::getNeighbour( const Matrix< int, _nDim
 		
 		unsigned int coeff=1;
 		
-		Matrix< int, _nDimGrid_Dimension_ , 1 >& NeighboorCoord;
-		
-		for (int i=0; i<dimension; i++) 
-		{
-			NeighboorCoord[i] = coordinate + ((ith_neigh/coeff) % 3 - 1);
-			coeff *= 3;
-		}
-		
-		return getCell(NeighboorCoord);
+        // TODO
+//		Matrix< int, _nDimGrid_Dimension_ , 1 >& NeighboorCoord;
+//		
+//		for (int i=0; i<dimension; i++) 
+//		{
+//			NeighboorCoord[i] = coordinate + ((ith_neigh/coeff) % 3 - 1);
+//			coeff *= 3;
+//		}
+//		
+//		return getCell(NeighboorCoord);
+        return 0x0;
     }
 }
 
