@@ -226,7 +226,7 @@ bool LocalPath::classicTest()
 
     if (!_lastValidEvaluated)
     {
-        if (_lastValidConfig == NULL)
+        if (_lastValidConfig.get() == NULL)
         {
             _lastValidConfig = _Robot->getNewConfig();
         }

@@ -42,6 +42,7 @@
 #include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
 #include "planner/TrajectoryOptim/Stomp/run_parallel_stomp.hpp"
 
+#include "API/ConfigSpace/configuration.hpp"
 #include "API/Graphic/drawModule.hpp"
 #include "API/project.hpp"
 #include "API/Grids/gridsAPI.hpp"
@@ -63,7 +64,6 @@
 #include <Eigen/Geometry> 
 
 #include <iostream>
-#include <tr1/memory>
 
 using namespace std;
 using namespace Move3D;

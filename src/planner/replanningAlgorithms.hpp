@@ -23,7 +23,6 @@
 //#include "planner/Diffusion/Variants/Star-RRT.hpp"
 
 #include <string>
-#include <tr1/memory>
 
 //! Function to cancel all kinematic constraints
 void p3d_deactivate_all_cntrts( Move3D::Robot* r );

@@ -14,8 +14,6 @@
 #include "Roadmap/graph.hpp"
 #include "Roadmap/BGL_Graph.hpp"
 
-#include <tr1/memory>
-
 #include "Localpath-pkg.h"
 #include "Planner-pkg.h"
 

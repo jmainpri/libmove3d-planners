@@ -16,8 +16,6 @@
 #include "API/Roadmap/graph.hpp"
 #include "API/Roadmap/BGL_Graph.hpp"
 
-#include <tr1/memory>
-
 #include "planEnvironment.hpp"
 
 #include "P3d-pkg.h"

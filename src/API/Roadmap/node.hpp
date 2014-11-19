@@ -28,8 +28,6 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
-#include <tr1/memory>
-
 #include "API/ConfigSpace/configuration.hpp"
 
 #ifndef _ROADMAP_H

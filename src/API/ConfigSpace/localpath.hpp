@@ -30,7 +30,7 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 
-class localpath;
+struct localpath;
 
 namespace Move3D {
 

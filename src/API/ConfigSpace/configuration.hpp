@@ -34,7 +34,11 @@
 #define EIGEN_USE_NEW_STDVECTOR
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
+#ifdef __MAC_10_9
+#include <memory>
+#else
 #include <tr1/memory>
+#endif
 #include <boost/function.hpp>
 
 //#ifdef LINUX
@@ -44,10 +48,17 @@
 //#define MOVE3D_BOOST_PTR_NAMESPACE std::shared_ptr;
 //#endif
 
+//#ifdef MACOSX
+//#define MOVE3D_USING_SHARED_PTR_NAMESPACE using namespace std::tr1;
+//#define MOVE3D_PTR_NAMESPACE std::tr1
+//#define MOVE3D_USING_BOOST_NAMESPACE using namespace boost;
+//#endif
+
 #ifdef MACOSX
-#define MOVE3D_USING_SHARED_PTR_NAMESPACE using namespace std::tr1;
-#define MOVE3D_PTR_NAMESPACE std::tr1
+#define MOVE3D_USING_SHARED_PTR_NAMESPACE
+#define MOVE3D_PTR_NAMESPACE std
 #define MOVE3D_USING_BOOST_NAMESPACE using namespace boost;
+#define MOVE3D_BOOST_PTR_NAMESPACE boost::shared_ptr
 #endif
 
 #ifndef MOVE3D_USING_SHARED_PTR_NAMESPACE
