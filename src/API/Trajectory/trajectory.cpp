@@ -226,14 +226,17 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t) :
         localpathPt = localpathPt->next_lp;
     }
 
-    m_Source = confPtr_t (new Configuration(m_Robot,p3d_config_at_param_along_traj(t, 0)));
+    m_Source = confPtr_t(new Configuration(m_Robot,p3d_config_at_param_along_traj(t, 0)));
     m_Source->setConstraints();
 
+    
     //	cout << "m_Source:" << endl;
     //	m_Source->print();
 
-    m_Target = confPtr_t (new Configuration(m_Robot,p3d_config_at_param_along_traj(t, getParamMax())));
+    m_Target = confPtr_t(new Configuration(m_Robot,p3d_config_at_param_along_traj(t, getParamMax())));
     m_Target->setConstraints();
+    
+    
     //	cout << "m_Target:" << endl;
     //	m_Target->print();
 
@@ -241,9 +244,11 @@ Trajectory::Trajectory(Robot* R, p3d_traj* t) :
     m_use_continuous_color = false;
     m_Color = 0;
 
-    if (!getBegin()->equal(*configAtParam(0)))
+    if (!getBegin()->equal(*configAtParam(0.0)))
     {
         cout << "Error in constructor : !getBegin()->equal(*configAtParam(0))" << endl;
+        getBegin()->print();
+        configAtParam(0.)->print();
     }
 
     if (!getEnd()->equal(*configAtParam(getParamMax())))
@@ -548,14 +553,14 @@ confPtr_t Trajectory::configAtTime(double time, unsigned int* id_localpath) cons
 }
 
 confPtr_t Trajectory::configAtParam(double param, unsigned int* id_localpath) const
-{
+{   
     if( m_Courbe.empty() )
         return confPtr_t(new Configuration(m_Robot,NULL));
 
     double soFar(0.0);
     double prevSoFar(0.0);
 
-    for (size_t i; i<m_Courbe.size(); i++)
+    for (size_t i=0; i<m_Courbe.size(); i++)
     {
         soFar = soFar + m_Courbe[i]->getParamMax();
 
