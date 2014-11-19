@@ -53,17 +53,17 @@ public:
 	 * Verifies that the localpath 
 	 * between epansionNode and directionConfig can expanded in the cost space
 	 */
-	bool expandToGoal(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig);
+	bool expandToGoal(Node* expansionNode, confPtr_t directionConfig);
 	
 	/**
 	 * Connect expansion method
 	 */
-	int connectExpandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode);
+	int connectExpandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode);
 	
 	/**
 	 * Extend expansion method
 	 */
-	int extendExpandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode);
+	int extendExpandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode);
 	
 	/** 
 	 * expandProcess 
@@ -78,7 +78,7 @@ public:
 	 *
 	 * @return the number of nodes created
 	 */
-	unsigned expandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode,
+	unsigned expandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode,
                     Env::expansionMethod method);
 	
 private:

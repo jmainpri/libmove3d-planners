@@ -183,7 +183,7 @@ void CostmapPlanner::autumnLeaves()
 				
 				// Get configuration at maximal threshold
 				// And insert in graph as leaf
-				shared_ptr<Configuration> q = E->getLocalPath()->configAtParam( parame );
+				confPtr_t q = E->getLocalPath()->configAtParam( parame );
 				
 				_Graph->removeEdges( node , parent  );
 				nodesToRemove.push_back( node );
@@ -300,7 +300,7 @@ unsigned int CostmapPlanner::run()
 	
 	double ts(0.0); m_time = 0.0; ChronoOn();
 	
-	shared_ptr<Configuration> gGoal = _Goal->getConfiguration();
+	confPtr_t gGoal = _Goal->getConfiguration();
 	
 	while ( !checkStopConditions() )
 	{

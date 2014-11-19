@@ -310,7 +310,7 @@ Trajectory* Dijkstra::extractTrajectory( vertex_t source, vertex_t target )
          path_iter++)
     {
         Node* ptrNode = m_graph_node_map[*path_iter];
-        shared_ptr<Configuration> q = ptrNode->getConfiguration();
+        confPtr_t q = ptrNode->getConfiguration();
         traj->push_back(q);
     }
 

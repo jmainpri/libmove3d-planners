@@ -48,7 +48,7 @@ unsigned int LocalPathValidTest::getNbCollisionTest()
     return mNbTest;
 }
 
-shared_ptr<Configuration> LocalPathValidTest::getLastValidConfiguration()
+confPtr_t LocalPathValidTest::getLastValidConfiguration()
 {
     return mLastValidConfiguration;
 }
@@ -92,7 +92,7 @@ bool LocalPathValidTest::testClassic()
     //Carefull
     //double Kpath = 0;
     double* q_atKpath = NULL;
-    //shared_ptr<Configuration> q_atKpath;
+    //confPtr_t q_atKpath;
 
     p3d_col_get_dmax(&dmax);
 
@@ -126,7 +126,7 @@ bool LocalPathValidTest::testClassic()
     }
 
     /* current position of robot is saved */
-    shared_ptr<Configuration> qp = this->configAtParam(0.0);
+    confPtr_t qp = this->configAtParam(0.0);
 
     /* We suppose that the fisrt and the last configurations are valid so
      we could test the configuration at dist0 from the bounds */
@@ -281,7 +281,7 @@ bool LocalPathValidTest::changePositionRobot(double l)
 
 bool LocalPathValidTest::changePositionRobotWithoutCntrt(double l) 
 {
-    shared_ptr<Configuration> q = configAtParam(l);
+    confPtr_t q = configAtParam(l);
     _Robot->setAndUpdateWithoutConstraints(*q);
     return invalidJointLimits();
 }

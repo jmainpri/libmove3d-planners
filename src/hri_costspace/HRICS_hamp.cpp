@@ -200,7 +200,7 @@ void HriSpaceCost::computeWorkspacePath()
 
     cout << "Computing Workspace Path for joint "<< _JntId << endl;
 
-    shared_ptr<Configuration> q = _Robot->getCurrentPos();
+    confPtr_t q = _Robot->getCurrentPos();
 
     _Robot->setAndUpdate( *_Robot->getInitPos() );
 

@@ -445,7 +445,7 @@ void HumanCostSpace::loadAgentGrids( const std::string& filename )
 //! The test uses a real time chrono
 void HumanCostSpace::testCostFunction()
 { 
-    shared_ptr<Configuration> q;
+    confPtr_t q;
 
     bool first_loop=true;
     unsigned int iter=0;

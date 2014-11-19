@@ -32,15 +32,15 @@ using MOVE3D_PTR_NAMESPACE::shared_ptr;
 
 SamplingMove3D::~SamplingAPI() {}
 
-shared_ptr<Configuration> SamplingMove3D::sample(bool samplePassive)
+confPtr_t SamplingMove3D::sample(bool samplePassive)
 {
 	return(mR->shoot(samplePassive));
 }
 
-shared_ptr<Configuration> SamplingMove3D::shootCollisionFree()
+confPtr_t SamplingMove3D::shootCollisionFree()
 {
 	bool collision(true);
-	shared_ptr<Configuration> q;
+	confPtr_t q;
 	while(collision)
 	{
 		q = this->sample();

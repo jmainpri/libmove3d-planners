@@ -599,6 +599,7 @@ vector<confPtr_t> Trajectory::getVectorOfConfiguration() const
 
     return vect;
 }
+
 vector<confPtr_t> Trajectory::getNConfAtParam(double delta) const
 {
     vector<confPtr_t> tmpVector(0);

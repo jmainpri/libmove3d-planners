@@ -147,7 +147,7 @@ Node* HRICS_RRT::nearestNeighbourInCell(Node* node, std::vector<Node*> neigbour)
 
     for(unsigned int i=0;i<nodesInCell.size();i++)
     {
-        shared_ptr<Configuration> config = nodesInCell[i]->getConfiguration();
+        confPtr_t config = nodesInCell[i]->getConfiguration();
         double dist = node->getConfiguration()->dist(*config);
         if(minDist>dist)
         {
@@ -164,7 +164,7 @@ Node* HRICS_RRT::nearestNeighbourInCell(Node* node, std::vector<Node*> neigbour)
   */
 Move3D::ThreeDCell* HRICS_RRT::getCellFromNode(Node* node)
 {
-    shared_ptr<Configuration> config = node->getConfiguration();
+    confPtr_t config = node->getConfiguration();
 
     Vector3d pos;
 

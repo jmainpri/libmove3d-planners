@@ -35,8 +35,8 @@ LocalpathFactory::LocalpathFactory() {}
 LocalpathFactory::~LocalpathFactory() {}
 
 Localpath* LocalpathFactory::create(
-		shared_ptr<Configuration> q1,
-		shared_ptr<Configuration> q2)
+		confPtr_t q1,
+		confPtr_t q2)
 {
 	return(new Localpath(q1, q2));
 }

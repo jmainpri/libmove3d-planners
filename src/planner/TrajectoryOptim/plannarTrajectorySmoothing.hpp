@@ -87,8 +87,8 @@ private:
     std::vector<Eigen::Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > _traj;
     Move3D::Robot* _cyl;
     Move3D::Robot* _Robot;
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration>  _curRobotConf;
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration>  _curCylConf;
+    confPtr_t  _curRobotConf;
+    confPtr_t  _curCylConf;
     double _dist;
 
 

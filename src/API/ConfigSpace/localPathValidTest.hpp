@@ -91,7 +91,7 @@ private:
 	
 	bool mMicrocollisionAvoidance;
 	
-	MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> mLastValidConfiguration;
+	confPtr_t mLastValidConfiguration;
 	
 	unsigned int mNbTest;
 

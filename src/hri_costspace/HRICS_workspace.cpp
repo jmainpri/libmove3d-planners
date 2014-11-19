@@ -272,7 +272,7 @@ Eigen::Vector3d Workspace::getVisball()
     Robot* visball = global_Project->getActiveScene()->getRobotByName("VISBALL");
 
     if (visball) {
-        shared_ptr<Configuration> q = visball->getCurrentPos();
+        confPtr_t q = visball->getCurrentPos();
         pos[0] = (*q)[6];
         pos[1] = (*q)[7];
         pos[2] = (*q)[8];
@@ -293,7 +293,7 @@ bool Workspace::computeAStarIn3DGrid()
     //
     ENV.setBool(Env::drawTraj,false);
 
-    shared_ptr<Configuration> config = _Robot->getInitPos();
+    confPtr_t config = _Robot->getInitPos();
 
     config->print();
 
@@ -376,7 +376,7 @@ void Workspace::solveAStar(State* start,State* goal)
     m3DPath.clear();
     m3DCellPath.clear();
 
-    shared_ptr<Configuration> config = _Robot->getCurrentPos();
+    confPtr_t config = _Robot->getCurrentPos();
 
     /*
      * Change the way AStar
@@ -491,7 +491,7 @@ double Workspace::distanceToEntirePath()
     Vector3d point;
     Vector3d interPolSaved;
 
-    shared_ptr<Configuration> config = _Robot->getCurrentPos();
+    confPtr_t config = _Robot->getCurrentPos();
 
     point[0] = config->at(mIndexObjectDof+0);
     point[1] = config->at(mIndexObjectDof+1);
@@ -543,7 +543,7 @@ double Workspace::distanceToCellPath()
 
     Vector3d point;
 
-    shared_ptr<Configuration> config = _Robot->getCurrentPos();
+    confPtr_t config = _Robot->getCurrentPos();
 
     point[0] = config->at(mIndexObjectDof+0);
     point[1] = config->at(mIndexObjectDof+1);
@@ -623,9 +623,9 @@ void Workspace::deactivateOnlyBaseCollision()
     p3d_col_activate_rob_rob(_Robot->getP3dRobotStruct(),mHumans[0]->getP3dRobotStruct());
 }
 
-bool Workspace::transPFromBaseConf(shared_ptr<Configuration> q_base, vector< Vector3d > points )
+bool Workspace::transPFromBaseConf(confPtr_t q_base, vector< Vector3d > points )
 {
-    shared_ptr<Configuration>  q_actual = _Robot->getCurrentPos(); //pour memoriser la configuration courante du robot
+    confPtr_t  q_actual = _Robot->getCurrentPos(); //pour memoriser la configuration courante du robot
 
     //On met à jour la configuration du robot pour que sa base soit dans la configuration
     //souhaitée:
@@ -665,9 +665,9 @@ bool Workspace::transPFromBaseConf(shared_ptr<Configuration> q_base, vector< Vec
     return false;
 }
 
-bool Workspace::testCol(shared_ptr<Configuration> q_base)
+bool Workspace::testCol(confPtr_t q_base)
 {
-    //	shared_ptr<Configuration> q_base = _Robot->getCurrentPos();
+    //	confPtr_t q_base = _Robot->getCurrentPos();
     bool jidoBaseActivation = false;
     if (q_base->getRobot()->getName().find("JIDO") != string::npos)
     {
@@ -753,10 +753,10 @@ bool Workspace::findGrapingPosition(std::string robot_name, std::vector<std::str
 }
 
 
-bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d& WSPoint)
+bool Workspace::sampleRobotBase(confPtr_t q_base, const Vector3d& WSPoint)
 {
 
-    /*shared_ptr<Configuration> q_cur = _Robot->getCurrentPos(); //store the current configuration
+    /*confPtr_t q_cur = _Robot->getCurrentPos(); //store the current configuration
     const int plantformIndexDof = 6;
 
     vector< pair<double,Vector3d > > PossiblePoints = m_ReachableSpace->getBaseGridPoint();
@@ -801,7 +801,7 @@ bool Workspace::sampleRobotBase(shared_ptr<Configuration> q_base, const Vector3d
         return false;*/
 
 
-    shared_ptr<Configuration> q_cur = _Robot->getCurrentPos(); //store the current configuration
+    confPtr_t q_cur = _Robot->getCurrentPos(); //store the current configuration
 
     unsigned int iterMax = 20;
 
@@ -942,7 +942,7 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, Move3
 
     for(unsigned int i=0;i<(unsigned int)traj.getNbOfPaths();i++)
     {
-        shared_ptr<Configuration> q_target(new Configuration(_Robot,q));
+        confPtr_t q_target(new Configuration(_Robot,q));
 
         LocalPath path(traj.getLocalPath(i)->getEnd(),q_target);
 
@@ -1030,7 +1030,7 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, Move3
       
       if(succeed)
       {
-        shared_ptr<Configuration> q_target(new Configuration(_Robot,q));
+        confPtr_t q_target(new Configuration(_Robot,q));
         
         p3d_update_virtual_object_config_for_arm_ik_constraint(_Robot->getP3dRobotStruct(), 0, q);
         
@@ -1089,7 +1089,7 @@ double* Workspace::testTransferPointToTrajectory( const Vector3d& WSPoint, Move3
   return NULL;
 }*/
 
-/*bool Workspace::baseInSight(shared_ptr<Configuration> q_base)
+/*bool Workspace::baseInSight(confPtr_t q_base)
  {
  
  const double min_theta= -M_PI/4;
@@ -1134,8 +1134,8 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 
     p3d_col_activate_rob_rob( _Robot->getP3dRobotStruct(), mHumans[0]->getP3dRobotStruct());
 
-    shared_ptr<Configuration> q_base = _Robot->getCurrentPos();
-    shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
+    confPtr_t q_base = _Robot->getCurrentPos();
+    confPtr_t q_cur_robot  = _Robot->getCurrentPos();
 
     if ( m_ReachableSpace == NULL )
     {
@@ -1196,7 +1196,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
         }
     }
 
-    shared_ptr<Configuration> q_cur_human = mHumans[0]->getCurrentPos();
+    confPtr_t q_cur_human = mHumans[0]->getCurrentPos();
 
     Vector3d WSPoint;
 
@@ -1295,7 +1295,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 //		return false;
 //	}
 
-//	shared_ptr<Configuration> q_base = _Robot->getCurrentPos();
+//	confPtr_t q_base = _Robot->getCurrentPos();
 
 //	if ( /*baseInSight(q_base)*/ false )
 //	{
@@ -1307,7 +1307,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 //		}
 //	}
 
-//	shared_ptr<Configuration> q_cur_robot  = _Robot->getCurrentPos();
+//	confPtr_t q_cur_robot  = _Robot->getCurrentPos();
 
 
 
@@ -1326,7 +1326,7 @@ bool Workspace::chooseBestTransferPoint(Vector3d& transfPoint, bool move, unsign
 ////	Vector3d WSPoint;
 ////	WSPoint = transfPoint;
 
-//	shared_ptr<Configuration> q_cur_human = mHumans[0]->getCurrentPos();
+//	confPtr_t q_cur_human = mHumans[0]->getCurrentPos();
 
 //	Vector3d WSPoint;
 
@@ -1585,7 +1585,7 @@ Eigen::Vector3d Workspace::computeOTPFromHandPose( bool rightHand )
 
 void Workspace::initPR2RepoConf()
 {
-    shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
+    confPtr_t q_cur = _Robot->getCurrentPos();
 
     int IndexObjectDof = m_ReachableSpace->getRobot()->getJoint("Pelvis")->getIndexOfFirstDof();
 
@@ -1636,7 +1636,7 @@ void Workspace::initPR2RepoConf()
     q[42] = 0;
 
 
-    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
+    confPtr_t m_q = confPtr_t(
                 new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
     _Robot->setInitPos(*m_q);
     _Robot->setAndUpdate( *m_q );
@@ -1649,7 +1649,7 @@ void Workspace::initPR2GiveConf()
 {
     cout << "Workspace::initPR2GiveConf()" << endl;
 
-    shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
+    confPtr_t q_cur = _Robot->getCurrentPos();
 
     configPt q;
     q = p3d_alloc_config(_Robot->getP3dRobotStruct());
@@ -1687,7 +1687,7 @@ void Workspace::initPR2GiveConf()
 
 
 
-    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
+    confPtr_t m_q = confPtr_t(
                 new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
     _Robot->setAndUpdate( *m_q );
     _Robot->setInitPos(*m_q );
@@ -1699,7 +1699,7 @@ void Workspace::initPR2AndHumanTest()
     cout << "Workspace::initPR2AndHumanTest()" << endl;
 
 
-    shared_ptr<Configuration> q_cur_human = m_ReachableSpace->getRobot()->getCurrentPos();
+    confPtr_t q_cur_human = m_ReachableSpace->getRobot()->getCurrentPos();
     int firstIndexOfHumanDof = m_ReachableSpace->getRobot()->getJoint("Pelvis")->getIndexOfFirstDof();
 
     configPt q_h;
@@ -1714,14 +1714,14 @@ void Workspace::initPR2AndHumanTest()
     q_h[firstIndexOfHumanDof + 1] = (*q_cur_human)[firstIndexOfHumanDof+1];
     q_h[firstIndexOfHumanDof + 5] = 0;
 
-    shared_ptr<Configuration> m_q_human = shared_ptr<Configuration>(
+    confPtr_t m_q_human = confPtr_t(
                 new Configuration(m_ReachableSpace->getRobot(),p3d_copy_config(m_ReachableSpace->getRobot()->getP3dRobotStruct(),q_h)));
 
     m_ReachableSpace->getRobot()->setInitPos(*m_q_human);
     m_ReachableSpace->getRobot()->setAndUpdate( *m_q_human );
 
 
-    shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
+    confPtr_t q_cur = _Robot->getCurrentPos();
     configPt q;
     q = p3d_alloc_config(_Robot->getP3dRobotStruct());
 
@@ -1738,7 +1738,7 @@ void Workspace::initPR2AndHumanTest()
     //it should be 180 or -180 but it won't work unless that.
     q[firstIndexOfRobotDof + 5] = 179.0*M_PI;
 
-    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
+    confPtr_t m_q = confPtr_t(
                 new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
 
     _Robot->setInitPos(*m_q);
@@ -1772,7 +1772,7 @@ void Workspace::computePR2GIK(bool move)
     _Robot->activateCcConstraint();
     if (q != NULL)
     {
-        shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
+        confPtr_t m_q = confPtr_t(
                     new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
         _Robot->setAndUpdate( *m_q );
     }
@@ -1784,7 +1784,7 @@ void Workspace::computePR2GIK(bool move)
 
 
 
-    /*shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
+    /*confPtr_t q_cur = _Robot->getCurrentPos();
     configPt q;
     q = p3d_alloc_config(_Robot->getP3dRobotStruct());
 
@@ -1803,11 +1803,11 @@ void Workspace::computePR2GIK(bool move)
     unsigned int i = 0;
     unsigned int loopThreshold = 50;
 
-    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
+    confPtr_t m_q = confPtr_t(
                                           new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
     _Robot->setAndUpdate( *m_q );
 
-    shared_ptr<Configuration> m_q_tmp;
+    confPtr_t m_q_tmp;
 
     while (dist > distThreshold && i < loopThreshold)
     {
@@ -1817,7 +1817,7 @@ void Workspace::computePR2GIK(bool move)
         q[virtualObjectDOF + 5] = p3d_random(-M_PI,M_PI);
         Joint* j14 = _Robot->getJoint("fingerJointGripper_0");
 
-        m_q_tmp = shared_ptr<Configuration>(new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
+        m_q_tmp = confPtr_t(new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
         _Robot->setAndUpdate( *m_q_tmp );
 
         dist = std::sqrt( pow(current_WSPoint[0] - j14->getVectorPos()[0], 2) + pow(current_WSPoint[1] - j14->getVectorPos()[1], 2) + pow(current_WSPoint[2] - j14->getVectorPos()[2], 2));
@@ -1847,13 +1847,13 @@ void Workspace::ChangeRobotPos(double value)
 {
 
     int firstIndexOfHumanDof = m_ReachableSpace->getRobot()->getJoint("Pelvis")->getIndexOfFirstDof();
-    shared_ptr<Configuration> q_cur_human = m_ReachableSpace->getRobot()->getCurrentPos();
+    confPtr_t q_cur_human = m_ReachableSpace->getRobot()->getCurrentPos();
 
     int firstIndexOfDof = dynamic_cast<p3d_jnt*>(_Robot->getP3dRobotStruct()->baseJnt)->user_dof_equiv_nbr;
     cout << "Workspace::ChangeRobotPos()" << endl;
     cout << value << endl;
 
-    shared_ptr<Configuration> q_cur = _Robot->getCurrentPos();
+    confPtr_t q_cur = _Robot->getCurrentPos();
     configPt q;
     q = p3d_alloc_config(_Robot->getP3dRobotStruct());
 
@@ -1865,7 +1865,7 @@ void Workspace::ChangeRobotPos(double value)
 
     q[firstIndexOfDof] = (*q_cur_human)[firstIndexOfHumanDof + 0] + value;
 
-    shared_ptr<Configuration> m_q = shared_ptr<Configuration>(
+    confPtr_t m_q = confPtr_t(
                 new Configuration(_Robot,p3d_copy_config(_Robot->getP3dRobotStruct(),q)));
     //    _Robot->setInitialPosition(*m_q);
     _Robot->setAndUpdate( *m_q );

@@ -49,7 +49,7 @@ unsigned MultiRRT::init()
 		
 		for (int i=0; i<ENV.getInt(Env::nbOfSeeds); i++)
 		{
-			shared_ptr<Configuration> q = _Robot->shootBaseWithoutCC();
+			confPtr_t q = _Robot->shootBaseWithoutCC();
 			while ((!q->setConstraintsWithSideEffect()) || q->isInCollision()) 
 			{
 				q = _Robot->shootBaseWithoutCC();
@@ -63,7 +63,7 @@ unsigned MultiRRT::init()
 	{
 		for (int i=0; i<ENV.getInt(Env::nbOfSeeds); i++)
 		{
-			shared_ptr<Configuration> q = _Robot->shoot();
+			confPtr_t q = _Robot->shoot();
 			while ( q->isInCollision()) 
 			{
 				q = _Robot->shoot();
@@ -75,7 +75,7 @@ unsigned MultiRRT::init()
 	return added;
 }
 
-bool MultiRRT::addSeed(shared_ptr<Configuration> q)
+bool MultiRRT::addSeed(confPtr_t q)
 {	
 	if (!_Init)
 	{
@@ -151,7 +151,7 @@ Node* MultiRRT::getGoalCompco()
 
 unsigned int MultiRRT::run()
 {
-	shared_ptr<Configuration> tmp = _Robot->getCurrentPos();
+	confPtr_t tmp = _Robot->getCurrentPos();
 	
 	//	cout << "ENV.getInt(Env::maxNodeCompco) = " << ENV.getInt(Env::maxNodeCompco) << endl;
 	if(!preConditions())

@@ -750,7 +750,7 @@ void g3d_draw_hrics(int opengl_context)
     {
         double depth = 1.0;
 
-        shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
+        confPtr_t q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
         int indexFirstDof = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint("Pelvis")->getIndexOfFirstDof();
 
         double xMin = (*q_hum)[indexFirstDof + 0] + PlanEnv->getDouble(PlanParam::env_randomXMinLimit);
@@ -841,8 +841,8 @@ void g3d_draw_hrics(int opengl_context)
         //    drawGauge(2, current_cost.second[1]);
         //    drawGauge(3, current_cost.second[2]);
 
-        //            shared_ptr<Configuration> q_rob = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot()->getCurrentPos();
-        //            shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
+        //            confPtr_t q_rob = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot()->getCurrentPos();
+        //            confPtr_t q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
 
         //    glLineWidth(3.);
         //    g3d_drawOneLine((*q_hum)[indexFirstDof + 0],   (*q_hum)[indexFirstDof + 1],    current_WSPoint[2],
@@ -855,7 +855,7 @@ void g3d_draw_hrics(int opengl_context)
     OTPListSize = OTPList.size();
     if (OTPListSize > 0)
     {
-        shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
+        confPtr_t q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
         int indexFirstDof = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint("Pelvis")->getIndexOfFirstDof();
         for (unsigned int i=0; i < OTPList.size(); i ++)
         {
@@ -936,7 +936,7 @@ void g3d_draw_hrics(int opengl_context)
     //        G3D_Window *win;
     //        win = g3d_get_cur_win();
     //        Robot* rob = global_Project->getActiveScene()->getActiveRobot();
-    //        shared_ptr<Configuration> q_cur = rob->getCurrentPos();
+    //        confPtr_t q_cur = rob->getCurrentPos();
     //
     ////        p3d_set_and_update_robot_conf(rob->getP3dRobotStruct()->ROBOT_POS);
     //        /* collision checking */
@@ -1022,7 +1022,7 @@ void drawSlice(int opengl_context)
 {
     Robot* rob = global_Project->getActiveScene()->getRobotByNameContaining("PR2");
     Robot* human = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman();
-    shared_ptr<Configuration> q_cur(human->getCurrentPos());
+    confPtr_t q_cur(human->getCurrentPos());
     //    getConfListSize() {return m_configList.size();}
     //            configPt getRobotConfigAt
 
@@ -1038,7 +1038,7 @@ void drawSlice(int opengl_context)
 
     for(int i = 0; i < dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getConfListSize(); i++)
     {
-        //        shared_ptr<Configuration> q( new Configuration(rob,dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getRobotConfigAt(i) ));
+        //        confPtr_t q( new Configuration(rob,dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getRobotConfigAt(i) ));
         //        rob->setAndUpdate(*q);
         dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->setRobotsToConf(i,PlanEnv->getBool(PlanParam::env_isStanding));
         global_Project->getActiveScene()->setActiveRobot("PR2_ROBOT");
@@ -1046,7 +1046,7 @@ void drawSlice(int opengl_context)
         //q->print();
         g3d_draw_robot(rob->getP3dRobotStruct()->num, win , opengl_context);
 
-        //        shared_ptr<Configuration> q( new Configuration(human,dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getRobotConfigAt(i) ));
+        //        confPtr_t q( new Configuration(human,dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getRobotConfigAt(i) ));
         //        human->setAndUpdate(*q);
         //        global_Project->getActiveScene()->setActiveRobot("ACHILE_HUMAN1");
         //        //cout << "g3d_draw_robot" << endl;

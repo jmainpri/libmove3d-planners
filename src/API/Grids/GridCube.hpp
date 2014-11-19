@@ -77,7 +77,7 @@ template<class T, class STREAM>
 
 typedef bool (*Compare)(p3d_node* n1, p3d_node* n2);
 
-extern void p3d_shoot_bounded(p3d_rob* R, std::vector<DofSpec>& params, shared_ptr<Configuration> q, bool sample_passive);
+extern void p3d_shoot_bounded(p3d_rob* R, std::vector<DofSpec>& params, confPtr_t q, bool sample_passive);
 
 class GridGraph : public Graph
 {
@@ -234,7 +234,7 @@ public:
             }
 
             remaining--;
-            shared_ptr<Configuration> q = mSampler->sample();
+            confPtr_t q = mSampler->sample();
             if(!mR->isInCollision(*q))
                 this->markCubeFree(*q);
             // some completion feedback for the user
@@ -323,7 +323,7 @@ public:
         return(true);
     }
 
-    Node* insertNode(shared_ptr<Configuration> q)
+    Node* insertNode(confPtr_t q)
     {
         int n;
         Node* node(NULL);

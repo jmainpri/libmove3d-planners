@@ -898,7 +898,7 @@ void ChompOptimizer::animateEndeffector()
             q[joints[j].move3d_dof_index_] = point[j];
         }
 
-        T.push_back( MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration>(new Configuration(q)) );
+        T.push_back( confPtr_t(new Configuration(q)) );
     }
 
     if( T.isValid() )

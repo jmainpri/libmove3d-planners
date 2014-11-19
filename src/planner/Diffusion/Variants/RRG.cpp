@@ -156,7 +156,7 @@ void RRGExpansion::setInitialCompco( ConnectedComponent* compco )
  * Expand the localpath
  */
 bool RRGExpansion::expandToGoal(Node* expansionNode,
-                                MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig)
+                                confPtr_t directionConfig)
 {
     return false;
 }

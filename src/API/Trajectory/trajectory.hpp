@@ -99,7 +99,7 @@ public:
     // Cuting, concat and extraction operations
     void copyPaths( std::vector<LocalPath*>& vect );
 
-    std::vector< MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> > getTowConfigurationAtParam( double param1, double param2, uint& lp1, uint& lp2 ) const;
+    std::vector< confPtr_t > getTowConfigurationAtParam( double param1, double param2, uint& lp1, uint& lp2 ) const;
 
     std::pair<bool,std::vector<LocalPath*> > extractSubPortion(double param1,double param2,unsigned int& first,unsigned int& last, bool check_for_coll = true) const;
     Trajectory extractSubTrajectoryOfLocalPaths(unsigned int id_start, unsigned int id_end) const;

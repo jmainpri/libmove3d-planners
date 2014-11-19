@@ -89,7 +89,7 @@ void Grid::computeAllCellCost()
 
     int nbCells = this->getNumberOfCells();
 
-    shared_ptr<Configuration> robotConf = _Robot->getCurrentPos();
+    confPtr_t robotConf = _Robot->getCurrentPos();
     for(int i=0; i<nbCells; i++)
     {
         //        dynamic_cast<Cell*>( BaseGrid::getCell(i) )->getHRICostSpace();
@@ -279,7 +279,7 @@ void Grid::draw()
 
 bool Grid::isVirtualObjectPathValid(Cell* fromCell,Cell* toCell)
 {
-    //    shared_ptr<Configuration> configFrom(new Configuration(_Robot));
+    //    confPtr_t configFrom(new Configuration(_Robot));
     //
     //    vector<double> cellCenter = fromCell->getCenter();
     //

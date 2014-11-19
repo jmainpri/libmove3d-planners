@@ -48,8 +48,8 @@ public:
 	virtual ~LocalpathFactory();
 
 	virtual Localpath* create(
-			MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q1,
-			MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q2);
+			confPtr_t q1,
+			confPtr_t q2);
 };
 
 #endif

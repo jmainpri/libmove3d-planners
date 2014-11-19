@@ -64,7 +64,7 @@ void HRICS_rrtPlanExpansion::init()
 {
     cout << "Init Box Jido" << endl;
     //    double box[] = {-1.3,1.3,-1.3,1.3,0,1.5};
-    shared_ptr<Configuration> qInit = m_Graph->getRobot()->getInitPos();
+    confPtr_t qInit = m_Graph->getRobot()->getInitPos();
 
     //    _Box = new double[6];
     //
@@ -94,10 +94,10 @@ void HRICS_rrtPlanExpansion::setCellPath(vector<Move3D::TwoDCell*> cellPath)
   * Cost Map RRT
   */
 //int Direction=0;
-shared_ptr<Configuration> HRICS_rrtPlanExpansion::getExpansionDirection(
+confPtr_t HRICS_rrtPlanExpansion::getExpansionDirection(
         Node* expandComp, Node* goalComp, bool samplePassive, Node*& directionNode)
 {
-    shared_ptr<Configuration> q;
+    confPtr_t q;
 
     mBiasing = ENV.getBool(Env::isGoalBiased) && p3d_random(0.,1.) <= ENV.getDouble(Env::Bias);
 
@@ -134,7 +134,7 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getExpansionDirection(
     return q;
 }
 
-shared_ptr<Configuration> HRICS_rrtPlanExpansion::getConfigurationInNextCell(Node* CompcoNode)
+confPtr_t HRICS_rrtPlanExpansion::getConfigurationInNextCell(Node* CompcoNode)
 {
     Move3D::TwoDCell* farthestCell=NULL;
 
@@ -181,13 +181,13 @@ shared_ptr<Configuration> HRICS_rrtPlanExpansion::getConfigurationInNextCell(Nod
         }
     }
 
-    //    shared_ptr<Configuration> q = m_Graph->getRobot()->shoot(false);
+    //    confPtr_t q = m_Graph->getRobot()->shoot(false);
 
     // Get a random config in the cell
     //    randomPoint = _2DCellPath[cellId]->getRandomPoint();
     mBiasedPlanCell = m2DCellPath[cellId];
 
-    shared_ptr<Configuration> q(new Configuration(m_Graph->getRobot()));
+    confPtr_t q(new Configuration(m_Graph->getRobot()));
 
     //    Vector2d corner = mBiasedPlanCell->getCorner();
     //    Vector2d cellSize = mBiasedPlanCell->getCellSize();

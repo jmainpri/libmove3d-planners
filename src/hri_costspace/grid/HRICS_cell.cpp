@@ -142,8 +142,8 @@ double Cell::getCost()
 
     Robot* rob = dynamic_cast<Grid*>(this->_grid)->getRobot();
 
-    shared_ptr<Configuration> configStored = rob->getCurrentPos();
-	shared_ptr<Configuration> config = rob->getCurrentPos();
+    confPtr_t configStored = rob->getCurrentPos();
+	confPtr_t config = rob->getCurrentPos();
 
 #if LIGHT_PLANNER
     (*config)[rob->getObjectDof()+0] = cellCenter[0];
