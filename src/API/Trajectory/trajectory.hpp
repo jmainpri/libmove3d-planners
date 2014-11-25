@@ -206,6 +206,7 @@ public:
 
     bool isValid() const;
     void resetIsValid();
+    int meanCollTest();
 
     void 	updateRange();
     double  computeSubPortionRange(const std::vector<LocalPath*>& portion) const;
@@ -224,7 +225,8 @@ public:
     void draw(int nbKeyFrame = 0);
     void print() const;
 
-    int meanCollTest();
+    // Shows trajectory in Move3D mode
+    void show() const;
 
     void setUseContinuousColors(bool use_continuous_color=true) {
         m_use_continuous_color=use_continuous_color;

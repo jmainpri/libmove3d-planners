@@ -31,14 +31,13 @@
 #include "API/libmove3d_simple_api.hpp"
 
 #include "planEnvironment.hpp"
-
 #include "utils/misc_functions.hpp"
 
-#include "P3d-pkg.h"
-#include "Graphic-pkg.h"
-#include "Localpath-pkg.h"
-#include "GroundHeight-pkg.h"
-#include "Planner-pkg.h"
+#include <libmove3d/include/P3d-pkg.h>
+#include <libmove3d/include/Graphic-pkg.h>
+#include <libmove3d/include/Localpath-pkg.h>
+#include <libmove3d/include/GroundHeight-pkg.h>
+#include <libmove3d/include/Planner-pkg.h>
 
 #include "cost_space.hpp"
 
@@ -49,6 +48,7 @@
 #include "move3d-headless.h"
 
 #include <ctime>
+#include <sys/time.h>
 
 using namespace std;
 using namespace Eigen;
@@ -2603,6 +2603,9 @@ void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove)
 
 bool Trajectory::loadFromFile(std::string filename)
 {
+    if( m_Robot == NULL)
+        return false;
+
     std::vector<int> r_dof_indices = m_Robot->getAllDofIds();
 
     Eigen::MatrixXd mat = move3d_load_matrix_from_csv_file( filename );
@@ -2621,6 +2624,73 @@ bool Trajectory::loadFromFile(std::string filename)
     // cout << mat << endl;
     setFromEigenMatrix( mat, r_dof_indices );
     return true;
+}
+
+void Trajectory::show() const
+{
+    cout << __PRETTY_FUNCTION__ << endl;
+
+    if( size() == 0 ) {
+        cout << "warning : motion is empty" << endl;
+        return;
+    }
+
+    cout << "m_use_time_parameter : " << m_use_time_parameter<< " , size : " << m_Courbe.size()  << endl;
+    cout << "time length : " << getTimeLength() << endl;
+    cout << "param max : " << getParamMax() << " , dmax : "  << ENV.getDouble(Env::dmax) << endl;
+
+
+    bool StopRun = false;
+    double tu_init = 0.0, tu = 0.0, t = 0.0;
+
+    while ( !StopRun )
+    {
+        if( m_use_time_parameter )
+        {
+            t = tu - tu_init;
+            m_Robot->setAndUpdate( *configAtTime( t ) );
+        }
+        else
+        {
+            m_Robot->setAndUpdate( *configAtParam( t ) );
+        }
+
+        bool ncol = m_Robot->isInCollision();
+
+        if( ncol )
+            cout << "Robot in collision " << endl;
+
+        g3d_set_draw_coll( ncol );
+        g3d_draw_allwin_active();
+
+        if( m_use_time_parameter )
+        {
+            timeval tim;
+
+            gettimeofday(&tim, NULL);
+            tu = tim.tv_sec + (tim.tv_usec/1000000.0);
+
+            if( tu_init == 0.0 )
+                tu_init = tu;
+
+            if ( t >= getTimeLength() )
+                StopRun = true;
+        }
+        else
+        {
+            usleep(20000); // sleep 20ms (50Hz)
+
+            t += ENV.getDouble(Env::dmax);
+
+            if ( t >= getParamMax() )
+                StopRun = true;
+        }
+
+        if ( PlanEnv->getBool(PlanParam::stopPlanner) )
+            StopRun = true;
+    }
+
+    cout << "end " << __PRETTY_FUNCTION__ << endl;
 }
 
 void Trajectory::printAllLocalpathCost()

@@ -1955,6 +1955,13 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::Ve
     last_trajectory_collision_free_ = performForwardKinematics(is_rollout);
     last_trajectory_constraints_satisfied_ = true;
 
+    // Special case for not handling joint limits
+    if( !succeded_joint_limits_ )
+    {
+        is_collision_free_ = false;
+        last_trajectory_collision_free_ = false;
+    }
+
     double cost;
 
     for (int i=free_vars_start_; i<=free_vars_end_; i++)

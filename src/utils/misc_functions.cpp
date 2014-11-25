@@ -95,7 +95,7 @@ Eigen::MatrixXd move3d_load_matrix_from_csv_file( std::string filename )
 
     std::ifstream file( filename.c_str(), std::ifstream::in );
 
-    if (file.is_open())
+    if (file.good() && file.is_open())
     {
         std::string line;
         std::string cell;

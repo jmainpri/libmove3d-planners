@@ -245,10 +245,12 @@ bool LocalPath::isValid()
         // Classic changes the configurations
         // So they might be changed from the call from
         // another local path
-        // _Begin->adaptCircularJointsLimits();
-        // _End->adaptCircularJointsLimits();
+        confPtr_t q_init = _Begin->copy();
+        confPtr_t q_end = _End->copy();
+        q_init->adaptCircularJointsLimits();
+        q_end->adaptCircularJointsLimits();
 
-        if ( _End->isOutOfBounds() || _Begin->isOutOfBounds() )
+        if ( q_init->isOutOfBounds() || q_end->isOutOfBounds() )
         {
             _Valid = false;
 

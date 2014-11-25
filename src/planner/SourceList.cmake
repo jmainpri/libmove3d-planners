@@ -4,6 +4,7 @@ BM3D_SRC_SUBDIR_PROCESS(
 planner.cpp 
 plannerFunctions.cpp 
 planEnvironment.cpp
+plannerSequences.cpp
 cost_space.cpp
 )
 
