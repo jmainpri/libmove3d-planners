@@ -67,6 +67,7 @@ public:
     bool getCollisionPointObstacleCost( int segment, int coll_point, double& collion_point_potential, Eigen::Vector3d& pos );
     void getFrames(int segment, const Eigen::VectorXd& joint_array, Move3D::Configuration& q);
     bool performForwardKinematics( const Move3D::ChompTrajectory& group_traj, bool is_rollout );
+    int getNumberOfCollisionPoints(Move3D::Robot* R);
 
     bool getJointLimitViolationSuccess() const { return succeded_joint_limits_; }
 

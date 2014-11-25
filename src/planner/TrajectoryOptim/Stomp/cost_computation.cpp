@@ -375,6 +375,8 @@ void costComputation::getFrames( int segment, const Eigen::VectorXd& joint_array
 
         joint_pos_eigen_[segment][j] = segment_frames_[segment][j].translation();
 
+//        cout << 'move3d_collision_space_ : ' << move3d_collision_space_ << endl;
+
         if( move3d_collision_space_ )
         {
             joint_axis_eigen_[segment][j](0) = segment_frames_[segment][j](0,2);
@@ -466,6 +468,7 @@ bool costComputation::getCollisionPointObstacleCost( int segment, int coll_point
 
 bool costComputation::getConfigObstacleCost( Move3D::Robot* robot, int i, Eigen::MatrixXd& collision_point_potential, std::vector< std::vector<Eigen::Vector3d> >& collision_point_pos )
 {
+//    cout << "get collision cost : " << robot->getName() << endl;
     bool in_collision = false;
 
     // calculate the position of every collision point
@@ -506,6 +509,11 @@ bool costComputation::getConfigObstacleCost( Move3D::Robot* robot, int i, Eigen:
     **/
 }
 
+int costComputation::getNumberOfCollisionPoints(Move3D::Robot* R)
+{
+    return planning_group_->collision_points_.size();
+}
+
 bool costComputation::performForwardKinematics( const ChompTrajectory& group_traj, bool is_rollout )
 {
     double invTime = 1.0 / group_traj.getDiscretization();
@@ -525,6 +533,7 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
     Eigen::VectorXd joint_array;
 
     Configuration q( *source_ );
+    Configuration q_tmp( *robot_model_->getCurrentPos() );
     Configuration q_prev( robot_model_ );
 
 
@@ -543,6 +552,7 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
 //        nb_features = fct->getFeatureFunction("Distance")->getNumberOfFeatures();
 //    Eigen::VectorXd phi (Eigen::VectorXd::Zero(nb_features) );
 
+//    cout << "Compute for robot : " << robot_model_->getName() << " collision space : " << collision_space_id_ << endl;
     int k = 0;
     int way_point_ratio = -1;
 
@@ -582,8 +592,7 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
 
             if( move3d_collision_space_ || use_external_collision_space_ )
             {
-                state_is_in_collision_[i] = Move3DGetConfigCollisionCost[ collision_space_id_ ]( planning_group_->robot_, i, collision_point_potential_, collision_point_pos_eigen_ );
-                // cout << "state_is_in_collision_[" << i << "] : " << state_is_in_collision_[i] << endl;
+                state_is_in_collision_[i] = Move3DGetConfigCollisionCost[ collision_space_id_ ]( robot_model_, i, collision_point_potential_, collision_point_pos_eigen_ );
             }
             else if( ( PlanEnv->getBool(PlanParam::useLegibleCost) || use_costspace_ ) && (move3d_collision_space_==NULL) )
             {
@@ -680,6 +689,8 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
     //    }
     //    cout << "------------------------------------" << endl;
     //  }
+
+    robot_model_->setAndUpdate( q_tmp );
 
     return is_collision_free_;
 

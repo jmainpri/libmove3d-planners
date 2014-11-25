@@ -1005,15 +1005,15 @@ void StompOptimizer::setRobotPool( const std::vector<Robot*>& robots )
         if( !use_external_collision_space_ )
         {
             collision_space_id = i + 1; // TODO FIX THIS (becarful with robot pointer)
-            move3d_set_fct_get_nb_collision_points( boost::bind( &StompOptimizer::getNumberOfCollisionPoints, this, _1 ), collision_space_id );
-            move3d_set_fct_get_config_collision_cost( boost::bind( &StompOptimizer::getConfigObstacleCost, this, _1, _2, _3, _4 ), collision_space_id );
         }
         else {
             use_external_collision_space_ = true;
             collision_space_id = 0;
         }
 
-        compute_fk_.push_back(new costComputation(robots[i], move3d_collision_space_, planning_group_, joint_costs_,
+        compute_fk_.push_back(new costComputation(robots[i], move3d_collision_space_,
+                                                  new ChompPlanningGroup( *planning_group_, robots[i] ),
+                                                  joint_costs_,
                                                   group_trajectory_,
                                                   stomp_parameters_->getObstacleCostWeight(),
                                                   use_costspace_,
@@ -1022,6 +1022,12 @@ void StompOptimizer::setRobotPool( const std::vector<Robot*>& robots )
                                                   use_external_collision_space_,
                                                   collision_space_id,
                                                   stomp_parameters_));
+
+        if( !use_external_collision_space_)
+        {
+            move3d_set_fct_get_nb_collision_points( boost::bind( &costComputation::getNumberOfCollisionPoints, compute_fk_.back(), _1 ), collision_space_id );
+            move3d_set_fct_get_config_collision_cost( boost::bind( &costComputation::getConfigObstacleCost, compute_fk_.back(), _1, _2, _3, _4 ), collision_space_id );
+        }
     }
 }
 
@@ -1945,7 +1951,7 @@ bool StompOptimizer::getManipulationHandOver()
     ArmManipulationData& armData  = (*rob->armManipulationData)[0];
     
     deactivateCcCntrts(rob, 0);
-    setAndActivateTwoJointsFixCntrt(rob,armData.getManipulationJnt(), armData.getCcCntrt()->pasjnts[ armData.getCcCntrt()->npasjnts-1 ]);
+    setAndActivateTwoJointsFixCntrt(rob, armData.getManipulationJnt(), armData.getCcCntrt()->pasjnts[ armData.getCcCntrt()->npasjnts-1 ]);
     
     if( found_ik ) {
         target_new_ = confPtr_t(new Configuration( robot_model_, q ));

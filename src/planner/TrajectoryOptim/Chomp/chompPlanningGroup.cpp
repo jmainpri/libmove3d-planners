@@ -70,6 +70,26 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
     num_dofs_ = chomp_dofs_.size();
 }
 
+// Change robot
+ChompPlanningGroup::ChompPlanningGroup(const ChompPlanningGroup& pg, Robot* rob)
+{
+    robot_ = rob;
+    chomp_dofs_.clear();
+
+    link_names_ = pg.link_names_;
+    collision_link_names_ = pg.collision_link_names_;
+    collision_points_ = pg.collision_points_;
+
+    for (size_t i=0; i<pg.chomp_dofs_.size(); i++)
+    {
+        ChompDof jnt = pg.chomp_dofs_[i];
+        jnt.move3d_joint_ = robot_->getJoint( jnt.joint_name_ );
+        chomp_dofs_.push_back( jnt );
+    }
+
+    num_dofs_ = chomp_dofs_.size();
+}
+
 std::vector<int> ChompPlanningGroup::getActiveDofs() const
 {
     std::vector<int> active_joints;

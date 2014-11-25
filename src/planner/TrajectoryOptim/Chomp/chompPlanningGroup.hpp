@@ -45,6 +45,7 @@ public:
 
     // Creates the planning group
     ChompPlanningGroup(Robot* rob, const std::vector<int>& active_joints );
+    ChompPlanningGroup(const ChompPlanningGroup& pg, Robot* rob);
 
     Robot* robot_;                                            /** Move3D robot which is planned **/
 
