@@ -319,7 +319,8 @@ namespace stomp_motion_planner
     {
         costComputation* traj_evaluation  = static_pointer_cast<StompOptimizer>(task_)->getCostComputers()[r];
 
-        traj_evaluation->getCost( rollouts_[r], parallel_cost_[r] );
+        bool joint_limits = false;
+        traj_evaluation->getCost( rollouts_[r], parallel_cost_[r], iteration_number, joint_limits, false, true );
         rollout_costs_.row(r) = parallel_cost_[r].transpose();
         policy_improvement_.setRolloutOutOfBounds( r, !traj_evaluation->getJointLimitViolationSuccess() );
 

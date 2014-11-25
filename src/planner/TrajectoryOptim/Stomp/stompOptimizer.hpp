@@ -328,6 +328,7 @@ private:
 
     std::vector<Move3D::confPtr_t> passive_dofs_;
 
+    MOVE3D_BOOST_PTR_NAMESPACE<costComputation> compute_fk_main_;
     std::vector<costComputation*> compute_fk_;
     std::vector<double> traj_color_;
 
@@ -506,10 +507,5 @@ private:
 extern std::map< Move3D::Robot*, std::vector<Eigen::Vector3d> > global_MultiStomplinesToDraw;
 extern std::map< Move3D::Robot*, std::vector<double> >          global_MultiStomplinesColors;
 extern MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> global_optimizer;
-
-void move3d_set_api_functions_collision_space( bool use_move3d_fct );
-bool move3d_use_api_functions_collision_space();
-void move3d_set_fct_get_nb_collision_points( boost::function<int(Move3D::Robot*)> fct, int id=0 );
-void move3d_set_fct_get_config_collision_cost( boost::function<bool( Move3D::Robot* robot, int i, Eigen::MatrixXd&, std::vector< std::vector<Eigen::Vector3d> >& )> fct, int id=0 ) ;
 
 #endif /* STOMP_OPTIMIZER_H_ */
