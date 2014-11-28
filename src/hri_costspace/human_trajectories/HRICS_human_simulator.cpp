@@ -99,7 +99,11 @@ bool HRICS_init_human_trajectory_cost()
 //                global_motionRecorders[0]->storeMotion( traj1, "[1460-1620]_human2_.csv" );
 //                global_motionRecorders[1]->storeMotion( traj2, "[1460-1620]_human1_.csv" );
 
-                std::string foldername = "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/ten_motions_last/";
+//                std::string folder_hrics = "/home/jmainpri/workspace/hrics-or-rafi/"; // "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/";
+//                std::string foldername = folder_hrics + "python_module/bioik/ten_motions_last/";
+
+                std::string foldername = "/home/jmainpri/Dropbox/move3d/assets/Collaboration/TRAJECTORIES/mocap/ten_motions_last/";
+
                 bool quiet = true;
                 global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet, -1.5 );
                 global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet, +1.5 );
@@ -227,9 +231,9 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
 //        cout << "Error adding feature visbility feature" << endl;
 //    }
 
-    if(!addFeatureFunction( &musc_feat_ )){
-        cout << "Error adding feature musculoskeletal feature" << endl;
-    }
+//    if(!addFeatureFunction( &musc_feat_ )){
+//        cout << "Error adding feature musculoskeletal feature" << endl;
+//    }
 
     w_ = getWeights();
 
@@ -1252,7 +1256,7 @@ void HumanTrajSimulator::runStandardStomp( int iter )
     PlanEnv->setDouble( PlanParam::trajDuration, current_motion_duration_ > 0.0 ? current_motion_duration_ : 0.1  );
 
     // Set buffer
-    if( path_.size() > 0 && time_along_current_path_ > 0.0)
+    if( path_.size() > 0 && time_along_current_path_ > 0.0 )
     {
         double dt = current_motion_duration_ / double(nb_way_points);
         std::vector<Eigen::VectorXd> buffer;

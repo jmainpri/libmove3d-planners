@@ -224,7 +224,7 @@ FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int
     //    cout.setf( std::ios::fixed, std:: ios::floatfield );
     //    cout.precision(2);
     //    cout.width(1);
-    //    cout << "dist is : " << dist.transpose() << endl;
+//    cout << "count is : " << count.transpose() << endl;
     //    cout << "joint dist : " << joints_dist.transpose() << endl;
 
     double factor = 5;

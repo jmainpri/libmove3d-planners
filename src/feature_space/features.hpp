@@ -102,7 +102,10 @@ public:
     virtual FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
     virtual FeatureVect getFeatureCount(const Move3D::Trajectory& t);
 
+    //! Get vector of weights for only the active features in the stack, set to 0 the other weights
     void setWeights( const WeightVect& w );
+
+    //! Get weights for all active features (active and
     WeightVect getWeights() const;
 
     void setActiveFeatures( const std::vector<int>& active_features );

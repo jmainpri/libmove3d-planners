@@ -281,6 +281,11 @@ public:
     void setBuffer(const std::vector<Eigen::VectorXd>& buffer) { buffer_ = buffer; use_buffer_ = true; }
     void clearBuffer() { use_buffer_ = false ; }
 
+    /**
+      * Main initialization function
+      */
+    void initialize();
+
 private:
 
     int id_;
@@ -438,7 +443,6 @@ private:
     //  std::vector<MOVE3D_BOOST_PTR_NAMESPACE<ConstraintEvaluator> > constraint_evaluators_;
     MOVE3D_BOOST_PTR_NAMESPACE<StompStatistics>  stomp_statistics_;
 
-    void initialize();
     void initPolicy();
     void calculateSmoothnessIncrements();
     void calculateCollisionIncrements();

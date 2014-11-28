@@ -498,7 +498,7 @@ namespace stomp_motion_planner
                     coeff *= 0.90; // 90 percent
                     traj.noise_[j] *= coeff;
                     traj.parameters_[j] = traj.nominal_parameters_[j] +  traj.noise_[j];
-                    if( k++ > 100 ){
+                    if( k++ > 3 ){ // this was at 100
                         break;
                     }
                 }
@@ -797,9 +797,11 @@ namespace stomp_motion_planner
 
         if( multiple_smoothness_ )
         {
-            Move3D::StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+            Move3D::StackedFeatures* fct = dynamic_cast<Move3D::StackedFeatures*>( global_activeFeatureFunction );
 
-            if( fct != NULL && fct->getFeatureFunction("SmoothnessAll") != NULL )
+            if( fct != NULL &&
+                    fct->getFeatureFunction("SmoothnessAll") != NULL &&
+                    fct->getFeatureFunction("SmoothnessAll")->is_active_ )
             {
                 control_cost_weights_ = fct->getFeatureFunction("SmoothnessAll")->getWeights();
 //                cout << "control_cost_weights_ : " << control_cost_weights_.transpose() << endl;

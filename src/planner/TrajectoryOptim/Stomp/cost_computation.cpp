@@ -123,6 +123,7 @@ costComputation::costComputation(Robot* robot,
     num_joints_ = group_trajectory_.getNumJoints();
     free_vars_start_ = group_trajectory_.getStartIndex();
     free_vars_end_ = group_trajectory_.getEndIndex();
+
     num_collision_points_ = planning_group_->collision_points_.size();
 
     joint_axis_eigen_.resize(num_vars_all_);
@@ -141,6 +142,7 @@ costComputation::costComputation(Robot* robot,
     {
         segment_frames_[i].resize(planning_group_->num_dofs_);
         joint_pos_eigen_[i].resize(planning_group_->num_dofs_);
+        joint_axis_eigen_[i].resize(planning_group_->num_dofs_);
     }
 
     if (num_collision_points_ > 0)
@@ -151,8 +153,6 @@ costComputation::costComputation(Robot* robot,
 
         for(int i=0; i<num_vars_all_;i++)
         {
-            joint_axis_eigen_[i].resize(num_collision_points_);
-            joint_pos_eigen_[i].resize(num_collision_points_);
             collision_point_pos_eigen_[i].resize(num_collision_points_);
             collision_point_vel_eigen_[i].resize(num_collision_points_);
             collision_point_acc_eigen_[i].resize(num_collision_points_);
@@ -379,6 +379,12 @@ void costComputation::getFrames( int segment, const Eigen::VectorXd& joint_array
 
         if( move3d_collision_space_ )
         {
+//            cout << "joint_axis_eigen_.size() : "  << joint_axis_eigen_.size() << endl;
+//            cout << "segment_frames_.size() : "  << segment_frames_.size() << endl;
+//            cout << j << endl;
+//            cout << "joint_axis_eigen_[" << segment << "].size() : "  << joint_axis_eigen_[segment].size() << endl;
+//            cout << "segment_frames_[" << segment << "].size() : "  << segment_frames_[segment].size() << endl;
+
             joint_axis_eigen_[segment][j](0) = segment_frames_[segment][j](0,2);
             joint_axis_eigen_[segment][j](1) = segment_frames_[segment][j](1,2);
             joint_axis_eigen_[segment][j](2) = segment_frames_[segment][j](2,2);
@@ -530,7 +536,7 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
 
     is_collision_free_ = true;
 
-    Eigen::VectorXd joint_array;
+    Eigen::VectorXd joint_array( num_joints_ );
 
     Configuration q( *source_ );
     Configuration q_tmp( *robot_model_->getCurrentPos() );
@@ -563,7 +569,7 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
 
         group_traj.getTrajectoryPointP3d( group_traj.getFullTrajectoryIndex(i), joint_array );
 
-        this->getFrames( i, joint_array, q ); // Perform FK
+        this->getFrames( i, joint_array, q ); // Perform FK (set and update)
 
         // current_traj.push_back( confPtr_t(new Configuration(q)) );
         if( false && is_rollout && ( i%way_point_ratio != 0 ) && ( i != start ) && (i != end ) )

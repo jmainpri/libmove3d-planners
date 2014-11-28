@@ -52,7 +52,15 @@ Move3D::Feature* global_activeFeatureFunction = NULL;
 double Feature::cost( Configuration& q )
 {
     FeatureVect phi = getFeatures( q );
-    double cost = is_stacked_ ? this->getWeights().transpose()*phi : w_.transpose()*phi;
+    WeightVect w = is_stacked_ ? this->getWeights() : w_ ;
+    double cost = w.transpose()*phi;
+
+    if( w.size() != phi.size() )
+    {
+        cout << "ERROR in Feature::cost" << endl;
+    }
+
+//    cout << "w.size() : "  << w.size() << " , phi.size() : " << phi.size() << endl;
 
     if( GestEnv->getBool(GestParam::print_debug) )
     {
@@ -65,6 +73,7 @@ double Feature::cost( Configuration& q )
         cout << "cost : " << cost << endl;
         cout << "is_stacked_ : " << is_stacked_ << endl;
     }
+
 
 //    cout << __PRETTY_FUNCTION__ << endl;
 
@@ -414,6 +423,7 @@ FeatureVect StackedFeatures::getFeatures(const Configuration& q, std::vector<int
         height += fi.size();
     }
 
+//    cout << "f size : " << f.size() << " , w size : " << getWeights().size() << endl;
 //    cout << "f : " << f.transpose() << endl;
 
     return f;
@@ -459,23 +469,39 @@ Feature* StackedFeatures::getFeatureFunctionAtIndex(int idx)
     return NULL;
 }
 
+// Get vector of weights for only the active
+// features in the stack, set to 0 the other weights
 void StackedFeatures::setWeights( const WeightVect& w )
 {
+    WeightVect w_tmp( nb_features_ );
+
     int height = 0;
+    int height_stack = 0;
     for( int i=0;i<int(feature_stack_.size()); i++)
     {
+        Eigen::VectorXd wi;
+        int num = feature_stack_[i]->getNumberOfFeatures();
+
         if( feature_stack_[i]->is_active_ )
         {
-            int num = feature_stack_[i]->getNumberOfFeatures();
-            Eigen::VectorXd weights = w.segment( height, num );
-            feature_stack_[i]->setWeights( weights );
+            wi = w.segment( height, num );
             height += num;
         }
+        else
+        {
+            wi = WeightVect::Zero(num);
+        }
+
+        feature_stack_[i]->setWeights( wi );
+        w_tmp.segment( height_stack, wi.size() ) = wi;
+        height_stack += wi.size();
     }
 
-    w_= w;
+    w_= w_tmp;
 }
 
+//! Get weight vector of active and deactivated
+//! feature functions
 WeightVect StackedFeatures::getWeights() const
 {
     WeightVect w = Eigen::VectorXd::Zero( nb_features_ );
