@@ -101,8 +101,9 @@ bool HRICS_init_human_trajectory_cost()
 
 //                std::string folder_hrics = "/home/jmainpri/workspace/hrics-or-rafi/"; // "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/";
 //                std::string foldername = folder_hrics + "python_module/bioik/ten_motions_last/";
-
-                std::string foldername = "/home/jmainpri/Dropbox/move3d/assets/Collaboration/TRAJECTORIES/mocap/ten_motions_last/";
+                
+                std::string move3d_root = std::string( getenv("HOME_MOVE3D" ) ) + std::string( "/../" );
+                std::string foldername = move3d_root + "assets/Collaboration/TRAJECTORIES/mocap/ten_motions_last/";
 
                 bool quiet = true;
                 global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet, -1.5 );

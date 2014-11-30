@@ -39,14 +39,15 @@ using namespace HRICS;
 using std::cout;
 using std::endl;
 
-static std::string move3d_demo_folder("/home/jmainpri/Dropbox/move3d/assets/IOC/TRAJECTORIES/");
-static std::string move3d_traj_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs_home/per_feature_square/");
+static std::string move3d_root = std::string( getenv("HOME_MOVE3D" ) ) + std::string( "/../" );
+static std::string move3d_demo_folder( move3d_root + "assets/IOC/TRAJECTORIES/");
+static std::string move3d_traj_folder( move3d_root + "move3d-launch/matlab/stomp_trajs_home/per_feature_square/");
 static std::string move3d_tmp_data_folder("matlab/move3d_tmp_data_home/");
 
 
 void HRICS_run_human_ioc_from_recorded_motion()
 {
-    std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
+    std::string foldername = move3d_root + "libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
 
     Scene* sce = global_Project->getActiveScene();
     Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );

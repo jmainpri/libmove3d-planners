@@ -826,7 +826,8 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::V
     }
 
     // compute the control costs
-    getControlCosts( group_trajectory_ );
+    // TODO, WIP
+//    getControlCosts( group_trajectory_ );
 
     //cout << "StompOptimizer::execute::cost => " << costs.sum() << endl;
     double last_trajectory_cost = costs.sum();

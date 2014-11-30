@@ -56,7 +56,8 @@ using namespace HRICS;
 using std::cout;
 using std::endl;
 
-static std::string move3d_root("/home/jmainpri/Dropbox/move3d/");
+static std::string move3d_root = std::string( getenv("HOME_MOVE3D" ) ) + std::string( "/../" );
+//static std::string move3d_root("/home/jmainpri/Dropbox/move3d/");
 
 // Folders for sphere (and plannar) type of features
 static std::string move3d_demo_folder;
