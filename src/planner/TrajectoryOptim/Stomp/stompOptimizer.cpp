@@ -62,9 +62,9 @@
 #include "hri_costspace/HRICS_parameters.hpp"
 #include "hri_costspace/gestures/HRICS_human_prediction_cost_space.hpp"
 
-#include "Graphic-pkg.h"
-#include "P3d-pkg.h"
-#include "Util-pkg.h"
+#include <libmove3d/include/Graphic-pkg.h>
+#include <libmove3d/include/P3d-pkg.h>
+#include <libmove3d/include/Util-pkg.h>
 
 #include "move3d-headless.h"
 
