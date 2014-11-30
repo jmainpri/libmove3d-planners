@@ -32,12 +32,17 @@
 #include "planner/TrajectoryOptim/Chomp/chompTrajectory.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompCost.hpp"
 #include "planner/TrajectoryOptim/Stomp/stompParameters.hpp"
+#include "planner/TrajectoryOptim/Stomp/covariant_trajectory_policy.hpp"
 
 #include "collision_space/collision_space.hpp"
 
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 #include <vector>
+
+#include "policy.hpp"
+#include "task.hpp"
+#include <boost/shared_ptr.hpp>
 
 namespace stomp_motion_planner
 {
@@ -56,7 +61,8 @@ public:
                     Move3D::confPtr_t q_target,
                     bool use_external_collision_space,
                     int collision_space_id,
-                    const stomp_motion_planner::StompParameters* stomp_parameters);
+                    const stomp_motion_planner::StompParameters* stomp_parameters,
+                    MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy);
 
     ~costComputation();
 
@@ -70,6 +76,10 @@ public:
     int getNumberOfCollisionPoints(Move3D::Robot* R);
 
     bool getJointLimitViolationSuccess() const { return succeded_joint_limits_; }
+
+    // Compute control cost TODO
+    bool getControlCosts(const Move3D::ChompTrajectory& group_traj);
+    std::vector<Eigen::VectorXd> getControlCosts() const { return current_control_costs_; }
 
     const std::vector< std::vector< Eigen::Transform3d, Eigen::aligned_allocator<Eigen::Transform3d> > > & getSegmentFrames() const { return segment_frames_; }
 
@@ -90,17 +100,17 @@ public:
 private:
 
     Move3D::Robot* robot_model_;
+    Move3D::ChompTrajectory group_trajectory_;
     const Move3D::ChompPlanningGroup* planning_group_;
 
     double resampleParameters(std::vector<Eigen::VectorXd>& parameters);
-
-    Move3D::ChompTrajectory group_trajectory_;
 
     bool is_collision_free_;
     bool succeded_joint_limits_;
 
     bool allow_end_configuration_motion_;
-    bool use_costspace_;
+
+    // Variables for collision and general cost
     std::vector<int> state_is_in_collision_;
     std::vector< std::vector< Eigen::Transform3d, Eigen::aligned_allocator<Eigen::Transform3d> > > segment_frames_;
     std::vector< std::vector<Eigen::Vector3d> >  joint_axis_eigen_;
@@ -111,10 +121,21 @@ private:
     std::vector< std::vector<Eigen::Vector3d> >  collision_point_potential_gradient_;
     Eigen::MatrixXd collision_point_potential_;
     Eigen::MatrixXd collision_point_vel_mag_;
+
+    // Variable General cost
+    bool use_costspace_;
     Eigen::VectorXd general_cost_potential_;
-    Eigen::VectorXd dt_;
+
+    // Variables for control cost
+    bool multiple_smoothness_;
+    MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy_;
+    double control_cost_weight_;
+    std::vector<Eigen::VectorXd> current_control_costs_;
+    std::vector<Eigen::MatrixXd> control_costs_; /**< [num_dimensions] num_parameters x num_parameters */
+
     std::vector< Move3D::ChompCost > joint_costs_;
 
+    Eigen::VectorXd dt_;
     int free_vars_start_;
     int free_vars_end_;
     int num_vars_all_;

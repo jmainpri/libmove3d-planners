@@ -419,6 +419,9 @@ bool traj_optim_initStomp()
             static_cast<SmoothnessFeature*>(fct->getFeatureFunction("SmoothnessAll"))->setBuffer( m_buffer );
     }
 
+    // Initialize all data structures
+    global_optimizer->initialize();
+
     cout << "Optimizer created" << endl;
 
     GlobalCostSpace::initialize();

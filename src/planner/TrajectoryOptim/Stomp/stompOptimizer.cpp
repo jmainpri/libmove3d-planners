@@ -138,9 +138,11 @@ StompOptimizer::StompOptimizer(ChompTrajectory *trajectory,
         collision_space_id_ = 0;
     }
 
-    use_buffer_ = false;
+    // Use costspace
+    use_costspace_ = ( move3d_collision_space_ == NULL );
+    use_costspace_ |= ( use_costspace_ && ( use_external_collision_space_ == false ));
 
-    initialize();
+    use_buffer_ = false;
 }
 
 void StompOptimizer::initialize()
@@ -192,10 +194,6 @@ void StompOptimizer::initialize()
         HRICS_activeLegi->addGoal( goal_0->getCurrentPos()->getEigenVector(6,7) );
         HRICS_activeLegi->addGoal( goal_1->getCurrentPos()->getEigenVector(6,7) );
     }
-
-    // Use costspace
-    use_costspace_ = ( move3d_collision_space_ == NULL );
-    use_costspace_ |= ( use_costspace_ && ( use_external_collision_space_ == false ));
 
     // Move the end configuration in the trajectory
     id_fixed_ = 2;
@@ -290,16 +288,8 @@ void StompOptimizer::initialize()
     source_ = getSource();
     target_ = getTarget();
 
-    // Construct fk function
-    compute_fk_main_ = MOVE3D_BOOST_PTR_NAMESPACE<costComputation>( new costComputation( robot_model_, move3d_collision_space_, planning_group_, joint_costs_,
-                                                                                         group_trajectory_,
-                                                                                         stomp_parameters_->getObstacleCostWeight(),
-                                                                                         use_costspace_,
-                                                                                         source_,
-                                                                                         target_,
-                                                                                         use_external_collision_space_,
-                                                                                         collision_space_id_,
-                                                                                         stomp_parameters_) );
+    cout << "use_costspace_ : " << use_costspace_ << endl;
+
     
 //    compute_fk_main_->getJointAxisEigen().resize(num_vars_all_);
 //    compute_fk_main_->getJointPosEigen().resize(num_vars_all_);
@@ -362,6 +352,18 @@ void StompOptimizer::initialize()
     //        constraints_.orientation_constraints[i], *robot_model_));
     //    constraint_evaluators_.push_back(eval);
     //  }
+
+    // Construct fk function
+    compute_fk_main_ = MOVE3D_BOOST_PTR_NAMESPACE<costComputation>( new costComputation( robot_model_, move3d_collision_space_, planning_group_, joint_costs_,
+                                                                                         group_trajectory_,
+                                                                                         stomp_parameters_->getObstacleCostWeight(),
+                                                                                         use_costspace_,
+                                                                                         source_,
+                                                                                         target_,
+                                                                                         use_external_collision_space_,
+                                                                                         collision_space_id_,
+                                                                                         stomp_parameters_,
+                                                                                         policy_) );
 }
 
 int StompOptimizer::getNumberOfCollisionPoints(Move3D::Robot* R)
@@ -597,8 +599,11 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     if( global_costSpace != NULL && global_costSpace->getSelectedCostName() == "costHumanWorkspaceOccupancy" )
         global_humanPredictionCostSpace->computeCurrentOccupancy();
 
+    cout << "before fk" << endl;
 
     performForwardKinematics(false);
+
+    cout << "after fk" << endl;
 
     // Print smoothness cost
     getSmoothnessCost();
@@ -614,9 +619,8 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     if ( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && stomp_parameters_->getAnimateEndeffector() )
         animateEndeffector();
     
-    if( PlanEnv->getBool(PlanParam::trajSaveCost) ) {
+    if( PlanEnv->getBool(PlanParam::trajSaveCost) )
         saveTrajectoryCostStats();
-    }
 
 //    cout << "wait for key" << endl;
 //    cin.ignore();
@@ -1021,7 +1025,8 @@ void StompOptimizer::setRobotPool( const std::vector<Robot*>& robots )
                                                   target_,
                                                   use_external_collision_space_,
                                                   collision_space_id,
-                                                  stomp_parameters_));
+                                                  stomp_parameters_,
+                                                  policy_));
 
         if( !use_external_collision_space_)
         {
@@ -1030,6 +1035,7 @@ void StompOptimizer::setRobotPool( const std::vector<Robot*>& robots )
         }
     }
 }
+
 
 /**
   * get the cost conputer

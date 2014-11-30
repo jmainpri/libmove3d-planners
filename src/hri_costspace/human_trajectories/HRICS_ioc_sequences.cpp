@@ -436,9 +436,10 @@ bool IocSequences::run()
 //            active_features_names.push_back("Visibility");
 //            active_features_names.push_back("Musculoskeletal");
 
+            global_ht_simulator->getCostSpace()->setActiveFeatures( active_features_names );
+
             if( HriEnv->getBool(HricsParam::ioc_use_baseline) )
             {
-                global_ht_simulator->getCostSpace()->setActiveFeatures( active_features_names );
                 WeightVect w( 10 * WeightVect::Ones(16));
                 global_ht_simulator->getCostSpace()->setWeights( w );
             }
