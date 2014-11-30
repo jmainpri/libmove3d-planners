@@ -97,6 +97,9 @@ public:
 
     Eigen::MatrixXd::ColXpr getJointTrajectory(int joint);
 
+    //! gets the parameters in the trajectory
+    bool getParameters(std::vector<Eigen::VectorXd>& parameters) const;
+
     //void overwriteTrajectory(const trajectory_msgs::JointTrajectory& traj);
 
     /**
@@ -234,6 +237,17 @@ inline Eigen::MatrixXd::RowXpr ChompTrajectory::getTrajectoryPoint(int traj_poin
 inline Eigen::MatrixXd::ColXpr ChompTrajectory::getJointTrajectory(int joint)
 {
     return trajectory_.col(joint);
+}
+
+inline bool ChompTrajectory::getParameters(std::vector<Eigen::VectorXd>& parameters) const
+{
+    if( parameters.size() != trajectory_.cols() )
+        return false;
+
+    for(int joint=0; joint<trajectory_.cols(); joint++)
+        parameters[joint] = trajectory_.col(joint);
+
+    return true;
 }
 
 inline int ChompTrajectory::getNumPoints() const

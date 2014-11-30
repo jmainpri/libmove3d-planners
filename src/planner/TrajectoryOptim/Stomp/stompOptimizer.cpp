@@ -290,16 +290,6 @@ void StompOptimizer::initialize()
 
     cout << "use_costspace_ : " << use_costspace_ << endl;
 
-    // Construct fk function
-    compute_fk_main_ = MOVE3D_BOOST_PTR_NAMESPACE<costComputation>( new costComputation( robot_model_, move3d_collision_space_, planning_group_, joint_costs_,
-                                                                                         group_trajectory_,
-                                                                                         stomp_parameters_->getObstacleCostWeight(),
-                                                                                         use_costspace_,
-                                                                                         source_,
-                                                                                         target_,
-                                                                                         use_external_collision_space_,
-                                                                                         collision_space_id_,
-                                                                                         stomp_parameters_) );
     
 //    compute_fk_main_->getJointAxisEigen().resize(num_vars_all_);
 //    compute_fk_main_->getJointPosEigen().resize(num_vars_all_);
@@ -362,6 +352,18 @@ void StompOptimizer::initialize()
     //        constraints_.orientation_constraints[i], *robot_model_));
     //    constraint_evaluators_.push_back(eval);
     //  }
+
+    // Construct fk function
+    compute_fk_main_ = MOVE3D_BOOST_PTR_NAMESPACE<costComputation>( new costComputation( robot_model_, move3d_collision_space_, planning_group_, joint_costs_,
+                                                                                         group_trajectory_,
+                                                                                         stomp_parameters_->getObstacleCostWeight(),
+                                                                                         use_costspace_,
+                                                                                         source_,
+                                                                                         target_,
+                                                                                         use_external_collision_space_,
+                                                                                         collision_space_id_,
+                                                                                         stomp_parameters_,
+                                                                                         policy_) );
 }
 
 int StompOptimizer::getNumberOfCollisionPoints(Move3D::Robot* R)
@@ -1023,7 +1025,8 @@ void StompOptimizer::setRobotPool( const std::vector<Robot*>& robots )
                                                   target_,
                                                   use_external_collision_space_,
                                                   collision_space_id,
-                                                  stomp_parameters_));
+                                                  stomp_parameters_,
+                                                  policy_));
 
         if( !use_external_collision_space_)
         {

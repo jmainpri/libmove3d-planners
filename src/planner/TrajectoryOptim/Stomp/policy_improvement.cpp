@@ -275,7 +275,8 @@ namespace stomp_motion_planner
 
         for (int d=0; d<num_dimensions_; ++d)
         {
-            //cout << "num_parameters_[" << d << "] = " << num_parameters_[d] << endl;
+//            cout << "num_parameters_[" << d << "] = " << num_parameters_[d] << endl;
+//            cout << "num_time_steps_ = " << num_time_steps_ << endl;
             rollout.parameters_.push_back(VectorXd::Zero(num_parameters_[d]));
             rollout.noise_.push_back(VectorXd::Zero(num_parameters_[d]));
             rollout.noise_projected_.push_back(VectorXd::Zero(num_parameters_[d]));

@@ -136,6 +136,8 @@ bool stompContext::initRun( Move3D::Trajectory& T, double duration )
     m_stomp->setUseCostSpace( m_use_costspace );
     //    }
 
+    m_stomp->initialize();
+
     m_stomp->setRobotPool( m_parallel_robots );
 
     cout << "Optimizer created" << endl;
