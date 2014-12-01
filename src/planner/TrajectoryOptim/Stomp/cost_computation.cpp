@@ -174,6 +174,7 @@ costComputation::costComputation(Robot* robot,
     multiple_smoothness_ = false;
     policy_ = policy;
     policy_->getControlCosts(control_costs_);
+    control_cost_weight_ = stomp_parameters_->getSmoothnessCostWeight();
 }
 
 costComputation::~costComputation()
@@ -315,6 +316,9 @@ bool costComputation::getControlCosts(const ChompTrajectory& group_traj)
 {
     std::vector<Eigen::VectorXd> parameters( num_joints_ );
     group_traj.getParameters( parameters ); // TODO check the paramters size
+    
+    //            cout << "sum control costs" << endl;
+    current_control_costs_ = std::vector<Eigen::VectorXd>( num_joints_, Eigen::VectorXd::Zero(num_vars_free_) );
 
     if( multiple_smoothness_ )
     {
@@ -322,9 +326,6 @@ bool costComputation::getControlCosts(const ChompTrajectory& group_traj)
         std::vector< std::vector<Eigen::VectorXd> > control_costs;
 
         static_cast<CovariantTrajectoryPolicy*>(policy_.get())->getAllCosts( parameters, control_costs, group_traj.getDiscretization() );
-
-//            cout << "sum control costs" << endl;
-        current_control_costs_ = std::vector<Eigen::VectorXd>( num_joints_, Eigen::VectorXd::Zero(num_vars_free_) );
 
         for (int c=0; c<4; ++c)
             for (int d=0; d<num_joints_; ++d) {
@@ -338,11 +339,22 @@ bool costComputation::getControlCosts(const ChompTrajectory& group_traj)
     else
     {
 //            cout << "NORMAL COMPUTATION" << endl;
+        
         policy_->computeControlCosts(control_costs_, parameters,
                                      std::vector<Eigen::VectorXd>( num_joints_, Eigen::VectorXd::Zero(num_vars_free_) ), control_cost_weight_ , current_control_costs_, group_traj.getDiscretization() );
     }
 
     return true;
+}
+
+double costComputation::getCost() const
+{
+//    double cost = state_costs_.sum();
+    double cost = 0.0;
+    int num_dim = current_control_costs_.size();
+    for (int d=0; d<num_dim; ++d)
+        cost += current_control_costs_[d].sum();
+    return cost;
 }
 
 double costComputation::getCollisionSpaceCost( const Configuration& q )
@@ -436,8 +448,6 @@ void costComputation::getFrames( int segment, const Eigen::VectorXd& joint_array
 bool costComputation::getCollisionPointObstacleCost( int segment, int coll_point, double& collion_point_potential, Eigen::Vector3d& pos )
 {
     bool colliding = false;
-
-
 
     if( move3d_collision_space_ /*&& (use_costspace_==false)*/ )
     {
@@ -743,12 +753,13 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::V
     // copy the parameters into group_trajectory_:
 
     for (int d=0; d<num_joints_; ++d) {
-        group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d].segment(1,parameters[d].size()-id_fixed_); // The use of segment prevents the drift
+        group_trajectory_.getFreeJointTrajectoryBlock(d) = parameters[d].segment( 1, parameters[d].size()-id_fixed_ );
+        // The use of segment prevents the drift
     }
     //cout << "group_trajectory_ = " << endl << group_trajectory_.getTrajectory() << endl;
+        
 
     // respect joint limits:
-
     succeded_joint_limits_ = handleJointLimits( group_trajectory_ );
 
     // Fix joint limits
@@ -825,9 +836,25 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::V
         //cout << "state_collision_cost : " << state_collision_cost << endl;
     }
 
+
+
+
     // compute the control costs
     // TODO, WIP
-//    getControlCosts( group_trajectory_ );
+//    cout << "id_fixed_ : " << id_fixed_ << endl;
+
+//    ChompTrajectory group_trajectory( group_trajectory_ );
+//    for (int d=0; d<num_joints_; ++d) {
+//        group_trajectory.getTrajectory().col(d) = parameters[d];
+//    }
+    getControlCosts( group_trajectory_ );
+    
+    // print control cost
+//    cout.precision(6);
+//    cout << " -- control cost : " << getCost() << " , state cost : " << costs.sum() << endl;
+
+
+
 
     //cout << "StompOptimizer::execute::cost => " << costs.sum() << endl;
     double last_trajectory_cost = costs.sum();

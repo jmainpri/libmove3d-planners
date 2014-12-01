@@ -90,12 +90,15 @@ public:
 
     double operator() (int traj_point, int joint) const;
 
+    //! Returns trajectory point
     Eigen::MatrixXd::RowXpr getTrajectoryPoint(int traj_point);
 
+    //! Returns joint trajectory
+    Eigen::MatrixXd::ColXpr getJointTrajectory(int joint);
+    
     //void getTrajectoryPointKDL(int traj_point, KDL::JntArray& kdl_jnt_array) const;
     void getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt_array) const;
 
-    Eigen::MatrixXd::ColXpr getJointTrajectory(int joint);
 
     //! gets the parameters in the trajectory
     bool getParameters(std::vector<Eigen::VectorXd>& parameters) const;

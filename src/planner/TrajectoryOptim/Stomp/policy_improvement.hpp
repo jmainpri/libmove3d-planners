@@ -130,7 +130,7 @@ namespace stomp_motion_planner
      * Outputs the total cost for each rollout (generated and reused) in rollout_costs_total
      * @param costs
      */
-    bool setRolloutCosts(const Eigen::MatrixXd& costs, const double control_cost_weight, std::vector<double>& rollout_costs_total);
+    bool setRolloutCosts(const Eigen::MatrixXd& costs, const std::vector<Eigen::MatrixXd>& control_costs, const double control_cost_weight, std::vector<double>& rollout_costs_total);
     
     /**
      * Performs the PI^2 update and provides parameter updates at every time step
@@ -225,14 +225,12 @@ namespace stomp_motion_planner
     
     void resampleUpdates();
     bool computeProjectedNoise();
-    bool computeRolloutControlCosts();
     bool computeRolloutCumulativeCosts();
     bool computeRolloutProbabilities();
     bool computeParameterUpdates();
     
     bool computeNoise(Rollout& rollout);
     bool computeProjectedNoise(Rollout& rollout);
-    bool computeRolloutControlCosts(Rollout& rollout);
     bool copyParametersFromPolicy();
 
     bool covarianceMatrixAdaptaion();

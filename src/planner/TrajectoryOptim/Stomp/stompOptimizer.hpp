@@ -123,6 +123,10 @@ public:
       */
     const std::vector<costComputation*>& getCostComputers();
 
+    /**
+      * get main cost computer
+      */
+    const MOVE3D_BOOST_PTR_NAMESPACE<costComputation> getMainCostComputer() const { return compute_fk_main_; }
 
     /**
    * Set the passive Dofs

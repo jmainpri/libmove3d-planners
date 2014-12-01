@@ -66,21 +66,43 @@ public:
 
     ~costComputation();
 
+    //! get total cost of last trajectory
+    double getCost() const;
+
+    //! compute the cost of a given trajectory
     bool getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample, bool is_rollout );
+    
+    //! set trajectory within the joint limits
     bool handleJointLimits( Move3D::ChompTrajectory& group_traj );
+    
+    //! compute collision space cost for one configuration
     double getCollisionSpaceCost( const Move3D::Configuration& q );
+    
+    //! compute obstacle potentials
     bool getConfigObstacleCost( Move3D::Robot* robot, int i, Eigen::MatrixXd& collision_point_potential, std::vector< std::vector<Eigen::Vector3d> >& collision_point_pos );
+    
+    //! compute collision point obstacle cost
     bool getCollisionPointObstacleCost( int segment, int coll_point, double& collion_point_potential, Eigen::Vector3d& pos );
+    
+    //! get the frames of configuration q
     void getFrames(int segment, const Eigen::VectorXd& joint_array, Move3D::Configuration& q);
-    bool performForwardKinematics( const Move3D::ChompTrajectory& group_traj, bool is_rollout );
+    
+    //! get the number of collision points
     int getNumberOfCollisionPoints(Move3D::Robot* R);
+    
+    //! perform forward kinematics and compute collision costs
+    bool performForwardKinematics( const Move3D::ChompTrajectory& group_traj, bool is_rollout );
+
+    //! compute control cost TODO
+    bool getControlCosts(const Move3D::ChompTrajectory& group_traj);
+
+    /************************************
+     * Getters
+     */
 
     bool getJointLimitViolationSuccess() const { return succeded_joint_limits_; }
-
-    // Compute control cost TODO
-    bool getControlCosts(const Move3D::ChompTrajectory& group_traj);
-    std::vector<Eigen::VectorXd> getControlCosts() const { return current_control_costs_; }
-
+    const std::vector<Eigen::VectorXd>& getControlCosts() const { return current_control_costs_; }
+    
     const std::vector< std::vector< Eigen::Transform3d, Eigen::aligned_allocator<Eigen::Transform3d> > > & getSegmentFrames() const { return segment_frames_; }
 
     const std::vector< std::vector<Eigen::Vector3d> >& getJointPosEigen() const { return joint_pos_eigen_; }

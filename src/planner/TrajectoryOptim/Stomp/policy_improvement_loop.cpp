@@ -104,6 +104,7 @@ namespace stomp_motion_planner
         assert( num_dimensions_ == static_cast<int>(noise_decay_.size()));
         assert( num_dimensions_ == static_cast<int>(noise_stddev_.size()));
 
+        joint_limits_ = false;
         use_annealing_ = false;
         use_cumulative_costs_ = false;
         set_parameters_in_policy_ = true;
@@ -152,6 +153,10 @@ namespace stomp_motion_planner
 
         tmp_rollout_cost_ = Eigen::VectorXd::Zero( num_time_steps_ );
         rollout_costs_ = Eigen::MatrixXd::Zero( num_rollouts_, num_time_steps_ );
+
+        rollout_control_costs_.resize( num_rollouts_ );
+        for(int r=0; r<num_rollouts_; r++)
+            rollout_control_costs_[r] = Eigen::MatrixXd::Zero( num_dimensions_, num_time_steps_ );
 
         reused_rollouts_.clear();
 
@@ -234,66 +239,6 @@ namespace stomp_motion_planner
         return true;
     }
 
-    bool PolicyImprovementLoop::generateSingleNoisyTrajectory()
-    {
-        int iteration_number = 0;
-
-        assert( initialized_ );
-        policy_iteration_counter_++;
-
-        // compute appropriate noise values
-        std::vector<double> noise;
-        noise.resize( num_dimensions_ );
-        for( int i=0; i<num_dimensions_; ++i )
-        {
-            noise[i] = noise_stddev_[i];
-        }
-
-        // get rollouts and execute them
-        const bool get_reused_ones = false;
-        policy_improvement_.getRollouts(rollouts_, noise, get_reused_ones, reused_rollouts_);
-
-        if( ENV.getBool(Env::drawTrajVector) )
-            addRolloutsToDraw(get_reused_ones);
-
-        if( use_annealing_ )
-            limits_violations_ = 0;
-
-        shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
-
-        for (int r=0; r<int(rollouts_.size()); ++r)
-        {
-            task_->execute(rollouts_[r], tmp_rollout_cost_, iteration_number, true, false, false );
-
-            rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
-            //printf("Rollout %d, cost = %lf\n", r+1, tmp_rollout_cost_.sum());
-
-            policy_improvement_.setRolloutOutOfBounds( r, !optimizer->getJointLimitViolationSuccess() );
-        }
-
-        std::vector<double> all_costs;
-        policy_improvement_.setRolloutCosts( rollout_costs_, control_cost_weight_, all_costs );
-
-        // improve the policy
-        // get a noise-less rollout to check the cost
-        policy_improvement_.improvePolicy(parameter_updates_);
-        policy_->updateParameters(parameter_updates_);
-        policy_->getParameters(parameters_);
-
-        // get the trajectory cost
-        assert(task_->execute(parameters_, tmp_rollout_cost_, iteration_number, true, false, false ));
-
-        // add the noiseless rollout into policy_improvement:
-        std::vector<std::vector<Eigen::VectorXd> > extra_rollout;
-        std::vector<Eigen::VectorXd> extra_rollout_cost;
-        extra_rollout.resize(1);
-        extra_rollout_cost.resize(1);
-        extra_rollout[0] = parameters_;
-        extra_rollout_cost[0] = tmp_rollout_cost_;
-        policy_improvement_.addExtraRollouts(extra_rollout, extra_rollout_cost);
-        return true;
-    }
-
     //------------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------
     bool PolicyImprovementLoop::setParallelRolloutsEnd(int r)
@@ -318,10 +263,14 @@ namespace stomp_motion_planner
     void PolicyImprovementLoop::parallelRollout(int r, int iteration_number )
     {
         costComputation* traj_evaluation  = static_pointer_cast<StompOptimizer>(task_)->getCostComputers()[r];
+        
+        traj_evaluation->getCost( rollouts_[r], parallel_cost_[r], iteration_number, joint_limits_, false, true );
 
-        bool joint_limits = false;
-        traj_evaluation->getCost( rollouts_[r], parallel_cost_[r], iteration_number, joint_limits, false, true );
+        // Get costs
         rollout_costs_.row(r) = parallel_cost_[r].transpose();
+        for(int d=0; d<num_dimensions_; d++)
+            rollout_control_costs_[r].row(d) = traj_evaluation->getControlCosts()[d];
+
         policy_improvement_.setRolloutOutOfBounds( r, !traj_evaluation->getJointLimitViolationSuccess() );
 
         setParallelRolloutsEnd( r );
@@ -338,9 +287,13 @@ namespace stomp_motion_planner
         else
         {
             shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
-            bool joint_limits = false;
-            optimizer->execute( rollouts_[r], tmp_rollout_cost_, iteration_number, joint_limits, false, true );
+            optimizer->execute( rollouts_[r], tmp_rollout_cost_, iteration_number, joint_limits_, false, true );
+
+            // Get costs
             rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
+            for(int d=0; d<num_dimensions_; d++)
+                rollout_control_costs_[r].row(d) = optimizer->getMainCostComputer()->getControlCosts()[d];
+
             policy_improvement_.setRolloutOutOfBounds( r, !optimizer->getJointLimitViolationSuccess() );
 
             if( use_annealing_ )
@@ -416,7 +369,7 @@ namespace stomp_motion_planner
         //cout << "control_cost_weight_ : " << control_cost_weight_ << endl;
 
         // Improve the policy
-        policy_improvement_.setRolloutCosts( rollout_costs_, control_cost_weight_, all_costs );
+        policy_improvement_.setRolloutCosts( rollout_costs_, rollout_control_costs_, control_cost_weight_, all_costs );
         policy_improvement_.improvePolicy( parameter_updates_ );
 
         policy_->updateParameters( parameter_updates_ );
@@ -437,15 +390,13 @@ namespace stomp_motion_planner
         bool resample = !PlanEnv->getBool( PlanParam::trajStompMultiplyM );
         // Warning!!!!
         // not return the modified trajectory when is out of bounds
-        bool joint_limits = true;
-        task_->execute( parameters_, tmp_rollout_cost_, iteration_number, joint_limits, resample, false );
+        task_->execute( parameters_, tmp_rollout_cost_, iteration_number, true, resample, false );
 
         // PROJECT TO CONSTRAINT
         if( project_last_config_ )
         {
             projectToConstraints( parameters_ );
-            bool joint_limits = true;
-            task_->execute( parameters_, tmp_rollout_cost_, iteration_number, joint_limits, resample, false );
+            task_->execute( parameters_, tmp_rollout_cost_, iteration_number, true, resample, false );
         }
         //printf("Noiseless cost = %lf\n", stats_msg.noiseless_cost);
 
@@ -579,8 +530,8 @@ namespace stomp_motion_planner
         shared_ptr<CovariantTrajectoryPolicy> policy = static_pointer_cast<CovariantTrajectoryPolicy>(policy_);
 
         const std::vector<Move3D::ChompDof>& joints = optimizer->getPlanningGroup()->chomp_dofs_;
-        Move3D::Smoothing traj(optimizer->getPlanningGroup()->robot_);
-        Eigen::MatrixXd parameters(num_dimensions_,num_time_steps_);
+        Move3D::Smoothing traj( optimizer->getPlanningGroup()->robot_ );
+        Eigen::MatrixXd parameters( num_dimensions_, num_time_steps_ );
 
         for ( int i=0; i<num_dimensions_; ++i) {
             parameters.row(i) = parameters_[i].transpose();

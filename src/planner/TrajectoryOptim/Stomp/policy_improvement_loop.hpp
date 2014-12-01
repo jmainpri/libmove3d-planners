@@ -90,6 +90,7 @@ private:
     bool use_cumulative_costs_;
     bool set_parameters_in_policy_;
   
+    bool joint_limits_;
     bool use_annealing_;
     int limits_violations_;
     double K_;
@@ -111,6 +112,7 @@ private:
     std::vector<Eigen::MatrixXd> parameter_updates_;
     std::vector<Eigen::VectorXd> parameters_;
     Eigen::MatrixXd rollout_costs_;
+    std::vector<Eigen::MatrixXd> rollout_control_costs_;
     std::vector<double> noise_stddev_;
     std::vector<double> noise_decay_;
 

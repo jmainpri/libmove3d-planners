@@ -91,28 +91,8 @@ namespace stomp_motion_planner
         for (int d=0; d<int(control_costs_.size()); ++d)
             control_cost += ( control_costs_[d].sum() );
 
-//        cout.precision(6);
-//        cout << "control cost : " << control_cost + length_cost_ << " , state cost : " << state_costs_.sum() << endl;
-
-        //        cout << "state_costs_ : ";
-        //        for (int i=0; i<state_costs_.size(); i++) {
-        //            cout << state_costs_[i] << " ";
-        //        }
-        //        cout << endl;
-
-        //        cout << "control_costs_ : ";
-        //        for (int d=0; d<int(control_costs_.size()); ++d)
-        //        {
-        //            cout << "( ";
-        //            for (int i=0; i<int(control_costs_[d].size()); i++)
-        //            {
-        //                cout <<  control_costs_[d][i] ;
-        //                if(d < int(control_costs_.size()-1))
-        //                    cout << " , ";
-        //            }
-        //            cout << ")";
-        //        }
-        //        cout << endl;
+        cout.precision(6);
+        cout << "control cost : " << control_cost << " , state cost : " << state_costs_.sum() << endl;
     }
 
     void Rollout::printProbabilities()
@@ -206,6 +186,23 @@ namespace stomp_motion_planner
 //        }
 
         multiple_smoothness_ = true;
+
+        // TODO move somewhere else
+        if( multiple_smoothness_ )
+        {
+            Move3D::StackedFeatures* fct = dynamic_cast<Move3D::StackedFeatures*>( global_activeFeatureFunction );
+
+            if( fct != NULL &&
+                    fct->getFeatureFunction("SmoothnessAll") != NULL &&
+                    fct->getFeatureFunction("SmoothnessAll")->is_active_ )
+            {
+                control_cost_weights_ = fct->getFeatureFunction("SmoothnessAll")->getWeights();
+//                cout << "control_cost_weights_ : " << control_cost_weights_.transpose() << endl;
+            }
+            else{
+                multiple_smoothness_ = false;
+            }
+        }
 
         return (initialized_ = true);
     }
@@ -401,22 +398,22 @@ namespace stomp_motion_planner
 
     bool PolicyImprovement::computeProjectedNoise(Rollout& rollout)
     {
-        for (int d=0; d<num_dimensions_; ++d)
-        {
-            rollout.noise_projected_[d] = projection_matrix_[d] * rollout.noise_[d];
+//        for (int d=0; d<num_dimensions_; ++d)
+//        {
+//            rollout.noise_projected_[d] = projection_matrix_[d] * rollout.noise_[d];
             //rollout.parameters_noise_projected_[d] = rollout.parameters_[d] + rollout.noise_projected_[d];
             //cout << "rollout.noise_projected_[" << d << "] = " << rollout.noise_projected_[d].transpose() << endl;
-        }
+//        }
 
         return true;
     }
 
     bool PolicyImprovement::computeProjectedNoise()
     {
-        for (int r=0; r<num_rollouts_; ++r)
-        {
-            computeProjectedNoise(rollouts_[r]);
-        }
+//        for (int r=0; r<num_rollouts_; ++r)
+//        {
+//            computeProjectedNoise(rollouts_[r]);
+//        }
         return true;
     }
 
@@ -619,29 +616,8 @@ namespace stomp_motion_planner
                 rollouts_[r].nominal_parameters_[d] = parameters_[d];
 
                 bool add_straight_lines = false;
-
                 if( add_straight_lines )
                 {
-                    //          double size = p3d_random( 0.0, (num_time_steps_-1)/2 );
-                    //          double center = p3d_random( 0.0, (num_time_steps_-1));
-                    //          int init = round(center - size/2);
-                    //          int end = round(center + size/2);
-                    //
-                    //          cout << "center : " << center << " , size : " << size << endl;
-                    //          cout << "init : " << init << " , end : " << end << endl;
-                    //          if (init < 0.0) {
-                    //            init = 0;
-                    //          }
-                    //          if (init > (num_time_steps_-1)) {
-                    //            init = num_time_steps_-1;
-                    //          }
-                    //          if (end < 0.0) {
-                    //            end = 0;
-                    //          }
-                    //          if (end > (num_time_steps_-1)) {
-                    //            end = num_time_steps_-1;
-                    //          }
-
                     std::vector<int> points;
                     points.resize(7);
                     points[0] = 0;
@@ -725,7 +701,7 @@ namespace stomp_motion_planner
                 }
             }
         }
-        computeProjectedNoise();
+        // computeProjectedNoise();
         return true;
     }
 
@@ -743,83 +719,24 @@ namespace stomp_motion_planner
         rollouts_[r].out_of_bounds_ = out_of_bounds;
     }
 
-
-    bool PolicyImprovement::computeRolloutControlCosts(Rollout& rollout)
-    {
-        if( multiple_smoothness_ )
-        {
-            std::vector<Eigen::VectorXd> parameters( num_dimensions_ );
-            for (int d=0; d<num_dimensions_; ++d)
-                parameters[d] = rollout.parameters_[d] + rollout.noise_projected_[d];
-
-//            cout << "compute control costs" << endl;
-            std::vector< std::vector<Eigen::VectorXd> > control_costs;
-            static_cast<CovariantTrajectoryPolicy*>(policy_.get())->getAllCosts( parameters, control_costs, discretization_ );
-
-//            cout << "sum control costs" << endl;
-            rollout.control_costs_ = std::vector<Eigen::VectorXd>( num_dimensions_, Eigen::VectorXd::Zero(num_time_steps_) );
-
-            for (int c=0; c<4; ++c)
-                for (int d=0; d<num_dimensions_; ++d) {
-//                    cout << "control_costs[" << c << "][d].size() : " << control_costs[c][d].size() << endl;
-//                    cout << "rollout.control_costs_[d].size() : " << rollout.control_costs_[d].size() << endl;
-                    rollout.control_costs_[d] += ( control_costs[c][d] );
-                }
-
-            for (int c=4; c<8; ++c) {
-                rollout.state_costs_ += ( control_cost_weights_[c] * control_costs[c][0] );
-            }
-        }
-        else
-        {
-//            cout << "NORMAL COMPUTATION" << endl;
-            policy_->computeControlCosts(control_costs_, rollout.parameters_,
-                                         rollout.noise_projected_, control_cost_weight_ , rollout.control_costs_, discretization_ );
-        }
-
-        return true;
-    }
-
-    bool PolicyImprovement::computeRolloutControlCosts()
-    {
-        for (int r=0; r<num_rollouts_; ++r)
-        {
-            computeRolloutControlCosts(rollouts_[r]);
-            rollouts_[r].printCost(control_cost_weight_);
-        }
-        return true;
-    }
-
-    bool PolicyImprovement::setRolloutCosts(const Eigen::MatrixXd& costs, const double control_cost_weight, std::vector<double>& rollout_costs_total)
+    bool PolicyImprovement::setRolloutCosts(const Eigen::MatrixXd& costs, const std::vector<Eigen::MatrixXd>& control_costs, const double control_cost_weight, std::vector<double>& rollout_costs_total)
     {
         assert(initialized_);
 
         control_cost_weight_ = control_cost_weight;
 
-        if( multiple_smoothness_ )
-        {
-            Move3D::StackedFeatures* fct = dynamic_cast<Move3D::StackedFeatures*>( global_activeFeatureFunction );
-
-            if( fct != NULL &&
-                    fct->getFeatureFunction("SmoothnessAll") != NULL &&
-                    fct->getFeatureFunction("SmoothnessAll")->is_active_ )
-            {
-                control_cost_weights_ = fct->getFeatureFunction("SmoothnessAll")->getWeights();
-//                cout << "control_cost_weights_ : " << control_cost_weights_.transpose() << endl;
-            }
-            else{
-                multiple_smoothness_ = false;
-            }
-        }
-
         // Warning some control costs may be added to the state costs
         for (int r=0; r<num_rollouts_gen_; ++r)
         {
             rollouts_[r].state_costs_ = costs.row(r).transpose();
+
+            // TODO add control costs
+            for (int d=0; d<num_dimensions_; ++d)
+                rollouts_[r].control_costs_[d] = control_costs[r].row(d).transpose();
         }
 
         // set control costs
-        computeRolloutControlCosts();
+        // computeRolloutControlCosts();
 
         // set the total costs
         rollout_costs_total.resize(num_rollouts_);
@@ -1033,10 +950,11 @@ namespace stomp_motion_planner
             extra_rollouts_[r].parameters_ = rollouts[r];
             extra_rollouts_[r].state_costs_ = rollout_costs[r];
             computeNoise(extra_rollouts_[r]);
-            computeProjectedNoise(extra_rollouts_[r]);
-            // set control cost
-            computeRolloutControlCosts(extra_rollouts_[r]);
-            //ROS_INFO("Extra rollout cost = %f", extra_rollouts_[r].getCost());
+            // computeProjectedNoise(extra_rollouts_[r]);
+            // computeRolloutControlCosts(extra_rollouts_[r]);
+
+            // TODO
+            // extra_rollouts_[r].rollout.control_costs_ = rollout_control_costs[r];
         }
 
         extra_rollouts_added_ = true;
