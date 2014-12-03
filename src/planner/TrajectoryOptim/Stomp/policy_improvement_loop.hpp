@@ -69,7 +69,7 @@ public:
      * Functions added by jim
      */
     void testSampler();
-    bool generateSingleNoisyTrajectory();
+
     void getRollouts(std::vector<std::vector<Move3D::confPtr_t> >& traj);
   
     // Reset all extra rollouts

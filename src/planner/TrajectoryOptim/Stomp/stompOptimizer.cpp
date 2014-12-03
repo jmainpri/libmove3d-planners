@@ -1083,7 +1083,7 @@ void StompOptimizer::generateNoisyTrajectory(const Move3D::Trajectory& traj, vec
     //      animateEndeffector();
     //    }
     
-    pi_loop.generateSingleNoisyTrajectory(/*iteration_+1*/);
+//    pi_loop.generateSingleNoisyTrajectory(/*iteration_+1*/);
     
     pi_loop.getRollouts( noisy_trajectories );
     

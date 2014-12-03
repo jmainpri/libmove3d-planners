@@ -77,10 +77,6 @@ public:
    */
     ChompTrajectory(const ChompTrajectory& source_traj, int diff_rule_length);
 
-    //  ChompTrajectory(const ChompRobotModel* robot_model,
-    //                  const ChompRobotModel::ChompPlanningGroup* planning_group,
-    //                  const trajectory_msgs::JointTrajectory& traj);
-
     /**
    * \brief Destructor
    */
@@ -99,9 +95,11 @@ public:
     //void getTrajectoryPointKDL(int traj_point, KDL::JntArray& kdl_jnt_array) const;
     void getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt_array) const;
 
-
     //! gets the parameters in the trajectory
     bool getParameters(std::vector<Eigen::VectorXd>& parameters) const;
+
+    //! gets the free parameters of the trajectory
+    bool getFreeParameters(std::vector<Eigen::VectorXd>& parameters) const;
 
     //void overwriteTrajectory(const trajectory_msgs::JointTrajectory& traj);
 
@@ -158,7 +156,7 @@ public:
     /**
    * \brief Gets the block of the trajectory which can be optimized
    */
-    Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic>  getFreeTrajectoryBlock();
+    Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic> getFreeTrajectoryBlock();
 
     /**
    * \brief Gets the block of free (optimizable) trajectory for a single joint
@@ -244,11 +242,22 @@ inline Eigen::MatrixXd::ColXpr ChompTrajectory::getJointTrajectory(int joint)
 
 inline bool ChompTrajectory::getParameters(std::vector<Eigen::VectorXd>& parameters) const
 {
-    if( parameters.size() != trajectory_.cols() )
+    if( int(parameters.size()) != trajectory_.cols() )
         return false;
 
     for(int joint=0; joint<trajectory_.cols(); joint++)
         parameters[joint] = trajectory_.col(joint);
+
+    return true;
+}
+
+inline bool ChompTrajectory::getFreeParameters(std::vector<Eigen::VectorXd>& parameters) const
+{
+    if( int(parameters.size()) != trajectory_.cols() )
+        return false;
+
+    for(int joint=0; joint<trajectory_.cols(); joint++)
+        parameters[joint] = trajectory_.col(joint).segment(start_index_+1, getNumFreePoints() /*-id_fixed_*/ ); // TODO see why
 
     return true;
 }

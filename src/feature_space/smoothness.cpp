@@ -288,7 +288,8 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
     //    cout.precision(6);
     //    cout << "size (" << mat2.rows() << ", " << mat2.cols() << ") , control cost : "  << f << endl;
 
-    //    control_cost_.saveProfiles( mat2, "/home/jmainpri/Dropbox/move3d/move3d-launch/launch_files/" , dt );
+//    if( name_ == "Velocity" )
+//        control_cost_.saveProfiles( traj_smooth, "/home/jmainpri/Dropbox/move3d/move3d-launch/launch_files/" , dt );
 
     return f;
 }
@@ -407,6 +408,9 @@ double TaskSmoothnessFeature::getVelocity( const Eigen::MatrixXd& mat, Eigen::Ve
 
     std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat, dt );
     costs = getControlCosts( control_cost );
+
+//    control_cost_.saveProfiles( mat, "/home/jmainpri/Dropbox/move3d/move3d-launch/launch_files/" , dt );
+
     return control_cost_.cost( control_cost );
 }
 

@@ -401,19 +401,20 @@ bool RecordMotion::loadXMLFolder(  const std::string& foldername  )
     return true;
 }
 
-void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet, double threshold )
+std::vector<std::string> RecordMotion::listFolder( const std::string& foldername, std::string ext, bool quiet ) const
 {
     if( !quiet ) {
         cout << "Load Folder : " << foldername << endl;
     }
 
+    std::vector<std::string> files;
+
     std::string command = "ls " + foldername;
     FILE* fp = popen( command.c_str(), "r");
     if (fp == NULL) {
         cout << "ERROR in system call" << endl;
-        return;
+        return files;
     }
-    std::vector<std::string> files;
 
     char str[PATH_MAX];
     while ( fgets( str, PATH_MAX, fp) != NULL )
@@ -422,7 +423,7 @@ void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet, dou
         filename = filename.substr(0, filename.size()-1);
         std::string extension( filename.substr( filename.find_last_of(".") + 1 ) );
         //cout << extension << endl;
-        if( extension == "csv" )
+        if( extension == ext )
         {
             char id = filename.at( filename.find_last_of(".")-1 );
             if( true /*id == '0'*/ ){
@@ -434,6 +435,41 @@ void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet, dou
         }
     }
     pclose(fp);
+    return files;
+}
+
+void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet, std::string base_name )
+{
+    std::vector<std::string> files = listFolder( foldername, "csv", quiet );
+    if( files.empty() )
+    {
+        cout << "Folder " << foldername << " is empty!!!" << endl;
+        return;
+    }
+
+    for(size_t i=0; i<files.size(); i++)
+    {
+        if ( files[i].find( base_name ) != std::string::npos ) // true if file name contains base_name
+        {
+            motion_t motion = loadFromCSV( foldername + "/" + files[i], quiet );
+            m_stored_motions.push_back( motion );
+            m_stored_motions_names.push_back( files[i] );
+        }
+    }
+
+    if( !quiet ) {
+        cout << "m_stored_motions.size() : " << m_stored_motions.size() << endl;
+    }
+}
+
+void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet, double threshold )
+{
+    std::vector<std::string> files = listFolder( foldername, "csv", quiet );
+    if( files.empty() )
+    {
+        cout << "Folder " << foldername << " is empty!!!" << endl;
+        return;
+    }
 
     m_stored_motions.clear();
     m_stored_motions_names.clear();
@@ -1112,7 +1148,7 @@ bool  RecordMotion::loadRegressedFromCSV( const std::string& foldername )
     return true;
 }
 
-confPtr_t RecordMotion::getConfigOpenRave( const std::vector<std::string>& config )
+confPtr_t RecordMotion::getConfigOpenRave( const std::vector<std::string>& config ) const
 {
     std::vector<double> tmp(config.size());
 
@@ -1130,7 +1166,7 @@ confPtr_t RecordMotion::getConfigOpenRave( const std::vector<std::string>& confi
     return q;
 }
 
-std::pair<double,confPtr_t> RecordMotion::getConfigBio( const std::vector<std::string>& config )
+std::pair<double,confPtr_t> RecordMotion::getConfigBio( const std::vector<std::string>& config ) const
 {
     std::vector<double> tmp(config.size());
 
@@ -1163,7 +1199,7 @@ std::pair<double,confPtr_t> RecordMotion::getConfigBio( const std::vector<std::s
     return time_config;
 }
 
-confPtr_t RecordMotion::getConfigTwelveDoF( const std::vector<std::string>& config )
+confPtr_t RecordMotion::getConfigTwelveDoF( const std::vector<std::string>& config ) const
 {
     confPtr_t q = m_robot->getCurrentPos();
 
@@ -1184,7 +1220,7 @@ confPtr_t RecordMotion::getConfigTwelveDoF( const std::vector<std::string>& conf
     return q;
 }
 
-motion_t RecordMotion::loadFromCSV( const std::string& filename, bool quiet )
+motion_t RecordMotion::loadFromCSV( const std::string& filename, bool quiet ) const
 {
     if(!quiet) {
         cout << "Loading from CSV : " << filename << endl;

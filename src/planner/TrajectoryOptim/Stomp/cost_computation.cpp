@@ -315,7 +315,7 @@ bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
 bool costComputation::getControlCosts(const ChompTrajectory& group_traj)
 {
     std::vector<Eigen::VectorXd> parameters( num_joints_ );
-    group_traj.getParameters( parameters ); // TODO check the paramters size
+    group_traj.getFreeParameters( parameters ); // TODO check the paramters size
     
     //            cout << "sum control costs" << endl;
     current_control_costs_ = std::vector<Eigen::VectorXd>( num_joints_, Eigen::VectorXd::Zero(num_vars_free_) );
@@ -339,9 +339,17 @@ bool costComputation::getControlCosts(const ChompTrajectory& group_traj)
     else
     {
 //            cout << "NORMAL COMPUTATION" << endl;
+
+        // TODO see why num_vars_free_ is 100 and not 100 - id_fixed
+//        cout << "parameter size : " << parameters[0].size() << endl;
+//        cout << "noise size : " << num_vars_free_ << endl;
         
-        policy_->computeControlCosts(control_costs_, parameters,
-                                     std::vector<Eigen::VectorXd>( num_joints_, Eigen::VectorXd::Zero(num_vars_free_) ), control_cost_weight_ , current_control_costs_, group_traj.getDiscretization() );
+        policy_->computeControlCosts(control_costs_,
+                                     parameters,
+                                     std::vector<Eigen::VectorXd>( num_joints_, Eigen::VectorXd::Zero(num_vars_free_) ),
+                                     control_cost_weight_ ,
+                                     current_control_costs_,
+                                     group_traj.getDiscretization() );
     }
 
     return true;

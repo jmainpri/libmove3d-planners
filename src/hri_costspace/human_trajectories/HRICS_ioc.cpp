@@ -2208,17 +2208,18 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
     double demo_cost = 0.0;
 //    double demo_cost = feature_fct_->getWeights().transpose()*phi_demos_[0];
 //    cout << "cost " << int(0) << " : " <<  demo_cost << endl;
-    cout << "dist wrist " << phi_demos_[0][0] << endl; //24
-    cout << "length : " << demos_[0].getParamMax() << endl;
+//    cout << "dist wrist " << phi_demos_[0][0] << endl; //24
+//    cout << "length : " << demos_[0].getParamMax() << endl;
 
-    FeatureVect phi = feature_fct_->getFeatureCount( demos_[0] );
-    cout << "weight : " << feature_fct_->getWeights().transpose() << endl;
-    cout << "cost : " << feature_fct_->getWeights().transpose()*phi << " , ";
-    cout << "Feature Sample : " << int(-1) << " , " << phi.transpose() << endl;
+    FeatureVect phi;
+    // phi = feature_fct_->getFeatureCount( demos_[0] );
+//    cout << "weight : " << feature_fct_->getWeights().transpose() << endl;
+//    cout << "cost : " << feature_fct_->getWeights().transpose()*phi << " , ";
+//    cout << "Feature Sample : " << int(-1) << " , " << phi.transpose() << endl;
 
-    Feature* fct = feature_fct_->getFeatureFunction("Distance");
-    if( fct != NULL )
-        cout << "distance cost : " << fct->costTraj( demos_[0] ) << endl;
+//    Feature* fct = feature_fct_->getFeatureFunction("Distance");
+//    if( fct != NULL )
+//        cout << "distance cost : " << fct->costTraj( demos_[0] ) << endl;
 
     int nb_lower_cost = 0;
     int nb_lower_feature = 0;
@@ -2238,6 +2239,8 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
             setBuffer(d);
 
 //        dtw_compare_performance( plangroup_, demos_[d], samples[d] );
+
+        continue;
 
         for( int i=0; i<int(samples[d].size()); i++)
         {

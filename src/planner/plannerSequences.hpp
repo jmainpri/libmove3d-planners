@@ -59,6 +59,7 @@ public:
 
     std::vector<confPtr_t> getStoredConfig() const;
     void runSequence();
+    void runSequence( const std::vector<confPtr_t>& configs );
 
     void draw();
 

@@ -81,12 +81,14 @@ public:
     void translateStoredMotions();
     void invertTranslationStoredMotions();
     motion_t invertTranslation( const motion_t& motion );
-    Move3D::confPtr_t getConfigOpenRave( const std::vector<std::string>& config );
-    Move3D::confPtr_t getConfigTwelveDoF( const std::vector<std::string>& config );
-    std::pair<double,Move3D::confPtr_t> getConfigBio( const std::vector<std::string>& config );
-    motion_t loadFromCSV( const std::string& filename, bool quiet = false );
+    Move3D::confPtr_t getConfigOpenRave( const std::vector<std::string>& config ) const;
+    Move3D::confPtr_t getConfigTwelveDoF( const std::vector<std::string>& config ) const;
+    std::pair<double,Move3D::confPtr_t> getConfigBio( const std::vector<std::string>& config ) const;
+    motion_t loadFromCSV( const std::string& filename, bool quiet = false ) const;
     void loadXMLFolder();
     bool loadXMLFolder( const std::string& foldername  );
+    std::vector<std::string> listFolder( const std::string& foldername, std::string ext, bool quiet ) const;
+    void loadCSVFolder( const std::string& foldername, bool quiet, std::string base_name );
     void loadCSVFolder( const std::string& foldername, bool quiet = false, double threshold=0.0 );
 
     void storeMotion( const motion_t& motion, std::string name, bool new_motion = true);
@@ -113,15 +115,22 @@ public:
     motion_t extractSubpart(int init, int end );
     motion_t extractSubpart(int init, int end, const motion_t& motion);
 
-    void incrementMotionId() { m_id_motion++; }
+    const std::vector<motion_t>& getStoredMotions() const { return m_stored_motions; }
 
-    const std::vector<motion_t>& getStoredMotions() { return m_stored_motions; }
-
-    std::string getStoredMotionName(size_t i)
+    std::string getStoredMotionName(size_t i) const
     {
         if( i < m_stored_motions_names.size() )
             return m_stored_motions_names[i];
         return "";
+    }
+
+
+    void incrementMotionId() { m_id_motion++; }
+
+    void clear()
+    {
+        m_stored_motions.clear();
+        m_stored_motions_names.clear();
     }
 
     void useOpenRAVEFormat( bool use_or_format ) { m_use_or_format = use_or_format; }

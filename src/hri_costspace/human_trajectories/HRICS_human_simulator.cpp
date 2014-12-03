@@ -41,6 +41,8 @@ HRICS::HumanTrajCostSpace* global_ht_cost_space = NULL;
 
 bool HRICS_init_human_trajectory_cost()
 {
+    cout << "*******************************************************************" << endl;
+    cout << "*******************************************************************" << endl;
     cout << "---------------------------------------------" << endl;
     cout << __PRETTY_FUNCTION__ << endl;
     cout << "---------------------------------------------" << endl;
@@ -57,6 +59,7 @@ bool HRICS_init_human_trajectory_cost()
         }
 
         bool load_kinect_motions = true;
+        bool load_a_term = true;
         if( load_kinect_motions )
         {
             global_motionRecorders.push_back( new HRICS::RecordMotion( human1 ) );
@@ -86,6 +89,29 @@ bool HRICS_init_human_trajectory_cost()
                 global_motionRecorders[0]->loadCSVFolder( foldername + "human_one/", quiet, +0.5 );
                 global_motionRecorders[1]->loadCSVFolder( foldername + "human_two/", quiet, -0.5 );
             }
+            else if ( load_a_term )
+            {
+                cout << "LOAD ATERM BIO MOTIONS" << endl;
+                global_motionRecorders[0]->useBioFormat( true );
+                global_motionRecorders[1]->useBioFormat( true );
+
+                for( int i=0; i<1; i++ )
+                {
+                    std::ostringstream ss; ss << i;
+                    std::string foldername = "/home/jmainpri/Desktop/experiments_a_term/aterm_experiment_ik_library/block1/" + ss.str() ;
+
+                    bool quiet = true;
+                    global_motionRecorders[0]->loadCSVFolder( foldername, quiet, "human1" ); // Active
+                    global_motionRecorders[1]->loadCSVFolder( foldername, quiet, "human2" ); // Passive
+                }
+
+                cout << "Stored motion names : " << endl;
+                for( int i=0; i<global_motionRecorders[0]->getStoredMotions().size();i++)
+                {
+                    cout << global_motionRecorders[0]->getStoredMotionName(i) << endl;
+                    cout << global_motionRecorders[1]->getStoredMotionName(i) << endl;
+                }
+            }
             else
             {
                 cout << "LOAD BIO MOTIONS" << endl;
@@ -101,7 +127,7 @@ bool HRICS_init_human_trajectory_cost()
 
 //                std::string folder_hrics = "/home/jmainpri/workspace/hrics-or-rafi/"; // "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/";
 //                std::string foldername = folder_hrics + "python_module/bioik/ten_motions_last/";
-                
+
                 std::string move3d_root = std::string( getenv("HOME_MOVE3D" ) ) + std::string( "/../" );
                 std::string foldername = move3d_root + "assets/Collaboration/TRAJECTORIES/mocap/ten_motions_last/";
 
@@ -153,6 +179,8 @@ bool HRICS_init_human_trajectory_cost()
     cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
     global_activeFeatureFunction = global_ht_cost_space;
 
+    cout << "*******************************************************************" << endl;
+    cout << "*******************************************************************" << endl;
     return true;
 }
 
@@ -568,100 +596,112 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     cout << "---------------------------------------------" << endl;
     cout << "Set replanning demonstrations" << endl;
 
-    std::vector<std::string> good_motions_names;
-//    good_motions_names.push_back( "[0551-0602]motion_saved_00000_00000.csv" );
-//    good_motions_names.push_back( "[1186-1245]motion_saved_00000_00001.csv" );
-//    good_motions_names.push_back( "[1552-1581]motion_saved_00000_00000.csv" );
-//    good_motions_names.push_back( "[1873-1929]motion_saved_00000_00001.csv" );
-//    good_motions_names.push_back( "[3191-3234]motion_saved_00000_00000.csv" );
-//    good_motions_names.push_back( "[3913-3950]motion_saved_00000_00000.csv" );
+     bool use_all_motions = true;
 
-    // QUAN GOOD
-//    good_motions_names.push_back( "[4125-4169]motion_saved_00000_00001.csv" );
-//    good_motions_names.push_back( "[4422-4476]motion_saved_00000_00000.csv" );
-//    good_motions_names.push_back( "[4591-4640]motion_saved_00000_00000.csv" );
-//    good_motions_names.push_back( "[4753-4802]motion_saved_00000_00000.csv" );
+     // Only select particular motions
+     std::vector<std::string> selected;
+     if( !use_all_motions )
+     {
 
-    // MOCAP GOOD
-//    good_motions_names.push_back( "[1460-1620]_human1_.csv" );
-//    good_motions_names.push_back( "[1460-1620]_human2_.csv" );
+         //    selected.push_back( "[0551-0602]motion_saved_00000_00000.csv" );
+         //    selected.push_back( "[1186-1245]motion_saved_00000_00001.csv" );
+         //    selected.push_back( "[1552-1581]motion_saved_00000_00000.csv" );
+         //    selected.push_back( "[1873-1929]motion_saved_00000_00001.csv" );
+         //    selected.push_back( "[3191-3234]motion_saved_00000_00000.csv" );
+         //    selected.push_back( "[3913-3950]motion_saved_00000_00000.csv" );
 
-    // TEN MOTIONS
+         // QUAN GOOD
+         //    selected.push_back( "[4125-4169]motion_saved_00000_00001.csv" );
+         //    selected.push_back( "[4422-4476]motion_saved_00000_00000.csv" );
+         //    selected.push_back( "[4591-4640]motion_saved_00000_00000.csv" );
+         //    selected.push_back( "[4753-4802]motion_saved_00000_00000.csv" );
 
-    // BAD...
-    //    good_motions_names.push_back("[1188-1256]_human2_.csv");
-    //    good_motions_names.push_back("[1188-1256]_human1_.csv");
-    //    good_motions_names.push_back("[2172-2249]_human2_.csv");
-    //    good_motions_names.push_back("[2172-2249]_human1_.csv");
-    //    good_motions_names.push_back("[2018-2099]_human2_.csv");
-    //    good_motions_names.push_back("[2018-2099]_human1_.csv");
-    //    good_motions_names.push_back("[1064-1140]_human2_.csv");
-    //    good_motions_names.push_back("[1064-1140]_human1_.csv");
-    //    good_motions_names.push_back("[0408-0491]_human2_.csv");
-    //    good_motions_names.push_back("[0408-0491]_human1_.csv");
+         // MOCAP GOOD
+         //    selected.push_back( "[1460-1620]_human1_.csv" );
+         //    selected.push_back( "[1460-1620]_human2_.csv" );
 
-    // GOOD...
-//    good_motions_names.push_back("[0446-0578]_human2_.csv");
-//    good_motions_names.push_back("[0446-0578]_human1_.csv");
+         // TEN MOTIONS
 
-//    good_motions_names.push_back("[0525-0657]_human2_.csv");
-//    good_motions_names.push_back("[0525-0657]_human1_.csv");
+         // BAD...
+         //    selected.push_back("[1188-1256]_human2_.csv");
+         //    selected.push_back("[1188-1256]_human1_.csv");
+         //    selected.push_back("[2172-2249]_human2_.csv");
+         //    selected.push_back("[2172-2249]_human1_.csv");
+         //    selected.push_back("[2018-2099]_human2_.csv");
+         //    selected.push_back("[2018-2099]_human1_.csv");
+         //    selected.push_back("[1064-1140]_human2_.csv");
+         //    selected.push_back("[1064-1140]_human1_.csv");
+         //    selected.push_back("[0408-0491]_human2_.csv");
+         //    selected.push_back("[0408-0491]_human1_.csv");
 
-//    good_motions_names.push_back("[0444-0585]_human2_.csv");
-//    good_motions_names.push_back("[0444-0585]_human1_.csv");
+         // GOOD...
+         //    selected.push_back("[0446-0578]_human2_.csv");
+         //    selected.push_back("[0446-0578]_human1_.csv");
 
-//    good_motions_names.push_back("[0489-0589]_human2_.csv");
-//    good_motions_names.push_back("[0489-0589]_human1_.csv");
+         //    selected.push_back("[0525-0657]_human2_.csv");
+         //    selected.push_back("[0525-0657]_human1_.csv");
 
-//    good_motions_names.push_back("[0780-0871]_human2_.csv");
-//    good_motions_names.push_back("[0780-0871]_human1_.csv");
+         //    selected.push_back("[0444-0585]_human2_.csv");
+         //    selected.push_back("[0444-0585]_human1_.csv");
 
-//    good_motions_names.push_back("[1537-1608]_human2_.csv");
-//    good_motions_names.push_back("[1537-1608]_human1_.csv");
+         //    selected.push_back("[0489-0589]_human2_.csv");
+         //    selected.push_back("[0489-0589]_human1_.csv");
 
-//    good_motions_names.push_back("[2711-2823]_human2_.csv");
-//    good_motions_names.push_back("[2711-2823]_human1_.csv");
+         //    selected.push_back("[0780-0871]_human2_.csv");
+         //    selected.push_back("[0780-0871]_human1_.csv");
 
-    // REPLANNING MOTION last
+         //    selected.push_back("[1537-1608]_human2_.csv");
+         //    selected.push_back("[1537-1608]_human1_.csv");
 
-    good_motions_names.push_back("[7395-7595]_human2_.csv");
-    good_motions_names.push_back("[7395-7595]_human1_.csv");
-
-    // REPLANNING MOTION first
-//    good_motions_names.push_back("[0629-0768]_human2_.csv");
-//    good_motions_names.push_back("[0629-0768]_human1_.csv");
-
-
-    if( !use_one_traj_ )
-    {
-//        good_motions_names.push_back("[0446-0578]_human2_.csv");
-//        good_motions_names.push_back("[0446-0578]_human1_.csv");
-
-//        good_motions_names.push_back("[0525-0657]_human2_.csv");
-//        good_motions_names.push_back("[0525-0657]_human1_.csv");
-
-//        good_motions_names.push_back("[0444-0585]_human2_.csv");
-//        good_motions_names.push_back("[0444-0585]_human1_.csv");
-
-//        good_motions_names.push_back("[0489-0589]_human2_.csv");
-//        good_motions_names.push_back("[0489-0589]_human1_.csv");
-
-//        good_motions_names.push_back("[0780-0871]_human2_.csv");
-//        good_motions_names.push_back("[0780-0871]_human1_.csv");
-
-//        good_motions_names.push_back("[1537-1608]_human2_.csv");
-//        good_motions_names.push_back("[1537-1608]_human1_.csv");
-
-//        good_motions_names.push_back("[2711-2823]_human2_.csv");
-//        good_motions_names.push_back("[2711-2823]_human1_.csv");
+         //    selected.push_back("[2711-2823]_human2_.csv");
+         //    selected.push_back("[2711-2823]_human1_.csv");
 
 
 
-//        good_motions_names.push_back("[1342-1451]_human2_.csv");
-//        good_motions_names.push_back("[1342-1451]_human1_.csv");
-//        good_motions_names.push_back("[2197-2343]_human2_.csv");
-//        good_motions_names.push_back("[2197-2343]_human1_.csv");
-    }
+         // REPLANNING MOTION last
+
+         selected.push_back("[7395-7595]_human2_.csv");
+         selected.push_back("[7395-7595]_human1_.csv");
+
+
+
+
+         // REPLANNING MOTION first
+         //    selected.push_back("[0629-0768]_human2_.csv");
+         //    selected.push_back("[0629-0768]_human1_.csv");
+
+
+         if( !use_one_traj_ )
+         {
+             //        selected.push_back("[0446-0578]_human2_.csv");
+             //        selected.push_back("[0446-0578]_human1_.csv");
+
+             //        selected.push_back("[0525-0657]_human2_.csv");
+             //        selected.push_back("[0525-0657]_human1_.csv");
+
+             //        selected.push_back("[0444-0585]_human2_.csv");
+             //        selected.push_back("[0444-0585]_human1_.csv");
+
+             //        selected.push_back("[0489-0589]_human2_.csv");
+             //        selected.push_back("[0489-0589]_human1_.csv");
+
+             //        selected.push_back("[0780-0871]_human2_.csv");
+             //        selected.push_back("[0780-0871]_human1_.csv");
+
+             //        selected.push_back("[1537-1608]_human2_.csv");
+             //        selected.push_back("[1537-1608]_human1_.csv");
+
+             //        selected.push_back("[2711-2823]_human2_.csv");
+             //        selected.push_back("[2711-2823]_human1_.csv");
+
+
+
+             //        selected.push_back("[1342-1451]_human2_.csv");
+             //        selected.push_back("[1342-1451]_human1_.csv");
+             //        selected.push_back("[2197-2343]_human2_.csv");
+             //        selected.push_back("[2197-2343]_human1_.csv");
+         }
+     }
 
     human_1_demos_.clear();
     human_2_demos_.clear();
@@ -676,48 +716,48 @@ void HumanTrajSimulator::setReplanningDemonstrations()
 
     bool initialized = false;
 
-    for( size_t k=0; k<good_motions_names.size(); k++ )
-        for( size_t j=0; j<motion_recorders_[0]->getStoredMotions().size(); j++ )
-            if( motion_recorders_[0]->getStoredMotionName(j) == good_motions_names[k] )
+    for( size_t j=0; j<motion_recorders_[0]->getStoredMotions().size(); j++ )
+        if( use_all_motions || std::find( selected.begin(), selected.end(), motion_recorders_[0]->getStoredMotionName(j) ) != selected.end() )
+        {
+            cout << "Add motion : " << motion_recorders_[0]->getStoredMotionName(j) << endl;
+
+            human_1_motions_.push_back( motion_recorders_[0]->getStoredMotions()[j] );
+            human_2_motions_.push_back( motion_recorders_[1]->getStoredMotions()[j] );
+
+            motions_1_names_.push_back( motion_recorders_[0]->getStoredMotionName(j) );
+            motions_2_names_.push_back( motion_recorders_[1]->getStoredMotionName(j) );
+
+            human_1_demos_.push_back( human_1_motions_.back() );
+            human_2_demos_.push_back( human_2_motions_.back() );
+
+            //
+            int demo_id = motions_demo_ids_.size();
+            motions_demo_ids_.push_back( demo_id );
+
+            bool only_set_active_dofs = true;
+            if( only_set_active_dofs )
             {
-                cout << "Add motion : " << good_motions_names[k] << endl;
-                human_1_motions_.push_back( motion_recorders_[0]->getStoredMotions()[j] );
-                human_2_motions_.push_back( motion_recorders_[1]->getStoredMotions()[j] );
-
-                motions_1_names_.push_back( motion_recorders_[0]->getStoredMotionName(j) );
-                motions_2_names_.push_back( motion_recorders_[1]->getStoredMotionName(j) );
-
-                human_1_demos_.push_back( human_1_motions_.back() );
-                human_2_demos_.push_back( human_2_motions_.back() );
-
-                //
-                int demo_id = motions_demo_ids_.size();
-                motions_demo_ids_.push_back( demo_id );
-
-                bool only_set_active_dofs = true;
-                if( only_set_active_dofs )
+                for( size_t s=0; s<human_2_motions_.back().size(); s++) // Only set active dofs on the configuration
                 {
-                    for( size_t s=0; s<human_2_motions_.back().size(); s++) // Only set active dofs on the configuration
+                    Move3D::confPtr_t q = human_2_motions_.back()[s].second;
+                    Move3D::confPtr_t q_tmp = q->getRobot()->getInitPos();
+                    q_tmp->setFromEigenVector( q->getEigenVector(active_dofs_), active_dofs_ );
+                    q_tmp->adaptCircularJointsLimits();
+                    human_2_motions_.back()[s].second = q_tmp;
+                    updateDofBounds( initialized, q_tmp );
+                }
+
+                if( use_bio_models_ ) // This might work for none bio models (kinect data) needs testing
+                    for( size_t s=0; s<human_1_motions_.back().size(); s++) // Only set active dofs on the configuration
                     {
-                        Move3D::confPtr_t q = human_2_motions_.back()[s].second;
+                        Move3D::confPtr_t q = human_1_motions_.back()[s].second;
                         Move3D::confPtr_t q_tmp = q->getRobot()->getInitPos();
                         q_tmp->setFromEigenVector( q->getEigenVector(active_dofs_), active_dofs_ );
                         q_tmp->adaptCircularJointsLimits();
-                        human_2_motions_.back()[s].second = q_tmp;
-                        updateDofBounds( initialized, q_tmp );
+                        human_1_motions_.back()[s].second = q_tmp;
                     }
-
-                    if( use_bio_models_ ) // This might work for none bio models (kinect data) needs testing
-                        for( size_t s=0; s<human_1_motions_.back().size(); s++) // Only set active dofs on the configuration
-                        {
-                            Move3D::confPtr_t q = human_1_motions_.back()[s].second;
-                            Move3D::confPtr_t q_tmp = q->getRobot()->getInitPos();
-                            q_tmp->setFromEigenVector( q->getEigenVector(active_dofs_), active_dofs_ );
-                            q_tmp->adaptCircularJointsLimits();
-                            human_1_motions_.back()[s].second = q_tmp;
-                        }
-                }
             }
+        }
 
     cout << "---------------------------------------------" << endl;
 }

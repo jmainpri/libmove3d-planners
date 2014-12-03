@@ -130,27 +130,41 @@ std::vector<confPtr_t> SequencesPlanners::getStoredConfig() const
      return configs;
 }
 
-void SequencesPlanners::runSequence()
+void SequencesPlanners::runSequence( const std::vector<confPtr_t>& configs )
 {
-    std::vector<confPtr_t> configs = getStoredConfig();
+    if( configs.empty() )
+        return;
+
     confPtr_t q_init = robot_->getInitPos();
+    confPtr_t q_goal = robot_->getGoalPos();
 
     robot_->setAndUpdate( *q_init );
 
     g3d_draw_allwin_active();
 
-    for( int i=0; i<configs.size() ; i++ )
-    {
-        robot_->setInitPos( *q_init );
-        robot_->setGoalPos( *configs[i] );
-        run();
+    robot_->setInitPos( *q_init );
+    robot_->setGoalPos( *configs[0] );
+    run();
 
+    for( int i=0; i<int(configs.size()-1); i++ )
+    {
         robot_->setInitPos( *configs[i] );
-        robot_->setGoalPos( *q_init );
+        robot_->setGoalPos( *configs[i+1] );
         run();
     }
 
+    robot_->setInitPos( *configs.back() );
+    robot_->setGoalPos( *q_init );
+    run();
+
     robot_->setInitPos( *q_init );
+    robot_->setInitPos( *q_goal );
+}
+
+void SequencesPlanners::runSequence()
+{
+    std::vector<confPtr_t> configs = getStoredConfig();
+    runSequence( configs );
 }
 
 void SequencesPlanners::playTrajs() //const
