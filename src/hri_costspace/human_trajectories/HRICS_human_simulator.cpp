@@ -47,31 +47,45 @@ bool HRICS_init_human_trajectory_cost()
     cout << __PRETTY_FUNCTION__ << endl;
     cout << "---------------------------------------------" << endl;
 
+    Move3D::Scene* sce = Move3D::global_Project->getActiveScene();
+    Move3D::Robot* passive_agent = sce->getRobotByName( "HERAKLES_HUMAN1" );
+    Move3D::Robot* active_agent = sce->getRobotByName( "HERAKLES_HUMAN2" );
+
     if( global_ht_cost_space == NULL )
     {
-        Move3D::Scene* sce = Move3D::global_Project->getActiveScene();
-        Move3D::Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );
-        Move3D::Robot* human2 = sce->getRobotByName( "HERAKLES_HUMAN2" );
-        if( human1 == NULL || human2 == NULL )
+        if( passive_agent == NULL )
         {
-            cout << "No humans HERAKLES in the the scene" << endl;
+            cout << "No passive humans HERAKLES in the the scene" << endl;
             return false;
+        }
+        if( active_agent == NULL )
+        {
+            cout << "No active humans HERAKLES in the the scene" << endl;
+
+            active_agent = sce->getRobotByName( "PR2_ROBOT" );
+            if( active_agent == NULL )
+            {
+                cout << "No robot PR2_ROBOT in the the scene" << endl;
+                return false;
+            }
+            else
+                cout << "Set PR2_ROBOT as active agent" << endl;
         }
 
         bool load_kinect_motions = true;
         bool load_a_term = true;
         if( load_kinect_motions )
         {
-            global_motionRecorders.push_back( new HRICS::RecordMotion( human1 ) );
-            global_motionRecorders.push_back( new HRICS::RecordMotion( human2 ) );
+            global_motionRecorders.push_back( new HRICS::RecordMotion( passive_agent ) );
+            global_motionRecorders.push_back( new HRICS::RecordMotion( active_agent ) );
 
             // std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
             // Set this bool to false is you want to print file names as they are loaded
             //        bool quiet = true;
             //        global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", quiet );
-            //        global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", quiet );
+            //        global_motionRecorders[1]->loadCSVFolder( foldername + "/passive_agent", quiet );
 
-            if( human1->getJoint( "rShoulderZ" ) != NULL )
+            if( passive_agent->getJoint( "rShoulderZ" ) != NULL )
             {
                 global_motionRecorders[0]->useOpenRAVEFormat( true );
                 global_motionRecorders[1]->useOpenRAVEFormat( true );
@@ -101,8 +115,10 @@ bool HRICS_init_human_trajectory_cost()
                     std::string foldername = "/home/jmainpri/Desktop/experiments_a_term/aterm_experiment_ik_library/block1/" + ss.str() ;
 
                     bool quiet = true;
-                    global_motionRecorders[0]->loadCSVFolder( foldername, quiet, "human1" ); // Active
-                    global_motionRecorders[1]->loadCSVFolder( foldername, quiet, "human2" ); // Passive
+                    global_motionRecorders[0]->loadCSVFolder( foldername, quiet, "human1" ); // Passive
+
+                    if( active_agent->getName() == "HERAKLES_HUMAN2" )
+                        global_motionRecorders[1]->loadCSVFolder( foldername, quiet, "human2" ); // Active
                 }
 
                 cout << "Stored motion names : " << endl;
@@ -152,11 +168,11 @@ bool HRICS_init_human_trajectory_cost()
 
         // Workspace Occupancy costspace
         std::vector<double> size = Move3D::global_Project->getActiveScene()->getBounds();
-        HRICS::WorkspaceOccupancyGrid* occupancyGrid = new WorkspaceOccupancyGrid( human1, 0.03, size );
-        global_humanPredictionCostSpace = new HRICS::HumanPredictionCostSpace( human2, occupancyGrid );
+        HRICS::WorkspaceOccupancyGrid* occupancyGrid = new WorkspaceOccupancyGrid( passive_agent, 0.03, size );
+        global_humanPredictionCostSpace = new HRICS::HumanPredictionCostSpace( active_agent, occupancyGrid );
 
         // Human trajectory costspace
-        global_ht_cost_space = new HRICS::HumanTrajCostSpace( human2, human1 );
+        global_ht_cost_space = new HRICS::HumanTrajCostSpace( active_agent, passive_agent );
 
         // Set active joints and joint bounds
         global_ht_simulator = new HRICS::HumanTrajSimulator( global_ht_cost_space );
@@ -173,8 +189,9 @@ bool HRICS_init_human_trajectory_cost()
     ENV.setBool( Env::isCostSpace, true );
     Move3D::global_costSpace->setCost( "costHumanTrajectoryCost" );
 
-    if( !global_ht_cost_space->initCollisionSpace() )
-        cout << "Error : could not init collision space" << endl;
+    if( active_agent->getName().find("HUMAN") != std::string::npos ) // TODO make that work for PR2
+        if( !global_ht_cost_space->initCollisionSpace() )
+            cout << "Error : could not init collision space" << endl;
 
     cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
     global_activeFeatureFunction = global_ht_cost_space;
@@ -200,7 +217,7 @@ void HRICS_run_human_planning()
 HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* passive ) :
     human_active_(active),
     human_passive_(passive),
-    smoothness_feat_( active ),
+    smoothness_feat_( active, active->getName() == "HUMAN_HERAKLES2" ? active->getJoint("rWristX") : active->getJoint("right-Arm2") ),
     dist_feat_( active, passive ),
     visi_feat_(active, passive),
     musc_feat_( active ),
@@ -394,27 +411,16 @@ HumanTrajSimulator::HumanTrajSimulator( HumanTrajCostSpace* cost_space )  :
 bool HumanTrajSimulator::init()
 {
     cout << __PRETTY_FUNCTION__ << endl;
-//    if( !global_motionRecorders[0]->getStoredMotions().empty() )
-//    {
-//        cout << "Load init and goal from file" << endl;
-//        const motion_t& motion_pas = global_motionRecorders[0]->getStoredMotions()[0];
-//        const motion_t& motion_act = global_motionRecorders[1]->getStoredMotions()[0];
 
-//        q_init_ = motion_act[0].second;
-//        q_goal_ = motion_act.back().second;
+    q_init_ = human_active_->getInitPos();
+    q_goal_ = human_active_->getGoalPos();
 
-//        // Adds the trajectory from the passive robot
-//        // to the cost space
-//        cost_space_->setPassiveTrajectory( motion_pas );
-//    }
-//    else
-//    {
-        q_init_ = human_active_->getInitPos();
-        q_goal_ = human_active_->getGoalPos();
-//    }
+    // set is human
+    is_active_agent_human_ = human_active_->getName().find("HUMAN") != std::string::npos;
 
-    // Set humans colors
-    setHumanColor( human_active_, 0 ); // 3 // 0 Black
+    // set humans colors
+    if( is_active_agent_human_ )
+        setHumanColor( human_active_, 0 ); // 3 // 0 Black
     setHumanColor( human_passive_, 2 ); // 2 Yellow // 3 Red
 
 
@@ -457,7 +463,8 @@ bool HumanTrajSimulator::init()
     }
 
     // Set the planning bounds
-    setPelvisBounds();
+    if( is_active_agent_human_ )
+        setPelvisBounds();
 
     // Set the current frame to 0
     current_frame_ = 0;
@@ -722,13 +729,15 @@ void HumanTrajSimulator::setReplanningDemonstrations()
             cout << "Add motion : " << motion_recorders_[0]->getStoredMotionName(j) << endl;
 
             human_1_motions_.push_back( motion_recorders_[0]->getStoredMotions()[j] );
-            human_2_motions_.push_back( motion_recorders_[1]->getStoredMotions()[j] );
-
             motions_1_names_.push_back( motion_recorders_[0]->getStoredMotionName(j) );
-            motions_2_names_.push_back( motion_recorders_[1]->getStoredMotionName(j) );
-
             human_1_demos_.push_back( human_1_motions_.back() );
-            human_2_demos_.push_back( human_2_motions_.back() );
+
+            if( is_active_agent_human_ )
+            {
+                human_2_motions_.push_back( motion_recorders_[1]->getStoredMotions()[j] );
+                motions_2_names_.push_back( motion_recorders_[1]->getStoredMotionName(j) );
+                human_2_demos_.push_back( human_2_motions_.back() );
+            }
 
             //
             int demo_id = motions_demo_ids_.size();
@@ -737,15 +746,16 @@ void HumanTrajSimulator::setReplanningDemonstrations()
             bool only_set_active_dofs = true;
             if( only_set_active_dofs )
             {
-                for( size_t s=0; s<human_2_motions_.back().size(); s++) // Only set active dofs on the configuration
-                {
-                    Move3D::confPtr_t q = human_2_motions_.back()[s].second;
-                    Move3D::confPtr_t q_tmp = q->getRobot()->getInitPos();
-                    q_tmp->setFromEigenVector( q->getEigenVector(active_dofs_), active_dofs_ );
-                    q_tmp->adaptCircularJointsLimits();
-                    human_2_motions_.back()[s].second = q_tmp;
-                    updateDofBounds( initialized, q_tmp );
-                }
+                if( is_active_agent_human_ )
+                    for( size_t s=0; s<human_2_motions_.back().size(); s++) // Only set active dofs on the configuration
+                    {
+                        Move3D::confPtr_t q = human_2_motions_.back()[s].second;
+                        Move3D::confPtr_t q_tmp = q->getRobot()->getInitPos();
+                        q_tmp->setFromEigenVector( q->getEigenVector(active_dofs_), active_dofs_ );
+                        q_tmp->adaptCircularJointsLimits();
+                        human_2_motions_.back()[s].second = q_tmp;
+                        updateDofBounds( initialized, q_tmp );
+                    }
 
                 if( use_bio_models_ ) // This might work for none bio models (kinect data) needs testing
                     for( size_t s=0; s<human_1_motions_.back().size(); s++) // Only set active dofs on the configuration
@@ -1007,39 +1017,51 @@ std::vector<int> HumanTrajSimulator::getActiveDofs() const
 
 void HumanTrajSimulator::setActiveJoints()
 {
-    if( use_bio_models_ )
+    if( is_active_agent_human_)
     {
-        active_joints_.push_back( human_active_->getJoint( "Pelvis" ) );
-        active_joints_.push_back( human_active_->getJoint( "TorsoX" ) );
-        active_joints_.push_back( human_active_->getJoint( "TorsoZ" ) );
-        active_joints_.push_back( human_active_->getJoint( "TorsoY" ) );
-        active_joints_.push_back( human_active_->getJoint( "rShoulderTransX" ) );
-        active_joints_.push_back( human_active_->getJoint( "rShoulderTransY" ) );
-        active_joints_.push_back( human_active_->getJoint( "rShoulderTransZ" ) );
-        active_joints_.push_back( human_active_->getJoint( "rShoulderY1" ) );
-        active_joints_.push_back( human_active_->getJoint( "rShoulderX" ) );
-        active_joints_.push_back( human_active_->getJoint( "rShoulderY2" ) );
-        active_joints_.push_back( human_active_->getJoint( "rArmTrans" ) );
-        active_joints_.push_back( human_active_->getJoint( "rElbowZ" ) );
-        active_joints_.push_back( human_active_->getJoint( "rElbowX" ) );
-        active_joints_.push_back( human_active_->getJoint( "rElbowY" ) );
-        active_joints_.push_back( human_active_->getJoint( "lPoint" ) );
-        active_joints_.push_back( human_active_->getJoint( "rWristZ" ) );
-        active_joints_.push_back( human_active_->getJoint( "rWristX" ) );
-        active_joints_.push_back( human_active_->getJoint( "rWristY" ) );
+        if( use_bio_models_ )
+        {
+            active_joints_.push_back( human_active_->getJoint( "Pelvis" ) );
+            active_joints_.push_back( human_active_->getJoint( "TorsoX" ) );
+            active_joints_.push_back( human_active_->getJoint( "TorsoZ" ) );
+            active_joints_.push_back( human_active_->getJoint( "TorsoY" ) );
+            active_joints_.push_back( human_active_->getJoint( "rShoulderTransX" ) );
+            active_joints_.push_back( human_active_->getJoint( "rShoulderTransY" ) );
+            active_joints_.push_back( human_active_->getJoint( "rShoulderTransZ" ) );
+            active_joints_.push_back( human_active_->getJoint( "rShoulderY1" ) );
+            active_joints_.push_back( human_active_->getJoint( "rShoulderX" ) );
+            active_joints_.push_back( human_active_->getJoint( "rShoulderY2" ) );
+            active_joints_.push_back( human_active_->getJoint( "rArmTrans" ) );
+            active_joints_.push_back( human_active_->getJoint( "rElbowZ" ) );
+            active_joints_.push_back( human_active_->getJoint( "rElbowX" ) );
+            active_joints_.push_back( human_active_->getJoint( "rElbowY" ) );
+            active_joints_.push_back( human_active_->getJoint( "lPoint" ) );
+            active_joints_.push_back( human_active_->getJoint( "rWristZ" ) );
+            active_joints_.push_back( human_active_->getJoint( "rWristX" ) );
+            active_joints_.push_back( human_active_->getJoint( "rWristY" ) );
+        }
+        else {
+            active_joints_.push_back( human_active_->getJoint( "Pelvis" ) ); // Pelvis
+            active_joints_.push_back( human_active_->getJoint( "TorsoX" ) ); // TorsoX
+            active_joints_.push_back( human_active_->getJoint( "TorsoY" ) ); // TorsoY
+            active_joints_.push_back( human_active_->getJoint( "TorsoZ" ) ); // TorsoZ
+            active_joints_.push_back( human_active_->getJoint( "rShoulderX" ) ); // rShoulderX
+            active_joints_.push_back( human_active_->getJoint( "rShoulderZ" ) ); // rShoulderZ
+            active_joints_.push_back( human_active_->getJoint( "rShoulderY" ) ); // rShoulderY
+            active_joints_.push_back( human_active_->getJoint( "rArmTrans" ) ); // rArmTrans
+            active_joints_.push_back( human_active_->getJoint( "rElbowZ" ) ); // rElbowZ
+        }
     }
-    else {
-        active_joints_.push_back( human_active_->getJoint( "Pelvis" ) ); // Pelvis
-        active_joints_.push_back( human_active_->getJoint( "TorsoX" ) ); // TorsoX
-        active_joints_.push_back( human_active_->getJoint( "TorsoY" ) ); // TorsoY
-        active_joints_.push_back( human_active_->getJoint( "TorsoZ" ) ); // TorsoZ
-        active_joints_.push_back( human_active_->getJoint( "rShoulderX" ) ); // rShoulderX
-        active_joints_.push_back( human_active_->getJoint( "rShoulderZ" ) ); // rShoulderZ
-        active_joints_.push_back( human_active_->getJoint( "rShoulderY" ) ); // rShoulderY
-        active_joints_.push_back( human_active_->getJoint( "rArmTrans" ) ); // rArmTrans
-        active_joints_.push_back( human_active_->getJoint( "rElbowZ" ) ); // rElbowZ
+    else
+    {
+        active_joints_.push_back( human_active_->getJoint( "right-Arm1" ) );
+        active_joints_.push_back( human_active_->getJoint( "right-Arm2" ) );
+        active_joints_.push_back( human_active_->getJoint( "right-Arm3" ) );
+        active_joints_.push_back( human_active_->getJoint( "right-Arm4" ) );
+        active_joints_.push_back( human_active_->getJoint( "right-Arm5" ) );
+        active_joints_.push_back( human_active_->getJoint( "right-Arm6" ) );
+        active_joints_.push_back( human_active_->getJoint( "right-Arm7" ) );
     }
-
 
 //    active_joints_.push_back(14); // joint name : rWristX
 //    active_joints_.push_back(15); // joint name : rWristY

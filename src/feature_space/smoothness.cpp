@@ -329,15 +329,12 @@ FeatureVect TrajectorySmoothness::getFeatures(const Configuration& q, std::vecto
 //------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------
 
-TaskSmoothnessFeature::TaskSmoothnessFeature( Move3D::Robot* robot ) : robot_(robot)
+TaskSmoothnessFeature::TaskSmoothnessFeature( Move3D::Robot* robot, Move3D::Joint* joint_task ) : robot_(robot)
 {
      name_ = "TaskSmoothness";
 
-//    human_active_joints_.push_back( human_active_->getJoint("Pelvis") );
-//    human_active_joints_.push_back( human_active_->getJoint("rShoulderX") );
-//    human_active_joints_.push_back( human_active_->getJoint("rElbowZ") );
      task_joints_.clear();
-     task_joints_.push_back( robot_->getJoint("rWristX") );
+     task_joints_.push_back( joint_task /*robot_->getJoint("rWristX")*/ );
 
      for( int i=0;i<task_joints_.size();i++)
          veclocity_joint_ids_.push_back( task_joints_[i]->getId() );
@@ -586,7 +583,7 @@ FeatureVect TaskSmoothnessFeature::getFeatureCount(const Move3D::Trajectory& tra
 // Smoothness cost
 
 
-SmoothnessFeature::SmoothnessFeature(Robot* robot) : Feature("SmoothnessAll"), task_features_(robot)
+SmoothnessFeature::SmoothnessFeature(Robot* robot, Joint* joint_task) : Feature("SmoothnessAll"), task_features_(robot,joint_task)
 {
     w_ = FeatureVect::Zero(8);
 }

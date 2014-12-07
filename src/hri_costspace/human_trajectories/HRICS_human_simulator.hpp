@@ -247,6 +247,8 @@ private:
 
     bool use_bio_models_;
 
+    bool is_active_agent_human_;
+
     bool end_simulation_;
 };
 

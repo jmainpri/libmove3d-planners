@@ -40,7 +40,7 @@ using namespace Move3D;
 using std::cout;
 using std::endl;
 
-static const bool draw_features = false;
+static const bool draw_features = true;
 
 // Declaration of constant vectors
 namespace HRICS {
@@ -61,123 +61,141 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 {
     is_config_dependent_ = true;
 
-    distance_joint_ids_.push_back( human_active_->getJoint("Pelvis")->getId() );
-
-    distance_joint_ids_.push_back( human_active_->getJoint("rWristX")->getId() );
-    distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );
-    distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );
-
-//    distance_joint_ids_.push_back( human_active_->getJoint("lWristX")->getId() );
-//    distance_joint_ids_.push_back( human_active_->getJoint("lElbowZ")->getId() );
-//    distance_joint_ids_.push_back( human_active_->getJoint("lShoulderX")->getId() );
-
-    //    distance_joint_ids_.push_back(1); // joint name : Pelvis
-    //    distance_joint_ids_.push_back(8); // joint name : rShoulderX
-    //    distance_joint_ids_.push_back(12); // joint name : rElbowZ
-    //    distance_joint_ids_.push_back(14); // joint name : rWristX
-    //    distance_joint_ids_.push_back(17); // joint name : lShoulderX
-    //    distance_joint_ids_.push_back(21); // joint name : lElbowZ
-    //    distance_joint_ids_.push_back(23); // joint name : lWristX
-
-    //    distance_joint_ids_.push_back(0); // joint name : J0
-    //    distance_joint_ids_.push_back(1); // joint name : Pelvis
-    //    distance_joint_ids_.push_back(2); // joint name : TorsoX // USED
-    //    distance_joint_ids_.push_back(3); // joint name : TorsoY
-    //    distance_joint_ids_.push_back(4); // joint name : TorsoZ
-    //    distance_joint_ids_.push_back(5); // joint name : HeadZ
-    //    distance_joint_ids_.push_back(6); // joint name : HeadY
-    //    distance_joint_ids_.push_back(7); // joint name : HeadX // USED
-    //    distance_joint_ids_.push_back(8); // joint name : rShoulderX
-    //    distance_joint_ids_.push_back(9); // joint name : rShoulderZ
-    //    distance_joint_ids_.push_back(10); // joint name : rShoulderY
-    //    distance_joint_ids_.push_back(11); // joint name : rArmTrans
-    //    distance_joint_ids_.push_back(12); // joint name : rElbowZ
-    //    distance_joint_ids_.push_back(13); // joint name : lPoint
-    //    distance_joint_ids_.push_back(14); // joint name : rWristX
-    //    distance_joint_ids_.push_back(15); // joint name : rWristY
-    //    distance_joint_ids_.push_back(16); // joint name : rWristZ
-    //    distance_joint_ids_.push_back(17); // joint name : lShoulderX
-    //    distance_joint_ids_.push_back(18); // joint name : lShoulderZ
-    //    distance_joint_ids_.push_back(19); // joint name : lShoulderY
-    //    distance_joint_ids_.push_back(20); // joint name : lArmTrans
-    //    distance_joint_ids_.push_back(21); // joint name : lElbowZ
-    //    distance_joint_ids_.push_back(22); // joint name : lPoint
-    //    distance_joint_ids_.push_back(23); // joint name : lWristX
-    //    distance_joint_ids_.push_back(24); // joint name : lWristY
-    //    distance_joint_ids_.push_back(25); // joint name : lWristZ
-    //    distance_joint_ids_.push_back(26); // joint name : rHipX // USED
-    //    distance_joint_ids_.push_back(27); // joint name : rHipY
-    //    distance_joint_ids_.push_back(28); // joint name : rHipZ
-    //    distance_joint_ids_.push_back(29); // joint name : rKnee // USED
-    //    distance_joint_ids_.push_back(30); // joint name : rAnkleX // USED
-    //    distance_joint_ids_.push_back(31); // joint name : rAnkleY
-    //    distance_joint_ids_.push_back(32); // joint name : rAnkleZ
-    //    distance_joint_ids_.push_back(33); // joint name : lHipX // USED
-    //    distance_joint_ids_.push_back(34); // joint name : lHipY
-    //    distance_joint_ids_.push_back(35); // joint name : lHipZ
-    //    distance_joint_ids_.push_back(36); // joint name : lKnee // USED
-    //    distance_joint_ids_.push_back(37); // joint name : lAnkleX // USED
-    //    distance_joint_ids_.push_back(38); // joint name : lAnkleY
-    //    distance_joint_ids_.push_back(39); // joint name : lAnkleZ
-    //    distance_joint_ids_.push_back(40); // joint name : rPalm // USED
-    //    distance_joint_ids_.push_back(41); // joint name : lPalm // USED
-    //    distance_joint_ids_.push_back(42); // joint name : rPoint
-    //    distance_joint_ids_.push_back(43); // joint name : lPoint
-    //    distance_joint_ids_.push_back(44); // joint name : lefthandgest
-    //    distance_joint_ids_.push_back(45); // joint name : righthandgest
-    //    distance_joint_ids_.push_back(46); // joint name : Eyes
-    //    distance_joint_ids_.push_back(47); // joint name : HriLookJoint
-
-    for( size_t i=0;i<distance_joint_ids_.size();i++)
+    if( human_active_->getName().find("HUMAN") != std::string::npos )
     {
-        human_active_joints_.push_back( human_active_->getJoint(distance_joint_ids_[i]) );
-        human_passive_joints_.push_back( human_passive_->getJoint(distance_joint_ids_[i]) );
-    }
+        distance_joint_ids_.push_back( human_active_->getJoint("Pelvis")->getId() );
 
-    // Print active joints
-    for(size_t i=0; i<human_active_joints_.size(); i++) {
-        cout << std::setw( ceil(log10(human_active_joints_.size())) ) << std::setfill( '0' ) <<  i;
-        cout << " , human active joint name : " << human_active_joints_[i]->getName() << endl;
-    }
+        distance_joint_ids_.push_back( human_active_->getJoint("rWristX")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("rElbowZ")->getId() );
+        distance_joint_ids_.push_back( human_active_->getJoint("rShoulderX")->getId() );
 
-    distance_names_.clear();
+        //    distance_joint_ids_.push_back( human_active_->getJoint("lWristX")->getId() );
+        //    distance_joint_ids_.push_back( human_active_->getJoint("lElbowZ")->getId() );
+        //    distance_joint_ids_.push_back( human_active_->getJoint("lShoulderX")->getId() );
 
-    for(size_t i=0;i<distance_joint_ids_.size();i++) // nb of features is nb_joint_ids ^ 2
-        for(size_t j=0;j<distance_joint_ids_.size();j++)
+        //    distance_joint_ids_.push_back(1); // joint name : Pelvis
+        //    distance_joint_ids_.push_back(8); // joint name : rShoulderX
+        //    distance_joint_ids_.push_back(12); // joint name : rElbowZ
+        //    distance_joint_ids_.push_back(14); // joint name : rWristX
+        //    distance_joint_ids_.push_back(17); // joint name : lShoulderX
+        //    distance_joint_ids_.push_back(21); // joint name : lElbowZ
+        //    distance_joint_ids_.push_back(23); // joint name : lWristX
+
+        //    distance_joint_ids_.push_back(0); // joint name : J0
+        //    distance_joint_ids_.push_back(1); // joint name : Pelvis
+        //    distance_joint_ids_.push_back(2); // joint name : TorsoX // USED
+        //    distance_joint_ids_.push_back(3); // joint name : TorsoY
+        //    distance_joint_ids_.push_back(4); // joint name : TorsoZ
+        //    distance_joint_ids_.push_back(5); // joint name : HeadZ
+        //    distance_joint_ids_.push_back(6); // joint name : HeadY
+        //    distance_joint_ids_.push_back(7); // joint name : HeadX // USED
+        //    distance_joint_ids_.push_back(8); // joint name : rShoulderX
+        //    distance_joint_ids_.push_back(9); // joint name : rShoulderZ
+        //    distance_joint_ids_.push_back(10); // joint name : rShoulderY
+        //    distance_joint_ids_.push_back(11); // joint name : rArmTrans
+        //    distance_joint_ids_.push_back(12); // joint name : rElbowZ
+        //    distance_joint_ids_.push_back(13); // joint name : lPoint
+        //    distance_joint_ids_.push_back(14); // joint name : rWristX
+        //    distance_joint_ids_.push_back(15); // joint name : rWristY
+        //    distance_joint_ids_.push_back(16); // joint name : rWristZ
+        //    distance_joint_ids_.push_back(17); // joint name : lShoulderX
+        //    distance_joint_ids_.push_back(18); // joint name : lShoulderZ
+        //    distance_joint_ids_.push_back(19); // joint name : lShoulderY
+        //    distance_joint_ids_.push_back(20); // joint name : lArmTrans
+        //    distance_joint_ids_.push_back(21); // joint name : lElbowZ
+        //    distance_joint_ids_.push_back(22); // joint name : lPoint
+        //    distance_joint_ids_.push_back(23); // joint name : lWristX
+        //    distance_joint_ids_.push_back(24); // joint name : lWristY
+        //    distance_joint_ids_.push_back(25); // joint name : lWristZ
+        //    distance_joint_ids_.push_back(26); // joint name : rHipX // USED
+        //    distance_joint_ids_.push_back(27); // joint name : rHipY
+        //    distance_joint_ids_.push_back(28); // joint name : rHipZ
+        //    distance_joint_ids_.push_back(29); // joint name : rKnee // USED
+        //    distance_joint_ids_.push_back(30); // joint name : rAnkleX // USED
+        //    distance_joint_ids_.push_back(31); // joint name : rAnkleY
+        //    distance_joint_ids_.push_back(32); // joint name : rAnkleZ
+        //    distance_joint_ids_.push_back(33); // joint name : lHipX // USED
+        //    distance_joint_ids_.push_back(34); // joint name : lHipY
+        //    distance_joint_ids_.push_back(35); // joint name : lHipZ
+        //    distance_joint_ids_.push_back(36); // joint name : lKnee // USED
+        //    distance_joint_ids_.push_back(37); // joint name : lAnkleX // USED
+        //    distance_joint_ids_.push_back(38); // joint name : lAnkleY
+        //    distance_joint_ids_.push_back(39); // joint name : lAnkleZ
+        //    distance_joint_ids_.push_back(40); // joint name : rPalm // USED
+        //    distance_joint_ids_.push_back(41); // joint name : lPalm // USED
+        //    distance_joint_ids_.push_back(42); // joint name : rPoint
+        //    distance_joint_ids_.push_back(43); // joint name : lPoint
+        //    distance_joint_ids_.push_back(44); // joint name : lefthandgest
+        //    distance_joint_ids_.push_back(45); // joint name : righthandgest
+        //    distance_joint_ids_.push_back(46); // joint name : Eyes
+        //    distance_joint_ids_.push_back(47); // joint name : HriLookJoint
+
+        for( size_t i=0;i<distance_joint_ids_.size();i++)
         {
-            std::string name =  human_active_joints_[i]->getName() + " , " + human_passive_joints_[j]->getName();
-            distance_names_.push_back( name );
+            human_active_joints_.push_back( human_active_->getJoint(distance_joint_ids_[i]) );
+            human_passive_joints_.push_back( human_passive_->getJoint(distance_joint_ids_[i]) );
         }
 
-    int nb_of_features = distance_joint_ids_.size() * distance_joint_ids_.size();
+        // Print active joints
+        for(size_t i=0; i<human_active_joints_.size(); i++) {
+            cout << std::setw( ceil(log10(human_active_joints_.size())) ) << std::setfill( '0' ) <<  i;
+            cout << " , human active joint name : " << human_active_joints_[i]->getName() << endl;
+        }
 
-    // Default value is 1
-    w_ = Eigen::VectorXd::Ones( nb_of_features );
+        distance_names_.clear();
 
-    // Case when w_ is 49 dimensional
-    if( w_.size() == 49 )
-    {
-        w_ <<   0.50, 0.20, 0.60, 1.00, 0.60, 0.30, 1.00, 0.20, 0.70, 0.60,
-                0.20, 0.20, 0.20, 0.80, 0.80, 0.80, 0.90, 0.80, 0.80, 0.80,
-                0.50, 1.00, 0.90, 0.70, 0.10, 0.70, 0.80, 0.80, 0.50, 0.30,
-                0.20, 0.20, 0.30, 0.20, 0.20, 1.00, 1.00, 1.00, 1.00, 1.00,
-                1.00, 0.80, 1.00, 1.00, 1.00, 0.50, 0.80, 0.80, 0.10;
+        for(size_t i=0;i<distance_joint_ids_.size();i++) // nb of features is nb_joint_ids ^ 2
+            for(size_t j=0;j<distance_joint_ids_.size();j++)
+            {
+                std::string name =  human_active_joints_[i]->getName() + " , " + human_passive_joints_[j]->getName();
+                distance_names_.push_back( name );
+            }
+
+        int nb_of_features = distance_joint_ids_.size() * distance_joint_ids_.size();
+
+        // Default value is 1
+        w_ = Eigen::VectorXd::Ones( nb_of_features );
+
+        // Case when w_ is 49 dimensional
+        if( w_.size() == 49 )
+        {
+            w_ <<   0.50, 0.20, 0.60, 1.00, 0.60, 0.30, 1.00, 0.20, 0.70, 0.60,
+                    0.20, 0.20, 0.20, 0.80, 0.80, 0.80, 0.90, 0.80, 0.80, 0.80,
+                    0.50, 1.00, 0.90, 0.70, 0.10, 0.70, 0.80, 0.80, 0.50, 0.30,
+                    0.20, 0.20, 0.30, 0.20, 0.20, 1.00, 1.00, 1.00, 1.00, 1.00,
+                    1.00, 0.80, 1.00, 1.00, 1.00, 0.50, 0.80, 0.80, 0.10;
+        }
+
+
+
+        w_distance_16 = Eigen::VectorXd::Ones( 16 );
+        w_distance_16  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
+                0.50, 0.10, 0.20, 0.50, // 04 -> 07
+                0.50, 0.20, 0.50, 0.50, // 08 -> 11
+                0.50, 0.50, 0.50, 0.20; // 12 -> 15
+
+    //    w_distance_16 /= 1;
+        w_distance_16 *= 10;
+
+        if( w_.size() == 16 )
+        {
+            w_ =  w_distance_16;
+        }
     }
-
-
-
-    w_distance_16 = Eigen::VectorXd::Ones( 16 );
-    w_distance_16  <<   0.01, 0.80, 0.50, 0.80, // 00 -> 03
-            0.50, 0.10, 0.20, 0.50, // 04 -> 07
-            0.50, 0.20, 0.50, 0.50, // 08 -> 11
-            0.50, 0.50, 0.50, 0.20; // 12 -> 15
-
-//    w_distance_16 /= 1;
-    w_distance_16 *= 10;
-
-    if( w_.size() == 16 )
+    else if( human_active_->getName().find("PR2") != std::string::npos )
     {
-        w_ =  w_distance_16;
+        human_active_joints_.push_back( human_active_->getJoint("Torso") );
+        human_active_joints_.push_back( human_active_->getJoint("right-Arm7") ); // Wrist
+        human_active_joints_.push_back( human_active_->getJoint("right-Arm5") ); // Elbow
+        human_active_joints_.push_back( human_active_->getJoint("right-Arm2") ); // Wrist
+
+        human_passive_joints_.push_back( human_passive_->getJoint("Pelvis") );
+        human_passive_joints_.push_back( human_passive_->getJoint("rWristX") );
+        human_passive_joints_.push_back( human_passive_->getJoint("rElbowZ") );
+        human_passive_joints_.push_back( human_passive_->getJoint("rShoulderX") );
+
+        for( int i=0; i<human_active_joints_.size(); i++)
+            distance_joint_ids_.push_back( human_active_joints_[i]->getId() );
     }
 
     //    w_ = Eigen::VectorXd::Ones(49);
@@ -235,15 +253,15 @@ FeatureVect DistanceFeature::getFeatures(const Configuration& q, std::vector<int
 
 FeatureVect DistanceFeature::computeDistances() const
 {
-    FeatureVect dist( distance_joint_ids_.size() * distance_joint_ids_.size() );
+    FeatureVect dist( human_active_joints_.size() * human_passive_joints_.size() );
 
     int k=0;
 
     Eigen::Vector3d pos_a;
     Eigen::Vector3d pos_p;
 
-    for(size_t i=0; i<distance_joint_ids_.size(); i++)
-        for(size_t j=0; j<distance_joint_ids_.size(); j++)
+    for(size_t i=0; i<human_active_joints_.size(); i++)
+        for(size_t j=0; j<human_passive_joints_.size(); j++)
         {
             pos_a = human_active_joints_[i]->getVectorPos();
             pos_p = human_passive_joints_[j]->getVectorPos();
@@ -256,8 +274,8 @@ FeatureVect DistanceFeature::computeDistances() const
 
 void DistanceFeature::draw()
 {
-    for(size_t i=0; i<distance_joint_ids_.size(); i++)
-        for(size_t j=0; j<distance_joint_ids_.size(); j++)
+    for(size_t i=0; i<human_active_joints_.size(); i++)
+        for(size_t j=0; j<human_passive_joints_.size(); j++)
         {
             Eigen::Vector3d pos_a = human_active_joints_[i]->getVectorPos();
             Eigen::Vector3d pos_p = human_passive_joints_[j]->getVectorPos();
@@ -338,13 +356,23 @@ VisibilityFeature::VisibilityFeature( Robot* active, Robot* passive ) :
 {
     is_config_dependent_ = true;
 
-    human_active_joints_.push_back( active->getJoint("Pelvis") );       // joint name : Pelvis
-    human_active_joints_.push_back( active->getJoint("rShoulderX") );   // joint name : rShoulderX
-    human_active_joints_.push_back( active->getJoint("rElbowZ") );      // joint name : rElbowZ
-    human_active_joints_.push_back( active->getJoint("rWristX") );      // joint name : rWristX
-    human_active_joints_.push_back( active->getJoint("lShoulderX") );   // joint name : rShoulderX
-    human_active_joints_.push_back( active->getJoint("lElbowZ") );      // joint name : rElbowZ
-    human_active_joints_.push_back( active->getJoint("lWristX") );      // joint name : rWristX
+    if( active->getName().find("HUMAN") != std::string::npos )
+    {
+        human_active_joints_.push_back( active->getJoint("Pelvis") );       // joint name : Pelvis
+        human_active_joints_.push_back( active->getJoint("rShoulderX") );   // joint name : rShoulderX
+        human_active_joints_.push_back( active->getJoint("rElbowZ") );      // joint name : rElbowZ
+        human_active_joints_.push_back( active->getJoint("rWristX") );      // joint name : rWristX
+        human_active_joints_.push_back( active->getJoint("lShoulderX") );   // joint name : rShoulderX
+        human_active_joints_.push_back( active->getJoint("lElbowZ") );      // joint name : rElbowZ
+        human_active_joints_.push_back( active->getJoint("lWristX") );      // joint name : rWristX
+    }
+    else if( active->getName() == "PR2_ROBOT" )
+    {
+        human_active_joints_.push_back( active->getJoint("Torso") );
+        human_active_joints_.push_back( active->getJoint("right-Arm7") ); // Wrist
+        human_active_joints_.push_back( active->getJoint("right-Arm5") ); // Elbow
+        human_active_joints_.push_back( active->getJoint("right-Arm2") ); // Wrist
+    }
 
     // Print active joints
     for(size_t i=0; i<human_active_joints_.size(); i++) {

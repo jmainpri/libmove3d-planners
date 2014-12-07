@@ -92,9 +92,9 @@ void HRICS_run_human_ioc_from_recorded_motion()
 
 void HRICS_run_human_ioc_evaluation()
 {
-    Scene* sce = global_Project->getActiveScene();
-    Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );
-    Robot* human2 = sce->getRobotByName( "HERAKLES_HUMAN2" );
+    Move3D::Scene* sce = global_Project->getActiveScene();
+    Move3D::Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );
+    Move3D::Robot* human2 = sce->getRobotByName( "HERAKLES_HUMAN2" );
     if( human1 == NULL || human2 == NULL )
     {
         cout << "No humans HERAKLES in the the scene" << endl;
@@ -110,7 +110,7 @@ void HRICS_run_human_ioc_evaluation()
     // feature_matrix_name_ = "matlab/features.txt";
     Move3D::StackedFeatures* feature_fct = new HRICS::HumanTrajCostSpace( human2, human1 );
 
-     std::vector<int> active_joints;
+    std::vector<int> active_joints;
 
     HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points,
                   planners, feature_fct, active_joints,

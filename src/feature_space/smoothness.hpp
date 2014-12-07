@@ -116,7 +116,7 @@ public:
 class TaskSmoothnessFeature : public TrajectorySmoothness
 {
 public:
-    TaskSmoothnessFeature( Move3D::Robot* active );
+    TaskSmoothnessFeature( Move3D::Robot* active, Move3D::Joint* joint_task );
     Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
     Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
 
@@ -153,7 +153,7 @@ private:
 class SmoothnessFeature : public Move3D::Feature
 {
 public:
-    SmoothnessFeature(Move3D::Robot* robot);
+    SmoothnessFeature(Move3D::Robot* robot, Move3D::Joint* joint_task);
     Move3D::FeatureVect getFeatureCount( const Move3D::Trajectory& t );
     Move3D::FeatureVect getFeatures( const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0) );
     void setActiveDoFs( const std::vector<int>& active_dofs );
