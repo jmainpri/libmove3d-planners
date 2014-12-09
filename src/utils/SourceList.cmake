@@ -13,6 +13,7 @@ NumsAndStrings.cpp
 misc_functions.cpp
 multilocalpath_utils.cpp
 ik_generator.cpp
+pr2_mapping.cpp
 )
 
 IF(QT_LIBRARY)
