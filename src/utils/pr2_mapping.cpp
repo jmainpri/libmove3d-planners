@@ -136,9 +136,6 @@ Move3D::Trajectory pr2_mapping::load_trajectory(std::string filename)
             return Move3D::Trajectory( robot_ );
         }
 
-        // Set the dof index for joints that have multiple dofs (base joint)
-        // preceding_joint == it_map->second ? dof_index++ : dof_index = 0;
-
         indices_move3d.push_back( joint->getIndexOfFirstDof() );
     }
 
@@ -155,13 +152,10 @@ Move3D::Trajectory pr2_mapping::load_trajectory(std::string filename)
         }
     }
 
-//    for( int i=0; i<dts.size(); i++ )
-//        cout << "dts[" << i << "] : " << dts[i] << endl;
-
     Move3D::Trajectory pr2_traj( robot_ );
     pr2_traj.setFromEigenMatrix( traj_active.transpose(), indices_move3d );
 
-    // Set the base pose
+    // Set the base pose in all configuration
     Move3D::Joint* platform = robot_->getJoint("platformJoint");
     if( platform != NULL )
         for( int i=0; i<traj.rows(); i++ )
@@ -188,6 +182,7 @@ Move3D::Trajectory pr2_mapping::load_trajectory(std::string filename)
             (*pr2_traj[i])[platform->getIndexOfFirstDof()+5] = angles[2];
         }
 
+    // Set time and dts
     pr2_traj.setUseTimeParameter( true );
     pr2_traj.setUseConstantTime( false );
     pr2_traj.setDeltaTimes( dts );
