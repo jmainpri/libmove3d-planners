@@ -1,6 +1,9 @@
 #include "pr2_mapping.hpp"
 #include "misc_functions.hpp"
 
+using std::cout;
+using std::endl;
+
 //    torso_lift_joint		Torso
 //    head_pan_joint			pan_cam
 //    head_tilt_joint			tilt_cam
@@ -24,6 +27,8 @@
 
 pr2_mapping::pr2_mapping(Move3D::Robot* robot)
 {
+    robot_ = robot;
+
     name_map_["torso_lift_joint"]         = "Torso";
     name_map_["head_pan_joint"]           = "pan_cam";
     name_map_["head_tilt_joint"]		  = "tilt_cam";
@@ -44,6 +49,14 @@ pr2_mapping::pr2_mapping(Move3D::Robot* robot)
     name_map_["l_wrist_flex_joint"]       = "left-Arm6";
     name_map_["l_wrist_roll_joint"]       = "left-Arm7";
     name_map_["l_gripper_joint"]		  = "fingerJointGripper_1";
+
+//    name_map_["base_footprint_x"]		  = "platformJoint";
+//    name_map_["base_footprint_y"]		  = "platformJoint";
+//    name_map_["base_footprint_z"]		  = "platformJoint";
+//    name_map_["base_footprint_quat_x"]	  = "platformJoint";
+//    name_map_["base_footprint_quat_y"]    = "platformJoint";
+//    name_map_["base_footprint_quat_z"]	  = "platformJoint";
+//    name_map_["base_footprint_quat_w"]	  = "platformJoint";
 
     pr2_map_["fl_caster_rotation_joint"] = 0;
     pr2_map_["fl_caster_l_wheel_joint"] = 1;
@@ -90,11 +103,22 @@ pr2_mapping::pr2_mapping(Move3D::Robot* robot)
     pr2_map_["l_gripper_l_finger_tip_joint"] = 42;
     pr2_map_["l_gripper_motor_screw_joint"] = 43;
     pr2_map_["l_gripper_motor_slider_joint"] = 44;
+
+    // Add the base pose from TF
+    pr2_map_["base_footprint_x"] = 45;
+    pr2_map_["base_footprint_y"] = 46;
+    pr2_map_["base_footprint_z"] = 47;
+    pr2_map_["base_footprint_quat_x"] = 48;
+    pr2_map_["base_footprint_quat_y"] = 49;
+    pr2_map_["base_footprint_quat_z"] = 50;
+    pr2_map_["base_footprint_quat_w"] = 51;
 }
 
 Move3D::Trajectory pr2_mapping::load_trajectory(std::string filename)
 {
     Eigen::MatrixXd traj = move3d_load_matrix_from_csv_file( filename );
+
+    cout << "loading matrix : " << traj.rows() << " , " << traj.cols() << endl;
 
     std::vector<int> indices_matrix;
     std::vector<int> indices_move3d;
@@ -103,8 +127,19 @@ Move3D::Trajectory pr2_mapping::load_trajectory(std::string filename)
     for( std::map<std::string,std::string>::iterator it_map=name_map_.begin();
          it_map!=name_map_.end(); it_map++ )
     {
+        cout << "it_map->second : " << it_map->second << endl;
+
         indices_matrix.push_back( pr2_map_[it_map->first] + 1 ); // Add one to account for dts (at index 0)
-        indices_move3d.push_back( robot_->getJoint( it_map->first )->getIndexOfFirstDof() );
+        Move3D::Joint* joint = robot_->getJoint( it_map->second );
+        if( joint == NULL ){
+            cout << "joint does not exist" << endl;
+            return Move3D::Trajectory( robot_ );
+        }
+
+        // Set the dof index for joints that have multiple dofs (base joint)
+        // preceding_joint == it_map->second ? dof_index++ : dof_index = 0;
+
+        indices_move3d.push_back( joint->getIndexOfFirstDof() );
     }
 
     std::vector<double> dts( traj.rows() );
@@ -116,13 +151,45 @@ Move3D::Trajectory pr2_mapping::load_trajectory(std::string filename)
 
         for( int j=0; j<int(indices_matrix.size()); j++ )
         {
-            traj_active(i,j) = traj(i,indices_matrix[j]); // Get active dofs
+            traj_active(i,j) = traj( i, indices_matrix[j] ); // Get active dofs
         }
     }
 
+//    for( int i=0; i<dts.size(); i++ )
+//        cout << "dts[" << i << "] : " << dts[i] << endl;
+
     Move3D::Trajectory pr2_traj( robot_ );
-    pr2_traj.setFromEigenMatrix( traj_active, indices_move3d );
+    pr2_traj.setFromEigenMatrix( traj_active.transpose(), indices_move3d );
+
+    // Set the base pose
+    Move3D::Joint* platform = robot_->getJoint("platformJoint");
+    if( platform != NULL )
+        for( int i=0; i<traj.rows(); i++ )
+        {
+            double X = traj(i, pr2_map_["base_footprint_x"] + 1 ); // Add one to account for dts (at index 0)
+            double Y = traj(i, pr2_map_["base_footprint_y"] + 1 );
+            double Z = traj(i, pr2_map_["base_footprint_z"] + 1 );
+
+            cout << "position[" << i << "] = (" << X << " , " << Y << " , " << Z << " )" << endl;
+
+            (*pr2_traj[i])[platform->getIndexOfFirstDof()+0] = X;
+            (*pr2_traj[i])[platform->getIndexOfFirstDof()+1] = Y;
+            (*pr2_traj[i])[platform->getIndexOfFirstDof()+2] = Z;
+
+            double x = traj(i, pr2_map_["base_footprint_quat_x"]  + 1); // Add one to account for dts (at index 0)
+            double y = traj(i, pr2_map_["base_footprint_quat_y"]  + 1);
+            double z = traj(i, pr2_map_["base_footprint_quat_z"]  + 1);
+            double w = traj(i, pr2_map_["base_footprint_quat_w"]  + 1);
+
+            Eigen::Vector3d angles( Eigen::Matrix3d( Eigen::Quaterniond(w,x,y,z) ).eulerAngles(0, 1, 2) );
+
+            (*pr2_traj[i])[platform->getIndexOfFirstDof()+3] = angles[0];
+            (*pr2_traj[i])[platform->getIndexOfFirstDof()+4] = angles[1];
+            (*pr2_traj[i])[platform->getIndexOfFirstDof()+5] = angles[2];
+        }
+
     pr2_traj.setUseTimeParameter( true );
+    pr2_traj.setUseConstantTime( false );
     pr2_traj.setDeltaTimes( dts );
 
     return pr2_traj;

@@ -2554,9 +2554,11 @@ bool Trajectory::setFromEigenMatrix(const Eigen::MatrixXd& mat, const std::vecto
 {
     m_Courbe.clear();
 
+    confPtr_t q_cur = m_Robot->getCurrentPos();
+
     for (int j=0; j<mat.cols(); j++)
     {
-        confPtr_t q(new Configuration(m_Robot));
+        confPtr_t q = q_cur->copy();
 
         for (int i=0; i<incides.size(); i++)
         {
