@@ -1770,6 +1770,17 @@ bool Trajectory::push_back(shared_ptr<LocalPath> path)
     return true;
 }
 
+bool Trajectory::push_back( confPtr_t q, double dt )
+{
+    if( !push_back( q ) )
+        return false;
+
+    if( m_use_time_parameter && !m_use_constant_dt )
+        m_dts.push_back(dt);
+
+    return true;
+}
+
 bool Trajectory::push_back( confPtr_t q )
 {
     bool add_config = false;

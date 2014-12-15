@@ -119,6 +119,7 @@ public:
     uint cutPortionInSmallLP(std::vector<LocalPath*>& portion, uint nLP);
 
     bool push_back(confPtr_t q);
+    bool push_back(confPtr_t q, double dt);
     bool push_back(MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> path);
 
     //---------------------------------------------------------

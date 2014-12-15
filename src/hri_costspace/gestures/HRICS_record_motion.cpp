@@ -1189,9 +1189,9 @@ std::pair<double,confPtr_t> RecordMotion::getConfigBio( const std::vector<std::s
 //        }
         // TODO REMOVE THAT SHOULDER HACK
         // Should work on left arm model to avoid seting the shoulder in the parser
-//        if ( it_map->first == "lShoulderX" ) {
-//            (*q)[ herakles_bio_move3d_map[it_map->first] ] = -M_PI/2; // Add one for time
-//        }
+        if ( it_map->first == "lShoulderX" ) {
+            (*q)[ herakles_bio_move3d_map[it_map->first] ] = -M_PI/2; // Add one for time
+        }
     }
 
     time_config.second = q;
