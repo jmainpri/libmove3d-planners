@@ -94,7 +94,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
         //    distance_joint_ids_.push_back(10); // joint name : rShoulderY
         //    distance_joint_ids_.push_back(11); // joint name : rArmTrans
         //    distance_joint_ids_.push_back(12); // joint name : rElbowZ
-        //    distance_joint_ids_.push_back(13); // joint name : lPoint
+        //    distance_joint_ids_.push_back(13); // joint name : rForeArmTrans
         //    distance_joint_ids_.push_back(14); // joint name : rWristX
         //    distance_joint_ids_.push_back(15); // joint name : rWristY
         //    distance_joint_ids_.push_back(16); // joint name : rWristZ

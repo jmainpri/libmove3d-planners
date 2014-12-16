@@ -542,7 +542,7 @@ void traj_optim_hrics_human_trajectory_manip_init_joints()
         m_active_joints.push_back( m_robot->getJoint( "rElbowZ" )->getId() );
         m_active_joints.push_back( m_robot->getJoint( "rElbowX" )->getId() );
         m_active_joints.push_back( m_robot->getJoint( "rElbowY" )->getId() );
-        m_active_joints.push_back( m_robot->getJoint( "lPoint" )->getId() );
+        m_active_joints.push_back( m_robot->getJoint( "rForeArmTrans" )->getId() );
 //        m_active_joints.push_back( m_robot->getJoint( "rWristZ" )->getId() );
 //        m_active_joints.push_back( m_robot->getJoint( "rWristX" )->getId() );
         m_active_joints.push_back( m_robot->getJoint( "rWristY" )->getId() );
@@ -562,7 +562,7 @@ void traj_optim_hrics_human_trajectory_manip_init_joints()
         m_planner_joints.push_back( m_robot->getJoint( "rElbowZ" )->getId() );
         m_planner_joints.push_back( m_robot->getJoint( "rElbowX" )->getId() );
         m_planner_joints.push_back( m_robot->getJoint( "rElbowY" )->getId() );
-        m_planner_joints.push_back( m_robot->getJoint( "lPoint" )->getId() );
+        m_planner_joints.push_back( m_robot->getJoint( "rForeArmTrans" )->getId() );
         m_planner_joints.push_back( m_robot->getJoint( "rWristZ" )->getId() );
         m_planner_joints.push_back( m_robot->getJoint( "rWristX" )->getId() );
         m_planner_joints.push_back( m_robot->getJoint( "rWristY" )->getId() );

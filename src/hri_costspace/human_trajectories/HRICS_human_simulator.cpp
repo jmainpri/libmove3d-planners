@@ -551,7 +551,7 @@ void HumanTrajSimulator::updateDofBounds( bool& initialized, Move3D::confPtr_t q
 
         if( use_bio_models_ )
         {
-            arm_dof_index = human_active_->getJoint( "lPoint" )->getIndexOfFirstDof();
+            arm_dof_index = human_active_->getJoint( "rForeArmTrans" )->getIndexOfFirstDof();
             if( forearm_max_ < (*q_tmp)[arm_dof_index] )
                 forearm_max_ = (*q_tmp)[arm_dof_index];
             if( forearm_min_ > (*q_tmp)[arm_dof_index] )
@@ -566,7 +566,7 @@ void HumanTrajSimulator::updateDofBounds( bool& initialized, Move3D::confPtr_t q
 
         if( use_bio_models_ )
         {
-            arm_dof_index = human_active_->getJoint( "lPoint" )->getIndexOfFirstDof();
+            arm_dof_index = human_active_->getJoint( "rForeArmTrans" )->getIndexOfFirstDof();
             forearm_max_ = (*q_tmp)[arm_dof_index];
             forearm_min_ = (*q_tmp)[arm_dof_index];
         }
@@ -955,7 +955,7 @@ void HumanTrajSimulator::setPelvisBounds()
 
     if( use_bio_models_ )
     {
-        Move3D::Joint* forearm_joint = human_active_->getJoint( "lPoint" );
+        Move3D::Joint* forearm_joint = human_active_->getJoint( "rForeArmTrans" );
         p3d_jnt_set_dof_rand_bounds( forearm_joint->getP3dJointStruct(), 0, forearm_min_ - bound_translations, forearm_max_ + bound_translations );
 
         if( shoulder_trans_min_.size() == 3 && shoulder_trans_max_.size() == 3 )
@@ -1035,7 +1035,7 @@ void HumanTrajSimulator::setActiveJoints()
             active_joints_.push_back( human_active_->getJoint( "rElbowZ" ) );
             active_joints_.push_back( human_active_->getJoint( "rElbowX" ) );
             active_joints_.push_back( human_active_->getJoint( "rElbowY" ) );
-            active_joints_.push_back( human_active_->getJoint( "lPoint" ) );
+            active_joints_.push_back( human_active_->getJoint( "rForeArmTrans" ) );
             active_joints_.push_back( human_active_->getJoint( "rWristZ" ) );
             active_joints_.push_back( human_active_->getJoint( "rWristX" ) );
             active_joints_.push_back( human_active_->getJoint( "rWristY" ) );
