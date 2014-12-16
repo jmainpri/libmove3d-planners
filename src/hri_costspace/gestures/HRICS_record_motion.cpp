@@ -766,14 +766,14 @@ void RecordMotion::drawHeraklesArms()
         {
             dawColorSkinedCylinder( p1,  p2 );
         }
+        if (error) {
+            cout << "Could not find one of the joints in hri_draw_kinect_human_arms" << endl;
+        }
     }
-    else {
-        error = true;
-    }
-
-    if (error) {
-        cout << "Could not find one of the joints in hri_draw_kinect_human_arms" << endl;
-    }
+//    else {
+//        //cout << "Could not find HERAKLES_HUMAN in hri_draw_kinect_human_arms" << endl;
+//        error = true;
+//    }
 }
 
 void RecordMotion::draw()
