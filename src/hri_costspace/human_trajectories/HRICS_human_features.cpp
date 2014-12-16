@@ -174,13 +174,15 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
                 0.50, 0.20, 0.50, 0.50, // 08 -> 11
                 0.50, 0.50, 0.50, 0.20; // 12 -> 15
 
-    //    w_distance_16 /= 1;
+        //    w_distance_16 /= 1;
         w_distance_16 *= 10;
 
         if( w_.size() == 16 )
         {
             w_ =  w_distance_16;
         }
+
+        //    w_ = Eigen::VectorXd::Ones(49);
     }
     else if( human_active_->getName().find("PR2") != std::string::npos )
     {
@@ -196,9 +198,19 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 
         for( int i=0; i<human_active_joints_.size(); i++)
             distance_joint_ids_.push_back( human_active_joints_[i]->getId() );
+
+        w_ = Eigen::VectorXd::Ones( human_active_joints_.size() * human_passive_joints_.size() );
+
+        for(size_t i=0;i<human_active_joints_.size();i++) // nb of features is nb_joint_ids ^ 2
+            for(size_t j=0;j<human_passive_joints_.size();j++)
+            {
+                std::string name =  human_active_joints_[i]->getName() + " , " + human_passive_joints_[j]->getName();
+                distance_names_.push_back( name );
+            }
+
+        w_distance_16 = w_; // TODO set this weight vector properly
     }
 
-    //    w_ = Eigen::VectorXd::Ones(49);
 
     // Print feature names and weights
     for(size_t i=0; i<distance_names_.size(); i++) {

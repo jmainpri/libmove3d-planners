@@ -546,6 +546,10 @@ void StompOptimizer::doChompOptimization()
 //void StompOptimizer::optimize()
 void StompOptimizer::runDeformation( int nbIteration, int idRun )
 {
+    StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+    if( fct != NULL && fct->getFeatureFunction("Distance") != NULL )
+        fct->printInfo();
+
     ChronoTimeOfDayOn();
     
     timeval tim;
@@ -898,7 +902,8 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     cout << "smooth.getFeatureCount( best_traj_ ) = " << (( stomp_parameters_->getSmoothnessCostWeight() / PlanEnv->getDouble( PlanParam::trajOptimSmoothFactor ) )
             * smooth.getFeatureCount( best_traj_ )) << endl;
 
-    StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+    // Get Stacked feature
+    fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
 
     if( fct != NULL && fct->getFeatureFunction("Distance") != NULL )
     {

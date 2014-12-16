@@ -155,10 +155,24 @@ bool IocSequences::run()
     Robot* human2 = sce->getRobotByName( "HERAKLES_HUMAN2" );
     if( features_type_ == human_trajs )
     {
-        if( human1 == NULL || human2 == NULL )
+        if( human1 == NULL )
         {
-            cout << "No humans HERAKLES in the the scene" << endl;
+            cout << "No humans HERAKLES_HUMAN1 in the the scene" << endl;
             return false;
+        }
+
+        if( human2 == NULL )
+        {
+            cout << "No active humans HERAKLES_HUMAN2 in the the scene" << endl;
+
+            human2 = sce->getRobotByName( "PR2_ROBOT" ); // Retargeting
+            if( human2 == NULL )
+            {
+                cout << "No robot PR2_ROBOT in the the scene" << endl;
+                return false;
+            }
+            else
+                cout << "Set PR2_ROBOT as active agent" << endl;
         }
 
         if( global_ht_cost_space == NULL )
@@ -462,7 +476,7 @@ bool IocSequences::run()
 
                 if( !HriEnv->getBool(HricsParam::ioc_use_baseline) ) // SET BASELINE HERE
                 {
-                    std::string demo_split = good_motions_names[ j ].substr( 0, 11 );
+                    std::string demo_split = good_motions_names[ /*j*/ 0 ].substr( 0, 11 );
 
                     std::stringstream ss;
                     ss << demo_split << "_spheres_weights_700.txt";

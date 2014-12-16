@@ -189,9 +189,9 @@ bool HRICS_init_human_trajectory_cost()
     ENV.setBool( Env::isCostSpace, true );
     Move3D::global_costSpace->setCost( "costHumanTrajectoryCost" );
 
-    if( active_agent->getName().find("HUMAN") != std::string::npos ) // TODO make that work for PR2
-        if( !global_ht_cost_space->initCollisionSpace() )
-            cout << "Error : could not init collision space" << endl;
+    // if( active_agent->getName().find("HUMAN") != std::string::npos ) // TODO make that work for PR2
+    if( !global_ht_cost_space->initCollisionSpace() )
+        cout << "Error : could not init collision space" << endl;
 
     cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
     global_activeFeatureFunction = global_ht_cost_space;
@@ -217,7 +217,7 @@ void HRICS_run_human_planning()
 HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* passive ) :
     human_active_(active),
     human_passive_(passive),
-    smoothness_feat_( active, active->getName() == "HUMAN_HERAKLES2" ? active->getJoint("rWristX") : active->getJoint("right-Arm2") ),
+    smoothness_feat_( active, active->getName() == "HERAKLES_HUMAN2" ? active->getJoint("rWristX") : active->getJoint("right-Arm2") ),
     dist_feat_( active, passive ),
     visi_feat_(active, passive),
     musc_feat_( active ),

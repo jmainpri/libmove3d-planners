@@ -732,7 +732,20 @@ bool traj_optim_init_collision_spaces( traj_optim::ScenarioType sce, Robot* rob 
 
         cout << "Init Human Simulation (Trajectory costspace)" << endl;
 
-        traj_optim_hrics_human_trajectory_manip_init_joints();
+        if( m_robot->getName() == "PR2_ROBOT" )
+        {
+            traj_optim_invalidate_cntrts();
+            traj_optim_shelf_set_localpath_and_cntrts();
+            traj_optim_manip_init_joints();
+
+        }
+        else if ( m_robot->getName() == "HERAKLES_HUMAN2" ){
+
+            traj_optim_hrics_human_trajectory_manip_init_joints();
+        }
+        else {
+            cout << "Not defined for robot " << m_robot->getName() << endl;
+        }
 
         // Init collspace
         if( !global_collisionSpace )

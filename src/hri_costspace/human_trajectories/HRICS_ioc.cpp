@@ -1610,7 +1610,7 @@ bool file_exists_test(const std::string& name) {
 bool IocEvaluation::loadDemonstrations()
 {
     if( nb_way_points_ <= 0 ){
-        cout << "Error in : " << __PRETTY_FUNCTION__ << "can not load demonstration be cause number of way point not set " <<  endl;
+        cout << "Error in : " << __PRETTY_FUNCTION__ << " can not load demonstration because number of way point not set " <<  endl;
         return false;
     }
 
