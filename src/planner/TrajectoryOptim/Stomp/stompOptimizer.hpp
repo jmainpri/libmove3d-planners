@@ -168,10 +168,10 @@ public:
 
     // stuff derived from Task:
     /**
-   * Initializes the task for a given number of time steps
-   * @param num_time_steps
-   * @return
-   */
+    * Initializes the task for a given number of time steps
+    * @param num_time_steps
+    * @return
+    */
     bool initialize(/*ros::NodeHandle& node_handle,*/ int num_time_steps);
 
     /**

@@ -81,6 +81,8 @@ public:
 
     std::vector<Move3D::Trajectory*> extractAllTrajectories( Move3D::Graph* g, Move3D::confPtr_t q_init, Move3D::confPtr_t q_goal, int nb_divisions );
 
+    void loadWeightVector(std::string filename);
+
     bool is_active_;
     bool is_config_dependent_; //! true if get features is used
 
