@@ -29,6 +29,7 @@
 
 #include "API/project.hpp"
 #include "API/Graphic/drawModule.hpp"
+#include "API/Graphic/drawCost.hpp"
 #include "utils/misc_functions.hpp"
 
 #include "planner/plannerFunctions.hpp"
@@ -40,6 +41,7 @@
 #include "collision_space/collision_space_factory.hpp"
 
 #include <libmove3d/include/Graphic-pkg.h>
+#include <libmove3d/p3d/env.hpp>
 
 #include <iomanip>
 #include <sstream>
@@ -173,7 +175,20 @@ void SequencesPlanners::playTrajs() //const
     {
         if( best_traj_[i].size() > 0 )
         {
-            best_traj_[i].replaceP3dTraj();
+            // best_traj_[i].replaceP3dTraj();
+
+            Move3D::Joint* draw_joint = best_traj_[i].getRobot()->getJoint( ENV.getInt(Env::jntToDraw) );
+            // Add trajectory to draw
+            if( draw_joint != NULL )
+            {
+                if( global_DrawModule )
+                {
+                    global_DrawModule->addDrawFunction( "Draw3DTrajs", boost::bind( &g3d_draw_3d_lines ) );
+                    global_DrawModule->enableDrawFunction( "Draw3DTrajs" );
+                }
+                global_linesToDraw.clear();
+                global_linesToDraw.push_back( std::make_pair( Eigen::Vector3d(1, 0, 0), best_traj_[i].getJointPoseTrajectory( draw_joint ) ) );
+            }
             best_traj_[i].show();
 
             if( PlanEnv->getBool(PlanParam::stopPlanner) )

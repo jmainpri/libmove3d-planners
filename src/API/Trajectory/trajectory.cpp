@@ -2592,8 +2592,14 @@ bool Trajectory::saveToFile(std::string filename) const
 
     for( int i=0; i<mat.rows(); i++ )
     {
-        if( m_use_time_parameter && m_use_constant_dt )
-            mat_time(i,0) = m_dt;
+        if( m_use_time_parameter )
+        {
+            if( m_use_constant_dt )
+
+                mat_time(i,0) = m_dt;
+//            else
+//                mat_time(i,0) = m_dts[i];
+        }
         else
             mat_time(i,0) = -1.;
     }

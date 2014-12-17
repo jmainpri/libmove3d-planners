@@ -292,6 +292,7 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
     active_features_names.push_back("Collision");
     active_features_names.push_back("Length");
     active_features_names.push_back("Distance");
+    active_features_names.push_back("SmoothnessAll");
     active_features_names.push_back("Visibility");
     active_features_names.push_back("Musculoskeletal");
 
