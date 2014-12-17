@@ -31,6 +31,7 @@
 #include "cost_space.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 #include "hri_costspace/HRICS_costspace.hpp"
+#include "feature_space/features.hpp"
 
 using namespace stomp_motion_planner;
 using namespace Move3D;
@@ -541,10 +542,10 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
 //    }
 
 
-    // Move3D::Trajectory current_traj( robot_model_ );
+    Move3D::Trajectory current_traj( robot_model_ );
 
 //    int nb_features = 0;
-//    StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+
 //    if( ( fct != NULL ) && ( fct->getFeatureFunction("Distance") != NULL ) )
 //        nb_features = fct->getFeatureFunction("Distance")->getNumberOfFeatures();
 //    Eigen::VectorXd phi (Eigen::VectorXd::Zero(nb_features) );
@@ -562,7 +563,8 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
 
         this->getFrames( i, joint_array, q ); // Perform FK (set and update)
 
-        // current_traj.push_back( confPtr_t(new Configuration(q)) );
+        current_traj.push_back( confPtr_t(new Configuration(q)) );
+
         if( false && is_rollout && ( i%way_point_ratio != 0 ) && ( i != start ) && (i != end ) )
         {
             cout << "no fk for : " << i << endl;
@@ -614,6 +616,9 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
 
         k++;
     }
+
+    Move3D::StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+    fct->getFeatureCount( current_traj );
 
 //    cout << "is_collision_free_ : " << is_collision_free_  << endl;
 

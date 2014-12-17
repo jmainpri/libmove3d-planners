@@ -608,6 +608,9 @@ FeatureVect SmoothnessFeature::getFeatureCount( const Move3D::Trajectory& t )
     phi[6] = phi_task[2] * 1e-09;
     phi[7] = phi_task[3] * 1e-13;
 
+    cout.precision(5);
+    cout << std::scientific << "phi : " << phi.transpose() << endl;
+
     return phi;
 }
 
