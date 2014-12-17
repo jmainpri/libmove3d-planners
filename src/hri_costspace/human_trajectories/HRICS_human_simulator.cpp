@@ -283,8 +283,6 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
 
     w_ = getWeights();
 
-    cout << "w_ = " << w_.transpose() << endl;
-
     setAllFeaturesActive();
 
     std::vector<std::string> active_features_names;
@@ -294,8 +292,17 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
     active_features_names.push_back("Distance");
     active_features_names.push_back("Visibility");
     active_features_names.push_back("Musculoskeletal");
+    active_features_names.push_back("SmoothnessAll");
 
     setActiveFeatures( active_features_names );
+
+    if( active->getName().find("PR2") != std::string::npos )
+    {
+        loadWeightVector("/home/jmainpri/Desktop/weights_replan.txt");
+    }
+
+    cout << "w_ = " << w_.transpose() << endl;
+
 
     printInfo();
 

@@ -39,6 +39,8 @@
 #include <libmove3d/p3d/env.hpp>
 #include <libmove3d/include/Graphic-pkg.h>
 
+#include <fstream>
+
 using namespace Move3D;
 
 using std::cout;
@@ -311,6 +313,39 @@ void Feature::setWeights( const WeightVect& w )
      active_features_.resize( w_.size() );
      for( int i=0;i<int(active_features_.size());i++)
          active_features_[i] = i;
+}
+
+void Feature::loadWeightVector(std::string filename)
+{
+    cout << "Load Weight Vector" << endl;
+
+    WeightVect w = WeightVect::Zero( getNumberOfFeatures() );
+
+    cout << "LOADING LEARNED WEIGHTS : " << filename << endl;
+    std::ifstream file( filename.c_str() );
+    std::string line, cell;
+
+    int i=0;
+
+    if( file.good() )
+    {
+        std::getline( file, line );
+        std::stringstream lineStream( line );
+
+        while( std::getline( lineStream, cell, ',' ) )
+        {
+            std::istringstream iss( cell );
+            iss >> w[i++];
+        }
+    }
+    else {
+        cout << "ERROR could not load weights" << endl;
+    }
+    file.close();
+
+    setWeights( w );
+
+    cout << " LEARNED weight : " << w.transpose() << endl;
 }
 
 std::vector<Move3D::Trajectory*> Feature::extractAllTrajectories( Move3D::Graph* g, confPtr_t q_init, confPtr_t q_goal, int nb_divisions  )
