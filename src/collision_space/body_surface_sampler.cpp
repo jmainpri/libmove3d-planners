@@ -261,12 +261,12 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* j
     int num_points = ceil( length / spacing ) + 1;
     spacing = length / ( num_points - 1.0 );
 
-    cout << "segment id : " << segment_number << " , nb of coll points : " << num_points << endl;
+    // cout << "segment id : " << segment_number << " , nb of coll points : " << num_points << endl;
 
     for (int i=0; i<num_points; ++i)
     {
         Eigen::Vector3d p = p1 + (double(i)/double(num_points))*( p2 - p1 );
-        cout << "p : " << p.transpose() << endl;
+        // cout << "p : " << p.transpose() << endl;
         collision_points.push_back(CollisionPoint(parent_joints, radius, m_collision_clearance_default, segment_number, p));
     }
 
