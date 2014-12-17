@@ -380,8 +380,11 @@ bool traj_optim_initStomp()
     m_chompplangroup->collision_points_ = traj_optim_get_collision_points();
 
     m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup, PlanEnv->getDouble(PlanParam::trajDuration) );
-    //m_chomptraj->print();
+    // m_chomptraj->print();
+
     cout << "Chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
+    cout << "PlanEnv->getDouble(PlanParam::trajDuration) : " << PlanEnv->getDouble(PlanParam::trajDuration) << endl;
+    cout << "Chomp Trajectory uses time : " << m_chomptraj->getUseTime() << endl;
 
     cout << "Initialize optimizer" << endl;
     global_optimizer.reset( new stomp_motion_planner::StompOptimizer( m_chomptraj, m_stompparams, m_chompplangroup, traj_optim_get_collision_space() ));
