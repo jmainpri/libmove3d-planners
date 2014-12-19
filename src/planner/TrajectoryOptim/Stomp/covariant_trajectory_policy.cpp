@@ -641,10 +641,19 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen:
 //        control_costs[2][d] = Eigen::VectorXd::Zero( parameters[d].size() );
     }
 
-    const double factor_dist = 1e-01;
-    const double factor_vel  = 1e-05;
-    const double factor_acc  = 1e-10;
-    const double factor_jerk = 1e-15;
+    double smoothness_phi_coeff_0=6169.25695308327;
+    double smoothness_phi_coeff_1=4.44904301010109;
+    double smoothness_phi_coeff_2=0.003049597344395;
+    double smoothness_phi_coeff_3=5.85878290700533e-08;
+    double smoothness_phi_coeff_4=2618693.84526831;
+    double smoothness_phi_coeff_5=1930.67945543425;
+    double smoothness_phi_coeff_6=2.45532918225898;
+    double smoothness_phi_coeff_7=4.41198038100153e-05;
+
+    const double factor_dist = smoothness_phi_coeff_0;
+    const double factor_vel  = smoothness_phi_coeff_1;
+    const double factor_acc  = smoothness_phi_coeff_2;
+    const double factor_jerk = smoothness_phi_coeff_3;
 
 
     Move3D::StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
@@ -654,10 +663,10 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen:
         Move3D::Trajectory traj( planning_group_->robot_ );
         setGroupTrajectoryToMove3DTraj( traj,  parameters, dt );
 
-        const double factor_task_dist = 1e+01;
-        const double factor_task_vel  = 1e-03;
-        const double factor_task_acc  = 1e-09;
-        const double factor_task_jerk = 1e-13;
+        const double factor_task_dist = smoothness_phi_coeff_4;
+        const double factor_task_vel  = smoothness_phi_coeff_5;
+        const double factor_task_acc  = smoothness_phi_coeff_6;
+        const double factor_task_jerk = smoothness_phi_coeff_7;
 
         SmoothnessFeature* smoothnes = static_cast<SmoothnessFeature*>(fct->getFeatureFunction("SmoothnessAll"));
 

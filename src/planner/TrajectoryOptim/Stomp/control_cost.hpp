@@ -44,7 +44,7 @@ public:
     void setType(int type);
 
     //! Returns the diff rule between
-    int getDiffRuleLength();
+    int getDiffRuleLength() const;
 
     //! Returns size segment of active controls
     int getInnerSegmentSize( const Eigen::VectorXd& control ) const;
@@ -59,13 +59,13 @@ public:
     double cost( const std::vector<Eigen::VectorXd>& control_costs );
 
     //! Returns the squared vel, acc or jerk
-    std::vector<Eigen::VectorXd> getSquaredQuantities( const Eigen::MatrixXd& traj, double dt=0.0 );
+    std::vector<Eigen::VectorXd> getSquaredQuantities( const Eigen::MatrixXd& traj, double dt=0.0 ) const;
 
     //! sets the start and end points in the trajectory
-    void fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj );
+    void fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj ) const;
 
     //! set buffer with previous trajectory
-    void fillTrajectoryWithBuffer( const Eigen::VectorXd& b, Eigen::MatrixXd& traj );
+    void fillTrajectoryWithBuffer( const Eigen::VectorXd& b, Eigen::MatrixXd& traj ) const;
 
     //! resample the matrix rows
     Eigen::MatrixXd resample( const Eigen::MatrixXd& m, int nb_points ) const;
@@ -80,7 +80,7 @@ public:
     void setBuffer( const std::vector<Eigen::VectorXd>& buffer ) { buffer_ = buffer; }
 
     //! Save velocity cost to file
-    void saveProfiles( const Eigen::MatrixXd& traj, std::string foldername, double dt=0.0 );
+    void saveProfiles( const Eigen::MatrixXd& traj, std::string foldername, double dt=0.0 ) const;
 
 protected:
     enum cost_type { vel=0, acc=1, jerk=2 } type_;

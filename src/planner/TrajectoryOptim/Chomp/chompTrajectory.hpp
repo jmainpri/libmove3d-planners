@@ -257,7 +257,7 @@ inline bool ChompTrajectory::getFreeParameters(std::vector<Eigen::VectorXd>& par
         return false;
 
     for(int joint=0; joint<trajectory_.cols(); joint++)
-        parameters[joint] = trajectory_.col(joint).segment(start_index_+1, getNumFreePoints() /*-id_fixed_*/ ); // TODO see why
+        parameters[joint] = trajectory_.col(joint).segment(start_index_, getNumFreePoints() /*-id_fixed_*/ ); // TODO see why
 
     return true;
 }

@@ -104,7 +104,7 @@ bool traj_optim_invalidate_cntrts()
             continue;
         }
 
-        cout << "deactivate : " << m_robot->getName() << " , " << name << endl;
+        // cout << "deactivate : " << m_robot->getName() << " , " << name << endl;
 
         // get constraint from the cntrts manager
         ct = rob->cntrt_manager->cntrts[i];

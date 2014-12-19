@@ -417,9 +417,20 @@ bool traj_optim_initStomp()
     {
         global_optimizer->setBuffer( m_buffer );
 
+        cout << "SET BUFFER" << endl;
         Move3D::StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
         if( fct != NULL && fct->getFeatureFunction("SmoothnessAll") != NULL )
             static_cast<SmoothnessFeature*>(fct->getFeatureFunction("SmoothnessAll"))->setBuffer( m_buffer );
+    }
+    else
+    {
+        global_optimizer->clearBuffer();
+
+        cout << "CLEAR BUFFER" << endl;
+        Move3D::StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+        if( fct != NULL && fct->getFeatureFunction("SmoothnessAll") != NULL )
+            static_cast<SmoothnessFeature*>(fct->getFeatureFunction("SmoothnessAll"))->clearBuffer();
+
     }
 
     // Initialize all data structures

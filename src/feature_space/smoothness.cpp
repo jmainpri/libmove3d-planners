@@ -184,11 +184,31 @@ TrajectorySmoothness::TrajectorySmoothness() : Feature("Smoothness")
 
 void TrajectorySmoothness::setBuffer(const std::vector<Eigen::VectorXd>& buffer)
 {
-    control_cost_.setBuffer(buffer);
-    buffer_is_filled_=true;
+    if( buffer.empty() )
+    {
+        clearBuffer();
+    }
+    else
+    {
+        control_cost_.setBuffer(buffer);
+        buffer_is_filled_=true;
+    }
 }
 
-Eigen::MatrixXd TrajectorySmoothness::getSmoothedTrajectory( const Move3D::Trajectory& t )
+void TrajectorySmoothness::saveAbsValuesToFile(const Move3D::Trajectory& t, std::string folder, double dt) const
+{
+    Eigen::MatrixXd mat1 = t.getEigenMatrix( active_dofs_ );
+
+//    cout << "motion : " << endl;
+//    cout.precision(4);
+//    cout << std::scientific << mat1 << endl;
+
+    Eigen::MatrixXd mat = getSmoothedTrajectory( t );
+
+    control_cost_.saveProfiles( mat, folder, dt );
+}
+
+Eigen::MatrixXd TrajectorySmoothness::getSmoothedTrajectory( const Move3D::Trajectory& t ) const
 {
     Robot* robot = t.getRobot();
 
@@ -207,18 +227,19 @@ Eigen::MatrixXd TrajectorySmoothness::getSmoothedTrajectory( const Move3D::Traje
     Eigen::VectorXd q_goal = t.getEnd()->getEigenVector( active_dofs_ );
 
     Eigen::MatrixXd mat1 = t.getEigenMatrix( active_dofs_ );
-    //    cout << "motion matrix 1" << endl;
-    //    cout.precision(2);
-    //    cout << mat1 << endl;
+//    cout << "motion matrix 1" << endl;
+//    cout.precision(4);
+//    cout << std::scientific << mat1 << endl;
 
     Eigen::MatrixXd mat2( rows, cols + 2*(diff_rule_length-1) );
     mat2.block( 0, diff_rule_length-1, rows, cols ) = mat1;
 
 //    cout << "motion matrix 2" << endl;
-//    cout.precision(2);
-//    cout << mat2 << endl;
+//    cout.precision(4);
+//    cout << std::scientific << mat2 << endl;
 
     if( buffer_is_filled_ )
+
         control_cost_.fillTrajectoryWithBuffer( q_goal, mat2 );
     else
         control_cost_.fillTrajectory( q_init, q_goal, mat2 );
@@ -237,7 +258,7 @@ Eigen::MatrixXd TrajectorySmoothness::getSmoothedTrajectory( const Move3D::Traje
                 if( joint->isJointDofCircular(k) )
                 {
                     Eigen::VectorXd row = mat2.row( r );
-                    //                    cout << "dof : " << r << " is circula , " << joint->getName() << endl;
+                    // cout << "dof : " << r << " is circula , " << joint->getName() << endl;
                     move3d_smooth_circular_parameters( row );
                     mat2.row( r ) = row;
                 }
@@ -501,6 +522,7 @@ double TaskSmoothnessFeature::getVelocity(const Move3D::Trajectory& t, Eigen::Ve
 //    cout << "costs.size() : " << costs.size() << endl;
 
 
+//   control_cost_.saveProfiles( mat, "/home/pr2command/catkin_ws/src/move3d_ros/data/control_costs/" , dt );
 //    control_cost_.saveProfiles( mat, "/home/jmainpri/Dropbox/move3d/move3d-launch/launch_files/task_vel/" , dt );
 
     return cost;
@@ -574,6 +596,8 @@ FeatureVect TaskSmoothnessFeature::getFeatureCount(const Move3D::Trajectory& tra
     count[2] = getAcceleration( traj, costs );
     count[3] = getJerk( traj, costs );
 
+
+
     return count;
 }
 
@@ -594,22 +618,69 @@ void SmoothnessFeature::setWeights( const WeightVect& w )
     PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(2) );
 }
 
+FeatureVect phi_max ( FeatureVect::Zero( 8 ) );
+FeatureVect phi_sum ( FeatureVect::Zero( 8 ) );
+int iter = 0;
+
+double smoothness_phi_coeff_0=6169.25695308327;
+double smoothness_phi_coeff_1=4.44904301010109;
+double smoothness_phi_coeff_2=0.003049597344395;
+double smoothness_phi_coeff_3=5.85878290700533e-08;
+double smoothness_phi_coeff_4=2618693.84526831;
+double smoothness_phi_coeff_5=1930.67945543425;
+double smoothness_phi_coeff_6=2.45532918225898;
+double smoothness_phi_coeff_7=4.41198038100153e-05;
+
+// 24677.0278123331				10474775.3810732	7722.71782173699	9.82131672903591	0.000176479215240061
+
+
+
+
 FeatureVect SmoothnessFeature::getFeatureCount( const Move3D::Trajectory& t )
 {
+//    FeatureVect phi( FeatureVect::Zero( 8 ) );
+//    phi[0] = length_.getFeatureCount(t)[0] * 1e-01;
+//    phi[1] = velocity_.getFeatureCount(t)[0] * 1e-05;
+//    phi[2] = acceleration_.getFeatureCount(t)[0] * 1e-10;
+//    phi[3] = jerk_.getFeatureCount(t)[0] * 1e-15;
+
+//    FeatureVect phi_task = task_features_.getFeatureCount( t );
+//    phi[4] = phi_task[0] * 1e+01;
+//    phi[5] = phi_task[1] * 1e-03;
+//    phi[6] = phi_task[2] * 1e-09;
+//    phi[7] = phi_task[3] * 1e-13;
+
     FeatureVect phi( FeatureVect::Zero( 8 ) );
-    phi[0] = length_.getFeatureCount(t)[0] * 1e-01;
-    phi[1] = velocity_.getFeatureCount(t)[0] * 1e-05;
-    phi[2] = acceleration_.getFeatureCount(t)[0] * 1e-10;
-    phi[3] = jerk_.getFeatureCount(t)[0] * 1e-15;
+    phi[0] = length_.getFeatureCount(t)[0] ;
+    phi[1] = velocity_.getFeatureCount(t)[0] ;
+    phi[2] = acceleration_.getFeatureCount(t)[0] ;
+    phi[3] = jerk_.getFeatureCount(t)[0] ;
 
     FeatureVect phi_task = task_features_.getFeatureCount( t );
-    phi[4] = phi_task[0] * 1e+01;
-    phi[5] = phi_task[1] * 1e-03;
-    phi[6] = phi_task[2] * 1e-09;
-    phi[7] = phi_task[3] * 1e-13;
+    phi[4] = phi_task[0] ;
+    phi[5] = phi_task[1] ;
+    phi[6] = phi_task[2] ;
+    phi[7] = phi_task[3] ;
 
-    cout.precision(5);
-    cout << std::scientific << "phi : " << phi.transpose() << endl;
+    phi[0] *= smoothness_phi_coeff_0;
+    phi[1] *= smoothness_phi_coeff_1;
+    phi[2] *= smoothness_phi_coeff_2;
+    phi[3] *= smoothness_phi_coeff_3;
+    phi[4] *= smoothness_phi_coeff_4;
+    phi[5] *= smoothness_phi_coeff_5;
+    phi[6] *= smoothness_phi_coeff_6;
+    phi[7] *= smoothness_phi_coeff_7;
+
+//    for( int i=0;i<8;i++)
+//    {
+//        if( phi[i] > phi_max[i])
+//            phi_max[i] = phi[i];
+//        phi_sum[i] += phi[i];
+//    }
+//    iter++;
+
+//    cout << std::scientific << "phi_max : " << phi_max.transpose() << endl;
+//    cout << std::scientific << "phi_av : " << (phi_max.transpose() / double(iter))<< endl;
 
     return phi;
 }
@@ -631,6 +702,9 @@ void SmoothnessFeature::setActiveDoFs( const std::vector<int>& active_dofs )
 
 void SmoothnessFeature::setBuffer(const std::vector<Eigen::VectorXd>& buffer)
 {
+//    for(size_t i=0;i<buffer.size(); i++)
+//        cout << buffer[i].transpose() << endl;
+
     velocity_.setBuffer( buffer );
     acceleration_.setBuffer( buffer );
     jerk_.setBuffer( buffer );

@@ -63,7 +63,7 @@ void ControlCost::setType(int type)
     type_ = cost_type(type);
 }
 
-int ControlCost::getDiffRuleLength()
+int ControlCost::getDiffRuleLength() const
 {
     return diff_rule_length_;
 }
@@ -100,7 +100,7 @@ double ControlCost::cost( const Eigen::MatrixXd& traj )
 }
 
 
-std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::MatrixXd& traj, double dt )
+std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::MatrixXd& traj, double dt ) const
 {
     // num of collums is the dimension of state space
     // num of rows is the length of the trajectory
@@ -164,7 +164,7 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
     return control_costs; // scaling
 }
 
-void ControlCost::fillTrajectoryWithBuffer( const Eigen::VectorXd& b, Eigen::MatrixXd& traj )
+void ControlCost::fillTrajectoryWithBuffer( const Eigen::VectorXd& b, Eigen::MatrixXd& traj ) const
 {
     // set the start and end of the trajectory
     for (int i=0; i<diff_rule_length_-1; ++i)
@@ -174,7 +174,7 @@ void ControlCost::fillTrajectoryWithBuffer( const Eigen::VectorXd& b, Eigen::Mat
     }
 }
 
-void ControlCost::fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj )
+void ControlCost::fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj ) const
 {
     // set the start and end of the trajectory
     // cout  << "diff_rule_length_ : " << diff_rule_length_ << endl;
@@ -255,21 +255,24 @@ Eigen::VectorXd ControlCost::interpolate( const Eigen::VectorXd& a, const Eigen:
     return out;
 }
 
-void ControlCost::saveProfiles( const Eigen::MatrixXd& traj, std::string foldername, double dt )
+void ControlCost::saveProfiles( const Eigen::MatrixXd& traj, std::string foldername, double dt ) const
 {
-    cost_type tmp = type_;
-
-    type_ = vel;
+//    cost_type tmp = type_;
+//    type_ = vel;
 
     std::vector<Eigen::VectorXd> control_costs = getSquaredQuantities( traj, dt );
 
     for (int d=0; d<control_costs.size(); ++d)
     {
         Eigen::VectorXd cost_vect = control_costs[d].segment( diff_rule_length_-1, control_costs[d].size() - 2*(diff_rule_length_-1));
+
+        // Get abs values
+         cost_vect = Eigen::ArrayXd( cost_vect ).sqrt();
+
         std::stringstream ss;
         ss << "stomp_vel_"  << std::setw(3) << std::setfill( '0' ) << d << ".txt";
         move3d_save_matrix_to_file( cost_vect.transpose(), foldername + ss.str() );
     }
 
-    type_ = tmp;
+//    type_ = tmp;
 }

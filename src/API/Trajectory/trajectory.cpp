@@ -2535,23 +2535,23 @@ Eigen::MatrixXd Trajectory::getEigenMatrix(int startIndex, int endIndex) const
 // Returns a matrix with the waypoints of the trajectory
 // The number of rows is the number of dofs
 // The number of cols is the number of waypoints
-Eigen::MatrixXd Trajectory::getEigenMatrix(const std::vector<int>& incides) const
+Eigen::MatrixXd Trajectory::getEigenMatrix(const std::vector<int>& dof_indices) const
 {
     if( m_Courbe.size() > 0 )
     {
-        int rows = incides.size();
+        int rows = dof_indices.size();
         int cols = m_Courbe.size()+1;
 
         Eigen::MatrixXd mat( rows, cols );
 
         for (int j=0; j<int(m_Courbe.size()); j++)
         {
-            mat.col(j) = m_Courbe[j]->getBegin()->getEigenVector( incides );
+            mat.col(j) = m_Courbe[j]->getBegin()->getEigenVector( dof_indices );
         }
 
         if( m_Courbe.size()-1 >= 0 )
         {
-            mat.col(m_Courbe.size()) = m_Courbe.back()->getEnd()->getEigenVector( incides );
+            mat.col(m_Courbe.size()) = m_Courbe.back()->getEnd()->getEigenVector( dof_indices );
         }
 
         return mat;
@@ -2561,7 +2561,7 @@ Eigen::MatrixXd Trajectory::getEigenMatrix(const std::vector<int>& incides) cons
     }
 }
 
-bool Trajectory::setFromEigenMatrix(const Eigen::MatrixXd& mat, const std::vector<int>& incides)
+bool Trajectory::setFromEigenMatrix(const Eigen::MatrixXd& mat, const std::vector<int>& dof_indices)
 {
     m_Courbe.clear();
 
@@ -2571,9 +2571,9 @@ bool Trajectory::setFromEigenMatrix(const Eigen::MatrixXd& mat, const std::vecto
     {
         confPtr_t q = q_cur->copy();
 
-        for (int i=0; i<incides.size(); i++)
+        for (int i=0; i<dof_indices.size(); i++)
         {
-            (*q)[incides[i]] = mat( i, j );
+            (*q)[dof_indices[i]] = mat( i, j );
         }
 
         push_back( q );

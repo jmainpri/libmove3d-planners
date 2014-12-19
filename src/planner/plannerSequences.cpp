@@ -200,7 +200,7 @@ void SequencesPlanners::playTrajs() //const
             if( !best_traj_[i].isValid() )
             {
                 cout << "Trajectory " << i << " in collision" << endl;
-                return;
+                // return;
             }
         }
     }

@@ -58,15 +58,19 @@ public:
     void printControlCosts( const std::vector<Eigen::VectorXd>& control_cost  );
 
     //! get smoothed trajectory as matrix
-    Eigen::MatrixXd getSmoothedTrajectory( const Move3D::Trajectory& t );
+    Eigen::MatrixXd getSmoothedTrajectory( const Move3D::Trajectory& t ) const;
 
     //! returns the control costs
-    double getControlCosts(const Eigen::MatrixXd& traj_smooth, std::vector<Eigen::VectorXd>& control_costs, double dt);
+    double getControlCosts(const Eigen::MatrixXd& traj_smooth, std::vector<Eigen::VectorXd>& control_costs, double dt );
 
-    //! Set Buffer
+    //! Set Buffer set buffer
     virtual void setBuffer(const std::vector<Eigen::VectorXd>& buffer);
 
+    //! Set Buffer as not filled
     void clearBuffer() { buffer_is_filled_=false; }
+
+    //! Save profile to file
+    void saveAbsValuesToFile(const Move3D::Trajectory& t, std::string folder, double dt) const;
 
 protected:
     ControlCost control_cost_;

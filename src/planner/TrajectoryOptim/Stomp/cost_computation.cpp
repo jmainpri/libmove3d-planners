@@ -32,6 +32,7 @@
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
 #include "hri_costspace/HRICS_costspace.hpp"
 #include "feature_space/features.hpp"
+#include "feature_space/smoothness.hpp"
 
 using namespace stomp_motion_planner;
 using namespace Move3D;
@@ -172,7 +173,24 @@ costComputation::costComputation(Robot* robot,
     group_trajectory_.setFixedId( id_fixed_ );
 
     // Initialize control costs
-    multiple_smoothness_ = false;
+    multiple_smoothness_ = true;
+
+    if( multiple_smoothness_ )
+    {
+        Move3D::StackedFeatures* fct = dynamic_cast<Move3D::StackedFeatures*>( global_activeFeatureFunction );
+
+        if( fct != NULL &&
+                fct->getFeatureFunction("SmoothnessAll") != NULL &&
+                fct->getFeatureFunction("SmoothnessAll")->is_active_ )
+        {
+            control_cost_weights_ = fct->getFeatureFunction("SmoothnessAll")->getWeights();
+            //                cout << "control_cost_weights_ : " << control_cost_weights_.transpose() << endl;
+        }
+        else{
+            multiple_smoothness_ = false;
+        }
+    }
+
     policy_ = policy;
     policy_->getControlCosts(control_costs_);
     control_cost_weight_ = stomp_parameters_->getSmoothnessCostWeight();
@@ -323,19 +341,30 @@ bool costComputation::getControlCosts(const ChompTrajectory& group_traj)
 
     if( multiple_smoothness_ )
     {
+        // cout << "policy_.get() : " << policy_.get() << endl;
 
         std::vector< std::vector<Eigen::VectorXd> > control_costs;
 
         static_cast<CovariantTrajectoryPolicy*>(policy_.get())->getAllCosts( parameters, control_costs, group_traj.getDiscretization() );
 
+//        cout << "control_costs.size() " << control_costs.size() << endl;
+//        cout << "current_control_costs_.size() " << current_control_costs_.size() << endl;
+//        cout << "num joint : " << num_joints_ << endl;
+
         for (int c=0; c<4; ++c)
             for (int d=0; d<num_joints_; ++d) {
-                current_control_costs_[d] += ( control_costs[c][d] );
+//                cout << "control_costs[c].size() : " << control_costs[c].size() << endl;
+//                cout << "current_control_costs_[d] : " << current_control_costs_[d].size() << endl;
+                current_control_costs_[d] += ( control_cost_weights_[c] * control_costs[c][d] );
             }
 
-//        for (int c=4; c<8; ++c) {
-//            rollout.state_costs_ += ( control_cost_weights_[c] * control_costs[c][0] );
-//        }
+        // cout << "weight vector : " << control_cost_weights_.transpose() << endl;
+
+        // cout << "GET CONTROL COST" << endl;
+
+        for (int c=4; c<8; ++c) {
+            general_cost_potential_.segment( free_vars_start_, num_vars_free_) += ( control_cost_weights_[c] * control_costs[c][0] );
+        }
     }
     else
     {
@@ -811,6 +840,8 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::V
     bool trajectory_collision_free = performForwardKinematics( group_trajectory_, is_rollout);
     bool last_trajectory_constraints_satisfied = true;
 
+
+
     // Special case for not handling joint limits
     if( !succeded_joint_limits_ )
     {
@@ -819,6 +850,16 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::V
     }
 
     double cost;
+
+    // compute the control costs
+    // TODO, WIP
+//    cout << "id_fixed_ : " << id_fixed_ << endl;
+
+//    ChompTrajectory group_trajectory( group_trajectory_ );
+//    for (int d=0; d<num_joints_; ++d) {
+//        group_trajectory.getTrajectory().col(d) = parameters[d];
+//    }
+    getControlCosts( group_trajectory_ );
 
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
@@ -850,24 +891,10 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::V
     }
 
 
-
-
-    // compute the control costs
-    // TODO, WIP
-//    cout << "id_fixed_ : " << id_fixed_ << endl;
-
-//    ChompTrajectory group_trajectory( group_trajectory_ );
-//    for (int d=0; d<num_joints_; ++d) {
-//        group_trajectory.getTrajectory().col(d) = parameters[d];
-//    }
-    getControlCosts( group_trajectory_ );
     
     // print control cost
 //    cout.precision(6);
 //    cout << " -- control cost : " << getCost() << " , state cost : " << costs.sum() << endl;
-
-
-
 
     //cout << "StompOptimizer::execute::cost => " << costs.sum() << endl;
     double last_trajectory_cost = costs.sum();

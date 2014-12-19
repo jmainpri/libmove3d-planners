@@ -40,7 +40,7 @@ using namespace Move3D;
 using std::cout;
 using std::endl;
 
-static const bool draw_features = true;
+static const bool draw_features = false;
 
 // Declaration of constant vectors
 namespace HRICS {

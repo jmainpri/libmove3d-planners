@@ -20,7 +20,7 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
     robot_ = rob;
     chomp_dofs_.clear();
 
-    bool print_group = false;
+    bool print_group = true;
 
     if( print_group )
         cout << "Creating planning group for : " << robot_->getName() << endl;
@@ -32,7 +32,7 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
             Joint* move3d_joint = robot_->getJoint( active_joints[i] );
 
             if( print_group )
-                cout << "Joint(" << j << "), Dof : " << move3d_joint->getIndexOfFirstDof() + j << ", " << move3d_joint->getName() << "" << endl;
+                cout << "Joint(" << active_joints[i] << "), Dof : " << move3d_joint->getIndexOfFirstDof() + j << ", " << move3d_joint->getName() << "" << endl;
 
             if( !move3d_joint->isJointDofUser(j) )
                 continue;

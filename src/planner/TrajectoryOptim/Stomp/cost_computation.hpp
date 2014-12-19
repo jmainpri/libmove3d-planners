@@ -144,6 +144,7 @@ private:
     Eigen::MatrixXd collision_point_potential_;
     Eigen::MatrixXd collision_point_vel_mag_;
 
+
     // Variable General cost
     bool use_costspace_;
     Eigen::VectorXd general_cost_potential_;
@@ -154,6 +155,7 @@ private:
     double control_cost_weight_;
     std::vector<Eigen::VectorXd> current_control_costs_;
     std::vector<Eigen::MatrixXd> control_costs_; /**< [num_dimensions] num_parameters x num_parameters */
+    Eigen::VectorXd control_cost_weights_;
 
     std::vector< Move3D::ChompCost > joint_costs_;
 
