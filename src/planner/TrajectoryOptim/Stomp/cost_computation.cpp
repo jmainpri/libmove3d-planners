@@ -647,7 +647,8 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
     }
 
     Move3D::StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
-    fct->getFeatureCount( current_traj );
+    if( fct != NULL )
+        fct->getFeatureCount( current_traj );
 
 //    cout << "is_collision_free_ : " << is_collision_free_  << endl;
 
