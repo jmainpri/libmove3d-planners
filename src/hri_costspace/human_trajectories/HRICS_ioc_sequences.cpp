@@ -56,7 +56,7 @@ using namespace HRICS;
 using std::cout;
 using std::endl;
 
-static std::string move3d_root("/home/jmainpri/Dropbox/move3d/");
+static std::string move3d_root = std::string( getenv("HOME_MOVE3D" ) ) + std::string( "/../" );
 
 // Folders for sphere (and plannar) type of features
 static std::string move3d_demo_folder;
@@ -69,9 +69,6 @@ static std::string move3d_human_trajs_demo_folder_originals;
 static std::string move3d_human_trajs_demo_folder_cut;
 
 static bool original_demos = false;
-
-extern bool hrics_set_baseline = false;
-extern bool hrics_one_iteration = false;
 
 void ioc_set_sphere_paths()
 {
@@ -257,11 +254,25 @@ bool IocSequences::run()
         switch( phase_ )
         {
         case save_feature_and_demo_size:
+        {
+            if( use_human_simulation_demo_ )
+            {
+                std::vector<Move3D::Trajectory> trajs   = global_ht_simulator->getDemoTrajectories();
+                std::vector<Move3D::confPtr_t> context  = global_ht_simulator->getContext();
+                std::vector<int> ids                    = global_ht_simulator->getDemoIds();
+                // trajs.push_back( HRICS::motion_to_traj( global_motionRecorders[0]->getStoredMotions()[0], human2, 60 ) );
+                // human1->setAndUpdate( *global_motionRecorders[1]->getStoredMotions()[0][0].second );
+                eval_->saveDemoToFile( trajs, ids, context );
+            }
+            else {
+                eval_->generateDemonstrations( nb_demos );
+            }
 
             cout << "SAVE FEATURES AND DEMO SIZE" << endl;
             eval_->loadDemonstrations();
             cout << "save problem" << endl;
             eval_->saveNbDemoAndNbFeatures();
+        }
             break;
 
         case generate:
@@ -411,7 +422,7 @@ bool IocSequences::run()
             std::vector<std::string> active_features_names;
 
             // BECARFUL (Comment for basekline)
-            if( !hrics_set_baseline )
+            if( !HriEnv->getBool(HricsParam::ioc_use_baseline) )
                 active_features_names.push_back("SmoothnessAll");
 
             active_features_names.push_back("Distance");
@@ -419,7 +430,7 @@ bool IocSequences::run()
 //            active_features_names.push_back("Visibility");
 //            active_features_names.push_back("Musculoskeletal");
 
-            if( hrics_set_baseline )
+            if( HriEnv->getBool(HricsParam::ioc_use_baseline) )
             {
                 global_ht_simulator->getCostSpace()->setActiveFeatures( active_features_names );
                 WeightVect w( 10 * WeightVect::Ones(16));
@@ -429,29 +440,31 @@ bool IocSequences::run()
             std::vector<motion_t> trajs;
 
             std::vector<std::string> good_motions_names;
+
+             good_motions_names.push_back( HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human2_.csv");
+
 //            good_motions_names.push_back("[0446-0578]_human2_.csv");
 //            good_motions_names.push_back("[0525-0657]_human2_.csv");
 //            good_motions_names.push_back("[0444-0585]_human2_.csv");
 //            good_motions_names.push_back("[0489-0589]_human2_.csv");
 //            good_motions_names.push_back("[0780-0871]_human2_.csv");
 //            good_motions_names.push_back("[1537-1608]_human2_.csv");
-            good_motions_names.push_back("[2711-2823]_human2_.csv");
+//            good_motions_names.push_back("[2711-2823]_human2_.csv");
 
             for( int j=0; j<global_ht_simulator->getNumberOfDemos(); j++ )
             {
                 global_ht_simulator->setDemonstrationId( j );
 
-                if( !hrics_set_baseline ) // SET BASELINE HERE
+                if( !HriEnv->getBool(HricsParam::ioc_use_baseline) ) // SET BASELINE HERE
                 {
                     std::string demo_split = good_motions_names[ j ].substr( 0, 11 );
 
                     std::stringstream ss;
                     ss << demo_split << "_spheres_weights_700.txt";
 
-                    eval_->loadWeightVector( "single_weight/dynamic/" + ss.str() );
+                    eval_->loadWeightVector( "tmp_weights/" + ss.str() );
                     eval_->setLearnedWeights();
                 }
-
 
                 for( int k=0; k<1; k++ )
                 {
@@ -462,7 +475,7 @@ bool IocSequences::run()
                     ss << "run_simulator_" << std::setw(3) << std::setfill( '0' ) << j;
                     ss <<              "_" << std::setw(3) << std::setfill( '0' ) << k << ".traj";
 
-                    Move3D::Trajectory traj( hrics_one_iteration ? global_ht_simulator->getCurrentPath() : global_ht_simulator->getExecutedPath() );
+                    Move3D::Trajectory traj( HriEnv->getBool(HricsParam::ioc_no_replanning) ? global_ht_simulator->getCurrentPath() : global_ht_simulator->getExecutedPath() );
                     traj.saveToFile( ss.str() );
 
                     trajs.push_back( global_ht_simulator->getExecutedTrajectory() );

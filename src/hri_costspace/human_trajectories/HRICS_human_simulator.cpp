@@ -36,9 +36,6 @@ using std::cin;
 HRICS::HumanTrajSimulator* global_ht_simulator = NULL;
 HRICS::HumanTrajCostSpace* global_ht_cost_space = NULL;
 
-extern bool hrics_set_baseline;
-extern bool hrics_one_iteration;
-
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 
@@ -102,7 +99,8 @@ bool HRICS_init_human_trajectory_cost()
 //                global_motionRecorders[0]->storeMotion( traj1, "[1460-1620]_human2_.csv" );
 //                global_motionRecorders[1]->storeMotion( traj2, "[1460-1620]_human1_.csv" );
 
-                std::string foldername = "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/ten_motions_last/";
+                std::string move3d_root = std::string( getenv("HOME_MOVE3D" ) ) + std::string( "/../" );
+                std::string foldername = move3d_root + "assets/Collaboration/TRAJECTORIES/mocap/ten_motions_last/";
                 bool quiet = true;
                 global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet, -1.5 );
                 global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet, +1.5 );
@@ -119,9 +117,7 @@ bool HRICS_init_human_trajectory_cost()
         cout << "create human traj cost space" << endl;
 
         // SET BASELINE HERE
-        hrics_set_baseline = false;
-        hrics_one_iteration = false;
-        PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, hrics_set_baseline ? 100. : 1.0000 );
+        PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, HriEnv->getBool(HricsParam::ioc_use_baseline) ? 100. : 1.0000 );
 
         // Workspace Occupancy costspace
         std::vector<double> size = Move3D::global_Project->getActiveScene()->getBounds();
@@ -209,7 +205,7 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
 
     smoothness_feat_.setActiveDoFs( active_dofs_ );
 
-    if( !hrics_set_baseline )
+    if( !HriEnv->getBool(HricsParam::ioc_use_baseline) )
     {
         smoothness_feat_.setWeights( Move3D::WeightVect::Ones( smoothness_feat_.getNumberOfFeatures() ) );
 
@@ -413,7 +409,8 @@ bool HumanTrajSimulator::init()
     minimal_demo_size_ = 10;
     trajectories_cut_ = false;
 
-    use_one_traj_ = false;
+    // Use only one trajectory
+    use_one_traj_ = !HriEnv->getBool(HricsParam::ioc_split_motions);
 
     if( !motion_recorders_.empty() )
     {
@@ -421,8 +418,8 @@ bool HumanTrajSimulator::init()
         // add cut motions
         setReplanningDemonstrations();
 
-//        if( !use_one_traj_ )
-//            addCutMotions();
+        if( !use_one_traj_ )
+            addCutMotions();
 
         // setInitAndGoalConfig(); // For simulation
 
@@ -601,35 +598,32 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     //    good_motions_names.push_back("[0408-0491]_human1_.csv");
 
     // GOOD...
-//    good_motions_names.push_back("[0446-0578]_human2_.csv");
-//    good_motions_names.push_back("[0446-0578]_human1_.csv");
+    good_motions_names.push_back("[0446-0578]_human2_.csv");
+    good_motions_names.push_back("[0446-0578]_human1_.csv");
 
-//    good_motions_names.push_back("[0525-0657]_human2_.csv");
-//    good_motions_names.push_back("[0525-0657]_human1_.csv");
+    good_motions_names.push_back("[0525-0657]_human2_.csv");
+    good_motions_names.push_back("[0525-0657]_human1_.csv");
 
-//    good_motions_names.push_back("[0444-0585]_human2_.csv");
-//    good_motions_names.push_back("[0444-0585]_human1_.csv");
+    good_motions_names.push_back("[0444-0585]_human2_.csv");
+    good_motions_names.push_back("[0444-0585]_human1_.csv");
 
-//    good_motions_names.push_back("[0489-0589]_human2_.csv");
-//    good_motions_names.push_back("[0489-0589]_human1_.csv");
+    good_motions_names.push_back("[0489-0589]_human2_.csv");
+    good_motions_names.push_back("[0489-0589]_human1_.csv");
 
-//    good_motions_names.push_back("[0780-0871]_human2_.csv");
-//    good_motions_names.push_back("[0780-0871]_human1_.csv");
+    good_motions_names.push_back("[0780-0871]_human2_.csv");
+    good_motions_names.push_back("[0780-0871]_human1_.csv");
 
-//    good_motions_names.push_back("[1537-1608]_human2_.csv");
-//    good_motions_names.push_back("[1537-1608]_human1_.csv");
+    good_motions_names.push_back("[1537-1608]_human2_.csv");
+    good_motions_names.push_back("[1537-1608]_human1_.csv");
 
-//    good_motions_names.push_back("[2711-2823]_human2_.csv");
-//    good_motions_names.push_back("[2711-2823]_human1_.csv");
+    good_motions_names.push_back("[2711-2823]_human2_.csv");
+    good_motions_names.push_back("[2711-2823]_human1_.csv");
 
     // REPLANNING MOTION last
 
     good_motions_names.push_back("[7395-7595]_human2_.csv");
     good_motions_names.push_back("[7395-7595]_human1_.csv");
 
-    // REPLANNING MOTION first
-//    good_motions_names.push_back("[0629-0768]_human2_.csv");
-//    good_motions_names.push_back("[0629-0768]_human1_.csv");
 
 
     if( !use_one_traj_ )
@@ -1433,7 +1427,7 @@ double HumanTrajSimulator::run()
 
 //        path_.replaceP3dTraj();
 
-        if( hrics_one_iteration && i == 0 ) // test no replanning
+        if( HriEnv->getBool(HricsParam::ioc_no_replanning) && i == 0 ) // test no replanning
             break;
     }
 
@@ -1449,7 +1443,7 @@ double HumanTrajSimulator::run()
 
 //    cout << "executed_path_.cost() : " << executed_path_.cost() << endl;
 
-    Move3D::Trajectory path( hrics_one_iteration ? path_ : motion_to_traj( executed_trajectory_, human_active_ ));
+    Move3D::Trajectory path( HriEnv->getBool(HricsParam::ioc_no_replanning) ? path_ : motion_to_traj( executed_trajectory_, human_active_ ));
 
     human_active_->setCurrentMove3DTraj( path );
 

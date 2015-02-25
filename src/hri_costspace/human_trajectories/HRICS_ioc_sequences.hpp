@@ -60,7 +60,8 @@ private:
         default_phase=4,
         monte_carlo=5,
         simulation=6,
-        save_feature_and_demo_size=7};
+        save_feature_and_demo_size=7
+    };
 
     // TYPE OF FEATURES
     enum feature_t {
