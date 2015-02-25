@@ -96,6 +96,14 @@ public:
     // Compute the cost of
     double cost(LocalPath& path, int& nb_test);
 
+    //! The jacobian is of m by n -> nb features by active dofs
+    //! column per dof
+    //! row per feature
+    Eigen::VectorXd getJacobian( const Configuration& q_0, std::vector<int> active_dofs = std::vector<int>() );
+
+    //! The Hessian
+    Eigen::MatrixXd getHessian( const Configuration& q, std::vector<int> active_dofs = std::vector<int>() );
+
     // Set node cost
     void setNodeCost(Node* node, Node* parent);
 

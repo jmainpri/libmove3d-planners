@@ -178,4 +178,13 @@ public:
 
 }
 
+extern double smoothness_phi_coeff_0;
+extern double smoothness_phi_coeff_1;
+extern double smoothness_phi_coeff_2;
+extern double smoothness_phi_coeff_3;
+extern double smoothness_phi_coeff_4;
+extern double smoothness_phi_coeff_5;
+extern double smoothness_phi_coeff_6;
+extern double smoothness_phi_coeff_7;
+
 #endif // SMOOTHNESS_HPP

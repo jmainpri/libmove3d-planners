@@ -251,7 +251,7 @@ void StompOptimizer::initialize()
         derivative_costs[2] = joint_cost*stomp_parameters_->getSmoothnessCostJerk();
         //        cout << "deriv cost for joint(" << i << ") : " << derivative_costs[0] << " " << derivative_costs[1] << " " << derivative_costs[2] << endl;
 
-        joint_costs_.push_back(ChompCost(group_trajectory_, i, derivative_costs, stomp_parameters_->getRidgeFactor()));
+        joint_costs_.push_back(ChompCost(group_trajectory_.getNumPoints(), i, derivative_costs, stomp_parameters_->getRidgeFactor()));
         double cost_scale = joint_costs_[i].getMaxQuadCostInvValue();
         if (max_cost_scale < cost_scale)
             max_cost_scale = cost_scale;

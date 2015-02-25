@@ -227,6 +227,9 @@ void initPlannerParameters()
     myIntMap.insert(std::make_pair( PlanParam::stompDrawIteration,           new intContainer(7)));
     myIntMap.insert(std::make_pair( PlanParam::stompMaxIteration,            new intContainer(250)));
 
+    // Nb samples
+    myIntMap.insert(std::make_pair( PlanParam::lamp_nb_samples,              new intContainer(10)));
+
     // ------------------------------------------------------------------
     // Double
     // ------------------------------------------------------------------
@@ -299,9 +302,15 @@ void initPlannerParameters()
 
     //cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble( PlanParam::env_objectNessecity ) << endl;
 
+    // LAMP
+    myDoubleMap.insert( std::make_pair( PlanParam::lamp_hessian_factor,         new doubleContainer(0.)));
+    myDoubleMap.insert( std::make_pair( PlanParam::lamp_control_cost,           new doubleContainer(0.)));
+    myDoubleMap.insert( std::make_pair( PlanParam::lamp_eta,                    new doubleContainer(0.1)));
+
     // String
     // ------------------------------------------------------------------
-    myStringMap.insert( std::make_pair( PlanParam::active_cost_function,       new stringContainer("")));
+    myStringMap.insert( std::make_pair( PlanParam::active_cost_function,     new stringContainer("")));
+    myStringMap.insert( std::make_pair( PlanParam::end_effector_joint,       new stringContainer("")));
 
     // Vector
     // ------------------------------------------------------------------

@@ -140,7 +140,7 @@ public:
 
     void setDrawExecution(bool draw_execution ) { draw_execute_motion_ = draw_execution; }
 
-    std::vector<std::string> getMotionsNames() const { return motions_1_names_; }
+    const std::vector<std::string>& getMotionsNames() const { return motions_1_names_; }
     std::vector<int> getDemoIds() const { return motions_demo_ids_; }
 
 private:

@@ -958,6 +958,9 @@ double Trajectory::cost() const
 
     double cost(0.0);
     cost = computeSubPortionCost(m_Courbe);
+
+//    cout << "cost  : " << cost << endl;
+
     // cost =  computeSubPortionIntergralCost(m_Courbe);
     // cost = reComputeSubPortionCost(m_Courbe,nb_cost_tests);
     return cost;
@@ -1031,6 +1034,8 @@ double Trajectory::costDeltaAlongTraj()
 {
     if( !ENV.getBool(Env::isCostSpace) )
         return isValid() ? 0. : 1000.;
+
+    cout << " m_Courbe.size() : " << m_Courbe.size() << endl;
 
     cout << "Sum of LP cost = " << computeSubPortionCost(m_Courbe) << endl;
     Trajectory tmp(*this);

@@ -88,6 +88,7 @@ void initHricsParameters()
     myBoolMap.insert( std::make_pair( HricsParam::ioc_user_set_pelvis_bounds, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_use_baseline, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_no_replanning, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_split_motions, new boolContainer(false) ));
 
     // Int
     // ------------------------------------------------------------------
@@ -98,6 +99,7 @@ void initHricsParameters()
     myIntMap.insert( std::make_pair( HricsParam::ioc_spheres_to_draw, new intContainer(-1) ));
     myIntMap.insert( std::make_pair( HricsParam::ioc_from_file_offset, new intContainer(-1) ));
     myIntMap.insert( std::make_pair( HricsParam::ioc_ik, new intContainer(-1) ));
+    myIntMap.insert( std::make_pair( HricsParam::ioc_baseline_type, new intContainer(-1) ));
 
     // Double
     // ------------------------------------------------------------------
@@ -111,7 +113,8 @@ void initHricsParameters()
     // String
     // ------------------------------------------------------------------
 #ifdef QT_LIBRARY
-    myStringMap.insert(std::make_pair(HricsParam::titi,                       new stringContainer("titi")));
+    myStringMap.insert(std::make_pair(HricsParam::ioc_traj_split_name,   new stringContainer("titi")));
+
 #endif
 
     // Vector

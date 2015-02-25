@@ -130,7 +130,7 @@ namespace stomp_motion_planner
             ratio_projected_ = 1.0; // 1.0 = all along the trajectory
 
             Move3D::Robot* robot = planning_group->robot_;
-            eef_ = robot->getJoint( "J4" ); // plannar J4
+            eef_ = robot->getJoint( PlanEnv->getString(PlanParam::end_effector_joint) ); // plannar J4
 
             if( eef_ != NULL )
             {
@@ -263,7 +263,6 @@ namespace stomp_motion_planner
     void PolicyImprovementLoop::parallelRollout(int r, int iteration_number )
     {
         costComputation* traj_evaluation  = static_pointer_cast<StompOptimizer>(task_)->getCostComputers()[r];
-        
         traj_evaluation->getCost( rollouts_[r], parallel_cost_[r], iteration_number, joint_limits_, false, true );
 
         // Get costs
@@ -294,11 +293,11 @@ namespace stomp_motion_planner
             for(int d=0; d<num_dimensions_; d++)
                 rollout_control_costs_[r].row(d) = optimizer->getMainCostComputer()->getControlCosts()[d];
 
-            policy_improvement_.setRolloutOutOfBounds( r, !optimizer->getJointLimitViolationSuccess() );
+            policy_improvement_.setRolloutOutOfBounds( r, !optimizer->getMainCostComputer()->getJointLimitViolationSuccess() );
 
             if( use_annealing_ )
             {
-                limits_violations_ += optimizer->getJointLimitViolations();
+                limits_violations_ += !optimizer->getMainCostComputer()->getJointLimitViolationSuccess();
             }
         }
     }
@@ -334,10 +333,6 @@ namespace stomp_motion_planner
         bool get_reused_ones = true;
         policy_improvement_.getRollouts( rollouts_, noise, get_reused_ones, reused_rollouts_ );
 
-        //cout << "Run single interation of stomp " << endl;
-        if ( ENV.getBool(Env::drawTrajVector) )
-            addRolloutsToDraw( get_reused_ones );
-
 
         //printRollouts();
 
@@ -364,11 +359,19 @@ namespace stomp_motion_planner
             //cout << "end parallel computing" << endl;
         }
 
+
+
         // TODO: fix this std::vector<>
         std::vector<double> all_costs;
         //cout << "control_cost_weight_ : " << control_cost_weight_ << endl;
 
         // Improve the policy
+        policy_improvement_.setRollouts( rollouts_ ); // TODO see if we need to set noise etc...
+
+        //cout << "Run single interation of stomp " << endl;
+        if ( ENV.getBool(Env::drawTrajVector) )
+            addRolloutsToDraw( get_reused_ones );
+
         policy_improvement_.setRolloutCosts( rollout_costs_, rollout_control_costs_, control_cost_weight_, all_costs );
         policy_improvement_.improvePolicy( parameter_updates_ );
 
@@ -387,7 +390,7 @@ namespace stomp_motion_planner
         //    addStraightLineRollout( extra_rollout, extra_rollout_cost );
 
         // Get the trajectory cost
-        bool resample = !PlanEnv->getBool( PlanParam::trajStompMultiplyM );
+        bool resample = false; //!PlanEnv->getBool( PlanParam::trajStompMultiplyM );
         // Warning!!!!
         // not return the modified trajectory when is out of bounds
         task_->execute( parameters_, tmp_rollout_cost_, iteration_number, true, resample, false );

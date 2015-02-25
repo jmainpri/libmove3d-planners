@@ -55,7 +55,7 @@ double Feature::cost( Configuration& q )
 {
     FeatureVect phi = getFeatures( q );
     WeightVect w = is_stacked_ ? this->getWeights() : w_ ;
-    double cost = w.transpose()*phi;
+    double cost = w.transpose()*FeatureVect( phi.array().pow( ENV.getDouble(Env::KlengthWeight) ) );
 
     if( w.size() != phi.size() )
     {
@@ -243,13 +243,13 @@ FeatureVect Feature::getFeatureCount( Move3D::LocalPath& path, int& nb_calls )
     double t_max = path.getParamMax();
     double step = ENV.getDouble(Env::dmax)*PlanEnv->getDouble(PlanParam::costResolution);
     int n_step = int(t_max/step);
-    if( n_step < 5 ){ // minumum of 5 steps
-        n_step = 5;
+    if( n_step < 2 ){ // minumum of 5 steps
+        n_step = 2;
         step = t_max / double(n_step);
     }
 
     confPtr_t q = path.configAtParam(0.0);
-    FeatureVect feat1 = getFeatures( *q );
+    FeatureVect feat1 = getFeatures( *q ); // .array().pow( ENV.getDouble(Env::KlengthWeight) );
 
     nb_calls = n_step;
 

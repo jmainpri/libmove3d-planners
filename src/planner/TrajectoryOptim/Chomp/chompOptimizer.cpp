@@ -103,7 +103,7 @@ void ChompOptimizer::initialize()
         derivative_costs[2] = joint_cost*parameters_->getSmoothnessCostJerk();
 
 
-        joint_costs_.push_back(ChompCost(group_trajectory_, i, derivative_costs, parameters_->getRidgeFactor()));
+        joint_costs_.push_back(ChompCost(num_vars_all_, i, derivative_costs, parameters_->getRidgeFactor()));
         double cost_scale = joint_costs_[i].getMaxQuadCostInvValue();
         if (max_cost_scale < cost_scale)
             max_cost_scale = cost_scale;

@@ -118,7 +118,7 @@ Eigen::VectorXd GeneralIK::single_step_joint_limits( const Eigen::VectorXd& xdes
     Eigen::MatrixXd J = robot_->getJacobian( active_joints_, eef_, with_rotation, with_height );
     Eigen::VectorXd dq;
 
-//    cout << "J : " << endl << J << endl;
+    // cout << "J : " << endl << J << endl;
 
     do
     {
@@ -146,18 +146,19 @@ Eigen::VectorXd GeneralIK::single_step_joint_limits( const Eigen::VectorXd& xdes
         q_s = q_s_old + dq;
 
         limit = false;
-        for(int j = 0; j<active_joints_.size(); j++)
+        for(int j =0; j<active_joints_.size(); j++)
         {
-            if( active_joints_[j]->isJointDofCircular(0))
+            if( active_joints_[j]->isJointDofCircular(0) )
                 continue;
 
             double lowerLimit, upperLimit;
             active_joints_[j]->getDofRandBounds( 0, lowerLimit, upperLimit );
+
             if( q_s[j] < lowerLimit || q_s[j] > upperLimit )
             {
                 badjointinds.push_back(j); // note this will never add the same joint twice, even if bClearBadJoints = false
                 limit = true;
-//                cout << "does not respect joint limits : " << active_joints_[j]->getName() << endl;
+                // cout << "does not respect joint limits : " << active_joints_[j]->getName() << endl;
             }
         }
 

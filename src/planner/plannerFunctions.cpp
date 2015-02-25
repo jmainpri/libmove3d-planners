@@ -199,6 +199,9 @@ p3d_traj* p3d_extract_traj( bool is_traj_found, int nb_added_nodes, Graph* graph
             ENV.setBool(Env::isCostSpace, is_cost_space);
         }
 
+        // Add current move3d trajectory
+        rob->setCurrentMove3DTraj( *traj );
+
         last_traj = *traj;
 
         traj->replaceP3dTraj();

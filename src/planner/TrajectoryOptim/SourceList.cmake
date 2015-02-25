@@ -12,5 +12,7 @@ BM3D_SRC_SUBDIR_PROCESS(plannarTrajectorySmoothing.cpp)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Classic/SourceList.cmake)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Chomp/SourceList.cmake)
 include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Stomp/SourceList.cmake)
+include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Lamp/SourceList.cmake)
+
 
 SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME_TMP})

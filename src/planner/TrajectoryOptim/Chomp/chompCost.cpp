@@ -44,10 +44,12 @@ using namespace Move3D;
 //namespace chomp
 //{
 
-ChompCost::ChompCost(const ChompTrajectory& trajectory, int joint_number, const std::vector<double>& derivative_costs, double ridge_factor)
+ChompCost::ChompCost( int num_vars_all, int joint_number, const std::vector<double>& derivative_costs, double ridge_factor)
 {
-    int num_vars_all = trajectory.getNumPoints();
+    // int num_vars_all = num_vars_all; // trajectory.getNumPoints();
     int num_vars_free = num_vars_all - 2*(DIFF_RULE_LENGTH-1);
+
+
     MatrixXd diff_matrix = MatrixXd::Zero(num_vars_all, num_vars_all);
     quad_cost_full_ = MatrixXd::Zero(num_vars_all, num_vars_all);
 
@@ -69,7 +71,6 @@ ChompCost::ChompCost(const ChompTrajectory& trajectory, int joint_number, const 
     quad_cost_inv_ = quad_cost_.inverse();
 
     //cout << quad_cost_inv_ << endl;
-
 }
 
 ChompCost::ChompCost(const ChompCost& c)

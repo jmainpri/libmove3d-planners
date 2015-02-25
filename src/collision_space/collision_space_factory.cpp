@@ -56,8 +56,8 @@ static std::vector<int> m_active_joints;
 static std::vector<int> m_planner_joints;
 static std::vector<CollisionPoint> m_collision_points;
 
-static bool m_add_human = false;
-static bool m_init=false;
+static bool m_add_human = true;
+static bool m_init = false;
 
 static Robot* m_robot=NULL;
 
@@ -155,7 +155,7 @@ void traj_optim_init_collision_space()
 
     // Warning
     // If not human not add bodies
-    if( m_robot->getName().find("HERAKLES") == std::string::npos )
+    if( m_robot->getName().find("HUMAN") == std::string::npos )
     {
 //        cout << "robot name : " << m_robot->getName() << endl;
 //        cout << "Add robot bodies exit " << endl; // exit(0);
@@ -177,7 +177,7 @@ void traj_optim_init_collision_space()
         {
             Robot* rob = sc->getRobot(i);
 
-            if (  ( m_robot != rob ) && rob->getName().find("HERAKLES") != std::string::npos )
+            if (  ( m_robot != rob ) && rob->getName().find("HUMAN") != std::string::npos )
             {
                 m_collspace->addRobot( rob );
             }

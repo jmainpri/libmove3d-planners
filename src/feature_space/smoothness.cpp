@@ -622,22 +622,28 @@ FeatureVect phi_max ( FeatureVect::Zero( 8 ) );
 FeatureVect phi_sum ( FeatureVect::Zero( 8 ) );
 int iter = 0;
 
-double smoothness_phi_coeff_0=6169.25695308327;
-double smoothness_phi_coeff_1=4.44904301010109;
-double smoothness_phi_coeff_2=0.003049597344395;
-double smoothness_phi_coeff_3=5.85878290700533e-08;
-double smoothness_phi_coeff_4=2618693.84526831;
-double smoothness_phi_coeff_5=1930.67945543425;
-double smoothness_phi_coeff_6=2.45532918225898;
-double smoothness_phi_coeff_7=4.41198038100153e-05;
-
 // 24677.0278123331				10474775.3810732	7722.71782173699	9.82131672903591	0.000176479215240061
+// PR2
+//double smoothness_phi_coeff_0=6169.25695308327;
+//double smoothness_phi_coeff_1=4.44904301010109;
+//double smoothness_phi_coeff_2=0.003049597344395;
+//double smoothness_phi_coeff_3=5.85878290700533e-08;
+//double smoothness_phi_coeff_4=2618693.84526831;
+//double smoothness_phi_coeff_5=1930.67945543425;
+//double smoothness_phi_coeff_6=2.45532918225898;
+//double smoothness_phi_coeff_7=4.41198038100153e-05;
 
+// HUMAN
 
+double smoothness_phi_coeff_0=1e-01;
+double smoothness_phi_coeff_1=1e-05;
+double smoothness_phi_coeff_2=1e-10;
+double smoothness_phi_coeff_3=1e-15;
+double smoothness_phi_coeff_4=1e+01;
+double smoothness_phi_coeff_5=1e-03;
+double smoothness_phi_coeff_6=1e-09;
+double smoothness_phi_coeff_7=1e-13;
 
-
-FeatureVect SmoothnessFeature::getFeatureCount( const Move3D::Trajectory& t )
-{
 //    FeatureVect phi( FeatureVect::Zero( 8 ) );
 //    phi[0] = length_.getFeatureCount(t)[0] * 1e-01;
 //    phi[1] = velocity_.getFeatureCount(t)[0] * 1e-05;
@@ -650,6 +656,9 @@ FeatureVect SmoothnessFeature::getFeatureCount( const Move3D::Trajectory& t )
 //    phi[6] = phi_task[2] * 1e-09;
 //    phi[7] = phi_task[3] * 1e-13;
 
+
+FeatureVect SmoothnessFeature::getFeatureCount( const Move3D::Trajectory& t )
+{
     FeatureVect phi( FeatureVect::Zero( 8 ) );
     phi[0] = length_.getFeatureCount(t)[0] ;
     phi[1] = velocity_.getFeatureCount(t)[0] ;

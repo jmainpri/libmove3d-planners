@@ -95,10 +95,12 @@ private:
     int limits_violations_;
     double K_;
 
+    // Constraints -----------------------
     bool project_last_config_;
     double ratio_projected_;
     Eigen::VectorXd x_task_goal_;
     Move3D::Joint* eef_;
+    // -----------------------------------
 
   
     MOVE3D_BOOST_PTR_NAMESPACE<Task> task_;
@@ -155,6 +157,7 @@ private:
     // Print rollouts
     void printSingleRollout( const std::vector<Eigen::VectorXd>& rollout, int id ) const;
     void printRollouts() const;
+
 };
 
 }

@@ -73,7 +73,8 @@ bool HRICS_init_human_trajectory_cost()
         }
 
         bool load_kinect_motions = true;
-        bool load_a_term = true;
+        bool load_a_term = false;
+
         if( load_kinect_motions )
         {
             global_motionRecorders.push_back( new HRICS::RecordMotion( passive_agent ) );
@@ -455,7 +456,8 @@ bool HumanTrajSimulator::init()
     minimal_demo_size_ = 10;
     trajectories_cut_ = false;
 
-    use_one_traj_ = false;
+    // Use only one trajectory
+    use_one_traj_ = !HriEnv->getBool(HricsParam::ioc_split_motions);
 
     if( !motion_recorders_.empty() )
     {
@@ -463,8 +465,8 @@ bool HumanTrajSimulator::init()
         // add cut motions
         setReplanningDemonstrations();
 
-//        if( !use_one_traj_ )
-//            addCutMotions();
+        if( !use_one_traj_ )
+            addCutMotions();
 
         // setInitAndGoalConfig(); // For simulation
 
@@ -611,7 +613,7 @@ void HumanTrajSimulator::setReplanningDemonstrations()
     cout << "---------------------------------------------" << endl;
     cout << "Set replanning demonstrations" << endl;
 
-     bool use_all_motions = true;
+     bool use_all_motions = false;
 
      // Only select particular motions
      std::vector<std::string> selected;
@@ -650,40 +652,48 @@ void HumanTrajSimulator::setReplanningDemonstrations()
          //    selected.push_back("[0408-0491]_human1_.csv");
 
          // GOOD...
-         //    selected.push_back("[0446-0578]_human2_.csv");
-         //    selected.push_back("[0446-0578]_human1_.csv");
 
-         //    selected.push_back("[0525-0657]_human2_.csv");
-         //    selected.push_back("[0525-0657]_human1_.csv");
+         selected.push_back("[0446-0578]_human2_.csv");
+         selected.push_back("[0446-0578]_human1_.csv");
 
-         //    selected.push_back("[0444-0585]_human2_.csv");
-         //    selected.push_back("[0444-0585]_human1_.csv");
+         selected.push_back("[0525-0657]_human2_.csv");
+         selected.push_back("[0525-0657]_human1_.csv");
 
-         //    selected.push_back("[0489-0589]_human2_.csv");
-         //    selected.push_back("[0489-0589]_human1_.csv");
+         selected.push_back("[0444-0585]_human2_.csv");
+         selected.push_back("[0444-0585]_human1_.csv");
 
-         //    selected.push_back("[0780-0871]_human2_.csv");
-         //    selected.push_back("[0780-0871]_human1_.csv");
+         selected.push_back("[0489-0589]_human2_.csv");
+         selected.push_back("[0489-0589]_human1_.csv");
 
-         //    selected.push_back("[1537-1608]_human2_.csv");
-         //    selected.push_back("[1537-1608]_human1_.csv");
+         selected.push_back("[0780-0871]_human2_.csv");
+         selected.push_back("[0780-0871]_human1_.csv");
 
-         //    selected.push_back("[2711-2823]_human2_.csv");
-         //    selected.push_back("[2711-2823]_human1_.csv");
+         selected.push_back("[1537-1608]_human2_.csv");
+         selected.push_back("[1537-1608]_human1_.csv");
+
+         selected.push_back("[2711-2823]_human2_.csv");
+         selected.push_back("[2711-2823]_human1_.csv");
 
 
 
-         // REPLANNING MOTION last
+         // REPLANNING MOTION last (paper)
 
-         selected.push_back("[7395-7595]_human2_.csv");
-         selected.push_back("[7395-7595]_human1_.csv");
-
+//         selected.push_back("[7395-7595]_human2_.csv");
+//         selected.push_back("[7395-7595]_human1_.csv");
 
 
 
          // REPLANNING MOTION first
          //    selected.push_back("[0629-0768]_human2_.csv");
          //    selected.push_back("[0629-0768]_human1_.csv");
+
+         std::string human2 = HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human2_.csv";
+         std::vector<std::string>::iterator it1 = find( selected.begin(), selected.end(), human2 );
+         selected.erase( it1 );
+
+         std::string human1 = HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human1_.csv";
+         std::vector<std::string>::iterator it2 = find( selected.begin(), selected.end(), human1 );
+         selected.erase( it2 );
 
 
          if( !use_one_traj_ )

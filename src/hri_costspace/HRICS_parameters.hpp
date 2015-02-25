@@ -64,7 +64,8 @@ namespace HricsParam
             ioc_use_simulation_demos,
             ioc_user_set_pelvis_bounds,
             ioc_use_baseline,
-            ioc_no_replanning
+            ioc_no_replanning,
+            ioc_split_motions
         };
 
         enum intParameter
@@ -75,7 +76,8 @@ namespace HricsParam
             ioc_planner_type,
             ioc_spheres_to_draw,
             ioc_from_file_offset,
-            ioc_ik
+            ioc_ik,
+            ioc_baseline_type
         };
 
         enum doubleParameter
@@ -88,7 +90,7 @@ namespace HricsParam
 
         enum stringParameter
         {
-             titi
+             ioc_traj_split_name
         };
 
         enum vectorParameter

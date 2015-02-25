@@ -156,9 +156,13 @@ void Spheres::initialize()
 //        centers_[1]->setAndUpdate( q2 );
 //        centers_[2]->setAndUpdate( q3 );
 
-        w_[i++] = 3;
+//        w_[i++] = 3;
+//        w_[i++] = 10;
+//        w_[i++] = 5;
+
         w_[i++] = 10;
-        w_[i++] = 5;
+        w_[i++] = 10;
+        w_[i++] = 10;
 
         scaling_features_ = 3;
         scaling_weight_ = 1;

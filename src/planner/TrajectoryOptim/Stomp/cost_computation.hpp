@@ -125,7 +125,9 @@ private:
     Move3D::ChompTrajectory group_trajectory_;
     const Move3D::ChompPlanningGroup* planning_group_;
 
-    double resampleParameters(std::vector<Eigen::VectorXd>& parameters);
+    double resampleParameters( std::vector<Eigen::VectorXd>& parameters );
+    void projectToConstraints( Move3D::ChompTrajectory& group_traj ) const;
+    void getMove3DConfiguration( const Eigen::VectorXd& joint_array, Move3D::Configuration& q ) const;
 
     bool is_collision_free_;
     bool succeded_joint_limits_;
@@ -143,6 +145,13 @@ private:
     std::vector< std::vector<Eigen::Vector3d> >  collision_point_potential_gradient_;
     Eigen::MatrixXd collision_point_potential_;
     Eigen::MatrixXd collision_point_vel_mag_;
+
+    // Constraints -----------------------
+    bool project_last_config_;
+    double ratio_projected_;
+    Eigen::VectorXd x_task_goal_;
+    Move3D::Joint* eef_;
+    // -----------------------------------
 
 
     // Variable General cost

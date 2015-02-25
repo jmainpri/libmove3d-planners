@@ -391,7 +391,7 @@ vector< pair<double,double> > LocalPath::getCostProfile()
     const double DeltaStep = getResolution();
     const unsigned int nStep = floor( ( getParamMax() / DeltaStep) + 0.5);
 
-    cout <<  "nStep : " << nStep <<  endl;
+    // cout <<  "nStep : " << nStep <<  endl;
 
     for (unsigned int i = 0; i < nStep; i++)
     {
@@ -461,6 +461,7 @@ double LocalPath::cost()
         _Cost = global_costSpace->cost( *this, _NbCostTest );
         _costEvaluated = true;
         // cout << "local path cost : " << _Cost << endl;
+        // cout << "local path nb. cost tests : " << _NbCostTest << endl;
     }
 //    else {
 //        cout << "already eval" << endl;

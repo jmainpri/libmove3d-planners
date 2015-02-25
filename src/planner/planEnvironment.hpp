@@ -126,7 +126,7 @@ enum boolParameter
     drawReachableGrid,
     saveVideo,
 
-    //Object Transfert point variable
+    // Object Transfert point variable
     env_humanGridDraw,
     env_robotGridDraw,
     env_isStanding,
@@ -186,7 +186,10 @@ enum intParameter
     env_timeShow,
     env_pow,
     env_MOTP,
-    env_anglePow
+    env_anglePow,
+
+    // Lamp
+    lamp_nb_samples
 };
 
 enum doubleParameter
@@ -251,12 +254,18 @@ enum doubleParameter
     env_futurX,
     env_futurY,
     env_futurZ,
-    env_futurRZ
+    env_futurRZ,
+
+    // Lamp
+    lamp_hessian_factor,
+    lamp_control_cost,
+    lamp_eta
 };
 
 enum stringParameter
 {
-    active_cost_function
+    active_cost_function,
+    end_effector_joint
 };
 
 enum vectorParameter

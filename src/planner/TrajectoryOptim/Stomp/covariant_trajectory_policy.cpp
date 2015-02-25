@@ -55,6 +55,15 @@
 using namespace std;
 using namespace Move3D;
 
+extern double smoothness_phi_coeff_0;
+extern double smoothness_phi_coeff_1;
+extern double smoothness_phi_coeff_2;
+extern double smoothness_phi_coeff_3;
+extern double smoothness_phi_coeff_4;
+extern double smoothness_phi_coeff_5;
+extern double smoothness_phi_coeff_6;
+extern double smoothness_phi_coeff_7;
+
 namespace stomp_motion_planner
 {
 
@@ -325,7 +334,7 @@ bool CovariantTrajectoryPolicy::initializeCosts()
         // Construct the quadratic cost matrices (for all variables)
         Eigen::MatrixXd cost_all = Eigen::MatrixXd::Identity( num_vars_all_ + free_offset_, num_vars_all_ + free_offset_ ) * cost_ridge_factor_;
 
-        for (int i=0; i<NUM_DIFF_RULES; ++i)
+        for (int i=0; i<NUM_DIFF_RULES; ++i) // NUM_DI...
         {
             // cout << "derivative cost : " << i << " , " << derivative_costs_[i] << endl;
             cost_all += derivative_costs_[i] * (differentiation_matrices_[i].transpose() * differentiation_matrices_[i]);
@@ -333,8 +342,10 @@ bool CovariantTrajectoryPolicy::initializeCosts()
         control_costs_all_.push_back( cost_all );
 
         // Extract the quadratic cost just for the free variables
-        Eigen::MatrixXd cost_free = cost_all.block( DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_, num_vars_free_ );
-        Eigen::MatrixXd cost_free2 = cost_all.block( DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_+ free_offset_, num_vars_free_+ free_offset_ );
+         Eigen::MatrixXd cost_free  = cost_all.block( DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_, num_vars_free_ );
+         Eigen::MatrixXd cost_free2 = cost_all.block( DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_+ free_offset_, num_vars_free_+ free_offset_ );
+//        Eigen::MatrixXd cost_free   = cost_all.block( 2*(DIFF_RULE_LENGTH-1), 2*(DIFF_RULE_LENGTH-1), num_vars_free_, num_vars_free_ );
+//        Eigen::MatrixXd cost_free2  = cost_all.block( 2*(DIFF_RULE_LENGTH-1), 2*(DIFF_RULE_LENGTH-1), num_vars_free_, num_vars_free_ );
 
         // cout << "cost_free("<<d<<") = " << endl << cost_free << endl;
 
@@ -345,13 +356,24 @@ bool CovariantTrajectoryPolicy::initializeCosts()
 
 //        move3d_save_matrix_to_file( cost_all, "../matlab/cost_all.txt" );
 
-        //cout << "control_costs["<< d <<"]  = " << endl << control_costs_[d] << endl;
+//        cout << "control_costs["<< d <<"]  = " << endl << control_costs_[d] << endl;
     }
 
 //    exit(0);
 
-//    move3d_save_matrix_to_file( control_costs_[0], "../matlab/cost_free.txt" );
-//    move3d_save_matrix_to_file( covariances_[0], "../matlab/invcost_matrix.txt" );
+//    cout << "diff_mat : "  << endl << differentiation_matrices_[1] << endl;
+//    cout << "diff_mat : "  << endl << control_costs_all_[0] << endl;
+
+
+//    cout << "diff_mat : "       << differentiation_matrices_[1].rows() << " , " << differentiation_matrices_[1].cols() << endl;
+//    cout << "cost_all : "       << control_costs_all_[0].rows() << " , " << control_costs_all_[0].cols() << endl;
+//    cout << "cost_free : "      << control_costs_[0].rows() << " , " << control_costs_[0].cols() << endl;
+//    cout << "cost_free2 : "     << covariances_[0].rows() << " , " << covariances_[0].cols() << endl;
+
+    move3d_save_matrix_to_file( differentiation_matrices_[1], "../matlab/diff_mat.txt" );
+    move3d_save_matrix_to_file( control_costs_all_[0], "../matlab/control_costs_all.txt" );
+    move3d_save_matrix_to_file( control_costs_[0], "../matlab/cost_free.txt" );
+    move3d_save_matrix_to_file( covariances_[0], "../matlab/invcost_matrix.txt" );
     return true;
 }
 
@@ -618,6 +640,7 @@ bool CovariantTrajectoryPolicy::updateParameters(const std::vector<Eigen::Matrix
     return true;
 }
 
+
 Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen::VectorXd>& parameters, std::vector< std::vector<Eigen::VectorXd> >& control_costs, double dt )
 {
     const int nb_costs = 8;
@@ -640,15 +663,6 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts( const std::vector<Eigen:
 //        control_costs[1][d] = Eigen::VectorXd::Zero( parameters[d].size() );
 //        control_costs[2][d] = Eigen::VectorXd::Zero( parameters[d].size() );
     }
-
-    double smoothness_phi_coeff_0=6169.25695308327;
-    double smoothness_phi_coeff_1=4.44904301010109;
-    double smoothness_phi_coeff_2=0.003049597344395;
-    double smoothness_phi_coeff_3=5.85878290700533e-08;
-    double smoothness_phi_coeff_4=2618693.84526831;
-    double smoothness_phi_coeff_5=1930.67945543425;
-    double smoothness_phi_coeff_6=2.45532918225898;
-    double smoothness_phi_coeff_7=4.41198038100153e-05;
 
     const double factor_dist = smoothness_phi_coeff_0;
     const double factor_vel  = smoothness_phi_coeff_1;

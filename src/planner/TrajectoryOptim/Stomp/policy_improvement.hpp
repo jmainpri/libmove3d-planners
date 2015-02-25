@@ -162,6 +162,11 @@ namespace stomp_motion_planner
      */
     bool resetReusedRollouts();
 
+    /**
+     * set rollouts
+     */
+    bool setRollouts( const std::vector<std::vector<Eigen::VectorXd> >& rollouts );
+
 
 
     std::vector<Eigen::MatrixXd> projection_matrix_;                        /**< [num_dimensions] num_parameters x num_parameters */
@@ -238,6 +243,8 @@ namespace stomp_motion_planner
     void addStraightLines( std::vector<int> points, Rollout& rollouts);
     bool generateRollouts(const std::vector<double>& noise_variance);
     bool simpleJointLimits( Rollout& traj ) const;
+
+    void addParmametersToDraw(const std::vector<Eigen::VectorXd>& rollout, int color);
   };
   
 }

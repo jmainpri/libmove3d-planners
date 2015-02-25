@@ -422,8 +422,10 @@ double CostSpace::path_cost_default( LocalPath& path, int& nb_test )
         //        if( m_resolution == cs_classic )
         //        {
         deltaStep = path.getResolution();
-        nStep = path.getParamMax()/deltaStep;
+        nStep = path.getParamMax() / deltaStep;
         //        }
+
+        // cout << "nStep : " << nStep << endl;
 
         confPtr_t q;
 
@@ -475,6 +477,7 @@ double CostSpace::cost( LocalPath& path, int& nb_test )
 {
     if(!mPathFunctions.empty())
     {
+        // cout << "path cost name : " << mSelectedPathCostName << endl;
         double cost = mSelectedPathCost( path, nb_test );
         return cost;
     }
@@ -482,6 +485,109 @@ double CostSpace::cost( LocalPath& path, int& nb_test )
     {
         return path_cost_default( path, nb_test );
     }
+}
+
+//! The jacobian is of m by n -> nb features by active dofs
+//! column per dof
+//! row per feature
+Eigen::VectorXd CostSpace::getJacobian( const Configuration& q, std::vector<int> active_dofs )
+{
+    const double eps = 1e-3;
+
+    const std::vector<int>& dofs = active_dofs;
+    if( active_dofs.empty() )
+    {
+        for( size_t i=0; i< q.getEigenVector().size(); i++ )
+            active_dofs.push_back( i );
+    }
+
+    Eigen::VectorXd q_0 = q.getEigenVector( dofs );
+    Eigen::VectorXd J = Eigen::VectorXd::Zero( dofs.size() );
+
+    Configuration q_tmp( q );
+    q_tmp.getRobot()->setAndUpdate( q_tmp );
+    double c_0 = cost( q_tmp );
+
+    for( size_t j=0; j<q_0.size(); j++ ) // For each colomn
+    {
+        int dof = j;
+        // int dof = active_dofs_[ j ];
+        // cout << "dof : " << dof << endl;
+
+        Eigen::VectorXd q_1 = q_0;
+        q_1[dof] = q_0[ dof ] + eps;
+
+        q_tmp.setFromEigenVector( q_1, dofs );
+        q_tmp.getRobot()->setAndUpdate( q_tmp );
+        double c_1 = cost( q_tmp );
+
+        // J.col(j) = ( c_1 - c_0 ) / eps;
+        J(j) = ( c_1 - c_0 ) / eps;
+    }
+
+//    cout << "J : " << endl << J.transpose() << std::scientific << endl;
+    return J;
+}
+
+//! The jacobian is of m by n -> nb features by active dofs
+//! column per dof
+//! row per feature
+Eigen::MatrixXd CostSpace::getHessian( const Configuration& q, std::vector<int> active_dofs )
+{
+    const double eps = 1e-3;
+    const double eps_sq = (eps*eps);
+
+    const std::vector<int>& dofs = active_dofs;
+    if( active_dofs.empty() )
+    {
+        for( size_t i=0; i< q.getEigenVector().size(); i++ )
+            active_dofs.push_back( i );
+    }
+
+    Eigen::VectorXd q_0 = q.getEigenVector( dofs );
+    Eigen::MatrixXd H = Eigen::MatrixXd::Zero( dofs.size(), dofs.size() );
+
+    Configuration q_tmp( q );
+    q_tmp.getRobot()->setAndUpdate( q_tmp );
+    double c_0 = cost( q_tmp );
+
+
+    for( size_t i=0; i<q_0.size(); i++ ) // For each row
+
+        for( size_t j=0; j<q_0.size(); j++ ) // For each colomn
+        {
+            int dof_i = i;
+            int dof_j = j;
+            // int dof = active_dofs_[ j ];
+            // cout << "dof : " << dof << endl;
+
+            Eigen::VectorXd q_1 = q_0;
+            q_1[dof_i] = q_0[ dof_i ] + eps;
+            q_1[dof_j] = q_0[ dof_j ] + eps;
+
+            Eigen::VectorXd q_2 = q_0;
+            q_2[dof_i] = q_0[ dof_i ] + eps;
+
+            Eigen::VectorXd q_3 = q_0;
+            q_3[dof_j] = q_0[ dof_j ] + eps;
+
+            q_tmp.setFromEigenVector( q_1, dofs );
+            q_tmp.getRobot()->setAndUpdate( q_tmp );
+            double c_1 = cost( q_tmp );
+
+            q_tmp.setFromEigenVector( q_2, dofs );
+            q_tmp.getRobot()->setAndUpdate( q_tmp );
+            double c_2 = cost( q_tmp );
+
+            q_tmp.setFromEigenVector( q_3, dofs );
+            q_tmp.getRobot()->setAndUpdate( q_tmp );
+            double c_3 = cost( q_tmp );
+
+            H(i, j) = ( c_1 - c_2 - c_3 + c_0 ) / eps_sq;
+        }
+
+//    cout << "J : " << endl << J.transpose() << std::scientific << endl;
+    return H;
 }
 
 //----------------------------------------------------------------------

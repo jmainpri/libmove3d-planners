@@ -227,9 +227,9 @@ void IocSampler::initPolicy()
     policy_.setPrintDebug( false );
 
     std::vector<double> derivative_costs(3);
-    derivative_costs[0] = 1.0; // velocity
+    derivative_costs[0] = 0.0; // velocity
     derivative_costs[1] = 0.0; // acceleration
-    derivative_costs[2] = 0.0; // smoothness
+    derivative_costs[2] = 1.0; // smoothness
 
     // initializes the policy
     policy_.initialize( num_vars_free_, num_joints_, 1.0, 0.0, derivative_costs );
@@ -525,8 +525,8 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
 
             while( ( traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max ) && ( nb_attempt < 10 ) )
             {
-                cout << "not in limits, name : " << planning_group_->chomp_dofs_[j].joint_name_ << endl;
-                cout << j << " : upper : " << j_max << ", lower : " << j_min << ", value : " << traj.parameters_[j][i] << endl;
+                // cout << "not in limits, name : " << planning_group_->chomp_dofs_[j].joint_name_ << endl;
+                // cout << j << " : upper : " << j_max << ", lower : " << j_min << ", value : " << traj.parameters_[j][i] << endl;
 
                 coeff *= 0.90; // 90 percent (10 * 0.9 = 0.3)
                 traj.noise_[j] *= coeff;
@@ -2198,7 +2198,9 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
         samples = ioc.getSamples();
 
         robot_->getP3dRobotStruct()->tcur = NULL;
-        ioc.addAllToDraw();
+
+        if( ENV.getBool(Env::drawTraj) )
+            ioc.addAllToDraw();
 //        saveSamplesToFile( samples );
     }
     else { // load from file
@@ -2240,8 +2242,6 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
 
 //        dtw_compare_performance( plangroup_, demos_[d], samples[d] );
 
-        continue;
-
         for( int i=0; i<int(samples[d].size()); i++)
         {
             phi = feature_fct_->getFeatureCount( samples[d][i] );
@@ -2276,7 +2276,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
             }
 
             // gradient_sum += feature_fct_->getJacobianSum( samples[d][i] );
-            // cout << "Sample(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
+//            cout << "Sample(" << d << "," <<  i << ") : " << phi_k[d][i].transpose() << endl;
 //             cout << "Smoothness(" << d << "," <<  i << ") : " << phi_k[d][i][0] << endl;
         }
     }
@@ -2695,6 +2695,8 @@ void IocEvaluation::saveToMatrixFile( const std::vector<FeatureVect>& demos, con
 
     std::stringstream ss;
     ss << tmp_data_folder_ << name << "_" << std::setw(3) << std::setfill( '0' ) << nb_samples_ << ".txt";
+
+    cout  << "mat.rows() : " << mat.rows() << " , mat.cols() : " << mat.cols() << endl;
 
     //cout << "save samples to : " << feature_matrix_name_ << endl;
     move3d_save_matrix_to_file( mat, ss.str() );

@@ -72,8 +72,8 @@ double StompParameters::getGeneralCostWeight() const
   
 void StompParameters::init()
 {
-  max_time_ = 10;
-  max_iterations_ = 10;
+  max_time_         = PlanEnv->getDouble(PlanParam::trajStompTimeLimit);
+  max_iterations_   = PlanEnv->getInt(PlanParam::stompMaxIteration);
   //max_iterations_after_collision_free_ = 100;
   max_iterations_after_collision_free_ = 100;
   max_best_iterations_= 1000;
@@ -102,7 +102,7 @@ void StompParameters::init()
   
   smoothness_cost_velocity_ = 0.0;
   smoothness_cost_acceleration_ = 1.0;
-  smoothness_cost_jerk_ = 0.0;
+  smoothness_cost_jerk_ = 1.0;
   
   use_hamiltonian_monte_carlo_ = true;
   hmc_discretization_ = 0.01;

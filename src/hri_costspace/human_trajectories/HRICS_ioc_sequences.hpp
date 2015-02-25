@@ -89,4 +89,6 @@ private:
 
 }
 
+void hrics_ioc_compute_results();
+
 #endif // HRICS_IOC_SEQUENCES_HPP

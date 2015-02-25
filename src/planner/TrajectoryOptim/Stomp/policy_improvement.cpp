@@ -354,6 +354,8 @@ namespace stomp_motion_planner
                 projection_matrix_[d].col(p) *= (1.0/(num_parameters_[d]*column_max));
             }
 
+            move3d_save_matrix_to_file(projection_matrix_[0],"../matlab/m_mat.txt");
+
             //cout << "Projection Matrix = " << endl << projection_matrix_[d] << endl;
         }
 
@@ -544,9 +546,9 @@ namespace stomp_motion_planner
                 //  cout << "rollouts_(" << r << ") cost : " << rollouts_[r].getCost() << " , stored cost : "  << rollout_costs_total_[r] << endl;
 
                 // discard out of bounds rollouts
-//                if ( rollouts_[r].out_of_bounds_ ) {
-//                    cost = std::numeric_limits<double>::max();
-//                }
+                if ( rollouts_[r].out_of_bounds_ ) {
+                    cost = std::numeric_limits<double>::max();
+                }
                 // cout << "rollout_cost_sorter_(" << r << ") cost : " << cost << endl;
                 rollout_cost_sorter_.push_back(std::make_pair(cost,r));
             }
@@ -664,12 +666,23 @@ namespace stomp_motion_planner
             }
         }
 
-        if( true )
+        if( false )
             for (int r=0; r<num_rollouts_gen_; ++r)
             {
                 // WARNING ADDED FOR IOC
                 simpleJointLimits( rollouts_[r] );
             }
+
+        return true;
+    }
+
+    bool PolicyImprovement::setRollouts(const std::vector<std::vector<Eigen::VectorXd> >& rollouts )
+    {
+        for (int r=0; r<rollouts.size(); ++r)
+        {
+            rollouts_[r].parameters_ = rollouts[r];
+            computeNoise( rollouts_[r] );
+        }
 
         return true;
     }
@@ -715,6 +728,8 @@ namespace stomp_motion_planner
 
         if( r<0 || r>=num_rollouts_gen_ )
             return;
+
+        // cout << "rollout[" << r << "] out of bounds > " << out_of_bounds << endl;
 
         rollouts_[r].out_of_bounds_ = out_of_bounds;
     }
@@ -873,6 +888,8 @@ namespace stomp_motion_planner
     {
         //MatrixXd noise_update = MatrixXd(num_time_steps_, num_dimensions_);
 
+        std::vector<Eigen::VectorXd> parameters;
+
         for (int d=0; d<num_dimensions_; ++d)
         {
             parameter_updates_[d] = MatrixXd::Zero(num_time_steps_, num_parameters_[d]);
@@ -884,8 +901,18 @@ namespace stomp_motion_planner
                 //cout << "parameter_updates_[" << d << "].row(0).transpose() = ";
                 //cout << endl << parameter_updates_[d].row(0).transpose() << endl;
 
-                parameter_updates_[d].row(0).transpose() += rollouts_[r].noise_[d].cwise() * rollouts_[r].probabilities_[d];
+                if( !rollouts_[r].out_of_bounds_ )
+                {
+                    parameter_updates_[d].row(0).transpose() += rollouts_[r].noise_[d].cwise() * rollouts_[r].probabilities_[d];
+                }
+                else
+                {
+                    // cout << "joint limits out of bounds" << endl;
+                }
             }
+
+            parameters.push_back( parameter_updates_[d].row(0).transpose() + parameters_[d] );
+
             // cout << "parameter_updates_[" << d << "].row(0).transpose() = " << endl << parameter_updates_[d].row(0).transpose() << endl;
             // This is the multiplication by M
             if( use_multiplication_by_m_ )
@@ -893,6 +920,8 @@ namespace stomp_motion_planner
                 parameter_updates_[d].row(0).transpose() = projection_matrix_[d]*parameter_updates_[d].row(0).transpose();
             }
         }
+
+        addParmametersToDraw( parameters, 0 );
 
         //resampleUpdates();
         return true;
@@ -913,6 +942,31 @@ namespace stomp_motion_planner
         //   cout << "parameter_updates[" << d << "] = " << endl << parameter_updates_[d] << endl;
         // }
         return true;
+    }
+
+    /// TODO implement it
+    void PolicyImprovement::addParmametersToDraw(const std::vector<Eigen::VectorXd>& parameters, int color)
+    {
+        const Move3D::ChompPlanningGroup* planning_group = static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup();
+        const std::vector<Move3D::ChompDof>& dofs = planning_group->chomp_dofs_;
+
+        Move3D::Trajectory traj( planning_group->robot_ );
+
+        for ( int j=0; j<num_time_steps_; ++j)
+        {
+            confPtr_t q = traj.getRobot()->getCurrentPos();
+
+            for ( int i=0; i<planning_group->num_dofs_; ++i)
+            {
+                (*q)[dofs[i].move3d_dof_index_] = parameters[i][j];
+            }
+            traj.push_back(q);
+        }
+
+        //T.print();
+        traj.setColor( color );
+//        global_trajToDraw.clear();
+        global_trajToDraw.push_back( traj );
     }
 
     bool PolicyImprovement::covarianceMatrixAdaptaion()
