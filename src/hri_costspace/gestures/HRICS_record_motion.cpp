@@ -577,6 +577,8 @@ bool RecordMotion::setRobotToStoredMotionConfig(int motion_id, int config_id)
     }
 
     if( config_id < 0 || ( config_id >= int(m_stored_motions[motion_id].size()))) {
+        cout << "config_id : " << config_id << endl;
+        cout << "m_stored_motions[motion_id].size() : " << m_stored_motions[motion_id].size() << endl;
         cout << "index out of range in " << __PRETTY_FUNCTION__ << endl;
         return false;
     }

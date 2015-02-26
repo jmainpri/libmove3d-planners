@@ -145,12 +145,28 @@ bool HRICS_init_human_trajectory_cost()
 //                std::string folder_hrics = "/home/jmainpri/workspace/hrics-or-rafi/"; // "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/";
 //                std::string foldername = folder_hrics + "python_module/bioik/ten_motions_last/";
 
+
+
+/**
+
+                ICRA PAPER September
                 std::string move3d_root = std::string( getenv("HOME_MOVE3D" ) ) + std::string( "/../" );
                 std::string foldername = move3d_root + "assets/Collaboration/TRAJECTORIES/mocap/ten_motions_last/";
 
                 bool quiet = true;
                 global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet, -1.5 );
                 global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet, +1.5 );
+**/
+
+
+
+                std::string foldername = "/home/move3d/workspace/motions_icra/trajs/active/";
+
+                bool quiet = true;
+                global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet );
+                global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet );
+
+
 
                 cout << "Stored motion names : " << endl;
                 for( int i=0; i<global_motionRecorders[0]->getStoredMotions().size();i++)
@@ -619,39 +635,8 @@ void HumanTrajSimulator::setReplanningDemonstrations()
      std::vector<std::string> selected;
      if( !use_all_motions )
      {
-
-         //    selected.push_back( "[0551-0602]motion_saved_00000_00000.csv" );
-         //    selected.push_back( "[1186-1245]motion_saved_00000_00001.csv" );
-         //    selected.push_back( "[1552-1581]motion_saved_00000_00000.csv" );
-         //    selected.push_back( "[1873-1929]motion_saved_00000_00001.csv" );
-         //    selected.push_back( "[3191-3234]motion_saved_00000_00000.csv" );
-         //    selected.push_back( "[3913-3950]motion_saved_00000_00000.csv" );
-
-         // QUAN GOOD
-         //    selected.push_back( "[4125-4169]motion_saved_00000_00001.csv" );
-         //    selected.push_back( "[4422-4476]motion_saved_00000_00000.csv" );
-         //    selected.push_back( "[4591-4640]motion_saved_00000_00000.csv" );
-         //    selected.push_back( "[4753-4802]motion_saved_00000_00000.csv" );
-
-         // MOCAP GOOD
-         //    selected.push_back( "[1460-1620]_human1_.csv" );
-         //    selected.push_back( "[1460-1620]_human2_.csv" );
-
-         // TEN MOTIONS
-
-         // BAD...
-         //    selected.push_back("[1188-1256]_human2_.csv");
-         //    selected.push_back("[1188-1256]_human1_.csv");
-         //    selected.push_back("[2172-2249]_human2_.csv");
-         //    selected.push_back("[2172-2249]_human1_.csv");
-         //    selected.push_back("[2018-2099]_human2_.csv");
-         //    selected.push_back("[2018-2099]_human1_.csv");
-         //    selected.push_back("[1064-1140]_human2_.csv");
-         //    selected.push_back("[1064-1140]_human1_.csv");
-         //    selected.push_back("[0408-0491]_human2_.csv");
-         //    selected.push_back("[0408-0491]_human1_.csv");
-
-         // GOOD...
+         /**
+         // GOOD... ICRA SEPTEMBER
 
          selected.push_back("[0446-0578]_human2_.csv");
          selected.push_back("[0446-0578]_human1_.csv");
@@ -674,18 +659,10 @@ void HumanTrajSimulator::setReplanningDemonstrations()
          selected.push_back("[2711-2823]_human2_.csv");
          selected.push_back("[2711-2823]_human1_.csv");
 
-
-
          // REPLANNING MOTION last (paper)
 
 //         selected.push_back("[7395-7595]_human2_.csv");
 //         selected.push_back("[7395-7595]_human1_.csv");
-
-
-
-         // REPLANNING MOTION first
-         //    selected.push_back("[0629-0768]_human2_.csv");
-         //    selected.push_back("[0629-0768]_human1_.csv");
 
          std::string human2 = HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human2_.csv";
          std::vector<std::string>::iterator it1 = find( selected.begin(), selected.end(), human2 );
@@ -694,6 +671,30 @@ void HumanTrajSimulator::setReplanningDemonstrations()
          std::string human1 = HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human1_.csv";
          std::vector<std::string>::iterator it2 = find( selected.begin(), selected.end(), human1 );
          selected.erase( it2 );
+         **/
+
+
+
+        // GOOD... ICRA FEBUARY
+        // 1 . Active
+
+         selected.push_back("[0649-0740]_human2_.csv");
+         selected.push_back("[0649-0740]_human1_.csv");
+
+         selected.push_back("[1282-1370]_human2_.csv");
+         selected.push_back("[1282-1370]_human1_.csv");
+
+         selected.push_back("[1593-1696]_human2_.csv");
+         selected.push_back("[1593-1696]_human1_.csv");
+
+         selected.push_back("[1619-1702]_human2_.csv");
+         selected.push_back("[1619-1702]_human1_.csv");
+
+         selected.push_back("[1696-1796]_human2_.csv");
+         selected.push_back("[1696-1796]_human1_.csv");
+
+
+
 
 
          if( !use_one_traj_ )

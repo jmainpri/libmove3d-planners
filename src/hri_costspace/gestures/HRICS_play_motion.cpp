@@ -135,7 +135,8 @@ void PlayMotion::runRealTime(int id)
                 // TODO switch to time
                 for (size_t j=0; j<_motion_recorders.size(); j++)
                 {
-                    _motion_recorders[j]->setRobotToStoredMotionConfig( id, _current_frame );
+                    if( !_motion_recorders[j]->setRobotToStoredMotionConfig( id, _current_frame ) );
+                        return;
                 }
             }
             else if( _motion_recorders.empty() )
