@@ -232,6 +232,7 @@ bool LocalPath::classicTest()
         }
 
         _Valid = Move3DLocalPathClassicTest( *this, _lastValidConfig, _NbColTest, _lastValidParam );
+        // cout << "_NbColTest : " << _NbColTest << endl;
         _Evaluated = true;
         _lastValidEvaluated = true;
     }
@@ -274,7 +275,7 @@ bool LocalPath::isValid()
             }
         }
         _NbColTest++;
-        //    cout << "_NbColTest : " << _NbColTest << endl;
+        // cout << "_NbColTest : " << _NbColTest << endl;
         _Evaluated = true;
     }
     return _Valid;

@@ -244,7 +244,13 @@ void initPlannerParameters()
     myDoubleMap.insert( std::make_pair( PlanParam::costResolution,           new doubleContainer(1.0)));
 
     myDoubleMap.insert( std::make_pair( PlanParam::distMinToDraw,            new doubleContainer(0.3)));
+
     myDoubleMap.insert( std::make_pair( PlanParam::trajStompTimeLimit,       new doubleContainer(7.0)));
+    myDoubleMap.insert( std::make_pair( PlanParam::trajStompSmoothVel,       new doubleContainer(0.0)));
+    myDoubleMap.insert( std::make_pair( PlanParam::trajStompSmoothAcc,       new doubleContainer(1.0)));
+    myDoubleMap.insert( std::make_pair( PlanParam::trajStompSmoothJerk,       new doubleContainer(0.0)));
+
+
     myDoubleMap.insert( std::make_pair( PlanParam::trajDuration,             new doubleContainer(5.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::trajOptimStdDev,          new doubleContainer(2.0)));
     myDoubleMap.insert( std::make_pair( PlanParam::trajOptimSmoothWeight,    new doubleContainer(0.1)));

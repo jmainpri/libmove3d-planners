@@ -221,12 +221,126 @@ costComputation::costComputation(Robot* robot,
     policy_ = policy;
     policy_->getControlCosts(control_costs_);
     control_cost_weight_ = stomp_parameters_->getSmoothnessCostWeight();
+
+    ///--------------------------------------------------------------------------
+    /// Joint limits
+    ///
+
+    joint_limits_computers_.resize( num_joints_ );
+
+    for(int joint=0; joint<num_joints_; joint++)
+    {
+        double max_limit = planning_group_->chomp_dofs_[joint].joint_limit_max_ - 1e-5;
+        double min_limit = planning_group_->chomp_dofs_[joint].joint_limit_min_ + 1e-5;
+
+        joint_limits_computers_[joint].dynamics_ = control_costs_[joint].block( 1, 1, num_vars_free_-id_fixed_, num_vars_free_-id_fixed_ );
+        joint_limits_computers_[joint].upper_ = max_limit * Eigen::VectorXd::Ones(num_vars_free_-id_fixed_);
+        joint_limits_computers_[joint].lower_ = min_limit * Eigen::VectorXd::Ones(num_vars_free_-id_fixed_) ;
+
+        if( !joint_limits_computers_[joint].initialize() )
+
+            cout << "ERROR could not initialize joint limits in " << __PRETTY_FUNCTION__ << endl;
+//        else
+//            cout << "Init joint limit for " << planning_group_->chomp_dofs_[joint].joint_name_ << " ok ! in " << __PRETTY_FUNCTION__ << endl;
+    }
 }
 
 costComputation::~costComputation()
 {
     cout << "destroy cost computation" << endl;
 }
+
+bool costComputation::checkJointLimits( ChompTrajectory& group_traj  )
+{
+    bool succes_joint_limits = true;
+
+    for (int joint=0; joint<num_joints_; joint++)
+    {
+        if (!planning_group_->chomp_dofs_[joint].has_joint_limits_)
+            continue;
+
+        double joint_max = planning_group_->chomp_dofs_[joint].joint_limit_max_;
+        double joint_min = planning_group_->chomp_dofs_[joint].joint_limit_min_;
+
+        double max_abs_violation =  1e-6;
+        double violate_max_with = 0;
+        double violate_min_with = 0;
+        double absolute_amount = 0.0;
+
+        for (int i=free_vars_start_; i<=free_vars_end_; i++)
+        {
+            if ( group_traj( i, joint ) > joint_max )
+            {
+                // cout << "value is : " << group_traj( i, joint ) << " , max is : " << joint_max << endl;
+                absolute_amount = std::fabs( joint_max - group_traj( i, joint ) );
+
+                if( absolute_amount > violate_max_with )
+                {
+                    violate_max_with = absolute_amount;
+                }
+            }
+            else if ( group_traj( i, joint ) < joint_min )
+            {
+                // cout << "value is : " << group_traj( i, joint ) << " , min is : " << joint_min << endl;
+                absolute_amount = std::fabs( joint_min - group_traj( i, joint ) );
+
+                if( absolute_amount > violate_min_with )
+                {
+                    violate_min_with = absolute_amount;
+                }
+            }
+
+            if( absolute_amount > max_abs_violation )
+            {
+                cout << "joint is out of limits : " << planning_group_->chomp_dofs_[joint].joint_name_ << endl;
+                cout << "value is : " << group_traj( i, joint ) ;
+                cout << " , min is : " << joint_min ;
+                cout << " , max is : " << joint_max << endl;
+                cout << "absolute_amount : " << absolute_amount ;
+                cout << " , max_abs_violation : " << max_abs_violation ;
+                cout << endl;
+
+                max_abs_violation = absolute_amount;
+                succes_joint_limits = false;
+
+                break;
+            }
+        }
+
+        if( !succes_joint_limits )
+            return false;
+    }
+
+    return true;
+}
+
+bool costComputation::handleJointLimitsQuadProg( ChompTrajectory& group_traj  )
+{
+    for(int joint=0; joint<num_joints_; joint++)
+    {
+        if( !planning_group_->chomp_dofs_[joint].has_joint_limits_ )
+            continue;
+
+        Eigen::VectorXd joint_traj = group_traj.getFreeJointTrajectoryBlock( joint );
+
+        double cost = joint_limits_computers_[joint].project( joint_traj);
+
+        if( cost == std::numeric_limits<double>::infinity() )
+        {
+            cout << "joint limits did not converge" << endl;
+        }
+        // cout << "cost : " << cost << endl;
+        group_traj.getFreeJointTrajectoryBlock( joint ) = joint_traj;
+    }
+
+    if( checkJointLimits( group_traj ) )
+        return true;
+
+    cout << "joint limits not ok! " << endl;
+
+    return false;
+}
+
 
 bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
 {
@@ -274,21 +388,22 @@ bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
             {
                 double amount = 0.0;
                 double absolute_amount = 0.0;
+
                 if ( group_traj(i, joint) > joint_max )
                 {
                     amount = joint_max - group_traj(i, joint);
                     absolute_amount = fabs(amount);
-                    //                    violate_max = true;
+                    // violate_max = true;
                     if( absolute_amount > violate_max_with )
                     {
                         violate_max_with = absolute_amount;
                     }
                 }
-                else if ( group_traj(i, joint) < joint_min )
+                else if ( group_traj( i, joint ) < joint_min )
                 {
                     amount = joint_min - group_traj(i, joint);
                     absolute_amount = fabs(amount);
-                    //                    violate_min = true;
+                    // violate_min = true;
                     if( absolute_amount > violate_min_with )
                     {
                         violate_min_with = absolute_amount;
@@ -299,13 +414,13 @@ bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
                     max_abs_violation = absolute_amount;
                     max_violation = amount;
                     max_violation_index = i;
-                    violation = true;
 
-                    // cout << "Violation (" << absolute_amount ;
-                    // cout << " , " << max_abs_violation << ")" << endl;
+//                    cout << "Violation (" << absolute_amount ;
+//                    cout << " , " << max_abs_violation << ")" << endl;
 
                     if ( i != free_vars_start_ && i != free_vars_end_ ) {
                         count_violation = true;
+                        violation = true;
                     }
                 }
             }
@@ -318,25 +433,37 @@ bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
                 {
                     joint_limits_violation++;
                 }
-                // cout << "Violation of Limits (joint) : " <<  joint << endl;
+
                 int free_var_index = max_violation_index - free_vars_start_;
-                double multiplier = max_violation / joint_costs_[joint].getQuadraticCostInverse()(free_var_index,free_var_index);
+                const Eigen::MatrixXd& matrix_joint = joint_costs_[joint].getQuadraticCostInverse();
+                double multiplier = max_violation / matrix_joint( free_var_index, free_var_index );
+                Eigen::VectorXd offset = ( multiplier * matrix_joint.col(free_var_index) );
 
-                group_traj.getFreeJointTrajectoryBlock(joint) +=
-                        (( multiplier * joint_costs_[joint].getQuadraticCostInverse().col(free_var_index)).segment(1,num_vars_free_-id_fixed_));
-                //                double offset = ( joint_max + joint_min )  / 2 ;
 
-                //                cout << "multiplier : " << multiplier << endl;
-                //                cout << "joint limit max : " << joint_max << endl;
-                //                cout << "joint limit min : " << joint_min << endl;
-                //                cout << "offset : " << offset << endl;
-                //                cout << group_trajectory_.getFreeJointTrajectoryBlock(joint).transpose() << endl;
+                group_traj(max_violation_index, joint) = group_traj(max_violation_index, joint) + offset( free_var_index );
 
-                //                group_trajectory_.getFreeJointTrajectoryBlock(joint) = ( group_trajectory_.getFreeJointTrajectoryBlock(joint).array() - offset )*multiplier + ( offset );
+                // group_traj.getFreeJointTrajectoryBlock(joint) += offset.segment( 1, num_vars_free_-id_fixed_ );
 
-                //                cout << group_trajectory_.getFreeJointTrajectoryBlock(joint).transpose() << endl;
+                /**
+                cout << " ---- " << endl;
+                cout << "joint : " << joint << endl;
+                cout << "max_violation_index : " << max_violation_index << endl;
+                cout << "joint_max : " << joint_max << endl;
+                cout << "joint_min : " << joint_min << endl;
+
+
+                cout << "group_traj(max_violation_index, joint) : " << group_traj(max_violation_index, joint) << endl;
+
+                cout << "max_violation : " << max_violation << endl;
+                cout << "offset : " << offset(free_var_index) << endl;
+
+                group_traj.getFreeJointTrajectoryBlock(joint) += offset.segment( 1, num_vars_free_-id_fixed_ );
+
+                cout << "group_traj(max_violation_index, joint) : " << group_traj(max_violation_index, joint) << endl;
+                **/
+
             }
-            if ( ++count > 10 )
+            if ( ++count > num_vars_free_ )
             {
                 succes_joint_limits = false;
                 //cout << "group_trajectory_(i, joint) = " << endl << group_trajectory_.getFreeJointTrajectoryBlock(joint) << endl;
@@ -345,10 +472,10 @@ bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
         }
         while(violation);
 
-        //        if( violation || !succes_joint_limits )
-        //        {
-        //            cout << "Violation of joint limits (joint) = " << joint << endl;
-        //        }
+        if( violation || !succes_joint_limits )
+        {
+            cout << "Violation of joint limits (joint) = " <<  planning_group_->chomp_dofs_[joint].joint_name_ << endl;
+        }
     }
 
     //    cout << "succes_joint_limits : " << succes_joint_limits << endl;
@@ -395,28 +522,12 @@ bool costComputation::getControlCosts(const ChompTrajectory& group_traj)
     }
     else
     {
-            // cout << "NORMAL COMPUTATION" << endl;
-
-        // TODO see why num_vars_free_ is 100 and not 100 - id_fixed
-//        cout << "parameter size : " << parameters[0].size() << endl;
-//        cout << "noise size : " << num_vars_free_ << endl;
-        
         policy_->computeControlCosts(control_costs_,
                                      parameters,
                                      std::vector<Eigen::VectorXd>( num_joints_, Eigen::VectorXd::Zero(num_vars_free_) ),
                                      control_cost_weight_ ,
                                      current_control_costs_,
                                      group_traj.getDiscretization() );
-
-//        for (int d=0; d<num_joints_; ++d)
-//        {
-//            general_cost_potential_.segment( free_vars_start_, num_vars_free_) += ( current_control_costs_[d] );
-
-//            for (int i=0; i<current_control_costs_[d].size(); ++i) {
-//                current_control_costs_[d][i] = 0.0;
-//            }
-//        }
-
     }
 
     return true;
@@ -887,10 +998,12 @@ bool costComputation::getCost( std::vector<Eigen::VectorXd>& parameters, Eigen::
         // The use of segment prevents the drift
     }
     //cout << "group_trajectory_ = " << endl << group_trajectory_.getTrajectory() << endl;
-        
+
 
     // respect joint limits:
-    succeded_joint_limits_ = handleJointLimits( group_trajectory_ );
+//    succeded_joint_limits_ = true;
+    succeded_joint_limits_ = handleJointLimitsQuadProg( group_trajectory_ );
+//    succeded_joint_limits_ = handleJointLimits( group_trajectory_ );
 
 
 //    if( !succeded_joint_limits_ )

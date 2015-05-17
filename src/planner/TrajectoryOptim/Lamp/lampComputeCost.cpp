@@ -30,10 +30,12 @@
 #include "planner/planEnvironment.hpp"
 #include "planner/cost_space.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
+#include "planner/TrajectoryOptim/jointlimits.hpp"
 #include "hri_costspace/HRICS_costspace.hpp"
 #include "feature_space/features.hpp"
 #include "feature_space/smoothness.hpp"
 #include "API/Device/generalik.hpp"
+
 
 using namespace stomp_motion_planner;
 using namespace Move3D;
@@ -59,8 +61,8 @@ LampCostComputation::LampCostComputation(Robot* robot,
                                  bool use_external_collision_space,
                                  int collision_space_id,
                                  const stomp_motion_planner::StompParameters* stomp_parameters,
-                                 stomp_motion_planner::Policy* policy
-                                 )
+                                 stomp_motion_planner::Policy* policy,
+                                 const Eigen::MatrixXd& dynamics )
 {
     robot_model_ = robot;
 
@@ -219,8 +221,9 @@ LampCostComputation::LampCostComputation(Robot* robot,
     ///--------------------------------------------------------------------------
 
     policy_ = policy;
-    policy_->getControlCosts(control_costs_);
+    policy_->getControlCosts( control_costs_ );
     control_cost_weight_ = stomp_parameters_->getSmoothnessCostWeight();
+
 
     ///--------------------------------------------------------------------------
     ///
@@ -228,6 +231,56 @@ LampCostComputation::LampCostComputation(Robot* robot,
     Eigen::VectorXd start   = group_trajectory_.getTrajectoryPoint(free_vars_start_).transpose();
     Eigen::VectorXd end     = group_trajectory_.getTrajectoryPoint(free_vars_end_).transpose();
     static_cast<CovariantTrajectoryPolicy*>(policy_)->setToMinControlCost( start, end );
+
+    ///--------------------------------------------------------------------------
+    /// JOINT LIMITS
+
+    Eigen::VectorXd upper( num_vars_free_ * num_joints_ );
+    Eigen::VectorXd lower( num_vars_free_ * num_joints_ );
+
+    for (int joint=0; joint<num_joints_; joint++)
+    {
+        for (int i=free_vars_start_; i<=free_vars_end_; i++)
+        {
+            int id = i*num_joints_ + joint;
+            upper( id ) = planning_group_->chomp_dofs_[joint].joint_limit_max_;
+            lower( id ) = planning_group_->chomp_dofs_[joint].joint_limit_min_;
+        }
+    }
+
+    joint_limits_computer_.dynamics_ = dynamics;
+    joint_limits_computer_.upper_ = upper - 1e-5 * Eigen::VectorXd::Ones( upper.size() );
+    joint_limits_computer_.lower_ = lower + 1e-5 * Eigen::VectorXd::Ones( lower.size() );
+
+    if( !joint_limits_computer_.initialize() )
+        cout << "ERROR could not initialize joint limits in " << __PRETTY_FUNCTION__ << endl;
+
+    // PER JOINT
+    joint_limits_computers_.resize( num_joints_ );
+
+    for(int joint=0; joint<num_joints_; joint++)
+    {
+        double max_limit = planning_group_->chomp_dofs_[joint].joint_limit_max_ - 1e-5;
+        double min_limit = planning_group_->chomp_dofs_[joint].joint_limit_min_ + 1e-5;
+
+        joint_limits_computers_[joint].dynamics_ = control_costs_[joint]; //.block( DIFF_RULE_LENGTH, DIFF_RULE_LENGTH, num_vars_free_, num_vars_free_ );
+        joint_limits_computers_[joint].upper_ = max_limit * Eigen::VectorXd::Ones(num_vars_free_);
+        joint_limits_computers_[joint].lower_ = min_limit * Eigen::VectorXd::Ones(num_vars_free_) ;
+
+        if( !joint_limits_computers_[joint].initialize() )
+            cout << "ERROR could not initialize joint limits in " << __PRETTY_FUNCTION__ << endl;
+    }
+
+    time_cumul_ = 0.0;
+    time_iter_ = 0;
+}
+
+
+void LampCostComputation::print_time() const
+{
+    cout << "total test time : " << std::scientific << time_cumul_ / double(time_iter_) << endl;
+    cout << "total time : " << std::scientific << time_cumul_ << endl;
+    cout << "total iter : " << time_iter_ << endl;
 }
 
 LampCostComputation::~LampCostComputation()
@@ -263,6 +316,87 @@ void LampCostComputation::set_fct_get_config_collision_cost( boost::function<boo
     else {
         cout << "ERROR SIZE in " << __PRETTY_FUNCTION__ << endl;
     }
+}
+
+bool LampCostComputation::checkJointLimits(  LampTrajectory& group_traj  )
+{
+    bool succes_joint_limits = true;
+
+    for (int joint=0; joint<num_joints_; joint++)
+    {
+        if (!planning_group_->chomp_dofs_[joint].has_joint_limits_)
+            continue;
+
+        double joint_max = planning_group_->chomp_dofs_[joint].joint_limit_max_;
+        double joint_min = planning_group_->chomp_dofs_[joint].joint_limit_min_;
+
+        double max_abs_violation =  1e-6;
+        double violate_max_with = 0;
+        double violate_min_with = 0;
+        double absolute_amount;
+
+        for (int i=free_vars_start_; i<=free_vars_end_; i++)
+        {
+            if ( group_traj( i, joint ) > joint_max )
+            {
+                // cout << "value is : " << group_traj( i, joint ) << " , max is : " << joint_max << endl;
+                absolute_amount = std::fabs( joint_max - group_traj( i, joint ) );
+
+                if( absolute_amount > violate_max_with )
+                {
+                    violate_max_with = absolute_amount;
+                }
+            }
+            else if ( group_traj( i, joint ) < joint_min )
+            {
+                // cout << "value is : " << group_traj( i, joint ) << " , min is : " << joint_min << endl;
+                absolute_amount = std::fabs( joint_min - group_traj( i, joint ) );
+
+                if( absolute_amount > violate_min_with )
+                {
+                    violate_min_with = absolute_amount;
+                }
+            }
+
+            if( absolute_amount > max_abs_violation )
+            {
+                max_abs_violation = absolute_amount;
+                succes_joint_limits = false;
+                break;
+            }
+        }
+
+        if( !succes_joint_limits )
+            return false;
+    }
+
+    return true;
+}
+
+bool LampCostComputation::handleJointLimitsQuadProg(  LampTrajectory& group_traj  )
+{
+//    if( checkJointLimits( group_traj ) )
+//        return true;
+
+//     double error = joint_limits_computer_.project( group_traj.trajectory_ );
+    // cout << "error : " << error << endl;
+
+    for(int joint=0; joint<num_joints_; joint++)
+    {
+        if(!planning_group_->chomp_dofs_[joint].has_joint_limits_)
+            continue;
+
+        Eigen::VectorXd joint_traj = group_traj.getDofTrajectoryBlock( joint );
+        joint_limits_computers_[joint].project( joint_traj );
+        group_traj.setDofTrajectoryBlock( joint, joint_traj );
+    }
+
+    if( checkJointLimits( group_traj ) )
+        return true;
+
+    // cout << "joint limits not ok! " << endl;
+
+    return false;
 }
 
 bool LampCostComputation::handleJointLimits(  LampTrajectory& group_traj  )
@@ -390,7 +524,7 @@ bool LampCostComputation::handleJointLimits(  LampTrajectory& group_traj  )
         //        }
     }
 
-    cout << "succes_joint_limits : " << succes_joint_limits << endl;
+    // cout << "succes_joint_limits : " << succes_joint_limits << endl;
 
     //    exit(1);
 
@@ -609,7 +743,6 @@ int LampCostComputation::getNumberOfCollisionPoints(Move3D::Robot* R)
     return planning_group_->collision_points_.size();
 }
 
-
 bool LampCostComputation::performForwardKinematics( const LampTrajectory& group_traj, bool is_rollout )
 {
     double invTime = 1.0 / group_traj.getDiscretization();
@@ -762,7 +895,19 @@ bool LampCostComputation::getCost( Move3D::LampTrajectory& traj, Eigen::VectorXd
     // project to joint limits
     if( joint_limits )
     {
-        succeded_joint_limits_ = handleJointLimits( group_trajectory_ );
+        double t_init, t_end;
+
+        ChronoTimeOfDayTimes(&t_init);
+
+        // succeded_joint_limits_ = handleJointLimits( group_trajectory_ );
+        succeded_joint_limits_ = handleJointLimitsQuadProg( group_trajectory_ );
+
+        ChronoTimeOfDayTimes(&t_end);
+
+        time_cumul_ += (t_end - t_init );
+        time_iter_++;
+
+        // cout << std::scientific << "ts : " << t_end - t_init << " sec." << endl;
     }
 
     // project to goal set

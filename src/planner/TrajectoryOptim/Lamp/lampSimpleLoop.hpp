@@ -12,6 +12,7 @@ public:
     bool initialize( bool single_rollout, double discretization );
     void run_single_iteration();
     void animateEndeffector();
+    void end();
 
     double getTrajectoryCost();
     double getSmoothnessCost();
@@ -21,8 +22,9 @@ private:
 
     double getTrajectoryCost( Move3D::LampTrajectory& traj, bool check_joint_limits = false );
     double getCollisionCost( Move3D::LampTrajectory& traj , bool check_joint_limits = false );
-    double getSmoothnessCost(const Move3D::LampTrajectory& traj);
+    double getSmoothnessCost( const Move3D::LampTrajectory& traj );
     void normalize_update( const Eigen::MatrixXd& deltas, const std::vector<bool>& valid, Eigen::VectorXd& update ) const;
+    Eigen::VectorXd generateSamples();
 
     Move3D::LampSampler sampler_;
     Move3D::Trajectory initial_traj_seed_;
@@ -31,6 +33,13 @@ private:
 
     const stomp_motion_planner::StompParameters *stomp_parameters_const_;
     const Move3D::CollisionSpace *move3d_collision_space_;
+
+    std::vector<LampTrajectory> samples_;
+    std::vector<LampTrajectory> reused_rollouts_;
+    int num_rollouts_gen_;
+    int num_rollouts_;
+    int num_rollouts_reused_;
+    bool rollouts_reused_next_;
 };
 
 };

@@ -4,7 +4,9 @@
 
 #include <time.h>
 #include <sys/time.h>
-#include <p3d/env.hpp>
+
+#include <libmove3d/p3d/env.hpp>
+#include <libmove3d/include/Util-pkg.h>
 
 using std::cout;
 using std::endl;
@@ -21,6 +23,8 @@ LampOptimizer::LampOptimizer()
 
 void LampOptimizer::runDeformation( int nbIteration, int idRun )
 {
+    ChronoTimeOfDayOn();
+
     timeval tim;
     gettimeofday(&tim, NULL);
     double t_init = tim.tv_sec+(tim.tv_usec/1000000.0);
@@ -126,9 +130,9 @@ void LampOptimizer::runDeformation( int nbIteration, int idRun )
         }
         else
         {
-            if( cost < best_group_trajectory_cost_ ||
-              ( PlanEnv->getBool(PlanParam::trajStompDrawImprovement) && (
-                cost < best_group_trajectory_in_collsion_cost_ )))
+            if( cost < best_group_trajectory_cost_
+              /*|| ( PlanEnv->getBool(PlanParam::trajStompDrawImprovement) && (
+                cost < best_group_trajectory_in_collsion_cost_ ))*/ )
             {
                 if ( is_collision_free_ )
                 {
@@ -230,6 +234,9 @@ void LampOptimizer::runDeformation( int nbIteration, int idRun )
 
         group_trajectory_ = best_group_trajectory_in_collision_;
 
+    // Run code on the virtual class
+    end();
+
     // convert to move3d trajectory
     best_traj_ = group_trajectory_.getMove3DTrajectory();
     robot_model_->setCurrentMove3DTraj( best_traj_ );
@@ -247,4 +254,5 @@ void LampOptimizer::runDeformation( int nbIteration, int idRun )
     //printf("Optimization core finished in %f sec", (ros::WallTime::now() - start_time).toSec());
     stomp_statistics_->best_cost = best_group_trajectory_cost_;
 
+    ChronoTimeOfDayOff();
 }

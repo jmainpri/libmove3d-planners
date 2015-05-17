@@ -4,7 +4,10 @@ SET(BM3D_MODULE_NAME ${BM3D_MODULE_NAME}/TrajectoryOptim)
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})
 
 IF(MULTILOCALPATH)
-BM3D_SRC_SUBDIR_PROCESS(trajectoryOptim.cpp)
+BM3D_SRC_SUBDIR_PROCESS(
+trajectoryOptim.cpp
+eiquadprog.hpp
+jointlimits.hpp)
 ENDIF()
 
 BM3D_SRC_SUBDIR_PROCESS(plannarTrajectorySmoothing.cpp)

@@ -410,6 +410,7 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
         m_Graph->addNode( node_new );
 
         if ( PlanEnv->getBool(PlanParam::orientedGraph) )
+
             m_Graph->addEdges( node_min, node_new, false, min_path_dist, false, min_path_cost );
         else
             m_Graph->addEdge( node_min, node_new, false, min_path_dist, false, min_path_cost );

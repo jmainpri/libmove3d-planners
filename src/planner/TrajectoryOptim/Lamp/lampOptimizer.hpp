@@ -26,6 +26,7 @@ public:
     virtual bool initialize( bool single_rollout, double discretization ) { return true; }
     virtual void run_single_iteration() { }
     virtual void animateEndeffector() { }
+    virtual void end() {}
 
 protected:
 

@@ -49,7 +49,6 @@ ChompCost::ChompCost( int num_vars_all, int joint_number, const std::vector<doub
     // int num_vars_all = num_vars_all; // trajectory.getNumPoints();
     int num_vars_free = num_vars_all - 2*(DIFF_RULE_LENGTH-1);
 
-
     MatrixXd diff_matrix = MatrixXd::Zero(num_vars_all, num_vars_all);
     quad_cost_full_ = MatrixXd::Zero(num_vars_all, num_vars_all);
 
@@ -57,9 +56,9 @@ ChompCost::ChompCost( int num_vars_all, int joint_number, const std::vector<doub
     double multiplier = 1.0;
     for (unsigned int i=0; i<derivative_costs.size(); i++)
     {
-        //multiplier *= trajectory.getDiscretization();
-        multiplier *= 1.0;
-        diff_matrix = getDiffMatrix(num_vars_all, &DIFF_RULES[i][0]);
+        // multiplier *= trajectory.getDiscretization();
+        multiplier *= 0.000001; // TODO fix that
+        diff_matrix = getDiffMatrix( num_vars_all, &DIFF_RULES[i][0]) ;
         quad_cost_full_ += (derivative_costs[i] * multiplier) * (diff_matrix.transpose()*diff_matrix);
     }
     quad_cost_full_ += MatrixXd::Identity( num_vars_all, num_vars_all )*ridge_factor;

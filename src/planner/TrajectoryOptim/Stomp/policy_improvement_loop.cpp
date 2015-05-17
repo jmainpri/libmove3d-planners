@@ -387,7 +387,7 @@ namespace stomp_motion_planner
         extra_rollout.resize( num_extra_rollouts );
         extra_rollout_cost.resize( num_extra_rollouts );
 
-        //    addStraightLineRollout( extra_rollout, extra_rollout_cost );
+        // addStraightLineRollout( extra_rollout, extra_rollout_cost );
 
         // Get the trajectory cost
         bool resample = false; //!PlanEnv->getBool( PlanParam::trajStompMultiplyM );
@@ -399,10 +399,11 @@ namespace stomp_motion_planner
         if( project_last_config_ )
         {
             projectToConstraints( parameters_ );
-            task_->execute( parameters_, tmp_rollout_cost_, iteration_number, true, resample, false );
+            task_->execute( parameters_, tmp_rollout_cost_, iteration_number, false, resample, false );
         }
         //printf("Noiseless cost = %lf\n", stats_msg.noiseless_cost);
 
+        policy_->setParameters( parameters_ );
         // Only set parameters for the changed chase
 //        if( set_parameters_in_policy_ )
 //        {
@@ -416,13 +417,6 @@ namespace stomp_motion_planner
         policy_improvement_.addExtraRollouts( extra_rollout, extra_rollout_cost );
 
         //cout << "rollout_cost_ = " << tmp_rollout_cost_.sum() << endl;
-
-        //    if (write_to_file_)
-        //    {
-        // store updated policy to disc
-        // assert(writePolicy(iteration_number));
-        // assert(writePolicyImprovementStatistics(stats_msg));
-        //    }
 
         return true;
     }
@@ -713,11 +707,11 @@ namespace stomp_motion_planner
             addSingleRolloutsToDraw( rollouts_[k], k );
         }
 
-        for ( int k=0; k<int(reused_rollouts_.size()); ++k)
-        {
+//        for ( int k=0; k<int(reused_rollouts_.size()); ++k)
+//        {
 //            cout << "Add reused rollout(" << k << ") to draw" << endl;
-            addSingleRolloutsToDraw( reused_rollouts_[k], k+int(rollouts_.size()) );
-        }
+//            addSingleRolloutsToDraw( reused_rollouts_[k], k+int(rollouts_.size()) );
+//        }
     }
 
     void PolicyImprovementLoop::printSingleRollout( const std::vector<Eigen::VectorXd>& rollout, int id ) const

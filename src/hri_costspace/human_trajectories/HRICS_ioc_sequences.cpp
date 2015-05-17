@@ -232,6 +232,11 @@ bool IocSequences::run()
         samples = Eigen::MatrixXd::Zero(1,1);
         samples(0,0) = HriEnv->getInt(HricsParam::ioc_sample_iteration);
     }
+    if( samples.rows() == 0 )
+    {
+        cout << "error defining the number of samples" << endl;
+        return false;
+    }
 
     // Main loop
     for(int i=0; i<samples.row(0).size() && !StopRun; i++)
@@ -443,21 +448,26 @@ bool IocSequences::run()
 
             if( HriEnv->getBool(HricsParam::ioc_use_baseline) )
             {
-                WeightVect w( 10 * WeightVect::Ones(16) );
+                WeightVect w( WeightVect::Zero(16) );
+
+                if( HriEnv->getBool(HricsParam::ioc_conservative_baseline) )
+                {
+                    w = ( 10 * WeightVect::Ones(16) );
+                }
                 global_ht_simulator->getCostSpace()->setWeights( w );
             }
 
             std::vector<motion_t> trajs;
 
             std::vector<std::string> good_motions_names;
-            good_motions_names.push_back( HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human2_.csv");
+//            good_motions_names.push_back( HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human2_.csv");
 
-//            good_motions_names.push_back("[0446-0578]_human2_.csv");
+//            good_motions_names.push_back("[0446-0578]_human2_.csv"); // specifies weight vector
 //            good_motions_names.push_back("[0525-0657]_human2_.csv");
 //            good_motions_names.push_back("[0444-0585]_human2_.csv");
 //            good_motions_names.push_back("[0489-0589]_human2_.csv");
 //            good_motions_names.push_back("[0780-0871]_human2_.csv");
-//            good_motions_names.push_back("[1537-1608]_human2_.csv");
+            good_motions_names.push_back("[1537-1608]_human2_.csv");
 
             // REPLAN
 //            good_motions_names.push_back("[2711-2823]_human2_.csv");
@@ -485,12 +495,15 @@ bool IocSequences::run()
 
                     std::stringstream ss;
                     ss.str("");
-                    ss << "run_simulator_" << std::setw(3) << std::setfill( '0' ) << j;
-                    ss <<              "_" << std::setw(3) << std::setfill( '0' ) << k << ".traj";
+                    ss << "run_simulator" ;
+                    ss << "_" << std::setw(3) << std::setfill( '0' ) << j;
+                    ss << "_" << std::setw(3) << std::setfill( '0' ) << k << ".traj";
 
                     Move3D::Trajectory traj( HriEnv->getBool(HricsParam::ioc_no_replanning) ? global_ht_simulator->getCurrentPath() : global_ht_simulator->getExecutedPath() );
-                    traj.saveToFile( move3d_tmp_data_folder + "tmp_trajs/" + ss.str() );
 
+                    std::string folder_param  = HriEnv->getString(HricsParam::stringParameter);
+                    std::string traj_folder =  folder_param == "" ? move3d_tmp_data_folder + "tmp_trajs/" : folder_param;
+                    traj.saveToFile( mtraj_folder + ss.str() );
                     trajs.push_back( global_ht_simulator->getExecutedTrajectory() );
                 }
 
@@ -737,34 +750,59 @@ void IocSequences::setCompareFeatures()
     }
 }
 
+Move3D::Trajectory load_one_traj( Move3D::Robot* active_human, std::string folder_name, int id_demo, int id_run )
+{
+    std::stringstream ss;
+    ss.str("");
+    ss << "run_simulator_" << std::setw(3) << std::setfill( '0' ) << id_demo;
+    ss <<              "_" << std::setw(3) << std::setfill( '0' ) << id_run << ".traj";
+
+    Move3D::Trajectory traj( active_human );
+    traj.loadFromFile( folder_name + ss.str() );
+
+    cout << "loading trajectory : " << folder_name + ss.str() << " nb of waypoints : " << traj.getNbOfViaPoints() << endl;
+
+    // traj.setColor( 0 );
+    // double alpha = double(d)/double(nb_demos);
+
+    return traj;
+}
+
+std::vector< std::vector<Move3D::Trajectory> > load_trajs_names(std::string folder, const std::vector<std::string>& demo_names, int demo_id, Eigen::Vector3d color, bool draw )
+{
+    std::vector< std::vector<Move3D::Trajectory> > trajs( demo_names.size() );
+
+    int nb_runs = 10;
+
+    Move3D::Robot* active_human = global_ht_simulator->getActiveHuman();
+
+    for( size_t d=0; d<demo_names.size(); d++ )
+        for( int k=0; k<nb_runs; k++ )
+        {
+            trajs[d].push_back( load_one_traj( active_human, folder + demo_names[d] + "/", 0, k ) ) ;
+
+            if( ( d == demo_id ) && draw )
+                global_linesToDraw.push_back( std::make_pair( color, trajs[d][k].getJointPoseTrajectory( active_human->getJoint(45) ) ) );
+        }
+
+    return trajs;
+}
+
 std::vector< std::vector<Move3D::Trajectory> > load_trajs(std::string folder, int nb_demos, int demo_id, Eigen::Vector3d color, bool draw )
 {
-    Move3D::Robot* active_human  = global_ht_simulator->getActiveHuman();
     std::vector< std::vector<Move3D::Trajectory> > trajs( nb_demos );
 
     int nb_runs = 10;
 
+    Move3D::Robot* active_human = global_ht_simulator->getActiveHuman();
+
     for( int d=0; d<nb_demos; d++ )
         for( int k=0; k<nb_runs; k++ )
         {
-            std::stringstream ss;
-            ss.str("");
-            ss << "run_simulator_" << std::setw(3) << std::setfill( '0' ) << d;
-            ss <<              "_" << std::setw(3) << std::setfill( '0' ) << k << ".traj";
+            trajs[d].push_back( load_one_traj( active_human, folder, d, k ) );
 
-
-            Move3D::Trajectory traj( active_human );
-            traj.loadFromFile( folder + ss.str() );
-
-            cout << "loading trajectory : " << folder + ss.str() << " nb of waypoints : " << traj.getNbOfViaPoints() << endl;
-
-            // traj.setColor( 0 );
-            // double alpha = double(d)/double(nb_demos);
-
-            if( d == demo_id && draw )
-                global_linesToDraw.push_back( std::make_pair( color, traj.getJointPoseTrajectory( active_human->getJoint(45) ) ) );
-            // global_trajToDraw.push_back( traj );
-            trajs[d].push_back( traj );
+            if( ( d == demo_id ) && draw )
+                global_linesToDraw.push_back( std::make_pair( color, trajs[d][k].getJointPoseTrajectory( active_human->getJoint(45) ) ) );
         }
 
     return trajs;
@@ -779,30 +817,49 @@ std::vector< std::vector<Move3D::Trajectory> > noreplan_recovered;
 void hrics_ioc_compute_results()
 {
 
-//    Move3D::Scene* sce = global_Project->getActiveScene();
-//    Move3D::Robot* robot = sce->getActiveRobot();
+    bool icra_paper_oct = false;
 
-//    if( robot != NULL ){
-//        cout << "Got robot" << endl;
-//    }
+    std::string folder_demos;
+    std::string folder_base_line;
+    std::string folder_recovered;
+    std::string folder_no_replan_base_line;
+    std::string folder_no_replan_recovered;
 
-//    Move3D::Trajectory traj(robot);
-//    traj.loadFromFile("tmp_traj_file.m3dtraj");
-//    traj.replaceP3dTraj();
+    std::vector<std::string> demo_split_names;
 
-    std::string folder_demos = "loo_trajectories/demos/";
+    if( icra_paper_oct )
+    {
+        /** PAPER ICRA OCTOBER **/
 
-//    std::string folder_base_line = "loo_trajectories/paper_icra_0/baseline/";
-//    std::string folder_recovered = "loo_trajectories/paper_icra_0/recovered/";
-//    std::string folder_no_replan_base_line = "loo_trajectories/paper_icra_0/no_replan_baseline/";
-//    std::string folder_no_replan_recovered = "loo_trajectories/paper_icra_0/no_replan_recovered/";
+        folder_demos = "loo_trajectories/demos/";
 
+        //    std::string folder_base_line = "loo_trajectories/paper_icra_0/baseline/";
+        //    std::string folder_recovered = "loo_trajectories/paper_icra_0/recovered/";
+        //    std::string folder_no_replan_base_line = "loo_trajectories/paper_icra_0/no_replan_baseline/";
+        //    std::string folder_no_replan_recovered = "loo_trajectories/paper_icra_0/no_replan_recovered/";
 
-    std::string folder_base_line = "loo_trajectories/with_collisions_final/zero_baseline_8/";
-    std::string folder_recovered = "loo_trajectories/with_collisions_final/recovered_8/";
-    std::string folder_no_replan_base_line = "loo_trajectories/with_collisions_final/no_replan_zero_baseline_8/";
-    std::string folder_no_replan_recovered = "loo_trajectories/with_collisions_final/no_replan_recovered_8/";
+        demo_split_names.resize(8);
 
+        folder_base_line                = "loo_trajectories/with_collisions_final/zero_baseline_8/";
+        folder_recovered                = "loo_trajectories/with_collisions_final/recovered_8/";
+        folder_no_replan_base_line      = "loo_trajectories/with_collisions_final/no_replan_zero_baseline_8/";
+        folder_no_replan_recovered      = "loo_trajectories/with_collisions_final/no_replan_recovered_8/";
+    }
+    else
+    {
+        folder_demos = "loo_trajectories/first_run_feb_demos//";
+
+        folder_base_line                = "loo_trajectories/first_run_feb/replan/baseline0/";
+        folder_recovered                = "loo_trajectories/first_run_feb/replan/recovered/";
+        folder_no_replan_base_line      = "loo_trajectories/first_run_feb/noreplan/baseline0/";
+        folder_no_replan_recovered      = "loo_trajectories/first_run_feb/noreplan/recovered/";
+
+        demo_split_names.push_back("[0649-0740]");
+        demo_split_names.push_back("[1282-1370]");
+        demo_split_names.push_back("[1593-1696]");
+        demo_split_names.push_back("[1619-1702]");
+        demo_split_names.push_back("[1696-1796]");
+    }
 
     Move3D::Robot* active_human  = global_ht_simulator->getActiveHuman();
     Move3D::Robot* passive_human = global_ht_simulator->getPassiveHuman();
@@ -818,7 +875,7 @@ void hrics_ioc_compute_results()
 
     ChompPlanningGroup* plangroup = new ChompPlanningGroup( active_human, active_joint_id );
 
-    int nb_demos = 8;
+    int nb_demos = demo_split_names.size();
     int demo_id = HriEnv->getInt(HricsParam::ioc_sample_iteration); // TODO change that
     if( demo_id >= nb_demos ){
         demo_id = nb_demos-1;
@@ -906,16 +963,32 @@ void hrics_ioc_compute_results()
 
 //    int nb_runs = 10;
 
-    if( true || baseline.empty() )
+
+    if( icra_paper_oct )
     {
-        baseline            = load_trajs( folder_base_line, nb_demos, demo_id, Eigen::Vector3d(0, 1, 0), false );
-        recovered           = load_trajs( folder_recovered, nb_demos, demo_id, Eigen::Vector3d(0, 0, 1), true );
-        noreplan_baseline   = load_trajs( folder_no_replan_base_line, nb_demos, demo_id, Eigen::Vector3d(0, 1, 0), false );
-        noreplan_recovered  = load_trajs( folder_no_replan_recovered, nb_demos, demo_id, Eigen::Vector3d(0, 1, 0), true );
+        if( true || baseline.empty() )
+        {
+            baseline            = load_trajs( folder_base_line, nb_demos, demo_id, Eigen::Vector3d(0, 1, 0), false );
+            recovered           = load_trajs( folder_recovered, nb_demos, demo_id, Eigen::Vector3d(0, 0, 1), true );
+            noreplan_baseline   = load_trajs( folder_no_replan_base_line, nb_demos, demo_id, Eigen::Vector3d(0, 1, 0), false );
+            noreplan_recovered  = load_trajs( folder_no_replan_recovered, nb_demos, demo_id, Eigen::Vector3d(0, 1, 0), true );
+        }
+    }
+    else
+    {
+        if( true || baseline.empty() )
+        {
+            baseline            = load_trajs_names( folder_base_line, demo_split_names, demo_id, Eigen::Vector3d(0, 1, 0), false );
+            recovered           = load_trajs_names( folder_recovered, demo_split_names, demo_id, Eigen::Vector3d(0, 0, 1), true );
+            noreplan_baseline   = load_trajs_names( folder_no_replan_base_line, demo_split_names, demo_id, Eigen::Vector3d(0, 1, 0), false );
+            noreplan_recovered  = load_trajs_names( folder_no_replan_recovered, demo_split_names, demo_id, Eigen::Vector3d(0, 1, 0), true );
+        }
     }
 
     // SET HUMAN CONFIGURAION
 
+    cout << "nb of demos loaded : " << global_ht_simulator->getDemonstrationsPassive().size() << endl;
+    cout << "demo_id : " << demo_id << endl;
     cout << "size : " << global_ht_simulator->getDemonstrationsPassive()[demo_id].size() << endl;
 
     active_human->setAndUpdate( *demos[demo_id].getEnd() );
@@ -925,7 +998,7 @@ void hrics_ioc_compute_results()
     // Comment to compute DTW
     Move3D::Trajectory passive_traj( HRICS::motion_to_traj( global_ht_simulator->getDemonstrationsPassive()[demo_id], passive_human ) );
     Move3D::Trajectory& active_traj = recovered[demo_id][9];
-    global_linesToDraw.push_back( std::make_pair( Eigen::Vector3d(1, 0, 0), active_traj.getJointPoseTrajectory( active_human->getJoint(45) ) ) );
+    // global_linesToDraw.push_back( std::make_pair( Eigen::Vector3d(1, 0, 0), active_traj.getJointPoseTrajectory( active_human->getJoint(45) ) ) );
 
     cout << "passive human traj size : " << passive_traj.size() << endl;
 //    qt_showMotion2( active_traj, passive_traj, true );

@@ -341,7 +341,7 @@ LampSampler::LampSampler( int num_var_free, int num_dofs ) : num_vars_free_(num_
 
 }
 
-void LampSampler::initialize(const std::vector<double>& derivative_costs)
+void LampSampler::initialize(const std::vector<double>& derivative_costs, int nb_points )
 {
     std::vector<int> joints;
 
@@ -360,7 +360,7 @@ void LampSampler::initialize(const std::vector<double>& derivative_costs)
     planning_group_ = new ChompPlanningGroup( robot_model_, joints );
     planning_group_->collision_points_ = traj_optim_get_collision_points();
 
-    num_vars_free_ = 100;
+    num_vars_free_ = nb_points;
     num_dofs_ = planning_group_->chomp_dofs_.size();
 
     cout << "num_vars_free_ : " << num_vars_free_ << endl;
@@ -584,11 +584,11 @@ std::vector<LampTrajectory> LampSampler::sampleTrajectories( int nb_trajectories
 
         // cout << "norm of noise : " << noise.norm() << endl;
 
-        if( ENV.getBool(Env::drawTrajVector) && ENV.getBool(Env::drawTraj) )
-        {
-            global_trajToDraw.push_back( trajectories[i].getMove3DTrajectory() );
-            global_trajToDraw.back().setColor( i );
-        }
+//        if( ENV.getBool(Env::drawTrajVector) && ENV.getBool(Env::drawTraj) )
+//        {
+//            global_trajToDraw.push_back( trajectories[i].getMove3DTrajectory() );
+//            global_trajToDraw.back().setColor( i );
+//        }
     }
 
     return trajectories;

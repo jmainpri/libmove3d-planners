@@ -169,6 +169,7 @@ public:
 
     // Functions inherited from LibraryItem:
 
+
     std::string getInfoString();
     std::string getClassName();
     bool readFromDisc(const std::string directory_name, const int item_id, const int trial_id = 0);
@@ -198,7 +199,7 @@ public:
 private:
 //    ros::NodeHandle node_handle_;
 
-    enum cost_type { vel=0, acc=1, jerk=2, dist=3 } type_;
+    enum cost_type { vel=0, acc=1, jerk=2, dist=3, mix=4 } type_;
     bool is_dist_;
 
     std::string file_name_base_;

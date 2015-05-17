@@ -95,9 +95,7 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
                                            const std::vector<double>& derivative_costs,
                                            const ChompPlanningGroup* planning_group)
 {
-    type_ = vel; // Match control cost
-//    type_ = acc;
-//    type_ = jerk;
+    type_ = mix;
 
     //node_handle_ = node_handle;
     //print_debug_ = true;
@@ -132,10 +130,7 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
     initializeVariables();
     initializeCosts();
     initializeBasisFunctions();
-    
-    //assert(initializeVariables());
-    //assert(initializeCosts());
-    //assert(initializeBasisFunctions());
+
     
     if( print_debug_ )
     {
@@ -235,16 +230,6 @@ bool CovariantTrajectoryPolicy::computeLinearControlCosts()
         linear_control_costs_[d] *= 2.0;
     }
     
-    //  Eigen::MatrixXd control_costs( num_time_steps_, num_dimensions_ );
-    //
-    //  for (int d=0; d<num_dimensions_; ++d)
-    //  {
-    //    control_costs.col(d) = linear_control_costs_[d].segment(free_vars_start_index_, num_vars_free_);
-    //  }
-    //
-    //  cout << "Control Costs : " << endl;
-    //  cout << control_costs << endl;
-    
     return true;
 }
 
@@ -254,12 +239,7 @@ bool CovariantTrajectoryPolicy::computeMinControlCostParameters()
     {
         parameters_all_[d].segment(free_vars_start_index_, num_vars_free_) = -0.5 * inv_control_costs_[d] * linear_control_costs_[d];
     }
-    //    for (int d=0; d<num_dimensions_; ++d)
-    //    {
-    //        VectorXd gradient =  2.0 * control_costs_all_[d] * parameters_all_[d];
-    //        parameters_all_[d].segment(free_vars_start_index_, num_vars_free_)
-    //                += -0.5 * inv_control_costs_[d] * gradient.segment(free_vars_start_index_, num_vars_free_);
-    //    }
+
     return true;
 }
 
@@ -276,8 +256,6 @@ bool CovariantTrajectoryPolicy::initializeVariables()
     for (int d=0; d<num_dimensions_; ++d)
         num_parameters_.push_back(num_time_steps_);
     
-//    cerr << "parameters_all_.resize : num_dimensions_ : " << num_dimensions_ << endl;
-//    cerr << "parameters_all_.resize : num_vars_all_ : " << num_vars_all_ << endl;
     parameters_all_.resize(num_dimensions_, Eigen::VectorXd::Zero(num_vars_all_));
     
     return true;
@@ -311,10 +289,6 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices()
                 differentiation_matrices_[d](i,index) = multiplier * DIFF_RULES[d][j+DIFF_RULE_LENGTH/2];
             }
         }
-//        if( print_debug_ )
-//        {
-//            cout << "differentiation_matrices_["<<d<<"] = " << endl << differentiation_matrices_[d] << endl ;
-//        }
     }
 
 //    move3d_save_matrix_to_file( differentiation_matrices_[0], "matlab/vel_diff_matrix.txt" );
@@ -329,7 +303,7 @@ bool CovariantTrajectoryPolicy::initializeCosts()
     inv_control_costs_.clear();
     covariances_.clear();
 
-    for (int d=0; d<num_dimensions_; ++d)
+    for( int d=0; d<num_dimensions_; ++d )
     {
         // Construct the quadratic cost matrices (for all variables)
         Eigen::MatrixXd cost_all = Eigen::MatrixXd::Identity( num_vars_all_ + free_offset_, num_vars_all_ + free_offset_ ) * cost_ridge_factor_;
@@ -479,11 +453,20 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
                         }
                     }
 
-                    acc_all[i] += (params_all[index]*DIFF_RULES[(int)type_][j+DIFF_RULE_LENGTH/2]);
-                }
+                    if( type_ == mix )
+                    {
+                        acc_all[i] += std::sqrt( derivative_costs_[0] ) * ( (params_all[index]*DIFF_RULES[(int)vel][j+DIFF_RULE_LENGTH/2]) / std::pow( dt, double(1) ) );
+                        acc_all[i] += std::sqrt( derivative_costs_[1] ) * ( (params_all[index]*DIFF_RULES[(int)acc][j+DIFF_RULE_LENGTH/2]) / std::pow( dt, double(2) ) );
+                        acc_all[i] += std::sqrt( derivative_costs_[2] ) * ( (params_all[index]*DIFF_RULES[(int)jerk][j+DIFF_RULE_LENGTH/2]) / std::pow( dt, double(3) ) );
+                    }
+                    else
+                    {
+                        acc_all[i] += (params_all[index]*DIFF_RULES[(int)type_][j+DIFF_RULE_LENGTH/2]);
 
-                if( dt != 0.0 ) // Devide by time step
-                    acc_all[i] /= std::pow( dt, double(type_+1) );
+                        if( dt != 0.0 ) // Devide by time step
+                            acc_all[i] /= std::pow( dt, double(type_+1) );
+                    }
+                }
             }
         }
 
@@ -499,10 +482,10 @@ bool CovariantTrajectoryPolicy::computeControlCosts(const std::vector<Eigen::Mat
 
         control_costs[d] = costs_all.segment( free_vars_start_index_, num_vars_free_ );
 
-        if( type_ == acc )
-            for (int d=0; d<num_dimensions_; ++d) {
-                control_costs[d] *= 1e-3;
-            }
+//        if( type_ == acc )
+//            for (int d=0; d<num_dimensions_; ++d) {
+//                control_costs[d] *= 1e-3;
+//            }
 
 //        if( !PlanEnv->getBool(PlanParam::trajStompNoPrint) )
 //            if( type_ == vel )

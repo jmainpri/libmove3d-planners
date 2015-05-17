@@ -36,6 +36,8 @@ using std::cin;
 HRICS::HumanTrajSimulator* global_ht_simulator = NULL;
 HRICS::HumanTrajCostSpace* global_ht_cost_space = NULL;
 
+static bool icra_september = false;
+
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 
@@ -114,6 +116,7 @@ bool HRICS_init_human_trajectory_cost()
                 {
                     std::ostringstream ss; ss << i;
                     std::string foldername = "/home/jmainpri/Desktop/experiments_a_term/aterm_experiment_ik_library/block1/" + ss.str() ;
+                    cout << "Load folder : " << foldername << endl;
 
                     bool quiet = true;
                     global_motionRecorders[0]->loadCSVFolder( foldername, quiet, "human1" ); // Passive
@@ -135,6 +138,9 @@ bool HRICS_init_human_trajectory_cost()
                 global_motionRecorders[0]->useBioFormat( true );
                 global_motionRecorders[1]->useBioFormat( true );
 
+                bool quiet = true;
+                std::string foldername;
+
                 // ORIGINAL
 //                std::string foldername = "/home/jmainpri/catkin_ws_hrics/src/hrics-or-rafi/python_module/bioik/tmp";
 //                motion_t traj1 = global_motionRecorders[0]->loadFromCSV( foldername + "/[1460-1620]_human2_.csv" );
@@ -147,26 +153,28 @@ bool HRICS_init_human_trajectory_cost()
 
 
 
-/**
+                if( icra_september )
+                {
 
-                ICRA PAPER September
-                std::string move3d_root = std::string( getenv("HOME_MOVE3D" ) ) + std::string( "/../" );
-                std::string foldername = move3d_root + "assets/Collaboration/TRAJECTORIES/mocap/ten_motions_last/";
+                    // ICRA PAPER September
+                    std::string move3d_root = std::string( getenv("HOME_MOVE3D" ) ) + std::string( "/../" );
+                    foldername = move3d_root + "assets/Collaboration/TRAJECTORIES/mocap/ten_motions_last/";
 
-                bool quiet = true;
-                global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet, -1.5 );
-                global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet, +1.5 );
-**/
+                    global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet, -1.5 );
+                    global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet, +1.5 );
+                }
+                else
+                {
+                    // ICRA PAPER February
+                    std::string move3d_root = std::string( getenv("HOME_MOVE3D" ) ) + std::string( "/../" );
+                    foldername = move3d_root + "assets/Collaboration/TRAJECTORIES/mocap/motions_icra/trajs/active/";
 
+                    cout << "Load folder : " << foldername << endl;
 
-
-                std::string foldername = "/home/move3d/workspace/motions_icra/trajs/active/";
-
-                bool quiet = true;
-                global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet );
-                global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet );
-
-
+                    bool quiet = true;
+                    global_motionRecorders[0]->loadCSVFolder( foldername + "human_two/", quiet );
+                    global_motionRecorders[1]->loadCSVFolder( foldername + "human_one/", quiet );
+                }
 
                 cout << "Stored motion names : " << endl;
                 for( int i=0; i<global_motionRecorders[0]->getStoredMotions().size();i++)
@@ -174,6 +182,8 @@ bool HRICS_init_human_trajectory_cost()
                     cout << global_motionRecorders[0]->getStoredMotionName(i) << endl;
                     cout << global_motionRecorders[1]->getStoredMotionName(i) << endl;
                 }
+
+
             }
         }
 
@@ -181,7 +191,7 @@ bool HRICS_init_human_trajectory_cost()
 
         // SET BASELINE HERE
         // OVERRIDE THE SMOOTH WEIGHTS
-        // PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, HriEnv->getBool(HricsParam::ioc_use_baseline) ? 100. : 1.0000 ); // USED TO BE 100 on baseline
+        PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, HriEnv->getBool(HricsParam::ioc_use_baseline) ? 100. : 1.0000 ); // USED TO BE 100 on baseline
 
         // Workspace Occupancy costspace
         std::vector<double> size = Move3D::global_Project->getActiveScene()->getBounds();
@@ -635,66 +645,83 @@ void HumanTrajSimulator::setReplanningDemonstrations()
      std::vector<std::string> selected;
      if( !use_all_motions )
      {
-         /**
+
+
          // GOOD... ICRA SEPTEMBER
 
-         selected.push_back("[0446-0578]_human2_.csv");
-         selected.push_back("[0446-0578]_human1_.csv");
+         if( icra_september )
+         {
+             selected.push_back("[0446-0578]_human2_.csv");
+             selected.push_back("[0446-0578]_human1_.csv");
 
-         selected.push_back("[0525-0657]_human2_.csv");
-         selected.push_back("[0525-0657]_human1_.csv");
+             selected.push_back("[0525-0657]_human2_.csv");
+             selected.push_back("[0525-0657]_human1_.csv");
 
-         selected.push_back("[0444-0585]_human2_.csv");
-         selected.push_back("[0444-0585]_human1_.csv");
+             selected.push_back("[0444-0585]_human2_.csv");
+             selected.push_back("[0444-0585]_human1_.csv");
 
-         selected.push_back("[0489-0589]_human2_.csv");
-         selected.push_back("[0489-0589]_human1_.csv");
+             selected.push_back("[0489-0589]_human2_.csv");
+             selected.push_back("[0489-0589]_human1_.csv");
 
-         selected.push_back("[0780-0871]_human2_.csv");
-         selected.push_back("[0780-0871]_human1_.csv");
+             selected.push_back("[0780-0871]_human2_.csv");
+             selected.push_back("[0780-0871]_human1_.csv");
 
-         selected.push_back("[1537-1608]_human2_.csv");
-         selected.push_back("[1537-1608]_human1_.csv");
+             selected.push_back("[1537-1608]_human2_.csv");
+             selected.push_back("[1537-1608]_human1_.csv");
 
-         selected.push_back("[2711-2823]_human2_.csv");
-         selected.push_back("[2711-2823]_human1_.csv");
+             selected.push_back("[2711-2823]_human2_.csv");
+             selected.push_back("[2711-2823]_human1_.csv");
 
-         // REPLANNING MOTION last (paper)
+             // REPLANNING MOTION last (paper)
 
-//         selected.push_back("[7395-7595]_human2_.csv");
-//         selected.push_back("[7395-7595]_human1_.csv");
-
-         std::string human2 = HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human2_.csv";
-         std::vector<std::string>::iterator it1 = find( selected.begin(), selected.end(), human2 );
-         selected.erase( it1 );
-
-         std::string human1 = HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human1_.csv";
-         std::vector<std::string>::iterator it2 = find( selected.begin(), selected.end(), human1 );
-         selected.erase( it2 );
-         **/
+             selected.push_back("[7395-7595]_human2_.csv");
+             selected.push_back("[7395-7595]_human1_.csv");
+         }
+         else
+         {
 
 
+//         std::string human2 = HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human2_.csv";
+//         std::vector<std::string>::iterator it1 = find( selected.begin(), selected.end(), human2 );
+//         selected.erase( it1 );
 
-        // GOOD... ICRA FEBUARY
-        // 1 . Active
-
-         selected.push_back("[0649-0740]_human2_.csv");
-         selected.push_back("[0649-0740]_human1_.csv");
-
-         selected.push_back("[1282-1370]_human2_.csv");
-         selected.push_back("[1282-1370]_human1_.csv");
-
-         selected.push_back("[1593-1696]_human2_.csv");
-         selected.push_back("[1593-1696]_human1_.csv");
-
-         selected.push_back("[1619-1702]_human2_.csv");
-         selected.push_back("[1619-1702]_human1_.csv");
-
-         selected.push_back("[1696-1796]_human2_.csv");
-         selected.push_back("[1696-1796]_human1_.csv");
+//         std::string human1 = HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human1_.csv";
+//         std::vector<std::string>::iterator it2 = find( selected.begin(), selected.end(), human1 );
+//         selected.erase( it2 );
 
 
 
+
+
+             // GOOD... ICRA FEBUARY
+             // 1 . Active
+
+             selected.push_back("[0649-0740]_human2_.csv");
+             selected.push_back("[0649-0740]_human1_.csv");
+
+             selected.push_back("[1282-1370]_human2_.csv");
+             selected.push_back("[1282-1370]_human1_.csv");
+
+             selected.push_back("[1593-1696]_human2_.csv");
+             selected.push_back("[1593-1696]_human1_.csv");
+
+             selected.push_back("[1619-1702]_human2_.csv");
+             selected.push_back("[1619-1702]_human1_.csv");
+
+             selected.push_back("[1696-1796]_human2_.csv");
+             selected.push_back("[1696-1796]_human1_.csv");
+
+
+
+
+         // Uncomment for leave one out
+//         selected.clear();
+//         std::string human2 = HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human2_.csv";
+//         std::string human1 = HriEnv->getString(HricsParam::ioc_traj_split_name) + "_human1_.csv";
+//         selected.push_back( human1 );
+//         selected.push_back( human2 );
+
+         }
 
 
          if( !use_one_traj_ )
@@ -922,6 +949,8 @@ std::vector<Move3D::confPtr_t> HumanTrajSimulator::getContext() const
 
 void HumanTrajSimulator::setPelvisBounds()
 {
+    cout <<"Set translations bounds from trajectory library" << endl;
+
     // Get first joint and change bounds
     Move3D::Joint* pelvis_joint = human_active_->getJoint( "Pelvis" );
 
@@ -961,6 +990,9 @@ void HumanTrajSimulator::setPelvisBounds()
                 dof[i][0] = pelvis_min_(i) - bound_rotat;
                 dof[i][1] = pelvis_max_(i) + bound_rotat;
             }
+
+            cout << "pelvis_min_.transpose() : " << pelvis_min_.transpose() << endl;
+            cout << "pelvis_max_.transpose() : " << pelvis_max_.transpose() << endl;
         }
     }
 
@@ -987,6 +1019,9 @@ void HumanTrajSimulator::setPelvisBounds()
 
         cout << "shoulder_trans_min_.transpose() : " << shoulder_trans_min_.transpose() << endl;
         cout << "shoulder_trans_max_.transpose() : " << shoulder_trans_max_.transpose() << endl;
+
+        cout << "forearm_min_ : " << forearm_min_ << endl;
+        cout << "forearm_max_ : " << forearm_max_ << endl;
 
         p3d_jnt_set_dof_rand_bounds( human_active_->getJoint( "rShoulderTransX" )->getP3dJointStruct(), 0, dof[0][0], dof[0][1] );
         p3d_jnt_set_dof_rand_bounds( human_active_->getJoint( "rShoulderTransY" )->getP3dJointStruct(), 0, dof[1][0], dof[1][1] );

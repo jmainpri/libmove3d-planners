@@ -172,6 +172,7 @@ struct LampTrajectory
     double discretization_;                            /**< time discretization */
     double duration_;                                  /**< duration */
     bool use_time_ ;
+    double cost_;
 };
 
 //! Sampler of noisy trajectories
@@ -185,7 +186,7 @@ public:
     //! Initializes the different data structures
     //! Initializes a coviarant trajectory policy
     //! Computes the control cost vector for the multivariate gaussian sampler
-    void initialize(const std::vector<double>& derivative_costs);
+    void initialize( const std::vector<double>& derivative_costs, int nb_points );
 
     //! Samples a noisy trajectory
     Eigen::VectorXd sample( double std_dev=1.0 );

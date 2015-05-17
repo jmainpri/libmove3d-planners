@@ -65,7 +65,8 @@ namespace HricsParam
             ioc_user_set_pelvis_bounds,
             ioc_use_baseline,
             ioc_no_replanning,
-            ioc_split_motions
+            ioc_split_motions,
+            ioc_conservative_baseline
         };
 
         enum intParameter
@@ -90,7 +91,8 @@ namespace HricsParam
 
         enum stringParameter
         {
-             ioc_traj_split_name
+             ioc_traj_split_name,
+             ioc_tmp_traj_folder
         };
 
         enum vectorParameter

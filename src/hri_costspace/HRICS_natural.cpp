@@ -533,6 +533,19 @@ void Natural::initNaturalBiomech()
     q[31] = 0.111212;
     q[32] = -1.38796;
 
+    q[ m_Robot->getJoint( "rShoulderTransX" )->getIndexOfFirstDof() ] = .018;
+    q[ m_Robot->getJoint( "rShoulderTransY" )->getIndexOfFirstDof() ] = .33;
+    q[ m_Robot->getJoint( "rShoulderTransZ" )->getIndexOfFirstDof() ] = .25;
+    q[ m_Robot->getJoint( "rArmTrans" )->getIndexOfFirstDof() ]       = .39;
+    q[ m_Robot->getJoint( "lPoint" )->getIndexOfFirstDof() ]          = .24;
+
+//    p3d_jnt_set_dof_rand_bounds( robot->getJoint( "rShoulderTransX" )->getP3dJointStruct(), 0, .016, .020 );
+//    p3d_jnt_set_dof_rand_bounds( robot->getJoint( "rShoulderTransY" )->getP3dJointStruct(), 0, .32, .34 );
+//    p3d_jnt_set_dof_rand_bounds( robot->getJoint( "rShoulderTransZ" )->getP3dJointStruct(), 0, .24, .26 );
+//    p3d_jnt_set_dof_rand_bounds( robot->getJoint( "rArmTrans" )->getP3dJointStruct(), 0, .38, .40 );
+//    p3d_jnt_set_dof_rand_bounds( robot->getJoint( "lPoint" )->getP3dJointStruct(), 0, .23, .25 );
+
+
     m_q_Confort = q.copy();
     m_Robot->setAndUpdate( *m_q_Confort );
 

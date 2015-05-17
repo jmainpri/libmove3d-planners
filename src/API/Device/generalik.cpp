@@ -79,7 +79,7 @@ bool GeneralIK::solve( const Eigen::VectorXd& xdes ) const
         q_cur->setFromEigenVector( q_new, active_dofs_ );
         robot_->setAndUpdate( *q_cur );
         dist =  ( xdes - ( with_rotations ? eef_->getXYZPose() : Eigen::VectorXd( eef_->getVectorPos().head(xdes.size())))).norm();
-//        cout << "diff = " << dist << endl;
+        cout << "diff = " << dist << endl;
 
         if( dist < 0.001 ){
 //            cout << "success (" << i << "), diff = " << dist << endl;
@@ -156,9 +156,13 @@ Eigen::VectorXd GeneralIK::single_step_joint_limits( const Eigen::VectorXd& xdes
 
             if( q_s[j] < lowerLimit || q_s[j] > upperLimit )
             {
-                badjointinds.push_back(j); // note this will never add the same joint twice, even if bClearBadJoints = false
+                badjointinds.push_back( j ); // note this will never add the same joint twice, even if bClearBadJoints = false
                 limit = true;
-                // cout << "does not respect joint limits : " << active_joints_[j]->getName() << endl;
+//                cout << "does not respect joint limits : " << active_joints_[j]->getName() ;
+//                cout << " , lowerLimit : " << lowerLimit ;
+//                cout << " , upperLimit : " << upperLimit ;
+//                cout << " , q_j : " << q_s[j];
+//                cout << " , id : " << active_joints_[j]->getIndexOfFirstDof() << endl;
             }
         }
 

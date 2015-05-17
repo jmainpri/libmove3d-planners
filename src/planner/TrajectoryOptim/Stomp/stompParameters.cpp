@@ -100,9 +100,9 @@ void StompParameters::init()
   animate_path_ = false;
   add_randomness_ = true;
   
-  smoothness_cost_velocity_ = 0.0;
-  smoothness_cost_acceleration_ = 1.0;
-  smoothness_cost_jerk_ = 1.0;
+  smoothness_cost_velocity_     = PlanEnv->getDouble(PlanParam::trajStompSmoothVel);
+  smoothness_cost_acceleration_ = PlanEnv->getDouble(PlanParam::trajStompSmoothAcc);
+  smoothness_cost_jerk_         = PlanEnv->getDouble(PlanParam::trajStompSmoothJerk);
   
   use_hamiltonian_monte_carlo_ = true;
   hmc_discretization_ = 0.01;

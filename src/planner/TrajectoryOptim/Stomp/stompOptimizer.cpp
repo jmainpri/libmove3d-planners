@@ -619,6 +619,9 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     //    last_move3d_cost_ = computeMove3DCost();
     //    printf("%3d, time: %f, cost: %f\n", 0, 0.0, last_move3d_cost_ );
     //    traj_convergence_with_time.push_back( make_pair( 0.0, last_move3d_cost_ ) );
+
+    // Clear trajs
+    global_trajToDraw.clear();
     
     if ( (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && stomp_parameters_->getAnimateEndeffector() )
         animateEndeffector();
@@ -705,15 +708,24 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         // setGroupTrajectoryToApiTraj( all_move3d_traj_.back() );
         // global_trajToDraw.push_back( all_move3d_traj_.back() );
 
-        if ( do_draw && (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && stomp_parameters_->getAnimateEndeffector() )
+        double cost = getTrajectoryCost();
+
+        // ( PlanEnv->getBool(PlanParam::trajStompDrawImprovement) && ( cost < best_group_trajectory_in_collsion_cost_ ))
+
+        if ( do_draw && (!ENV.getBool(Env::drawDisabled)) && ENV.getBool(Env::drawTraj) && stomp_parameters_->getAnimateEndeffector()  )
         {
             move3d_draw_clear_handles( robot_model_ );
             robot_model_->setAndUpdate(*q_tmp);
+
             animateEndeffector();
+
+//            if( !ENV.getBool(Env::drawTrajVector) )
+//                animateEndeffector();
+//            else
+//                g3d_draw_allwin_active();
+
             //animateTrajectoryPolicy();
         }
-
-        double cost = getTrajectoryCost();
 
         //double cost = last_trajectory_cost_;
         stomp_statistics_->costs.push_back(cost);
@@ -751,9 +763,10 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         }
         else
         {
-            if( cost < best_group_trajectory_cost_ ||
-              ( PlanEnv->getBool(PlanParam::trajStompDrawImprovement) && (
-                cost < best_group_trajectory_in_collsion_cost_ )))
+//            cout << "cost : " << cost << endl;
+//            cout << "best traj group : " << best_group_trajectory_cost_ << endl;
+
+            if( cost < best_group_trajectory_cost_ )
             {
                 if ( is_collision_free_ )
                 {
@@ -1484,7 +1497,7 @@ void StompOptimizer::getCostProfiles( vector<double>& smoothness_cost, vector<do
 bool StompOptimizer::handleJointLimits()
 {
 //    compute_fk_main_.
-    return compute_fk_main_->handleJointLimits( group_trajectory_ );
+    return compute_fk_main_->handleJointLimitsQuadProg( group_trajectory_ );
 }
 
 double StompOptimizer::getCollisionSpaceCost( const Move3D::Configuration& q )
@@ -1878,15 +1891,8 @@ void StompOptimizer::animateEndeffector(bool print_cost)
             cout << " and is NOT valid" << endl;
     }
     
-    if( !ENV.getBool(Env::drawTrajVector) )
-    {
-        T.replaceP3dTraj();
-    }
-    else
-    {
-        T.setColor( Red );
-        global_trajToDraw.push_back( T );
-    }
+    T.replaceP3dTraj();
+
 
     if( !robot_model_->getUseLibmove3dStruct() )
     {

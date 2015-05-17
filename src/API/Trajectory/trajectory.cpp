@@ -1719,7 +1719,7 @@ void Trajectory::draw( int nbKeyFrame )
         if( move3d_use_api_functions() ) glLineWidth(3.);
 
         if( !m_use_continuous_color ) {
-            move3d_draw_one_line( pi[0], pi[1], height_i, pf[0], pf[1], height_f, int(m_Color) % 8, NULL, m_Robot );
+            move3d_draw_one_line( pi[0], pi[1], height_i, pf[0], pf[1], height_f, int(m_Color)  /*% 8*/, NULL, m_Robot );
         }
         else{
             double colorvector[4];
@@ -2479,7 +2479,12 @@ Eigen::MatrixXd Trajectory::getJointPoseTrajectory( const Move3D::Joint* joint )
         {
             m_Robot->setAndUpdate( *m_Courbe.back()->getEnd() );
             Eigen::Transform3d T( joint->getMatrixPos() );
+
+            cout << "translation : " << T.translation() << endl;
+            cout << "rotation : " << T.rotation() << endl;
+
             Eigen::Quaterniond q( T.rotation() );
+
             mat.col(m_Courbe.size())[0] = T.translation().x();
             mat.col(m_Courbe.size())[1] = T.translation().y();
             mat.col(m_Courbe.size())[2] = T.translation().z();

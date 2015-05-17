@@ -351,8 +351,11 @@ p3d_traj* p3d_planner_function(p3d_rob* robotPt, configPt qs, configPt qg)
     cout << "NB EXPANSION " << rrt->getNumberOfExpansion() << endl;
     cout << "** ** --------------------------" << endl;
 
-    cout << "av. nb col tests per edge :  " << graph->getNumberOfColTestCalls() / graph->getNumberOfEdges() << endl;
-    cout << "av. nb cost calls per edge :  " << graph->getNumberOfCostCalls() / graph->getNumberOfEdges() << endl;
+    if( graph->getNumberOfEdges() > 0 )
+    {
+        cout << "av. nb col tests per edge :  " << graph->getNumberOfColTestCalls() / graph->getNumberOfEdges() << endl;
+        cout << "av. nb cost calls per edge :  " << graph->getNumberOfCostCalls() / graph->getNumberOfEdges() << endl;
+    }
 
     rrt_statistics.runId = rrt->getRunId();
     rrt_statistics.succeeded = (traj!=NULL);

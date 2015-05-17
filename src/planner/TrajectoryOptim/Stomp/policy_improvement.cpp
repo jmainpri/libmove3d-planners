@@ -40,6 +40,7 @@
 //#include <ros/assert.h>
 
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+
 #include <Eigen/LU>
 #include <Eigen/Array>
 
@@ -55,8 +56,10 @@
 
 #include "planner/planEnvironment.hpp"
 #include "feature_space/smoothness.hpp"
-#include "Graphic-pkg.h"
-#include "P3d-pkg.h"
+#include "utils/NumsAndStrings.hpp"
+
+#include <libmove3d/include/Graphic-pkg.h>
+#include <libmove3d/include/P3d-pkg.h>
 
 #include "stompOptimizer.hpp"
 
@@ -225,6 +228,8 @@ namespace stomp_motion_planner
 
             if( !PlanEnv->getBool(PlanParam::trajStompMatrixAdaptation) )
             {
+                // cout << "inv_control_costs_[" << d << "] : " << inv_control_costs_[d] << endl;
+                move3d_save_matrix_to_file( inv_control_costs_[d], "inv_control_costs_" + num_to_string<int>(d) );
                 MultivariateGaussian mvg( VectorXd::Zero(num_parameters_[d]), inv_control_costs_[d] );
                 noise_generators_.push_back(mvg);
             }
@@ -890,7 +895,22 @@ namespace stomp_motion_planner
 
         std::vector<Eigen::VectorXd> parameters;
 
-        for (int d=0; d<num_dimensions_; ++d)
+        const bool count_out_of_joint_limits = false;
+        const bool draw_update = true;
+
+        if( count_out_of_joint_limits )
+        {
+            int nb_samples_in_joint_limits=0;
+            for (int r=0; r<num_rollouts_; ++r)
+            {
+                if( !rollouts_[r].out_of_bounds_ )
+                    nb_samples_in_joint_limits++;
+            }
+            cout << "nb of samples in joint limits : " << nb_samples_in_joint_limits << endl;
+        }
+
+
+        for( int d=0; d<num_dimensions_; ++d )
         {
             parameter_updates_[d] = MatrixXd::Zero(num_time_steps_, num_parameters_[d]);
 
@@ -911,7 +931,10 @@ namespace stomp_motion_planner
                 }
             }
 
-            parameters.push_back( parameter_updates_[d].row(0).transpose() + parameters_[d] );
+            if( draw_update )
+            {
+                parameters.push_back( parameter_updates_[d].row(0).transpose() + parameters_[d] );
+            }
 
             // cout << "parameter_updates_[" << d << "].row(0).transpose() = " << endl << parameter_updates_[d].row(0).transpose() << endl;
             // This is the multiplication by M
@@ -921,7 +944,8 @@ namespace stomp_motion_planner
             }
         }
 
-        addParmametersToDraw( parameters, 0 );
+        if( draw_update )
+            addParmametersToDraw( parameters, 33 ); // Orange
 
         //resampleUpdates();
         return true;
@@ -965,7 +989,8 @@ namespace stomp_motion_planner
 
         //T.print();
         traj.setColor( color );
-//        global_trajToDraw.clear();
+        traj.setUseContinuousColors( false );
+        //        global_trajToDraw.clear();
         global_trajToDraw.push_back( traj );
     }
 

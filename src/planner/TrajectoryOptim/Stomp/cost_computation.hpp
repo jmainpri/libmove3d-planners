@@ -33,6 +33,7 @@
 #include "planner/TrajectoryOptim/Chomp/chompCost.hpp"
 #include "planner/TrajectoryOptim/Stomp/stompParameters.hpp"
 #include "planner/TrajectoryOptim/Stomp/covariant_trajectory_policy.hpp"
+#include "planner/TrajectoryOptim/jointlimits.hpp"
 
 #include "collision_space/collision_space.hpp"
 
@@ -74,6 +75,9 @@ public:
     
     //! set trajectory within the joint limits
     bool handleJointLimits( Move3D::ChompTrajectory& group_traj );
+
+    //! Quad prog joint limits
+    bool handleJointLimitsQuadProg( Move3D::ChompTrajectory& group_traj  );
     
     //! compute collision space cost for one configuration
     double getCollisionSpaceCost( const Move3D::Configuration& q );
@@ -128,6 +132,7 @@ private:
     double resampleParameters( std::vector<Eigen::VectorXd>& parameters );
     void projectToConstraints( Move3D::ChompTrajectory& group_traj ) const;
     void getMove3DConfiguration( const Eigen::VectorXd& joint_array, Move3D::Configuration& q ) const;
+    bool checkJointLimits( Move3D::ChompTrajectory& group_traj  );
 
     bool is_collision_free_;
     bool succeded_joint_limits_;
@@ -153,6 +158,8 @@ private:
     Move3D::Joint* eef_;
     // -----------------------------------
 
+    //Joint limits
+    std::vector<TrajOptJointLimit> joint_limits_computers_;
 
     // Variable General cost
     bool use_costspace_;

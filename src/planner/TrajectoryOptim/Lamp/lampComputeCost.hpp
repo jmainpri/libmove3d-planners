@@ -34,6 +34,7 @@
 #include "planner/TrajectoryOptim/Stomp/covariant_trajectory_policy.hpp"
 #include "planner/TrajectoryOptim/Stomp/policy.hpp"
 #include "planner/TrajectoryOptim/Stomp/task.hpp"
+#include "planner/TrajectoryOptim/jointlimits.hpp"
 
 #include "collision_space/collision_space.hpp"
 
@@ -64,7 +65,8 @@ public:
                     bool use_external_collision_space,
                     int collision_space_id,
                     const stomp_motion_planner::StompParameters* stomp_parameters,
-                    stomp_motion_planner::Policy* policy);
+                    stomp_motion_planner::Policy* policy,
+                    const Eigen::MatrixXd& dynamics );
 
     ~LampCostComputation();
 
@@ -74,8 +76,14 @@ public:
     //! compute the cost of a given trajectory
     bool getCost( Move3D::LampTrajectory& traj, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample, bool is_rollout );
 
+    //! check joint limits
+    bool checkJointLimits(  LampTrajectory& group_traj  );
+
     //! set trajectory within the joint limits
     bool handleJointLimits( Move3D::LampTrajectory& group_traj );
+
+    //! set trajectory within the joint limits
+    bool handleJointLimitsQuadProg(  LampTrajectory& group_traj  );
 
     //! compute collision space cost for one configuration
     double getCollisionSpaceCost( const Move3D::Configuration& q );
@@ -97,6 +105,9 @@ public:
 
     //! compute control cost TODO
     bool getControlCosts(const Move3D::LampTrajectory& group_traj);
+
+    //!
+    void print_time() const;
 
     /************************************
      * Setters
@@ -132,6 +143,9 @@ private:
     Move3D::Robot* robot_model_;
     Move3D::LampTrajectory group_trajectory_;
     const Move3D::ChompPlanningGroup* planning_group_;
+
+    TrajOptJointLimit joint_limits_computer_;
+    std::vector<TrajOptJointLimit> joint_limits_computers_;
 
     void projectToConstraints( Move3D::LampTrajectory& group_traj ) const;
     void getMove3DConfiguration( const Eigen::VectorXd& joint_array, Move3D::Configuration& q ) const;
@@ -203,6 +217,9 @@ private:
 
     std::vector< boost::function<int( Move3D::Robot* )> > move3d_get_number_of_collision_points_;
     std::vector< boost::function<bool( Move3D::Robot*, int i, Eigen::MatrixXd&, std::vector< std::vector<Eigen::Vector3d> >& )> > move3d_get_config_collision_cost_;
+
+    double time_cumul_;
+    int time_iter_;
 };
 
 }

@@ -574,7 +574,8 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
         traj.parameters_[j].end(1) = traj.nominal_parameters_[j].end(1);
     }
 
-//    cout << "is_in_joint_limits : " << is_in_joint_limits << endl;
+    cout << __PRETTY_FUNCTION__ << endl;
+    cout << "is_in_joint_limits : " << is_in_joint_limits << endl;
 
     return is_in_joint_limits;
 }

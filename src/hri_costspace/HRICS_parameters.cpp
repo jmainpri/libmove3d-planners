@@ -89,6 +89,7 @@ void initHricsParameters()
     myBoolMap.insert( std::make_pair( HricsParam::ioc_use_baseline, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_no_replanning, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_split_motions, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_conservative_baseline, new boolContainer(false) ));
 
     // Int
     // ------------------------------------------------------------------
@@ -113,7 +114,9 @@ void initHricsParameters()
     // String
     // ------------------------------------------------------------------
 #ifdef QT_LIBRARY
+
     myStringMap.insert(std::make_pair(HricsParam::ioc_traj_split_name,   new stringContainer("titi")));
+    myStringMap.insert(std::make_pair(HricsParam::ioc_tmp_traj_folder,   new stringContainer("")));
 
 #endif
 

@@ -2,6 +2,8 @@
 #include "lampComputeCost.hpp"
 #include "API/project.hpp"
 #include "planner/planEnvironment.hpp"
+
+#include <libmove3d/p3d/env.hpp>
 #include <libmove3d/include/Graphic-pkg.h>
 
 using namespace Move3D;
@@ -28,11 +30,17 @@ LampSimpleLoop::LampSimpleLoop( Move3D::Robot* robot ) : sampler_(robot)
 
     double duration     = PlanEnv->getDouble(PlanParam::trajDuration);
     int nb_points       = PlanEnv->getInt(PlanParam::nb_pointsOnTraj);
-    sampler_.initialize( stomp_parameters_->getSmoothnessCosts() );
+    sampler_.initialize( stomp_parameters_->getSmoothnessCosts() , nb_points );
     planning_group_ = sampler_.planning_group_;
     group_trajectory_ = Move3D::LampTrajectory( planning_group_->chomp_dofs_.size(), nb_points, duration );
     group_trajectory_.planning_group_ = planning_group_;
     group_trajectory_.setFromMove3DTrajectory( initial_traj_seed_ );
+
+    num_rollouts_ = PlanEnv->getInt(PlanParam::lamp_nb_samples);
+    num_rollouts_gen_ = num_rollouts_;
+    num_rollouts_reused_ = 0;
+    rollouts_reused_next_ = false;
+    reused_rollouts_.clear();
 
 
     // Cost computer...
@@ -54,10 +62,11 @@ LampSimpleLoop::LampSimpleLoop( Move3D::Robot* robot ) : sampler_(robot)
                                                  use_external_collision_space,
                                                  collision_space_id,
                                                  stomp_parameters_const_,
-                                                 &sampler_.policy_);
+                                                 &sampler_.policy_,
+                                                 sampler_.control_ );
 
 
-    if( !use_external_collision_space)
+    if( !use_external_collision_space )
     {
         cost_computer_.set_fct_get_nb_collision_points( boost::bind( &Move3D::LampCostComputation::getNumberOfCollisionPoints, &cost_computer_, _1 ), collision_space_id );
         cost_computer_.set_fct_get_config_collision_cost( boost::bind( &Move3D::LampCostComputation::getConfigObstacleCost, &cost_computer_, _1, _2, _3, _4 ), collision_space_id );
@@ -69,30 +78,38 @@ bool LampSimpleLoop::initialize(bool single_rollout, double discretization)
 
 }
 
+void LampSimpleLoop::end()
+{
+    cost_computer_.print_time();
+}
+
 void LampSimpleLoop::run_single_iteration()
 {
-    std::vector<LampTrajectory> samples = sampler_.sampleTrajectories( PlanEnv->getInt(PlanParam::lamp_nb_samples), group_trajectory_ );
-
-    std::vector<bool> succeeded( samples.size(), false );
-    Eigen::VectorXd costs( samples.size() );
-    Eigen::MatrixXd deltas( samples.size(), group_trajectory_.trajectory_.size() );
+    std::vector<bool> succeeded( samples_.size(), false );
+    Eigen::VectorXd costs( generateSamples() );
+    Eigen::MatrixXd deltas( samples_.size(), group_trajectory_.trajectory_.size() );
 
     int nb_valid_samples= 0;
     double group_trajectory_cost = getTrajectoryCost();
 
     // Compute cost
-    for( int i=0; i<samples.size(); i++)
+    for( int i=0; i<samples_.size(); i++)
     {
-        deltas.row(i) = samples[i].trajectory_ - group_trajectory_.trajectory_;
+        deltas.row(i) = samples_[i].trajectory_ - group_trajectory_.trajectory_;
 
-        costs[i] = getTrajectoryCost( samples[i], false ) ; //- group_trajectory_cost;
-
-        if( cost_computer_.getJointLimitViolationSuccess() )
+        if( !samples_[i].out_of_bounds_ )
         {
             succeeded[i] = true;
             nb_valid_samples++;
         }
+
+        if( ENV.getBool(Env::drawTrajVector) && ENV.getBool(Env::drawTraj) )
+        {
+            global_trajToDraw.push_back( samples_[i].getMove3DTrajectory() );
+            global_trajToDraw.back().setColor( i );
+        }
     }
+
 
     Eigen::VectorXd baises( group_trajectory_.trajectory_.size() );
 
@@ -101,7 +118,7 @@ void LampSimpleLoop::run_single_iteration()
         double b_i_num = 0.;
         double b_i_den = 0.;
 
-        for( int i=0; i<samples.size(); i++)
+        for( int i=0; i<samples_.size(); i++)
         {
             b_i_num += costs[i] * std::pow( deltas(i, j), 2. );
             b_i_den += std::pow( deltas(i, j), 2. );
@@ -109,7 +126,6 @@ void LampSimpleLoop::run_single_iteration()
 
         baises[j] = b_i_num / b_i_den;
     }
-
 
     cout << "nb_valid_samples : " << nb_valid_samples << endl;
 
@@ -120,7 +136,7 @@ void LampSimpleLoop::run_single_iteration()
 
         // Compute update
         // double delta = 0.;
-        for( int i=0; i<samples.size(); i++)
+        for( int i=0; i<samples_.size(); i++)
         {
             if( succeeded[i] )
             {
@@ -144,6 +160,8 @@ void LampSimpleLoop::run_single_iteration()
         // cout << "delta : " << delta << endl;
         // Set update
         group_trajectory_.trajectory_ -= new_traj.trajectory_;
+
+        getTrajectoryCost( group_trajectory_, true ) ; //- group_trajectory_cost;
     }
 }
 
@@ -200,7 +218,9 @@ double LampSimpleLoop::getTrajectoryCost( Move3D::LampTrajectory& traj, bool che
     double coll_cost =  getCollisionCost( traj, check_joint_limits );
     double cont_cost =  getSmoothnessCost( traj );
 
-    return  coll_cost + cont_cost;
+    traj.cost_ = coll_cost + cont_cost;
+
+    return traj.cost_;
 }
 
 double LampSimpleLoop::getCollisionCost( Move3D::LampTrajectory& traj, bool check_joint_limits )
@@ -215,6 +235,9 @@ double LampSimpleLoop::getCollisionCost( Move3D::LampTrajectory& traj, bool chec
 
     // Computes costs and joint limits
     cost_computer_.getCost( traj, costs, iteration_, check_joint_limits, false, false );
+
+    // Get out of bounds
+    traj.out_of_bounds_ = !cost_computer_.getJointLimitViolationSuccess();
 
     return costs.sum();
 }
@@ -245,4 +268,72 @@ double LampSimpleLoop::getSmoothnessCost()
 double LampSimpleLoop::getCollisionCost()
 {
     return getCollisionCost( group_trajectory_ );
+}
+
+Eigen::VectorXd LampSimpleLoop::generateSamples()
+{
+    std::vector<LampTrajectory>  samples = sampler_.sampleTrajectories( num_rollouts_gen_, group_trajectory_ );
+
+    Eigen::VectorXd costs( num_rollouts_ );
+    for( int i=0; i<samples.size(); i++ )
+    {
+        costs[i] = getTrajectoryCost( samples[i], true ) ; //- group_trajectory_cost;
+    }
+
+    // The rollouts of the run are not used
+    if( !rollouts_reused_next_ )
+    {
+        num_rollouts_gen_ = num_rollouts_;
+
+        if( num_rollouts_reused_ > 0 )
+            rollouts_reused_next_ = true;
+    }
+    else
+    {
+        // we assume here that rollout_parameters_ and rollout_noise_ have already been allocated
+        num_rollouts_gen_ = num_rollouts_ - num_rollouts_reused_;
+
+        for( int r=0; r<reused_rollouts_.size(); ++r )
+            samples.push_back( reused_rollouts_[r] );
+
+        // figure out which rollouts to reuse
+        std::vector< std::pair<double,int> > rollout_cost_sorter;
+        for (int r=0; r<samples.size(); ++r)
+        {
+            double cost = costs[r];
+
+            // discard out of bounds rollouts
+            if ( samples[r].out_of_bounds_ )
+                cost = std::numeric_limits<double>::max();
+
+            rollout_cost_sorter.push_back( std::make_pair(cost,r) );
+        }
+        std::sort( rollout_cost_sorter.begin(), rollout_cost_sorter.end() );
+
+
+        // use the best ones: (copy them into reused_rollouts)
+        reused_rollouts_.resize( num_rollouts_reused_ );
+
+        for( int r=0; r<num_rollouts_reused_; ++r )
+        {
+            int reuse_index = rollout_cost_sorter[r].second;
+
+            if( reuse_index >=0 )
+                reused_rollouts_[r] = samples[ reuse_index ];
+        }
+
+        // copy them back from reused_rollouts_ into rollouts_
+        if( samples.size() >= ( num_rollouts_gen_ + reused_rollouts_.size() ) ) //! TODO fix this
+        {
+            for( int r=0; r<num_rollouts_reused_; ++r)
+                samples[num_rollouts_gen_+r] = reused_rollouts_[r];
+
+            for( int i=0; i<num_rollouts_; i++ )
+                costs[i] = samples[i].cost_ ; //- group_trajectory_cost;
+        }
+    }
+
+    samples_ = samples;
+
+    return costs;
 }
