@@ -57,7 +57,7 @@ public:
     LampCostComputation(Move3D::Robot* robot,
                     const Move3D::CollisionSpace *collision_space,
                     const Move3D::ChompPlanningGroup* planning_group,
-                    Move3D::LampTrajectory group_trajectory,
+                    Move3D::VectorTrajectory group_trajectory,
                     double obstacle_weight,
                     bool use_costspace,
                     Move3D::confPtr_t q_source,
@@ -74,16 +74,16 @@ public:
     double getCost() const;
 
     //! compute the cost of a given trajectory
-    bool getCost( Move3D::LampTrajectory& traj, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample, bool is_rollout );
+    bool getCost( Move3D::VectorTrajectory& traj, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample, bool is_rollout );
 
     //! check joint limits
-    bool checkJointLimits(  LampTrajectory& group_traj  );
+    bool checkJointLimits(  VectorTrajectory& group_traj  );
 
     //! set trajectory within the joint limits
-    bool handleJointLimits( Move3D::LampTrajectory& group_traj );
+    bool handleJointLimits( Move3D::VectorTrajectory& group_traj );
 
     //! set trajectory within the joint limits
-    bool handleJointLimitsQuadProg(  LampTrajectory& group_traj  );
+    bool handleJointLimitsQuadProg(  VectorTrajectory& group_traj  );
 
     //! compute collision space cost for one configuration
     double getCollisionSpaceCost( const Move3D::Configuration& q );
@@ -101,10 +101,10 @@ public:
     int getNumberOfCollisionPoints(Move3D::Robot* R);
 
     //! perform forward kinematics and compute collision costs
-    bool performForwardKinematics( const Move3D::LampTrajectory& group_traj, bool is_rollout );
+    bool performForwardKinematics( const Move3D::VectorTrajectory& group_traj, bool is_rollout );
 
     //! compute control cost TODO
-    bool getControlCosts(const Move3D::LampTrajectory& group_traj);
+    bool getControlCosts(const Move3D::VectorTrajectory& group_traj);
 
     //!
     void print_time() const;
@@ -136,18 +136,18 @@ public:
     const Eigen::VectorXd& getCollisionCostPotential() const { return general_cost_potential_; }
     const Eigen::VectorXd& getDts() const { return dt_; }
 
-    const Move3D::LampTrajectory& getGroupTrajectory() const { return group_trajectory_; }
+    const Move3D::VectorTrajectory& getGroupTrajectory() const { return group_trajectory_; }
 
 private:
 
     Move3D::Robot* robot_model_;
-    Move3D::LampTrajectory group_trajectory_;
+    Move3D::VectorTrajectory group_trajectory_;
     const Move3D::ChompPlanningGroup* planning_group_;
 
     TrajOptJointLimit joint_limits_computer_;
     std::vector<TrajOptJointLimit> joint_limits_computers_;
 
-    void projectToConstraints( Move3D::LampTrajectory& group_traj ) const;
+    void projectToConstraints( Move3D::VectorTrajectory& group_traj ) const;
     void getMove3DConfiguration( const Eigen::VectorXd& joint_array, Move3D::Configuration& q ) const;
 
     bool is_collision_free_;
@@ -183,6 +183,7 @@ private:
     bool multiple_smoothness_;
     stomp_motion_planner::Policy* policy_;
     double control_cost_weight_;
+    double total_smoothness_cost_;
     std::vector<Eigen::VectorXd> current_control_costs_;
     std::vector<Eigen::MatrixXd> control_costs_; /**< [num_dimensions] num_parameters x num_parameters */
     Eigen::VectorXd control_cost_weights_;
@@ -199,7 +200,7 @@ private:
     int id_fixed_;
     int iteration_;
     int num_collision_points_;
-    int num_joints_;
+    int num_dofs_;
 
     double hack_tweek_;
     double obstacle_weight_;

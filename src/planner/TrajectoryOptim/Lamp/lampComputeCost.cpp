@@ -53,7 +53,7 @@ const double hack_tweek = 1;
 LampCostComputation::LampCostComputation(Robot* robot,
                                  const CollisionSpace *collision_space,
                                  const ChompPlanningGroup* planning_group,
-                                 Move3D::LampTrajectory group_trajectory,
+                                 Move3D::VectorTrajectory group_trajectory,
                                  double obstacle_weight,
                                  bool use_costspace,
                                  Move3D::confPtr_t q_source,
@@ -88,9 +88,9 @@ LampCostComputation::LampCostComputation(Robot* robot,
 
     iteration_ = 0;
 
-    num_vars_free_ = group_trajectory_.getNumFreePoints();
-    num_vars_all_ = group_trajectory_.getNumFreePoints() + 2 * DIFF_RULE_LENGTH;
-    num_joints_ = group_trajectory_.getNumJoints();
+    num_vars_free_  = group_trajectory_.getNumFreePoints();
+    num_vars_all_   = group_trajectory_.getNumFreePoints() + 2 * DIFF_RULE_LENGTH;
+    num_dofs_     = group_trajectory_.getNumDofs();
 
     free_vars_start_2_ = DIFF_RULE_LENGTH - 1;
     free_vars_end_2_ = (num_vars_all_ - 1) - (DIFF_RULE_LENGTH - 1);
@@ -235,14 +235,14 @@ LampCostComputation::LampCostComputation(Robot* robot,
     ///--------------------------------------------------------------------------
     /// JOINT LIMITS
 
-    Eigen::VectorXd upper( num_vars_free_ * num_joints_ );
-    Eigen::VectorXd lower( num_vars_free_ * num_joints_ );
+    Eigen::VectorXd upper( num_vars_free_ * num_dofs_ );
+    Eigen::VectorXd lower( num_vars_free_ * num_dofs_ );
 
-    for (int joint=0; joint<num_joints_; joint++)
+    for (int joint=0; joint<num_dofs_; joint++)
     {
         for (int i=free_vars_start_; i<=free_vars_end_; i++)
         {
-            int id = i*num_joints_ + joint;
+            int id = i*num_dofs_ + joint;
             upper( id ) = planning_group_->chomp_dofs_[joint].joint_limit_max_;
             lower( id ) = planning_group_->chomp_dofs_[joint].joint_limit_min_;
         }
@@ -256,9 +256,9 @@ LampCostComputation::LampCostComputation(Robot* robot,
         cout << "ERROR could not initialize joint limits in " << __PRETTY_FUNCTION__ << endl;
 
     // PER JOINT
-    joint_limits_computers_.resize( num_joints_ );
+    joint_limits_computers_.resize( num_dofs_ );
 
-    for(int joint=0; joint<num_joints_; joint++)
+    for(int joint=0; joint<num_dofs_; joint++)
     {
         double max_limit = planning_group_->chomp_dofs_[joint].joint_limit_max_ - 1e-5;
         double min_limit = planning_group_->chomp_dofs_[joint].joint_limit_min_ + 1e-5;
@@ -318,11 +318,11 @@ void LampCostComputation::set_fct_get_config_collision_cost( boost::function<boo
     }
 }
 
-bool LampCostComputation::checkJointLimits(  LampTrajectory& group_traj  )
+bool LampCostComputation::checkJointLimits(  VectorTrajectory& group_traj  )
 {
     bool succes_joint_limits = true;
 
-    for (int joint=0; joint<num_joints_; joint++)
+    for (int joint=0; joint<num_dofs_; joint++)
     {
         if (!planning_group_->chomp_dofs_[joint].has_joint_limits_)
             continue;
@@ -373,7 +373,7 @@ bool LampCostComputation::checkJointLimits(  LampTrajectory& group_traj  )
     return true;
 }
 
-bool LampCostComputation::handleJointLimitsQuadProg(  LampTrajectory& group_traj  )
+bool LampCostComputation::handleJointLimitsQuadProg(  VectorTrajectory& group_traj  )
 {
 //    if( checkJointLimits( group_traj ) )
 //        return true;
@@ -381,7 +381,7 @@ bool LampCostComputation::handleJointLimitsQuadProg(  LampTrajectory& group_traj
 //     double error = joint_limits_computer_.project( group_traj.trajectory_ );
     // cout << "error : " << error << endl;
 
-    for(int joint=0; joint<num_joints_; joint++)
+    for(int joint=0; joint<num_dofs_; joint++)
     {
         if(!planning_group_->chomp_dofs_[joint].has_joint_limits_)
             continue;
@@ -399,12 +399,12 @@ bool LampCostComputation::handleJointLimitsQuadProg(  LampTrajectory& group_traj
     return false;
 }
 
-bool LampCostComputation::handleJointLimits(  LampTrajectory& group_traj  )
+bool LampCostComputation::handleJointLimits(  VectorTrajectory& group_traj  )
 {
     bool succes_joint_limits = true;
     bool joint_limits_violation = 0;
 
-    for (int joint=0; joint<num_joints_; joint++)
+    for (int joint=0; joint<num_dofs_; joint++)
     {
         if (!planning_group_->chomp_dofs_[joint].has_joint_limits_)
             continue;
@@ -531,13 +531,13 @@ bool LampCostComputation::handleJointLimits(  LampTrajectory& group_traj  )
     return succes_joint_limits;
 }
 
-bool LampCostComputation::getControlCosts(const LampTrajectory& group_traj)
+bool LampCostComputation::getControlCosts(const VectorTrajectory& group_traj)
 {
-    std::vector<Eigen::VectorXd> parameters( num_joints_ );
+    std::vector<Eigen::VectorXd> parameters( num_dofs_ );
     group_traj.getFreeParameters( parameters ); // TODO check the paramters size
 
     //            cout << "sum control costs" << endl;
-    current_control_costs_ = std::vector<Eigen::VectorXd>( num_joints_, Eigen::VectorXd::Zero(num_vars_free_) );
+    current_control_costs_ = std::vector<Eigen::VectorXd>( num_dofs_, Eigen::VectorXd::Zero(num_vars_free_) );
 
     if( multiple_smoothness_ )
     {
@@ -549,10 +549,10 @@ bool LampCostComputation::getControlCosts(const LampTrajectory& group_traj)
 
 //        cout << "control_costs.size() " << control_costs.size() << endl;
 //        cout << "current_control_costs_.size() " << current_control_costs_.size() << endl;
-//        cout << "num joint : " << num_joints_ << endl;
+//        cout << "num joint : " << num_dofs_ << endl;
 
         for (int c=0; c<4; ++c)
-            for (int d=0; d<num_joints_; ++d) {
+            for (int d=0; d<num_dofs_; ++d) {
 //                cout << "control_costs[c].size() : " << control_costs[c].size() << endl;
 //                cout << "current_control_costs_[d] : " << current_control_costs_[d].size() << endl;
                 current_control_costs_[d] += ( control_cost_weights_[c] * control_costs[c][d] );
@@ -565,10 +565,13 @@ bool LampCostComputation::getControlCosts(const LampTrajectory& group_traj)
         for (int c=4; c<8; ++c) {
             general_cost_potential_.segment( free_vars_start_, num_vars_free_) += ( control_cost_weights_[c] * control_costs[c][0] );
         }
+
+
+        // TODO ADD SMOOTHNESS COST
     }
     else
     {
-            // cout << "NORMAL COMPUTATION" << endl;
+        // cout << "NORMAL COMPUTATION" << endl;
 
         // TODO see why num_vars_free_ is 100 and not 100 - id_fixed
 //        cout << "parameter size : " << parameters[0].size() << endl;
@@ -576,12 +579,16 @@ bool LampCostComputation::getControlCosts(const LampTrajectory& group_traj)
 
         policy_->computeControlCosts(control_costs_,
                                      parameters,
-                                     std::vector<Eigen::VectorXd>( num_joints_, Eigen::VectorXd::Zero(num_vars_free_) ),
+                                     std::vector<Eigen::VectorXd>( num_dofs_, Eigen::VectorXd::Zero(num_vars_free_) ),
                                      control_cost_weight_ ,
                                      current_control_costs_,
-                                     group_traj.getDiscretization() );
+                                     group_traj.getUseTime() ? group_traj.getDiscretization() : 0.0 );
 
-//        for (int d=0; d<num_joints_; ++d)
+        total_smoothness_cost_ += 0.;
+        for (int d=0; d<num_dofs_; ++d)
+            total_smoothness_cost_ += control_costs_[d].sum();
+
+//        for (int d=0; d<num_dofs_; ++d)
 //        {
 //            general_cost_potential_.segment( free_vars_start_, num_vars_free_) += ( current_control_costs_[d] );
 
@@ -743,7 +750,7 @@ int LampCostComputation::getNumberOfCollisionPoints(Move3D::Robot* R)
     return planning_group_->collision_points_.size();
 }
 
-bool LampCostComputation::performForwardKinematics( const LampTrajectory& group_traj, bool is_rollout )
+bool LampCostComputation::performForwardKinematics( const VectorTrajectory& group_traj, bool is_rollout )
 {
     double invTime = 1.0 / group_traj.getDiscretization();
     double invTimeSq = invTime*invTime;
@@ -754,7 +761,7 @@ bool LampCostComputation::performForwardKinematics( const LampTrajectory& group_
 
     is_collision_free_ = true;
 
-    Eigen::VectorXd joint_array( num_joints_ );
+    Eigen::VectorXd joint_array( num_dofs_ );
 
     Move3D::Configuration q( *source_ );
     Move3D::Configuration q_tmp( *robot_model_->getCurrentPos() );
@@ -848,9 +855,9 @@ bool LampCostComputation::performForwardKinematics( const LampTrajectory& group_
     return is_collision_free_;
 }
 
-void LampCostComputation::projectToConstraints( LampTrajectory& group_traj ) const
+void LampCostComputation::projectToConstraints( VectorTrajectory& group_traj ) const
 {
-    Eigen::VectorXd joint_array( num_joints_ );
+    Eigen::VectorXd joint_array( num_dofs_ );
     Move3D::confPtr_t q_end = robot_model_->getCurrentPos();
 
     group_traj.getTrajectoryPointP3d( group_traj.getFullTrajectoryIndex(free_vars_end_), joint_array );
@@ -880,14 +887,14 @@ void LampCostComputation::projectToConstraints( LampTrajectory& group_traj ) con
 
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
-        for( int joint=0; joint<num_joints_; joint++)
+        for( int joint=0; joint<num_dofs_; joint++)
             group_traj(i, joint) += alpha * dq[joint];
 
         alpha += delta;
     }
 }
 
-bool LampCostComputation::getCost( Move3D::LampTrajectory& traj, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample, bool is_rollout )
+bool LampCostComputation::getCost( Move3D::VectorTrajectory& traj, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample, bool is_rollout )
 {
     // copy the parameters into group_trajectory_
     group_trajectory_ = traj;

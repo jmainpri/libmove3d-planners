@@ -39,12 +39,12 @@
 namespace HRICS
 {
 
-class HumanTrajCostSpace : public Move3D::StackedFeatures
+class HumanTrajFeatures: public Move3D::StackedFeatures
 {
 
 public:
-    HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* passive );
-    ~HumanTrajCostSpace();
+    HumanTrajFeatures( Move3D::Robot* active, Move3D::Robot* passive );
+    ~HumanTrajFeatures();
 
     void draw() { }
 
@@ -65,6 +65,12 @@ public:
 
     Move3D::FeatureVect normalizing_by_sampling();
 
+    void addFeaturesSmoothness();
+    void addFeaturesDistance();
+
+    void setActiveDoFsAllFeatures();
+
+
 private:
 
     Move3D::Robot* human_active_;
@@ -73,23 +79,27 @@ private:
     Move3D::Trajectory passive_traj_;
     int nb_way_points_;
 
-    DistanceFeature dist_feat_;
-    VisibilityFeature visi_feat_;
-    MusculoskeletalFeature musc_feat_;
-    ReachabilityFeature reach_feat_;
-    LegibilityFeature legib_feat_;
-    CollisionFeature collision_feat_;
+    DistanceFeature             dist_feat_;
+    VisibilityFeature           visi_feat_;
+    MusculoskeletalFeature      musc_feat_;
+    ReachabilityFeature         reach_feat_;
+    LegibilityFeature           legib_feat_;
+    CollisionFeature            collision_feat_;
 
     Move3D::LengthFeature length_feat_;
 //    Move3D::TrajectorySmoothness smoothness_feat_;
     Move3D::SmoothnessFeature smoothness_feat_;
+
+    // Store a pointer to all feature
+    // to iterate of all when not active in the base class
+    std::vector<Move3D::Feature*> all_features_;
 
     bool use_bio_models_;
 };
 
 }
 
-extern HRICS::HumanTrajCostSpace* global_ht_cost_space;
+extern HRICS::HumanTrajFeatures* global_human_traj_features;
 
 //! main test function for human planning
 void HRICS_run_human_planning();
@@ -102,7 +112,7 @@ namespace HRICS
 class HumanTrajSimulator
 {
 public:
-    HumanTrajSimulator( HumanTrajCostSpace* cost_space );
+    HumanTrajSimulator( HumanTrajFeatures* features );
 
     bool init();
     double run();
@@ -119,12 +129,15 @@ public:
     //! Returns the active degree of freedom
     std::vector<int> getActiveDofs() const;
 
+    void clearLastSimulationMotions() { human_1_simulation_.clear();  human_2_simulation_.clear(); }
+    std::vector< std::vector<motion_t> > getLastSimulationMotions();
     std::vector< std::vector<motion_t> > getMotions();
     std::vector<Move3D::Trajectory> getDemoTrajectories() const;
     std::vector<Move3D::confPtr_t> getContext() const;
 
     void setDemonstrations( const std::vector<motion_t>& demos ); // { human_2_motions_ = demos; }
     void setDemonstrationId(int demo_id) { id_of_demonstration_ = demo_id; }
+    bool setDemonstrationId(std::string split);
     const std::vector<motion_t>& getCurrentMotions() { return human_2_motions_; }
     const std::vector<motion_t>& getDemonstrations() { return human_2_demos_; }
     const std::vector<motion_t>& getDemonstrationsPassive() { return human_1_motions_; }
@@ -136,7 +149,7 @@ public:
     motion_t getExecutedTrajectory() const;
     double getCost( const motion_t& traj ) const;
 
-    HumanTrajCostSpace* getCostSpace() { return cost_space_; }
+    HumanTrajFeatures* getCostSpace() { return human_traj_features_; }
 
     void setDrawExecution(bool draw_execution ) { draw_execute_motion_ = draw_execution; }
 
@@ -203,7 +216,7 @@ private:
 
     // ------------------------------------------------------------------------
 
-    HumanTrajCostSpace* cost_space_;
+    HumanTrajFeatures* human_traj_features_;
 
     Move3D::Robot* human_active_;
     Move3D::Robot* human_passive_;
@@ -227,6 +240,10 @@ private:
 
     std::vector<std::string> motions_1_names_;
     std::vector<std::string> motions_2_names_;
+
+    // Last simulation motion
+    std::vector<motion_t> human_1_simulation_;
+    std::vector<motion_t> human_2_simulation_;
 
     std::vector<int> motions_demo_ids_;
 
@@ -254,6 +271,6 @@ private:
 
 }
 
-extern HRICS::HumanTrajSimulator* global_ht_simulator;
+extern HRICS::HumanTrajSimulator* global_human_traj_simulator;
 
 #endif // HRICS_HUMAN_SIMULATOR_HPP

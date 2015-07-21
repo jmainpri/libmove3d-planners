@@ -69,6 +69,9 @@ namespace stomp_motion_planner
     std::vector<Eigen::VectorXd> cumulative_costs_;                 /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> probabilities_;                    /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> nominal_parameters_;                    /**< [num_dimensions] num_time_steps */
+
+    bool use_total_smoothness_cost_;
+    double total_smoothness_cost_; /**< total smoothness cost **/
     
     bool out_of_bounds_; /**< Wether the rollout is violating dof limits */
     
@@ -130,7 +133,7 @@ namespace stomp_motion_planner
      * Outputs the total cost for each rollout (generated and reused) in rollout_costs_total
      * @param costs
      */
-    bool setRolloutCosts(const Eigen::MatrixXd& costs, const std::vector<Eigen::MatrixXd>& control_costs, const double control_cost_weight, std::vector<double>& rollout_costs_total);
+    bool setRolloutCosts(const Eigen::MatrixXd& costs, const std::vector<Eigen::MatrixXd>& control_costs, const double control_cost_weight, const std::vector<std::pair<bool,double> >& total_smoothness_cost,  std::vector<double>& rollout_costs_total );
     
     /**
      * Performs the PI^2 update and provides parameter updates at every time step

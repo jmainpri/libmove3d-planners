@@ -367,13 +367,13 @@ public:
      */
     Eigen::VectorXd getEigenVector()  const;
     Eigen::VectorXd getEigenVector(int startIndex, int endIndex)  const;
-    Eigen::VectorXd getEigenVector(const std::vector<int>& indices)  const;
+    Eigen::VectorXd getEigenVector(const std::vector<int>& dof_indices)  const;
 
     /**
      * set the Eigen Vector of the configuration
      */
     void setFromEigenVector(const Eigen::VectorXd& conf);
-    void setFromEigenVector(const Eigen::VectorXd& conf, int startIndex, int endIndex);
+    void setFromEigenVector(const Eigen::VectorXd& conf, int startIndex, int dof_indices);
     void setFromEigenVector(const Eigen::VectorXd& conf, const std::vector<int>& indices);
 
     /**

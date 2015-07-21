@@ -31,6 +31,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <dirent.h>
 
 // For random number generator (seed can be passed as argument)
 #include <libmove3d/include/P3d-pkg.h>
@@ -136,6 +137,41 @@ Eigen::MatrixXd move3d_load_matrix_from_csv_file( std::string filename )
     }
 
     return matrix;
+}
+
+std::vector<std::string> move3d_get_folders_in_folder( std::string foldername )
+{
+    DIR* dir = opendir( foldername.c_str() );
+
+    std::cout << "Process directory: " << foldername.c_str() << std::endl;
+
+    if(NULL == dir)
+    {
+        std::cout << "could not open directory: " << foldername.c_str() << std::endl;
+        return std::vector<std::string>();
+    }
+
+    std::vector<std::string> folders;
+    struct dirent* entity = readdir(dir);
+    while( entity != NULL )
+    {
+        // find entity type
+        if( entity->d_type == DT_DIR )
+        {
+            // it's a direcotry
+            // don't process the  '..' and the '.' directories
+            if( std::string(entity->d_name) != "." && std::string(entity->d_name) != ".."  )
+            {
+                //it's an directory so process it
+                folders.push_back( std::string(entity->d_name) );
+            }
+        }
+
+        entity = readdir( dir );
+    }
+
+    closedir( dir );
+    return folders;
 }
 
 std::vector<std::string> move3d_get_files_in_folder( std::string foldername, std::string extension, int nb_max_files )

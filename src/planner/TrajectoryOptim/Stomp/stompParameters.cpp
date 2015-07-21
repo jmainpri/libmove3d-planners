@@ -40,6 +40,9 @@
 #include "../p3d/env.hpp"
 #include "Planner-pkg.h"
 
+using std::cout;
+using std::endl;
+
 namespace stomp_motion_planner
 {
 
@@ -53,6 +56,8 @@ StompParameters::~StompParameters()
 
 double StompParameters::getSmoothnessCostWeight() const
 {
+//    cout << "smoothness_factor : " << smoothness_factor_ << endl;
+//    cout << "PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight) : " << PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight) << endl;
     return smoothness_factor_ * PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight);
 //  return smoothness_cost_weight_;
 }

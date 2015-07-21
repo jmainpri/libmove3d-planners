@@ -81,9 +81,18 @@ namespace stomp_motion_planner
     double Rollout::getCost()
     {
         double cost = state_costs_.sum();
-        int num_dim = control_costs_.size();
-        for (int d=0; d<num_dim; ++d)
-            cost += control_costs_[d].sum();
+
+        if( use_total_smoothness_cost_ )
+        {
+            cost += total_smoothness_cost_;
+        }
+        else
+        {
+            int num_dim = control_costs_.size();
+            for (int d=0; d<num_dim; ++d)
+                cost += control_costs_[d].sum();
+        }
+
         return cost;
     }
 
@@ -157,6 +166,8 @@ namespace stomp_motion_planner
         task_ = task;
         discretization_ = discretization;
 
+        cout << "PolicyImprovement::initialize : discretization_ : " << discretization_ << endl;
+
         policy_->setNumTimeSteps(num_time_steps_);
         policy_->getControlCosts(control_costs_);
         policy_->getCovariances(inv_control_costs_);
@@ -229,7 +240,7 @@ namespace stomp_motion_planner
             if( !PlanEnv->getBool(PlanParam::trajStompMatrixAdaptation) )
             {
                 // cout << "inv_control_costs_[" << d << "] : " << inv_control_costs_[d] << endl;
-                move3d_save_matrix_to_file( inv_control_costs_[d], "inv_control_costs_" + num_to_string<int>(d) );
+                // move3d_save_matrix_to_file( inv_control_costs_[d], "inv_control_costs_" + num_to_string<int>(d) );
                 MultivariateGaussian mvg( VectorXd::Zero(num_parameters_[d]), inv_control_costs_[d] );
                 noise_generators_.push_back(mvg);
             }
@@ -739,7 +750,7 @@ namespace stomp_motion_planner
         rollouts_[r].out_of_bounds_ = out_of_bounds;
     }
 
-    bool PolicyImprovement::setRolloutCosts(const Eigen::MatrixXd& costs, const std::vector<Eigen::MatrixXd>& control_costs, const double control_cost_weight, std::vector<double>& rollout_costs_total)
+    bool PolicyImprovement::setRolloutCosts(const Eigen::MatrixXd& costs, const std::vector<Eigen::MatrixXd>& control_costs, const double control_cost_weight, const std::vector<std::pair<bool,double> >& total_smoothness_cost, std::vector<double>& rollout_costs_total )
     {
         assert(initialized_);
 
@@ -748,6 +759,14 @@ namespace stomp_motion_planner
         // Warning some control costs may be added to the state costs
         for (int r=0; r<num_rollouts_gen_; ++r)
         {
+            if( total_smoothness_cost[r].first ) // Set total cost
+            {
+                rollouts_[r].use_total_smoothness_cost_     = total_smoothness_cost[r].first;
+                rollouts_[r].total_smoothness_cost_         = total_smoothness_cost[r].second;
+            }
+            else
+                rollouts_[r].use_total_smoothness_cost_ = false;
+
             rollouts_[r].state_costs_ = costs.row(r).transpose();
 
             // TODO add control costs
@@ -760,7 +779,7 @@ namespace stomp_motion_planner
 
         // set the total costs
         rollout_costs_total.resize(num_rollouts_);
-        for (int r=0; r<num_rollouts_; ++r)
+        for( int r=0; r<num_rollouts_; ++r )
         {
             rollout_costs_total[r] = rollout_costs_total_[r] = rollouts_[r].getCost();
             // rollouts_[r].printCost();
@@ -775,7 +794,7 @@ namespace stomp_motion_planner
         {
             for (int d=0; d<num_dimensions_; ++d)
             {
-                rollouts_[r].total_costs_[d] = rollouts_[r].state_costs_ + rollouts_[r].control_costs_[d];
+                rollouts_[r].total_costs_[d] = rollouts_[r].state_costs_ /*+ rollouts_[r].control_costs_[d]*/;
                 rollouts_[r].cumulative_costs_[d] = rollouts_[r].total_costs_[d];
                 // cout << "------------------------------------------------------------" << endl;
                 // cout << "rollouts_["<<r<<"].state_costs       = " << rollouts_[r].state_costs_.transpose() << endl;
@@ -826,7 +845,7 @@ namespace stomp_motion_planner
                 double p_sum = 0.0;
                 for (int r=0; r<num_rollouts_; ++r)
                 {
-                    // the -10.0 here is taken from the paper:
+                    // the -10.0 here is taken from the paper
                     rollouts_[r].probabilities_[d](t) = exp(-10.0*(rollouts_[r].cumulative_costs_[d](t) - min_cost)/denom);
                     p_sum += rollouts_[r].probabilities_[d](t);
                 }
@@ -945,7 +964,7 @@ namespace stomp_motion_planner
         }
 
         if( draw_update )
-            addParmametersToDraw( parameters, 33 ); // Orange
+            addParmametersToDraw( parameters, 33 ); // 33 -> Orange
 
         //resampleUpdates();
         return true;

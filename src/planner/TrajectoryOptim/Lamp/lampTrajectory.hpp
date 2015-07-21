@@ -59,85 +59,64 @@ namespace Move3D
 {
 
 //! Trajectory structure
-struct LampTrajectory
+struct VectorTrajectory
 {
-    LampTrajectory() : discretization_(0.0) { }
-    LampTrajectory( int nb_joints, int nb_var, double duration );
+    VectorTrajectory() : discretization_(0.0) { }
+    VectorTrajectory( int nb_joints, int nb_var, double duration );
 
-    /**
-   * \brief Gets the number of points in the trajectory
-   */
+    //!  \brief Gets the number of points in the trajectory
     int getNumPoints() const { return num_vars_free_; }
 
-    /**
-   * \brief Gets the number of points (that are free to be optimized) in the trajectory
-   */
+    //!  \brief Gets the number of points (that are free to be optimized) in the trajectory
     int getNumFreePoints() const { return num_vars_free_; }
 
-    /**
-   * \brief Gets the number of joints in each trajectory point
-   */
-    int getNumJoints() const { return num_dofs_; }
+    //!  \brief Gets the number of joints in each trajectory point
+    int getNumDofs() const { return num_dofs_; }
 
-    /**
-   * \brief Gets the discretization time interval of the trajectory
-   */
+    //! \brief Gets the discretization time interval of the trajectory
     double getDiscretization() const { return discretization_; }
 
-    /**
-   * \brief Gets the start index
-   */
+    //!  \brief Gets the start index
     int getStartIndex() const { return 0; }
 
-    /**
-   * \brief Gets the end index
-   */
+    //!  \brief Gets the end index
     int getEndIndex() const { return num_vars_free_-1; }
 
-    /**
-   * \brief Get the value at a given point for a given dof
-   */
+    //! Get use time
+    bool getUseTime() const { return use_time_; }
+
+    //! Get index for traj point and dof
+    int getVectorIndex(int traj_point, int dof);
+
+    //!  \brief Get the value at a given point for a given dof
     double& operator() (int traj_point, int dof);
 
-    /**
-   * \brief Get the value at a given point for a given dof
-   */
+    //!  \brief Get the value at a given point for a given dof
     double operator() (int traj_point, int dof) const;
 
-    /**
-      * Set one dof trajectory
-      */
+    //!  \brief Get dof cost value
+    double& dof_cost(int traj_point, int dof);
+
+    //!  \brief Get dof cost value
+    double dof_cost(int traj_point, int dof) const;
+
+    //! Set one dof trajectory
     void setDofTrajectoryBlock(int dof, const Eigen::VectorXd traj);
 
-    /**
-      * Set one dof trajectory
-      */
+    //! Set one dof trajectory
     void addToDofTrajectoryBlock(int dof, const Eigen::VectorXd traj);
 
-    /**
-      * Get trajectory paramters
-      * */
+    //! Get trajectory paramters
     Eigen::VectorXd getDofTrajectoryBlock( int dof ) const;
 
-    /**
-      * Get trajectory paramters
-      * */
+    //! Get trajectory paramters
     bool getParameters(std::vector<Eigen::VectorXd>& parameters) const;
 
-    /**
-      * Get trajectory paramters
-      * */
+    //! Get trajectory paramters
     bool getFreeParameters(std::vector<Eigen::VectorXd>& parameters) const;
 
-    /**
-      * Get trajectory paramters
-      * */
+    //! Get trajectory paramters
     Eigen::VectorXd getTrajectoryPoint(int i) const;
-
-    /**
-      * Get use time
-      * */
-    bool getUseTime() const { return use_time_; }
 
     //! Planning group
     Move3D::ChompPlanningGroup* planning_group_;
@@ -164,15 +143,18 @@ struct LampTrajectory
     int getFullTrajectoryIndex(int i) const { return i; }
 
 
-    Eigen::VectorXd trajectory_;                       /**< [num_dimensions] num_parameters */
-    Eigen::VectorXd state_costs_;                      /**< num_time_steps */
-    int num_vars_free_;                                /**< nb_vars_ */
-    int num_dofs_;                                     /**< nb_joints_ */
-    bool out_of_bounds_;                               /**< Wether the rollout is violating dof limits */
-    double discretization_;                            /**< time discretization */
-    double duration_;                                  /**< duration */
-    bool use_time_ ;
-    double cost_;
+    Eigen::VectorXd     trajectory_;                   /**< [num_dimensions] num_parameters */
+    Eigen::VectorXd     dof_costs_;                    /**< [num_dimensions] num_parameters */
+    Eigen::VectorXd     state_costs_;                  /**< num_time_steps */
+
+    int                 num_vars_free_;                /**< nb_vars_ */
+    int                 num_dofs_;                     /**< nb_joints_ */
+    bool                out_of_bounds_;                /**< Wether the rollout is violating dof limits */
+    double              discretization_;               /**< time discretization */
+    double              duration_;                     /**< duration */
+    bool                use_time_ ;
+    double              total_cost_;
+    double              total_smoothness_cost_;
 };
 
 //! Sampler of noisy trajectories
@@ -192,7 +174,7 @@ public:
     Eigen::VectorXd sample( double std_dev=1.0 );
 
     //! Return sampled trajectories
-    std::vector<LampTrajectory> sampleTrajectories( int nb_trajectories, const Move3D::LampTrajectory& current_trajectory );
+    std::vector<VectorTrajectory> sampleTrajectories( int nb_trajectories, const Move3D::VectorTrajectory& current_trajectory );
 
     //! PLanning group
     Move3D::ChompPlanningGroup* planning_group_;
@@ -210,7 +192,7 @@ private:
     Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic> getConfigurationBlockOfPrecisionMatrix(int var);
     void setOneDofBlockOfPrecisionMatrix( int dof, Eigen::MatrixXd matrix );
     void setTimeStepPrecisionMatrix( int time_step, Eigen::MatrixXd matrix );
-    bool addHessianToPrecisionMatrix( const Move3D::LampTrajectory& traj );
+    bool addHessianToPrecisionMatrix( const Move3D::VectorTrajectory& traj );
 
     std::vector<Eigen::MatrixXd> control_costs_;             /**< [num_dimensions] num_parameters x num_parameters */
     std::vector<Eigen::MatrixXd> inv_control_costs_;         /**< [num_dimensions] num_parameters x num_parameters */

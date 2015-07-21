@@ -461,6 +461,7 @@ private:
     void animateTrajectoryPolicy();
     void visualizeState(int index);
     void saveEndeffectorTraj();
+    void computeTrajectoryFeatures(const Move3D::Trajectory& traj);
 
     double getTrajectoryCost();
     double getSmoothnessCost();

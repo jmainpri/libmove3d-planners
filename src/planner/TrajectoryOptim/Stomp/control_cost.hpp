@@ -46,6 +46,12 @@ public:
     //! Returns the diff rule between
     int getDiffRuleLength() const;
 
+    //! Reset the inner segment size
+    void resetInnerSegmentPadding();
+
+    //! Reset the inner segment size
+    void setInnerSegmentPadding( int padding );
+
     //! Returns size segment of active controls
     int getInnerSegmentSize( const Eigen::VectorXd& control ) const;
 
@@ -56,7 +62,7 @@ public:
     double cost( const Eigen::MatrixXd& t );
 
     //! Returns the cost of vel, acc or jerk profile
-    double cost( const std::vector<Eigen::VectorXd>& control_costs );
+    double cost( const std::vector<Eigen::VectorXd>& control_costs, double dt=0.0 );
 
     //! Returns the squared vel, acc or jerk
     std::vector<Eigen::VectorXd> getSquaredQuantities( const Eigen::MatrixXd& traj, double dt=0.0 ) const;
@@ -82,8 +88,11 @@ public:
     //! Save velocity cost to file
     void saveProfiles( const Eigen::MatrixXd& traj, std::string foldername, double dt=0.0 ) const;
 
+
 protected:
     enum cost_type { vel=0, acc=1, jerk=2 } type_;
+    int inner_segment_padding_left_;
+    int inner_segment_padding_right_;
     int diff_rule_length_;
     double scaling_;
     std::vector<Eigen::VectorXd> buffer_;

@@ -41,6 +41,8 @@ public:
               MultiplePlanners& planners, Move3D::StackedFeatures* features, std::vector<int> active_joints,
               std::string folder,  std::string traj_folder, std::string tmp_data_folder );
 
+    ~HumanIoc() { }
+
 //    void runSampling();
     void setPlanningGroup();
     void setDemos( const std::vector<motion_t>& stored_motions );

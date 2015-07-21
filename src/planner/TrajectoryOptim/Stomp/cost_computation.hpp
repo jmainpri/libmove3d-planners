@@ -67,9 +67,6 @@ public:
 
     ~costComputation();
 
-    //! get total cost of last trajectory
-    double getCost() const;
-
     //! compute the cost of a given trajectory
     bool getCost(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample, bool is_rollout );
     
@@ -98,7 +95,7 @@ public:
     bool performForwardKinematics( const Move3D::ChompTrajectory& group_traj, bool is_rollout );
 
     //! compute control cost TODO
-    bool getControlCosts(const Move3D::ChompTrajectory& group_traj);
+    bool getControlCosts(const Move3D::ChompTrajectory& group_traj, bool save_control_cost );
 
     /************************************
      * Getters
@@ -118,10 +115,14 @@ public:
 
     const Eigen::MatrixXd& getCollisionPointPotential() const { return collision_point_potential_; }
     const Eigen::MatrixXd& getCollisionVelMag() const { return collision_point_vel_mag_; }
-    const Eigen::VectorXd& getCollisionCostPotential() const { return general_cost_potential_; }
+    const Eigen::VectorXd& getGeneralCostPotential() const { return general_cost_potential_; }
+    const Eigen::VectorXd& getSmoothnessCostPotential() const { return smoothness_cost_potential_; }
     const Eigen::VectorXd& getDts() const { return dt_; }
 
     const Move3D::ChompTrajectory& getGroupTrajectory() const { return group_trajectory_; }
+
+    bool getUseTotalSmoothnessCost() const { return use_total_smoothness_cost_; }
+    bool getTotalSmoothnessCost() const { return total_smoothness_cost_; }
 
 private:
 
@@ -161,9 +162,14 @@ private:
     //Joint limits
     std::vector<TrajOptJointLimit> joint_limits_computers_;
 
-    // Variable General cost
+    // general cost
     bool use_costspace_;
     Eigen::VectorXd general_cost_potential_;
+
+    // Smoothness costs
+    bool use_total_smoothness_cost_;
+    double total_smoothness_cost_;
+    Eigen::VectorXd smoothness_cost_potential_;
 
     // Variables for control cost
     bool multiple_smoothness_;

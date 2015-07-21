@@ -484,7 +484,7 @@ double Trajectory::getTimeLength() const
         }
         else {
             double t=0.0;
-            for( int i=0; i<m_dts.size(); i++)
+            for( int i=0; i<int(m_dts.size()); i++)
                 t += m_dts[i];
             return t;
         }
@@ -1077,6 +1077,59 @@ double Trajectory::costSum()
     }
     cost += m_Courbe[i-1]->getEnd()->cost();
     //cout << "delta_cost["<<i-1<<"] = " << m_Courbe[i-1]->getEnd()->cost() << endl;
+    return cost;
+}
+
+double Trajectory::getDeltaTime(int i)
+{
+    double delta = 0;
+
+    if( m_use_time_parameter )
+    {
+        if( m_use_constant_dt )
+
+            delta *= m_dt;
+        else
+            delta *= m_dts[i]; // Warning not sure ...
+    }
+    else
+    {
+        if ( i <= int(m_Courbe.size()) )
+        {
+            if( i == 0 || i == m_Courbe.size() )
+            {
+                int id = ( i == m_Courbe.size() ) ? i - 1 : i;
+                confPtr_t q_1 =  m_Courbe[id]->getBegin();
+                confPtr_t q_2 =  m_Courbe[id]->getEnd();
+                delta = q_1->dist( *q_2 );
+            }
+            else
+            {
+                confPtr_t q_1 =  m_Courbe[i-1]->getBegin();
+                confPtr_t q_2 =  m_Courbe[i]->getBegin();
+                delta = q_1->dist( *q_2 );
+            }
+        }
+    }
+
+    return delta;
+}
+
+double Trajectory::costPerPoint()
+{
+    double cost = 0.0;
+    int i=0;
+    double delta;
+
+    for (i=0; i<int(m_Courbe.size()); i++)
+    {
+        delta = m_Courbe[i]->getBegin()->cost() * getDeltaTime(i);
+        cost += delta;
+    }
+
+    delta = m_Courbe[i-1]->getEnd()->cost() * getDeltaTime(i);
+    cost += delta;
+
     return cost;
 }
 
@@ -2581,7 +2634,7 @@ bool Trajectory::setFromEigenMatrix(const Eigen::MatrixXd& mat, const std::vecto
     {
         confPtr_t q = q_cur->copy();
 
-        for (int i=0; i<dof_indices.size(); i++)
+        for (int i=0; i<int(dof_indices.size()); i++)
         {
             (*q)[dof_indices[i]] = mat( i, j );
         }

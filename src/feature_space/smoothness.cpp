@@ -154,7 +154,8 @@ AccelerationSmoothness::AccelerationSmoothness()
 void AccelerationSmoothness::setWeights( const WeightVect& w )
 {
     w_ = w;
-    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
+    // TODO verify that this is correct ...
+//     PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
 }
 
 //----------------------------------------------------------------------
@@ -205,6 +206,9 @@ void TrajectorySmoothness::saveAbsValuesToFile(const Move3D::Trajectory& t, std:
 
     Eigen::MatrixXd mat = getSmoothedTrajectory( t );
 
+//    cout << "mat.rows() : " << mat.rows() << endl;
+//    cout << "mat.cols() : " << mat.cols() << endl;
+
     control_cost_.saveProfiles( mat, folder, dt );
 }
 
@@ -219,7 +223,7 @@ Eigen::MatrixXd TrajectorySmoothness::getSmoothedTrajectory( const Move3D::Traje
     int rows = active_dofs_.size();
     int cols = t.getNbOfViaPoints();
 
-    //    cout << "cols : " << cols << endl;
+    // cout << "cols : " << cols << endl;
 
     int diff_rule_length = control_cost_.getDiffRuleLength();
 
@@ -272,15 +276,23 @@ Eigen::MatrixXd TrajectorySmoothness::getSmoothedTrajectory( const Move3D::Traje
 
 double TrajectorySmoothness::getControlCosts(const Eigen::MatrixXd& traj_smooth, std::vector<Eigen::VectorXd>& control_costs, double dt)
 {
+    if( buffer_is_filled_ )
+
+        control_cost_.setInnerSegmentPadding(0);
+    else
+        control_cost_.resetInnerSegmentPadding();
+
     // Compute the squared profile of quantities
     control_costs = control_cost_.getSquaredQuantities( traj_smooth, dt );
 
 //    printControlCosts( control_costs );
-    double cost = control_cost_.cost( control_costs );
+    double cost = control_cost_.cost( control_costs, dt );
 
     // Set inner segments
-    for ( int d=0; d<int(control_costs.size()); ++d )
-        control_costs[d] = control_cost_.getInnerSegment( control_costs[d] );
+    for ( int d=0; d<int(control_costs.size()); ++d ) {
+        double time_step = dt == 0.0 ? 1.0 : dt;
+        control_costs[d] = time_step * control_cost_.getInnerSegment( control_costs[d] );
+    }
 
     return cost;
 }
@@ -318,7 +330,7 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 void TrajectorySmoothness::setWeights( const WeightVect& w )
 {
     w_ = w;
-    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
+//    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
 }
 
 void TrajectorySmoothness::printControlCosts( const std::vector<Eigen::VectorXd>& control_cost )
@@ -596,8 +608,6 @@ FeatureVect TaskSmoothnessFeature::getFeatureCount(const Move3D::Trajectory& tra
     count[2] = getAcceleration( traj, costs );
     count[3] = getJerk( traj, costs );
 
-
-
     return count;
 }
 
@@ -615,7 +625,7 @@ SmoothnessFeature::SmoothnessFeature(Robot* robot, Joint* joint_task) : Feature(
 void SmoothnessFeature::setWeights( const WeightVect& w )
 {
     w_ = w;
-    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(2) );
+//    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(2) );
 }
 
 FeatureVect phi_max ( FeatureVect::Zero( 8 ) );

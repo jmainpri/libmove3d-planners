@@ -44,6 +44,9 @@ void move3d_save_context_to_csv_file( const std::vector<Move3D::confPtr_t>& cont
 //! Returns the files in the folder with argumen extension
 std::vector<std::string>  move3d_get_files_in_folder( std::string foldername, std::string extention, int nb_max_files=-1 );
 
+//! Retunrs the folders in the folder given as argument
+std::vector<std::string> move3d_get_folders_in_folder( std::string foldername );
+
 //! Load matrix from file
 Eigen::MatrixXd move3d_load_matrix_from_csv_file( std::string filename );
 

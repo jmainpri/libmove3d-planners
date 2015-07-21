@@ -132,6 +132,7 @@ public:
     double costDeltaAlongTraj();
     double costNPoints(const int n_points);
     double costSum();
+    double costPerPoint();
     
     std::vector< std::pair<double,double > > getCostProfile();
     double computeSubPortionIntergralCost(const std::vector<LocalPath*>& portion);
@@ -170,6 +171,8 @@ public:
     void setDeltaTime(double dt) {
         m_dt = dt;
     }
+
+    double getDeltaTime(int i);
 
     double getDeltaTime() const {
         return m_use_time_parameter && m_use_constant_dt ? m_dt : 0.0;

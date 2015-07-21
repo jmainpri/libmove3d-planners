@@ -179,7 +179,7 @@ public:
     std::string getFileName(const int trial_id);
 
     //! Save all costs profiles
-    void saveProfiles( const std::vector<Eigen::VectorXd>& parameters, std::string filename );
+    void saveProfiles( const std::vector<Eigen::VectorXd>& parameters, std::string filename, double dt=0.0 );
 
     //! Return all costs
     Eigen::VectorXd getAllCosts( const std::vector<Eigen::VectorXd>& parameters, std::vector< std::vector<Eigen::VectorXd> >& control_costs, double dt=0.0 );

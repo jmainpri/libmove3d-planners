@@ -114,6 +114,7 @@ private:
     std::vector<Eigen::MatrixXd> parameter_updates_;
     std::vector<Eigen::VectorXd> parameters_;
     Eigen::MatrixXd rollout_costs_;
+    std::vector<std::pair<bool,double> > rollout_total_control_costs_;
     std::vector<Eigen::MatrixXd> rollout_control_costs_;
     std::vector<double> noise_stddev_;
     std::vector<double> noise_decay_;
@@ -138,7 +139,6 @@ private:
 
     bool setParallelRolloutsEnd(int r);
     void parallelRollout(int i, int iteration_number);
-
     void executeRollout(int r, int iteration_number);
 
     void projectToConstraints( std::vector<Eigen::VectorXd>& parameters );

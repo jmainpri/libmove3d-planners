@@ -259,13 +259,15 @@ MESSAGE(Eigen3_INCLUDE_DIR : ${EIGEN3_INCLUDE_DIR})
 #-------------- Boost ----------------------------------------------------------
 
 # boost is used e.g. for managing the cost functions (T-RRT).
-FIND_PACKAGE(Boost REQUIRED COMPONENTS thread)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS thread system)
+# FIND_PACKAGE(Boost REQUIRED)
 SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${BOOST_INCLUDE_DIRS})
 SET(LIBS ${LIBS} ${Boost_LIBRARIES})
 ADD_DEFINITIONS(-pthread)
 MESSAGE("Boost_VERSION : ${Boost_VERSION}")
 MESSAGE("Boost_INCLUDE_DIRS : ${Boost_INCLUDE_DIRS}")
 MESSAGE("Boost_LIBRARIES : ${Boost_LIBRARIES}")
+
 
 #-------------- GBM ------------------------------------------------------------
 #IF(USE_GBM)
@@ -453,9 +455,23 @@ IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
    SET(CMAKE_INSTALL_PREFIX "$ENV{ROBOTPKG_BASE}" CACHE PATH "Move3DMPLIB install prefix" FORCE)
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
-#ADD_EXECUTABLE(move3dplannerstest ${CMAKE_SOURCE_DIR}/src/test/main.cpp)
-#SET_TARGET_PROPERTIES(move3dplannerstest PROPERTIES LINKER_LANGUAGE CXX)
-#TARGET_LINK_LIBRARIES(move3dplannerstest move3d-planners)
+# -------- TESTS ---------
+# TODO remove this code to a proper CMakeLists.txt
+
+#add_executable(move3dplannerstest ${CMAKE_SOURCE_DIR}/src/tests/main.cpp)
+#set_target_properties(move3dplannerstest PROPERTIES LINKER_LANGUAGE CXX)
+#target_link_libraries(move3dplannerstest move3d-planners)
+
+add_executable(move3dplannerstest ${CMAKE_SOURCE_DIR}/src/tests/test_control_costs.cpp)
+set_target_properties(move3dplannerstest PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(move3dplannerstest move3d-planners ${Boost_LIBRARIES} ${LIBS})
+
+INSTALL(TARGETS move3dplannerstest
+        RUNTIME DESTINATION bin CONFIGURATIONS ${CMAKE_BUILD_TYPE}
+        LIBRARY DESTINATION lib CONFIGURATIONS ${CMAKE_BUILD_TYPE})
+
+
+# -------------------------
 
 
 INSTALL(TARGETS move3d-planners

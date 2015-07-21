@@ -66,7 +66,8 @@ namespace HricsParam
             ioc_use_baseline,
             ioc_no_replanning,
             ioc_split_motions,
-            ioc_conservative_baseline
+            ioc_conservative_baseline,
+            ioc_show_last_simulation
         };
 
         enum intParameter

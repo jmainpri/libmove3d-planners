@@ -60,6 +60,11 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
 
     cout << "Chomp trajectory uses time : " << uses_time_ << endl;
 
+    if( uses_time_ )
+        cout << "DURATION : " << duration_ << endl;
+    else
+        cout << "LENGTH : " << duration_ << endl;
+
     int number_inital_points = T.getNbOfViaPoints();
 
     // figure out the num_points_:
@@ -76,6 +81,9 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
     // WARNING, integration is performed over number of points and not paths...
     // each point is supposed centered on an interval
 //    discretization_ = duration_ / double( T.getNbOfViaPoints() ); // getNbOfPaths
+
+
+
     discretization_ = duration_ / double( T.getNbOfPaths() );
 
     // allocate the memory:

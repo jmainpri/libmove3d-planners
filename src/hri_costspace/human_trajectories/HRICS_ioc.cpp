@@ -1149,7 +1149,7 @@ IocEvaluation::IocEvaluation(Robot* rob, int nb_demos, int nb_samples, int nb_wa
     if( dynamic_cast<Squares*>( feature_fct_->getFeatureFunction(0)) != NULL )
         feature_type_ = "squares";
 
-    if( dynamic_cast<HumanTrajCostSpace*>( feature_fct_ ) != NULL )
+    if( dynamic_cast<HumanTrajFeatures*>( feature_fct_ ) != NULL )
         feature_type_ = "human_trajs";
 
     // Set active dofs
@@ -1168,9 +1168,9 @@ Move3D::Trajectory IocEvaluation::planMotion( planner_t type )
     if( use_simulator_ )
     {
         cout << "RUN SIMULATOR FOR DEMO : " << demo_id_ << endl;
-        global_ht_simulator->setDemonstrationId( demo_id_ );
-        global_ht_simulator->run();
-        Move3D::Trajectory traj = global_ht_simulator->getExecutedPath();
+        global_human_traj_simulator->setDemonstrationId( demo_id_ );
+        global_human_traj_simulator->run();
+        Move3D::Trajectory traj = global_human_traj_simulator->getExecutedPath();
         return traj;
     }
     else
@@ -1792,27 +1792,45 @@ void IocEvaluation::loadWeightVector(std::string filename)
         ss << tmp_data_folder_ << filename;
 
     cout << "LOADING LEARNED WEIGHTS : " << ss.str() << endl;
-    std::ifstream file( ss.str().c_str() );
-    std::string line, cell;
 
-    int i=0;
 
-    if( file.good() )
+    Eigen::MatrixXd mat = move3d_load_matrix_from_csv_file( ss.str() );
+
+    if( mat.rows() > 1 )
     {
-        std::getline( file, line );
-        std::stringstream lineStream( line );
+        cout << __PRETTY_FUNCTION__ << " : weight vector is a matrix" << endl;
+        return;
+    }
 
-        while( std::getline( lineStream, cell, ',' ) )
-        {
-            std::istringstream iss( cell );
-            iss >> learned_vect_[i++];
-        }
+    if( mat.cols() != int(learned_vect_.size()) )
+    {
+        cout << __PRETTY_FUNCTION__ << " : weight vector is resized" << endl;
+        nb_weights_ = mat.cols();
     }
-    else {
-        cout << "ERROR could not load weights" << endl;
-        exit(0);
-    }
-    file.close();
+
+    learned_vect_ = mat.row(0);
+
+//    std::ifstream file( ss.str().c_str() );
+//    std::string line, cell;
+
+//    int i=0;
+
+//    if( file.good() )
+//    {
+//        std::getline( file, line );
+//        std::stringstream lineStream( line );
+
+//        while( std::getline( lineStream, cell, ',' ) )
+//        {
+//            std::istringstream iss( cell );
+//            iss >> learned_vect_[i++];
+//        }
+//    }
+//    else {
+//        cout << "ERROR could not load weights" << endl;
+//        exit(0);
+//    }
+//    file.close();
 
     cout << " LEARNED weight : " << learned_vect_.transpose() << endl;
 }

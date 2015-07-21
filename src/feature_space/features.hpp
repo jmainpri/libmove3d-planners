@@ -126,6 +126,8 @@ public:
     Feature* getFeatureFunction(int i) { return feature_stack_[i]; }
     Feature* getFeatureFunction(std::string name);
 
+    void clearFeatureStack() { nb_features_ = 0; feature_stack_.clear(); }
+
 protected:
 
     int nb_features_;

@@ -31,9 +31,6 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
         {
             Joint* move3d_joint = robot_->getJoint( active_joints[i] );
 
-            if( print_group )
-                cout << "Joint(" << active_joints[i] << "), Dof : " << move3d_joint->getIndexOfFirstDof() + j << ", " << move3d_joint->getName() << "" << endl;
-
             if( !move3d_joint->isJointDofUser(j) )
                 continue;
 
@@ -41,14 +38,16 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob, const std::vector<int>& activ
             //robot_->getJoint( active_joints[i] )->getDofBounds(j,min,max);
             move3d_joint->getDofRandBounds(j,min,max);
 
+            if (min == max)
+                continue;
+
             if( print_group )
             {
+                cout << "pgID(" << chomp_dofs_.size() << ") : Joint(" << active_joints[i] << "), Dof : " << move3d_joint->getIndexOfFirstDof() + j << ", " << move3d_joint->getName() << " , " ;
                 cout << "Is dof user : ";
                 cout << "(min = " << min << ", max = " << max << ")" << endl;
             }
 
-            if (min == max)
-                continue;
 
             ChompDof jnt;
 

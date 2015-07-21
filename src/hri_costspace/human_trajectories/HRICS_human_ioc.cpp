@@ -78,7 +78,7 @@ void HRICS_run_human_ioc_from_recorded_motion()
     MultiplePlanners planners(human2);
 
     // feature_matrix_name_ = "matlab/features.txt";
-    Move3D::StackedFeatures* feature_fct = new HRICS::HumanTrajCostSpace( human2, human1 );
+    Move3D::StackedFeatures* feature_fct = new HRICS::HumanTrajFeatures( human2, human1 );
 
     std::vector<int> active_joints;
 
@@ -108,7 +108,7 @@ void HRICS_run_human_ioc_evaluation()
     MultiplePlanners planners(human2);
 
     // feature_matrix_name_ = "matlab/features.txt";
-    Move3D::StackedFeatures* feature_fct = new HRICS::HumanTrajCostSpace( human2, human1 );
+    Move3D::StackedFeatures* feature_fct = new HRICS::HumanTrajFeatures( human2, human1 );
 
     std::vector<int> active_joints;
 
@@ -134,7 +134,7 @@ HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples,
 //    nb_weights_ = original_vect_.size();
 
     // Sets the joint limits
-//    HumanTrajSimulator sim( global_ht_cost_space );
+//    HumanTrajSimulator sim( global_human_traj_features );
 //    sim.init();
 //    sim.getActiveJoints();
 

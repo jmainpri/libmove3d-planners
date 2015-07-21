@@ -363,14 +363,14 @@ Eigen::VectorXd Configuration::getEigenVector( int startIndex, int endIndex ) co
     return q;
 }
 
-Eigen::VectorXd Configuration::getEigenVector(const std::vector<int>& indices) const
+Eigen::VectorXd Configuration::getEigenVector(const std::vector<int>& dof_indices) const
 {
-    VectorXd q( indices.size() );
+    VectorXd q( dof_indices.size() );
 
     // Get the values of the dofs
-    for ( int i=0; i<int(indices.size()); i++)
+    for ( int i=0; i<int(dof_indices.size()); i++)
     {
-        q(i) = _Configuration[ indices[i] ];
+        q(i) = _Configuration[ dof_indices[i] ];
     }
 
     return q;
@@ -394,12 +394,12 @@ void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, int startInd
     }
 }
 
-void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, const std::vector<int>& indices)
+void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, const std::vector<int>& dof_indices)
 {
     // Get the values of the dofs
-    for ( size_t i=0; i<indices.size(); i++)
+    for ( size_t i=0; i<dof_indices.size(); i++)
     {
-        _Configuration[ indices[i] ] = conf(i);
+        _Configuration[ dof_indices[i] ] = conf(i);
     }
 }
 

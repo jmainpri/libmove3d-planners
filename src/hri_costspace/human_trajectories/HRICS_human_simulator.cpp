@@ -33,8 +33,8 @@ using std::cout;
 using std::endl;
 using std::cin;
 
-HRICS::HumanTrajSimulator* global_ht_simulator = NULL;
-HRICS::HumanTrajCostSpace* global_ht_cost_space = NULL;
+HRICS::HumanTrajSimulator* global_human_traj_simulator = NULL;
+HRICS::HumanTrajFeatures* global_human_traj_features = NULL;
 
 static bool icra_september = false;
 
@@ -53,7 +53,7 @@ bool HRICS_init_human_trajectory_cost()
     Move3D::Robot* passive_agent = sce->getRobotByName( "HERAKLES_HUMAN1" );
     Move3D::Robot* active_agent = sce->getRobotByName( "HERAKLES_HUMAN2" );
 
-    if( global_ht_cost_space == NULL )
+    if( global_human_traj_features == NULL )
     {
         if( passive_agent == NULL )
         {
@@ -191,7 +191,7 @@ bool HRICS_init_human_trajectory_cost()
 
         // SET BASELINE HERE
         // OVERRIDE THE SMOOTH WEIGHTS
-        PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, HriEnv->getBool(HricsParam::ioc_use_baseline) ? 100. : 1.0000 ); // USED TO BE 100 on baseline
+        // PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, HriEnv->getBool(HricsParam::ioc_use_baseline) ? 100. : 1.0000 ); // USED TO BE 100 on baseline
 
         // Workspace Occupancy costspace
         std::vector<double> size = Move3D::global_Project->getActiveScene()->getBounds();
@@ -199,29 +199,29 @@ bool HRICS_init_human_trajectory_cost()
         global_humanPredictionCostSpace = new HRICS::HumanPredictionCostSpace( active_agent, occupancyGrid );
 
         // Human trajectory costspace
-        global_ht_cost_space = new HRICS::HumanTrajCostSpace( active_agent, passive_agent );
+        global_human_traj_features = new HRICS::HumanTrajFeatures( active_agent, passive_agent );
 
         // Set active joints and joint bounds
-        global_ht_simulator = new HRICS::HumanTrajSimulator( global_ht_cost_space );
+        global_human_traj_simulator = new HRICS::HumanTrajSimulator( global_human_traj_features );
         // Set the sampling bounds for the human simulator
-        global_ht_simulator->setPelvisBoundsByUser( HriEnv->getBool(HricsParam::ioc_user_set_pelvis_bounds) );
-        global_ht_simulator->init();
+        global_human_traj_simulator->setPelvisBoundsByUser( HriEnv->getBool(HricsParam::ioc_user_set_pelvis_bounds) );
+        global_human_traj_simulator->init();
 
         // Define cost functions
         cout << " add cost : " << "costHumanTrajectoryCost" << endl;
         Move3D::global_costSpace->addCost( "costHumanWorkspaceOccupancy", boost::bind( &HRICS::HumanPredictionCostSpace::getCurrentOccupationCost, global_humanPredictionCostSpace, _1) );
-        Move3D::global_costSpace->addCost( "costHumanTrajectoryCost", boost::bind( &HumanTrajCostSpace::cost, global_ht_cost_space, _1) );
+        Move3D::global_costSpace->addCost( "costHumanTrajectoryCost", boost::bind( &HumanTrajFeatures::cost, global_human_traj_features, _1) );
     }
 
     ENV.setBool( Env::isCostSpace, true );
     Move3D::global_costSpace->setCost( "costHumanTrajectoryCost" );
 
     // if( active_agent->getName().find("HUMAN") != std::string::npos ) // TODO make that work for PR2
-    if( !global_ht_cost_space->initCollisionSpace() )
+    if( !global_human_traj_features->initCollisionSpace() )
         cout << "Error : could not init collision space" << endl;
 
-    cout << " global_ht_cost_space : " << global_ht_cost_space << endl;
-    global_activeFeatureFunction = global_ht_cost_space;
+    cout << " global_human_traj_features : " << global_human_traj_features << endl;
+    global_activeFeatureFunction = global_human_traj_features;
 
     cout << "*******************************************************************" << endl;
     cout << "*******************************************************************" << endl;
@@ -232,7 +232,7 @@ void HRICS_run_human_planning()
 {
     HRICS_init_human_trajectory_cost();
 
-    HumanTrajSimulator sim( global_ht_cost_space );
+    HumanTrajSimulator sim( global_human_traj_features );
     sim.init();
     sim.run();
 }
@@ -241,9 +241,9 @@ void HRICS_run_human_planning()
 //----------------------------------------------------------------------
 // Human Trajectory Cost Space
 
-HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* passive ) :
-    human_active_(active),
-    human_passive_(passive),
+HumanTrajFeatures::HumanTrajFeatures( Move3D::Robot* active, Move3D::Robot* passive ) :
+    human_active_( active ),
+    human_passive_( passive ),
     smoothness_feat_( active, active->getName() == "HERAKLES_HUMAN2" ? active->getJoint("rWristX") : active->getJoint("right-Arm2") ),
     dist_feat_( active, passive ),
     visi_feat_(active, passive),
@@ -278,12 +278,11 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
     musc_feat_.setWeights( Move3D::WeightVect::Ones( musc_feat_.getNumberOfFeatures() ) );
 
     smoothness_feat_.setActiveDoFs( active_dofs_ );
+    smoothness_feat_.setWeights( Move3D::WeightVect::Ones( smoothness_feat_.getNumberOfFeatures() ) );
 
     if( HriEnv->getInt(HricsParam::ioc_ik) != 1 )
         if( !HriEnv->getBool(HricsParam::ioc_use_baseline) )
         {
-            smoothness_feat_.setWeights( Move3D::WeightVect::Ones( smoothness_feat_.getNumberOfFeatures() ) );
-
             if(!addFeatureFunction( &smoothness_feat_ ) ){
                 cout << "Error adding feature smoothness" << endl;
             }
@@ -312,6 +311,16 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
 
     setAllFeaturesActive();
 
+    // Add all features to vector
+    all_features_.push_back(&dist_feat_);
+    all_features_.push_back(&visi_feat_);
+    all_features_.push_back(&musc_feat_);
+    all_features_.push_back(&reach_feat_);
+    all_features_.push_back(&legib_feat_);
+    all_features_.push_back(&collision_feat_);
+    all_features_.push_back(&length_feat_);
+    all_features_.push_back(&smoothness_feat_);
+
     std::vector<std::string> active_features_names;
 //    active_features_names.push_back("Smoothness");
     active_features_names.push_back("Collision");
@@ -337,7 +346,31 @@ HumanTrajCostSpace::HumanTrajCostSpace( Move3D::Robot* active, Move3D::Robot* pa
     cout << "---------------------------------------------" << endl;
 }
 
-Move3D::FeatureVect HumanTrajCostSpace::normalizing_by_sampling()
+void HumanTrajFeatures::addFeaturesSmoothness()
+{
+    cout << "ADDING feature to stack : " << smoothness_feat_.getName() << endl;
+    if(!addFeatureFunction( &smoothness_feat_ ) ){
+        cout << "Error adding feature smoothness" << endl;
+    }
+}
+
+void HumanTrajFeatures::addFeaturesDistance()
+{
+    cout << "ADDING feature to stack : " << dist_feat_.getName() << endl;
+    if(!addFeatureFunction( &dist_feat_ ) ){
+        cout << "Error adding feature distance feature" << endl;
+    }
+}
+
+void HumanTrajFeatures::setActiveDoFsAllFeatures()
+{
+    for(int i=0; i<all_features_.size(); i++)
+    {
+        all_features_[i]->setActiveDoFs( active_dofs_ );
+    }
+}
+
+Move3D::FeatureVect HumanTrajFeatures::normalizing_by_sampling()
 {
     cout << "---------------------------------------------" << endl;
     cout << __PRETTY_FUNCTION__ << endl;
@@ -397,17 +430,17 @@ Move3D::FeatureVect HumanTrajCostSpace::normalizing_by_sampling()
     return phi_sum;
 }
 
-HumanTrajCostSpace::~HumanTrajCostSpace()
+HumanTrajFeatures::~HumanTrajFeatures()
 {
 
 }
 
-void HumanTrajCostSpace::setPassiveConfig( const Move3D::Configuration& q )
+void HumanTrajFeatures::setPassiveConfig( const Move3D::Configuration& q )
 {
     human_passive_->setAndUpdate(q);
 }
 
-void HumanTrajCostSpace::setPassiveTrajectory( const motion_t& motion )
+void HumanTrajFeatures::setPassiveTrajectory( const motion_t& motion )
 {
     Move3D::Trajectory t( human_passive_ );
 
@@ -420,7 +453,7 @@ void HumanTrajCostSpace::setPassiveTrajectory( const motion_t& motion )
     passive_traj_.replaceP3dTraj();
 }
 
-//FeatureVect HumanTrajCostSpace::getFeatures(const Configuration& q)
+//FeatureVect HumanTrajFeatures::getFeatures(const Configuration& q)
 //{
 //    FeatureVect vect = dist_feat_.getFeatures(q);
 //    return vect;
@@ -430,8 +463,8 @@ void HumanTrajCostSpace::setPassiveTrajectory( const motion_t& motion )
 //----------------------------------------------------------------------
 // Human Trajectory Simulator
 
-HumanTrajSimulator::HumanTrajSimulator( HumanTrajCostSpace* cost_space )  :
-    cost_space_( cost_space ),
+HumanTrajSimulator::HumanTrajSimulator( HumanTrajFeatures* cost_space )  :
+    human_traj_features_( cost_space ),
     human_active_( cost_space->getActiveHuman() ),
     human_passive_( cost_space->getPassiveHuman() ),
     init_scenario_(false)
@@ -475,7 +508,7 @@ bool HumanTrajSimulator::init()
     // Set bounds and dofs
     setActiveJoints();
 
-    // set the pointers to the motion recorder
+    // Set the pointers to the motion recorder
     motion_recorders_ = global_motionRecorders;
 
     // Set minimal demonstration size
@@ -632,6 +665,19 @@ void HumanTrajSimulator::setDemonstrations( const std::vector<motion_t>& demos )
 ////            updateDofBounds( initialized, q_tmp );
 //        }
     }
+}
+
+bool HumanTrajSimulator::setDemonstrationId(std::string split)
+{
+    for(int i=0; i<int(motions_1_names_.size()); i++)
+    {
+        if( motions_1_names_[i].substr( 0, 11 ) == split )
+        {
+            id_of_demonstration_ = i;
+            return true;
+        }
+    }
+    return false;
 }
 
 void HumanTrajSimulator::setReplanningDemonstrations()
@@ -825,6 +871,14 @@ void HumanTrajSimulator::setInitAndGoalConfig()
         human_active_->setInitPos( *human_2_motions_[0][0].second );
         human_active_->setGoalPos( *human_2_motions_[0].back().second );
     }
+}
+
+std::vector< std::vector<motion_t> > HumanTrajSimulator::getLastSimulationMotions()
+{
+    std::vector< std::vector<motion_t> > motions;
+    motions.push_back( human_1_simulation_ );
+    motions.push_back( human_2_simulation_ );
+    return motions;
 }
 
 std::vector< std::vector<motion_t> > HumanTrajSimulator::getMotions()
@@ -1135,10 +1189,8 @@ void HumanTrajSimulator::setActiveJoints()
     for( size_t i=0; i<active_dofs_.size(); i++ ) // print all active dofs
         cout << " active dofs [" << i << "] : " << active_dofs_[i] << endl;
 
-    for( size_t i=0; i<cost_space_->getNumberOfFeatureFunctions(); i++ ) // set all features active dofs
-    {
-        cost_space_->getFeatureFunction(i)->setActiveDoFs( active_dofs_ );
-    }
+    human_traj_features_->setActiveDoFs( active_dofs_ );
+    human_traj_features_->setActiveDoFsAllFeatures();
 
     global_humanPredictionCostSpace->setActiveJoints( active_joints_ );
 }
@@ -1202,17 +1254,17 @@ motion_t HumanTrajSimulator::getExecutedTrajectory() const
 double HumanTrajSimulator::getCost( const motion_t& traj ) const
 {
 //    cout << "Get cost of traj" << endl;
-//    cost_space_->printInfo();
+//    human_traj_features_->printInfo();
 
     // get smoothness feature
     Move3D::Trajectory t = motion_to_traj( traj, human_active_ );
-    Move3D::FeatureVect phi = cost_space_->getFeatureCount( t );
+    Move3D::FeatureVect phi = human_traj_features_->getFeatureCount( t );
 
     // reset config dependent features
     for( int i=0; i<phi.size(); i++)
     {
-//        cout << " feature at " << i << " : " << cost_space_->getFeatureFunctionAtIndex(i)->getName() << endl;
-        if( cost_space_->getFeatureFunctionAtIndex(i)->is_config_dependent_ )
+//        cout << " feature at " << i << " : " << cost_space_human_traj_features_->getFeatureFunctionAtIndex(i)->getName() << endl;
+        if( human_traj_features_->getFeatureFunctionAtIndex(i)->is_config_dependent_ )
             phi[i] = 0;
     }
 
@@ -1244,7 +1296,7 @@ double HumanTrajSimulator::getCost( const motion_t& traj ) const
 
         human_active_->setAndUpdate( *q_1 );
 
-        phi += ( cost_space_->getFeatures( *q_1 ) * dist );
+        phi += ( human_traj_features_->getFeatures( *q_1 ) * dist );
 
         if( i < nb_via_points )
         {
@@ -1256,9 +1308,9 @@ double HumanTrajSimulator::getCost( const motion_t& traj ) const
     }
 
 
-//    cost_space_->print( phi );
+//    human_traj_features_->print( phi );
 
-    return cost_space_->getWeights().transpose() * phi;
+    return human_traj_features_->getWeights().transpose() * phi;
 }
 
 bool HumanTrajSimulator::loadActiveHumanGoalConfig()
@@ -1491,7 +1543,8 @@ void HumanTrajSimulator::execute(const Move3D::Trajectory& path, bool to_end)
     }
 
     // Add the end configuration
-    if( end_simulation_ ){
+    if( end_simulation_ )
+    {
         double dt = motion_duration_ - ( t + current_time_ );
         t += dt;
         executed_trajectory_.push_back( std::make_pair( dt, q_goal_->copy() ) );
@@ -1577,6 +1630,10 @@ double HumanTrajSimulator::run()
     cout << "executed motion duration : " << motion_duration( executed_trajectory_ ) << endl;
     cout << "passive motion duration : " << motion_duration( human_passive_motion_ ) << endl;
     cout << " active motion duration : " << motion_duration( human_active_motion_ ) << endl;
+
+    // Store simulation : TODO should
+    human_1_simulation_.push_back( human_passive_motion_ );
+    human_2_simulation_.push_back( executed_trajectory_ );
 
     return 0.0;
 }

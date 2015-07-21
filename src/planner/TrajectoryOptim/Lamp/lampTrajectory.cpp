@@ -76,7 +76,7 @@ void lamp_sample_trajectories()
 // -------------------------------------------------------------
 // -------------------------------------------------------------
 
-LampTrajectory::LampTrajectory( int nb_dofs, int nb_var, double duration )
+VectorTrajectory::VectorTrajectory( int nb_dofs, int nb_var, double duration )
 {
     state_costs_ = Eigen::VectorXd::Zero(nb_var);
     out_of_bounds_ = false;
@@ -87,9 +87,11 @@ LampTrajectory::LampTrajectory( int nb_dofs, int nb_var, double duration )
     use_time_ =  duration != 0.0 ? true : false ;
     duration_ = use_time_ ? duration : 0.0;
     discretization_ = duration_ / double( num_vars_free_ );
+
+    trajectory_.resize( num_dofs_ * num_vars_free_ );
 }
 
-void LampTrajectory::setFromMove3DTrajectory( const Move3D::Trajectory& T )
+void VectorTrajectory::setFromMove3DTrajectory( const Move3D::Trajectory& T )
 {
     const std::vector<Move3D::ChompDof>& joints = planning_group_->chomp_dofs_;
 
@@ -113,7 +115,7 @@ void LampTrajectory::setFromMove3DTrajectory( const Move3D::Trajectory& T )
     }
 }
 
-Move3D::confPtr_t LampTrajectory::getMove3DConfiguration(int i) const
+Move3D::confPtr_t VectorTrajectory::getMove3DConfiguration(int i) const
 {
     const std::vector<Move3D::ChompDof>& joints = planning_group_->chomp_dofs_;
 
@@ -125,7 +127,7 @@ Move3D::confPtr_t LampTrajectory::getMove3DConfiguration(int i) const
     return q;
 }
 
-Eigen::VectorXd LampTrajectory::getTrajectoryPoint( int i ) const
+Eigen::VectorXd VectorTrajectory::getTrajectoryPoint( int i ) const
 {
     Eigen::VectorXd q(num_dofs_);
 
@@ -138,11 +140,11 @@ Eigen::VectorXd LampTrajectory::getTrajectoryPoint( int i ) const
     return q;
 }
 
-Move3D::Trajectory LampTrajectory::getMove3DTrajectory() const
+Move3D::Trajectory VectorTrajectory::getMove3DTrajectory() const
 {
     Move3D::Robot* rob = planning_group_->robot_;
 
-    if( trajectory_.size() == 0)
+    if( trajectory_.size() == 0 )
     {
         cout << "empty parameters" << endl;
         return Move3D::Trajectory( rob );
@@ -177,7 +179,7 @@ Move3D::Trajectory LampTrajectory::getMove3DTrajectory() const
 //! Interpolates linearly two configurations
 //! u = 0 -> a
 //! u = 1 -> b
-Eigen::VectorXd LampTrajectory::interpolate( const Eigen::VectorXd& a, const Eigen::VectorXd& b, double u ) const
+Eigen::VectorXd VectorTrajectory::interpolate( const Eigen::VectorXd& a, const Eigen::VectorXd& b, double u ) const
 {
     Eigen::VectorXd out;
     if( a.size() != b.size() )
@@ -194,7 +196,7 @@ Eigen::VectorXd LampTrajectory::interpolate( const Eigen::VectorXd& a, const Eig
     return out;
 }
 
-Eigen::VectorXd LampTrajectory::getSraightLineTrajectory()
+Eigen::VectorXd VectorTrajectory::getSraightLineTrajectory()
 {
     // Set size
     Eigen::VectorXd straight_line = trajectory_;
@@ -231,6 +233,9 @@ Eigen::VectorXd LampTrajectory::getSraightLineTrajectory()
 //        cout << "active dof " << i << " : " << dofs[i] << endl;
 //    }
 
+//    cout << "planning_group_ : " << planning_group_ << endl;
+//    cout << " -- robot : " << planning_group_->robot_ << endl;
+
     a = planning_group_->robot_->getInitPos()->getEigenVector( dofs );
     b = planning_group_->robot_->getGoalPos()->getEigenVector( dofs );
 
@@ -255,7 +260,7 @@ Eigen::VectorXd LampTrajectory::getSraightLineTrajectory()
     return straight_line;
 }
 
-void LampTrajectory::setDofTrajectoryBlock(int dof, const Eigen::VectorXd traj)
+void VectorTrajectory::setDofTrajectoryBlock(int dof, const Eigen::VectorXd traj)
 {
     for( int i=0; i<num_vars_free_; i++)
     {
@@ -263,7 +268,7 @@ void LampTrajectory::setDofTrajectoryBlock(int dof, const Eigen::VectorXd traj)
     }
 }
 
-void LampTrajectory::addToDofTrajectoryBlock(int dof, const Eigen::VectorXd traj)
+void VectorTrajectory::addToDofTrajectoryBlock(int dof, const Eigen::VectorXd traj)
 {
     for( int i=0; i<num_vars_free_; i++)
     {
@@ -271,7 +276,7 @@ void LampTrajectory::addToDofTrajectoryBlock(int dof, const Eigen::VectorXd traj
     }
 }
 
-Eigen::VectorXd LampTrajectory::getDofTrajectoryBlock( int dof ) const
+Eigen::VectorXd VectorTrajectory::getDofTrajectoryBlock( int dof ) const
 {
     Eigen::VectorXd traj( num_vars_free_ );
 
@@ -283,7 +288,7 @@ Eigen::VectorXd LampTrajectory::getDofTrajectoryBlock( int dof ) const
     return traj;
 }
 
-bool LampTrajectory::getParameters(std::vector<Eigen::VectorXd>& parameters) const
+bool VectorTrajectory::getParameters(std::vector<Eigen::VectorXd>& parameters) const
 {
     if( int(parameters.size()) != num_dofs_ )
         return false;
@@ -294,7 +299,7 @@ bool LampTrajectory::getParameters(std::vector<Eigen::VectorXd>& parameters) con
     return true;
 }
 
-bool LampTrajectory::getFreeParameters(std::vector<Eigen::VectorXd>& parameters) const
+bool VectorTrajectory::getFreeParameters(std::vector<Eigen::VectorXd>& parameters) const
 {
     if( int(parameters.size()) != num_dofs_ )
         return false;
@@ -305,7 +310,7 @@ bool LampTrajectory::getFreeParameters(std::vector<Eigen::VectorXd>& parameters)
     return true;
 }
 
-void LampTrajectory::getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt_array) const
+void VectorTrajectory::getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt_array) const
 {
     jnt_array.resize( num_dofs_ );
 
@@ -320,12 +325,27 @@ void LampTrajectory::getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt_
     }
 }
 
-double& LampTrajectory::operator() (int traj_point, int dof)
+int VectorTrajectory::getVectorIndex(int traj_point, int dof)
+{
+    return traj_point*num_dofs_ + dof;
+}
+
+double& VectorTrajectory::dof_cost(int traj_point, int dof)
+{
+    return dof_costs_[ traj_point*num_dofs_ + dof ];
+}
+
+double VectorTrajectory::dof_cost(int traj_point, int dof) const
+{
+    return dof_costs_[ traj_point*num_dofs_ + dof ];
+}
+
+double& VectorTrajectory::operator() (int traj_point, int dof)
 {
     return trajectory_[ traj_point*num_dofs_ + dof ];
 }
 
-double LampTrajectory::operator() (int traj_point, int dof) const
+double VectorTrajectory::operator() (int traj_point, int dof) const
 {
     return trajectory_[ traj_point*num_dofs_ + dof ];
 }
@@ -343,6 +363,8 @@ LampSampler::LampSampler( int num_var_free, int num_dofs ) : num_vars_free_(num_
 
 void LampSampler::initialize(const std::vector<double>& derivative_costs, int nb_points )
 {
+    cout << "initialize sampler" << endl;
+
     std::vector<int> joints;
 
     // Initializae scenario
@@ -353,7 +375,8 @@ void LampSampler::initialize(const std::vector<double>& derivative_costs, int nb
     }
     else
     {
-        joints.push_back(1);
+        joints = robot_model_->getActiveJointsIds();
+        // joints.push_back(1);
     }
 
     // Initialize planning group
@@ -467,7 +490,7 @@ bool LampSampler::preAllocateMultivariateGaussianSampler()
     return true;
 }
 
-bool LampSampler::addHessianToPrecisionMatrix( const Move3D::LampTrajectory& traj )
+bool LampSampler::addHessianToPrecisionMatrix( const Move3D::VectorTrajectory& traj )
 {
     // invert the control costs, initialize noise generators:
     // inv_control_costs_.clear();
@@ -566,14 +589,14 @@ Eigen::VectorXd LampSampler::sample(double std_dev)
     return traj;
 }
 
-std::vector<LampTrajectory> LampSampler::sampleTrajectories( int nb_trajectories, const Move3D::LampTrajectory& current_trajectory )
+std::vector<VectorTrajectory> LampSampler::sampleTrajectories( int nb_trajectories, const Move3D::VectorTrajectory& current_trajectory )
 {
     global_trajToDraw.clear();
 
 //    preAllocateMultivariateGaussianSampler();
 //    addHessianToPrecisionMatrix( current_trajectory );
 
-    std::vector<LampTrajectory> trajectories( nb_trajectories );
+    std::vector<VectorTrajectory> trajectories( nb_trajectories );
 
     for( int i=0; i<trajectories.size(); i++)
     {
@@ -582,7 +605,7 @@ std::vector<LampTrajectory> LampSampler::sampleTrajectories( int nb_trajectories
         trajectories[i] = current_trajectory;
         trajectories[i].trajectory_ += noise;
 
-        // cout << "norm of noise : " << noise.norm() << endl;
+         cout << "norm of noise : " << noise.norm() << endl;
 
 //        if( ENV.getBool(Env::drawTrajVector) && ENV.getBool(Env::drawTraj) )
 //        {

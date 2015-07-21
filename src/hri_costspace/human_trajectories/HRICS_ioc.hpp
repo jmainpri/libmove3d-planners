@@ -227,6 +227,12 @@ public:
                    MultiplePlanners& planners, Move3D::StackedFeatures* features, std::vector<int> active_joints,
                    std::string folder,  std::string traj_folder, std::string tmp_data_folder );
 
+    ~IocEvaluation() {
+        stored_features_.clear();
+        phi_demos_.clear();
+        phi_jac_demos_.clear();
+    }
+
     //! Sample trajectories around the demonstrations
     virtual std::vector<std::vector<Move3D::Trajectory> > runSampling();
 
@@ -293,6 +299,7 @@ public:
     void setDemoId(int demo_id) { demo_id_ = demo_id; }
     void setOriginalDemoFolder(std::string folder) { original_demo_folder_ = folder; }
     void setDemoIds( const std::vector<int>& ids ) { demo_ids_ = ids; }
+    void setWeightDim(int dim) { nb_weights_ = dim; }
 
 protected:
 
@@ -361,16 +368,19 @@ protected:
     std::vector<Move3D::Trajectory> demos_;
     std::vector<Move3D::Trajectory> samples_;
     std::vector<Move3D::Trajectory> learned_;
+
+    // Weight vectors
     Move3D::WeightVect learned_vect_;
     Move3D::WeightVect original_vect_;
 
     std::vector<int> demo_ids_;
-
     std::vector<int> active_joints_;
-    Move3D::StackedFeatures* feature_fct_;
+
     std::string feature_type_;
-    Move3D::TrajectorySmoothness* smoothness_fct_;
-    Move3D::ChompPlanningGroup* plangroup_;
+
+    Move3D::StackedFeatures*        feature_fct_;
+    Move3D::TrajectorySmoothness*   smoothness_fct_;
+    Move3D::ChompPlanningGroup*     plangroup_;
 
     bool load_sample_from_file_;
     bool remove_samples_in_collision_;
@@ -381,7 +391,6 @@ protected:
     int demo_id_;
 
     std::vector<Move3D::FeatureVect> stored_features_;
-
     std::vector<Move3D::FeatureVect> phi_demos_;
     std::vector<Move3D::FeatureVect> phi_jac_demos_;
 

@@ -1100,3 +1100,13 @@ void move3d_set_api_functions_draw()
     move3d_set_fct_draw_one_line( boost::bind( move3d_draw_one_line_fct, _1, _2, _3, _4, _5, _6, _7, _8 ) );
     move3d_set_fct_draw_clear_handles( boost::bind( move3d_draw_clear_handles_fct ) );
 }
+
+void move3d_set_classic_libmove3d_api()
+{
+    move3d_set_api_scene();
+    move3d_set_api_functions_configuration();
+    move3d_set_api_functions_localpath();
+    move3d_set_api_functions_robot();
+    move3d_set_api_functions_joint();
+    move3d_set_api_functions_draw();
+}

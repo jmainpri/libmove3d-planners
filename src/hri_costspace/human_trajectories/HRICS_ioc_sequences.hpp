@@ -51,6 +51,7 @@ private:
     void setSamplingFeaturesIk();
     void setGenerationFeatures();
     void setCompareFeatures();
+    void GenerateResults();
 
 
     // IOC PHASES
@@ -62,7 +63,8 @@ private:
         default_phase=4,
         monte_carlo=5,
         simulation=6,
-        save_feature_and_demo_size=7};
+        save_feature_and_demo_size=7,
+        generate_results=8};
 
     // TYPE OF FEATURES
     enum feature_t {
@@ -85,6 +87,14 @@ private:
     bool use_human_simulation_demo_;
     HRICS::IocEvaluation* eval_;
 
+    // Trajectories results
+    std::vector<Move3D::Trajectory> demos_;
+    std::vector< std::vector<Move3D::Trajectory> > baseline_agressive_;
+    std::vector< std::vector<Move3D::Trajectory> > baseline_conservative_;
+    std::vector< std::vector<Move3D::Trajectory> > recovered_;
+    std::vector< std::vector<Move3D::Trajectory> > noreplan_baseline_agressive_;
+    std::vector< std::vector<Move3D::Trajectory> > noreplan_baseline_conservative_;
+    std::vector< std::vector<Move3D::Trajectory> > noreplan_recovered_;
 };
 
 }

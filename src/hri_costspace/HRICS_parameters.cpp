@@ -90,6 +90,7 @@ void initHricsParameters()
     myBoolMap.insert( std::make_pair( HricsParam::ioc_no_replanning, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_split_motions, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_conservative_baseline, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_show_last_simulation, new boolContainer(false) ));
 
     // Int
     // ------------------------------------------------------------------
