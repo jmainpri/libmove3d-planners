@@ -124,7 +124,8 @@ bool traj_optim_set_scenario_type()
 
     if( m_planning_type == DEFAULT )
     {
-        if( ENV.getBool(Env::isCostSpace) && global_costSpace->getSelectedCostName() == "costMap2D" )
+        if( ENV.getBool(Env::isCostSpace)
+                && global_costSpace->getSelectedCostName() == "costMap2D" )
         {
             m_sce = traj_optim::CostMap;
         }
@@ -229,6 +230,8 @@ bool traj_optim_initScenario()
 {
     traj_optim_init_planning_type( ENV.getInt(Env::setOfActiveJoints) );
 
+    cout << "init collision space" << endl;
+
     if(!traj_optim_set_scenario_type()) {
         cout << "Not well initialized" << endl;
         return false;
@@ -239,7 +242,8 @@ bool traj_optim_initScenario()
     // m_robot = global_Project->getActiveScene()->getRobotByNameContaining("ROBOT");
 
     if( global_costSpace )
-        cout << "COST FUNCTION is : " << global_costSpace->getSelectedCostName() << endl;
+        cout << "COST FUNCTION is : "
+             << global_costSpace->getSelectedCostName() << endl;
     else
         cout << "NO COST FUNCTION" << endl;
 
@@ -379,7 +383,9 @@ bool traj_optim_initStomp()
     m_chompplangroup = new ChompPlanningGroup( m_robot, traj_optim_get_planner_joints() );
     m_chompplangroup->collision_points_ = traj_optim_get_collision_points();
 
-    m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup, PlanEnv->getDouble(PlanParam::trajDuration) );
+    m_chomptraj = new ChompTrajectory(
+                T, DIFF_RULE_LENGTH,
+                *m_chompplangroup, PlanEnv->getDouble(PlanParam::trajDuration) );
     // m_chomptraj->print();
 
     cout << "Chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
@@ -454,7 +460,8 @@ bool traj_optim_runStomp( int runId )
 
     if(!traj_optim_initStomp() )
     {
-        cout << "Could not init stomp in : " << __PRETTY_FUNCTION__ << endl;
+        cout << "Could not init stomp in : "
+             << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 

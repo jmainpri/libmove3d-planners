@@ -156,9 +156,13 @@ costComputation::costComputation(Robot* robot,
 
     if (num_collision_points_ > 0)
     {
-        collision_point_potential_  = Eigen::MatrixXd::Zero(num_vars_all_, num_collision_points_);
-        collision_point_vel_mag_    = Eigen::MatrixXd::Zero(num_vars_all_, num_collision_points_);
-        collision_point_potential_gradient_.resize(num_vars_all_, std::vector<Eigen::Vector3d>(num_collision_points_));
+        collision_point_potential_
+                = Eigen::MatrixXd::Zero(num_vars_all_, num_collision_points_);
+        collision_point_vel_mag_
+                = Eigen::MatrixXd::Zero(num_vars_all_, num_collision_points_);
+        collision_point_potential_gradient_.resize(
+                    num_vars_all_,
+                    std::vector<Eigen::Vector3d>(num_collision_points_));
 
         for(int i=0; i<num_vars_all_;i++)
         {
@@ -492,13 +496,15 @@ bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
     return succes_joint_limits;
 }
 
-bool costComputation::getControlCosts(const ChompTrajectory& group_traj, bool save_control_cost )
+bool costComputation::getControlCosts(const ChompTrajectory& group_traj,
+                                      bool save_control_cost )
 {
     std::vector<Eigen::VectorXd> parameters( num_joints_ );
     group_traj.getFreeParameters( parameters ); // TODO check the paramters size
     
     //            cout << "sum control costs" << endl;
-    current_control_costs_ = std::vector<Eigen::VectorXd>( num_joints_, Eigen::VectorXd::Zero(num_vars_free_) );
+    current_control_costs_ = std::vector<Eigen::VectorXd>(
+                num_joints_, Eigen::VectorXd::Zero(num_vars_free_) );
 
     if( multiple_smoothness_ )
     {
@@ -506,7 +512,12 @@ bool costComputation::getControlCosts(const ChompTrajectory& group_traj, bool sa
 
         std::vector< std::vector<Eigen::VectorXd> > control_costs;
 
-        static_cast<CovariantTrajectoryPolicy*>(policy_.get())->getAllCosts( parameters, control_costs,  group_traj.getUseTime() ? group_traj.getDiscretization() : 0.);
+        double dt = group_traj.getUseTime() ? group_traj.getDiscretization() : 0.;
+
+        static_cast<CovariantTrajectoryPolicy*>(policy_.get())->getAllCosts(
+                    parameters,
+                    control_costs,
+                    dt );
 
 //        cout << "control_costs.size() " << control_costs.size() << endl;
 //        cout << "current_control_costs_.size() " << current_control_costs_.size() << endl;
@@ -514,18 +525,19 @@ bool costComputation::getControlCosts(const ChompTrajectory& group_traj, bool sa
 
         for (int c=0; c<4; ++c)
             for (int d=0; d<num_joints_; ++d) {
-//                cout << "control_costs[c].size() : " << control_costs[c].size() << endl;
-//                cout << "current_control_costs_[d] : " << current_control_costs_[d].size() << endl;
-                current_control_costs_[d] += ( control_cost_weights_[c] * control_costs[c][d] );
+                current_control_costs_[d]
+                        += ( control_cost_weights_[c] * control_costs[c][d] );
             }
 
         // cout << "weight vector : " << control_cost_weights_.transpose() << endl;
 
         // cout << "GET CONTROL COST" << endl;
 
-        smoothness_cost_potential_ = Eigen::VectorXd::Zero(num_vars_all_);
+        smoothness_cost_potential_ = Eigen::VectorXd::Zero( num_vars_all_ );
         for( int c=4; c<8; ++c ) {
-            smoothness_cost_potential_.segment( free_vars_start_, num_vars_free_) += ( control_cost_weights_[c] * control_costs[c][0] );
+            smoothness_cost_potential_.segment(
+                        free_vars_start_, num_vars_free_) +=
+                    ( control_cost_weights_[c] * control_costs[c][0] );
         }
 
         // PRINT WEIGHTS
@@ -537,18 +549,25 @@ bool costComputation::getControlCosts(const ChompTrajectory& group_traj, bool sa
         total_smoothness_cost_ = 0.;
         for (int c=0; c<4; ++c)
             for (int d=0; d<num_joints_; ++d)
-                total_smoothness_cost_ += control_cost_weights_[c] * control_costs[c][d].sum();
+                total_smoothness_cost_
+                        += control_cost_weights_[c] * control_costs[c][d].sum();
         for (int c=4; c<8; ++c)
-            total_smoothness_cost_ += control_cost_weights_[c] * control_costs[c][0].sum();
+            total_smoothness_cost_
+                    += control_cost_weights_[c] * control_costs[c][0].sum();
     }
     else
     {
+        std::vector<Eigen::VectorXd>
+        noise = std::vector<Eigen::VectorXd>( num_joints_,
+                    Eigen::VectorXd::Zero(num_vars_free_) );
+
         policy_->computeControlCosts(control_costs_,
                                      parameters,
-                                     std::vector<Eigen::VectorXd>( num_joints_, Eigen::VectorXd::Zero(num_vars_free_) ),
+                                     noise,
                                      control_cost_weight_ ,
                                      current_control_costs_,
-                                     group_traj.getUseTime() ? group_traj.getDiscretization() : 0. );
+                                     group_traj.getUseTime() ?
+                                         group_traj.getDiscretization() : 0. );
 
         // Get total smoothness cost
         // current control costs are already multipied by
@@ -601,7 +620,8 @@ double costComputation::getCollisionSpaceCost( const Configuration& q )
     return state_collision_cost;
 }
 
-void costComputation::getMove3DConfiguration( const Eigen::VectorXd& joint_array, Configuration& q ) const
+void costComputation::getMove3DConfiguration(
+        const Eigen::VectorXd& joint_array, Configuration& q ) const
 {
     const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
@@ -621,7 +641,9 @@ void costComputation::getMove3DConfiguration( const Eigen::VectorXd& joint_array
     }
 }
 
-void costComputation::getFrames( int segment, const Eigen::VectorXd& joint_array, Configuration& q )
+void costComputation::getFrames( int segment,
+                                 const Eigen::VectorXd& joint_array,
+                                 Configuration& q )
 {
     // Get configuration
     getMove3DConfiguration( joint_array, q );
@@ -638,20 +660,24 @@ void costComputation::getFrames( int segment, const Eigen::VectorXd& joint_array
     {
         segment_frames_[segment][j] = joints[j].move3d_joint_->getMatrixPos();
 
-        //cout << "joints[" << j<< "].move3d_joint_ : " << joints[j].move3d_joint_->getName() << endl;
-        //        eigenTransformToStdVector( t, segment_frames_[segment][j] );
+//        cout << "joints[" << j<< "].move3d_joint_ : "
+//             << joints[j].move3d_joint_->getName()
+//             << endl;
 
-        joint_pos_eigen_[segment][j] = segment_frames_[segment][j].translation();
+        // eigenTransformToStdVector( t, segment_frames_[segment][j] );
+
+        joint_pos_eigen_[segment][j]
+                = segment_frames_[segment][j].translation();
 
 //        cout << 'move3d_collision_space_ : ' << move3d_collision_space_ << endl;
 
         if( move3d_collision_space_ )
         {
-//            cout << "joint_axis_eigen_.size() : "  << joint_axis_eigen_.size() << endl;
-//            cout << "segment_frames_.size() : "  << segment_frames_.size() << endl;
-//            cout << j << endl;
-//            cout << "joint_axis_eigen_[" << segment << "].size() : "  << joint_axis_eigen_[segment].size() << endl;
-//            cout << "segment_frames_[" << segment << "].size() : "  << segment_frames_[segment].size() << endl;
+// cout << "joint_axis_eigen_.size() : "  << joint_axis_eigen_.size() << endl;
+// cout << "segment_frames_.size() : "  << segment_frames_.size() << endl;
+// cout << j << endl;
+// cout << "joint_axis_eigen_[" << segment << "].size() : "  << joint_axis_eigen_[segment].size() << endl;
+// cout << "segment_frames_[" << segment << "].size() : "  << segment_frames_[segment].size() << endl;
 
             joint_axis_eigen_[segment][j](0) = segment_frames_[segment][j](0,2);
             joint_axis_eigen_[segment][j](1) = segment_frames_[segment][j](1,2);
@@ -660,7 +686,11 @@ void costComputation::getFrames( int segment, const Eigen::VectorXd& joint_array
     }
 }
 
-bool costComputation::getCollisionPointObstacleCost( int segment, int coll_point, double& collion_point_potential, Eigen::Vector3d& pos )
+bool costComputation::
+getCollisionPointObstacleCost( int segment,
+                               int coll_point,
+                               double& collion_point_potential,
+                               Eigen::Vector3d& pos )
 {
     bool colliding = false;
 
@@ -670,17 +700,19 @@ bool costComputation::getCollisionPointObstacleCost( int segment, int coll_point
         int j = coll_point;
         double distance;
 
-        planning_group_->collision_points_[j].getTransformedPosition( segment_frames_[i], pos );
+        planning_group_->collision_points_[j].getTransformedPosition(
+                    segment_frames_[i], pos );
 
         // To fix in collision space
         // The joint 1 is allways colliding
-        colliding = move3d_collision_space_->getCollisionPointPotentialGradient( planning_group_->collision_points_[j],
-                                                                                 pos,
-                                                                                 distance,
-                                                                                 collion_point_potential,
-                                                                                 collision_point_potential_gradient_[i][j] );
+        colliding = move3d_collision_space_->getCollisionPointPotentialGradient(
+                    planning_group_->collision_points_[j],
+                    pos,
+                    distance,
+                    collion_point_potential,
+                    collision_point_potential_gradient_[i][j] );
 
-//        cout << "is colliding, robot : " << robot_model_->getName() << endl;
+        // cout << "is colliding, robot : " << robot_model_->getName() << endl;
         // cout << "distance( " << i << ", " << j << " ) : " << distance << endl;
         //cout << "collision_point_potential_(" << i << ", " << j << " ) : " << collision_point_potential_(i,j) << endl;
         // if( collision_point_potential_(i,j) != 0.0 )
@@ -781,15 +813,18 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
             if( move3d_collision_space_ || use_external_collision_space_ )
                 for( int j=0; j<num_collision_points_;j++)
                 {
-                    collision_point_potential_(i,j) = collision_point_potential_(i-1,j);
-                    collision_point_pos_eigen_[i][j] = collision_point_pos_eigen_[i-1][j];
+                    collision_point_potential_(i,j) =
+                            collision_point_potential_(i-1,j);
+                    collision_point_pos_eigen_[i][j] =
+                            collision_point_pos_eigen_[i-1][j];
                 }
         }
         else
         {
             if( use_costspace_ )
             {
-                general_cost_potential_[i] = global_costSpace->cost( q ); // no set and update
+                // no set and update
+                general_cost_potential_[i] = global_costSpace->cost( q );
             }
             else if( PlanEnv->getBool(PlanParam::useLegibleCost) )
             {
@@ -798,7 +833,11 @@ bool costComputation::performForwardKinematics( const ChompTrajectory& group_tra
 
             if( move3d_collision_space_ || use_external_collision_space_ )
             {
-                state_is_in_collision_[i] = Move3DGetConfigCollisionCost[ collision_space_id_ ]( robot_model_, i, collision_point_potential_, collision_point_pos_eigen_ );
+                state_is_in_collision_[i] =
+                        Move3DGetConfigCollisionCost[ collision_space_id_ ](
+                        robot_model_, i,
+                        collision_point_potential_,
+                        collision_point_pos_eigen_ );
             }
             else if( ( PlanEnv->getBool(PlanParam::useLegibleCost) || use_costspace_ ) && (move3d_collision_space_==NULL) )
             {
@@ -1128,6 +1167,7 @@ bool costComputation::getCost( std::vector<Eigen::VectorXd>& parameters, Eigen::
         // Second term added from Mrinal's thesis
         // to account for the smoothness criteria
         cost += ( total_smoothness_cost_ / ( 2 * double(num_vars_free_) ) );
+        // cout << "total_smoothness_cost_ : " << total_smoothness_cost_ << endl;
 //        cout << dt_[i] << " ";
 
         costs(i-free_vars_start_) = cost;

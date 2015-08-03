@@ -50,7 +50,16 @@ public:
     int getCurrentFrame();
     int getNumberOfMotions() const;
 
-    void setMotionsNames( const std::vector< std::string >& names ) { _motions_names = names; }
+    void setMotionsNames( const std::vector< std::string >& names ) {
+        _motions_names = names;
+    }
+
+    std::string getMotionName(int id) {
+        if( id > _motions_names.size() )
+            return std::string("");
+        else
+            return _motions_names[id];
+    }
 
 
 private:

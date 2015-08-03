@@ -474,7 +474,7 @@ p3d_traj* Trajectory::replaceHumanP3dTraj(Robot*rob, p3d_traj* trajPt)
     //	print()
 }
 
-double Trajectory::getTimeLength() const
+double Trajectory::getDuration() const
 {
     if( m_use_time_parameter )
     {
@@ -497,7 +497,7 @@ confPtr_t Trajectory::configAtTime(double time, unsigned int* id_localpath) cons
     if( m_Courbe.empty() || !m_use_time_parameter )
         return confPtr_t(new Configuration(m_Robot,NULL));
 
-    if( time >= getTimeLength() )
+    if( time >= getDuration() )
         return m_Target;
 
     double alpha_local = 0.0;
@@ -1879,14 +1879,14 @@ bool Trajectory::push_back( confPtr_t q )
 
 bool Trajectory::cutTrajInSmallLPSimple(unsigned int nLP, bool use_time)
 {
-    double range = use_time ? getTimeLength() : computeSubPortionRange( m_Courbe );
+    double range = use_time ? getDuration() : computeSubPortionRange( m_Courbe );
     double delta = range/double(nLP);
 
     vector<LocalPath*> portion;
     bool null_length_local_path = false;
     double length = 0.0;
     double t=0.0;
-    cout << "use_time : " << use_time << " (" << m_dt << "), range : " << range << " , delta : " << delta << endl;
+    // cout << "use_time : " << use_time << " (" << m_dt << "), range : " << range << " , delta : " << delta << endl;
 
     for( unsigned int i=0; i<nLP; i++ )
     {
@@ -1905,7 +1905,7 @@ bool Trajectory::cutTrajInSmallLPSimple(unsigned int nLP, bool use_time)
 
     if( use_time ) { // TODO make this work for all types of time
         m_dt = delta;
-        cout << "set dt to : " << std::scientific << m_dt << endl;
+        // cout << "set dt to : " << std::scientific << m_dt << endl;
     }
 
     m_Courbe = portion;
@@ -2533,8 +2533,8 @@ Eigen::MatrixXd Trajectory::getJointPoseTrajectory( const Move3D::Joint* joint )
             m_Robot->setAndUpdate( *m_Courbe.back()->getEnd() );
             Eigen::Transform3d T( joint->getMatrixPos() );
 
-            cout << "translation : " << T.translation() << endl;
-            cout << "rotation : " << T.rotation() << endl;
+            // cout << "translation : " << T.translation() << endl;
+            // cout << "rotation : " << T.rotation() << endl;
 
             Eigen::Quaterniond q( T.rotation() );
 
@@ -2691,6 +2691,8 @@ bool Trajectory::loadFromFile(std::string filename)
     std::vector<int> r_dof_indices = m_Robot->getAllDofIds();
 
     Eigen::MatrixXd mat = move3d_load_matrix_from_csv_file( filename );
+    if( mat.rows() == 0 && mat.cols() == 0 )
+        return false;
 
     if( mat(0,0) != -1. ){
 
@@ -2718,7 +2720,7 @@ void Trajectory::show() const
     }
 
     cout << "m_use_time_parameter : " << m_use_time_parameter<< " , size : " << m_Courbe.size()  << endl;
-    cout << "time length : " << getTimeLength() << endl;
+    cout << "time length : " << getDuration() << endl;
     cout << "param max : " << getParamMax() << " , dmax : "  << ENV.getDouble(Env::dmax) << endl;
 
 
@@ -2755,7 +2757,7 @@ void Trajectory::show() const
             if( tu_init == 0.0 )
                 tu_init = tu;
 
-            if ( t >= getTimeLength() )
+            if ( t >= getDuration() )
                 StopRun = true;
         }
         else

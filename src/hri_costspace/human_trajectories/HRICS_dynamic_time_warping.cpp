@@ -295,10 +295,11 @@ std::vector< std::vector<double> > get_vector_from_matrix( const Eigen::MatrixXd
     return test_vec;
 }
 
-std::vector<double> dtw_compare_performance( const Move3D::ChompPlanningGroup* planning_group,
-                                             const Move3D::Trajectory& t0,
-                                             const std::vector<Move3D::Trajectory>& t_tests,
-                                             std::vector<Move3D::Joint*> joints )
+std::vector<double> dtw_compare_performance(
+        const Move3D::ChompPlanningGroup* planning_group,
+        const Move3D::Trajectory& t0,
+        const std::vector<Move3D::Trajectory>& t_tests,
+        std::vector<Move3D::Joint*> joints )
 {
     std::vector<double> scost;
 
@@ -314,7 +315,9 @@ std::vector<double> dtw_compare_performance( const Move3D::ChompPlanningGroup* p
 
     if( joints.empty() )
     {
-        Eigen::MatrixXd mat = t0.getEigenMatrix( planning_group->getActiveDofs() );
+        Eigen::MatrixXd mat = t0.getEigenMatrix(
+                    planning_group->getActiveDofs() );
+
         test_vec_0 = get_vector_from_matrix(mat);
 
         // Store all other trajectories
@@ -322,8 +325,12 @@ std::vector<double> dtw_compare_performance( const Move3D::ChompPlanningGroup* p
         {
             mat = t_tests[i].getEigenMatrix( planning_group->getActiveDofs() );
 
-            if( mat.cols() != test_vec_0.size() ) { // Check that the trajectories have the same number of waypoints
-                cout << "ERROR in dtw computations ( " <<mat.cols() << " , " << test_vec_0.size()  << ")" << endl;
+            if( mat.cols() != test_vec_0.size() ) {
+                // Check that the trajectories have the same number of waypoints
+                cout << "ERROR in dtw computations ( "
+                     << mat.cols() << " , " << test_vec_0.size()  << ")"
+                     << endl;
+
                 return scost;
             }
 
@@ -340,8 +347,12 @@ std::vector<double> dtw_compare_performance( const Move3D::ChompPlanningGroup* p
         {
             mat = t_tests[i].getJointPoseTrajectory( joints[0] );
 
-            if( mat.cols() != test_vec_0.size() ) { // Check that the trajectories have the same number of waypoints
-                cout << "ERROR in dtw computations ( " <<mat.cols() << " , " << test_vec_0.size()  << ")" << endl;
+            if( mat.cols() != test_vec_0.size() ) {
+                // Check that the trajectories have the same number of waypoints
+                cout << "ERROR in dtw computations ( "
+                     << mat.cols() << " , " << test_vec_0.size()  << ")"
+                     << endl;
+
                 return scost;
             }
 
@@ -357,8 +368,12 @@ std::vector<double> dtw_compare_performance( const Move3D::ChompPlanningGroup* p
         {
             mat = t_tests[i].getJointPoseTrajectory( joints );
 
-            if( mat.cols() != test_vec_0.size() ) { // Check that the trajectories have the same number of waypoints
-                cout << "ERROR in dtw computations ( " <<mat.cols() << " , " << test_vec_0.size()  << ")" << endl;
+            if( mat.cols() != test_vec_0.size() ) {
+                // Check that the trajectories have the same number of waypoints
+                cout << "ERROR in dtw computations ( "
+                     << mat.cols() << " , " << test_vec_0.size()  << ")"
+                     << endl;
+
                 return scost;
             }
 
@@ -366,13 +381,18 @@ std::vector<double> dtw_compare_performance( const Move3D::ChompPlanningGroup* p
         }
     }
 
-    DTW::SimpleDTW my_eval( test_vec_0.size(), test_vec_0.size(), planning_group );
+    DTW::SimpleDTW my_eval( test_vec_0.size(), test_vec_0.size(),
+                            planning_group );
 
     if ( joints.size() == 1 ) {
-        my_eval.setDistFunction( boost::bind( &SimpleDTW::tansform_distance, &my_eval, _1, _2) );
+        my_eval.setDistFunction( boost::bind(
+                                     &SimpleDTW::tansform_distance,
+                                     &my_eval, _1, _2) );
     }
     if ( joints.size() > 1 ) {
-        my_eval.setDistFunction( boost::bind( &SimpleDTW::centers_distance, &my_eval, _1, _2) );
+        my_eval.setDistFunction( boost::bind(
+                                     &SimpleDTW::centers_distance,
+                                     &my_eval, _1, _2) );
     }
 
     cout << "Evaluating\n";

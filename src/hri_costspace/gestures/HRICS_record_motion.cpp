@@ -54,7 +54,9 @@ std::vector<RecordMotion*> global_motionRecorders;
 //--------------------------------------------------------
 //--------------------------------------------------------
 
-Move3D::Trajectory HRICS::motion_to_traj( const motion_t& traj, Move3D::Robot* robot, int max_index )
+Move3D::Trajectory HRICS::motion_to_traj( const motion_t& traj,
+                                          Move3D::Robot* robot,
+                                          int max_index )
 {
     if( traj.empty() )
         return Move3D::Trajectory();
@@ -91,8 +93,8 @@ Move3D::Trajectory HRICS::motion_to_traj( const motion_t& traj, Move3D::Robot* r
 
         ith++;
 
-        if( ( t - traj1.getTimeLength() ) > 1e-3 ) {
-            cout << "break in motion_to_traj,  t : " << t << ", traj1.getTimeLength() : " << traj1.getTimeLength() << endl;
+        if( ( t - traj1.getDuration() ) > 1e-3 ) {
+            cout << "break in motion_to_traj,  t : " << t << ", traj1.getDuration() : " << traj1.getDuration() << endl;
             cout << " i : " << traj2.getNbOfViaPoints() << endl;
             cout << " ith : " << ith << endl;
             break;
@@ -438,7 +440,8 @@ std::vector<std::string> RecordMotion::listFolder( const std::string& foldername
     return files;
 }
 
-void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet, std::string base_name )
+void RecordMotion::loadCSVFolder( const std::string& foldername,
+                                  bool quiet, std::string base_name )
 {
     std::vector<std::string> files = listFolder( foldername, "csv", quiet );
     if( files.empty() )
@@ -449,9 +452,12 @@ void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet, std
 
     for(size_t i=0; i<files.size(); i++)
     {
-        if ( files[i].find( base_name ) != std::string::npos ) // true if file name contains base_name
+        // true if file name contains base_name
+        if ( files[i].find( base_name ) != std::string::npos )
         {
             motion_t motion = loadFromCSV( foldername + "/" + files[i], quiet );
+            if( !quiet )
+                cout << "motion.size() : " << motion.size() << endl;
             m_stored_motions.push_back( motion );
             m_stored_motions_names.push_back( files[i] );
         }
@@ -462,7 +468,37 @@ void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet, std
     }
 }
 
-void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet, double threshold )
+void RecordMotion::loadTrajectories( const std::string& foldername,
+                                     bool quiet )
+{
+    std::vector<std::string> files = listFolder( foldername, "traj", quiet );
+    if( files.empty() )
+    {
+        cout << "Folder " << foldername << " is empty!!!" << endl;
+        return;
+    }
+
+    m_stored_motions.clear();
+    m_stored_motions_names.clear();
+
+    for(size_t i=0; i<files.size(); i++)
+    {
+        Move3D::Trajectory traj( m_robot );
+        traj.loadFromFile( foldername + "/" + files[i] );
+
+        double duration = traj.getDuration();
+        m_stored_motions.push_back( HRICS::traj_to_motion(traj, duration) );
+        m_stored_motions_names.push_back( files[i] );
+    }
+
+    if( !quiet ) {
+        cout << "m_stored_motions.size() : " << m_stored_motions.size() << endl;
+    }
+}
+
+
+void RecordMotion::loadCSVFolder( const std::string& foldername,
+                                  bool quiet, double threshold )
 {
     std::vector<std::string> files = listFolder( foldername, "csv", quiet );
     if( files.empty() )
@@ -1222,7 +1258,8 @@ confPtr_t RecordMotion::getConfigTwelveDoF( const std::vector<std::string>& conf
     return q;
 }
 
-motion_t RecordMotion::loadFromCSV( const std::string& filename, bool quiet ) const
+motion_t RecordMotion::loadFromCSV( const std::string& filename,
+                                    bool quiet ) const
 {
     if(!quiet) {
         cout << "Loading from CSV : " << filename << endl;

@@ -40,7 +40,11 @@ typedef std::vector< std::pair<double,Move3D::confPtr_t> > motion_t;
 namespace HRICS
 {
 
-Move3D::Trajectory motion_to_traj( const motion_t& traj, Move3D::Robot* robot, int max_index=-1 );
+//! resamples the motion at
+//! 100 Hz to generate a trajectory with constant time
+//! stamps
+Move3D::Trajectory motion_to_traj( const motion_t& traj,
+                                   Move3D::Robot* robot, int max_index=-1 );
 
 inline double motion_duration( const motion_t& traj )
 {
@@ -88,8 +92,13 @@ public:
     void loadXMLFolder();
     bool loadXMLFolder( const std::string& foldername  );
     std::vector<std::string> listFolder( const std::string& foldername, std::string ext, bool quiet ) const;
-    void loadCSVFolder( const std::string& foldername, bool quiet, std::string base_name );
-    void loadCSVFolder( const std::string& foldername, bool quiet = false, double threshold=0.0 );
+
+    void loadTrajectories( const std::string& foldername,
+                           bool quiet );
+    void loadCSVFolder( const std::string& foldername, bool quiet,
+                        std::string base_name );
+    void loadCSVFolder( const std::string& foldername, bool quiet = false,
+                        double threshold=0.0 );
 
     void storeMotion( const motion_t& motion, std::string name, bool new_motion = true);
     void addToCurrentMotion( const motion_t& motion );

@@ -128,7 +128,9 @@ bool traj_optim_init_collision_points()
     {
         planner_joints_id.push_back( m_planner_joints[i] );
     }
-    m_collision_points = sampler->generateRobotCollisionPoints( m_robot, m_active_joints, planner_joints_id, m_id_of_first_active_joint );
+    m_collision_points = sampler->generateRobotCollisionPoints(
+                m_robot, m_active_joints, planner_joints_id,
+                m_id_of_first_active_joint );
 
     cout << "nb of collision point are " << m_collision_points.size() << endl;
 
@@ -150,7 +152,9 @@ void traj_optim_init_collision_space()
 
     //    ChronoTimeOfDayOn();
 
-    m_collspace = new CollisionSpace( m_robot, double(ENV.getInt(Env::nbCells))/100, global_Project->getActiveScene()->getBounds() );
+    m_collspace = new CollisionSpace( m_robot,
+                                      double(ENV.getInt(Env::nbCells))/100,
+                                      global_Project->getActiveScene()->getBounds() );
     m_collspace->resetPoints();
 
     // Warning
@@ -160,9 +164,12 @@ void traj_optim_init_collision_space()
 //        cout << "robot name : " << m_robot->getName() << endl;
 //        cout << "Add robot bodies exit " << endl; // exit(0);
 
-        for (unsigned int joint_id=0; joint_id<m_robot->getNumberOfJoints(); joint_id++)
+        for (unsigned int joint_id=0; joint_id<
+             m_robot->getNumberOfJoints(); joint_id++)
         {
-            if ( find( m_active_joints.begin(), m_active_joints.end(), joint_id ) == m_active_joints.end() )
+            if ( find( m_active_joints.begin(),
+                       m_active_joints.end(), joint_id ) ==
+                 m_active_joints.end() )
             {
                 m_collspace->addRobotBody( m_robot->getJoint(joint_id) );
             }
@@ -177,10 +184,19 @@ void traj_optim_init_collision_space()
         {
             Robot* rob = sc->getRobot(i);
 
-            if (  ( m_robot != rob ) && rob->getName().find("HUMAN") != std::string::npos )
+            if (  ( m_robot != rob ) && rob->getName().find("HUMAN")
+                  != std::string::npos )
             {
                 m_collspace->addRobot( rob );
             }
+        }
+        // if human then add ROBOT to the collision environment
+        // instead of human partner
+        if( m_robot->getName().find("HUMAN") != std::string::npos )
+        {
+            Move3D::Robot* robot = sc->getRobotByNameContaining("ROBOT");
+            if( robot )
+                m_collspace->addRobot( robot );
         }
     }
 
@@ -585,7 +601,9 @@ bool traj_optim_init_collision_spaces( traj_optim::ScenarioType sce, Robot* rob 
 
     m_robot = rob;
 
-    cout << "Robot is : " << m_robot->getName() << " in " << __PRETTY_FUNCTION__ << endl;
+    cout << "Robot is : " << m_robot->getName()
+         << " in " << __PRETTY_FUNCTION__
+         << endl;
 
     if( m_robot == NULL )
         return false;
@@ -623,7 +641,8 @@ bool traj_optim_init_collision_spaces( traj_optim::ScenarioType sce, Robot* rob 
     case traj_optim::Shelf:
 
         cout << "Init Shelf" << endl;
-        cout << "Set robot, localpath and cntrts with " << m_robot->getName() << endl;
+        cout << "Set robot, localpath and cntrts with "
+             << m_robot->getName() << endl;
 
         if( move3d_use_api_functions() )
         {
@@ -737,7 +756,6 @@ bool traj_optim_init_collision_spaces( traj_optim::ScenarioType sce, Robot* rob 
             traj_optim_invalidate_cntrts();
             traj_optim_shelf_set_localpath_and_cntrts();
             traj_optim_manip_init_joints();
-
         }
         else if ( m_robot->getName() == "HERAKLES_HUMAN2" ){
 

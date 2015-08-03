@@ -40,7 +40,52 @@
 using std::cout;
 using std::endl;
 
-void move3d_save_matrix_to_file( const Eigen::MatrixXd& matrix, std::string filename )
+bool no_save_to_file = true;
+
+void save_strings_to_file( std::vector<std::string> strings,
+                   std::string filename )
+{
+    if( !strings.empty() )
+    {
+        std::ofstream file( filename.c_str() );
+
+        if (file.is_open()) {
+            for( size_t i=0; i<strings.size(); i++ ) {
+                file << std::scientific << strings[i] << '\n';
+            }
+            file.close();
+        }
+    }
+}
+
+std::vector<std::string> load_strings_from_file( std::string filename )
+{
+    std::vector<std::string> result;
+    std::ifstream file( filename.c_str(), std::ifstream::in );
+
+    if (file.is_open())
+    {
+        std::string line;
+        std::string cell;
+
+        while( file.good() )
+        {
+            std::getline( file, line );
+            std::stringstream line_stream( line );
+
+            while( std::getline( line_stream, cell, ',' ) )
+            {
+                result.push_back( cell );
+            }
+        }
+    }
+
+    return result;
+}
+
+
+void move3d_save_matrix_to_file( const Eigen::MatrixXd& matrix,
+                                 std::string filename )
 {
     cout << "save matrix to : " << filename << endl;
     std::ofstream file( filename.c_str() );
@@ -54,7 +99,8 @@ void move3d_save_matrix_to_file( const Eigen::MatrixXd& matrix, std::string file
     file.close();
 }
 
-void move3d_save_matrix_to_csv_file( const Eigen::MatrixXd& matrix, std::string filename )
+void move3d_save_matrix_to_csv_file( const Eigen::MatrixXd& matrix,
+                                     std::string filename )
 {
     std::ofstream s;
     s.open( filename.c_str() );
@@ -72,7 +118,8 @@ void move3d_save_matrix_to_csv_file( const Eigen::MatrixXd& matrix, std::string 
 }
 
 // general case, stream interface
-inline size_t word_count(std::stringstream& is)  // can pass an open std::ifstream() to this if required
+inline size_t word_count(std::stringstream& is)
+// can pass an open std::ifstream() to this if required
 {
 //    cout << is.str() << endl;
     size_t c = 0;
@@ -117,7 +164,8 @@ Eigen::MatrixXd move3d_load_matrix_from_csv_file( std::string filename )
             if( i == 0 ) {
                 int n_cols = word_count( line );
                 matrix = Eigen::MatrixXd( n_rows, n_cols );
-//                cout << "size : ( " << n_rows << " , " << n_cols << " )" << endl;
+//                cout << "size : ( "
+                // << n_rows << " , " << n_cols << " )" << endl;
             }
 
             j = 0;
@@ -147,7 +195,8 @@ std::vector<std::string> move3d_get_folders_in_folder( std::string foldername )
 
     if(NULL == dir)
     {
-        std::cout << "could not open directory: " << foldername.c_str() << std::endl;
+        std::cout << "could not open directory: "
+                  << foldername.c_str() << std::endl;
         return std::vector<std::string>();
     }
 
@@ -174,7 +223,9 @@ std::vector<std::string> move3d_get_folders_in_folder( std::string foldername )
     return folders;
 }
 
-std::vector<std::string> move3d_get_files_in_folder( std::string foldername, std::string extension, int nb_max_files )
+std::vector<std::string> move3d_get_files_in_folder( std::string foldername,
+                                                     std::string extension,
+                                                     int nb_max_files )
 {
     bool quiet = true;
     std::vector<std::string> files;
@@ -229,7 +280,10 @@ std::vector<int> move3d_change_basis( int number, int basis )
     return result;
 }
 
-Eigen::VectorXd move3d_lerp( const Eigen::VectorXd& v0, const Eigen::VectorXd& v1, double t ) // t \in [0 1]
+Eigen::VectorXd move3d_lerp( const Eigen::VectorXd& v0,
+                             const Eigen::VectorXd& v1,
+                             double t )
+// t \in [0 1]
 {
     return v0+(v1-v0)*t; // v0*(1-t)+v1*t
 }
@@ -277,13 +331,18 @@ void print_joint_mapping( Move3D::Robot* robot )
 
     for( size_t i=0; i<robot->getNumberOfJoints(); i++)
     {
-        //        cout << i << " , joint name : " << rob->getJoint(i)->getName() << endl;
+        // cout << i
+        // << " , joint name : " << rob->getJoint(i)->getName() << endl;
 
         for( size_t j=0; j<robot->getJoint(i)->getNumberOfDof(); j++)
         {
-//            cout << "jnt->getName() : " << robot->getJoint(i)->getName() << "(" <<i<< ") , ";
-//            cout << "index_dof : " << robot->getJoint(i)->getIndexOfFirstDof()+j << endl;
-            cout << "move3d_map[\"" << robot->getJoint(i)->getName() << "\"]=" << robot->getJoint(i)->getIndexOfFirstDof()+j << ";" << endl;
+            // cout << "jnt->getName() : "
+            // << robot->getJoint(i)->getName() << "(" <<i<< ") , ";
+            // cout << "index_dof : "
+            // << robot->getJoint(i)->getIndexOfFirstDof()+j << endl;
+            cout << "move3d_map[\"" << robot->getJoint(i)->getName()
+                 << "\"]=" << robot->getJoint(i)->getIndexOfFirstDof()+j
+                 << ";" << endl;
         }
     }
 }
@@ -305,7 +364,9 @@ void print_joint_anchors( Move3D::Robot* robot )
         //        Eigen::Transform3d T( j_prev->getMatrixPos().inverse() );
         Eigen::Vector3d v( j_prev->getVectorPos() );
 
-        cout << "j : " << j->getName() << " , j_prev : " << j_prev->getName() << " \t" << ( j->getVectorPos() - v ) .transpose() << endl;
+        cout << "j : " << j->getName() << " , j_prev : "
+             << j_prev->getName() << " \t"
+             << ( j->getVectorPos() - v ) .transpose() << endl;
     }
 
     for( size_t j=0; j<robot->getNumberOfJoints(); j++)
@@ -320,18 +381,29 @@ void print_joint_anchors( Move3D::Robot* robot )
         for( int i=0; i <o->np; i++ )
         {
             cout << "name : " << o->name << endl;
-            //            cout << i  << ": " << o->jnt->abs_pos[0][3] << " " << o->jnt->abs_pos[1][3] << " " << o->jnt->abs_pos[2][3] << endl;
-            cout << i  << ": " <<  o->pol[i]->pos_rel_jnt[0][3] << " " << o->pol[i]->pos_rel_jnt[1][3] << " " << o->pol[i]->pos_rel_jnt[2][3] << endl;
-            cout << i  << ": " <<  o->pol[i]->pos0[0][3] << " " << o->pol[i]->pos0[1][3] << " " << o->pol[i]->pos0[2][3] << endl;
+            // cout << i  << ": "
+            // << o->jnt->abs_pos[0][3] << " "
+            // << o->jnt->abs_pos[1][3] << " " << o->jnt->abs_pos[2][3] << endl;
+            cout << i  << ": "
+                 <<  o->pol[i]->pos_rel_jnt[0][3]
+                    << " " << o->pol[i]->pos_rel_jnt[1][3]
+                    << " " << o->pol[i]->pos_rel_jnt[2][3] << endl;
+
+            cout << i  << ": "
+                 <<  o->pol[i]->pos0[0][3]
+                    << " " << o->pol[i]->pos0[1][3]
+                    << " " << o->pol[i]->pos0[2][3] << endl;
 
             p3d_matrix4 t;
             p3d_matMultXform( o->jnt->abs_pos, o->pol[i]->pos_rel_jnt, t );
-            cout << i  << ": " << t[0][3] << " " << t[1][3]<< " " << t[2][3] << endl;
+            cout << i  << ": "
+                 << t[0][3] << " " << t[1][3]<< " " << t[2][3] << endl;
         }
     }
 }
 
-std::vector<Move3D::confPtr_t> move3d_load_context_from_csv_file( std::string filename )
+std::vector<Move3D::confPtr_t> move3d_load_context_from_csv_file(
+        std::string filename )
 {
     Move3D::Scene* sce = Move3D::global_Project->getActiveScene();
     std::vector<Move3D::confPtr_t> context;
@@ -399,7 +471,8 @@ std::vector<Move3D::confPtr_t> move3d_load_context_from_csv_file( std::string fi
     return context;
 }
 
-void move3d_save_context_to_csv_file( const std::vector<Move3D::confPtr_t>& context, std::string filename )
+void move3d_save_context_to_csv_file( const std::vector<Move3D::confPtr_t>& context,
+                                      std::string filename )
 {
     std::ofstream s;
     s.open( filename.c_str() );
@@ -419,7 +492,8 @@ void move3d_save_context_to_csv_file( const std::vector<Move3D::confPtr_t>& cont
     s.close();
 }
 
-// Derived from code by Yohann Solaro ( http://listengine.tuxfamily.org/lists.tuxfamily.org/eigen/2010/01/msg00187.html )
+// Derived from code by Yohann Solaro
+// ( http://listengine.tuxfamily.org/lists.tuxfamily.org/eigen/2010/01/msg00187.html )
 // see : http://en.wikipedia.org/wiki/Moore-Penrose_pseudoinverse#The_general_case_and_the_SVD_method
 Eigen::MatrixXd move3d_pinv( const Eigen::MatrixXd &b, double rcond )
 {
@@ -440,7 +514,8 @@ Eigen::MatrixXd move3d_pinv( const Eigen::MatrixXd &b, double rcond )
     Eigen::JacobiSVD<Eigen::MatrixXd> svdA;
     svdA.compute( a, Eigen::ComputeFullU | Eigen::ComputeThinV );
 
-    Eigen::JacobiSVD<Eigen::MatrixXd>::SingularValuesType vSingular = svdA.singularValues();
+    Eigen::JacobiSVD<Eigen::MatrixXd>::SingularValuesType vSingular =
+            svdA.singularValues();
 
     // Build a diagonal matrix with the Inverted Singular values
     // The pseudo inverted singular matrix is easy to compute :
@@ -458,10 +533,13 @@ Eigen::MatrixXd move3d_pinv( const Eigen::MatrixXd &b, double rcond )
     }
 
     // A little optimization here
-    Eigen::MatrixXd mAdjointU = svdA.matrixU().adjoint().block( 0, 0, vSingular.rows(), svdA.matrixU().adjoint().cols() );
+    Eigen::MatrixXd mAdjointU = svdA.matrixU().adjoint().block(
+                0, 0, vSingular.rows(), svdA.matrixU().adjoint().cols() );
 
     // Pseudo-Inversion : V * S * U'
-    Eigen::MatrixXd a_pinv = (svdA.matrixV() * vPseudoInvertedSingular.asDiagonal()) * mAdjointU;
+    Eigen::MatrixXd a_pinv =
+            (svdA.matrixV() * vPseudoInvertedSingular.asDiagonal())
+            * mAdjointU;
 
     if( flip )
     {

@@ -99,17 +99,27 @@ public:
     // Cuting, concat and extraction operations
     void copyPaths( std::vector<LocalPath*>& vect );
 
-    std::vector< confPtr_t > getTowConfigurationAtParam( double param1, double param2, uint& lp1, uint& lp2 ) const;
+    std::vector< confPtr_t > getTowConfigurationAtParam(
+            double param1, double param2, uint& lp1, uint& lp2 ) const;
 
-    std::pair<bool,std::vector<LocalPath*> > extractSubPortion(double param1,double param2,unsigned int& first,unsigned int& last, bool check_for_coll = true) const;
-    Trajectory extractSubTrajectoryOfLocalPaths(unsigned int id_start, unsigned int id_end) const;
-    Trajectory extractSubTrajectory(double param1,double param2, bool check_for_coll = true) const;
+    std::pair<bool,std::vector<LocalPath*> > extractSubPortion(
+            double param1,double param2,
+            unsigned int& first,unsigned int& last,
+            bool check_for_coll = true) const;
+    Trajectory extractSubTrajectoryOfLocalPaths(
+            unsigned int id_start, unsigned int id_end) const;
+    Trajectory extractSubTrajectory(
+            double param1, double param2, bool check_for_coll = true) const;
     Trajectory extractReverseTrajectory() const;
 
     bool concat(const Trajectory& traj);
 
-    bool replacePortionOfLocalPaths( unsigned int id1, unsigned int id2, std::vector<LocalPath*> paths, bool freeMemory = true );
-    bool replacePortion( double param1, double param2, std::vector<LocalPath*> paths, bool freeMemory = true );
+    bool replacePortionOfLocalPaths( unsigned int id1, unsigned int id2,
+                                     std::vector<LocalPath*> paths,
+                                     bool freeMemory = true );
+    bool replacePortion( double param1, double param2,
+                         std::vector<LocalPath*> paths,
+                         bool freeMemory = true );
     
     bool replaceBegin( double param, const std::vector<LocalPath*>& paths );
     bool replaceEnd( double param, const std::vector<LocalPath*>& paths );
@@ -186,7 +196,7 @@ public:
         return m_dts;
     }
 
-    double getTimeLength() const;
+    double getDuration() const;
 
     confPtr_t configAtTime(double time, unsigned int* id_localpath=NULL) const;
 

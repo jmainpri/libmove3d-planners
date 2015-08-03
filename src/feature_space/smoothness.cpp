@@ -58,7 +58,7 @@ LengthFeature::LengthFeature()
 FeatureVect LengthFeature::getFeatures( const Move3D::Configuration& q, std::vector<int> active_dofs )
 {
     return FeatureVect::Zero( 1 );
-//    return scaling_ * FeatureVect::Ones( 1 );
+    //    return scaling_ * FeatureVect::Ones( 1 );
 }
 
 double LengthFeature::getControlCosts(const Eigen::MatrixXd& traj_smooth, std::vector<Eigen::VectorXd>& control_costs)
@@ -92,12 +92,12 @@ double LengthFeature::getControlCosts(const Eigen::MatrixXd& traj_smooth, std::v
             }
 
             acc_all[i] = std::pow( params_all[i]  - params_all[i+1], 2. );
-//            acc_all[i] = std::abs( params_all[i] ) - std::abs( params_all[i+1] );
+            //            acc_all[i] = std::abs( params_all[i] ) - std::abs( params_all[i+1] );
         }
 
         control_costs[d] = acc_all;
 
-//        cout << "acc_all : " << std::scientific << acc_all.transpose() << endl;
+        //        cout << "acc_all : " << std::scientific << acc_all.transpose() << endl;
 
     }
 
@@ -110,12 +110,14 @@ double LengthFeature::getControlCosts(const Eigen::MatrixXd& traj_smooth, std::v
             tmp += control_costs[d][i];
 
         length += tmp;
-//        length += std::sqrt(tmp); // Sum of squarred lengths
+        // length += std::sqrt(tmp); // Sum of squarred lengths
     }
 
     // Set inner segments
-    for ( int d=0; d<int(control_costs.size()); ++d )
+    for ( size_t d=0; d<control_costs.size(); ++d )
+    {
         control_costs[d] = control_cost_.getInnerSegment( control_costs[d] );
+    }
 
     return length;
 }
@@ -155,7 +157,7 @@ void AccelerationSmoothness::setWeights( const WeightVect& w )
 {
     w_ = w;
     // TODO verify that this is correct ...
-//     PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
+    //     PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
 }
 
 //----------------------------------------------------------------------
@@ -187,28 +189,38 @@ void TrajectorySmoothness::setBuffer(const std::vector<Eigen::VectorXd>& buffer)
 {
     if( buffer.empty() )
     {
+        // cout << "empty buffer" << endl;
         clearBuffer();
     }
     else
     {
+        control_cost_.setInnerSegmentPadding(0);
         control_cost_.setBuffer(buffer);
         buffer_is_filled_=true;
     }
 }
 
-void TrajectorySmoothness::saveAbsValuesToFile(const Move3D::Trajectory& t, std::string folder, double dt) const
+void TrajectorySmoothness::clearBuffer()
 {
+    control_cost_.resetInnerSegmentPadding();
+    buffer_is_filled_=false;
+}
+
+void TrajectorySmoothness::saveAbsValuesToFile(const Move3D::Trajectory& t, std::string folder ) const
+{
+
     Eigen::MatrixXd mat1 = t.getEigenMatrix( active_dofs_ );
 
-//    cout << "motion : " << endl;
-//    cout.precision(4);
-//    cout << std::scientific << mat1 << endl;
+    //    cout << "motion : " << endl;
+    //    cout.precision(4);
+    //    cout << std::scientific << mat1 << endl;
 
     Eigen::MatrixXd mat = getSmoothedTrajectory( t );
 
-//    cout << "mat.rows() : " << mat.rows() << endl;
-//    cout << "mat.cols() : " << mat.cols() << endl;
+    //    cout << "mat.rows() : " << mat.rows() << endl;
+    //    cout << "mat.cols() : " << mat.cols() << endl;
 
+    double dt = t.getDeltaTime();
     control_cost_.saveProfiles( mat, folder, dt );
 }
 
@@ -216,9 +228,9 @@ Eigen::MatrixXd TrajectorySmoothness::getSmoothedTrajectory( const Move3D::Traje
 {
     Robot* robot = t.getRobot();
 
-//    cout << "active_dofs_ : ";
-//    for(int i=0;i<active_dofs_.size();i++) cout << active_dofs_[i] << " ";
-//    cout << endl;
+    //    cout << "active_dofs_ : ";
+    //    for(int i=0;i<active_dofs_.size();i++) cout << active_dofs_[i] << " ";
+    //    cout << endl;
 
     int rows = active_dofs_.size();
     int cols = t.getNbOfViaPoints();
@@ -231,16 +243,16 @@ Eigen::MatrixXd TrajectorySmoothness::getSmoothedTrajectory( const Move3D::Traje
     Eigen::VectorXd q_goal = t.getEnd()->getEigenVector( active_dofs_ );
 
     Eigen::MatrixXd mat1 = t.getEigenMatrix( active_dofs_ );
-//    cout << "motion matrix 1" << endl;
-//    cout.precision(4);
-//    cout << std::scientific << mat1 << endl;
+    //    cout << "motion matrix 1" << endl;
+    //    cout.precision(4);
+    //    cout << std::scientific << mat1 << endl;
 
     Eigen::MatrixXd mat2( rows, cols + 2*(diff_rule_length-1) );
     mat2.block( 0, diff_rule_length-1, rows, cols ) = mat1;
 
-//    cout << "motion matrix 2" << endl;
-//    cout.precision(4);
-//    cout << std::scientific << mat2 << endl;
+    //    cout << "motion matrix 2" << endl;
+    //    cout.precision(4);
+    //    cout << std::scientific << mat2 << endl;
 
     if( buffer_is_filled_ )
 
@@ -285,15 +297,15 @@ double TrajectorySmoothness::getControlCosts(const Eigen::MatrixXd& traj_smooth,
     // Compute the squared profile of quantities
     control_costs = control_cost_.getSquaredQuantities( traj_smooth, dt );
 
-//    printControlCosts( control_costs );
-    double cost = control_cost_.cost( control_costs, dt );
+    double cost = 0.0;
+    double time_step = dt == 0.0 ? 1.0 : dt;
 
     // Set inner segments
-    for ( int d=0; d<int(control_costs.size()); ++d ) {
-        double time_step = dt == 0.0 ? 1.0 : dt;
+    for ( int d=0; d<int(control_costs.size()); ++d )
+    {
         control_costs[d] = time_step * control_cost_.getInnerSegment( control_costs[d] );
+        cost += control_costs[d].sum();
     }
-
     return cost;
 }
 
@@ -302,14 +314,15 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
     FeatureVect f( Eigen::VectorXd::Zero( 1 ) );
 
     Eigen::MatrixXd traj_smooth = getSmoothedTrajectory( t );
-//    cout << "motion matrix 3" << endl;
-//    cout.precision(4);
-//    cout << traj_smooth << endl;
+    //    cout << "motion matrix 3" << endl;
+    //    cout.precision(4);
+    //    cout << traj_smooth << endl;
 
     std::vector<Eigen::VectorXd> control_costs( traj_smooth.rows() );
 
-    double dt = t.getUseTimeParameter() && t.getUseConstantTime() ? t.getDeltaTime() : 0.0;
-//    cout << "dt : " << dt << endl;
+    double dt = t.getUseTimeParameter()
+            && t.getUseConstantTime() ? t.getDeltaTime() : 0.0;
+    //    cout << "dt : " << dt << endl;
 
     double smoothness_factor = PlanEnv->getDouble( PlanParam::trajOptimSmoothFactor ); // * 1000.0; // for IOC, scale the features between 0.1
     double smoothness_cost = getControlCosts( traj_smooth, control_costs, dt );
@@ -321,8 +334,8 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
     //    cout.precision(6);
     //    cout << "size (" << mat2.rows() << ", " << mat2.cols() << ") , control cost : "  << f << endl;
 
-//    if( name_ == "Velocity" )
-//        control_cost_.saveProfiles( traj_smooth, "/home/jmainpri/Dropbox/move3d/move3d-launch/launch_files/" , dt );
+    //    if( name_ == "Velocity" )
+    //        control_cost_.saveProfiles( traj_smooth, "/home/jmainpri/Dropbox/move3d/move3d-launch/launch_files/" , dt );
 
     return f;
 }
@@ -330,7 +343,7 @@ FeatureVect TrajectorySmoothness::getFeatureCount( const Move3D::Trajectory& t )
 void TrajectorySmoothness::setWeights( const WeightVect& w )
 {
     w_ = w;
-//    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
+    //    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
 }
 
 void TrajectorySmoothness::printControlCosts( const std::vector<Eigen::VectorXd>& control_cost )
@@ -354,7 +367,7 @@ void TrajectorySmoothness::printControlCosts( const std::vector<Eigen::VectorXd>
 
 FeatureVect TrajectorySmoothness::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
-//    cout << "Get feature smoothness" << endl;
+    //    cout << "Get feature smoothness" << endl;
     return FeatureVect::Zero( 1 );
 }
 
@@ -364,15 +377,18 @@ FeatureVect TrajectorySmoothness::getFeatures(const Configuration& q, std::vecto
 
 TaskSmoothnessFeature::TaskSmoothnessFeature( Move3D::Robot* robot, Move3D::Joint* joint_task ) : robot_(robot)
 {
-     name_ = "TaskSmoothness";
+    name_ = "TaskSmoothness";
 
-     task_joints_.clear();
-     task_joints_.push_back( joint_task /*robot_->getJoint("rWristX")*/ );
+    task_joints_.clear();
+    task_joints_.push_back( joint_task /*robot_->getJoint("rWristX")*/ );
 
-     for( int i=0;i<task_joints_.size();i++)
-         veclocity_joint_ids_.push_back( task_joints_[i]->getId() );
+    for( int i=0;i<task_joints_.size();i++)
+        veclocity_joint_ids_.push_back( task_joints_[i]->getId() );
+
+    // Since we are checking tanslation joint
+    // this check will not work
+    control_cost_.setCheckTrajectoryConsistency( false );
 }
-
 
 Eigen::VectorXd TaskSmoothnessFeature::getTaskPose( Move3D::confPtr_t q )
 {
@@ -405,24 +421,25 @@ Eigen::MatrixXd TaskSmoothnessFeature::getTaskTrajectory( const Move3D::Trajecto
         mat1.col(i) = getTaskPose( t[i] );
     }
 
-//    cout << "motion matrix 1" << endl;
-//    cout.precision(2);
-//    cout << mat1 << endl;
+    //    cout << "motion matrix 1" << endl;
+    //    cout.precision(2);
+    //    cout << mat1 << endl;
 
     Eigen::MatrixXd mat2( rows, cols + 2*(diff_rule_length-1) );
     mat2.block( 0, diff_rule_length-1, rows, cols ) = mat1;
 
     if( buffer_is_filled_ )
+
         control_cost_.fillTrajectoryWithBuffer( x_goal, mat2 );
     else
         control_cost_.fillTrajectory( x_init, x_goal, mat2 );
 
-//    if( !PlanEnv->getBool(PlanParam::trajStompNoPrint))
-//    {
-//        cout << "motion matrix 2" << endl;
-//        cout.precision(5);
-//        cout << mat2 << endl;
-//    }
+    //    if( !PlanEnv->getBool(PlanParam::trajStompNoPrint))
+    //    {
+    //        cout << "motion matrix 2" << endl;
+    //        cout.precision(5);
+    //        cout << mat2 << endl;
+    //    }
 
     return mat2;
 }
@@ -437,11 +454,8 @@ double TaskSmoothnessFeature::getVelocity( const Eigen::MatrixXd& mat, Eigen::Ve
     control_cost_.setType(0);
 
     std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat, dt );
-    costs = getControlCosts( control_cost );
-
-//    control_cost_.saveProfiles( mat, "/home/jmainpri/Dropbox/move3d/move3d-launch/launch_files/" , dt );
-
-    return control_cost_.cost( control_cost );
+    costs = getControlCosts( control_cost, dt );
+    return control_cost_.cost( control_cost, dt );
 }
 
 double TaskSmoothnessFeature::getAcceleration( const Eigen::MatrixXd& mat, Eigen::VectorXd& costs, double dt )
@@ -449,8 +463,8 @@ double TaskSmoothnessFeature::getAcceleration( const Eigen::MatrixXd& mat, Eigen
     control_cost_.setType(1);
 
     std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat, dt );
-    costs = getControlCosts( control_cost );
-    return control_cost_.cost( control_cost );
+    costs = getControlCosts( control_cost, dt );
+    return control_cost_.cost( control_cost, dt );
 }
 
 double TaskSmoothnessFeature::getJerk( const Eigen::MatrixXd& mat, Eigen::VectorXd& costs, double dt )
@@ -458,23 +472,23 @@ double TaskSmoothnessFeature::getJerk( const Eigen::MatrixXd& mat, Eigen::Vector
     control_cost_.setType(2);
 
     std::vector<Eigen::VectorXd> control_cost = control_cost_.getSquaredQuantities( mat, dt );
-    costs = getControlCosts( control_cost );
-    return control_cost_.cost( control_cost );
+    costs = getControlCosts( control_cost, dt );
+    return control_cost_.cost( control_cost, dt );
 }
 
-Eigen::VectorXd TaskSmoothnessFeature::getControlCosts( std::vector<Eigen::VectorXd>& control_cost ) const
+Eigen::VectorXd TaskSmoothnessFeature::getControlCosts( const std::vector<Eigen::VectorXd>& control_cost, double dt ) const
 {
     if( control_cost.empty() )
         return Eigen::VectorXd::Zero(0);
 
     Eigen::VectorXd costs = Eigen::VectorXd::Zero( control_cost_.getInnerSegmentSize( control_cost[0] ) );
 
+    double time_step = dt == 0.0 ? 1.0 : dt;
+
     for( int d=0; d<control_cost.size(); d ++)
     {
-        Eigen::VectorXd control_cost_tmp = control_cost_.getInnerSegment( control_cost[d] );
-        for( int i=0; i<control_cost_tmp.size(); i ++){
-            costs[i] += control_cost_tmp[i];
-        }
+        Eigen::VectorXd control_cost_tmp = time_step * control_cost_.getInnerSegment( control_cost[d] );
+        costs += control_cost_tmp;
     }
     return costs;
 }
@@ -482,20 +496,20 @@ Eigen::VectorXd TaskSmoothnessFeature::getControlCosts( std::vector<Eigen::Vecto
 // Compute velocity between two configurations
 double TaskSmoothnessFeature::getDist( const Move3D::Trajectory& t, Eigen::VectorXd& control_costs )
 {
-//    std::vector<Eigen::Vector3d> dist(veclocity_joint_ids_.size());
+    //    std::vector<Eigen::Vector3d> dist(veclocity_joint_ids_.size());
 
-//    std::vector<Eigen::Vector3d> pos_0(veclocity_joint_ids_.size());
-//    std::vector<Eigen::Vector3d> pos_1(veclocity_joint_ids_.size());
+    //    std::vector<Eigen::Vector3d> pos_0(veclocity_joint_ids_.size());
+    //    std::vector<Eigen::Vector3d> pos_1(veclocity_joint_ids_.size());
 
-//    human_active_->setAndUpdate(*t[i_q-1]);
+    //    human_active_->setAndUpdate(*t[i_q-1]);
 
-//    for( int i=0;i<veclocity_joint_ids_.size();i++)
-//        pos_0[i] = human_active_joints_[i]->getVectorPos();
+    //    for( int i=0;i<veclocity_joint_ids_.size();i++)
+    //        pos_0[i] = human_active_joints_[i]->getVectorPos();
 
-//    human_active_->setAndUpdate(*t[i_q]);
+    //    human_active_->setAndUpdate(*t[i_q]);
 
-//    for( int i=0;i<veclocity_joint_ids_.size();i++)
-//        pos_1[i] = human_active_joints_[i]->getVectorPos();
+    //    for( int i=0;i<veclocity_joint_ids_.size();i++)
+    //        pos_1[i] = human_active_joints_[i]->getVectorPos();
 
     double dist=0.0;
 
@@ -519,23 +533,50 @@ double TaskSmoothnessFeature::getDist( const Move3D::Trajectory& t, Eigen::Vecto
     return dist;
 }
 
+void TaskSmoothnessFeature::saveAbsValuesToFileVelocity(const Move3D::Trajectory& t, std::string folder )
+{
+    Eigen::MatrixXd mat = getTaskTrajectory( t );
+    double dt = t.getDeltaTime(); // returns 0.0 if undefined
+    control_cost_.setType(0);
+    control_cost_.saveProfiles( mat, folder, dt );
+}
+
+void TaskSmoothnessFeature::saveAbsValuesToFileAcceleration(const Move3D::Trajectory& t, std::string folder )
+{
+     Eigen::MatrixXd mat = getTaskTrajectory( t );
+     double dt = t.getDeltaTime(); // returns 0.0 if undefined
+     control_cost_.setType(1);
+     control_cost_.saveProfiles( mat, folder, dt );
+}
+
+void TaskSmoothnessFeature::saveAbsValuesToFileJerk(const Move3D::Trajectory& t, std::string folder )
+{
+     Eigen::MatrixXd mat = getTaskTrajectory( t );
+     cout << "mat rows : " << mat.rows() << endl;
+     cout << "mat cols : " << mat.cols() << endl;
+
+     double dt = t.getDeltaTime(); // returns 0.0 if undefined
+     control_cost_.setType(2);
+     control_cost_.saveProfiles( mat, folder, dt );
+}
+
 // Compute velocity between two configurations
 double TaskSmoothnessFeature::getVelocity(const Move3D::Trajectory& t, Eigen::VectorXd& costs )
 {
-    double dt = t.getUseTimeParameter() && t.getUseConstantTime() ? t.getDeltaTime() : 0.0;
+    double dt = t.getDeltaTime(); // returns 0.0 if undefined
 
     Eigen::MatrixXd mat = getTaskTrajectory( t );
 
     // Compute the squared profile of quantities
-   double cost = getVelocity( mat, costs, dt );
+    double cost = getVelocity( mat, costs, dt );
 
-//    cout << "number of via points : " << t.getNbOfViaPoints() << endl;
-//    cout << "control_cost[0].size() : " << control_cost[0].size() << endl;
-//    cout << "costs.size() : " << costs.size() << endl;
+    //    cout << "number of via points : " << t.getNbOfViaPoints() << endl;
+    //    cout << "control_cost[0].size() : " << control_cost[0].size() << endl;
+    //    cout << "costs.size() : " << costs.size() << endl;
 
 
-//   control_cost_.saveProfiles( mat, "/home/pr2command/catkin_ws/src/move3d_ros/data/control_costs/" , dt );
-//    control_cost_.saveProfiles( mat, "/home/jmainpri/Dropbox/move3d/move3d-launch/launch_files/task_vel/" , dt );
+    //   control_cost_.saveProfiles( mat, "/home/pr2command/catkin_ws/src/move3d_ros/data/control_costs/" , dt );
+    //    control_cost_.saveProfiles( mat, "/home/jmainpri/Dropbox/move3d/move3d-launch/launch_files/task_vel/" , dt );
 
     return cost;
 }
@@ -564,24 +605,34 @@ double TaskSmoothnessFeature::getJerk( const Move3D::Trajectory& t, Eigen::Vecto
 
 void TaskSmoothnessFeature::setBuffer(const std::vector<Eigen::VectorXd>& buffer )
 {
-    std::vector<Eigen::VectorXd> x_buffer( buffer.size() );
-
-    Move3D::confPtr_t q = robot_->getCurrentPos();
-
-    for( int i=0; i<buffer.size(); i++)
+    if( buffer.empty() )
     {
-        q->setFromEigenVector( buffer[i], active_dofs_ );
-        x_buffer[i] = getTaskPose( q );
+        // cout << "empty buffer" << endl;
+        clearBuffer();
+        control_cost_.resetInnerSegmentPadding();
     }
+    else
+    {
+        std::vector<Eigen::VectorXd> x_buffer( buffer.size() );
 
-//    if( !PlanEnv->getBool(PlanParam::trajStompNoPrint))
-//    {
-//        for( int i=0; i<buffer.size(); i++)
-//            cout << "x_buffer[" << i << "] : " << x_buffer[i].transpose() << endl;
-//    }
+        Move3D::confPtr_t q = robot_->getCurrentPos();
 
-    control_cost_.setBuffer( x_buffer );
-    buffer_is_filled_=true;
+        for( int i=0; i<buffer.size(); i++)
+        {
+            q->setFromEigenVector( buffer[i], active_dofs_ );
+            x_buffer[i] = getTaskPose( q );
+        }
+
+        //    if( !PlanEnv->getBool(PlanParam::trajStompNoPrint))
+        //    {
+        //        for( int i=0; i<buffer.size(); i++)
+        //            cout << "x_buffer[" << i << "] : " << x_buffer[i].transpose() << endl;
+        //    }
+
+        control_cost_.setInnerSegmentPadding(0);
+        control_cost_.setBuffer( x_buffer );
+        buffer_is_filled_=true;
+    }
 }
 
 void TaskSmoothnessFeature::draw()
@@ -625,7 +676,7 @@ SmoothnessFeature::SmoothnessFeature(Robot* robot, Joint* joint_task) : Feature(
 void SmoothnessFeature::setWeights( const WeightVect& w )
 {
     w_ = w;
-//    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(2) );
+    //    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(2) );
 }
 
 FeatureVect phi_max ( FeatureVect::Zero( 8 ) );
@@ -645,14 +696,36 @@ int iter = 0;
 
 // HUMAN
 
-double smoothness_phi_coeff_0=1e-01;
-double smoothness_phi_coeff_1=1e-05;
-double smoothness_phi_coeff_2=1e-10;
-double smoothness_phi_coeff_3=1e-15;
-double smoothness_phi_coeff_4=1e+01;
-double smoothness_phi_coeff_5=1e-03;
-double smoothness_phi_coeff_6=1e-09;
-double smoothness_phi_coeff_7=1e-13;
+//double smoothness_phi_coeff_0=1e-01;
+//double smoothness_phi_coeff_1=1e-05;
+//double smoothness_phi_coeff_2=1e-10;
+//double smoothness_phi_coeff_3=1e-15;
+
+//double smoothness_phi_coeff_4=1e+01;
+//double smoothness_phi_coeff_5=1e-03;
+//double smoothness_phi_coeff_6=1e-09;
+//double smoothness_phi_coeff_7=1e-13;
+
+//double smoothness_phi_coeff_0=1.;
+//double smoothness_phi_coeff_1=1.;
+//double smoothness_phi_coeff_2=1.;
+//double smoothness_phi_coeff_3=1.;
+
+//double smoothness_phi_coeff_4=1.;
+//double smoothness_phi_coeff_5=1.;
+//double smoothness_phi_coeff_6=1.;
+//double smoothness_phi_coeff_7=1.;
+
+// NEW FETURES July
+double smoothness_phi_coeff_0=0.1519;
+double smoothness_phi_coeff_1=0.0033;
+double smoothness_phi_coeff_2=8.17e-07;
+double smoothness_phi_coeff_3=8.65e-11;
+
+double smoothness_phi_coeff_4=32.9508;
+double smoothness_phi_coeff_5=0.3675;
+double smoothness_phi_coeff_6=8.43e-04;
+double smoothness_phi_coeff_7=9.62e-08;
 
 //    FeatureVect phi( FeatureVect::Zero( 8 ) );
 //    phi[0] = length_.getFeatureCount(t)[0] * 1e-01;
@@ -690,23 +763,23 @@ FeatureVect SmoothnessFeature::getFeatureCount( const Move3D::Trajectory& t )
     phi[6] *= smoothness_phi_coeff_6;
     phi[7] *= smoothness_phi_coeff_7;
 
-//    for( int i=0;i<8;i++)
-//    {
-//        if( phi[i] > phi_max[i])
-//            phi_max[i] = phi[i];
-//        phi_sum[i] += phi[i];
-//    }
-//    iter++;
+    //    for( int i=0;i<8;i++)
+    //    {
+    //        if( phi[i] > phi_max[i])
+    //            phi_max[i] = phi[i];
+    //        phi_sum[i] += phi[i];
+    //    }
+    //    iter++;
 
-//    cout << std::scientific << "phi_max : " << phi_max.transpose() << endl;
-//    cout << std::scientific << "phi_av : " << (phi_max.transpose() / double(iter))<< endl;
+    //    cout << std::scientific << "phi_max : " << phi_max.transpose() << endl;
+    //    cout << std::scientific << "phi_av : " << (phi_max.transpose() / double(iter))<< endl;
 
     return phi;
 }
 
 FeatureVect SmoothnessFeature::getFeatures(const Configuration& q, std::vector<int> active_dofs)
 {
-//    cout << "Get feature smoothness" << endl;
+    //    cout << "Get feature smoothness" << endl;
     return FeatureVect::Zero( 8 );
 }
 
@@ -721,17 +794,19 @@ void SmoothnessFeature::setActiveDoFs( const std::vector<int>& active_dofs )
 
 void SmoothnessFeature::setBuffer(const std::vector<Eigen::VectorXd>& buffer)
 {
-//    for(size_t i=0;i<buffer.size(); i++)
-//        cout << buffer[i].transpose() << endl;
+    //    for(size_t i=0;i<buffer.size(); i++)
+    //        cout << buffer[i].transpose() << endl;
 
+    length_.setBuffer( buffer );
     velocity_.setBuffer( buffer );
     acceleration_.setBuffer( buffer );
     jerk_.setBuffer( buffer );
     task_features_.setBuffer( buffer );
- }
+}
 
 void SmoothnessFeature::clearBuffer()
 {
+    length_.clearBuffer();
     velocity_.clearBuffer();
     acceleration_.clearBuffer();
     jerk_.clearBuffer();

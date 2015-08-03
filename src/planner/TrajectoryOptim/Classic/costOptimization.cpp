@@ -100,7 +100,8 @@ bool CostOptimization::oneLoopDeform()
     confPtr_t qInitPt = getRobot()->getCurrentPos();
 
     //Get 3 configurations at random along the trajectory
-    vector<confPtr_t>  vectConf = get3RandSuccesConfAlongTraj( lPrev, lCurrent, lNext, m_step );
+    vector<confPtr_t>  vectConf = get3RandSuccesConfAlongTraj(
+                lPrev, lCurrent, lNext, m_step );
     confPtr_t qPrevPt = vectConf.at(0);
     confPtr_t qCurrPt = vectConf.at(1);
     confPtr_t qNextPt = vectConf.at(2);

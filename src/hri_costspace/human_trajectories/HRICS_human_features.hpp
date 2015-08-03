@@ -46,7 +46,9 @@ class DistanceFeature : public Move3D::Feature
 {
 public:
     DistanceFeature( Move3D::Robot* active, Move3D::Robot* passive );
-    Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
+    Move3D::FeatureVect getFeatures(const Move3D::Configuration& q,
+                                    std::vector<int> active_dofs
+                                    = std::vector<int>(0));
     Move3D::FeatureVect computeDistances() const;
 
     void draw();

@@ -234,6 +234,8 @@ enum doubleParameter
 
     // Collision Space
     ratioCollRadiusSpacing,
+    collison_points_clearance,
+
 
     // Object TransfertPoint variable
     env_randomXMinLimit,

@@ -67,10 +67,15 @@ public:
     virtual void setBuffer(const std::vector<Eigen::VectorXd>& buffer);
 
     //! Set Buffer as not filled
-    void clearBuffer() { buffer_is_filled_=false; }
+    void clearBuffer();
 
     //! Save profile to file
-    void saveAbsValuesToFile(const Move3D::Trajectory& t, std::string folder, double dt) const;
+    void saveAbsValuesToFile(const Move3D::Trajectory& t, std::string folder ) const;
+
+    //! get diff rule
+    int get_left_padding() { return control_cost_.get_left_padding(); }
+    int get_right_padding() { return control_cost_.get_right_padding(); }
+    int get_diff_rule() { return control_cost_.getDiffRuleLength(); }
 
 protected:
     ControlCost control_cost_;
@@ -127,6 +132,10 @@ public:
     Eigen::MatrixXd getTaskTrajectory( const Move3D::Trajectory& t );
     Eigen::VectorXd getTaskPose( Move3D::confPtr_t _q );
 
+    void saveAbsValuesToFileVelocity(const Move3D::Trajectory& t, std::string folder );
+    void saveAbsValuesToFileAcceleration(const Move3D::Trajectory& t, std::string folder );
+    void saveAbsValuesToFileJerk(const Move3D::Trajectory& t, std::string folder );
+
     // Compute velocity between two configurations
     double getDist( const Move3D::Trajectory& t,Eigen::VectorXd& control_costs );
     double getVelocity( const Move3D::Trajectory& t,Eigen::VectorXd& control_costs );
@@ -138,7 +147,7 @@ public:
     double getAcceleration(const  Eigen::MatrixXd& t, Eigen::VectorXd& control_costs, double dt );
     double getJerk( const Eigen::MatrixXd& t, Eigen::VectorXd& control_costs, double dt );
 
-    Eigen::VectorXd getControlCosts( std::vector<Eigen::VectorXd>& control_cost ) const;
+    Eigen::VectorXd getControlCosts( const std::vector<Eigen::VectorXd>& control_cost, double dt ) const;
 
     //! Set Task buffer
     void setBuffer( const std::vector<Eigen::VectorXd>& buffer );

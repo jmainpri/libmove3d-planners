@@ -370,8 +370,7 @@ namespace stomp_motion_planner
                 projection_matrix_[d].col(p) *= (1.0/(num_parameters_[d]*column_max));
             }
 
-            move3d_save_matrix_to_file(projection_matrix_[0],"../matlab/m_mat.txt");
-
+            // move3d_save_matrix_to_file(projection_matrix_[0],"../matlab/m_mat.txt");
             //cout << "Projection Matrix = " << endl << projection_matrix_[d] << endl;
         }
 

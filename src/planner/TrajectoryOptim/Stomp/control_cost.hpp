@@ -43,11 +43,19 @@ public:
     //! Set type of quantity
     void setType(int type);
 
+    //! Set check trajectory consistency
+    //! this will check if the angles of two consicutive configurations
+    //! are on the same range (2pi)
+    void setCheckTrajectoryConsistency( bool check ) { check_trajectory_consistency_ = check; }
+
     //! Returns the diff rule between
     int getDiffRuleLength() const;
 
     //! Reset the inner segment size
     void resetInnerSegmentPadding();
+
+    int get_left_padding() { return inner_segment_padding_left_; }
+    int get_right_padding() { return inner_segment_padding_right_; }
 
     //! Reset the inner segment size
     void setInnerSegmentPadding( int padding );
@@ -88,7 +96,6 @@ public:
     //! Save velocity cost to file
     void saveProfiles( const Eigen::MatrixXd& traj, std::string foldername, double dt=0.0 ) const;
 
-
 protected:
     enum cost_type { vel=0, acc=1, jerk=2 } type_;
     int inner_segment_padding_left_;
@@ -96,6 +103,7 @@ protected:
     int diff_rule_length_;
     double scaling_;
     std::vector<Eigen::VectorXd> buffer_;
+    bool check_trajectory_consistency_;
 
 };
 

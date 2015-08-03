@@ -168,7 +168,13 @@ public:
     bool jointLimits( IocIk& q ) const;
 
     //! Generate the sampled trajectories
-    //! around the demonstrations
+    //! around one demonstration
+    int generateDemoSamples( int demo_id, int nb_samples,
+                             bool check_in_collision,
+                             context_t context );
+
+    //! Generate the sampled trajectories
+    //! around all the demonstrations
     int generateSamples(int nb_samples, bool check_in_collision, context_t context = context_t() );
 
     //! Generates samples around configuration
@@ -176,6 +182,9 @@ public:
 
     //! Returns Move3D trajectories
     std::vector< std::vector<Move3D::Trajectory> > getSamples() const;
+
+    //! Returns Move3D trajectories for demo d
+    std::vector< Move3D::Trajectory > getDemoSamples(int d) const;
 
     //! Returns configurations
     std::vector< std::vector<Move3D::confPtr_t> > getSamplesIk() const;
@@ -185,7 +194,7 @@ public:
 
     //! Drawing function
     void addTrajectoryToDraw( const IocTrajectory& t, int color );
-    void addAllToDraw();
+    void addAllToDraw( const std::vector<int>& demos_ids, const std::vector<std::string>& demo_names );
 
     //! Solve the ioc problem
     Eigen::VectorXd solve( const std::vector<Eigen::VectorXd>& phi_demo, const std::vector< std::vector<Eigen::VectorXd> >& phi_k );
@@ -196,15 +205,21 @@ public:
     //! Rethe the last configuration of demo
     IocIk getLastConfigOfDemo(int d) const;
 
+    //! Delete samples for demo d
+    void deleteSampleForDemo(int d);
+
+    //! Reset all samples
+    void resetAllSamples();
+
 private:
 
-    bool isTrajectoryValid( const IocTrajectory& traj );
+    bool isTrajectoryValid( const IocTrajectory& traj, bool relax_collision_check );
     bool isIkValid( const IocIk& ik );
     bool projectConfiguration( IocIk& q, int d );
 
     std::vector< IocTrajectory > demonstrations_;
 
-    std::vector< std::vector<IocTrajectory> > samples_;
+    std::vector< std::vector<IocTrajectory*> > samples_;
     double noise_stddev_;
 
     std::vector< std::vector<IocIk> > samples_ik_;
@@ -231,13 +246,20 @@ public:
         stored_features_.clear();
         phi_demos_.clear();
         phi_jac_demos_.clear();
+        delete_all_samples();
     }
+
+    //! Sample trajectories in a sequence
+    std::vector<std::vector<Move3D::Trajectory> > runSamplingSequence();
 
     //! Sample trajectories around the demonstrations
     virtual std::vector<std::vector<Move3D::Trajectory> > runSampling();
 
     //! Sample ik around the demonstrations
     virtual std::vector<std::vector<Move3D::confPtr_t> > runIKSampling();
+
+    //! Delete Alls samples
+    void delete_all_samples();
 
     //! Run learning using the C++ library
     virtual void runLearning();
@@ -255,7 +277,7 @@ public:
     void generateDemonstrations( int nb_demos );
 
     //! Load recorded traectories in the move3d format
-    bool loadDemonstrations();
+    bool loadDemonstrations( const std::vector<int>& demo_ids = std::vector<int>() );
 
     //! Load trajectories in planner class
     void loadPlannerTrajectories( int nb_trajs=-1, int offset=-1, int random=0 );
@@ -282,7 +304,7 @@ public:
     void setPlannerType( planner_t planner_type ) { planner_type_ = planner_type; }
 
     //! Save demo to file
-    void saveDemoToFile(const std::vector<Move3D::Trajectory>& demos,  const std::vector<int>& demo_ids, std::vector<Move3D::confPtr_t> context = std::vector<Move3D::confPtr_t>() );
+    void saveDemoToFile(const std::vector<Move3D::Trajectory>& demos, std::vector<Move3D::confPtr_t> context = std::vector<Move3D::confPtr_t>() );
 
     //! Save samples to files
     void saveSamplesToFile(const std::vector< std::vector<Move3D::Trajectory> >& samples ) const;
@@ -299,7 +321,10 @@ public:
     void setDemoId(int demo_id) { demo_id_ = demo_id; }
     void setOriginalDemoFolder(std::string folder) { original_demo_folder_ = folder; }
     void setDemoIds( const std::vector<int>& ids ) { demo_ids_ = ids; }
+    void setDemoNames( const std::vector<std::string>& demo_names ) { demo_names_ = demo_names; }
     void setWeightDim(int dim) { nb_weights_ = dim; }
+
+    void setProcessDirectory( std::string process_dir ) { process_dir_ = process_dir; }
 
 protected:
 
@@ -365,6 +390,8 @@ protected:
     int nb_weights_;
     int nb_way_points_;
 
+    std::vector<int> demo_ids_;
+    std::vector<std::string> demo_names_;
     std::vector<Move3D::Trajectory> demos_;
     std::vector<Move3D::Trajectory> samples_;
     std::vector<Move3D::Trajectory> learned_;
@@ -373,10 +400,12 @@ protected:
     Move3D::WeightVect learned_vect_;
     Move3D::WeightVect original_vect_;
 
-    std::vector<int> demo_ids_;
+    std::string process_dir_;
+
     std::vector<int> active_joints_;
 
     std::string feature_type_;
+
 
     Move3D::StackedFeatures*        feature_fct_;
     Move3D::TrajectorySmoothness*   smoothness_fct_;

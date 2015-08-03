@@ -61,7 +61,8 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 {
     is_config_dependent_ = true;
 
-    if( human_active_->getName().find("HUMAN") != std::string::npos )
+    if( human_active_->getName().find("HUMAN") != std::string::npos &&
+         human_passive_->getName().find("HUMAN") != std::string::npos  )
     {
         distance_joint_ids_.push_back( human_active_->getJoint("Pelvis")->getId() );
 
@@ -132,22 +133,28 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
 
         for( size_t i=0;i<distance_joint_ids_.size();i++)
         {
-            human_active_joints_.push_back( human_active_->getJoint(distance_joint_ids_[i]) );
-            human_passive_joints_.push_back( human_passive_->getJoint(distance_joint_ids_[i]) );
+            human_active_joints_.push_back(
+                        human_active_->getJoint(distance_joint_ids_[i]) );
+            human_passive_joints_.push_back(
+                        human_passive_->getJoint(distance_joint_ids_[i]) );
         }
 
         // Print active joints
         for(size_t i=0; i<human_active_joints_.size(); i++) {
-            cout << std::setw( ceil(log10(human_active_joints_.size())) ) << std::setfill( '0' ) <<  i;
-            cout << " , human active joint name : " << human_active_joints_[i]->getName() << endl;
+            cout << std::setw( ceil(log10(human_active_joints_.size())) )
+                 << std::setfill( '0' ) <<  i;
+            cout << " , human active joint name : "
+                 << human_active_joints_[i]->getName() << endl;
         }
 
         distance_names_.clear();
 
-        for(size_t i=0;i<distance_joint_ids_.size();i++) // nb of features is nb_joint_ids ^ 2
+        for(size_t i=0;i<distance_joint_ids_.size();i++)
+            // nb of features is nb_joint_ids ^ 2
             for(size_t j=0;j<distance_joint_ids_.size();j++)
             {
-                std::string name =  human_active_joints_[i]->getName() + " , " + human_passive_joints_[j]->getName();
+                std::string name =  human_active_joints_[i]->getName() + " , "
+                        + human_passive_joints_[j]->getName();
                 distance_names_.push_back( name );
             }
 
@@ -199,26 +206,62 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
         for( int i=0; i<human_active_joints_.size(); i++)
             distance_joint_ids_.push_back( human_active_joints_[i]->getId() );
 
-        w_ = Eigen::VectorXd::Ones( human_active_joints_.size() * human_passive_joints_.size() );
+        w_ = Eigen::VectorXd::Ones(
+                    human_active_joints_.size() *
+                    human_passive_joints_.size() );
 
-        for(size_t i=0;i<human_active_joints_.size();i++) // nb of features is nb_joint_ids ^ 2
+        // nb of features is nb_joint_ids ^ 2
+        for(size_t i=0;i<human_active_joints_.size();i++)
             for(size_t j=0;j<human_passive_joints_.size();j++)
             {
-                std::string name =  human_active_joints_[i]->getName() + " , " + human_passive_joints_[j]->getName();
+                std::string name =  human_active_joints_[i]->getName() + " , "
+                        + human_passive_joints_[j]->getName();
+                distance_names_.push_back( name );
+            }
+
+        w_distance_16 = w_; // TODO set this weight vector properly
+    }
+    else if( human_active_->getName().find("HUMAN") != std::string::npos &&
+             human_passive_->getName().find("PR2") != std::string::npos )
+    {
+        human_active_joints_.push_back( human_active_->getJoint("Pelvis") );
+        human_active_joints_.push_back( human_active_->getJoint("rWristX") );
+        human_active_joints_.push_back( human_active_->getJoint("rElbowZ") );
+        human_active_joints_.push_back( human_active_->getJoint("rShoulderX") );
+
+        human_passive_joints_.push_back( human_passive_->getJoint("Torso") );
+        human_passive_joints_.push_back( human_passive_->getJoint("right-Arm7") ); // Wrist
+        human_passive_joints_.push_back( human_passive_->getJoint("right-Arm5") ); // Elbow
+        human_passive_joints_.push_back( human_passive_->getJoint("right-Arm2") ); // Wrist
+
+        for( int i=0; i<human_active_joints_.size(); i++)
+            distance_joint_ids_.push_back( human_active_joints_[i]->getId() );
+
+        w_ = Eigen::VectorXd::Ones(
+                    human_active_joints_.size() *
+                    human_passive_joints_.size() );
+
+        // nb of features is nb_joint_ids ^ 2
+        for(size_t i=0;i<human_active_joints_.size();i++)
+            for(size_t j=0;j<human_passive_joints_.size();j++)
+            {
+                std::string name =  human_active_joints_[i]->getName() + " , "
+                        + human_passive_joints_[j]->getName();
                 distance_names_.push_back( name );
             }
 
         w_distance_16 = w_; // TODO set this weight vector properly
     }
 
-
     // Print feature names and weights
     for(size_t i=0; i<distance_names_.size(); i++) {
         cout << " ACTIVE - PASSIVE " << endl;
         cout.precision(2);
         cout.setf( std::ios::fixed, std:: ios::floatfield );
-        cout  << std::setw( ceil(log10(distance_names_.size())) ) << std::setfill( '0' ) <<  i;
-        cout << " , w : " << w_[i] << " , distance name : " << distance_names_[i] <<  endl;
+        cout  << std::setw( ceil(log10(distance_names_.size())) )
+              << std::setfill( '0' ) <<  i;
+        cout << " , w : " << w_[i] << " , distance name : "
+             << distance_names_[i] <<  endl;
         //        cout << "( " << distance_names_[i] << " ) , " ;
         //        if( (i+1)%10 == 0 ){
         //            cout << endl;

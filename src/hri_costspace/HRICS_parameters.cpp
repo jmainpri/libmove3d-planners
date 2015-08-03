@@ -81,6 +81,7 @@ void initHricsParameters()
     myBoolMap.insert( std::make_pair( HricsParam::ioc_load_samples_from_file, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_draw_demonstrations, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_draw_samples, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_draw_one_demo, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_sample_around_demo, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_exit_after_run, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_use_stomp_spetial_cost, new boolContainer(false) ));
@@ -91,6 +92,12 @@ void initHricsParameters()
     myBoolMap.insert( std::make_pair( HricsParam::ioc_split_motions, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_conservative_baseline, new boolContainer(false) ));
     myBoolMap.insert( std::make_pair( HricsParam::ioc_show_last_simulation, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_remove_split, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_parallel_job, new boolContainer(false) ));
+    myBoolMap.insert( std::make_pair( HricsParam::ioc_show_replanning, new boolContainer(false) ));
+
+
+
 
     // Int
     // ------------------------------------------------------------------
@@ -102,6 +109,8 @@ void initHricsParameters()
     myIntMap.insert( std::make_pair( HricsParam::ioc_from_file_offset, new intContainer(-1) ));
     myIntMap.insert( std::make_pair( HricsParam::ioc_ik, new intContainer(-1) ));
     myIntMap.insert( std::make_pair( HricsParam::ioc_baseline_type, new intContainer(-1) ));
+    myIntMap.insert( std::make_pair( HricsParam::ioc_dataset, new intContainer(0) ));
+
 
     // Double
     // ------------------------------------------------------------------

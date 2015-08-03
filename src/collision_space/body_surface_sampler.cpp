@@ -267,7 +267,10 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(Joint* j
     {
         Eigen::Vector3d p = p1 + (double(i)/double(num_points))*( p2 - p1 );
         // cout << "p : " << p.transpose() << endl;
-        collision_points.push_back(CollisionPoint(parent_joints, radius, m_collision_clearance_default, segment_number, p));
+        cout << "clearance : " << m_collision_clearance_default << endl;
+        collision_points.push_back(CollisionPoint(
+                                       parent_joints, radius,
+                                       m_collision_clearance_default, segment_number, p));
     }
 
 
@@ -376,7 +379,8 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateAllRobotCollisionPoints(
 
     for (int id=0; id<int(robot->getNumberOfJoints()); id++)
     {
-        std::vector<CollisionPoint> points = generateJointCollisionPoints( robot, id, active_joints, planner_joints );
+        std::vector<CollisionPoint> points =
+                generateJointCollisionPoints( robot, id, active_joints, planner_joints );
 
         for (int i=0; i<int(points.size()); i++)
         {
@@ -390,9 +394,7 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateAllRobotCollisionPoints(
 //! Generate the collision points for links associated to the active joints
 //! It computes the parent joints of the joint
 std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Robot* robot, 
-                                                                             const std::vector<int>& active_joints,
-                                                                             const std::vector<int>& planner_joints,
-                                                                             int id_first_active_joint )
+                                                                             const std::vector<int>& active_joints,                                                                             const std::vector<int>& planner_joints,                                                                             int id_first_active_joint )
 {
     std::vector<CollisionPoint> all_points;
     all_points.clear();
@@ -400,7 +402,8 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Rob
     // If only one joint is active
     if(active_joints.size() == 1)
     {
-        std::vector<CollisionPoint> points = generateJointCollisionPoints( robot, 0, active_joints, planner_joints );
+        std::vector<CollisionPoint> points =
+                generateJointCollisionPoints( robot, 0, active_joints, planner_joints );
 
         for (int i=0; i<int(points.size()); i++)
         {
@@ -411,7 +414,8 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(Rob
     // Else only do not account for the first joint
     for ( int id=id_first_active_joint; id<int(active_joints.size()); id++ )
     {
-        std::vector<CollisionPoint> points = generateJointCollisionPoints( robot, id, active_joints, planner_joints );
+        std::vector<CollisionPoint> points =
+                generateJointCollisionPoints( robot, id, active_joints, planner_joints );
 
         for (int i=0; i<int(points.size()); i++)
         {

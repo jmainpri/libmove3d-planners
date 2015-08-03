@@ -89,12 +89,18 @@ private:
 
     // Trajectories results
     std::vector<Move3D::Trajectory> demos_;
-    std::vector< std::vector<Move3D::Trajectory> > baseline_agressive_;
-    std::vector< std::vector<Move3D::Trajectory> > baseline_conservative_;
-    std::vector< std::vector<Move3D::Trajectory> > recovered_;
-    std::vector< std::vector<Move3D::Trajectory> > noreplan_baseline_agressive_;
-    std::vector< std::vector<Move3D::Trajectory> > noreplan_baseline_conservative_;
-    std::vector< std::vector<Move3D::Trajectory> > noreplan_recovered_;
+    std::vector< std::vector<Move3D::Trajectory> >
+    baseline_agressive_;
+    std::vector< std::vector<Move3D::Trajectory> >
+    baseline_conservative_;
+    std::vector< std::vector<Move3D::Trajectory> >
+    recovered_;
+    std::vector< std::vector<Move3D::Trajectory> >
+    noreplan_baseline_agressive_;
+    std::vector< std::vector<Move3D::Trajectory> >
+    noreplan_baseline_conservative_;
+    std::vector< std::vector<Move3D::Trajectory> >
+    noreplan_recovered_;
 };
 
 }

@@ -33,6 +33,12 @@
 #include "API/libmove3d_api.hpp"
 #include "feature_space/smoothness.hpp"
 #include "planner/TrajectoryOptim/Lamp/lampTrajectory.hpp"
+#include "planner/TrajectoryOptim/Stomp/covariant_trajectory_policy.hpp"
+
+#include "planEnvironment.hpp"
+#include "hri_costspace/gestures/HRICS_gest_parameters.hpp"
+#include "hri_costspace/HRICS_parameters.hpp"
+
 #include "utils/misc_functions.hpp"
 
 #include <libmove3d/include/Planner-pkg.h>
@@ -79,7 +85,113 @@ Move3D::Trajectory create_random_trajectory()
     return trajectory_0;
 }
 
-Move3D::Trajectory create_sinusoidal_trajectory( Move3D::confPtr_t q_init_ptr, Move3D::confPtr_t q_goal_ptr, int nb_config )
+double get_control_cost( const Move3D::Trajectory& trajectory,
+                         const std::vector<int>& joints )
+{
+    // Intialize policy
+
+    std::vector<double> derivative_costs;
+    derivative_costs.push_back( 0 );
+    derivative_costs.push_back( 1 );
+    derivative_costs.push_back( 0 );
+
+    double ridge_factor = 0;
+
+    stomp_motion_planner::CovariantTrajectoryPolicy policy;
+    policy.setPrintDebug( false );
+
+    Move3D::ChompPlanningGroup*
+    planning_group = new Move3D::ChompPlanningGroup( trajectory.getRobot(),
+                                                     joints );
+
+    int nb_dofs = planning_group->num_dofs_;
+    int num_time_steps = trajectory.getNbOfViaPoints();
+
+    policy.initialize( num_time_steps,
+                       nb_dofs,
+                       trajectory.getDuration(),
+                       ridge_factor,
+                       derivative_costs,
+                       planning_group);
+
+    Eigen::VectorXd start = trajectory.getBegin()->getEigenVector(
+                planning_group->getActiveDofs() );
+    Eigen::VectorXd end = trajectory.getEnd()->getEigenVector(
+                planning_group->getActiveDofs() );
+
+    policy.setToMinControlCost( start, end );
+
+    // Get parameter vectors
+
+    std::vector<Eigen::MatrixXd> control_cost_matrices;
+
+    std::vector<Eigen::VectorXd> parameters =
+            std::vector<Eigen::VectorXd>( nb_dofs,
+                                Eigen::VectorXd::Zero(num_time_steps) );
+    std::vector<Eigen::VectorXd> noise=
+            std::vector<Eigen::VectorXd>( nb_dofs,
+                                Eigen::VectorXd::Zero(num_time_steps) );
+    std::vector<Eigen::VectorXd> control_costs=
+            std::vector<Eigen::VectorXd>( nb_dofs,
+                                Eigen::VectorXd::Zero(num_time_steps) );
+    double weight = 1.0;
+    double dt = trajectory.getDeltaTime();
+
+    Eigen::MatrixXd mat =
+            trajectory.getEigenMatrix( planning_group->getActiveDofs() );
+
+
+    if( nb_dofs != mat.rows() ) {
+        cout << "ERROR nb of dofs ("
+             << nb_dofs << " , " << mat.rows() << " )"
+             << endl;
+        exit(0);
+    }
+    if( num_time_steps != mat.cols() ) {
+        cout << "ERROR time steps ("
+             << num_time_steps << " , " << mat.cols() << " )"
+             << endl;
+        exit(0);
+    }
+
+    for ( int i=0; i<nb_dofs; ++i)
+    {
+        for ( int j=0; j<num_time_steps; ++j)
+        {
+            parameters[i][j] = mat(i,j);
+        }
+    }
+
+    cout << "dt : " << dt << endl;
+    // cout << "mat : " << mat << endl;
+
+    policy.computeControlCosts( control_cost_matrices,
+                                parameters,
+                                noise,
+                                weight,
+                                control_costs,
+                                dt );
+
+    // Get total smoothness cost
+    // current control costs are already multipied by
+    // the cost weight
+    double total_smoothness_cost = 0.;
+    int num_dim = control_costs.size();
+
+    for (int d=0; d<num_dim; ++d)
+    {
+//        cout << "control cost [" << d << "] : "
+//             << control_costs[d].transpose()
+//             << endl;
+
+        total_smoothness_cost += control_costs[d].sum();
+    }
+    return total_smoothness_cost * dt;
+}
+
+Move3D::Trajectory create_sinusoidal_trajectory(
+        Move3D::confPtr_t q_init_ptr,
+        Move3D::confPtr_t q_goal_ptr, int nb_config )
 {
     Move3D::Trajectory sinus_traj( robot );
 
@@ -142,7 +254,14 @@ int main(int argc, char *argv[])
     Move3D::global_Project->getActiveScene()->setActiveRobot( robot_name );
     robot = Move3D::global_Project->getActiveScene()->getActiveRobot();
 
-    cout << "get active joints" << endl;
+    // GET QT PARAMETERS (used to be in project)
+    initPlannerParameters();
+    initGestureParameters();
+    initHricsParameters();
+
+    cout << "get active joints for robot : "
+         << robot->getName()
+         << endl;
 
     std::vector<int> active_joints  = robot->getActiveJointsIds();
     active_dofs = robot->getActiveDoFsFromJoints( active_joints );
@@ -209,7 +328,7 @@ int main(int argc, char *argv[])
     for( int i=0; i<active_dofs.size(); i++ )
         cout << "active dofs : "  << active_dofs[i] << endl;
 
-    bool with_buffer(true);
+    bool with_buffer(false);
     std::vector<Eigen::VectorXd> buffer; // diff_rule_length_-1 (6)
 
     if( with_buffer )
@@ -258,11 +377,100 @@ int main(int argc, char *argv[])
     cout << "jerk 4 : " << jerk.getFeatureCount( trajectory_3 ) << endl;
     cout << "jerk 5 : " << jerk.getFeatureCount( trajectory_4 ) << endl;
 
-    std::string folder = std::string(getenv("HOME_MOVE3D")) + "/../move3d-launch/launch_files/control_cost_profiles/";
-    acceleration.saveAbsValuesToFile( trajectory_0, folder, trajectory_0.getDeltaTime() );
-    acceleration.saveAbsValuesToFile( trajectory_1, folder, trajectory_1.getDeltaTime( ));
-//    velocity.saveAbsValuesToFile( trajectory_2, folder, trajectory_2.getDeltaTime( ));
-//    velocity.saveAbsValuesToFile( trajectory_4, folder, trajectory_4.getDeltaTime() );
+
+
+
+
+    std::string joint_name("J6"); // Last joint
+    Move3D::Joint* joint = robot->getJoint( joint_name );
+    for( int i=0;i<robot->getNumberOfJoints(); i++)
+    {
+        cout << robot->getJoint(i)->getName() << endl;
+    }
+    if( joint == NULL ) {
+        cout << "no joint named : " << joint_name << endl;
+        exit(0);
+    }
+
+    Move3D::TaskSmoothnessFeature task_smoothness( robot, joint );
+    Eigen::VectorXd control_costs;
+
+    cout << "task vel 1 : "
+         << task_smoothness.getVelocity( trajectory_0, control_costs )
+         << endl;
+    cout << "task vel 2 : "
+         << task_smoothness.getVelocity( trajectory_1, control_costs )
+         << endl;
+    cout << "task vel 3 : "
+         << task_smoothness.getVelocity( trajectory_2, control_costs )
+         << endl;
+    cout << "task vel 4 : "
+         << task_smoothness.getVelocity( trajectory_3, control_costs )
+         << endl;
+    cout << "task vel 5 : "
+         << task_smoothness.getVelocity( trajectory_4, control_costs )
+         << endl;
+
+
+    cout << "task accel 1 : "
+         << task_smoothness.getAcceleration( trajectory_0, control_costs )
+         << endl;
+    cout << "task accel 2 : "
+         << task_smoothness.getAcceleration( trajectory_1, control_costs )
+         << endl;
+    cout << "task accel 3 : "
+         << task_smoothness.getAcceleration( trajectory_2, control_costs )
+         << endl;
+    cout << "task accel 4 : "
+         << task_smoothness.getAcceleration( trajectory_3, control_costs )
+         << endl;
+    cout << "task accel 5 : "
+         << task_smoothness.getAcceleration( trajectory_4, control_costs )
+         << endl;
+
+
+    cout << "task jerk 1 : "
+         << task_smoothness.getJerk( trajectory_0, control_costs )
+         << endl;
+    cout << "task jerk 2 : "
+         << task_smoothness.getJerk( trajectory_1, control_costs )
+         << endl;
+    cout << "task jerk 3 : "
+         << task_smoothness.getJerk( trajectory_2, control_costs )
+         << endl;
+    cout << "task jerk 4 : "
+         << task_smoothness.getJerk( trajectory_3, control_costs )
+         << endl;
+    cout << "task jerk 5 : "
+         << task_smoothness.getJerk( trajectory_4, control_costs )
+         << endl;
+
+    std::string folder = std::string(getenv("HOME_MOVE3D"))
+            + "/../move3d-launch/launch_files/control_cost_profiles/";
+
+    jerk.saveAbsValuesToFile( trajectory_0, folder );
+    jerk.saveAbsValuesToFile( trajectory_1, folder );
+
+    //    jerk.saveAbsValuesToFile( trajectory_2, folder, trajectory_2.getDeltaTime() );
+    //    jerk.saveAbsValuesToFile( trajectory_4, folder, trajectory_4.getDeltaTime() );
+
+    task_smoothness.saveAbsValuesToFileVelocity( trajectory_1, folder );
+    task_smoothness.saveAbsValuesToFileAcceleration( trajectory_1, folder );
+    // task_smoothness.saveAbsValuesToFileJerk( trajectory_1, folder );
+
+
+    double control_cost_1 = get_control_cost( trajectory_0, active_joints );
+    double control_cost_2 = get_control_cost( trajectory_1, active_joints );
+    double control_cost_3 = get_control_cost( trajectory_2, active_joints );
+    double control_cost_4 = get_control_cost( trajectory_3, active_joints );
+//    double control_cost_5 = get_control_cost( trajectory_4, active_joints );
+
+    cout << "control cost 1  : " << control_cost_1 << endl;
+    cout << "control cost 2  : " << control_cost_2 << endl;
+    cout << "control cost 3  : " << control_cost_3 << endl;
+    cout << "control cost 4  : " << control_cost_4 << endl;
+//    cout << "control cost 5  : " << control_cost_5 << endl;
+
 
     trajectory_0.saveToFile( folder + "test0.traj" );
     trajectory_1.saveToFile( folder + "test1.traj" );

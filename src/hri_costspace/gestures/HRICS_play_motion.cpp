@@ -28,6 +28,7 @@
 #include "HRICS_play_motion.hpp"
 #include "HRICS_record_motion.hpp"
 #include "planEnvironment.hpp"
+#include "collision_space/collision_space.hpp"
 
 #include <libmove3d/include/Graphic-pkg.h>
 #include <sys/time.h>
@@ -107,11 +108,11 @@ void PlayMotion::runRealTime(int id)
     double dt = 0.0;
     double time = 0.0;
 
-    cout << "start playback" << endl;
+//    cout << "start playback" << endl;
 
-    if( id < _motions_names.size() && _motion_recorders.empty() ){
-        cout << " motion : " << _motions_names[id] << " , duration : " << motion_duration( _stored_motions[0][id] ) <<  endl;
-    }
+//    if( id < _motions_names.size() && _motion_recorders.empty() ){
+//        cout << " motion : " << _motions_names[id] << " , duration : " << motion_duration( _stored_motions[0][id] ) <<  endl;
+//    }
 
     while( !StopRun )
     {
@@ -160,13 +161,32 @@ void PlayMotion::runRealTime(int id)
                             Move3D::confPtr_t q = _stored_motions[j][id][i].second;
                             Move3D::Robot* robot = q->getRobot();
                             robot->setAndUpdate( *q );
+
+                            bool ncol = false;
+
+                            if( Move3D::global_collisionSpace )
+                            {
+                                double distance = std::numeric_limits<double>::max();
+                                double potential = std::numeric_limits<double>::max();
+
+                                ncol = Move3D::global_collisionSpace->isRobotColliding( distance, potential );
+                            }
+                            else
+                            {
+                                ncol = robot->isInCollision();
+                            }
+
+                            // if( ncol ){
+                            //     cout << "Robot in collision " << endl;
+                            // }
+
                             break;
                         }
 
                         i++;
                     }
                     if( i >= _stored_motions[j][id].size() ){
-                        cout << "reach end of trajectory" << endl;
+                        // cout << "reach end of trajectory" << endl;
                         StopRun = true;
                     }
                 }
@@ -210,7 +230,7 @@ void PlayMotion::runRealTime(int id)
 //        }
     }
 
-    cout << "End play motion" << endl;
+    // cout << "End play motion" << endl;
     return;
 }
 

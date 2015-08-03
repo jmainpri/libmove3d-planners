@@ -276,6 +276,7 @@ void initPlannerParameters()
 
     // Collspace
     myDoubleMap.insert( std::make_pair( PlanParam::ratioCollRadiusSpacing,  new doubleContainer(2.0)));
+    myDoubleMap.insert( std::make_pair( PlanParam::collison_points_clearance,  new doubleContainer(0.06)));
 
 
     // Object TransfertPoint variable

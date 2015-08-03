@@ -50,7 +50,9 @@ void HRICS::printHumanConfig()
 
         for( int j=0; j<int(jnt->getNumberOfDof()); j++)
         {
-            cout << "jnt->getName() : " << jnt->getName() << "(" <<i<< ") , index_dof : " << jnt->getIndexOfFirstDof()+j << endl;
+            cout << "jnt->getName() : " << jnt->getName() << "("
+                 << i << ") , index_dof : " << jnt->getIndexOfFirstDof()+j
+                 << endl;
         }
     }
 }
@@ -190,19 +192,28 @@ void HRICS::setTenAccessiblePositions()
         case 0:
         {
             Distance* dist = HRICS_humanCostMaps->getAgentGrid(human)->getDistance();
-            sorted_cells.push_back( make_pair(dist->getWorkspaceCost(reachable_cells[i]->getWorkspacePoint()),reachable_cells[i]) );
+            sorted_cells.push_back(
+                        make_pair(dist->getWorkspaceCost(
+                                      reachable_cells[i]->getWorkspacePoint()),
+                                  reachable_cells[i]) );
         }
             break;
         case 1:
         {
             Visibility* visi = HRICS_humanCostMaps->getAgentGrid(human)->getVisibility();
-            sorted_cells.push_back( make_pair(visi->getWorkspaceCost(reachable_cells[i]->getWorkspacePoint()),reachable_cells[i]) );
+            sorted_cells.push_back(
+                        make_pair(visi->getWorkspaceCost(
+                                      reachable_cells[i]->getWorkspacePoint()),
+                                  reachable_cells[i]) );
         }
             break;
         case 2:
         {
             Natural* reach = HRICS_humanCostMaps->getAgentGrid(human)->getNatural();
-            sorted_cells.push_back( make_pair(reach->getWorkspaceCost(reachable_cells[i]->getWorkspacePoint()),reachable_cells[i]) );
+            sorted_cells.push_back(
+                        make_pair(reach->getWorkspaceCost(
+                                      reachable_cells[i]->getWorkspacePoint()),
+                                  reachable_cells[i]) );
         }
             break;
         }
@@ -218,16 +229,26 @@ void HRICS::setTenAccessiblePositions()
     sort( sorted_cells.begin(), sorted_cells.end() );
 
     Scene* sce = global_Project->getActiveScene();
-    sce->getRobotByName("Doggy")->setAndUpdateFreeFlyer( sorted_cells[0].second->getWorkspacePoint() );
-    sce->getRobotByName("Doggy1")->setAndUpdateFreeFlyer( sorted_cells[1].second->getWorkspacePoint() );
-    sce->getRobotByName("Doggy2")->setAndUpdateFreeFlyer( sorted_cells[2].second->getWorkspacePoint() );
-    sce->getRobotByName("Doggy3")->setAndUpdateFreeFlyer( sorted_cells[3].second->getWorkspacePoint() );
-    sce->getRobotByName("Doggy4")->setAndUpdateFreeFlyer( sorted_cells[4].second->getWorkspacePoint() );
-    sce->getRobotByName("Doggy5")->setAndUpdateFreeFlyer( sorted_cells[5].second->getWorkspacePoint() );
-    sce->getRobotByName("Doggy6")->setAndUpdateFreeFlyer( sorted_cells[6].second->getWorkspacePoint() );
-    sce->getRobotByName("Doggy7")->setAndUpdateFreeFlyer( sorted_cells[7].second->getWorkspacePoint() );
-    sce->getRobotByName("Doggy8")->setAndUpdateFreeFlyer( sorted_cells[8].second->getWorkspacePoint() );
-    sce->getRobotByName("Doggy9")->setAndUpdateFreeFlyer( sorted_cells[9].second->getWorkspacePoint() );
+    sce->getRobotByName("Doggy")->setAndUpdateFreeFlyer(
+                sorted_cells[0].second->getWorkspacePoint() );
+    sce->getRobotByName("Doggy1")->setAndUpdateFreeFlyer(
+                sorted_cells[1].second->getWorkspacePoint() );
+    sce->getRobotByName("Doggy2")->setAndUpdateFreeFlyer(
+                sorted_cells[2].second->getWorkspacePoint() );
+    sce->getRobotByName("Doggy3")->setAndUpdateFreeFlyer(
+                sorted_cells[3].second->getWorkspacePoint() );
+    sce->getRobotByName("Doggy4")->setAndUpdateFreeFlyer(
+                sorted_cells[4].second->getWorkspacePoint() );
+    sce->getRobotByName("Doggy5")->setAndUpdateFreeFlyer(
+                sorted_cells[5].second->getWorkspacePoint() );
+    sce->getRobotByName("Doggy6")->setAndUpdateFreeFlyer(
+                sorted_cells[6].second->getWorkspacePoint() );
+    sce->getRobotByName("Doggy7")->setAndUpdateFreeFlyer(
+                sorted_cells[7].second->getWorkspacePoint() );
+    sce->getRobotByName("Doggy8")->setAndUpdateFreeFlyer(
+                sorted_cells[8].second->getWorkspacePoint() );
+    sce->getRobotByName("Doggy9")->setAndUpdateFreeFlyer(
+                sorted_cells[9].second->getWorkspacePoint() );
 }
 
 void HRICS::generateGraspConfigurations()

@@ -64,7 +64,9 @@ bool HRICS_init_boxes_cost()
 
     if( global_BoxesCostFct->getNumberOfFeatures() > 0 )
     {
-        cout << "add cost functions : " << "costBoxes" << endl;
+        cout << "add cost functions : "
+             << "costBoxes" << endl;
+
         global_costSpace->addCost( "costBoxes", boost::bind( &Boxes::cost, global_BoxesCostFct, _1) );
         global_costSpace->addCost( "costBoxesJacobian", boost::bind( &Boxes::jacobianCost, global_BoxesCostFct, _1) );
         // global_costSpace->setCost( "costSquares" );
@@ -182,7 +184,9 @@ void Boxes::initialize()
     // Generate collision points
     sampler_ = new BodySurfaceSampler(0.1, 0.05);
     sampler_->generateRobotBoudingCylinder( robot_, joints );
-    sampler_->generateRobotCollisionPoints( robot_, active_joints_, active_joints_ );
+    sampler_->generateRobotCollisionPoints( robot_,
+                                            active_joints_,
+                                            active_joints_ );
 }
 
 

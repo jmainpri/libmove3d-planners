@@ -39,6 +39,13 @@
 namespace HRICS
 {
 
+enum test_set {
+    icra_paper_sept=0,
+    icra_paper_feb=1,
+    user_study=2,
+    human_robot_experiment=3
+} ;
+
 class HumanTrajFeatures: public Move3D::StackedFeatures
 {
 
@@ -153,7 +160,7 @@ public:
 
     void setDrawExecution(bool draw_execution ) { draw_execute_motion_ = draw_execution; }
 
-    const std::vector<std::string>& getMotionsNames() const { return motions_1_names_; }
+    const std::vector<std::string>& getMotionsNames() const { return motions_demo_names_; }
     std::vector<int> getDemoIds() const { return motions_demo_ids_; }
 
 private:
@@ -245,6 +252,7 @@ private:
     std::vector<motion_t> human_1_simulation_;
     std::vector<motion_t> human_2_simulation_;
 
+    std::vector<std::string> motions_demo_names_;
     std::vector<int> motions_demo_ids_;
 
     bool is_pelvis_bound_user_defined_;
@@ -265,6 +273,7 @@ private:
     bool use_bio_models_;
 
     bool is_active_agent_human_;
+    bool is_passive_agent_human_;
 
     bool end_simulation_;
 };

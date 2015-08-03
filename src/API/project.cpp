@@ -28,9 +28,6 @@ Project::Project(Scene* sc)
     setActiveScene( m_Scenes.back()->getName() );
 
     cout << "Create project and environement parameters" << endl;
-    initPlannerParameters();
-    initGestureParameters();
-    initHricsParameters();
 }
 
 Project::~Project()
