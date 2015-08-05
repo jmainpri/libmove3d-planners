@@ -574,7 +574,8 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         if( use_costspace_ &&  global_activeFeatureFunction != NULL )
             global_activeFeatureFunction->printInfo();
     
-    stomp_statistics_ = MOVE3D_BOOST_PTR_NAMESPACE<StompStatistics>(new StompStatistics());
+    stomp_statistics_
+            = MOVE3D_BOOST_PTR_NAMESPACE<StompStatistics>(new StompStatistics());
     stomp_statistics_->run_id = idRun;
     stomp_statistics_->collision_success_iteration = -1;
     stomp_statistics_->success_iteration = -1;
@@ -738,7 +739,8 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
 
         double cost = getTrajectoryCost();
 
-        // ( PlanEnv->getBool(PlanParam::trajStompDrawImprovement) && ( cost < best_group_trajectory_in_collsion_cost_ ))
+        // ( PlanEnv->getBool(PlanParam::trajStompDrawImprovement) &&
+        // ( cost < best_group_trajectory_in_collsion_cost_ ))
 
         if ( do_draw && (!ENV.getBool(Env::drawDisabled)) &&
              ENV.getBool(Env::drawTraj) &&
@@ -829,7 +831,8 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
         gettimeofday(&tim, NULL);
         time_ = tim.tv_sec+(tim.tv_usec/1000000.0) - t_init;
 
-        if( PlanEnv->getBool(PlanParam::trajSaveCost) && /**time_>double(ith_save)*/ do_draw ) {
+        if( PlanEnv->getBool(PlanParam::trajSaveCost)
+                && /**time_>double(ith_save)*/ do_draw ) {
             saveTrajectoryCostStats();
             ith_save++;
         }
@@ -956,7 +959,7 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     performForwardKinematics( false );
     printf("Best trajectory : iter=%3d, cost (s=%f, c=%f, g=%f)\n",
            last_improvement_iteration_,
-           getSmoothnessCost(), getCollisionCost(), getGeneralCost() );
+           getSmoothnessCost(true), getCollisionCost(), getGeneralCost() );
 
 
     // Print control costs
@@ -995,9 +998,11 @@ void StompOptimizer::runDeformation( int nbIteration, int idRun )
     
     printf("Collision free success iteration = %d for robot %s (time : %f)\n",
            stomp_statistics_->collision_success_iteration,
-           robot_model_->getName().c_str(), stomp_statistics_->success_time);
+           robot_model_->getName().c_str(),
+           stomp_statistics_->success_time);
     printf("Terminated after %d iterations, using path from iteration %d\n",
-           iteration_, last_improvement_iteration_);
+           iteration_,
+           last_improvement_iteration_);
     printf("Best cost = %f\n", best_group_trajectory_cost_);
     printf("Stomp has run for : %f sec\n", time_ );
     
@@ -1029,7 +1034,8 @@ void StompOptimizer::setRobotPool( const std::vector<Robot*>& robots )
     {
         if( !use_external_collision_space_ )
         {
-            collision_space_id = i + 1; // TODO FIX THIS (becarful with robot pointer)
+            // TODO FIX THIS (becarful with robot pointer)
+            collision_space_id = i + 1;
         }
         else {
             use_external_collision_space_ = true;
@@ -1212,8 +1218,10 @@ void StompOptimizer::calculateTotalIncrements()
                 (
                     joint_costs_[i].getQuadraticCostInverse() *
                     (
-                        stomp_parameters_->getSmoothnessCostWeight() * smoothness_increments_.col(i) +
-                        stomp_parameters_->getObstacleCostWeight() * collision_increments_.col(i)
+                        stomp_parameters_->getSmoothnessCostWeight() *
+                        smoothness_increments_.col(i) +
+                        stomp_parameters_->getObstacleCostWeight() *
+                        collision_increments_.col(i)
                         )
                     );
     }
@@ -1327,7 +1335,8 @@ double StompOptimizer::getGeneralCost()
 
     double general_cost = 0.0;
 
-    Eigen::VectorXd costs( Eigen::VectorXd::Zero( compute_fk_main_->getDts().size() ) );
+    Eigen::VectorXd costs( Eigen::VectorXd::Zero(
+                               compute_fk_main_->getDts().size() ) );
 
     double time = 0.0;
 
@@ -1335,7 +1344,8 @@ double StompOptimizer::getGeneralCost()
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {
         // general_cost += ( pow( compute_fk_main_->getCollisionCostPotential()(i) , hack_tweek )  * compute_fk_main_->getDts()[i] );
-        costs[i] = compute_fk_main_->getGeneralCostPotential()(i) * compute_fk_main_->getDts()[i];
+        costs[i] = compute_fk_main_->getGeneralCostPotential()(i) *
+                compute_fk_main_->getDts()[i];
         time += compute_fk_main_->getDts()[i];
         general_cost += costs[i];
     }
@@ -1373,17 +1383,19 @@ double StompOptimizer::getGeneralCost()
     return stomp_parameters_->getGeneralCostWeight() * general_cost;
 }
 
-double StompOptimizer::getSmoothnessCost()
+double StompOptimizer::getSmoothnessCost(bool save_to_file)
 {
     bool use_weight = true;
-    double weight = use_weight ? stomp_parameters_->getSmoothnessCostWeight() : 1.0;
+    double weight = use_weight ?
+                stomp_parameters_->getSmoothnessCostWeight() : 1.0;
     double smoothness_cost = 0.0;
 
     //    double joint_cost = 0.0;
     //    // joint costs:
     //    for ( int i=0; i<num_joints_; i++ )
     //    {
-    //        joint_cost = joint_costs_[i].getCost(group_trajectory_.getJointTrajectory(i));
+    //        joint_cost =
+    // joint_costs_[i].getCost(group_trajectory_.getJointTrajectory(i));
     //        smoothness_cost += joint_cost;
     //    }
     //    return stomp_parameters_->getSmoothnessCostWeight() * smoothness_cost;
@@ -1395,41 +1407,55 @@ double StompOptimizer::getSmoothnessCost()
     for (int d=0; d<num_joints_; ++d)
     {
         //policy_parameters_[d] = group_trajectory_.getFreeTrajectoryBlock();
-        policy_parameters_[d].segment(1,policy_parameters_[d].size()-id_fixed_) = group_trajectory_.getFreeJointTrajectoryBlock(d);
+        policy_parameters_[d].segment(1,policy_parameters_[d].size()-id_fixed_)
+                = group_trajectory_.getFreeJointTrajectoryBlock(d);
+
         noise[d] = VectorXd::Zero( policy_parameters_[d].size() );
     }
 
-    double discretization = group_trajectory_.getUseTime() ? group_trajectory_.getDiscretization() : 0.0;
+    double discretization = group_trajectory_.getUseTime() ?
+                group_trajectory_.getDiscretization() : 0.0;
 
     bool classic = HriEnv->getBool(HricsParam::ioc_use_baseline);
 
-    StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+    StackedFeatures* fct =
+            dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
 
-    if( ( classic == false ) && ( fct != NULL ) && ( fct->getFeatureFunction("SmoothnessAll") != NULL ) )
+    if( ( classic == false ) && ( fct != NULL ) &&
+            ( fct->getFeatureFunction("SmoothnessAll") != NULL ) )
     {
         std::vector< std::vector<Eigen::VectorXd> > control_costs;
 
-        Eigen::VectorXd costs = policy_->getAllCosts( policy_parameters_, control_costs, discretization );
+        Eigen::VectorXd costs = policy_->getAllCosts(
+                    policy_parameters_, control_costs, discretization );
 
 //        Move3D::Trajectory traj( robot_model_ );
 //        setGroupTrajectoryToMove3DTraj( traj );
 
-        smoothness_cost = fct->getFeatureFunction("SmoothnessAll")->getWeights().transpose() * costs;
+        smoothness_cost =
+                fct->getFeatureFunction("SmoothnessAll")->getWeights().transpose()
+                * costs;
 
         // cout << "costs (control) : " << costs.transpose() << endl;
-//        cout << "costs (control) : " << costs.array() * fct->getFeatureFunction("SmoothnessAll")->getWeights().array() << endl;
+//        cout << "costs (control) : " << costs.array() *
+        // fct->getFeatureFunction("SmoothnessAll")->getWeights().array()
+        // << endl;
 
-//         SmoothnessFeature*  smoothness_feature =  dynamic_cast<SmoothnessFeature*>(fct->getFeatureFunction("SmoothnessAll"));
+//         SmoothnessFeature*  smoothness_feature =
+        // dynamic_cast<SmoothnessFeature*>(fct->getFeatureFunction("SmoothnessAll"));
 //         if( smoothness_feature == NULL )
 //             exit(0);
 
-//         cout << "left padding : "  << smoothness_feature->task_features_.get_left_padding() << endl;
-//         cout << "right padding : "  << smoothness_feature->task_features_.get_right_padding() << endl;
+//         cout << "left padding : "
+        // << smoothness_feature->task_features_.get_left_padding() << endl;
+//         cout << "right padding : "
+        // << smoothness_feature->task_features_.get_right_padding() << endl;
 
 //        cout.precision(4);
 //        cout << "smoothness_phi  : " << std::scientific << costs.transpose() << endl;
 //        cout << "smoothness_w    : " << w.transpose() << endl;
-//        cout << "smoothness_cost : " << std::scientific <<  ( w.cwise() * costs ).transpose()  << endl;
+//        cout << "smoothness_cost : " << std::scientific
+        // <<  ( w.cwise() * costs ).transpose()  << endl;
     }
     else
     {
@@ -1438,8 +1464,15 @@ double StompOptimizer::getSmoothnessCost()
         // cout << "NORMAL COMPUTATION : " << weight << endl;
 
         // cout << "discretization : " << discretization << endl;
-        policy_->computeControlCosts( control_cost_matrices, policy_parameters_, noise, weight, control_costs, discretization );
-        // policy_->saveProfiles( policy_parameters_, "./control_cost_profiles", discretization );
+        policy_->computeControlCosts( control_cost_matrices,
+                                      policy_parameters_,
+                                      noise, weight, control_costs,
+                                      discretization );
+
+        if( save_to_file ) {
+            policy_->saveProfiles( policy_parameters_,
+                                   "./control_cost_profiles", discretization );
+        }
 
         // cout << "policy_parameters_ : " << policy_parameters_[0].transpose() << endl;
         // cout << std::scientific << control_costs[0].transpose() << endl;

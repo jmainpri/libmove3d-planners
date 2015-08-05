@@ -464,7 +464,7 @@ private:
     void computeTrajectoryFeatures(const Move3D::Trajectory& traj);
 
     double getTrajectoryCost();
-    double getSmoothnessCost();
+    double getSmoothnessCost(bool save_to_file = false);
     double getCollisionCost();
     double getGeneralCost();
     void perturbTrajectory();

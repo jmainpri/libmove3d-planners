@@ -218,16 +218,28 @@ bool CovariantTrajectoryPolicy::setToMinControlCost(Eigen::VectorXd& start,
 bool CovariantTrajectoryPolicy::computeLinearControlCosts()
 {
     linear_control_costs_.clear();
-    linear_control_costs_.resize(num_dimensions_, Eigen::VectorXd::Zero(num_vars_free_));
+    linear_control_costs_.resize(num_dimensions_,
+                                 Eigen::VectorXd::Zero(num_vars_free_));
     
     for (int d=0; d<num_dimensions_; ++d)
     {
         linear_control_costs_[d].transpose() =
-                parameters_all_[d].segment(0, DIFF_RULE_LENGTH-1).transpose() *
-                control_costs_all_[d].block(0, free_vars_start_index_, DIFF_RULE_LENGTH-1, num_vars_free_);
 
-        linear_control_costs_[d].transpose() += parameters_all_[d].segment(free_vars_end_index_+1, DIFF_RULE_LENGTH-1).transpose() *
-                control_costs_all_[d].block(free_vars_end_index_+1, free_vars_start_index_, DIFF_RULE_LENGTH-1, num_vars_free_);
+                parameters_all_[d].segment(0, DIFF_RULE_LENGTH-1).transpose() *
+
+                control_costs_all_[d].block(0,
+                                            free_vars_start_index_,
+                                            DIFF_RULE_LENGTH-1,
+                                            num_vars_free_);
+
+        linear_control_costs_[d].transpose() += parameters_all_[d].segment(
+
+                    free_vars_end_index_+1, DIFF_RULE_LENGTH-1).transpose() *
+
+                control_costs_all_[d].block(free_vars_end_index_+1,
+                                            free_vars_start_index_,
+                                            DIFF_RULE_LENGTH-1,
+                                            num_vars_free_);
 
         linear_control_costs_[d] *= 2.0;
     }
@@ -239,7 +251,8 @@ bool CovariantTrajectoryPolicy::computeMinControlCostParameters()
 {
     for (int d=0; d<num_dimensions_; ++d)
     {
-        parameters_all_[d].segment(free_vars_start_index_, num_vars_free_) = -0.5 * inv_control_costs_[d] * linear_control_costs_[d];
+        parameters_all_[d].segment(free_vars_start_index_, num_vars_free_)
+                = -0.5 * inv_control_costs_[d] * linear_control_costs_[d];
     }
 
     return true;
@@ -267,7 +280,9 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices()
 {
     double multiplier = 1.0;
     differentiation_matrices_.clear();
-    differentiation_matrices_.resize( NUM_DIFF_RULES, Eigen::MatrixXd::Zero( num_vars_all_ + free_offset_, num_vars_all_ + free_offset_) );
+    differentiation_matrices_.resize( NUM_DIFF_RULES, Eigen::MatrixXd::Zero(
+                                          num_vars_all_ + free_offset_,
+                                          num_vars_all_ + free_offset_) );
 
     for (int d=0; d<NUM_DIFF_RULES; ++d)
     {
@@ -309,18 +324,29 @@ bool CovariantTrajectoryPolicy::initializeCosts()
     for( int d=0; d<num_dimensions_; ++d )
     {
         // Construct the quadratic cost matrices (for all variables)
-        Eigen::MatrixXd cost_all = Eigen::MatrixXd::Identity( num_vars_all_ + free_offset_, num_vars_all_ + free_offset_ ) * cost_ridge_factor_;
+        Eigen::MatrixXd cost_all = cost_ridge_factor_ * Eigen::MatrixXd::Identity(
+                    num_vars_all_ + free_offset_,
+                    num_vars_all_ + free_offset_ ) ;
 
         for (int i=0; i<NUM_DIFF_RULES; ++i) // NUM_DI...
         {
             // cout << "derivative cost : " << i << " , " << derivative_costs_[i] << endl;
-            cost_all += derivative_costs_[i] * (differentiation_matrices_[i].transpose() * differentiation_matrices_[i]);
+            cost_all += derivative_costs_[i] *
+                    (differentiation_matrices_[i].transpose() *
+                     differentiation_matrices_[i]);
         }
         control_costs_all_.push_back( cost_all );
 
         // Extract the quadratic cost just for the free variables
-         Eigen::MatrixXd cost_free  = cost_all.block( DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_, num_vars_free_ );
-         Eigen::MatrixXd cost_free2 = cost_all.block( DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1, num_vars_free_+ free_offset_, num_vars_free_+ free_offset_ );
+         Eigen::MatrixXd cost_free  = cost_all.block(
+                     DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1,
+                     num_vars_free_, num_vars_free_ );
+
+         Eigen::MatrixXd cost_free2 = cost_all.block(
+                     DIFF_RULE_LENGTH-1, DIFF_RULE_LENGTH-1,
+                     num_vars_free_+ free_offset_,
+                     num_vars_free_+ free_offset_ );
+
 //        Eigen::MatrixXd cost_free   = cost_all.block( 2*(DIFF_RULE_LENGTH-1), 2*(DIFF_RULE_LENGTH-1), num_vars_free_, num_vars_free_ );
 //        Eigen::MatrixXd cost_free2  = cost_all.block( 2*(DIFF_RULE_LENGTH-1), 2*(DIFF_RULE_LENGTH-1), num_vars_free_, num_vars_free_ );
 
@@ -412,7 +438,8 @@ bool CovariantTrajectoryPolicy::computeControlCosts(
         const std::vector<Eigen::VectorXd>& noise,
         const double weight,
         std::vector<Eigen::VectorXd>& control_costs,
-        double dt )
+        double dt,
+        bool save_to_file )
 {
     bool with_time( dt != 0.0 );
 
@@ -437,7 +464,7 @@ bool CovariantTrajectoryPolicy::computeControlCosts(
         }
 
         double factor = 0;
-        int offset = 2; // TODO what does that do when setting buffer...
+        int offset = 2; // TRO=2, TODO what does that do when setting buffer...
 
         switch( type_ )
         {
@@ -489,17 +516,24 @@ bool CovariantTrajectoryPolicy::computeControlCosts(
 
                     if( type_ == mix )
                     {
-                        acc_all[i] += std::sqrt( derivative_costs_[0] ) * ( (params_all[index]*DIFF_RULES[(int)vel][j+DIFF_RULE_LENGTH/2])  /
+                        acc_all[i] += std::sqrt( derivative_costs_[0] ) *
+                                ( (params_all[index]*DIFF_RULES[(int)vel]
+                                  [j+DIFF_RULE_LENGTH/2])  /
                                 ( with_time ? std::pow( dt, double(1) ) : 1.0 ) );
-                        acc_all[i] += std::sqrt( derivative_costs_[1] ) * ( (params_all[index]*DIFF_RULES[(int)acc][j+DIFF_RULE_LENGTH/2])  /
+                        acc_all[i] += std::sqrt( derivative_costs_[1] ) *
+                                ( (params_all[index]*DIFF_RULES[(int)acc]
+                                  [j+DIFF_RULE_LENGTH/2])  /
                                 ( with_time ? std::pow( dt, double(2) ) : 1.0 ) );
-                        acc_all[i] += std::sqrt( derivative_costs_[2] ) * ( (params_all[index]*DIFF_RULES[(int)jerk][j+DIFF_RULE_LENGTH/2]) /
+                        acc_all[i] += std::sqrt( derivative_costs_[2] ) *
+                                ( (params_all[index]*DIFF_RULES[(int)jerk]
+                                  [j+DIFF_RULE_LENGTH/2]) /
                                 ( with_time ? std::pow( dt, double(3) ) : 1.0 ) );
                     }
                     else
                     {
                         acc_all[i] +=
-                                (params_all[index]*DIFF_RULES[(int)type_][j+DIFF_RULE_LENGTH/2]);
+                                (params_all[index]*DIFF_RULES[(int)type_][
+                                j+DIFF_RULE_LENGTH/2]);
                         // cout << "type : " << type_ << endl;
                     }
                 }
@@ -530,7 +564,7 @@ bool CovariantTrajectoryPolicy::computeControlCosts(
                     free_vars_start_index_ + offset ,
                     num_vars_free_ - 2*offset );
 
-        if( false )
+        if( save_to_file )
         {
             std::stringstream ss;
             ss.str("");
@@ -886,7 +920,9 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
     return costs;
 }
 
-void CovariantTrajectoryPolicy::saveProfiles( const std::vector<Eigen::VectorXd>& parameters, std::string foldername, double dt )
+void CovariantTrajectoryPolicy::saveProfiles(
+        const std::vector<Eigen::VectorXd>& parameters,
+        std::string foldername, double dt )
 {
 
     std::vector<Eigen::MatrixXd> control_cost_matrices;
@@ -903,29 +939,35 @@ void CovariantTrajectoryPolicy::saveProfiles( const std::vector<Eigen::VectorXd>
     foldername += "/";
 
     type_ = vel;
-    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs, dt );
+    computeControlCosts( control_cost_matrices, parameters, noise,
+                         1.0, control_costs, dt );
     for (int d=0; d<parameters.size(); ++d)
     {
         std::stringstream ss;
-        ss << "stomp_vel_"  << std::setw(3) << std::setfill( '0' ) << d << ".txt";
+        ss << "stomp_vel_"
+           << std::setw(3) << std::setfill( '0' ) << d << ".csv";
         move3d_save_matrix_to_file( control_costs[d], foldername + ss.str() );
     }
 
     type_ = acc;
-    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs, dt );
+    computeControlCosts( control_cost_matrices, parameters, noise,
+                         1.0, control_costs, dt );
     for (int d=0; d<parameters.size(); ++d)
     {
         std::stringstream ss;
-        ss << "stomp_acc_"  << std::setw(3) << std::setfill( '0' ) << d << ".txt";
+        ss << "stomp_acc_"
+           << std::setw(3) << std::setfill( '0' ) << d << ".csv";
         move3d_save_matrix_to_file( control_costs[d], foldername + ss.str() );
     }
 
     type_ = jerk;
-    computeControlCosts( control_cost_matrices, parameters, noise, 1.0, control_costs, dt );
+    computeControlCosts( control_cost_matrices, parameters, noise,
+                         1.0, control_costs, dt );
     for (int d=0; d<parameters.size(); ++d)
     {
         std::stringstream ss;
-        ss << "stomp_jerk_"  << std::setw(3) << std::setfill( '0' ) << d << ".txt";
+        ss << "stomp_jerk_"
+           << std::setw(3) << std::setfill( '0' ) << d << ".csv";
         move3d_save_matrix_to_file( control_costs[d], foldername + ss.str() );
     }
 
@@ -934,7 +976,9 @@ void CovariantTrajectoryPolicy::saveProfiles( const std::vector<Eigen::VectorXd>
 
 }
 
-void CovariantTrajectoryPolicy::setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj,  const std::vector<Eigen::VectorXd>& parameters, double dt )
+void CovariantTrajectoryPolicy::setGroupTrajectoryToMove3DTraj(
+        Move3D::Trajectory& traj,
+        const std::vector<Eigen::VectorXd>& parameters, double dt )
 {
     if( parameters.empty() ){
         cout << "Error in parameter empty " << endl;

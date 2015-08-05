@@ -289,7 +289,8 @@ Eigen::VectorXd ControlCost::interpolate( const Eigen::VectorXd& a, const Eigen:
     return out;
 }
 
-void ControlCost::saveProfiles( const Eigen::MatrixXd& traj, std::string foldername, double dt ) const
+void ControlCost::saveProfiles( const Eigen::MatrixXd& traj,
+                                std::string foldername, double dt ) const
 {
 //    cost_type tmp = type_;
 //    type_ = vel;
@@ -312,8 +313,9 @@ void ControlCost::saveProfiles( const Eigen::MatrixXd& traj, std::string foldern
 //        cout << "cost_vect.size() : " << cost_vect.size() << endl;
 
         std::stringstream ss;
-        ss << "stomp_vel_"  << std::setw(3) << std::setfill( '0' ) << d << ".txt";
-        move3d_save_matrix_to_csv_file( cost_vect.transpose(), foldername + ss.str() );
+        ss << "stomp_vel_"  << std::setw(3) << std::setfill( '0' ) << d << ".csv";
+        move3d_save_matrix_to_csv_file( cost_vect.transpose(),
+                                        foldername + "/" + ss.str() );
     }
 
 //    type_ = tmp;

@@ -493,9 +493,14 @@ bool LampCostComputation::handleJointLimits(  VectorTrajectory& group_traj  )
                 // cout << "Violation of Limits (joint) : " <<  joint << endl;
                 int free_var_index = max_violation_index - free_vars_start_;
 
+                double multiplier = max_violation /
+                        joint_costs_[joint].getQuadraticCostInverse()(
+                            free_var_index, free_var_index );
 
-                double multiplier = max_violation / joint_costs_[joint].getQuadraticCostInverse()( free_var_index, free_var_index );
-                Eigen::VectorXd offset = multiplier * (joint_costs_[joint].getQuadraticCostInverse().col( free_var_index )).segment( id_fixed_, num_vars_free_-id_fixed_ );
+                Eigen::VectorXd offset = multiplier *
+                        (joint_costs_[joint].getQuadraticCostInverse().col(
+                             free_var_index )).segment( id_fixed_,
+                                                        num_vars_free_-id_fixed_ );
                 group_traj.addToDofTrajectoryBlock( joint , offset );
                 // double offset = ( joint_max + joint_min )  / 2 ;
 
@@ -537,7 +542,11 @@ bool LampCostComputation::getControlCosts(const VectorTrajectory& group_traj)
     group_traj.getFreeParameters( parameters ); // TODO check the paramters size
 
     //            cout << "sum control costs" << endl;
-    current_control_costs_ = std::vector<Eigen::VectorXd>( num_dofs_, Eigen::VectorXd::Zero(num_vars_free_) );
+    current_control_costs_ = std::vector<Eigen::VectorXd>(
+                num_dofs_, Eigen::VectorXd::Zero(num_vars_free_) );
+
+    double dt = group_traj.getUseTime() ?
+                group_traj.getDiscretization() : 0.0;
 
     if( multiple_smoothness_ )
     {
@@ -545,17 +554,22 @@ bool LampCostComputation::getControlCosts(const VectorTrajectory& group_traj)
 
         std::vector< std::vector<Eigen::VectorXd> > control_costs;
 
-        static_cast<CovariantTrajectoryPolicy*>(policy_)->getAllCosts( parameters, control_costs, group_traj.getDiscretization() );
+        static_cast<CovariantTrajectoryPolicy*>(policy_)->getAllCosts(
+                    parameters, control_costs, dt );
 
 //        cout << "control_costs.size() " << control_costs.size() << endl;
-//        cout << "current_control_costs_.size() " << current_control_costs_.size() << endl;
+//        cout << "current_control_costs_.size() "
+//        << current_control_costs_.size() << endl;
 //        cout << "num joint : " << num_dofs_ << endl;
 
         for (int c=0; c<4; ++c)
             for (int d=0; d<num_dofs_; ++d) {
-//                cout << "control_costs[c].size() : " << control_costs[c].size() << endl;
-//                cout << "current_control_costs_[d] : " << current_control_costs_[d].size() << endl;
-                current_control_costs_[d] += ( control_cost_weights_[c] * control_costs[c][d] );
+//                cout << "control_costs[c].size() : "
+//                << control_costs[c].size() << endl;
+//                cout << "current_control_costs_[d] : "
+//                << current_control_costs_[d].size() << endl;
+                current_control_costs_[d] +=
+                        ( control_cost_weights_[c] * control_costs[c][d] );
             }
 
         // cout << "weight vector : " << control_cost_weights_.transpose() << endl;
@@ -563,7 +577,8 @@ bool LampCostComputation::getControlCosts(const VectorTrajectory& group_traj)
         // cout << "GET CONTROL COST" << endl;
 
         for (int c=4; c<8; ++c) {
-            general_cost_potential_.segment( free_vars_start_, num_vars_free_) += ( control_cost_weights_[c] * control_costs[c][0] );
+            general_cost_potential_.segment( free_vars_start_, num_vars_free_)
+                    += ( control_cost_weights_[c] * control_costs[c][0] );
         }
 
 
@@ -577,12 +592,16 @@ bool LampCostComputation::getControlCosts(const VectorTrajectory& group_traj)
 //        cout << "parameter size : " << parameters[0].size() << endl;
 //        cout << "noise size : " << num_vars_free_ << endl;
 
+        std::vector<Eigen::VectorXd>
+                noise = std::vector<Eigen::VectorXd>(
+                    num_dofs_, Eigen::VectorXd::Zero(num_vars_free_) );
+
         policy_->computeControlCosts(control_costs_,
                                      parameters,
-                                     std::vector<Eigen::VectorXd>( num_dofs_, Eigen::VectorXd::Zero(num_vars_free_) ),
+                                     noise,
                                      control_cost_weight_ ,
                                      current_control_costs_,
-                                     group_traj.getUseTime() ? group_traj.getDiscretization() : 0.0 );
+                                     dt );
 
         total_smoothness_cost_ += 0.;
         for (int d=0; d<num_dofs_; ++d)
@@ -590,7 +609,8 @@ bool LampCostComputation::getControlCosts(const VectorTrajectory& group_traj)
 
 //        for (int d=0; d<num_dofs_; ++d)
 //        {
-//            general_cost_potential_.segment( free_vars_start_, num_vars_free_) += ( current_control_costs_[d] );
+//            general_cost_potential_.segment(
+//        free_vars_start_, num_vars_free_) += ( current_control_costs_[d] );
 
 //            for (int i=0; i<current_control_costs_[d].size(); ++i) {
 //                current_control_costs_[d][i] = 0.0;
@@ -636,12 +656,22 @@ double LampCostComputation::getCollisionSpaceCost( const Configuration& q )
     // Calculate the 3d position of every collision point
     for (int j=0; j<num_collision_points_; j++)
     {
-        // OLD (free_vars_start_ is the first point, does not matter when called from outside)
-        colliding |= getCollisionPointObstacleCost( free_vars_start_, j, collision_point_potential_( free_vars_start_, j ), collision_point_pos_eigen_[free_vars_start_][j] );
-        state_collision_cost += collision_point_potential_( free_vars_start_, j ); // * collision_point_vel_mag_( free_vars_start_, j );
+        // OLD (free_vars_start_ is the first point, does not matter
+        // when called from outside)
+        colliding |= getCollisionPointObstacleCost(
+                    free_vars_start_, j,
+                    collision_point_potential_( free_vars_start_, j ),
+                    collision_point_pos_eigen_[free_vars_start_][j] );
+
+        state_collision_cost +=
+                collision_point_potential_( free_vars_start_, j );
+        // * collision_point_vel_mag_( free_vars_start_, j );
 
         if(!quiet)
-            cout << "collision_point_potential_( " << free_vars_start_ << " , " <<  j << " ) : " << collision_point_potential_( free_vars_start_, j ) << endl;
+            cout << "collision_point_potential_( " << free_vars_start_ << " , "
+                 <<  j << " ) : "
+                 << collision_point_potential_( free_vars_start_, j )
+                 << endl;
     }
 
     if( colliding && !quiet ){

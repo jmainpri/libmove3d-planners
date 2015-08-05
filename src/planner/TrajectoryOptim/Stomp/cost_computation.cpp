@@ -605,12 +605,22 @@ double costComputation::getCollisionSpaceCost( const Configuration& q )
     // Calculate the 3d position of every collision point
     for (int j=0; j<num_collision_points_; j++)
     {
-        // OLD (free_vars_start_ is the first point, does not matter when called from outside)
-        colliding |= getCollisionPointObstacleCost( free_vars_start_, j, collision_point_potential_( free_vars_start_, j ), collision_point_pos_eigen_[free_vars_start_][j] );
-        state_collision_cost += collision_point_potential_( free_vars_start_, j ); // * collision_point_vel_mag_( free_vars_start_, j );
+        // OLD (free_vars_start_ is the first point, does not matter
+        // when called from outside)
+        colliding |= getCollisionPointObstacleCost(
+                    free_vars_start_, j,
+                    collision_point_potential_( free_vars_start_, j ),
+                    collision_point_pos_eigen_[free_vars_start_][j] );
+
+        state_collision_cost += collision_point_potential_(
+                    free_vars_start_, j );
+        // * collision_point_vel_mag_( free_vars_start_, j );
 
         if(!quiet)
-            cout << "collision_point_potential_( " << free_vars_start_ << " , " <<  j << " ) : " << collision_point_potential_( free_vars_start_, j ) << endl;
+            cout << "collision_point_potential_( "
+                 << free_vars_start_ << " , " <<  j << " ) : "
+                 << collision_point_potential_( free_vars_start_, j )
+                 << endl;
     }
 
     if( colliding && !quiet ){

@@ -143,15 +143,21 @@ struct VectorTrajectory
     int getFullTrajectoryIndex(int i) const { return i; }
 
 
-    Eigen::VectorXd     trajectory_;                   /**< [num_dimensions] num_parameters */
-    Eigen::VectorXd     dof_costs_;                    /**< [num_dimensions] num_parameters */
-    Eigen::VectorXd     state_costs_;                  /**< num_time_steps */
+    /**< [num_dimensions] num_parameters */
+    Eigen::VectorXd     trajectory_;
 
-    int                 num_vars_free_;                /**< nb_vars_ */
-    int                 num_dofs_;                     /**< nb_joints_ */
-    bool                out_of_bounds_;                /**< Wether the rollout is violating dof limits */
-    double              discretization_;               /**< time discretization */
-    double              duration_;                     /**< duration */
+    /**< [num_dimensions] num_parameters */
+    Eigen::VectorXd     dof_costs_;
+
+    /**< num_time_steps */
+    Eigen::VectorXd     state_costs_;
+    int                 num_vars_free_;       /**< nb_vars_ */
+    int                 num_dofs_;            /**< nb_joints_ */
+
+    /**< Wether the rollout is violating dof limits */
+    bool                out_of_bounds_;
+    double              discretization_;      /**< time discretization */
+    double              duration_;            /**< duration */
     bool                use_time_ ;
     double              total_cost_;
     double              total_smoothness_cost_;
@@ -168,13 +174,16 @@ public:
     //! Initializes the different data structures
     //! Initializes a coviarant trajectory policy
     //! Computes the control cost vector for the multivariate gaussian sampler
-    void initialize( const std::vector<double>& derivative_costs, int nb_points );
+    void initialize( const std::vector<double>& derivative_costs,
+                     int nb_points );
 
     //! Samples a noisy trajectory
     Eigen::VectorXd sample( double std_dev=1.0 );
 
     //! Return sampled trajectories
-    std::vector<VectorTrajectory> sampleTrajectories( int nb_trajectories, const Move3D::VectorTrajectory& current_trajectory );
+    std::vector<VectorTrajectory> sampleTrajectories(
+            int nb_trajectories,
+            const Move3D::VectorTrajectory& current_trajectory );
 
     //! PLanning group
     Move3D::ChompPlanningGroup* planning_group_;
@@ -189,18 +198,26 @@ public:
 private:
 
     Eigen::MatrixXd getOneDofBlockOfPrecisionMatrix(int dof);
-    Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic> getConfigurationBlockOfPrecisionMatrix(int var);
+
+    Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic>
+    getConfigurationBlockOfPrecisionMatrix(int var);
+
     void setOneDofBlockOfPrecisionMatrix( int dof, Eigen::MatrixXd matrix );
     void setTimeStepPrecisionMatrix( int time_step, Eigen::MatrixXd matrix );
     bool addHessianToPrecisionMatrix( const Move3D::VectorTrajectory& traj );
 
-    std::vector<Eigen::MatrixXd> control_costs_;             /**< [num_dimensions] num_parameters x num_parameters */
-    std::vector<Eigen::MatrixXd> inv_control_costs_;         /**< [num_dimensions] num_parameters x num_parameters */
+    /**< [num_dimensions] num_parameters x num_parameters */
+    std::vector<Eigen::MatrixXd> control_costs_;
+
+    /**< [num_dimensions] num_parameters x num_parameters */
+    std::vector<Eigen::MatrixXd> inv_control_costs_;
 
     //! Allocate a multivariate gaussian sampler
     //! the sampler produces one dimenssional noisy trajectories
     bool preAllocateMultivariateGaussianSampler();
-    std::vector<MultivariateGaussian> noise_generators_;     /**< objects that generate noise for each dimension */
+
+    /**< objects that generate noise for each dimension */
+    std::vector<MultivariateGaussian> noise_generators_;
     Eigen::VectorXd tmp_noise_;
 
     int num_vars_free_;
