@@ -62,9 +62,9 @@ HumanPredictionSimulator* global_humanPredictionSimulator = NULL;
 
 void HRICS_initOccupancyPredictionFramework( std::string robot_name, std::string human_name )
 {
-    cout << "---------------------------------------------------------------" << endl;
+    cout << "---------------------------------------------------------" << endl;
     cout << " HRICS_initOccupancyPredictionFramework " << endl;
-    cout << "---------------------------------------------------------------" << endl;
+    cout << "---------------------------------------------------------" << endl;
 
     std::vector<double> size = global_Project->getActiveScene()->getBounds();
 
@@ -76,8 +76,13 @@ void HRICS_initOccupancyPredictionFramework( std::string robot_name, std::string
 //    size[4] = -2;
 //    size[5] = 2;
 
-    Robot* robot = global_Project->getActiveScene()->getRobotByName( robot_name ); // PR2_ROBOT ... ABBIE
-    Robot* human = global_Project->getActiveScene()->getRobotByName( human_name ); // HERAKLES_HUMAN1 ... HERAKLES_HUMAN
+    Scene* sce = global_Project->getActiveScene();
+
+    // PR2_ROBOT ... ABBIE
+    Robot* robot = sce->getRobotByName( robot_name );
+
+    // HERAKLES_HUMAN1 ... HERAKLES_HUMAN
+    Robot* human = sce->getRobotByName( human_name );
 
     if( robot == NULL || human == NULL )
     {
@@ -91,8 +96,18 @@ void HRICS_initOccupancyPredictionFramework( std::string robot_name, std::string
         global_motionRecorders.push_back( recorder );
 
     std::string foldername;
-//    std::string home = std::string( getenv("HOME_MOVE3D" ) ) + std::string( "/../../workspace/gesture-recognition/bkp_recorded_motion/bkp_good_8_classes/" );
-    std::string home = std::string( getenv("HOME" ) ) + std::string( "/catkin_ws_hrics/src/NRI-Human-Robot-Collaboration-dataset/wpi_gesture_recognition/first_motions/good_8_classes/" );
+
+//    std::string home = std::string( getenv("HOME_MOVE3D" ) ) +
+//    std::string( "/../../workspace/gesture-recognition/bkp_recorded_motion/\
+//    bkp_good_8_classes/" );
+
+//    std::string home = std::string( getenv("ROS_CATKIN_WS" ) ) +
+//            std::string( "/src/NRI-Human-Robot-Collaboration-dataset/\
+//wpi_gesture_recognition/first_motions/good_8_classes/" );
+
+
+    std::string home = std::string( getenv("HOME_MOVE3D" ) ) +
+            std::string( "/../assets/Gesture/wpi_gesture_recognition/first_motions/good_8_classes/" );
 
     foldername = home + std::string("regressed/");
     if( recorder->loadRegressedFromCSV( foldername ) )
