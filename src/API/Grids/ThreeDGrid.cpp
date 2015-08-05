@@ -589,17 +589,17 @@ void ThreeDGrid::createAllCells()
 ThreeDCell* ThreeDGrid::getCell(unsigned int x, unsigned int y, unsigned int z) const
 {
 //#ifdef THREED_GRID_DEBUG
-    if(x<0 || x >= _nbCellsX)
+    if( x<0 || x >= _nbCellsX )
     {
         //cout << "ThreeDGrid Error : out of bounds"<< endl;
         return NULL;
     }
-    if(y<0 || y >= _nbCellsY)
+    if( y<0 || y >= _nbCellsY )
     {
         //cout << "ThreeDGrid Error : out of bounds"<< endl;
         return NULL;
     }
-    if(z<0 || z >= _nbCellsZ)
+    if( z<0 || z >= _nbCellsZ )
     {
         //cout << "ThreeDGrid Error : out of bounds"<< endl;
         return NULL;
@@ -628,24 +628,30 @@ const bool DebugCell = false;
 ThreeDCell* ThreeDGrid::getCell(const Vector3d& point) const
 {
 //#ifdef THREED_GRID_DEBUG
-    if( (point[0]<_originCorner[0]) || (point[0]>(_originCorner[0]+_nbCellsX*_cellSize[0]) ))
+    if( (point[0]<_originCorner[0]) ||
+            (point[0]>(_originCorner[0]+_nbCellsX*_cellSize[0]) ))
     {
         if (DebugCell)
-            cout << "Error point not in grid in " << __PRETTY_FUNCTION__ << endl;
+            cout << "Error point not in grid in "
+                 << __PRETTY_FUNCTION__ << endl;
         return 0x00;
     }
 
-    if( (point[1]<_originCorner[1]) || (point[1]>(_originCorner[1]+_nbCellsY*_cellSize[1]) ))
+    if( (point[1]<_originCorner[1]) ||
+            (point[1]>(_originCorner[1]+_nbCellsY*_cellSize[1]) ))
     {
         if (DebugCell)
-            cout << "Error point not in grid in " << __PRETTY_FUNCTION__ << endl;
+            cout << "Error point not in grid in "
+                 << __PRETTY_FUNCTION__ << endl;
         return 0x00;
     }
 
-    if( (point[2]<_originCorner[2]) || (point[2]>(_originCorner[2]+_nbCellsZ*_cellSize[2]) ))
+    if( (point[2]<_originCorner[2]) ||
+            (point[2]>(_originCorner[2]+_nbCellsZ*_cellSize[2]) ))
     {
         if (DebugCell)
-            cout << "Error point not in grid in " << __PRETTY_FUNCTION__ << endl;
+            cout << "Error point not in grid in "
+                 << __PRETTY_FUNCTION__ << endl;
         return 0x00;
     }
 //#endif
@@ -654,9 +660,12 @@ ThreeDCell* ThreeDGrid::getCell(const Vector3d& point) const
 //                   floor((point[1]-_originCorner[1])/_cellSize[1]),
 //                   floor((point[2]-_originCorner[2])/_cellSize[2]));
 
-    return static_cast<ThreeDCell*>(_cells[ floor((point[0]-_originCorner[0])/_cellSize[0]) +
-                                            floor((point[1]-_originCorner[1])/_cellSize[1])*_nbCellsX +
-                                            floor((point[2]-_originCorner[2])/_cellSize[2])*_nbCellsX*_nbCellsY]);
+    int index =
+            floor((point[0]-_originCorner[0])/_cellSize[0]) +
+            floor((point[1]-_originCorner[1])/_cellSize[1])*_nbCellsX +
+            floor((point[2]-_originCorner[2])/_cellSize[2])*_nbCellsX*_nbCellsY;
+
+    return static_cast<ThreeDCell*>(_cells[ index ]);
 }
 
 /*!
@@ -678,12 +687,12 @@ ThreeDCell* ThreeDGrid::getCell(double* pos) const
 Vector3i ThreeDGrid::getCellCoord(ThreeDCell* ptrCell) const
 {
     Vector3i coord;
-    //
+
     int index = ptrCell->getIndex();
 
-    //    coord[0] = (i/1) % 3 - 1 ; // x
-    //    coord[1] = (i/3) % 3 - 1 ; // y
-    //    coord[2] = (i/9) % 3 - 1 ; // z
+    // coord[0] = (i/1) % 3 - 1 ; // x
+    // coord[1] = (i/3) % 3 - 1 ; // y
+    // coord[2] = (i/9) % 3 - 1 ; // z
 
     int sizeXY = _nbCellsX * _nbCellsY;
     coord[2] = floor(index / sizeXY);

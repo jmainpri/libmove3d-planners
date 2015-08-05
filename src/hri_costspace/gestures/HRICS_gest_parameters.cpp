@@ -70,6 +70,9 @@ void initGestureParameters()
     myBoolMap.insert( std::make_pair( GestParam::with_multiple_stomps,             new boolContainer(false)));
     myBoolMap.insert( std::make_pair( GestParam::parallelize_stomp,                new boolContainer(false)));
     myBoolMap.insert( std::make_pair( GestParam::print_debug,                      new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( GestParam::play_next,                        new boolContainer(false)));
+    myBoolMap.insert( std::make_pair( GestParam::play_repeat,                      new boolContainer(false)));
+
     // Int
     // ------------------------------------------------------------------
     myIntMap.insert(std::make_pair( GestParam::human_traj_id,                      new intContainer(-1)));

@@ -67,6 +67,8 @@ public:
     bool getParametersAll(std::vector<Eigen::VectorXd>& parameters);
     void setFileNameBase(const std::string& file_name_base);
     void setPrintDebug(bool print_debug) { print_debug_ = print_debug; }
+    // Fill the trajectory with start and goal
+    bool fillBufferStartAndGoal();
 
     // Functions inherited from Policy:
 
@@ -116,6 +118,16 @@ public:
     bool getControlCosts(std::vector<Eigen::MatrixXd>& control_costs);
 
     /**
+    * Gets the positive semi-definite matrix of the quadratic control cost
+    * The weight of this control cost is provided by the task
+    * is equal to the inverse of the control cost matrices in the general case
+    *
+    * @param control_cost_matrix (output) Array of square, positive semi-definite matrix: num_params x num_params
+    * @return true on success, false on failure
+    */
+   bool getCovariances(std::vector<Eigen::MatrixXd>& covariances);
+
+    /**
      * Update the policy parameters based on the updates per timestep
      * @param updates (input) parameter updates per time-step, num_time_steps x num_parameters
      * @return true on success, false on failure
@@ -149,13 +161,20 @@ public:
      * @param control_costs (output) [num_dimensions] num_time_steps: Control costs over time
      * @return
      */
-    bool computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices, const std::vector<std::vector<Eigen::VectorXd> >& parameters,
-                                     const double weight, std::vector<Eigen::VectorXd>& control_costs);
+    bool computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices,
+                             const std::vector<std::vector<Eigen::VectorXd> >& parameters,
+                             const double weight,
+                             std::vector<Eigen::VectorXd>& control_costs);
 
-    bool computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices, const std::vector<Eigen::VectorXd>& parameters,
-                             const std::vector<Eigen::VectorXd>& noise, const double weight, std::vector<Eigen::VectorXd>& control_costs);
+    bool computeControlCosts(const std::vector<Eigen::MatrixXd>& control_cost_matrices,
+                             const std::vector<Eigen::VectorXd>& parameters,
+                             const std::vector<Eigen::VectorXd>& noise,
+                             const double weight,
+                             std::vector<Eigen::VectorXd>& control_costs,
+                             double dt, bool save_to_file=false);
 
     // Functions inherited from LibraryItem:
+
 
     std::string getInfoString();
     std::string getClassName();
@@ -165,17 +184,36 @@ public:
     bool writeToDisc(const std::string abs_file_name);
     std::string getFileName(const int trial_id);
 
+    //! Save all costs profiles
+    void saveProfiles( const std::vector<Eigen::VectorXd>& parameters, std::string filename, double dt=0.0 );
+
+    //! Return all costs
+    Eigen::VectorXd getAllCosts( const std::vector<Eigen::VectorXd>& parameters, std::vector< std::vector<Eigen::VectorXd> >& control_costs, double dt=0.0 );
+
+    //! set buffer with previous trajectory
+    void setBuffer( const std::vector<Eigen::VectorXd>& buffer ) { buffer_ = buffer; use_buffer_ = true; }
+    void clearBuffer() { use_buffer_ = false; }
+
+    void setGroupTrajectoryToMove3DTraj( Move3D::Trajectory& traj,  const std::vector<Eigen::VectorXd>& parameters, double dt=0.0 );
+
+
     double movement_dt_;
+
+    int num_vars_free_;
+    int num_vars_all_;
 
 private:
 //    ros::NodeHandle node_handle_;
+
+    enum cost_type { vel=0, acc=1, jerk=2, dist=3, mix=4 } type_;
+    bool is_dist_;
 
     std::string file_name_base_;
     bool print_debug_;
 
     int num_time_steps_;
-    int num_vars_free_;
-    int num_vars_all_;
+    int free_offset_;
+
     int free_vars_start_index_;
     int free_vars_end_index_;
     int num_dimensions_;
@@ -187,6 +225,7 @@ private:
     std::vector<Eigen::MatrixXd> basis_functions_;
     std::vector<Eigen::MatrixXd> control_costs_;
     std::vector<Eigen::MatrixXd> inv_control_costs_;
+    std::vector<Eigen::MatrixXd> covariances_;
     std::vector<Eigen::MatrixXd> control_costs_all_;
 
     std::vector<Eigen::VectorXd> linear_control_costs_;
@@ -196,6 +235,11 @@ private:
     std::vector<Eigen::MatrixXd> differentiation_matrices_;
 
     const Move3D::ChompPlanningGroup* planning_group_;
+
+    Eigen::VectorXd start_;
+    Eigen::VectorXd goal_;
+    bool use_buffer_;
+    std::vector<Eigen::VectorXd> buffer_;
 
     void createDifferentiationMatrices();
     bool readParameters();
@@ -260,6 +304,12 @@ inline bool CovariantTrajectoryPolicy::getBasisFunctions(std::vector<Eigen::Matr
 inline bool CovariantTrajectoryPolicy::getControlCosts(std::vector<Eigen::MatrixXd>& control_costs)
 {
     control_costs = control_costs_;
+    return true;
+}
+
+inline bool CovariantTrajectoryPolicy::getCovariances(std::vector<Eigen::MatrixXd>& covariances)
+{
+    covariances = covariances_;
     return true;
 }
 

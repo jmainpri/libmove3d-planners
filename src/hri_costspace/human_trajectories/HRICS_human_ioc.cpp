@@ -26,7 +26,7 @@
  *                                               Jim Mainprice Tue 27 May 2014 
  */
 #include "HRICS_human_ioc.hpp"
-#include "HRICS_human_cost_space.hpp"
+#include "HRICS_human_simulator.hpp"
 #include "HRICS_play_motion.hpp"
 #include "HRICS_parameters.hpp"
 
@@ -39,14 +39,15 @@ using namespace HRICS;
 using std::cout;
 using std::endl;
 
-static std::string move3d_demo_folder("/home/jmainpri/Dropbox/move3d/assets/IOC/TRAJECTORIES/");
-static std::string move3d_traj_folder("/home/jmainpri/Dropbox/move3d/move3d-launch/matlab/stomp_trajs_home/per_feature_square/");
+static std::string move3d_root = std::string( getenv("HOME_MOVE3D" ) ) + std::string( "/../" );
+static std::string move3d_demo_folder( move3d_root + "assets/IOC/TRAJECTORIES/");
+static std::string move3d_traj_folder( move3d_root + "move3d-launch/matlab/stomp_trajs_home/per_feature_square/");
 static std::string move3d_tmp_data_folder("matlab/move3d_tmp_data_home/");
 
 
 void HRICS_run_human_ioc_from_recorded_motion()
 {
-    std::string foldername = "/home/jmainpri/workspace/move3d/libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
+    std::string foldername = move3d_root + "libmove3d/statFiles/collaboration/recorded_motion_01_09_13";
 
     Scene* sce = global_Project->getActiveScene();
     Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );
@@ -60,8 +61,8 @@ void HRICS_run_human_ioc_from_recorded_motion()
     global_motionRecorders.push_back( new HRICS::RecordMotion( human1 ) );
     global_motionRecorders.push_back( new HRICS::RecordMotion( human2 ) );
 
-    global_motionRecorders[0]->loadCSVFolder( foldername + "/human0" );
-    global_motionRecorders[1]->loadCSVFolder( foldername + "/human1" );
+    global_motionRecorders[0]->loadCSVFolder( foldername + "/human0", false, +0.5 );
+    global_motionRecorders[1]->loadCSVFolder( foldername + "/human1", false, -0.5 );
 
     HRICS::PlayMotion player( global_motionRecorders );
 //    for(int i=0;i<int(global_motionRecorders[0]->getStoredMotions().size());i++)
@@ -77,7 +78,7 @@ void HRICS_run_human_ioc_from_recorded_motion()
     MultiplePlanners planners(human2);
 
     // feature_matrix_name_ = "matlab/features.txt";
-    Move3D::StackedFeatures* feature_fct = new HRICS::HumanTrajCostSpace( human2, human1 );
+    Move3D::StackedFeatures* feature_fct = new HRICS::HumanTrajFeatures( human2, human1 );
 
     std::vector<int> active_joints;
 
@@ -91,9 +92,9 @@ void HRICS_run_human_ioc_from_recorded_motion()
 
 void HRICS_run_human_ioc_evaluation()
 {
-    Scene* sce = global_Project->getActiveScene();
-    Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );
-    Robot* human2 = sce->getRobotByName( "HERAKLES_HUMAN2" );
+    Move3D::Scene* sce = global_Project->getActiveScene();
+    Move3D::Robot* human1 = sce->getRobotByName( "HERAKLES_HUMAN1" );
+    Move3D::Robot* human2 = sce->getRobotByName( "HERAKLES_HUMAN2" );
     if( human1 == NULL || human2 == NULL )
     {
         cout << "No humans HERAKLES in the the scene" << endl;
@@ -107,9 +108,9 @@ void HRICS_run_human_ioc_evaluation()
     MultiplePlanners planners(human2);
 
     // feature_matrix_name_ = "matlab/features.txt";
-    Move3D::StackedFeatures* feature_fct = new HRICS::HumanTrajCostSpace( human2, human1 );
+    Move3D::StackedFeatures* feature_fct = new HRICS::HumanTrajFeatures( human2, human1 );
 
-     std::vector<int> active_joints;
+    std::vector<int> active_joints;
 
     HumanIoc ioc( human2, human1, nb_demos, nb_samples, nb_way_points,
                   planners, feature_fct, active_joints,
@@ -133,7 +134,7 @@ HumanIoc::HumanIoc( Robot* active, Robot* passive, int nb_demos, int nb_samples,
 //    nb_weights_ = original_vect_.size();
 
     // Sets the joint limits
-//    HumanTrajSimulator sim( global_ht_cost_space );
+//    HumanTrajSimulator sim( global_human_traj_features );
 //    sim.init();
 //    sim.getActiveJoints();
 
@@ -197,54 +198,3 @@ Move3D::Trajectory HumanIoc::getTrajectoryFromMotion( const motion_t& m ) const
 
     return t;
 }
-
-/**
-void HumanIoc::runSampling()
-{
-    // Comment it to generate less demos
-    nb_demos_ = 10;
-
-    ChompPlanningGroup* plangroup = new ChompPlanningGroup( robot_, active_joints_ );
-    std::vector<int> active_dofs = plangroup->getActiveDofs();
-
-    // Create IOC sampling object
-    HRICS::Ioc ioc( nb_way_points_, plangroup );
-
-//    demos_[0].getBegin()->equal( *demos_[0].getEnd(), true );
-
-    // Get features of demos
-    std::vector<FeatureVect> phi_demo( nb_demos_ );
-    for(int i=0;i<nb_demos_;i++)
-    {
-        demos_[i].cutTrajInSmallLP( nb_way_points_-1 );
-        FeatureVect phi = feature_fct_->getFeatureCount( demos_[i] );
-        cout << "Feature Demo : " << endl << phi.transpose() << endl;
-        ioc.addDemonstration( demos_[i].getEigenMatrix( active_dofs ) );
-        cout << "demo : " << endl <<  demos_[i].getEigenMatrix( active_dofs ) << endl;
-        phi_demo[i] = phi;
-    }
-
-    return;
-
-    // Get features of samples
-    ioc.generateSamples( nb_samples_ );
-    std::vector< std::vector<Move3D::Trajectory> > samples = ioc.getSamples();
-    std::vector< std::vector<FeatureVect> > phi_k( samples.size() );
-    for( int d=0;d<int(samples.size());d++)
-    {
-        for( int i=0;i<int(samples[d].size());i++)
-        {
-            phi_k[d].push_back( feature_fct_->getFeatureCount( samples[d][i] ) );
-            cout << "Feature(" << d << "," <<  i << ") : " << phi_k[d].back().transpose() << endl;
-        }
-    }
-
-//    saveToMatrix( phi_demo, phi_k );
-
-//    for( int i=0;i<1;i++)
-//    {
-//        Eigen::VectorXd w = ioc.solve( phi_demo, phi_k );
-//        cout << "w : " << w.transpose() << endl;
-//    }
-}
-*/

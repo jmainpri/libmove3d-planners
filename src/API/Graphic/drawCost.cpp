@@ -1,10 +1,29 @@
 /*
- *  g3d_draw_cost.cpp
- *  BioMove3D
+ * Copyright (c) 2010-2014 LAAS/CNRS, WPI
+ * All rights reserved.
  *
- *  Created by Jim Mainprice on 30/04/10.
- *  Copyright 2010 LAAS/CNRS. All rights reserved.
+ * Redistribution  and  use  in  source  and binary  forms,  with  or  without
+ * modification, are permitted provided that the following conditions are met:
  *
+ *   1. Redistributions of  source  code must retain the  above copyright
+ *      notice and this list of conditions.
+ *   2. Redistributions in binary form must reproduce the above copyright
+ *      notice and  this list of  conditions in the  documentation and/or
+ *      other materials provided with the distribution.
+ *
+ * THE SOFTWARE  IS PROVIDED "AS IS"  AND THE AUTHOR  DISCLAIMS ALL WARRANTIES
+ * WITH  REGARD   TO  THIS  SOFTWARE  INCLUDING  ALL   IMPLIED  WARRANTIES  OF
+ * MERCHANTABILITY AND  FITNESS.  IN NO EVENT  SHALL THE AUTHOR  BE LIABLE FOR
+ * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
+ * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
+ * Move3d: A generic platform for path planning. In in 4th Int. Symp.
+ * on Assembly and Task Planning.
+ *
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 
 #ifdef HRI_COSTSPACE
@@ -23,6 +42,7 @@
 #include "planner/TrajectoryOptim/Stomp/stompOptimizer.hpp"
 #include "planner/TrajectoryOptim/Stomp/run_parallel_stomp.hpp"
 
+#include "API/ConfigSpace/configuration.hpp"
 #include "API/Graphic/drawModule.hpp"
 #include "API/project.hpp"
 #include "API/Grids/gridsAPI.hpp"
@@ -44,7 +64,6 @@
 #include <Eigen/Geometry> 
 
 #include <iostream>
-#include <tr1/memory>
 
 using namespace std;
 using namespace Move3D;
@@ -130,6 +149,55 @@ void g3d_draw_eigen_box(	const Eigen::Vector3d& v1, const Eigen::Vector3d& v2, c
     glPopAttrib();
 }
 //#endif
+
+std::vector<Move3D::confPtr_t> global_configToDraw;
+
+void g3d_draw_configurations()
+{
+    G3D_Window *win = g3d_get_cur_win();
+    p3d_numcoll = false;
+    for( int i=0; i<int(global_configToDraw.size()); i++)
+    {
+        Move3D::Robot* robot = global_configToDraw[i]->getRobot();
+        robot->setAndUpdate( *global_configToDraw[i] );
+        win->vs.transparency_mode = G3D_TRANSPARENT_AND_OPAQUE;
+        g3d_draw_robot( robot->getP3dRobotStruct()->num, win, 0 );
+        win->vs.transparency_mode = G3D_TRANSPARENT_AND_OPAQUE;
+    }
+}
+
+std::vector< std::pair<Eigen::Vector3d, Eigen::MatrixXd> > global_linesToDraw;
+
+void g3d_draw_3d_lines()
+{
+    double color[4];
+    color[0] = 1.0;
+    color[1] = 0.8;
+    color[2] = 0.2;
+    color[3] = 1.0;
+
+    const double size = 0.005; // 0.005
+
+    for( int l=0; l<int(global_linesToDraw.size()); l++)
+        for( int i=0; i<int(global_linesToDraw[l].second.cols()-1); i++)
+        {
+            color[0] = global_linesToDraw[l].first[0];
+            color[1] = global_linesToDraw[l].first[1];
+            color[2] = global_linesToDraw[l].first[2];
+
+            g3d_set_color( Any, color );
+
+            g3d_draw_solid_sphere( global_linesToDraw[l].second(0, i+0), global_linesToDraw[l].second(1, i+0), global_linesToDraw[l].second(2, i+0), size, 10 );
+
+            g3d_drawOneLine( global_linesToDraw[l].second(0, i+0), global_linesToDraw[l].second(1, i+0), global_linesToDraw[l].second(2, i+0),
+                             global_linesToDraw[l].second(0, i+1), global_linesToDraw[l].second(1, i+1), global_linesToDraw[l].second(2, i+1), Any, color);
+
+            if( i == int(global_linesToDraw[l].second.cols()-2))
+            {
+                g3d_draw_solid_sphere( global_linesToDraw[l].second(0, i+1), global_linesToDraw[l].second(1, i+1), global_linesToDraw[l].second(2, i+1), size, 10);
+            }
+        }
+}
 
 void g3d_draw_multistomp_lines()
 {
@@ -682,7 +750,7 @@ void g3d_draw_hrics(int opengl_context)
     {
         double depth = 1.0;
 
-        shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
+        confPtr_t q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
         int indexFirstDof = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint("Pelvis")->getIndexOfFirstDof();
 
         double xMin = (*q_hum)[indexFirstDof + 0] + PlanEnv->getDouble(PlanParam::env_randomXMinLimit);
@@ -773,8 +841,8 @@ void g3d_draw_hrics(int opengl_context)
         //    drawGauge(2, current_cost.second[1]);
         //    drawGauge(3, current_cost.second[2]);
 
-        //            shared_ptr<Configuration> q_rob = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot()->getCurrentPos();
-        //            shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
+        //            confPtr_t q_rob = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getRobot()->getCurrentPos();
+        //            confPtr_t q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
 
         //    glLineWidth(3.);
         //    g3d_drawOneLine((*q_hum)[indexFirstDof + 0],   (*q_hum)[indexFirstDof + 1],    current_WSPoint[2],
@@ -787,7 +855,7 @@ void g3d_draw_hrics(int opengl_context)
     OTPListSize = OTPList.size();
     if (OTPListSize > 0)
     {
-        shared_ptr<Configuration> q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
+        confPtr_t q_hum = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getCurrentPos();
         int indexFirstDof = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman()->getJoint("Pelvis")->getIndexOfFirstDof();
         for (unsigned int i=0; i < OTPList.size(); i ++)
         {
@@ -868,7 +936,7 @@ void g3d_draw_hrics(int opengl_context)
     //        G3D_Window *win;
     //        win = g3d_get_cur_win();
     //        Robot* rob = global_Project->getActiveScene()->getActiveRobot();
-    //        shared_ptr<Configuration> q_cur = rob->getCurrentPos();
+    //        confPtr_t q_cur = rob->getCurrentPos();
     //
     ////        p3d_set_and_update_robot_conf(rob->getP3dRobotStruct()->ROBOT_POS);
     //        /* collision checking */
@@ -888,16 +956,24 @@ void g3d_draw_hrics(int opengl_context)
 //#endif
 
 
-void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
+void computeConfigCostOnTraj (p3d_rob* rob, configPt q )
 {
+    if( rob == NULL){
+        return;
+    }
+
+    Robot* robot( global_Project->getActiveScene()->getRobotByName(rob->name) );
+
     if(ENV.getBool(Env::isCostSpace))
     {
-        p3d_rob* costRobot = rob;
+#ifdef HRI_COSTSPACE
+
         configPt cost_q = q;
 
-#ifdef HRI_COSTSPACE
         if ( ENV.getBool(Env::enableHri) )
         {
+            p3d_rob* costRobot = rob;
+
             std::string robotName(costRobot->name);
 
             if( robotName.find( global_ActiveRobotName ) == std::string::npos ) // Does not contain Robot
@@ -905,14 +981,15 @@ void computeConfigCostOnTraj(p3d_rob* rob,configPt q)
                 costRobot = p3d_get_robot_by_name_containing( global_ActiveRobotName.c_str() );
                 cost_q = p3d_get_robot_config(costRobot);
             }
+
+            robot = global_Project->getActiveScene()->getRobotByName(costRobot->name);
         }
 #endif
 
-        Robot* r_Cost( global_Project->getActiveScene()->getRobotByName(costRobot->name) );
-        Configuration	q_Cost(r_Cost,cost_q);
+//        Configuration q( robot, cost_q );
+//        std::cout << "Cost for " << robot->getName() << " = " << global_costSpace->cost(q) << std::endl;
 
-        std::cout << "Cost for " << r_Cost->getName() << " = " << global_costSpace->cost(q_Cost) << std::endl;
-        //        std::cout << "Cost for " << r_Cost->getName() << " = " << HRICS_getPredictionOccupancyCost(q_Cost) << endl;
+        // std::cout << "Cost for " << r_Cost->getName() << " = " << HRICS_getPredictionOccupancyCost(q_Cost) << endl;
     }
 
     if( global_collisionSpace )
@@ -945,7 +1022,7 @@ void drawSlice(int opengl_context)
 {
     Robot* rob = global_Project->getActiveScene()->getRobotByNameContaining("PR2");
     Robot* human = dynamic_cast<HRICS::Workspace*>(HRICS_MotionPL)->getHuman();
-    shared_ptr<Configuration> q_cur(human->getCurrentPos());
+    confPtr_t q_cur(human->getCurrentPos());
     //    getConfListSize() {return m_configList.size();}
     //            configPt getRobotConfigAt
 
@@ -961,7 +1038,7 @@ void drawSlice(int opengl_context)
 
     for(int i = 0; i < dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getConfListSize(); i++)
     {
-        //        shared_ptr<Configuration> q( new Configuration(rob,dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getRobotConfigAt(i) ));
+        //        confPtr_t q( new Configuration(rob,dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getRobotConfigAt(i) ));
         //        rob->setAndUpdate(*q);
         dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->setRobotsToConf(i,PlanEnv->getBool(PlanParam::env_isStanding));
         global_Project->getActiveScene()->setActiveRobot("PR2_ROBOT");
@@ -969,7 +1046,7 @@ void drawSlice(int opengl_context)
         //q->print();
         g3d_draw_robot(rob->getP3dRobotStruct()->num, win , opengl_context);
 
-        //        shared_ptr<Configuration> q( new Configuration(human,dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getRobotConfigAt(i) ));
+        //        confPtr_t q( new Configuration(human,dynamic_cast<HRICS::OTPMotionPl*>(HRICS_MotionPLConfig)->getRobotConfigAt(i) ));
         //        human->setAndUpdate(*q);
         //        global_Project->getActiveScene()->setActiveRobot("ACHILE_HUMAN1");
         //        //cout << "g3d_draw_robot" << endl;

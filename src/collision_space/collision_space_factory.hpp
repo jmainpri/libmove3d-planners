@@ -52,6 +52,7 @@ enum ScenarioType {
 }
 
 bool traj_optim_init_collision_spaces( traj_optim::ScenarioType sce, Move3D::Robot* rob );
+void traj_optim_reset_collision_space();
 void traj_optim_add_human_to_collision_space(bool add);
 
 const Move3D::CollisionSpace* traj_optim_get_collision_space();

@@ -51,7 +51,7 @@ public:
     stompContext( int id, Move3D::Robot* robot, const Move3D::CollisionSpace* coll_space, const std::vector<int>& planner_joints, const std::vector<Move3D::CollisionPoint>& collision_points );
     ~stompContext();
 
-    bool initRun( Move3D::Trajectory& T );
+    bool initRun( Move3D::Trajectory& T, double duration );
     void run();
 
     void setParallelRobots( const std::vector<Move3D::Robot*>& robots );
@@ -94,7 +94,7 @@ public:
     ~stompRun();
 
     void setPool( const std::vector<Move3D::Robot*>& robots );
-    bool run( int id, Move3D::Trajectory &T );
+    bool run( int id, Move3D::Trajectory &T, double duration );
 
     void start();
     void isRunning();

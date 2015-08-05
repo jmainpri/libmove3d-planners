@@ -33,25 +33,60 @@
 
 #include "API/Device/robot.hpp"
 
+//! Save vector of string to file
+void save_strings_to_file( std::vector<std::string> strings, std::string filename );
+
+//! Load string from file
+std::vector<std::string> load_strings_from_file( std::string filename );
+
 //! Save Eigen matrix to file (can be loaded with matlab)
-void move3d_save_matrix_to_file( const Eigen::MatrixXd& mat, std::string filename );
+void move3d_save_matrix_to_file( const Eigen::MatrixXd& mat,
+                                 std::string filename );
+
+void move3d_save_matrix_to_csv_file( const Eigen::MatrixXd& mat,
+                                     std::string filename );
+
+//! Save scenario to file
+std::vector<Move3D::confPtr_t> move3d_load_context_from_csv_file(
+        std::string filename );
+
+void move3d_save_context_to_csv_file( const std::vector<Move3D::confPtr_t>& context,
+                                      std::string filename );
 
 //! Returns the files in the folder with argumen extension
-std::vector<std::string>  move3d_get_files_in_folder( std::string foldername, std::string extention, int nb_max_files=-1 );
+std::vector<std::string>  move3d_get_files_in_folder( std::string foldername,
+                                                      std::string extention,
+                                                      int nb_max_files=-1 );
+
+//! Retunrs the folders in the folder given as argument
+std::vector<std::string> move3d_get_folders_in_folder( std::string foldername );
+
+//! Load matrix from file
+Eigen::MatrixXd move3d_load_matrix_from_csv_file( std::string filename );
 
 //! Get a random interger
 double move3d_random_integer( int min, int max );
 
 //! Change number basis
-std::vector<int> move3d_change_basis( int number , int basis );
+std::vector<int> move3d_change_basis( int number, int basis );
 
 //! Linear interpolation between two vectors
-Eigen::VectorXd move3d_lerp( const Eigen::VectorXd& v0, const Eigen::VectorXd& v1, double t );
+Eigen::VectorXd move3d_lerp( const Eigen::VectorXd& v0,
+                             const Eigen::VectorXd& v1,
+                             double t );
+
+//! this function makes sure the curve in param
+//! is continus for compting sum of acceleration
+//! on circular joints
+void move3d_smooth_circular_parameters( Eigen::VectorXd& params );
 
 //! Print the joint mapping of a given robot
 void print_joint_mapping( Move3D::Robot* robot );
 
 //! Print joint achors
 void print_joint_anchors( Move3D::Robot* robot );
+
+//! Matrix pseudo inverse
+Eigen::MatrixXd move3d_pinv( const Eigen::MatrixXd &b, double rcond );
 
 #endif // MISC_FUNCTIONS_HPP

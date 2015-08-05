@@ -8,6 +8,8 @@
 // Copyright: See COPYING file that comes with this distribution
 //
 //
+#include "localpath.hpp"
+
 #include "planner/cost_space.hpp"
 #include "planner/planEnvironment.hpp"
 
@@ -62,7 +64,8 @@ void move3d_set_fct_localpath_stay_within_dist( boost::function<double(LocalPath
 
 LocalPath::LocalPath(confPtr_t B, confPtr_t E) :
     _Robot(B->getRobot()),
-    _Begin(B), _End(E),
+    _Begin(B),
+    _End(E),
     _LocalPath(NULL),
     _Valid(false),
     _Evaluated(false),
@@ -87,7 +90,7 @@ LocalPath::LocalPath(LocalPath& path, double& p , bool lastValidConfig) :
     _Robot(path.getRobot()),
     _Begin(path._Begin),
     _LocalPath(NULL),
-  _phiEvaluated(false)
+    _phiEvaluated(false)
 {
     // For extend (Construct a smaller local path)
     // This function is used in Base Expansion
@@ -159,7 +162,7 @@ LocalPath::LocalPath( Robot* R, p3d_localpath* lpPtr ) :
     _Cost(0.0),
     _ResolEvaluated(false),
     _Resolution(0.0),
-  _phiEvaluated(false)
+    _phiEvaluated(false)
 {
 
     _LocalPath = Move3DLocalPathCopyFromStruct( *this, lpPtr, _Begin, _End );
@@ -223,12 +226,13 @@ bool LocalPath::classicTest()
 
     if (!_lastValidEvaluated)
     {
-        if (_lastValidConfig == NULL)
+        if (_lastValidConfig.get() == NULL)
         {
             _lastValidConfig = _Robot->getNewConfig();
         }
 
         _Valid = Move3DLocalPathClassicTest( *this, _lastValidConfig, _NbColTest, _lastValidParam );
+        // cout << "_NbColTest : " << _NbColTest << endl;
         _Evaluated = true;
         _lastValidEvaluated = true;
     }
@@ -237,9 +241,29 @@ bool LocalPath::classicTest()
 
 bool LocalPath::isValid()
 {
-    if (!_Evaluated)
+    if( !_Evaluated )
     {
-        if ( _End->isInCollision() || _Begin->isInCollision() || _End->isOutOfBounds() || _Begin->isOutOfBounds() )
+        // Classic changes the configurations
+        // So they might be changed from the call from
+        // another local path
+        confPtr_t q_init = _Begin->copy();
+        confPtr_t q_end = _End->copy();
+        q_init->adaptCircularJointsLimits();
+        q_end->adaptCircularJointsLimits();
+
+        if ( q_init->isOutOfBounds() || q_end->isOutOfBounds() )
+        {
+            _Valid = false;
+
+            cout << "Start or goal out of bounds" << endl;
+
+            cout << "begin : " << endl;
+            _Begin->isOutOfBounds( true );
+            cout << "end : " << endl;
+            _End->isOutOfBounds( true );
+
+        }
+        else if ( _End->isInCollision() || _Begin->isInCollision() )
         {
             _Valid = false;
         }
@@ -251,7 +275,7 @@ bool LocalPath::isValid()
             }
         }
         _NbColTest++;
-        //    cout << "_NbColTest : " << _NbColTest << endl;
+        // cout << "_NbColTest : " << _NbColTest << endl;
         _Evaluated = true;
     }
     return _Valid;
@@ -368,7 +392,7 @@ vector< pair<double,double> > LocalPath::getCostProfile()
     const double DeltaStep = getResolution();
     const unsigned int nStep = floor( ( getParamMax() / DeltaStep) + 0.5);
 
-    cout <<  "nStep : " << nStep <<  endl;
+    // cout <<  "nStep : " << nStep <<  endl;
 
     for (unsigned int i = 0; i < nStep; i++)
     {
@@ -438,6 +462,7 @@ double LocalPath::cost()
         _Cost = global_costSpace->cost( *this, _NbCostTest );
         _costEvaluated = true;
         // cout << "local path cost : " << _Cost << endl;
+        // cout << "local path nb. cost tests : " << _NbCostTest << endl;
     }
 //    else {
 //        cout << "already eval" << endl;

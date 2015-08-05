@@ -1,23 +1,44 @@
 /*
- *  drawModule.cpp
- *  OOMove3D
+ * Copyright (c) 2010-2014 LAAS/CNRS, WPI
+ * All rights reserved.
  *
- *  Created by Jim Mainprice on 18/10/10.
- *  Copyright 2010 LAAS/CNRS. All rights reserved.
+ * Redistribution  and  use  in  source  and binary  forms,  with  or  without
+ * modification, are permitted provided that the following conditions are met:
  *
+ *   1. Redistributions of  source  code must retain the  above copyright
+ *      notice and this list of conditions.
+ *   2. Redistributions in binary form must reproduce the above copyright
+ *      notice and  this list of  conditions in the  documentation and/or
+ *      other materials provided with the distribution.
+ *
+ * THE SOFTWARE  IS PROVIDED "AS IS"  AND THE AUTHOR  DISCLAIMS ALL WARRANTIES
+ * WITH  REGARD   TO  THIS  SOFTWARE  INCLUDING  ALL   IMPLIED  WARRANTIES  OF
+ * MERCHANTABILITY AND  FITNESS.  IN NO EVENT  SHALL THE AUTHOR  BE LIABLE FOR
+ * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
+ * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
+ * Move3d: A generic platform for path planning. In in 4th Int. Symp.
+ * on Assembly and Task Planning.
+ *
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 
 #include "drawModule.hpp"
 #include "drawCost.hpp"
 
-#include "P3d-pkg.h"
-#include "Graphic-pkg.h"
-#include "Planner-pkg.h"
-
-#include "../p3d/env.hpp"
 #include "API/Roadmap/graph.hpp"
 #include "API/Roadmap/graphConverter.hpp"
 #include "API/Trajectory/trajectory.hpp"
+
+#include "planEnvironment.hpp"
+
+#include <libmove3d/p3d/env.hpp>
+#include <libmove3d/include/P3d-pkg.h>
+#include <libmove3d/include/Graphic-pkg.h>
+#include <libmove3d/include/Planner-pkg.h>
 
 #ifdef HRI_PLANNER
 #include <libmove3d/hri/hri.h>
@@ -138,12 +159,15 @@ void DrawFunctions::deleteDrawFunction( std::string name )
 //! call to all functions in draw
 void DrawFunctions::draw()
 {
-    // cout << __PRETTY_FUNCTION__ << endl;
-    std::set< string >::iterator it;
-    for ( it=active_functions_.begin() ; it != active_functions_.end(); it++ )
+    if( PlanEnv->getBool(PlanParam::drawModule) )
     {
-        // cout << "DRAW_FUNCTION : " << *it << ", " << functions_[*it] << endl;
-        functions_[*it]();
+        // cout << __PRETTY_FUNCTION__ << endl;
+        std::set< string >::iterator it;
+        for ( it=active_functions_.begin() ; it != active_functions_.end(); it++ )
+        {
+            // cout << "DRAW_FUNCTION : " << *it << ", " << functions_[*it] << endl;
+            functions_[*it]();
+        }
     }
 }
 
@@ -204,6 +228,9 @@ void g3d_draw_cost_features()
     // Draws the custom draw functions
     if( global_DrawModule != NULL )
         global_DrawModule->draw();
+
+    // Draws a set of configurations
+    g3d_draw_configurations();
 
 #ifdef HRI_COSTSPACE
     g3d_draw_costspace();

@@ -85,6 +85,11 @@ public:
     Eigen::Vector3d	getVectorPos() const;
 
     /**
+     * Get the Vector abs_pos of the Joint
+     */
+    Eigen::VectorXd	getXYZPose() const;
+
+    /**
      * Random shoot the joint
      */
     void shoot(Configuration& q,bool sample_passive=false);
@@ -133,6 +138,11 @@ public:
      * Get Dof Pos in Configuration
      */
     unsigned int getIndexOfFirstDof() const;
+
+    /**
+     * Get Dof Pos in Configuration
+     */
+    std::vector<unsigned int> getDofIndices() const;
 
     /**
    * Get the id in the joint structure of the robot

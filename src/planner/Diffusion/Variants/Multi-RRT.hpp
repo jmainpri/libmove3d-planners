@@ -30,7 +30,7 @@ public:
     /**
      * Adds a Seed to the algorithm
      */
-    bool addSeed(MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q);
+    bool addSeed(confPtr_t q);
 
     /**
    * Get random compco for expansion

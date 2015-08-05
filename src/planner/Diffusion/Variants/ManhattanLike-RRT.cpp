@@ -189,7 +189,7 @@ int ManhattanLikeRRT::passiveExpandProcess(Node* expansionNode,
             // Create a copy of the expansion configuration.
             // This configuration will become the new target configuration,
             // after its passive dofs have been changed.
-            shared_ptr<Configuration> newRandConf = expansionNode->getConfiguration()->copy();
+            confPtr_t newRandConf = expansionNode->getConfiguration()->copy();
 
             for (int i = 0;
                  i < ENV.getInt(Env::MaxPassiveExpand) && !expansionSucceeded;
@@ -222,7 +222,7 @@ int ManhattanLikeRRT::expandOneStep(Node* fromComp,Node* toComp)
 {
     Node* directionNode(NULL);
     Node* expansionNode(NULL);
-    shared_ptr<Configuration> directionConfig;
+    confPtr_t directionConfig;
 
     // get direction
     directionConfig = _expan->getExpansionDirection(fromComp,toComp,

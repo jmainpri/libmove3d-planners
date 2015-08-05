@@ -41,7 +41,7 @@
 #include <Eigen/Core>
 //#include <chomp_motion_planner/chomp_trajectory.h>
 #include "API/Trajectory/trajectory.hpp"
-#include "chompTrajectory.hpp"
+//#include "chompTrajectory.hpp"
 
 #include <vector>
 
@@ -54,7 +54,7 @@ namespace Move3D
   class ChompCost
   {
   public:
-    ChompCost(const ChompTrajectory& T, 
+    ChompCost( int num_vars_all,
               int joint_number, 
               const std::vector<double>& derivative_costs, 
               double ridge_factor=0.0);

@@ -37,21 +37,16 @@
 
 #include "API/Device/joint.hpp"
 #include "API/ConfigSpace/configuration.hpp"
-
+#include "API/Trajectory/trajectory.hpp"
 
 #ifndef _DEVICE_H
 struct rob;
 //struct jnt;
 #endif
 
-//#ifndef _TRAJ_H
-//struct traj;
-//#endif
-
 namespace Move3D {
 
 class Scene;
-class Trajectory;
 
 /**
  * @ingroup CPP_API
@@ -141,6 +136,21 @@ public:
      * Gets the current trajectory
      */
     void removeCurrentTraj();
+
+    /**
+     * Gets the current API Trajectory
+     */
+    const Move3D::Trajectory& getCurrentMove3DTraj();
+
+    /**
+     * Gets the current trajectory
+     */
+    void setCurrentMove3DTraj(const Move3D::Trajectory& traj);
+
+    /**
+     * Gets the current trajectory
+     */
+    void removeCurrentMove3DTraj();
 
     /**
      * Get the number of dofs
@@ -261,6 +271,12 @@ public:
     bool isInCollisionWithOthersAndEnv();
 
     /**
+     * Returns true if the robot is
+     * in colision with robots
+     */
+    bool isInCollisionWithOthers( std::vector<Move3D::Robot*>& others );
+
+    /**
       * Robot to environment distance
       */
     double distanceToEnviroment();
@@ -292,6 +308,11 @@ public:
     confPtr_t getNewConfig();
 
     /**
+      * Get stored vector config
+      */
+    std::vector<confPtr_t> getStoredConfigs();
+
+    /**
      * Returns an array of dof ids
      */
     std::vector<int> getActiveJointsIds();
@@ -310,6 +331,16 @@ public:
      * Get Number of active DoFs
      */
     Joint* getIthActiveDoFJoint(unsigned int ithActiveDoF , unsigned int& ithDofOnJoint  );
+
+    /**
+     * Get all dof ids
+     */
+    std::vector<int> getAllDofIds() const;
+
+    /**
+     * Get Jacobian
+     */
+    Eigen::MatrixXd getJacobian(const std::vector<Joint*>& active_joints, Joint* eef, bool with_rotations, bool with_height = false) const;
 
 
 #ifdef LIGHT_PLANNER
@@ -372,17 +403,16 @@ public:
 #endif
 
 private:
-    void* robot_kin_struct_; /*!< une structure de p3d_rob contenant les données sur le Robot*/
-    std::string name_; /*!< le nom du Robot*/
-    Move3D::Scene* active_scene_;
-    bool copy_; /*!< Is true if the p3d_jnt copies and not only points to the structure */
-    bool contains_libmove3d_struct_;
-    unsigned int nb_dofs_;
-
-    std::vector<Joint*> joints_;
-
-    Eigen::Vector3d object_box_center_;
-    Eigen::Vector3d object_box_dimentions_;
+    void*                   robot_kin_struct_; /*!< une structure de p3d_rob contenant les données sur le Robot*/
+    std::string             name_; /*!< le nom du Robot*/
+    Move3D::Scene*          active_scene_;
+    bool                    copy_; /*!< Is true if the p3d_jnt copies and not only points to the structure */
+    bool                    contains_libmove3d_struct_;
+    unsigned int            nb_dofs_;
+    std::vector<Joint*>     joints_;
+    Eigen::Vector3d         object_box_center_;
+    Eigen::Vector3d         object_box_dimentions_;
+    Move3D::Trajectory      current_trajectory_;
 };
 
 extern Robot* API_activeRobot;
@@ -398,6 +428,7 @@ void move3d_set_fct_robot_set_and_update_multi_sol( boost::function<bool( Move3D
 void move3d_set_fct_robot_without_constraints( boost::function<void( Move3D::Robot*, const Move3D::Configuration& q )> fct );
 void move3d_set_fct_robot_is_in_collision( boost::function<bool( Move3D::Robot* )> fct );
 void move3d_set_fct_robot_is_in_collision_with_others_and_env( boost::function<bool( Move3D::Robot* )> fct );
+void move3d_set_fct_robot_is_in_collision_with_others( boost::function<bool( Move3D::Robot*, std::vector<Move3D::Robot*>& )> fct );
 void move3d_set_fct_robot_distance_to_env( boost::function<double( Move3D::Robot* )> fct ) ;
 void move3d_set_fct_robot_distance_to_robot( boost::function<double( Move3D::Robot*, Move3D::Robot* )> fct );
 void move3d_set_fct_robot_get_init_pos( boost::function<Move3D::confPtr_t( Move3D::Robot* )> fct );

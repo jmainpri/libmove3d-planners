@@ -39,11 +39,13 @@
 
 #include "planner/planEnvironment.hpp"
 
+#include "API/Graphic/drawModule.hpp"
 #include "API/Grids/gridsAPI.hpp"
 #include "API/project.hpp"
 
 #include <libmove3d/p3d/env.hpp>
 
+#include <boost/bind.hpp>
 #include <sys/time.h>
 
 //#include <PolyVoxCore/SurfaceMesh.h>
@@ -172,11 +174,17 @@ m_id_class_to_draw(0)
     
     if( m_human->getUseLibmove3dStruct() )
     {
-        m_sampler = new BodySurfaceSampler( 0.02 );
+        m_sampler = new BodySurfaceSampler( 0.02, 0.05 );
         m_sampler->sampleRobotBodiesSurface( m_human );
     }
 
     m_T_draw = Eigen::Transform3d::Identity();
+
+//    if( global_DrawModule )
+//    {
+//        global_DrawModule->addDrawFunction( "WorkspaceOccupancyGrid", boost::bind( &WorkspaceOccupancyGrid::draw, this) );
+//        global_DrawModule->enableDrawFunction( "WorkspaceOccupancyGrid" );
+//    }
 }
 
 WorkspaceOccupancyGrid::~WorkspaceOccupancyGrid()
@@ -317,12 +325,12 @@ bool WorkspaceOccupancyGrid::are_all_cells_blank(int id)
 
 void WorkspaceOccupancyGrid::computeCurrentOccupancy()
 {
-    m_current_occupied_cells.clear();
-
     for(int i=0;i<int(m_current_occupied_cells.size());i++)
     {
         m_current_occupied_cells[i]->m_currently_occupied = false;
     }
+
+    m_current_occupied_cells.clear();
 
     get_cells_occupied_by_human( m_current_occupied_cells, -1, false );
 
@@ -425,14 +433,22 @@ double WorkspaceOccupancyGrid::getOccupancy(const Eigen::Vector3d &point) const
 
 double WorkspaceOccupancyGrid::geCurrentOccupancy(const Eigen::Vector3d &point) const
 {
-    if( m_all_occupied_cells.empty() )
+    if( m_current_occupied_cells.empty() )
     {
-        cout << "occupied cells not loaded" << endl;
-        exit(0);
+//        cout << "occupied cells not loaded" << endl;
+//        exit(0);
         return 0.0;
     }
 
-    return double(static_cast<WorkspaceOccupancyCell*>(getCell( point ))->m_currently_occupied);
+    WorkspaceOccupancyCell* cell = static_cast<WorkspaceOccupancyCell*>(getCell( point ));
+
+    if( cell == NULL ) {
+        //return 0.0;
+        cout << "Null cell" << endl;
+        return 0.0;
+    }
+
+    return double(cell->m_currently_occupied);
 }
 
 double WorkspaceOccupancyGrid::getOccupancyCombination( const Eigen::Vector3d &point ) const
@@ -583,7 +599,7 @@ void WorkspaceOccupancyGrid::simple_draw_combined()
 //    cout << __PRETTY_FUNCTION__ << endl;
 
     if( m_all_occupied_cells.empty() ){
-        cout << "m_all_occupied_cells.empty()" << endl;
+//        cout << "m_all_occupied_cells.empty()" << endl;
         return;
     }
 
@@ -791,23 +807,24 @@ void WorkspaceOccupancyGrid::draw()
     {
 //        cout << "draw current occupancy" << endl;
         computeCurrentOccupancy();
-        return simple_draw_current_occupancy();
+        simple_draw_current_occupancy();
+        return;
     }
 
-    if( !m_motions.empty() )
+    if(GestEnv->getBool(GestParam::draw_single_class))
     {
-        if(GestEnv->getBool(GestParam::draw_single_class))
-        {
-//            cout << "simple_draw_one_class" << endl;
-            return simple_draw_one_class();
-        }
-        else
-        {
-//            cout << "simple_draw_combined" << endl;
-            return simple_draw_combined();
-        }
+        // cout << "simple_draw_one_class" << endl;
+        simple_draw_one_class();
+        return;
     }
     else
+    {
+        // cout << "simple_draw_combined" << endl;
+        simple_draw_combined();
+        return;
+    }
+
+    if( m_motions.empty() )
     {
         cout << "motion empty" << endl;
         return;

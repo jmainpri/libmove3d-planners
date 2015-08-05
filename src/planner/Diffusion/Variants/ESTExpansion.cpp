@@ -121,7 +121,7 @@ Node* ESTExpansion::getExpansionNode(vector<Node*>& nodes)
 confPtr_t ESTExpansion::getExpansionDirection(
         Node* expansionNode, Node* toComp)
 {
-    shared_ptr<Configuration> q;
+    confPtr_t q;
 
     q = m_Graph->getRobot()->shoot(true);
     return q;
@@ -132,7 +132,7 @@ confPtr_t ESTExpansion::getExpansionDirection(
  * EST
  */
 Node* ESTExpansion::expandProcessEST( Node* expansionNode,
-                                      MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
+                                      confPtr_t directionConfig,
                                       int& nbCreatedNodes)
 {
     confPtr_t fromConfig = expansionNode->getConfiguration();

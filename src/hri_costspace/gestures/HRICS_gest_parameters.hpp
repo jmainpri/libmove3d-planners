@@ -45,7 +45,9 @@ namespace GestParam
             draw_recorded_motion,
             with_multiple_stomps,
             parallelize_stomp,
-            print_debug
+            print_debug,
+            play_next,
+            play_repeat
         };
 
         enum intParameter

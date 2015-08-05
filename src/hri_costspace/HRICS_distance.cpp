@@ -19,7 +19,7 @@ using namespace Move3D;
 
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
-/*!
+/*!b
  * Constructor that sets the Human and Robot structures
 
 Distance::Distance()

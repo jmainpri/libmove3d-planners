@@ -58,9 +58,20 @@ namespace HricsParam
             ioc_load_samples_from_file,
             ioc_draw_demonstrations,
             ioc_draw_samples,
+            ioc_draw_one_demo,
             ioc_sample_around_demo,
             ioc_exit_after_run,
-            ioc_use_stomp_spetial_cost
+            ioc_use_stomp_spetial_cost,
+            ioc_use_simulation_demos,
+            ioc_user_set_pelvis_bounds,
+            ioc_use_baseline,
+            ioc_no_replanning,
+            ioc_split_motions,
+            ioc_conservative_baseline,
+            ioc_show_last_simulation,
+            ioc_remove_split,
+            ioc_parallel_job,
+            ioc_show_replanning
         };
 
         enum intParameter
@@ -70,19 +81,24 @@ namespace HricsParam
             ioc_nb_of_way_points,
             ioc_planner_type,
             ioc_spheres_to_draw,
-            ioc_from_file_offset
+            ioc_from_file_offset,
+            ioc_ik,
+            ioc_baseline_type,
+            ioc_dataset
         };
 
         enum doubleParameter
         {
             ioc_spheres_power,
             ioc_sample_std_dev,
+            ioc_sample_std_dev_ik,
             ioc_cost_factor
         };
 
         enum stringParameter
         {
-             titi
+             ioc_traj_split_name,
+             ioc_tmp_traj_folder
         };
 
         enum vectorParameter

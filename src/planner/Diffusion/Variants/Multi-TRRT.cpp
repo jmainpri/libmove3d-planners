@@ -53,7 +53,7 @@ class ConfigurationComparator
 {	
 public:
 
-    bool operator()(shared_ptr<Configuration> first, shared_ptr<Configuration> second)
+    bool operator()(confPtr_t first, confPtr_t second)
     {
         return ( first->cost() < second->cost() );
     }
@@ -365,7 +365,7 @@ void MultiTRRT::extractTrajectory()
 
 unsigned int MultiTRRT::run()
 {
-    shared_ptr<Configuration> tmp = _Robot->getCurrentPos();
+    confPtr_t tmp = _Robot->getCurrentPos();
 
     //	cout << "ENV.getInt(Env::maxNodeCompco) = " << ENV.getInt(Env::maxNodeCompco) << endl;
     if(!preConditions())
@@ -607,7 +607,7 @@ void MultiTransitionExpansion::adjustTemperature(bool accepted, Node* node, doub
     //	}
 }
 
-unsigned MultiTransitionExpansion::expandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode,
+unsigned MultiTransitionExpansion::expandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode,
                                                  Env::expansionMethod method)
 {
     //cout << "Expansion node cost = " <<  expansionNode->cost() << endl;

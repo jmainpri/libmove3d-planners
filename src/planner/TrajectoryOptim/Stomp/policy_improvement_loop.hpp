@@ -62,14 +62,14 @@ public:
 
 //    bool initializeAndRunTaskByName(/*ros::NodeHandle& node_handle,*/ std::string& task_name);
 
-    bool initialize(MOVE3D_BOOST_PTR_NAMESPACE<Task> task, bool singleRollout);
+    bool initialize(MOVE3D_BOOST_PTR_NAMESPACE<Task> task, bool singleRollout, double discretization );
     bool runSingleIteration(int iteration_number);
   
     /**
      * Functions added by jim
      */
     void testSampler();
-    bool generateSingleNoisyTrajectory();
+
     void getRollouts(std::vector<std::vector<Move3D::confPtr_t> >& traj);
   
     // Reset all extra rollouts
@@ -90,9 +90,18 @@ private:
     bool use_cumulative_costs_;
     bool set_parameters_in_policy_;
   
+    bool joint_limits_;
     bool use_annealing_;
     int limits_violations_;
     double K_;
+
+    // Constraints -----------------------
+    bool project_last_config_;
+    double ratio_projected_;
+    Eigen::VectorXd x_task_goal_;
+    Move3D::Joint* eef_;
+    // -----------------------------------
+
   
     MOVE3D_BOOST_PTR_NAMESPACE<Task> task_;
     MOVE3D_BOOST_PTR_NAMESPACE<Policy> policy_;
@@ -105,6 +114,8 @@ private:
     std::vector<Eigen::MatrixXd> parameter_updates_;
     std::vector<Eigen::VectorXd> parameters_;
     Eigen::MatrixXd rollout_costs_;
+    std::vector<std::pair<bool,double> > rollout_total_control_costs_;
+    std::vector<Eigen::MatrixXd> rollout_control_costs_;
     std::vector<double> noise_stddev_;
     std::vector<double> noise_decay_;
 
@@ -128,8 +139,9 @@ private:
 
     bool setParallelRolloutsEnd(int r);
     void parallelRollout(int i, int iteration_number);
-
     void executeRollout(int r, int iteration_number);
+
+    void projectToConstraints( std::vector<Eigen::VectorXd>& parameters );
 
     int policy_iteration_counter_;
     bool readPolicy(const int iteration_number);
@@ -145,6 +157,7 @@ private:
     // Print rollouts
     void printSingleRollout( const std::vector<Eigen::VectorXd>& rollout, int id ) const;
     void printRollouts() const;
+
 };
 
 }

@@ -40,6 +40,9 @@
 #include "../p3d/env.hpp"
 #include "Planner-pkg.h"
 
+using std::cout;
+using std::endl;
+
 namespace stomp_motion_planner
 {
 
@@ -53,31 +56,47 @@ StompParameters::~StompParameters()
 
 double StompParameters::getSmoothnessCostWeight() const
 {
-    return PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight);
+//    cout << "smoothness_factor : " << smoothness_factor_ << endl;
+//    cout << "PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight) : " << PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight) << endl;
+    return smoothness_factor_ * PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight);
 //  return smoothness_cost_weight_;
 }
 
 double StompParameters::getObstacleCostWeight() const
 {
-    return PlanEnv->getDouble(PlanParam::trajOptimObstacWeight);
+
+    return collision_factor_ * PlanEnv->getDouble(PlanParam::trajOptimObstacWeight);
+//  return obstacle_cost_weight_;
+}
+
+double StompParameters::getGeneralCostWeight() const
+{
+    return PlanEnv->getDouble(PlanParam::trajOptimGlobalWeight);
 //  return obstacle_cost_weight_;
 }
   
 void StompParameters::init()
 {
-  max_time_ = 10;
-  max_iterations_ = 10;
+  max_time_         = PlanEnv->getDouble(PlanParam::trajStompTimeLimit);
+  max_iterations_   = PlanEnv->getInt(PlanParam::stompMaxIteration);
   //max_iterations_after_collision_free_ = 100;
   max_iterations_after_collision_free_ = 100;
-  max_best_iterations_=1000;
+  max_best_iterations_= 1000;
+
+  // Scaling features for IOC ...
+  smoothness_factor_ = PlanEnv->getDouble(PlanParam::trajOptimSmoothFactor); //100.0; // for IOC, scale the features between 0.1
+  collision_factor_ = PlanEnv->getDouble(PlanParam::trajOptimObstacFactor);
+
+
+  stop_when_collision_free_ = PlanEnv->getBool(PlanParam::trajOptimStopWhenCollisionFree);
   
   //smoothness_cost_weight_ = 0.1;
 //  smoothness_cost_weight_ = 0.05;
 //  obstacle_cost_weight_ = 1.0;
 
   // Not used anymore
-  smoothness_cost_weight_ = PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight);
-  obstacle_cost_weight_ =   PlanEnv->getDouble(PlanParam::trajOptimObstacWeight);
+//  smoothness_cost_weight_ = PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight);
+//  obstacle_cost_weight_ =   PlanEnv->getDouble(PlanParam::trajOptimObstacWeight);
   
   constraint_cost_weight_ = 0.0;
   torque_cost_weight_ = 0.0;
@@ -86,9 +105,9 @@ void StompParameters::init()
   animate_path_ = false;
   add_randomness_ = true;
   
-  smoothness_cost_velocity_ = 0.0;
-  smoothness_cost_acceleration_ = 1.0;
-  smoothness_cost_jerk_ = 0.0;
+  smoothness_cost_velocity_     = PlanEnv->getDouble(PlanParam::trajStompSmoothVel);
+  smoothness_cost_acceleration_ = PlanEnv->getDouble(PlanParam::trajStompSmoothAcc);
+  smoothness_cost_jerk_         = PlanEnv->getDouble(PlanParam::trajStompSmoothJerk);
   
   use_hamiltonian_monte_carlo_ = true;
   hmc_discretization_ = 0.01;

@@ -64,7 +64,7 @@ public:
     /**
    * \brief Constructs a trajectory for a given robot model, trajectory duration, and discretization
    */
-    ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_);
+    ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_, double duration );
 
     /**
    * \brief Constructs a trajectory for a given robot model, number of trajectory points, and discretization
@@ -77,10 +77,6 @@ public:
    */
     ChompTrajectory(const ChompTrajectory& source_traj, int diff_rule_length);
 
-    //  ChompTrajectory(const ChompRobotModel* robot_model,
-    //                  const ChompRobotModel::ChompPlanningGroup* planning_group,
-    //                  const trajectory_msgs::JointTrajectory& traj);
-
     /**
    * \brief Destructor
    */
@@ -90,12 +86,20 @@ public:
 
     double operator() (int traj_point, int joint) const;
 
+    //! Returns trajectory point
     Eigen::MatrixXd::RowXpr getTrajectoryPoint(int traj_point);
 
+    //! Returns joint trajectory
+    Eigen::MatrixXd::ColXpr getJointTrajectory(int joint);
+    
     //void getTrajectoryPointKDL(int traj_point, KDL::JntArray& kdl_jnt_array) const;
     void getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt_array) const;
 
-    Eigen::MatrixXd::ColXpr getJointTrajectory(int joint);
+    //! gets the parameters in the trajectory
+    bool getParameters(std::vector<Eigen::VectorXd>& parameters) const;
+
+    //! gets the free parameters of the trajectory
+    bool getFreeParameters(std::vector<Eigen::VectorXd>& parameters) const;
 
     //void overwriteTrajectory(const trajectory_msgs::JointTrajectory& traj);
 
@@ -152,7 +156,7 @@ public:
     /**
    * \brief Gets the block of the trajectory which can be optimized
    */
-    Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic>  getFreeTrajectoryBlock();
+    Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic> getFreeTrajectoryBlock();
 
     /**
    * \brief Gets the block of free (optimizable) trajectory for a single joint
@@ -170,12 +174,25 @@ public:
     int getFullTrajectoryIndex(int i) const;
 
     /**
-   * \brief Gets the joint velocities at the given trajectory point
-   */
+     * \brief Gets the joint velocities at the given trajectory point
+     */
     template <typename Derived>
     void getJointVelocities(int traj_point, Eigen::MatrixBase<Derived>& velocities);
 
+    /**
+     * \brief Gets the duration of the trajectory
+     */
     double getDuration() const;
+
+    /**
+     * \brief Returns true if the trajectory is time parametrized
+     */
+    bool getUseTime() const { return uses_time_; }
+
+
+    //! Set to 1 for motion of the end configuration
+    //! Set to 2 for no motion
+    void setFixedId(int id_fixed) { id_fixed_ = id_fixed; }
 
     // Returns the Move3d robot
     //  Robot* getRobot() { return robot_model_; }
@@ -197,6 +214,8 @@ private:
     int start_index_;                                     /**< Start index (inclusive) of trajectory to be optimized (everything before it will not be modified) */
     int end_index_;                                       /**< End index (inclusive) of trajectory to be optimized (everything after it will not be modified) */
     std::vector<int> full_trajectory_index_;              /**< If this is a "group" trajectory, the index from the original traj which each element here was copied */
+    bool uses_time_;                                      /**< True if the trajectory is defined with time */
+    int id_fixed_;                                        // Specifies if the end of the trajectory is fixed
 };
 
 ///////////////////////// inline functions follow //////////////////////
@@ -219,6 +238,28 @@ inline Eigen::MatrixXd::RowXpr ChompTrajectory::getTrajectoryPoint(int traj_poin
 inline Eigen::MatrixXd::ColXpr ChompTrajectory::getJointTrajectory(int joint)
 {
     return trajectory_.col(joint);
+}
+
+inline bool ChompTrajectory::getParameters(std::vector<Eigen::VectorXd>& parameters) const
+{
+    if( int(parameters.size()) != trajectory_.cols() )
+        return false;
+
+    for(int joint=0; joint<trajectory_.cols(); joint++)
+        parameters[joint] = trajectory_.col(joint);
+
+    return true;
+}
+
+inline bool ChompTrajectory::getFreeParameters(std::vector<Eigen::VectorXd>& parameters) const
+{
+    if( int(parameters.size()) != trajectory_.cols() )
+        return false;
+
+    for(int joint=0; joint<trajectory_.cols(); joint++)
+        parameters[joint] = trajectory_.col(joint).segment(start_index_, getNumFreePoints() /*-id_fixed_*/ ); // TODO see why
+
+    return true;
 }
 
 inline int ChompTrajectory::getNumPoints() const
@@ -267,12 +308,12 @@ inline Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic> ChompTrajec
     //  std::cout << "getNumFreePoints() = " << getNumFreePoints() << std::endl;
     //  std::cout << "getNumJoints() = " << getNumJoints()  << std::endl;
 
-    return trajectory_.block(start_index_, 0, getNumFreePoints(), getNumJoints());
+    return trajectory_.block(start_index_+1, 0, getNumFreePoints()-id_fixed_, getNumJoints()); // TODO change everywhere
 }
 
 inline Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic> ChompTrajectory::getFreeJointTrajectoryBlock(int joint)
 {
-    return trajectory_.block(start_index_, joint, getNumFreePoints(), 1);
+    return trajectory_.block(start_index_+1, joint, getNumFreePoints()-id_fixed_, 1);
 }
 
 //inline void ChompTrajectory::getTrajectoryPointKDL(int traj_point, KDL::JntArray& kdl_jnt_array) const

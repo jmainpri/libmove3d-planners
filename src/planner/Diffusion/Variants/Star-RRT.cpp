@@ -144,7 +144,7 @@ void StarExpansion::setInitialCompco( ConnectedComponent* compco )
  * Expand the localpath
  */
 bool StarExpansion::expandToGoal(Node* expansionNode, 
-                                 shared_ptr<Configuration> directionConfig)
+                                 confPtr_t directionConfig)
 {
     return false;
 }
@@ -153,7 +153,7 @@ bool StarExpansion::expandToGoal(Node* expansionNode,
  * Connect expansion method
  */
 int StarExpansion::connectExpandProcess(Node* expansionNode, 
-                                        MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig,
+                                        confPtr_t directionConfig,
                                         Node* directionNode)
 {
     cout << "StarExpansion::connectExpandProcess Not implemented" << endl;
@@ -410,6 +410,7 @@ int StarExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direction
         m_Graph->addNode( node_new );
 
         if ( PlanEnv->getBool(PlanParam::orientedGraph) )
+
             m_Graph->addEdges( node_min, node_new, false, min_path_dist, false, min_path_cost );
         else
             m_Graph->addEdge( node_min, node_new, false, min_path_dist, false, min_path_cost );

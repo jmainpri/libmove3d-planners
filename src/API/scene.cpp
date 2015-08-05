@@ -45,7 +45,7 @@ void move3d_set_fct_get_bounds( boost::function<std::vector<double>( void* )> fc
 
 Move3D::Scene::Scene( void* environnement )
 {
-    m_Scene = Move3DSceneConstructor( environnement, m_Name, m_Robot, global_ActiveRobotName );
+    m_scene = Move3DSceneConstructor( environnement, m_name, m_robot, global_ActiveRobotName );
 
     // Set the robot by name containing ROBOT to active
     Robot* rob = getRobotByNameContaining( global_ActiveRobotName );
@@ -55,9 +55,9 @@ Move3D::Scene::Scene( void* environnement )
         setActiveRobot( rob->getName() );
     }
 
-    for( size_t i=0;i<m_Robot.size(); i++ )
+    for( size_t i=0;i<m_robot.size(); i++ )
     {
-        m_Robot[i]->setActiveScene( this );
+        m_robot[i]->setActiveScene( this );
     }
 
     // Set the active rrt function
@@ -70,24 +70,24 @@ Move3D::Scene::~Scene()
 
 string Scene::getName()
 {
-    return m_Name;
+    return m_name;
 }
 
 void Scene::setActiveRobot( const string &name )
 {
-    Move3DSceneSetActiveRobot( this, m_Scene, name );
+    Move3DSceneSetActiveRobot( this, m_scene, name );
 }
 
 Robot* Scene::getActiveRobot()
 {
-    return Move3DSceneGetActiveRobot( this, m_Scene );
+    return Move3DSceneGetActiveRobot( this, m_scene );
 }
 
 int Scene::getRobotId(const string& str)
 {
-    for( size_t i=0; i<m_Robot.size(); i++ )
+    for( size_t i=0; i<m_robot.size(); i++ )
     {
-        if ( m_Robot[i]->getName() == str )
+        if ( m_robot[i]->getName() == str )
         {
             return i;
         }
@@ -104,9 +104,9 @@ Robot* Scene::getRobotByName(const string &str)
 {
     int id = getRobotId(str);
 
-    if ( id >= 0 && id < int(m_Robot.size()) )
+    if ( id >= 0 && id < int(m_robot.size()) )
     {
-        return m_Robot[id];
+        return m_robot[id];
     }
 
     return NULL;
@@ -117,11 +117,11 @@ Robot* Scene::getRobotByName(const string &str)
  */
 Robot* Scene::getRobotByNameContaining(const string &str)
 {
-    for (unsigned int i=0; i<m_Robot.size(); i++)
+    for (unsigned int i=0; i<m_robot.size(); i++)
     {
-        if ( m_Robot[i]->getName().find( str ) != string::npos )
+        if ( m_robot[i]->getName().find( str ) != string::npos )
         {
-            return m_Robot[i];
+            return m_robot[i];
         }
     }
 
@@ -130,16 +130,16 @@ Robot* Scene::getRobotByNameContaining(const string &str)
 
 void Scene::insertRobot(Robot* R)
 {
-    m_Robot.push_back(R);
+    m_robot.push_back(R);
 }
 
 double Scene::getDMax()
 {
-    return Move3DSceneGetDMax( m_Scene );
+    return Move3DSceneGetDMax( m_scene );
 }
 
 std::vector<double> Scene::getBounds()
 {
-    return Move3DSceneGetBounds( m_Scene );
+    return Move3DSceneGetBounds( m_scene );
 }
 

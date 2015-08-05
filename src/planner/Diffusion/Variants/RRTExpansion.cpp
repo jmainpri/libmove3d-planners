@@ -158,7 +158,7 @@ confPtr_t RRTExpansion::getExpansionDirection( Node* expandComp, Node* goalComp,
     return (q);
 }
 
-Node* RRTExpansion::getExpansionNode(Node* compNode, shared_ptr<Configuration> direction, int distance)
+Node* RRTExpansion::getExpansionNode(Node* compNode, confPtr_t direction, int distance)
 {
     //    cout << "Distance == " << distance << endl;
 
@@ -213,7 +213,7 @@ Node* RRTExpansion::getExpansionNode(Node* compNode, shared_ptr<Configuration> d
         LocalPath path(node->getConfiguration(),direction);
         double pathDelta = path.getParamMax() <= 0. ? 1. : MIN(1., this->step() / path.getParamMax());
 
-        shared_ptr<Configuration> newDirection = path.configAtParam(pathDelta);
+        confPtr_t newDirection = path.configAtParam(pathDelta);
         m_Graph->getRobot()->shootObjectJoint(*newDirection);
 
         int ObjectDof = m_Graph->getRobot()->getObjectDof();
@@ -245,7 +245,7 @@ Node* RRTExpansion::getExpansionNode(Node* compNode, shared_ptr<Configuration> d
 }
 
 bool RRTExpansion::expandToGoal(Node* expansionNode,
-                                MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig)
+                                confPtr_t directionConfig)
 {
     return false;
 }

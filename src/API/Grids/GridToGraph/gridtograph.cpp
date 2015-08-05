@@ -99,7 +99,7 @@ void GridToGraph::putGridInGraph()
 
                 Vector3d center = currentCell->getCenter();
 
-                shared_ptr<Configuration> conf(new Configuration(_Robot));
+                confPtr_t conf(new Configuration(_Robot));
                 conf = _Robot->getCurrentPos();
 
                 conf->getConfigStruct()[6] = center[0];

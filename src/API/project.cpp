@@ -24,13 +24,10 @@ Project* Move3D::global_Project = NULL;
 
 Project::Project(Scene* sc)
 {
-	m_Scenes.push_back( sc );
-	setActiveScene( m_Scenes.back()->getName() );
-	
-	cout << "Create project and environement parameters" << endl;
-	initPlannerParameters();
-    initGestureParameters();
-    initHricsParameters();
+    m_Scenes.push_back( sc );
+    setActiveScene( m_Scenes.back()->getName() );
+
+    cout << "Create project and environement parameters" << endl;
 }
 
 Project::~Project()
@@ -39,24 +36,24 @@ Project::~Project()
 
 Move3D::Scene* Project::getActiveScene()
 {
-	for(unsigned int i = 0; i < m_Scenes.size(); i++)
-	{
-		if( m_Scenes[i]->getName().compare( m_activeScene ) == 0 )
-		{
-			return m_Scenes[i];
-		}
-	}
-	
-	return 0x00;
+    for(unsigned int i = 0; i < m_Scenes.size(); i++)
+    {
+        if( m_Scenes[i]->getName().compare( m_activeScene ) == 0 )
+        {
+            return m_Scenes[i];
+        }
+    }
+
+    return 0x00;
 }
 
 void Project::setActiveScene(string name)
 {	
-	m_activeScene = name;
+    m_activeScene = name;
 }
 
 void Project::insertScene(Scene* E)
 {
-	m_Scenes.push_back(E);
+    m_Scenes.push_back(E);
 }
 

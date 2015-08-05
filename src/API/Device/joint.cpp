@@ -78,6 +78,24 @@ Vector3d Joint::getVectorPos() const
     return Move3DJointGetVectorPos( this );
 }
 
+Eigen::VectorXd	Joint::getXYZPose() const
+{
+    Eigen::VectorXd xyz(6);
+
+    Eigen::Transform3d T = getMatrixPos();
+
+    xyz(0) = T.translation()(0);
+    xyz(1) = T.translation()(1);
+    xyz(2) = T.translation()(2);
+
+    Eigen::Vector3d angles = T.rotation().eulerAngles(0, 1, 2);
+    xyz(3) = angles(0);
+    xyz(4) = angles(1);
+    xyz(5) = angles(2);
+
+    return xyz;
+}
+
 Transform3d Joint::getMatrixPos() const
 {
     return Move3DJointGetMatrixPos( this );
@@ -131,6 +149,17 @@ unsigned int Joint::getNumberOfDof() const
 unsigned int Joint::getIndexOfFirstDof() const
 {
     return Move3DJointGetIndexOfFirstDoF( this );
+}
+
+std::vector<unsigned int> Joint::getDofIndices() const
+{
+    std::vector<unsigned int> indices( getNumberOfDof() );
+    int index_of_first_dof = getIndexOfFirstDof();
+
+    for( size_t i=0;i<indices.size();i++)
+        indices[i] = index_of_first_dof+i;
+
+    return indices;
 }
 
 void Joint::setConfigFromDofValues(Configuration& q)

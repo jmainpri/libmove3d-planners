@@ -80,7 +80,7 @@ double HRICS_getPlanarHumanGridCost(Configuration& q)
 double HRICS_getConfigCost(Configuration& Conf)
 {	
     Robot* rob = Conf.getRobot();
-    shared_ptr<Configuration> q_Saved = rob->getCurrentPos();
+    confPtr_t q_Saved = rob->getCurrentPos();
 
     rob->setAndUpdate(Conf);
 
@@ -197,7 +197,7 @@ double HRICS_getConfigCost(Configuration& Conf)
 
 
     case NatuSpace: // Natural Class ----------------------------------
-        Cost = HRICS_activeNatu->getConfigCost();
+        Cost = HRICS_activeNatu->cost(Conf);
         break;
 
     default:
@@ -359,9 +359,9 @@ void HRICS_init(HRI_AGENTS* agents)
         if( ENV.getBool(Env::HRIAutoLoadGrid) && getenv("HOME_MOVE3D") )
         {
             std::string home(getenv("HOME_MOVE3D"));
-            std::string fileName("/statFiles/Cost3DGrids/Cost3DGrid.grid");
+            std::string fileName("../assets/Cost3DGrids/Cost3DGrid.grid");
 
-            fileName = home + fileName;
+            fileName = home + "/" + fileName;
 
             // Reads the grid from XML and sets it ti the HRICS_MotionPL
             HRICS_loadGrid( fileName );
@@ -385,9 +385,9 @@ void HRICS_init(HRI_AGENTS* agents)
     HRICS_humanCostMaps = new HRICS::HumanCostSpace( workspace->getRobot(), workspace->getHumans(), HRICS_activeNatu, ENV.getDouble(Env::CellSize) );
 
     std::string home(getenv("HOME_MOVE3D"));
-    std::string filename = "/statFiles/Cost3DGrids/human_grids_0.grid";
+    std::string filename = "../assets/Cost3DGrids/human_grids_0.grid";
 
-    HRICS_humanCostMaps->loadAgentGrids( home + filename );
+    HRICS_humanCostMaps->loadAgentGrids( home + "/" + filename );
 
     // ------------------------------------------
     // Set cost type and cost functions

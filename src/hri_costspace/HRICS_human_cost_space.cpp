@@ -412,7 +412,7 @@ void HumanCostSpace::saveAgentGrids()
         std::ostringstream oss; oss << i;
 
         std::string home(getenv("HOME_MOVE3D"));
-        std::string filename = "/statFiles/Cost3DGrids/human_grids_" + oss.str() + ".grid";
+        std::string filename = "../assets/Cost3DGrids/human_grids_" + oss.str() + ".grid";
 
         filename = home + filename;
 
@@ -445,7 +445,7 @@ void HumanCostSpace::loadAgentGrids( const std::string& filename )
 //! The test uses a real time chrono
 void HumanCostSpace::testCostFunction()
 { 
-    shared_ptr<Configuration> q;
+    confPtr_t q;
 
     bool first_loop=true;
     unsigned int iter=0;

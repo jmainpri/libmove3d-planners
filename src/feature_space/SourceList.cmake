@@ -8,4 +8,5 @@ spheres_3d.cpp
 spheres.cpp
 squares.cpp
 clearance.cpp
+smoothness.cpp
 )

@@ -27,20 +27,16 @@
  */
 #include "control_cost.hpp"
 
+#include "utils/misc_functions.hpp"
+#include "chompUtils.hpp"
+
 #include <iostream>
+#include <iomanip>
+
+#include <libmove3d/include/Util-pkg.h>
 
 using std::cout;
 using std::endl;
-
-static const int DIFF_RULE_LENGTH = 7;
-static const int NUM_DIFF_RULES = 3;
-
-// the differentiation rules (centered at the center)
-const double DIFF_RULES[NUM_DIFF_RULES][DIFF_RULE_LENGTH] = {
-    {0, 0, -2/6.0, -3/6.0, 6/6.0, -1/6.0, 0},                   // velocity
-    {0, -1/12.0, 16/12.0, -30/12.0, 16/12.0, -1/12.0, 0},       // acceleration
-    {0, 1/12.0, -17/12.0, 46/12.0, -46/12.0, 17/12.0, -1/12.0}  // jerk
-};
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
@@ -49,24 +45,63 @@ const double DIFF_RULES[NUM_DIFF_RULES][DIFF_RULE_LENGTH] = {
 ControlCost::ControlCost()
 {
     diff_rule_length_ = DIFF_RULE_LENGTH;
-    //type_ = vel;
-    type_ = acc;
+    type_ = vel; // Becareful to match covariant_trajectory_policy
     scaling_ = 100;
+    check_trajectory_consistency_ = true;
+    resetInnerSegmentPadding();
 }
 
-int ControlCost::getDiffRuleLength()
+void ControlCost::setInnerSegmentPadding( int padding )
+{
+    inner_segment_padding_left_ = padding;
+}
+
+void ControlCost::resetInnerSegmentPadding()
+{
+    inner_segment_padding_left_ = std::floor(double(diff_rule_length_)/double(2));
+    inner_segment_padding_right_ = inner_segment_padding_left_ ;
+
+//    inner_segment_padding_left_+= 1;
+//    inner_segment_padding_right_-= 1;
+//    cout << "inner_segment_padding_left_ : " << inner_segment_padding_left_ << endl;
+}
+
+void ControlCost::setType(int type)
+{
+    type_ = cost_type(type);
+}
+
+int ControlCost::getDiffRuleLength() const
 {
     return diff_rule_length_;
 }
 
-double ControlCost::cost( const std::vector<Eigen::VectorXd>& control_costs )
+int ControlCost::getInnerSegmentSize( const Eigen::VectorXd& control ) const
+{
+    // return control.size() - 2*(diff_rule_length_-1);
+    return control.size() - ( 2*diff_rule_length_ +
+                              inner_segment_padding_left_ +
+                              inner_segment_padding_right_);
+}
+
+Eigen::VectorXd ControlCost::getInnerSegment( const Eigen::VectorXd& control ) const
+{
+    // return control.segment( diff_rule_length_-1, control.size() - 2*(diff_rule_length_-1));;
+    int size = getInnerSegmentSize(control);
+    return control.segment( diff_rule_length_ + inner_segment_padding_left_, size );
+}
+
+double ControlCost::cost( const std::vector<Eigen::VectorXd>& control_costs, double dt )
 {
     double cost=0.0;
+    double time_step = dt == 0.0 ? 1.0 : dt;
+
     for ( int d=0; d<int(control_costs.size()); ++d )
     {
-        Eigen::VectorXd cost_vect =  control_costs[d].segment( diff_rule_length_-1, control_costs[d].size() - 2*(diff_rule_length_-1));
-        // cout << "cost_vect : " << cost_vect.transpose() << endl;
-        // cout << "cost_vect.size() : " << cost_vect.size() << endl;
+        Eigen::VectorXd cost_vect = time_step * getInnerSegment( control_costs[d] );
+//        cout.precision(2);
+//        cout << "cost_vect : " << cost_vect.transpose() << endl;
+//        cout << "cost_vect.size() : " << cost_vect.size() << endl;
         cost += cost_vect.sum();
     }
 
@@ -80,7 +115,7 @@ double ControlCost::cost( const Eigen::MatrixXd& traj )
 }
 
 
-std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::MatrixXd& traj )
+std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::MatrixXd& traj, double dt ) const
 {
     // num of collums is the dimension of state space
     // num of rows is the length of the trajectory
@@ -91,15 +126,28 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
         return control_costs;
     }
 
+    double factor = 1.;
+
+    switch( type_ )
+    {
+    case vel:
+        factor = 2.;
+        break;
+    case acc:
+        factor = 3.;
+        break;
+    case jerk:
+        factor = 6.;
+        break;
+    }
+
     // cout << "traj.cols() : " << traj.cols() << endl;
     // cout << "traj.rows() : " << traj.rows() << endl;
     // cout << "traj : " << endl << traj << endl;
 
     const double weight = 1.0;
 
-    int type = type_;
-
-    // this measures the velocity and squares them
+    // this measures the velocity and squares them (for each DoF)
     for ( int d=0; d<traj.rows(); ++d )
     {
         Eigen::VectorXd params_all = traj.row(d);
@@ -107,6 +155,16 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
 
         for (int i=0; i<params_all.size(); i++)
         {
+             // Check for jumps on circular joints (MAY ACTIVATE FOR TRANSLATION JOINTS (diff > 3.14)
+            if( check_trajectory_consistency_ && ( i < params_all.size()-1 ) )
+            {
+                double diff = params_all[i] - params_all[i+1];
+                double error = std::fabs( diff_angle( params_all[i+1] , params_all[i] ) - diff );
+                if( error > 1e-6 ){
+                    cout << "control cost breaks at row "  << d << " and col  " << i << " by " << error << " in " << __PRETTY_FUNCTION__ << endl;
+                }
+            }
+
             // TODO change to velocity
             for (int j=-diff_rule_length_/2; j<=diff_rule_length_/2; j++)
             {
@@ -118,7 +176,13 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
                     continue;
 
                 // 0 should be velocity
-                acc_all[i] += (params_all[index]*DIFF_RULES[type][j+diff_rule_length_/2]);
+                acc_all[i] +=
+                        (params_all[index]*DIFF_RULES2[type_][j+diff_rule_length_/2]);
+            }
+
+            if( dt != 0.0 )
+            {
+                acc_all[i] /= ( factor * std::pow( dt, double(int(type_)+1) ) );
             }
         }
 
@@ -128,23 +192,30 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
 
         control_costs[d] = weight * ( acc_all.cwise()*acc_all );
 
-        // cout << "control_costs[" << d << "] : " << endl << control_costs[d].transpose() << endl;
+//        cout << "control_costs[" << d << "] : " << endl << control_costs[d].transpose() << endl;
     }
 
     return control_costs; // scaling
 }
-void ControlCost::fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj )
+
+void ControlCost::fillTrajectoryWithBuffer( const Eigen::VectorXd& b, Eigen::MatrixXd& traj ) const
 {
-    // we need diff_rule_length-1 extra points on either side
-    // Copy on the left side
-    for (int i=0; i<diff_rule_length_-1; i++)
+    // set the start and end of the trajectory
+    for (int i=0; i<diff_rule_length_-1; ++i)
+    {
+        traj.col(i) = buffer_[i];
+        traj.col(traj.cols()-1-i) = b;
+    }
+}
+
+void ControlCost::fillTrajectory( const Eigen::VectorXd& a, const Eigen::VectorXd& b, Eigen::MatrixXd& traj) const
+{
+    // set the start and end of the trajectory
+    // cout  << "diff_rule_length_ : " << diff_rule_length_ << endl;
+    for (int i=0; i<diff_rule_length_-1; ++i)
     {
         traj.col(i) = a;
-    }
-    // Copy on the right side
-    for (int i=(traj.cols()-diff_rule_length_+1); i<traj.cols(); i++)
-    {
-        traj.col(i) = b;
+        traj.col(traj.cols()-1-i) = b;
     }
 }
 
@@ -216,4 +287,36 @@ Eigen::VectorXd ControlCost::interpolate( const Eigen::VectorXd& a, const Eigen:
         out[i] += u*(b[i]-a[i]);
     }
     return out;
+}
+
+void ControlCost::saveProfiles( const Eigen::MatrixXd& traj,
+                                std::string foldername, double dt ) const
+{
+//    cost_type tmp = type_;
+//    type_ = vel;
+
+//    cout << __PRETTY_FUNCTION__ << endl;
+
+    std::vector<Eigen::VectorXd> control_costs = getSquaredQuantities( traj, dt );
+
+    for (int d=0; d<int(control_costs.size()); ++d)
+    {
+//        Eigen::VectorXd cost_vect = control_costs[d].segment( diff_rule_length_-1, control_costs[d].size() - 2*(diff_rule_length_-1));
+
+        double time_step = dt == 0.0 ? 1.0 : dt;
+        Eigen::VectorXd cost_vect = time_step * getInnerSegment( control_costs[d] );
+
+
+        // Get abs values
+//        cost_vect = time_step * Eigen::ArrayXd( cost_vect ).sqrt();
+
+//        cout << "cost_vect.size() : " << cost_vect.size() << endl;
+
+        std::stringstream ss;
+        ss << "stomp_vel_"  << std::setw(3) << std::setfill( '0' ) << d << ".csv";
+        move3d_save_matrix_to_csv_file( cost_vect.transpose(),
+                                        foldername + "/" + ss.str() );
+    }
+
+//    type_ = tmp;
 }

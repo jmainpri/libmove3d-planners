@@ -47,6 +47,7 @@
 #include "task.hpp"
 
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
+#include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -68,12 +69,15 @@ namespace stomp_motion_planner
     std::vector<Eigen::VectorXd> cumulative_costs_;                 /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> probabilities_;                    /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> nominal_parameters_;                    /**< [num_dimensions] num_time_steps */
+
+    bool use_total_smoothness_cost_;
+    double total_smoothness_cost_; /**< total smoothness cost **/
     
     bool out_of_bounds_; /**< Wether the rollout is violating dof limits */
     
     double getCost();   /**< Gets the rollout cost = state cost + control costs per dimension */
     
-    void printCost();
+    void printCost(double weight=1.0);
     void printProbabilities();
   };
   
@@ -102,6 +106,7 @@ namespace stomp_motion_planner
                     const int num_extra_rollouts, 
                     MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy,
                     MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Task>   task,
+                    double discretization,
                     bool use_cumulative_costs=true);
     
     /**
@@ -128,7 +133,7 @@ namespace stomp_motion_planner
      * Outputs the total cost for each rollout (generated and reused) in rollout_costs_total
      * @param costs
      */
-    bool setRolloutCosts(const Eigen::MatrixXd& costs, const double control_cost_weight, std::vector<double>& rollout_costs_total);
+    bool setRolloutCosts(const Eigen::MatrixXd& costs, const std::vector<Eigen::MatrixXd>& control_costs, const double control_cost_weight, const std::vector<std::pair<bool,double> >& total_smoothness_cost,  std::vector<double>& rollout_costs_total );
     
     /**
      * Performs the PI^2 update and provides parameter updates at every time step
@@ -159,7 +164,14 @@ namespace stomp_motion_planner
      * Reset extra rollouts
      */
     bool resetReusedRollouts();
-    
+
+    /**
+     * set rollouts
+     */
+    bool setRollouts( const std::vector<std::vector<Eigen::VectorXd> >& rollouts );
+
+
+
     std::vector<Eigen::MatrixXd> projection_matrix_;                        /**< [num_dimensions] num_parameters x num_parameters */
     
   private:
@@ -180,13 +192,19 @@ namespace stomp_motion_planner
     
     bool use_multiplication_by_m_;
     bool use_cumulative_costs_;                                             /**< Use cumulative costs or state costs? */
+
     
     MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy_;
     MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Task>   task_;
     
     std::vector<Eigen::MatrixXd> control_costs_;                            /**< [num_dimensions] num_parameters x num_parameters */
     std::vector<Eigen::MatrixXd> inv_control_costs_;                        /**< [num_dimensions] num_parameters x num_parameters */
+//    std::vector<Eigen::MatrixXd> covariances_;
+
+    bool multiple_smoothness_;
+    Eigen::VectorXd control_cost_weights_;
     double control_cost_weight_;
+    double discretization_;
     
     std::vector<Eigen::MatrixXd> basis_functions_;                          /**< [num_dimensions] num_time_steps x num_parameters */
 
@@ -215,14 +233,12 @@ namespace stomp_motion_planner
     
     void resampleUpdates();
     bool computeProjectedNoise();
-    bool computeRolloutControlCosts();
     bool computeRolloutCumulativeCosts();
     bool computeRolloutProbabilities();
     bool computeParameterUpdates();
     
     bool computeNoise(Rollout& rollout);
     bool computeProjectedNoise(Rollout& rollout);
-    bool computeRolloutControlCosts(Rollout& rollout);
     bool copyParametersFromPolicy();
 
     bool covarianceMatrixAdaptaion();
@@ -230,6 +246,8 @@ namespace stomp_motion_planner
     void addStraightLines( std::vector<int> points, Rollout& rollouts);
     bool generateRollouts(const std::vector<double>& noise_variance);
     bool simpleJointLimits( Rollout& traj ) const;
+
+    void addParmametersToDraw(const std::vector<Eigen::VectorXd>& rollout, int color);
   };
   
 }

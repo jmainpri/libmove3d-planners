@@ -97,10 +97,11 @@ bool CostOptimization::oneLoopDeform()
     bool isOptimSuccess(false);
     double TrajCost = this->cost();
 
-    shared_ptr<Configuration> qInitPt = getRobot()->getCurrentPos();
+    confPtr_t qInitPt = getRobot()->getCurrentPos();
 
     //Get 3 configurations at random along the trajectory
-    vector<confPtr_t>  vectConf = get3RandSuccesConfAlongTraj( lPrev, lCurrent, lNext, m_step );
+    vector<confPtr_t>  vectConf = get3RandSuccesConfAlongTraj(
+                lPrev, lCurrent, lNext, m_step );
     confPtr_t qPrevPt = vectConf.at(0);
     confPtr_t qCurrPt = vectConf.at(1);
     confPtr_t qNextPt = vectConf.at(2);
@@ -509,7 +510,7 @@ double CostOptimization::getLastDescendingConfParam(LocalPath& directionPath)
 /*!
  * Bias to one specific configuration
  */
-shared_ptr<Configuration> CostOptimization::cheat()
+confPtr_t CostOptimization::cheat()
 {
     double q[26];
 
@@ -540,7 +541,7 @@ shared_ptr<Configuration> CostOptimization::cheat()
     q[24] = 14.000000;
     q[25] = 0.000000;
 
-    shared_ptr<Configuration> ptrConfig(new Configuration(this->getRobot(),q));
+    confPtr_t ptrConfig(new Configuration(this->getRobot(),q));
     ptrConfig->convertToRadian();
     return ptrConfig;
 }

@@ -16,6 +16,7 @@
 
 Move3D::Trajectory traj_optim_create_sraight_line_traj();
 
+bool traj_optim_resetInit();
 bool traj_optim_initStomp();
 bool traj_optim_runChomp();
 bool traj_optim_runStomp(int runId);
@@ -29,6 +30,8 @@ void traj_optim_set_use_extern_trajectory( bool use );
 void traj_optim_set_extern_trajectory( const Move3D::Trajectory& traj );
 void traj_optim_set_discretization( double discretization );
 void traj_optim_set_discretize( bool discretize );
+void traj_optim_clear_buffer();
+void traj_optim_set_buffer( const std::vector<Eigen::VectorXd>& buffer );
 
 bool traj_optim_initScenario();
 

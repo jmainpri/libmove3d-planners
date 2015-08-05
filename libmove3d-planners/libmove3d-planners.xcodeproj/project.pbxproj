@@ -1,0 +1,201 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXFileReference section */
+		468A3C401A1C1F5900236F40 /* API */ = {isa = PBXFileReference; lastKnownFileType = folder; name = API; path = ../src/API; sourceTree = "<group>"; };
+		468A3C411A1C1F5900236F40 /* collision_space */ = {isa = PBXFileReference; lastKnownFileType = folder; name = collision_space; path = ../src/collision_space; sourceTree = "<group>"; };
+		468A3C421A1C1F5900236F40 /* feature_space */ = {isa = PBXFileReference; lastKnownFileType = folder; name = feature_space; path = ../src/feature_space; sourceTree = "<group>"; };
+		468A3C431A1C1F5900236F40 /* hri_costspace */ = {isa = PBXFileReference; lastKnownFileType = folder; name = hri_costspace; path = ../src/hri_costspace; sourceTree = "<group>"; };
+		468A3C441A1C1F5900236F40 /* planner */ = {isa = PBXFileReference; lastKnownFileType = folder; name = planner; path = ../src/planner; sourceTree = "<group>"; };
+		468A3C451A1C1F5900236F40 /* SourceList.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = SourceList.cmake; path = ../src/SourceList.cmake; sourceTree = "<group>"; };
+		468A3C461A1C1F5900236F40 /* test */ = {isa = PBXFileReference; lastKnownFileType = folder; name = test; path = ../src/test; sourceTree = "<group>"; };
+		468A3C471A1C1F5900236F40 /* utils */ = {isa = PBXFileReference; lastKnownFileType = folder; name = utils; path = ../src/utils; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		468A3C311A1C1F3E00236F40 = {
+			isa = PBXGroup;
+			children = (
+				468A3C401A1C1F5900236F40 /* API */,
+				468A3C411A1C1F5900236F40 /* collision_space */,
+				468A3C421A1C1F5900236F40 /* feature_space */,
+				468A3C431A1C1F5900236F40 /* hri_costspace */,
+				468A3C441A1C1F5900236F40 /* planner */,
+				468A3C451A1C1F5900236F40 /* SourceList.cmake */,
+				468A3C461A1C1F5900236F40 /* test */,
+				468A3C471A1C1F5900236F40 /* utils */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		468A3C361A1C1F3E00236F40 /* libmove3d-planners */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) -j2 install";
+			buildConfigurationList = 468A3C391A1C1F3E00236F40 /* Build configuration list for PBXLegacyTarget "libmove3d-planners" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "/Users/jmainpri/workspace/move3d/libmove3d-planners/build";
+			dependencies = (
+			);
+			name = "libmove3d-planners";
+			passBuildSettingsInEnvironment = 1;
+			productName = "libmove3d-planners";
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXProject section */
+		468A3C321A1C1F3E00236F40 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0610;
+				ORGANIZATIONNAME = "Jim Mainprice";
+				TargetAttributes = {
+					468A3C361A1C1F3E00236F40 = {
+						CreatedOnToolsVersion = 6.1;
+					};
+				};
+			};
+			buildConfigurationList = 468A3C351A1C1F3E00236F40 /* Build configuration list for PBXProject "libmove3d-planners" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 468A3C311A1C1F3E00236F40;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				468A3C361A1C1F3E00236F40 /* libmove3d-planners */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		468A3C371A1C1F3E00236F40 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		468A3C381A1C1F3E00236F40 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		468A3C3A1A1C1F3E00236F40 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUGGING_SYMBOLS = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		468A3C3B1A1C1F3E00236F40 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		468A3C351A1C1F3E00236F40 /* Build configuration list for PBXProject "libmove3d-planners" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				468A3C371A1C1F3E00236F40 /* Debug */,
+				468A3C381A1C1F3E00236F40 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		468A3C391A1C1F3E00236F40 /* Build configuration list for PBXLegacyTarget "libmove3d-planners" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				468A3C3A1A1C1F3E00236F40 /* Debug */,
+				468A3C3B1A1C1F3E00236F40 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 468A3C321A1C1F3E00236F40 /* Project object */;
+}

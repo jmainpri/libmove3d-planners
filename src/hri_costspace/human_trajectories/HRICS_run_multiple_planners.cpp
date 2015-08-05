@@ -145,7 +145,7 @@ bool MultiplePlanners::run()
     switch( planner_type_ )
     {
     case stomp:
-        return runStomp();
+        return runStomp(0.0);
     case astar:
         return runAStar();
     case rrt:
@@ -165,7 +165,7 @@ const std::vector<Move3D::Trajectory>& MultiplePlanners::getAllTrajs()
     }
 }
 
-bool MultiplePlanners::runStomp()
+bool MultiplePlanners::runStomp(double duration)
 {
     if( robot_ == NULL )
     {
@@ -199,7 +199,7 @@ bool MultiplePlanners::runStomp()
        T = init_stomp_;
     }
 
-    pool.run( 0, T );
+    pool.run( 0, T, duration );
 
     all_traj_ = pool.getContext(0)->getStompOptimizer()->getAllTrajs();
     best_traj_.push_back( pool.getBestTrajectory( 0 ) );

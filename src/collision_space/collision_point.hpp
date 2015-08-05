@@ -73,7 +73,7 @@ public:
         return m_parent_joints;
     }
 
-    void getTransformedPosition(std::vector<Eigen::Transform3d>& segment_frames, Eigen::Vector3d& position) const;
+    void getTransformedPosition(std::vector<Eigen::Transform3d, Eigen::aligned_allocator<Eigen::Transform3d> >& segment_frames, Eigen::Vector3d& position) const;
 //    void getTransformedPosition(std::vector<std::vector<double> >& segment_frames, Eigen::Vector3d& position) const;
 
     void getJacobian(std::vector</*Eigen::Map<*/Eigen::Vector3d> /*>*/& joint_pos,
@@ -132,7 +132,7 @@ inline const Eigen::Vector3d& CollisionPoint::getPosition() const
     return m_position;
 }
 
-inline void CollisionPoint::getTransformedPosition(std::vector<Eigen::Transform3d>& segment_frames, 
+inline void CollisionPoint::getTransformedPosition(std::vector<Eigen::Transform3d, Eigen::aligned_allocator<Eigen::Transform3d> >& segment_frames,
                                                    Eigen::Vector3d& position) const
 {
     position = segment_frames[m_segment_number] * m_position;

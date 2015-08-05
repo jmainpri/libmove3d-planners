@@ -12,11 +12,11 @@
 #include <boost/foreach.hpp>
 #include <boost/config.hpp>
 #include <boost/random.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/vector_as_graph.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/strong_components.hpp>
 #include <boost/graph/graph_utility.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/astar_search.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/random.hpp>
@@ -1911,14 +1911,14 @@ void Graph::addCycles(Node* node, double step)
 
     p3d_list_node* savedListDistNodePt = listDistNodePt;
 
-    shared_ptr<LocalPath> LP;
+    MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> LP;
 
     while (listDistNodePt)
     {
         if (!p3d_IsSmallDistInGraph(graph_, node->getNodeStruct(),
                                     listDistNodePt->N, 5, step))
         {
-            LP = shared_ptr<LocalPath> (new LocalPath(node->getConfiguration(),
+            LP = MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> (new LocalPath(node->getConfiguration(),
                                                       this->getNode(listDistNodePt->N)->getConfiguration()));
             if (LP->isValid()
                     /*&& this->getNode(listDistNodePt->N)->getConfiguration()->costTestSucceeded(
@@ -2204,13 +2204,13 @@ public:
 
         Vertex_t v = target(e, g);
 
-        if( API_activeFeatureSpace != NULL )
+        if( global_activeFeatureFunction != NULL )
         {
             confPtr_t q = m_vertices[v]->getConfiguration();
 
             if( !q->areFeaturesEvaluated() )
             {
-                Move3D::FeatureVect phi = API_activeFeatureSpace->getFeatures( *q );
+                Move3D::FeatureVect phi = global_activeFeatureFunction->getFeatures( *q );
                 q->setFeatures( phi );
 
                 if( phi.maxCoeff() > 0.513 )

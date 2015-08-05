@@ -61,7 +61,7 @@ public:
 
 private:
 
-    bool runStomp();
+    bool runStomp(double duration);
     bool runAStar();
     bool runRRT();
 

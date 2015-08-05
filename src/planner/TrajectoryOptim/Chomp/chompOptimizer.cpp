@@ -82,7 +82,7 @@ void ChompOptimizer::initialize()
     group_joint_to_move3d_joint_index_.resize(num_joints_);
     for (int i=0; i<num_joints_; ++i)
     {
-        group_joint_to_move3d_joint_index_[i] = planning_group_->chomp_joints_[i].move3d_joint_index_;
+        group_joint_to_move3d_joint_index_[i] = planning_group_->chomp_dofs_[i].move3d_joint_index_;
     }
 
     num_collision_points_ = planning_group_->collision_points_.size();
@@ -95,7 +95,7 @@ void ChompOptimizer::initialize()
     for (int i=0; i<num_joints_; i++)
     {
         double joint_cost = 1.0;
-        std::string joint_name = planning_group_->chomp_joints_[i].joint_name_;
+        std::string joint_name = planning_group_->chomp_dofs_[i].joint_name_;
         //    nh.param("joint_costs/"+joint_name, joint_cost, 1.0);
         std::vector<double> derivative_costs(3);
         derivative_costs[0] = joint_cost*parameters_->getSmoothnessCostVelocity();
@@ -103,7 +103,7 @@ void ChompOptimizer::initialize()
         derivative_costs[2] = joint_cost*parameters_->getSmoothnessCostJerk();
 
 
-        joint_costs_.push_back(ChompCost(group_trajectory_, i, derivative_costs, parameters_->getRidgeFactor()));
+        joint_costs_.push_back(ChompCost(num_vars_all_, i, derivative_costs, parameters_->getRidgeFactor()));
         double cost_scale = joint_costs_[i].getMaxQuadCostInvValue();
         if (max_cost_scale < cost_scale)
             max_cost_scale = cost_scale;
@@ -146,7 +146,7 @@ void ChompOptimizer::initialize()
 
     for(int i=0; i<num_vars_all_;i++)
     {
-        segment_frames_[i].resize(planning_group_->num_joints_);
+        segment_frames_[i].resize(planning_group_->num_dofs_);
     }
 
     joint_axis_eigen_.resize(num_vars_all_);
@@ -461,8 +461,8 @@ void ChompOptimizer::addIncrementsToTrajectory()
         double max = final_increments_.col(i).maxCoeff();
         double min = final_increments_.col(i).minCoeff();
 
-        double max_scale = planning_group_->chomp_joints_[i].joint_update_limit_ / fabs(max);
-        double min_scale = planning_group_->chomp_joints_[i].joint_update_limit_ / fabs(min);
+        double max_scale = planning_group_->chomp_dofs_[i].joint_update_limit_ / fabs(max);
+        double min_scale = planning_group_->chomp_dofs_[i].joint_update_limit_ / fabs(min);
 
         if (max_scale < scale)
             scale = max_scale;
@@ -538,11 +538,11 @@ void ChompOptimizer::handleJointLimits()
 {
     for (int joint=0; joint<num_joints_; joint++)
     {
-        //    if (!planning_group_->chomp_joints_[joint].has_joint_limits_)
+        //    if (!planning_group_->chomp_dofs_[joint].has_joint_limits_)
         //      continue;
 
-        double joint_max = planning_group_->chomp_joints_[joint].joint_limit_max_;
-        double joint_min = planning_group_->chomp_joints_[joint].joint_limit_min_;
+        double joint_max = planning_group_->chomp_dofs_[joint].joint_limit_max_;
+        double joint_min = planning_group_->chomp_dofs_[joint].joint_limit_min_;
 
         int count = 0;
 
@@ -597,9 +597,9 @@ void ChompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array)
 
     Configuration q = *robot_model_->getCurrentPos();
 
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
-    for(int j=0; j<planning_group_->num_joints_;j++)
+    for(int j=0; j<planning_group_->num_dofs_;j++)
     {
         int dof = joints[j].move3d_dof_index_;
 
@@ -614,7 +614,7 @@ void ChompOptimizer::getFrames(int segment, const Eigen::VectorXd& joint_array)
 
     robot_model_->setAndUpdate( q );
 
-    for(int j=0; j<planning_group_->num_joints_;j++)
+    for(int j=0; j<planning_group_->num_dofs_;j++)
     {
         Eigen::Transform3d t = joints[j].move3d_joint_->getMatrixPos();
 
@@ -889,16 +889,16 @@ void ChompOptimizer::animateEndeffector()
     // for each point in the trajectory
     for (int i=start; i<=end; ++i)
     {
-        const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+        const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
         Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(i).transpose();
 
-        for(int j=0; j<planning_group_->num_joints_;j++)
+        for(int j=0; j<planning_group_->num_dofs_;j++)
         {
             q[joints[j].move3d_dof_index_] = point[j];
         }
 
-        T.push_back( MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration>(new Configuration(q)) );
+        T.push_back( confPtr_t(new Configuration(q)) );
     }
 
     if( T.isValid() )
@@ -914,11 +914,11 @@ void ChompOptimizer::animateEndeffector()
 confPtr_t ChompOptimizer::getConfigurationOnGroupTraj(int ith)
 {
     confPtr_t q = planning_group_->robot_->getCurrentPos();
-    const std::vector<ChompJoint>& joints = planning_group_->chomp_joints_;
+    const std::vector<ChompDof>& joints = planning_group_->chomp_dofs_;
 
     Eigen::VectorXd point = group_trajectory_.getTrajectoryPoint(ith).transpose();
 
-    for(int j=0; j<planning_group_->num_joints_;j++)
+    for(int j=0; j<planning_group_->num_dofs_;j++)
     {
         (*q)[joints[j].move3d_dof_index_] = point[j];
     }
@@ -939,7 +939,7 @@ confPtr_t ChompOptimizer::getConfigurationOnGroupTraj(int ith)
 //{
 //  visualization_msgs::Marker msg;
 //  msg.points.resize(num_vars_free_);
-//  // int joint_index = planning_group_->chomp_joints_[num_joints_-1].kdl_joint_index_;
+//  // int joint_index = planning_group_->chomp_dofs_[num_joints_-1].kdl_joint_index_;
 //  int sn = animate_endeffector_segment_number_;
 //  for (int i=0; i<num_vars_free_; ++i)
 //  {
@@ -1001,7 +1001,7 @@ confPtr_t ChompOptimizer::getConfigurationOnGroupTraj(int ith)
 //  for (int j=0; j<num_joints_; ++j)
 //  {
 //    int i=num_collision_points_+j;
-//    int joint_index = planning_group_->chomp_joints_[j].kdl_joint_index_;
+//    int joint_index = planning_group_->chomp_dofs_[j].kdl_joint_index_;
 //    msg.markers[i].header.frame_id = robot_model_->getReferenceFrame();
 //    msg.markers[i].header.stamp = ros::Time();
 //    msg.markers[i].ns = "chomp_collisions";

@@ -17,40 +17,215 @@
  * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
  * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                                  
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001). 
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
  * Move3d: A generic platform for path planning. In in 4th Int. Symp.
  * on Assembly and Task Planning.
  *
- *                                               Jim Mainprice Tue 27 May 2014 
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 #include "misc_functions.hpp"
+#include "NumsAndStrings.hpp"
+#include "API/project.hpp"
 
 #include <iostream>
 #include <fstream>
+#include <dirent.h>
 
 // For random number generator (seed can be passed as argument)
 #include <libmove3d/include/P3d-pkg.h>
+#include <libmove3d/include/Util-pkg.h>
 
 using std::cout;
 using std::endl;
 
-void move3d_save_matrix_to_file( const Eigen::MatrixXd& mat, std::string filename )
+bool no_save_to_file = true;
+
+void save_strings_to_file( std::vector<std::string> strings,
+                   std::string filename )
 {
-     cout << "save matrix to : " << filename << endl;
+    if( !strings.empty() )
+    {
+        std::ofstream file( filename.c_str() );
+
+        if (file.is_open()) {
+            for( size_t i=0; i<strings.size(); i++ ) {
+                file << std::scientific << strings[i] << '\n';
+            }
+            file.close();
+        }
+    }
+}
+
+std::vector<std::string> load_strings_from_file( std::string filename )
+{
+    std::vector<std::string> result;
+    std::ifstream file( filename.c_str(), std::ifstream::in );
+
+    if (file.is_open())
+    {
+        std::string line;
+        std::string cell;
+
+        while( file.good() )
+        {
+            std::getline( file, line );
+            std::stringstream line_stream( line );
+
+            while( std::getline( line_stream, cell, ',' ) )
+            {
+                result.push_back( cell );
+            }
+        }
+    }
+
+    return result;
+}
+
+
+void move3d_save_matrix_to_file( const Eigen::MatrixXd& matrix,
+                                 std::string filename )
+{
+    cout << "save matrix to : " << filename << endl;
     std::ofstream file( filename.c_str() );
     if (file.is_open())
-        file << mat << '\n';
-//        for( int i=0;i<mat.rows();i++){
-//            for( int j=0;j<mat.cols();j++)
-//                file << mat(i,j) << " ";
-//            file << endl;
-//        }
+        file << std::scientific << matrix << '\n';
+    //        for( int i=0;i<mat.rows();i++){
+    //            for( int j=0;j<mat.cols();j++)
+    //                file << mat(i,j) << " ";
+    //            file << endl;
+    //        }
     file.close();
 }
 
-std::vector<std::string>  move3d_get_files_in_folder( std::string foldername, std::string extension, int nb_max_files )
+void move3d_save_matrix_to_csv_file( const Eigen::MatrixXd& matrix,
+                                     std::string filename )
+{
+    std::ofstream s;
+    s.open( filename.c_str() );
+
+    for (int i=0; i<matrix.rows(); i++)
+    {
+        for (int j=0; j<matrix.cols(); j++)
+        {
+            s << matrix( i, j ) << ",";
+        }
+        s << endl;
+    }
+
+    s.close();
+}
+
+// general case, stream interface
+inline size_t word_count(std::stringstream& is)
+// can pass an open std::ifstream() to this if required
+{
+//    cout << is.str() << endl;
+    size_t c = 0;
+    for(std::string w; std::getline( is, w, ',' ); ++c);
+//        cout << "found word : " << w << endl;
+    return c;
+}
+
+// simple string interface
+inline size_t word_count(const std::string& str)
+{
+//    cout << "line is : " << str << endl;
+    std::stringstream ss(str);
+    return word_count(ss);
+}
+
+Eigen::MatrixXd move3d_load_matrix_from_csv_file( std::string filename )
+{
+    Eigen::MatrixXd matrix;
+//    cout << "load matrix from : " << filename << endl;
+
+    std::ifstream file( filename.c_str(), std::ifstream::in );
+
+    if (file.good() && file.is_open())
+    {
+        std::string line;
+        std::string cell;
+
+        int n_rows = std::count(std::istreambuf_iterator<char>(file),
+                                std::istreambuf_iterator<char>(), '\n');
+
+        int i=0, j=0;
+
+        file.clear() ;
+        file.seekg(0, std::ios::beg );
+
+        while( file.good() )
+        {
+            std::getline( file, line );
+            std::stringstream lineStream( line );
+
+            if( i == 0 ) {
+                int n_cols = word_count( line );
+                matrix = Eigen::MatrixXd( n_rows, n_cols );
+//                cout << "size : ( "
+                // << n_rows << " , " << n_cols << " )" << endl;
+            }
+
+            j = 0;
+
+            while( std::getline( lineStream, cell, ',' ) )
+            {
+                convert_text_to_num<double>( matrix(i, j), cell, std::dec );
+                j++;
+            }
+            i++;
+        }
+
+        file.close();
+    }
+    else {
+        cout << "could not open file : " << filename << endl;
+    }
+
+    return matrix;
+}
+
+std::vector<std::string> move3d_get_folders_in_folder( std::string foldername )
+{
+    DIR* dir = opendir( foldername.c_str() );
+
+    std::cout << "Process directory: " << foldername.c_str() << std::endl;
+
+    if(NULL == dir)
+    {
+        std::cout << "could not open directory: "
+                  << foldername.c_str() << std::endl;
+        return std::vector<std::string>();
+    }
+
+    std::vector<std::string> folders;
+    struct dirent* entity = readdir(dir);
+    while( entity != NULL )
+    {
+        // find entity type
+        if( entity->d_type == DT_DIR )
+        {
+            // it's a direcotry
+            // don't process the  '..' and the '.' directories
+            if( std::string(entity->d_name) != "." && std::string(entity->d_name) != ".."  )
+            {
+                //it's an directory so process it
+                folders.push_back( std::string(entity->d_name) );
+            }
+        }
+
+        entity = readdir( dir );
+    }
+
+    closedir( dir );
+    return folders;
+}
+
+std::vector<std::string> move3d_get_files_in_folder( std::string foldername,
+                                                     std::string extension,
+                                                     int nb_max_files )
 {
     bool quiet = true;
     std::vector<std::string> files;
@@ -105,9 +280,40 @@ std::vector<int> move3d_change_basis( int number, int basis )
     return result;
 }
 
-Eigen::VectorXd move3d_lerp( const Eigen::VectorXd& v0, const Eigen::VectorXd& v1, double t ) // t \in [0 1]
+Eigen::VectorXd move3d_lerp( const Eigen::VectorXd& v0,
+                             const Eigen::VectorXd& v1,
+                             double t )
+// t \in [0 1]
 {
     return v0+(v1-v0)*t; // v0*(1-t)+v1*t
+}
+
+void move3d_smooth_circular_parameters( Eigen::VectorXd& params )
+{
+    double previous = params[0];
+
+    for (int i=1; i<params.size(); i++)
+    {
+        double diff = previous - params[i];
+        double angle_diff = diff_angle( params[i], previous );
+
+        while( std::fabs( angle_diff - diff ) > 1e-12 )
+        {
+            if( diff > 0 )
+                params[i] += 2*M_PI;
+            else
+                params[i] -= 2*M_PI;
+
+            diff = previous - params[i];
+            angle_diff = diff_angle( params[i], previous );
+
+//            cout << "i : " << i << endl;
+//            cout << "diff : "  << diff << endl;
+//            cout << "angle_diff : "  << angle_diff << endl;
+        }
+
+        previous = params[i];
+    }
 }
 
 double move3d_random_integer( int min, int max )
@@ -125,13 +331,18 @@ void print_joint_mapping( Move3D::Robot* robot )
 
     for( size_t i=0; i<robot->getNumberOfJoints(); i++)
     {
-//        cout << i << " , joint name : " << rob->getJoint(i)->getName() << endl;
+        // cout << i
+        // << " , joint name : " << rob->getJoint(i)->getName() << endl;
 
         for( size_t j=0; j<robot->getJoint(i)->getNumberOfDof(); j++)
         {
-            cout << "jnt->getName() : " << robot->getJoint(i)->getName() << "(" <<i<< ") , ";
-            cout << "index_dof : " << robot->getJoint(i)->getIndexOfFirstDof()+j << endl;
-            //cout << "move3d_map[\"" << rob->getJoint(i)->getName() << "\"]=" << rob->getJoint(i)->getIndexOfFirstDof()+j << ";" << endl;
+            // cout << "jnt->getName() : "
+            // << robot->getJoint(i)->getName() << "(" <<i<< ") , ";
+            // cout << "index_dof : "
+            // << robot->getJoint(i)->getIndexOfFirstDof()+j << endl;
+            cout << "move3d_map[\"" << robot->getJoint(i)->getName()
+                 << "\"]=" << robot->getJoint(i)->getIndexOfFirstDof()+j
+                 << ";" << endl;
         }
     }
 }
@@ -150,10 +361,12 @@ void print_joint_anchors( Move3D::Robot* robot )
         if( j_prev == NULL )
             continue;
 
-//        Eigen::Transform3d T( j_prev->getMatrixPos().inverse() );
+        //        Eigen::Transform3d T( j_prev->getMatrixPos().inverse() );
         Eigen::Vector3d v( j_prev->getVectorPos() );
 
-        cout << "j : " << j->getName() << " , j_prev : " << j_prev->getName() << " \t" << ( j->getVectorPos() - v ) .transpose() << endl;
+        cout << "j : " << j->getName() << " , j_prev : "
+             << j_prev->getName() << " \t"
+             << ( j->getVectorPos() - v ) .transpose() << endl;
     }
 
     for( size_t j=0; j<robot->getNumberOfJoints(); j++)
@@ -168,13 +381,171 @@ void print_joint_anchors( Move3D::Robot* robot )
         for( int i=0; i <o->np; i++ )
         {
             cout << "name : " << o->name << endl;
-//            cout << i  << ": " << o->jnt->abs_pos[0][3] << " " << o->jnt->abs_pos[1][3] << " " << o->jnt->abs_pos[2][3] << endl;
-            cout << i  << ": " <<  o->pol[i]->pos_rel_jnt[0][3] << " " << o->pol[i]->pos_rel_jnt[1][3] << " " << o->pol[i]->pos_rel_jnt[2][3] << endl;
-            cout << i  << ": " <<  o->pol[i]->pos0[0][3] << " " << o->pol[i]->pos0[1][3] << " " << o->pol[i]->pos0[2][3] << endl;
+            // cout << i  << ": "
+            // << o->jnt->abs_pos[0][3] << " "
+            // << o->jnt->abs_pos[1][3] << " " << o->jnt->abs_pos[2][3] << endl;
+            cout << i  << ": "
+                 <<  o->pol[i]->pos_rel_jnt[0][3]
+                    << " " << o->pol[i]->pos_rel_jnt[1][3]
+                    << " " << o->pol[i]->pos_rel_jnt[2][3] << endl;
+
+            cout << i  << ": "
+                 <<  o->pol[i]->pos0[0][3]
+                    << " " << o->pol[i]->pos0[1][3]
+                    << " " << o->pol[i]->pos0[2][3] << endl;
 
             p3d_matrix4 t;
             p3d_matMultXform( o->jnt->abs_pos, o->pol[i]->pos_rel_jnt, t );
-            cout << i  << ": " << t[0][3] << " " << t[1][3]<< " " << t[2][3] << endl;
+            cout << i  << ": "
+                 << t[0][3] << " " << t[1][3]<< " " << t[2][3] << endl;
         }
     }
+}
+
+std::vector<Move3D::confPtr_t> move3d_load_context_from_csv_file(
+        std::string filename )
+{
+    Move3D::Scene* sce = Move3D::global_Project->getActiveScene();
+    std::vector<Move3D::confPtr_t> context;
+    std::ifstream file( filename.c_str(), std::ifstream::in );
+
+    cout << "load context from : " << filename << endl;
+
+    if (file.is_open())
+    {
+        std::string line;
+        std::string cell;
+        std::string robot_name;
+
+        int n_rows = std::count(std::istreambuf_iterator<char>(file),
+                                std::istreambuf_iterator<char>(), '\n');
+
+        context.resize( n_rows );
+
+        cout << "nb of lines : "  << n_rows << endl;
+
+        int i=0, j=0;
+
+        file.clear() ;
+        file.seekg(0, std::ios::beg );
+
+        while( file.good() )
+        {
+            std::getline( file, line );
+            std::stringstream lineStream( line );
+
+            int nb_of_cell_on_line = word_count( line );
+            if( nb_of_cell_on_line < 2 ){
+                break;
+            }
+
+            Eigen::VectorXd q( Eigen::VectorXd::Zero( nb_of_cell_on_line-1 ));
+
+            std::getline( lineStream, robot_name, ',' );
+            Move3D::Robot* robot = sce->getRobotByName( robot_name );
+
+//            cout << "robot name : " << robot_name << endl;
+//            cout << "q size : " << q.size() << endl;
+
+            j = 0;
+
+            while( std::getline( lineStream, cell, ',' ) )
+            {
+                convert_text_to_num<double>( q( j++), cell, std::dec );
+            }
+
+            context[i] = Move3D::confPtr_t(new Move3D::Configuration(robot));
+            context[i]->setFromEigenVector( q );
+//            cout << q.transpose() << endl;
+//            context[i]->print();
+
+            i++;
+        }
+
+        file.close();
+    }
+    else {
+        cout << "could not open file : " << filename << endl;
+    }
+
+    return context;
+}
+
+void move3d_save_context_to_csv_file( const std::vector<Move3D::confPtr_t>& context,
+                                      std::string filename )
+{
+    std::ofstream s;
+    s.open( filename.c_str() );
+
+    for( size_t k=0;k<context.size(); k++ )
+    {
+        s << context[k]->getRobot()->getName() << ",";
+
+        Eigen::VectorXd q = context[k]->getEigenVector();
+
+        for (int i=0; i<q.size(); i++)
+            s << q( i ) << ",";
+
+        s << endl;
+    }
+
+    s.close();
+}
+
+// Derived from code by Yohann Solaro
+// ( http://listengine.tuxfamily.org/lists.tuxfamily.org/eigen/2010/01/msg00187.html )
+// see : http://en.wikipedia.org/wiki/Moore-Penrose_pseudoinverse#The_general_case_and_the_SVD_method
+Eigen::MatrixXd move3d_pinv( const Eigen::MatrixXd &b, double rcond )
+{
+    // TODO: Figure out why it wants fewer rows than columns
+//    if ( a.rows()<a.cols() )
+//        return false;
+    bool flip = false;
+    Eigen::MatrixXd a;
+    if( a.rows() < a.cols() )
+    {
+        a = b.transpose();
+        flip = true;
+    }
+    else
+        a = b;
+
+    // SVD
+    Eigen::JacobiSVD<Eigen::MatrixXd> svdA;
+    svdA.compute( a, Eigen::ComputeFullU | Eigen::ComputeThinV );
+
+    Eigen::JacobiSVD<Eigen::MatrixXd>::SingularValuesType vSingular =
+            svdA.singularValues();
+
+    // Build a diagonal matrix with the Inverted Singular values
+    // The pseudo inverted singular matrix is easy to compute :
+    // is formed by replacing every nonzero entry by its reciprocal (inversing).
+    Eigen::VectorXd vPseudoInvertedSingular( svdA.matrixV().cols() );
+
+    for (int iRow=0; iRow<vSingular.rows(); iRow++)
+    {
+        if ( fabs(vSingular(iRow)) <= rcond ) // Todo : Put epsilon in parameter
+        {
+            vPseudoInvertedSingular(iRow)=0.;
+        }
+        else
+            vPseudoInvertedSingular(iRow)=1./vSingular(iRow);
+    }
+
+    // A little optimization here
+    Eigen::MatrixXd mAdjointU = svdA.matrixU().adjoint().block(
+                0, 0, vSingular.rows(), svdA.matrixU().adjoint().cols() );
+
+    // Pseudo-Inversion : V * S * U'
+    Eigen::MatrixXd a_pinv =
+            (svdA.matrixV() * vPseudoInvertedSingular.asDiagonal())
+            * mAdjointU;
+
+    if( flip )
+    {
+        a = a.transpose();
+        a_pinv = a_pinv.transpose();
+    }
+
+    return a_pinv;
 }

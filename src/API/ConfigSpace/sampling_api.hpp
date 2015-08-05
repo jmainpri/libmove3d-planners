@@ -35,7 +35,11 @@ class Configuration;
 class LocalPath;
 #endif
 
+#ifdef __MAC_10_9
+#include <memory>
+#else
 #include <tr1/memory>
+#endif
 
 class Robot;
 
@@ -53,9 +57,9 @@ public:
 
 	virtual ~SamplingAPI();
 
-    virtual MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> sample(bool samplePassive = true);
+    virtual confPtr_t sample(bool samplePassive = true);
 
-    MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> shootCollisionFree();
+    confPtr_t shootCollisionFree();
 };
 
 #endif

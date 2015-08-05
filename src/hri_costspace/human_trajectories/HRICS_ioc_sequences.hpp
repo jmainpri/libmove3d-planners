@@ -29,6 +29,7 @@
 #define HRICS_IOC_SEQUENCES_HPP
 
 #include "feature_space/features.hpp"
+#include "HRICS_human_ioc.hpp"
 
 #include <iostream>
 
@@ -46,13 +47,24 @@ public:
 
 private:
 
+    void setSamplingFeatures();
+    void setSamplingFeaturesIk();
+    void setGenerationFeatures();
+    void setCompareFeatures();
+    void GenerateResults();
+
+
     // IOC PHASES
-    enum phase_t { generate=0,
-                   sample=1,
-                   compare=2,
-                   run_planner=3,
-                   default_phase=4,
-                   monte_carlo=5 };
+    enum phase_t {
+        generate=0,
+        sample=1,
+        compare=2,
+        run_planner=3,
+        default_phase=4,
+        monte_carlo=5,
+        simulation=6,
+        save_feature_and_demo_size=7,
+        generate_results=8};
 
     // TYPE OF FEATURES
     enum feature_t {
@@ -60,15 +72,39 @@ private:
         spheres,
         human_trajs };
 
+    // SAMPLE IK
+    enum sample_ik_t {
+        no_ik=0,
+        only_ik=1,
+        ik_and_traj=2 };
 
     phase_t phase_;
     feature_t features_type_;
+    sample_ik_t sample_ik_;
 
     std::vector<int> active_joints_;
     Move3D::StackedFeatures* feature_fct_;
+    bool use_human_simulation_demo_;
+    HRICS::IocEvaluation* eval_;
 
+    // Trajectories results
+    std::vector<Move3D::Trajectory> demos_;
+    std::vector< std::vector<Move3D::Trajectory> >
+    baseline_agressive_;
+    std::vector< std::vector<Move3D::Trajectory> >
+    baseline_conservative_;
+    std::vector< std::vector<Move3D::Trajectory> >
+    recovered_;
+    std::vector< std::vector<Move3D::Trajectory> >
+    noreplan_baseline_agressive_;
+    std::vector< std::vector<Move3D::Trajectory> >
+    noreplan_baseline_conservative_;
+    std::vector< std::vector<Move3D::Trajectory> >
+    noreplan_recovered_;
 };
 
 }
+
+void hrics_ioc_compute_results();
 
 #endif // HRICS_IOC_SEQUENCES_HPP

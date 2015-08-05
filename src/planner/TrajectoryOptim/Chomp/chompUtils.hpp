@@ -61,7 +61,16 @@ static const double DIFF_RULES[NUM_DIFF_RULES][DIFF_RULE_LENGTH] = {
 };
 
 
-inline void stdVectorToEigenTransform(const std::vector<double>& stl, Eigen::Transform3d& T)
+// the differentiation rules (centered at the center)
+static const double DIFF_RULES2[NUM_DIFF_RULES][DIFF_RULE_LENGTH] = {
+    {0, 0, -1, 0, 1, 0, 0},                                     // velocity
+    {0, 1, -1, 0, -1, 1, 0},                                    // acceleration
+    {-1, 1, 1, 0, -1, -1, 1}                                    // jerk
+};
+
+
+inline void stdVectorToEigenTransform(const std::vector<double>& stl,
+                                      Eigen::Transform3d& T)
 {
     for (int j=0; j<4; j++)
     {
@@ -79,7 +88,8 @@ inline void stdVectorToEigenTransform(const std::vector<double>& stl, Eigen::Tra
     //cout << "Transfo : " << endl << T.matrix() << endl;
 }
 
-inline void eigenTransformToStdVector(const Eigen::Transform3d& T, std::vector<double>& stl )
+inline void eigenTransformToStdVector(const Eigen::Transform3d& T,
+                                      std::vector<double>& stl )
 {
 //    stl.resize(12);
     for (int j=0; j<4; j++)

@@ -45,28 +45,46 @@ MOVE3D_USING_SHARED_PTR_NAMESPACE
 //namespace chomp
 //{
 
-ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_)
+ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_length, const ChompPlanningGroup& active_joints_, double duration )
 //planning_group_(planning_group),
 //discretization_(source_traj.discretization_)
 {
+    id_fixed_ = 2; // Fixed end configuration
+
     //num_joints_ = robot_model_->getNumberOfJoints();
-    num_joints_ = active_joints_.num_joints_;
+    num_joints_ = active_joints_.num_dofs_;
 
-    duration_ = T.getParamMax();
+    // Set duration to external parameter if not equal 0.0
+    uses_time_ =  duration != 0.0 ? true : false ;
+    duration_ = uses_time_ ? duration : T.getParamMax();
 
-    int number_inital_points = T.getNbOfPaths()+1;
+    cout << "Chomp trajectory uses time : " << uses_time_ << endl;
+
+    if( uses_time_ )
+        cout << "DURATION : " << duration_ << endl;
+    else
+        cout << "LENGTH : " << duration_ << endl;
+
+    int number_inital_points = T.getNbOfViaPoints();
 
     // figure out the num_points_:
     // we need diff_rule_length-1 extra points on either side:
     int start_extra = (diff_rule_length - 1);
     int end_extra = (diff_rule_length - 1);
 
-    num_points_ = (T.getNbOfPaths()+1) + start_extra + end_extra;
+    num_points_ = number_inital_points + start_extra + end_extra;
 
     start_index_ = diff_rule_length - 1;
     end_index_ = (num_points_ - 1) - (diff_rule_length - 1);
     //duration_ = (num_points_ - 1)*discretization_;
-    discretization_ = duration_/(num_points_-1);
+
+    // WARNING, integration is performed over number of points and not paths...
+    // each point is supposed centered on an interval
+//    discretization_ = duration_ / double( T.getNbOfViaPoints() ); // getNbOfPaths
+
+
+
+    discretization_ = duration_ / double( T.getNbOfPaths() );
 
     // allocate the memory:
     init();
@@ -88,7 +106,7 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
 
         for(int j=0; j<num_joints_; j++)
         {
-            int source_joint = active_joints_.chomp_joints_[j].move3d_dof_index_;
+            int source_joint = active_joints_.chomp_dofs_[j].move3d_dof_index_;
 
             confPtr_t q;
 
@@ -105,7 +123,9 @@ ChompTrajectory::ChompTrajectory(const Move3D::Trajectory& T, int diff_rule_leng
 }
 
 ChompTrajectory::ChompTrajectory(const ChompTrajectory& source_traj,  int diff_rule_length) :
-    discretization_(source_traj.discretization_)
+    discretization_(source_traj.discretization_),
+    uses_time_(source_traj.uses_time_),
+    id_fixed_(source_traj.id_fixed_)
 {
     num_joints_ = source_traj.num_joints_;
 
@@ -116,9 +136,9 @@ ChompTrajectory::ChompTrajectory(const ChompTrajectory& source_traj,  int diff_r
 
     num_points_ = source_traj.num_points_ + start_extra + end_extra;
 
-    cout << "source_traj.num_points_ = " << source_traj.num_points_ << endl;
-    cout << "start_extra = " << start_extra << endl;
-    cout << "end_extra = " << end_extra << endl;
+//    cout << "source_traj.num_points_ = " << source_traj.num_points_ << endl;
+//    cout << "start_extra = " << start_extra << endl;
+//    cout << "end_extra = " << end_extra << endl;
 
     start_index_ = diff_rule_length - 1;
     end_index_ = (num_points_ - 1) - (diff_rule_length - 1);

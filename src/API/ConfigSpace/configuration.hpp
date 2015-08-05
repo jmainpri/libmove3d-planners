@@ -34,7 +34,11 @@
 #define EIGEN_USE_NEW_STDVECTOR
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
+#ifdef __MAC_10_9
+#include <memory>
+#else
 #include <tr1/memory>
+#endif
 #include <boost/function.hpp>
 
 //#ifdef LINUX
@@ -44,10 +48,17 @@
 //#define MOVE3D_BOOST_PTR_NAMESPACE std::shared_ptr;
 //#endif
 
+//#ifdef MACOSX
+//#define MOVE3D_USING_SHARED_PTR_NAMESPACE using namespace std::tr1;
+//#define MOVE3D_PTR_NAMESPACE std::tr1
+//#define MOVE3D_USING_BOOST_NAMESPACE using namespace boost;
+//#endif
+
 #ifdef MACOSX
-#define MOVE3D_USING_SHARED_PTR_NAMESPACE using namespace std::tr1;
-#define MOVE3D_PTR_NAMESPACE std::tr1
+#define MOVE3D_USING_SHARED_PTR_NAMESPACE
+#define MOVE3D_PTR_NAMESPACE std
 #define MOVE3D_USING_BOOST_NAMESPACE using namespace boost;
+#define MOVE3D_BOOST_PTR_NAMESPACE boost::shared_ptr
 #endif
 
 #ifndef MOVE3D_USING_SHARED_PTR_NAMESPACE
@@ -356,13 +367,14 @@ public:
      */
     Eigen::VectorXd getEigenVector()  const;
     Eigen::VectorXd getEigenVector(int startIndex, int endIndex)  const;
-    Eigen::VectorXd getEigenVector(const std::vector<int>& indices)  const;
+    Eigen::VectorXd getEigenVector(const std::vector<int>& dof_indices)  const;
 
     /**
      * set the Eigen Vector of the configuration
      */
     void setFromEigenVector(const Eigen::VectorXd& conf);
-    void setFromEigenVector(const Eigen::VectorXd& conf, int startIndex, int endIndex);
+    void setFromEigenVector(const Eigen::VectorXd& conf, int startIndex, int dof_indices);
+    void setFromEigenVector(const Eigen::VectorXd& conf, const std::vector<int>& indices);
 
     /**
      *

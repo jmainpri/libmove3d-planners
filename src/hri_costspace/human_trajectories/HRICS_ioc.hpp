@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "feature_space/features.hpp"
+#include "feature_space/smoothness.hpp"
 
 #include "HRICS_run_multiple_planners.hpp"
 
@@ -43,22 +44,24 @@
 namespace HRICS
 {
 
+typedef std::vector<std::vector<Move3D::confPtr_t> > context_t;
+
 //! Trajectory structure
 struct IocTrajectory
 {
-    IocTrajectory() { }
-    IocTrajectory( int nb_joints, int nb_var );
+    IocTrajectory() : discretization_(0.0) { }
+    IocTrajectory( int nb_joints, int nb_var, double discretization );
 
     std::vector<Eigen::VectorXd> nominal_parameters_;               /**< [num_dimensions] num_parameters */
     std::vector<Eigen::VectorXd> parameters_;                       /**< [num_dimensions] num_parameters */
     std::vector<Eigen::VectorXd> noise_;                            /**< [num_dimensions] num_parameters */
-    std::vector<Eigen::VectorXd> noise_projected_;                  /**< [num_dimensions][num_time_steps] num_parameters */
-    std::vector<Eigen::VectorXd> parameters_noise_projected_;       /**< [num_dimensions][num_time_steps] num_parameters */
     std::vector<Eigen::VectorXd> control_costs_;                    /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> total_costs_;                      /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> cumulative_costs_;                 /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> probabilities_;                    /**< [num_dimensions] num_time_steps */
     std::vector<Eigen::VectorXd> straight_line_;                    /**< [num_dimensions] num_parameters */
+
+    double discretization_;                                         /**< time discretization */
 
     Eigen::VectorXd state_costs_;                                   /**< num_time_steps */
     Eigen::VectorXd feature_count_;                                 /**< num_features */
@@ -110,6 +113,36 @@ private:
     Eigen::VectorXd tmp_noise_;
 };
 
+//! Ioc structure
+struct IocIk
+{
+    IocIk() { }
+    IocIk( int nb_joints );
+
+    Eigen::VectorXd nominal_parameters_;               /**< [num_dimensions] num_parameters */
+    Eigen::VectorXd parameters_;                       /**< [num_dimensions] num_parameters */
+    Eigen::VectorXd noise_;                       /**< [num_dimensions] num_parameters */
+
+    bool out_of_bounds_; /**< Wether the rollout is violating dof limits */
+
+    Move3D::confPtr_t getMove3DConfig( const Move3D::ChompPlanningGroup* planning_group ) const;
+};
+
+//! Sampler of noisy trajectories
+class IocIkSampler
+{
+public:
+    IocIkSampler();
+    IocIkSampler( int nb_joints );
+
+    //! Samples a noisy configuration
+    IocIk sample( double std_dev );
+
+private:
+    int nb_joints_;
+
+};
+
 //! Main IOC class
 class Ioc
 {
@@ -117,7 +150,7 @@ public:
     Ioc( int num_vars, const Move3D::ChompPlanningGroup* planning_group );
 
     //! Add a trajectory to the set of demonstrated trajectories
-    bool addDemonstration(const Eigen::MatrixXd& demo);
+    bool addDemonstration( const Eigen::MatrixXd& demo, double discretization );
 
     //! Add a trajectory to the set of sample trajectories
     //! @param d is the id of the demonstration
@@ -132,20 +165,36 @@ public:
 
     //! Reduces the trajectory magnitude
     bool jointLimits( IocTrajectory& traj ) const;
+    bool jointLimits( IocIk& q ) const;
 
     //! Generate the sampled trajectories
-    //! around the demonstrations
-    void generateSamples(int nb_samples);
+    //! around one demonstration
+    int generateDemoSamples( int demo_id, int nb_samples,
+                             bool check_in_collision,
+                             context_t context );
+
+    //! Generate the sampled trajectories
+    //! around all the demonstrations
+    int generateSamples(int nb_samples, bool check_in_collision, context_t context = context_t() );
+
+    //! Generates samples around configuration
+    int generateIKSamples( int nb_samples, bool check_in_collision, context_t context );
 
     //! Returns Move3D trajectories
-    std::vector< std::vector<Move3D::Trajectory> > getSamples();
+    std::vector< std::vector<Move3D::Trajectory> > getSamples() const;
+
+    //! Returns Move3D trajectories for demo d
+    std::vector< Move3D::Trajectory > getDemoSamples(int d) const;
+
+    //! Returns configurations
+    std::vector< std::vector<Move3D::confPtr_t> > getSamplesIk() const;
 
     //! Returns Move3D trajectories
-    std::vector< Move3D::Trajectory > getDemonstrations();
+    std::vector<Move3D::Trajectory> getDemonstrations() const;
 
     //! Drawing function
     void addTrajectoryToDraw( const IocTrajectory& t, int color );
-    void addAllToDraw();
+    void addAllToDraw( const std::vector<int>& demos_ids, const std::vector<std::string>& demo_names );
 
     //! Solve the ioc problem
     Eigen::VectorXd solve( const std::vector<Eigen::VectorXd>& phi_demo, const std::vector< std::vector<Eigen::VectorXd> >& phi_k );
@@ -153,15 +202,36 @@ public:
     // Returns the number of demonstrations
     int getNbOfDemonstrations() { return demonstrations_.size(); }
 
+    //! Rethe the last configuration of demo
+    IocIk getLastConfigOfDemo(int d) const;
+
+    //! Delete samples for demo d
+    void deleteSampleForDemo(int d);
+
+    //! Reset all samples
+    void resetAllSamples();
+
 private:
+
+    bool isTrajectoryValid( const IocTrajectory& traj, bool relax_collision_check );
+    bool isIkValid( const IocIk& ik );
+    bool projectConfiguration( IocIk& q, int d );
+
     std::vector< IocTrajectory > demonstrations_;
-    std::vector< std::vector<IocTrajectory> > samples_;
+
+    std::vector< std::vector<IocTrajectory*> > samples_;
     double noise_stddev_;
 
+    std::vector< std::vector<IocIk> > samples_ik_;
+    double noise_stddev_ik_;
+
     const Move3D::ChompPlanningGroup* planning_group_;
+
     int num_vars_;
     int num_joints_;
+
     IocSampler sampler_;
+    IocIkSampler sampler_ik_;
 };
 
 //! Evaluation Class
@@ -172,8 +242,24 @@ public:
                    MultiplePlanners& planners, Move3D::StackedFeatures* features, std::vector<int> active_joints,
                    std::string folder,  std::string traj_folder, std::string tmp_data_folder );
 
+    ~IocEvaluation() {
+        stored_features_.clear();
+        phi_demos_.clear();
+        phi_jac_demos_.clear();
+        delete_all_samples();
+    }
+
+    //! Sample trajectories in a sequence
+    std::vector<std::vector<Move3D::Trajectory> > runSamplingSequence();
+
     //! Sample trajectories around the demonstrations
-    virtual void runSampling();
+    virtual std::vector<std::vector<Move3D::Trajectory> > runSampling();
+
+    //! Sample ik around the demonstrations
+    virtual std::vector<std::vector<Move3D::confPtr_t> > runIKSampling();
+
+    //! Delete Alls samples
+    void delete_all_samples();
 
     //! Run learning using the C++ library
     virtual void runLearning();
@@ -188,19 +274,22 @@ public:
     void runPlannerWeightedFeature( int nb_runs=1 );
 
     //! Generate demonstration using optimal planning
-    void generateDemonstrations();
+    void generateDemonstrations( int nb_demos );
 
     //! Load recorded traectories in the move3d format
-    void loadDemonstrations();
+    bool loadDemonstrations( const std::vector<int>& demo_ids = std::vector<int>() );
 
     //! Load trajectories in planner class
     void loadPlannerTrajectories( int nb_trajs=-1, int offset=-1, int random=0 );
 
     //! Load weight vector from CSV format
-    void loadWeightVector();
+    void loadWeightVector(std::string filename = "");
 
     //! Save 2D traj to file for Matlab
     void saveDemoToMatlab();
+
+    //! Save nb of demos and nb of features
+    void saveNbDemoAndNbFeatures();
 
     //! Compute costs using the original costs and the learned costs
     Eigen::VectorXd compareDemosAndPlanned();
@@ -214,13 +303,40 @@ public:
     //! Set planner type for the generation phase
     void setPlannerType( planner_t planner_type ) { planner_type_ = planner_type; }
 
+    //! Save demo to file
+    void saveDemoToFile(const std::vector<Move3D::Trajectory>& demos, std::vector<Move3D::confPtr_t> context = std::vector<Move3D::confPtr_t>() );
+
+    //! Save samples to files
+    void saveSamplesToFile(const std::vector< std::vector<Move3D::Trajectory> >& samples ) const;
+
+    //! Load samples from files
+    std::vector< std::vector< Move3D::Trajectory> > loadSamplesFromFile( int nb_demos, int nb_samples ) const;
+
+    virtual void setLearnedWeights();
+    virtual void setOriginalWeights();
+
+    //! Set use of saved context
+    void setUseContext( bool use_context ) { use_context_ = use_context; }
+    void setUseSimulator(bool use_simulator) { use_simulator_ = use_simulator; }
+    void setDemoId(int demo_id) { demo_id_ = demo_id; }
+    void setOriginalDemoFolder(std::string folder) { original_demo_folder_ = folder; }
+    void setDemoIds( const std::vector<int>& ids ) { demo_ids_ = ids; }
+    void setDemoNames( const std::vector<std::string>& demo_names ) { demo_names_ = demo_names; }
+    void setWeightDim(int dim) { nb_weights_ = dim; }
+
+    void setProcessDirectory( std::string process_dir ) { process_dir_ = process_dir; }
+
 protected:
 
+    std::vector<Move3D::FeatureVect> addDemonstrationsIk(HRICS::Ioc& ioc);
     std::vector<Move3D::FeatureVect> addDemonstrations(Ioc& ioc);
     std::vector< std::vector<Move3D::FeatureVect> > addSamples(Ioc& ioc);
 
     //! Compute the cost of the demos
     Eigen::VectorXd getCostsOfDemonstrations() const;
+
+    //! Saves the configurations of humands and objects in the scene
+    void saveContextToFile(const std::vector<Move3D::confPtr_t>& context) const;
 
     //! Save trajectory to matrix
     void saveTrajToMatlab(const Move3D::Trajectory& t, int id) const;
@@ -259,8 +375,14 @@ protected:
     //! Returns trajectory that best fits
     Move3D::Trajectory selectBestSample( double detla_mean, const std::vector<Move3D::Trajectory>& trajs );
 
-    virtual void setLearnedWeights();
-    virtual void setOriginalWeights();
+    //! Returns true if the trajectory is valid
+    bool isTrajectoryValid( Move3D::Trajectory& path );
+
+    //! Set the context for that trajectory
+    void setContext(int d);
+
+    //! Set the buffer for that trajectory
+    void setBuffer(int d);
 
     Move3D::Robot* robot_;
     int nb_demos_;
@@ -268,24 +390,36 @@ protected:
     int nb_weights_;
     int nb_way_points_;
 
+    std::vector<int> demo_ids_;
+    std::vector<std::string> demo_names_;
     std::vector<Move3D::Trajectory> demos_;
     std::vector<Move3D::Trajectory> samples_;
     std::vector<Move3D::Trajectory> learned_;
+
+    // Weight vectors
     Move3D::WeightVect learned_vect_;
     Move3D::WeightVect original_vect_;
 
+    std::string process_dir_;
+
     std::vector<int> active_joints_;
-    Move3D::StackedFeatures* feature_fct_;
+
     std::string feature_type_;
-    Move3D::TrajectorySmoothness* smoothness_fct_;
-    Move3D::ChompPlanningGroup* plangroup_;
+
+
+    Move3D::StackedFeatures*        feature_fct_;
+    Move3D::TrajectorySmoothness*   smoothness_fct_;
+    Move3D::ChompPlanningGroup*     plangroup_;
 
     bool load_sample_from_file_;
+    bool remove_samples_in_collision_;
     MultiplePlanners& planners_;
     int round_id_;
 
-    std::vector<Move3D::FeatureVect> stored_features_;
+    bool use_simulator_;
+    int demo_id_;
 
+    std::vector<Move3D::FeatureVect> stored_features_;
     std::vector<Move3D::FeatureVect> phi_demos_;
     std::vector<Move3D::FeatureVect> phi_jac_demos_;
 
@@ -293,9 +427,15 @@ protected:
     std::string folder_;
     std::string traj_folder_;
     std::string tmp_data_folder_;
+    std::string original_demo_folder_;
 
     // Planner type
     planner_t planner_type_;
+    int nb_planning_test_;
+
+    // Context
+    bool use_context_;
+    context_t context_;
 };
 
 }

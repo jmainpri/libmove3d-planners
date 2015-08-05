@@ -159,13 +159,13 @@ bool move3d_configuration_in_collision(Robot* R)
 
 bool move3d_configuration_is_out_of_bounds( Robot* R, double* C, bool print )
 {
-    return p3d_isOutOfBounds( (p3d_rob*)R->getP3dRobotStruct(), C, print);
+    return p3d_is_out_of_bounds( (p3d_rob*)R->getP3dRobotStruct(), C, print);
 }
 
 void move3d_configuration_adapt_to_circular_joints( Robot* R, double* C )
 {
     configPt q = p3d_alloc_config( (p3d_rob*)R->getP3dRobotStruct() );
-    p3d_adaptConfigsForCircularDofs( (p3d_rob*)R->getP3dRobotStruct(), &C, &q );
+    p3d_adapt_configs_for_circular_dofs( (p3d_rob*)R->getP3dRobotStruct(), &C, &q );
 //    p3d_copy_config_into(static_cast<p3d_rob*>(R->getP3dRobotStruct()), q, &C);
     p3d_destroy_config( (p3d_rob*)R->getP3dRobotStruct(), q );
 }
@@ -318,14 +318,26 @@ void* move3d_localpath_get_localpath_struct( LocalPath& path, bool multi_sol, in
 
     if ( !path.getP3dLocalpathStructConst() )
     {
+        confPtr_t q_init = path.getBegin()->copy();
+        confPtr_t q_goal = path.getEnd()->copy();
+
         if( !multi_sol )
         {
-            path_struct = p3d_local_planner( (p3d_rob*) path.getRobot()->getP3dRobotStruct(), path.getBegin()->getConfigStruct(), path.getEnd()->getConfigStruct() );
+            // USE COPY because locaplanner modifies circular joints
+            path_struct = p3d_local_planner( (p3d_rob*) path.getRobot()->getP3dRobotStruct(),
+                                             q_init->getConfigStruct(),
+                                             q_goal->getConfigStruct() );
         }
         else
         {
-            path_struct = p3d_local_planner_multisol( (p3d_rob*) path.getRobot()->getP3dRobotStruct(), path.getBegin()->getConfigStruct(), path.getEnd()->getConfigStruct(), path.getIkSol() );
+            // USE COPY because locaplanner modifies circular joints
+            path_struct = p3d_local_planner_multisol( (p3d_rob*) path.getRobot()->getP3dRobotStruct(),
+                                                      q_init->getConfigStruct(),
+                                                      q_goal->getConfigStruct(),
+                                                      path.getIkSol() );
         }
+
+
 
         if ( path_struct )
         {
@@ -602,6 +614,22 @@ bool move3d_robot_is_in_collision_with_env( Robot* R )
 {
     return pqp_robot_all_no_self_collision_test(static_cast<p3d_rob*>(R->getP3dRobotStruct()));
 }
+
+bool move3d_robot_is_in_collision_with_others( Robot* R, std::vector<Robot*>& others )
+{
+    bool in_collision = false;
+
+    for( int i=0; i<others.size(); i++)
+        if( pqp_robot_robot_collision_test(static_cast<p3d_rob*>(R->getP3dRobotStruct()),
+                                           static_cast<p3d_rob*>(others[i]->getP3dRobotStruct()) ) ) {
+            in_collision = true;
+                break;
+        }
+
+//    cout << "robot in collision : " << in_collision << endl;
+    return in_collision;
+}
+
 
 double move3d_robot_distance_to_env( Robot* R )
 {
@@ -1034,6 +1062,7 @@ void move3d_set_api_functions_robot()
     move3d_set_fct_robot_without_constraints( boost::bind( move3d_robot_set_and_update_with_constraints, _1, _2 ) );
     move3d_set_fct_robot_is_in_collision( boost::bind( move3d_robot_is_in_collision, _1 ));
     move3d_set_fct_robot_is_in_collision_with_others_and_env( boost::bind( move3d_robot_is_in_collision_with_env, _1 ) );
+    move3d_set_fct_robot_is_in_collision_with_others( boost::bind( move3d_robot_is_in_collision_with_others, _1, _2 ) );
     move3d_set_fct_robot_distance_to_env( boost::bind( move3d_robot_distance_to_env, _1 ) ) ;
     move3d_set_fct_robot_distance_to_robot( boost::bind( move3d_robot_distance_to_robot, _1, _2 ) );
     move3d_set_fct_robot_get_init_pos( boost::bind( move3d_robot_get_init_pos, _1 ) );
@@ -1070,4 +1099,14 @@ void move3d_set_api_functions_draw()
     move3d_set_fct_draw_sphere( boost::bind( move3d_draw_sphere_fct, _1, _2, _3, _4, _5 ) );
     move3d_set_fct_draw_one_line( boost::bind( move3d_draw_one_line_fct, _1, _2, _3, _4, _5, _6, _7, _8 ) );
     move3d_set_fct_draw_clear_handles( boost::bind( move3d_draw_clear_handles_fct ) );
+}
+
+void move3d_set_classic_libmove3d_api()
+{
+    move3d_set_api_scene();
+    move3d_set_api_functions_configuration();
+    move3d_set_api_functions_localpath();
+    move3d_set_api_functions_robot();
+    move3d_set_api_functions_joint();
+    move3d_set_api_functions_draw();
 }

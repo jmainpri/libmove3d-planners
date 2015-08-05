@@ -65,7 +65,7 @@ public:
     void setNaturalCostSpace(Natural* NCS) { m_NaturalCostSpace = NCS; setGridOrigin(); }
     Natural* getNaturalCostSpace() { return m_NaturalCostSpace; }
     Eigen::Transform3d getRobotOrigin() { return m_RobotOriginPos; }
-    //MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> getActualConfig() { return m_ActualConfig; }
+    //confPtr_t getActualConfig() { return m_ActualConfig; }
 
     Move3D::Robot* getRobot();
 

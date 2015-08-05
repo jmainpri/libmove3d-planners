@@ -104,7 +104,7 @@ void EnvGrid::init(pair<double,double> minMax)
         cout << "in: EnvGrid::init(pair<double,double> minMax)\n" << endl;
 //        cout << "Store position of all robot in the scene (object too); and move them out of the scene" << endl;
     }
-    vector<pair<Robot*,shared_ptr<Configuration> > > initConfiguration;
+    vector<pair<Robot*,confPtr_t > > initConfiguration;
     for (int i=0; i<XYZ_ENV->nr; i++)
     {
         string name(XYZ_ENV->robot[i]->name);
@@ -117,9 +117,9 @@ void EnvGrid::init(pair<double,double> minMax)
             robotCyl = new Robot(XYZ_ENV->robot[i]);
         }
 //        Robot* r = new Robot(XYZ_ENV->robot[i]);
-//        pair<Robot*,shared_ptr<Configuration> > p;
+//        pair<Robot*,confPtr_t > p;
 //        p.first = r;
-//        shared_ptr<Configuration> q = r->getCurrentPos();
+//        confPtr_t q = r->getCurrentPos();
 //        p.second = r->getCurrentPos();
 //        initConfiguration.push_back(p);
 //
@@ -141,14 +141,14 @@ void EnvGrid::init(pair<double,double> minMax)
     initAllReachability();
 
     Robot* robot = getRobot();
-    shared_ptr<Configuration> q_robot_cur = robot->getCurrentPos();
-    shared_ptr<Configuration> q_robot = robot->getCurrentPos();
+    confPtr_t q_robot_cur = robot->getCurrentPos();
+    confPtr_t q_robot = robot->getCurrentPos();
     (*q_robot)[6] = 0;
     (*q_robot)[7] = 0;
     robot->setAndUpdate(*q_robot);
     Robot* human = getHuman();
-    shared_ptr<Configuration> q_human_cur = human->getCurrentPos();
-    shared_ptr<Configuration> q_human = human->getCurrentPos();
+    confPtr_t q_human_cur = human->getCurrentPos();
+    confPtr_t q_human = human->getCurrentPos();
     (*q_human)[6] = 0;
     (*q_human)[7] = 0;
     human->setAndUpdate(*q_human);
@@ -208,7 +208,7 @@ void EnvGrid::init(pair<double,double> minMax)
         cout << "All robot are replaced\n" << endl;
         cout << "Move the cylinder out of the scenne" << endl;
     }
-    shared_ptr<Configuration> q = humCyl->getCurrentPos();
+    confPtr_t q = humCyl->getCurrentPos();
     (*q)[6] = 0;
     (*q)[7] = 0;
     humCyl->setAndUpdate(*q);
@@ -236,8 +236,8 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
     initAllReachability();
 
     Robot* robot = getRobot();
-    shared_ptr<Configuration> q_robot_cur = robot->getCurrentPos();
-    shared_ptr<Configuration> q_robot = robot->getCurrentPos();
+    confPtr_t q_robot_cur = robot->getCurrentPos();
+    confPtr_t q_robot = robot->getCurrentPos();
     (*q_robot)[6] = 10;
     (*q_robot)[7] = 1;
     robot->setAndUpdate(*q_robot);
@@ -249,8 +249,8 @@ void EnvGrid::initGrid(Eigen::Vector3d humanPos)
 
 
     Robot* human = getHuman();
-    shared_ptr<Configuration> q_human_cur = human->getCurrentPos();
-    shared_ptr<Configuration> q_human = human->getCurrentPos();
+    confPtr_t q_human_cur = human->getCurrentPos();
+    confPtr_t q_human = human->getCurrentPos();
     (*q_human)[6] = 10;
     (*q_human)[7] = 1;
     human->setAndUpdate(*q_human);
@@ -396,10 +396,10 @@ void EnvGrid::recomputeGridWhenHumanMove(Eigen::Vector3d humanPos)
     initAllTrajs();
     initAllCellState();
 
-    shared_ptr<Configuration> q_human_cur = mHuman->getCurrentPos();
-    shared_ptr<Configuration> q_robot_cur = mRobot->getCurrentPos();
-    shared_ptr<Configuration> q_human = mHuman->getCurrentPos();
-    shared_ptr<Configuration> q_robot = mRobot->getCurrentPos();
+    confPtr_t q_human_cur = mHuman->getCurrentPos();
+    confPtr_t q_robot_cur = mRobot->getCurrentPos();
+    confPtr_t q_human = mHuman->getCurrentPos();
+    confPtr_t q_robot = mRobot->getCurrentPos();
 
     int firstIndexOfHumanDof = mHuman->getJoint("Pelvis")->getIndexOfFirstDof();
     int firstIndexOfRobotDof = static_cast<p3d_jnt*>( static_cast<p3d_rob*>(mRobot->getP3dRobotStruct() )->baseJnt )->user_dof_equiv_nbr;
@@ -1192,13 +1192,13 @@ void EnvCell::computeHumanReach()
 
     //human detection of collision
     Robot* human = dynamic_cast<EnvGrid*>(_grid)->getHuman();
-    shared_ptr<Configuration> q_human_cur = human->getCurrentPos();
-    shared_ptr<Configuration> q_human = human->getCurrentPos();
+    confPtr_t q_human_cur = human->getCurrentPos();
+    confPtr_t q_human = human->getCurrentPos();
     (*q_human)[6] = 0;
     (*q_human)[7] = 0;
     human->setAndUpdate(*q_human);
 
-    shared_ptr<Configuration> q = humCyl->getCurrentPos();
+    confPtr_t q = humCyl->getCurrentPos();
     (*q)[6] = this->getCenter()[0];
     (*q)[7] = this->getCenter()[1];
     humCyl->setAndUpdate(*q);
@@ -1224,13 +1224,13 @@ void EnvCell::computeRobotReach()
 
     //robot detection of collision
     Robot* rob = dynamic_cast<EnvGrid*>(_grid)->getRobot();
-    shared_ptr<Configuration> q_rob_cur = rob->getCurrentPos();
-    shared_ptr<Configuration> q_rob = rob->getCurrentPos();
+    confPtr_t q_rob_cur = rob->getCurrentPos();
+    confPtr_t q_rob = rob->getCurrentPos();
     (*q_rob)[6] = 0;
     (*q_rob)[7] = 0;
     rob->setAndUpdate(*q_rob);
 
-    shared_ptr<Configuration> q = robotCyl->getCurrentPos();
+    confPtr_t q = robotCyl->getCurrentPos();
     (*q)[6] = this->getCenter()[0];
     (*q)[7] = this->getCenter()[1];
     robotCyl->setAndUpdate(*q);

@@ -47,6 +47,10 @@ public:
     double getCostFromActiveJoints( Move3D::Configuration& q ) const;
     double getCurrentOccupationCost( Move3D::Configuration& q ) const;
 
+    void setActiveJoints( const std::vector<Move3D::Joint*>& active_joints ) { m_active_joints = active_joints; }
+
+    void computeCurrentOccupancy() { m_ws_occupancy->computeCurrentOccupancy(); }
+
 private:
     void draw_sampled_points();
     void sampleRobotPoints();
@@ -55,7 +59,7 @@ private:
     Move3D::Robot* m_robot;
     WorkspaceOccupancyGrid* m_ws_occupancy;
     Move3D::BodySurfaceSampler* m_surface_sampler;
-    std::vector<int> m_active_joints;
+    std::vector<Move3D::Joint*> m_active_joints;
 };
 
 }

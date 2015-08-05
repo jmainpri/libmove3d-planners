@@ -170,7 +170,7 @@ bool ConfigSpace::computeAStarIn2DGrid()
     //
     ENV.setBool(Env::drawTraj,false);
 
-    shared_ptr<Configuration> config = _Robot->getInitPos();
+    confPtr_t config = _Robot->getInitPos();
 
     config->print();
 
@@ -251,7 +251,7 @@ void ConfigSpace::solveAStar(PlanState* start,PlanState* goal)
     m2DPath.clear();
     //    m2DCellPath.clear();
 
-    //    shared_ptr<Configuration> config = _Robot->getCurrentPos();
+    //    confPtr_t config = _Robot->getCurrentPos();
 
     /*
     * Change the way AStar

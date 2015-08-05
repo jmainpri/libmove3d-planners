@@ -166,7 +166,7 @@ int TestModel::nbOfCostPerSeconds()
 void TestModel::distEnv()
 {
 
-    shared_ptr<Configuration> q;
+    confPtr_t q;
 
     for (int i = 0; i < 100; i++)
     {
@@ -182,10 +182,10 @@ void TestModel::distEnv()
 int TestModel::nbOfLocalPathsPerSeconds()
 {
 
-    shared_ptr<Configuration> current = modelRobot->getCurrentPos();
+    confPtr_t current = modelRobot->getCurrentPos();
 
-    shared_ptr<Configuration> q1;
-    shared_ptr<Configuration> q2;
+    confPtr_t q1;
+    confPtr_t q2;
 
     double tu, ts;
     ChronoOn();

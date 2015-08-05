@@ -83,7 +83,7 @@ int CostmapExpansion::connectExpandProcess( Node* expansionNode, confPtr_t direc
 	
 	double delta = this->pathDelta(directionLocalpath);
 	
-	shared_ptr<Configuration> ptrConf;
+	confPtr_t ptrConf;
 	
 	double param = directionLocalpath.whenCostIntegralPasses( m_lastBestPath*0.80 );
 	
@@ -134,7 +134,7 @@ int CostmapExpansion::extendExpandProcess( Node* expansionNode, confPtr_t direct
 	
 	double delta = this->pathDelta(directionLocalpath);
 	
-	shared_ptr<Configuration> ptrConf;
+	confPtr_t ptrConf;
 	
 	if( (delta==1)&& directionNode )
 	{

@@ -31,6 +31,7 @@
 #include "planner/planEnvironment.hpp"
 #include "planner/cost_space.hpp"
 
+
 using namespace std;
 using namespace HRICS;
 using namespace Move3D;
@@ -57,7 +58,7 @@ HumanPredictionCostSpace::HumanPredictionCostSpace( Robot* robot, WorkspaceOccup
 {
     cout << "Create HumanPredictionCostSpace" << endl;
 
-    m_surface_sampler = new BodySurfaceSampler( 0.50 );
+    m_surface_sampler = new BodySurfaceSampler( 0.50, 0.05 );
 
     sampleRobotPoints();
     setActiveJoints();
@@ -77,26 +78,30 @@ double HumanPredictionCostSpace::getCurrentOccupationCost(Configuration& q) cons
 
     int nb_points = 0;
 
+    double factor = 10.0;
+
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
-        Joint* jnt = m_robot->getJoint( m_active_joints[i] );
-        p3d_obj* obj = jnt->getP3dJointStruct()->o;
+        p3d_obj* obj = m_active_joints[i]->getP3dJointStruct()->o;
+
+//        cout << "Active joint : "  << m_active_joints[i]->getName() << endl;
 
         if( obj )
         {
             //cout << "compute cost for joint : " << jnt->getName() ;
-            Eigen::Transform3d T = robot->getJoint( m_active_joints[i] )->getMatrixPos();
+            Eigen::Transform3d T = m_active_joints[i]->getMatrixPos();
             PointCloud& pc = m_surface_sampler->getPointCloud( obj );
 
             for( int j=0; j<int(pc.size()); j++ )
             {
-                cost += (4*m_ws_occupancy->geCurrentOccupancy( T*pc[j] ));
+                cost += (factor*m_ws_occupancy->geCurrentOccupancy( T*pc[j] ));
                 nb_points++;
             }
         }
     }
 
-    //cout << " , cost : " << cost << endl;
+//    cout << " , cost : " << cost << endl;
+//    exit(0);
     return cost;
 }
 
@@ -111,13 +116,12 @@ double HumanPredictionCostSpace::getCost(Configuration& q) const
 
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
-        Joint* jnt = m_robot->getJoint( m_active_joints[i] );
-        p3d_obj* obj = jnt->getP3dJointStruct()->o;
+        p3d_obj* obj = m_active_joints[i]->getP3dJointStruct()->o;
 
         if( obj )
         {
             //cout << "compute cost for joint " << jnt->getName() << endl;
-            Eigen::Transform3d T = robot->getJoint( m_active_joints[i] )->getMatrixPos();
+            Eigen::Transform3d T = m_active_joints[i]->getMatrixPos();
             PointCloud& pc = m_surface_sampler->getPointCloud( obj );
 
             for( int j=0; j<int(pc.size()); j++ )
@@ -129,7 +133,11 @@ double HumanPredictionCostSpace::getCost(Configuration& q) const
         }
     }
 
-    //cout << "cost : " << cost << endl;
+
+    cout << "cost : " << cost << endl;
+
+
+
     //cout << "occupancy computed for " << nb_points << endl;
     //cout << "HumanPredictionCostSpace cost : " << cost << endl;
     return cost;
@@ -144,7 +152,7 @@ double HumanPredictionCostSpace::getCostFromActiveJoints(Configuration& q) const
 
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
-        cost += 10*m_ws_occupancy->getOccupancyCombination( robot->getJoint( m_active_joints[i] )->getVectorPos() );
+        cost += 10*m_ws_occupancy->getOccupancyCombination( m_active_joints[i]->getVectorPos() );
     }
 
     return cost;
@@ -169,12 +177,11 @@ void HumanPredictionCostSpace::draw_sampled_points()
 
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
-        Joint* jnt = m_robot->getJoint( m_active_joints[i] );
-        p3d_obj* obj = jnt->getP3dJointStruct()->o;
+        p3d_obj* obj = m_active_joints[i]->getP3dJointStruct()->o;
 
         if( obj )
         {
-            m_surface_sampler->getPointCloud( obj ).drawAllPoints( jnt->getMatrixPos() );
+            m_surface_sampler->getPointCloud( obj ).drawAllPoints( m_active_joints[i]->getMatrixPos() );
         }
     }
 }
@@ -189,11 +196,11 @@ void HumanPredictionCostSpace::setActiveJoints()
         //        m_active_joints.push_back( 6 );
         //        m_active_joints.push_back( 7 );
 
-        m_active_joints.push_back( 8 );
-        m_active_joints.push_back( 9 );
-        m_active_joints.push_back( 10 );
-        m_active_joints.push_back( 11 );
-        m_active_joints.push_back( 12 );
+        m_active_joints.push_back( m_robot->getJoint( 8 ) );
+        m_active_joints.push_back( m_robot->getJoint( 9 ) );
+        m_active_joints.push_back( m_robot->getJoint( 10 ) );
+        m_active_joints.push_back( m_robot->getJoint( 11 ) );
+        m_active_joints.push_back( m_robot->getJoint( 12 ) );
         //        m_active_joints.push_back( 14 );
         //        m_active_joints.push_back( 15 );
     }
@@ -202,8 +209,7 @@ void HumanPredictionCostSpace::setActiveJoints()
 
     for(int i=0; i<int(m_active_joints.size()); i++)
     {
-        Joint* jnt = m_robot->getJoint( m_active_joints[i] );
-        p3d_obj* obj = jnt->getP3dJointStruct()->o;
+        p3d_obj* obj = m_active_joints[i]->getP3dJointStruct()->o;
 
         if( obj )
         {

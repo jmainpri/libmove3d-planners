@@ -271,7 +271,7 @@ LinearTrajectory* RoboptimFactory::make_Roboptim(Move3D::Trajectory& traj)
 	
 	try
 	{
-		MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q;
+		confPtr_t q;
 		
 		for ( int i=-1; i< traj.getNbOfPaths() ; i++) 
 		{
@@ -329,7 +329,7 @@ Move3D::Trajectory*	RoboptimFactory::make_Move3D(LinearTrajectory& traj)
 		const int outputSize = traj.outputSize ();
 		ublas::vector<double> params = traj.parameters ();
 		
-		std::vector< MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> > vect_conf;
+		std::vector< confPtr_t > vect_conf;
 		
 		//std::cout << "Number of control points : " << traj.getNumberOfControlPoints() << std::endl;
 		//std::cout << "Output Size : " << outputSize << std::endl;
@@ -337,7 +337,7 @@ Move3D::Trajectory*	RoboptimFactory::make_Move3D(LinearTrajectory& traj)
 
 		for ( int i=0; i< (int)(traj.getNumberOfControlPoints()); i++) 
 		{
-			MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q ( new Configuration(m_Robot) );
+			confPtr_t q ( new Configuration(m_Robot) );
 			
 			for ( int j=0; j< (int)outputSize; j++) 
 			{
@@ -379,7 +379,7 @@ void CostMapFunction::impl_compute (result_t& r , const argument_t& a) const thr
 	
 	for ( int i=0; i< (int)(m_nbControlPoints); i++) 
 	{
-		MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> q ( new Configuration(m_Robot) );
+		confPtr_t q ( new Configuration(m_Robot) );
 		
 		for ( int j=0; j< (int)outputSize; j++) 
 		{

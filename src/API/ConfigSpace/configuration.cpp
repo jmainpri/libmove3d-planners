@@ -142,12 +142,12 @@ Configuration::Configuration(const Configuration& conf) :
 
 Configuration& Configuration::operator= (const Configuration& source)
 {
-    _flagInitQuaternions = source._flagInitQuaternions ;
-    _CollisionTested = source._CollisionTested ;
-    _InCollision = source._InCollision ;
-    _CostTested = source._CostTested ;
-    _Cost = source._Cost ;
-    _Robot =  source._Robot ;
+    _flagInitQuaternions = source._flagInitQuaternions;
+    _CollisionTested = source._CollisionTested;
+    _InCollision = source._InCollision;
+    _CostTested = source._CostTested;
+    _Cost = source._Cost;
+    _Robot =  source._Robot;
     _phiEvaluated = source._phiEvaluated;
     _phi = source._phi;
 
@@ -363,14 +363,14 @@ Eigen::VectorXd Configuration::getEigenVector( int startIndex, int endIndex ) co
     return q;
 }
 
-Eigen::VectorXd Configuration::getEigenVector(const std::vector<int>& indices) const
+Eigen::VectorXd Configuration::getEigenVector(const std::vector<int>& dof_indices) const
 {
-    VectorXd q( indices.size() );
+    VectorXd q( dof_indices.size() );
 
     // Get the values of the dofs
-    for ( int i=0; i<int(indices.size()); i++)
+    for ( int i=0; i<int(dof_indices.size()); i++)
     {
-        q(i) = _Configuration[ indices[i] ];
+        q(i) = _Configuration[ dof_indices[i] ];
     }
 
     return q;
@@ -391,6 +391,15 @@ void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, int startInd
     for (int i = startIndex; i <= endIndex; i++)
     {
         _Configuration[i] = conf(i);
+    }
+}
+
+void Configuration::setFromEigenVector(const Eigen::VectorXd& conf, const std::vector<int>& dof_indices)
+{
+    // Get the values of the dofs
+    for ( size_t i=0; i<dof_indices.size(); i++)
+    {
+        _Configuration[ dof_indices[i] ] = conf(i);
     }
 }
 

@@ -91,10 +91,10 @@ void HRICS_rrtExpansion::setCellPath(vector<Move3D::ThreeDCell*> cellPath)
   *
   */
 int Direction=0;
-shared_ptr<Configuration> HRICS_rrtExpansion::getExpansionDirection(
+confPtr_t HRICS_rrtExpansion::getExpansionDirection(
         Node* expandComp, Node* goalComp, bool samplePassive, Node*& directionNode)
 {
-    shared_ptr<Configuration> q;
+    confPtr_t q;
 
     _biasing = ENV.getBool(Env::isGoalBiased) && p3d_random(0.,1.) <= ENV.getDouble(Env::Bias);
 
@@ -133,7 +133,7 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getExpansionDirection(
 
 Move3D::ThreeDCell* BiasedCell=NULL;
 
-shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* CompcoNode)
+confPtr_t HRICS_rrtExpansion::getConfigurationInNextCell(Node* CompcoNode)
 {
     Move3D::ThreeDCell* farthestCell=NULL;
 
@@ -182,7 +182,7 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* C
         }
     }
 
-    //    shared_ptr<Configuration> q = m_Graph->getRobot()->shoot(false);
+    //    confPtr_t q = m_Graph->getRobot()->shoot(false);
 
     // Get a random config in the cell
     //    randomPoint = _3DCellPath[cellId]->getRandomPoint();
@@ -199,7 +199,7 @@ shared_ptr<Configuration> HRICS_rrtExpansion::getConfigurationInNextCell(Node* C
     //    Matrix3d mat = Matrix3d::Identity();
     //    randomPoint =2*mat*randomPoint;
 
-    shared_ptr<Configuration> q(new Configuration(m_Graph->getRobot()));
+    confPtr_t q(new Configuration(m_Graph->getRobot()));
 
     Vector3d corner = BiasedCell->getCorner();
     Vector3d cellSize = BiasedCell->getCellSize();

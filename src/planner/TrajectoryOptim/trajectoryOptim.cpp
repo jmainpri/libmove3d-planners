@@ -20,6 +20,7 @@
 #include "collision_space/collision_space_factory.hpp"
 #include "planner/planEnvironment.hpp"
 #include "planner/cost_space.hpp"
+#include "feature_space/smoothness.hpp"
 
 #include "utils/multilocalpath_utils.hpp"
 
@@ -77,8 +78,9 @@ static Move3D::Trajectory m_external_trajectory;
 static bool m_discretize=false;
 static double m_discretization=0.0;
 
-// Extern collision space
-extern CollisionSpace* global_collSpace;
+static bool m_use_buffer;
+static std::vector<Eigen::VectorXd> m_buffer;
+
 
 //! Create an initial Move3D trajectory
 //! it generates a straigt line between the two configuration init 
@@ -122,7 +124,8 @@ bool traj_optim_set_scenario_type()
 
     if( m_planning_type == DEFAULT )
     {
-        if( ENV.getBool(Env::isCostSpace) && global_costSpace->getSelectedCostName() == "costMap2D" )
+        if( ENV.getBool(Env::isCostSpace)
+                && global_costSpace->getSelectedCostName() == "costMap2D" )
         {
             m_sce = traj_optim::CostMap;
         }
@@ -218,9 +221,16 @@ void traj_optim_init_planning_type(int type)
 //*   Run Functions 
 //****************************************************************
 
+bool traj_optim_resetInit()
+{
+    m_init = false;
+}
+
 bool traj_optim_initScenario()
 {
     traj_optim_init_planning_type( ENV.getInt(Env::setOfActiveJoints) );
+
+    cout << "init collision space" << endl;
 
     if(!traj_optim_set_scenario_type()) {
         cout << "Not well initialized" << endl;
@@ -232,7 +242,8 @@ bool traj_optim_initScenario()
     // m_robot = global_Project->getActiveScene()->getRobotByNameContaining("ROBOT");
 
     if( global_costSpace )
-        cout << "COST FUNCTION is : " << global_costSpace->getSelectedCostName() << endl;
+        cout << "COST FUNCTION is : "
+             << global_costSpace->getSelectedCostName() << endl;
     else
         cout << "NO COST FUNCTION" << endl;
 
@@ -250,14 +261,6 @@ bool traj_optim_initScenario()
 // --------------------------------------------------------
 bool traj_optim_InitTraj( Move3D::Trajectory& T )
 {
-    if( !m_init )
-    {
-        if(!traj_optim_initScenario())
-        {
-            return false;
-        }
-    }
-
     if( m_use_external_trajectory )
     {
         T = m_external_trajectory;
@@ -278,14 +281,14 @@ bool traj_optim_InitTraj( Move3D::Trajectory& T )
 
     if( m_discretize )
     {
-        nb_points = floor(T.getParamMax() / m_discretization );
+        nb_points = floor( T.getParamMax() / m_discretization );
     }
     else
     {
         nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
     }
 
-    T.cutTrajInSmallLP( nb_points );
+    T.cutTrajInSmallLP( nb_points-1 );
     T.replaceP3dTraj();
 
     cout << "End Init traj" << endl;
@@ -296,6 +299,14 @@ bool traj_optim_InitTraj( Move3D::Trajectory& T )
 // --------------------------------------------------------
 bool traj_optim_runChomp()
 {
+    if( !m_init )
+    {
+        if(!traj_optim_initScenario())
+        {
+            return false;
+        }
+    }
+
     Move3D::Trajectory T(m_robot);
 
     if( !traj_optim_InitTraj(T) ){
@@ -304,7 +315,7 @@ bool traj_optim_runChomp()
 
     int nb_points = PlanEnv->getInt( PlanParam::nb_pointsOnTraj );
 
-    T.cutTrajInSmallLP( nb_points );
+    T.cutTrajInSmallLP( nb_points-1 );
     T.replaceP3dTraj();
 
     g3d_draw_allwin_active();
@@ -317,12 +328,12 @@ bool traj_optim_runChomp()
     m_chompplangroup = new ChompPlanningGroup( m_robot, traj_optim_get_planner_joints() );
     m_chompplangroup->collision_points_ = traj_optim_get_collision_points();
 
-    m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup );
+    m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup, PlanEnv->getDouble(PlanParam::trajDuration) );
     m_chomptraj->print();
     cout << "chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
     cout << "Initialize optimizer" << endl;
 
-    ChompOptimizer optimizer( m_chomptraj, m_chompparams, m_chompplangroup, global_collSpace );
+    ChompOptimizer optimizer( m_chomptraj, m_chompparams, m_chompplangroup, traj_optim_get_collision_space() );
     cout << "Optimizer created" << endl;
 
     optimizer.runDeformation(0,0);
@@ -335,6 +346,15 @@ bool traj_optim_initStomp()
 {
     cout << "----------------------------------" << endl;
     cout << " Init Stomp ----------------------" << endl;
+
+    if( !m_init )
+    {
+        if(!traj_optim_initScenario())
+        {
+            return false;
+        }
+    }
+
     Move3D::Trajectory T(m_robot);
 
     if( !traj_optim_InitTraj(T) )
@@ -363,12 +383,17 @@ bool traj_optim_initStomp()
     m_chompplangroup = new ChompPlanningGroup( m_robot, traj_optim_get_planner_joints() );
     m_chompplangroup->collision_points_ = traj_optim_get_collision_points();
 
-    m_chomptraj = new ChompTrajectory( T, DIFF_RULE_LENGTH, *m_chompplangroup );
-    //m_chomptraj->print();
+    m_chomptraj = new ChompTrajectory(
+                T, DIFF_RULE_LENGTH,
+                *m_chompplangroup, PlanEnv->getDouble(PlanParam::trajDuration) );
+    // m_chomptraj->print();
+
     cout << "Chomp Trajectory has npoints : " << m_chomptraj->getNumPoints() << endl;
+    cout << "PlanEnv->getDouble(PlanParam::trajDuration) : " << PlanEnv->getDouble(PlanParam::trajDuration) << endl;
+    cout << "Chomp Trajectory uses time : " << m_chomptraj->getUseTime() << endl;
 
     cout << "Initialize optimizer" << endl;
-    global_optimizer.reset( new stomp_motion_planner::StompOptimizer( m_chomptraj, m_stompparams, m_chompplangroup, global_collSpace ));
+    global_optimizer.reset( new stomp_motion_planner::StompOptimizer( m_chomptraj, m_stompparams, m_chompplangroup, traj_optim_get_collision_space() ));
     global_optimizer->setSource( T.getBegin() );
     global_optimizer->setSharedPtr( global_optimizer );
     global_optimizer->setPassiveDofs( passive_dofs );
@@ -394,6 +419,29 @@ bool traj_optim_initStomp()
         global_optimizer->setUseCostSpace( true );
     }
 
+    if( m_use_buffer )
+    {
+        global_optimizer->setBuffer( m_buffer );
+
+        cout << "SET BUFFER" << endl;
+        Move3D::StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+        if( fct != NULL && fct->getFeatureFunction("SmoothnessAll") != NULL )
+            static_cast<SmoothnessFeature*>(fct->getFeatureFunction("SmoothnessAll"))->setBuffer( m_buffer );
+    }
+    else
+    {
+        global_optimizer->clearBuffer();
+
+        cout << "CLEAR BUFFER" << endl;
+        Move3D::StackedFeatures* fct = dynamic_cast<StackedFeatures*>( global_activeFeatureFunction );
+        if( fct != NULL && fct->getFeatureFunction("SmoothnessAll") != NULL )
+            static_cast<SmoothnessFeature*>(fct->getFeatureFunction("SmoothnessAll"))->clearBuffer();
+
+    }
+
+    // Initialize all data structures
+    global_optimizer->initialize();
+
     cout << "Optimizer created" << endl;
 
     GlobalCostSpace::initialize();
@@ -412,7 +460,8 @@ bool traj_optim_runStomp( int runId )
 
     if(!traj_optim_initStomp() )
     {
-        cout << "Could not init stomp in : " << __PRETTY_FUNCTION__ << endl;
+        cout << "Could not init stomp in : "
+             << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
@@ -425,7 +474,8 @@ bool traj_optim_runStomp( int runId )
         global_optimizer->testMultiVariateGaussianSampler();
     }
 
-    global_optimizer->resetSharedPtr();
+    // WHY IS THIS HERE
+//    global_optimizer->resetSharedPtr();
     return true;
 }
 
@@ -508,6 +558,17 @@ void traj_optim_set_discretize( bool discretize )
 void traj_optim_set_discretization( double discretization )
 {
     m_discretization = discretization;
+}
+
+void traj_optim_clear_buffer()
+{
+    m_use_buffer = false;
+}
+
+void traj_optim_set_buffer( const std::vector<Eigen::VectorXd>& buffer )
+{
+    m_use_buffer = true;
+    m_buffer = buffer;
 }
 
 // --------------------------------------------------------

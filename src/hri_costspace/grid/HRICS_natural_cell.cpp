@@ -122,7 +122,7 @@ void NaturalCell::resetReachable()
  */
 Vector3d NaturalCell::getWorkspacePoint()
 {
-//	shared_ptr<Configuration> q_actual = dynamic_cast<NaturalGrid*>(_grid)->getRobot()->getCurrentPos();
+//	confPtr_t q_actual = dynamic_cast<NaturalGrid*>(_grid)->getRobot()->getCurrentPos();
 //	
 //	Transform3d actual(Transform3d::Identity());
 //	
@@ -303,7 +303,7 @@ double NaturalCell::getCost(bool leftArm)
 
 	// Get the cost of the Workspace point associated to the cell
 	Natural* NatSpace = dynamic_cast<NaturalGrid*>(_grid)->getNaturalCostSpace();
-	shared_ptr<Configuration> q_actual = NatSpace->getRobot()->getCurrentPos();
+	confPtr_t q_actual = NatSpace->getRobot()->getCurrentPos();
 
 	HRI_GIK_TASK_TYPE task;
 	task = GIK_RATREACH;
@@ -327,7 +327,7 @@ double NaturalCell::getCost(bool leftArm)
 	double distance_tolerance = 0.02;
 	IKSucceded = hri_agent_single_task_manip_move(agents->humans[0], task, &Tcoord, distance_tolerance, &q);
 
-	shared_ptr<Configuration> ptrQ(new Configuration(NatSpace->getRobot(),q));
+	confPtr_t ptrQ(new Configuration(NatSpace->getRobot(),q));
 
 	if (IKSucceded)
 	{

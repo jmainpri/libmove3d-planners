@@ -131,7 +131,7 @@ void NaturalGrid::computeAllCellCost()
 	cout << "NaturalGrid::computeAllCellCost" << endl;
 	vector<HRICS::NaturalCell*> cells = getAllReachableCells();
 
-	shared_ptr<Configuration> q = getRobot()->getCurrentPos();
+	confPtr_t q = getRobot()->getCurrentPos();
 
 	unsigned int nbCells = cells.size();
 
@@ -174,7 +174,7 @@ void NaturalGrid::computeReachability()
 
 	int nbCells = this->getNumberOfCells();
 //	m_NaturalCostSpace->setRobotToConfortPosture();
-	shared_ptr<Configuration> robotConf = getRobot()->getInitPos();
+	confPtr_t robotConf = getRobot()->getInitPos();
 	
 	for(int i=0; i<nbCells; i++)
     {
@@ -380,7 +380,7 @@ int NaturalGrid::robotConfigInCell(int i)
  */
 Eigen::Transform3d NaturalGrid::getTransformFromRobotPos()
 {	
-// shared_ptr<Configuration> q_actual = getRobot()->getCurrentPos();
+// confPtr_t q_actual = getRobot()->getCurrentPos();
 //  
 //	Transform3d actual(Transform3d::Identity());
 //	

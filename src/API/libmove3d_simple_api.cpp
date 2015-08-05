@@ -276,7 +276,7 @@ bool move3d_configuration_simple_in_collision(Robot* R)
 
 bool move3d_configuration_simple_is_out_of_bounds( Robot* R, double* C, bool print )
 {
-    // return p3d_isOutOfBounds( (p3d_rob*)R->getP3dRobotStruct(), C, print);
+    // return p3d_is_out_of_bounds( (p3d_rob*)R->getP3dRobotStruct(), C, print);
     int is_out_of_bounds = false;
 
     // double EPS6 = 1e-6;
@@ -308,7 +308,7 @@ bool move3d_configuration_simple_is_out_of_bounds( Robot* R, double* C, bool pri
 void move3d_configuration_simple_adapt_to_circular_joints( Robot* R, double* C )
 {
 //    configPt q = p3d_alloc_config( (p3d_rob*)R->getP3dRobotStruct() );
-//    p3d_adaptConfigsForCircularDofs( (p3d_rob*)R->getP3dRobotStruct(), &C, &q );
+//    p3d_adapt_configs_for_circular_dofs( (p3d_rob*)R->getP3dRobotStruct(), &C, &q );
 //    p3d_destroy_config( (p3d_rob*)R->getP3dRobotStruct(), q );
     // TODO
     return;

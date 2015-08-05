@@ -40,6 +40,7 @@
 //#include <ros/assert.h>
 
 #define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+
 #include <Eigen/LU>
 #include <Eigen/Array>
 
@@ -52,9 +53,13 @@
 
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Trajectory/trajectory.hpp"
+
 #include "planner/planEnvironment.hpp"
-#include "Graphic-pkg.h"
-#include "P3d-pkg.h"
+#include "feature_space/smoothness.hpp"
+#include "utils/NumsAndStrings.hpp"
+
+#include <libmove3d/include/Graphic-pkg.h>
+#include <libmove3d/include/P3d-pkg.h>
 
 #include "stompOptimizer.hpp"
 
@@ -72,44 +77,34 @@ USING_PART_OF_NAMESPACE_EIGEN
 namespace stomp_motion_planner
 {
     //! Computes the cost the rollout
-    //! the function sums the control costs of all dumensions
+    //! the function sums the control costs of all dimensions
     double Rollout::getCost()
     {
         double cost = state_costs_.sum();
-        int num_dim = control_costs_.size();
-        for (int d=0; d<num_dim; ++d)
-            cost += control_costs_[d].sum();
+
+        if( use_total_smoothness_cost_ )
+        {
+            cost += total_smoothness_cost_;
+        }
+        else
+        {
+            int num_dim = control_costs_.size();
+            for (int d=0; d<num_dim; ++d)
+                cost += control_costs_[d].sum();
+        }
+
         return cost;
     }
 
-    void Rollout::printCost()
+    void Rollout::printCost( double weight )
     {
         double control_cost = 0.0;
 
         for (int d=0; d<int(control_costs_.size()); ++d)
-            control_cost += control_costs_[d].sum();
+            control_cost += ( control_costs_[d].sum() );
 
+        cout.precision(6);
         cout << "control cost : " << control_cost << " , state cost : " << state_costs_.sum() << endl;
-
-        //        cout << "state_costs_ : ";
-        //        for (int i=0; i<state_costs_.size(); i++) {
-        //            cout << state_costs_[i] << " ";
-        //        }
-        //        cout << endl;
-
-        //        cout << "control_costs_ : ";
-        //        for (int d=0; d<int(control_costs_.size()); ++d)
-        //        {
-        //            cout << "( ";
-        //            for (int i=0; i<int(control_costs_[d].size()); i++)
-        //            {
-        //                cout <<  control_costs_[d][i] ;
-        //                if(d < int(control_costs_.size()-1))
-        //                    cout << " , ";
-        //            }
-        //            cout << ")";
-        //        }
-        //        cout << endl;
     }
 
     void Rollout::printProbabilities()
@@ -161,6 +156,7 @@ namespace stomp_motion_planner
                                        const int num_extra_rollouts,
                                        MOVE3D_BOOST_PTR_NAMESPACE<Policy> policy,
                                        MOVE3D_BOOST_PTR_NAMESPACE<Task>   task,
+                                       double discretization,
                                        bool use_cumulative_costs)
     {
         num_time_steps_ = num_time_steps;
@@ -168,9 +164,13 @@ namespace stomp_motion_planner
         use_multiplication_by_m_ = PlanEnv->getBool(PlanParam::trajStompMultiplyM);
         policy_ = policy;
         task_ = task;
+        discretization_ = discretization;
+
+        cout << "PolicyImprovement::initialize : discretization_ : " << discretization_ << endl;
 
         policy_->setNumTimeSteps(num_time_steps_);
         policy_->getControlCosts(control_costs_);
+        policy_->getCovariances(inv_control_costs_);
         policy_->getNumDimensions(num_dimensions_);
         policy_->getNumParameters(num_parameters_);
         policy_->getBasisFunctions(basis_functions_);
@@ -182,12 +182,41 @@ namespace stomp_motion_planner
         //assert(preComputeProjectionMatrices());
 
 
-        cout << "num_reused_rollouts : " << num_reused_rollouts << endl;
+//        cout << "num_reused_rollouts : " << num_reused_rollouts << endl;
 
         preAllocateMultivariateGaussianSampler();
         setNumRollouts( num_rollouts, num_reused_rollouts, num_extra_rollouts );
         preAllocateTempVariables();
         preComputeProjectionMatrices();
+
+//        project_last_config_ = true;
+
+//        if( project_last_config_ && ( planning_group_ != NULL ) )
+//        {
+//            Move3D::Robot* robot = planning_group_->robot_;
+//            Move3D::confPtr_t q_goal = robot->getGoalPos();
+//            robot->setAndUpdate(*q_goal);
+//            task_goal_ = robot->getJoint( "J3" )->getVectorPos();
+//        }
+
+        multiple_smoothness_ = true;
+
+        // TODO move somewhere else
+        if( multiple_smoothness_ )
+        {
+            Move3D::StackedFeatures* fct = dynamic_cast<Move3D::StackedFeatures*>( global_activeFeatureFunction );
+
+            if( fct != NULL &&
+                    fct->getFeatureFunction("SmoothnessAll") != NULL &&
+                    fct->getFeatureFunction("SmoothnessAll")->is_active_ )
+            {
+                control_cost_weights_ = fct->getFeatureFunction("SmoothnessAll")->getWeights();
+//                cout << "control_cost_weights_ : " << control_cost_weights_.transpose() << endl;
+            }
+            else{
+                multiple_smoothness_ = false;
+            }
+        }
 
         return (initialized_ = true);
     }
@@ -197,17 +226,21 @@ namespace stomp_motion_planner
     bool PolicyImprovement::preAllocateMultivariateGaussianSampler()
     {
         // invert the control costs, initialize noise generators:
-        inv_control_costs_.clear();
+//        inv_control_costs_.clear();
         noise_generators_.clear();
 
         for (int d=0; d<num_dimensions_; ++d)
         {
             //cout << "control_costs_[" << d << "] = " << endl << control_costs_[d] << endl;
             //cout << "inv_control_costs_[" << d << "] = " << endl << control_costs_[d].inverse() << endl;
-            inv_control_costs_.push_back(control_costs_[d].inverse());
+//            inv_control_costs_.push_back(control_costs_[d].inverse());
+
+//            move3d_save_matrix_to_file( inv_control_costs_[d], "../matlab/invcost_matrix.txt" );
 
             if( !PlanEnv->getBool(PlanParam::trajStompMatrixAdaptation) )
             {
+                // cout << "inv_control_costs_[" << d << "] : " << inv_control_costs_[d] << endl;
+                // move3d_save_matrix_to_file( inv_control_costs_[d], "inv_control_costs_" + num_to_string<int>(d) );
                 MultivariateGaussian mvg( VectorXd::Zero(num_parameters_[d]), inv_control_costs_[d] );
                 noise_generators_.push_back(mvg);
             }
@@ -255,7 +288,8 @@ namespace stomp_motion_planner
 
         for (int d=0; d<num_dimensions_; ++d)
         {
-            //cout << "num_parameters_[" << d << "] = " << num_parameters_[d] << endl;
+//            cout << "num_parameters_[" << d << "] = " << num_parameters_[d] << endl;
+//            cout << "num_time_steps_ = " << num_time_steps_ << endl;
             rollout.parameters_.push_back(VectorXd::Zero(num_parameters_[d]));
             rollout.noise_.push_back(VectorXd::Zero(num_parameters_[d]));
             rollout.noise_projected_.push_back(VectorXd::Zero(num_parameters_[d]));
@@ -327,6 +361,7 @@ namespace stomp_motion_planner
             for (int p=0; p<num_parameters_[d]; ++p)
             {
                 double column_max = inv_control_costs_[d](0,p);
+
                 for (int p2 = 1; p2 < num_parameters_[d]; ++p2)
                 {
                     if (inv_control_costs_[d](p2,p) > column_max)
@@ -335,6 +370,7 @@ namespace stomp_motion_planner
                 projection_matrix_[d].col(p) *= (1.0/(num_parameters_[d]*column_max));
             }
 
+            // move3d_save_matrix_to_file(projection_matrix_[0],"../matlab/m_mat.txt");
             //cout << "Projection Matrix = " << endl << projection_matrix_[d] << endl;
         }
 
@@ -355,7 +391,7 @@ namespace stomp_motion_planner
         }
 
         //    // draw traj
-        //    const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
+        //    const std::vector<ChompDof>& joints = optimizer->getPlanningGroup()->chomp_dofs_;
         //    Robot* robot = optimizer->getPlanningGroup()->robot_;
         //    Move3D::Trajectory traj(robot);
         //
@@ -379,22 +415,22 @@ namespace stomp_motion_planner
 
     bool PolicyImprovement::computeProjectedNoise(Rollout& rollout)
     {
-        for (int d=0; d<num_dimensions_; ++d)
-        {
-            rollout.noise_projected_[d] = projection_matrix_[d] * rollout.noise_[d];
+//        for (int d=0; d<num_dimensions_; ++d)
+//        {
+//            rollout.noise_projected_[d] = projection_matrix_[d] * rollout.noise_[d];
             //rollout.parameters_noise_projected_[d] = rollout.parameters_[d] + rollout.noise_projected_[d];
             //cout << "rollout.noise_projected_[" << d << "] = " << rollout.noise_projected_[d].transpose() << endl;
-        }
+//        }
 
         return true;
     }
 
     bool PolicyImprovement::computeProjectedNoise()
     {
-        for (int r=0; r<num_rollouts_; ++r)
-        {
-            computeProjectedNoise(rollouts_[r]);
-        }
+//        for (int r=0; r<num_rollouts_; ++r)
+//        {
+//            computeProjectedNoise(rollouts_[r]);
+//        }
         return true;
     }
 
@@ -409,7 +445,7 @@ namespace stomp_motion_planner
         shared_ptr<StompOptimizer> optimizer = static_pointer_cast<StompOptimizer>(task_);
         shared_ptr<CovariantTrajectoryPolicy> policy = static_pointer_cast<CovariantTrajectoryPolicy>(policy_);
 
-        const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
+        const std::vector<ChompDof>& joints = optimizer->getPlanningGroup()->chomp_dofs_;
 
         Eigen::MatrixXd parameters( num_dimensions_, num_time_steps_ );
 
@@ -428,10 +464,10 @@ namespace stomp_motion_planner
             confs[0] = optimizer->getPlanningGroup()->robot_->getCurrentPos();
             confs[1] = optimizer->getPlanningGroup()->robot_->getCurrentPos();
 
-            for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+            for ( int i=0; i<optimizer->getPlanningGroup()->num_dofs_; ++i)
                 (*confs[0])[joints[i].move3d_dof_index_] = parameters( i, init );
 
-            for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+            for ( int i=0; i<optimizer->getPlanningGroup()->num_dofs_; ++i)
                 (*confs[1])[joints[i].move3d_dof_index_] = parameters( i, end );
 
             LocalPath path( confs[0], confs[1] );
@@ -442,7 +478,7 @@ namespace stomp_motion_planner
             {
                 confPtr_t q = path.configAtParam(param);
 
-                for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i )
+                for ( int i=0; i<optimizer->getPlanningGroup()->num_dofs_; ++i )
                     parameters(i,j) = (*q)[joints[i].move3d_dof_index_];
 
                 param += step;
@@ -466,8 +502,8 @@ namespace stomp_motion_planner
         {
             double coeff = 1.0;
 
-            double j_max = static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->chomp_joints_[j].joint_limit_max_;
-            double j_min = static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->chomp_joints_[j].joint_limit_min_;
+            double j_max = static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->chomp_dofs_[j].joint_limit_max_;
+            double j_min = static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->chomp_dofs_[j].joint_limit_min_;
 
             for( int i=0;i<num_time_steps_;i++)
             {
@@ -477,7 +513,7 @@ namespace stomp_motion_planner
                     coeff *= 0.90; // 90 percent
                     traj.noise_[j] *= coeff;
                     traj.parameters_[j] = traj.nominal_parameters_[j] +  traj.noise_[j];
-                    if( k++ > 100 ){
+                    if( k++ > 3 ){ // this was at 100
                         break;
                     }
                 }
@@ -525,9 +561,9 @@ namespace stomp_motion_planner
                 //  cout << "rollouts_(" << r << ") cost : " << rollouts_[r].getCost() << " , stored cost : "  << rollout_costs_total_[r] << endl;
 
                 // discard out of bounds rollouts
-//                if ( rollouts_[r].out_of_bounds_ ) {
-//                    cost = std::numeric_limits<double>::max();
-//                }
+                if ( rollouts_[r].out_of_bounds_ ) {
+                    cost = std::numeric_limits<double>::max();
+                }
                 // cout << "rollout_cost_sorter_(" << r << ") cost : " << cost << endl;
                 rollout_cost_sorter_.push_back(std::make_pair(cost,r));
             }
@@ -597,29 +633,8 @@ namespace stomp_motion_planner
                 rollouts_[r].nominal_parameters_[d] = parameters_[d];
 
                 bool add_straight_lines = false;
-
                 if( add_straight_lines )
                 {
-                    //          double size = p3d_random( 0.0, (num_time_steps_-1)/2 );
-                    //          double center = p3d_random( 0.0, (num_time_steps_-1));
-                    //          int init = round(center - size/2);
-                    //          int end = round(center + size/2);
-                    //
-                    //          cout << "center : " << center << " , size : " << size << endl;
-                    //          cout << "init : " << init << " , end : " << end << endl;
-                    //          if (init < 0.0) {
-                    //            init = 0;
-                    //          }
-                    //          if (init > (num_time_steps_-1)) {
-                    //            init = num_time_steps_-1;
-                    //          }
-                    //          if (end < 0.0) {
-                    //            end = 0;
-                    //          }
-                    //          if (end > (num_time_steps_-1)) {
-                    //            end = num_time_steps_-1;
-                    //          }
-
                     std::vector<int> points;
                     points.resize(7);
                     points[0] = 0;
@@ -666,12 +681,23 @@ namespace stomp_motion_planner
             }
         }
 
-        if( true )
+        if( false )
             for (int r=0; r<num_rollouts_gen_; ++r)
             {
                 // WARNING ADDED FOR IOC
                 simpleJointLimits( rollouts_[r] );
             }
+
+        return true;
+    }
+
+    bool PolicyImprovement::setRollouts(const std::vector<std::vector<Eigen::VectorXd> >& rollouts )
+    {
+        for (int r=0; r<rollouts.size(); ++r)
+        {
+            rollouts_[r].parameters_ = rollouts[r];
+            computeNoise( rollouts_[r] );
+        }
 
         return true;
     }
@@ -703,7 +729,7 @@ namespace stomp_motion_planner
                 }
             }
         }
-        computeProjectedNoise();
+        // computeProjectedNoise();
         return true;
     }
 
@@ -718,43 +744,41 @@ namespace stomp_motion_planner
         if( r<0 || r>=num_rollouts_gen_ )
             return;
 
+        // cout << "rollout[" << r << "] out of bounds > " << out_of_bounds << endl;
+
         rollouts_[r].out_of_bounds_ = out_of_bounds;
     }
 
-
-    bool PolicyImprovement::computeRolloutControlCosts(Rollout& rollout)
-    {
-        policy_->computeControlCosts(control_costs_, rollout.parameters_,
-                                     rollout.noise_projected_, 0.5*control_cost_weight_, rollout.control_costs_);
-        return true;
-    }
-
-    bool PolicyImprovement::computeRolloutControlCosts()
-    {
-        for (int r=0; r<num_rollouts_; ++r)
-        {
-            computeRolloutControlCosts(rollouts_[r]);
-        }
-        return true;
-    }
-
-    bool PolicyImprovement::setRolloutCosts(const Eigen::MatrixXd& costs, const double control_cost_weight, std::vector<double>& rollout_costs_total)
+    bool PolicyImprovement::setRolloutCosts(const Eigen::MatrixXd& costs, const std::vector<Eigen::MatrixXd>& control_costs, const double control_cost_weight, const std::vector<std::pair<bool,double> >& total_smoothness_cost, std::vector<double>& rollout_costs_total )
     {
         assert(initialized_);
 
         control_cost_weight_ = control_cost_weight;
 
-        // set control costs
-        computeRolloutControlCosts();
-
+        // Warning some control costs may be added to the state costs
         for (int r=0; r<num_rollouts_gen_; ++r)
         {
+            if( total_smoothness_cost[r].first ) // Set total cost
+            {
+                rollouts_[r].use_total_smoothness_cost_     = total_smoothness_cost[r].first;
+                rollouts_[r].total_smoothness_cost_         = total_smoothness_cost[r].second;
+            }
+            else
+                rollouts_[r].use_total_smoothness_cost_ = false;
+
             rollouts_[r].state_costs_ = costs.row(r).transpose();
+
+            // TODO add control costs
+            for (int d=0; d<num_dimensions_; ++d)
+                rollouts_[r].control_costs_[d] = control_costs[r].row(d).transpose();
         }
+
+        // set control costs
+        // computeRolloutControlCosts();
 
         // set the total costs
         rollout_costs_total.resize(num_rollouts_);
-        for (int r=0; r<num_rollouts_; ++r)
+        for( int r=0; r<num_rollouts_; ++r )
         {
             rollout_costs_total[r] = rollout_costs_total_[r] = rollouts_[r].getCost();
             // rollouts_[r].printCost();
@@ -769,7 +793,7 @@ namespace stomp_motion_planner
         {
             for (int d=0; d<num_dimensions_; ++d)
             {
-                rollouts_[r].total_costs_[d] = rollouts_[r].state_costs_ + rollouts_[r].control_costs_[d];
+                rollouts_[r].total_costs_[d] = rollouts_[r].state_costs_ /*+ rollouts_[r].control_costs_[d]*/;
                 rollouts_[r].cumulative_costs_[d] = rollouts_[r].total_costs_[d];
                 // cout << "------------------------------------------------------------" << endl;
                 // cout << "rollouts_["<<r<<"].state_costs       = " << rollouts_[r].state_costs_.transpose() << endl;
@@ -820,7 +844,7 @@ namespace stomp_motion_planner
                 double p_sum = 0.0;
                 for (int r=0; r<num_rollouts_; ++r)
                 {
-                    // the -10.0 here is taken from the paper:
+                    // the -10.0 here is taken from the paper
                     rollouts_[r].probabilities_[d](t) = exp(-10.0*(rollouts_[r].cumulative_costs_[d](t) - min_cost)/denom);
                     p_sum += rollouts_[r].probabilities_[d](t);
                 }
@@ -843,7 +867,7 @@ namespace stomp_motion_planner
     {
         shared_ptr<StompOptimizer> optimizer =  static_pointer_cast<StompOptimizer>(task_);
 
-        const std::vector<ChompJoint>& joints = optimizer->getPlanningGroup()->chomp_joints_;
+        const std::vector<ChompDof>& joints = optimizer->getPlanningGroup()->chomp_dofs_;
 
         // New trajectory and parameters trajectory
         Move3D::Trajectory traj( static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup()->robot_);
@@ -858,7 +882,7 @@ namespace stomp_motion_planner
         {
             confPtr_t q = optimizer->getPlanningGroup()->robot_->getCurrentPos();
 
-            for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+            for ( int i=0; i<optimizer->getPlanningGroup()->num_dofs_; ++i)
             {
                 (*q)[joints[i].move3d_dof_index_] = parameters(i,j);
             }
@@ -871,7 +895,7 @@ namespace stomp_motion_planner
         {
             confPtr_t q = traj.configAtParam(param);
 
-            for ( int i=0; i<optimizer->getPlanningGroup()->num_joints_; ++i)
+            for ( int i=0; i<optimizer->getPlanningGroup()->num_dofs_; ++i)
             {
                 parameters(i,j) = (*q)[joints[i].move3d_dof_index_];
             }
@@ -887,7 +911,24 @@ namespace stomp_motion_planner
     {
         //MatrixXd noise_update = MatrixXd(num_time_steps_, num_dimensions_);
 
-        for (int d=0; d<num_dimensions_; ++d)
+        std::vector<Eigen::VectorXd> parameters;
+
+        const bool count_out_of_joint_limits = false;
+        const bool draw_update = true;
+
+        if( count_out_of_joint_limits )
+        {
+            int nb_samples_in_joint_limits=0;
+            for (int r=0; r<num_rollouts_; ++r)
+            {
+                if( !rollouts_[r].out_of_bounds_ )
+                    nb_samples_in_joint_limits++;
+            }
+            cout << "nb of samples in joint limits : " << nb_samples_in_joint_limits << endl;
+        }
+
+
+        for( int d=0; d<num_dimensions_; ++d )
         {
             parameter_updates_[d] = MatrixXd::Zero(num_time_steps_, num_parameters_[d]);
 
@@ -898,8 +939,21 @@ namespace stomp_motion_planner
                 //cout << "parameter_updates_[" << d << "].row(0).transpose() = ";
                 //cout << endl << parameter_updates_[d].row(0).transpose() << endl;
 
-                parameter_updates_[d].row(0).transpose() += rollouts_[r].noise_[d].cwise() * rollouts_[r].probabilities_[d];
+                if( !rollouts_[r].out_of_bounds_ )
+                {
+                    parameter_updates_[d].row(0).transpose() += rollouts_[r].noise_[d].cwise() * rollouts_[r].probabilities_[d];
+                }
+                else
+                {
+                    // cout << "joint limits out of bounds" << endl;
+                }
             }
+
+            if( draw_update )
+            {
+                parameters.push_back( parameter_updates_[d].row(0).transpose() + parameters_[d] );
+            }
+
             // cout << "parameter_updates_[" << d << "].row(0).transpose() = " << endl << parameter_updates_[d].row(0).transpose() << endl;
             // This is the multiplication by M
             if( use_multiplication_by_m_ )
@@ -907,6 +961,9 @@ namespace stomp_motion_planner
                 parameter_updates_[d].row(0).transpose() = projection_matrix_[d]*parameter_updates_[d].row(0).transpose();
             }
         }
+
+        if( draw_update )
+            addParmametersToDraw( parameters, 33 ); // 33 -> Orange
 
         //resampleUpdates();
         return true;
@@ -927,6 +984,32 @@ namespace stomp_motion_planner
         //   cout << "parameter_updates[" << d << "] = " << endl << parameter_updates_[d] << endl;
         // }
         return true;
+    }
+
+    /// TODO implement it
+    void PolicyImprovement::addParmametersToDraw(const std::vector<Eigen::VectorXd>& parameters, int color)
+    {
+        const Move3D::ChompPlanningGroup* planning_group = static_pointer_cast<StompOptimizer>(task_)->getPlanningGroup();
+        const std::vector<Move3D::ChompDof>& dofs = planning_group->chomp_dofs_;
+
+        Move3D::Trajectory traj( planning_group->robot_ );
+
+        for ( int j=0; j<num_time_steps_; ++j)
+        {
+            confPtr_t q = traj.getRobot()->getCurrentPos();
+
+            for ( int i=0; i<planning_group->num_dofs_; ++i)
+            {
+                (*q)[dofs[i].move3d_dof_index_] = parameters[i][j];
+            }
+            traj.push_back(q);
+        }
+
+        //T.print();
+        traj.setColor( color );
+        traj.setUseContinuousColors( false );
+        //        global_trajToDraw.clear();
+        global_trajToDraw.push_back( traj );
     }
 
     bool PolicyImprovement::covarianceMatrixAdaptaion()
@@ -964,10 +1047,11 @@ namespace stomp_motion_planner
             extra_rollouts_[r].parameters_ = rollouts[r];
             extra_rollouts_[r].state_costs_ = rollout_costs[r];
             computeNoise(extra_rollouts_[r]);
-            computeProjectedNoise(extra_rollouts_[r]);
-            // set control cost
-            computeRolloutControlCosts(extra_rollouts_[r]);
-            //ROS_INFO("Extra rollout cost = %f", extra_rollouts_[r].getCost());
+            // computeProjectedNoise(extra_rollouts_[r]);
+            // computeRolloutControlCosts(extra_rollouts_[r]);
+
+            // TODO
+            // extra_rollouts_[r].rollout.control_costs_ = rollout_control_costs[r];
         }
 
         extra_rollouts_added_ = true;

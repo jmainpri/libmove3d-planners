@@ -123,6 +123,10 @@ public:
       */
     const std::vector<costComputation*>& getCostComputers();
 
+    /**
+      * get main cost computer
+      */
+    const MOVE3D_BOOST_PTR_NAMESPACE<costComputation> getMainCostComputer() const { return compute_fk_main_; }
 
     /**
    * Set the passive Dofs
@@ -149,7 +153,7 @@ public:
     /**
    * Get the current configuration collision cost
    */
-    double getCollisionSpaceCost( Move3D::Configuration& q );
+    double getCollisionSpaceCost( const Move3D::Configuration& q );
 
     /**
    * Get the current trajectory cost profile
@@ -164,10 +168,10 @@ public:
 
     // stuff derived from Task:
     /**
-   * Initializes the task for a given number of time steps
-   * @param num_time_steps
-   * @return
-   */
+    * Initializes the task for a given number of time steps
+    * @param num_time_steps
+    * @return
+    */
     bool initialize(/*ros::NodeHandle& node_handle,*/ int num_time_steps);
 
     /**
@@ -186,7 +190,7 @@ public:
    * @param costs Vector of num_time_steps, state space cost per timestep (do not include control costs)
    * @return
    */
-    bool execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample );
+    bool execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample, bool is_rollout );
 
     /**
    * Get the Policy object of this Task
@@ -252,7 +256,7 @@ public:
     /**
       * Get Group traj
       */
-    void setGroupTrajectoryToApiTraj(Move3D::Trajectory& traj);
+    void setGroupTrajectoryToMove3DTraj(Move3D::Trajectory& traj);
 
     /**
       * Returns cost profiles
@@ -275,6 +279,17 @@ public:
       */
     const std::vector<Move3D::Trajectory>& getAllTrajs() const { return all_move3d_traj_; }
 
+    /**
+      * Set trajectory buffer
+      */
+    void setBuffer(const std::vector<Eigen::VectorXd>& buffer) { buffer_ = buffer; use_buffer_ = true; }
+    void clearBuffer() { use_buffer_ = false ; }
+
+    /**
+      * Main initialization function
+      */
+    void initialize();
+
 private:
 
     int id_;
@@ -288,6 +303,7 @@ private:
     std::vector<Move3D::Trajectory> all_move3d_traj_;
     Move3D::Trajectory move3d_traj_;
     Move3D::Trajectory best_traj_;
+    Move3D::Trajectory last_traj_;
 
     int num_joints_;
     int num_vars_free_;
@@ -317,9 +333,11 @@ private:
     bool use_time_limit_;
     double time_limit_;
     bool use_iteration_limit_;
+    bool use_collision_free_limit_limit_;
 
     std::vector<Move3D::confPtr_t> passive_dofs_;
 
+    MOVE3D_BOOST_PTR_NAMESPACE<costComputation> compute_fk_main_;
     std::vector<costComputation*> compute_fk_;
     std::vector<double> traj_color_;
 
@@ -345,14 +363,18 @@ private:
     //  std::vector<std::vector<KDL::Vector> > collision_point_vel_;
     //  std::vector<std::vector<KDL::Vector> > collision_point_acc_;
 
-    std::vector<std::vector<Eigen::Transform3d> > segment_frames_;
+    std::vector<std::vector<Eigen::Transform3d, Eigen::aligned_allocator<Eigen::Transform3d> > > segment_frames_;
     std::vector<std::vector<Eigen::Vector3d> >  joint_axis_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  joint_pos_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_pos_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_vel_eigen_;
     std::vector<std::vector<Eigen::Vector3d> >  collision_point_acc_eigen_;
 
+    std::vector<Eigen::VectorXd> buffer_;
+    bool use_buffer_;
+
     Eigen::VectorXd general_cost_potential_;
+    Eigen::VectorXd dt_;
 
     Eigen::MatrixXd collision_point_potential_;
     Eigen::MatrixXd collision_point_vel_mag_;
@@ -409,6 +431,9 @@ private:
     std::vector<double> last_human_pos_;
     bool reset_reused_rollouts_;
 
+    bool allow_end_configuration_motion_;
+    int id_fixed_;
+
     Move3D::confPtr_t source_;
     Move3D::confPtr_t target_;
     Move3D::confPtr_t target_new_;
@@ -422,7 +447,6 @@ private:
     //  std::vector<MOVE3D_BOOST_PTR_NAMESPACE<ConstraintEvaluator> > constraint_evaluators_;
     MOVE3D_BOOST_PTR_NAMESPACE<StompStatistics>  stomp_statistics_;
 
-    void initialize();
     void initPolicy();
     void calculateSmoothnessIncrements();
     void calculateCollisionIncrements();
@@ -437,9 +461,10 @@ private:
     void animateTrajectoryPolicy();
     void visualizeState(int index);
     void saveEndeffectorTraj();
+    void computeTrajectoryFeatures(const Move3D::Trajectory& traj);
 
     double getTrajectoryCost();
-    double getSmoothnessCost();
+    double getSmoothnessCost(bool save_to_file = false);
     double getCollisionCost();
     double getGeneralCost();
     void perturbTrajectory();
@@ -453,7 +478,7 @@ private:
     bool getCollisionPointObstacleCost( int segment, int coll_point, double& collion_point_potential, Eigen::Vector3d& pos );
     bool getConfigObstacleCost( Move3D::Robot* robot, int i, Eigen::MatrixXd& collision_point_potential, std::vector< std::vector<Eigen::Vector3d> >& collision_point_pos );
 
-    bool performForwardKinematics();
+    bool performForwardKinematics(bool is_rollout);
     void doChompOptimization();
 
     void copyPolicyToGroupTrajectory();
@@ -481,6 +506,8 @@ private:
 
     int getNumberOfCollisionPoints(Move3D::Robot* R);
 
+
+
     //  void getTorques(int index, std::vector<double>& torques, const std::vector<KDL::Wrench>& wrenches);
 };
 
@@ -489,10 +516,5 @@ private:
 extern std::map< Move3D::Robot*, std::vector<Eigen::Vector3d> > global_MultiStomplinesToDraw;
 extern std::map< Move3D::Robot*, std::vector<double> >          global_MultiStomplinesColors;
 extern MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompOptimizer> global_optimizer;
-
-void move3d_set_api_functions_collision_space( bool use_move3d_fct );
-bool move3d_use_api_functions_collision_space();
-void move3d_set_fct_get_nb_collision_points( boost::function<int(Move3D::Robot*)> fct, int id=0 );
-void move3d_set_fct_get_config_collision_cost( boost::function<bool( Move3D::Robot* robot, int i, Eigen::MatrixXd&, std::vector< std::vector<Eigen::Vector3d> >& )> fct, int id=0 ) ;
 
 #endif /* STOMP_OPTIMIZER_H_ */

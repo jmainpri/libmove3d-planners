@@ -67,7 +67,7 @@ ThresholdExpansion::~ThresholdExpansion()
 /*!
  * Expand the localpath
  */
-bool ThresholdExpansion::expandToGoal(Node* expansionNode, shared_ptr<Configuration> directionConfig)
+bool ThresholdExpansion::expandToGoal(Node* expansionNode, confPtr_t directionConfig)
 {
   LocalPath directionLocalPath(expansionNode->getConfiguration(), directionConfig);
 	const double paramMax = directionLocalPath.getParamMax();
@@ -75,7 +75,7 @@ bool ThresholdExpansion::expandToGoal(Node* expansionNode, shared_ptr<Configurat
 	double param = 0;
   for ( int i = 1; param < paramMax; i++)
   {
-		shared_ptr<Configuration> q;
+		confPtr_t q;
     param = ((double) i) * step();
 		
     if (param > paramMax)
@@ -99,7 +99,7 @@ bool ThresholdExpansion::expandToGoal(Node* expansionNode, shared_ptr<Configurat
 /*!
  * Connect expansion method
  */
-int ThresholdExpansion::connectExpandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode)
+int ThresholdExpansion::connectExpandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode)
 {
 	cout << "ThresholdExpansion::connectExpandProcess Not implemented" << endl;
 	return 0;
@@ -108,7 +108,7 @@ int ThresholdExpansion::connectExpandProcess(Node* expansionNode, MOVE3D_PTR_NAM
 /*!
  * Extend expansion method
  */
-int ThresholdExpansion::extendExpandProcess(Node* expansionNode, MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> directionConfig, Node* directionNode)
+int ThresholdExpansion::extendExpandProcess(Node* expansionNode, confPtr_t directionConfig, Node* directionNode)
 {
 	bool failed(false);
   int nbCreatedNodes(0);
@@ -190,7 +190,7 @@ int ThresholdExpansion::extendExpandProcess(Node* expansionNode, MOVE3D_PTR_NAME
  * expandProcess
  */
 unsigned ThresholdExpansion::expandProcess(Node* expansionNode,
-                                      shared_ptr<Configuration> directionConfig,
+                                      confPtr_t directionConfig,
                                       Node* directionNode,
                                       Env::expansionMethod method)
 {

@@ -75,7 +75,7 @@ public:
     BodySurfaceSampler* getBodySampler() { return m_sampler; }
 
     // functions
-    void init();
+    void initialize();
 
     // ---------------------------------------------------------------
     // point cloud collision checker

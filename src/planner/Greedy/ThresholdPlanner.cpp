@@ -124,10 +124,10 @@ bool ThresholdPlanner::newTrajectoryExtracted(Move3D::Trajectory* trajPt)
  */
 unsigned int ThresholdPlanner::run()
 {
-	shared_ptr<Configuration> tmp = _Robot->getCurrentPos();
+	confPtr_t tmp = _Robot->getCurrentPos();
 	
-	shared_ptr<Configuration> qi = _Start->getConfiguration();
-	shared_ptr<Configuration> qf = _Goal->getConfiguration();
+	confPtr_t qi = _Start->getConfiguration();
+	confPtr_t qf = _Goal->getConfiguration();
 	
 	//	cout << "ENV.getInt(Env::maxNodeCompco) = " << ENV.getInt(Env::maxNodeCompco) << endl;
 	if( !preConditions() )

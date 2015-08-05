@@ -17,13 +17,13 @@
  * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
  * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                                  
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001). 
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
  * Move3d: A generic platform for path planning. In in 4th Int. Symp.
  * on Assembly and Task Planning.
  *
- *                                               Jim Mainprice Tue 27 May 2014 
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 #include "HRICS_record_motion.hpp"
 
@@ -49,6 +49,62 @@ using namespace HRICS;
 using namespace Move3D;
 
 std::vector<RecordMotion*> global_motionRecorders;
+
+//--------------------------------------------------------
+//--------------------------------------------------------
+//--------------------------------------------------------
+
+Move3D::Trajectory HRICS::motion_to_traj( const motion_t& traj,
+                                          Move3D::Robot* robot,
+                                          int max_index )
+{
+    if( traj.empty() )
+        return Move3D::Trajectory();
+
+    if( max_index < 0 )
+        max_index = traj.size();
+
+    Move3D::Trajectory traj1( robot );
+    std::vector<double> dts;
+
+    for( int i=0; i<int(traj.size()) && i<max_index; i++ ) {
+        if( traj[i].second->getConfigStruct() == NULL ){
+            std::cout << "NULL configuration in " << __PRETTY_FUNCTION__ << std::endl;
+        }
+        dts.push_back( traj[i].first );
+        traj1.push_back( Move3D::confPtr_t( new Move3D::Configuration( robot, traj[i].second->getConfigStruct() )));
+    }
+    traj1.setUseTimeParameter( true );
+    traj1.setUseConstantTime( false );
+    traj1.setDeltaTimes( dts );
+
+    // Resample
+    Move3D::Trajectory traj2( robot );
+    const double dt = 0.01; // 100Hz
+    double t = 0.0;
+    int ith=0;
+
+    while(1)
+    {
+        if(!traj2.push_back( traj1.configAtTime(t) ) )
+            cout << "no configuration added at : " << ith << endl;
+
+        t += dt;
+
+        ith++;
+
+        if( ( t - traj1.getDuration() ) > 1e-3 ) {
+            cout << "break in motion_to_traj,  t : " << t << ", traj1.getDuration() : " << traj1.getDuration() << endl;
+            cout << " i : " << traj2.getNbOfViaPoints() << endl;
+            cout << " ith : " << ith << endl;
+            break;
+        }
+    }
+    traj2.setUseTimeParameter( true );
+    traj2.setUseConstantTime( true );
+    traj2.setDeltaTime( dt ); // Set index 1 because 0 is often 0.0
+    return traj2;
+}
 
 //--------------------------------------------------------
 //--------------------------------------------------------
@@ -330,7 +386,7 @@ bool RecordMotion::loadXMLFolder(  const std::string& foldername  )
             {
                 //cout << "Load File : " << filename.str() << endl;
                 motion_t partial_motion = loadFromXml( filename.str() );
-                storeMotion( partial_motion, j == 0 );
+                storeMotion( partial_motion, "", j == 0 );
 
                 cout << "partial_motion.size() : " << partial_motion.size() << endl;
 
@@ -347,19 +403,20 @@ bool RecordMotion::loadXMLFolder(  const std::string& foldername  )
     return true;
 }
 
-void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet )
+std::vector<std::string> RecordMotion::listFolder( const std::string& foldername, std::string ext, bool quiet ) const
 {
     if( !quiet ) {
         cout << "Load Folder : " << foldername << endl;
     }
 
+    std::vector<std::string> files;
+
     std::string command = "ls " + foldername;
     FILE* fp = popen( command.c_str(), "r");
     if (fp == NULL) {
         cout << "ERROR in system call" << endl;
-        return;
+        return files;
     }
-    std::vector<std::string> files;
 
     char str[PATH_MAX];
     while ( fgets( str, PATH_MAX, fp) != NULL )
@@ -368,21 +425,128 @@ void RecordMotion::loadCSVFolder( const std::string& foldername, bool quiet )
         filename = filename.substr(0, filename.size()-1);
         std::string extension( filename.substr( filename.find_last_of(".") + 1 ) );
         //cout << extension << endl;
-        if( extension == "csv" )
+        if( extension == ext )
         {
-            if( !quiet ) {
-                cout << "add : " << filename << endl;
+            char id = filename.at( filename.find_last_of(".")-1 );
+            if( true /*id == '0'*/ ){
+                if( !quiet ) {
+                    cout << "add : " << filename << endl;
+                }
+                files.push_back( filename );
             }
-            files.push_back( filename );
         }
     }
     pclose(fp);
+    return files;
+}
 
-    m_stored_motions.resize( files.size() );
-
-    for(int i=0;i<int(files.size());i++)
+void RecordMotion::loadCSVFolder( const std::string& foldername,
+                                  bool quiet, std::string base_name )
+{
+    std::vector<std::string> files = listFolder( foldername, "csv", quiet );
+    if( files.empty() )
     {
-        m_stored_motions[i] = loadFromCSV( foldername + "/" + files[i], quiet );
+        cout << "Folder " << foldername << " is empty!!!" << endl;
+        return;
+    }
+
+    for(size_t i=0; i<files.size(); i++)
+    {
+        // true if file name contains base_name
+        if ( files[i].find( base_name ) != std::string::npos )
+        {
+            motion_t motion = loadFromCSV( foldername + "/" + files[i], quiet );
+            if( !quiet )
+                cout << "motion.size() : " << motion.size() << endl;
+            m_stored_motions.push_back( motion );
+            m_stored_motions_names.push_back( files[i] );
+        }
+    }
+
+    if( !quiet ) {
+        cout << "m_stored_motions.size() : " << m_stored_motions.size() << endl;
+    }
+}
+
+void RecordMotion::loadTrajectories( const std::string& foldername,
+                                     bool quiet )
+{
+    std::vector<std::string> files = listFolder( foldername, "traj", quiet );
+    if( files.empty() )
+    {
+        cout << "Folder " << foldername << " is empty!!!" << endl;
+        return;
+    }
+
+    m_stored_motions.clear();
+    m_stored_motions_names.clear();
+
+    for(size_t i=0; i<files.size(); i++)
+    {
+        Move3D::Trajectory traj( m_robot );
+        traj.loadFromFile( foldername + "/" + files[i] );
+
+        double duration = traj.getDuration();
+        m_stored_motions.push_back( HRICS::traj_to_motion(traj, duration) );
+        m_stored_motions_names.push_back( files[i] );
+    }
+
+    if( !quiet ) {
+        cout << "m_stored_motions.size() : " << m_stored_motions.size() << endl;
+    }
+}
+
+
+void RecordMotion::loadCSVFolder( const std::string& foldername,
+                                  bool quiet, double threshold )
+{
+    std::vector<std::string> files = listFolder( foldername, "csv", quiet );
+    if( files.empty() )
+    {
+        cout << "Folder " << foldername << " is empty!!!" << endl;
+        return;
+    }
+
+    m_stored_motions.clear();
+    m_stored_motions_names.clear();
+
+    for(size_t i=0; i<files.size(); i++)
+    {
+        motion_t motion = loadFromCSV( foldername + "/" + files[i], quiet );
+
+        if( threshold != 0.0 )
+        {
+            if( threshold < 0.0 )
+            {
+                if( (*motion[0].second)[6] < fabs(threshold) )
+                {
+                    m_stored_motions.push_back( motion );
+                    m_stored_motions_names.push_back( files[i] );
+                }
+            }
+
+            if( threshold > 0.0 )
+            {
+                if( (*motion[0].second)[6] > fabs(threshold) )
+                {
+                    m_stored_motions.push_back( motion );
+                    m_stored_motions_names.push_back( files[i] );
+                }
+            }
+        }
+        else {
+            m_stored_motions.push_back( motion );
+            m_stored_motions_names.push_back( files[i] );
+        }
+
+        //        std::string filename( files[i].substr( 0, files[i].find_last_of(".") - 1 ) + "1.csv" );
+        //        std::string path = foldername + "/" + filename;
+        //        std::ifstream file_exists( path.c_str() );
+        //        if( file_exists )
+        //        {
+        //            motion_t motion1 = loadFromCSV( path, quiet );
+        //            m_stored_motions.back().insert( m_stored_motions.back().end(), motion1.begin(), motion1.end() );
+        //        }
     }
 
     if( !quiet ) {
@@ -411,10 +575,11 @@ void RecordMotion::addToCurrentMotion( const motion_t& motion )
     m_motion.insert( m_motion.end(), motion.begin(), motion.end() );
 }
 
-void RecordMotion::storeMotion( const motion_t& motion, bool new_motion )
+void RecordMotion::storeMotion( const motion_t& motion, std::string name, bool new_motion )
 {
     if( new_motion )
     {
+        m_stored_motions_names.push_back( name );
         m_stored_motions.push_back( motion );
     }
     else
@@ -441,24 +606,20 @@ bool RecordMotion::setRobotToConfiguration(int ith)
 
 bool RecordMotion::setRobotToStoredMotionConfig(int motion_id, int config_id)
 {
-    if( motion_id < 0 || ( motion_id > int(m_stored_motions[motion_id].size())))
+    if( motion_id < 0 || ( motion_id > int(m_stored_motions.size())))
     {
         cout << "index out of stored motion range in " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
-    if( config_id < 0 || config_id >= int(m_stored_motions[motion_id].size()) ) {
+    if( config_id < 0 || ( config_id >= int(m_stored_motions[motion_id].size()))) {
+        cout << "config_id : " << config_id << endl;
+        cout << "m_stored_motions[motion_id].size() : " << m_stored_motions[motion_id].size() << endl;
         cout << "index out of range in " << __PRETTY_FUNCTION__ << endl;
         return false;
     }
 
-
     m_robot->setAndUpdate( *m_stored_motions[motion_id][config_id].second );
-
-    //    if(use_camera_)
-    //    {
-    //        _camera->pubImage(m_times[config_id]);
-    //    }
 
     return true;
 }
@@ -530,14 +691,14 @@ void RecordMotion::showMotion( const motion_t& motion )
 
         if ( dt>=motion[i].first ) {
 
-            //            cout << "-------------------------------" << endl;
-            //            q_cur->equal( *motion[i].second, true );
+            // cout << "-------------------------------" << endl;
+            // q_cur->equal( *motion[i].second, true );
             q_cur = motion[i].second;
             m_robot->setAndUpdate( *q_cur );
-            //            cout << "dt : " << dt << " , m_motion[i].first : " << motion[i].first << endl;
-            //            motion[i].second->print();
-            //            motion[i].second->adaptCircularJointsLimits();
-            //            cout << (*motion[i].second)[11] << endl;
+            // cout << "dt : " << dt << " , m_motion[i].first : " << motion[i].first << endl;
+            // motion[i].second->print();
+            // motion[i].second->adaptCircularJointsLimits();
+            // cout << (*motion[i].second)[11] << endl;
             g3d_draw_allwin_active();
             dt = 0.0;
             i++;
@@ -553,7 +714,7 @@ void RecordMotion::showMotion( const motion_t& motion )
     }
 }
 
-void RecordMotion::drawMotion( const motion_t& motion )
+void RecordMotion::drawMotion( const motion_t& motion, int nb_frames=-1 )
 {
     if( motion.empty() ) {
         return;
@@ -564,7 +725,9 @@ void RecordMotion::drawMotion( const motion_t& motion )
     static_cast<p3d_rob*>( m_robot->getP3dRobotStruct() )->draw_transparent = false;
     p3d_rob* rob = (p3d_rob*)(p3d_get_desc_curid( P3D_ROBOT ));
 
-    for ( int i=0; i<int(motion.size()); i++ )
+    int delta = nb_frames > 0 ? int( double(motion.size()) / double(nb_frames)) : 1;
+
+    for ( int i=0; i<int(motion.size()); i += delta )
     {
         win->vs.transparency_mode= G3D_TRANSPARENT_AND_OPAQUE;
 
@@ -641,14 +804,14 @@ void RecordMotion::drawHeraklesArms()
         {
             dawColorSkinedCylinder( p1,  p2 );
         }
+        if (error) {
+            cout << "Could not find one of the joints in hri_draw_kinect_human_arms" << endl;
+        }
     }
-    else {
-        error = true;
-    }
-
-    if (error) {
-        cout << "Could not find one of the joints in hri_draw_kinect_human_arms" << endl;
-    }
+//    else {
+//        //cout << "Could not find HERAKLES_HUMAN in hri_draw_kinect_human_arms" << endl;
+//        error = true;
+//    }
 }
 
 void RecordMotion::draw()
@@ -762,12 +925,12 @@ void RecordMotion::saveStoredToCSV( const std::string &filename , bool break_int
     }
 
     //Breaks the prediction for IROS
-//    const int samples = 100;
-//    cout << "Down sampling to " << samples << endl;
-//    for (int i=0; i<int(m_stored_motions.size()); i++)
-//    {
-//        m_stored_motions[i] = resample( m_stored_motions[i], samples );
-//    }
+    //    const int samples = 100;
+    //    cout << "Down sampling to " << samples << endl;
+    //    for (int i=0; i<int(m_stored_motions.size()); i++)
+    //    {
+    //        m_stored_motions[i] = resample( m_stored_motions[i], samples );
+    //    }
 
     std::ofstream s;
     if( !break_into_files )
@@ -956,8 +1119,8 @@ Eigen::Transform3d RecordMotion::getOffsetTransform()
     T.translation()(2) = m_transZ;
 
     Eigen::Matrix3d rot = Eigen::Matrix3d( Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX())
-                                         * Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY())
-                                         * Eigen::AngleAxisd(m_transR, Eigen::Vector3d::UnitZ()) );
+                                           * Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY())
+                                           * Eigen::AngleAxisd(m_transR, Eigen::Vector3d::UnitZ()) );
 
     T.linear() = rot;
 
@@ -1023,18 +1186,17 @@ bool  RecordMotion::loadRegressedFromCSV( const std::string& foldername )
     return true;
 }
 
-confPtr_t RecordMotion::getConfigOpenRave( const std::vector<std::string>& config )
+confPtr_t RecordMotion::getConfigOpenRave( const std::vector<std::string>& config ) const
 {
     std::vector<double> tmp(config.size());
 
     for(int i=0;i<int(config.size());i++)
-    {
         convert_text_to_num<double>( tmp[i], config[i], std::dec );
-    }
 
     confPtr_t q = m_robot->getCurrentPos();
 
-    for( std::map<std::string,int>::iterator it_map=herakles_openrave_map.begin(); it_map!=herakles_openrave_map.end(); it_map++ )
+    for( std::map<std::string,int>::iterator it_map=herakles_openrave_map.begin();
+         it_map!=herakles_openrave_map.end(); it_map++ )
     {
         (*q)[ herakles_move3d_map[it_map->first] ] = tmp[ it_map->second ];
     }
@@ -1042,7 +1204,40 @@ confPtr_t RecordMotion::getConfigOpenRave( const std::vector<std::string>& confi
     return q;
 }
 
-confPtr_t RecordMotion::getConfigTwelveDoF( const std::vector<std::string>& config )
+std::pair<double,confPtr_t> RecordMotion::getConfigBio( const std::vector<std::string>& config ) const
+{
+    std::vector<double> tmp(config.size());
+
+    for(int i=0;i<int(config.size());i++)
+        convert_text_to_num<double>( tmp[i], config[i], std::dec );
+
+    std::pair<double,confPtr_t> time_config;
+
+    time_config.first = tmp[0];
+
+    confPtr_t q = m_robot->getCurrentPos();
+
+    for( std::map<std::string,int>::iterator it_map=herakles_bio_openrave_map.begin();
+         it_map!=herakles_bio_openrave_map.end(); it_map++ )
+    {
+        (*q)[ herakles_bio_move3d_map[it_map->first] ] = tmp[ it_map->second+1 ]; // Add one for time
+
+//        if ( it_map->first == "rShoulderTransY" ) {
+//            cout << it_map->first << " : " << tmp[ it_map->second+1 ] << endl;
+//        }
+        // TODO REMOVE THAT SHOULDER HACK
+        // Should work on left arm model to avoid seting the shoulder in the parser
+        if ( it_map->first == "lShoulderX" ) {
+            (*q)[ herakles_bio_move3d_map[it_map->first] ] = -M_PI/2; // Add one for time
+        }
+    }
+
+    time_config.second = q;
+
+    return time_config;
+}
+
+confPtr_t RecordMotion::getConfigTwelveDoF( const std::vector<std::string>& config ) const
 {
     confPtr_t q = m_robot->getCurrentPos();
 
@@ -1063,7 +1258,8 @@ confPtr_t RecordMotion::getConfigTwelveDoF( const std::vector<std::string>& conf
     return q;
 }
 
-motion_t RecordMotion::loadFromCSV( const std::string& filename, bool quiet )
+motion_t RecordMotion::loadFromCSV( const std::string& filename,
+                                    bool quiet ) const
 {
     if(!quiet) {
         cout << "Loading from CSV : " << filename << endl;
@@ -1106,23 +1302,34 @@ motion_t RecordMotion::loadFromCSV( const std::string& filename, bool quiet )
     //    cout << "m_robot->getNumberOfActiveDoF()" << m_robot->getNumberOfActiveDoF() << endl;
     for (int i=0; i<int(matrix.size()); i++)
     {
-        confPtr_t q;
+        std::pair<double,confPtr_t> config;
 
-        if( m_use_or_format )
+        if( m_use_bio_format )
         {
-            q = getConfigOpenRave( matrix[i] );
+             config = getConfigBio( matrix[i] );
+        }
+        else if( m_use_or_format )
+        {
+            confPtr_t q = getConfigOpenRave( matrix[i] );
+            config.first = 0.02;
+            config.second = q;
+            q->adaptCircularJointsLimits();
         }
         else
         {
-            q = getConfigTwelveDoF( matrix[i] );
+            confPtr_t q = getConfigTwelveDoF( matrix[i] );
+            config.first = 0.02;
+            config.second = q;
+            q->adaptCircularJointsLimits();
         }
 
-        // This is because the data was recorded near limits
-        q->adaptCircularJointsLimits();
-        //q->print();
+//        cout << "dt : " << config.first << endl;
+//        config.second->print();
 
-        motion.push_back( std::make_pair(0.02,q) );
+        motion.push_back( config );
     }
+
+//    exit(0);
 
     return motion;
 }
