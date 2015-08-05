@@ -403,7 +403,8 @@ bool RecordMotion::loadXMLFolder(  const std::string& foldername  )
     return true;
 }
 
-std::vector<std::string> RecordMotion::listFolder( const std::string& foldername, std::string ext, bool quiet ) const
+std::vector<std::string> RecordMotion::listFolder(
+        const std::string& foldername, std::string ext, bool quiet ) const
 {
     if( !quiet ) {
         cout << "Load Folder : " << foldername << endl;
@@ -427,7 +428,7 @@ std::vector<std::string> RecordMotion::listFolder( const std::string& foldername
         //cout << extension << endl;
         if( extension == ext )
         {
-            char id = filename.at( filename.find_last_of(".")-1 );
+            // char id = filename.at( filename.find_last_of(".")-1 );
             if( true /*id == '0'*/ ){
                 if( !quiet ) {
                     cout << "add : " << filename << endl;

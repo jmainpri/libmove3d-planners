@@ -144,36 +144,42 @@ void PlayMotion::runRealTime(int id)
             {
                 for (size_t j=0; j<_stored_motions.size(); j++) // for each human or robot
                 {
-                    if( id >= _stored_motions[j].size() ) // no motion of that id
+                    if( id >= int(_stored_motions[j].size()) ) // no motion of that id
                         return;
 
                     int i =0;
                     double time_traj = 0.0;
 
-                    while( i < _stored_motions[j][id].size() )
+                    while( i < int(_stored_motions[j][id].size()) )
                     {
                         time_traj += _stored_motions[j][id][i].first; // compute time along trajectory
 
                         if( time_traj >= time )
                         {
-//                            cout << "i : " << i << " , :  _stored_motions[j][id].size() "  << _stored_motions[j][id].size() << " , time_traj : " << time_traj << " , time : " << time  << endl;
+//                            cout << "i : " << i
+                            // << " , :  _stored_motions[j][id].size() "
+                            // << _stored_motions[j][id].size() << " , time_traj : "
+                            // << time_traj << " , time : " << time  << endl;
 
                             Move3D::confPtr_t q = _stored_motions[j][id][i].second;
                             Move3D::Robot* robot = q->getRobot();
                             robot->setAndUpdate( *q );
 
-                            bool ncol = false;
+                            // bool ncol = false;
 
                             if( Move3D::global_collisionSpace )
                             {
                                 double distance = std::numeric_limits<double>::max();
                                 double potential = std::numeric_limits<double>::max();
 
-                                ncol = Move3D::global_collisionSpace->isRobotColliding( distance, potential );
+//                                ncol =
+                                Move3D::global_collisionSpace->isRobotColliding(
+                                            distance, potential );
                             }
                             else
                             {
-                                ncol = robot->isInCollision();
+//                                ncol =
+                                robot->isInCollision();
                             }
 
                             // if( ncol ){
@@ -185,7 +191,7 @@ void PlayMotion::runRealTime(int id)
 
                         i++;
                     }
-                    if( i >= _stored_motions[j][id].size() ){
+                    if( i >= int(_stored_motions[j][id].size()) ){
                         // cout << "reach end of trajectory" << endl;
                         StopRun = true;
                     }

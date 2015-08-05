@@ -701,7 +701,7 @@ Joint* Robot::getIthActiveDoFJoint(unsigned int ithActiveDoF , unsigned int& ith
 Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints, Joint* eef, bool with_rotations, bool with_height) const
 {
     int nb_dofs = 0;
-    for(int j=0; j<active_joints.size(); j++)
+    for(size_t j=0; j<active_joints.size(); j++)
         nb_dofs += active_joints[j]->getNumberOfDof();
 
     if( with_rotations )
@@ -715,7 +715,7 @@ Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints, Joi
 
     int id=0;
 
-    for(int j=0; j<active_joints.size(); j++)
+    for(size_t j=0; j<active_joints.size(); j++)
     {
         Eigen::Transform3d T( active_joints[j]->getMatrixPos() );
 

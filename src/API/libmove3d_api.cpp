@@ -619,7 +619,7 @@ bool move3d_robot_is_in_collision_with_others( Robot* R, std::vector<Robot*>& ot
 {
     bool in_collision = false;
 
-    for( int i=0; i<others.size(); i++)
+    for( size_t i=0; i<others.size(); i++)
         if( pqp_robot_robot_collision_test(static_cast<p3d_rob*>(R->getP3dRobotStruct()),
                                            static_cast<p3d_rob*>(others[i]->getP3dRobotStruct()) ) ) {
             in_collision = true;

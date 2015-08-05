@@ -36,7 +36,7 @@
 
 #ifndef COVARIANT_TRAJECTORY_POLICY_H_
 #define COVARIANT_TRAJECTORY_POLICY_H_
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 
 #include "planner/TrajectoryOptim/Chomp/chompUtils.hpp"

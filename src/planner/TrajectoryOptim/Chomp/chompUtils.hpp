@@ -38,12 +38,14 @@
 #ifndef CHOMP_UTILS_H_
 #define CHOMP_UTILS_H_
 
+#include "utils/eigen_transition.hpp"
+
 //#include <kdl/jntarray.hpp>
 //#include <chomp_motion_planner/chomp_robot_model.h>
 #include <iostream>
 #include <vector>
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 

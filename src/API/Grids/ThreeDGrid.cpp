@@ -30,12 +30,12 @@
 #include "Graphic-pkg.h"
 #include "P3d-pkg.h"
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
-
-#include <Eigen/Array>
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 
 #include "API/Graphic/drawModule.hpp"
+#include "utils/eigen_transition.hpp"
 
+#include <Eigen/Dense>
 #include <iostream>
 #include <libxml/parser.h>
 
@@ -43,7 +43,7 @@ using namespace std;
 using namespace Move3D;
 
 // import most common Eigen types
-//USING_PART_OF_NAMESPACE_EIGEN
+//using namespace Eigen;
 using namespace Eigen;
 
 /*!
@@ -410,7 +410,7 @@ bool ThreeDCell::readCellFromXml(xmlNodePtr cur)
 }
 
 // import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
+//using namespace Eigen;
 using namespace Eigen;
 
 /*!

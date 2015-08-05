@@ -54,7 +54,7 @@ class Spheres3D : public PlanarFeature
     public:
 
         Spheres3D();
-        ~Spheres3D();
+        virtual ~Spheres3D();
 
         void initialize();
 

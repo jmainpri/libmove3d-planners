@@ -48,11 +48,11 @@ Move3D::confPtr_t IKGenerator::sample(Move3D::confPtr_t q, double variance_facto
 
     Move3D::confPtr_t q_tmp = q->copy();
 
-    for(int j=0; j<active_joints_.size(); j++)
+    for(size_t j=0; j<active_joints_.size(); j++)
     {
         Move3D::Joint* jntPt = active_joints_[j];
 
-        for(int i=0; i<jntPt->getNumberOfDof(); i++)
+        for(size_t i=0; i<jntPt->getNumberOfDof(); i++)
         {
            int k = jntPt->getIndexOfFirstDof() + i;
 
@@ -98,7 +98,9 @@ bool IKGenerator::generate(const Eigen::VectorXd& xdes)
 
         for(int j=0; j<nb_samples; j++)
         {
-            Move3D::confPtr_t q_tmp = sample( best[ j<best.size() ? j : 0 ].second, temperature );
+            Move3D::confPtr_t q_tmp =
+                    sample( best[ j<int(best.size()) ? j : 0 ].second,
+                    temperature );
 
             robot_->setAndUpdate(*q_tmp);
 //            q_tmp->print();
@@ -133,7 +135,7 @@ bool IKGenerator::generate(const Eigen::VectorXd& xdes)
 
             best.push_back( configs[0] );
             std::sort( best.begin(), best.end() );
-            if( best.size() > nb_samples )
+            if( best.size() > size_t(nb_samples) )
                 best.resize( nb_samples );
         }
         temperature -= alpha;

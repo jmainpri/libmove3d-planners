@@ -93,9 +93,10 @@ private:
     LegibilityFeature           legib_feat_;
     CollisionFeature            collision_feat_;
 
+    Move3D::SmoothnessFeature smoothness_feat_;
     Move3D::LengthFeature length_feat_;
 //    Move3D::TrajectorySmoothness smoothness_feat_;
-    Move3D::SmoothnessFeature smoothness_feat_;
+
 
     // Store a pointer to all feature
     // to iterate of all when not active in the base class

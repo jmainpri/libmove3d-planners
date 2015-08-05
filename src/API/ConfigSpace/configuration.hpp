@@ -28,7 +28,7 @@
 #ifndef CONFIGURATION_HPP
 #define CONFIGURATION_HPP
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 
 #include <Eigen/Core>
 #define EIGEN_USE_NEW_STDVECTOR
@@ -40,6 +40,8 @@
 #include <tr1/memory>
 #endif
 #include <boost/function.hpp>
+
+#include "utils/eigen_transition.hpp"
 
 //#ifdef LINUX
 //#define MOVE3D_USING_SHARED_PTR_NAMESPACE

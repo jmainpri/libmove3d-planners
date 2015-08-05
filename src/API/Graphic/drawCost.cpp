@@ -57,7 +57,7 @@
 #include "Collision-pkg.h"
 #endif
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 #define EIGEN_USE_NEW_STDVECTOR
 #include <Eigen/StdVector>
@@ -962,13 +962,14 @@ void computeConfigCostOnTraj (p3d_rob* rob, configPt q )
         return;
     }
 
-    Robot* robot( global_Project->getActiveScene()->getRobotByName(rob->name) );
+//    Robot* robot =  global_Project->getActiveScene()->getRobotByName(
+//                rob->name);
 
     if(ENV.getBool(Env::isCostSpace))
     {
 #ifdef HRI_COSTSPACE
 
-        configPt cost_q = q;
+        // configPt cost_q = q;
 
         if ( ENV.getBool(Env::enableHri) )
         {
@@ -976,13 +977,15 @@ void computeConfigCostOnTraj (p3d_rob* rob, configPt q )
 
             std::string robotName(costRobot->name);
 
-            if( robotName.find( global_ActiveRobotName ) == std::string::npos ) // Does not contain Robot
+            // Does not contain Robot
+            if( robotName.find( global_ActiveRobotName ) == std::string::npos )
             {
                 costRobot = p3d_get_robot_by_name_containing( global_ActiveRobotName.c_str() );
-                cost_q = p3d_get_robot_config(costRobot);
+                // cost_q = p3d_get_robot_config(costRobot);
             }
 
-            robot = global_Project->getActiveScene()->getRobotByName(costRobot->name);
+//            robot = global_Project->getActiveScene()->getRobotByName(
+//                        costRobot->name);
         }
 #endif
 

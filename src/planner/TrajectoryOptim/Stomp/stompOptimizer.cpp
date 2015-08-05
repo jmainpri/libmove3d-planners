@@ -38,7 +38,7 @@
 //#include <ros/ros.h>
 //#include <visualization_msgs/MarkerArray.h>
 #include "Chomp/chompUtils.hpp"
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/LU>
 
 #include "run_parallel_stomp.hpp"
@@ -77,7 +77,7 @@
 using namespace std;
 using namespace Move3D;
 
-USING_PART_OF_NAMESPACE_EIGEN
+using namespace Eigen;
 
 const double hack_tweek = 1;
 
@@ -1646,11 +1646,14 @@ bool StompOptimizer::performForwardKinematics(bool is_rollout)
     return compute_fk_main_->performForwardKinematics( group_trajectory_, is_rollout);
 }
 
-bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters, Eigen::VectorXd& costs, const int iteration_number, bool joint_limits, bool resample, bool is_rollout )
+bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters,
+                             Eigen::VectorXd& costs, const int iteration_number,
+                             bool joint_limits, bool resample, bool is_rollout )
 {
     is_collision_free_  = compute_fk_main_->getCost( parameters, costs, iteration_number, joint_limits, resample, is_rollout );
     group_trajectory_   = compute_fk_main_->getGroupTrajectory();
     updateFullTrajectory();
+    return true;
 }
 
 void StompOptimizer::getTrajectoryCost( std::vector<double>& cost, double step )

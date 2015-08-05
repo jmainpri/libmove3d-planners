@@ -125,7 +125,7 @@ Eigen::VectorXd GeneralIK::single_step_joint_limits( const Eigen::VectorXd& xdes
         Eigen::VectorXd q_s_old = q_s;
 
         // eliminate bad joint columns from the Jacobian
-        for(int j = 0; j < badjointinds.size(); j++)
+        for(size_t j = 0; j < badjointinds.size(); j++)
             for(int k = 0; k < xdes.size(); k++)
                 J( k, badjointinds[j] ) = 0;
 
@@ -146,7 +146,7 @@ Eigen::VectorXd GeneralIK::single_step_joint_limits( const Eigen::VectorXd& xdes
         q_s = q_s_old + dq;
 
         limit = false;
-        for(int j =0; j<active_joints_.size(); j++)
+        for(size_t j =0; j<active_joints_.size(); j++)
         {
             if( active_joints_[j]->isJointDofCircular(0) )
                 continue;

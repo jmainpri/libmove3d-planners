@@ -297,7 +297,7 @@ Move3D::confPtr_t IocIk::getMove3DConfig(
     confPtr_t q = p_g->robot_->getCurrentPos();
     const std::vector<ChompDof>& joints = p_g->chomp_dofs_;
 
-    for ( size_t i=0; i<parameters_.size(); ++i ) {
+    for ( int i=0; i<parameters_.size(); ++i ) {
         (*q)[joints[i].move3d_dof_index_] = parameters_[i];
     }
 
@@ -324,7 +324,7 @@ IocIk IocIkSampler::sample( double std_dev )
 
     //    cout << "nb_joints_ : " << nb_joints_ << endl;
 
-    for ( size_t i=0; i<q.noise_.size(); ++i )
+    for ( int i=0; i<q.noise_.size(); ++i )
         q.noise_[i] = p3d_gaussian_random2( 0.0, std_dev*std_dev );
 
     return q;
@@ -620,8 +620,9 @@ bool Ioc::jointLimits( IocTrajectory& traj ) const
         }
 
         // Set the start and end values constant
-        traj.parameters_[j].start(1) = traj.nominal_parameters_[j].start(1);
-        traj.parameters_[j].end(1) = traj.nominal_parameters_[j].end(1);
+        // WARNING USED TO BE START AND END
+        traj.parameters_[j].head(1) = traj.nominal_parameters_[j].head(1);
+        traj.parameters_[j].tail(1) = traj.nominal_parameters_[j].tail(1);
     }
 
 //    cout << __PRETTY_FUNCTION__ << endl;
@@ -677,7 +678,7 @@ bool Ioc::isTrajectoryValid( const IocTrajectory& traj,
     Move3D::Scene* sce = global_Project->getActiveScene();
 
     std::vector<Move3D::Robot*> others;
-    for( int i=0; i<sce->getNumberOfRobots(); i++ )
+    for( size_t i=0; i<sce->getNumberOfRobots(); i++ )
     {
         std::string robot_name = sce->getRobot(i)->getName();
         if( robot_name != robot->getName()
@@ -712,7 +713,7 @@ bool Ioc::isIkValid( const IocIk& ik )
     Move3D::Scene* sce = global_Project->getActiveScene();
 
     std::vector<Move3D::Robot*> others;
-    for( int i=0; i<sce->getNumberOfRobots(); i++ )
+    for( size_t i=0; i<sce->getNumberOfRobots(); i++ )
     {
         std::string robot_name = sce->getRobot(i)->getName();
         if( robot_name != robot->getName() &&
@@ -733,14 +734,14 @@ bool Ioc::isIkValid( const IocIk& ik )
 IocIk Ioc::getLastConfigOfDemo(int d) const
 {
     IocIk q(num_joints_);
-    for( int i=0; i<demonstrations_[d].parameters_.size(); i++ )
+    for( size_t i=0; i<demonstrations_[d].parameters_.size(); i++ )
         q.parameters_[i] = demonstrations_[d].parameters_[i].tail(1)[0];
     return q;
 }
 
 void Ioc::deleteSampleForDemo(int d)
 {
-    if( samples_.size() < d )
+    if( int(samples_.size()) < d )
     {
         for(size_t ns=0; ns<samples_.size(); ns++ )
         {
@@ -1000,7 +1001,7 @@ std::vector< std::vector<Move3D::Trajectory> > Ioc::getSamples() const
 
 std::vector< Move3D::Trajectory > Ioc::getDemoSamples(int d) const
 {
-    if(  d > samples_.size() )
+    if(  d > int(samples_.size()) )
         return std::vector<Move3D::Trajectory>();
 
     std::vector<Move3D::Trajectory> samples;
@@ -1725,7 +1726,7 @@ void IocEvaluation::saveDemoToFile(
         const std::vector<Move3D::Trajectory>& demos,
         std::vector<Move3D::confPtr_t> context )
 {
-    int id = 0;
+    // int id = 0;
 
     // Create a buffer to keep track of demo ids being saved
     // each demo is incremented when saved
@@ -1811,7 +1812,8 @@ void IocEvaluation::saveDemoToFile(
     cout  << "DEMO SIZE : " << demos.size() << endl;
 }
 
-void IocEvaluation::saveSamplesToFile(const std::vector< std::vector<Move3D::Trajectory> >& samples ) const
+void IocEvaluation::saveSamplesToFile(
+        const std::vector< std::vector<Move3D::Trajectory> >& samples ) const
 {
     for(size_t d=0; d<samples.size(); d++)
     {
@@ -1830,15 +1832,16 @@ void IocEvaluation::saveSamplesToFile(const std::vector< std::vector<Move3D::Tra
     }
 }
 
-std::vector< std::vector< Move3D::Trajectory> > IocEvaluation::loadSamplesFromFile( int nb_demos, int nb_samples ) const
+std::vector< std::vector< Move3D::Trajectory> >
+IocEvaluation::loadSamplesFromFile( int nb_demos, int nb_samples ) const
 {
     std::vector< std::vector< Move3D::Trajectory> > samples( nb_demos );
 
-    for(size_t d=0; d<nb_demos; d++)
+    for( int d=0; d<nb_demos; d++ )
     {
         cout << "Load samples of demo : " << d << endl;
 
-        for(size_t i=0; i<nb_samples; i++)
+        for( int i=0; i<nb_samples; i++ )
         {
             std::stringstream ss;
             ss << folder_
@@ -1917,7 +1920,7 @@ bool IocEvaluation::loadDemonstrations( const std::vector<int>& demos_ids )
         cout << "nb_demos_ : " << nb_demos_ << endl;
         cout << "demo_names.size() : " << demo_names_.size() << endl;
         cout << "demo_ids_tmp.size() : " << demo_ids_tmp.size() << endl;
-        for( int i=0; i<demo_ids_tmp.size(); i++ ) {
+        for( int i=0; i<int(demo_ids_tmp.size()); i++ ) {
             cout << "demo ids [" << i << "] : "
                  << demo_ids_tmp[i] << " "
                  << demo_names_[demo_ids_tmp[i]] << endl;
@@ -2004,7 +2007,7 @@ bool IocEvaluation::loadDemonstrations( const std::vector<int>& demos_ids )
     if( !context_.empty() )
     {
         context_t context(1);
-        for(int i=0; i<context_[0].size(); i++) {
+        for(int i=0; i<int(context_[0].size()); i++) {
             if( std::find(
                         demos_to_remove.begin(),
                         demos_to_remove.end(), i ) ==
@@ -2363,7 +2366,7 @@ bool IocEvaluation::isTrajectoryValid( Move3D::Trajectory& path )
 
 
     std::vector<Move3D::Robot*> others;
-    for( int i=0; i<sce->getNumberOfRobots(); i++ )
+    for( size_t i=0; i<sce->getNumberOfRobots(); i++ )
     {
         std::string robot_name = sce->getRobot(i)->getName();
         if( robot_name != robot->getName() &&
@@ -2389,7 +2392,7 @@ std::vector<std::vector<Move3D::confPtr_t> > IocEvaluation::runIKSampling()
 
     global_configToDraw.clear();
 
-    for( int i=0;i<demo_ids_.size();i++)
+    for( size_t i=0;i<demo_ids_.size();i++)
     {
         cout << "demo_ids_[" << i << "] : " << demo_ids_[i] << endl;
     }
@@ -2444,7 +2447,7 @@ std::vector<std::vector<Move3D::confPtr_t> > IocEvaluation::runIKSampling()
 
     int nb_lower_cost = 0;
     int nb_lower_feature = 0;
-    int nb_shorter = 0;
+    // int nb_shorter = 0;
     int nb_in_collision = 0;
 
     // Get samples features
@@ -2514,12 +2517,12 @@ IocEvaluation::runSamplingSequence()
 
     global_trajToDraw.clear();
 
-    for( int i=0; i<demo_ids_.size(); i++ )
+    for( size_t i=0; i<demo_ids_.size(); i++ )
     {
         cout << "demo_ids_[" << i << "] : " << demo_ids_[i] << endl;
     }
 
-    for( int i=0; i<demo_names_.size(); i++ )
+    for( size_t i=0; i<demo_names_.size(); i++ )
     {
         cout << "demo_names : " << demo_names_[i] << endl;
     }
@@ -2583,7 +2586,7 @@ IocEvaluation::runSamplingSequence()
                     remove_samples_in_collision_,
                     context_ );
 
-        if( demo_ids_[d] < demo_names_.size() ) {
+        if( demo_ids_[d] < int(demo_names_.size()) ) {
             current_traj_name = demo_names_[ demo_ids_[d] ].substr( 0, 11 );
             cout << "demo : " << current_traj_name << endl;
         }
@@ -2708,12 +2711,12 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling()
     // << plangroup_->chomp_dofs_[i].joint_limit_max_ << endl;
     //    }
 
-    for( int i=0; i<demo_ids_.size(); i++ )
+    for( size_t i=0; i<demo_ids_.size(); i++ )
     {
         cout << "demo_ids_[" << i << "] : " << demo_ids_[i] << endl;
     }
 
-    for( int i=0; i<demo_names_.size(); i++ )
+    for( size_t i=0; i<demo_names_.size(); i++ )
     {
         cout << "demo_names : " << demo_names_[i] << endl;
     }

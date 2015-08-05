@@ -203,7 +203,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
         human_passive_joints_.push_back( human_passive_->getJoint("rElbowZ") );
         human_passive_joints_.push_back( human_passive_->getJoint("rShoulderX") );
 
-        for( int i=0; i<human_active_joints_.size(); i++)
+        for( size_t i=0; i<human_active_joints_.size(); i++)
             distance_joint_ids_.push_back( human_active_joints_[i]->getId() );
 
         w_ = Eigen::VectorXd::Ones(
@@ -234,7 +234,7 @@ DistanceFeature::DistanceFeature( Robot* active, Robot* passive ) :
         human_passive_joints_.push_back( human_passive_->getJoint("right-Arm5") ); // Elbow
         human_passive_joints_.push_back( human_passive_->getJoint("right-Arm2") ); // Wrist
 
-        for( int i=0; i<human_active_joints_.size(); i++)
+        for( size_t i=0; i<human_active_joints_.size(); i++)
             distance_joint_ids_.push_back( human_active_joints_[i]->getId() );
 
         w_ = Eigen::VectorXd::Ones(

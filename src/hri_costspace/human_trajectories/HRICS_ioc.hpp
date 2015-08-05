@@ -28,7 +28,7 @@
 #ifndef HRICS_IOC_HPP
 #define HRICS_IOC_HPP
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 #include <vector>
 
@@ -242,7 +242,7 @@ public:
                    MultiplePlanners& planners, Move3D::StackedFeatures* features, std::vector<int> active_joints,
                    std::string folder,  std::string traj_folder, std::string tmp_data_folder );
 
-    ~IocEvaluation() {
+    virtual ~IocEvaluation() {
         stored_features_.clear();
         phi_demos_.clear();
         phi_jac_demos_.clear();

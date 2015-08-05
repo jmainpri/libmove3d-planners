@@ -32,13 +32,13 @@
 #include "Graphic-pkg.h"
 
 #include <iostream>
-//#include <Eigen/Array>
+//#include <Eigen/Dense>
 
 using namespace std;
 using namespace Move3D;
 
 // import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
+//using namespace Eigen;
 using namespace Eigen;
 
 

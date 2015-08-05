@@ -392,7 +392,7 @@ Eigen::VectorXd SamplingBasedInnerLoop::generateSamples()
     std::vector<Move3D::VectorTrajectory>  samples = sampler_.sampleTrajectories( num_rollouts_gen_, group_trajectory_ );
 
     Eigen::VectorXd costs( num_rollouts_ );
-    for( int i=0; i<samples.size(); i++ )
+    for( size_t i=0; i<samples.size(); i++ )
     {
         costs[i] = getTrajectoryCost( samples[i], true ) ; //- group_trajectory_cost;
     }
@@ -410,12 +410,12 @@ Eigen::VectorXd SamplingBasedInnerLoop::generateSamples()
         // we assume here that rollout_parameters_ and rollout_noise_ have already been allocated
         num_rollouts_gen_ = num_rollouts_ - num_rollouts_reused_;
 
-        for( int r=0; r<reused_rollouts_.size(); ++r )
+        for( size_t r=0; r<reused_rollouts_.size(); ++r )
             samples.push_back( reused_rollouts_[r] );
 
         // figure out which rollouts to reuse
         std::vector< std::pair<double,int> > rollout_cost_sorter;
-        for (int r=0; r<samples.size(); ++r)
+        for( size_t r=0; r<samples.size(); ++r)
         {
             double cost = costs[r];
 

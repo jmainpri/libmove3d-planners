@@ -56,7 +56,7 @@
 // * The CPP API so that
 // * Robot is first and Graph is last (kind of tricky because its backwards)
 // */
-//#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+//////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 //#include <Eigen/Core>
 //#define EIGEN_USE_NEW_STDVECTOR
 //#include <Eigen/StdVector>

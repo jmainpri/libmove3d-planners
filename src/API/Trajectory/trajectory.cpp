@@ -1096,9 +1096,9 @@ double Trajectory::getDeltaTime(int i)
     {
         if ( i <= int(m_Courbe.size()) )
         {
-            if( i == 0 || i == m_Courbe.size() )
+            if( i == 0 || i == int(m_Courbe.size()) )
             {
-                int id = ( i == m_Courbe.size() ) ? i - 1 : i;
+                int id = ( i == int(m_Courbe.size()) ) ? i - 1 : i;
                 confPtr_t q_1 =  m_Courbe[id]->getBegin();
                 confPtr_t q_2 =  m_Courbe[id]->getEnd();
                 delta = q_1->dist( *q_2 );

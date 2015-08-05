@@ -224,6 +224,7 @@ void traj_optim_init_planning_type(int type)
 bool traj_optim_resetInit()
 {
     m_init = false;
+    return true;
 }
 
 bool traj_optim_initScenario()

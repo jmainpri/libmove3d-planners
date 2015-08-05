@@ -36,10 +36,10 @@
 
 #include "covariant_trajectory_policy.hpp"
 //#include "param_server.hpp"
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/LU>
 #include <Eigen/Core>
-#include <Eigen/Array>
+#include <Eigen/Dense>
 
 #include "Util-pkg.h"
 
@@ -189,6 +189,8 @@ bool CovariantTrajectoryPolicy::fillBufferStartAndGoal()
             parameters_all_[d](num_vars_all_-1-i) = goal_(d);
         }
     }
+
+    return true;
 }
 
 //! compute the minmal control costs
@@ -468,6 +470,9 @@ bool CovariantTrajectoryPolicy::computeControlCosts(
 
         switch( type_ )
         {
+        case dist:
+            factor = 1.;
+            break;
         case vel:
             factor = 2.;
             break;
@@ -476,6 +481,9 @@ bool CovariantTrajectoryPolicy::computeControlCosts(
             break;
         case jerk:
             factor = 6.;
+            break;
+        case mix:
+            factor = 1.;
             break;
         }
 
@@ -555,7 +563,7 @@ bool CovariantTrajectoryPolicy::computeControlCosts(
         if( type_ == dist )
             costs_all = acc_all;
         else
-            costs_all = ( acc_all.cwise()*acc_all );
+            costs_all = ( acc_all.cwiseProduct( acc_all) );
 
 
         costs_all *= weight;
@@ -729,13 +737,13 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
     Eigen::VectorXd costs( Eigen::VectorXd::Zero(nb_costs) );
 
     control_costs.resize(nb_costs);
-    for (int i=0; i<control_costs.size(); ++i) {
+    for (size_t i=0; i<control_costs.size(); ++i) {
         control_costs[i].resize( parameters.size() );
-        for (int d=0; d<control_costs[i].size(); ++d)
+        for (size_t d=0; d<control_costs[i].size(); ++d)
             control_costs[i][d] = Eigen::VectorXd::Zero( parameters[d].size() );
     }
 
-    for (int d=0; d<parameters.size(); ++d) {
+    for (size_t d=0; d<parameters.size(); ++d) {
         noise[d] = Eigen::VectorXd::Zero( parameters[d].size() );
 //        control_costs[0][d] = Eigen::VectorXd::Zero( parameters[d].size() );
 //        control_costs[1][d] = Eigen::VectorXd::Zero( parameters[d].size() );
@@ -830,7 +838,7 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
 
         // The task space distance is computed over the entire trajectory (no buffer)
         //.segment( left_padding, size_of_traj - left_padding - right_padding )
-        for (int d=0; d<control_costs[4].size(); ++d)
+        for (size_t d=0; d<control_costs[4].size(); ++d)
             control_costs[4][d]
                     = factor_task_dist * control_costs_t;
 
@@ -838,7 +846,7 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
         cost_t = task.getVelocity( traj_task, control_costs_t, dt );
         costs[5] = factor_task_vel * cost_t;
 
-        for (int d=0; d<control_costs[5].size(); ++d)
+        for (size_t d=0; d<control_costs[5].size(); ++d)
         {
             control_costs[5][d].segment( left_padding, size_of_traj -
                                          left_padding - right_padding )
@@ -849,7 +857,7 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
         cost_t = task.getAcceleration( traj_task, control_costs_t, dt );
         costs[6] = factor_task_acc * cost_t;
 
-        for (int d=0; d<control_costs[6].size(); ++d)
+        for (size_t d=0; d<control_costs[6].size(); ++d)
             control_costs[6][d].segment( left_padding, size_of_traj -
                                          left_padding - right_padding )
                     = factor_task_acc * control_costs_t;
@@ -858,7 +866,7 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
         cost_t = task.getJerk( traj_task, control_costs_t, dt );
         costs[7] = factor_task_jerk * cost_t;
 
-        for (int d=0; d<control_costs[7].size(); ++d)
+        for (size_t d=0; d<control_costs[7].size(); ++d)
             control_costs[7][d].segment( left_padding, size_of_traj -
                                          left_padding - right_padding )
                     = factor_task_jerk * control_costs_t;
@@ -876,7 +884,7 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
         type_ = dist;
         computeControlCosts( control_cost_matrices, parameters, noise,
                              1.0, control_costs_tmp,  dt );
-        for (int d=0; d<parameters.size(); ++d)
+        for (size_t d=0; d<parameters.size(); ++d)
         {
             costs[0] += control_costs_tmp[d].sum();
             control_costs[0][d] = control_costs_tmp[d];
@@ -886,7 +894,7 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
         type_ = vel;
         computeControlCosts( control_cost_matrices, parameters, noise,
                              1.0, control_costs_tmp, dt );
-        for (int d=0; d<parameters.size(); ++d)
+        for (size_t d=0; d<parameters.size(); ++d)
         {
             costs[1] += control_costs_tmp[d].sum();
             control_costs[1][d] = ( factor_vel * control_costs_tmp[d]  );
@@ -896,7 +904,7 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
         type_ = acc;
         computeControlCosts( control_cost_matrices, parameters, noise,
                              1.0, control_costs_tmp, dt );
-        for (int d=0; d<parameters.size(); ++d)
+        for (size_t d=0; d<parameters.size(); ++d)
         {
             costs[2] += control_costs_tmp[d].sum();
             control_costs[2][d] = ( factor_acc * control_costs_tmp[d] );
@@ -907,7 +915,7 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
         type_ = jerk;
         computeControlCosts( control_cost_matrices, parameters, noise,
                              1.0, control_costs_tmp, dt );
-        for (int d=0; d<parameters.size(); ++d)
+        for (size_t d=0; d<parameters.size(); ++d)
         {
             costs[3] += control_costs_tmp[d].sum();
             control_costs[3][d] = ( factor_jerk * control_costs_tmp[d] );
@@ -929,7 +937,7 @@ void CovariantTrajectoryPolicy::saveProfiles(
     std::vector<Eigen::VectorXd> noise( parameters.size() );
     std::vector<Eigen::VectorXd> control_costs( parameters.size() );
 
-    for (int d=0; d<parameters.size(); ++d)
+    for (size_t d=0; d<parameters.size(); ++d)
     {
         noise[d] = Eigen::VectorXd::Zero( parameters[d].size() );
     }
@@ -941,7 +949,7 @@ void CovariantTrajectoryPolicy::saveProfiles(
     type_ = vel;
     computeControlCosts( control_cost_matrices, parameters, noise,
                          1.0, control_costs, dt );
-    for (int d=0; d<parameters.size(); ++d)
+    for (size_t d=0; d<parameters.size(); ++d)
     {
         std::stringstream ss;
         ss << "stomp_vel_"
@@ -952,7 +960,7 @@ void CovariantTrajectoryPolicy::saveProfiles(
     type_ = acc;
     computeControlCosts( control_cost_matrices, parameters, noise,
                          1.0, control_costs, dt );
-    for (int d=0; d<parameters.size(); ++d)
+    for (size_t d=0; d<parameters.size(); ++d)
     {
         std::stringstream ss;
         ss << "stomp_acc_"
@@ -963,7 +971,7 @@ void CovariantTrajectoryPolicy::saveProfiles(
     type_ = jerk;
     computeControlCosts( control_cost_matrices, parameters, noise,
                          1.0, control_costs, dt );
-    for (int d=0; d<parameters.size(); ++d)
+    for (size_t d=0; d<parameters.size(); ++d)
     {
         std::stringstream ss;
         ss << "stomp_jerk_"

@@ -179,12 +179,12 @@ inline double solve_quadprog2(LLT<MatrixXd,Lower> &chol,  double c1, MatrixXd& J
     double t, t1, t2; /* t is the step length, which is the minimum of the partial step length t1
     * and the full step length t2 */
     VectorXi A(m + p), A_old(m + p), iai(m + p), iaexcl(m+p);
-    int q;
+
     int iq, iter = 0;
 
     me = p; /* number of equality constraints */
     mi = m; /* number of inequality constraints */
-    q = 0;  /* size of the active set A (containing the indices of the active constraints) */
+    // int q = 0;  /* size of the active set A (containing the indices of the active constraints) */
 
     /*
    * Preprocessing phase
@@ -282,7 +282,7 @@ l1:	iter++;
     if (std::abs(psi) <= mi * std::numeric_limits<double>::epsilon() * c1 * c2* 100.0)
     {
         /* numerically there are not infeasibilities anymore */
-        q = iq;
+        // q = iq;
         return f_value;
     }
     
@@ -302,7 +302,7 @@ l2: /* Step 2: check for feasibility and determine a new S-pair */
     }
     if (ss >= 0.0)
     {
-        q = iq;
+        // q = iq;
         return f_value;
     }
     
@@ -366,7 +366,7 @@ l2a:/* Step 2a: determine step direction */
     {
         /* QPP is infeasible */
         // FIXME: unbounded to raise
-        q = iq;
+        // q = iq;
         return inf;
     }
     /* case (ii): step in dual space */

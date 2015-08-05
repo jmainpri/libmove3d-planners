@@ -27,6 +27,8 @@
  */
 #include "HRICS_legibility.hpp"
 
+#include <iostream>
+
 using namespace HRICS;
 using std::cout;
 using std::endl;

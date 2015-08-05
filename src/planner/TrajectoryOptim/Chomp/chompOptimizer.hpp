@@ -17,7 +17,7 @@
 
 #include "collision_space/collision_space.hpp"
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 
 #include <vector>

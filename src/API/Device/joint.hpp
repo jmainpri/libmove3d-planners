@@ -29,6 +29,7 @@
 #define JOINT_HPP
 
 #include "API/ConfigSpace/configuration.hpp"
+#include "utils/eigen_transition.hpp"
 
 #include <libmove3d/include/p3d_matrix.h>
 

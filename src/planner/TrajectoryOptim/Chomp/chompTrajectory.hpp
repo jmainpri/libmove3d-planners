@@ -48,7 +48,7 @@
 
 #include <vector>
 //#include <kdl/jntarray.hpp>
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 
 namespace Move3D

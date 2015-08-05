@@ -37,6 +37,7 @@ class Spheres : public PlanarFeature
 {
 public:
     Spheres();
+    virtual ~Spheres() {}
 
     void initialize();
 

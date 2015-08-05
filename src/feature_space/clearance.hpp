@@ -40,7 +40,7 @@ class Clearance : public Feature
     public:
 
         Clearance();
-        ~Clearance();
+        virtual ~Clearance();
 
         void initialize();
 

@@ -511,7 +511,7 @@ namespace stomp_motion_planner
         double delta = 1.0 / double(num_time_steps_-start);
         for( int j=start; j<num_time_steps_; j++ )
         {
-            for ( int i=0; i<parameters.size(); ++i)
+            for ( size_t i=0; i<parameters.size(); ++i)
                 parameters[i][j] += alpha * dq[i];
 
             alpha += delta;

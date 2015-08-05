@@ -21,6 +21,8 @@
 #include <libmove3d/include/Graphic-pkg.h>
 #include <libmove3d/include/Util-pkg.h>
 
+#include <Eigen/Eigenvalues>
+
 #include <iomanip>
 #include <sstream>
 #include <fstream>
@@ -100,7 +102,7 @@ void VectorTrajectory::setFromMove3DTrajectory( const Move3D::Trajectory& T )
     double delta = T.getParamMax() / double(num_vars_free_-1);
     double s = 0.0;
 
-    for ( size_t i=0; i<num_vars_free_; ++i )
+    for ( int i=0; i<num_vars_free_; ++i )
     {
         Move3D::confPtr_t q = T.configAtParam(s);
         s += delta;
@@ -131,7 +133,7 @@ Eigen::VectorXd VectorTrajectory::getTrajectoryPoint( int i ) const
 {
     Eigen::VectorXd q(num_dofs_);
 
-    for ( size_t j=0; j<num_dofs_; ++j )
+    for ( int j=0; j<num_dofs_; ++j )
         q(j) = (*this)( i, j );
 
 //    TODO implement as segment...
@@ -163,7 +165,7 @@ Move3D::Trajectory VectorTrajectory::getMove3DTrajectory() const
         T.setDeltaTime( discretization_ );
     }
 
-    for ( size_t i=0; i<num_vars_free_; ++i )
+    for ( int i=0; i<num_vars_free_; ++i )
     {
         Move3D::confPtr_t q = rob->getInitPos();
 
@@ -496,16 +498,17 @@ bool LampSampler::addHessianToPrecisionMatrix( const Move3D::VectorTrajectory& t
     // inv_control_costs_.clear();
 //    noise_generators_.clear();
 
-    for ( size_t i=0; i<num_vars_free_; ++i )
+    for ( int i=0; i<num_vars_free_; ++i )
     {
         Move3D::confPtr_t q = traj.getMove3DConfiguration( i );
 
         // Eigen::MatrixXd H = PlanEnv->getDouble(PlanParam::hessian_factor) * std::pow( q->cost(), 4 )  * Eigen::MatrixXd::Identity( num_dofs_ , num_dofs_ );
 //         PlanEnv->getDouble(PlanParam::hessian_factor) * global_costSpace->getHessian( *q, planning_group_->getActiveDofs() );
 
-        Eigen::MatrixXd H = PlanEnv->getDouble(PlanParam::lamp_hessian_factor) * global_costSpace->getHessian( *q, planning_group_->getActiveDofs() );
-
-
+        Eigen::MatrixXd H =
+                PlanEnv->getDouble(PlanParam::lamp_hessian_factor) *
+                global_costSpace->getHessian(
+                    *q, planning_group_->getActiveDofs() );
 
         Eigen::EigenSolver<Eigen::MatrixXd> es(H);
 //        Eigen::VectorXcd eigen_values = es.eigenvalues();
@@ -516,14 +519,14 @@ bool LampSampler::addHessianToPrecisionMatrix( const Move3D::VectorTrajectory& t
 ;
         std::vector<bool> is_negative( eig_val.size(), false );
 
-        for( int k=0; k<is_negative.size(); k++)
+        for( size_t k=0; k<is_negative.size(); k++)
         {
             if( 0 > eig_val[k].real() )
                 is_negative[k] = true;
 //                eig_val[k].real() = 0;
         }
 
-        for( int k=0; k<is_negative.size(); k++)
+        for( size_t k=0; k<is_negative.size(); k++)
         {
             if( is_negative[k] )
             {
@@ -589,7 +592,9 @@ Eigen::VectorXd LampSampler::sample(double std_dev)
     return traj;
 }
 
-std::vector<VectorTrajectory> LampSampler::sampleTrajectories( int nb_trajectories, const Move3D::VectorTrajectory& current_trajectory )
+std::vector<VectorTrajectory> LampSampler::sampleTrajectories(
+        int nb_trajectories,
+        const Move3D::VectorTrajectory& current_trajectory )
 {
     global_trajToDraw.clear();
 
@@ -598,7 +603,7 @@ std::vector<VectorTrajectory> LampSampler::sampleTrajectories( int nb_trajectori
 
     std::vector<VectorTrajectory> trajectories( nb_trajectories );
 
-    for( int i=0; i<trajectories.size(); i++)
+    for( size_t i=0; i<trajectories.size(); i++)
     {
         Eigen::VectorXd noise = sample();
 

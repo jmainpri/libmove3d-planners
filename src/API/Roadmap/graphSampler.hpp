@@ -28,7 +28,7 @@
 #ifndef GRAPHSAMPLER_HPP
 #define GRAPHSAMPLER_HPP
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 #include <vector>
 

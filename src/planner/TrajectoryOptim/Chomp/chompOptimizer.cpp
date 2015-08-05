@@ -16,7 +16,7 @@
 //#include <visualization_msgs/MarkerArray.h>
 //#include <chomp_motion_planner/chomp_utils.h>
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/LU>
 
 #include "planner/planEnvironment.hpp"
@@ -28,7 +28,7 @@
 #include "move3d-headless.h"
 
 using namespace std;
-USING_PART_OF_NAMESPACE_EIGEN
+using namespace Eigen;
 
 using namespace Move3D;
 
