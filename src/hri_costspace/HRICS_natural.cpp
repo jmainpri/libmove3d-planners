@@ -910,7 +910,7 @@ double Natural::getCustomDistConfig(Configuration& q)
     {
         Joint* jntPt = m_Robot->getJoint(i);
 
-        for (int j=0; j<jntPt->getNumberOfDof(); j++)
+        for (size_t j=0; j<jntPt->getNumberOfDof(); j++)
         {
             double W = (*m_q_ConfortWeigths)[jntPt->getIndexOfFirstDof()+j];
             double dof_dist = p3d_jnt_calc_dof_dist( jntPt->getP3dJointStruct(), j, m_q_Confort->getConfigStruct(), q.getConfigStruct());

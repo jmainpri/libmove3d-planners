@@ -32,7 +32,7 @@ using namespace std;
 using namespace HRICS;
 
 // import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
+//using namespace Eigen;
 using namespace Eigen;
 
 State::State( Vector3i cell , Grid* grid) :

@@ -52,7 +52,7 @@ namespace Move3D { class ConfGenerator; }
 //#include <motion_planning_msgs/Constraints.h>
 //#include "constraint_evaluator.hpp"
 //#include <stomp_motion_planner/STOMPStatistics.h>
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 
 namespace Move3D

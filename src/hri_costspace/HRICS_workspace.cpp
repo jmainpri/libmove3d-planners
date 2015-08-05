@@ -20,7 +20,7 @@
 
 //#include "../../qtWindow/cppToQt.hpp"
 
-//#include <Eigen/Array>
+//#include <Eigen/Dense>
 
 #include <libmove3d/include/P3d-pkg.h>
 #include <libmove3d/include/Collision-pkg.h>
@@ -51,7 +51,7 @@ using namespace HRICS;
 using namespace Move3D;
 
 // import most common Eigen types 
-//USING_PART_OF_NAMESPACE_EIGEN
+//using namespace Eigen;
 using namespace Eigen;
 
 extern string global_ActiveRobotName;
@@ -840,7 +840,9 @@ bool Workspace::sampleRobotBase(confPtr_t q_base, const Vector3d& WSPoint)
 
             t.translation() = HumanPos;
 
-            Rotation2Dd	rot( p3d_random(-M_PI/rotationAngle, M_PI/rotationAngle));//p3d_random(-M_PI/4, M_PI/4));
+            Rotation2Dd	rot( p3d_random(-M_PI/rotationAngle,
+                                        M_PI/rotationAngle));
+            //p3d_random(-M_PI/4, M_PI/4));
 
 
             t.linear() = rot.toRotationMatrix();

@@ -321,11 +321,11 @@ std::vector<double> dtw_compare_performance(
         test_vec_0 = get_vector_from_matrix(mat);
 
         // Store all other trajectories
-        for (int i=0; i<t_tests.size(); i++)
+        for (size_t i=0; i<t_tests.size(); i++)
         {
             mat = t_tests[i].getEigenMatrix( planning_group->getActiveDofs() );
 
-            if( mat.cols() != test_vec_0.size() ) {
+            if( mat.cols() != int(test_vec_0.size()) ) {
                 // Check that the trajectories have the same number of waypoints
                 cout << "ERROR in dtw computations ( "
                      << mat.cols() << " , " << test_vec_0.size()  << ")"
@@ -343,11 +343,11 @@ std::vector<double> dtw_compare_performance(
         test_vec_0 = get_vector_from_matrix(mat);
 
         // Store all other trajectories
-        for (int i=0; i<t_tests.size(); i++)
+        for (size_t i=0; i<t_tests.size(); i++)
         {
             mat = t_tests[i].getJointPoseTrajectory( joints[0] );
 
-            if( mat.cols() != test_vec_0.size() ) {
+            if( mat.cols() != int(test_vec_0.size()) ) {
                 // Check that the trajectories have the same number of waypoints
                 cout << "ERROR in dtw computations ( "
                      << mat.cols() << " , " << test_vec_0.size()  << ")"
@@ -364,11 +364,11 @@ std::vector<double> dtw_compare_performance(
         test_vec_0 = get_vector_from_matrix(mat);
 
         // Store all other trajectories
-        for (int i=0; i<t_tests.size(); i++)
+        for (size_t i=0; i<t_tests.size(); i++)
         {
             mat = t_tests[i].getJointPoseTrajectory( joints );
 
-            if( mat.cols() != test_vec_0.size() ) {
+            if( mat.cols() != int(test_vec_0.size()) ) {
                 // Check that the trajectories have the same number of waypoints
                 cout << "ERROR in dtw computations ( "
                      << mat.cols() << " , " << test_vec_0.size()  << ")"
@@ -405,7 +405,7 @@ std::vector<double> dtw_compare_performance(
 
     scost.resize( test_vec_1.size() );
 
-    for (int i=0; i<scost.size(); i++)
+    for (size_t i=0; i<scost.size(); i++)
     {
         scost[i] = my_eval.EvaluateWarpingCost( test_vec_0, test_vec_1[i] );
         cout << "scost[" << i << "] : " << scost[i] << endl;

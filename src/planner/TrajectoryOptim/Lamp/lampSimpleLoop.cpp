@@ -26,7 +26,7 @@ void lamp_simple_loop()
 
 bool LampSimpleLoop::initialize(bool single_rollout, double discretization)
 {
-
+    return true;
 }
 
 void LampSimpleLoop::end()
@@ -41,10 +41,11 @@ void LampSimpleLoop::run_single_iteration()
     Eigen::MatrixXd deltas( samples_.size(), group_trajectory_.trajectory_.size() );
 
     int nb_valid_samples= 0;
-    double group_trajectory_cost = getTrajectoryCost();
+//    double group_trajectory_cost =
+            getTrajectoryCost();
 
     // Compute cost
-    for( int i=0; i<samples_.size(); i++)
+    for( size_t i=0; i<samples_.size(); i++)
     {
         deltas.row(i) = samples_[i].trajectory_ - group_trajectory_.trajectory_;
 
@@ -69,7 +70,7 @@ void LampSimpleLoop::run_single_iteration()
         double b_i_num = 0.;
         double b_i_den = 0.;
 
-        for( int i=0; i<samples_.size(); i++)
+        for( size_t i=0; i<samples_.size(); i++)
         {
             b_i_num += costs[i] * std::pow( deltas(i, j), 2. );
             b_i_den += std::pow( deltas(i, j), 2. );
@@ -87,7 +88,7 @@ void LampSimpleLoop::run_single_iteration()
 
         // Compute update
         // double delta = 0.;
-        for( int i=0; i<samples_.size(); i++)
+        for( size_t i=0; i<samples_.size(); i++)
         {
             if( succeeded[i] )
             {

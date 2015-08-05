@@ -145,8 +145,8 @@ double HumanPredictionCostSpace::getCost(Configuration& q) const
 
 double HumanPredictionCostSpace::getCostFromActiveJoints(Configuration& q) const
 {
-    Robot* robot = q.getRobot();
-    //    robot->setAndUpdate(q);
+    // Robot* robot = q.getRobot();
+    // robot->setAndUpdate(q);
 
     double cost=0.0;
 

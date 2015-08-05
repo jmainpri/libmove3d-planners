@@ -37,7 +37,7 @@
 
 #include "collision_space/collision_space.hpp"
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 #include <vector>
 
@@ -95,7 +95,7 @@ public:
     bool performForwardKinematics( const Move3D::ChompTrajectory& group_traj, bool is_rollout );
 
     //! compute control cost TODO
-    bool getControlCosts(const Move3D::ChompTrajectory& group_traj, bool save_control_cost );
+    bool getControlCosts(const Move3D::ChompTrajectory& group_traj );
 
     /************************************
      * Getters
@@ -104,7 +104,8 @@ public:
     bool getJointLimitViolationSuccess() const { return succeded_joint_limits_; }
     const std::vector<Eigen::VectorXd>& getControlCosts() const { return current_control_costs_; }
     
-    const std::vector< std::vector< Eigen::Transform3d, Eigen::aligned_allocator<Eigen::Transform3d> > > & getSegmentFrames() const { return segment_frames_; }
+    const std::vector< std::vector< Eigen::Transform3d, Eigen::aligned_allocator<Eigen::Transform3d> > > &
+    getSegmentFrames() const { return segment_frames_; }
 
     const std::vector< std::vector<Eigen::Vector3d> >& getJointPosEigen() const { return joint_pos_eigen_; }
     const std::vector< std::vector<Eigen::Vector3d> >& getJointAxisEigen() const { return joint_axis_eigen_; }

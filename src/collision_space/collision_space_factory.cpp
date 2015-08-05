@@ -232,7 +232,7 @@ bool traj_optim_default_init()
 
     m_id_of_first_active_joint = 0;
 
-    for( int i=0; i<m_planner_joints.size(); i++)
+    for( size_t i=0; i<m_planner_joints.size(); i++)
     {
         cout << "Active joints : " << m_planner_joints[i] << endl;
     }

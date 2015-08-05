@@ -55,7 +55,7 @@ public:
     }
 
     std::string getMotionName(int id) {
-        if( id > _motions_names.size() )
+        if( id > int(_motions_names.size()) )
             return std::string("");
         else
             return _motions_names[id];

@@ -263,11 +263,11 @@ Eigen::MatrixXd TrajectorySmoothness::getSmoothedTrajectory( const Move3D::Traje
     // Smooth circular curves before cost computation
     // must be after the mat2 construction
     int r=0;
-    for( int i=0; i<robot->getNumberOfJoints(); i++ )
+    for( size_t i=0; i<robot->getNumberOfJoints(); i++ )
     {
         Joint* joint = robot->getJoint(i);
 
-        for( int k=0; k<joint->getNumberOfDof(); k++ ) {
+        for( size_t k=0; k<joint->getNumberOfDof(); k++ ) {
 
             if( std::find( active_dofs_.begin(), active_dofs_.end(), joint->getIndexOfFirstDof() + k ) != active_dofs_.end() )
             {
@@ -382,7 +382,7 @@ TaskSmoothnessFeature::TaskSmoothnessFeature( Move3D::Robot* robot, Move3D::Join
     task_joints_.clear();
     task_joints_.push_back( joint_task /*robot_->getJoint("rWristX")*/ );
 
-    for( int i=0;i<task_joints_.size();i++)
+    for( size_t i=0;i<task_joints_.size();i++)
         veclocity_joint_ids_.push_back( task_joints_[i]->getId() );
 
     // Since we are checking tanslation joint
@@ -444,12 +444,14 @@ Eigen::MatrixXd TaskSmoothnessFeature::getTaskTrajectory( const Move3D::Trajecto
     return mat2;
 }
 
-double TaskSmoothnessFeature::getDist( const Eigen::MatrixXd& mat, Eigen::VectorXd& costs )
+double TaskSmoothnessFeature::getDist( const Eigen::MatrixXd& mat,
+                                       Eigen::VectorXd& costs )
 {
-
+    return 0.0;
 }
 
-double TaskSmoothnessFeature::getVelocity( const Eigen::MatrixXd& mat, Eigen::VectorXd& costs, double dt )
+double TaskSmoothnessFeature::getVelocity( const Eigen::MatrixXd& mat,
+                                           Eigen::VectorXd& costs, double dt )
 {
     control_cost_.setType(0);
 
@@ -458,7 +460,8 @@ double TaskSmoothnessFeature::getVelocity( const Eigen::MatrixXd& mat, Eigen::Ve
     return control_cost_.cost( control_cost, dt );
 }
 
-double TaskSmoothnessFeature::getAcceleration( const Eigen::MatrixXd& mat, Eigen::VectorXd& costs, double dt )
+double TaskSmoothnessFeature::getAcceleration( const Eigen::MatrixXd& mat,
+                                               Eigen::VectorXd& costs, double dt )
 {
     control_cost_.setType(1);
 
@@ -467,7 +470,8 @@ double TaskSmoothnessFeature::getAcceleration( const Eigen::MatrixXd& mat, Eigen
     return control_cost_.cost( control_cost, dt );
 }
 
-double TaskSmoothnessFeature::getJerk( const Eigen::MatrixXd& mat, Eigen::VectorXd& costs, double dt )
+double TaskSmoothnessFeature::getJerk( const Eigen::MatrixXd& mat,
+                                       Eigen::VectorXd& costs, double dt )
 {
     control_cost_.setType(2);
 
@@ -476,7 +480,8 @@ double TaskSmoothnessFeature::getJerk( const Eigen::MatrixXd& mat, Eigen::Vector
     return control_cost_.cost( control_cost, dt );
 }
 
-Eigen::VectorXd TaskSmoothnessFeature::getControlCosts( const std::vector<Eigen::VectorXd>& control_cost, double dt ) const
+Eigen::VectorXd TaskSmoothnessFeature::getControlCosts(
+        const std::vector<Eigen::VectorXd>& control_cost, double dt ) const
 {
     if( control_cost.empty() )
         return Eigen::VectorXd::Zero(0);
@@ -485,7 +490,7 @@ Eigen::VectorXd TaskSmoothnessFeature::getControlCosts( const std::vector<Eigen:
 
     double time_step = dt == 0.0 ? 1.0 : dt;
 
-    for( int d=0; d<control_cost.size(); d ++)
+    for( size_t d=0; d<control_cost.size(); d ++)
     {
         Eigen::VectorXd control_cost_tmp = time_step * control_cost_.getInnerSegment( control_cost[d] );
         costs += control_cost_tmp;
@@ -494,7 +499,8 @@ Eigen::VectorXd TaskSmoothnessFeature::getControlCosts( const std::vector<Eigen:
 }
 
 // Compute velocity between two configurations
-double TaskSmoothnessFeature::getDist( const Move3D::Trajectory& t, Eigen::VectorXd& control_costs )
+double TaskSmoothnessFeature::getDist( const Move3D::Trajectory& t,
+                                       Eigen::VectorXd& control_costs )
 {
     //    std::vector<Eigen::Vector3d> dist(veclocity_joint_ids_.size());
 
@@ -523,7 +529,7 @@ double TaskSmoothnessFeature::getDist( const Move3D::Trajectory& t, Eigen::Vecto
         x_1 = getTaskPose( t[i+1] );
 
         Eigen::VectorXd delta = ( x_0 - x_1 );
-        Eigen::VectorXd costs = delta.cwise() * delta;
+        Eigen::VectorXd costs = delta.cwiseProduct( delta );
 
         control_costs[i] = costs.sum();
 
@@ -617,7 +623,7 @@ void TaskSmoothnessFeature::setBuffer(const std::vector<Eigen::VectorXd>& buffer
 
         Move3D::confPtr_t q = robot_->getCurrentPos();
 
-        for( int i=0; i<buffer.size(); i++)
+        for( size_t i=0; i<buffer.size(); i++)
         {
             q->setFromEigenVector( buffer[i], active_dofs_ );
             x_buffer[i] = getTaskPose( q );

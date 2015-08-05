@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
     trajectory_3.setDeltaTime( delta_3 );
     trajectory_4.setDeltaTime( delta_4 );
 
-    for( int i=0; i<active_dofs.size(); i++ )
+    for( size_t i=0; i<active_dofs.size(); i++ )
         cout << "active dofs : "  << active_dofs[i] << endl;
 
     bool with_buffer(false);
@@ -383,7 +383,7 @@ int main(int argc, char *argv[])
 
     std::string joint_name("J6"); // Last joint
     Move3D::Joint* joint = robot->getJoint( joint_name );
-    for( int i=0;i<robot->getNumberOfJoints(); i++)
+    for( size_t i=0;i<robot->getNumberOfJoints(); i++)
     {
         cout << robot->getJoint(i)->getName() << endl;
     }

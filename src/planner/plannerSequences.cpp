@@ -171,7 +171,7 @@ void SequencesPlanners::runSequence()
 
 void SequencesPlanners::playTrajs() //const
 {
-    for( int i=0; i<best_traj_.size(); i++ )
+    for( size_t i=0; i<best_traj_.size(); i++ )
     {
         if( best_traj_[i].size() > 0 )
         {

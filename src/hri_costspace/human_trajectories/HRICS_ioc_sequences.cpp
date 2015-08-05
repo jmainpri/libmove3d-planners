@@ -270,7 +270,7 @@ bool IocSequences::run()
 
     bool StopRun = false;
     std::vector<Eigen::VectorXd> results;
-    int iteration = 0;
+    // int iteration = 0;
 
     MultiplePlanners planners(rob);
     if( sample_from_file )
@@ -1046,7 +1046,7 @@ void IocSequences::GenerateResults()
 
     std::vector<std::string> demos_filenames = move3d_get_files_in_folder(
                 folder_demos, "traj" );
-    for( int i=0; i<demos_filenames.size(); i++)
+    for( size_t i=0; i<demos_filenames.size(); i++)
         cout << demos_filenames[i] << endl;
 
 
@@ -1057,7 +1057,7 @@ void IocSequences::GenerateResults()
     std::vector<std::string> demo_split_names =
             sim->getMotionsNames();
     //move3d_get_folders_in_folder( folder_recovered );
-    for( int i=0; i<demo_split_names.size(); i++)
+    for( size_t i=0; i<demo_split_names.size(); i++)
     {
         demo_split_names[i] = demo_split_names[i].substr( 0, 11 );
         cout << demo_split_names[i] << endl;
@@ -1825,8 +1825,11 @@ void hrics_ioc_compute_results()
 
     // Show trajectory
     // Comment to compute DTW
-    Move3D::Trajectory passive_traj( HRICS::motion_to_traj( global_human_traj_simulator->getDemonstrationsPassive()[demo_id], passive_human ) );
-    Move3D::Trajectory& active_traj = recovered[demo_id][9];
+    Move3D::Trajectory passive_traj(
+                HRICS::motion_to_traj(
+                    global_human_traj_simulator->getDemonstrationsPassive()[demo_id],
+                                       passive_human ) );
+    // Move3D::Trajectory& active_traj = recovered[demo_id][9];
     // global_linesToDraw.push_back( std::make_pair( Eigen::Vector3d(1, 0, 0), active_traj.getJointPoseTrajectory( active_human->getJoint(45) ) ) );
 
     cout << "passive human traj size : " << passive_traj.size() << endl;

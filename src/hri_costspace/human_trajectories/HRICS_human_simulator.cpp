@@ -159,7 +159,7 @@ bool HRICS_init_human_trajectory_cost()
                 }
 
                 cout << "Stored motion names : " << endl;
-                for( int i=0; i<
+                for( size_t i=0; i<
                      global_motionRecorders[0]->getStoredMotions().size(); i++)
                 {
                     cout << global_motionRecorders[0]->getStoredMotionName(i)
@@ -267,7 +267,7 @@ bool HRICS_init_human_trajectory_cost()
                 }
 
                 cout << "Stored motion names : " << endl;
-                for( int i=0; i<
+                for( size_t i=0; i<
                      global_motionRecorders[0]->getStoredMotions().size();i++)
                 {
                     cout << global_motionRecorders[0]->getStoredMotionName(i)
@@ -484,7 +484,7 @@ void HumanTrajFeatures::addFeaturesDistance()
 
 void HumanTrajFeatures::setActiveDoFsAllFeatures()
 {
-    for(int i=0; i<all_features_.size(); i++)
+    for(size_t i=0; i<all_features_.size(); i++)
     {
         all_features_[i]->setActiveDoFs( active_dofs_ );
     }
@@ -969,7 +969,7 @@ void HumanTrajSimulator::setReplanningDemonstrations()
 
         cout << "REMOVE SPLIT : " << split << endl;
 
-        for( int i=0; i<selected.size(); i++ )
+        for( size_t i=0; i<selected.size(); i++ )
         {
             if( split == selected[i].substr( 0, 11 ) )
             {
@@ -1176,7 +1176,7 @@ void HumanTrajSimulator::addCutMotions()
     cout << "size 2 after adding cut motions : "
          << human_2_motions_.size() << endl;
 
-    for( int i=0; i<human_1_motions_.size(); i++ )
+    for( size_t i=0; i<human_1_motions_.size(); i++ )
     {
         cout << "time length [" << motions_demo_ids_[i]
                 << "][" << i << "] : "
@@ -1558,7 +1558,7 @@ double HumanTrajSimulator::getCost( const motion_t& traj ) const
 
     for (int i=1; i<nb_via_points+1; i++)
     {
-        int j =0;
+        size_t j =0;
         double time_traj = 0.0;
         while( j < human_1_motions_[id_of_demonstration_].size() )
             // set passive human at time along motion
@@ -1599,7 +1599,7 @@ double HumanTrajSimulator::getCost( const motion_t& traj ) const
 
 bool HumanTrajSimulator::loadActiveHumanGoalConfig()
 {
-    if( id_of_demonstration_ >= human_2_motions_.size()  )
+    if( id_of_demonstration_ >= int(human_2_motions_.size())  )
         return false;
 
     // INITIALIZE SIMULATION

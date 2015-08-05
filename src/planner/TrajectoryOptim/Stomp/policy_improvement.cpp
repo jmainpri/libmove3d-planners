@@ -39,10 +39,10 @@
 #include <stdio.h>
 //#include <ros/assert.h>
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 
 #include <Eigen/LU>
-#include <Eigen/Array>
+#include <Eigen/Dense>
 
 // local includes
 //#include <ros/ros.h>
@@ -72,7 +72,7 @@ using namespace Move3D;
 
 MOVE3D_USING_BOOST_NAMESPACE
 
-USING_PART_OF_NAMESPACE_EIGEN
+using namespace Eigen;
 
 namespace stomp_motion_planner
 {
@@ -522,8 +522,8 @@ namespace stomp_motion_planner
             }
 
             // Set the start and end values constant
-            traj.parameters_[j].start(1) = traj.parameters_[j].start(1);
-            traj.parameters_[j].end(1) = traj.parameters_[j].end(1);
+            traj.parameters_[j].head(1) = traj.parameters_[j].head(1);
+            traj.parameters_[j].tail(1) = traj.parameters_[j].tail(1);
         }
 
         return true;
@@ -693,7 +693,7 @@ namespace stomp_motion_planner
 
     bool PolicyImprovement::setRollouts(const std::vector<std::vector<Eigen::VectorXd> >& rollouts )
     {
-        for (int r=0; r<rollouts.size(); ++r)
+        for (size_t r=0; r<rollouts.size(); ++r)
         {
             rollouts_[r].parameters_ = rollouts[r];
             computeNoise( rollouts_[r] );
@@ -941,7 +941,9 @@ namespace stomp_motion_planner
 
                 if( !rollouts_[r].out_of_bounds_ )
                 {
-                    parameter_updates_[d].row(0).transpose() += rollouts_[r].noise_[d].cwise() * rollouts_[r].probabilities_[d];
+                    parameter_updates_[d].row(0).transpose()
+                            += rollouts_[r].noise_[d].cwiseProduct(
+                                rollouts_[r].probabilities_[d] );
                 }
                 else
                 {
@@ -951,14 +953,16 @@ namespace stomp_motion_planner
 
             if( draw_update )
             {
-                parameters.push_back( parameter_updates_[d].row(0).transpose() + parameters_[d] );
+                parameters.push_back( parameter_updates_[d].row(0).transpose()
+                                      + parameters_[d] );
             }
 
             // cout << "parameter_updates_[" << d << "].row(0).transpose() = " << endl << parameter_updates_[d].row(0).transpose() << endl;
             // This is the multiplication by M
             if( use_multiplication_by_m_ )
             {
-                parameter_updates_[d].row(0).transpose() = projection_matrix_[d]*parameter_updates_[d].row(0).transpose();
+                parameter_updates_[d].row(0).transpose() =
+                        projection_matrix_[d]*parameter_updates_[d].row(0).transpose();
             }
         }
 

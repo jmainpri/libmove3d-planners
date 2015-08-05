@@ -30,11 +30,12 @@
 
 #include <vector>
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
 #include "API/Grids/BaseGrid.hpp"
+#include "utils/eigen_transition.hpp"
 
 /*!
  @ingroup GRID

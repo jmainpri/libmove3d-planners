@@ -37,7 +37,7 @@
 
 #include <libmove3d/include/LightPlanner-pkg.h>
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 

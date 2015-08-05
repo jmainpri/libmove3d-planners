@@ -161,7 +161,9 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
                 double diff = params_all[i] - params_all[i+1];
                 double error = std::fabs( diff_angle( params_all[i+1] , params_all[i] ) - diff );
                 if( error > 1e-6 ){
-                    cout << "control cost breaks at row "  << d << " and col  " << i << " by " << error << " in " << __PRETTY_FUNCTION__ << endl;
+                    cout << "control cost breaks at row "  << d
+                         << " and col  " << i << " by " << error << " in "
+                         << __PRETTY_FUNCTION__ << endl;
                 }
             }
 
@@ -190,7 +192,7 @@ std::vector<Eigen::VectorXd> ControlCost::getSquaredQuantities( const Eigen::Mat
         // cout << "params_all : " << params_all.transpose() << endl;
         // cout << "acc_all : " << acc_all.transpose() << endl;
 
-        control_costs[d] = weight * ( acc_all.cwise()*acc_all );
+        control_costs[d] = weight * ( acc_all.cwiseProduct( acc_all ) );
 
 //        cout << "control_costs[" << d << "] : " << endl << control_costs[d].transpose() << endl;
     }

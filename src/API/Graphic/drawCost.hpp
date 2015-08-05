@@ -31,7 +31,7 @@
 
 #include <libmove3d/include/device.h>
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 
 #include <Eigen/Core>
 #define EIGEN_USE_NEW_STDVECTOR

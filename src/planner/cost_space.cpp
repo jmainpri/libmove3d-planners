@@ -497,7 +497,7 @@ Eigen::VectorXd CostSpace::getJacobian( const Configuration& q, std::vector<int>
     const std::vector<int>& dofs = active_dofs;
     if( active_dofs.empty() )
     {
-        for( size_t i=0; i< q.getEigenVector().size(); i++ )
+        for( int i=0; i< q.getEigenVector().size(); i++ )
             active_dofs.push_back( i );
     }
 
@@ -508,7 +508,7 @@ Eigen::VectorXd CostSpace::getJacobian( const Configuration& q, std::vector<int>
     q_tmp.getRobot()->setAndUpdate( q_tmp );
     double c_0 = cost( q_tmp );
 
-    for( size_t j=0; j<q_0.size(); j++ ) // For each colomn
+    for( int j=0; j<q_0.size(); j++ ) // For each colomn
     {
         int dof = j;
         // int dof = active_dofs_[ j ];
@@ -540,7 +540,7 @@ Eigen::MatrixXd CostSpace::getHessian( const Configuration& q, std::vector<int> 
     const std::vector<int>& dofs = active_dofs;
     if( active_dofs.empty() )
     {
-        for( size_t i=0; i< q.getEigenVector().size(); i++ )
+        for( int i=0; i< q.getEigenVector().size(); i++ )
             active_dofs.push_back( i );
     }
 
@@ -552,9 +552,9 @@ Eigen::MatrixXd CostSpace::getHessian( const Configuration& q, std::vector<int> 
     double c_0 = cost( q_tmp );
 
 
-    for( size_t i=0; i<q_0.size(); i++ ) // For each row
+    for( int i=0; i<q_0.size(); i++ ) // For each row
 
-        for( size_t j=0; j<q_0.size(); j++ ) // For each colomn
+        for( int j=0; j<q_0.size(); j++ ) // For each colomn
         {
             int dof_i = i;
             int dof_j = j;

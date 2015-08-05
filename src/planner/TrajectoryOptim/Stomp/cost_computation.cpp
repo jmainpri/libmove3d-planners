@@ -496,8 +496,7 @@ bool costComputation::handleJointLimits(  ChompTrajectory& group_traj  )
     return succes_joint_limits;
 }
 
-bool costComputation::getControlCosts(const ChompTrajectory& group_traj,
-                                      bool save_control_cost )
+bool costComputation::getControlCosts(const ChompTrajectory& group_traj )
 {
     std::vector<Eigen::VectorXd> parameters( num_joints_ );
     group_traj.getFreeParameters( parameters ); // TODO check the paramters size
@@ -1121,7 +1120,7 @@ bool costComputation::getCost( std::vector<Eigen::VectorXd>& parameters, Eigen::
 
     // do forward kinematics:
     bool trajectory_collision_free = performForwardKinematics( group_trajectory_, is_rollout);
-    bool last_trajectory_constraints_satisfied = true;
+    // bool last_trajectory_constraints_satisfied = true;
 
 
 
@@ -1145,8 +1144,7 @@ bool costComputation::getCost( std::vector<Eigen::VectorXd>& parameters, Eigen::
 
     // cout << "dt : " << dt_.transpose() << endl;
 
-    bool save_control_cost;
-    getControlCosts( group_trajectory_ , save_control_cost );
+    getControlCosts( group_trajectory_ );
 
     for (int i=free_vars_start_; i<=free_vars_end_; i++)
     {

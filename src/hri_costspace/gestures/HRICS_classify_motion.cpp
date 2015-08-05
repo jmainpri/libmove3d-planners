@@ -59,8 +59,11 @@ Eigen::VectorXd ClassifyMotion::gauss_pdf(const Eigen::MatrixXd& motion, int id_
     Eigen::MatrixXd Data = motion.transpose() - m_mu[id_class].col(id_state).transpose().replicate(nbData,1);
     Eigen::MatrixXd& Sigma = m_sigma[id_class][id_state];
     Eigen::VectorXd prob;
-    prob = ((Data*(Sigma.inverse())).cwise()*Data).rowwise().sum();
-    prob = (-0.5*prob).cwise().exp() / std::sqrt(std::abs((std::pow(2*M_PI,nbVar)*Sigma.determinant()+realmin)));
+    prob = ((Data*(Sigma.inverse())).cwiseProduct(Data) ).rowwise().sum();
+
+    prob = (-0.5*prob).array().exp() /
+            std::sqrt(std::abs((std::pow(2*M_PI,nbVar)*
+                                Sigma.determinant()+ realmin)));
     return prob;
 }
 
@@ -93,7 +96,7 @@ std::vector<double> ClassifyMotion::classify_motion(const Eigen::MatrixXd &motio
 //            if( F(k) > 1 )
 //                cout << "F(" << k << ") : " << F(k) << endl;
 
-        result[i] = F.cwise().log().sum()/F.size();
+        result[i] = F.array().log().sum()/F.size();
     }
 
 

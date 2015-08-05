@@ -35,7 +35,7 @@
 //! Ugly...
 #include "hri_costspace/human_trajectories/HRICS_human_features.hpp"
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 
 #include <vector>
 

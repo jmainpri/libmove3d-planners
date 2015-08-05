@@ -47,7 +47,7 @@ class Boxes : public Squares
     public:
 
         Boxes();
-        ~Boxes();
+        virtual ~Boxes();
 
         void initialize();
 

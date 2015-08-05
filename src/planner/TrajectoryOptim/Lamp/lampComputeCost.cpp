@@ -171,7 +171,7 @@ LampCostComputation::LampCostComputation(Robot* robot,
     joint_costs_.clear();
     double max_cost_scale = 0.0;
 
-    for (int i=0; i<planning_group_->chomp_dofs_.size(); i++)
+    for (size_t i=0; i<planning_group_->chomp_dofs_.size(); i++)
     {
         double joint_cost = 1.0;
         std::vector<double> derivative_costs(3);
@@ -188,7 +188,7 @@ LampCostComputation::LampCostComputation(Robot* robot,
     }
 
     // scale the smoothness costs
-    for (int i=0; i<joint_costs_.size(); i++)
+    for (size_t i=0; i<joint_costs_.size(); i++)
     {
         joint_costs_[i].scale(max_cost_scale);
     }

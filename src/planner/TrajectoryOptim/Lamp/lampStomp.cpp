@@ -21,6 +21,7 @@ bool Stomp::initialize(bool single_rollout, double discretization)
 {
     probabilities_.resize( num_rollouts_ );
     precompute_projection_matrices();
+    return true;
 }
 
 void Stomp::end()
@@ -53,10 +54,11 @@ void Stomp::run_single_iteration()
     std::vector<Move3D::VectorTrajectory> deltas( samples_.size() );
 
     int nb_valid_samples= 0;
-    double group_trajectory_cost = getTrajectoryCost();
+//    double group_trajectory_cost =
+            getTrajectoryCost();
 
     // Compute cost
-    for( int i=0; i<samples_.size(); i++)
+    for( size_t i=0; i<samples_.size(); i++)
     {
         deltas[i] = Move3D::VectorTrajectory( samples_[i] );
         deltas[i].trajectory_ -= group_trajectory_.trajectory_;
@@ -156,15 +158,18 @@ bool Stomp::rollout_probabilities()
     return true;
 }
 
-bool Stomp::compute_parameter_updates( const std::vector<Move3D::VectorTrajectory> & deltas, Eigen::VectorXd& parameter_updates )
+bool Stomp::compute_parameter_updates(
+        const std::vector<Move3D::VectorTrajectory> & deltas,
+        Eigen::VectorXd& parameter_updates )
 {
-    const bool draw_update = true;
+    // const bool draw_update = true;
 
     for( int r=0; r<num_rollouts_; ++r )
     {
         if( !samples_[r].out_of_bounds_ )
         {
-            parameter_updates += deltas[r].trajectory_.cwise() * probabilities_[r];
+            parameter_updates +=
+                    deltas[r].trajectory_.cwiseProduct( probabilities_[r]);
         }
         else
         {

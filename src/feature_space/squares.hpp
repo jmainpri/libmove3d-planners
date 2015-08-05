@@ -30,7 +30,7 @@
 
 #include "planar_feature.hpp"
 
-#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
+////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 #include <vector>
 
@@ -56,7 +56,7 @@ class Squares : public PlanarFeature
 {
 public:
     Squares();
-    ~Squares();
+    virtual ~Squares();
 
     virtual void initialize();
     void computeSize();
