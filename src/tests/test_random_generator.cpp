@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2014 LAAS/CNRS, WPI, MPI
+ * Copyright (c) 2010-2015 LAAS/CNRS, WPI
  * All rights reserved.
  *
  * Redistribution  and  use  in  source  and binary  forms,  with  or  without
@@ -23,35 +23,22 @@
  * Move3d: A generic platform for path planning. In in 4th Int. Symp.
  * on Assembly and Task Planning.
  *
- *                                               Jim Mainprice Tue 27 May 2014
+ *                                               Jim Mainprice Sun 5 July 2015
  */
 
-#include "trajOptimizer.hpp"
-#include "lampTrajectory.hpp"
-#include "lampComputeCost.hpp"
+#include <iostream>
+#include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
 
-#ifndef LAMP_STOMP_LOOP_H_
-#define LAMP_STOMP_LOOP_H_
+using std::cout;
+using std::endl;
 
-namespace Move3D {
-
-class Stomp : public SamplingBasedInnerLoop {
- public:
-  Stomp(Move3D::Robot* robot) : SamplingBasedInnerLoop(robot) {}
-
-  bool initialize(bool single_rollout, double discretization);
-  void run_single_iteration();
-  void end();
-  bool rollout_probabilities();
-  bool compute_parameter_updates(
-      const std::vector<Move3D::VectorTrajectory>& deltas,
-      Eigen::VectorXd& parameter_updates);
-  bool precompute_projection_matrices();
-
- private:
-  std::vector<Eigen::VectorXd> probabilities_;
-  Eigen::MatrixXd projection_matrix_;
-};
+int main(int argc, char *argv[]) {
+  int dimension = 10;
+  Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(dimension, dimension);
+  Eigen::VectorXd mean = Eigen::VectorXd::Ones(dimension);
+  MultivariateGaussian sampler( mean, covariance );
+  cout << "sample : " << endl;
+  Eigen::VectorXd sample( dimension );
+  sampler.sample( sample );
+  cout << sample << endl;
 }
-
-#endif /* LAMP_STOMP_LOOP_H_ */

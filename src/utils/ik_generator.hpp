@@ -31,18 +31,20 @@
 
 #include "API/Device/generalik.hpp"
 
-namespace Move3D
-{
+namespace Move3D {
 
-class IKGenerator : public GeneralIK
-{
-public:
-    IKGenerator(Move3D::Robot* robot);
-    bool generate(const Eigen::VectorXd& xdes);
-    Move3D::confPtr_t sample(Move3D::confPtr_t q, double variance_factor);
+class IKGenerator : public GeneralIK {
+ public:
+  IKGenerator(Move3D::Robot* robot);
+  bool generate(const Eigen::VectorXd& xdes);
+  Move3D::confPtr_t sample(Move3D::confPtr_t q, double variance_factor);
+  void set_drawing(bool v) { draw_ = v; }
 
+ private:
+  bool draw_;
 };
-
 }
 
-#endif // IK_GENERATOR_HPP
+bool test_ik_generator();
+
+#endif  // IK_GENERATOR_HPP

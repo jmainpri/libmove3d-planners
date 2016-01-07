@@ -1,26 +1,31 @@
-SET(BM3D_MODULE_NAME src/planner)
-BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})
-BM3D_SRC_SUBDIR_PROCESS(
-planner.cpp 
-plannerFunctions.cpp 
-planEnvironment.cpp
-plannerSequences.cpp
-cost_space.cpp
-)
+message(STATUS "Adding Tests")
 
-IF(MULTILOCALPATH AND LIGHT_PLANNER)
-BM3D_SRC_SUBDIR_PROCESS(
-replanningAlgorithms.cpp
-replanningSimulators.cpp
-)
-ENDIF()
+#add_executable(move3dplannerstest ${CMAKE_SOURCE_DIR}/src/tests/main.cpp)
+#set_target_properties(move3dplannerstest PROPERTIES LINKER_LANGUAGE CXX)
+#target_link_libraries(move3dplannerstest move3d-planners)
 
-BM3D_QT_GENERATE_MOC(
-planEnvironment.hpp
-)
+add_executable(move3d_test_control ${CMAKE_SOURCE_DIR}/src/tests/test_control_costs.cpp)
+set_target_properties(move3d_test_control PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(move3d_test_control move3d-planners ${Boost_LIBRARIES} ${LIBS})
+install(TARGETS move3d_test_control
+        RUNTIME DESTINATION bin CONFIGURATIONS ${CMAKE_BUILD_TYPE}
+        LIBRARY DESTINATION lib CONFIGURATIONS ${CMAKE_BUILD_TYPE})
 
-include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Diffusion/SourceList.cmake)
-include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/PRM/SourceList.cmake)
-include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/Greedy/SourceList.cmake)
-include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/TrajectoryOptim/SourceList.cmake)
-include(${CMAKE_SOURCE_DIR}/${BM3D_MODULE_NAME}/AStar/SourceList.cmake)
+add_executable(move3d_test_random_generator ${CMAKE_SOURCE_DIR}/src/tests/test_random_generator.cpp)
+set_target_properties(move3d_test_random_generator PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(move3d_test_random_generator move3d-planners ${Boost_LIBRARIES} ${LIBS})
+install(TARGETS move3d_test_random_generator
+        RUNTIME DESTINATION bin CONFIGURATIONS ${CMAKE_BUILD_TYPE}
+        LIBRARY DESTINATION lib CONFIGURATIONS ${CMAKE_BUILD_TYPE})
+
+
+add_executable(move3d_test_save_to_file ${CMAKE_SOURCE_DIR}/src/tests/test_save_to_file.cpp)
+set_target_properties(move3d_test_save_to_file PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(move3d_test_save_to_file move3d-planners ${Boost_LIBRARIES} ${LIBS})
+install(TARGETS move3d_test_save_to_file
+        RUNTIME DESTINATION bin CONFIGURATIONS ${CMAKE_BUILD_TYPE}
+        LIBRARY DESTINATION lib CONFIGURATIONS ${CMAKE_BUILD_TYPE})
+
+enable_testing()
+#message("CMAKE_BINARY_DIR = " ${CMAKE_BINARY_DIR})
+add_test(NAME basic COMMAND move3dplannerstest)

@@ -17,16 +17,16 @@
  * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
  * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                                  
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001). 
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
  * Move3d: A generic platform for path planning. In in 4th Int. Symp.
  * on Assembly and Task Planning.
  *
- *                                               Jim Mainprice Tue 27 May 2014 
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 
-#include "API/Device/robot.hpp" // WARNING: Robot has to be declared before trajectory allways
+#include "API/Device/robot.hpp"  // WARNING: Robot has to be declared before trajectory allways
 
 #ifndef TRAJECTORY_HPP_
 #define TRAJECTORY_HPP_
@@ -44,8 +44,7 @@ struct traj;
  * @ingroup Trajectory
  * @brief Trajectory witch is a vector of local paths
  */
-namespace Move3D
-{
+namespace Move3D {
 /**
  * @ingroup CPP_API
  * @defgroup Trajectory
@@ -53,282 +52,260 @@ namespace Move3D
 
 class Robot;
 
-struct TrajectoryStatistics
-{
-    double length;
-    double min;
-    double max;
-    double sum;
-    double average;
-    double integral;
-    double mecha_work;
-    bool is_valid;
+struct TrajectoryStatistics {
+  double length;
+  double min;
+  double max;
+  double sum;
+  double average;
+  double integral;
+  double mecha_work;
+  bool is_valid;
 
-    void print()
-    {
-        std::cout << "--- stats on traj ---" << std::endl;
-        std::cout << " length = " << length << std::endl;
-        std::cout << " min = " << min << std::endl;
-        std::cout << " max = " << max << std::endl;
-        std::cout << " average = " << average << std::endl;
-        std::cout << " integral = " << integral << std::endl;
-        std::cout << " mecha_work = " << mecha_work << std::endl;
-        std::cout << "---------------------" << std::endl;
-    }
+  void print() {
+    std::cout << "--- stats on traj ---" << std::endl;
+    std::cout << " length = " << length << std::endl;
+    std::cout << " min = " << min << std::endl;
+    std::cout << " max = " << max << std::endl;
+    std::cout << " average = " << average << std::endl;
+    std::cout << " integral = " << integral << std::endl;
+    std::cout << " mecha_work = " << mecha_work << std::endl;
+    std::cout << "---------------------" << std::endl;
+  }
 };
 
+class Trajectory {
+ public:
+  //---------------------------------------------------------
+  // Constructors
+  Trajectory();
+  Trajectory(Robot* R);
+  Trajectory(Robot* R, traj* t);
+  Trajectory(std::vector<confPtr_t>& C);
+  Trajectory(const Trajectory& T);
+  ~Trajectory();
 
-class Trajectory
-{
-public:
-    //---------------------------------------------------------
-    // Constructors
-    Trajectory();
-    Trajectory(Robot* R);
-    Trajectory(Robot* R, traj* t);
-    Trajectory(std::vector<confPtr_t>& C);
-    Trajectory(const Trajectory& T);
-    ~Trajectory();
+  Trajectory& operator=(const Trajectory& t);
 
-    Trajectory& operator= (const Trajectory& t);
+  bool operator==(const Trajectory& t) const;
+  bool operator!=(const Trajectory& t) const;
 
-    bool operator == ( const Trajectory& t ) const;
-    bool operator != ( const Trajectory& t ) const;
-    
-    //---------------------------------------------------------
-    // Cuting, concat and extraction operations
-    void copyPaths( std::vector<LocalPath*>& vect );
+  //---------------------------------------------------------
+  // Cuting, concat and extraction operations
+  void copyPaths(std::vector<LocalPath*>& vect);
 
-    std::vector< confPtr_t > getTowConfigurationAtParam(
-            double param1, double param2, uint& lp1, uint& lp2 ) const;
+  std::vector<confPtr_t> getTowConfigurationAtParam(double param1,
+                                                    double param2,
+                                                    uint& lp1,
+                                                    uint& lp2) const;
 
-    std::pair<bool,std::vector<LocalPath*> > extractSubPortion(
-            double param1,double param2,
-            unsigned int& first,unsigned int& last,
-            bool check_for_coll = true) const;
-    Trajectory extractSubTrajectoryOfLocalPaths(
-            unsigned int id_start, unsigned int id_end) const;
-    Trajectory extractSubTrajectory(
-            double param1, double param2, bool check_for_coll = true) const;
-    Trajectory extractReverseTrajectory() const;
+  std::pair<bool, std::vector<LocalPath*> > extractSubPortion(
+      double param1,
+      double param2,
+      unsigned int& first,
+      unsigned int& last,
+      bool check_for_coll = true) const;
+  Trajectory extractSubTrajectoryOfLocalPaths(unsigned int id_start,
+                                              unsigned int id_end) const;
+  Trajectory extractSubTrajectory(double param1,
+                                  double param2,
+                                  bool check_for_coll = true) const;
+  Trajectory extractReverseTrajectory() const;
 
-    bool concat(const Trajectory& traj);
+  bool concat(const Trajectory& traj);
 
-    bool replacePortionOfLocalPaths( unsigned int id1, unsigned int id2,
-                                     std::vector<LocalPath*> paths,
-                                     bool freeMemory = true );
-    bool replacePortion( double param1, double param2,
-                         std::vector<LocalPath*> paths,
-                         bool freeMemory = true );
-    
-    bool replaceBegin( double param, const std::vector<LocalPath*>& paths );
-    bool replaceEnd( double param, const std::vector<LocalPath*>& paths );
+  bool replacePortionOfLocalPaths(unsigned int id1,
+                                  unsigned int id2,
+                                  std::vector<LocalPath*> paths,
+                                  bool freeMemory = true);
+  bool replacePortion(double param1,
+                      double param2,
+                      std::vector<LocalPath*> paths,
+                      bool freeMemory = true);
 
-    bool cutTrajInSmallLP(unsigned int nLP);
-    bool cutTrajInSmallLPSimple(unsigned int nLP, bool use_time=false);
-    uint cutPortionInSmallLP(std::vector<LocalPath*>& portion, uint nLP);
+  bool replaceBegin(double param, const std::vector<LocalPath*>& paths);
+  bool replaceEnd(double param, const std::vector<LocalPath*>& paths);
 
-    bool push_back(confPtr_t q);
-    bool push_back(confPtr_t q, double dt);
-    bool push_back(MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> path);
+  bool cutTrajInSmallLP(unsigned int nLP);
+  bool cutTrajInSmallLPSimple(unsigned int nLP, bool use_time = false);
+  uint cutPortionInSmallLP(std::vector<LocalPath*>& portion, uint nLP);
 
-    //---------------------------------------------------------
-    // Cost
+  bool push_back(confPtr_t q);
+  bool push_back(confPtr_t q, double dt);
+  bool push_back(MOVE3D_PTR_NAMESPACE::shared_ptr<LocalPath> path);
 
-    double cost() const;
-    double costNoRecompute();
-    double costRecomputed();
-    double costStatistics( TrajectoryStatistics& stat );
-    double costDeltaAlongTraj();
-    double costNPoints(const int n_points);
-    double costSum();
-    double costPerPoint();
-    
-    std::vector< std::pair<double,double > > getCostProfile();
-    double computeSubPortionIntergralCost(const std::vector<LocalPath*>& portion);
-    double computeSubPortionCost(const std::vector<LocalPath*>& portion) const;
-    std::pair<double,double> computeSubPortionMinAndMaxCost(std::vector<LocalPath*>& portion);
-    double reComputeSubPortionCost(std::vector<LocalPath*>& portion, int& nb_cost_tests);
-    double computeSubPortionCostVisib( std::vector<LocalPath*>& portion );
-    double costOfPortion(double param1,double param2);
-    double extractCostPortion(double param1, double param2);
+  //---------------------------------------------------------
+  // Cost
 
-    bool operator < (const Trajectory& traj) const {
-        return cost() < traj.cost();
-    }
-    
-    std::vector<double> getCostAlongTrajectory(int nbSample);
-    void resetCostComputed();
+  double cost() const;
+  double costNoRecompute();
+  double costRecomputed();
+  double costStatistics(TrajectoryStatistics& stat);
+  double costDeltaAlongTraj();
+  double costNPoints(const int n_points);
+  double costSum();
+  double costPerPoint();
 
-    //---------------------------------------------------------
-    // Time
-    void setUseTimeParameter(bool use_time) {
-        m_use_time_parameter = use_time;
-    }
+  std::vector<std::pair<double, double> > getCostProfile();
+  double computeSubPortionIntergralCost(const std::vector<LocalPath*>& portion);
+  double computeSubPortionCost(const std::vector<LocalPath*>& portion) const;
+  std::pair<double, double> computeSubPortionMinAndMaxCost(
+      std::vector<LocalPath*>& portion);
+  double reComputeSubPortionCost(std::vector<LocalPath*>& portion,
+                                 int& nb_cost_tests);
+  double computeSubPortionCostVisib(std::vector<LocalPath*>& portion);
+  double costOfPortion(double param1, double param2);
+  double extractCostPortion(double param1, double param2);
 
-    bool getUseTimeParameter() const {
-        return m_use_time_parameter;
-    }
+  bool operator<(const Trajectory& traj) const { return cost() < traj.cost(); }
 
-    void setUseConstantTime(bool use_cst_time) {
-        m_use_constant_dt = use_cst_time;
-    }
+  std::vector<double> getCostAlongTrajectory(int nbSample);
+  void resetCostComputed();
 
-    bool getUseConstantTime() const {
-        return m_use_constant_dt;
-    }
+  //---------------------------------------------------------
+  // Time
+  void setUseTimeParameter(bool use_time) { m_use_time_parameter = use_time; }
 
-    void setDeltaTime(double dt) {
-        m_dt = dt;
-    }
+  bool getUseTimeParameter() const { return m_use_time_parameter; }
 
-    double getDeltaTime(int i);
+  void setUseConstantTime(bool use_cst_time) {
+    m_use_constant_dt = use_cst_time;
+  }
 
-    double getDeltaTime() const {
-        return m_use_time_parameter && m_use_constant_dt ? m_dt : 0.0;
-    }
+  bool getUseConstantTime() const { return m_use_constant_dt; }
 
-    void setDeltaTimes(const std::vector<double>& dts) {
-        m_dts = dts;
-    }
+  void setDeltaTime(double dt) { m_dt = dt; }
 
-    const std::vector<double>& getDeltaTimes() {
-        return m_dts;
-    }
+  double getDeltaTime(int i);
 
-    double getDuration() const;
+  double getDeltaTime() const {
+    return m_use_time_parameter && m_use_constant_dt ? m_dt : 0.0;
+  }
 
-    confPtr_t configAtTime(double time, unsigned int* id_localpath=NULL) const;
+  void setDeltaTimes(const std::vector<double>& dts) { m_dts = dts; }
 
-    //---------------------------------------------------------
-    // Basic
-    bool isEmpty();
-    void clear();
-    
-    confPtr_t configAtParam(double param, unsigned int* id_localpath=NULL) const;
+  const std::vector<double>& getDeltaTimes() { return m_dts; }
 
-    std::vector<confPtr_t> getNConfAtParam(double delta) const;
-    std::vector<confPtr_t> getVectorOfConfiguration() const;
+  double getDuration() const;
 
-    uint            getLocalPathId(double param) const;
-    LocalPath*      getLocalPath(unsigned int id) const;
+  confPtr_t configAtTime(double time, unsigned int* id_localpath = NULL) const;
 
-    confPtr_t operator[] ( const int &i ) const;
-    int size() const { return m_Courbe.size(); }
-    int	getNbOfPaths() const { return m_Courbe.size(); }
-    int	getNbOfViaPoints() const;
+  //---------------------------------------------------------
+  // Basic
+  bool isEmpty();
+  void clear();
 
-    bool isValid() const;
-    void resetIsValid();
-    int meanCollTest();
+  confPtr_t configAtParam(double param,
+                          unsigned int* id_localpath = NULL) const;
 
-    void 	updateRange();
-    double  computeSubPortionRange(const std::vector<LocalPath*>& portion) const;
+  std::vector<confPtr_t> getNConfAtParam(double delta) const;
+  std::vector<confPtr_t> getVectorOfConfiguration() const;
 
-    bool    replaceP3dTraj() const;
-    traj* 	replaceP3dTraj(traj* trajPt) const;
-    traj* 	replaceHumanP3dTraj(Robot* robot, traj* trajPt);
+  uint getLocalPathId(double param) const;
+  LocalPath* getLocalPath(unsigned int id) const;
 
-    Eigen::MatrixXd getJointPoseTrajectory( const std::vector<Move3D::Joint*>& joints ) const;
-    Eigen::MatrixXd getJointPoseTrajectory( const Move3D::Joint* joint ) const;
-    Eigen::MatrixXd getEigenMatrix(int startIndex=0, int endIndex=0) const;
-    Eigen::MatrixXd getEigenMatrix(const std::vector<int>& incides) const;
-    bool setFromEigenMatrix(const Eigen::MatrixXd& mat, const std::vector<int>& incides);
+  confPtr_t operator[](const int& i) const;
+  int size() const { return m_Courbe.size(); }
+  int getNbOfPaths() const { return m_Courbe.size(); }
+  int getNbOfViaPoints() const;
 
-    void printAllLocalpathCost();
-    void draw(int nbKeyFrame = 0);
-    void print() const;
+  bool isValid() const;
+  void resetIsValid();
+  int meanCollTest();
 
-    // Shows trajectory in Move3D mode
-    void show() const;
+  void updateRange();
+  double computeSubPortionRange(const std::vector<LocalPath*>& portion) const;
 
-    void setUseContinuousColors(bool use_continuous_color=true) {
-        m_use_continuous_color=use_continuous_color;
-    }
+  bool replaceP3dTraj() const;
+  traj* replaceP3dTraj(traj* trajPt) const;
+  traj* replaceHumanP3dTraj(Robot* robot, traj* trajPt);
 
-    void setColor(double col) {
-        m_Color = col;
-    }
+  Eigen::MatrixXd getJointPoseTrajectory(
+      const std::vector<Move3D::Joint*>& joints) const;
+  Eigen::MatrixXd getJointPoseTrajectory(const Move3D::Joint* joint) const;
+  Eigen::MatrixXd getEigenMatrix(int startIndex = 0, int endIndex = 0) const;
+  Eigen::MatrixXd getEigenMatrix(const std::vector<int>& incides) const;
+  bool setFromEigenMatrix(const Eigen::MatrixXd& mat,
+                          const std::vector<int>& incides);
 
-    unsigned int getHighestCostId() const {
-        return m_HighestCostId;
-    }
+  void printAllLocalpathCost();
+  void draw(int nbKeyFrame = 0);
+  void print() const;
 
-    Robot* getRobot() const {
-        return m_Robot;
-    }
+  // Shows trajectory in Move3D mode
+  void show() const;
 
-    confPtr_t getBegin() const {
-        return m_Source;
-    }
+  void setUseContinuousColors(bool use_continuous_color = true) {
+    m_use_continuous_color = use_continuous_color;
+  }
 
-    confPtr_t getEnd() const {
-        return m_Target;
-    }
+  void setColor(double col) { m_Color = col; }
 
-    const std::vector<LocalPath*>& getCourbe() const {
-        return m_Courbe;
-    }
+  unsigned int getHighestCostId() const { return m_HighestCostId; }
 
-    double getParamMax() const {
-        return computeSubPortionRange(m_Courbe);
-    }
+  Robot* getRobot() const { return m_Robot; }
 
-    long int Id() {
-        return m_id;
-    }
+  confPtr_t getBegin() const { return m_Source; }
 
-    //---------------------------------------------------------
-    // B-Spline
-    bool makeBSplineTrajectory();
+  confPtr_t getEnd() const { return m_Target; }
 
-    //---------------------------------------------------------
-    // Save and Load from File
-    bool saveToFile(std::string filename) const;
-    bool loadFromFile(std::string filename);
+  const std::vector<LocalPath*>& getCourbe() const { return m_Courbe; }
 
-    //---------------------------------------------------------
-    // Members
+  double getParamMax() const { return computeSubPortionRange(m_Courbe); }
 
-protected:
+  long int Id() { return m_id; }
 
-    /* Robot */
-    Robot*						m_Robot;
+  //---------------------------------------------------------
+  // B-Spline
+  bool makeBSplineTrajectory();
 
-    unsigned int				m_HighestCostId;
-    bool						m_isHighestCostIdSet;
+  //---------------------------------------------------------
+  // Save and Load from File
+  bool saveToFile(std::string filename) const;
+  bool loadFromFile(std::string filename);
 
-private:
+  //---------------------------------------------------------
+  // Members
 
-    std::vector<LocalPath*> 	m_Courbe;
+ protected:
+  /* Robot */
+  Robot* m_Robot;
 
-    /* name of trajectory */
-    std::string                 m_name;
+  unsigned int m_HighestCostId;
+  bool m_isHighestCostIdSet;
 
-    /* trajectory id */
-    long int                    m_id;
+ private:
+  std::vector<LocalPath*> m_Courbe;
 
-    /* Name of the file */
-    std::string                 m_file;
+  /* name of trajectory */
+  std::string m_name;
 
-    bool                        m_use_continuous_color;
-    double                      m_Color;
+  /* trajectory id */
+  long int m_id;
 
-    /* Start and Goal (should never change) */
-    confPtr_t                   m_Source;
-    confPtr_t                   m_Target;
+  /* Name of the file */
+  std::string m_file;
 
-    /* time along trajectory */
-    bool                        m_use_time_parameter;
-    bool                        m_use_constant_dt;
-    double                      m_dt;
-    std::vector<double>         m_dts;
+  bool m_use_continuous_color;
+  double m_Color;
+
+  /* Start and Goal (should never change) */
+  confPtr_t m_Source;
+  confPtr_t m_Target;
+
+  /* time along trajectory */
+  bool m_use_time_parameter;
+  bool m_use_constant_dt;
+  double m_dt;
+  std::vector<double> m_dts;
 };
 }
 
-//#if defined( QT_LIBRARY ) 
+//#if defined( QT_LIBRARY )
 #include <vector>
-namespace Move3D { class Trajectory; }
+namespace Move3D {
+class Trajectory;
+}
 extern std::vector<Move3D::Trajectory> global_trajToDraw;
 void draw_traj_debug();
 //#endif

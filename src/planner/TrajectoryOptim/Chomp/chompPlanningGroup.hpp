@@ -16,91 +16,94 @@
 
 namespace Move3D {
 
-double chomp_random_value( double max, double min );
+double chomp_random_value(double max, double min);
 
 /**
  * \brief Contains information about a single joint for CHOMP planning
  */
-struct ChompDof
-{
-    Joint* move3d_joint_;                                       /**< Pointer to the Move3D joint in the tree */
-    int move3d_joint_index_;                                    /**< Index for use in a Move3D joint array */
-    int move3d_dof_index_;                                       /**< Index in the configuration */
-    int chomp_joint_index_;                                     /**< Joint index for CHOMP */
-    std::string joint_name_;                                    /**< Name of the joint */
-    std::string link_name_;                                     /**< Name of the corresponding link (from planning.yaml) */
-    bool is_circular_;                                          /**< Does this joint wrap-around? */
-    bool has_joint_limits_;                                     /**< Are there joint limits? */
-    double joint_limit_min_;                                    /**< Minimum joint angle value */
-    double joint_limit_max_;                                    /**< Maximum joint angle value */
-    double joint_update_limit_;                                 /**< Maximum amount the joint value can be updated in an iteration */
+struct ChompDof {
+  Joint* move3d_joint_;    /**< Pointer to the Move3D joint in the tree */
+  int move3d_joint_index_; /**< Index for use in a Move3D joint array */
+  int move3d_dof_index_;   /**< Index in the configuration */
+  int chomp_joint_index_;  /**< Joint index for CHOMP */
+  std::string joint_name_; /**< Name of the joint */
+  std::string
+      link_name_;    /**< Name of the corresponding link (from planning.yaml) */
+  bool is_circular_; /**< Does this joint wrap-around? */
+  bool is_translational_;  /**< Is the joint tanslational */
+  bool has_joint_limits_;     /**< Are there joint limits? */
+  double joint_limit_min_;    /**< Minimum joint angle value */
+  double joint_limit_max_;    /**< Maximum joint angle value */
+  double joint_update_limit_; /**< Maximum amount the joint value can be updated
+                                 in an iteration */
+  double range_;
 };
 
 /**
  * \brief Contains information about a planning group
  */
-class ChompPlanningGroup
-{
-public:
+class ChompPlanningGroup {
+ public:
+  // Creates the planning group
+  ChompPlanningGroup(Robot* rob, const std::vector<int>& active_joints);
+  ChompPlanningGroup(const ChompPlanningGroup& pg, Robot* rob);
 
-    // Creates the planning group
-    ChompPlanningGroup(Robot* rob, const std::vector<int>& active_joints );
-    ChompPlanningGroup(const ChompPlanningGroup& pg, Robot* rob);
+  Robot* robot_; /** Move3D robot which is planned **/
 
-    Robot* robot_;                                            /** Move3D robot which is planned **/
+  std::string name_;                 /**< Name of the planning group */
+  int num_dofs_;                     /**< Number of joints used in planning */
+  std::vector<ChompDof> chomp_dofs_; /**< Joints used in planning */
+  std::vector<std::string> link_names_; /**< Links used in planning */
+  std::vector<std::string>
+      collision_link_names_; /**< Links used in collision checking */
+  std::vector<CollisionPoint>
+      collision_points_; /**< Ordered list of collision checking points (from
+                            root to tip) */
 
-    std::string name_;                                          /**< Name of the planning group */
-    int num_dofs_;                                            /**< Number of joints used in planning */
-    std::vector<ChompDof> chomp_dofs_;                      /**< Joints used in planning */
-    std::vector<std::string> link_names_;                       /**< Links used in planning */
-    std::vector<std::string> collision_link_names_;             /**< Links used in collision checking */
-    std::vector<CollisionPoint> collision_points_;              /**< Ordered list of collision checking points (from root to tip) */
+  /**
+ * Gets a random state vector within the joint limits
+ */
+  template <typename Derived>
+  void getRandomState(Eigen::MatrixBase<Derived>& state_vec) const;
 
-    /**
-   * Gets a random state vector within the joint limits
-   */
-    template <typename Derived>
-    void getRandomState(Eigen::MatrixBase<Derived>& state_vec) const;
+  /**
+ * Adds the collision point to this planning group, if any of the joints in this
+ * group can
+ * control the collision point in some way. Also converts the
+ * ChompCollisionPoint::parent_joints
+ * vector into group joint indexes
+ */
+  bool addCollisionPoint(CollisionPoint& collision_point);
 
-    /**
-   * Adds the collision point to this planning group, if any of the joints in this group can
-   * control the collision point in some way. Also converts the ChompCollisionPoint::parent_joints
-   * vector into group joint indexes
-   */
-    bool addCollisionPoint( CollisionPoint& collision_point );
+  /**
+    * Returns the Move3d active dofs
+    */
+  std::vector<int> getActiveDofs() const;
+  std::vector<Move3D::Joint*> getActiveJoints() const;
 
-    /**
-      * Returns the Move3d active dofs
-      */
-    std::vector<int> getActiveDofs() const;
-    std::vector<Move3D::Joint*> getActiveJoints() const;
-
-    /**
-   * Displays all bounding spheres
-   */
-    void draw() const;
-    void draw(std::vector<Eigen::Transform3d>& segment) const;
-    void draw(std::vector<std::vector<double> >& segment) const;
+  /**
+ * Displays all bounding spheres
+ */
+  void draw() const;
+  void draw(std::vector<Eigen::Transform3d>& segment) const;
+  void draw(std::vector<std::vector<double> >& segment) const;
 };
 
 template <typename Derived>
-void ChompPlanningGroup::ChompPlanningGroup::getRandomState(Eigen::MatrixBase<Derived>& state_vec) const
-{
-    for (int i=0; i<num_dofs_; i++)
-    {
-        double min = chomp_dofs_[i].joint_limit_min_;
-        double max = chomp_dofs_[i].joint_limit_max_;
+void ChompPlanningGroup::ChompPlanningGroup::getRandomState(
+    Eigen::MatrixBase<Derived>& state_vec) const {
+  for (int i = 0; i < num_dofs_; i++) {
+    double min = chomp_dofs_[i].joint_limit_min_;
+    double max = chomp_dofs_[i].joint_limit_max_;
 
-        if (!chomp_dofs_[i].has_joint_limits_)
-        {
-            min = -M_PI/2.0;
-            max = M_PI/2.0;
-        }
-
-        state_vec(i) = chomp_random_value( max, min );
+    if (!chomp_dofs_[i].has_joint_limits_) {
+      min = -M_PI / 2.0;
+      max = M_PI / 2.0;
     }
-}
 
+    state_vec(i) = chomp_random_value(max, min);
+  }
+}
 }
 
 #endif

@@ -451,24 +451,26 @@ TARGET_LINK_LIBRARIES(move3d-planners ${LIBS})
 # Intallation
 # ------------------------------------------------------------------------------
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-#  SET(CMAKE_INSTALL_PREFIX "${Move3DMPLIB_BINARY_DIR}/install" CACHE PATH "Move3DMPLIB install prefix" FORCE)
-   SET(CMAKE_INSTALL_PREFIX "$ENV{ROBOTPKG_BASE}" CACHE PATH "Move3DMPLIB install prefix" FORCE)
-ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
-# -------- TESTS ---------
-# TODO remove this code to a proper CMakeLists.txt
+    message("CMAKE_INSTALL_PREFIX set to default")
 
-#add_executable(move3dplannerstest ${CMAKE_SOURCE_DIR}/src/tests/main.cpp)
-#set_target_properties(move3dplannerstest PROPERTIES LINKER_LANGUAGE CXX)
-#target_link_libraries(move3dplannerstest move3d-planners)
+    if(DEFINED ENV{MOVE3D_INSTALL_DIR})
+        set(LIBMOVE3D_INSTALL_PREFIX $ENV{MOVE3D_INSTALL_DIR})
+    else()
+        set(LIBMOVE3D_INSTALL_PREFIX $ENV{ROBOTPKG_BASE})
+    endif()
 
-add_executable(move3dplannerstest ${CMAKE_SOURCE_DIR}/src/tests/test_control_costs.cpp)
-set_target_properties(move3dplannerstest PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(move3dplannerstest move3d-planners ${Boost_LIBRARIES} ${LIBS})
+    SET(CMAKE_INSTALL_PREFIX "${LIBMOVE3D_INSTALL_PREFIX}" CACHE PATH "Move3DMPLIB install prefix" FORCE)
 
-INSTALL(TARGETS move3dplannerstest
-        RUNTIME DESTINATION bin CONFIGURATIONS ${CMAKE_BUILD_TYPE}
-        LIBRARY DESTINATION lib CONFIGURATIONS ${CMAKE_BUILD_TYPE})
+else()
+
+    message("CMAKE_INSTALL_PREFIX not set to default")
+
+endif()
+
+
+
+message( STATUS "CMAKE_INSTALL_PREFIX " ${CMAKE_INSTALL_PREFIX} )
 
 
 # -------------------------
@@ -482,12 +484,9 @@ INSTALL(
 	DIRECTORY ${Move3DMPLIB_SOURCE_DIRECTORIES}/ 
 	DESTINATION include/libmove3d/planners 
 	FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
+
 # -------------------------------------------------------------
 # --- Testing -------------------------------------------------
 # -------------------------------------------------------------
-ENABLE_TESTING()
-
-MESSAGE("CMAKE_BINARY_DIR = " ${CMAKE_BINARY_DIR})
-
-ADD_TEST(NAME basic COMMAND move3dplannerstest)
+INCLUDE(src/tests/SourceList.cmake)
 

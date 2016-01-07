@@ -30,7 +30,6 @@
 #include <iostream>
 
 #include "API/project.hpp"
-#include "API/libmove3d_api.hpp"
 #include "feature_space/smoothness.hpp"
 #include "planner/TrajectoryOptim/Lamp/lampTrajectory.hpp"
 #include "planner/TrajectoryOptim/Stomp/covariant_trajectory_policy.hpp"
@@ -223,31 +222,14 @@ Move3D::Trajectory create_sinusoidal_trajectory(
 
 int main(int argc, char *argv[])
 {
-    std::string home, filename, robot_name;
-
-    home =  getenv("HOME_MOVE3D");
-    if ( "" == home )
+    if( !move3d_start_and_load_manipulator() )
     {
-        std::cout << "Error : HOME_MOVE3D not define" << std::endl;
-        return 0;
+      return 0;
     }
 
-    cout << "home : " << home << endl;
-
-    // Load environment from file
-    filename = "/../assets/Manipulator/manipulateur.p3d";
-    p3d_col_set_mode(p3d_col_mode_none);
-    p3d_read_desc((home+filename).c_str());
+    std::string  robot_name;
     robot_name = XYZ_ENV->robot[0]->name ;
     cout << "Robot name is : " << robot_name << endl;
-
-    // Set collision checker
-    p3d_col_set_mode(p3d_col_mode_pqp);
-    p3d_col_start(p3d_col_mode_pqp);
-    set_collision_by_object(TRUE);
-
-    // Set c++ api function
-    move3d_set_classic_libmove3d_api();
 
     // Make c++ project interface
     Move3D::global_Project = new Move3D::Project(new Move3D::Scene(XYZ_ENV));

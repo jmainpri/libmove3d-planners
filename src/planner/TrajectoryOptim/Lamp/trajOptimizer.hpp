@@ -17,107 +17,97 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace Move3D
-{
+namespace Move3D {
 
-class TrajectoryOptimizer
-{
+class TrajectoryOptimizer {
+ public:
+  TrajectoryOptimizer();
+  void runDeformation(int nbIteration, int idRun);
 
-public:
+  virtual bool initialize(bool single_rollout, double discretization) {
+    return true;
+  }
+  virtual void run_single_iteration() {}
+  virtual void animateEndeffector() {}
+  virtual void end() {}
 
-    TrajectoryOptimizer();
-    void runDeformation( int nbIteration, int idRun );
+ protected:
+  Move3D::Robot* robot_model_;
+  Move3D::VectorTrajectory group_trajectory_;
 
-    virtual bool initialize( bool single_rollout, double discretization ) { return true; }
-    virtual void run_single_iteration() { }
-    virtual void animateEndeffector() { }
-    virtual void end() {}
+  MOVE3D_BOOST_PTR_NAMESPACE<StompStatistics> stomp_statistics_;
+  MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompParameters>
+      stomp_parameters_;
 
-protected:
+  int iteration_;
 
-    Move3D::Robot*          robot_model_;
-    Move3D::VectorTrajectory  group_trajectory_;
+ protected:
+  void copyPolicyToGroupTrajectory() {}
+  void handleJointLimits() {}
+  void updateFullTrajectory() {}
+  void performForwardKinematics(bool) {}
+  virtual double getSmoothnessCost() { return 0.0; }
+  virtual double getGeneralCost() { return 0.0; }
+  virtual double getTrajectoryCost() { return 0.0; }
+  virtual double getStateCost() { return 0.0; }
 
-    MOVE3D_BOOST_PTR_NAMESPACE<StompStatistics> stomp_statistics_;
-    MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::StompParameters> stomp_parameters_;
+ private:
+  Move3D::Trajectory move3d_traj_;
+  Move3D::Trajectory last_traj_;
+  Move3D::Trajectory best_traj_;
 
-    int                     iteration_;
+  double time_;
+  double best_group_trajectory_cost_;
+  double best_group_trajectory_in_collsion_cost_;
+  bool use_time_limit_;
+  int best_iteration_;
+  int last_improvement_iteration_;
+  bool reset_reused_rollouts_;
+  bool last_trajectory_collision_free_;
+  int collision_free_iteration_;
+  bool last_trajectory_constraints_satisfied_;
+  bool is_collision_free_;
+  bool use_iteration_limit_;
+  bool use_collision_free_limit_limit_;
 
-protected:
-
-    void copyPolicyToGroupTrajectory() { }
-    void handleJointLimits() { }
-    void updateFullTrajectory() { }
-    void performForwardKinematics(bool) { }
-    virtual double getSmoothnessCost() { return 0.0; }
-    virtual double getGeneralCost() { return 0.0; }
-    virtual double getTrajectoryCost() { return 0.0; }
-    virtual double getStateCost() { return 0.0; }
-
-private:
-
-    Move3D::Trajectory      move3d_traj_;
-    Move3D::Trajectory      last_traj_;
-    Move3D::Trajectory      best_traj_;
-
-    double                  time_;
-    double                  best_group_trajectory_cost_;
-    double                  best_group_trajectory_in_collsion_cost_;
-    bool                    use_time_limit_;
-    int                     best_iteration_;
-    int                     last_improvement_iteration_;
-    bool                    reset_reused_rollouts_;
-    bool                    last_trajectory_collision_free_;
-    int                     collision_free_iteration_;
-    bool                    last_trajectory_constraints_satisfied_;
-    bool                    is_collision_free_;
-    bool                    use_iteration_limit_;
-    bool                    use_collision_free_limit_limit_;
-
-
-    Move3D::VectorTrajectory  best_group_trajectory_;
-    Move3D::VectorTrajectory  best_group_trajectory_in_collision_;
-
+  Move3D::VectorTrajectory best_group_trajectory_;
+  Move3D::VectorTrajectory best_group_trajectory_in_collision_;
 };
 
-class SamplingBasedInnerLoop : public TrajectoryOptimizer
-{
+class SamplingBasedInnerLoop : public TrajectoryOptimizer {
+ public:
+  SamplingBasedInnerLoop(Move3D::Robot* robot);
 
-public:
+ protected:
+  double getTrajectoryCost();
+  double getSmoothnessCost();
+  double getStateCost();
 
-    SamplingBasedInnerLoop(Move3D::Robot* robot);
+  double getTrajectoryCost(Move3D::VectorTrajectory& traj,
+                           bool check_joint_limits = false);
+  double getStateCost(Move3D::VectorTrajectory& traj,
+                      bool check_joint_limits = false);
+  double getSmoothnessCost(const Move3D::VectorTrajectory& traj);
 
+  void animateEndeffector();
 
-protected:
+  Eigen::VectorXd generateSamples();
 
-    double getTrajectoryCost();
-    double getSmoothnessCost();
-    double getStateCost();
+  Move3D::LampSampler sampler_;
+  Move3D::Trajectory initial_traj_seed_;
+  Move3D::ChompPlanningGroup* planning_group_;
+  Move3D::LampCostComputation cost_computer_;
 
-    double getTrajectoryCost( Move3D::VectorTrajectory& traj, bool check_joint_limits = false );
-    double getStateCost( Move3D::VectorTrajectory& traj , bool check_joint_limits = false );
-    double getSmoothnessCost( const Move3D::VectorTrajectory& traj );
+  const stomp_motion_planner::StompParameters* stomp_parameters_const_;
+  const Move3D::CollisionSpace* move3d_collision_space_;
 
-    void animateEndeffector();
-
-    Eigen::VectorXd generateSamples();
-
-    Move3D::LampSampler sampler_;
-    Move3D::Trajectory initial_traj_seed_;
-    Move3D::ChompPlanningGroup* planning_group_;
-    Move3D::LampCostComputation cost_computer_;
-
-    const stomp_motion_planner::StompParameters *stomp_parameters_const_;
-    const Move3D::CollisionSpace *move3d_collision_space_;
-
-    std::vector<VectorTrajectory> samples_;
-    std::vector<VectorTrajectory> reused_rollouts_;
-    int num_rollouts_gen_;
-    int num_rollouts_;
-    int num_rollouts_reused_;
-    bool rollouts_reused_next_;
+  std::vector<VectorTrajectory> samples_;
+  std::vector<VectorTrajectory> reused_rollouts_;
+  int num_rollouts_gen_;
+  int num_rollouts_;
+  int num_rollouts_reused_;
+  bool rollouts_reused_next_;
 };
-
 }
 
 #endif

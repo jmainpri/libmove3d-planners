@@ -34,7 +34,6 @@
 
 //#include "hri_costspace/Grid/HRICS_two_d_grid.hpp"
 
-
 #ifdef HRI_PLANNER
 #include <libmove3d/hri/hri.h>
 #endif
@@ -42,212 +41,200 @@
 /**
  @ingroup HRICS
  */
-namespace HRICS
-{
+namespace HRICS {
 /**
   * Natural Motion and Arm Confort
   */
-class Natural
-{
-public:
+class Natural {
+ public:
+  Natural(Move3D::Robot* R);
+  ~Natural();
 
-    Natural( Move3D::Robot* R );
-    ~Natural();
+  //! Initilize the parameters for the Natural Cost space
+  void initGeneral();
+  void initNaturalJustin();
+  void initNaturalAchile();
+  void initNaturalHerakles();
+  void initNaturalBiomech();
+  void initNaturalOldDude();
+  void initHumanBaseGrid(std::vector<double> box);
 
-    //! Initilize the parameters for the Natural Cost space
-    void initGeneral();
-    void initNaturalJustin();
-    void initNaturalAchile();
-    void initNaturalHerakles();
-    void initNaturalBiomech();
-    void initNaturalOldDude();
-    void initHumanBaseGrid(std::vector<double> box);
+  //! get the robot
+  Move3D::Robot* getRobot() { return m_Robot; }
 
-    //! get the robot
-    Move3D::Robot* getRobot() { return m_Robot; }
+  //! returns true of the robot is a human
+  bool IsHuman() { return m_IsHuman; }
 
-    //! returns true of the robot is a human
-    bool IsHuman() { return m_IsHuman; }
+  //! Print position of the joints considered
+  void printBodyPos();
 
-    //! Print position of the joints considered
-    void printBodyPos();
+  //! Get the elemetary cost features
+  void getConfigCostFeatures(Eigen::VectorXd& features);
 
-    //! Get the elemetary cost features
-    void getConfigCostFeatures( Eigen::VectorXd& features );
+  //! Get the cost of the current configuration
+  double cost(Move3D::Configuration& q);
 
-    //! Get the cost of the current configuration
-    double cost(Move3D::Configuration& q);
+  //! Returns the current config cost
+  double getConfigCost();
 
-    //! Returns the current config cost
-    double getConfigCost();
+  //! Get the cost of a point in the grid
+  double getWorkspaceCost(const Eigen::Vector3d& WSPoint);
 
-    //! Get the cost of a point in the grid
-    double getWorkspaceCost(const Eigen::Vector3d& WSPoint);
+  //! Get the reachable workspace points
+  std::vector<std::pair<double, Eigen::Vector3d> > getReachableWSPoint();
 
-    //! Get the reachable workspace points
-    std::vector< std::pair<double,Eigen::Vector3d> > getReachableWSPoint();
+  //! Compute if the Workspace Point is Reachable Move the robot
+  bool computeIsReachableAndMove(const Eigen::Vector3d& WSPoint, bool leftArm);
 
-    //! Compute if the Workspace Point is Reachable Move the robot
-    bool computeIsReachableAndMove( const Eigen::Vector3d& WSPoint, bool leftArm);
+  //! Compute if the Workspace Point is Reachable Move the robot
+  bool computeIsReachableOnly(const Eigen::Vector3d& WSPoint, bool leftArm);
 
-    //! Compute if the Workspace Point is Reachable Move the robot
-    bool computeIsReachableOnly(const Eigen::Vector3d& WSPoint, bool leftArm);
+  //! Set the robot to the comfort posture
+  void setRobotToConfortPosture();
 
-    //! Set the robot to the comfort posture
-    void setRobotToConfortPosture();
+  //! Return the comfort posture
+  Move3D::confPtr_t getComfortPosture() { return m_q_Confort->copy(); }
 
-    //! Return the comfort posture
-    Move3D::confPtr_t getComfortPosture() { return m_q_Confort->copy(); }
+  //! get the cost of a point in the workspace
+  double getCost(const Eigen::Vector3d& WSPoint,
+                 bool useLeftvsRightArm,
+                 bool withEffect = false);
 
-    //! get the cost of a point in the workspace
-    double getCost(const Eigen::Vector3d& WSPoint, bool useLeftvsRightArm, bool withEffect = false);
+  //! get the grid origin
+  Eigen::Transform3d getGridOriginMatrix();
 
-    //! get the grid origin
-    Eigen::Transform3d getGridOriginMatrix();
+  //! returns true of the point in the workspace is reachable
+  bool getWorkspaceIsReachable(const Eigen::Vector3d& WSPoint);
 
-    //! returns true of the point in the workspace is reachable
-    bool getWorkspaceIsReachable(const Eigen::Vector3d& WSPoint);
+  //! set the robot color from configuration confort
+  //! if pass false as argument the robot returns to normal color
+  void setRobotColorFromConfiguration(bool toSet = true);
 
-    //! set the robot color from configuration confort
-    //! if pass false as argument the robot returns to normal color
-    void setRobotColorFromConfiguration(bool toSet=true);
+  //! get sorted reachable points
+  std::vector<Eigen::Vector3d> getSortedReachableWSPoint();
 
-    //! get sorted reachable points
-    std::vector<Eigen::Vector3d> getSortedReachableWSPoint();
+  // Compute the natural grid
+  NaturalGrid* computeNaturalGrid();
 
-    // Compute the natural grid
-    NaturalGrid* computeNaturalGrid();
+  //! Set the reachability grid
+  void setGrid(NaturalGrid* grid) { m_Grid = grid; }
 
-    //! Set the reachability grid
-    void setGrid(NaturalGrid* grid) { m_Grid = grid; }
+  //! get the object index dof
+  int getObjectDof() { return m_IndexObjectDof; }
 
-    //! get the object index dof
-    int getObjectDof() { return m_IndexObjectDof; }
+  //! get the grid
+  NaturalGrid* getGrid() { return m_Grid; }
 
-    //! get the grid
-    NaturalGrid* getGrid() { return m_Grid; }
+ private:
+  /**
+    * Get the 3 component of natural
+    * cost space
+    */
+  double getJointDisplacement();
+  double getEnergy();
+  double getDiscomfort();
 
-private:
+  /**
+    * Others
+    */
+  double basicNaturalArmCost(bool useLeftvsRightArm);
 
+  std::vector<double> getUpperBodyHeigth(bool useReference = true);
+  double getCustomDistConfig(Move3D::Configuration& q, Eigen::VectorXd& f);
+  double getJointLimits(Move3D::Configuration& q);
 
-    /**
-      * Get the 3 component of natural
-      * cost space
-      */
-    double getJointDisplacement();
-    double getEnergy();
-    double getDiscomfort();
+  /**
+    * Simple number of IK Cost
+    */
+  double getNumberOfIKCost(const Eigen::Vector3d& WSPoint);
 
-    /**
-      * Others
-      */
-    double basicNaturalArmCost(bool useLeftvsRightArm);
+  /**
+   * compute a NaturalGrid (calling class NaturalGrid)
+   * by using Env variable.
+   */
 
-    std::vector<double> getUpperBodyHeigth(bool useReference = true);
-    double getCustomDistConfig( Move3D::Configuration& q);
-    double getJointLimits( Move3D::Configuration& q);
+  void computeAllCellCost();
+  void computeAllReachableCellCost();
 
-    /**
-      * Simple number of IK Cost
-      */
-    double getNumberOfIKCost(const Eigen::Vector3d& WSPoint);
+  void initConfigIndices();
 
-    /**
-     * compute a NaturalGrid (calling class NaturalGrid)
-     * by using Env variable.
-     */
+  bool m_debug;
+  int m_IndexObjectDof;
+  bool m_computeNbOfIK;
+  bool m_leftArmCost;
+  bool m_BestPointsSorted;
+  Move3D::Robot* m_Robot;
+  NaturalGrid* m_Grid;
+  int m_nbDof;
 
-    void computeAllCellCost();
-    void computeAllReachableCellCost();
+  enum Kinematic { Default, Justin, Achile, Herakles, Biomech, OldDude };
 
-    void initConfigIndices();
-
-
-    bool                m_debug;
-    int                 m_IndexObjectDof;
-    bool                m_computeNbOfIK;
-    bool                m_leftArmCost;
-    bool                m_BestPointsSorted;
-    Move3D::Robot*      m_Robot;
-    NaturalGrid*        m_Grid;
-
-    enum Kinematic
-    {
-        Default,
-        Justin,
-        Achile,
-        Herakles,
-        Biomech,
-        OldDude
-    };
-
-    bool			m_IsHuman;
+  bool m_IsHuman;
 
 #ifdef HRI_PLANNER
-    HRI_AGENTS*		m_Agents;
+  HRI_AGENTS* m_Agents;
 #endif
 
-    Kinematic		m_KinType;
+  Kinematic m_KinType;
 
-    /***********************************************/
-    int m_JOINT_SPINE;
-    int m_JOINT_HEAD;
+  /***********************************************/
+  int m_JOINT_SPINE;
+  int m_JOINT_HEAD;
 
-    int m_JOINT_ARM_RIGTH_SHOULDER;
-    int m_JOINT_ARM_RIGTH_ELBOW;
-    int m_JOINT_ARM_RIGTH_WRIST;
+  int m_JOINT_ARM_RIGTH_SHOULDER;
+  int m_JOINT_ARM_RIGTH_ELBOW;
+  int m_JOINT_ARM_RIGTH_WRIST;
 
-    int m_JOINT_ARM_LEFT_SHOULDER;
-    int m_JOINT_ARM_LEFT_ELBOW;
-    int m_JOINT_ARM_LEFT_WRIST;
+  int m_JOINT_ARM_LEFT_SHOULDER;
+  int m_JOINT_ARM_LEFT_ELBOW;
+  int m_JOINT_ARM_LEFT_WRIST;
 
-    /***********************************************/
-    int m_CONFIG_INDEX_SPINE;
-    int m_CONFIG_INDEX_HEAD;
+  /***********************************************/
+  int m_CONFIG_INDEX_SPINE;
+  int m_CONFIG_INDEX_HEAD;
 
-    int m_CONFIG_INDEX_ARM_RIGTH_SHOULDER;
-    int m_CONFIG_INDEX_ARM_RIGTH_ELBOW;
-    int m_CONFIG_INDEX_ARM_RIGTH_WRIST;
+  int m_CONFIG_INDEX_ARM_RIGTH_SHOULDER;
+  int m_CONFIG_INDEX_ARM_RIGTH_ELBOW;
+  int m_CONFIG_INDEX_ARM_RIGTH_WRIST;
 
-    int m_CONFIG_INDEX_ARM_LEFT_SHOULDER;
-    int m_CONFIG_INDEX_ARM_LEFT_ELBOW;
-    int m_CONFIG_INDEX_ARM_LEFT_WRIST;
+  int m_CONFIG_INDEX_ARM_LEFT_SHOULDER;
+  int m_CONFIG_INDEX_ARM_LEFT_ELBOW;
+  int m_CONFIG_INDEX_ARM_LEFT_WRIST;
 
+  /**
+    * @brief The Confort configuration
+    */
+  Move3D::confPtr_t m_q_Confort;
 
-    /**
-      * @brief The Confort configuration
-      */
-    Move3D::confPtr_t m_q_Confort;
+  /**
+    * @brief Weights associated to confort
+    */
+  Move3D::confPtr_t m_q_ConfortWeigths;
 
-    /**
-      * @brief Weights associated to confort
-      */
-    Move3D::confPtr_t m_q_ConfortWeigths;
+  /**
+    * Weigth associated to the joints limits function
+    */
+  double m_G;
 
-    /**
-      * Weigth associated to the joints limits function
-      */
-    double								m_G;
+  /**
+    * Mass times gravity constant = potential energy
+    * @bref Mass (Weigts) associated with each arm
+    */
+  std::vector<double> m_mg;
 
-    /**
-      * Mass times gravity constant = potential energy
-      * @bref Mass (Weigts) associated with each arm
-      */
-    std::vector<double>					m_mg;
-    
-    /**
-     * Height of arms at rest
-     */
-    std::vector<double>        m_armHeightL;
-    std::vector<double>        m_armHeightR;
+  /**
+   * Height of arms at rest
+   */
+  std::vector<double> m_armHeightL;
+  std::vector<double> m_armHeightR;
 
-    Move3D::confPtr_t m_q_Init;
-    Move3D::confPtr_t m_q_Goal;
+  Move3D::confPtr_t m_q_Init;
+  Move3D::confPtr_t m_q_Goal;
 
-    /**
-      * Sorted Cells
-      */
-    std::vector< NaturalCell* >			m_SortedCells;
+  /**
+    * Sorted Cells
+    */
+  std::vector<NaturalCell*> m_SortedCells;
 };
 }
 

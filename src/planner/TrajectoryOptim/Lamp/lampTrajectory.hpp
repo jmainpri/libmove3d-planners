@@ -30,7 +30,6 @@
 
 #include "API/Trajectory/trajectory.hpp"
 
-
 #include <vector>
 
 #include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
@@ -47,7 +46,9 @@
 #include "planner/TrajectoryOptim/Stomp/stompStatistics.hpp"
 #include "planner/TrajectoryOptim/Stomp/cost_computation.hpp"
 
-namespace Move3D { class ConfGenerator; }
+namespace Move3D {
+class ConfGenerator;
+}
 
 //#include <motion_planning_msgs/Constraints.h>
 //#include "constraint_evaluator.hpp"
@@ -55,183 +56,176 @@ namespace Move3D { class ConfGenerator; }
 ////#define EIGEN2_SUPPORT_STAGE10_FULL_EIGEN2_API
 #include <Eigen/Core>
 
-namespace Move3D
-{
+namespace Move3D {
 
 //! Trajectory structure
-struct VectorTrajectory
-{
-    VectorTrajectory() : discretization_(0.0) { }
-    VectorTrajectory( int nb_joints, int nb_var, double duration );
+struct VectorTrajectory {
+  VectorTrajectory() : discretization_(0.0) {}
+  VectorTrajectory(int nb_joints, int nb_var, double duration);
 
-    //!  \brief Gets the number of points in the trajectory
-    int getNumPoints() const { return num_vars_free_; }
+  //!  \brief Gets the number of points in the trajectory
+  int getNumPoints() const { return num_vars_free_; }
 
-    //!  \brief Gets the number of points (that are free to be optimized) in the trajectory
-    int getNumFreePoints() const { return num_vars_free_; }
+  //!  \brief Gets the number of points (that are free to be optimized) in the
+  //trajectory
+  int getNumFreePoints() const { return num_vars_free_; }
 
-    //!  \brief Gets the number of joints in each trajectory point
-    int getNumDofs() const { return num_dofs_; }
+  //!  \brief Gets the number of joints in each trajectory point
+  int getNumDofs() const { return num_dofs_; }
 
-    //! \brief Gets the discretization time interval of the trajectory
-    double getDiscretization() const { return discretization_; }
+  //! \brief Gets the discretization time interval of the trajectory
+  double getDiscretization() const { return discretization_; }
 
-    //!  \brief Gets the start index
-    int getStartIndex() const { return 0; }
+  //!  \brief Gets the start index
+  int getStartIndex() const { return 0; }
 
-    //!  \brief Gets the end index
-    int getEndIndex() const { return num_vars_free_-1; }
+  //!  \brief Gets the end index
+  int getEndIndex() const { return num_vars_free_ - 1; }
 
-    //! Get use time
-    bool getUseTime() const { return use_time_; }
+  //! Get use time
+  bool getUseTime() const { return use_time_; }
 
-    //! Get index for traj point and dof
-    int getVectorIndex(int traj_point, int dof);
+  //! Get index for traj point and dof
+  int getVectorIndex(int traj_point, int dof);
 
-    //!  \brief Get the value at a given point for a given dof
-    double& operator() (int traj_point, int dof);
+  //!  \brief Get the value at a given point for a given dof
+  double& operator()(int traj_point, int dof);
 
-    //!  \brief Get the value at a given point for a given dof
-    double operator() (int traj_point, int dof) const;
+  //!  \brief Get the value at a given point for a given dof
+  double operator()(int traj_point, int dof) const;
 
-    //!  \brief Get dof cost value
-    double& dof_cost(int traj_point, int dof);
+  //!  \brief Get dof cost value
+  double& dof_cost(int traj_point, int dof);
 
-    //!  \brief Get dof cost value
-    double dof_cost(int traj_point, int dof) const;
+  //!  \brief Get dof cost value
+  double dof_cost(int traj_point, int dof) const;
 
-    //! Set one dof trajectory
-    void setDofTrajectoryBlock(int dof, const Eigen::VectorXd traj);
+  //! Set one dof trajectory
+  void setDofTrajectoryBlock(int dof, const Eigen::VectorXd traj);
 
-    //! Set one dof trajectory
-    void addToDofTrajectoryBlock(int dof, const Eigen::VectorXd traj);
+  //! Set one dof trajectory
+  void addToDofTrajectoryBlock(int dof, const Eigen::VectorXd traj);
 
-    //! Get trajectory paramters
-    Eigen::VectorXd getDofTrajectoryBlock( int dof ) const;
+  //! Get trajectory paramters
+  Eigen::VectorXd getDofTrajectoryBlock(int dof) const;
 
-    //! Get trajectory paramters
-    bool getParameters(std::vector<Eigen::VectorXd>& parameters) const;
+  //! Get trajectory paramters
+  bool getParameters(std::vector<Eigen::VectorXd>& parameters) const;
 
-    //! Get trajectory paramters
-    bool getFreeParameters(std::vector<Eigen::VectorXd>& parameters) const;
+  //! Get trajectory paramters
+  bool getFreeParameters(std::vector<Eigen::VectorXd>& parameters) const;
 
-    //! Get trajectory paramters
-    Eigen::VectorXd getTrajectoryPoint(int i) const;
+  //! Get trajectory paramters
+  Eigen::VectorXd getTrajectoryPoint(int i) const;
 
-    //! Planning group
-    Move3D::ChompPlanningGroup* planning_group_;
+  //! Planning group
+  Move3D::ChompPlanningGroup* planning_group_;
 
-    //! Interpolation between two vector
-    Eigen::VectorXd interpolate( const Eigen::VectorXd& a, const Eigen::VectorXd& b, double u ) const;
+  //! Interpolation between two vector
+  Eigen::VectorXd interpolate(const Eigen::VectorXd& a,
+                              const Eigen::VectorXd& b,
+                              double u) const;
 
-    //! Sets the interpolated trajectory
-    Eigen::VectorXd getSraightLineTrajectory();
+  //! Sets the interpolated trajectory
+  Eigen::VectorXd getSraightLineTrajectory();
 
-    //! Return move3d configuration
-    Move3D::confPtr_t getMove3DConfiguration(int i) const;
+  //! Return move3d configuration
+  Move3D::confPtr_t getMove3DConfiguration(int i) const;
 
-    //! Returns the move3d trajectory
-    Move3D::Trajectory getMove3DTrajectory() const;
+  //! Returns the move3d trajectory
+  Move3D::Trajectory getMove3DTrajectory() const;
 
-    //! Set from move3d trajectory
-    void setFromMove3DTrajectory( const Move3D::Trajectory& T );
+  //! Set from move3d trajectory
+  void setFromMove3DTrajectory(const Move3D::Trajectory& T);
 
-    //! Get configuration at particular point
-    void getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt_array) const;
+  //! Get configuration at particular point
+  void getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt_array) const;
 
-    //! Return the index along the trajectory
-    int getFullTrajectoryIndex(int i) const { return i; }
+  //! Return the index along the trajectory
+  int getFullTrajectoryIndex(int i) const { return i; }
 
+  /**< [num_dimensions] num_parameters */
+  Eigen::VectorXd trajectory_;
 
-    /**< [num_dimensions] num_parameters */
-    Eigen::VectorXd     trajectory_;
+  /**< [num_dimensions] num_parameters */
+  Eigen::VectorXd dof_costs_;
 
-    /**< [num_dimensions] num_parameters */
-    Eigen::VectorXd     dof_costs_;
+  /**< num_time_steps */
+  Eigen::VectorXd state_costs_;
+  int num_vars_free_; /**< nb_vars_ */
+  int num_dofs_;      /**< nb_joints_ */
 
-    /**< num_time_steps */
-    Eigen::VectorXd     state_costs_;
-    int                 num_vars_free_;       /**< nb_vars_ */
-    int                 num_dofs_;            /**< nb_joints_ */
-
-    /**< Wether the rollout is violating dof limits */
-    bool                out_of_bounds_;
-    double              discretization_;      /**< time discretization */
-    double              duration_;            /**< duration */
-    bool                use_time_ ;
-    double              total_cost_;
-    double              total_smoothness_cost_;
+  /**< Wether the rollout is violating dof limits */
+  bool out_of_bounds_;
+  double discretization_; /**< time discretization */
+  double duration_;       /**< duration */
+  bool use_time_;
+  double total_cost_;
+  double total_smoothness_cost_;
 };
 
 //! Sampler of noisy trajectories
-class LampSampler
-{
-public:
-    LampSampler( Move3D::Robot* robot ) { robot_model_ = robot; }
-    LampSampler( int num_var_free, int num_dofs );
-    ~LampSampler() { delete planning_group_; }
+class LampSampler {
+ public:
+  LampSampler(Move3D::Robot* robot) { robot_model_ = robot; }
+  LampSampler(int num_var_free, int num_dofs);
+  ~LampSampler() { delete planning_group_; }
 
-    //! Initializes the different data structures
-    //! Initializes a coviarant trajectory policy
-    //! Computes the control cost vector for the multivariate gaussian sampler
-    void initialize( const std::vector<double>& derivative_costs,
-                     int nb_points );
+  //! Initializes the different data structures
+  //! Initializes a coviarant trajectory policy
+  //! Computes the control cost vector for the multivariate gaussian sampler
+  void initialize(const std::vector<double>& derivative_costs, int nb_points);
 
-    //! Samples a noisy trajectory
-    Eigen::VectorXd sample( double std_dev=1.0 );
+  //! Samples a noisy trajectory
+  Eigen::VectorXd sample(double std_dev = 1.0);
 
-    //! Return sampled trajectories
-    std::vector<VectorTrajectory> sampleTrajectories(
-            int nb_trajectories,
-            const Move3D::VectorTrajectory& current_trajectory );
+  //! Return sampled trajectories
+  std::vector<VectorTrajectory> sampleTrajectories(
+      int nb_trajectories, const Move3D::VectorTrajectory& current_trajectory);
 
-    //! PLanning group
-    Move3D::ChompPlanningGroup* planning_group_;
+  //! PLanning group
+  Move3D::ChompPlanningGroup* planning_group_;
 
-    //! Trajectory policy
-    stomp_motion_planner::CovariantTrajectoryPolicy policy_;
+  //! Trajectory policy
+  stomp_motion_planner::CovariantTrajectoryPolicy policy_;
 
-    Eigen::MatrixXd control_;
-    Eigen::MatrixXd precision_;
-    Eigen::MatrixXd covariance_;
+  Eigen::MatrixXd control_;
+  Eigen::MatrixXd precision_;
+  Eigen::MatrixXd covariance_;
 
-private:
+ private:
+  Eigen::MatrixXd getOneDofBlockOfPrecisionMatrix(int dof);
 
-    Eigen::MatrixXd getOneDofBlockOfPrecisionMatrix(int dof);
+  Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic>
+  getConfigurationBlockOfPrecisionMatrix(int var);
 
-    Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic>
-    getConfigurationBlockOfPrecisionMatrix(int var);
+  void setOneDofBlockOfPrecisionMatrix(int dof, Eigen::MatrixXd matrix);
+  void setTimeStepPrecisionMatrix(int time_step, Eigen::MatrixXd matrix);
+  bool addHessianToPrecisionMatrix(const Move3D::VectorTrajectory& traj);
 
-    void setOneDofBlockOfPrecisionMatrix( int dof, Eigen::MatrixXd matrix );
-    void setTimeStepPrecisionMatrix( int time_step, Eigen::MatrixXd matrix );
-    bool addHessianToPrecisionMatrix( const Move3D::VectorTrajectory& traj );
+  /**< [num_dimensions] num_parameters x num_parameters */
+  std::vector<Eigen::MatrixXd> control_costs_;
 
-    /**< [num_dimensions] num_parameters x num_parameters */
-    std::vector<Eigen::MatrixXd> control_costs_;
+  /**< [num_dimensions] num_parameters x num_parameters */
+  std::vector<Eigen::MatrixXd> inv_control_costs_;
 
-    /**< [num_dimensions] num_parameters x num_parameters */
-    std::vector<Eigen::MatrixXd> inv_control_costs_;
+  //! Allocate a multivariate gaussian sampler
+  //! the sampler produces one dimenssional noisy trajectories
+  bool preAllocateMultivariateGaussianSampler();
 
-    //! Allocate a multivariate gaussian sampler
-    //! the sampler produces one dimenssional noisy trajectories
-    bool preAllocateMultivariateGaussianSampler();
+  /**< objects that generate noise for each dimension */
+  std::vector<MultivariateGaussian> noise_generators_;
+  Eigen::VectorXd tmp_noise_;
 
-    /**< objects that generate noise for each dimension */
-    std::vector<MultivariateGaussian> noise_generators_;
-    Eigen::VectorXd tmp_noise_;
+  int num_vars_free_;
+  int num_dofs_;
 
-    int num_vars_free_;
-    int num_dofs_;
+  double min_eigen_value_;
+  double max_eigen_value_;
 
-    double min_eigen_value_;
-    double max_eigen_value_;
-
-    // Planning group
-    Move3D::Robot* robot_model_;
-
-
+  // Planning group
+  Move3D::Robot* robot_model_;
 };
-
 }
 
 void lamp_sample_trajectories();

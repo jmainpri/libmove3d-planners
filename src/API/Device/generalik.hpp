@@ -33,43 +33,42 @@
 
 namespace Move3D {
 
-class GeneralIK
-{
-public:
-    GeneralIK(Move3D::Robot* robot);
+class GeneralIK {
+ public:
+  GeneralIK(Move3D::Robot* robot);
 
-    //! Initialize with a set of joints and Joint for the end effector
-    bool initialize( const std::vector<Move3D::Joint*>& joints, Move3D::Joint* eef );
+  //! Initialize with a set of joints and Joint for the end effector
+  bool initialize(const std::vector<Move3D::Joint*>& joints,
+                  Move3D::Joint* eef);
 
-    //! Solve for a given task (6Dof)
-    bool solve(const Eigen::VectorXd& xdes) const;
+  //! Solve for a given task (6Dof)
+  bool solve(const Eigen::VectorXd& xdes) const;
 
-    //! single step, Jacobian transpose (6Dof)
-    Eigen::VectorXd single_step( const Eigen::VectorXd& xdes ) const;
+  //! single step, Jacobian transpose (6Dof)
+  Eigen::VectorXd single_step(const Eigen::VectorXd& xdes) const;
 
-    //! single step with joint limits (6Dof)
-    Eigen::VectorXd single_step_joint_limits( const Eigen::VectorXd& xdes ) const;
+  //! single step with joint limits (6Dof)
+  Eigen::VectorXd single_step_joint_limits(const Eigen::VectorXd& xdes) const;
 
-    //! Returns the active dofs
-    const std::vector<int>& getActiveDofs() { return active_dofs_; }
+  //! Returns the active dofs
+  const std::vector<int>& getActiveDofs() { return active_dofs_; }
 
-    //! Magnitude applied to the gradient (set to 1. to get Jacobian Pseudo inverse X task des)
-    double magnitude_;
+  //! Magnitude applied to the gradient (set to 1. to get Jacobian Pseudo
+  //inverse X task des)
+  double magnitude_;
 
-protected:
+ protected:
+  Move3D::Robot* robot_;
+  Move3D::Joint* eef_;
+  std::vector<Move3D::Joint*> active_joints_;
+  std::vector<int> active_dofs_;
 
-    Move3D::Robot* robot_;
-    Move3D::Joint* eef_;
-    std::vector<Move3D::Joint*> active_joints_;
-    std::vector<int> active_dofs_;
-
-private:
-
-    bool limits_;
-    bool check_joint_limits_;
-    int nb_steps_;
+ private:
+  bool limits_;
+  bool check_joint_limits_;
+  int nb_steps_;
+  double max_distance_to_target_;
 };
-
 }
 
-#endif // GENERALIK_HPP
+#endif  // GENERALIK_HPP

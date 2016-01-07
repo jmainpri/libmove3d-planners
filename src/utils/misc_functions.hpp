@@ -34,7 +34,8 @@
 #include "API/Device/robot.hpp"
 
 //! Save vector of string to file
-void save_strings_to_file( std::vector<std::string> strings, std::string filename );
+void save_strings_to_file( std::vector<std::string> strings,
+                           std::string filename );
 
 //! Load string from file
 std::vector<std::string> load_strings_from_file( std::string filename );
@@ -50,10 +51,11 @@ void move3d_save_matrix_to_csv_file( const Eigen::MatrixXd& mat,
 std::vector<Move3D::confPtr_t> move3d_load_context_from_csv_file(
         std::string filename );
 
-void move3d_save_context_to_csv_file( const std::vector<Move3D::confPtr_t>& context,
-                                      std::string filename );
+void move3d_save_context_to_csv_file(
+    const std::vector<Move3D::confPtr_t>& context,
+    std::string filename );
 
-//! Returns the files in the folder with argumen extension
+//! Returns the files in the folder with argument extension
 std::vector<std::string>  move3d_get_files_in_folder( std::string foldername,
                                                       std::string extention,
                                                       int nb_max_files=-1 );
@@ -88,5 +90,8 @@ void print_joint_anchors( Move3D::Robot* robot );
 
 //! Matrix pseudo inverse
 Eigen::MatrixXd move3d_pinv( const Eigen::MatrixXd &b, double rcond );
+
+//! Start move3d and load manipulator
+bool move3d_start_and_load_manipulator();
 
 #endif // MISC_FUNCTIONS_HPP

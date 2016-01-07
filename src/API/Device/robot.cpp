@@ -39,752 +39,740 @@ Robot* Move3D::API_activeRobot = NULL;
 // API FUNCTIONS
 // ****************************************************************************************************
 
-static boost::function<void( Robot*, void*, unsigned int&, bool, std::string&, std::vector<Joint*>& )> Move3DRobotConstructor;
-static boost::function<Move3D::Trajectory( Robot* )> Move3DRobotGetCurrentTrajectory;
-static boost::function<confPtr_t( confPtr_t, bool )> Move3DRobotShoot;
-static boost::function<confPtr_t( confPtr_t, bool )> Move3DRobotShootDir;
-static boost::function<bool( Robot*, const Configuration& q, bool )> Move3DRobotSetAndUpdate;
-static boost::function<bool( Robot*, const Configuration& q )> Move3DRobotSetAndUpdateMultiSol;
-static boost::function<void( Robot*, const Configuration& q )> Move3DRobotSetAndUpdateWithoutConstraints;
-static boost::function<bool( Robot* )> Move3DRobotIsInCollision;
-static boost::function<bool( Robot* )> Move3DRobotIsInCollisionWithOthersAndEnv;
-static boost::function<bool( Robot*, std::vector<Robot*>& )> Move3DRobotIsInCollisionWithOthers;
-static boost::function<double( Robot* )> Move3DRobotDistanceEnv;
-static boost::function<double( Robot*, Robot* )> Move3DRobotDistanceToRobot;
-static boost::function<confPtr_t( Robot* )> Move3DRobotGetInitPos;
-static boost::function<void( Robot*, const Configuration& )> Move3DRobotSetInitPos;
-static boost::function<confPtr_t( Robot* )> Move3DRobotGetGoalPos;
-static boost::function<void( Robot*, const Configuration& )> Move3DRobotSetGoalPos;
-static boost::function<confPtr_t( Robot* )> Move3DRobotGetCurrentPos;
-static boost::function<confPtr_t( Robot* )> Move3DRobotGetNewPos;
-static boost::function<unsigned int( Robot* )> Move3DRobotGetNumberOfActiveDofs;
-static boost::function<Joint*( Robot*, unsigned int, unsigned int& )> Move3DRobotGetIthActiveDofJoint;
+static boost::function<void(
+    Robot*, void*, unsigned int&, bool, std::string&, std::vector<Joint*>&)>
+    Move3DRobotConstructor;
+static boost::function<Move3D::Trajectory(Robot*)>
+    Move3DRobotGetCurrentTrajectory;
+static boost::function<confPtr_t(confPtr_t, bool)> Move3DRobotShoot;
+static boost::function<confPtr_t(confPtr_t, bool)> Move3DRobotShootDir;
+static boost::function<bool(Robot*, const Configuration& q, bool)>
+    Move3DRobotSetAndUpdate;
+static boost::function<bool(Robot*, const Configuration& q)>
+    Move3DRobotSetAndUpdateMultiSol;
+static boost::function<void(Robot*, const Configuration& q)>
+    Move3DRobotSetAndUpdateWithoutConstraints;
+static boost::function<bool(Robot*)> Move3DRobotIsInCollision;
+static boost::function<bool(Robot*)> Move3DRobotIsInCollisionWithOthersAndEnv;
+static boost::function<bool(Robot*, std::vector<Robot*>&)>
+    Move3DRobotIsInCollisionWithOthers;
+static boost::function<double(Robot*)> Move3DRobotDistanceEnv;
+static boost::function<double(Robot*, Robot*)> Move3DRobotDistanceToRobot;
+static boost::function<confPtr_t(Robot*)> Move3DRobotGetInitPos;
+static boost::function<void(Robot*, const Configuration&)>
+    Move3DRobotSetInitPos;
+static boost::function<confPtr_t(Robot*)> Move3DRobotGetGoalPos;
+static boost::function<void(Robot*, const Configuration&)>
+    Move3DRobotSetGoalPos;
+static boost::function<confPtr_t(Robot*)> Move3DRobotGetCurrentPos;
+static boost::function<confPtr_t(Robot*)> Move3DRobotGetNewPos;
+static boost::function<unsigned int(Robot*)> Move3DRobotGetNumberOfActiveDofs;
+static boost::function<Joint*(Robot*, unsigned int, unsigned int&)>
+    Move3DRobotGetIthActiveDofJoint;
 
 // ****************************************************************************************************
 // SETTERS
 // ****************************************************************************************************
 
-void move3d_set_fct_robot_constructor( boost::function<void( Robot*, void*, unsigned int&, bool, std::string&, std::vector<Joint*>& )> fct ) {  Move3DRobotConstructor = fct; }
-void move3d_set_fct_robot_get_current_trajectory( boost::function<Move3D::Trajectory( Robot* )> fct ) {  Move3DRobotGetCurrentTrajectory = fct; }
-void move3d_set_fct_robot_shoot( boost::function<confPtr_t( confPtr_t, bool )> fct ) {  Move3DRobotShoot = fct; }
-void move3d_set_fct_robot_shoot_dir( boost::function<confPtr_t( confPtr_t, bool )> fct ) {  Move3DRobotShootDir = fct; }
-void move3d_set_fct_robot_set_and_update( boost::function<bool( Robot*, const Configuration& q, bool )> fct ) {  Move3DRobotSetAndUpdate = fct; }
-void move3d_set_fct_robot_set_and_update_multi_sol( boost::function<bool( Robot*, const Configuration& q )> fct ) {  Move3DRobotSetAndUpdateMultiSol = fct; }
-void move3d_set_fct_robot_without_constraints( boost::function<void( Robot*, const Configuration& q )> fct ) {  Move3DRobotSetAndUpdateWithoutConstraints = fct; }
-void move3d_set_fct_robot_is_in_collision( boost::function<bool( Robot* )> fct ) {  Move3DRobotIsInCollision = fct; }
-void move3d_set_fct_robot_is_in_collision_with_others_and_env( boost::function<bool( Robot* )> fct ) {  Move3DRobotIsInCollisionWithOthersAndEnv = fct; }
-void move3d_set_fct_robot_is_in_collision_with_others( boost::function<bool( Robot*, std::vector<Robot*>& )> fct ) {  Move3DRobotIsInCollisionWithOthers = fct; }
-void move3d_set_fct_robot_distance_to_env( boost::function<double( Robot* )> fct ) {  Move3DRobotDistanceEnv = fct; }
-void move3d_set_fct_robot_distance_to_robot( boost::function<double( Robot*, Robot* )> fct ) {  Move3DRobotDistanceToRobot = fct; }
-void move3d_set_fct_robot_get_init_pos( boost::function<confPtr_t( Robot* )> fct ) {  Move3DRobotGetInitPos = fct; }
-void move3d_set_fct_robot_set_init_pos( boost::function<void( Robot*, const Configuration& )> fct ) {  Move3DRobotSetInitPos = fct; }
-void move3d_set_fct_robot_get_goal_pos( boost::function<confPtr_t( Robot* )> fct ) {  Move3DRobotGetGoalPos = fct; }
-void move3d_set_fct_robot_set_goal_pos( boost::function<void( Robot*, const Configuration& )> fct ) {  Move3DRobotSetGoalPos = fct; }
-void move3d_set_fct_robot_get_current_pos( boost::function<confPtr_t( Robot* )> fct ) {  Move3DRobotGetCurrentPos = fct; }
-void move3d_set_fct_robot_get_new_pos( boost::function<confPtr_t( Robot* )> fct ) {  Move3DRobotGetNewPos = fct; }
-void move3d_set_fct_robot_get_number_of_active_dofs( boost::function<unsigned int( Robot* )> fct ) {  Move3DRobotGetNumberOfActiveDofs = fct; }
-void move3d_set_fct_robot_get_ith_active_dof_joint( boost::function<Joint*( Robot*, unsigned int, unsigned int& )> fct ) {  Move3DRobotGetIthActiveDofJoint = fct; }
+void move3d_set_fct_robot_constructor(boost::function<void(
+    Robot*, void*, unsigned int&, bool, std::string&, std::vector<Joint*>&)>
+                                          fct) {
+  Move3DRobotConstructor = fct;
+}
+void move3d_set_fct_robot_get_current_trajectory(
+    boost::function<Move3D::Trajectory(Robot*)> fct) {
+  Move3DRobotGetCurrentTrajectory = fct;
+}
+void move3d_set_fct_robot_shoot(
+    boost::function<confPtr_t(confPtr_t, bool)> fct) {
+  Move3DRobotShoot = fct;
+}
+void move3d_set_fct_robot_shoot_dir(
+    boost::function<confPtr_t(confPtr_t, bool)> fct) {
+  Move3DRobotShootDir = fct;
+}
+void move3d_set_fct_robot_set_and_update(
+    boost::function<bool(Robot*, const Configuration& q, bool)> fct) {
+  Move3DRobotSetAndUpdate = fct;
+}
+void move3d_set_fct_robot_set_and_update_multi_sol(
+    boost::function<bool(Robot*, const Configuration& q)> fct) {
+  Move3DRobotSetAndUpdateMultiSol = fct;
+}
+void move3d_set_fct_robot_without_constraints(
+    boost::function<void(Robot*, const Configuration& q)> fct) {
+  Move3DRobotSetAndUpdateWithoutConstraints = fct;
+}
+void move3d_set_fct_robot_is_in_collision(boost::function<bool(Robot*)> fct) {
+  Move3DRobotIsInCollision = fct;
+}
+void move3d_set_fct_robot_is_in_collision_with_others_and_env(
+    boost::function<bool(Robot*)> fct) {
+  Move3DRobotIsInCollisionWithOthersAndEnv = fct;
+}
+void move3d_set_fct_robot_is_in_collision_with_others(
+    boost::function<bool(Robot*, std::vector<Robot*>&)> fct) {
+  Move3DRobotIsInCollisionWithOthers = fct;
+}
+void move3d_set_fct_robot_distance_to_env(boost::function<double(Robot*)> fct) {
+  Move3DRobotDistanceEnv = fct;
+}
+void move3d_set_fct_robot_distance_to_robot(
+    boost::function<double(Robot*, Robot*)> fct) {
+  Move3DRobotDistanceToRobot = fct;
+}
+void move3d_set_fct_robot_get_init_pos(boost::function<confPtr_t(Robot*)> fct) {
+  Move3DRobotGetInitPos = fct;
+}
+void move3d_set_fct_robot_set_init_pos(
+    boost::function<void(Robot*, const Configuration&)> fct) {
+  Move3DRobotSetInitPos = fct;
+}
+void move3d_set_fct_robot_get_goal_pos(boost::function<confPtr_t(Robot*)> fct) {
+  Move3DRobotGetGoalPos = fct;
+}
+void move3d_set_fct_robot_set_goal_pos(
+    boost::function<void(Robot*, const Configuration&)> fct) {
+  Move3DRobotSetGoalPos = fct;
+}
+void move3d_set_fct_robot_get_current_pos(
+    boost::function<confPtr_t(Robot*)> fct) {
+  Move3DRobotGetCurrentPos = fct;
+}
+void move3d_set_fct_robot_get_new_pos(boost::function<confPtr_t(Robot*)> fct) {
+  Move3DRobotGetNewPos = fct;
+}
+void move3d_set_fct_robot_get_number_of_active_dofs(
+    boost::function<unsigned int(Robot*)> fct) {
+  Move3DRobotGetNumberOfActiveDofs = fct;
+}
+void move3d_set_fct_robot_get_ith_active_dof_joint(
+    boost::function<Joint*(Robot*, unsigned int, unsigned int&)> fct) {
+  Move3DRobotGetIthActiveDofJoint = fct;
+}
 
 // ****************************************************************************************************
 
-Robot::Robot(void* robotPt, bool copy )
-{
-    copy_ = copy;
-    robot_kin_struct_ = robotPt;
-    contains_libmove3d_struct_ = true;
-    object_box_dimentions_ = Eigen::Vector3d::Zero();
-    Move3DRobotConstructor( this, robot_kin_struct_, nb_dofs_, copy, name_, joints_ );
+Robot::Robot(void* robotPt, bool copy) {
+  copy_ = copy;
+  robot_kin_struct_ = robotPt;
+  contains_libmove3d_struct_ = true;
+  object_box_dimentions_ = Eigen::Vector3d::Zero();
+  Move3DRobotConstructor(
+      this, robot_kin_struct_, nb_dofs_, copy, name_, joints_);
 
-    current_trajectory_ = Move3D::Trajectory(this);
-    current_trajectory_.clear();
+  current_trajectory_ = Move3D::Trajectory(this);
+  current_trajectory_.clear();
 }
 
-Robot::~Robot()
-{
-    if(copy_)
-    {
-        deleteRobStructure(static_cast<p3d_rob*>(robot_kin_struct_));
-    }
+Robot::~Robot() {
+  if (copy_) {
+    deleteRobStructure(static_cast<p3d_rob*>(robot_kin_struct_));
+  }
 }
 
-const string& Robot::getName()
-{
-    return name_;
-}
+const string& Robot::getName() { return name_; }
 
-//Accessors
-rob* Robot::getP3dRobotStruct()
-{
-    return static_cast<p3d_rob*>(robot_kin_struct_);
+// Accessors
+rob* Robot::getP3dRobotStruct() {
+  return static_cast<p3d_rob*>(robot_kin_struct_);
 }
-
 
 /**
  * Gets traj
  * @return pointer to structure p3d_traj
  */
-void* Robot::getTrajStruct()
-{
-    return static_cast<p3d_rob*>(robot_kin_struct_)->tcur;
+void* Robot::getTrajStruct() {
+  return static_cast<p3d_rob*>(robot_kin_struct_)->tcur;
 }
 
-void Robot::removeCurrentTraj()
-{
-    p3d_traj* traj = static_cast<p3d_traj*>( getTrajStruct() );
-    if( traj != NULL )
-    {
-        p3d_del_traj( traj );
-        traj = NULL;
-    }
+void Robot::removeCurrentTraj() {
+  p3d_traj* traj = static_cast<p3d_traj*>(getTrajStruct());
+  if (traj != NULL) {
+    p3d_del_traj(traj);
+    traj = NULL;
+  }
 }
 
-Move3D::Trajectory Robot::getCurrentTraj()
-{
-    return Move3DRobotGetCurrentTrajectory(this);
+Move3D::Trajectory Robot::getCurrentTraj() {
+  return Move3DRobotGetCurrentTrajectory(this);
 }
 
-
-const Move3D::Trajectory& Robot::getCurrentMove3DTraj()
-{
-    return current_trajectory_;
+const Move3D::Trajectory& Robot::getCurrentMove3DTraj() {
+  return current_trajectory_;
 }
 
-void Robot::setCurrentMove3DTraj(const Move3D::Trajectory& traj)
-{
-    current_trajectory_ = traj;
+void Robot::setCurrentMove3DTraj(const Move3D::Trajectory& traj) {
+  current_trajectory_ = traj;
 }
 
-void Robot::removeCurrentMove3DTraj()
-{
+void Robot::removeCurrentMove3DTraj() {}
 
-}
+unsigned int Robot::getNumberOfDofs() const { return nb_dofs_; }
 
-unsigned int Robot::getNumberOfDofs() const
-{
-    return nb_dofs_;
-}
+unsigned int Robot::getNumberOfJoints() const { return joints_.size(); }
 
-unsigned int Robot::getNumberOfJoints() const
-{
-    return  joints_.size();
-}
-
-Joint* Robot::getJoint( unsigned int i )
-{
-    if (joints_.empty() || i > joints_.size()-1 ) {
-        return NULL;
-    }
-
-    return joints_[i];
-}
-
-Joint* Robot::getJoint(std::string name) const
-{
-    for (unsigned int i=0; i<joints_.size(); i++)
-    {
-        if( joints_[i]->getName() == name )
-        {
-            return joints_[i];
-        }
-    }
-
+Joint* Robot::getJoint(unsigned int i) {
+  if (joints_.empty() || i > joints_.size() - 1) {
     return NULL;
+  }
+
+  return joints_[i];
 }
 
-const std::vector<Joint*>& Robot::getAllJoints()
-{
-    return joints_;
+Joint* Robot::getJoint(std::string name) const {
+  for (unsigned int i = 0; i < joints_.size(); i++) {
+    if (joints_[i]->getName() == name) {
+      return joints_[i];
+    }
+  }
+
+  return NULL;
 }
 
-bool Robot::isInObjectBox( const Eigen::Vector3d& p0 )
-{
-    Eigen::Transform3d T( getJoint(1)->getMatrixPos().inverse() );
-    Eigen::Vector3d p = T * p0;
+const std::vector<Joint*>& Robot::getAllJoints() { return joints_; }
 
-    Eigen::VectorXd limits(6);
-    limits[0] = object_box_center_[0] + object_box_dimentions_[0] / 2;
-    limits[1] = object_box_center_[0] - object_box_dimentions_[0] / 2;
-    limits[2] = object_box_center_[1] + object_box_dimentions_[1] / 2;
-    limits[3] = object_box_center_[1] - object_box_dimentions_[1] / 2;
-    limits[4] = object_box_center_[2] + object_box_dimentions_[2] / 2;
-    limits[5] = object_box_center_[2] - object_box_dimentions_[2] / 2;
+bool Robot::isInObjectBox(const Eigen::Vector3d& p0) {
+  Eigen::Transform3d T(getJoint(1)->getMatrixPos().inverse());
+  Eigen::Vector3d p = T * p0;
 
-    if( p[0] > limits[0] )
-        return false;
-    if( p[0] < limits[1] )
-        return false;
-    if( p[1] > limits[2] )
-        return false;
-    if( p[1] < limits[3] )
-        return false;
-    if( p[2] > limits[4] )
-        return false;
-    if( p[2] < limits[5] )
-        return false;
+  Eigen::VectorXd limits(6);
+  limits[0] = object_box_center_[0] + object_box_dimentions_[0] / 2;
+  limits[1] = object_box_center_[0] - object_box_dimentions_[0] / 2;
+  limits[2] = object_box_center_[1] + object_box_dimentions_[1] / 2;
+  limits[3] = object_box_center_[1] - object_box_dimentions_[1] / 2;
+  limits[4] = object_box_center_[2] + object_box_dimentions_[2] / 2;
+  limits[5] = object_box_center_[2] - object_box_dimentions_[2] / 2;
 
-    return true;
+  if (p[0] > limits[0]) return false;
+  if (p[0] < limits[1]) return false;
+  if (p[1] > limits[2]) return false;
+  if (p[1] < limits[3]) return false;
+  if (p[2] > limits[4]) return false;
+  if (p[2] < limits[5]) return false;
+
+  return true;
 }
 
-std::vector<Eigen::Vector3d> Robot::getObjectBox()
-{
-    if( getJoint(1) == NULL || object_box_dimentions_ == Vector3d::Zero() ){
-        return std::vector<Eigen::Vector3d>();
-    }
+std::vector<Eigen::Vector3d> Robot::getObjectBox() {
+  if (getJoint(1) == NULL || object_box_dimentions_ == Vector3d::Zero()) {
+    return std::vector<Eigen::Vector3d>();
+  }
 
-    std::vector<Eigen::Vector3d> box(8);
+  std::vector<Eigen::Vector3d> box(8);
 
-    box[0][0] = 1;		box[4][0] = -1;
-    box[0][1] = -1;		box[4][1] = -1;
-    box[0][2] = 1;		box[4][2] = 1;
+  box[0][0] = 1;
+  box[4][0] = -1;
+  box[0][1] = -1;
+  box[4][1] = -1;
+  box[0][2] = 1;
+  box[4][2] = 1;
 
-    box[1][0] = 1;		box[5][0] = -1;
-    box[1][1] = 1;		box[5][1] = 1;
-    box[1][2] = 1;		box[5][2] = 1;
+  box[1][0] = 1;
+  box[5][0] = -1;
+  box[1][1] = 1;
+  box[5][1] = 1;
+  box[1][2] = 1;
+  box[5][2] = 1;
 
-    box[2][0] = 1;		box[6][0] = -1;
-    box[2][1] = -1;		box[6][1] = -1;
-    box[2][2] = -1;		box[6][2] = -1;
+  box[2][0] = 1;
+  box[6][0] = -1;
+  box[2][1] = -1;
+  box[6][1] = -1;
+  box[2][2] = -1;
+  box[6][2] = -1;
 
-    box[3][0] = 1;		box[7][0] = -1;
-    box[3][1] = 1;		box[7][1] = 1;
-    box[3][2] = -1;		box[7][2] = -1;
+  box[3][0] = 1;
+  box[7][0] = -1;
+  box[3][1] = 1;
+  box[7][1] = 1;
+  box[3][2] = -1;
+  box[7][2] = -1;
 
-    Matrix3d A = Matrix3d::Zero();
-    A(0,0) = object_box_dimentions_[0] / 2 ;
-    A(1,1) = object_box_dimentions_[1] / 2 ;
-    A(2,2) = object_box_dimentions_[2] / 2 ;
+  Matrix3d A = Matrix3d::Zero();
+  A(0, 0) = object_box_dimentions_[0] / 2;
+  A(1, 1) = object_box_dimentions_[1] / 2;
+  A(2, 2) = object_box_dimentions_[2] / 2;
 
-    Transform3d T = getJoint(1)->getMatrixPos();
+  Transform3d T = getJoint(1)->getMatrixPos();
 
-    for (unsigned int i=0; i<8; i++)
-    {
-        box[i] = A * box[i];
-        box[i] = object_box_center_ + box[i];
-        box[i] = T * box[i];
-    }
+  for (unsigned int i = 0; i < 8; i++) {
+    box[i] = A * box[i];
+    box[i] = object_box_center_ + box[i];
+    box[i] = T * box[i];
+  }
 
-    return box;
+  return box;
 }
 
-void Robot::initObjectBox( const std::vector<double>& dimensions )
-{
-    if( dimensions.empty() )
-    {
-        object_box_dimentions_[0] = 1.0;
-        object_box_dimentions_[1] = 1.0;
-        object_box_dimentions_[2] = 1.0;
-        object_box_center_ = Vector3d::Zero();
-    }
-    else if( dimensions.size() == 3 )
-    {
-        object_box_dimentions_[0] = dimensions[0];
-        object_box_dimentions_[1] = dimensions[1];
-        object_box_dimentions_[2] = dimensions[2];
-        object_box_center_ = Vector3d::Zero();
-    }
-    else if( dimensions.size() == 6 )
-    {
-        object_box_dimentions_[0] = dimensions[0];
-        object_box_dimentions_[1] = dimensions[1];
-        object_box_dimentions_[2] = dimensions[2];
-        object_box_center_ = Vector3d::Zero();
-        object_box_center_[0] += dimensions[3];
-        object_box_center_[1] += dimensions[4];
-        object_box_center_[2] += dimensions[5];
-    }
+void Robot::initObjectBox(const std::vector<double>& dimensions) {
+  if (dimensions.empty()) {
+    object_box_dimentions_[0] = 1.0;
+    object_box_dimentions_[1] = 1.0;
+    object_box_dimentions_[2] = 1.0;
+    object_box_center_ = Vector3d::Zero();
+  } else if (dimensions.size() == 3) {
+    object_box_dimentions_[0] = dimensions[0];
+    object_box_dimentions_[1] = dimensions[1];
+    object_box_dimentions_[2] = dimensions[2];
+    object_box_center_ = Vector3d::Zero();
+  } else if (dimensions.size() == 6) {
+    object_box_dimentions_[0] = dimensions[0];
+    object_box_dimentions_[1] = dimensions[1];
+    object_box_dimentions_[2] = dimensions[2];
+    object_box_center_ = Vector3d::Zero();
+    object_box_center_[0] += dimensions[3];
+    object_box_center_[1] += dimensions[4];
+    object_box_center_[2] += dimensions[5];
+  }
 }
 
 #ifdef LIGHT_PLANNER
 
-bool Robot::isActiveCcConstraint()
-{
-    for(int i = 0; i < static_cast<p3d_rob*>(robot_kin_struct_)->nbCcCntrts; i++)
-    {
-        if(static_cast<p3d_rob*>(robot_kin_struct_)->ccCntrts[i]->active)
-        {
-            return true;
-        }
+bool Robot::isActiveCcConstraint() {
+  for (int i = 0; i < static_cast<p3d_rob*>(robot_kin_struct_)->nbCcCntrts;
+       i++) {
+    if (static_cast<p3d_rob*>(robot_kin_struct_)->ccCntrts[i]->active) {
+      return true;
     }
+  }
 
-    return false;
+  return false;
 }
 
 /**
  * Activate Constraint
  */
-void Robot::activateCcConstraint()
-{
-    int pas_jnt_index = static_cast<p3d_rob*>(robot_kin_struct_)->ccCntrts[0]->npasjnts-1;
-    p3d_jnt* manip_jnt = (*static_cast<p3d_rob*>(robot_kin_struct_)->armManipulationData)[0].getManipulationJnt();
-    activateCcCntrts(static_cast<p3d_rob*>(robot_kin_struct_),-1,false);
-    desactivateTwoJointsFixCntrt(static_cast<p3d_rob*>(robot_kin_struct_),manip_jnt,static_cast<p3d_rob*>(robot_kin_struct_)->ccCntrts[0]->pasjnts[ pas_jnt_index ]);
+void Robot::activateCcConstraint() {
+  int pas_jnt_index =
+      static_cast<p3d_rob*>(robot_kin_struct_)->ccCntrts[0]->npasjnts - 1;
+  p3d_jnt* manip_jnt = (*static_cast<p3d_rob*>(robot_kin_struct_)
+                             ->armManipulationData)[0].getManipulationJnt();
+  activateCcCntrts(static_cast<p3d_rob*>(robot_kin_struct_), -1, false);
+  desactivateTwoJointsFixCntrt(static_cast<p3d_rob*>(robot_kin_struct_),
+                               manip_jnt,
+                               static_cast<p3d_rob*>(robot_kin_struct_)
+                                   ->ccCntrts[0]
+                                   ->pasjnts[pas_jnt_index]);
 }
 
 /**
  * Deactivate Constraint
  */
-void Robot::deactivateCcConstraint()
-{
-    int pas_jnt_index = static_cast<p3d_rob*>(robot_kin_struct_)->ccCntrts[0]->npasjnts-1;
-    p3d_jnt* manip_jnt = (*static_cast<p3d_rob*>(robot_kin_struct_)->armManipulationData)[0].getManipulationJnt();
-    deactivateCcCntrts(static_cast<p3d_rob*>(robot_kin_struct_),-1);
-    setAndActivateTwoJointsFixCntrt(static_cast<p3d_rob*>(robot_kin_struct_),manip_jnt,static_cast<p3d_rob*>(robot_kin_struct_)->ccCntrts[0]->pasjnts[ pas_jnt_index ]);
+void Robot::deactivateCcConstraint() {
+  int pas_jnt_index =
+      static_cast<p3d_rob*>(robot_kin_struct_)->ccCntrts[0]->npasjnts - 1;
+  p3d_jnt* manip_jnt = (*static_cast<p3d_rob*>(robot_kin_struct_)
+                             ->armManipulationData)[0].getManipulationJnt();
+  deactivateCcCntrts(static_cast<p3d_rob*>(robot_kin_struct_), -1);
+  setAndActivateTwoJointsFixCntrt(static_cast<p3d_rob*>(robot_kin_struct_),
+                                  manip_jnt,
+                                  static_cast<p3d_rob*>(robot_kin_struct_)
+                                      ->ccCntrts[0]
+                                      ->pasjnts[pas_jnt_index]);
 }
 
 /**
  * Returns the Virtual object dof
  */
-int Robot::getObjectDof() 
-{
-    p3d_jnt* jnt = (*static_cast<p3d_rob*>(robot_kin_struct_)->armManipulationData)[0].getManipulationJnt();
+int Robot::getObjectDof() {
+  p3d_jnt* jnt = (*static_cast<p3d_rob*>(robot_kin_struct_)
+                       ->armManipulationData)[0].getManipulationJnt();
 
-    if ( jnt )
-    {
-        return jnt->index_dof;
-    }
-    else
-    {
-        return 0;
-        std::cout << "Robot::getObjectDof()::Warning" << std::endl;
-    }
+  if (jnt) {
+    return jnt->index_dof;
+  } else {
+    return 0;
+    std::cout << "Robot::getObjectDof()::Warning" << std::endl;
+  }
 }
-
 
 /**
  * Returns the base Joint
  */
-void* Robot::getBaseJnt()
-{
-    return static_cast<p3d_rob*>(robot_kin_struct_)->baseJnt;
+void* Robot::getBaseJnt() {
+  return static_cast<p3d_rob*>(robot_kin_struct_)->baseJnt;
 }
 
 /**
  * Shoots the base Joint of the robot
  */
-confPtr_t Robot::shootBaseWithoutCC()
-{
-    confPtr_t q = getCurrentPos();
-    joints_[static_cast<p3d_rob*>(robot_kin_struct_)->baseJnt->num]->shoot(*q);
-    cout << "Base Num = " << static_cast<p3d_rob*>(robot_kin_struct_)->baseJnt->num << endl;
-    deactivateCcConstraint();
-    setAndUpdate(*q);
-    activateCcConstraint();
-    return getCurrentPos();
+confPtr_t Robot::shootBaseWithoutCC() {
+  confPtr_t q = getCurrentPos();
+  joints_[static_cast<p3d_rob*>(robot_kin_struct_)->baseJnt->num]->shoot(*q);
+  cout << "Base Num = "
+       << static_cast<p3d_rob*>(robot_kin_struct_)->baseJnt->num << endl;
+  deactivateCcConstraint();
+  setAndUpdate(*q);
+  activateCcConstraint();
+  return getCurrentPos();
 }
 
 /**
  * Shoots all exept base
  */
-confPtr_t Robot::shootAllExceptBase()
-{
-    confPtr_t q( new Configuration(this));
+confPtr_t Robot::shootAllExceptBase() {
+  confPtr_t q(new Configuration(this));
 
-    for (unsigned int i=0; i<joints_.size(); i++)
+  for (unsigned int i = 0; i < joints_.size(); i++) {
+    if (static_cast<p3d_rob*>(robot_kin_struct_)->baseJnt->num == ((int)i))
+    // if (i<2)
     {
-        if (static_cast<p3d_rob*>(robot_kin_struct_)->baseJnt->num == ((int)i))
-            //if (i<2)
-        {
-            joints_[i]->setConfigFromDofValues(*q);
-        }
-        else
-        {
-            joints_[i]->shoot(*q);
-        }
+      joints_[i]->setConfigFromDofValues(*q);
+    } else {
+      joints_[i]->shoot(*q);
+    }
+  }
+
+  return q;
+}
+
+bool Robot::setAndUpdateAllExceptBase(Configuration& q) {
+  for (int i = 0; i < (int)joints_.size(); i++) {
+    p3d_jnt* jntPt = static_cast<p3d_jnt*>(joints_[i]->getP3dJointStruct());
+
+    // if (static_cast<p3d_rob*>(robot_kin_struct_)->baseJnt->num == ((int)i))
+    if (i <= 1) {
+      continue;
     }
 
-    return q;
-}
+    for (int j = 0; j < jntPt->dof_equiv_nbr; j++) {
+      int k = jntPt->index_dof + j;
 
-bool Robot::setAndUpdateAllExceptBase(Configuration& q)
-{
-    for(int i=0; i<(int)joints_.size(); i++)
-    {
-        p3d_jnt* jntPt = static_cast<p3d_jnt*>( joints_[i]->getP3dJointStruct() );
-
-        //if (static_cast<p3d_rob*>(robot_kin_struct_)->baseJnt->num == ((int)i))
-        if ( i <= 1)
-        { continue; }
-
-        for(int j=0; j<jntPt->dof_equiv_nbr; j++)
-        {
-            int k = jntPt->index_dof+j;
-
-            joints_[i]->setJointDof(j,q[k]);
-        }
+      joints_[i]->setJointDof(j, q[k]);
     }
+  }
 
-    return p3d_update_this_robot_pos(static_cast<p3d_rob*>(robot_kin_struct_));
+  return p3d_update_this_robot_pos(static_cast<p3d_rob*>(robot_kin_struct_));
 }
 
-confPtr_t Robot::shootFreeFlyer(double* box)
-{
-    //    cout << "box  = ( " << box[0] << " , " ;
-    //    cout << box[1] << " , " ;
-    //    cout << box[2] << " , " ;
-    //    cout << box[3] << " , " ;
-    //    cout << box[4] << " , " ;
-    //    cout << box[5] << " )" << endl;
-    confPtr_t q(new Configuration(this));
-    p3d_FreeFlyerShoot(static_cast<p3d_rob*>(robot_kin_struct_), q->getConfigStruct(), box);
-    return q;
+confPtr_t Robot::shootFreeFlyer(double* box) {
+  //    cout << "box  = ( " << box[0] << " , " ;
+  //    cout << box[1] << " , " ;
+  //    cout << box[2] << " , " ;
+  //    cout << box[3] << " , " ;
+  //    cout << box[4] << " , " ;
+  //    cout << box[5] << " )" << endl;
+  confPtr_t q(new Configuration(this));
+  p3d_FreeFlyerShoot(
+      static_cast<p3d_rob*>(robot_kin_struct_), q->getConfigStruct(), box);
+  return q;
 }
 
+void Robot::shootObjectJoint(Configuration& Conf) {
+  /*confPtr_t q(new Configuration(Conf));
 
-void Robot::shootObjectJoint(Configuration& Conf)
-{
-    /*confPtr_t q(new Configuration(Conf));
+  vector<Vector3d> FFBox = getObjectBox();
 
-    vector<Vector3d> FFBox = getObjectBox();
+  Vector3d center(Vector3d::Zero());
 
-    Vector3d center(Vector3d::Zero());
+  double box[8][3];
 
-    double box[8][3];
+  for (int i=0; i<8; i++)
+  {
+      for (int j=0; j<3; j++)
+      {
+          box[i][j] = FFBox[i][j];
+      }
+  }*/
 
-    for (int i=0; i<8; i++)
-    {
-        for (int j=0; j<3; j++)
-        {
-            box[i][j] = FFBox[i][j];
-        }
-    }*/
+  confPtr_t q(new Configuration(Conf));
+  deactivateCcConstraint();
 
-    confPtr_t q(new Configuration(Conf));
-    deactivateCcConstraint();
+  p3d_shoot_justin_left_arm(
+      static_cast<p3d_rob*>(robot_kin_struct_), q->getConfigStruct(), false);
+  setAndUpdate(*q);
+  q = getCurrentPos();
 
-    p3d_shoot_justin_left_arm(static_cast<p3d_rob*>(robot_kin_struct_), q->getConfigStruct(), false);
-    setAndUpdate(*q);
-    q = getCurrentPos();
+  activateCcConstraint();
 
-    activateCcConstraint();
+  int ObjectDof = getObjectDof();
 
-    int ObjectDof = getObjectDof();
+  Conf[ObjectDof + 0] = (*q)[ObjectDof + 0];
+  Conf[ObjectDof + 1] = (*q)[ObjectDof + 1];
+  Conf[ObjectDof + 2] = (*q)[ObjectDof + 2];
+  Conf[ObjectDof + 3] = (*q)[ObjectDof + 3];
+  Conf[ObjectDof + 4] = (*q)[ObjectDof + 4];
+  Conf[ObjectDof + 5] = (*q)[ObjectDof + 5];
 
-    Conf[ObjectDof+0] = (*q)[ObjectDof+0];
-    Conf[ObjectDof+1] = (*q)[ObjectDof+1];
-    Conf[ObjectDof+2] = (*q)[ObjectDof+2];
-    Conf[ObjectDof+3] = (*q)[ObjectDof+3];
-    Conf[ObjectDof+4] = (*q)[ObjectDof+4];
-    Conf[ObjectDof+5] = (*q)[ObjectDof+5];
-
-    //p3d_JointFreeFlyerShoot(static_cast<p3d_rob*>(robot_kin_struct_),static_cast<p3d_rob*>(robot_kin_struct_)->curObjectJnt,q->getConfigStruct(),box);
+  // p3d_JointFreeFlyerShoot(static_cast<p3d_rob*>(robot_kin_struct_),static_cast<p3d_rob*>(robot_kin_struct_)->curObjectJnt,q->getConfigStruct(),box);
 }
 
 /**
  * Shoots a random direction
  */
-confPtr_t Robot::shootRandomDirection()
-{
-    confPtr_t q( new Configuration(this) );
-    p3d_RandDirShoot( static_cast<p3d_rob*>(robot_kin_struct_), q->getConfigStruct() , false );
-    return q;
+confPtr_t Robot::shootRandomDirection() {
+  confPtr_t q(new Configuration(this));
+  p3d_RandDirShoot(
+      static_cast<p3d_rob*>(robot_kin_struct_), q->getConfigStruct(), false);
+  return q;
 }
 
 /**
  * Shoots the base Joint of the robot
  */
-confPtr_t Robot::shootBase()
-{
-    confPtr_t q( new Configuration(this));
-    joints_[static_cast<p3d_rob*>(robot_kin_struct_)->baseJnt->num]->shoot(*q);
-    return q;
+confPtr_t Robot::shootBase() {
+  confPtr_t q(new Configuration(this));
+  joints_[static_cast<p3d_rob*>(robot_kin_struct_)->baseJnt->num]->shoot(*q);
+  return q;
 }
 
 #endif
 
-confPtr_t Robot::shoot(bool samplePassive)
-{
-    confPtr_t q(new Configuration(this));
-    return Move3DRobotShoot( q, samplePassive );
+confPtr_t Robot::shoot(bool samplePassive) {
+  confPtr_t q(new Configuration(this));
+  return Move3DRobotShoot(q, samplePassive);
 }
 
-confPtr_t Robot::shootDir(bool samplePassive)
-{
-    confPtr_t q(new Configuration(this));
-    return Move3DRobotShootDir( q, samplePassive );
+confPtr_t Robot::shootDir(bool samplePassive) {
+  confPtr_t q(new Configuration(this));
+  return Move3DRobotShootDir(q, samplePassive);
 }
 
-int Robot::setAndUpdateFreeFlyer(const Eigen::Vector3d& pos)
-{
-    confPtr_t q = this->getCurrentPos();
-    (*q)[6] = pos[0];
-    (*q)[7] = pos[1];
-    (*q)[8] = pos[2];
-    return this->setAndUpdate(*q);
+int Robot::setAndUpdateFreeFlyer(const Eigen::Vector3d& pos) {
+  confPtr_t q = this->getCurrentPos();
+  (*q)[6] = pos[0];
+  (*q)[7] = pos[1];
+  (*q)[8] = pos[2];
+  return this->setAndUpdate(*q);
 }
 
 /**
  * Returns false if does not respect the
  * constraints, does not change configuration
  */
-int Robot::setAndUpdate( const Configuration& q, bool withoutFreeFlyers )
-{
-    if(q.getConfigStructConst() == NULL)
-        return false;
+int Robot::setAndUpdate(const Configuration& q, bool withoutFreeFlyers) {
+  if (q.getConfigStructConst() == NULL) return false;
 
-    return Move3DRobotSetAndUpdate( this, q, withoutFreeFlyers );
+  return Move3DRobotSetAndUpdate(this, q, withoutFreeFlyers);
 }
 
-bool Robot::setAndUpdateMultiSol( const Configuration& q)
-{
-    if(q.getConfigStructConst() == NULL)
-        return false;
+bool Robot::setAndUpdateMultiSol(const Configuration& q) {
+  if (q.getConfigStructConst() == NULL) return false;
 
-    return Move3DRobotSetAndUpdateMultiSol( this, q );
+  return Move3DRobotSetAndUpdateMultiSol(this, q);
 }
 
-void Robot::setAndUpdateWithoutConstraints( const Configuration& q)
-{
-    if(q.getConfigStructConst() == NULL)
-        return;
+void Robot::setAndUpdateWithoutConstraints(const Configuration& q) {
+  if (q.getConfigStructConst() == NULL) return;
 
-    Move3DRobotSetAndUpdateWithoutConstraints( this, q );
+  Move3DRobotSetAndUpdateWithoutConstraints(this, q);
 }
 
-bool Robot::isInCollision()
-{
-    return Move3DRobotIsInCollision( this );
-    //cout << "Collision = " << ncol << endl;
+bool Robot::isInCollision() {
+  return Move3DRobotIsInCollision(this);
+  // cout << "Collision = " << ncol << endl;
 }
 
-bool Robot::isInCollisionWithOthersAndEnv()
-{
-    return Move3DRobotIsInCollisionWithOthersAndEnv( this );
+bool Robot::isInCollisionWithOthersAndEnv() {
+  return Move3DRobotIsInCollisionWithOthersAndEnv(this);
 }
 
-bool Robot::isInCollisionWithOthers( std::vector<Move3D::Robot*>& others )
-{
-    return Move3DRobotIsInCollisionWithOthers( this, others );
+bool Robot::isInCollisionWithOthers(std::vector<Move3D::Robot*>& others) {
+  return Move3DRobotIsInCollisionWithOthers(this, others);
 }
 
-double Robot::distanceToEnviroment()
-{
-    return Move3DRobotDistanceEnv( this );
+double Robot::distanceToEnviroment() { return Move3DRobotDistanceEnv(this); }
+
+double Robot::distanceToRobot(Robot* robot) {
+  return Move3DRobotDistanceToRobot(this, robot);
 }
 
-double Robot::distanceToRobot(Robot* robot)
-{
-    return Move3DRobotDistanceToRobot( this, robot );
+confPtr_t Robot::getInitPos() { return Move3DRobotGetInitPos(this); }
+
+void Robot::setInitPos(Configuration& conf) {
+  Move3DRobotSetInitPos(this, conf);
 }
 
-confPtr_t Robot::getInitPos()
-{
-    return Move3DRobotGetInitPos( this );
+confPtr_t Robot::getGoalPos() { return Move3DRobotGetGoalPos(this); }
+
+void Robot::setGoalPos(Configuration& conf) {
+  Move3DRobotSetGoalPos(this, conf);
 }
 
-void Robot::setInitPos(Configuration& conf)
-{
-    Move3DRobotSetInitPos( this, conf );
+confPtr_t Robot::getCurrentPos() {
+  // This creates a memory leak
+  return Move3DRobotGetCurrentPos(this);
 }
 
-confPtr_t Robot::getGoalPos()
-{
-    return Move3DRobotGetGoalPos( this );
-}
-
-void Robot::setGoalPos(Configuration& conf)
-{
-    Move3DRobotSetGoalPos( this, conf );
-}
-
-confPtr_t Robot::getCurrentPos()
-{
-    // This creates a memory leak
-    return Move3DRobotGetCurrentPos( this );
-}
-
-confPtr_t Robot::getNewConfig()
-{
-    return Move3DRobotGetNewPos( this );
-}
+confPtr_t Robot::getNewConfig() { return Move3DRobotGetNewPos(this); }
 
 /**
   * Get stored vector config
   */
-std::vector<confPtr_t> Robot::getStoredConfigs()
-{
-    std::vector<confPtr_t> configs;
+std::vector<confPtr_t> Robot::getStoredConfigs() {
+  std::vector<confPtr_t> configs;
 
-    if( !contains_libmove3d_struct_ )
-        return configs;
+  if (!contains_libmove3d_struct_) return configs;
 
-    p3d_rob* robot = static_cast<p3d_rob*>(robot_kin_struct_);
+  p3d_rob* robot = static_cast<p3d_rob*>(robot_kin_struct_);
 
-    for( int i=0; i<robot->nconf; i++ )
-        configs.push_back( confPtr_t( new Configuration( this, robot->conf[i]->q )));
+  for (int i = 0; i < robot->nconf; i++)
+    configs.push_back(confPtr_t(new Configuration(this, robot->conf[i]->q)));
 
-    return configs;
+  return configs;
 }
 
-std::vector<int> Robot::getActiveJointsIds()
-{
-    std::vector<int> joint_ids;
+std::vector<int> Robot::getActiveJointsIds() {
+  std::vector<int> joint_ids;
 
-    for (size_t i=0; i<joints_.size(); i++)
-    {
-        for (size_t j=0; j<joints_[i]->getNumberOfDof(); j++)
-        {
-            if( !joints_[i]->isJointDofUser(j) )
-                continue;
+  for (size_t i = 0; i < joints_.size(); i++) {
+    for (size_t j = 0; j < joints_[i]->getNumberOfDof(); j++) {
+      if (!joints_[i]->isJointDofUser(j)) continue;
 
-            joint_ids.push_back( i );
-            break;
-        }
+      joint_ids.push_back(i);
+      break;
     }
+  }
 
-    return joint_ids;
+  return joint_ids;
 }
 
-std::vector<int> Robot::getActiveDoFsFromJoints( const std::vector<int>& joint_ids )
-{
-    std::vector<int> dof_ids;
+std::vector<int> Robot::getActiveDoFsFromJoints(
+    const std::vector<int>& joint_ids) {
+  std::vector<int> dof_ids;
 
-    for (size_t i=0; i<joint_ids.size(); i++)
-    {
-        Joint* move3d_joint = getJoint( joint_ids[i] );
+  for (size_t i = 0; i < joint_ids.size(); i++) {
+    Joint* move3d_joint = getJoint(joint_ids[i]);
 
-        for (size_t j=0; j<move3d_joint->getNumberOfDof(); j++)
-        {
-            // cout << "Joint(" << j << "), Dof : " << move3d_joint->getIndexOfFirstDof() + j << ", " << move3d_joint->getName() << "" << endl;
+    for (size_t j = 0; j < move3d_joint->getNumberOfDof(); j++) {
+      // cout << "Joint(" << j << "), Dof : " <<
+      // move3d_joint->getIndexOfFirstDof() + j << ", " <<
+      // move3d_joint->getName() << "" << endl;
 
-            if( !move3d_joint->isJointDofUser(j) )
-                continue;
+      if (!move3d_joint->isJointDofUser(j)) continue;
 
-            double min,max;
-            // robot_->getJoint( active_joints[i] )->getDofBounds(j,min,max);
-            move3d_joint->getDofRandBounds(j,min,max);
+      double min, max;
+      // robot_->getJoint( active_joints[i] )->getDofBounds(j,min,max);
+      move3d_joint->getDofRandBounds(j, min, max);
 
-            if (min == max)
-                continue;
+      if (min == max) continue;
 
-            dof_ids.push_back( move3d_joint->getIndexOfFirstDof() + j );
-        }
+      dof_ids.push_back(move3d_joint->getIndexOfFirstDof() + j);
     }
+  }
 
-    return dof_ids;
+  return dof_ids;
 }
 
-std::vector<int> Robot::getAllDofIds() const
-{
-    std::vector<int> r_dof_indices;
+std::vector<int> Robot::getAllDofIds() const {
+  std::vector<int> r_dof_indices;
 
-    for( size_t i=0; i<joints_.size(); i++)
-    {
-        std::vector<unsigned int> j_indices = joints_[i]->getDofIndices();
+  for (size_t i = 0; i < joints_.size(); i++) {
+    std::vector<unsigned int> j_indices = joints_[i]->getDofIndices();
 
-        for( size_t j=0; j<j_indices.size(); j++)
-            r_dof_indices.push_back( j_indices[j] );
-    }
+    for (size_t j = 0; j < j_indices.size(); j++)
+      r_dof_indices.push_back(j_indices[j]);
+  }
 
-    return r_dof_indices;
+  return r_dof_indices;
 }
 
 /**
  * Returns the number of DoF active in the planning phase
  * @return Number of Active DoFs
  */
-unsigned int Robot::getNumberOfActiveDoF()
-{
-    return Move3DRobotGetNumberOfActiveDofs( this );
+unsigned int Robot::getNumberOfActiveDoF() {
+  return Move3DRobotGetNumberOfActiveDofs(this);
 }
 
 /*
  * Gets the joint of the ith active DoF
  */
-Joint* Robot::getIthActiveDoFJoint(unsigned int ithActiveDoF , unsigned int& ithDofOnJoint )
-{
-    return Move3DRobotGetIthActiveDofJoint( this, ithActiveDoF, ithDofOnJoint );
+Joint* Robot::getIthActiveDoFJoint(unsigned int ithActiveDoF,
+                                   unsigned int& ithDofOnJoint) {
+  return Move3DRobotGetIthActiveDofJoint(this, ithActiveDoF, ithDofOnJoint);
 }
 
 /**
  * Get Jacobian
  */
-Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints, Joint* eef, bool with_rotations, bool with_height) const
-{
-    int nb_dofs = 0;
-    for(size_t j=0; j<active_joints.size(); j++)
-        nb_dofs += active_joints[j]->getNumberOfDof();
+Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints,
+                                   Joint* eef,
+                                   bool with_rotations,
+                                   bool with_height) const {
+  int nb_dofs = 0;
+  for (size_t j = 0; j < active_joints.size(); j++)
+    nb_dofs += active_joints[j]->getNumberOfDof();
 
-    if( with_rotations )
-        with_height = true;
-    with_height = true;
-    int nb_task_trans = with_height ? 3 : 2;
+  if (with_rotations) with_height = true;
+  with_height = true;
+  int nb_task_trans = with_height ? 3 : 2;
 
-    Eigen::MatrixXd J( Eigen::MatrixXd::Zero( with_rotations ? 6 : nb_task_trans, nb_dofs ) );
-    Eigen::Transform3d T_eef( eef->getMatrixPos() );
-    Eigen::Vector3d p,z;
+  Eigen::MatrixXd J(
+      Eigen::MatrixXd::Zero(with_rotations ? 6 : nb_task_trans, nb_dofs));
+  Eigen::Transform3d T_eef(eef->getMatrixPos());
+  Eigen::Vector3d p, z;
 
-    int id=0;
+  int id = 0;
 
-    for(size_t j=0; j<active_joints.size(); j++)
-    {
-        Eigen::Transform3d T( active_joints[j]->getMatrixPos() );
+  for (size_t j = 0; j < active_joints.size(); j++) {
+    Eigen::Transform3d T(active_joints[j]->getMatrixPos());
 
-        for(int i=0; i<nb_task_trans; i++) // position offset
-            p(i) = T_eef(i,3) - T(i,3);
-        for(int i=0; i<nb_task_trans; i++) // rotation axis (Z axis)
-            z(i) = T(i,2);
+    for (int i = 0; i < nb_task_trans; i++)  // position offset
+      p(i) = T_eef(i, 3) - T(i, 3);
+    for (int i = 0; i < nb_task_trans; i++)  // rotation axis (Z axis)
+      z(i) = T(i, 2);
 
-        if( active_joints[j]->getP3dJointStruct()->type == P3D_ROTATE )
-        {
-            // CROSS PRODUCT
-            Eigen::Vector3d J_pi;
+    if (active_joints[j]->getP3dJointStruct()->type == P3D_ROTATE) {
+      // CROSS PRODUCT
+      Eigen::Vector3d J_pi;
 
-            J_pi = z.cross( p );
+      J_pi = z.cross(p);
 
-            J(0,id) = J_pi(0);
-            J(1,id) = J_pi(1);
-            if( with_height )
-                J(2,id) = J_pi(2);
+      J(0, id) = J_pi(0);
+      J(1, id) = J_pi(1);
+      if (with_height) J(2, id) = J_pi(2);
 
-            if( boost::math::isnan(J(0,id)) ){
-                printf("NAN VALUE\n");
-            }
-            if( with_rotations ){
-                J(3,id) = z(0);
-                J(4,id) = z(1);
-                J(5,id) = z(2);
-            }
-        }
-        if( active_joints[j]->getP3dJointStruct()->type == P3D_TRANSLATE ){
-            J(0,id) = z(0);
-            J(1,id) = z(1);
-            if( with_height )
-                J(2,id) = z(2);
-        }
-//        if( active_joints[j]->getP3dJointStruct()->type == P3D_FREEFLYER ){ // TODO
-//            J(0,id) = 1;
-//            J(1,id) = 0;
-//            J(2,id) = 0;
-//            if( with_rotations ){
-//                J(3,id)=0;
-//                J(4,id)=0;  /* Rotation */
-//                J(5,id)=0;
-//                id++;
-//            }
-//            J(0,id+1) = 0;
-//            J(1,id+1) = 1;
-//            J(2,id+1) = 0;
-//            if( with_rotations ){
-//                J(3,id+1)=0;
-//                J(4,id+1)=0;  /* Rotation */
-//                J(5,id+1)=0;
-//                id++;
-//            }
-//            J(0,id+2) = 0;
-//            J(1,id+2) = 0;
-//            J(2,id+2) = 1;
-//            if( with_rotations ){
-//                J(3,id)=0;
-//                J(4,id)=0;  /* Rotation */
-//                J(5,id)=0;
-//                id++;
-//            }
-//            // ....
-//        }
-        id++;
+      if (boost::math::isnan(J(0, id))) {
+        printf("NAN VALUE\n");
+      }
+      if (with_rotations) {
+        J(3, id) = z(0);
+        J(4, id) = z(1);
+        J(5, id) = z(2);
+      }
     }
+    if (active_joints[j]->getP3dJointStruct()->type == P3D_TRANSLATE) {
+      J(0, id) = z(0);
+      J(1, id) = z(1);
+      if (with_height) J(2, id) = z(2);
+    }
+    //        if( active_joints[j]->getP3dJointStruct()->type == P3D_FREEFLYER
+    //        ){ // TODO
+    //            J(0,id) = 1;
+    //            J(1,id) = 0;
+    //            J(2,id) = 0;
+    //            if( with_rotations ){
+    //                J(3,id)=0;
+    //                J(4,id)=0;  /* Rotation */
+    //                J(5,id)=0;
+    //                id++;
+    //            }
+    //            J(0,id+1) = 0;
+    //            J(1,id+1) = 1;
+    //            J(2,id+1) = 0;
+    //            if( with_rotations ){
+    //                J(3,id+1)=0;
+    //                J(4,id+1)=0;  /* Rotation */
+    //                J(5,id+1)=0;
+    //                id++;
+    //            }
+    //            J(0,id+2) = 0;
+    //            J(1,id+2) = 0;
+    //            J(2,id+2) = 1;
+    //            if( with_rotations ){
+    //                J(3,id)=0;
+    //                J(4,id)=0;  /* Rotation */
+    //                J(5,id)=0;
+    //                id++;
+    //            }
+    //            // ....
+    //        }
+    id++;
+  }
 
-//    cout << "J :  " << endl << J << endl;
+  //    cout << "J :  " << endl << J << endl;
 
-    return J;
+  return J;
 }
