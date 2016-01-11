@@ -55,6 +55,10 @@ void move3d_save_context_to_csv_file(
     const std::vector<Move3D::confPtr_t>& context,
     std::string filename );
 
+//! Get eigen vector from vector of strings
+//! representing float numbers
+Eigen::VectorXd moved_get_vector( const std::vector<std::string>& config );
+
 //! Returns the files in the folder with argument extension
 std::vector<std::string>  move3d_get_files_in_folder( std::string foldername,
                                                       std::string extention,
@@ -77,6 +81,9 @@ Eigen::VectorXd move3d_lerp( const Eigen::VectorXd& v0,
                              const Eigen::VectorXd& v1,
                              double t );
 
+//! Matrix pseudo inverse
+Eigen::MatrixXd move3d_pinv( const Eigen::MatrixXd &b, double rcond );
+
 //! this function makes sure the curve in param
 //! is continus for compting sum of acceleration
 //! on circular joints
@@ -87,9 +94,6 @@ void print_joint_mapping( Move3D::Robot* robot );
 
 //! Print joint achors
 void print_joint_anchors( Move3D::Robot* robot );
-
-//! Matrix pseudo inverse
-Eigen::MatrixXd move3d_pinv( const Eigen::MatrixXd &b, double rcond );
 
 //! Start move3d and load manipulator
 bool move3d_start_and_load_manipulator();

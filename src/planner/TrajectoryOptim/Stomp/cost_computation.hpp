@@ -205,6 +205,7 @@ class costComputation {
   // Constraints -----------------------
   bool project_last_config_;
   double ratio_projected_;
+  double strength_;
   Eigen::VectorXd x_task_goal_;
   Move3D::Joint* eef_;
   // -----------------------------------

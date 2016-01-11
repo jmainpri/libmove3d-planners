@@ -446,6 +446,16 @@ void move3d_save_context_to_csv_file(
   s.close();
 }
 
+Eigen::VectorXd moved_get_vector( const std::vector<std::string>& config )
+{
+  Eigen::VectorXd tmp(config.size());
+
+  for (int i = 0; i < int(config.size()); i++)
+    convert_text_to_num<double>(tmp[i], config[i], std::dec);
+
+  return tmp;
+}
+
 // Derived from code by Yohann Solaro
 // (
 // http://listengine.tuxfamily.org/lists.tuxfamily.org/eigen/2010/01/msg00187.html

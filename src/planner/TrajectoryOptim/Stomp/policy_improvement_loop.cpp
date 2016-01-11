@@ -112,8 +112,7 @@ bool PolicyImprovementLoop::initialize(
   //        cout << "wait for key" << endl;
   //        std::cin.ignore();
 
-  ///--------------------------------------------------------------------------
-
+  //----------------------------------------------------------------------------
   // ADD A GOAL TO THE POLICY IMPROVEMENT LOOP
 
   project_last_config_ = PlanEnv->getBool(PlanParam::trajStompMoveEndConfig);
@@ -139,8 +138,7 @@ bool PolicyImprovementLoop::initialize(
     cout << "x_task_goal_ : " << x_task_goal_.transpose() << endl;
   }
 
-  ///--------------------------------------------------------------------------
-
+  //----------------------------------------------------------------------------
   // INITIALIZE POLICY IMPROVEMENT LOOP
   policy_improvement_.initialize(num_rollouts_,
                                  num_time_steps_,
@@ -181,7 +179,7 @@ bool PolicyImprovementLoop::initialize(
 }
 
 bool PolicyImprovementLoop::readParametersSingleRollout() {
-  num_rollouts_ = 10;
+  num_rollouts_ = PlanEnv->getInt(PlanParam::lamp_nb_samples);
   num_reused_rollouts_ = 5;
 
   noise_decay_.clear();
@@ -213,7 +211,7 @@ bool PolicyImprovementLoop::readParameters() {
   // sometimes good!
   // node_handle_.param("use_cumulative_costs", use_cumulative_costs_, true);
 
-  num_rollouts_ = 10;
+  num_rollouts_ = PlanEnv->getInt(PlanParam::lamp_nb_samples);;
   num_reused_rollouts_ = 5;
   // num_time_steps_ = 51;
 
@@ -253,8 +251,9 @@ bool PolicyImprovementLoop::writePolicy(const int iteration_number,
   return true;
 }
 
-//------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
 bool PolicyImprovementLoop::setParallelRolloutsEnd(int r) {
   mtx_set_end_.lock();
   parrallel_is_rollout_running_[r] = false;
@@ -346,8 +345,9 @@ void PolicyImprovementLoop::executeRollout(int r, int iteration_number) {
   }
 }
 
-//------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
 bool PolicyImprovementLoop::runSingleIteration(const int iteration_number) {
   assert(initialized_);
   policy_iteration_counter_++;
@@ -592,8 +592,8 @@ void PolicyImprovementLoop::addStraightLineRollout(
   extra_rollout_cost[0] = tmp_rollout_cost_;
 }
 
-//------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void PolicyImprovementLoop::resampleParameters() {
   shared_ptr<StompOptimizer> optimizer =
       static_pointer_cast<StompOptimizer>(task_);
@@ -685,8 +685,8 @@ continue;
   }
 }
 
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void PolicyImprovementLoop::parametersToVector(
     std::vector<Eigen::VectorXd>& rollout) {
   rollout.clear();
@@ -695,15 +695,14 @@ void PolicyImprovementLoop::parametersToVector(
   }
 }
 
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void PolicyImprovementLoop::testSampler() {
   policy_improvement_.testNoiseGenerators();
 }
 
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void PolicyImprovementLoop::getRollouts(
     std::vector<std::vector<confPtr_t> >& traj) {
   shared_ptr<StompOptimizer> optimizer =
@@ -758,7 +757,7 @@ void PolicyImprovementLoop::addSingleRolloutsToDraw(
     T.push_back(traj[i]);
   }
   // T.print();
-  T.setColor(color);
+  T.setColor(color%10);
   global_trajToDraw.push_back(T);
 }
 

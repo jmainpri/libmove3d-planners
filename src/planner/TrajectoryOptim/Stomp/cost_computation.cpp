@@ -207,6 +207,7 @@ costComputation::costComputation(
 
   if (project_last_config_ && (planning_group_ != NULL)) {
     ratio_projected_ = 1.0;  // 1.0 = all along the trajectory
+    strength_ = PlanEnv->getDouble(PlanParam::trajStompConstStrength);
 
     Move3D::Robot* robot = planning_group_->robot_;
     eef_ = robot->getJoint(
@@ -1005,31 +1006,39 @@ bool costComputation::projectToConstraints(ChompTrajectory& group_traj) const {
   // cout << "x_task_goal_.size() : " << x_task_goal_.size() << endl;
 
   bool solved = ik.solve(x_task_goal_);
-  Move3D::confPtr_t q_cur = robot_model_->getCurrentPos();
-  const std::vector<int> active_dofs = ik.getActiveDofs();
-  Eigen::VectorXd q_1 = q_end->getEigenVector(active_dofs);
-  Eigen::VectorXd q_2 = q_cur->getEigenVector(active_dofs);
-  Eigen::VectorXd dq = q_2 - q_1;
 
-  // Get dq through J+
-  // ik.magnitude_ = 1.0;
-  // Eigen::VectorXd dq = ik.single_step_joint_limits( x_task_goal_ );
+  if (solved) {
+    Move3D::confPtr_t q_cur = robot_model_->getCurrentPos();
+    const std::vector<int> active_dofs = ik.getActiveDofs();
+    Eigen::VectorXd q_1 = q_end->getEigenVector(active_dofs);
+    Eigen::VectorXd q_2 = q_cur->getEigenVector(active_dofs);
+    Eigen::VectorXd dq = q_2 - q_1;
 
-  // cout << "dq : " << dq.transpose() << endl;
+    // Get dq through J+
+    // ik.magnitude_ = 1.0;
+    // Eigen::VectorXd dq = ik.single_step_joint_limits( x_task_goal_ );
 
-  int start = double(1. - ratio_projected_) * num_vars_free_;
-  double alpha = 0.0;
-  double delta = 1.0 / double(num_vars_free_ - start);
+    // cout << "dq : " << dq.transpose() << endl;
 
-  for (int i = free_vars_start_; i <= free_vars_end_; i++) {
-    for (int joint = 0; joint < num_joints_; joint++) {
-      group_traj(i, joint) += alpha * dq[joint];
+    int start = double(1. - ratio_projected_) * num_vars_free_;
+    double alpha = 0.0;
+    double delta = 1.0 / double(num_vars_free_ - start);
+
+    for (int i = free_vars_start_ + start; i <= free_vars_end_; i++) {
+      for (int joint = 0; joint < num_joints_; joint++) {
+        group_traj(i, joint) += std::pow(alpha, strength_) * dq[joint];
+
+        //      cout << "std::pow(" << alpha
+        //           << ", strength_) : " << std::pow(alpha, strength_)
+        //           << " , " << i
+        //           << endl;
+      }
+
+      alpha += delta;
     }
-
-    alpha += delta;
   }
 
-  // cout << "solved : " << solved << endl;
+  // cout << "ik solved : " << solved << endl;
 
   return solved;
 }
@@ -1063,8 +1072,10 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters,
   //  cout << "Trajectory out of joint limits " << endl;
   //  }
 
+  bool ik_solved = false;
   if (project_last_config_ && succeded_joint_limits_) {
-    projectToConstraints(group_trajectory_);
+    ik_solved = projectToConstraints(group_trajectory_);
+    succeded_joint_limits_ = ik_solved;
   }
 
   // Fix joint limits
@@ -1079,7 +1090,7 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters,
   // succeded_joint_limits_ = true;
 
   // copy the group_trajectory_ parameters:
-  if (joint_limits || project_last_config_) {
+  if (joint_limits || ( project_last_config_ && ik_solved )) {
     // cout << "return with joint limits" << endl;
     // cout << "Change rollout" << endl;
     for (int d = 0; d < num_joints_; ++d) {

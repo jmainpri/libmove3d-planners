@@ -347,6 +347,8 @@ void initPlannerParameters() {
       std::make_pair(PlanParam::trajStompSmoothAcc, new doubleContainer(1.0)));
   myDoubleMap.insert(
       std::make_pair(PlanParam::trajStompSmoothJerk, new doubleContainer(0.0)));
+  myDoubleMap.insert(std::make_pair(PlanParam::trajStompConstStrength,
+                                    new doubleContainer(1.0)));
 
   myDoubleMap.insert(
       std::make_pair(PlanParam::trajDuration, new doubleContainer(5.0)));

@@ -17,13 +17,13 @@
  * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
  * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                                  
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001). 
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
  * Move3d: A generic platform for path planning. In in 4th Int. Symp.
  * on Assembly and Task Planning.
  *
- *                                               Jim Mainprice Tue 27 May 2014 
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 #ifndef RECORDMOTION_HPP
 #define RECORDMOTION_HPP
@@ -35,148 +35,160 @@
 #include "API/ConfigSpace/configuration.hpp"
 #include "API/Trajectory/trajectory.hpp"
 
-typedef std::vector< std::pair<double,Move3D::confPtr_t> > motion_t;
+typedef std::vector<std::pair<double, Move3D::confPtr_t> > motion_t;
 
-namespace HRICS
-{
+namespace HRICS {
 
 //! resamples the motion at
 //! 100 Hz to generate a trajectory with constant time
 //! stamps
-Move3D::Trajectory motion_to_traj( const motion_t& traj,
-                                   Move3D::Robot* robot, int max_index=-1 );
+Move3D::Trajectory motion_to_traj(const motion_t& traj,
+                                  Move3D::Robot* robot,
+                                  int max_index = -1);
 
-inline double motion_duration( const motion_t& traj )
-{
-    double time=0.0;
-    for( size_t i=1; i<traj.size(); i++ )
-        time += traj[i].first;
-    return time;
+inline double motion_duration(const motion_t& traj) {
+  double time = 0.0;
+  for (size_t i = 1; i < traj.size(); i++) time += traj[i].first;
+  return time;
 }
 
-inline motion_t traj_to_motion( Move3D::Trajectory& traj, double duration )
-{
-    motion_t motion;
-    double dt = duration / double(traj.getNbOfPaths());
+inline motion_t traj_to_motion(Move3D::Trajectory& traj, double duration) {
+  motion_t motion;
+  double dt = duration / double(traj.getNbOfPaths());
 
-    for( int i=0; i<traj.getNbOfViaPoints(); i++)
-        motion.push_back( std::make_pair( dt, traj[i] ) );
+  for (int i = 0; i < traj.getNbOfViaPoints(); i++)
+    motion.push_back(std::make_pair(dt, traj[i]));
 
-    return motion;
+  return motion;
 }
 
 class RecordMotion {
+ public:
+  RecordMotion();
+  RecordMotion(Move3D::Robot* robot);
+  ~RecordMotion();
 
-public:
-    RecordMotion();
-    RecordMotion( Move3D::Robot* robot );
-    ~RecordMotion();
+  void setRobot(const std::string& robotname);
+  void saveCurrentConfig();
+  void reset();
+  void saveCurrentToFile();
+  void saveToXml(const std::string& filename);
+  void saveToXml(const std::string& filename, const motion_t& motion);
 
-    void setRobot(const std::string& robotname);
-    void saveCurrentConfig();
-    void reset();
-    void saveCurrentToFile();
-    void saveToXml( const std::string& filename );
-    void saveToXml( const std::string& filename, const motion_t& motion );
+  motion_t loadFromXml(const std::string& filename);
+  void loadMotionFromMultipleFiles(const std::string& baseFilename,
+                                   int number_of_files);
+  bool loadRegressedFromCSV(const std::string& foldername);
+  void translateStoredMotions();
+  void invertTranslationStoredMotions();
+  motion_t invertTranslation(const motion_t& motion);
 
-    motion_t loadFromXml( const std::string &filename );
-    void loadMotionFromMultipleFiles( const std::string& baseFilename, int number_of_files );
-    bool loadRegressedFromCSV( const std::string& foldername );
-    void translateStoredMotions();
-    void invertTranslationStoredMotions();
-    motion_t invertTranslation( const motion_t& motion );
-    Move3D::confPtr_t getConfigOpenRave( const std::vector<std::string>& config ) const;
-    Move3D::confPtr_t getConfigTwelveDoF( const std::vector<std::string>& config ) const;
-    std::pair<double,Move3D::confPtr_t> getConfigBio( const std::vector<std::string>& config ) const;
-    motion_t loadFromCSV( const std::string& filename, bool quiet = false ) const;
-    void loadXMLFolder();
-    bool loadXMLFolder( const std::string& foldername  );
-    std::vector<std::string> listFolder( const std::string& foldername, std::string ext, bool quiet ) const;
+  Move3D::confPtr_t getConfigOpenRave(
+      const Eigen::VectorXd& config) const;
+  Move3D::confPtr_t getConfigTwelveDoF(
+      const Eigen::VectorXd& config) const;
+  std::pair<double, Move3D::confPtr_t> getConfigBio(
+      const Eigen::VectorXd& config) const;
 
-    void loadTrajectories( const std::string& foldername,
-                           bool quiet );
-    void loadCSVFolder( const std::string& foldername, bool quiet,
-                        std::string base_name );
-    void loadCSVFolder( const std::string& foldername, bool quiet = false,
-                        double threshold=0.0 );
+  motion_t loadFromCSV(const std::string& filename, bool quiet = false) const;
+  void loadXMLFolder();
+  bool loadXMLFolder(const std::string& foldername);
+  std::vector<std::string> listFolder(const std::string& foldername,
+                                      std::string ext,
+                                      bool quiet) const;
 
-    void storeMotion( const motion_t& motion, std::string name, bool new_motion = true);
-    void addToCurrentMotion( const motion_t& motion );
-    void saveToCSV( const std::string &filename, const motion_t& motion);
-    void saveStoredToCSV( const std::string &filename, bool break_into_files );
-    motion_t resample( const motion_t& motion, int nb_sample );
-    void resampleAll( int nb_sample );
-    motion_t getArmTorsoMotion( const motion_t& motion, Move3D::confPtr_t q );
+  void loadTrajectories(const std::string& foldername, bool quiet);
+  void loadCSVFolder(const std::string& foldername,
+                     bool quiet,
+                     std::string base_name);
+  void loadCSVFolder(const std::string& foldername,
+                     bool quiet = false,
+                     double threshold = 0.0);
 
-    void showStoredMotion();
-    void showCurrentMotion();
-    void showMotion( const motion_t& motion );
+  void storeMotion(const motion_t& motion,
+                   std::string name,
+                   bool new_motion = true);
+  void addToCurrentMotion(const motion_t& motion);
+  void saveToCSV(const std::string& filename, const motion_t& motion);
+  void saveStoredToCSV(const std::string& filename, bool break_into_files);
+  motion_t resample(const motion_t& motion, int nb_sample);
+  void resampleAll(int nb_sample);
+  motion_t getArmTorsoMotion(const motion_t& motion, Move3D::confPtr_t q);
 
-    bool setRobotToStoredMotionConfig(int motion_id, int config_id);
-    bool setRobotToConfiguration(int ith);
-    bool setShowMotion(int ith);
+  void showStoredMotion();
+  void showCurrentMotion();
+  void showMotion(const motion_t& motion);
 
-    void drawMotion( const motion_t& motion, int nb_frames );
-    void dawColorSkinedCylinder( const Eigen::Vector3d& p1, const Eigen::Vector3d& p2);
-    void drawHeraklesArms();
-    void draw();
+  bool setRobotToStoredMotionConfig(int motion_id, int config_id);
+  bool setRobotToConfiguration(int ith);
+  bool setShowMotion(int ith);
 
-    motion_t extractSubpart(int init, int end );
-    motion_t extractSubpart(int init, int end, const motion_t& motion);
+  void drawMotion(const motion_t& motion, int nb_frames);
+  void dawColorSkinedCylinder(const Eigen::Vector3d& p1,
+                              const Eigen::Vector3d& p2);
+  void drawHeraklesArms();
+  void draw();
 
-    const std::vector<motion_t>& getStoredMotions() const { return m_stored_motions; }
+  motion_t extractSubpart(int init, int end);
+  motion_t extractSubpart(int init, int end, const motion_t& motion);
 
-    std::string getStoredMotionName(size_t i) const
-    {
-        if( i < m_stored_motions_names.size() )
-            return m_stored_motions_names[i];
-        return "";
-    }
+  const std::vector<motion_t>& getStoredMotions() const {
+    return m_stored_motions;
+  }
 
+  std::string getStoredMotionName(size_t i) const {
+    if (i < m_stored_motions_names.size()) return m_stored_motions_names[i];
+    return "";
+  }
 
-    void incrementMotionId() { m_id_motion++; }
+  void incrementMotionId() { m_id_motion++; }
 
-    void clear()
-    {
-        m_stored_motions.clear();
-        m_stored_motions_names.clear();
-    }
+  void clear() {
+    m_stored_motions.clear();
+    m_stored_motions_names.clear();
+  }
 
-    void useOpenRAVEFormat( bool use_or_format ) { m_use_or_format = use_or_format; }
-    void useBioFormat( bool use_bio_format ) { m_use_bio_format = use_bio_format; }
+  void useOpenRAVEFormat(bool use_or_format) {
+    m_use_or_format = use_or_format;
+  }
+  void useBioFormat(bool use_bio_format) { m_use_bio_format = use_bio_format; }
 
-    void setOffsetValue( double x, double y, double z, double rot ) { m_transX = x; m_transY = y; m_transY = z; m_transR = rot; }
-    Eigen::Transform3d getOffsetTransform();
+  void setOffsetValue(double x, double y, double z, double rot) {
+    m_transX = x;
+    m_transY = y;
+    m_transY = z;
+    m_transR = rot;
+  }
+  Eigen::Transform3d getOffsetTransform();
 
-    bool m_is_recording;
+  bool m_is_recording;
 
-private:
+ private:
+  void intialize();
 
-    void intialize();
+  Move3D::Robot* m_robot;
+  Move3D::confPtr_t m_init_q;
+  double m_time_last_saved;
+  double m_time_to_record;
+  double m_time_last_record;
+  int m_id_file;
+  int m_id_motion;
+  motion_t m_motion;
+  std::vector<motion_t> m_stored_motions;
+  std::vector<std::string> m_stored_motions_names;
+  int m_ith_shown_motion;
+  bool m_use_or_format;
+  bool m_use_bio_format;
 
-    Move3D::Robot* m_robot;
-    Move3D::confPtr_t m_init_q;
-    double m_time_last_saved;
-    double m_time_to_record;
-    double m_time_last_record;
-    int m_id_file;
-    int m_id_motion;
-    motion_t m_motion;
-    std::vector<motion_t> m_stored_motions;
-    std::vector<std::string> m_stored_motions_names;
-    int m_ith_shown_motion;
-    bool m_use_or_format;
-    bool m_use_bio_format;
-
-    // offset
-    double m_transX;
-    double m_transY;
-    double m_transZ;
-    double m_transR;
+  // offset
+  double m_transX;
+  double m_transY;
+  double m_transZ;
+  double m_transR;
 };
 }
 
 extern std::vector<HRICS::RecordMotion*> global_motionRecorders;
 extern void show_recorded_human_motions();
 
-#endif // RECORDMOTION_HPP
+#endif  // RECORDMOTION_HPP

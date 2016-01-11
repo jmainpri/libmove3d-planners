@@ -125,6 +125,7 @@ class Natural {
   //! get the grid
   NaturalGrid* getGrid() { return m_Grid; }
 
+
  private:
   /**
     * Get the 3 component of natural
@@ -142,6 +143,9 @@ class Natural {
   std::vector<double> getUpperBodyHeigth(bool useReference = true);
   double getCustomDistConfig(Move3D::Configuration& q, Eigen::VectorXd& f);
   double getJointLimits(Move3D::Configuration& q);
+
+  //! Set thre model joint limits
+  void setBiomechJointLimitsFromFile(std::string filename);
 
   /**
     * Simple number of IK Cost
@@ -230,6 +234,10 @@ class Natural {
 
   Move3D::confPtr_t m_q_Init;
   Move3D::confPtr_t m_q_Goal;
+
+  // Joint limits
+  Move3D::confPtr_t m_q_limits_max;
+  Move3D::confPtr_t m_q_limits_min;
 
   /**
     * Sorted Cells

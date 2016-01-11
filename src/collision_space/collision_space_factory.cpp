@@ -89,36 +89,6 @@ std::vector<int> traj_optim_get_active_joints() { return m_active_joints; }
 
 std::vector<int> traj_optim_get_planner_joints() { return m_planner_joints; }
 
-//! initializes the collision points
-// --------------------------------------------------------
-bool traj_optim_init_collision_points() {
-  // Generate Bounding volumes for active joints
-  BodySurfaceSampler* sampler = m_collspace->getBodySampler();
-
-  // Get all joints active in the motion planning
-  // and compute bounding cylinders
-  std::vector<Joint*> joints;
-  joints.clear();
-
-  for (unsigned int i = 0; i < m_active_joints.size(); i++) {
-    joints.push_back(m_robot->getJoint(m_active_joints[i]));
-  }
-  /*double maxRadius =*/sampler->generateRobotBoudingCylinder(m_robot, joints);
-
-  // Get all planner joint and compute collision points
-  std::vector<int> planner_joints_id;
-  for (unsigned int i = 0; i < m_planner_joints.size(); i++) {
-    planner_joints_id.push_back(m_planner_joints[i]);
-  }
-  m_collision_points = sampler->generateRobotCollisionPoints(
-      m_robot, m_active_joints, planner_joints_id, m_id_of_first_active_joint);
-
-  cout << "nb of collision point are " << m_collision_points.size() << endl;
-
-  // Set the collision space as global (drawing)
-  global_collisionSpace = m_collspace;
-  return true;
-}
 
 //! initializes the collision space
 // --------------------------------------------------------
@@ -192,6 +162,37 @@ void traj_optim_init_collision_space() {
   //    ChronoTimeOfDayTimes(&time);
   //    ChronoTimeOfDayOff();
   //    cout << " collision space computed in : " << time << endl;
+}
+
+//! initializes the collision points
+// --------------------------------------------------------
+bool traj_optim_init_collision_points() {
+  // Generate Bounding volumes for active joints
+  BodySurfaceSampler* sampler = m_collspace->getBodySampler();
+
+  // Get all joints active in the motion planning
+  // and compute bounding cylinders
+  std::vector<Joint*> joints;
+  joints.clear();
+
+  for (unsigned int i = 0; i < m_active_joints.size(); i++) {
+    joints.push_back(m_robot->getJoint(m_active_joints[i]));
+  }
+  /*double maxRadius =*/sampler->generateRobotBoudingCylinder(m_robot, joints);
+
+  // Get all planner joint and compute collision points
+  std::vector<int> planner_joints_id;
+  for (unsigned int i = 0; i < m_planner_joints.size(); i++) {
+    planner_joints_id.push_back(m_planner_joints[i]);
+  }
+  m_collision_points = sampler->generateRobotCollisionPoints(
+      m_robot, m_active_joints, planner_joints_id, m_id_of_first_active_joint);
+
+  cout << "nb of collision point are " << m_collision_points.size() << endl;
+
+  // Set the collision space as global (drawing)
+  global_collisionSpace = m_collspace;
+  return true;
 }
 
 //****************************************************************
@@ -521,20 +522,20 @@ void traj_optim_hrics_human_trajectory_manip_init_joints() {
       p3d_jnt_set_dof_rand_bounds(
           m_robot->getJoint("rShoulderTransX")->getP3dJointStruct(),
           0,
-          .016,
-          .020);
+          .03,
+          .06);
       p3d_jnt_set_dof_rand_bounds(
           m_robot->getJoint("rShoulderTransY")->getP3dJointStruct(),
           0,
-          .32,
-          .34);
+          .18,
+          .22);
       p3d_jnt_set_dof_rand_bounds(
           m_robot->getJoint("rShoulderTransZ")->getP3dJointStruct(),
           0,
-          .24,
-          .26);
+          .12,
+          .16);
       p3d_jnt_set_dof_rand_bounds(
-          m_robot->getJoint("rArmTrans")->getP3dJointStruct(), 0, .38, .40);
+          m_robot->getJoint("rArmTrans")->getP3dJointStruct(), 0, .37, .41);
       p3d_jnt_set_dof_rand_bounds(
           m_robot->getJoint("rForeArmTrans")->getP3dJointStruct(), 0, .23, .26);
     } else {
@@ -548,37 +549,36 @@ void traj_optim_hrics_human_trajectory_manip_init_joints() {
       m_active_joints.push_back(m_robot->getJoint("TorsoZ")->getId());
       m_active_joints.push_back(m_robot->getJoint("TorsoY")->getId());
     }
-    m_active_joints.push_back(m_robot->getJoint("rShoulderTransX")->getId());
-    m_active_joints.push_back(m_robot->getJoint("rShoulderTransY")->getId());
-    m_active_joints.push_back(m_robot->getJoint("rShoulderTransZ")->getId());
+    //    m_active_joints.push_back(m_robot->getJoint("rShoulderTransX")->getId());
+    //    m_active_joints.push_back(m_robot->getJoint("rShoulderTransY")->getId());
+    //    m_active_joints.push_back(m_robot->getJoint("rShoulderTransZ")->getId());
     m_active_joints.push_back(m_robot->getJoint("rShoulderY1")->getId());
     m_active_joints.push_back(m_robot->getJoint("rShoulderX")->getId());
     m_active_joints.push_back(m_robot->getJoint("rShoulderY2")->getId());
-    m_active_joints.push_back(m_robot->getJoint("rArmTrans")->getId());
+    //    m_active_joints.push_back(m_robot->getJoint("rArmTrans")->getId());
     m_active_joints.push_back(m_robot->getJoint("rElbowZ")->getId());
     m_active_joints.push_back(m_robot->getJoint("rElbowX")->getId());
     m_active_joints.push_back(m_robot->getJoint("rElbowY")->getId());
-    m_active_joints.push_back(m_robot->getJoint("rForeArmTrans")->getId());
-    //        m_active_joints.push_back( m_robot->getJoint( "rWristZ" )->getId()
-    //        );
-    //        m_active_joints.push_back( m_robot->getJoint( "rWristX" )->getId()
-    //        );
+    //    m_active_joints.push_back(m_robot->getJoint("rForeArmTrans")->getId());
+    m_active_joints.push_back(m_robot->getJoint("rWristZ")->getId());
+    m_active_joints.push_back(m_robot->getJoint("rWristX")->getId());
     m_active_joints.push_back(m_robot->getJoint("rWristY")->getId());
 
     m_planner_joints.push_back(m_robot->getJoint("TorsoX")->getId());
     m_planner_joints.push_back(m_robot->getJoint("TorsoZ")->getId());
     m_planner_joints.push_back(m_robot->getJoint("TorsoY")->getId());
-    m_planner_joints.push_back(m_robot->getJoint("rShoulderTransX")->getId());
-    m_planner_joints.push_back(m_robot->getJoint("rShoulderTransY")->getId());
-    m_planner_joints.push_back(m_robot->getJoint("rShoulderTransZ")->getId());
+
+    //    m_planner_joints.push_back(m_robot->getJoint("rShoulderTransX")->getId());
+    //    m_planner_joints.push_back(m_robot->getJoint("rShoulderTransY")->getId());
+    //    m_planner_joints.push_back(m_robot->getJoint("rShoulderTransZ")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rShoulderY1")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rShoulderX")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rShoulderY2")->getId());
-    m_planner_joints.push_back(m_robot->getJoint("rArmTrans")->getId());
+    //    m_planner_joints.push_back(m_robot->getJoint("rArmTrans")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rElbowZ")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rElbowX")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rElbowY")->getId());
-    m_planner_joints.push_back(m_robot->getJoint("rForeArmTrans")->getId());
+    //    m_planner_joints.push_back(m_robot->getJoint("rForeArmTrans")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rWristZ")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rWristX")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rWristY")->getId());

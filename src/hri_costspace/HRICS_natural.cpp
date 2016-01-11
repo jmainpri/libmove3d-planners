@@ -10,9 +10,11 @@
 #include "HRICS_natural.hpp"
 #include "API/Grids/gridsAPI.hpp"
 #include "planner/cost_space.hpp"
+#include "utils/misc_functions.hpp"
+#include "gestures/HRICS_record_motion.hpp"
 
-#include "P3d-pkg.h"
-#include "Planner-pkg.h"
+#include <libmove3d/include/P3d-pkg.h>
+#include <libmove3d/include/Planner-pkg.h>
 
 #include <boost/bind.hpp>
 
@@ -138,7 +140,7 @@ void Natural::initGeneral() {
     m_KinType = Achile;
   } else if (m_Robot->getName().find("HERAKLES") != string::npos) {
     m_KinType = Biomech;
-//    m_KinType = Herakles;
+    //    m_KinType = Herakles;
   } else if (m_Robot->getName().find("OLDDUDE") != string::npos) {
     m_KinType = OldDude;
   } else if (m_Robot->getName().find("OLDDUDE") != string::npos) {
@@ -223,7 +225,6 @@ void Natural::initGeneral() {
 
   m_Grid = NULL;
   cout << "Object Dof is " << m_IndexObjectDof << endl;
-
 }
 
 void Natural::initConfigIndices() {
@@ -523,19 +524,37 @@ void Natural::initNaturalBiomech() {
   m_JOINT_ARM_LEFT_ELBOW = BIOMECH_JOINT_ARM_LEFT_ELBOW;
   m_JOINT_ARM_LEFT_WRIST = BIOMECH_JOINT_ARM_LEFT_WRIST;
 
+  setBiomechJointLimitsFromFile("");
+
   initConfigIndices();
 
   Configuration q(*m_Robot->getNewConfig());
 
+  //  Joint(8), Dof : 18, rShoulderTransX , (min = 0.0340089, max = 0.146555)
+  //  Joint(9), Dof : 19, rShoulderTransY , (min = 0.0857289, max = 0.257622)
+  //  Joint(10), Dof : 20, rShoulderTransZ , (min = -0.0822057, max = 0.182777)
+  //  Joint(11), Dof : 21, rShoulderY1 , (min = -1.94149, max = 2.80703)
+  //  Joint(12), Dof : 22, rShoulderX , (min = -1.75369, max = -0.00176006)
+  //  Joint(13), Dof : 23, rShoulderY2 , (min = -2.09138, max = 2.65664)
+  //  Joint(14), Dof : 24, rArmTrans , (min = 0.278929, max = 0.462408)
+  //  Joint(15), Dof : 25, rElbowZ , (min = 0.28148, max = 2.01673)
+  //  Joint(16), Dof : 26, rElbowX , (min = -0.608768, max = 0.32509)
+  //  Joint(17), Dof : 27, rElbowY , (min = -3.14125, max = 3.14119)
+  //  Joint(18), Dof : 28, rForeArmTrans , (min = 0.177062, max = 0.315494)
+  //  Joint(19), Dof : 29, rWristZ , (min = -2.4236, max = 2.96851)
+  //  Joint(20), Dof : 30, rWristX , (min = -1.38323, max = 1.49798)
+  //  Joint(21), Dof : 31, rWristY , (min = -2.87235, max = 2.82653)
+  //  Joint(22), Dof : 32, lShoulderX , (min = -1.5708, max = -1.5708)
+
   // Neutral Position NORMAL
-  q[18] = 0.018;
-  q[19] = 0.326;
-  q[20] = 0.255;
-  q[21] = 0.311646;
-  q[22] = -0.133832;
-  q[23] = 1.22522;
+  q[18] = 0.05;
+  q[19] = 0.20;
+  q[20] = 0.15;
+  q[21] = -.593;
+  q[22] = -.24;
+  q[23] = 1.65;
   q[24] = 0.396;
-  q[25] = 0.0666018;
+  q[25] = 0.30;
   q[26] = -0.267664;
   q[27] = -0.245044;
   q[28] = 0.246;
@@ -544,11 +563,11 @@ void Natural::initNaturalBiomech() {
   q[31] = 0.111212;
   q[32] = -1.38796;
 
-  q[m_Robot->getJoint("rShoulderTransX")->getIndexOfFirstDof()] = .018;
-  q[m_Robot->getJoint("rShoulderTransY")->getIndexOfFirstDof()] = .33;
-  q[m_Robot->getJoint("rShoulderTransZ")->getIndexOfFirstDof()] = .25;
-  q[m_Robot->getJoint("rArmTrans")->getIndexOfFirstDof()] = .39;
-  q[m_Robot->getJoint("lPoint")->getIndexOfFirstDof()] = .24;
+//  q[m_Robot->getJoint("rShoulderTransX")->getIndexOfFirstDof()] = .018;
+//  q[m_Robot->getJoint("rShoulderTransY")->getIndexOfFirstDof()] = .33;
+//  q[m_Robot->getJoint("rShoulderTransZ")->getIndexOfFirstDof()] = .25;
+//  q[m_Robot->getJoint("rArmTrans")->getIndexOfFirstDof()] = .39;
+//  q[m_Robot->getJoint("lPoint")->getIndexOfFirstDof()] = .24;
 
   //    p3d_jnt_set_dof_rand_bounds( robot->getJoint( "rShoulderTransX"
   //    )->getP3dJointStruct(), 0, .016, .020 );
@@ -562,6 +581,7 @@ void Natural::initNaturalBiomech() {
   //    )->getP3dJointStruct(), 0, .23, .25 );
 
   m_q_Confort = q.copy();
+  // m_Robot->setInitPos(*m_q_Confort); // TODO remove q_init only for saving
   m_Robot->setAndUpdate(*m_q_Confort);
 
   // Compute the rest posture heights
@@ -578,9 +598,9 @@ void Natural::initNaturalBiomech() {
     q[i] = 0;
   }
 
-  q[m_CONFIG_INDEX_SPINE + 0] = 100;  // Torso
-  q[m_CONFIG_INDEX_SPINE + 1] = 50;
-  q[m_CONFIG_INDEX_SPINE + 2] = 50;
+  q[m_CONFIG_INDEX_SPINE + 0] = 10;  // Torso
+  q[m_CONFIG_INDEX_SPINE + 1] = 5;
+  q[m_CONFIG_INDEX_SPINE + 2] = 5;
 
   q[m_CONFIG_INDEX_HEAD + 0] = 0;  // Head
   q[m_CONFIG_INDEX_HEAD + 1] = 0;
@@ -594,9 +614,9 @@ void Natural::initNaturalBiomech() {
   q[m_CONFIG_INDEX_ARM_RIGTH_ELBOW + 1] = 1;
   q[m_CONFIG_INDEX_ARM_RIGTH_ELBOW + 2] = 1;
 
-  q[m_CONFIG_INDEX_ARM_RIGTH_WRIST + 0] = 1;  // Right Wrist
-  q[m_CONFIG_INDEX_ARM_RIGTH_WRIST + 1] = 1;
-  q[m_CONFIG_INDEX_ARM_RIGTH_WRIST + 2] = 1;
+  q[m_CONFIG_INDEX_ARM_RIGTH_WRIST + 0] = 20;  // Right Wrist
+  q[m_CONFIG_INDEX_ARM_RIGTH_WRIST + 1] = 20;
+  q[m_CONFIG_INDEX_ARM_RIGTH_WRIST + 2] = 20;
 
   q[m_CONFIG_INDEX_ARM_LEFT_SHOULDER + 0] = 1;  // Left Shoulder
   q[m_CONFIG_INDEX_ARM_LEFT_SHOULDER + 1] = 1;
@@ -691,6 +711,75 @@ void Natural::initNaturalOldDude() {
   m_mg.push_back(30);
   m_mg.push_back(4);
   m_mg.push_back(1);
+}
+
+void Natural::setBiomechJointLimitsFromFile(std::string filename) {
+  std::ostringstream ss;
+  ss << "/usr/local/jim_local/Dropbox/move3d/catkin_ws_move3d/src/"
+     << "hrics-or-rafi/"
+     << "python_module/bioik/user_experiment_data/selection/";
+
+  Eigen::VectorXd max_v =
+      move3d_load_matrix_from_csv_file(ss.str() + "max_dof.csv");
+  Eigen::VectorXd min_v =
+      move3d_load_matrix_from_csv_file(ss.str() + "min_dof.csv");
+
+  cout << "max_v size : " << max_v.size() << endl;
+  cout << "min_v size : " << min_v.size() << endl;
+
+  HRICS::RecordMotion motion_recorder(m_Robot);
+  motion_recorder.useBioFormat(true);
+
+  std::pair<double, confPtr_t> q_max = motion_recorder.getConfigBio(max_v);
+  std::pair<double, confPtr_t> q_min = motion_recorder.getConfigBio(min_v);
+
+  for (size_t i = 0; i < m_Robot->getNumberOfJoints(); i++) {
+    for (size_t j = 0; j < m_Robot->getJoint(i)->getNumberOfDof(); j++) {
+      Joint* move3d_joint = m_Robot->getJoint(i);
+
+      double min, max;
+      move3d_joint->getDofRandBounds(j, min, max);
+
+      int dof_index = move3d_joint->getIndexOfFirstDof() + j;
+
+      const bool print_group = true;
+      if (print_group) {
+        cout << "Joint(" << i << "), Dof : " << dof_index << ", "
+             << move3d_joint->getName() << " , ";
+        cout << "(min = " << min << ", max = " << max << ") , ";
+        cout << "Is dof angular :  " << move3d_joint->isJointDofAngular(j);
+        cout << " , limits :  " << (*q_max.second)[dof_index];
+        cout << " , " << (*q_min.second)[dof_index] << endl;
+      }
+
+//      if( move3d_joint->getName() == "rShoulderTransX" )
+//        continue;
+//      if( move3d_joint->getName() == "rShoulderTransY" )
+//        continue;
+//      if( move3d_joint->getName() == "rShoulderTransZ" )
+//        continue;
+
+//      if( move3d_joint->getName() == "rElbowZ" )
+//        continue;
+//      if( move3d_joint->getName() == "rElbowX" )
+//        continue;
+//      if( move3d_joint->getName() == "rElbowY" )
+//        continue;
+
+      p3d_jnt_set_dof_rand_bounds(move3d_joint->getP3dJointStruct(),
+                                  j,
+                                  (*q_min.second)[dof_index],
+                                  (*q_max.second)[dof_index]);
+
+      p3d_jnt_set_dof_bounds(move3d_joint->getP3dJointStruct(),
+                             j,
+                             (*q_min.second)[dof_index],
+                             (*q_max.second)[dof_index]);
+    }
+  }
+
+  m_q_limits_max = q_max.second;
+  m_q_limits_min = q_max.second;
 }
 
 void Natural::initHumanBaseGrid(vector<double> box) {

@@ -17,13 +17,13 @@
  * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
  * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                                  
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001). 
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
  * Move3d: A generic platform for path planning. In in 4th Int. Symp.
  * on Assembly and Task Planning.
  *
- *                                               Jim Mainprice Tue 27 May 2014 
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 #ifndef COLLISIONSPACE_FACTORY_HPP
 #define COLLISIONSPACE_FACTORY_HPP
@@ -33,25 +33,24 @@
 #include "collision_point.hpp"
 #include "collision_space.hpp"
 
-namespace traj_optim
-{
+namespace traj_optim {
 
 enum ScenarioType {
-    Default,
-    CostMap,
-    Simple,
-    Shelf,
-    Navigation,
-    HumanAwareNav,
-    HumanAwareManip,
-    HumanAwareMobileManip,
-    HumanSimulation,
-    LegiblePlane
+  Default,
+  CostMap,
+  Simple,
+  Shelf,
+  Navigation,
+  HumanAwareNav,
+  HumanAwareManip,
+  HumanAwareMobileManip,
+  HumanSimulation,
+  LegiblePlane
 };
-
 }
 
-bool traj_optim_init_collision_spaces( traj_optim::ScenarioType sce, Move3D::Robot* rob );
+bool traj_optim_init_collision_spaces(traj_optim::ScenarioType sce,
+                                      Move3D::Robot* rob);
 void traj_optim_reset_collision_space();
 void traj_optim_add_human_to_collision_space(bool add);
 
@@ -61,4 +60,4 @@ std::vector<Move3D::CollisionPoint> traj_optim_get_collision_points();
 std::vector<int> traj_optim_get_active_joints();
 std::vector<int> traj_optim_get_planner_joints();
 
-#endif // COLLISIONSPACE_FACTORY_HPP
+#endif  // COLLISIONSPACE_FACTORY_HPP

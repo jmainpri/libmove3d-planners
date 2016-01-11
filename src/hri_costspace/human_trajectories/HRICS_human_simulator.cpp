@@ -206,10 +206,10 @@ bool HRICS_init_human_trajectory_cost()
                     std::string type = training ? "trainning" : "testing";
 
                     std::string home =
-                            std::string( getenv("HOME" ) ) +
-                            std::string("/");
+                            std::string( getenv("HOME_MOVE3D" ) ) +
+                            std::string("/../");
 
-                    foldername = home + "catkin/catkin_ws_move3d/" +
+                    foldername = home + "catkin_ws_move3d/" +
                             "src/hrics-or-rafi/python_module/bioik/" +
                             "user_experiment_data/selection/" + type + "/";
 

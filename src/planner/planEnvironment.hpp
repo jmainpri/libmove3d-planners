@@ -220,6 +220,7 @@ enum doubleParameter
     trajOptimObstacFactor,
     trajReplanningWindow,
     trajReplanningTotalTime,
+    trajStompConstStrength,
 
     // Sample Graph
     samplegraphVarianceA,
