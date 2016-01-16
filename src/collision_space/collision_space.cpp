@@ -328,6 +328,17 @@ double CollisionSpace::addPointsToField(
     bucket_queue[0].push_back(voxel);
   }
 
+  for (unsigned int i = 0; i < _cells.size(); i++) {
+    CollisionSpaceCell* voxel = dynamic_cast<CollisionSpaceCell*>(_cells[i]);
+    Eigen::Vector3d center = voxel->getCenter();
+    if (m_sampler->isPointInsidePrimitves(center)) {
+      voxel->setOccupied(true);
+      voxel->m_DistanceSquare = 0;
+      voxel->m_ClosestPoint = getCellCoord(voxel);
+      voxel->m_UpdateDirection = initial_update_direction;
+    }
+  }
+
   // now process the queue:
   cout << "process the Queue : " << bucket_queue.size() << endl;
   for (unsigned int i = 0; i < bucket_queue.size(); ++i) {

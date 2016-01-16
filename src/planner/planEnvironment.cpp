@@ -315,6 +315,8 @@ void initPlannerParameters() {
   // Nb samples
   myIntMap.insert(
       std::make_pair(PlanParam::lamp_nb_samples, new intContainer(10)));
+  myIntMap.insert(
+      std::make_pair(PlanParam::lamp_nb_reused_samples, new intContainer(5)));
 
   // ------------------------------------------------------------------
   // Double
@@ -360,6 +362,8 @@ void initPlannerParameters() {
                                     new doubleContainer(0.1)));
   myDoubleMap.insert(std::make_pair(PlanParam::trajOptimGlobalWeight,
                                     new doubleContainer(1.0)));
+  myDoubleMap.insert(
+      std::make_pair(PlanParam::trajOptimTermWeight, new doubleContainer(0.0)));
   myDoubleMap.insert(std::make_pair(PlanParam::trajOptimSmoothFactor,
                                     new doubleContainer(1.0)));
   myDoubleMap.insert(std::make_pair(PlanParam::trajOptimObstacFactor,

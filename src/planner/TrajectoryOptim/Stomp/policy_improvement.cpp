@@ -85,6 +85,8 @@ double Rollout::getCost() {
   } else {
     int num_dim = control_costs_.size();
     for (int d = 0; d < num_dim; ++d) cost += control_costs_[d].sum();
+
+    // cout << "control_costs_[d].sum() : " << control_costs_[0].sum() << endl;
   }
 
   return cost;
@@ -173,6 +175,13 @@ bool PolicyImprovement::initialize(const int num_rollouts,
   preAllocateTempVariables();
   preComputeProjectionMatrices();
 
+  // Always use the std dev initial tunning
+  // at the first iteration
+  use_new_std_dev_ = false;
+  stdev_intieria_ = 0.2;
+  stdev_scaling_ = Eigen::VectorXd::Ones(parameters_.size());
+  stdev_min_ = 0.001 * Eigen::VectorXd::Ones(parameters_.size());
+
   //        project_last_config_ = true;
 
   //        if( project_last_config_ && ( planning_group_ != NULL ) )
@@ -221,11 +230,12 @@ bool PolicyImprovement::preAllocateMultivariateGaussianSampler() {
     //            move3d_save_matrix_to_file( inv_control_costs_[d],
     //            "../matlab/invcost_matrix.txt" );
 
-    if (!PlanEnv->getBool(PlanParam::trajStompMatrixAdaptation)) {
+    if (true || !PlanEnv->getBool(PlanParam::trajStompMatrixAdaptation)) {
       // cout << "inv_control_costs_[" << d << "] : " << inv_control_costs_[d]
       // << endl;
-      // move3d_save_matrix_to_file( inv_control_costs_[d], "inv_control_costs_"
-      // + num_to_string<int>(d) );
+      move3d_save_matrix_to_csv_file(
+          inv_control_costs_[d],
+          "inv_control_costs_" + num_to_string<int>(d) + ".txt");
       MultivariateGaussian mvg(VectorXd::Zero(num_parameters_[d]),
                                inv_control_costs_[d]);
       noise_generators_.push_back(mvg);
@@ -332,13 +342,14 @@ bool PolicyImprovement::preAllocateTempVariables() {
 
 //! Precomputes the projection matrices M
 //! using the inverse of the control cost matrix
-//! Each column of the
+//! Each column of the matrix is scaled
 bool PolicyImprovement::preComputeProjectionMatrices() {
   //  ROS_INFO("Precomputing projection matrices..");
   projection_matrix_.resize(num_dimensions_);
   for (int d = 0; d < num_dimensions_; ++d) {
     projection_matrix_[d] = inv_control_costs_[d];
 
+    // continue;
     // cout << "Inv control Matrix = " << endl << inv_control_costs_[d] << endl;
 
     for (int p = 0; p < num_parameters_[d]; ++p) {
@@ -679,10 +690,31 @@ bool PolicyImprovement::setRollouts(
 
 bool PolicyImprovement::getRollouts(
     std::vector<std::vector<Eigen::VectorXd> >& generated_rollouts,
-    const std::vector<double>& noise_variance,
+    const std::vector<double>& noise_std,
     bool get_reused,
     std::vector<std::vector<Eigen::VectorXd> >& reused_rollouts) {
-  if (!generateRollouts(noise_variance)) {
+  // The standard deviation is \sigma^2 * R^-1
+  // See Mrinal's thesis TODO see if we just multiply the samples by sigma
+  // or sigma square
+  std::vector<double> stdev = noise_std;
+  if (use_new_std_dev_) {
+    for (int d = 0; d < stdev.size(); d++) {
+      stdev[d] = stdev_[d];
+      // cout << "stdev[" <<d << "] : " << stdev[d] << endl;
+    }
+  } else {
+    // for (int d = 0; d < stdev.size(); d++) {
+    //   cout << "stdev[" <<d << "] : " << stdev[d] << endl;
+    // }
+    stdev_.resize(stdev.size());
+    stdev_min_.resize(stdev.size());
+    for (int d = 0; d < stdev.size(); d++) {
+      stdev_[d] = stdev[d];
+      // stdev_min_[d] = stdev[d] / (stdev_scaling_[d] * 10);
+    }
+  }
+
+  if (!generateRollouts(stdev)) {
     cout << "Failed to generate rollouts." << endl;
     return false;
   }
@@ -916,9 +948,12 @@ bool PolicyImprovement::computeParameterUpdates() {
     // cout << "parameter_updates_[" << d << "].row(0).transpose() = " << endl
     // << parameter_updates_[d].row(0).transpose() << endl;
     // This is the multiplication by M
+    // const double eta = 0.000002;
+    const double eta = 1.;
     if (use_multiplication_by_m_) {
       parameter_updates_[d].row(0).transpose() =
-          projection_matrix_[d] * parameter_updates_[d].row(0).transpose();
+          eta * projection_matrix_[d] *
+          parameter_updates_[d].row(0).transpose();
     }
   }
 
@@ -937,6 +972,10 @@ bool PolicyImprovement::improvePolicy(
   computeParameterUpdates();
 
   parameter_updates = parameter_updates_;
+
+  if (PlanEnv->getBool(PlanParam::trajStompMatrixAdaptation)) {
+    covarianceMatrixAdaptaion();
+  }
 
   // for (int d=0; d<num_dimensions_; d++)
   // {
@@ -972,24 +1011,66 @@ void PolicyImprovement::addParmametersToDraw(
 }
 
 bool PolicyImprovement::covarianceMatrixAdaptaion() {
+  // find min and max cost over all rollouts:
+  double max_cost = rollout_costs_total_.maxCoeff();
+  double min_cost = rollout_costs_total_.minCoeff();
+  double denom = max_cost - min_cost;
+
+  // prevent divide by zero
+  if (denom < 1e-8) denom = 1e-8;
+
+  // Compute the
+  Eigen::VectorXd rollout_probabilities(num_rollouts_);
+
+  for (int r = 0; r < num_rollouts_; ++r) {
+    // the -10.0 here is taken from the paper
+    rollout_probabilities[r] =
+        exp(-10.0 * (rollout_costs_total_[r] - min_cost) / denom);
+  }
+  rollout_probabilities /= rollout_probabilities.sum();
+
+  // TODO here Switch if only one sigma is needed
   std::vector<MatrixXd> covariance(num_dimensions_);
 
-  for (int d = 0; d < num_dimensions_; ++d) {
+  int num_vars = rollouts_[0].noise_[0].size();
+
+  for (uint d = 0; d < covariance.size(); ++d) {
+    covariance[d] = MatrixXd::Zero(num_vars, num_vars);
     for (int r = 0; r < num_rollouts_; ++r) {
       covariance[d] +=
-          rollouts_[r].probabilities_[d] *
+          rollout_probabilities[r] *
+          (1 / (stdev_scaling_[d] * stdev_scaling_[d])) *
           (rollouts_[r].noise_[d] * rollouts_[r].noise_[d].transpose());
     }
   }
 
-  MatrixXd new_covariance = MatrixXd(num_time_steps_, num_time_steps_);
-
-  noise_generators_.clear();
-  for (int d = 0; d < num_dimensions_; ++d) {
-    MultivariateGaussian mvg(VectorXd::Zero(num_parameters_[d]),
-                             new_covariance);
-    noise_generators_.push_back(mvg);
+  double numer_1 = 0.;
+  double denom_1 = 0.;
+  for (uint d = 0; d < covariance.size(); ++d) {
+    for (int i = 0; i < num_vars; i++) {
+      for (int j = 0; j < num_vars; j++) {
+        numer_1 += covariance[d](i, j) * inv_control_costs_[d](i, j);
+        denom_1 += inv_control_costs_[d](i, j) * inv_control_costs_[d](i, j);
+      }
+    }
   }
+
+  double stdev = 0.;
+  stdev = std::sqrt(numer_1 / denom_1);
+
+  // cout << "stdev : " << stdev << endl;
+
+  for (int d = 0; d < stdev_.size(); ++d) {
+    double stdev_prev = stdev_[d] / stdev_scaling_[d];
+    stdev_[d] =
+        stdev_scaling_[d] *
+        std::max(stdev_intieria_ * stdev + (1. - stdev_intieria_) * stdev_prev,
+                 stdev_min_[d]);
+  }
+
+  use_new_std_dev_ = true;
+  // cout << "-- sigmas : " << stdev_.transpose() << endl;
+
   return true;
 }
 

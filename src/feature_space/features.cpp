@@ -568,9 +568,10 @@ void StackedFeatures::setActiveFeatures( const std::vector<std::string>& active_
 
     for( size_t i=0; i<feature_stack_.size(); i++ )
     {
-        if( std::find( active_features_names.begin(), active_features_names.end(), feature_stack_[i]->getName() )
-            != active_features_names.end()  )
-        {
+      if (std::find(active_features_names.begin(),
+                    active_features_names.end(),
+                    feature_stack_[i]->getName()) !=
+          active_features_names.end()) {
             features_ids.push_back( i );
 //            cout << "set active feature id : " << i << endl;
         }

@@ -19,27 +19,22 @@
 bool Env_stopUser();
 
 #ifdef QT_LIBRARY
-class PlanParam : public QObject
-{
+class PlanParam : public QObject {
+  Q_OBJECT;
+  Q_ENUMS(boolParameter);
+  Q_ENUMS(intParameter);
+  Q_ENUMS(doubleParameter);
+  Q_ENUMS(stringParameter);
+  Q_ENUMS(vectorParameter);
 
-    Q_OBJECT;
-    Q_ENUMS(boolParameter);
-    Q_ENUMS(intParameter);
-    Q_ENUMS(doubleParameter);
-    Q_ENUMS(stringParameter);
-    Q_ENUMS(vectorParameter);
-
-public:
-
-    PlanParam();
-    ~PlanParam();
+ public:
+  PlanParam();
+  ~PlanParam();
 
 #else
-namespace PlanParam
-{
+namespace PlanParam {
 #endif
-enum boolParameter
-{
+  enum boolParameter {
     stopPlanner,
     isMaxDisNeigh,
     isWeightedChoice,
@@ -155,10 +150,9 @@ enum boolParameter
     env_trajSoftMotion,
     env_trajRos
 
-};
+  };
 
-enum intParameter
-{
+  enum intParameter {
     tata,
     nb_pointsOnTraj,
 
@@ -189,11 +183,11 @@ enum intParameter
     env_anglePow,
 
     // Lamp
-    lamp_nb_samples
-};
+    lamp_nb_samples,
+    lamp_nb_reused_samples
+  };
 
-enum doubleParameter
-{
+  enum doubleParameter {
     // Drawing
     drawScaleFactorNodeSphere,
 
@@ -216,6 +210,7 @@ enum doubleParameter
     trajOptimSmoothWeight,
     trajOptimObstacWeight,
     trajOptimGlobalWeight,
+    trajOptimTermWeight,
     trajOptimSmoothFactor,
     trajOptimObstacFactor,
     trajReplanningWindow,
@@ -236,7 +231,6 @@ enum doubleParameter
     // Collision Space
     ratioCollRadiusSpacing,
     collison_points_clearance,
-
 
     // Object TransfertPoint variable
     env_randomXMinLimit,
@@ -266,30 +260,20 @@ enum doubleParameter
     lamp_hessian_factor,
     lamp_control_cost,
     lamp_eta
-};
+  };
 
-enum stringParameter
-{
-    active_cost_function,
-    end_effector_joint
-};
+  enum stringParameter { active_cost_function, end_effector_joint };
 
-enum vectorParameter
-{
-    planner_joints,
-    active_joints
-};
-
+  enum vectorParameter { planner_joints, active_joints };
 };
 
 // Object that holds all parameters
 // Of the planner Environment
-extern Parameters<
-PlanParam::boolParameter,
-PlanParam::intParameter,
-PlanParam::doubleParameter,
-PlanParam::stringParameter,
-PlanParam::vectorParameter>* PlanEnv;
+extern Parameters<PlanParam::boolParameter,
+                  PlanParam::intParameter,
+                  PlanParam::doubleParameter,
+                  PlanParam::stringParameter,
+                  PlanParam::vectorParameter>* PlanEnv;
 
 // Functions that initializes the planner
 // Parameters

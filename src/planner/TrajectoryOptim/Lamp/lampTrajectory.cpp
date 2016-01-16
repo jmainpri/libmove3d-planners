@@ -363,8 +363,13 @@ void LampSampler::initialize(const std::vector<double>& derivative_costs,
   policy_.setPrintDebug(false);
 
   // initializes the policy
-  policy_.initialize(
-      num_vars_free_, num_dofs_, 1.0, 0.0, derivative_costs, planning_group_);
+  policy_.initialize(num_vars_free_,
+                     num_dofs_,
+                     1.0,
+                     0.0,
+                     derivative_costs,
+                     false,
+                     planning_group_);
   policy_.getControlCosts(control_costs_);
 
   tmp_noise_ = Eigen::VectorXd::Zero(num_vars_free_ * num_dofs_);

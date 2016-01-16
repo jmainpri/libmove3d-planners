@@ -157,9 +157,22 @@ class ChompTrajectory {
   int getEndIndex() const;
 
   /**
+ * \brief Gets fixed index
+ * Set to 1 for motion of the end configuration
+ * Set to 2 for no motion
+ */
+  int getNbFixedPoints() const { return nb_fixed_points_; }
+
+  /**
  * \brief Gets the entire trajectory matrix
  */
   Eigen::MatrixXd& getTrajectory();
+
+  /**
+ * \brief Gets the block of the trajectory which can be optimized
+ */
+  Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic>
+  getAllFreeTrajectoryBlock();
 
   /**
  * \brief Gets the block of the trajectory which can be optimized
@@ -203,7 +216,9 @@ class ChompTrajectory {
 
   //! Set to 1 for motion of the end configuration
   //! Set to 2 for no motion
-  void setFixedId(int id_fixed) { id_fixed_ = id_fixed; }
+  void setNbFixedPoints(int nb_fixed_points) {
+    nb_fixed_points_ = nb_fixed_points;
+  }
 
   // Returns the Move3d robot
   //  Robot* getRobot() { return robot_model_; }
@@ -226,12 +241,12 @@ class ChompTrajectory {
                        (everything before it will not be modified) */
   int end_index_;   /**< End index (inclusive) of trajectory to be optimized
                        (everything after it will not be modified) */
-  std::vector<
-      int> full_trajectory_index_; /**< If this is a "group" trajectory, the
-                                      index from the original traj which each
-                                      element here was copied */
-  bool uses_time_; /**< True if the trajectory is defined with time */
-  int id_fixed_;   // Specifies if the end of the trajectory is fixed
+  std::vector<int>
+      full_trajectory_index_; /**< If this is a "group" trajectory, the
+                                 index from the original traj which each
+                                 element here was copied */
+  bool uses_time_;       /**< True if the trajectory is defined with time */
+  int nb_fixed_points_;  // Specifies if the end of the trajectory is fixed
 };
 
 ///////////////////////// inline functions follow //////////////////////
@@ -269,7 +284,8 @@ inline bool ChompTrajectory::getFreeParameters(
 
   for (int joint = 0; joint < trajectory_.cols(); joint++)
     parameters[joint] = trajectory_.col(joint).segment(
-        start_index_, getNumFreePoints() /*-id_fixed_*/);  // TODO see why
+        start_index_,
+        getNumFreePoints() /*-nb_fixed_points_*/);  // TODO see why
 
   return true;
 }
@@ -298,20 +314,24 @@ inline int ChompTrajectory::getEndIndex() const { return end_index_; }
 inline Eigen::MatrixXd& ChompTrajectory::getTrajectory() { return trajectory_; }
 
 inline Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic>
-ChompTrajectory::getFreeTrajectoryBlock() {
-  //  std::cout << "getNumFreePoints() = " << getNumFreePoints() << std::endl;
-  //  std::cout << "getNumJoints() = " << getNumJoints()  << std::endl;
+ChompTrajectory::getAllFreeTrajectoryBlock() {
+  return trajectory_.block(start_index_, 0, getNumFreePoints(), getNumJoints());
+}
 
+inline Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic>
+ChompTrajectory::getFreeTrajectoryBlock() {
+  // Suposes that nb_fixed_points_ >= 1 and that
+  // at the first configuration does not move
   return trajectory_.block(start_index_ + 1,
                            0,
-                           getNumFreePoints() - id_fixed_,
+                           getNumFreePoints() - nb_fixed_points_,
                            getNumJoints());  // TODO change everywhere
 }
 
 inline Eigen::Block<Eigen::MatrixXd, Eigen::Dynamic, Eigen::Dynamic>
 ChompTrajectory::getFreeJointTrajectoryBlock(int joint) {
   return trajectory_.block(
-      start_index_ + 1, joint, getNumFreePoints() - id_fixed_, 1);
+      start_index_ + 1, joint, getNumFreePoints() - nb_fixed_points_, 1);
 }
 
 // inline void ChompTrajectory::getTrajectoryPointKDL(int traj_point,

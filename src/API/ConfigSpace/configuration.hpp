@@ -389,9 +389,8 @@ class Configuration {
   void print(bool withPassive = false) const;
 
  private:
-  bool
-      _flagInitQuaternions; /*!< Booleen indiquant que les Quaternions ont été
-                               initialisés*/
+  bool _flagInitQuaternions; /*!< Booleen indiquant que les Quaternions ont été
+                                initialisés*/
   int _QuatDof;
   //        Eigen::Quaterniond _Quaternions;
 

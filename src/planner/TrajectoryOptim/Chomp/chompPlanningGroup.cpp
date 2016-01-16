@@ -20,8 +20,7 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob,
   robot_ = rob;
   chomp_dofs_.clear();
 
-  bool print_group = true;
-
+  const bool print_group = true;
   if (print_group)
     cout << "Creating planning group for : " << robot_->getName() << endl;
 

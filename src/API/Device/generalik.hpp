@@ -51,10 +51,15 @@ class GeneralIK {
   Eigen::VectorXd single_step_joint_limits(const Eigen::VectorXd& xdes) const;
 
   //! Returns the active dofs
-  const std::vector<int>& getActiveDofs() { return active_dofs_; }
+  const std::vector<int>& active_dofs() { return active_dofs_; }
+
+  //! Check the joint limits and adds to the badjointinds structure
+  bool checkViolateJointLimits(const Eigen::VectorXd& q,
+                               std::vector<int>& badjointinds,
+                               bool print = false) const;
 
   //! Magnitude applied to the gradient (set to 1. to get Jacobian Pseudo
-  //inverse X task des)
+  // inverse X task des)
   double magnitude_;
 
  protected:

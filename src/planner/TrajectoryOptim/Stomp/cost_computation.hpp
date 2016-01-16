@@ -167,6 +167,7 @@ class costComputation {
   const Move3D::ChompTrajectory& getGroupTrajectory() const {
     return group_trajectory_;
   }
+  double getTerimanlCost() const { return terminal_cost_; }
 
   bool getUseTotalSmoothnessCost() const { return use_total_smoothness_cost_; }
   bool getTotalSmoothnessCost() const { return total_smoothness_cost_; }
@@ -177,7 +178,9 @@ class costComputation {
   const Move3D::ChompPlanningGroup* planning_group_;
 
   double resampleParameters(std::vector<Eigen::VectorXd>& parameters);
+  double terminalCost(Move3D::ChompTrajectory& group_traj) const;
   bool projectToConstraints(Move3D::ChompTrajectory& group_traj) const;
+  bool projectToConstraintWithMetric(Move3D::ChompTrajectory& group_traj) const;
   void getMove3DConfiguration(const Eigen::VectorXd& joint_array,
                               Move3D::Configuration& q) const;
   bool checkJointLimits(const Move3D::ChompTrajectory& group_traj);
@@ -208,6 +211,7 @@ class costComputation {
   double strength_;
   Eigen::VectorXd x_task_goal_;
   Move3D::Joint* eef_;
+  double terminal_cost_;
   // -----------------------------------
 
   // Joint limits
@@ -224,12 +228,14 @@ class costComputation {
 
   // Variables for control cost
   bool multiple_smoothness_;
-  MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy_;
+  MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::CovariantTrajectoryPolicy>
+      policy_;
   double control_cost_weight_;
   std::vector<Eigen::VectorXd> current_control_costs_;
   std::vector<Eigen::MatrixXd>
       control_costs_; /**< [num_dimensions] num_parameters x num_parameters */
   Eigen::VectorXd control_cost_weights_;
+  std::vector<Eigen::MatrixXd> inv_control_costs_;
 
   std::vector<Move3D::ChompCost> joint_costs_;
 

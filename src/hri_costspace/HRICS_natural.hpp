@@ -69,6 +69,9 @@ class Natural {
   void printBodyPos();
 
   //! Get the elemetary cost features
+  void getAllConfigFeatures(Eigen::VectorXd& features);
+
+  //! Get the elemetary cost features
   void getConfigCostFeatures(Eigen::VectorXd& features);
 
   //! Get the cost of the current configuration
@@ -124,7 +127,6 @@ class Natural {
 
   //! get the grid
   NaturalGrid* getGrid() { return m_Grid; }
-
 
  private:
   /**
@@ -238,6 +240,9 @@ class Natural {
   // Joint limits
   Move3D::confPtr_t m_q_limits_max;
   Move3D::confPtr_t m_q_limits_min;
+
+  // Dofs for computing limmits and distance to comfort configuration
+  std::vector<int> m_active_dofs_;
 
   /**
     * Sorted Cells

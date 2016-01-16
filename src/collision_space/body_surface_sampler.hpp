@@ -35,6 +35,7 @@ class BodySurfaceSampler {
   //-----------------------------------------------------
   PointCloud& sampleObjectSurface(obj* obj, bool isRobot = false);
   void sampleObjectInside(p3d_obj* obj, PointCloud& pc, bool isRobot = false);
+  bool isPointInsidePrimitves(const Eigen::Vector3d& point);
   void sampleStaticObjectsSurface();
   void sampleRobotBodiesSurface(Robot* rob);
   void sampleAllRobotsBodiesSurface();

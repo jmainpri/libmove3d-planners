@@ -524,9 +524,23 @@ void Natural::initNaturalBiomech() {
   m_JOINT_ARM_LEFT_ELBOW = BIOMECH_JOINT_ARM_LEFT_ELBOW;
   m_JOINT_ARM_LEFT_WRIST = BIOMECH_JOINT_ARM_LEFT_WRIST;
 
-  setBiomechJointLimitsFromFile("");
-
   initConfigIndices();
+
+  m_active_dofs_.clear();
+  m_active_dofs_.push_back(m_CONFIG_INDEX_SPINE + 0);  // Torso
+  m_active_dofs_.push_back(m_CONFIG_INDEX_SPINE + 1);
+  m_active_dofs_.push_back(m_CONFIG_INDEX_SPINE + 2);
+  m_active_dofs_.push_back(m_CONFIG_INDEX_ARM_RIGTH_SHOULDER + 0);
+  m_active_dofs_.push_back(m_CONFIG_INDEX_ARM_RIGTH_SHOULDER + 1);
+  m_active_dofs_.push_back(m_CONFIG_INDEX_ARM_RIGTH_SHOULDER + 2);
+  m_active_dofs_.push_back(m_CONFIG_INDEX_ARM_RIGTH_ELBOW + 0);  // Right Elbow
+  m_active_dofs_.push_back(m_CONFIG_INDEX_ARM_RIGTH_ELBOW + 1);
+  m_active_dofs_.push_back(m_CONFIG_INDEX_ARM_RIGTH_ELBOW + 2);
+  m_active_dofs_.push_back(m_CONFIG_INDEX_ARM_RIGTH_WRIST + 0);  // Right Wrist
+  m_active_dofs_.push_back(m_CONFIG_INDEX_ARM_RIGTH_WRIST + 1);
+  m_active_dofs_.push_back(m_CONFIG_INDEX_ARM_RIGTH_WRIST + 2);
+
+  setBiomechJointLimitsFromFile("");
 
   Configuration q(*m_Robot->getNewConfig());
 
@@ -563,11 +577,11 @@ void Natural::initNaturalBiomech() {
   q[31] = 0.111212;
   q[32] = -1.38796;
 
-//  q[m_Robot->getJoint("rShoulderTransX")->getIndexOfFirstDof()] = .018;
-//  q[m_Robot->getJoint("rShoulderTransY")->getIndexOfFirstDof()] = .33;
-//  q[m_Robot->getJoint("rShoulderTransZ")->getIndexOfFirstDof()] = .25;
-//  q[m_Robot->getJoint("rArmTrans")->getIndexOfFirstDof()] = .39;
-//  q[m_Robot->getJoint("lPoint")->getIndexOfFirstDof()] = .24;
+  //  q[m_Robot->getJoint("rShoulderTransX")->getIndexOfFirstDof()] = .018;
+  //  q[m_Robot->getJoint("rShoulderTransY")->getIndexOfFirstDof()] = .33;
+  //  q[m_Robot->getJoint("rShoulderTransZ")->getIndexOfFirstDof()] = .25;
+  //  q[m_Robot->getJoint("rArmTrans")->getIndexOfFirstDof()] = .39;
+  //  q[m_Robot->getJoint("lPoint")->getIndexOfFirstDof()] = .24;
 
   //    p3d_jnt_set_dof_rand_bounds( robot->getJoint( "rShoulderTransX"
   //    )->getP3dJointStruct(), 0, .016, .020 );
@@ -610,9 +624,9 @@ void Natural::initNaturalBiomech() {
   q[m_CONFIG_INDEX_ARM_RIGTH_SHOULDER + 1] = 10;
   q[m_CONFIG_INDEX_ARM_RIGTH_SHOULDER + 2] = 10;
 
-  q[m_CONFIG_INDEX_ARM_RIGTH_ELBOW + 0] = 1;  // Right Elbow
-  q[m_CONFIG_INDEX_ARM_RIGTH_ELBOW + 1] = 1;
-  q[m_CONFIG_INDEX_ARM_RIGTH_ELBOW + 2] = 1;
+  q[m_CONFIG_INDEX_ARM_RIGTH_ELBOW + 0] = 10;  // Right Elbow
+  q[m_CONFIG_INDEX_ARM_RIGTH_ELBOW + 1] = 10;
+  q[m_CONFIG_INDEX_ARM_RIGTH_ELBOW + 2] = 10;
 
   q[m_CONFIG_INDEX_ARM_RIGTH_WRIST + 0] = 20;  // Right Wrist
   q[m_CONFIG_INDEX_ARM_RIGTH_WRIST + 1] = 20;
@@ -736,50 +750,57 @@ void Natural::setBiomechJointLimitsFromFile(std::string filename) {
   for (size_t i = 0; i < m_Robot->getNumberOfJoints(); i++) {
     for (size_t j = 0; j < m_Robot->getJoint(i)->getNumberOfDof(); j++) {
       Joint* move3d_joint = m_Robot->getJoint(i);
+      int dof_index = move3d_joint->getIndexOfFirstDof() + j;
+
+      const bool only_treat_active_dofs = true;
+      if (only_treat_active_dofs &&
+          std::find(m_active_dofs_.begin(), m_active_dofs_.end(), dof_index) ==
+              m_active_dofs_.end()) {
+        continue;
+      }
 
       double min, max;
       move3d_joint->getDofRandBounds(j, min, max);
-
-      int dof_index = move3d_joint->getIndexOfFirstDof() + j;
 
       const bool print_group = true;
       if (print_group) {
         cout << "Joint(" << i << "), Dof : " << dof_index << ", "
              << move3d_joint->getName() << " , ";
-        cout << "(min = " << min << ", max = " << max << ") , ";
-        cout << "Is dof angular :  " << move3d_joint->isJointDofAngular(j);
+        cout << "(min = " << min << ", max = " << max << ")";
         cout << " , limits :  " << (*q_max.second)[dof_index];
-        cout << " , " << (*q_min.second)[dof_index] << endl;
+        cout << " , " << (*q_min.second)[dof_index];
+        cout << " , Is dof angular :  " << move3d_joint->isJointDofAngular(j);
+        cout << " , Is dof circular : " << move3d_joint->isJointDofCircular(j);
+        cout << endl;
       }
 
-//      if( move3d_joint->getName() == "rShoulderTransX" )
-//        continue;
-//      if( move3d_joint->getName() == "rShoulderTransY" )
-//        continue;
-//      if( move3d_joint->getName() == "rShoulderTransZ" )
-//        continue;
+      // Check that it does not cover the whole joint
+      if (move3d_joint->isJointDofCircular(j) &&
+          std::fabs((*q_max.second)[dof_index] - M_PI) < 1e-3 &&
+          std::fabs((*q_min.second)[dof_index] + M_PI) < 1e-3) {
+        continue;
+      }
 
-//      if( move3d_joint->getName() == "rElbowZ" )
-//        continue;
-//      if( move3d_joint->getName() == "rElbowX" )
-//        continue;
-//      if( move3d_joint->getName() == "rElbowY" )
-//        continue;
+      double slack = 0.05 * std::fabs((*q_max.second)[dof_index] -
+                                      (*q_min.second)[dof_index]);
 
       p3d_jnt_set_dof_rand_bounds(move3d_joint->getP3dJointStruct(),
                                   j,
-                                  (*q_min.second)[dof_index],
-                                  (*q_max.second)[dof_index]);
+                                  (*q_min.second)[dof_index] - slack,
+                                  (*q_max.second)[dof_index] + slack);
 
       p3d_jnt_set_dof_bounds(move3d_joint->getP3dJointStruct(),
                              j,
-                             (*q_min.second)[dof_index],
-                             (*q_max.second)[dof_index]);
+                             (*q_min.second)[dof_index] - slack,
+                             (*q_max.second)[dof_index] + slack);
+
+      cout << "new bounds : " << (*q_min.second)[dof_index] - slack << " , "
+           << (*q_max.second)[dof_index] + slack << endl;
     }
   }
 
   m_q_limits_max = q_max.second;
-  m_q_limits_min = q_max.second;
+  m_q_limits_min = q_min.second;
 }
 
 void Natural::initHumanBaseGrid(vector<double> box) {
@@ -864,6 +885,12 @@ void Natural::setRobotToConfortPosture() {
   (*m_q_Confort)[m_IndexObjectDof + 5] = (*q_cur)[m_IndexObjectDof + 5];
 
   m_Robot->setAndUpdate(*m_q_Confort);
+}
+
+//! Get the elemetary cost features
+void Natural::getAllConfigFeatures(Eigen::VectorXd& features) {
+  confPtr_t q = m_Robot->getCurrentPos();
+  getCustomDistConfig(*q, features);
 }
 
 //! Get the elemetary cost features
@@ -1034,8 +1061,8 @@ vector<double> Natural::getUpperBodyHeigth(bool useReference) {
  */
 double Natural::getCustomDistConfig(Configuration& q, Eigen::VectorXd& phi) {
   double l = 0., ljnt = 0.;
-  phi = Eigen::VectorXd::Zero(m_nbDof);
-  Eigen::VectorXd w = phi;  // Set to 0
+  Eigen::VectorXd phi_tmp = Eigen::VectorXd::Zero(m_nbDof);
+  Eigen::VectorXd w = phi_tmp;  // Set to 0
 
   for (int i = 0; i < int(m_Robot->getJoints().size()); i++) {
     // Get move3d joint
@@ -1054,12 +1081,12 @@ double Natural::getCustomDistConfig(Configuration& q, Eigen::VectorXd& phi) {
                                   m_q_Confort->getConfigStruct(),
                                   q.getConfigStruct());
         int k = move3d_joint->getIndexOfFirstDof() + j;
-        phi[k] = std::fabs(dof_dist / range);
+        phi_tmp[k] = std::fabs(dof_dist / range);
 
         const bool print_dist = false;
         if (print_dist) {
           cout << "name : " << move3d_joint->getName() << " , range[" << k
-               << "] : " << range << " , phi[" << k << "] : " << phi[k]
+               << "] : " << range << " , phi[" << k << "] : " << phi_tmp[k]
                << " , w[" << k << "] : " << (*m_q_ConfortWeigths)[k] << endl;
         }
       }
@@ -1069,14 +1096,17 @@ double Natural::getCustomDistConfig(Configuration& q, Eigen::VectorXd& phi) {
   }
 
   // Normalize (TODO: should not be there !!!)
-  int nb_confort_dofs = 0;
-  for (int i = 0; i < phi.size(); i++) {
+  for (int i = 0; i < phi_tmp.size(); i++) {
     w[i] = (*m_q_ConfortWeigths)[i];
-    if (phi[i] > 0) nb_confort_dofs++;
   }
+  phi_tmp /= double(phi_tmp.size());
+  l = w.transpose() * phi_tmp;
 
-  phi /= double(nb_confort_dofs);
-  l = w.transpose() * phi;
+  // Set only active dofs in the phi vector
+  phi = Eigen::VectorXd::Zero(m_active_dofs_.size());
+  for (int i = 0; i < phi.size(); i++) {
+    phi[i] = phi_tmp[m_active_dofs_[i]];
+  }
   // l = sqrt(ljnt);
   // printf( "total dist = %f\n", l );
 

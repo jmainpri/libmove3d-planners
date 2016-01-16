@@ -109,12 +109,62 @@ PointCloud& BodySurfaceSampler::sampleObjectSurface(p3d_obj* obj,
     }
   }
 
-  bool sample_inside = true;
+  bool sample_inside = false;
   if (sample_inside) {
     sampleObjectInside(obj, m_objectToPointCloudMap[obj], isRobot);
   }
 
   return m_objectToPointCloudMap[obj];
+}
+
+bool BodySurfaceSampler::isPointInsidePrimitves(const Eigen::Vector3d& point) {
+  // Get Move3D point
+  p3d_vector3 p_o;
+  p_o[0] = point.x();
+  p_o[1] = point.y();
+  p_o[2] = point.z();
+
+  for (int j = 0; j < XYZ_ENV->no; j++) {
+    p3d_obj* obj = XYZ_ENV->o[j];
+    for (int i = 0; i < obj->np; i++) {
+      // Only test box and cylinders
+      if (obj->pol[i]->entity_type) {
+        if ((obj->pol[i]->entity_type != 5) && (obj->pol[i]->entity_type != 6))
+          continue;
+
+        p3d_matrix4 inv_pos;
+        p3d_matInvertXform(obj->pol[i]->pos_rel_jnt, inv_pos);
+
+        p3d_vector3 p;
+        p3d_xformPoint(inv_pos, p_o, p);
+
+        if (obj->pol[i]->entity_type == 5)  // box
+        {
+          double x = obj->pol[i]->primitive_data->x_length;
+          double y = obj->pol[i]->primitive_data->y_length;
+          double z = obj->pol[i]->primitive_data->z_length;
+
+          // Check that the point is in the box
+          if ((p[0] > (-x / 2)) && (p[0] < (x / 2)) && (p[1] > (-y / 2)) &&
+              (p[1] < (y / 2)) && (p[2] > (-z / 2)) && (p[2] < (z / 2))) {
+            return true;
+          }
+        } else if (obj->pol[i]->entity_type == 6)  // cylinder
+        {
+          double r = obj->pol[i]->primitive_data->radius;
+          double h = obj->pol[i]->primitive_data->height;
+
+          // Check that the point is in the cylinder
+          if ((p[2] > (-h / 2)) && (p[2] < (h / 2)) &&
+              (std::sqrt(p[0] * p[0] + p[1] * p[1]) < r)) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
 void BodySurfaceSampler::sampleObjectInside(p3d_obj* obj,

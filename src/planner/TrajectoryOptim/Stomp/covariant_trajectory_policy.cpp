@@ -88,6 +88,7 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
                                            const double cost_ridge_factor,
                                            const std::vector<double>&
                                                derivative_costs,
+                                           const bool free_end_config,
                                            const ChompPlanningGroup*
                                                planning_group) {
   type_ = acc;
@@ -100,9 +101,9 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
 
   // Computes a control matrices that allow motion of the end part
   // Should be set to 2 for the normal case
-  free_offset_ = PlanEnv->getBool(PlanParam::trajStompMoveEndConfig)
-                     ? int(num_time_steps_ / 2.)
-                     : 0;
+  free_offset_ = free_end_config ? int(num_time_steps_/3) : 0;
+
+  cout << "free_offset_ : " << free_offset_ << endl;
 
   use_buffer_ = false;
 
@@ -113,8 +114,8 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
   }
 
   // movement_duration_ = 5.0;
-  //  movement_duration_ = movement_duration*7.716;
-  //  movement_duration_ = movement_duration*1.5432;
+  // movement_duration_ = movement_duration*7.716;
+  // movement_duration_ = movement_duration*1.5432;
 
   cost_ridge_factor_ = cost_ridge_factor;
   derivative_costs_ = derivative_costs;

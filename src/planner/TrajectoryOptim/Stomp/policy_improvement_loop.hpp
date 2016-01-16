@@ -51,115 +51,120 @@
 #include <boost/thread/mutex.hpp>
 //#include <policy_improvement_loop/PolicyImprovementStatistics.h>
 
-namespace stomp_motion_planner
-{
+namespace stomp_motion_planner {
 
-class PolicyImprovementLoop
-{
-public:
-    PolicyImprovementLoop();
-    virtual ~PolicyImprovementLoop();
+class PolicyImprovementLoop {
+ public:
+  PolicyImprovementLoop();
+  virtual ~PolicyImprovementLoop();
 
-//    bool initializeAndRunTaskByName(/*ros::NodeHandle& node_handle,*/ std::string& task_name);
+  //    bool initializeAndRunTaskByName(/*ros::NodeHandle& node_handle,*/
+  //    std::string& task_name);
 
-    bool initialize(MOVE3D_BOOST_PTR_NAMESPACE<Task> task, bool singleRollout, double discretization );
-    bool runSingleIteration(int iteration_number);
-  
-    /**
-     * Functions added by jim
-     */
-    void testSampler();
+  bool initialize(MOVE3D_BOOST_PTR_NAMESPACE<Task> task,
+                  bool singleRollout,
+                  double discretization);
+  bool runSingleIteration(int iteration_number);
 
-    void getRollouts(std::vector<std::vector<Move3D::confPtr_t> >& traj);
-  
-    // Reset all extra rollouts
-    void resetReusedRollouts();
+  /**
+   * Functions added by jim
+   */
+  void testSampler();
 
-  
-private:
+  void getRollouts(std::vector<std::vector<Move3D::confPtr_t> >& traj);
 
-    bool initialized_;
-//    ros::NodeHandle node_handle_;
+  // Reset all extra rollouts
+  void resetReusedRollouts();
 
-    int num_rollouts_;
-    int num_reused_rollouts_;
-    int num_time_steps_;
-    int num_dimensions_;
+ private:
+  bool initialized_;
+  //    ros::NodeHandle node_handle_;
 
-    bool write_to_file_;
-    bool use_cumulative_costs_;
-    bool set_parameters_in_policy_;
-  
-    bool joint_limits_;
-    bool use_annealing_;
-    int limits_violations_;
-    double K_;
+  int num_rollouts_;
+  int num_reused_rollouts_;
+  int num_time_steps_;
+  int num_dimensions_;
 
-    // Constraints -----------------------
-    bool project_last_config_;
-    double ratio_projected_;
-    Eigen::VectorXd x_task_goal_;
-    Move3D::Joint* eef_;
-    // -----------------------------------
+  bool write_to_file_;
+  bool use_cumulative_costs_;
+  bool set_parameters_in_policy_;
 
-  
-    MOVE3D_BOOST_PTR_NAMESPACE<Task> task_;
-    MOVE3D_BOOST_PTR_NAMESPACE<Policy> policy_;
+  bool joint_limits_;
+  bool use_annealing_;
+  int limits_violations_;
+  double K_;
 
-    PolicyImprovement policy_improvement_;
-  
-    std::vector<std::vector<Eigen::VectorXd> > rollouts_; /**< [num_rollouts][num_dimensions] num_parameters */
-    std::vector<std::vector<Eigen::VectorXd> > reused_rollouts_;
-  
-    std::vector<Eigen::MatrixXd> parameter_updates_;
-    std::vector<Eigen::VectorXd> parameters_;
-    Eigen::MatrixXd rollout_costs_;
-    std::vector<std::pair<bool,double> > rollout_total_control_costs_;
-    std::vector<Eigen::MatrixXd> rollout_control_costs_;
-    std::vector<double> noise_stddev_;
-    std::vector<double> noise_decay_;
+  // Constraints -----------------------
+  bool project_last_config_;
+  double ratio_projected_;
+  Eigen::VectorXd x_task_goal_;
+  Move3D::Joint* eef_;
+  // -----------------------------------
 
-    boost::mutex mtx_end_;
-    boost::mutex mtx_set_end_;
-    std::vector<bool> parrallel_is_rollout_running_;
-    std::vector<Eigen::VectorXd> parallel_cost_;
-    std::vector<boost::thread*> threads_;
+  MOVE3D_BOOST_PTR_NAMESPACE<Task> task_;
+  MOVE3D_BOOST_PTR_NAMESPACE<Policy> policy_;
 
-    double control_cost_weight_;
-    double state_cost_weight_;
+  PolicyImprovement policy_improvement_;
 
-    // temporary variables
-    Eigen::VectorXd tmp_rollout_cost_;
+  std::vector<std::vector<Eigen::VectorXd> >
+      rollouts_; /**< [num_rollouts][num_dimensions] num_parameters */
+  std::vector<std::vector<Eigen::VectorXd> > reused_rollouts_;
 
-    bool readParameters();
+  std::vector<Eigen::MatrixXd> parameter_updates_;
+  std::vector<Eigen::VectorXd> parameters_;
+  Eigen::MatrixXd rollout_costs_;
+  std::vector<std::pair<bool, double> > rollout_total_control_costs_;
+  std::vector<Eigen::MatrixXd> rollout_control_costs_;
+  std::vector<double> noise_stddev_;
+  std::vector<double> noise_decay_;
 
-    // added by jim
-    bool readParametersSingleRollout();
-    void resampleParameters();
+  boost::mutex mtx_end_;
+  boost::mutex mtx_set_end_;
+  std::vector<bool> parrallel_is_rollout_running_;
+  std::vector<Eigen::VectorXd> parallel_cost_;
+  std::vector<boost::thread*> threads_;
 
-    bool setParallelRolloutsEnd(int r);
-    void parallelRollout(int i, int iteration_number);
-    void executeRollout(int r, int iteration_number);
+  double control_cost_weight_;
+  double state_cost_weight_;
 
-    void projectToConstraints( std::vector<Eigen::VectorXd>& parameters );
+  // temporary variables
+  Eigen::VectorXd tmp_rollout_cost_;
 
-    int policy_iteration_counter_;
-    bool readPolicy(const int iteration_number);
-    bool writePolicy(const int iteration_number, bool is_rollout = false, int rollout_id = 0);
-    //bool writePolicyImprovementStatistics(const policy_improvement_loop::PolicyImprovementStatistics& stats_msg);
-  
-    void addStraightLineRollout(std::vector<std::vector<Eigen::VectorXd> >& extra_rollout, std::vector<Eigen::VectorXd>& extra_rollout_cost);
-    void parametersToVector(std::vector<Eigen::VectorXd>& rollout);
-    void getSingleRollout(const std::vector<Eigen::VectorXd>& rollout, std::vector<Move3D::confPtr_t>& traj);
-    void addSingleRolloutsToDraw(const std::vector<Eigen::VectorXd>& rollout, int color);
-    void addRolloutsToDraw(bool add_reused);
+  bool readParameters();
 
-    // Print rollouts
-    void printSingleRollout( const std::vector<Eigen::VectorXd>& rollout, int id ) const;
-    void printRollouts() const;
+  // added by jim
+  // bool readParametersSingleRollout();
+  void resampleParameters();
 
+  bool setParallelRolloutsEnd(int r);
+  void parallelRollout(int i, int iteration_number);
+  void executeRollout(int r, int iteration_number);
+
+  void projectToConstraints(std::vector<Eigen::VectorXd>& parameters);
+
+  int policy_iteration_counter_;
+  bool readPolicy(const int iteration_number);
+  bool writePolicy(const int iteration_number,
+                   bool is_rollout = false,
+                   int rollout_id = 0);
+  // bool writePolicyImprovementStatistics(const
+  // policy_improvement_loop::PolicyImprovementStatistics& stats_msg);
+
+  void addStraightLineRollout(
+      std::vector<std::vector<Eigen::VectorXd> >& extra_rollout,
+      std::vector<Eigen::VectorXd>& extra_rollout_cost);
+  void parametersToVector(std::vector<Eigen::VectorXd>& rollout);
+  void getSingleRollout(const std::vector<Eigen::VectorXd>& rollout,
+                        std::vector<Move3D::confPtr_t>& traj);
+  void addSingleRolloutsToDraw(const std::vector<Eigen::VectorXd>& rollout,
+                               int color);
+  void addRolloutsToDraw(bool add_reused);
+
+  // Print rollouts
+  void printSingleRollout(const std::vector<Eigen::VectorXd>& rollout,
+                          int id) const;
+  void printRollouts() const;
 };
-
 }
 
 #endif /* POLICY_IMPROVEMENT_LOOP_H_ */

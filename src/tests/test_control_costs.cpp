@@ -111,6 +111,7 @@ double get_control_cost( const Move3D::Trajectory& trajectory,
                        trajectory.getDuration(),
                        ridge_factor,
                        derivative_costs,
+                       false,
                        planning_group);
 
     Eigen::VectorXd start = trajectory.getBegin()->getEigenVector(

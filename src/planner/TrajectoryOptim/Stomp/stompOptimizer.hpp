@@ -505,6 +505,7 @@ class StompOptimizer : public Task {
   double getSmoothnessCost(bool save_to_file = false);
   double getCollisionCost();
   double getGeneralCost();
+  double getTerminalCost();
   void perturbTrajectory();
   void getRandomMomentum();
   void updateMomentum();

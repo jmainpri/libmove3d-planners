@@ -58,6 +58,7 @@ class CovariantTrajectoryPolicy : public Policy {
                   const double movement_duration,
                   const double cost_ridge_factor,
                   const std::vector<double>& derivative_costs,
+                  const bool free_end_config,
                   const Move3D::ChompPlanningGroup* planning_group = NULL);
 
   bool setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal);
@@ -223,7 +224,7 @@ class CovariantTrajectoryPolicy : public Policy {
   int num_vars_all_;
 
  private:
-  //    ros::NodeHandle node_handle_;
+  // ros::NodeHandle node_handle_;
 
   enum cost_type { vel = 0, acc = 1, jerk = 2, dist = 3, mix = 4 } type_;
   bool is_dist_;

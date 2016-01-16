@@ -39,152 +39,161 @@
 
 #include <vector>
 
-namespace Move3D
-{
+namespace Move3D {
 
 ////////////////////////////////////////
-class TrajectorySmoothness : public Feature
-{
-public:
-    TrajectorySmoothness();
+class TrajectorySmoothness : public Feature {
+ public:
+  TrajectorySmoothness();
 
-    //! Returns a smoothness cost for the trajectory
-    FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
-    FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+  //! Returns a smoothness cost for the trajectory
+  FeatureVect getFeatures(const Move3D::Configuration& q,
+                          std::vector<int> active_dofs = std::vector<int>(0));
+  FeatureVect getFeatureCount(const Move3D::Trajectory& t);
 
-    void setWeights(const WeightVect &w);
+  void setWeights(const WeightVect& w);
 
-    //! Prints the control cost along the trajectory
-    void printControlCosts( const std::vector<Eigen::VectorXd>& control_cost  );
+  //! Prints the control cost along the trajectory
+  void printControlCosts(const std::vector<Eigen::VectorXd>& control_cost);
 
-    //! get smoothed trajectory as matrix
-    Eigen::MatrixXd getSmoothedTrajectory( const Move3D::Trajectory& t ) const;
+  //! get smoothed trajectory as matrix
+  Eigen::MatrixXd getSmoothedTrajectory(const Move3D::Trajectory& t) const;
 
-    //! returns the control costs
-    double getControlCosts(const Eigen::MatrixXd& traj_smooth, std::vector<Eigen::VectorXd>& control_costs, double dt );
+  //! returns the control costs
+  double getControlCosts(const Eigen::MatrixXd& traj_smooth,
+                         std::vector<Eigen::VectorXd>& control_costs,
+                         double dt);
 
-    //! Set Buffer set buffer
-    virtual void setBuffer(const std::vector<Eigen::VectorXd>& buffer);
+  //! Set Buffer set buffer
+  virtual void setBuffer(const std::vector<Eigen::VectorXd>& buffer);
 
-    //! Set Buffer as not filled
-    void clearBuffer();
+  //! Set Buffer as not filled
+  void clearBuffer();
 
-    //! Save profile to file
-    void saveAbsValuesToFile(const Move3D::Trajectory& t, std::string folder ) const;
+  //! Save profile to file
+  void saveAbsValuesToFile(const Move3D::Trajectory& t,
+                           std::string folder) const;
 
-    //! get diff rule
-    int get_left_padding() { return control_cost_.get_left_padding(); }
-    int get_right_padding() { return control_cost_.get_right_padding(); }
-    int get_diff_rule() { return control_cost_.getDiffRuleLength(); }
+  //! get diff rule
+  int get_left_padding() { return control_cost_.get_left_padding(); }
+  int get_right_padding() { return control_cost_.get_right_padding(); }
+  int get_diff_rule() { return control_cost_.getDiffRuleLength(); }
 
-protected:
-    ControlCost control_cost_;
-    bool buffer_is_filled_;
+ protected:
+  ControlCost control_cost_;
+  bool buffer_is_filled_;
 
-private:
-    double computeControlCost( const Eigen::MatrixXd& traj );
-
+ private:
+  double computeControlCost(const Eigen::MatrixXd& traj);
 };
 
 ////////////////////////////////////////
-class LengthFeature : public TrajectorySmoothness
-{
-public:
-    LengthFeature();
-    Move3D::FeatureVect getFeatureCount( const Move3D::Trajectory& t );
-    Move3D::FeatureVect getFeatures( const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0) );
-    double getControlCosts(const Eigen::MatrixXd& traj_smooth, std::vector<Eigen::VectorXd>& control_costs);
-    double scaling_;
+class LengthFeature : public TrajectorySmoothness {
+ public:
+  LengthFeature();
+  Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+  Move3D::FeatureVect getFeatures(
+      const Move3D::Configuration& q,
+      std::vector<int> active_dofs = std::vector<int>(0));
+  double getControlCosts(const Eigen::MatrixXd& traj_smooth,
+                         std::vector<Eigen::VectorXd>& control_costs);
+  double scaling_;
 };
 
 ////////////////////////////////////////
-class VelocitySmoothness : public TrajectorySmoothness
-{
-public:
-    VelocitySmoothness();
-    void setWeights(const WeightVect &w);
+class VelocitySmoothness : public TrajectorySmoothness {
+ public:
+  VelocitySmoothness();
+  void setWeights(const WeightVect& w);
 };
 
 ////////////////////////////////////////
-class AccelerationSmoothness : public TrajectorySmoothness
-{
-public:
-    AccelerationSmoothness();
-    void setWeights(const WeightVect &w);
+class AccelerationSmoothness : public TrajectorySmoothness {
+ public:
+  AccelerationSmoothness();
+  void setWeights(const WeightVect& w);
 };
 
 ////////////////////////////////////////
-class JerkSmoothness : public TrajectorySmoothness
-{
-public:
-    JerkSmoothness();
-    void setWeights(const WeightVect &w);
+class JerkSmoothness : public TrajectorySmoothness {
+ public:
+  JerkSmoothness();
+  void setWeights(const WeightVect& w);
 };
 
 ////////////////////////////////////////
-class TaskSmoothnessFeature : public TrajectorySmoothness
-{
-public:
-    TaskSmoothnessFeature( Move3D::Robot* active, Move3D::Joint* joint_task );
-    Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
-    Move3D::FeatureVect getFeatures(const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0));
+class TaskSmoothnessFeature : public TrajectorySmoothness {
+ public:
+  TaskSmoothnessFeature(Move3D::Robot* active, Move3D::Joint* joint_task);
+  Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+  Move3D::FeatureVect getFeatures(
+      const Move3D::Configuration& q,
+      std::vector<int> active_dofs = std::vector<int>(0));
 
-    Eigen::MatrixXd getTaskTrajectory( const Move3D::Trajectory& t );
-    Eigen::VectorXd getTaskPose( Move3D::confPtr_t _q );
+  Eigen::MatrixXd getTaskTrajectory(const Move3D::Trajectory& t);
+  Eigen::VectorXd getTaskPose(Move3D::confPtr_t _q);
 
-    void saveAbsValuesToFileVelocity(const Move3D::Trajectory& t, std::string folder );
-    void saveAbsValuesToFileAcceleration(const Move3D::Trajectory& t, std::string folder );
-    void saveAbsValuesToFileJerk(const Move3D::Trajectory& t, std::string folder );
+  void saveAbsValuesToFileVelocity(const Move3D::Trajectory& t,
+                                   std::string folder);
+  void saveAbsValuesToFileAcceleration(const Move3D::Trajectory& t,
+                                       std::string folder);
+  void saveAbsValuesToFileJerk(const Move3D::Trajectory& t, std::string folder);
 
-    // Compute velocity between two configurations
-    double getDist( const Move3D::Trajectory& t,Eigen::VectorXd& control_costs );
-    double getVelocity( const Move3D::Trajectory& t,Eigen::VectorXd& control_costs );
-    double getAcceleration( const Move3D::Trajectory& t, Eigen::VectorXd& control_costs );
-    double getJerk( const Move3D::Trajectory& t, Eigen::VectorXd& control_costs );
+  // Compute velocity between two configurations
+  double getDist(const Move3D::Trajectory& t, Eigen::VectorXd& control_costs);
+  double getVelocity(const Move3D::Trajectory& t,
+                     Eigen::VectorXd& control_costs);
+  double getAcceleration(const Move3D::Trajectory& t,
+                         Eigen::VectorXd& control_costs);
+  double getJerk(const Move3D::Trajectory& t, Eigen::VectorXd& control_costs);
 
-    double getDist( const Eigen::MatrixXd& t,Eigen::VectorXd& control_costs );
-    double getVelocity( const Eigen::MatrixXd& t,Eigen::VectorXd& control_costs, double dt );
-    double getAcceleration(const  Eigen::MatrixXd& t, Eigen::VectorXd& control_costs, double dt );
-    double getJerk( const Eigen::MatrixXd& t, Eigen::VectorXd& control_costs, double dt );
+  double getDist(const Eigen::MatrixXd& t, Eigen::VectorXd& control_costs);
+  double getVelocity(const Eigen::MatrixXd& t,
+                     Eigen::VectorXd& control_costs,
+                     double dt);
+  double getAcceleration(const Eigen::MatrixXd& t,
+                         Eigen::VectorXd& control_costs,
+                         double dt);
+  double getJerk(const Eigen::MatrixXd& t,
+                 Eigen::VectorXd& control_costs,
+                 double dt);
 
-    Eigen::VectorXd getControlCosts( const std::vector<Eigen::VectorXd>& control_cost, double dt ) const;
+  Eigen::VectorXd getControlCosts(
+      const std::vector<Eigen::VectorXd>& control_cost, double dt) const;
 
-    //! Set Task buffer
-    void setBuffer( const std::vector<Eigen::VectorXd>& buffer );
+  //! Set Task buffer
+  void setBuffer(const std::vector<Eigen::VectorXd>& buffer);
 
-    // Draw velocities
-    void draw();
+  // Draw velocities
+  void draw();
 
-private:
-
-    Move3D::Robot* robot_;
-    std::vector<int> veclocity_joint_ids_;
-    std::vector<Move3D::Joint*> task_joints_;
+ private:
+  Move3D::Robot* robot_;
+  std::vector<int> veclocity_joint_ids_;
+  std::vector<Move3D::Joint*> task_joints_;
 };
 
 ////////////////////////////////////////
-class SmoothnessFeature : public Move3D::Feature
-{
-public:
-    SmoothnessFeature(Move3D::Robot* robot, Move3D::Joint* joint_task);
-    Move3D::FeatureVect getFeatureCount( const Move3D::Trajectory& t );
-    Move3D::FeatureVect getFeatures( const Move3D::Configuration& q, std::vector<int> active_dofs = std::vector<int>(0) );
-    void setActiveDoFs( const std::vector<int>& active_dofs );
-    void setWeights(const WeightVect &w);
+class SmoothnessFeature : public Move3D::Feature {
+ public:
+  SmoothnessFeature(Move3D::Robot* robot, Move3D::Joint* joint_task);
+  Move3D::FeatureVect getFeatureCount(const Move3D::Trajectory& t);
+  Move3D::FeatureVect getFeatures(
+      const Move3D::Configuration& q,
+      std::vector<int> active_dofs = std::vector<int>(0));
+  void setActiveDoFs(const std::vector<int>& active_dofs);
+  void setWeights(const WeightVect& w);
 
-    //! Set Buffer
-    void setBuffer(const std::vector<Eigen::VectorXd>& buffer);
-    void clearBuffer();
+  //! Set Buffer
+  void setBuffer(const std::vector<Eigen::VectorXd>& buffer);
+  void clearBuffer();
 
-    LengthFeature length_;
-    VelocitySmoothness velocity_;
-    AccelerationSmoothness acceleration_;
-    JerkSmoothness jerk_;
-    TaskSmoothnessFeature task_features_;
+  LengthFeature length_;
+  VelocitySmoothness velocity_;
+  AccelerationSmoothness acceleration_;
+  JerkSmoothness jerk_;
+  TaskSmoothnessFeature task_features_;
 };
-
-
-
 }
 
 extern double smoothness_phi_coeff_0;
@@ -196,4 +205,4 @@ extern double smoothness_phi_coeff_5;
 extern double smoothness_phi_coeff_6;
 extern double smoothness_phi_coeff_7;
 
-#endif // SMOOTHNESS_HPP
+#endif  // SMOOTHNESS_HPP

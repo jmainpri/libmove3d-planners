@@ -88,9 +88,11 @@ bool PolicyImprovementLoop::initialize(
 
   if (!singleRollout) {
     readParameters();
-  } else {
-    readParametersSingleRollout();
   }
+
+//  else {
+//    readParametersSingleRollout();
+//  }
   task_ = task;
   task_->initialize(/*node_handle_,*/ num_time_steps_);
   task_->getControlCostWeight(control_cost_weight_);
@@ -178,22 +180,22 @@ bool PolicyImprovementLoop::initialize(
   return (initialized_ = true);
 }
 
-bool PolicyImprovementLoop::readParametersSingleRollout() {
-  num_rollouts_ = PlanEnv->getInt(PlanParam::lamp_nb_samples);
-  num_reused_rollouts_ = 5;
+//bool PolicyImprovementLoop::readParametersSingleRollout() {
+//  num_rollouts_ = PlanEnv->getInt(PlanParam::lamp_nb_samples);
+//  num_reused_rollouts_ = 5;
 
-  noise_decay_.clear();
-  noise_decay_.resize(num_dimensions_, .99);
+//  noise_decay_.clear();
+//  noise_decay_.resize(num_dimensions_, .99);
 
-  // noise is now recomputed dynamicaly
-  noise_stddev_.clear();
-  noise_stddev_.resize(num_dimensions_,
-                       PlanEnv->getDouble(PlanParam::trajOptimStdDev));
+//  // noise is now recomputed dynamicaly
+//  noise_stddev_.clear();
+//  noise_stddev_.resize(num_dimensions_,
+//                       PlanEnv->getDouble(PlanParam::trajOptimStdDev));
 
-  write_to_file_ = false;  // defaults are sometimes good!
-  use_cumulative_costs_ = false;
-  return true;
-}
+//  write_to_file_ = false;  // defaults are sometimes good!
+//  use_cumulative_costs_ = false;
+//  return true;
+//}
 
 bool PolicyImprovementLoop::readParameters() {
   // assert(stomp_motion_planner::read(node_handle_,
@@ -287,11 +289,13 @@ void PolicyImprovementLoop::parallelRollout(int r, int iteration_number) {
     rollout_control_costs_[r].row(d) = traj_evaluation->getControlCosts()[d];
 
   // get total smoothness cost
+  /*
   if (traj_evaluation->getUseTotalSmoothnessCost()) {
     rollout_total_control_costs_[r].first = true;
     rollout_total_control_costs_[r].second =
         traj_evaluation->getTotalSmoothnessCost();
   }
+  */
 
   policy_improvement_.setRolloutOutOfBounds(
       r, !traj_evaluation->getJointLimitViolationSuccess());
@@ -316,8 +320,11 @@ void PolicyImprovementLoop::executeRollout(int r, int iteration_number) {
                        false,
                        true);
 
+
     // get rollout dimensions control costs
     rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
+
+    /*
     for (int d = 0; d < num_dimensions_; d++)
       rollout_control_costs_[r].row(d) =
           optimizer->getMainCostComputer()->getControlCosts()[d];
@@ -328,6 +335,8 @@ void PolicyImprovementLoop::executeRollout(int r, int iteration_number) {
       rollout_total_control_costs_[r].second =
           optimizer->getMainCostComputer()->getTotalSmoothnessCost();
     }
+
+    */
 
     policy_improvement_.setRolloutOutOfBounds(
         r, !optimizer->getMainCostComputer()->getJointLimitViolationSuccess());
@@ -361,21 +370,18 @@ bool PolicyImprovementLoop::runSingleIteration(const int iteration_number) {
   }
 
   // compute appropriate noise values
-  std::vector<double> noise;
-  noise.resize(num_dimensions_);
+  std::vector<double> sigma;
+  sigma.resize(num_dimensions_);
+  Eigen::VectorXd scaling(num_dimensions_);
 
   const std::vector<Move3D::ChompDof>& dofs =
       static_pointer_cast<StompOptimizer>(task_)
           ->getPlanningGroup()
           ->chomp_dofs_;
 
-  for (int i = 0; i < num_dimensions_; ++i) {
-    // noise[i] = noise_stddev_[i] /* K_ * pow(noise_decay_[i],
-    // iteration_number-1)*/;
-
+  for (int d = 0; d < num_dimensions_; d++) {
+    scaling[d] = dofs[d].range_ / 6.;
     // 6. is for keeping the compatibility with old code
-    noise[i] =
-        (dofs[i].range_ / 6.) * PlanEnv->getDouble(PlanParam::trajOptimStdDev);
 
     // Becarful special case for the translational dofs of
     // T-RO biomech human
@@ -383,14 +389,21 @@ bool PolicyImprovementLoop::runSingleIteration(const int iteration_number) {
     //  noise[i] *= 0.001;
     // }
 
-    // cout << "noise_stddev_[" << i << "] = " << noise_stddev_[i] << endl;
-    // cout << "noise_stddev = " << noise[i] << endl;
+
+    sigma[d] = PlanEnv->getDouble(PlanParam::trajOptimStdDev) * scaling[d];
+
+    // cout << "sigma[" <<d << "] : " << sigma[d] << endl;
   }
+
+  // cout << "scaling : " << scaling.transpose() << endl;
+
+  // Set the scaling
+  policy_improvement_.setExplorationScaling(scaling);
 
   // get rollouts and execute them
   bool get_reused_ones = true;
   policy_improvement_.getRollouts(
-      rollouts_, noise, get_reused_ones, reused_rollouts_);
+      rollouts_, sigma, get_reused_ones, reused_rollouts_);
 
   // printRollouts();
 
@@ -482,11 +495,9 @@ bool PolicyImprovementLoop::runSingleIteration(const int iteration_number) {
   //        }
 
   // add the noiseless rollout into policy_improvement:
-  extra_rollout[num_extra_rollouts - 1] = parameters_;
-  extra_rollout_cost[num_extra_rollouts - 1] = tmp_rollout_cost_;
-  policy_improvement_.addExtraRollouts(extra_rollout, extra_rollout_cost);
-
-  // cout << "rollout_cost_ = " << tmp_rollout_cost_.sum() << endl;
+  // extra_rollout[num_extra_rollouts - 1] = parameters_;
+  // extra_rollout_cost[num_extra_rollouts - 1] = tmp_rollout_cost_;
+  // policy_improvement_.addExtraRollouts(extra_rollout, extra_rollout_cost);
 
   return true;
 }
@@ -513,9 +524,8 @@ void PolicyImprovementLoop::projectToConstraints(
 
   ik.solve(x_task_goal_);
   Move3D::confPtr_t q_cur = robot->getCurrentPos();
-  const std::vector<int> active_dofs = ik.getActiveDofs();
-  Eigen::VectorXd q_1 = q_end->getEigenVector(active_dofs);
-  Eigen::VectorXd q_2 = q_cur->getEigenVector(active_dofs);
+  Eigen::VectorXd q_1 = q_end->getEigenVector(ik.active_dofs());
+  Eigen::VectorXd q_2 = q_cur->getEigenVector(ik.active_dofs());
   Eigen::VectorXd dq = q_2 - q_1;
 
   // Get dq through J+

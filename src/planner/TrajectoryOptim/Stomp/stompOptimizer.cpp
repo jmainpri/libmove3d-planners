@@ -203,8 +203,8 @@ void StompOptimizer::initialize() {
   if (allow_end_configuration_motion_) {
     id_fixed_ = 1;
   }
-  full_trajectory_->setFixedId(id_fixed_);
-  group_trajectory_.setFixedId(id_fixed_);
+  full_trajectory_->setNbFixedPoints(id_fixed_);
+  group_trajectory_.setNbFixedPoints(id_fixed_);
 
   // init some variables:
   num_vars_free_ = group_trajectory_.getNumFreePoints();
@@ -636,6 +636,7 @@ void StompOptimizer::runDeformation(int nbIteration, int idRun) {
   // Print smoothness cost
   getSmoothnessCost();
   getGeneralCost();
+  getTerminalCost();
 
   // group_trajectory_.print();
 
@@ -848,13 +849,14 @@ void StompOptimizer::runDeformation(int nbIteration, int idRun) {
         if ((ENV.getBool(Env::drawTraj) ||
              PlanEnv->getBool(PlanParam::drawParallelTraj))) {
           printf(
-              "%3d, time: %3f, cost: %f (s=%f, c=%f, g=%f), move3d cost: %f\n",
+              "%3d, time: %3f, cost: %f (s=%f, c=%f, g=%f, t=%f), move3d cost: %f\n",
               iteration_,
               time_,
               cost,
               getSmoothnessCost(),
               getCollisionCost(),
               getGeneralCost(),
+              getTerminalCost(),
               move3d_cost);
         } else {
           printf("%3d, time: %3f, cost: %f\n", iteration_, time_, cost);
@@ -1258,6 +1260,7 @@ double StompOptimizer::getTrajectoryCost() {
   if (move3d_collision_space_ || use_external_collision_space_)
     cost += getCollisionCost();
   if (use_costspace_) cost += getGeneralCost();
+  cost += getTerminalCost();
   return cost;
 }
 
@@ -1375,6 +1378,12 @@ double StompOptimizer::getGeneralCost() {
   // << endl;
 
   return stomp_parameters_->getGeneralCostWeight() * general_cost;
+}
+
+
+double StompOptimizer::getTerminalCost()
+{
+  return compute_fk_main_->getTerimanlCost();
 }
 
 double StompOptimizer::getSmoothnessCost(bool save_to_file) {
@@ -1676,7 +1685,7 @@ bool StompOptimizer::execute(std::vector<Eigen::VectorXd>& parameters,
       parameters, costs, iteration_number, joint_limits, resample, is_rollout);
   group_trajectory_ = compute_fk_main_->getGroupTrajectory();
   updateFullTrajectory();
-  return  compute_fk_main_->getJointLimitViolationSuccess();
+  return compute_fk_main_->getJointLimitViolationSuccess();
 }
 
 void StompOptimizer::getTrajectoryCost(std::vector<double>& cost, double step) {
@@ -2354,6 +2363,7 @@ void StompOptimizer::initPolicy() {
                       group_trajectory_.getDuration(),
                       stomp_parameters_->getRidgeFactor(),
                       derivative_costs,
+                      PlanEnv->getBool(PlanParam::trajStompMoveEndConfig),
                       planning_group_);
 
   // initialize the policy trajectory

@@ -85,7 +85,7 @@ class CollisionSpace : public Move3D::ThreeDGrid {
   }
   std::vector<CollisionSpaceCell*> getFreeCells() const {
     std::vector<CollisionSpaceCell*> free_cells;
-    for (int i = 0; i < _cells.size(); i++) {
+    for (uint i = 0; i < _cells.size(); i++) {
       if (std::find(m_OccupationCells.begin(),
                     m_OccupationCells.end(),
                     static_cast<CollisionSpaceCell*>(_cells[i])) !=

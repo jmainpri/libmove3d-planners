@@ -173,15 +173,6 @@ costComputation::costComputation(
     }
   }
 
-  // Move the end configuration in the trajectory
-  id_fixed_ = 2;
-  allow_end_configuration_motion_ =
-      PlanEnv->getBool(PlanParam::trajStompMoveEndConfig);
-  if (allow_end_configuration_motion_) {
-    id_fixed_ = 1;
-  }
-  group_trajectory_.setFixedId(id_fixed_);
-
   // Initialize control costs
   multiple_smoothness_ = true;
 
@@ -203,7 +194,18 @@ costComputation::costComputation(
   ///--------------------------------------------------------------------------
   /// ADD A GOAL TO THE POLICY IMPROVEMENT LOOP
 
+  // Move the end configuration in the trajectory
+  id_fixed_ = 2;
+  allow_end_configuration_motion_ =
+      PlanEnv->getBool(PlanParam::trajStompMoveEndConfig);
+  if (allow_end_configuration_motion_) {
+    id_fixed_ = 1;
+  }
+  group_trajectory_.setNbFixedPoints(id_fixed_);
+
   project_last_config_ = PlanEnv->getBool(PlanParam::trajStompMoveEndConfig);
+
+  terminal_cost_ = 0.0;  // Terminal cost for the robot
 
   if (project_last_config_ && (planning_group_ != NULL)) {
     ratio_projected_ = 1.0;  // 1.0 = all along the trajectory
@@ -225,8 +227,13 @@ costComputation::costComputation(
 
   ///--------------------------------------------------------------------------
 
-  policy_ = policy;
+  // Get the policy pointer
+  policy_ = boost::static_pointer_cast<
+      stomp_motion_planner::CovariantTrajectoryPolicy,
+      stomp_motion_planner::Policy>(policy);
+
   policy_->getControlCosts(control_costs_);
+  policy_->getCovariances(inv_control_costs_);
   control_cost_weight_ = stomp_parameters_->getSmoothnessCostWeight();
 
   ///--------------------------------------------------------------------------
@@ -990,6 +997,24 @@ double costComputation::resampleParameters(
   return traj.cost();
 }
 
+double costComputation::terminalCost(ChompTrajectory& group_traj) const {
+  Eigen::VectorXd joint_array(num_joints_);
+  Move3D::confPtr_t q_end = robot_model_->getCurrentPos();
+
+  group_traj.getTrajectoryPointP3d(
+      group_traj.getFullTrajectoryIndex(free_vars_end_), joint_array);
+  getMove3DConfiguration(joint_array, *q_end);
+
+  robot_model_->setAndUpdate(*q_end);
+
+  double squared_norm =
+      (x_task_goal_ - Eigen::VectorXd(eef_->getVectorPos().head(
+                          x_task_goal_.size()))).squaredNorm();
+
+  const double coeff = PlanEnv->getDouble(PlanParam::trajOptimTermWeight);
+  return coeff * squared_norm;
+}
+
 bool costComputation::projectToConstraints(ChompTrajectory& group_traj) const {
   Eigen::VectorXd joint_array(num_joints_);
   Move3D::confPtr_t q_end = robot_model_->getCurrentPos();
@@ -1009,9 +1034,8 @@ bool costComputation::projectToConstraints(ChompTrajectory& group_traj) const {
 
   if (solved) {
     Move3D::confPtr_t q_cur = robot_model_->getCurrentPos();
-    const std::vector<int> active_dofs = ik.getActiveDofs();
-    Eigen::VectorXd q_1 = q_end->getEigenVector(active_dofs);
-    Eigen::VectorXd q_2 = q_cur->getEigenVector(active_dofs);
+    Eigen::VectorXd q_1 = q_end->getEigenVector(ik.active_dofs());
+    Eigen::VectorXd q_2 = q_cur->getEigenVector(ik.active_dofs());
     Eigen::VectorXd dq = q_2 - q_1;
 
     // Get dq through J+
@@ -1043,6 +1067,111 @@ bool costComputation::projectToConstraints(ChompTrajectory& group_traj) const {
   return solved;
 }
 
+bool costComputation::projectToConstraintWithMetric(
+    ChompTrajectory& group_traj) const {
+  // Get the current robot configuration and set the to the end configuration
+  // of the trajectory
+  Move3D::confPtr_t q_end = robot_model_->getCurrentPos();
+  Eigen::VectorXd joint_array(num_joints_);
+  group_traj.getTrajectoryPointP3d(
+      group_traj.getFullTrajectoryIndex(free_vars_end_), joint_array);
+  getMove3DConfiguration(joint_array, *q_end);
+
+  Eigen::MatrixXd xi = group_traj.getAllFreeTrajectoryBlock();
+  cout << "-------------------------" << endl;
+  cout << "num free points : " << group_traj.getNumFreePoints() << endl;
+  cout << "fixed_id : " << group_traj.getNbFixedPoints() << endl;
+  cout << "xi.rows() : " << xi.rows() << endl;
+  cout << "xi.cols() : " << xi.cols() << endl;
+
+  cout << "num_joints_ : " << num_joints_ << endl;
+  cout << "num_vars_free_ : " << num_vars_free_ << endl;
+
+  cout << "inv_control_costs_[0].rows() : " << inv_control_costs_[0].rows()
+       << endl;
+  cout << "inv_control_costs_[0].cols() : " << inv_control_costs_[0].cols()
+       << endl;
+
+  // Get the active dofs and active joints
+  std::vector<int> active_dofs = planning_group_->getActiveDofs();
+  std::vector<Move3D::Joint*> active_joints =
+      planning_group_->getActiveJoints();
+
+  // Set the dimensionality of the task space
+  bool with_rotation = x_task_goal_.size() == 6;
+  bool with_height = x_task_goal_.size() == 3;
+
+  bool solved = false;
+  int nb_steps = 100;
+
+  double max_distance_to_target = 0.01;  // 1 cm
+
+  for (int i = 0; i < nb_steps; i++)  // IK LOOP
+  {
+    Eigen::VectorXd x_error =
+        x_task_goal_ -
+        (with_rotation
+             ? eef_->getXYZPose()
+             : Eigen::VectorXd(eef_->getVectorPos())).head(x_task_goal_.size());
+
+    double dist = x_error.norm();
+    cout << "dist : " << dist << endl;
+    if (dist < max_distance_to_target) {
+      cout << "success (" << i << "), diff = " << dist << endl;
+      solved = true;
+      break;
+    }
+
+    // Get Jacobian
+    Eigen::MatrixXd J = robot_model_->getJacobian(
+        active_joints, eef_, with_rotation, with_height);
+    Eigen::MatrixXd Jt = J.transpose();
+
+    cout << "J : " << J << endl;
+
+    Eigen::MatrixXd xi_new = xi;
+    for (int d = 0; d < num_joints_; d++) {
+      const Eigen::MatrixXd Rinv = inv_control_costs_[d];
+
+      // cout << "Rinv : " << Rinv << endl;
+      // TODO write the model for projecting the samples correctly
+      cout << "J * Rinv * Jt : " << J* Rinv* Jt << endl;
+      Eigen::MatrixXd Reg(Eigen::MatrixXd::Zero(J.rows(), J.rows()));
+      Reg.diagonal() += 0.0001 * Eigen::VectorXd::Ones(Reg.diagonal().size());
+      Eigen::MatrixXd M = J * Rinv * Jt + Reg;
+
+      Eigen::MatrixXd projector = Rinv * Jt * (M).inverse();
+
+      cout << "projector : " << projector.transpose() << endl;
+      cout << "projector.rows() : " << projector.rows() << endl;
+      cout << "projector.cols() : " << projector.cols() << endl;
+
+      xi_new = xi - projector * (J * xi - x_error);
+
+      cout << "xi_new.rows() : " << xi_new.rows() << endl;
+      cout << "xi_new.cols() : " << xi_new.cols() << endl;
+
+      cout << "xi.rows() : " << xi.rows() << endl;
+      cout << "xi.cols() : " << xi.cols() << endl;
+
+      Eigen::VectorXd q = xi_new.row(num_vars_free_ - 1);
+      cout << "q_new : " << q.transpose() << endl;
+
+      exit(1);
+    }
+
+    Eigen::VectorXd q_new = xi_new.row(num_vars_free_ - 1);
+    cout << "q_new : " << q_new.transpose() << endl;
+    cout << "xi : " << xi.row(num_vars_free_ - 1) << endl;
+    q_end->setFromEigenVector(q_new, active_dofs);
+    robot_model_->setAndUpdate(*q_end);
+  }
+
+  // cout << "ik solved : " << solved << endl;
+
+  return solved;
+}
+
 bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters,
                               Eigen::VectorXd& costs,
                               const int iteration_number,
@@ -1065,17 +1194,27 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters,
   // respect joint limits:
   //    succeded_joint_limits_ = true;
   succeded_joint_limits_ = handleJointLimitsQuadProg(group_trajectory_);
-  //    succeded_joint_limits_ = handleJointLimits( group_trajectory_ );
+  //  succeded_joint_limits_ = handleJointLimits(group_trajectory_);
 
   // if( !succeded_joint_limits_ )
   // {
   //  cout << "Trajectory out of joint limits " << endl;
   //  }
 
+  terminal_cost_ = 0.0;
   bool ik_solved = false;
   if (project_last_config_ && succeded_joint_limits_) {
     ik_solved = projectToConstraints(group_trajectory_);
+
+    // ik_solved = true;
+    // terminal_cost_ = terminalCost(group_trajectory_);
+
+    // Right projection the sample is projected to the goal set
+    // by iterative projections
+    // projectToConstraintWithMetric(group_trajectory_);
+
     succeded_joint_limits_ = ik_solved;
+    // cout << "terminal cost : " << terminal_cost_ << endl;
   }
 
   // Fix joint limits
@@ -1090,7 +1229,7 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters,
   // succeded_joint_limits_ = true;
 
   // copy the group_trajectory_ parameters:
-  if (joint_limits || ( project_last_config_ && ik_solved )) {
+  if (joint_limits || (project_last_config_ && ik_solved)) {
     // cout << "return with joint limits" << endl;
     // cout << "Change rollout" << endl;
     for (int d = 0; d < num_joints_; ++d) {
@@ -1167,10 +1306,12 @@ bool costComputation::getCost(std::vector<Eigen::VectorXd>& parameters,
 
     // Second term added from Mrinal's thesis
     // to account for the smoothness criteria
-    cost += (total_smoothness_cost_ / (2 * double(num_vars_free_)));
-    // cout << "total_smoothness_cost_ : " << total_smoothness_cost_ << endl;
-    //        cout << dt_[i] << " ";
+    cost += (total_smoothness_cost_ / double(num_vars_free_));
 
+    // Add the terminal cost
+    cost += (terminal_cost_ / double(num_vars_free_));
+
+    // Add the cost to the pertime variable cost
     costs(i - free_vars_start_) = cost;
 
     // cout << "state_collision_cost : " << state_collision_cost << endl;

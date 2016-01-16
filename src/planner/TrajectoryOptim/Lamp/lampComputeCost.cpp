@@ -144,7 +144,7 @@ LampCostComputation::LampCostComputation(
   }
 
   id_fixed_ = 0;
-  //    group_trajectory_.setFixedId( id_fixed_ );
+  //    group_trajectory_.setNbFixedPoints( id_fixed_ );
 
   // Initialize control costs
   multiple_smoothness_ = true;
@@ -879,9 +879,8 @@ void LampCostComputation::projectToConstraints(
 
   ik.solve(x_task_goal_);
   Move3D::confPtr_t q_cur = robot_model_->getCurrentPos();
-  const std::vector<int> active_dofs = ik.getActiveDofs();
-  Eigen::VectorXd q_1 = q_end->getEigenVector(active_dofs);
-  Eigen::VectorXd q_2 = q_cur->getEigenVector(active_dofs);
+  Eigen::VectorXd q_1 = q_end->getEigenVector(ik.active_dofs());
+  Eigen::VectorXd q_2 = q_cur->getEigenVector(ik.active_dofs());
   Eigen::VectorXd dq = q_2 - q_1;
 
   // Get dq through J+

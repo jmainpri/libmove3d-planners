@@ -103,8 +103,7 @@ void move3d_save_matrix_to_csv_file(const Eigen::MatrixXd& matrix,
 
       // Warning introduction of potential bug
       // TODO make sure it works in a test file
-      if (j < matrix.cols() - 1)
-        s << ",";
+      if (j < matrix.cols() - 1) s << ",";
     }
     s << endl;
   }
@@ -446,8 +445,7 @@ void move3d_save_context_to_csv_file(
   s.close();
 }
 
-Eigen::VectorXd moved_get_vector( const std::vector<std::string>& config )
-{
+Eigen::VectorXd moved_get_vector(const std::vector<std::string>& config) {
   Eigen::VectorXd tmp(config.size());
 
   for (int i = 0; i < int(config.size()); i++)

@@ -685,7 +685,9 @@ Joint* Robot::getIthActiveDoFJoint(unsigned int ithActiveDoF,
 }
 
 /**
- * Get Jacobian
+ * Get Jacobian matrix has 
+ * rows : task space dimension (2, 3 or 6)
+ * cols : active dofs
  */
 Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints,
                                    Joint* eef,
@@ -738,41 +740,44 @@ Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints,
       J(1, id) = z(1);
       if (with_height) J(2, id) = z(2);
     }
-    //        if( active_joints[j]->getP3dJointStruct()->type == P3D_FREEFLYER
-    //        ){ // TODO
-    //            J(0,id) = 1;
-    //            J(1,id) = 0;
-    //            J(2,id) = 0;
-    //            if( with_rotations ){
-    //                J(3,id)=0;
-    //                J(4,id)=0;  /* Rotation */
-    //                J(5,id)=0;
-    //                id++;
-    //            }
-    //            J(0,id+1) = 0;
-    //            J(1,id+1) = 1;
-    //            J(2,id+1) = 0;
-    //            if( with_rotations ){
-    //                J(3,id+1)=0;
-    //                J(4,id+1)=0;  /* Rotation */
-    //                J(5,id+1)=0;
-    //                id++;
-    //            }
-    //            J(0,id+2) = 0;
-    //            J(1,id+2) = 0;
-    //            J(2,id+2) = 1;
-    //            if( with_rotations ){
-    //                J(3,id)=0;
-    //                J(4,id)=0;  /* Rotation */
-    //                J(5,id)=0;
-    //                id++;
-    //            }
-    //            // ....
-    //        }
+
+    // TODO for the case of free flyer joints .... This one only
+    // handles translations and I am not sure it is even correct
+    if (active_joints[j]->getP3dJointStruct()->type == P3D_FREEFLYER) {
+      J(0, id) = 1;
+      J(1, id) = 0;
+      J(2, id) = 0;
+      if (with_rotations) {
+        J(3, id) = 0;
+        J(4, id) = 0; /* Rotation */
+        J(5, id) = 0;
+        id++;
+      }
+      J(0, id + 1) = 0;
+      J(1, id + 1) = 1;
+      J(2, id + 1) = 0;
+      if (with_rotations) {
+        J(3, id + 1) = 0;
+        J(4, id + 1) = 0; /* Rotation */
+        J(5, id + 1) = 0;
+        id++;
+      }
+      J(0, id + 2) = 0;
+      J(1, id + 2) = 0;
+      J(2, id + 2) = 1;
+      if (with_rotations) {
+        J(3, id) = 0;
+        J(4, id) = 0; /* Rotation */
+        J(5, id) = 0;
+        id++;
+      }
+      // ....
+    }
+
     id++;
   }
 
-  //    cout << "J :  " << endl << J << endl;
+  // cout << "J :  " << endl << J << endl;
 
   return J;
 }

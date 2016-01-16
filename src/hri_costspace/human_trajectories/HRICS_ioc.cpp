@@ -69,10 +69,10 @@ using std::cout;
 using std::endl;
 using std::cin;
 
-// -------------------------------------------------------------
-// -------------------------------------------------------------
-// -------------------------------------------------------------
-// -------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 IocTrajectory::IocTrajectory(int nb_joints, int nb_var, double discretization) {
   //    cout << "nb_joints : " << nb_joints << endl;
@@ -97,33 +97,39 @@ IocTrajectory::IocTrajectory(int nb_joints, int nb_var, double discretization) {
   out_of_bounds_ = false;
 }
 
+//! Returns the move3d configuration at the waypoint instant
+Move3D::confPtr_t IocTrajectory::getMove3DConfig(
+    int waypoint,
+    Move3D::Robot* rob,
+    const std::vector<Move3D::ChompDof>& dofs) const {
+  confPtr_t q = rob->getCurrentPos();
+  for (size_t i = 0; i < dofs.size(); ++i) {
+    (*q)[dofs[i].move3d_dof_index_] = parameters_[i][waypoint];
+  }
+  return q;
+}
+
 Move3D::Trajectory IocTrajectory::getMove3DTrajectory(
-    const ChompPlanningGroup* p_g) const {
-  Robot* rob = p_g->robot_;
+    const ChompPlanningGroup* planning_group) const {
+  Move3D::Robot* rob = planning_group->robot_;
 
   if (parameters_.empty()) {
     cout << "empty parameters" << endl;
     return Move3D::Trajectory(rob);
   }
 
-  const std::vector<ChompDof>& joints = p_g->chomp_dofs_;
-
   // Create move3d trajectory
   Move3D::Trajectory T(rob);
-
   if (discretization_ != 0.0) {
     T.setUseTimeParameter(true);
     T.setUseConstantTime(true);
     T.setDeltaTime(discretization_);
   }
 
-  for (int j = 0; j < parameters_[0].size(); ++j) {
-    confPtr_t q = rob->getCurrentPos();
+  const std::vector<ChompDof>& dofs = planning_group->chomp_dofs_;
 
-    for (size_t i = 0; i < parameters_.size(); ++i) {
-      (*q)[joints[i].move3d_dof_index_] = parameters_[i][j];
-    }
-
+  for (int i = 0; i < parameters_[0].size(); i++) {
+    Move3D::confPtr_t q = getMove3DConfig(i, rob, dofs);
     T.push_back(q->copy());
   }
 
@@ -189,10 +195,10 @@ void IocTrajectory::setSraightLineTrajectory() {
   }
 }
 
-// -------------------------------------------------------------
-// -------------------------------------------------------------
-// -------------------------------------------------------------
-// -------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 IocSampler::IocSampler() {}
 
@@ -200,8 +206,19 @@ IocSampler::IocSampler(int num_var_free, int num_joints)
     : num_vars_free_(num_var_free), num_joints_(num_joints) {}
 
 void IocSampler::initialize() {
+  if (num_vars_free_ == 0) {
+    return;
+  }
+
   initPolicy();
+
   policy_.getControlCosts(control_costs_);
+  policy_.getCovariances(convariances_);
+
+  move3d_save_matrix_to_csv_file(control_costs_[0].inverse(),
+                                 "ioc_control_cost.txt");
+  move3d_save_matrix_to_csv_file(convariances_[0], "ioc_covariance.txt");
+
   preAllocateMultivariateGaussianSampler();
   tmp_noise_ = Eigen::VectorXd::Zero(num_vars_free_);
 }
@@ -212,20 +229,18 @@ void IocSampler::initPolicy() {
   std::vector<double> derivative_costs(3);
   derivative_costs[0] = 0.0;  // velocity
   derivative_costs[1] = 0.0;  // acceleration
-  derivative_costs[2] = 1.0;  // smoothness
+  derivative_costs[2] = 1.0;  // jerk
 
   // initializes the policy
-  policy_.initialize(num_vars_free_, num_joints_, 1.0, 0.0, derivative_costs);
+  policy_.initialize(
+      num_vars_free_, num_joints_, 1.0, 0.0, derivative_costs, false);
 }
 
 bool IocSampler::preAllocateMultivariateGaussianSampler() {
   // invert the control costs, initialize noise generators:
-  inv_control_costs_.clear();
   noise_generators_.clear();
 
   for (int j = 0; j < num_joints_; ++j) {
-    inv_control_costs_.push_back(control_costs_[j].inverse());
-
     // move3d_save_matrix_to_file( inv_control_costs_[0],
     // "../matlab/invcost_matrix.txt" );
 
@@ -235,7 +250,7 @@ bool IocSampler::preAllocateMultivariateGaussianSampler() {
     // TODO see of the noise generator needs to be
     // var free or var all
     MultivariateGaussian mvg(Eigen::VectorXd::Zero(num_vars_free_),
-                             inv_control_costs_[j]);
+                             convariances_[j]);
     noise_generators_.push_back(mvg);
   }
 
@@ -244,18 +259,46 @@ bool IocSampler::preAllocateMultivariateGaussianSampler() {
 
 Eigen::MatrixXd IocSampler::sample(double std_dev) {
   Eigen::MatrixXd traj(num_joints_, num_vars_free_);
-
   for (int i = 0; i < num_joints_; i++) {
     noise_generators_[i].sample(tmp_noise_);
-    traj.row(i) = std_dev * tmp_noise_;
+    traj.row(i) = std_dev * (dofs_bounds_[i].range_ / 3.) * tmp_noise_;
   }
   return traj;
 }
 
-// -------------------------------------------------------------
-// -------------------------------------------------------------
-// -------------------------------------------------------------
-// -------------------------------------------------------------
+IocIk IocSampler::sample_ik(double std_dev) {
+  IocIk q(num_joints_);
+  for (int i = 0; i < q.noise_.size(); ++i) {
+    q.noise_[i] = p3d_gaussian_random2(0.0, std_dev * std_dev);
+  }
+  return q;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
+IocSamplerGoalSet::IocSamplerGoalSet(int num_var_free, int num_joints)
+    : IocSampler(num_var_free, num_joints) {}
+
+void IocSamplerGoalSet::initPolicy() {
+  policy_.setPrintDebug(false);
+
+  std::vector<double> derivative_costs(3);
+  derivative_costs[0] = 0.0;  // velocity
+  derivative_costs[1] = 0.0;  // acceleration
+  derivative_costs[2] = 1.0;  // jerk
+
+  // initializes the policy
+  policy_.initialize(
+      num_vars_free_, num_joints_, 1.0, 0.0, derivative_costs, true);
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 IocIk::IocIk(int nb_joints) {
   nominal_parameters_ = Eigen::VectorXd::Zero(nb_joints);
@@ -276,43 +319,74 @@ Move3D::confPtr_t IocIk::getMove3DConfig(
   return q;
 }
 
-// -------------------------------------------------------------
-// -------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-IocIkSampler::IocIkSampler() {}
-
-IocIkSampler::IocIkSampler(int nb_joints) : nb_joints_(nb_joints) {
+IocSamplerIk::IocSamplerIk(int num_joints) : IocSampler(0, num_joints) {
   //    cout << "IocIkSampler -> nb_joints_ : " << nb_joints_ << endl;
 }
 
-IocIk IocIkSampler::sample(double std_dev) {
-  IocIk q(nb_joints_);
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-  //    cout << "nb_joints_ : " << nb_joints_ << endl;
-
-  for (int i = 0; i < q.noise_.size(); ++i)
-    q.noise_[i] = p3d_gaussian_random2(0.0, std_dev * std_dev);
-
-  return q;
-}
-
-// -------------------------------------------------------------
-// -------------------------------------------------------------
-// -------------------------------------------------------------
-// -------------------------------------------------------------
-
-Ioc::Ioc(int num_vars, const ChompPlanningGroup* planning_group)
+Ioc::Ioc(int num_vars,
+         const ChompPlanningGroup* planning_group,
+         const GoalsetData_t& goalset_data)
     : planning_group_(planning_group),
+      goalset_data_(goalset_data),
       num_vars_(num_vars),
-      num_joints_(planning_group->num_dofs_),
-      sampler_(num_vars, num_joints_),
-      sampler_ik_(num_joints_) {
+      num_joints_(planning_group->num_dofs_) {
   demonstrations_.clear();
   noise_stddev_ = HriEnv->getDouble(HricsParam::ioc_sample_std_dev);
   noise_stddev_ik_ = HriEnv->getDouble(HricsParam::ioc_sample_std_dev_ik);
-  sampler_.initialize();
+
+  cout << "sampler goal set : " << goalset_data_.sample_goal_set_ << endl;
+  if (goalset_data_.sample_goal_set_) {
+    sampler_ = MOVE3D_PTR_NAMESPACE::shared_ptr<IocSamplerGoalSet>(
+        new IocSamplerGoalSet(num_vars_, num_joints_));
+  } else {
+    sampler_ = MOVE3D_PTR_NAMESPACE::shared_ptr<IocSampler>(
+        new IocSampler(num_vars_, num_joints_));
+  }
+
+  //----------------------------------------------------------------------------
+  // Set dof bounds
+  std::vector<IocSampler::dof_bounds> dof_bounds(planning_group->num_dofs_);
+  for (int i = 0; i < planning_group->num_dofs_; i++) {
+    dof_bounds[i].circular_ = planning_group->chomp_dofs_[i].is_circular_;
+    dof_bounds[i].max_ = planning_group->chomp_dofs_[i].joint_limit_max_;
+    dof_bounds[i].min_ = planning_group->chomp_dofs_[i].joint_limit_min_;
+    dof_bounds[i].range_ = planning_group->chomp_dofs_[i].range_;
+  }
+
+  sampler_->set_joint_bounds(dof_bounds);
+  sampler_->initialize();
 
   cout << "Ioc -> nb_joints_ : " << num_joints_ << endl;
+
+  //----------------------------------------------------------------------------
+  // Joint limits
+  joint_limits_computers_.resize(num_joints_);
+
+  for (int joint = 0; joint < num_joints_; joint++) {
+    double max_limit =
+        planning_group_->chomp_dofs_[joint].joint_limit_max_ - 1e-5;
+    double min_limit =
+        planning_group_->chomp_dofs_[joint].joint_limit_min_ + 1e-5;
+
+    joint_limits_computers_[joint].dynamics_ = sampler_->control_costs()[joint];
+    joint_limits_computers_[joint].upper_ =
+        max_limit * Eigen::VectorXd::Ones(num_vars_);
+    joint_limits_computers_[joint].lower_ =
+        min_limit * Eigen::VectorXd::Ones(num_vars_);
+
+    if (!joint_limits_computers_[joint].initialize())
+
+      cout << "ERROR could not initialize joint limits in "
+           << __PRETTY_FUNCTION__ << endl;
+  }
 }
 
 bool Ioc::addDemonstration(const Eigen::MatrixXd& demo, double discretization) {
@@ -478,6 +552,83 @@ bool Ioc::jointLimits(IocIk& q) const {
   return is_in_joint_limits;
 }
 
+bool Ioc::checkJointLimits(const IocTrajectory& traj) const {
+  bool succes_joint_limits = true;
+
+  for (int joint = 0; joint < num_joints_; joint++) {
+    if (!planning_group_->chomp_dofs_[joint].has_joint_limits_) continue;
+
+    double joint_max = planning_group_->chomp_dofs_[joint].joint_limit_max_;
+    double joint_min = planning_group_->chomp_dofs_[joint].joint_limit_min_;
+
+    double max_abs_violation = 1e-6;
+    double violate_max_with = 0;
+    double violate_min_with = 0;
+    double absolute_amount = 0.0;
+
+    for (int i = 0; i < num_vars_; i++) {
+      if (traj(joint, i) > joint_max) {
+        // cout << "value is : " << traj(joint, i) << " , max is : " <<
+        // joint_max << endl;
+        absolute_amount = std::fabs(joint_max - traj(joint, i));
+
+        if (absolute_amount > violate_max_with) {
+          violate_max_with = absolute_amount;
+        }
+      } else if (traj(joint, i) < joint_min) {
+        // cout << "value is : " << traj(joint, i) << " , min is : " <<
+        // joint_min << endl;
+        absolute_amount = std::fabs(joint_min - traj(joint, i));
+
+        if (absolute_amount > violate_min_with) {
+          violate_min_with = absolute_amount;
+        }
+      }
+
+      if (absolute_amount > max_abs_violation) {
+        //        cout << "joint is out of limits : "
+        //             << planning_group_->chomp_dofs_[joint].joint_name_ <<
+        //             endl;
+        //        cout << "value is : " << traj(joint, i);
+        //        cout << " , min is : " << joint_min;
+        //        cout << " , max is : " << joint_max << endl;
+        //        cout << "absolute_amount : " << absolute_amount;
+        //        cout << " , max_abs_violation : " << max_abs_violation;
+        //        cout << endl;
+
+        max_abs_violation = absolute_amount;
+        succes_joint_limits = false;
+
+        break;
+      }
+    }
+
+    if (!succes_joint_limits) return false;
+  }
+
+  return true;
+}
+
+bool Ioc::jointLimitsQuadProg(IocTrajectory& traj) const {
+  for (int joint = 0; joint < num_joints_; joint++) {
+    if (!planning_group_->chomp_dofs_[joint].has_joint_limits_) {
+      continue;
+    }
+
+    double cost =
+        joint_limits_computers_[joint].project(traj.parameters_[joint]);
+    if (cost == std::numeric_limits<double>::infinity()) {
+      cout << "joint limits did not converge" << endl;
+    }
+  }
+
+  if (checkJointLimits(traj)) {
+    return true;
+  }
+
+  return false;
+}
+
 //! returns true if in joint limits
 bool Ioc::jointLimits(IocTrajectory& traj) const {
   bool is_in_joint_limits = true;
@@ -529,11 +680,10 @@ bool Ioc::jointLimits(IocTrajectory& traj) const {
 
       for (int i = 0; i < num_vars_; i++) {
         if (traj.parameters_[j][i] < j_min || traj.parameters_[j][i] > j_max) {
-          // cout << "not in limits, name : "
-          // << planning_group_->chomp_dofs_[j].joint_name_ << endl;
-          //  cout << j << " : upper : "
-          // << j_max << ", lower : " << j_min
-          // << ", value : " << traj.parameters_[j][i] << endl;
+          cout << "not in limits, name : "
+               << planning_group_->chomp_dofs_[j].joint_name_ << endl;
+          cout << j << " : upper : " << j_max << ", lower : " << j_min
+               << ", value : " << traj.parameters_[j][i] << endl;
 
           if (traj.parameters_[j][i] < j_min)
             traj.parameters_[j][i] = j_min + 1e-6;
@@ -553,11 +703,6 @@ bool Ioc::jointLimits(IocTrajectory& traj) const {
       cout << "joint " << planning_group_->chomp_dofs_[j].joint_name_
            << " not in limit" << endl;
     }
-
-    // Set the start and end values constant
-    // WARNING USED TO BE START AND END
-    traj.parameters_[j].head(1) = traj.nominal_parameters_[j].head(1);
-    traj.parameters_[j].tail(1) = traj.nominal_parameters_[j].tail(1);
   }
 
   //    cout << __PRETTY_FUNCTION__ << endl;
@@ -565,46 +710,6 @@ bool Ioc::jointLimits(IocTrajectory& traj) const {
 
   return is_in_joint_limits;
 }
-
-// void Ioc::pureRandomSampling( int nb_samples )
-//{
-//    int nb_demos = getNbOfDemonstrations();
-
-//    samples_.resize( nb_demos );
-
-//    for (int d=0; d<nb_demos; ++d)
-//    {
-//        Move3D::Trajectory demo = demonstrations_[d].getMove3DTrajectory(
-//        planning_group_ );
-
-//        confPtr_t q_init = demo.getBegin();
-//        confPtr_t q_goal = demo.getEnd();
-
-//        samples_[d].resize( nb_samples );
-
-//        for (int ns=0; ns<int(samples_[d].size()); ++ns )
-//        {
-//            samples_[d][ns] = IocTrajectory( num_joints_, num_vars_ );
-
-//            std::vector<Configuration> configs;
-
-//            for (int k=0; k<int(samples_[d].size()); ++k )
-//            {
-//                configs.push_back( planning_group_->robot_->shoot() );
-//            }
-
-//            for (int ns=0; ns<int(samples_[d].size()); ++ns )
-//            {
-//                configs.push_back( planning_group_->robot_->shoot() );
-//            }
-
-//            for (int ns=0; ns<int(samples_[d].size()); ++ns )
-//            {
-
-//            }
-//        }
-//    }
-//}
 
 bool Ioc::isTrajectoryValid(const IocTrajectory& traj,
                             bool relax_collision_check) {
@@ -628,9 +733,10 @@ bool Ioc::isTrajectoryValid(const IocTrajectory& traj,
   for (int i = 0; i < path.getNbOfViaPoints(); i++) {
     robot->setAndUpdate(*path[i]);
     if (robot->isInCollisionWithOthers(others)) {
-      if (path[i]->isOutOfBounds()) {
-        cout << "Configuration invalid : out of bounds !!!" << endl;
+      if (path[i]->isOutOfBounds(true)) {
+        cout << "configuration invalid : out of bounds !!!" << endl;
       }
+      // cout << "collision with other robot" << endl;
       return false;
     }
   }
@@ -698,20 +804,77 @@ bool Ioc::projectConfiguration(IocIk& q, int d) {
   active_joints.erase(active_joints.begin());  // Remove Free Flyer
 
   // Get task pose
-  Move3D::Joint* eef = robot->getJoint("rPalm");
   robot->setAndUpdate(*q_demo);
-  Eigen::VectorXd xdes = eef->getXYZPose();
+  Eigen::VectorXd xdes = goalset_data_.eef_->getXYZPose();
 
   // Perform General IK
   robot->setAndUpdate(*q_proj);
   Move3D::GeneralIK ik(robot);
-  ik.initialize(active_joints, eef);
+  ik.initialize(active_joints, goalset_data_.eef_);
   bool succeed = ik.solve(xdes);
 
   // Retreive configuration
   q.parameters_ =
       robot->getCurrentPos()->getEigenVector(planning_group_->getActiveDofs());
   return succeed;
+}
+
+bool Ioc::projectToGolset(IocTrajectory& traj) const {
+  // cout << "x_task_goal_.size() : " << x_task_goal_.size() << endl;
+  Move3D::confPtr_t q_end = traj.getMove3DConfig(traj.last_waypoint(),
+                                                 planning_group_->robot_,
+                                                 planning_group_->chomp_dofs_);
+
+  //  cout << "planning_group_->chomp_dofs_.size() : "
+  //       << planning_group_->chomp_dofs_.size() << endl;
+  //  cout << "planning_group_->getActiveJoints().size() : "
+  //       << planning_group_->getActiveJoints().size() << endl;
+
+  planning_group_->robot_->setAndUpdate(*q_end);
+
+  // Solve IK from q_end
+  Move3D::GeneralIK ik(planning_group_->robot_);
+  ik.initialize(planning_group_->getActiveJoints(), goalset_data_.eef_);
+
+  //  cout << "ik.active_dofs().size() : " << ik.active_dofs().size() << endl;
+
+  bool solved = ik.solve(goalset_data_.x_task_goal_);
+  if (solved) {
+    Move3D::confPtr_t q_cur = planning_group_->robot_->getCurrentPos();
+    Eigen::VectorXd q_1 = q_end->getEigenVector(ik.active_dofs());
+    Eigen::VectorXd q_2 = q_cur->getEigenVector(ik.active_dofs());
+    Eigen::VectorXd dq = q_2 - q_1;
+
+    // Get the dq_move3d because the active dofs might not be
+    // the same for the IK than for the IOC because GeneralIK does not
+    // handle all types of joints (P3D_FREEFLYER)
+    Move3D::confPtr_t dq_move3d(
+        new Move3D::Configuration(planning_group_->robot_));
+    for (int i = 0; i < dq.size(); ++i) {
+      (*dq_move3d)[ik.active_dofs()[i]] = dq[i];
+    }
+
+    // cout << "dq : " << dq.transpose() << endl;
+
+    int start = double(1. - goalset_data_.ratio_projected_) * num_vars_;
+    double alpha = 0.0;
+    double delta = 1.0 / double(num_vars_ - start);
+
+    const std::vector<ChompDof>& dofs = planning_group_->chomp_dofs_;
+
+    for (int i = start; i < num_vars_; i++) {
+      for (int joint = 0; joint < num_joints_; joint++) {
+        traj(joint, i) += std::pow(alpha, goalset_data_.strength_) *
+                          (*dq_move3d)[dofs[joint].move3d_dof_index_];
+      }
+
+      alpha += delta;
+    }
+  }
+
+  // cout << "ik solved : " << solved << endl;
+
+  return solved;
 }
 
 int Ioc::generateIKSamples(int nb_samples,
@@ -748,7 +911,7 @@ int Ioc::generateIKSamples(int nb_samples,
       int nb_failed = 0;
       do {
         // Sample noisy ik
-        samples_ik_[d][ns] = sampler_ik_.sample(noise_stddev_ik_);
+        samples_ik_[d][ns] = sampler_->sample_ik(noise_stddev_ik_);
 
         // Change to generate samples around demonstration
         if (HriEnv->getBool(HricsParam::ioc_sample_around_demo))
@@ -821,7 +984,7 @@ int Ioc::generateDemoSamples(int demo_id,
 
     do {
       // Sample noisy trajectory
-      Eigen::MatrixXd noisy_traj = sampler_.sample(noise_stddev_);
+      Eigen::MatrixXd noisy_traj = sampler_->sample(noise_stddev_);
 
       for (int j = 0; j < num_joints_; ++j) {
         // Change to generate samples around demonstration
@@ -833,6 +996,9 @@ int Ioc::generateDemoSamples(int demo_id,
               demonstrations_[demo_id].straight_line_[j];
         // TODO why commented
 
+        // cout << std::scientific << "noisy traj : " << noisy_traj.row(j) <<
+        // endl;
+
         samples_[demo_id][ns]->noise_[j] = noisy_traj.row(j);
 
         samples_[demo_id][ns]->parameters_[j] =
@@ -841,7 +1007,31 @@ int Ioc::generateDemoSamples(int demo_id,
         //.cwiseProduct(samples_[d][ns].total_costs_[j]);
       }
 
-      is_valid = jointLimits(*samples_[demo_id][ns]);
+      // Check the joint limits and modify the noise to fit
+      // TODO change by a SQP joint limit projection
+      // is_valid = jointLimits(*samples_[demo_id][ns]);
+      is_valid = jointLimitsQuadProg(*samples_[demo_id][ns]);
+
+      // Project the configuration to the goal set region defined by the
+      // task space position of the end-effector
+      if (goalset_data_.sample_goal_set_ && is_valid ) {
+        Move3D::confPtr_t q_end = demonstrations_[demo_id].getMove3DConfig(
+            demonstrations_[demo_id].last_waypoint(),
+            planning_group_->robot_,
+            planning_group_->chomp_dofs_);
+        planning_group_->robot_->setAndUpdate(*q_end);
+        goalset_data_.x_task_goal_ = goalset_data_.eef_->getVectorPos().head(3);
+        // cout << goalset_data_ << endl;
+        is_valid = projectToGolset(*samples_[demo_id][ns]);
+      }
+
+      // Set the start and end values constant
+      for (int j = 0; j < num_joints_; ++j) {
+        // WARNING USED TO BE START AND END
+        samples_[demo_id][ns]->parameters_[j].head(1) =
+            samples_[demo_id][ns]->nominal_parameters_[j].head(1);
+        // traj.parameters_[j].tail(1) = traj.nominal_parameters_[j].tail(1);
+      }
 
       if (check_in_collision) {
         is_valid =
@@ -1154,10 +1344,10 @@ Eigen::VectorXd Ioc::solve(
 #endif
 }
 
-// -------------------------------------------------------------
-// -------------------------------------------------------------
-// -------------------------------------------------------------
-// -------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 IocEvaluation::IocEvaluation(Robot* rob,
                              int nb_demos,
@@ -1188,7 +1378,7 @@ IocEvaluation::IocEvaluation(Robot* rob,
 
   active_joints_ = active_joints;
 
-  plangroup_ = new ChompPlanningGroup(robot_, active_joints_);
+  planning_group_ = new ChompPlanningGroup(robot_, active_joints_);
 
   feature_fct_ = features;
 
@@ -1199,7 +1389,10 @@ IocEvaluation::IocEvaluation(Robot* rob,
 
   // Active dofs are set when the planning group is created
   smoothness_fct_ = new TrajectorySmoothness;
-  smoothness_fct_->setActiveDoFs(plangroup_->getActiveDofs());
+  smoothness_fct_->setActiveDoFs(planning_group_->getActiveDofs());
+
+  // sample goal set
+  goalset_data_.sample_goal_set_ = false;
 
   // Set the feature type
   if (dynamic_cast<Spheres*>(feature_fct_->getFeatureFunction(0)) != NULL)
@@ -1213,11 +1406,28 @@ IocEvaluation::IocEvaluation(Robot* rob,
 
   // Set active dofs
   if (feature_type_ == "spheres" || feature_type_ == "squares ") {
-    global_PlanarCostFct->setActiveDoFs(plangroup_->getActiveDofs());
+    global_PlanarCostFct->setActiveDoFs(planning_group_->getActiveDofs());
   }
 
   use_context_ = false;
   use_simulator_ = false;
+}
+
+void IocEvaluation::initializeGoalSetData() {
+  goalset_data_.sample_goal_set_ = true;
+  goalset_data_.ratio_projected_ = 1.0;  // 1.0 = all along the trajectory
+  goalset_data_.strength_ =
+      PlanEnv->getDouble(PlanParam::trajStompConstStrength);
+  goalset_data_.eef_ = planning_group_->robot_->getJoint(
+      PlanEnv->getString(PlanParam::end_effector_joint));  // plannar J4
+
+  if (goalset_data_.eef_ != NULL) {
+    goalset_data_.x_task_goal_ =
+        goalset_data_.eef_->getVectorPos().head(3);  // head(2) only (x,y)
+  } else {
+    goalset_data_.sample_goal_set_ = false;
+    goalset_data_.x_task_goal_ = Eigen::VectorXd::Zero(0);
+  }
 }
 
 void IocEvaluation::delete_all_samples() {
@@ -1357,7 +1567,7 @@ void IocEvaluation::runPlannerWeightedFeature(int nb_runs) {
 
   activateAllFeatures();
 
-  HRICS::Ioc ioc(nb_way_points_, plangroup_);
+  HRICS::Ioc ioc(nb_way_points_, planning_group_, goalset_data_);
 
   // Get weight vector
   WeightVect w(WeightVect::Ones(feature_fct_->getNumberOfFeatures()));
@@ -1981,7 +2191,7 @@ void IocEvaluation::setBuffer(int d) {
       for (int i = 0; i < nb_config; i++) {
         double t = time_along_original_demo - double(nb_config - i) * dt;
         Move3D::confPtr_t q = demos_[demo_ids_[d]].configAtTime(t);
-        buffer.push_back(q->getEigenVector(plangroup_->getActiveDofs()));
+        buffer.push_back(q->getEigenVector(planning_group_->getActiveDofs()));
         // cout << "buffer " << d << " [" << i << "] "
         // << t << " : " << buffer[i].transpose() << endl;
       }
@@ -2008,11 +2218,12 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrationsIk(HRICS::Ioc& ioc) {
   for (size_t d = 0; d < demos_.size(); d++) {
     if (use_context_) setContext(d);
 
-    ioc.addDemonstration(demos_[d].getEigenMatrix(plangroup_->getActiveDofs()),
-                         demos_[d].getDeltaTime());
+    ioc.addDemonstration(
+        demos_[d].getEigenMatrix(planning_group_->getActiveDofs()),
+        demos_[d].getDeltaTime());
 
     FeatureVect phi = feature_fct_->getFeatures(
-        *ioc.getLastConfigOfDemo(d).getMove3DConfig(plangroup_));
+        *ioc.getLastConfigOfDemo(d).getMove3DConfig(planning_group_));
     cout << "Feature Demo : " << phi.transpose() << endl;
 
     phi_demo[d] = phi;
@@ -2039,8 +2250,9 @@ std::vector<FeatureVect> IocEvaluation::addDemonstrations(HRICS::Ioc& ioc) {
     cout << "Feature Demo : " << phi.transpose() << endl;
 
     // ioc.addDemonstration( demos_[i].getEigenMatrix(6,7) );
-    ioc.addDemonstration(demos_[d].getEigenMatrix(plangroup_->getActiveDofs()),
-                         demos_[d].getDeltaTime());
+    ioc.addDemonstration(
+        demos_[d].getEigenMatrix(planning_group_->getActiveDofs()),
+        demos_[d].getDeltaTime());
     phi_demo[d] = phi;
   }
 
@@ -2057,10 +2269,11 @@ std::vector<std::vector<FeatureVect> > IocEvaluation::addSamples(
     // Only cut of needed
     samples_[i].cutTrajInSmallLP(nb_way_points_ - 1);
     //        ioc.addSample( 0, samples_[i].getEigenMatrix(6,7) );
-    ioc.addSample(0, samples_[i].getEigenMatrix(plangroup_->getActiveDofs()));
+    ioc.addSample(0,
+                  samples_[i].getEigenMatrix(planning_group_->getActiveDofs()));
     // ioc.setNominalSampleValue( 0, i, samples_[i].getEigenMatrix(6,7)  );
     ioc.setNominalSampleValue(
-        0, i, samples_[i].getEigenMatrix(plangroup_->getActiveDofs()));
+        0, i, samples_[i].getEigenMatrix(planning_group_->getActiveDofs()));
 
     // FeatureProfile p = feature_fct_->getFeatureJacobianProfile(
     // samples_[i] );
@@ -2176,14 +2389,14 @@ std::vector<std::vector<Move3D::confPtr_t> > IocEvaluation::runIKSampling() {
   std::vector<std::vector<Move3D::confPtr_t> > samples;
 
   cout << "Create Ioc" << endl;
-  HRICS::Ioc ioc(nb_way_points_, plangroup_);
+  HRICS::Ioc ioc(nb_way_points_, planning_group_, goalset_data_);
 
   // Get demos features
   cout << "Add demonstrations" << endl;
   phi_demos_ = addDemonstrationsIk(ioc);
 
-  //    cout << "wait for key" << endl;
-  //    std::cin.ignore();
+  // cout << "wait for key" << endl;
+  // std::cin.ignore();
 
   bool generate = true;
 
@@ -2209,7 +2422,7 @@ std::vector<std::vector<Move3D::confPtr_t> > IocEvaluation::runIKSampling() {
   double demo_cost = 0.0;
 
   FeatureVect phi = feature_fct_->getFeatures(
-      *ioc.getLastConfigOfDemo(0).getMove3DConfig(plangroup_));
+      *ioc.getLastConfigOfDemo(0).getMove3DConfig(planning_group_));
 
   cout << "weight : " << feature_fct_->getWeights().transpose() << endl;
   cout << "cost : " << feature_fct_->getWeights().transpose() * phi << " , ";
@@ -2227,7 +2440,7 @@ std::vector<std::vector<Move3D::confPtr_t> > IocEvaluation::runIKSampling() {
   for (int d = 0; d < int(samples.size()); d++) {
     if (use_context_) setContext(d);
 
-    //        dtw_compare_performance( plangroup_, demos_[d], samples[d] );
+    //        dtw_compare_performance( planning_group_, demos_[d], samples[d] );
 
     for (int i = 0; i < int(samples[d].size()); i++) {
       phi = feature_fct_->getFeatures(*samples[d][i]);
@@ -2303,7 +2516,7 @@ IocEvaluation::runSamplingSequence() {
   cout << "nb_samples : " << nb_samples_ << endl;
 
   cout << "Create Ioc" << endl;
-  HRICS::Ioc ioc(nb_way_points_, plangroup_);
+  HRICS::Ioc ioc(nb_way_points_, planning_group_, goalset_data_);
 
   // Get demos features
   cout << "Add demonstrations" << endl;
@@ -2447,13 +2660,13 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling() {
 
   //    print_joint_mapping( robot_ );
 
-  //    for( int i=0; i<plangroup_->chomp_dofs_.size();i++){
+  //    for( int i=0; i<planning_group_->chomp_dofs_.size();i++){
   //        cout << " group joint name : "
-  //  << plangroup_->chomp_dofs_[i].joint_name_ << endl;
+  //  << planning_group_->chomp_dofs_[i].joint_name_ << endl;
   //        cout << "              min : "
-  // << plangroup_->chomp_dofs_[i].joint_limit_min_ << endl;
+  // << planning_group_->chomp_dofs_[i].joint_limit_min_ << endl;
   //        cout << "              max : "
-  // << plangroup_->chomp_dofs_[i].joint_limit_max_ << endl;
+  // << planning_group_->chomp_dofs_[i].joint_limit_max_ << endl;
   //    }
 
   for (size_t i = 0; i < demo_ids_.size(); i++) {
@@ -2478,7 +2691,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling() {
   std::vector<std::vector<Move3D::Trajectory> > samples;
 
   cout << "Create Ioc" << endl;
-  HRICS::Ioc ioc(nb_way_points_, plangroup_);
+  HRICS::Ioc ioc(nb_way_points_, planning_group_, goalset_data_);
 
   // Get demos features
   cout << "Add demonstrations" << endl;
@@ -2540,7 +2753,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling() {
 
     if (feature_fct_->getFeatureFunction("SmoothnessAll")) setBuffer(d);
 
-    // dtw_compare_performance( plangroup_, demos_[d], samples[d] );
+    // dtw_compare_performance( planning_group_, demos_[d], samples[d] );
 
     for (int i = 0; i < int(samples[d].size()); i++) {
       phi = feature_fct_->getFeatureCount(samples[d][i]);
@@ -2585,7 +2798,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling() {
   cout << "nb_shorter : " << nb_shorter << endl;
   cout << "nb_in_collision : " << nb_in_collision << endl;
 
-  //    removeDominatedSamplesAndResample( ioc, phi_k );
+  // removeDominatedSamplesAndResample( ioc, phi_k );
 
   // checkStartAndGoal( samples );
 
@@ -2605,7 +2818,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling() {
 }
 
 void IocEvaluation::runFromFileSampling(int offset) {
-  HRICS::Ioc ioc(nb_way_points_, plangroup_);
+  HRICS::Ioc ioc(nb_way_points_, planning_group_, goalset_data_);
 
   // Get demos features
   phi_demos_ = addDemonstrations(ioc);
@@ -2666,7 +2879,7 @@ void IocEvaluation::runFromFileSampling(int offset) {
 void IocEvaluation::monteCarloSampling(double factor, int nb_tries) {
   cout << __PRETTY_FUNCTION__ << endl;
 
-  HRICS::Ioc ioc(nb_way_points_, plangroup_);
+  HRICS::Ioc ioc(nb_way_points_, planning_group_, goalset_data_);
 
   // Get demos features
   phi_demos_ = addDemonstrations(ioc);
@@ -2946,7 +3159,8 @@ void IocEvaluation::saveTrajToMatlab(const Move3D::Trajectory& t,
   saved_traj.cutTrajInSmallLP(nb_way_points - 1);
 
   //    Eigen::MatrixXd mat = saved_traj.getEigenMatrix(6,7);
-  Eigen::MatrixXd mat = saved_traj.getEigenMatrix(plangroup_->getActiveDofs());
+  Eigen::MatrixXd mat =
+      saved_traj.getEigenMatrix(planning_group_->getActiveDofs());
 
   // Save traj to file
   move3d_save_matrix_to_file(
