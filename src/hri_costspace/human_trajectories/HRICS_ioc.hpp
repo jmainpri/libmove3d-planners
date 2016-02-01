@@ -48,8 +48,8 @@ typedef std::vector<std::vector<Move3D::confPtr_t> > context_t;
 
 //! Trajectory structure
 struct IocTrajectory {
-  IocTrajectory() : discretization_(0.0) {}
-  IocTrajectory(int nb_joints, int nb_var, double discretization);
+  IocTrajectory() : dt_(0.0) {}
+  IocTrajectory(int nb_joints, int nb_var, double dt);
 
   std::vector<Eigen::VectorXd>
       nominal_parameters_; /**< [num_dimensions] num_parameters */
@@ -67,7 +67,7 @@ struct IocTrajectory {
   std::vector<Eigen::VectorXd>
       straight_line_; /**< [num_dimensions] num_parameters */
 
-  double discretization_; /**< time discretization */
+  double dt_; /**< time discretization */
 
   Eigen::VectorXd state_costs_;   /**< num_time_steps */
   Eigen::VectorXd feature_count_; /**< num_features */
@@ -130,10 +130,15 @@ struct IocIk {
 class IocSampler {
  public:
   IocSampler();
-  IocSampler(int num_var_free, int num_joints);
+  IocSampler(int num_var_free,
+             int num_dofs,
+             const Move3D::ChompPlanningGroup* planning_group);
 
   //! Initializes the different data structures
-  void initialize();
+  bool Initialize();
+
+  //! Project trajectory sample to joint limits
+  void ProjectToJointLimitsQuadProg(HRICS::IocTrajectory& traj);
 
   //! Samples a noisy trajectory
   Eigen::MatrixXd sample(double std_dev);
@@ -149,9 +154,10 @@ class IocSampler {
     double range_;
   };
 
-  void set_joint_bounds(const std::vector<dof_bounds>& bounds) {
-    dofs_bounds_ = bounds;
-  }
+  int num_vars_free() const { return num_vars_free_; }
+  int num_dofs() const { return num_dofs_; }
+
+  const std::vector<dof_bounds>& joint_bounds() const { return dofs_bounds_; }
 
   const std::vector<Eigen::MatrixXd>& control_costs() const {
     return control_costs_;
@@ -166,6 +172,10 @@ class IocSampler {
   //! the sampler produces one dimenssional noisy trajectories
   bool preAllocateMultivariateGaussianSampler();
 
+  //! Initialize the joint limit computers
+  void InitializeJointLimitProjector();
+
+  //! computes the control cost matrices for sampling
   stomp_motion_planner::CovariantTrajectoryPolicy policy_;
 
   //! [num_dimensions] num_parameters x num_parameters */
@@ -178,15 +188,19 @@ class IocSampler {
   std::vector<MultivariateGaussian> noise_generators_;
 
   int num_vars_free_;
-  int num_joints_;
+  int num_dofs_;
   Eigen::VectorXd tmp_noise_;
   std::vector<dof_bounds> dofs_bounds_;
+  const Move3D::ChompPlanningGroup* planning_group_;
+  std::vector<Move3D::TrajOptJointLimit> joint_limits_computers_;
 };
 
 class IocSamplerGoalSet : public IocSampler {
  public:
   IocSamplerGoalSet() {}
-  IocSamplerGoalSet(int num_var_free, int num_joints);
+  IocSamplerGoalSet(int num_var_free,
+                    int num_joints,
+                    const Move3D::ChompPlanningGroup* planning_group);
 
  protected:
   //! Initializes a coviarant trajectory policy
@@ -252,7 +266,7 @@ class Ioc {
 
   //! Reduces the trajectory magnitude
   bool checkJointLimits(const IocTrajectory& traj) const;
-  bool jointLimitsQuadProg(IocTrajectory& traj) const ;
+  bool jointLimitsQuadProg(IocTrajectory& traj) const;
   bool jointLimits(IocTrajectory& traj) const;
   bool jointLimits(IocIk& q) const;
 
@@ -330,9 +344,6 @@ class Ioc {
   //! Planning Group
   const Move3D::ChompPlanningGroup* planning_group_;
 
-  //! Joint limits
-  std::vector<TrajOptJointLimit> joint_limits_computers_;
-
   //! goal set stucture
   GoalsetData_t goalset_data_;
 
@@ -362,9 +373,6 @@ class IocEvaluation {
     phi_jac_demos_.clear();
     delete_all_samples();
   }
-
-  //! Sample trajectories in a sequence
-  std::vector<std::vector<Move3D::Trajectory> > runSamplingSequence();
 
   //! Sample trajectories around the demonstrations
   virtual std::vector<std::vector<Move3D::Trajectory> > runSampling();

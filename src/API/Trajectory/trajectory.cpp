@@ -56,6 +56,9 @@ using namespace Move3D;
 
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
+static bool zero_trajectory = false;
+void Move3D::set_use_zero_trajectory(bool v) { zero_trajectory = v; }
+
 std::vector<Trajectory> global_trajToDraw;
 
 Trajectory::Trajectory()
@@ -166,10 +169,11 @@ Trajectory::Trajectory(std::vector<confPtr_t>& configs)
 
     m_Courbe.clear();
 
-    for (unsigned int i = 0; i < configs.size() - 1; i++) {
-      if (!configs[i]->equal(*configs[i + 1])) {
+    for (size_t i = 0; i < configs.size() - 1; i++) {
+      if ((!configs[i]->equal(*configs[i + 1])) || zero_trajectory) {
         LocalPath* path = new LocalPath(configs[i], configs[i + 1]);
         m_Courbe.push_back(path);
+        cout << "add path to trajectory" << endl;
       } else {
         cout << "two configuration are the same in traj constructor" << endl;
       }
@@ -299,11 +303,18 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt) const {
       cout << " Warning : Robot not the same as the robot in traj " << endl;
       return NULL;
     }
+    // TODO should destroy but does not work for
+    // zero trajectory (set to false)
     if (trajPt->courbePt != NULL) {
       destroy_list_localpath(robotPt, trajPt->courbePt);
     }
   } else {
     trajPt = p3d_create_empty_trajectory(robotPt);
+  }
+
+  // TODO this does not allow to export circular trajectories
+  if (zero_trajectory && m_Target->equal(*m_Source)) {
+    return trajPt;
   }
 
   // trajPt->name = strdup(name);
@@ -342,6 +353,7 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt) const {
   else {
     cout << "replaceP3dTraj with empty trajectory" << endl;
     trajPt->courbePt = NULL;
+    trajPt = NULL;
   }
 
   return trajPt;
@@ -467,7 +479,7 @@ confPtr_t Trajectory::configAtTime(double time,
 
     if (path_id == 0) {
       cout << " m_dts[0] : " << m_dts[path_id] << endl;
-      exit(0);
+      cout << "Error : " << __PRETTY_FUNCTION__ << endl;
     }
     path_id--;
 
@@ -826,7 +838,7 @@ double Trajectory::computeSubPortionCostVisib(vector<LocalPath*>& portion) {
       step_cost =
           global_costSpace->deltaStepCost(prevCost, currentCost, distStep);
       //			p3d_ComputeDeltaStepCost(prevCost, currentCost,
-      //distStep);
+      // distStep);
 
       cout << " Step Cost = " << step_cost << endl;
 
@@ -1053,13 +1065,13 @@ double Trajectory::costOfPortion(double param1, double param2) {
 //				cout << "Error getting Conf at param" << endl;
 //
 //			confPtrStart =
-//m_Courbe.at(i)->configAtParam(param1-prevSoFar);
+// m_Courbe.at(i)->configAtParam(param1-prevSoFar);
 //			id_start = i;
 //			break;
 //		}
 //		if(i==nloc-1){
 //			confPtrStart =
-//m_Courbe.at(i)->configAtParam(param1-prevSoFar);
+// m_Courbe.at(i)->configAtParam(param1-prevSoFar);
 //			id_start = i;
 //		}
 //		prevSoFar = soFar;
@@ -1079,7 +1091,7 @@ double Trajectory::costOfPortion(double param1, double param2) {
 //				cout << "Error getting Conf at param" << endl;
 //
 //			confPtrEnd =
-//m_Courbe.at(i)->configAtParam(param2-prevSoFar);
+// m_Courbe.at(i)->configAtParam(param2-prevSoFar);
 //			id_end = i;
 //			break;
 //		}
@@ -1624,6 +1636,7 @@ bool Trajectory::push_back(shared_ptr<LocalPath> path) {
   return true;
 }
 
+// TODO change that to allow no movement trajectories
 bool Trajectory::push_back(confPtr_t q, double dt) {
   if (!push_back(q)) return false;
 
@@ -1634,28 +1647,29 @@ bool Trajectory::push_back(confPtr_t q, double dt) {
 
 bool Trajectory::push_back(confPtr_t q) {
   bool add_config = false;
+  // cout << "m_Courbe.size() : " << m_Courbe.size() << endl;
 
   if (m_Courbe.empty()) {
     if (m_Source->getConfigStruct() == NULL) {
       m_Source = q;
       add_config = true;
     } else {
-      if (!m_Source->equal(*q)) {
+      if ((!m_Source->equal(*q)) || zero_trajectory) {
         m_Courbe.push_back(new LocalPath(m_Source, q));
         m_Target = q;
         add_config = true;
+      } else {
+        cout << "source equal q" << endl;
       }
-      //            else
-      //                cout << "source equal q" << endl;
     }
   } else {
-    if (!m_Target->equal(*q)) {
+    if ((!m_Target->equal(*q)) || zero_trajectory) {
       m_Courbe.push_back(new LocalPath(m_Target, q));
       m_Target = q;
       add_config = true;
+    } else {
+      cout << "target equal q" << endl;
     }
-    //        else
-    //            cout << "target equal q" << endl;
   }
 
   return add_config;
@@ -1669,7 +1683,8 @@ bool Trajectory::cutTrajInSmallLPSimple(unsigned int nLP, bool use_time) {
   bool null_length_local_path = false;
   double length = 0.0;
   double t = 0.0;
-  // cout << "use_time : " << use_time << " (" << m_dt << "), range : " << range
+  // cout << "use_time : " << use_time << " (" << m_dt << "), range : " <<
+  // range
   // << " , delta : " << delta << endl;
 
   for (unsigned int i = 0; i < nLP; i++) {
@@ -1683,7 +1698,7 @@ bool Trajectory::cutTrajInSmallLPSimple(unsigned int nLP, bool use_time) {
     if (path_length == 0.0) null_length_local_path = true;
 
     length += portion.back()->getParamMax();
-    //        cout << "length : " << length << endl;
+    // cout << "length : " << length << endl;
   }
 
   if (use_time) {  // TODO make this work for all types of time
@@ -2242,12 +2257,7 @@ Eigen::MatrixXd Trajectory::getJointPoseTrajectory(
     if (m_Courbe.size() - 1 >= 0) {
       m_Robot->setAndUpdate(*m_Courbe.back()->getEnd());
       Eigen::Transform3d T(joint->getMatrixPos());
-
-      // cout << "translation : " << T.translation() << endl;
-      // cout << "rotation : " << T.rotation() << endl;
-
       Eigen::Quaterniond q(T.rotation());
-
       mat.col(m_Courbe.size())[0] = T.translation().x();
       mat.col(m_Courbe.size())[1] = T.translation().y();
       mat.col(m_Courbe.size())[2] = T.translation().z();
@@ -2384,8 +2394,7 @@ bool Trajectory::loadFromFile(std::string filename) {
     m_use_time_parameter = true;
     m_use_constant_dt = true;
     m_dt = mat(0, 0);
-  }
-  else {
+  } else {
     m_use_time_parameter = false;
   }
 

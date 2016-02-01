@@ -117,6 +117,55 @@ PointCloud& BodySurfaceSampler::sampleObjectSurface(p3d_obj* obj,
   return m_objectToPointCloudMap[obj];
 }
 
+bool p3d_is_point_in_object(p3d_obj* obj, p3d_vector3 p_o, bool is_robot) {
+  for (int i = 0; i < obj->np; i++) {
+    // Only test box and cylinders
+    if (obj->pol[i]->entity_type) {
+      if ((obj->pol[i]->entity_type != 5) && (obj->pol[i]->entity_type != 6))
+        continue;
+      if (obj->pol[i]->TYPE == P3D_GRAPHIC) continue;
+
+      p3d_matrix4 inv_pos;
+
+      if (is_robot) {
+        p3d_matrix4 pos;
+        p3d_matMultXform(obj->jnt->abs_pos, obj->pol[i]->pos_rel_jnt, pos);
+        p3d_matInvertXform(pos, inv_pos);
+      } else {
+        p3d_matInvertXform(obj->pol[i]->pos_rel_jnt, inv_pos);
+      }
+
+      p3d_vector3 p;
+      p3d_xformPoint(inv_pos, p_o, p);
+
+      if (obj->pol[i]->entity_type == 5)  // box
+      {
+        double x = obj->pol[i]->primitive_data->x_length;
+        double y = obj->pol[i]->primitive_data->y_length;
+        double z = obj->pol[i]->primitive_data->z_length;
+
+        // Check that the point is in the box
+        if ((p[0] > (-x / 2)) && (p[0] < (x / 2)) && (p[1] > (-y / 2)) &&
+            (p[1] < (y / 2)) && (p[2] > (-z / 2)) && (p[2] < (z / 2))) {
+          return true;
+        }
+      } else if (obj->pol[i]->entity_type == 6)  // cylinder
+      {
+        double r = obj->pol[i]->primitive_data->radius;
+        double h = obj->pol[i]->primitive_data->height;
+
+        // Check that the point is in the cylinder
+        if ((p[2] > (-h / 2)) && (p[2] < (h / 2)) &&
+            (std::sqrt(p[0] * p[0] + p[1] * p[1]) < r)) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 bool BodySurfaceSampler::isPointInsidePrimitves(const Eigen::Vector3d& point) {
   // Get Move3D point
   p3d_vector3 p_o;
@@ -126,40 +175,18 @@ bool BodySurfaceSampler::isPointInsidePrimitves(const Eigen::Vector3d& point) {
 
   for (int j = 0; j < XYZ_ENV->no; j++) {
     p3d_obj* obj = XYZ_ENV->o[j];
-    for (int i = 0; i < obj->np; i++) {
-      // Only test box and cylinders
-      if (obj->pol[i]->entity_type) {
-        if ((obj->pol[i]->entity_type != 5) && (obj->pol[i]->entity_type != 6))
-          continue;
+    if (p3d_is_point_in_object(obj, p_o, false)) {
+      return true;
+    }
+  }
 
-        p3d_matrix4 inv_pos;
-        p3d_matInvertXform(obj->pol[i]->pos_rel_jnt, inv_pos);
-
-        p3d_vector3 p;
-        p3d_xformPoint(inv_pos, p_o, p);
-
-        if (obj->pol[i]->entity_type == 5)  // box
-        {
-          double x = obj->pol[i]->primitive_data->x_length;
-          double y = obj->pol[i]->primitive_data->y_length;
-          double z = obj->pol[i]->primitive_data->z_length;
-
-          // Check that the point is in the box
-          if ((p[0] > (-x / 2)) && (p[0] < (x / 2)) && (p[1] > (-y / 2)) &&
-              (p[1] < (y / 2)) && (p[2] > (-z / 2)) && (p[2] < (z / 2))) {
-            return true;
-          }
-        } else if (obj->pol[i]->entity_type == 6)  // cylinder
-        {
-          double r = obj->pol[i]->primitive_data->radius;
-          double h = obj->pol[i]->primitive_data->height;
-
-          // Check that the point is in the cylinder
-          if ((p[2] > (-h / 2)) && (p[2] < (h / 2)) &&
-              (std::sqrt(p[0] * p[0] + p[1] * p[1]) < r)) {
-            return true;
-          }
-        }
+  for (int r = 0; r < XYZ_ENV->nr; r++) {
+    p3d_rob* rob = XYZ_ENV->robot[r];
+    if (std::string(rob->name) == "HERAKLES_HUMAN1") continue;
+    if (std::string(rob->name) == "HERAKLES_HUMAN2") continue;
+    for (int i = 0; i < rob->no; i++) {
+      if (p3d_is_point_in_object(rob->o[i], p_o, true)) {
+        return true;
       }
     }
   }
@@ -346,8 +373,6 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(
   Eigen::Vector3d p1 = bc->getPoint1();
   Eigen::Vector3d p2 = bc->getPoint2();
 
-  Eigen::Vector3d p;
-
   double spacing =
       radius / PlanEnv->getDouble(PlanParam::ratioCollRadiusSpacing);  // 2.0
   int num_points = ceil(length / spacing) + 1;
@@ -365,6 +390,7 @@ std::vector<CollisionPoint> BodySurfaceSampler::getLinksCollisionPoints(
                                               m_collision_clearance_default,
                                               segment_number,
                                               p));
+    collision_points.back().set_joint(jnt);
   }
 
   return collision_points;
@@ -506,6 +532,11 @@ std::vector<CollisionPoint> BodySurfaceSampler::generateRobotCollisionPoints(
     for (int i = 0; i < int(points.size()); i++) {
       all_points.push_back(points[i]);
     }
+  }
+
+  for (size_t i = 0; i < all_points.size(); i++) {
+    cout << "all_points[" << i << "] : " << all_points[i].joint()->getName()
+         << endl;
   }
 
   return all_points;

@@ -90,9 +90,9 @@ bool PolicyImprovementLoop::initialize(
     readParameters();
   }
 
-//  else {
-//    readParametersSingleRollout();
-//  }
+  //  else {
+  //    readParametersSingleRollout();
+  //  }
   task_ = task;
   task_->initialize(/*node_handle_,*/ num_time_steps_);
   task_->getControlCostWeight(control_cost_weight_);
@@ -142,6 +142,7 @@ bool PolicyImprovementLoop::initialize(
 
   //----------------------------------------------------------------------------
   // INITIALIZE POLICY IMPROVEMENT LOOP
+
   policy_improvement_.initialize(num_rollouts_,
                                  num_time_steps_,
                                  num_reused_rollouts_,
@@ -158,10 +159,12 @@ bool PolicyImprovementLoop::initialize(
   for (int r = 0; r < num_rollouts_; r++)
     rollout_total_control_costs_[r] = std::pair<bool, double>(false, 0.0);
 
+  // Set thre rollout cost to 0
   rollout_control_costs_.resize(num_rollouts_);
-  for (int r = 0; r < num_rollouts_; r++)
+  for (int r = 0; r < num_rollouts_; r++) {
     rollout_control_costs_[r] =
         Eigen::MatrixXd::Zero(num_dimensions_, num_time_steps_);
+  }
 
   reused_rollouts_.clear();
 
@@ -180,7 +183,7 @@ bool PolicyImprovementLoop::initialize(
   return (initialized_ = true);
 }
 
-//bool PolicyImprovementLoop::readParametersSingleRollout() {
+// bool PolicyImprovementLoop::readParametersSingleRollout() {
 //  num_rollouts_ = PlanEnv->getInt(PlanParam::lamp_nb_samples);
 //  num_reused_rollouts_ = 5;
 
@@ -213,7 +216,8 @@ bool PolicyImprovementLoop::readParameters() {
   // sometimes good!
   // node_handle_.param("use_cumulative_costs", use_cumulative_costs_, true);
 
-  num_rollouts_ = PlanEnv->getInt(PlanParam::lamp_nb_samples);;
+  num_rollouts_ = PlanEnv->getInt(PlanParam::lamp_nb_samples);
+
   num_reused_rollouts_ = 5;
   // num_time_steps_ = 51;
 
@@ -276,17 +280,19 @@ void PolicyImprovementLoop::parallelRollout(int r, int iteration_number) {
   costComputation* traj_evaluation =
       static_pointer_cast<StompOptimizer>(task_)->getCostComputers()[r];
 
-  traj_evaluation->getCost(rollouts_[r],
-                           parallel_cost_[r],
-                           iteration_number,
-                           joint_limits_,
-                           false,
-                           true);
+  bool within_constraints = false;
+
+  traj_evaluation->getCost(
+      rollouts_[r], parallel_cost_[r], true, within_constraints);
 
   // Get costs
   rollout_costs_.row(r) = parallel_cost_[r].transpose();
-  for (int d = 0; d < num_dimensions_; d++)
+  for (int d = 0; d < num_dimensions_; d++) {
+    // cout << "size 1 " << rollout_control_costs_[r].row(d).size() << endl;
+    // cout << "size 2 " << traj_evaluation->getControlCosts()[d].size() <<
+    // endl;
     rollout_control_costs_[r].row(d) = traj_evaluation->getControlCosts()[d];
+  }
 
   // get total smoothness cost
   /*
@@ -320,24 +326,21 @@ void PolicyImprovementLoop::executeRollout(int r, int iteration_number) {
                        false,
                        true);
 
-
     // get rollout dimensions control costs
     rollout_costs_.row(r) = tmp_rollout_cost_.transpose();
-
-    /*
-    for (int d = 0; d < num_dimensions_; d++)
-      rollout_control_costs_[r].row(d) =
-          optimizer->getMainCostComputer()->getControlCosts()[d];
 
     // get total smoothness cost
     if (optimizer->getMainCostComputer()->getUseTotalSmoothnessCost()) {
       rollout_total_control_costs_[r].first = true;
       rollout_total_control_costs_[r].second =
           optimizer->getMainCostComputer()->getTotalSmoothnessCost();
+    } else {
+      rollout_total_control_costs_[r].first = false;
+      for (int d = 0; d < num_dimensions_; d++) {
+        rollout_control_costs_[r].row(d) =
+            optimizer->getMainCostComputer()->getControlCosts()[d];
+      }
     }
-
-    */
-
     policy_improvement_.setRolloutOutOfBounds(
         r, !optimizer->getMainCostComputer()->getJointLimitViolationSuccess());
 
@@ -345,12 +348,6 @@ void PolicyImprovementLoop::executeRollout(int r, int iteration_number) {
       limits_violations_ +=
           !optimizer->getMainCostComputer()->getJointLimitViolationSuccess();
     }
-
-    //            if( joint_limits_ )
-    //            {
-    //                rollouts_[r] =
-    //                optimizer->getMainCostComputer()->getGroupTrajectory();
-    //            }
   }
 }
 
@@ -389,6 +386,8 @@ bool PolicyImprovementLoop::runSingleIteration(const int iteration_number) {
     //  noise[i] *= 0.001;
     // }
 
+    // cout << "range[" << d << "] for dof " << dofs[d].joint_name_ << " "
+    //     << dofs[d].range_ << endl;
 
     sigma[d] = PlanEnv->getDouble(PlanParam::trajOptimStdDev) * scaling[d];
 
@@ -466,7 +465,8 @@ bool PolicyImprovementLoop::runSingleIteration(const int iteration_number) {
   bool resample = false;  //!PlanEnv->getBool( PlanParam::trajStompMultiplyM );
   // Warning!!!!
   // does not return the modified trajectory when is out of bounds
-  bool joint_limit_ok = task_->execute(
+  // bool joint_limit_ok =
+  task_->execute(
       parameters_, tmp_rollout_cost_, iteration_number, true, resample, false);
 
   // cout << "current traj is : " << joint_limit_ok << endl;
@@ -767,7 +767,7 @@ void PolicyImprovementLoop::addSingleRolloutsToDraw(
     T.push_back(traj[i]);
   }
   // T.print();
-  T.setColor(color%10);
+  T.setColor(color % 10);
   global_trajToDraw.push_back(T);
 }
 

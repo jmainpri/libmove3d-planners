@@ -54,6 +54,8 @@ bool traj_optim_init_collision_spaces(traj_optim::ScenarioType sce,
 void traj_optim_reset_collision_space();
 void traj_optim_add_human_to_collision_space(bool add);
 
+bool traj_optim_hrics_human_trajectory_biomech_dof_bounds(Move3D::Robot* robot);
+
 const Move3D::CollisionSpace* traj_optim_get_collision_space();
 std::vector<Move3D::CollisionPoint> traj_optim_get_collision_points();
 

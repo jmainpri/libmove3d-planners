@@ -260,11 +260,6 @@ class StompOptimizer : public Task {
   void draw();
 
   /**
- * Draw real collision points
- */
-  void drawCollisionPoints();
-
-  /**
  * Retreive source and target
  */
   void setSource(Move3D::confPtr_t q) { source_ = q; }
@@ -316,6 +311,14 @@ class StompOptimizer : public Task {
     use_buffer_ = true;
   }
   void clearBuffer() { use_buffer_ = false; }
+
+  /**
+    * Set goal set
+    */
+  void setGoalset(const Eigen::VectorXd& x_task_goal) {
+    x_task_goal_ = x_task_goal;
+  }
+  void setUseGoalset(bool v) { use_goalset_ = v; }
 
   /**
     * Main initialization function
@@ -468,8 +471,13 @@ class StompOptimizer : public Task {
   std::vector<double> last_human_pos_;
   bool reset_reused_rollouts_;
 
+  // Allow motion of the end configuration
   bool allow_end_configuration_motion_;
   int id_fixed_;
+
+  // Goal set variables
+  bool use_goalset_;
+  Eigen::VectorXd x_task_goal_;
 
   Move3D::confPtr_t source_;
   Move3D::confPtr_t target_;
@@ -512,14 +520,6 @@ class StompOptimizer : public Task {
   void updatePositionFromMomentum();
   void calculatePseudoInverse();
 
-  void getFrames(int segment,
-                 const Eigen::VectorXd& joint_array,
-                 Move3D::Configuration& q);
-
-  bool getCollisionPointObstacleCost(int segment,
-                                     int coll_point,
-                                     double& collion_point_potential,
-                                     Eigen::Vector3d& pos);
   bool getConfigObstacleCost(
       Move3D::Robot* robot,
       int i,

@@ -58,7 +58,8 @@ class MultivariateGaussian {
  public:
   template <typename Derived1, typename Derived2>
   MultivariateGaussian(const Eigen::MatrixBase<Derived1>& mean,
-                       const Eigen::MatrixBase<Derived2>& covariance);
+                       const Eigen::MatrixBase<Derived2>& covariance,
+                       int seed=0);
 
   template <typename Derived>
   void sample(Eigen::MatrixBase<Derived>& output);
@@ -82,12 +83,14 @@ class MultivariateGaussian {
 template <typename Derived1, typename Derived2>
 MultivariateGaussian::MultivariateGaussian(
     const Eigen::MatrixBase<Derived1>& mean,
-    const Eigen::MatrixBase<Derived2>& covariance)
+    const Eigen::MatrixBase<Derived2>& covariance,
+    int seed)
     : mean_(mean),
       covariance_(covariance),
       covariance_cholesky_(covariance_.llt().matrixL()),
       size_(mean.rows()),
-      rng_(move3d_random_integer(0, RAND_MAX)),
+      //rng_(seed),
+      rng_( seed > 0 ? seed : move3d_random_integer(seed, RAND_MAX)),
       gaussian_(rng_, normal_dist_) {}
 
 template <typename Derived>

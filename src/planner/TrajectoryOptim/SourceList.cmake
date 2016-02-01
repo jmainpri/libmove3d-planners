@@ -7,7 +7,11 @@ IF(MULTILOCALPATH)
 BM3D_SRC_SUBDIR_PROCESS(
 trajectoryOptim.cpp
 eiquadprog.hpp
-jointlimits.hpp)
+jointlimits.hpp
+goal_set_projection.cpp
+goal_set_projection.hpp
+vector_trajectory.cpp
+vector_trajectory.hpp)
 ENDIF()
 
 BM3D_SRC_SUBDIR_PROCESS(plannarTrajectorySmoothing.cpp)

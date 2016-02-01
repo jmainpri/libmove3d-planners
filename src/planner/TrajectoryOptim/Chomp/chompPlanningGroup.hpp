@@ -30,7 +30,8 @@ struct ChompDof {
   std::string
       link_name_;    /**< Name of the corresponding link (from planning.yaml) */
   bool is_circular_; /**< Does this joint wrap-around? */
-  bool is_translational_;  /**< Is the joint tanslational */
+  bool is_translational_;     /**< Is the joint tanslational */
+  bool is_free_flyer_;     /**< Is the joint a free flyer */
   bool has_joint_limits_;     /**< Are there joint limits? */
   double joint_limit_min_;    /**< Minimum joint angle value */
   double joint_limit_max_;    /**< Maximum joint angle value */

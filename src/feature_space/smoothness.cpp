@@ -57,8 +57,8 @@ LengthFeature::LengthFeature() {
 
 FeatureVect LengthFeature::getFeatures(const Move3D::Configuration& q,
                                        std::vector<int> active_dofs) {
-  return FeatureVect::Zero(1);
-  //    return scaling_ * FeatureVect::Ones( 1 );
+  return FeatureVect::Zero(w_.size());
+  // return scaling_ * FeatureVect::Ones( 1 );
 }
 
 double LengthFeature::getControlCosts(
@@ -74,6 +74,9 @@ double LengthFeature::getControlCosts(
   }
 
   int diff_rule_length = control_cost_.getDiffRuleLength();
+
+  // cout << "traj_smooth.cols() : " << traj_smooth.cols() << endl;
+  // cout << "traj_smooth.rows() : " << traj_smooth.rows() << endl;
 
   // this measures the velocity and squares them
   for (int d = 0; d < traj_smooth.rows(); ++d) {
@@ -96,14 +99,11 @@ double LengthFeature::getControlCosts(
       }
 
       acc_all[i] = std::pow(params_all[i] - params_all[i + 1], 2.);
-      //            acc_all[i] = std::abs( params_all[i] ) - std::abs(
-      //            params_all[i+1] );
+      // acc_all[i] = std::abs( params_all[i] ) - std::abs(params_all[i+1] );
     }
 
     control_costs[d] = acc_all;
-
-    //        cout << "acc_all : " << std::scientific << acc_all.transpose() <<
-    //        endl;
+    // cout << "acc_all : " << std::scientific << acc_all.transpose() << endl;
   }
 
   double length = 0.0;
@@ -221,7 +221,8 @@ Eigen::MatrixXd TrajectorySmoothness::getSmoothedTrajectory(
   int rows = active_dofs_.size();
   int cols = t.getNbOfViaPoints();
 
-  // cout << "cols : " << cols << endl;
+  //  cout << "rows : " << cols << endl;
+  //  cout << "cols : " << cols << endl;
 
   int diff_rule_length = control_cost_.getDiffRuleLength();
 
@@ -229,9 +230,9 @@ Eigen::MatrixXd TrajectorySmoothness::getSmoothedTrajectory(
   Eigen::VectorXd q_goal = t.getEnd()->getEigenVector(active_dofs_);
 
   Eigen::MatrixXd mat1 = t.getEigenMatrix(active_dofs_);
-  //    cout << "motion matrix 1" << endl;
-  //    cout.precision(4);
-  //    cout << std::scientific << mat1 << endl;
+  // cout << "motion matrix 1" << endl;
+  // cout.precision(4);
+  // cout << std::scientific << mat1 << endl;
 
   Eigen::MatrixXd mat2(rows, cols + 2 * (diff_rule_length - 1));
   mat2.block(0, diff_rule_length - 1, rows, cols) = mat1;
@@ -334,7 +335,7 @@ FeatureVect TrajectorySmoothness::getFeatureCount(const Move3D::Trajectory& t) {
 
 void TrajectorySmoothness::setWeights(const WeightVect& w) {
   w_ = w;
-  //    PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
+  // PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight, w(0) );
 }
 
 void TrajectorySmoothness::printControlCosts(
@@ -356,12 +357,13 @@ void TrajectorySmoothness::printControlCosts(
 
 FeatureVect TrajectorySmoothness::getFeatures(const Configuration& q,
                                               std::vector<int> active_dofs) {
-  //    cout << "Get feature smoothness" << endl;
-  return FeatureVect::Zero(1);
+  // cout << "Get feature smoothness" << endl;
+  // cout << "w_.size() : " << w_.size() << endl;
+  return FeatureVect::Zero(w_.size());
 }
 
-//------------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 TaskSmoothnessFeature::TaskSmoothnessFeature(Move3D::Robot* robot,
                                              Move3D::Joint* joint_task)
@@ -377,6 +379,9 @@ TaskSmoothnessFeature::TaskSmoothnessFeature(Move3D::Robot* robot,
   // Since we are checking tanslation joint
   // this check will not work
   control_cost_.setCheckTrajectoryConsistency(false);
+
+  // Set weight dimension
+  w_ = WeightVect::Ones(veclocity_joint_ids_.size() * 4);
 }
 
 Eigen::VectorXd TaskSmoothnessFeature::getTaskPose(Move3D::confPtr_t q) {
@@ -489,36 +494,14 @@ Eigen::VectorXd TaskSmoothnessFeature::getControlCosts(
 // Compute velocity between two configurations
 double TaskSmoothnessFeature::getDist(const Move3D::Trajectory& t,
                                       Eigen::VectorXd& control_costs) {
-  //    std::vector<Eigen::Vector3d> dist(veclocity_joint_ids_.size());
-
-  //    std::vector<Eigen::Vector3d> pos_0(veclocity_joint_ids_.size());
-  //    std::vector<Eigen::Vector3d> pos_1(veclocity_joint_ids_.size());
-
-  //    human_active_->setAndUpdate(*t[i_q-1]);
-
-  //    for( int i=0;i<veclocity_joint_ids_.size();i++)
-  //        pos_0[i] = human_active_joints_[i]->getVectorPos();
-
-  //    human_active_->setAndUpdate(*t[i_q]);
-
-  //    for( int i=0;i<veclocity_joint_ids_.size();i++)
-  //        pos_1[i] = human_active_joints_[i]->getVectorPos();
-
   double dist = 0.0;
-
   Eigen::VectorXd x_0, x_1;
-
   control_costs = Eigen::VectorXd::Zero(t.getNbOfViaPoints());
 
   for (int i = 0; i < t.getNbOfPaths(); i++) {
     x_0 = getTaskPose(t[i]);
     x_1 = getTaskPose(t[i + 1]);
-
-    Eigen::VectorXd delta = (x_0 - x_1);
-    Eigen::VectorXd costs = delta.cwiseProduct(delta);
-
-    control_costs[i] = costs.sum();
-
+    control_costs[i] = (x_0 - x_1).norm();
     dist += control_costs[i];
   }
 
@@ -638,8 +621,8 @@ void TaskSmoothnessFeature::draw() {
 
 FeatureVect TaskSmoothnessFeature::getFeatures(const Configuration& q,
                                                std::vector<int> active_dofs) {
-  FeatureVect count;
-  return count;
+  return FeatureVect::Zero(w_.size());
+  ;
 }
 
 FeatureVect TaskSmoothnessFeature::getFeatureCount(
@@ -674,14 +657,17 @@ FeatureVect phi_max(FeatureVect::Zero(8));
 FeatureVect phi_sum(FeatureVect::Zero(8));
 int iter = 0;
 
-// 24677.0278123331				10474775.3810732	7722.71782173699
+// 24677.0278123331				10474775.3810732
+// 7722.71782173699
 // 9.82131672903591	0.000176479215240061
 // PR2
 // double smoothness_phi_coeff_0=6169.25695308327;
 // double smoothness_phi_coeff_1=4.44904301010109;
 // double smoothness_phi_coeff_2=0.003049597344395;
 // double smoothness_phi_coeff_3=5.85878290700533e-08;
-// double smoothness_phi_coeff_4=2618693.84526831;
+
+// double smoothness_phi_coeff_4=2618693.84526831 / double(100.);  // TODO
+// WARNING .... TRO
 // double smoothness_phi_coeff_5=1930.67945543425;
 // double smoothness_phi_coeff_6=2.45532918225898;
 // double smoothness_phi_coeff_7=4.41198038100153e-05;
@@ -714,7 +700,8 @@ double smoothness_phi_coeff_1 = 0.0033;
 double smoothness_phi_coeff_2 = 8.17e-07;
 double smoothness_phi_coeff_3 = 8.65e-11;
 
-double smoothness_phi_coeff_4 = 32.9508;
+double smoothness_phi_coeff_4 =
+    32.9508 / double(100.);  // TODO WARNING .... TRO
 double smoothness_phi_coeff_5 = 0.3675;
 double smoothness_phi_coeff_6 = 8.43e-04;
 double smoothness_phi_coeff_7 = 9.62e-08;

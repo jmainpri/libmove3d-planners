@@ -549,27 +549,15 @@ MusculoskeletalFeature::MusculoskeletalFeature(Move3D::Robot* active)
     : Feature("Musculoskeletal"), natural_cost_(new Natural(active)) {
   is_config_dependent_ = true;
 
-  // w_musculo_03 = Eigen::VectorXd::Ones(3);
-  // w_musculo_03 << 0.01, 0.20, 0.30;  // 00 -> 03
-
-  // w_musculo_03 /= 100;
-
-  // w_ = w_musculo_03;
-
-  //    if( global_DrawModule && draw_features && (
-  //    active->getJoint("rShoulderZ") != NULL ) ) // TODO fix for bio models if
-  //    not a bio model
-  //    {
-  //        global_DrawModule->addDrawFunction( "HumanMusculoskeletal",
-  //        boost::bind( &MusculoskeletalFeature::draw, this) );
-  //        global_DrawModule->enableDrawFunction( "HumanMusculoskeletal" );
-  //    }
+  // Set the dimensionality
+  confPtr_t q = active->getCurrentPos();
+  FeatureVect phi = getFeatures(*q);
+  w_ = WeightVect::Ones(phi.size());
 }
 
 FeatureVect MusculoskeletalFeature::getFeatures(const Configuration& q,
                                                 std::vector<int> active_dofs) {
   //    natural_cost_->getRobot()->setAndUpdate(q);
-
   FeatureVect count(computeMusculoskeletalEffort());
 
   //    cout << "muskulo : " << count.transpose() << endl;

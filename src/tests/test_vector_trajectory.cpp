@@ -32,55 +32,14 @@
 using std::cout;
 using std::endl;
 
-bool TestEquality(const std::vector<Eigen::VectorXd>& samples) {
-  bool success = true;
-  for (size_t i = 0; i < samples.size(); i++) {
-    for (size_t j = i; j < samples.size(); j++) {
-      for (int d = 0; d < samples[0].size(); d++) {
-        if (samples[i][d] != samples[j][d]) {
-          success = false;
-          break;
-        }
-      }
-    }
-  }
-  return success;
-}
-
-int main(int argc, char* argv[]) {
-  int nb_samples = 20;
+int main(int argc, char *argv[]) {
   int dimension = 10;
   Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(dimension, dimension);
   Eigen::VectorXd mean = Eigen::VectorXd::Ones(dimension);
-
-  std::vector<Eigen::VectorXd> samples;
-  for (int i = 0; i < nb_samples; i++) {
-    MultivariateGaussian sampler(mean, covariance, 1);
-    // cout << "sample : " << endl;
-    Eigen::VectorXd s(dimension);
-    sampler.sample(s);
-    samples.push_back(s);
-  }
-
-  if (!TestEquality(samples)) {
-    cout << "Error" << endl;
-    return EXIT_FAILURE;
-  }
-
-
-  cout << "success (MultivariateGaussian) " << endl;
-
-  samples.clear();
-  for (int i = 0; i < nb_samples; i++) {
-    std::srand((unsigned int)time(0));
-    samples.push_back(Eigen::VectorXd::Random(dimension));
-  }
-
-  if (!TestEquality(samples)) {
-    cout << "Error" << endl;
-    return EXIT_FAILURE;
-  }
-
-  cout << "success (Eigen)" << endl;
+  MultivariateGaussian sampler( mean, covariance );
+  cout << "sample : " << endl;
+  Eigen::VectorXd sample( dimension );
+  sampler.sample( sample );
+  cout << sample << endl;
   return EXIT_SUCCESS;
 }

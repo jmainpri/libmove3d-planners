@@ -102,6 +102,10 @@ bool GeneralIK::solve(const Eigen::VectorXd& xdes) const {
     }
   }
 
+  if (!has_succeeded) {
+    cout << __PRETTY_FUNCTION__ << "  dist = " << dist << endl;
+  }
+
   return has_succeeded;
 }
 
@@ -159,8 +163,7 @@ Eigen::VectorXd GeneralIK::single_step_joint_limits(
     Eigen::MatrixXd Jplus = J.transpose()*M.inverse();
     */
 
-    Eigen::MatrixXd Jplus =
-        move3d_pinv(J, 1e-3).block(0, 0, active_joints_.size(), xdes.size());
+    Eigen::MatrixXd Jplus = move3d_pinv(J, 1e-3);
 
     dq = Jplus * magnitude_ * x_error;
 
@@ -200,8 +203,9 @@ bool GeneralIK::checkViolateJointLimits(const Eigen::VectorXd& q,
       }
 
       if (q[dof_id] < lowerLimit || q[dof_id] > upperLimit) {
-        badjointinds.push_back(i);  // note this will never add the same joint
-                                    // twice, even if bClearBadJoints = false
+        badjointinds.push_back(
+            dof_id);  // note this will never add the same joint
+                      // twice, even if bClearBadJoints = false
         violate_limit = true;
 
         if (print) {

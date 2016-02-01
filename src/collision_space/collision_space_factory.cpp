@@ -46,6 +46,8 @@
 #include <libmove3d/p3d/env.hpp>
 #include <libmove3d/include/Planner-pkg.h>
 
+#include <iomanip>
+
 using namespace Move3D;
 using std::cout;
 using std::endl;
@@ -89,7 +91,6 @@ std::vector<int> traj_optim_get_active_joints() { return m_active_joints; }
 
 std::vector<int> traj_optim_get_planner_joints() { return m_planner_joints; }
 
-
 //! initializes the collision space
 // --------------------------------------------------------
 void traj_optim_init_collision_space() {
@@ -108,12 +109,15 @@ void traj_optim_init_collision_space() {
                          global_Project->getActiveScene()->getBounds());
   m_collspace->resetPoints();
 
+  // TRO 2016 Has to be turned off for user stdy
+  const bool add_human_pevlis_and_legs = false;
+
   // Warning
   // If not human add bodies that are
   // not part of the active joints set
   if (m_robot->getName().find("HUMAN") == std::string::npos) {
     //  cout << "robot name : " << m_robot->getName() << endl;
-    //  cout << "Add robot bodies exit " << endl; // exit(0);
+    //  cout << "Add robot bodies exit " << endl;
 
     for (unsigned int joint_id = 0; joint_id < m_robot->getNumberOfJoints();
          joint_id++) {
@@ -125,7 +129,8 @@ void traj_optim_init_collision_space() {
   }
   // Special case for BIOMECH model
   // Add the pelvis and the legs
-  else if (m_robot->getName().find("HERAKLES_HUMAN2") != std::string::npos) {
+  else if (add_human_pevlis_and_legs &&
+           (m_robot->getName().find("HERAKLES_HUMAN2") != std::string::npos)) {
     m_collspace->addRobotBody(m_robot->getJoint(1));
     for (unsigned int joint_id = 31; joint_id < m_robot->getNumberOfJoints();
          joint_id++) {
@@ -474,6 +479,72 @@ void traj_optim_hrics_mobile_manip_init_joints() {
   m_collspace = NULL;
 }
 
+void update_dof_bouds(confPtr_t q_tmp,
+                      Eigen::VectorXd& pelvis_max,
+                      Eigen::VectorXd& pelvis_min) {
+  for (size_t i = 0; i < 6; i++) {
+    if (pelvis_max[i] < (*q_tmp)[6 + i]) pelvis_max[i] = (*q_tmp)[6 + i];
+    if (pelvis_min[i] > (*q_tmp)[6 + i]) pelvis_min[i] = (*q_tmp)[6 + i];
+  }
+}
+
+//! set biomech dof bounds when planning
+bool traj_optim_hrics_human_trajectory_biomech_dof_bounds(
+    Move3D::Robot* robot) {
+  // HERE WE declare the human joint and joint limits
+  // before the TRO reviews we did not have definitions of the joint
+  // limits here and Pelvis was allways included to make 23 DoFs of the paper
+  if (robot->getJoint("rShoulderTransX") == NULL) {
+    return false;
+  }
+  p3d_jnt_set_dof_rand_bounds(
+      robot->getJoint("rShoulderTransX")->getP3dJointStruct(), 0, .03, .06);
+  p3d_jnt_set_dof_rand_bounds(
+      robot->getJoint("rShoulderTransY")->getP3dJointStruct(), 0, .18, .22);
+  p3d_jnt_set_dof_rand_bounds(
+      robot->getJoint("rShoulderTransZ")->getP3dJointStruct(), 0, .12, .16);
+  p3d_jnt_set_dof_rand_bounds(
+      robot->getJoint("rArmTrans")->getP3dJointStruct(), 0, .37, .41);
+  p3d_jnt_set_dof_rand_bounds(
+      robot->getJoint("rForeArmTrans")->getP3dJointStruct(), 0, .23, .26);
+
+  Eigen::VectorXd pelvis_max(Eigen::VectorXd::Ones(6));
+  Eigen::VectorXd pelvis_min(Eigen::VectorXd::Ones(6));
+
+  pelvis_max *= std::numeric_limits<double>::min();
+  pelvis_min *= std::numeric_limits<double>::max();
+
+  update_dof_bouds(robot->getInitPos(), pelvis_max, pelvis_min);
+  update_dof_bouds(robot->getGoalPos(), pelvis_max, pelvis_min);
+
+  const double bound_trans = 0.02;
+  const double bound_rotat = 0.05;
+
+  double dof[6][2];
+  for (int i = 0; i < 3; i++) {  // Translation bounds
+    dof[i][0] = pelvis_min(i) - bound_trans;
+    dof[i][1] = pelvis_max(i) + bound_trans;
+  }
+  for (int i = 3; i < 6; i++) {  // Rotation bounds
+    dof[i][0] = pelvis_min(i) - bound_rotat;
+    dof[i][1] = pelvis_max(i) + bound_rotat;
+  }
+
+  cout << std::setw(3) << "pelvis_min.transpose() : " << pelvis_min.transpose()
+       << endl;
+  cout << std::setw(3) << "pelvis_max.transpose() : " << pelvis_max.transpose()
+       << endl;
+
+  for (int i = 0; i < 6; i++) {
+    p3d_jnt_set_dof_rand_bounds(robot->getJoint("Pelvis")->getP3dJointStruct(),
+                                i,
+                                dof[i][0],
+                                dof[i][1]);
+  }
+
+  return true;
+}
+
 //! initializes the collision space
 //! and points
 // --------------------------------------------------------
@@ -507,78 +578,69 @@ void traj_optim_hrics_human_trajectory_manip_init_joints() {
     m_planner_joints.push_back(10);
     m_planner_joints.push_back(11);
     m_planner_joints.push_back(12);
-    //    m_planner_joints.push_back( 13 );
+    // m_planner_joints.push_back( 13 );
   } else {
     m_active_joints.clear();
     m_planner_joints.clear();
 
-    // HERE WE declare the human joint and joint limits
-    // before the TRO reviews we did not have definitions of the joint
-    // limits here and Pelvis was allways included to make 23 DoFs of the paper
+    // HERE WE declare the human joint and joint limits before the TRO reviews
+    // we did not have definitions of the joint limits here and Pelvis was
+    // allways included to make 23 DoFs of the paper
 
-    if (PlanEnv->getBool(PlanParam::trajStompMoveEndConfig)) {
+    double vmin_0, vmax_0, vmin_1, vmax_1;
+    m_robot->getJoint("Pelvis")->getDofRandBounds(0, vmin_0, vmax_0);
+    m_robot->getJoint("Pelvis")->getDofRandBounds(1, vmin_1, vmax_1);
+
+    bool dof_bounds_not_set =
+        vmin_0 == -3 && vmin_1 == -3 && vmax_0 == 3 && vmax_1 == 3;
+
+    cout << "vmin_0 : " << vmin_0 << endl;
+    cout << "vmin_1 : " << vmin_1 << endl;
+    cout << "vmax_0 : " << vmax_0 << endl;
+    cout << "vmax_1 : " << vmax_1 << endl;
+    cout << "dof_bounds_not_set : " << dof_bounds_not_set << endl;
+
+    if (PlanEnv->getBool(PlanParam::trajStompMoveEndConfig) &&
+        dof_bounds_not_set) {
       // TODO remove joint limits from here
-
-      p3d_jnt_set_dof_rand_bounds(
-          m_robot->getJoint("rShoulderTransX")->getP3dJointStruct(),
-          0,
-          .03,
-          .06);
-      p3d_jnt_set_dof_rand_bounds(
-          m_robot->getJoint("rShoulderTransY")->getP3dJointStruct(),
-          0,
-          .18,
-          .22);
-      p3d_jnt_set_dof_rand_bounds(
-          m_robot->getJoint("rShoulderTransZ")->getP3dJointStruct(),
-          0,
-          .12,
-          .16);
-      p3d_jnt_set_dof_rand_bounds(
-          m_robot->getJoint("rArmTrans")->getP3dJointStruct(), 0, .37, .41);
-      p3d_jnt_set_dof_rand_bounds(
-          m_robot->getJoint("rForeArmTrans")->getP3dJointStruct(), 0, .23, .26);
-    } else {
-      m_active_joints.push_back(m_robot->getJoint("Pelvis")->getId());
-      m_planner_joints.push_back(m_robot->getJoint("Pelvis")->getId());
+      traj_optim_hrics_human_trajectory_biomech_dof_bounds(m_robot);
     }
 
-    //
-    if (!PlanEnv->getBool(PlanParam::trajStompMoveEndConfig)) {
-      m_active_joints.push_back(m_robot->getJoint("TorsoX")->getId());
-      m_active_joints.push_back(m_robot->getJoint("TorsoZ")->getId());
-      m_active_joints.push_back(m_robot->getJoint("TorsoY")->getId());
-    }
-    //    m_active_joints.push_back(m_robot->getJoint("rShoulderTransX")->getId());
-    //    m_active_joints.push_back(m_robot->getJoint("rShoulderTransY")->getId());
-    //    m_active_joints.push_back(m_robot->getJoint("rShoulderTransZ")->getId());
+    // This removes the collision bodies (Active in the collision checking)
+    // m_active_joints.push_back(m_robot->getJoint("Pelvis")->getId());
+    // m_active_joints.push_back(m_robot->getJoint("TorsoX")->getId());
+    // m_active_joints.push_back(m_robot->getJoint("TorsoZ")->getId());
+    // m_active_joints.push_back(m_robot->getJoint("TorsoY")->getId());
+    m_active_joints.push_back(m_robot->getJoint("rShoulderTransX")->getId());
+    m_active_joints.push_back(m_robot->getJoint("rShoulderTransY")->getId());
+    m_active_joints.push_back(m_robot->getJoint("rShoulderTransZ")->getId());
     m_active_joints.push_back(m_robot->getJoint("rShoulderY1")->getId());
     m_active_joints.push_back(m_robot->getJoint("rShoulderX")->getId());
     m_active_joints.push_back(m_robot->getJoint("rShoulderY2")->getId());
-    //    m_active_joints.push_back(m_robot->getJoint("rArmTrans")->getId());
+    m_active_joints.push_back(m_robot->getJoint("rArmTrans")->getId());
     m_active_joints.push_back(m_robot->getJoint("rElbowZ")->getId());
     m_active_joints.push_back(m_robot->getJoint("rElbowX")->getId());
     m_active_joints.push_back(m_robot->getJoint("rElbowY")->getId());
-    //    m_active_joints.push_back(m_robot->getJoint("rForeArmTrans")->getId());
+    m_active_joints.push_back(m_robot->getJoint("rForeArmTrans")->getId());
     m_active_joints.push_back(m_robot->getJoint("rWristZ")->getId());
     m_active_joints.push_back(m_robot->getJoint("rWristX")->getId());
     m_active_joints.push_back(m_robot->getJoint("rWristY")->getId());
 
+    m_planner_joints.push_back(m_robot->getJoint("Pelvis")->getId());
     m_planner_joints.push_back(m_robot->getJoint("TorsoX")->getId());
     m_planner_joints.push_back(m_robot->getJoint("TorsoZ")->getId());
     m_planner_joints.push_back(m_robot->getJoint("TorsoY")->getId());
-
-    //    m_planner_joints.push_back(m_robot->getJoint("rShoulderTransX")->getId());
-    //    m_planner_joints.push_back(m_robot->getJoint("rShoulderTransY")->getId());
-    //    m_planner_joints.push_back(m_robot->getJoint("rShoulderTransZ")->getId());
+    m_planner_joints.push_back(m_robot->getJoint("rShoulderTransX")->getId());
+    m_planner_joints.push_back(m_robot->getJoint("rShoulderTransY")->getId());
+    m_planner_joints.push_back(m_robot->getJoint("rShoulderTransZ")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rShoulderY1")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rShoulderX")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rShoulderY2")->getId());
-    //    m_planner_joints.push_back(m_robot->getJoint("rArmTrans")->getId());
+    m_planner_joints.push_back(m_robot->getJoint("rArmTrans")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rElbowZ")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rElbowX")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rElbowY")->getId());
-    //    m_planner_joints.push_back(m_robot->getJoint("rForeArmTrans")->getId());
+    m_planner_joints.push_back(m_robot->getJoint("rForeArmTrans")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rWristZ")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rWristX")->getId());
     m_planner_joints.push_back(m_robot->getJoint("rWristY")->getId());
@@ -733,7 +795,8 @@ bool traj_optim_init_collision_spaces(traj_optim::ScenarioType sce,
 
     case traj_optim::HumanSimulation:
 
-      cout << "Init Human Simulation (Trajectory costspace)" << endl;
+      cout << "Init Human Simulation Collision space (Trajectory costspace)"
+           << endl;
 
       if (m_robot->getName() == "PR2_ROBOT") {
         traj_optim_invalidate_cntrts();
@@ -752,9 +815,6 @@ bool traj_optim_init_collision_spaces(traj_optim::ScenarioType sce,
       } else {
         m_collspace = global_collisionSpace;
       }
-
-      // exit(0);
-
       break;
 
     case traj_optim::Navigation:

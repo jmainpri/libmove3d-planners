@@ -17,13 +17,13 @@
  * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
  * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                                  
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001). 
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
  * Move3d: A generic platform for path planning. In in 4th Int. Symp.
  * on Assembly and Task Planning.
  *
- *                                               Jim Mainprice Tue 27 May 2014 
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 #ifndef HRICS_HUMANIOC_HPP
 #define HRICS_HUMANIOC_HPP
@@ -31,36 +31,34 @@
 #include "HRICS_ioc.hpp"
 #include "hri_costspace/gestures/HRICS_record_motion.hpp"
 
-namespace HRICS
-{
+namespace HRICS {
 
-class HumanIoc : public IocEvaluation
-{
-public:
-    HumanIoc( Move3D::Robot* active,
-              Move3D::Robot* passive,
-              int nb_demos, int nb_samples, int nb_way_points,
-              MultiplePlanners& planners,
-              Move3D::StackedFeatures* features,
-              std::vector<int> active_joints,
-              std::string folder,
-              std::string traj_folder,
-              std::string tmp_data_folder );
+class HumanIoc : public IocEvaluation {
+ public:
+  HumanIoc(Move3D::Robot* active,
+           Move3D::Robot* passive,
+           int nb_demos,
+           int nb_samples,
+           int nb_way_points,
+           MultiplePlanners& planners,
+           Move3D::StackedFeatures* features,
+           std::vector<int> active_joints,
+           std::string folder,
+           std::string traj_folder,
+           std::string tmp_data_folder);
 
-    ~HumanIoc() { }
+  ~HumanIoc() {}
 
-//    void runSampling();
-    void setPlanningGroup();
-    void setDemos( const std::vector<motion_t>& stored_motions );
+  //    void runSampling();
+  void setPlanningGroup();
+  void setDemos(const std::vector<motion_t>& stored_motions);
 
-private:
-    Move3D::Trajectory getTrajectoryFromMotion( const motion_t& m ) const;
-
+ private:
+  Move3D::Trajectory getTrajectoryFromMotion(const motion_t& m) const;
 };
-
 }
 
 void HRICS_run_human_ioc_from_recorded_motion();
 void HRICS_run_human_ioc_evaluation();
 
-#endif // HRICS_HUMANIOC_HPP
+#endif  // HRICS_HUMANIOC_HPP

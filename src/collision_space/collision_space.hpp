@@ -45,9 +45,18 @@ class CollisionSpaceCell : public Move3D::ThreeDCell {
   void draw(int color, int width);
   void draw(void);
 
+  // Positive field
   int m_DistanceSquare;  /**< Squared distance from the closest obstacle */
   int m_UpdateDirection; /**< Direction from which this voxel was updated */
   Eigen::Vector3i m_ClosestPoint; /**< Closes obstacle from this voxel */
+
+  // Negative counter part
+  int negative_distance_square_;
+  int negative_update_direction_;
+  Eigen::Vector3i closest_negative_point_;
+
+  static const int UNINITIALIZED =
+      -1; /**< \brief Value that represents an unitialized voxel */
 
  private:
   bool m_Valid;  // There is no static obstacles crossing this cell
@@ -144,6 +153,20 @@ class CollisionSpace : public Move3D::ThreeDGrid {
 
   double getDistanceFromCell(int x, int y, int z) const;
 
+  CollisionSpaceCell* getCellSpaceCell(const Eigen::Vector3d& point) const;
+  CollisionSpaceCell* getCellSpaceCell(const Eigen::Vector3i& point) const;
+
+  double getMaxtDistSq() const {
+    double max_distance_sq =
+        (_nbCellsX * _nbCellsX + _nbCellsY * _nbCellsY + _nbCellsZ * _nbCellsZ);
+    return max_distance_sq;
+  }
+
+  void propagatePositive(
+      std::vector<std::vector<CollisionSpaceCell*> >& bucket_queue);
+  void propagateNegative(
+      std::vector<std::vector<CollisionSpaceCell*> >& bucket_queue);
+
   // The position of the origin of the grid regarding th eorigin of the world
   // int m_nbMaxCells; //the number of cell along the longest axis of the
   // environment
@@ -169,6 +192,8 @@ class CollisionSpace : public Move3D::ThreeDGrid {
   std::vector<double> m_SqrtTable;
   std::vector<std::vector<std::vector<std::vector<int> > > > m_Neighborhoods;
   std::vector<std::vector<int> > m_DirectionNumberToDirection;
+
+  bool propagate_negative_;
 };
 
 extern CollisionSpace* global_collisionSpace;

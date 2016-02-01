@@ -17,13 +17,13 @@
  * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
  * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                                  
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001). 
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
  * Move3d: A generic platform for path planning. In in 4th Int. Symp.
  * on Assembly and Task Planning.
  *
- *                                               Jim Mainprice Tue 27 May 2014 
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 #include "HRICS_parameters.hpp"
 #include <libmove3d/include/move3d-headless.h>
@@ -36,118 +36,140 @@
 // When Qt is disabled this just acts as a normal container
 
 // Definition of the parameter container
-Parameters<
-HricsParam::boolParameter,
-HricsParam::intParameter,
-HricsParam::doubleParameter,
-HricsParam::stringParameter,
-HricsParam::vectorParameter>* HriEnv = NULL;
+Parameters<HricsParam::boolParameter,
+           HricsParam::intParameter,
+           HricsParam::doubleParameter,
+           HricsParam::stringParameter,
+           HricsParam::vectorParameter>* HriEnv = NULL;
 
 #ifdef QT_LIBRARY
 HricsParam* EnumHricsParameterObject = NULL;
 
-HricsParam::HricsParam()
-{
+HricsParam::HricsParam() {}
 
-}
-
-HricsParam::~HricsParam()
-{
-
-}
+HricsParam::~HricsParam() {}
 #endif
 
 // @brief Function that inizializes the
 // Parameter container
-void initHricsParameters()
-{
+void initHricsParameters() {
 #ifdef QT_LIBRARY
-    EnumHricsParameterObject = new HricsParam;
+  EnumHricsParameterObject = new HricsParam;
 #endif
 
-    // Create 5 maps for all types and fill the 5 maps
-    // ------------------------------------------------------------------
-    std::map<HricsParam::boolParameter,      boolContainer*>                  myBoolMap;
-    std::map<HricsParam::intParameter,       intContainer*>                   myIntMap;
-    std::map<HricsParam::doubleParameter,    doubleContainer*>                myDoubleMap;
-    std::map<HricsParam::stringParameter,    stringContainer*>                myStringMap;
-    std::map<HricsParam::vectorParameter,    vectorContainer*>                myVectorMap;
+  // Create 5 maps for all types and fill the 5 maps
+  // ------------------------------------------------------------------
+  std::map<HricsParam::boolParameter, boolContainer*> myBoolMap;
+  std::map<HricsParam::intParameter, intContainer*> myIntMap;
+  std::map<HricsParam::doubleParameter, doubleContainer*> myDoubleMap;
+  std::map<HricsParam::stringParameter, stringContainer*> myStringMap;
+  std::map<HricsParam::vectorParameter, vectorContainer*> myVectorMap;
 
-    // Bool
-    // ------------------------------------------------------------------
-    myBoolMap.insert( std::make_pair( HricsParam::init_spheres_cost, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::init_human_trajectory_cost, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_single_iteration, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_load_samples_from_file, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_draw_demonstrations, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_draw_samples, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_draw_one_demo, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_sample_around_demo, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_exit_after_run, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_use_stomp_spetial_cost, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_use_simulation_demos, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_user_set_pelvis_bounds, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_use_baseline, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_no_replanning, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_split_motions, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_conservative_baseline, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_show_last_simulation, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_remove_split, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_parallel_job, new boolContainer(false) ));
-    myBoolMap.insert( std::make_pair( HricsParam::ioc_show_replanning, new boolContainer(false) ));
+  // Bool
+  // ------------------------------------------------------------------
+  myBoolMap.insert(
+      std::make_pair(HricsParam::init_spheres_cost, new boolContainer(false)));
+  myBoolMap.insert(std::make_pair(HricsParam::init_human_trajectory_cost,
+                                  new boolContainer(false)));
+  myBoolMap.insert(std::make_pair(HricsParam::ioc_single_iteration,
+                                  new boolContainer(false)));
+  myBoolMap.insert(std::make_pair(HricsParam::ioc_load_samples_from_file,
+                                  new boolContainer(false)));
+  myBoolMap.insert(std::make_pair(HricsParam::ioc_draw_demonstrations,
+                                  new boolContainer(false)));
+  myBoolMap.insert(
+      std::make_pair(HricsParam::ioc_draw_samples, new boolContainer(false)));
+  myBoolMap.insert(
+      std::make_pair(HricsParam::ioc_draw_one_demo, new boolContainer(false)));
+  myBoolMap.insert(std::make_pair(HricsParam::ioc_sample_around_demo,
+                                  new boolContainer(false)));
+  myBoolMap.insert(
+      std::make_pair(HricsParam::ioc_exit_after_run, new boolContainer(false)));
+  myBoolMap.insert(std::make_pair(HricsParam::ioc_use_stomp_spetial_cost,
+                                  new boolContainer(false)));
+  myBoolMap.insert(std::make_pair(HricsParam::ioc_use_simulation_demos,
+                                  new boolContainer(false)));
+  myBoolMap.insert(std::make_pair(HricsParam::ioc_user_set_pelvis_bounds,
+                                  new boolContainer(false)));
+  myBoolMap.insert(
+      std::make_pair(HricsParam::ioc_use_baseline, new boolContainer(false)));
+  myBoolMap.insert(
+      std::make_pair(HricsParam::ioc_no_replanning, new boolContainer(false)));
+  myBoolMap.insert(
+      std::make_pair(HricsParam::ioc_split_motions, new boolContainer(false)));
+  myBoolMap.insert(std::make_pair(HricsParam::ioc_conservative_baseline,
+                                  new boolContainer(false)));
+  myBoolMap.insert(std::make_pair(HricsParam::ioc_show_last_simulation,
+                                  new boolContainer(false)));
+  myBoolMap.insert(
+      std::make_pair(HricsParam::ioc_remove_split, new boolContainer(false)));
+  myBoolMap.insert(
+      std::make_pair(HricsParam::ioc_parallel_job, new boolContainer(false)));
+  myBoolMap.insert(std::make_pair(HricsParam::ioc_show_replanning,
+                                  new boolContainer(false)));
+  myBoolMap.insert(std::make_pair(HricsParam::ioc_training_dataset,
+                                  new boolContainer(false)));
+  myBoolMap.insert(
+      std::make_pair(HricsParam::ioc_set_dof_limits_from_experiments,
+                     new boolContainer(false)));
 
+  // Int
+  // ------------------------------------------------------------------
+  myIntMap.insert(std::make_pair(HricsParam::ioc_phase, new intContainer(0)));
+  myIntMap.insert(
+      std::make_pair(HricsParam::ioc_sample_iteration, new intContainer(0)));
+  myIntMap.insert(
+      std::make_pair(HricsParam::ioc_nb_of_way_points, new intContainer(0)));
+  myIntMap.insert(
+      std::make_pair(HricsParam::ioc_planner_type, new intContainer(0)));
+  myIntMap.insert(
+      std::make_pair(HricsParam::ioc_spheres_to_draw, new intContainer(-1)));
+  myIntMap.insert(
+      std::make_pair(HricsParam::ioc_from_file_offset, new intContainer(-1)));
+  myIntMap.insert(std::make_pair(HricsParam::ioc_ik, new intContainer(-1)));
+  myIntMap.insert(
+      std::make_pair(HricsParam::ioc_baseline_type, new intContainer(-1)));
+  myIntMap.insert(std::make_pair(HricsParam::ioc_dataset, new intContainer(0)));
 
+  // Double
+  // ------------------------------------------------------------------
+  myDoubleMap.insert(
+      std::make_pair(HricsParam::ioc_spheres_power, new doubleContainer(2.0)));
+  myDoubleMap.insert(
+      std::make_pair(HricsParam::ioc_sample_std_dev, new doubleContainer(2.0)));
+  myDoubleMap.insert(std::make_pair(HricsParam::ioc_sample_std_dev_ik,
+                                    new doubleContainer(2.0)));
+  myDoubleMap.insert(
+      std::make_pair(HricsParam::ioc_cost_factor, new doubleContainer(2.0)));
 
+// cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble(
+// PlanParam::env_objectNessecity ) << endl;
 
-    // Int
-    // ------------------------------------------------------------------
-    myIntMap.insert( std::make_pair( HricsParam::ioc_phase, new intContainer(0) ));
-    myIntMap.insert( std::make_pair( HricsParam::ioc_sample_iteration, new intContainer(0) ));
-    myIntMap.insert( std::make_pair( HricsParam::ioc_nb_of_way_points, new intContainer(0) ));
-    myIntMap.insert( std::make_pair( HricsParam::ioc_planner_type, new intContainer(0) ));
-    myIntMap.insert( std::make_pair( HricsParam::ioc_spheres_to_draw, new intContainer(-1) ));
-    myIntMap.insert( std::make_pair( HricsParam::ioc_from_file_offset, new intContainer(-1) ));
-    myIntMap.insert( std::make_pair( HricsParam::ioc_ik, new intContainer(-1) ));
-    myIntMap.insert( std::make_pair( HricsParam::ioc_baseline_type, new intContainer(-1) ));
-    myIntMap.insert( std::make_pair( HricsParam::ioc_dataset, new intContainer(0) ));
-
-
-    // Double
-    // ------------------------------------------------------------------
-    myDoubleMap.insert( std::make_pair( HricsParam::ioc_spheres_power, new doubleContainer(2.0) ));
-    myDoubleMap.insert( std::make_pair( HricsParam::ioc_sample_std_dev, new doubleContainer(2.0) ));
-    myDoubleMap.insert( std::make_pair( HricsParam::ioc_sample_std_dev_ik, new doubleContainer(2.0) ));
-    myDoubleMap.insert( std::make_pair( HricsParam::ioc_cost_factor, new doubleContainer(2.0) ));
-
-    //cout << "PlanEnv->getDouble(p) = " << PlanEnv->getDouble( PlanParam::env_objectNessecity ) << endl;
-
-    // String
-    // ------------------------------------------------------------------
+// String
+// ------------------------------------------------------------------
 #ifdef QT_LIBRARY
 
-    myStringMap.insert(std::make_pair(HricsParam::ioc_traj_split_name,   new stringContainer("titi")));
-    myStringMap.insert(std::make_pair(HricsParam::ioc_tmp_traj_folder,   new stringContainer("")));
+  myStringMap.insert(std::make_pair(HricsParam::ioc_traj_split_name,
+                                    new stringContainer("titi")));
+  myStringMap.insert(
+      std::make_pair(HricsParam::ioc_tmp_traj_folder, new stringContainer("")));
 
 #endif
 
-    // Vector
-    // ------------------------------------------------------------------
-    std::vector<double> tutu;
-    tutu.push_back( 1 ); tutu.push_back( 8 );
+  // Vector
+  // ------------------------------------------------------------------
+  std::vector<double> tutu;
+  tutu.push_back(1);
+  tutu.push_back(8);
 
-    myVectorMap.insert(std::make_pair(HricsParam::tutu,                       new vectorContainer(tutu)));
+  myVectorMap.insert(
+      std::make_pair(HricsParam::tutu, new vectorContainer(tutu)));
 
-    // Make the new parameter container
-    HriEnv =  new Parameters<
-            HricsParam::boolParameter,
-            HricsParam::intParameter,
-            HricsParam::doubleParameter,
-            HricsParam::stringParameter,
-            HricsParam::vectorParameter>(
-                myBoolMap,
-                myIntMap,
-                myDoubleMap,
-                myStringMap,
-                myVectorMap);
+  // Make the new parameter container
+  HriEnv = new Parameters<HricsParam::boolParameter,
+                          HricsParam::intParameter,
+                          HricsParam::doubleParameter,
+                          HricsParam::stringParameter,
+                          HricsParam::vectorParameter>(
+      myBoolMap, myIntMap, myDoubleMap, myStringMap, myVectorMap);
 }
-

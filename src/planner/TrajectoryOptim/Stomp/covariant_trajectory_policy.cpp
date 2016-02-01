@@ -88,7 +88,7 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
                                            const double cost_ridge_factor,
                                            const std::vector<double>&
                                                derivative_costs,
-                                           const bool free_end_config,
+                                           const double free_end_config,
                                            const ChompPlanningGroup*
                                                planning_group) {
   type_ = acc;
@@ -101,7 +101,8 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
 
   // Computes a control matrices that allow motion of the end part
   // Should be set to 2 for the normal case
-  free_offset_ = free_end_config ? int(num_time_steps_/3) : 0;
+  free_offset_ =
+      free_end_config > 0 ? int(double(num_time_steps_) / free_end_config) : 0;
 
   cout << "free_offset_ : " << free_offset_ << endl;
 
@@ -112,10 +113,6 @@ bool CovariantTrajectoryPolicy::initialize(/*ros::NodeHandle& node_handle,*/
   } else {
     movement_duration_ = movement_duration;
   }
-
-  // movement_duration_ = 5.0;
-  // movement_duration_ = movement_duration*7.716;
-  // movement_duration_ = movement_duration*1.5432;
 
   cost_ridge_factor_ = cost_ridge_factor;
   derivative_costs_ = derivative_costs;
@@ -269,21 +266,29 @@ void CovariantTrajectoryPolicy::createDifferentiationMatrices() {
       Eigen::MatrixXd::Zero(num_vars_all_ + free_offset_,
                             num_vars_all_ + free_offset_));
 
+  differentiation_matrices_no_offset_.resize(
+      NUM_DIFF_RULES, Eigen::MatrixXd::Zero(num_vars_all_, num_vars_all_));
+
   for (int d = 0; d < NUM_DIFF_RULES; ++d) {
     if (print_debug_) {
       cout << "Movement duration : " << movement_duration_ << endl;
       cout << "Movement dt : " << movement_dt_ << endl;
     }
-    // multiplier /= movement_dt_;
-    // multiplier /= 0.03815;
 
     for (int i = 0; i < num_vars_all_ + free_offset_; i++) {
       for (int j = -DIFF_RULE_LENGTH / 2; j <= DIFF_RULE_LENGTH / 2; j++) {
         int index = i + j;
         if (index < 0) continue;
         if (index >= (num_vars_all_ + free_offset_)) continue;
+
         differentiation_matrices_[d](i, index) =
             multiplier * DIFF_RULES[d][j + DIFF_RULE_LENGTH / 2];
+
+        // store the value in a matrice which is not cropped
+        if ((index < num_vars_all_) && (i < num_vars_all_)) {
+          differentiation_matrices_no_offset_[d](i, index) =
+              differentiation_matrices_[d](i, index);
+        }
       }
     }
   }
@@ -307,6 +312,10 @@ bool CovariantTrajectoryPolicy::initializeCosts() {
         Eigen::MatrixXd::Identity(num_vars_all_ + free_offset_,
                                   num_vars_all_ + free_offset_);
 
+    Eigen::MatrixXd cost_all_no_offset =
+        cost_ridge_factor_ *
+        Eigen::MatrixXd::Identity(num_vars_all_, num_vars_all_);
+
     for (int i = 0; i < NUM_DIFF_RULES; ++i)  // NUM_DI...
     {
       // cout << "derivative cost : " << i << " , " << derivative_costs_[i] <<
@@ -314,10 +323,23 @@ bool CovariantTrajectoryPolicy::initializeCosts() {
       cost_all +=
           derivative_costs_[i] * (differentiation_matrices_[i].transpose() *
                                   differentiation_matrices_[i]);
+
+      cost_all_no_offset +=
+          derivative_costs_[i] *
+          (differentiation_matrices_no_offset_[i].transpose() *
+           differentiation_matrices_no_offset_[i]);
     }
     control_costs_all_.push_back(cost_all);
 
     // Extract the quadratic cost just for the free variables
+    Eigen::MatrixXd cost_control_all;
+    bool use_offset = true;
+    if (use_offset) {
+      cost_control_all = cost_all;
+    } else {
+      cost_control_all = cost_all_no_offset;
+    }
+
     Eigen::MatrixXd cost_free = cost_all.block(DIFF_RULE_LENGTH - 1,
                                                DIFF_RULE_LENGTH - 1,
                                                num_vars_free_,
@@ -338,8 +360,11 @@ bool CovariantTrajectoryPolicy::initializeCosts() {
     // cout << "cost_free("<<d<<") = " << endl << cost_free << endl;
 
     control_costs_.push_back(cost_free);
+
     inv_control_costs_.push_back(cost_free.inverse());
-    //        covariances_.push_back( cost_free.inverse() );
+    // covariances_.push_back( cost_free.inverse() );
+
+    // block_free2 already starts with DIFF_RULE offset
     covariances_.push_back(
         cost_free2.inverse().block(0, 0, num_vars_free_, num_vars_free_));
 
@@ -348,8 +373,6 @@ bool CovariantTrajectoryPolicy::initializeCosts() {
     //        cout << "control_costs["<< d <<"]  = " << endl <<
     //        control_costs_[d] << endl;
   }
-
-  //    exit(0);
 
   //    cout << "diff_mat : "  << endl << differentiation_matrices_[1] << endl;
   //    cout << "diff_mat : "  << endl << control_costs_all_[0] << endl;
@@ -533,9 +556,9 @@ bool CovariantTrajectoryPolicy::computeControlCosts(
       }
     }
 
-    //        cout << "TYPE : " << type_ << " , dt : " << dt << endl;
-    //        cout << "dt : " << dt << endl;
-    //        cout << "acc_all : " << acc_all.transpose() << endl;
+    // cout << "TYPE : " << type_ << " , dt : " << dt << endl;
+    // cout << "dt : " << dt << endl;
+    // cout << "acc_all : " << acc_all.transpose() << endl;
 
     if (type_ == dist)
       costs_all = acc_all;
@@ -544,8 +567,10 @@ bool CovariantTrajectoryPolicy::computeControlCosts(
 
     costs_all *= weight;
 
-    control_costs[d] = costs_all.segment(free_vars_start_index_ + offset,
-                                         num_vars_free_ - 2 * offset);
+    // TODO check that it works with human model and goal set ...
+    control_costs[d].segment(offset, num_vars_free_ - 2 * offset) =
+        costs_all.segment(free_vars_start_index_ + offset,
+                          num_vars_free_ - 2 * offset);
 
     if (save_to_file) {
       std::stringstream ss;
@@ -735,8 +760,10 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
   control_costs.resize(nb_costs);
   for (size_t i = 0; i < control_costs.size(); ++i) {
     control_costs[i].resize(parameters.size());
-    for (size_t d = 0; d < control_costs[i].size(); ++d)
+    for (size_t d = 0; d < control_costs[i].size(); ++d) {
+      //cout << "parameter size : " << parameters[d].size() << endl;
       control_costs[i][d] = Eigen::VectorXd::Zero(parameters[d].size());
+    }
   }
 
   for (size_t d = 0; d < parameters.size(); ++d) {
@@ -787,13 +814,6 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
       control_costs[0][d].segment(left_padding,
                                   size_of_traj - left_padding - right_padding) =
           factor_dist * control_costs_tmp[d];
-      //            cout << "control_costs[0][d].segment( left_padding,
-      //            size_of_traj - left_padding - right_padding ).size() : "
-      //                 <<  control_costs[0][d].segment( left_padding,
-      //                 size_of_traj - left_padding - right_padding ).size()
-      //                 << endl;
-      //            cout << "control_costs_tmp[d].size() : " <<
-      //            control_costs_tmp[d].size() << endl;
     }
     costs[0] = dist * factor_dist;
 
@@ -835,8 +855,8 @@ Eigen::VectorXd CovariantTrajectoryPolicy::getAllCosts(
     cost_t = task.getDist(traj, control_costs_t);
     costs[4] = factor_task_dist * cost_t;
 
-    // The task space distance is computed over the entire trajectory (no
-    // buffer)
+    // The task space distance is computed over
+    // the entire trajectory (no buffer)
     //.segment( left_padding, size_of_traj - left_padding - right_padding )
     for (size_t d = 0; d < control_costs[4].size(); ++d)
       control_costs[4][d] = factor_task_dist * control_costs_t;
@@ -928,6 +948,7 @@ void CovariantTrajectoryPolicy::saveProfiles(
 
   for (size_t d = 0; d < parameters.size(); ++d) {
     noise[d] = Eigen::VectorXd::Zero(parameters[d].size());
+    control_costs[d] = Eigen::VectorXd::Zero(parameters[d].size());
   }
 
   cost_type type_tmp = type_;
@@ -970,7 +991,6 @@ void CovariantTrajectoryPolicy::setGroupTrajectoryToMove3DTraj(
     double dt) {
   if (parameters.empty()) {
     cout << "Error in parameter empty " << endl;
-    //        exit(0);
   }
 
   //    int start = free_vars_start_;

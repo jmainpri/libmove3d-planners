@@ -37,7 +37,7 @@ using std::endl;
 
 int main(int argc, char* argv[]) {
   if (!move3d_start_and_load_manipulator()) {
-    return 0;
+    return EXIT_FAILURE;
   }
 
   std::string robot_name;
@@ -83,4 +83,6 @@ int main(int argc, char* argv[]) {
   }else {
     cout << "Test NOT ok! isApprox(" << threshold << ")" << endl;
   }
+
+  return EXIT_SUCCESS;
 }

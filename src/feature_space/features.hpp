@@ -45,7 +45,10 @@ typedef Eigen::VectorXd WeightVect;
 class Feature {
  public:
   Feature(std::string name)
-      : is_config_dependent_(false), is_stacked_(false), name_(name) {}
+      : is_active_(false),
+        is_config_dependent_(false),
+        is_stacked_(false),
+        name_(name) {}
 
   std::string getName() const { return name_; }
 
@@ -118,7 +121,7 @@ class StackedFeatures : public Feature {
   virtual FeatureVect getFeatureCount(const Move3D::Trajectory& t);
 
   //! Get vector of weights for only the active features in the stack, set to 0
-  //the other weights
+  // the other weights
   void setWeights(const WeightVect& w);
 
   //! Get weights for all active features (active and
@@ -127,6 +130,7 @@ class StackedFeatures : public Feature {
   void setActiveFeatures(const std::vector<int>& active_features);
   void setActiveFeatures(const std::vector<std::string>& active_features);
   void setAllFeaturesActive();
+  void setAllFeaturesInactive();
 
   bool addFeatureFunction(Feature* fct);
   int getNumberOfFeatureFunctions() { return feature_stack_.size(); }

@@ -17,68 +17,62 @@
  * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
  * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
- * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                                  
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001). 
+ * Siméon, T., Laumond, J. P., & Lamiraux, F. (2001).
  * Move3d: A generic platform for path planning. In in 4th Int. Symp.
  * on Assembly and Task Planning.
  *
- *                                               Jim Mainprice Tue 27 May 2014 
+ *                                               Jim Mainprice Tue 27 May 2014
  */
 #ifndef HRICS_PLAYMOTION_HPP
 #define HRICS_PLAYMOTION_HPP
 
 #include "HRICS_record_motion.hpp"
 
-namespace HRICS
-{
+namespace HRICS {
 
 class PlayMotion {
+ public:
+  PlayMotion(const std::vector<HRICS::RecordMotion*>& recorders);
+  PlayMotion(const std::vector<std::vector<motion_t> >& motions);
 
-public:
-    PlayMotion( const std::vector<HRICS::RecordMotion*>& recorders);
-    PlayMotion( const std::vector<std::vector<motion_t> >& motions);
+  void play(int id);
+  void play(const std::vector<std::string>& filepaths);
 
-    void play(int id);
-    void play(const std::vector<std::string>& filepaths);
+  //    void setDirection(const bool dir);
+  void setStep(const int step);
+  void setControlled(const bool controlled);
+  void setRecentInput(const bool input);
+  bool getRecentInput();
+  int getCurrentFrame();
+  int getNumberOfMotions() const;
 
-//    void setDirection(const bool dir);
-    void setStep(const int step);
-    void setControlled(const bool controlled);
-    void setRecentInput(const bool input);
-    bool getRecentInput();
-    int getCurrentFrame();
-    int getNumberOfMotions() const;
+  void setMotionsNames(const std::vector<std::string>& names) {
+    _motions_names = names;
+  }
 
-    void setMotionsNames( const std::vector< std::string >& names ) {
-        _motions_names = names;
-    }
+  std::string getMotionName(int id) {
+    if (id >= int(_motions_names.size()))
+      return std::string("");
+    else
+      return _motions_names[id];
+  }
 
-    std::string getMotionName(int id) {
-        if( id > int(_motions_names.size()) )
-            return std::string("");
-        else
-            return _motions_names[id];
-    }
+ private:
+  void runRealTime(int id);
+  void runControlled();
 
+  std::vector<HRICS::RecordMotion*> _motion_recorders;
+  std::vector<std::vector<motion_t> > _stored_motions;
 
-private:
+  std::vector<std::string> _motions_names;
 
-    void runRealTime(int id);
-    void runControlled();
-
-    std::vector<HRICS::RecordMotion*> _motion_recorders;
-    std::vector< std::vector<motion_t> >_stored_motions;
-
-    std::vector< std::string > _motions_names;
-
-    int _current_frame;
-    int _step_size;
-    bool _play_controlled;
-    bool _recent_input;
-
+  int _current_frame;
+  int _step_size;
+  bool _play_controlled;
+  bool _recent_input;
 };
-
 }
 
-#endif // HRICS_PLAYMOTION_HPP
+#endif  // HRICS_PLAYMOTION_HPP

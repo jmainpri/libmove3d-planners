@@ -58,7 +58,7 @@ class CovariantTrajectoryPolicy : public Policy {
                   const double movement_duration,
                   const double cost_ridge_factor,
                   const std::vector<double>& derivative_costs,
-                  const bool free_end_config,
+                  const double free_end_config,
                   const Move3D::ChompPlanningGroup* planning_group = NULL);
 
   bool setToMinControlCost(Eigen::VectorXd& start, Eigen::VectorXd& goal);
@@ -254,6 +254,7 @@ class CovariantTrajectoryPolicy : public Policy {
   std::vector<Eigen::VectorXd> parameters_all_;
 
   std::vector<Eigen::MatrixXd> differentiation_matrices_;
+  std::vector<Eigen::MatrixXd> differentiation_matrices_no_offset_;
 
   const Move3D::ChompPlanningGroup* planning_group_;
 

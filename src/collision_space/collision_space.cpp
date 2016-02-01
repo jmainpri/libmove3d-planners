@@ -38,16 +38,20 @@ CollisionSpaceCell::CollisionSpaceCell(int i,
   m_Visited = false;
   m_Occupied = false;
 
-  m_ClosestPoint[0] = -1;
-  m_ClosestPoint[1] = -1;
-  m_ClosestPoint[2] = -1;
+  m_ClosestPoint.x() = UNINITIALIZED;
+  m_ClosestPoint.x() = UNINITIALIZED;
+  m_ClosestPoint.x() = UNINITIALIZED;
 
   _cellSize = grid->getCellSize();
+  m_Location = grid->getCellCoord(this);
+
+  closest_negative_point_.x() = m_Location.x();
+  closest_negative_point_.y() = m_Location.y();
+  closest_negative_point_.z() = m_Location.z();
 
   // Max radius
   m_DistanceSquare = 10000;
-
-  m_Location = grid->getCellCoord(this);
+  negative_distance_square_ = 0;
 }
 
 void CollisionSpaceCell::draw(int color, int width) {
@@ -110,6 +114,8 @@ CollisionSpace::CollisionSpace(Robot* rob,
 
   // m_Robot = global_Project->getActiveScene()->getActiveRobot();
   m_Robot = rob;
+
+  propagate_negative_ = true;
 
   initialize();
 
@@ -292,52 +298,145 @@ void CollisionSpace::initNeighborhoods() {
 
 double CollisionSpace::addPointsToField(
     const std::vector<Eigen::Vector3d>& points) {
-  //    cout << "Add points to distance field" << endl;
-  //    cout << "Propagate distance" << endl;
+  // cout << "Add points to distance field" << endl;
+  // cout << "Propagate distance" << endl;
 
-  double max_distance_sq =
-      (_nbCellsX * _nbCellsX + _nbCellsY * _nbCellsY + _nbCellsZ * _nbCellsZ);
+  propagate_negative_ = true;
 
-  // cout << "max_distance_sq : " << max_distan#include "API/project.hpp"ce_sq
-  // << endl;
+  double max_distance_sq = getMaxtDistSq();
+
+  cout << "max_distance_sq : " << max_distance_sq << endl;
 
   // initialize the bucket queue
   std::vector<std::vector<CollisionSpaceCell*> > bucket_queue;
   bucket_queue.resize(max_distance_sq + 1);
   bucket_queue[0].reserve(points.size());
 
+  // negative stack (voxel that will be processed
+  std::vector<Eigen::Vector3i> negative_stack;
+  negative_stack.reserve(_nbCellsX * _nbCellsY * _nbCellsZ);
+
+  std::vector<std::vector<CollisionSpaceCell*> > negative_bucket_queue;
+  negative_bucket_queue.resize(max_distance_sq + 1);
+  negative_bucket_queue[0].reserve(points.size());
+
   // first mark all the points as distance=0, and add them to the queue
   int initial_update_direction = getDirectionNumber(0, 0, 0);
   for (unsigned int i = 0; i < points.size(); ++i) {
-    Eigen::Vector3d point = points[i];
-
-    ThreeDCell* ptrCell = getCell(point);
-    CollisionSpaceCell* voxel = NULL;
-    if (ptrCell)
-      voxel = dynamic_cast<CollisionSpaceCell*>(ptrCell);
-    else
-      continue;
-
+    CollisionSpaceCell* voxel = getCellSpaceCell(points[i]);
     if (!voxel) continue;
 
-    Eigen::Vector3i coord = getCellCoord(voxel);
-
+    Eigen::Vector3i loc = getCellCoord(voxel);
+    voxel->setOccupied(true);
     voxel->m_DistanceSquare = 0;
-    voxel->m_ClosestPoint = coord;
+    voxel->m_ClosestPoint = loc;
     voxel->m_UpdateDirection = initial_update_direction;
     bucket_queue[0].push_back(voxel);
+
+    // TODO check if this works
+    //    if (propagate_negative_) {
+    //      voxel->negative_distance_square_ = max_distance_sq;
+    //      voxel->negative_update_direction_ = initial_update_direction;
+    //      voxel->closest_negative_point_.x() =
+    //      CollisionSpaceCell::UNINITIALIZED;
+    //      voxel->closest_negative_point_.y() =
+    //      CollisionSpaceCell::UNINITIALIZED;
+    //      voxel->closest_negative_point_.z() =
+    //      CollisionSpaceCell::UNINITIALIZED;
+    //      negative_stack.push_back(loc);
+    //    }
   }
 
-  for (unsigned int i = 0; i < _cells.size(); i++) {
-    CollisionSpaceCell* voxel = dynamic_cast<CollisionSpaceCell*>(_cells[i]);
-    Eigen::Vector3d center = voxel->getCenter();
-    if (m_sampler->isPointInsidePrimitves(center)) {
-      voxel->setOccupied(true);
-      voxel->m_DistanceSquare = 0;
-      voxel->m_ClosestPoint = getCellCoord(voxel);
-      voxel->m_UpdateDirection = initial_update_direction;
+  // Add points inside obstacle geometry
+  if (m_Robot->getName() != "PR2_ROBOT") {
+    for (unsigned int i = 0; i < _cells.size(); i++) {
+      CollisionSpaceCell* voxel = dynamic_cast<CollisionSpaceCell*>(_cells[i]);
+      Eigen::Vector3d center = voxel->getCenter();
+      if (m_sampler->isPointInsidePrimitves(center)) {
+        // Get location of the voxel
+        Eigen::Vector3i loc = getCellCoord(voxel);
+
+        voxel->setOccupied(true);
+        voxel->m_DistanceSquare = 0;
+        voxel->m_ClosestPoint = loc;
+        voxel->m_UpdateDirection = initial_update_direction;
+
+        if (propagate_negative_) {
+          voxel->negative_distance_square_ = max_distance_sq;
+          voxel->negative_update_direction_ = initial_update_direction;
+          voxel->closest_negative_point_.x() =
+              CollisionSpaceCell::UNINITIALIZED;
+          voxel->closest_negative_point_.y() =
+              CollisionSpaceCell::UNINITIALIZED;
+          voxel->closest_negative_point_.z() =
+              CollisionSpaceCell::UNINITIALIZED;
+          negative_stack.push_back(loc);
+        }
+      }
     }
   }
+  propagatePositive(bucket_queue);
+
+  if (propagate_negative_) {
+    while (!negative_stack.empty()) {
+      Eigen::Vector3i loc = negative_stack.back();
+      negative_stack.pop_back();
+
+      // select the neighborhood list based on the update direction
+      std::vector<std::vector<int> >& neighborhood =
+          m_DirectionNumberToDirection;
+
+      // Look in the neighbouring cells and update distance
+      for (unsigned int n = 0; n < neighborhood.size(); n++) {
+        Eigen::Vector3i direction;
+        direction[0] = neighborhood[n][0];
+        direction[1] = neighborhood[n][1];
+        direction[2] = neighborhood[n][2];
+
+        Eigen::Vector3i nloc = loc + direction;
+        CollisionSpaceCell* neighbour = getCellSpaceCell(nloc);
+        if (!neighbour) continue;
+
+        Eigen::Vector3i& close_point = neighbour->closest_negative_point_;
+        CollisionSpaceCell* closest_point_voxel = getCellSpaceCell(close_point);
+        if (!closest_point_voxel) {
+          closest_point_voxel = neighbour;
+        }
+
+        // our closest non-obstacle cell has become an obstacle
+        if (closest_point_voxel->negative_distance_square_ != 0) {
+          // find all neigbors inside pre-existing obstacles whose
+          // closest_negative_point_ is now an obstacle. These must all be
+          // set to max_distance_sq_ so they will be re-propogated with a new
+          // closest_negative_point_ that is outside the obstacle.
+          if (neighbour->negative_distance_square_ != max_distance_sq) {
+            neighbour->negative_distance_square_ = max_distance_sq;
+            neighbour->closest_negative_point_.x() =
+                CollisionSpaceCell::UNINITIALIZED;
+            neighbour->closest_negative_point_.y() =
+                CollisionSpaceCell::UNINITIALIZED;
+            neighbour->closest_negative_point_.z() =
+                CollisionSpaceCell::UNINITIALIZED;
+            negative_stack.push_back(nloc);
+          }
+        } else {
+          // this cell still has a valid non-obstacle cell,
+          // so we need to propogate from it
+          neighbour->negative_update_direction_ = initial_update_direction;
+          negative_bucket_queue[0].push_back(neighbour);
+        }
+      }
+    }
+    propagateNegative(negative_bucket_queue);
+  }
+
+  // cout << "All points have been added!!!" << endl;
+  return 0.0;
+}
+
+void CollisionSpace::propagatePositive(
+    std::vector<std::vector<CollisionSpaceCell*> >& bucket_queue) {
+  double max_distance_sq = getMaxtDistSq();
 
   // now process the queue:
   cout << "process the Queue : " << bucket_queue.size() << endl;
@@ -368,32 +467,19 @@ double CollisionSpace::addPointsToField(
       }
 
       // select the neighborhood list based on the update direction:
-      std::vector<std::vector<int> >* neighborhood =
-          &m_Neighborhoods[D][vptr->m_UpdateDirection];
+      std::vector<std::vector<int> >& neighborhood =
+          m_Neighborhoods[D][vptr->m_UpdateDirection];
 
-      // Look in the neighbouring cells
-      // and update distance
-      for (unsigned int n = 0; n < neighborhood->size(); n++) {
+      // Look in the neighbouring cells and update distance
+      for (unsigned int n = 0; n < neighborhood.size(); n++) {
         Eigen::Vector3i direction;
-        direction[0] = (*neighborhood)[n][0];
-        direction[1] = (*neighborhood)[n][1];
-        direction[2] = (*neighborhood)[n][2];
+        direction.x() = neighborhood[n][0];
+        direction.y() = neighborhood[n][1];
+        direction.z() = neighborhood[n][2];
 
         Eigen::Vector3i neigh_loc = loc + direction;
-
-        ThreeDCell* ptrCell = getCell(neigh_loc);
-
-        CollisionSpaceCell* neighbour = NULL;
-        if (ptrCell)
-          neighbour = dynamic_cast<CollisionSpaceCell*>(ptrCell);
-        else
-          continue;
-
+        CollisionSpaceCell* neighbour = getCellSpaceCell(neigh_loc);
         if (!neighbour) continue;
-
-        // cout << "loc = " << endl << loc << endl;
-        // cout << "vptr->m_ClosestPoint = "
-        // << endl << vptr->m_ClosestPoint << endl;
 
         double new_distance_sq_float =
             (vptr->m_ClosestPoint - neigh_loc).squaredNorm();
@@ -404,20 +490,83 @@ double CollisionSpace::addPointsToField(
           continue;
         }
 
-        // cout << "new_distance_sq_float = " << new_distance_sq_float << endl;
-        // cout << "---------------------------------------" << endl;
         if (new_distance_sq < neighbour->m_DistanceSquare) {
-          //         cout << "loc = " <<  loc << endl;
-          // cout << "vptr->m_ClosestPoint = "
-          // << endl << vptr->m_ClosestPoint << endl;
-          // cout << "new_distance_sq_float = " << new_distance_sq_float <<
-          // endl;
-          // cout << "new_distance_sq = " << new_distance_sq << endl;
-          // update the neighboring voxel
           neighbour->m_DistanceSquare = new_distance_sq;
           neighbour->m_ClosestPoint = vptr->m_ClosestPoint;
-
           neighbour->m_UpdateDirection =
+              getDirectionNumber(direction[0], direction[1], direction[2]);
+
+          // and put it in the queue
+          bucket_queue[new_distance_sq].push_back(neighbour);
+        }
+      }
+      ++list_it;
+    }
+    bucket_queue[i].clear();
+  }
+}
+
+void CollisionSpace::propagateNegative(
+    std::vector<std::vector<CollisionSpaceCell*> >& bucket_queue) {
+  double max_distance_sq = getMaxtDistSq();
+
+  // now process the queue:
+  cout << "process negative Queue : " << bucket_queue.size() << endl;
+  for (unsigned int i = 0; i < bucket_queue.size(); ++i) {
+    std::vector<CollisionSpaceCell*>::iterator list_it =
+        bucket_queue[i].begin();
+
+    while (list_it != bucket_queue[i].end()) {
+      CollisionSpaceCell* vptr = *list_it;
+
+      // TODO: no idea why this happens
+      if (vptr == NULL) {
+        continue;
+      }
+
+      // Get the cell location in grid
+      Eigen::Vector3i loc = getCellCoord(vptr);
+
+      int D = i;
+      if (D > 1) D = 1;
+      // avoid a possible segfault situation:
+      if (vptr->negative_update_direction_ < 0 ||
+          vptr->negative_update_direction_ > 26) {
+        cout << "Invalid update direction detected: "
+             << vptr->negative_update_direction_ << endl;
+
+        ++list_it;
+        continue;
+      }
+
+      // select the neighborhood list based on the update direction:
+      std::vector<std::vector<int> >& neighborhood =
+          m_Neighborhoods[D][vptr->negative_update_direction_];
+
+      // Look in the neighbouring cells and update distance
+      for (unsigned int n = 0; n < neighborhood.size(); n++) {
+        Eigen::Vector3i direction;
+        direction[0] = neighborhood[n][0];
+        direction[1] = neighborhood[n][1];
+        direction[2] = neighborhood[n][2];
+
+        Eigen::Vector3i neigh_loc = loc + direction;
+        CollisionSpaceCell* neighbour = getCellSpaceCell(neigh_loc);
+        if (!neighbour) continue;
+
+        double new_distance_sq_float =
+            (vptr->closest_negative_point_ - neigh_loc).squaredNorm();
+
+        int new_distance_sq = new_distance_sq_float;
+        if (new_distance_sq > max_distance_sq) {
+          cout << "new_distance_sq : " << new_distance_sq << endl;
+          continue;
+        }
+
+        if (new_distance_sq < neighbour->negative_distance_square_) {
+          neighbour->negative_distance_square_ = new_distance_sq;
+          neighbour->closest_negative_point_ = vptr->closest_negative_point_;
+          neighbour->negative_update_direction_ =
               getDirectionNumber(direction[0], direction[1], direction[2]);
 
           // and put it in the queue:
@@ -428,8 +577,6 @@ double CollisionSpace::addPointsToField(
     }
     bucket_queue[i].clear();
   }
-  //    cout << "All points have been added!!!" << endl;
-  return 0.0;
 }
 
 void CollisionSpace::propagateDistance() {
@@ -500,12 +647,33 @@ double CollisionSpace::getDistance(CollisionSpaceCell* cell) const {
   if (cell->m_DistanceSquare >= (int)m_SqrtTable.size()) {
     return 0;
   }
-  return m_SqrtTable[cell->m_DistanceSquare];
+  return m_SqrtTable[cell->m_DistanceSquare] -
+         m_SqrtTable[cell->negative_distance_square_];
 }
 
 double CollisionSpace::getDistanceFromCell(int x, int y, int z) const {
   return getDistance(static_cast<CollisionSpaceCell*>(
       _cells[x + y * _nbCellsX + z * _nbCellsX * _nbCellsY]));
+}
+
+CollisionSpaceCell* CollisionSpace::getCellSpaceCell(
+    const Eigen::Vector3d& point) const {
+  ThreeDCell* ptrCell = getCell(point);
+  CollisionSpaceCell* cell = NULL;
+  if (ptrCell) {
+    cell = dynamic_cast<CollisionSpaceCell*>(ptrCell);
+  }
+  return cell;
+}
+
+CollisionSpaceCell* CollisionSpace::getCellSpaceCell(
+    const Eigen::Vector3i& loc) const {
+  ThreeDCell* ptrCell = getCell(loc);
+  CollisionSpaceCell* cell = NULL;
+  if (ptrCell) {
+    cell = dynamic_cast<CollisionSpaceCell*>(ptrCell);
+  }
+  return cell;
 }
 
 //! Computes the finiate differenting gradient
@@ -548,7 +716,8 @@ double CollisionSpace::getDistanceGradient(const Eigen::Vector3d& point,
 }
 
 //! The distance potential and the gradient is computed for a collision point
-//! First the distance d of the collision point (sphere) to the closest obstacle
+//! First the distance d of the collision point (sphere) to the closest
+// obstacle
 // is computed
 //! Then 3 cases apear to compute the potential
 //! - 0 if this distance is greater than the coll point clearance
@@ -573,14 +742,14 @@ bool CollisionSpace::getCollisionPointPotentialGradient(
     gradient.setZero();
   } else if (d >= 0.0) {
     double diff = (d - collision_point.getClearance());
-    double gradient_magnitude = diff * collision_point.getInvClearance();
-    // ( diff / clearance )
-    potential = 0.5 * gradient_magnitude * diff;
-    gradient = gradient_magnitude * field_gradient;
+    potential = 0.5 * collision_point.getInvClearance() * diff * diff;
+    gradient = diff * collision_point.getInvClearance() * field_gradient;
   } else  // if d < 0.0
   {
     gradient = field_gradient;
-    potential = -d + 0.5 * collision_point.getClearance();
+    double offset = 0.5 * collision_point.getClearance();
+    potential = -d * 10 + offset;
+    // potential = -d + 0.5 * collision_point.getClearance();
   }
 
   //    cout << "field_distance : " << field_distance
@@ -618,15 +787,21 @@ bool CollisionSpace::isRobotColliding(double& dist, double& pot) const {
 
       // CollisionSpaceCell* cell = static_cast<CollisionSpaceCell*>( getCell(
       // position ) );
-      // if( ( cell != NULL ? getDistance( cell ) : 0 ) <= points[j].getRadius()
+      // if( ( cell != NULL ? getDistance( cell ) : 0 ) <=
+      // points[j].getRadius()
       // )
 
       if (getCollisionPointPotentialGradient(
               points[j], position, distance, potential, gradient)) {
         points[j].m_is_colliding = true;
 
-        // Hack!!!
+        cout << "point[" << j
+             << "] in joint is in collision: " << points[j].joint()->getName()
+             << endl;
+
+        // Hack!!! to exclude certain points
         if (points[j].getSegmentNumber() > 1) {
+          cout << "points[" << j << "].getSegmentNumber()" << endl;
           isRobotColliding = true;
         }
       } else {
@@ -749,15 +924,34 @@ void CollisionSpace::drawGradient() {
 void CollisionSpace::drawSquaredDist() {
   double distToClosObst;
   CollisionSpaceCell* cell;
+  double min_dist = std::numeric_limits<double>::max();
+  double draw_min_dist = -0.15;
+  //  double draw_min_dist = -1.; // plannar manipulator
+
   for (unsigned int i = 0; i < getNumberOfCells(); i++) {
     cell = static_cast<CollisionSpaceCell*>(_cells[i]);
 
     distToClosObst = getDistance(cell);
 
-    // cout << "distToClosObst : " << distToClosObst << endl;
+    if (distToClosObst > PlanEnv->getDouble(PlanParam::distMinToDraw)) {
+      continue;
+    }
 
-    if (distToClosObst < PlanEnv->getDouble(PlanParam::distMinToDraw))
-      cell->drawColorGradient(distToClosObst, 0.0, 1.0, true);
+    // Draws the cell at a particular height in the grid
+    // * plannar manipulator 10
+    // * human trajectories 45
+    // if (cell->getLocation().z() != 42) {
+    //  continue;
+    //}
+
+    if (min_dist > distToClosObst) {
+      min_dist = distToClosObst;
+    }
+
+    cell->drawColorGradient(distToClosObst,
+                            draw_min_dist,
+                            PlanEnv->getDouble(PlanParam::distMinToDraw),
+                            true);
   }
 }
 
@@ -768,9 +962,8 @@ void CollisionSpace::drawCollisionPoints() {
     std::vector<CollisionPoint>& points = m_sampler->getCollisionPoints(jnt);
 
     for (unsigned int j = 0; j < points.size(); j++) {
-      //      if (points[j].getSegmentNumber() <
-      //      ENV.getDouble(Env::extensionStep))
-      //        continue;
+      // if (points[j].getSegmentNumber() <ENV.getDouble(Env::extensionStep))
+      //    continue;
 
       if (points[j].m_is_colliding) {
         double color[4];

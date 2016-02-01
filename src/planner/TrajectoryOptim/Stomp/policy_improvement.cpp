@@ -78,15 +78,16 @@ namespace stomp_motion_planner {
 //! Computes the cost the rollout
 //! the function sums the control costs of all dimensions
 double Rollout::getCost() {
+  // Get the total cost
   double cost = state_costs_.sum();
 
+  // This is set to true when all costs
+  // are combined in the per state cost by avearaging
   if (use_total_smoothness_cost_) {
     cost += total_smoothness_cost_;
   } else {
     int num_dim = control_costs_.size();
     for (int d = 0; d < num_dim; ++d) cost += control_costs_[d].sum();
-
-    // cout << "control_costs_[d].sum() : " << control_costs_[0].sum() << endl;
   }
 
   return cost;
@@ -233,9 +234,10 @@ bool PolicyImprovement::preAllocateMultivariateGaussianSampler() {
     if (true || !PlanEnv->getBool(PlanParam::trajStompMatrixAdaptation)) {
       // cout << "inv_control_costs_[" << d << "] : " << inv_control_costs_[d]
       // << endl;
-      move3d_save_matrix_to_csv_file(
-          inv_control_costs_[d],
-          "inv_control_costs_" + num_to_string<int>(d) + ".txt");
+      move3d_save_matrix_to_csv_file(inv_control_costs_[d],
+                                     "control_matrices/inv_control_costs_" +
+                                         num_to_string<int>(d) + ".csv");
+
       MultivariateGaussian mvg(VectorXd::Zero(num_parameters_[d]),
                                inv_control_costs_[d]);
       noise_generators_.push_back(mvg);
@@ -285,9 +287,6 @@ bool PolicyImprovement::setNumRollouts(const int num_rollouts,
   // cout << "num_time_steps_  = " << num_time_steps_ << endl;
 
   for (int d = 0; d < num_dimensions_; ++d) {
-    //            cout << "num_parameters_[" << d << "] = " <<
-    //            num_parameters_[d] << endl;
-    //            cout << "num_time_steps_ = " << num_time_steps_ << endl;
     rollout.parameters_.push_back(VectorXd::Zero(num_parameters_[d]));
     rollout.noise_.push_back(VectorXd::Zero(num_parameters_[d]));
     rollout.noise_projected_.push_back(VectorXd::Zero(num_parameters_[d]));
@@ -405,8 +404,8 @@ bool PolicyImprovement::copyParametersFromPolicy() {
 }
 
 bool PolicyImprovement::computeProjectedNoise(Rollout& rollout) {
-  //        for (int d=0; d<num_dimensions_; ++d)
-  //        {
+  // for (int d=0; d<num_dimensions_; ++d)
+  // {
   //            rollout.noise_projected_[d] = projection_matrix_[d] *
   //            rollout.noise_[d];
   // rollout.parameters_noise_projected_[d] = rollout.parameters_[d] +
@@ -419,10 +418,10 @@ bool PolicyImprovement::computeProjectedNoise(Rollout& rollout) {
 }
 
 bool PolicyImprovement::computeProjectedNoise() {
-  //        for (int r=0; r<num_rollouts_; ++r)
-  //        {
-  //            computeProjectedNoise(rollouts_[r]);
-  //        }
+  // for (int r=0; r<num_rollouts_; ++r)
+  // {
+  //  computeProjectedNoise(rollouts_[r]);
+  // }
   return true;
 }
 
@@ -617,55 +616,6 @@ bool PolicyImprovement::generateRollouts(
       rollouts_[r].noise_[d] = noise_stddev[d] * tmp_noise_[d];
       rollouts_[r].parameters_[d] = parameters_[d] + rollouts_[r].noise_[d];
       rollouts_[r].nominal_parameters_[d] = parameters_[d];
-
-      bool add_straight_lines = false;
-      if (add_straight_lines) {
-        std::vector<int> points;
-        points.resize(7);
-        points[0] = 0;
-        points[1] = num_time_steps_ - 1;
-
-        for (int i = 2; i < int(points.size()); i++) {
-          points[i] = round(p3d_random(1.0, (num_time_steps_ - 2)));
-        }
-
-        std::sort(points.begin(), points.end());
-
-        //          if( init != end )
-        addStraightLines(points, rollouts_[r]);
-      }
-
-      // Saves the first rollout for first dimenstion
-
-      /**
-if (r == 0 && d == 0)
-{
-global_noiseTrajectory1.clear();
-
-for (int i=0; i<rollouts_[r].parameters_[d].size(); i++)
-{
-  global_noiseTrajectory1.push_back(rollouts_[r].noise_[d][i]);
-  //global_noiseTrajectory1.push_back(rollouts_[r].parameters_[d][i]);
-}
-}
-// Saves the first rollout for second dimenstion
-if (r == 0 && d == 1)
-{
-global_noiseTrajectory2.clear();
-
-//cout << "rollouts_[r].parameters_[d].size() : " <<
-rollouts_[r].parameters_[d].size() << endl;
-for (int i=0; i<rollouts_[r].parameters_[d].size(); i++)
-{
-  global_noiseTrajectory2.push_back(rollouts_[r].noise_[d][i]);
-  //global_noiseTrajectory2.push_back(rollouts_[r].parameters_[d][i]);
-}
-}
-*/
-      // cout << "rollouts_[" << r << "].noise_[" << d << "] = "<<
-      // rollouts_[r].noise_[d].transpose() << endl;
-      // cout << "rollouts_[" << r << "].parameters_[" << d << "] = "<<
-      // rollouts_[r].parameters_[d].transpose() << endl;
     }
   }
 
@@ -698,7 +648,7 @@ bool PolicyImprovement::getRollouts(
   // or sigma square
   std::vector<double> stdev = noise_std;
   if (use_new_std_dev_) {
-    for (int d = 0; d < stdev.size(); d++) {
+    for (size_t d = 0; d < stdev.size(); d++) {
       stdev[d] = stdev_[d];
       // cout << "stdev[" <<d << "] : " << stdev[d] << endl;
     }
@@ -708,7 +658,7 @@ bool PolicyImprovement::getRollouts(
     // }
     stdev_.resize(stdev.size());
     stdev_min_.resize(stdev.size());
-    for (int d = 0; d < stdev.size(); d++) {
+    for (size_t d = 0; d < stdev.size(); d++) {
       stdev_[d] = stdev[d];
       // stdev_min_[d] = stdev[d] / (stdev_scaling_[d] * 10);
     }
@@ -746,8 +696,7 @@ void PolicyImprovement::setRolloutOutOfBounds(int r, bool out_of_bounds) {
 
   if (r < 0 || r >= num_rollouts_gen_) return;
 
-  // cout << "rollout[" << r << "] out of bounds > " << out_of_bounds << endl;
-
+  // cout << "rollout[" << r << "] out of bounds : " << out_of_bounds << endl;
   rollouts_[r].out_of_bounds_ = out_of_bounds;
 }
 
@@ -767,14 +716,17 @@ bool PolicyImprovement::setRolloutCosts(
     {
       rollouts_[r].use_total_smoothness_cost_ = total_smoothness_cost[r].first;
       rollouts_[r].total_smoothness_cost_ = total_smoothness_cost[r].second;
-    } else
+    } else {
       rollouts_[r].use_total_smoothness_cost_ = false;
 
-    rollouts_[r].state_costs_ = costs.row(r).transpose();
+      // TODO add control costs only when
+      // not using total control cost
+      for (int d = 0; d < num_dimensions_; ++d) {
+        rollouts_[r].control_costs_[d] = control_costs[r].row(d).transpose();
+      }
+    }
 
-    // TODO add control costs
-    for (int d = 0; d < num_dimensions_; ++d)
-      rollouts_[r].control_costs_[d] = control_costs[r].row(d).transpose();
+    rollouts_[r].state_costs_ = costs.row(r).transpose();
   }
 
   // set control costs
@@ -793,17 +745,15 @@ bool PolicyImprovement::computeRolloutCumulativeCosts() {
   // compute cumulative costs at each timestep
   for (int r = 0; r < num_rollouts_; ++r) {
     for (int d = 0; d < num_dimensions_; ++d) {
-      rollouts_[r].total_costs_[d] =
-          rollouts_[r].state_costs_ /*+ rollouts_[r].control_costs_[d]*/;
+      // Set the total cost which is used
+      // to compute the probabilities in the function bellow
+      rollouts_[r].total_costs_[d] = rollouts_[r].state_costs_;
+
+      if (!rollouts_[r].use_total_smoothness_cost_) {
+        rollouts_[r].total_costs_[d] += rollouts_[r].control_costs_[d];
+        // cout << "set control cost" << endl;
+      }
       rollouts_[r].cumulative_costs_[d] = rollouts_[r].total_costs_[d];
-      // cout << "------------------------------------------------------------"
-      // << endl;
-      // cout << "rollouts_["<<r<<"].state_costs       = " <<
-      // rollouts_[r].state_costs_.transpose() << endl;
-      // cout << "rollouts_["<<r<<"].control_costs_["<<d<<"] = " <<
-      // rollouts_[r].control_costs_[d].transpose() << endl;
-      // cout << "rollouts_["<<r<<"].total_costs_["<<d<<"]   = " <<
-      // rollouts_[r].total_costs_[d].transpose() << endl;
 
       if (use_cumulative_costs_) {
         for (int t = num_time_steps_ - 2; t >= 0; --t) {
@@ -817,23 +767,18 @@ bool PolicyImprovement::computeRolloutCumulativeCosts() {
 }
 
 bool PolicyImprovement::computeRolloutProbabilities() {
-  for (int d = 0; d < num_dimensions_; ++d) {
-    // cout  << "dimension " << d << ", Cumulative costs " <<
-    // rollouts_[0].cumulative_costs_[d] << endl;
-    // tmp_min_cost_ =
-    // rollout_cumulative_costs_[d].colwise().minCoeff().transpose();
-    // tmp_max_cost_ =
-    // rollout_cumulative_costs_[d].colwise().maxCoeff().transpose();
-    // tmp_max_minus_min_cost_ = tmp_max_cost_ - tmp_min_cost_;
 
+  for (int d = 0; d < num_dimensions_; ++d) {
     for (int t = 0; t < num_time_steps_; t++) {
       // find min and max cost over all rollouts:
-      double min_cost = rollouts_[0].cumulative_costs_[d](t);
-      double max_cost = min_cost;
-      for (int r = 1; r < num_rollouts_; ++r) {
-        double c = rollouts_[r].cumulative_costs_[d](t);
-        if (c < min_cost) min_cost = c;
-        if (c > max_cost) max_cost = c;
+      double min_cost = std::numeric_limits<double>::max();
+      double max_cost = std::numeric_limits<double>::min();
+      for (int r = 0; r < num_rollouts_; ++r) {
+        if (!rollouts_[r].out_of_bounds_) {  // Only sum over valid samples
+          double c = rollouts_[r].cumulative_costs_[d](t);
+          if (c < min_cost) min_cost = c;
+          if (c > max_cost) max_cost = c;
+        }
       }
 
       double denom = max_cost - min_cost;
@@ -843,22 +788,19 @@ bool PolicyImprovement::computeRolloutProbabilities() {
 
       double p_sum = 0.0;
       for (int r = 0; r < num_rollouts_; ++r) {
-        // the -10.0 here is taken from the paper
-        rollouts_[r].probabilities_[d](t) = exp(
-            -10.0 * (rollouts_[r].cumulative_costs_[d](t)-min_cost) / denom);
-        p_sum += rollouts_[r].probabilities_[d](t);
+        if (!rollouts_[r].out_of_bounds_) {  // Only sum over valid samples
+          // the -10.0 here is taken from the paper
+          rollouts_[r].probabilities_[d](t) = exp(
+              -10.0 * (rollouts_[r].cumulative_costs_[d](t)-min_cost) / denom);
+
+          p_sum += rollouts_[r].probabilities_[d](t);
+        }
       }
       for (int r = 0; r < num_rollouts_; ++r) {
         rollouts_[r].probabilities_[d](t) /= p_sum;
       }
     }
   }
-
-  //    for (int r=0; r<num_rollouts_; ++r)
-  //    {
-  //      cout << "Rollout nb : " << r << endl;
-  //      rollouts_[r].printProbabilities();
-  //    }
   return true;
 }
 
@@ -910,36 +852,34 @@ bool PolicyImprovement::computeParameterUpdates() {
   std::vector<Eigen::VectorXd> parameters;
 
   const bool count_out_of_joint_limits = false;
-  const bool draw_update = true;
+  const bool draw_update = false;
+  int nb_samples_in_joint_limits = 0;
 
-  if (count_out_of_joint_limits) {
-    int nb_samples_in_joint_limits = 0;
-    for (int r = 0; r < num_rollouts_; ++r) {
-      if (!rollouts_[r].out_of_bounds_) nb_samples_in_joint_limits++;
+  for (int d = 0; d < num_dimensions_; ++d) {
+    parameter_updates_[d] = MatrixXd::Zero(num_time_steps_, num_parameters_[d]);
+  }
+
+  for (int r = 0; r < num_rollouts_; ++r) {
+    if (!rollouts_[r].out_of_bounds_) {
+      for (int d = 0; d < num_dimensions_; ++d) {
+        if (!is_finite(rollouts_[r].probabilities_[d])) {
+          cout << "rollout update is not finite [" << r << "][" << d << "]"
+               << endl;
+        }
+        parameter_updates_[d].row(0).transpose() +=
+            rollouts_[r].noise_[d].cwiseProduct(rollouts_[r].probabilities_[d]);
+      }
+    } else {
+      nb_samples_in_joint_limits++;
+      cout << "joint limits out of bounds for sample : " << r << endl;
     }
+  }
+  if (count_out_of_joint_limits) {
     cout << "nb of samples in joint limits : " << nb_samples_in_joint_limits
          << endl;
   }
 
   for (int d = 0; d < num_dimensions_; ++d) {
-    parameter_updates_[d] = MatrixXd::Zero(num_time_steps_, num_parameters_[d]);
-
-    for (int r = 0; r < num_rollouts_; ++r) {
-      // cout << "rollouts_[" << r << "].probabilities_[" << d << "] = " << endl
-      // << rollouts_[r].probabilities_[d] << endl;
-      // cout << "rollouts_[" << r << "].noise_[" << d << "] = " << endl <<
-      // rollouts_[r].noise_[d] << endl;
-      // cout << "parameter_updates_[" << d << "].row(0).transpose() = ";
-      // cout << endl << parameter_updates_[d].row(0).transpose() << endl;
-
-      if (!rollouts_[r].out_of_bounds_) {
-        parameter_updates_[d].row(0).transpose() +=
-            rollouts_[r].noise_[d].cwiseProduct(rollouts_[r].probabilities_[d]);
-      } else {
-        // cout << "joint limits out of bounds" << endl;
-      }
-    }
-
     if (draw_update) {
       parameters.push_back(parameter_updates_[d].row(0).transpose() +
                            parameters_[d]);
@@ -1006,7 +946,7 @@ void PolicyImprovement::addParmametersToDraw(
   // T.print();
   traj.setColor(color);
   traj.setUseContinuousColors(false);
-  //        global_trajToDraw.clear();
+  // global_trajToDraw.clear();
   global_trajToDraw.push_back(traj);
 }
 
@@ -1070,6 +1010,7 @@ bool PolicyImprovement::covarianceMatrixAdaptaion() {
 
   use_new_std_dev_ = true;
   // cout << "-- sigmas : " << stdev_.transpose() << endl;
+  // cout << "-- stdev_scaling_ : " << stdev_scaling_.transpose() << endl;
 
   return true;
 }

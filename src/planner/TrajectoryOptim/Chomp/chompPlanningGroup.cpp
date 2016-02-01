@@ -15,6 +15,7 @@
 using namespace std;
 using namespace Move3D;
 
+
 ChompPlanningGroup::ChompPlanningGroup(Robot* rob,
                                        const std::vector<int>& active_joints) {
   robot_ = rob;
@@ -45,7 +46,7 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob,
         cout << "Is dof user : ";
         cout << "(min = " << min << ", max = " << max << ") , ";
         cout << "Is dof angular :  " << move3d_joint->isJointDofAngular(j)
-             << endl;
+             << " , range : " << (max - min) << endl;
       }
 
       ChompDof jnt;
@@ -56,6 +57,14 @@ ChompPlanningGroup::ChompPlanningGroup(Robot* rob,
       jnt.chomp_joint_index_ = i;
       jnt.joint_name_ = move3d_joint->getName();
       jnt.is_circular_ = move3d_joint->isJointDofCircular(j);
+      jnt.is_free_flyer_ =
+          move3d_joint->getP3dJointStruct()->type == P3D_FREEFLYER;
+
+      // TODO see why this would break anything
+      // if (jnt.is_circular_ && min == -M_PI && max == M_PI) {
+      //  jnt.has_joint_limits_ = false;
+      // }
+
       jnt.has_joint_limits_ = true;
       jnt.joint_limit_min_ = min;
       jnt.joint_limit_max_ = max;
@@ -90,13 +99,10 @@ ChompPlanningGroup::ChompPlanningGroup(const ChompPlanningGroup& pg,
 }
 
 std::vector<int> ChompPlanningGroup::getActiveDofs() const {
-  std::vector<int> active_joints;
-  for (int i = 0; i < int(chomp_dofs_.size()); i++) {
-    active_joints.push_back(chomp_dofs_[i].move3d_dof_index_);
-    //        cout << "name : " << chomp_dofs_[i].joint_name_ << ", dof_index_ :
-    //        " << chomp_dofs_[i].move3d_dof_index_ << endl;
+  std::vector<int> active_joints(chomp_dofs_.size());
+  for (size_t i = 0; i < chomp_dofs_.size(); i++) {
+    active_joints[i] = chomp_dofs_[i].move3d_dof_index_;
   }
-
   return active_joints;
 }
 

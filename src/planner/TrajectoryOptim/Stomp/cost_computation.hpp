@@ -34,6 +34,7 @@
 #include "planner/TrajectoryOptim/Stomp/stompParameters.hpp"
 #include "planner/TrajectoryOptim/Stomp/covariant_trajectory_policy.hpp"
 #include "planner/TrajectoryOptim/jointlimits.hpp"
+#include "planner/TrajectoryOptim/goal_set_projection.hpp"
 
 #include "collision_space/collision_space.hpp"
 
@@ -62,17 +63,17 @@ class costComputation {
       bool use_external_collision_space,
       int collision_space_id,
       const stomp_motion_planner::StompParameters* stomp_parameters,
-      MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy);
+      MOVE3D_BOOST_PTR_NAMESPACE<stomp_motion_planner::Policy> policy,
+      bool use_goal_set,
+      const Eigen::VectorXd& x_task_goal);
 
   ~costComputation();
 
   //! compute the cost of a given trajectory
   bool getCost(std::vector<Eigen::VectorXd>& parameters,
                Eigen::VectorXd& costs,
-               const int iteration_number,
-               bool joint_limits,
-               bool resample,
-               bool is_rollout);
+               bool is_rollout,
+               bool& with_in_constraints);
 
   //! set trajectory within the joint limits
   bool handleJointLimits(Move3D::ChompTrajectory& group_traj);
@@ -90,16 +91,10 @@ class costComputation {
       Eigen::MatrixXd& collision_point_potential,
       std::vector<std::vector<Eigen::Vector3d> >& collision_point_pos);
 
-  //! compute collision point obstacle cost
-  bool getCollisionPointObstacleCost(int segment,
-                                     int coll_point,
-                                     double& collion_point_potential,
-                                     Eigen::Vector3d& pos);
-
   //! get the frames of configuration q
-  void getFrames(int segment,
-                 const Eigen::VectorXd& joint_array,
-                 Move3D::Configuration& q);
+  // void getFrames(int segment,
+  //               const Eigen::VectorXd& joint_array,
+  //               Move3D::Configuration& q);
 
   //! get the number of collision points
   int getNumberOfCollisionPoints(Move3D::Robot* R);
@@ -120,19 +115,6 @@ class costComputation {
     return current_control_costs_;
   }
 
-  const std::vector<
-      std::vector<Eigen::Transform3d,
-                  Eigen::aligned_allocator<Eigen::Transform3d> > >&
-  getSegmentFrames() const {
-    return segment_frames_;
-  }
-
-  const std::vector<std::vector<Eigen::Vector3d> >& getJointPosEigen() const {
-    return joint_pos_eigen_;
-  }
-  const std::vector<std::vector<Eigen::Vector3d> >& getJointAxisEigen() const {
-    return joint_axis_eigen_;
-  }
   const std::vector<std::vector<Eigen::Vector3d> >& getCollisionPointPosEigen()
       const {
     return collision_point_pos_eigen_;
@@ -159,9 +141,6 @@ class costComputation {
   const Eigen::VectorXd& getGeneralCostPotential() const {
     return general_cost_potential_;
   }
-  const Eigen::VectorXd& getSmoothnessCostPotential() const {
-    return smoothness_cost_potential_;
-  }
   const Eigen::VectorXd& getDts() const { return dt_; }
 
   const Move3D::ChompTrajectory& getGroupTrajectory() const {
@@ -178,12 +157,19 @@ class costComputation {
   const Move3D::ChompPlanningGroup* planning_group_;
 
   double resampleParameters(std::vector<Eigen::VectorXd>& parameters);
-  double terminalCost(Move3D::ChompTrajectory& group_traj) const;
+  double terminalCost(const Move3D::ChompTrajectory& group_traj) const;
   bool projectToConstraints(Move3D::ChompTrajectory& group_traj) const;
-  bool projectToConstraintWithMetric(Move3D::ChompTrajectory& group_traj) const;
+  bool projectToConstraintWithQP(Move3D::ChompTrajectory& group_traj);
   void getMove3DConfiguration(const Eigen::VectorXd& joint_array,
                               Move3D::Configuration& q) const;
   bool checkJointLimits(const Move3D::ChompTrajectory& group_traj);
+
+  //! compute collision point obstacle cost
+  bool getCollisionPointObstacleCost(int segment,
+                                     int coll_point,
+                                     double& collion_point_potential,
+                                     Eigen::Vector3d& pos);
+
 
   bool is_collision_free_;
   bool succeded_joint_limits_;
@@ -192,11 +178,6 @@ class costComputation {
 
   // Variables for collision and general cost
   std::vector<int> state_is_in_collision_;
-  std::vector<std::vector<Eigen::Transform3d,
-                          Eigen::aligned_allocator<Eigen::Transform3d> > >
-      segment_frames_;
-  std::vector<std::vector<Eigen::Vector3d> > joint_axis_eigen_;
-  std::vector<std::vector<Eigen::Vector3d> > joint_pos_eigen_;
   std::vector<std::vector<Eigen::Vector3d> > collision_point_pos_eigen_;
   std::vector<std::vector<Eigen::Vector3d> > collision_point_vel_eigen_;
   std::vector<std::vector<Eigen::Vector3d> > collision_point_acc_eigen_;
@@ -205,17 +186,20 @@ class costComputation {
   Eigen::MatrixXd collision_point_potential_;
   Eigen::MatrixXd collision_point_vel_mag_;
 
-  // Constraints -----------------------
+  // Goal set --------------------------
   bool project_last_config_;
   double ratio_projected_;
   double strength_;
   Eigen::VectorXd x_task_goal_;
   Move3D::Joint* eef_;
   double terminal_cost_;
+  bool use_goal_set_projector_;
+  TrajOptGoalSet goal_set_projector_;
+
   // -----------------------------------
 
   // Joint limits
-  std::vector<TrajOptJointLimit> joint_limits_computers_;
+  std::vector<Move3D::TrajOptJointLimit> joint_limits_projector_;
 
   // general cost
   bool use_costspace_;
@@ -224,7 +208,6 @@ class costComputation {
   // Smoothness costs
   bool use_total_smoothness_cost_;
   double total_smoothness_cost_;
-  Eigen::VectorXd smoothness_cost_potential_;
 
   // Variables for control cost
   bool multiple_smoothness_;

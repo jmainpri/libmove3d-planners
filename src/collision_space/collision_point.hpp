@@ -18,6 +18,7 @@
 #include <algorithm>
 
 #include "planner/TrajectoryOptim/Chomp/chompUtils.hpp"
+#include "API/Device/joint.hpp"
 
 namespace Move3D {
 
@@ -80,13 +81,14 @@ class CollisionPoint {
                   Eigen::aligned_allocator<Eigen::Transform3d> >&
           segment_frames,
       Eigen::Vector3d& position) const;
-  //    void getTransformedPosition(std::vector<std::vector<double> >&
-  //    segment_frames, Eigen::Vector3d& position) const;
+
+  void getTransformedPosition(const Eigen::Transform3d& t,
+                              Eigen::Vector3d& position) const;
 
   void getJacobian(
-      std::vector</*Eigen::Map<*/ Eigen::Vector3d> /*>*/& joint_pos,
-      std::vector</*Eigen::Map<*/ Eigen::Vector3d> /*>*/& joint_axis,
-      /*Eigen::Map<*/ Eigen::Vector3d /*>*/& collision_point_pos,
+      std::vector<Eigen::Vector3d>& joint_pos,
+      std::vector<Eigen::Vector3d>& joint_axis,
+      Eigen::Vector3d& collision_point_pos,
       Eigen::MatrixXd& jacobian,
       const std::vector<int>& group_joint_to_move3d_joint_index) const;
 
@@ -94,7 +96,11 @@ class CollisionPoint {
 
   bool m_is_colliding; /**< Collision point in collision */
 
+  const Move3D::Joint* joint() const { return m_joint; }
+  void set_joint(Move3D::Joint* j) { m_joint = j; }
+
  private:
+  Move3D::Joint* m_joint;           /**< Joint to which it belongs */
   std::vector<int> m_parent_joints; /**< Which joints can influence the motion
                                        of this point */
   double m_radius;                  /**< Radius of the sphere */
@@ -128,22 +134,16 @@ inline const Eigen::Vector3d& CollisionPoint::getPosition() const {
 }
 
 inline void CollisionPoint::getTransformedPosition(
+    const Eigen::Transform3d& t, Eigen::Vector3d& position) const {
+  position = t * m_position;
+}
+
+inline void CollisionPoint::getTransformedPosition(
     std::vector<Eigen::Transform3d,
                 Eigen::aligned_allocator<Eigen::Transform3d> >& segment_frames,
     Eigen::Vector3d& position) const {
-  position = segment_frames[m_segment_number] * m_position;
+  getTransformedPosition(segment_frames[m_segment_number], position);
 }
-
-// inline void
-// CollisionPoint::getTransformedPosition(std::vector<std::vector<double> >&
-// segment_frames,
-//                                                   Eigen::Vector3d& position)
-//                                                   const
-//{
-//    Eigen::Transform3d T;
-//    stdVectorToEigenTransform( segment_frames[m_segment_number], T );
-//    position = T*m_position;
-//}
 }
 
 #endif /* COLLISION_POINT_HPP */

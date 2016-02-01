@@ -28,6 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <time.h>
 
 #include "HRICS_dynamic_time_warping.hpp"
+#include "misc_functions.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -162,32 +163,46 @@ double SimpleDTW::euclidean_distance(const std::vector<double>& P1,
   return sqrt(total);
 }
 
+const bool squared_metric = false;
+
 double SimpleDTW::tansform_distance(const std::vector<double>& P1,
                                     const std::vector<double>& P2) {
   if (P1.size() != 7 || P2.size() != 7) {
     return 0;
   }
 
-  double alpha = 0.2;
-  //    double alpha = 0.1;
+  double alpha = 0.05;  // Means PI -> 15 cm
 
   double p_total = 0.0;
   for (unsigned int i = 0; i < 3; i++) {
-    p_total = p_total + pow((P1[i] - P2[i]), 2);
+    p_total += pow((P1[i] - P2[i]), 2);
   }
   p_total = sqrt(p_total);
 
   double dot_product =
-      1 - (P1[3] * P2[3]) + (P1[4] * P2[4]) + (P1[5] * P2[5]) + (P1[6] * P2[6]);
+      (P1[3] * P2[3]) + (P1[4] * P2[4]) + (P1[5] * P2[5]) + (P1[6] * P2[6]);
   double r_total = 0.0;
-  if (dot_product < 0.99999999) {
-    r_total = acos(2 * pow(dot_product, 2) - 1);
+  if (dot_product < .9999) {
+    r_total = 2. * acos(fabs(dot_product));
+  }
+  if (r_total < .0) {
+    cout << "Error: task space distance" << endl;
   }
 
-  //    cout << std::scientific << " p_total : " << p_total << "  , r_total : "
-  //    <<  alpha * r_total << endl;
+  double total = 0.;
+  if (squared_metric) {
+    total = pow(p_total + alpha * r_total, 2);
+  } else {
+    total = p_total + alpha * r_total;
+  }
 
-  return p_total + alpha * r_total;
+  if(std::isnan(total)){
+    cout << "p_total : " << p_total<< endl;
+    cout << "r_total : " << r_total<< endl;
+    cout << "dot_product : " << dot_product<< endl;
+  }
+
+  return total;
 }
 
 double SimpleDTW::centers_distance(const std::vector<double>& P1,
@@ -207,10 +222,15 @@ double SimpleDTW::centers_distance(const std::vector<double>& P1,
       int dof_id = i + j * 3;
       double dist_dof = pow((P1[dof_id] - P2[dof_id]), 2);
       dist += dist_dof;
-      //            cout << std::scientific << "dist [" << dof_id << "] = " <<
-      //            dist_dof << endl;
+      //  cout << std::scientific << "dist [" << dof_id << "] = " <<
+      //  ist_dof << endl;
     }
-    p_total += sqrt(dist);
+
+    if (squared_metric) {
+      p_total += dist;  // squared of joint distances
+    } else {
+      p_total += sqrt(dist);
+    }
   }
 
   return p_total;
@@ -218,7 +238,7 @@ double SimpleDTW::centers_distance(const std::vector<double>& P1,
 
 int dtw_compare_performance(int traj_length, int iterations) {
   struct timespec bstv, betv;
-  printf("Building test arrays\n");
+  // printf("Building test arrays\n");
   std::vector<std::vector<double> > test_vec_1;
   for (int i = 0; i < traj_length; i++) {
     std::vector<double> state;
@@ -240,7 +260,7 @@ int dtw_compare_performance(int traj_length, int iterations) {
     test_vec_2.push_back(traj);
   }
   DTW::SimpleDTW my_eval = DTW::SimpleDTW(traj_length, traj_length);
-  printf("Evaluating\n");
+// printf("Evaluating\n");
 #ifndef MACOSX
   // Run tests
   printf("-----Test single-threaded version-----\n");
@@ -257,7 +277,7 @@ int dtw_compare_performance(int traj_length, int iterations) {
   float bsecsv = (float)(betv.tv_sec - bstv.tv_sec);
   bsecsv = bsecsv + (float)(betv.tv_nsec - bstv.tv_nsec) / 1000000000.0;
   printf("Final cost: %f\n", scost);
-  printf("SINGLE (vector): %f\n", bsecsv);
+// printf("SINGLE (vector): %f\n", bsecsv);
 #endif
   return 0;
 }
@@ -265,16 +285,26 @@ int dtw_compare_performance(int traj_length, int iterations) {
 std::vector<std::vector<double> > get_vector_from_matrix(
     const Eigen::MatrixXd& mat) {
   std::vector<std::vector<double> > test_vec(mat.cols());
-
   for (int j = 0; j < mat.cols(); j++) {
     std::vector<double> state(mat.rows());
-
-    for (int i = 0; i < mat.rows(); i++) state[i] = mat(i, j);
-
+    for (int i = 0; i < mat.rows(); i++) {
+      state[i] = mat(i, j);
+    }
     test_vec[j] = state;
   }
 
   return test_vec;
+}
+
+bool has_nan(const std::vector<std::vector<double> >& vect){
+  for (int j = 0; j < vect.size(); j++) {
+    for (int i = 0; i < vect[j].size(); i++) {
+     if(std::isnan(vect[j][i])){
+       return true;
+     }
+    }
+  }
+  return false;
 }
 
 std::vector<double> dtw_compare_performance(
@@ -285,7 +315,7 @@ std::vector<double> dtw_compare_performance(
   std::vector<double> scost;
 
   struct timespec bstv, betv;
-  printf("Building test arrays\n");
+  // printf("Building test arrays\n");
 
   //    for (int i=0; i<active_dofs.size(); i++)
   //        cout << "active dofs : " << active_dofs[i] << endl;
@@ -297,11 +327,19 @@ std::vector<double> dtw_compare_performance(
   if (joints.empty()) {
     Eigen::MatrixXd mat = t0.getEigenMatrix(planning_group->getActiveDofs());
 
+    if (!is_finite(mat)) {
+      cout << "Error in demo trajectory" << endl;
+    }
+
     test_vec_0 = get_vector_from_matrix(mat);
 
     // Store all other trajectories
     for (size_t i = 0; i < t_tests.size(); i++) {
       mat = t_tests[i].getEigenMatrix(planning_group->getActiveDofs());
+
+      if (!is_finite(mat)) {
+        cout << "Error in sample trajectory" << endl;
+      }
 
       if (mat.cols() != int(test_vec_0.size())) {
         // Check that the trajectories have the same number of waypoints
@@ -315,11 +353,18 @@ std::vector<double> dtw_compare_performance(
     }
   } else if (joints.size() == 1) {
     Eigen::MatrixXd mat = t0.getJointPoseTrajectory(joints[0]);
+    if (!is_finite(mat)) {
+      cout << "Error in task demo trajectory" << endl;
+    }
+
     test_vec_0 = get_vector_from_matrix(mat);
 
     // Store all other trajectories
     for (size_t i = 0; i < t_tests.size(); i++) {
       mat = t_tests[i].getJointPoseTrajectory(joints[0]);
+      if (!is_finite(mat)) {
+        cout << "Error in task sample trajectory" << endl;
+      }
 
       if (mat.cols() != int(test_vec_0.size())) {
         // Check that the trajectories have the same number of waypoints
@@ -333,11 +378,23 @@ std::vector<double> dtw_compare_performance(
     }
   } else {
     Eigen::MatrixXd mat = t0.getJointPoseTrajectory(joints);
+    if (!is_finite(mat)) {
+      cout << "Error in task demo trajectory" << endl;
+    }
     test_vec_0 = get_vector_from_matrix(mat);
+    if( has_nan(test_vec_0)){
+       cout << "Error in task demo vector" << endl;
+    }
 
     // Store all other trajectories
     for (size_t i = 0; i < t_tests.size(); i++) {
       mat = t_tests[i].getJointPoseTrajectory(joints);
+      if (!is_finite(mat)) {
+        cout << "Error in task sample trajectory" << endl;
+      }
+      if( has_nan(test_vec_0)){
+         cout << "Error in task sample vector" << endl;
+      }
 
       if (mat.cols() != int(test_vec_0.size())) {
         // Check that the trajectories have the same number of waypoints
@@ -362,10 +419,10 @@ std::vector<double> dtw_compare_performance(
         boost::bind(&SimpleDTW::centers_distance, &my_eval, _1, _2));
   }
 
-  cout << "Evaluating\n";
-  // Run tests
-  cout << "-----Test single-threaded version-----\n";
-  cout << "Testing vector variant\n";
+// cout << "Evaluating\n";
+// Run tests
+// cout << "-----Test single-threaded version-----\n";
+// cout << "Testing vector variant\n";
 
 #ifndef MACOSX
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &bstv);
@@ -374,7 +431,7 @@ std::vector<double> dtw_compare_performance(
 
   for (size_t i = 0; i < scost.size(); i++) {
     scost[i] = my_eval.EvaluateWarpingCost(test_vec_0, test_vec_1[i]);
-    cout << "scost[" << i << "] : " << scost[i] << endl;
+    //cout << "scost[" << i << "] : " << scost[i] << endl;
   }
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &betv);
   //---------------------------------------------
@@ -382,7 +439,7 @@ std::vector<double> dtw_compare_performance(
   float bsecsv = (float)(betv.tv_sec - bstv.tv_sec);
   bsecsv = bsecsv + (float)(betv.tv_nsec - bstv.tv_nsec) / 1000000000.0;
 
-  cout << "SINGLE (vector): " << bsecsv << endl;
+// cout << "SINGLE (vector): " << bsecsv << endl;
 #endif
 
   return scost;

@@ -260,26 +260,12 @@ LampCostComputation::LampCostComputation(
          << endl;
 
   // PER JOINT
-  joint_limits_computers_.resize(num_dofs_);
-
-  for (int joint = 0; joint < num_dofs_; joint++) {
-    double max_limit =
-        planning_group_->chomp_dofs_[joint].joint_limit_max_ - 1e-5;
-    double min_limit =
-        planning_group_->chomp_dofs_[joint].joint_limit_min_ + 1e-5;
-
-    joint_limits_computers_[joint].dynamics_ =
-        control_costs_[joint];  //.block( DIFF_RULE_LENGTH, DIFF_RULE_LENGTH,
-                                //num_vars_free_, num_vars_free_ );
-    joint_limits_computers_[joint].upper_ =
-        max_limit * Eigen::VectorXd::Ones(num_vars_free_);
-    joint_limits_computers_[joint].lower_ =
-        min_limit * Eigen::VectorXd::Ones(num_vars_free_);
-
-    if (!joint_limits_computers_[joint].initialize())
-      cout << "ERROR could not initialize joint limits in "
-           << __PRETTY_FUNCTION__ << endl;
-  }
+  CreateJointLimitProjectors(joint_limits_computers_,
+                             *planning_group_,
+                             control_costs_,
+                             num_vars_free_,
+                             1, // TODO see this ...
+                             id_fixed_);
 
   time_cumul_ = 0.0;
   time_iter_ = 0;
@@ -515,8 +501,6 @@ bool LampCostComputation::handleJointLimits(VectorTrajectory& group_traj) {
   }
 
   // cout << "succes_joint_limits : " << succes_joint_limits << endl;
-
-  //    exit(1);
 
   return succes_joint_limits;
 }

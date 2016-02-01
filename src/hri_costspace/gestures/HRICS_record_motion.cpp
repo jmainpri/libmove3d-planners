@@ -70,8 +70,13 @@ Move3D::Trajectory HRICS::motion_to_traj(const motion_t& traj,
       std::cout << "NULL configuration in " << __PRETTY_FUNCTION__ << std::endl;
     }
     dts.push_back(traj[i].first);
-    traj1.push_back(Move3D::confPtr_t(
-        new Move3D::Configuration(robot, traj[i].second->getConfigStruct())));
+
+    // this allows to set the configuration to a different
+    // robot object (of the same type)
+    if (!traj1.push_back(Move3D::confPtr_t(new Move3D::Configuration(
+            robot, traj[i].second->getConfigStruct())))) {
+      cout << "no configuration added at time : " << traj[i].first << endl;
+    }
   }
   traj1.setUseTimeParameter(true);
   traj1.setUseConstantTime(false);
@@ -102,6 +107,12 @@ Move3D::Trajectory HRICS::motion_to_traj(const motion_t& traj,
   traj2.setUseTimeParameter(true);
   traj2.setUseConstantTime(true);
   traj2.setDeltaTime(dt);  // Set index 1 because 0 is often 0.0
+
+  if( traj1.getDuration() != traj2.getDuration()){
+    cout << " -- traj1 and traj 2 do not have the same duration" << endl;
+    cout << "    * traj1 Duration : " << traj1.getDuration() << endl;
+    cout << "    * traj2 Duration : " << traj2.getDuration() << endl;
+  }
   return traj2;
 }
 
@@ -1219,12 +1230,12 @@ motion_t RecordMotion::loadFromCSV(const std::string& filename,
     if (m_use_bio_format) {
       config = getConfigBio(q_with_time);
     } else if (m_use_or_format) {
-      confPtr_t q = getConfigOpenRave(q_with_time); // No time in ths case
+      confPtr_t q = getConfigOpenRave(q_with_time);  // No time in ths case
       config.first = 0.02;
       config.second = q;
       q->adaptCircularJointsLimits();
     } else {
-      confPtr_t q = getConfigTwelveDoF(q_with_time); // No time in this case
+      confPtr_t q = getConfigTwelveDoF(q_with_time);  // No time in this case
       config.first = 0.02;
       config.second = q;
       q->adaptCircularJointsLimits();
@@ -1235,8 +1246,6 @@ motion_t RecordMotion::loadFromCSV(const std::string& filename,
 
     motion.push_back(config);
   }
-
-  //    exit(0);
 
   return motion;
 }

@@ -74,6 +74,8 @@ struct TrajectoryStatistics {
   }
 };
 
+void set_use_zero_trajectory(bool v);
+
 class Trajectory {
  public:
   //---------------------------------------------------------

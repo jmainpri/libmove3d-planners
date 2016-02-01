@@ -23,6 +23,7 @@ CollisionPoint::CollisionPoint(const std::vector<int>& parent_joints,
                                int segment_number,
                                const Eigen::Vector3d& position)
     : m_is_colliding(false),
+      m_joint(NULL),
       m_parent_joints(parent_joints),
       m_radius(radius),
       m_volume((4.0 / 3.0) * M_PI * m_radius * m_radius * m_radius),
@@ -34,6 +35,7 @@ CollisionPoint::CollisionPoint(const std::vector<int>& parent_joints,
 CollisionPoint::CollisionPoint(const CollisionPoint& point,
                                const std::vector<int>& parent_joints)
     : m_is_colliding(point.m_is_colliding),
+      m_joint(point.m_joint),
       m_parent_joints(parent_joints),
       m_radius(point.m_radius),
       m_volume((4.0 / 3.0) * M_PI * m_radius * m_radius * m_radius),
@@ -45,9 +47,9 @@ CollisionPoint::CollisionPoint(const CollisionPoint& point,
 CollisionPoint::~CollisionPoint() {}
 
 void CollisionPoint::getJacobian(
-    std::vector</*Eigen::Map<*/ Eigen::Vector3d> /*>*/& joint_pos,
-    std::vector</*Eigen::Map<*/ Eigen::Vector3d> /*>*/& joint_axis,
-    /*Eigen::Map<*/ Eigen::Vector3d /*>*/& collision_point_pos,
+    std::vector<Eigen::Vector3d>& joint_pos,
+    std::vector<Eigen::Vector3d>& joint_axis,
+    Eigen::Vector3d& collision_point_pos,
     Eigen::MatrixXd& jacobian,
     const std::vector<int>& group_joint_to_move3d_joint_index) const {
   for (unsigned int joint = 0; joint < group_joint_to_move3d_joint_index.size();
@@ -103,14 +105,8 @@ void BoundingCylinder::draw(const Eigen::Transform3d& T) {
   Eigen::Vector3d p1Trans;
   Eigen::Vector3d p2Trans;
 
-  //  if (withTransform) {
-  //    p1Trans = m_p1;
-  //    p2Trans = m_p2;
-  //  }
-  //  else {
   p1Trans = T * m_p1;
   p2Trans = T * m_p2;
-  //  }
 
   p1[0] = p1Trans[0];
   p1[1] = p1Trans[1];

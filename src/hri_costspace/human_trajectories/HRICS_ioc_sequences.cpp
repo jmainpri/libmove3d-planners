@@ -86,6 +86,18 @@ static std::string move3d_process_folder = std::string(getenv("HOME")) +
 
 static bool original_demos = false;
 
+// these are set here because the we kill the ioc object
+// at each run
+static bool results_are_loaded_ = false;
+static std::vector<std::vector<Move3D::Trajectory> > baseline_agressive_;
+static std::vector<std::vector<Move3D::Trajectory> > baseline_conservative_;
+static std::vector<std::vector<Move3D::Trajectory> > recovered_;
+static std::vector<std::vector<Move3D::Trajectory> >
+    noreplan_baseline_agressive_;
+static std::vector<std::vector<Move3D::Trajectory> >
+    noreplan_baseline_conservative_;
+static std::vector<std::vector<Move3D::Trajectory> > noreplan_recovered_;
+
 void ioc_set_sphere_paths() {
   // Folders for sphere (and plannar) type of features
   move3d_demo_folder = move3d_root + "assets/IOC/TRAJECTORIES/";
@@ -153,6 +165,8 @@ IocSequences::IocSequences() {
 
   use_human_simulation_demo_ =
       HriEnv->getBool(HricsParam::ioc_use_simulation_demos);
+
+  results_are_loaded_ = false;
 }
 
 bool IocSequences::run() {
@@ -224,10 +238,12 @@ bool IocSequences::run() {
         cout << "Set PR2_ROBOT as active agent" << endl;
     }
 
-    if (global_human_traj_features == NULL) {
+    if (global_human_traj_simulator == NULL) {
       cout << "global_human_traj_features not initialized in file " << __FILE__
            << " ,  " << __PRETTY_FUNCTION__ << endl;
       return false;
+    } else {
+      feature_fct_ = global_human_traj_simulator->getCostSpace();
     }
   }
 
@@ -397,6 +413,8 @@ bool IocSequences::run() {
       case sample: {
         std::vector<int> ids;
 
+        setSamplingFeatures();
+
         {
           cout << "GENERATE" << endl;
 
@@ -445,10 +463,10 @@ bool IocSequences::run() {
         {
           if (sample_ik_ == no_ik) {
             eval_->setSampleGoalSet(false);
-            eval_->runSamplingSequence();
+            eval_->runSampling();
           } else if (sample_ik_ == ik_and_traj) {
             eval_->setSampleGoalSet(true);
-            eval_->runSamplingSequence();
+            eval_->runSampling();
           } else if (sample_ik_ == only_ik) {
             eval_->setSampleGoalSet(false);
             eval_->runIKSampling();
@@ -521,25 +539,22 @@ bool IocSequences::run() {
         std::vector<std::string> active_features_names;
 
         // BECARFUL (Comment for baseline)
-        if (!HriEnv->getBool(HricsParam::ioc_use_baseline))
-          active_features_names.push_back("SmoothnessAll");
+        if (!HriEnv->getBool(HricsParam::ioc_use_baseline)) {
+          setSamplingFeatures();
+        } else {
+          simulator->getCostSpace()->clearFeatureStack();
+          simulator->getCostSpace()->addFeaturesDistance();
+          simulator->getCostSpace()->setAllFeaturesActive();
 
-        active_features_names.push_back("Distance");
-        // active_features_names.push_back("Length");
-        // active_features_names.push_back("Visibility");
-        // active_features_names.push_back("Musculoskeletal");
+          if (HriEnv->getBool(HricsParam::ioc_use_baseline)) {
+            WeightVect w(WeightVect::Zero(16));
+            PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight, 0.01);
 
-        cout << "set active features" << endl;
-        simulator->getCostSpace()->setActiveFeatures(active_features_names);
-
-        if (HriEnv->getBool(HricsParam::ioc_use_baseline)) {
-          WeightVect w(WeightVect::Zero(16));
-          PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight, 0.001);
-
-          if (HriEnv->getBool(HricsParam::ioc_conservative_baseline)) {
-            w = (5 * WeightVect::Ones(16));
+            if (HriEnv->getBool(HricsParam::ioc_conservative_baseline)) {
+              w = (10 * WeightVect::Ones(16));
+            }
+            simulator->getCostSpace()->setWeights(w);
           }
-          simulator->getCostSpace()->setWeights(w);
         }
 
         std::vector<motion_t> trajs;
@@ -555,46 +570,63 @@ bool IocSequences::run() {
           if (!HriEnv->getBool(HricsParam::ioc_use_baseline))
           // SET BASELINE HERE
           {
-            // Set active features
-            simulator->getCostSpace()->clearFeatureStack();
-            simulator->getCostSpace()->addFeaturesSmoothness();
-            simulator->getCostSpace()->addFeaturesDistance();
-            simulator->getCostSpace()->setAllFeaturesActive();
-
             std::stringstream ss;
+
+            std::string regualrizer_str = num_to_string<double>(regularizer_);
+            cout << "regularizer : " << regualrizer_str << endl;
 
             switch (dataset) {
               case icra_paper_sept: {
                 /// 1 - CASE FOR LEAVE ONE OUT
-                ss << split << "_spheres_weights_700.txt";
+                // ss << split << "_spheres_weights_700.txt";
+
+                // Curently using no replanning weights
+                ss << split << ".txt";
+
+                // TODO test without the go to line
+                //                ss << "user_study_replan_spheres_weights_330_"
+                //                << split
+                //                   << "_.txt";
                 break;
               }
               case icra_paper_feb: {
                 /// 2- CASE FOR FEBRUARY
-                std::string demo_split = "[2711-2823]";
-                ss << demo_split << "_spheres_weights_700.txt";
+                // std::string demo_split = "[2711-2823]";
+                // ss << demo_split << "_spheres_weights_700.txt";
+                ss << "[2711-2823].txt";
                 break;
               }
               case human_robot_experiment:
               case user_study: {
+                // Set active features for original set no Musculoskeletal
+                // features
+
                 /// 3 - CASE FOR 80 / 20
                 if (HriEnv->getBool(HricsParam::ioc_no_replanning)) {
-                  ss << "user_study_noreplan_spheres_weights_300.txt";
+                  ss << "user_study_noreplan_spheres_weights_300_"
+                     << regualrizer_str << "_.txt";
                 } else {
-                  ss << "user_study_replan_spheres_weights_300.txt";
+                  ss << "user_study_replan_spheres_weights_300_"
+                     << regualrizer_str << "_.txt";
                 }
                 break;
               }
             }
 
             // eval_->loadWeightVector( "single_weight/dynamic/" + ss.str() );
+
             eval_->loadWeightVector("tmp_weights/" + ss.str());
             eval_->setLearnedWeights();
           }
 
           simulator->clearLastSimulationMotions();
 
-          for (int k = 0; k < 10; k++) {
+          for (int k = 0; k < 10; k++) {  // Set to 10
+
+            cout << "****************************************************"
+                 << endl
+                 << "Run simulator" << endl;
+
             simulator->run();
 
             std::stringstream ss;
@@ -674,18 +706,18 @@ bool IocSequences::run() {
 }
 
 void IocSequences::set_features() {
+  // Set the regularizer that is used in the lerning phase
+  // regularizer_ = 5;  // 0.1;
+  regularizer_ = 0.01;
+
   if (features_type_ == spheres && global_PlanarCostFct != NULL) {
+    // Set a generic feature function
+    // this is stacked
     feature_fct_ = new StackedFeatures;
 
     std::vector<int> aj(1);
     aj[0] = 1;
     active_joints_ = aj;
-
-    // fct->addFeatureFunction( smoothness_fct_ );
-
-    // TODO becareful with this
-    //        global_PlanarCostFct->setActiveDoFs( plangroup_->getActiveDofs()
-    //        );
 
     if (!feature_fct_->addFeatureFunction(global_PlanarCostFct)) {
       cout << "ERROR : could not add feature function!!!!" << endl;
@@ -701,21 +733,6 @@ void IocSequences::set_features() {
 
       feature_fct_->setAllFeaturesActive();
 
-      //            std::vector<int> active_feature;
-      //            for( int i=0;i<feature_fct_->getNumberOfFeatures();i++)
-      //            {
-      //                // active_feature.clear();
-      //                active_feature.push_back(i);
-      //                // feature_fct_->setActiveFeatures( active_feature );
-      //                // global_PlanarCostFct->produceCostMap(i);
-      //                //
-      //                global_PlanarCostFct->produceDerivativeFeatureCostMap(i);
-      //            }
-
-      //            feature_fct_->setActiveFeatures( active_feature );
-      // global_PlanarCostFct->produceCostMap(0);
-      // global_PlanarCostFct->produceDerivativeFeatureCostMap(0);
-
       double time;
       ChronoTimeOfDayTimes(&time);
       ChronoTimeOfDayOff();
@@ -723,25 +740,36 @@ void IocSequences::set_features() {
     }
   }
 
-  if (features_type_ == human_trajs && global_human_traj_features != NULL) {
-    feature_fct_ = global_human_traj_features;
+  if (features_type_ == human_trajs && global_human_traj_simulator != NULL) {
+    cout << "Set human features for sampling" << endl;
+    // Set the human feature function
+    feature_fct_ = global_human_traj_simulator->getCostSpace();
 
-    // Set all feature active
-    feature_fct_->setAllFeaturesActive();
+    HRICS::HumanTrajSimulator* simulator = global_human_traj_simulator;
 
-    // Get active joints
-    std::vector<Move3D::Joint*> joints =
-        global_human_traj_simulator->getActiveJoints();
+    // Set active joints
+    std::vector<Move3D::Joint*> joints = simulator->getActiveJoints();
     active_joints_.clear();
     for (size_t i = 0; i < joints.size(); i++)
       active_joints_.push_back(joints[i]->getId());
 
-    cout << "active_joints_.size() : " << active_joints_.size() << endl;
+    // Set active features
+    simulator->getCostSpace()->clearFeatureStack();
+    simulator->getCostSpace()->addFeaturesSmoothness();
+    simulator->getCostSpace()->addFeaturesDistance();
+    simulator->getCostSpace()->addFeaturesMusculo();
+    simulator->getCostSpace()->setAllFeaturesActive();
+
+    cout << "stack info" << endl;
+    feature_fct_->printInfo();
+
+    cout << "original_vect : " << endl;
+    feature_fct_->printWeights();
   }
 }
 
 void IocSequences::setGenerationFeatures() {
-  if (features_type_ == human_trajs && global_human_traj_features != NULL) {
+  if (features_type_ == human_trajs && global_human_traj_simulator != NULL) {
     std::vector<std::string> active_features;
     // active_features.push_back("Length");
     active_features.push_back("Distance");
@@ -765,56 +793,17 @@ void IocSequences::setGenerationFeatures() {
 }
 
 void IocSequences::setSamplingFeatures() {
-  if (features_type_ == human_trajs && global_human_traj_features != NULL) {
+  if (features_type_ == human_trajs && global_human_traj_simulator != NULL) {
     cout << "Set human features for sampling" << endl;
 
-    std::vector<std::string> active_features;
-    //        active_features.push_back("Length");
-    active_features.push_back("Distance");
-    active_features.push_back("SmoothnessAll");
-    //        active_features.push_back("Visibility");
-    //        active_features.push_back("Collision");
-    //        active_features.push_back("Musculoskeletal");
+    HRICS::HumanTrajSimulator* simulator = global_human_traj_simulator;
 
-    feature_fct_->setActiveFeatures(active_features);
-
-    //        feature_fct_->getFeatureFunction("Smoothness")->setWeights(
-    //        PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight) *
-    //        WeightVect::Ones(1) );
-    feature_fct_->getFeatureFunction("SmoothnessAll")
-        ->setWeights(PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight) *
-                     WeightVect::Ones(4));
-    feature_fct_->getFeatureFunction("Distance")->setWeights(w_distance_16);
-    //        feature_fct_->getFeatureFunction("Collision")->setWeights( 0.0001
-    //        * FeatureVect::Ones(1) );
-
-    //        feature_fct_->getFeatureFunction("Length")->setWeights(
-    //        WeightVect::Ones(1) * 0.001 );
-    //        feature_fct_->getFeatureFunction("Distance")->setWeights(
-    //        w_distance_16 );
-
-    //        feature_fct_->getFeatureFunction("Length")->setWeights(
-    //        WeightVect::Ones(1) * 0.7 );
-    //        feature_fct_->getFeatureFunction("Distance")->setWeights(
-    //        w_distance_16 );
-
-    //        double w_smoo =
-    //        PlanEnv->getDouble(PlanParam::trajOptimSmoothWeight);
-    //        double w_obst =
-    //        PlanEnv->getDouble(PlanParam::trajOptimObstacWeight);
-    //        double w_dist =
-    //        PlanEnv->getDouble(PlanParam::trajOptimGlobalWeight);
-
-    //        PlanEnv->setDouble(PlanParam::trajOptimSmoothWeight,1.0);
-    //        PlanEnv->setDouble(PlanParam::trajOptimObstacWeight,w_obst);
-    //        PlanEnv->setDouble(PlanParam::trajOptimGlobalWeight,w_dist);
-
-    //        feature_fct_->getFeatureFunction("Smoothness")->setWeights( w_smoo
-    //        * FeatureVect::Ones(1) );
-    //        feature_fct_->getFeatureFunction("Collision")->setWeights( w_obst
-    //        * FeatureVect::Ones(1) );
-    //        feature_fct_->getFeatureFunction("Distance")->setWeights( w_dist *
-    //        w_distance_16 );
+    // Set active features
+    simulator->getCostSpace()->clearFeatureStack();
+    simulator->getCostSpace()->addFeaturesSmoothness();
+    simulator->getCostSpace()->addFeaturesDistance();
+    simulator->getCostSpace()->addFeaturesMusculo();
+    simulator->getCostSpace()->setAllFeaturesActive();
 
     cout << "stack info" << endl;
     feature_fct_->printInfo();
@@ -825,7 +814,7 @@ void IocSequences::setSamplingFeatures() {
 }
 
 void IocSequences::setSamplingFeaturesIk() {
-  if (features_type_ == human_trajs && global_human_traj_features != NULL) {
+  if (features_type_ == human_trajs && global_human_traj_simulator != NULL) {
     cout << "Set human features for sampling" << endl;
 
     std::vector<std::string> active_features;
@@ -847,7 +836,7 @@ void IocSequences::setSamplingFeaturesIk() {
 }
 
 void IocSequences::setCompareFeatures() {
-  if (features_type_ == human_trajs && global_human_traj_features != NULL) {
+  if (features_type_ == human_trajs && global_human_traj_simulator != NULL) {
     std::vector<std::string> active_features;
     //        active_features.push_back("Length");
     active_features.push_back("Smoothness");
@@ -881,12 +870,20 @@ std::vector<Eigen::VectorXd> dtw(ChompPlanningGroup* plangroup,
   std::vector<double> costs_tmp;
 
   costs_tmp = dtw_compare_performance(plangroup, demo, trajs, active_joints);
+  cout << "cost size : " << costs_tmp.size() << endl;
   costs[0] = Eigen::VectorXd::Zero(costs_tmp.size());
   for (int k = 0; k < int(costs_tmp.size()); k++) costs[0][k] = costs_tmp[k];
+  if( !is_finite(costs[0]) ){
+    cout << "has nan !!! : " << costs[0].transpose() << endl;
+  }
 
   costs_tmp = dtw_compare_performance(plangroup, demo, trajs, end_effector);
+  cout << "cost size : " << costs_tmp.size() << endl;
   costs[1] = Eigen::VectorXd::Zero(costs_tmp.size());
   for (int k = 0; k < int(costs_tmp.size()); k++) costs[1][k] = costs_tmp[k];
+  if( !is_finite(costs[1]) ){
+    cout << "has nan !!! : " << costs[1].transpose() << endl;
+  }
 
   return costs;
 }
@@ -899,6 +896,7 @@ struct ioc_statistics_t {
     min = std::numeric_limits<double>::max();
     stddev = 0.;
     avg = 0.;
+    nb_samples = nb_samples;
   }
 
   void setMin(double val) {
@@ -915,12 +913,17 @@ struct ioc_statistics_t {
   double max;
   double stddev;
   double avg;
+  int nb_samples;
 };
 
 void dtw_update_stat(const Eigen::VectorXd& values,
                      ioc_statistics_t& dtw_stats) {
-  dtw_stats.sum += values;
-  dtw_stats.sum_of_sqares += Eigen::VectorXd(values.array() * values.array());
+  for (int i = 0; i < values.size(); i++) { // for each sample
+    dtw_stats.sum[i] += values[i];
+  }
+  for (int i = 0; i < values.size(); i++) { // for each sample
+    dtw_stats.sum_of_sqares[i] += (values[i]*values[i]);
+  }
   dtw_stats.setMin(values.minCoeff());
   dtw_stats.setMax(values.maxCoeff());
 }
@@ -933,16 +936,31 @@ void dtw_compute_average_and_stddev(ioc_statistics_t& dtw_stats,
       dtw_stats.sum_of_sqares.sum() / double(nb_data_points) - sq_mean);
 }
 
+void draw_split(std::string split,
+                const std::vector<std::string>& demo_names,
+                const std::vector<std::vector<Move3D::Trajectory> >& trajs,
+                const Eigen::Vector3d& color,
+                Move3D::Robot* human) {
+  for (size_t d = 0; d < trajs.size(); d++) {
+    for (size_t k = 0; k < trajs[d].size(); k++) {
+      if (demo_names[d] == split) {
+        global_linesToDraw.push_back(std::make_pair(
+            color, trajs[d][k].getJointPoseTrajectory(human->getJoint(45))));
+      }
+    }
+  }
+}
+
 void IocSequences::GenerateResults() {
   cout << " ------------------------------------- " << endl;
   cout << "       GENERATE DTW                    " << endl;
   cout << " ------------------------------------- " << endl;
 
   std::string home(getenv("HOME"));
-  std::string folder("/move3d_tmp/trajectories_process/");
+  std::string folder("/move3d_tmp/dtw/trajectories_process/");
 
-  bool load_replan = false;
-  bool compute_dtw = true;
+  const bool load_replan = true;
+  const bool compute_dtw = true;
 
   std::string folder_demos;
 
@@ -1076,7 +1094,7 @@ void IocSequences::GenerateResults() {
 
   if (true || demos_.empty()) {
     for (int d = 0; d < nb_demos; d++)
-    //    if( true )
+    // if( true )
     {
       std::stringstream ss;
       ss.str("");
@@ -1091,7 +1109,7 @@ void IocSequences::GenerateResults() {
 
       traj.setColor(d);
 
-      //            double alpha = double(d)/double(nb_demos);
+      // double alpha = double(d)/double(nb_demos);
 
       if (d == demo_id)
         global_linesToDraw.push_back(std::make_pair(
@@ -1105,49 +1123,45 @@ void IocSequences::GenerateResults() {
 
   //    int nb_runs = 10;
 
-  if (noreplan_recovered_.empty()) {
-    bool draw_noreplanning = !HriEnv->getBool(HricsParam::ioc_show_replanning);
-
-    noreplan_baseline_agressive_ =
-        load_trajs_names(folder_noreplan_baseline_agressive,
-                         demo_split_names,
-                         split,
-                         Eigen::Vector3d(0, 0, 1),
-                         draw_noreplanning);  // Blue
-    noreplan_baseline_conservative_ =
-        load_trajs_names(folder_noreplan_baseline_conservative,
-                         demo_split_names,
-                         split,
-                         Eigen::Vector3d(1, 1, 0),
-                         draw_noreplanning);  // Yellow
-    noreplan_recovered_ = load_trajs_names(folder_noreplan_recovered,
-                                           demo_split_names,
-                                           split,
-                                           Eigen::Vector3d(0, 1, 0),
-                                           draw_noreplanning);  // Green
-
-    if (load_replan) {
-      bool draw_replanning = HriEnv->getBool(HricsParam::ioc_show_replanning);
-
-      baseline_agressive_ = load_trajs_names(folder_baseline_agressive,
+  if (!results_are_loaded_) {  // if results are not yet loaded
+    if (noreplan_recovered_.empty()) {
+      noreplan_baseline_agressive_ =
+          load_trajs_names(folder_noreplan_baseline_agressive,
+                           demo_split_names,
+                           split,
+                           Eigen::Vector3d(0, 0, 1),
+                           false);  // Blue
+      noreplan_baseline_conservative_ =
+          load_trajs_names(folder_noreplan_baseline_conservative,
+                           demo_split_names,
+                           split,
+                           Eigen::Vector3d(1, 1, 0),
+                           false);  // Yellow
+      noreplan_recovered_ = load_trajs_names(folder_noreplan_recovered,
                                              demo_split_names,
                                              split,
-                                             Eigen::Vector3d(0, 0, 1),
-                                             draw_replanning);  // Blue
-      baseline_conservative_ = load_trajs_names(folder_baseline_conservative,
-                                                demo_split_names,
-                                                split,
-                                                Eigen::Vector3d(1, 1, 0),
-                                                draw_replanning);  // Yellow
-      recovered_ = load_trajs_names(folder_recovered,
-                                    demo_split_names,
-                                    split,
-                                    Eigen::Vector3d(0, 1, 0),
-                                    draw_replanning);  // Green
+                                             Eigen::Vector3d(0, 1, 0),
+                                             false);  // Green
+
+      if (load_replan) {
+        baseline_agressive_ = load_trajs_names(folder_baseline_agressive,
+                                               demo_split_names,
+                                               split,
+                                               Eigen::Vector3d(0, 0, 1),
+                                               false);  // Blue
+        baseline_conservative_ = load_trajs_names(folder_baseline_conservative,
+                                                  demo_split_names,
+                                                  split,
+                                                  Eigen::Vector3d(1, 1, 0),
+                                                  false);  // Yellow
+        recovered_ = load_trajs_names(folder_recovered,
+                                      demo_split_names,
+                                      split,
+                                      Eigen::Vector3d(0, 1, 0),
+                                      false);  // Green
+      }
     }
   }
-
-  // SET HUMAN CONFIGURAION
 
   cout << "nb of demos loaded : " << sim->getDemonstrationsPassive().size()
        << endl;
@@ -1155,9 +1169,76 @@ void IocSequences::GenerateResults() {
   cout << "size : " << sim->getDemonstrationsPassive()[demo_id].size() << endl;
   cout << "passive name : " << passive_human->getName() << endl;
 
+  results_are_loaded_ = true;
+  bool compare_replanning = false;
+  bool set_passive_to_end;  // only when showing replanning
+
+  if (compare_replanning && load_replan) {
+    draw_split(split,
+               demo_split_names,
+               noreplan_recovered_,
+               Eigen::Vector3d(0, 1, 0),  // Green
+               active_human);
+    draw_split(split,
+               demo_split_names,
+               recovered_,
+               Eigen::Vector3d(0, 0, 1),  // Blue
+               active_human);
+
+    set_passive_to_end = true;
+    cout << " -- draw no-replanning and replanning" << endl;
+  } else if ((!HriEnv->getBool(HricsParam::ioc_show_replanning)) ||
+             (!load_replan)) {
+    draw_split(split,
+               demo_split_names,
+               noreplan_baseline_agressive_,
+               Eigen::Vector3d(0, 0, 1),  // Blue
+               active_human);
+    draw_split(split,
+               demo_split_names,
+               noreplan_baseline_conservative_,
+               Eigen::Vector3d(1, 1, 0),  // Yellow
+               active_human);
+    draw_split(split,
+               demo_split_names,
+               noreplan_recovered_,
+               Eigen::Vector3d(0, 1, 0),  // Green
+               active_human);
+
+    set_passive_to_end = false;
+    cout << " -- draw no-replanning" << endl;
+  } else {
+    draw_split(split,
+               demo_split_names,
+               baseline_agressive_,
+               Eigen::Vector3d(0, 0, 1),  // Blue
+               active_human);
+    draw_split(split,
+               demo_split_names,
+               baseline_conservative_,
+               Eigen::Vector3d(1, 1, 0),  // Yellow
+               active_human);
+    draw_split(split,
+               demo_split_names,
+               recovered_,
+               Eigen::Vector3d(0, 1, 0),  // Green
+               active_human);
+
+    set_passive_to_end = true;
+    cout << " -- draw replanning" << endl;
+  }
+
+  // SET HUMAN CONFIGURAION
+
   active_human->setAndUpdate(*demos_[demo_id].getEnd());
-  passive_human->setAndUpdate(
-      *sim->getDemonstrationsPassive()[demo_id][0].second);
+
+  if (set_passive_to_end) {
+    passive_human->setAndUpdate(
+        *sim->getDemonstrationsPassive()[demo_id].back().second);
+  } else {
+    passive_human->setAndUpdate(
+        *sim->getDemonstrationsPassive()[demo_id][0].second);
+  }
 
   cout << "get passive trajectory" << endl;
   // Show trajectory
@@ -1177,30 +1258,86 @@ void IocSequences::GenerateResults() {
   // -------------------------------------------------------------------------
   // -------------------------------------------------------------------------
   // END VIZUALIZATION
-  if (!compute_dtw) return;
+  if ((!compute_dtw)) return;
+
+  cout << "COMPUTING DTW .........." << endl;
 
   std::vector<Move3D::Joint*> joints;
-  joints.push_back(active_human->getJoint(45));
+  joints.push_back(active_human->getJoint("rPalm"));  // rPalm
 
   active_joints.clear();
-
-  active_joints.push_back(
-      active_human->getJoint("Pelvis"));  // joint name : Pelvis
+  // active_joints.push_back(active_human->getJoint("Pelvis"));
   active_joints.push_back(active_human->getJoint("TorsoX"));
-  active_joints.push_back(
-      active_human->getJoint("rShoulderX"));  // joint name : rShoulderX
-  active_joints.push_back(
-      active_human->getJoint("rElbowZ"));  // joint name : rElbowZ
-  active_joints.push_back(
-      active_human->getJoint("rWristX"));  // joint name : rWristX
+  active_joints.push_back(active_human->getJoint("rShoulderX"));
+  active_joints.push_back(active_human->getJoint("rElbowZ"));
+  active_joints.push_back(active_human->getJoint("rWristX"));
+  active_joints.push_back(active_human->getJoint("rPalm"));
 
-  int nb_samples = noreplan_baseline_agressive_[0].size();
-  ioc_statistics_t stat_baseline_agressive_joint(nb_samples);
-  ioc_statistics_t stat_baseline_agressive_task(nb_samples);
-  ioc_statistics_t stat_baseline_conservative_joint(nb_samples);
-  ioc_statistics_t stat_baseline_conservative_task(nb_samples);
-  ioc_statistics_t stat_recovered_joint(nb_samples);
-  ioc_statistics_t stat_recovered_task(nb_samples);
+  // -------------------------------------------------------------------------
+  // Get the number of data points
+
+  //  noreplan_baseline_agressive_;
+  //  noreplan_baseline_conservative_;
+  //  noreplan_recovered_;
+  //  baseline_agressive_;
+  //  baseline_conservative_;
+  //  recovered_;
+
+  int nb_data_points_noreplan_baseline_agressive_ = 0;
+  int nb_data_points_noreplan_baseline_conservative_ = 0;
+  int nb_data_points_noreplan_recovered_ = 0;
+
+  int nb_data_points_baseline_agressive_ = 0;
+  int nb_data_points_baseline_conservative_ = 0;
+  int nb_data_points_recovered_ = 0;
+
+  for (int d = 0; d < noreplan_baseline_agressive_.size(); d++) {
+    for (int i = 0; i < noreplan_baseline_agressive_[d].size(); i++) {
+      nb_data_points_noreplan_baseline_agressive_++;
+    }
+  }
+  for (int d = 0; d < noreplan_baseline_conservative_.size(); d++) {
+    for (int i = 0; i < noreplan_baseline_conservative_[d].size(); i++) {
+      nb_data_points_noreplan_baseline_conservative_++;
+    }
+  }
+  for (int d = 0; d < noreplan_recovered_.size(); d++) {
+    for (int i = 0; i < noreplan_recovered_[d].size(); i++) {
+      nb_data_points_noreplan_recovered_++;
+    }
+  }
+
+  if (load_replan) {
+    for (int d = 0; d < baseline_agressive_.size(); d++) {
+      for (int i = 0; i < baseline_agressive_[d].size(); i++) {
+        nb_data_points_baseline_agressive_++;
+      }
+    }
+    for (int d = 0; d < baseline_conservative_.size(); d++) {
+      for (int i = 0; i < baseline_conservative_[d].size(); i++) {
+        nb_data_points_baseline_conservative_++;
+      }
+    }
+    for (int d = 0; d < recovered_.size(); d++) {
+      for (int i = 0; i < recovered_[d].size(); i++) {
+        nb_data_points_recovered_++;
+      }
+    }
+  }
+
+  cout << "nb_data_points_noreplan_baseline_agressive_ : "
+       << nb_data_points_noreplan_baseline_agressive_ << endl;
+  cout << "nb_data_points_noreplan_baseline_conservative_ : "
+       << nb_data_points_noreplan_baseline_conservative_ << endl;
+  cout << "nb_data_points_noreplan_recovered_ : "
+       << nb_data_points_noreplan_recovered_ << endl;
+  cout << "nb_data_points_baseline_agressive_ : "
+       << nb_data_points_baseline_agressive_ << endl;
+  cout << "nb_data_points_baseline_conservative_ : "
+       << nb_data_points_baseline_conservative_ << endl;
+  cout << "nb_data_points_recovered_ : " << nb_data_points_recovered_ << endl;
+
+  int nb_samples = 10;
 
   ioc_statistics_t stat_noreplan_baseline_agressive_joint(nb_samples);
   ioc_statistics_t stat_noreplan_baseline_agressive_task(nb_samples);
@@ -1209,7 +1346,20 @@ void IocSequences::GenerateResults() {
   ioc_statistics_t stat_noreplan_recovered_joint(nb_samples);
   ioc_statistics_t stat_noreplan_recovered_task(nb_samples);
 
+  ioc_statistics_t stat_baseline_agressive_joint(nb_samples);
+  ioc_statistics_t stat_baseline_agressive_task(nb_samples);
+  ioc_statistics_t stat_baseline_conservative_joint(nb_samples);
+  ioc_statistics_t stat_baseline_conservative_task(nb_samples);
+  ioc_statistics_t stat_recovered_joint(nb_samples);
+  ioc_statistics_t stat_recovered_task(nb_samples);
+
+  const double factor_jnt = 1.;
+  const double factor_task = 1.;
+
+  bool only_one = false;
   for (size_t d = 0; d < demos_.size(); d++) {
+    if ((only_one) && (demo_split_names[d] != split)) continue;
+
     std::vector<Eigen::VectorXd> dtw_noreplan_baseline_agressive =
         dtw(plangroup,
             demos_[d],
@@ -1217,9 +1367,9 @@ void IocSequences::GenerateResults() {
             active_joints,
             joints);
 
-    dtw_update_stat(dtw_noreplan_baseline_agressive[0],
+    dtw_update_stat(factor_jnt * dtw_noreplan_baseline_agressive[0],
                     stat_noreplan_baseline_agressive_joint);
-    dtw_update_stat(dtw_noreplan_baseline_agressive[1],
+    dtw_update_stat(factor_task * dtw_noreplan_baseline_agressive[1],
                     stat_noreplan_baseline_agressive_task);
 
     std::vector<Eigen::VectorXd> dtw_noreplan_baseline_conservative =
@@ -1229,23 +1379,43 @@ void IocSequences::GenerateResults() {
             active_joints,
             joints);
 
-    dtw_update_stat(dtw_noreplan_baseline_conservative[0],
+    dtw_update_stat(factor_jnt * dtw_noreplan_baseline_conservative[0],
                     stat_noreplan_baseline_conservative_joint);
-    dtw_update_stat(dtw_noreplan_baseline_conservative[1],
+    dtw_update_stat(factor_task * dtw_noreplan_baseline_conservative[1],
                     stat_noreplan_baseline_conservative_task);
 
     std::vector<Eigen::VectorXd> dtw_noreplan_recovered = dtw(
         plangroup, demos_[d], noreplan_recovered_[d], active_joints, joints);
 
-    dtw_update_stat(dtw_noreplan_recovered[0], stat_noreplan_recovered_joint);
-    dtw_update_stat(dtw_noreplan_recovered[1], stat_noreplan_recovered_task);
+    dtw_update_stat(factor_jnt * dtw_noreplan_recovered[0],
+                    stat_noreplan_recovered_joint);
+    dtw_update_stat(factor_task * dtw_noreplan_recovered[1],
+                    stat_noreplan_recovered_task);
+
+    if (demo_split_names[d] == split) {
+      cout << "DTW for : " << split << endl
+           << "dtw_noreplan_baseline_conservative (baseline 1) :  \t"
+           << dtw_noreplan_baseline_conservative[0].mean() << " , "
+           << dtw_noreplan_baseline_conservative[1].mean() << " , "
+           << dtw_noreplan_baseline_conservative[1].transpose() << endl
+           << "dtw_noreplan_baseline_agressive (baseline 0) :     \t"
+           << dtw_noreplan_baseline_agressive[0].mean() << " , "
+           << dtw_noreplan_baseline_agressive[1].mean() << " , "
+           << dtw_noreplan_baseline_agressive[1].transpose() << endl
+           << "dtw_noreplan_recovered (IOC) :                     \t"
+           << dtw_noreplan_recovered[0].mean() << " , "
+           << dtw_noreplan_recovered[1].mean() << " , "
+           << dtw_noreplan_recovered[1].transpose() << endl;
+    }
 
     if (load_replan) {
       std::vector<Eigen::VectorXd> dtw_baseline_agressive = dtw(
           plangroup, demos_[d], baseline_agressive_[d], active_joints, joints);
 
-      dtw_update_stat(dtw_baseline_agressive[0], stat_baseline_agressive_joint);
-      dtw_update_stat(dtw_baseline_agressive[1], stat_baseline_agressive_task);
+      dtw_update_stat(factor_jnt * dtw_baseline_agressive[0],
+                      stat_baseline_agressive_joint);
+      dtw_update_stat(factor_task * dtw_baseline_agressive[1],
+                      stat_baseline_agressive_task);
 
       std::vector<Eigen::VectorXd> dtw_baseline_conservative =
           dtw(plangroup,
@@ -1254,43 +1424,57 @@ void IocSequences::GenerateResults() {
               active_joints,
               joints);
 
-      dtw_update_stat(dtw_baseline_conservative[0],
+      dtw_update_stat(factor_jnt * dtw_baseline_conservative[0],
                       stat_baseline_conservative_joint);
-      dtw_update_stat(dtw_baseline_conservative[1],
+      dtw_update_stat(factor_task * dtw_baseline_conservative[1],
                       stat_baseline_conservative_task);
 
       std::vector<Eigen::VectorXd> dtw_recovered =
           dtw(plangroup, demos_[d], recovered_[d], active_joints, joints);
 
-      dtw_update_stat(dtw_recovered[0], stat_recovered_joint);
-      dtw_update_stat(dtw_recovered[1], stat_recovered_task);
+      dtw_update_stat(factor_jnt * dtw_recovered[0], stat_recovered_joint);
+      dtw_update_stat(factor_task * dtw_recovered[1], stat_recovered_task);
     }
   }
 
-  int nb_data_points = nb_demos * nb_samples;
+  if (only_one) {
+    nb_demos = 1;
+  }
+
+  // int nb_data_points = nb_demos * nb_samples;
 
   dtw_compute_average_and_stddev(stat_noreplan_baseline_agressive_joint,
-                                 nb_data_points);
+                                 nb_data_points_noreplan_baseline_agressive_);
   dtw_compute_average_and_stddev(stat_noreplan_baseline_agressive_task,
-                                 nb_data_points);
-  dtw_compute_average_and_stddev(stat_noreplan_baseline_conservative_joint,
-                                 nb_data_points);
-  dtw_compute_average_and_stddev(stat_noreplan_baseline_conservative_task,
-                                 nb_data_points);
-  dtw_compute_average_and_stddev(stat_noreplan_recovered_joint, nb_data_points);
-  dtw_compute_average_and_stddev(stat_noreplan_recovered_task, nb_data_points);
+                                 nb_data_points_noreplan_baseline_agressive_);
+
+  dtw_compute_average_and_stddev(
+      stat_noreplan_baseline_conservative_joint,
+      nb_data_points_noreplan_baseline_conservative_);
+  dtw_compute_average_and_stddev(
+      stat_noreplan_baseline_conservative_task,
+      nb_data_points_noreplan_baseline_conservative_);
+
+  dtw_compute_average_and_stddev(stat_noreplan_recovered_joint,
+                                 nb_data_points_noreplan_recovered_);
+  dtw_compute_average_and_stddev(stat_noreplan_recovered_task,
+                                 nb_data_points_noreplan_recovered_);
 
   if (load_replan) {
     dtw_compute_average_and_stddev(stat_baseline_agressive_joint,
-                                   nb_data_points);
+                                   nb_data_points_baseline_agressive_);
     dtw_compute_average_and_stddev(stat_baseline_agressive_task,
-                                   nb_data_points);
+                                   nb_data_points_baseline_agressive_);
+
     dtw_compute_average_and_stddev(stat_baseline_conservative_joint,
-                                   nb_data_points);
+                                   nb_data_points_baseline_conservative_);
     dtw_compute_average_and_stddev(stat_baseline_conservative_task,
-                                   nb_data_points);
-    dtw_compute_average_and_stddev(stat_recovered_joint, nb_data_points);
-    dtw_compute_average_and_stddev(stat_recovered_task, nb_data_points);
+                                   nb_data_points_baseline_conservative_);
+
+    dtw_compute_average_and_stddev(stat_recovered_joint,
+                                   nb_data_points_recovered_);
+    dtw_compute_average_and_stddev(stat_recovered_task,
+                                   nb_data_points_recovered_);
   }
 
   cout << "set human configuration" << endl;
@@ -1512,21 +1696,30 @@ std::vector<std::vector<Move3D::Trajectory> > load_trajs_names(
     bool draw) {
   std::vector<std::vector<Move3D::Trajectory> > trajs(demo_names.size());
 
-  int nb_runs = 10;
-
   Move3D::Robot* active_human = global_human_traj_simulator->getActiveHuman();
 
-  for (size_t d = 0; d < demo_names.size(); d++)  // For all demo names
-    for (int k = 0; k < nb_runs; k++)             // For all runs
+  for (size_t d = 0; d < demo_names.size(); d++) {  // For all demo names
+
+    std::vector<std::string> files =
+        move3d_get_files_in_folder(folder + demo_names[d], "traj", 10);
+
+    int nb_runs = files.size();
+
+    cout << "folder : " << folder << endl;
+    cout << "nb of files : " << nb_runs << endl;
+
+    for (int k = 0; k < nb_runs; k++)  // For all runs
     {
       trajs[d].push_back(
           load_one_traj(active_human, folder + demo_names[d] + "/", 0, k));
 
-      if (demo_names[d] == split && draw)
+      if (demo_names[d] == split && draw) {
         global_linesToDraw.push_back(std::make_pair(
             color,
             trajs[d][k].getJointPoseTrajectory(active_human->getJoint(45))));
+      }
     }
+  }
 
   return trajs;
 }
@@ -1547,11 +1740,17 @@ std::vector<std::vector<Move3D::Trajectory> > load_trajs(std::string folder,
                                                          bool draw) {
   std::vector<std::vector<Move3D::Trajectory> > trajs(nb_demos);
 
-  int nb_runs = 10;
+  std::vector<std::string> files =
+      move3d_get_files_in_folder(folder, "traj", 10);
+
+  int nb_runs = files.size();
+
+  cout << "folder : " << folder << endl;
+  cout << "nb of files : " << nb_runs << endl;
 
   Move3D::Robot* active_human = global_human_traj_simulator->getActiveHuman();
 
-  for (int d = 0; d < nb_demos; d++)
+  for (int d = 0; d < nb_demos; d++) {
     for (int k = 0; k < nb_runs; k++) {
       trajs[d].push_back(load_one_traj(active_human, folder, d, k));
 
@@ -1560,6 +1759,7 @@ std::vector<std::vector<Move3D::Trajectory> > load_trajs(std::string folder,
             color,
             trajs[d][k].getJointPoseTrajectory(active_human->getJoint(45))));
     }
+  }
 
   return trajs;
 }
@@ -1932,10 +2132,10 @@ void hrics_ioc_compute_results() {
     }
 
     // BASELINE
-    //        cout << stats[d][0][0] << "  " << stats[d][0][1] << "  " <<
-    //        stats[d][0][2] << "  " << stats[d][0][3] << "  " ;
-    //        cout << stats[d][1][0] << "  " << stats[d][1][1] << "  " <<
-    //        stats[d][1][2] << "  " << stats[d][1][3] << "  " ;
+    // cout << stats[d][0][0] << "  " << stats[d][0][1] << "  " <<
+    // stats[d][0][2] << "  " << stats[d][0][3] << "  " ;
+    // cout << stats[d][1][0] << "  " << stats[d][1][1] << "  " <<
+    // stats[d][1][2] << "  " << stats[d][1][3] << "  " ;
 
     //        cout << stats[d][4][0] << "  " << stats[d][4][1] << "  " <<
     //        stats[d][4][2] << "  " << stats[d][4][3] << "  " ;

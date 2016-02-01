@@ -88,6 +88,9 @@ static double m_discretization = 0.0;
 static bool m_use_buffer;
 static std::vector<Eigen::VectorXd> m_buffer;
 
+static bool m_use_goal_set = false;
+static Eigen::VectorXd m_x_task_goal;
+
 //! Create an initial Move3D trajectory
 //! it generates a straigt line between the two configuration init
 //! and goal
@@ -107,12 +110,27 @@ Move3D::Trajectory traj_optim_create_sraight_line_traj() {
   }
 
   std::vector<confPtr_t> confs(2);
-
   confs[0] = q_init;
   confs[1] = q_goal;
 
   Move3D::Trajectory T(confs);
+  return T;
+}
 
+Move3D::Trajectory traj_optim_create_zero_line_traj() {
+  if (!m_robot) {
+    cout << "robot not initialized in file " << __FILE__ << " ,  "
+         << __PRETTY_FUNCTION__ << endl;
+  }
+
+  confPtr_t q_init(m_robot->getInitPos());
+  confPtr_t q_goal(m_robot->getInitPos());
+
+  std::vector<confPtr_t> confs(2);
+  confs[0] = q_init;
+  confs[1] = q_goal;
+
+  Move3D::Trajectory T(confs);
   return T;
 }
 
@@ -247,6 +265,10 @@ bool traj_optim_initScenario() {
   return true;
 }
 
+//! If this is true it will initialize stomp with a zero-th line trajectory
+//! you have to setup zero trajectory in the trajectory.cpp file
+const bool use_zero_trajectory = false;
+
 //!
 //! Get Initial trajectory
 // --------------------------------------------------------
@@ -255,11 +277,14 @@ bool traj_optim_InitTraj(Move3D::Trajectory& T) {
     T = m_external_trajectory;
   } else if (PlanEnv->getBool(PlanParam::withCurrentTraj)) {
     T = m_robot->getCurrentTraj();
+  } else if (use_zero_trajectory) {
+    Move3D::set_use_zero_trajectory(true);
+    T = traj_optim_create_zero_line_traj();
   } else {
     T = traj_optim_create_sraight_line_traj();
   }
 
-  if (T.getNbOfPaths() == 0) return false;
+  if ((!use_zero_trajectory) && (T.getNbOfPaths() == 0)) return false;
 
   int nb_points = 0;
 
@@ -269,8 +294,14 @@ bool traj_optim_InitTraj(Move3D::Trajectory& T) {
     nb_points = PlanEnv->getInt(PlanParam::nb_pointsOnTraj);
   }
 
-  T.cutTrajInSmallLP(nb_points - 1);
-  T.replaceP3dTraj();
+  if (use_zero_trajectory) {
+    for (int i = 0; i < nb_points - 2; i++) {
+      T.push_back(m_robot->getInitPos());
+    }
+  } else {
+    T.cutTrajInSmallLP(nb_points - 1);
+    T.replaceP3dTraj();
+  }
 
   cout << "End Init traj" << endl;
   return true;
@@ -412,6 +443,21 @@ bool traj_optim_initStomp() {
     global_optimizer->setUseCostSpace(true);
   }
 
+  if ((!m_use_goal_set) &&
+      PlanEnv->getBool(PlanParam::trajStompMoveEndConfig)) {
+    Move3D::Joint* eef = m_robot->getJoint(
+        PlanEnv->getString(PlanParam::end_effector_joint));  // plannar J4
+    m_robot->setAndUpdate(*m_robot->getGoalPos());
+    m_x_task_goal = eef->getVectorPos();
+    m_use_goal_set = true;
+    cout << "Set goal set " << endl;
+  }
+
+  if (m_use_goal_set) {
+    global_optimizer->setUseGoalset(true);
+    global_optimizer->setGoalset(m_x_task_goal);
+  }
+
   if (m_use_buffer) {
     global_optimizer->setBuffer(m_buffer);
 
@@ -466,7 +512,7 @@ bool traj_optim_runStomp(int runId) {
 
   std::string filename = "stomp_best_traj.txt";
   cout << "save best traj to : " << filename << endl;
-  global_optimizer->getBestTraj().saveToFile( filename );
+  global_optimizer->getBestTraj().saveToFile(filename);
 
   // WHY IS THIS HERE
   // global_optimizer->resetSharedPtr();
@@ -545,6 +591,12 @@ void traj_optim_clear_buffer() { m_use_buffer = false; }
 void traj_optim_set_buffer(const std::vector<Eigen::VectorXd>& buffer) {
   m_use_buffer = true;
   m_buffer = buffer;
+}
+
+void traj_optim_set_use_goal_set(bool v) { m_use_goal_set = v; }
+
+void traj_optim_set_goal_set(const Eigen::VectorXd& x_task_goal) {
+  m_x_task_goal = x_task_goal;
 }
 
 // --------------------------------------------------------

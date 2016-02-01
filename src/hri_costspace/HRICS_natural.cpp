@@ -12,6 +12,8 @@
 #include "planner/cost_space.hpp"
 #include "utils/misc_functions.hpp"
 #include "gestures/HRICS_record_motion.hpp"
+#include "HRICS_parameters.hpp"
+#include "HRICS_human_simulator.hpp"
 
 #include <libmove3d/include/P3d-pkg.h>
 #include <libmove3d/include/Planner-pkg.h>
@@ -540,7 +542,9 @@ void Natural::initNaturalBiomech() {
   m_active_dofs_.push_back(m_CONFIG_INDEX_ARM_RIGTH_WRIST + 1);
   m_active_dofs_.push_back(m_CONFIG_INDEX_ARM_RIGTH_WRIST + 2);
 
-  setBiomechJointLimitsFromFile("");
+  if (HriEnv->getBool(HricsParam::ioc_set_dof_limits_from_experiments)) {
+    setBiomechJointLimitsFromFile("");
+  }
 
   Configuration q(*m_Robot->getNewConfig());
 
@@ -728,15 +732,27 @@ void Natural::initNaturalOldDude() {
 }
 
 void Natural::setBiomechJointLimitsFromFile(std::string filename) {
-  std::ostringstream ss;
-  ss << "/usr/local/jim_local/Dropbox/move3d/catkin_ws_move3d/src/"
-     << "hrics-or-rafi/"
-     << "python_module/bioik/user_experiment_data/selection/";
+  //  std::ostringstream ss;
+  //  ss << "/usr/local/jim_local/Dropbox/move3d/catkin_ws_move3d/src/"
+  //     << "hrics-or-rafi/"
+  //     << "python_module/bioik/user_experiment_data/selection/";
 
-  Eigen::VectorXd max_v =
-      move3d_load_matrix_from_csv_file(ss.str() + "max_dof.csv");
-  Eigen::VectorXd min_v =
-      move3d_load_matrix_from_csv_file(ss.str() + "min_dof.csv");
+  std::stringstream ss;
+  ss.str("");
+  ss << std::string(getenv("HOME_MOVE3D")) + "/../move3d-launch/launch_files/";
+  ss << "dof_limits/";
+
+  test_set dataset = test_set(HriEnv->getInt(HricsParam::ioc_dataset));
+
+  // Get joint limits from files
+  Eigen::VectorXd max_v, min_v;
+  if (dataset == icra_paper_sept || dataset == icra_paper_feb) {
+    max_v = move3d_load_matrix_from_csv_file(ss.str() + "icra_max_dof.csv");
+    min_v = move3d_load_matrix_from_csv_file(ss.str() + "icra_min_dof.csv");
+  } else {
+    max_v = move3d_load_matrix_from_csv_file(ss.str() + "max_dof.csv");
+    min_v = move3d_load_matrix_from_csv_file(ss.str() + "min_dof.csv");
+  }
 
   cout << "max_v size : " << max_v.size() << endl;
   cout << "min_v size : " << min_v.size() << endl;
@@ -1081,7 +1097,8 @@ double Natural::getCustomDistConfig(Configuration& q, Eigen::VectorXd& phi) {
                                   m_q_Confort->getConfigStruct(),
                                   q.getConfigStruct());
         int k = move3d_joint->getIndexOfFirstDof() + j;
-        phi_tmp[k] = std::fabs(dof_dist / range);
+
+        phi_tmp[k] = std::fabs(dof_dist / range);  // Already normalized here
 
         const bool print_dist = false;
         if (print_dist) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2014 LAAS/CNRS, WPI
+ * Copyright (c) 2010-2014 LAAS/CNRS, WPI, MPI
  * All rights reserved.
  *
  * Redistribution  and  use  in  source  and binary  forms,  with  or  without
@@ -37,6 +37,8 @@
 #include "planner/TrajectoryOptim/Chomp/chompCost.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompMultivariateGaussian.hpp"
 #include "planner/TrajectoryOptim/Classic/smoothing.hpp"
+#include "planner/TrajectoryOptim/vector_trajectory.hpp"
+
 #include "collision_space/collision_space.hpp"
 
 #include <boost/shared_ptr.hpp>
@@ -57,112 +59,6 @@ class ConfGenerator;
 #include <Eigen/Core>
 
 namespace Move3D {
-
-//! Trajectory structure
-struct VectorTrajectory {
-  VectorTrajectory() : discretization_(0.0) {}
-  VectorTrajectory(int nb_joints, int nb_var, double duration);
-
-  //!  \brief Gets the number of points in the trajectory
-  int getNumPoints() const { return num_vars_free_; }
-
-  //!  \brief Gets the number of points (that are free to be optimized) in the
-  //trajectory
-  int getNumFreePoints() const { return num_vars_free_; }
-
-  //!  \brief Gets the number of joints in each trajectory point
-  int getNumDofs() const { return num_dofs_; }
-
-  //! \brief Gets the discretization time interval of the trajectory
-  double getDiscretization() const { return discretization_; }
-
-  //!  \brief Gets the start index
-  int getStartIndex() const { return 0; }
-
-  //!  \brief Gets the end index
-  int getEndIndex() const { return num_vars_free_ - 1; }
-
-  //! Get use time
-  bool getUseTime() const { return use_time_; }
-
-  //! Get index for traj point and dof
-  int getVectorIndex(int traj_point, int dof);
-
-  //!  \brief Get the value at a given point for a given dof
-  double& operator()(int traj_point, int dof);
-
-  //!  \brief Get the value at a given point for a given dof
-  double operator()(int traj_point, int dof) const;
-
-  //!  \brief Get dof cost value
-  double& dof_cost(int traj_point, int dof);
-
-  //!  \brief Get dof cost value
-  double dof_cost(int traj_point, int dof) const;
-
-  //! Set one dof trajectory
-  void setDofTrajectoryBlock(int dof, const Eigen::VectorXd traj);
-
-  //! Set one dof trajectory
-  void addToDofTrajectoryBlock(int dof, const Eigen::VectorXd traj);
-
-  //! Get trajectory paramters
-  Eigen::VectorXd getDofTrajectoryBlock(int dof) const;
-
-  //! Get trajectory paramters
-  bool getParameters(std::vector<Eigen::VectorXd>& parameters) const;
-
-  //! Get trajectory paramters
-  bool getFreeParameters(std::vector<Eigen::VectorXd>& parameters) const;
-
-  //! Get trajectory paramters
-  Eigen::VectorXd getTrajectoryPoint(int i) const;
-
-  //! Planning group
-  Move3D::ChompPlanningGroup* planning_group_;
-
-  //! Interpolation between two vector
-  Eigen::VectorXd interpolate(const Eigen::VectorXd& a,
-                              const Eigen::VectorXd& b,
-                              double u) const;
-
-  //! Sets the interpolated trajectory
-  Eigen::VectorXd getSraightLineTrajectory();
-
-  //! Return move3d configuration
-  Move3D::confPtr_t getMove3DConfiguration(int i) const;
-
-  //! Returns the move3d trajectory
-  Move3D::Trajectory getMove3DTrajectory() const;
-
-  //! Set from move3d trajectory
-  void setFromMove3DTrajectory(const Move3D::Trajectory& T);
-
-  //! Get configuration at particular point
-  void getTrajectoryPointP3d(int traj_point, Eigen::VectorXd& jnt_array) const;
-
-  //! Return the index along the trajectory
-  int getFullTrajectoryIndex(int i) const { return i; }
-
-  /**< [num_dimensions] num_parameters */
-  Eigen::VectorXd trajectory_;
-
-  /**< [num_dimensions] num_parameters */
-  Eigen::VectorXd dof_costs_;
-
-  /**< num_time_steps */
-  Eigen::VectorXd state_costs_;
-  int num_vars_free_; /**< nb_vars_ */
-  int num_dofs_;      /**< nb_joints_ */
-
-  /**< Wether the rollout is violating dof limits */
-  bool out_of_bounds_;
-  double discretization_; /**< time discretization */
-  double duration_;       /**< duration */
-  bool use_time_;
-  double total_cost_;
-  double total_smoothness_cost_;
-};
 
 //! Sampler of noisy trajectories
 class LampSampler {

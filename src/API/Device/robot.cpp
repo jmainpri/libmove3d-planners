@@ -35,9 +35,9 @@ MOVE3D_USING_SHARED_PTR_NAMESPACE
 
 Robot* Move3D::API_activeRobot = NULL;
 
-// ****************************************************************************************************
+// *****************************************************************************
 // API FUNCTIONS
-// ****************************************************************************************************
+// *****************************************************************************
 
 static boost::function<void(
     Robot*, void*, unsigned int&, bool, std::string&, std::vector<Joint*>&)>
@@ -70,9 +70,9 @@ static boost::function<unsigned int(Robot*)> Move3DRobotGetNumberOfActiveDofs;
 static boost::function<Joint*(Robot*, unsigned int, unsigned int&)>
     Move3DRobotGetIthActiveDofJoint;
 
-// ****************************************************************************************************
+// *****************************************************************************
 // SETTERS
-// ****************************************************************************************************
+// *****************************************************************************
 
 void move3d_set_fct_robot_constructor(boost::function<void(
     Robot*, void*, unsigned int&, bool, std::string&, std::vector<Joint*>&)>
@@ -151,7 +151,7 @@ void move3d_set_fct_robot_get_ith_active_dof_joint(
   Move3DRobotGetIthActiveDofJoint = fct;
 }
 
-// ****************************************************************************************************
+// *****************************************************************************
 
 Robot::Robot(void* robotPt, bool copy) {
   copy_ = copy;
@@ -685,7 +685,7 @@ Joint* Robot::getIthActiveDoFJoint(unsigned int ithActiveDoF,
 }
 
 /**
- * Get Jacobian matrix has 
+ * Get Jacobian matrix has
  * rows : task space dimension (2, 3 or 6)
  * cols : active dofs
  */
@@ -724,7 +724,9 @@ Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints,
 
       J(0, id) = J_pi(0);
       J(1, id) = J_pi(1);
-      if (with_height) J(2, id) = J_pi(2);
+      if (with_height) {
+        J(2, id) = J_pi(2);
+      }
 
       if (boost::math::isnan(J(0, id))) {
         printf("NAN VALUE\n");
@@ -734,50 +736,64 @@ Eigen::MatrixXd Robot::getJacobian(const std::vector<Joint*>& active_joints,
         J(4, id) = z(1);
         J(5, id) = z(2);
       }
+
+     id = id + 1;
     }
     if (active_joints[j]->getP3dJointStruct()->type == P3D_TRANSLATE) {
       J(0, id) = z(0);
       J(1, id) = z(1);
-      if (with_height) J(2, id) = z(2);
-    }
+      if (with_height) {
+        J(2, id) = z(2);
+      }
 
+      id = id + 1;
+    }
     // TODO for the case of free flyer joints .... This one only
-    // handles translations and I am not sure it is even correct
+    // handles translation and I am not sure it is even correct
+    // Only works for the base joint ...
     if (active_joints[j]->getP3dJointStruct()->type == P3D_FREEFLYER) {
+      // x translation
       J(0, id) = 1;
       J(1, id) = 0;
-      J(2, id) = 0;
-      if (with_rotations) {
-        J(3, id) = 0;
-        J(4, id) = 0; /* Rotation */
-        J(5, id) = 0;
-        id++;
+      if (with_height) {
+        J(2, id) = 0;
       }
-      J(0, id + 1) = 0;
-      J(1, id + 1) = 1;
-      J(2, id + 1) = 0;
       if (with_rotations) {
         J(3, id + 1) = 0;
         J(4, id + 1) = 0; /* Rotation */
         J(5, id + 1) = 0;
-        id++;
       }
+      // y translation
+      J(0, id + 1) = 0;
+      J(1, id + 1) = 1;
+      if (with_height) {
+        J(2, id + 1) = 0;
+      }
+      if (with_rotations) {
+        J(3, id + 1) = 0;
+        J(4, id + 1) = 0; /* Rotation */
+        J(5, id + 1) = 0;
+      }
+      // z translation
       J(0, id + 2) = 0;
       J(1, id + 2) = 0;
-      J(2, id + 2) = 1;
-      if (with_rotations) {
-        J(3, id) = 0;
-        J(4, id) = 0; /* Rotation */
-        J(5, id) = 0;
-        id++;
+      if (with_height) {
+        J(2, id + 2) = 1;
       }
-      // ....
+      if (with_rotations) {
+        J(3, id + 2) = 0;
+        J(4, id + 2) = 0; /* Rotation */
+        J(5, id + 2) = 0;
+      }
+
+      id = id + 6; // TODO the rotations ...
     }
 
-    id++;
+    //    }
   }
 
-  // cout << "J :  " << endl << J << endl;
+//  cout << "J rows and cols :  " << J.rows() << " , " << J.cols() << endl;
+//  cout << "J :  " << endl << J << endl;
 
   return J;
 }

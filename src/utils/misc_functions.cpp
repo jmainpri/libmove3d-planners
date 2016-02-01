@@ -29,6 +29,9 @@
 #include "NumsAndStrings.hpp"
 #include "API/project.hpp"
 #include "API/libmove3d_api.hpp"
+#include "planEnvironment.hpp"
+#include "hri_costspace/gestures/HRICS_gest_parameters.hpp"
+#include "hri_costspace/HRICS_parameters.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -293,8 +296,10 @@ void move3d_smooth_circular_parameters(Eigen::VectorXd& params) {
   }
 }
 
-double move3d_random_integer(int min, int max) {
-  return p3d_random_integer(min, max);
+int move3d_random_integer(int min, int max) {
+  int random_number = p3d_random_integer(min, max);
+  // cout << "random number : " << random_number << endl;
+  return random_number;
 }
 
 //! This function prints the joint mapping of a robot
@@ -461,16 +466,15 @@ Eigen::VectorXd moved_get_vector(const std::vector<std::string>& config) {
 // see :
 // http://en.wikipedia.org/wiki/Moore-Penrose_pseudoinverse#The_general_case_and_the_SVD_method
 Eigen::MatrixXd move3d_pinv(const Eigen::MatrixXd& b, double rcond) {
-  // TODO: Figure out why it wants fewer rows than columns
-  //    if ( a.rows()<a.cols() )
-  //        return false;
   bool flip = false;
-  Eigen::MatrixXd a;
-  if (a.rows() < a.cols()) {
-    a = b.transpose();
-    flip = true;
-  } else
-    a = b;
+  Eigen::MatrixXd a = b;
+
+//  if (b.rows() < b.cols()) {
+//    a = b.transpose();
+//    flip = true;
+//  } else {
+//    a = b;
+//  }
 
   // SVD
   Eigen::JacobiSVD<Eigen::MatrixXd> svdA;
@@ -501,25 +505,23 @@ Eigen::MatrixXd move3d_pinv(const Eigen::MatrixXd& b, double rcond) {
       (svdA.matrixV() * vPseudoInvertedSingular.asDiagonal()) * mAdjointU;
 
   if (flip) {
-    a = a.transpose();
+    // a = a.transpose();
     a_pinv = a_pinv.transpose();
   }
 
   return a_pinv;
 }
 
-bool move3d_start_and_load_manipulator() {
+bool move3d_start_and_load_p3d_file(std::string filename) {
   std::string home;
   home = getenv("HOME_MOVE3D");
   if ("" == home) {
     std::cout << "Error : HOME_MOVE3D not define" << std::endl;
     return false;
   }
-
   cout << "home : " << home << endl;
 
   // Load environment from file
-  std::string filename = "/../assets/Manipulator/manipulateur.p3d";
   p3d_col_set_mode(p3d_col_mode_none);
   p3d_read_desc((home + filename).c_str());
 
@@ -532,4 +534,31 @@ bool move3d_start_and_load_manipulator() {
   move3d_set_classic_libmove3d_api();
 
   return true;
+}
+
+bool move3d_start_and_load_manipulator() {
+  return move3d_start_and_load_p3d_file(
+      "/../assets/Manipulator/manipulateur.p3d");
+}
+
+Move3D::Robot* move3d_start_all_p3d_environment(std::string filename) {
+  if (!move3d_start_and_load_p3d_file(filename)) {
+    return NULL;
+  }
+  std::string robot_name;
+  robot_name = XYZ_ENV->active_robot->name;  // XYZ_ENV->robot[0]->name;
+  cout << "-- Robot name is : " << robot_name << endl;
+
+  // Make c++ project interface
+  Move3D::global_Project = new Move3D::Project(new Move3D::Scene(XYZ_ENV));
+  Move3D::global_Project->getActiveScene()->setActiveRobot(robot_name);
+  Move3D::Robot* robot =
+      Move3D::global_Project->getActiveScene()->getActiveRobot();
+
+  // GET QT PARAMETERS (used to be in project)
+  initPlannerParameters();
+  initGestureParameters();
+  initHricsParameters();
+
+  return robot;
 }

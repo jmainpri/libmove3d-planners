@@ -40,8 +40,7 @@ typedef std::vector<std::pair<double, Move3D::confPtr_t> > motion_t;
 namespace HRICS {
 
 //! resamples the motion at
-//! 100 Hz to generate a trajectory with constant time
-//! stamps
+//! 100 Hz to generate a trajectory with constant time stamps
 Move3D::Trajectory motion_to_traj(const motion_t& traj,
                                   Move3D::Robot* robot,
                                   int max_index = -1);

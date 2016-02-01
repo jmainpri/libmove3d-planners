@@ -97,12 +97,12 @@ void HRICS_initOccupancyPredictionFramework(std::string robot_name,
   std::string foldername;
 
   //    std::string home = std::string( getenv("HOME_MOVE3D" ) ) +
-  //    std::string( "/../../workspace/gesture-recognition/bkp_recorded_motion/\
-//    bkp_good_8_classes/" );
+  //    std::string( "/../../workspace/gesture-recognition/bkp_recorded_motion/
+  //    bkp_good_8_classes/" );
 
   //    std::string home = std::string( getenv("ROS_CATKIN_WS" ) ) +
-  //            std::string( "/src/NRI-Human-Robot-Collaboration-dataset/\
-//wpi_gesture_recognition/first_motions/good_8_classes/" );
+  //            std::string( "/src/NRI-Human-Robot-Collaboration-dataset/
+  // wpi_gesture_recognition/first_motions/good_8_classes/" );
 
   std::string home = std::string(getenv("HOME_MOVE3D")) +
                      std::string(

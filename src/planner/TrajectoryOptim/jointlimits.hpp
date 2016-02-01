@@ -29,9 +29,35 @@
 #ifndef TRAJECTORY_JOINT_LIMITS_HPP_
 #define TRAJECTORY_JOINT_LIMITS_HPP_
 
+#include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
 #include "eiquadprog.hpp"
 #include <iostream>
 
+namespace Move3D {
+
+// This class solves the joint limit projection using a QP
+// the problem is of the form :
+//
+// min 0.5 * xi^t A xi + g0^t xi
+// s.t.
+//    CI^t xi + ci0 >= 0
+//
+// The matrix and vectors dimensions are as follows:
+//    xi.size() : n
+//    A.size()  : n * n
+//    g0.size() : n
+//    CI.size() : n * m
+//    ci0       : m
+//
+// here m is equal to 2 because we have upper and lower limits
+// g0 sets an offest because it is of the original problem is of the form
+//
+// min 0.5 * (x-xi)^t A (x-xi)
+// s.t.
+//    CI^t xi + ci0 >= 0
+//
+// this leads to the following offset: g0 = ( -1 * x^t * A )^t
+// => xi^t A xi + ( -1 * x^t * A )^t xi  = (x-xi)^t A (x-xi)
 class TrajOptJointLimit {
  public:
   TrajOptJointLimit() {}
@@ -64,7 +90,6 @@ class TrajOptJointLimit {
      * value for H */
     // J = L^-T
     J_ = Eigen::MatrixXd::Identity(dynamics_.rows(), dynamics_.rows());
-    ;
     J_ = chol_.matrixU().solve(J_);
 
     /* c1 * c2 is an estimate for cond(G) */
@@ -80,16 +105,7 @@ class TrajOptJointLimit {
     Eigen::VectorXd offset =
         -1. * (parameters.transpose() * dynamics_).transpose();
     Eigen::MatrixXd J = J_;
-
-    // std::cout << "selection : " << selection_ << std::endl;
-
-    //        double error = Eigen::solve_quadprog<Eigen::MatrixXd,
-    //        Eigen::VectorXd, Eigen::MatrixXd, Eigen::VectorXd,
-    //        Eigen::MatrixXd, Eigen::VectorXd, Eigen::VectorXd>
-    //                ( dynamics,  offset,
-    //                  eq_select_, eq_const_,
-    //                  selection_, constraints_,
-    //                  parameters );
+    Eigen::VectorXd lagrange_mult;
 
     double cost = Eigen::solve_quadprog2<Eigen::VectorXd,
                                          Eigen::MatrixXd,
@@ -105,18 +121,51 @@ class TrajOptJointLimit {
                                                           eq_const_,
                                                           selection_,
                                                           constraints_,
-                                                          parameters);
+                                                          parameters,
+                                                          lagrange_mult);
 
     return cost;
   }
 
-  Eigen::MatrixXd dynamics_;
+  friend bool CreateJointLimitProjectors(
+      std::vector<TrajOptJointLimit>& joint_limits_projector,
+      const Move3D::ChompPlanningGroup& planning_group,
+      const std::vector<Eigen::MatrixXd>& control_costs,
+      int num_var,
+      int init_offset,
+      int id_fixed = 0) {
+    bool succeded = true;
+    joint_limits_projector.resize(planning_group.chomp_dofs_.size());
 
-  Eigen::MatrixXd selection_;
-  Eigen::VectorXd constraints_;
+    for (size_t d = 0; d < planning_group.chomp_dofs_.size(); d++) {
+      double max_limit = planning_group.chomp_dofs_[d].joint_limit_max_ - 1e-5;
+      double min_limit = planning_group.chomp_dofs_[d].joint_limit_min_ + 1e-5;
 
-  Eigen::VectorXd upper_;
-  Eigen::VectorXd lower_;
+      joint_limits_projector[d].dynamics_ = control_costs[d].block(
+          init_offset, init_offset, num_var - id_fixed, num_var - id_fixed);
+      joint_limits_projector[d].upper_ =
+          max_limit * Eigen::VectorXd::Ones(num_var - id_fixed);
+      joint_limits_projector[d].lower_ =
+          min_limit * Eigen::VectorXd::Ones(num_var - id_fixed);
+
+      if (!joint_limits_projector[d].initialize()) {
+        std::cout << "Error: could not initialize joint limits in "
+                  << __PRETTY_FUNCTION__ << " for joint : "
+                  << planning_group.chomp_dofs_[d].joint_name_ << std::endl;
+        succeded = false;
+      }
+    }
+    return succeded;
+  }
+
+  // TODO move privte
+  Eigen::MatrixXd dynamics_;  // control cost matrix
+  Eigen::VectorXd upper_;     // Upper joint limit bounds
+  Eigen::VectorXd lower_;     // Lower joint limit bounds
+
+ private:
+  Eigen::MatrixXd selection_;    // this is set internaly
+  Eigen::VectorXd constraints_;  //
 
   Eigen::MatrixXd eq_select_;
   Eigen::VectorXd eq_const_;
@@ -127,5 +176,6 @@ class TrajOptJointLimit {
   double c2_;
   Eigen::MatrixXd J_;
 };
+}
 
 #endif

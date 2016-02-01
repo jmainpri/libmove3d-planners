@@ -32,6 +32,8 @@ void traj_optim_set_discretization( double discretization );
 void traj_optim_set_discretize( bool discretize );
 void traj_optim_clear_buffer();
 void traj_optim_set_buffer( const std::vector<Eigen::VectorXd>& buffer );
+void traj_optim_set_use_goal_set(bool v);
+void traj_optim_set_goal_set(const Eigen::VectorXd& x_task_goal);
 
 bool traj_optim_initScenario();
 

@@ -37,244 +37,222 @@ using namespace HRICS;
 using std::cout;
 using std::endl;
 
-PlayMotion::PlayMotion( const std::vector<HRICS::RecordMotion*>& recorders )
-{
-    _play_controlled = false;
-    _motion_recorders = recorders;
+PlayMotion::PlayMotion(const std::vector<HRICS::RecordMotion*>& recorders) {
+  _play_controlled = false;
+  _motion_recorders = recorders;
 }
 
-PlayMotion::PlayMotion( const std::vector<std::vector<motion_t> >& motions)
-{
-    _play_controlled = false;
-    _stored_motions = motions;
+PlayMotion::PlayMotion(const std::vector<std::vector<motion_t> >& motions) {
+  _play_controlled = false;
+  _stored_motions = motions;
 }
 
-//void PlayMotion::setDirection(const bool dir) { _play_dir = dir; }
+// void PlayMotion::setDirection(const bool dir) { _play_dir = dir; }
 void PlayMotion::setStep(const int step) { _step_size = step; }
-void PlayMotion::setControlled(const bool controlled) { _play_controlled = controlled; }
-void PlayMotion::setRecentInput(const bool input) { _recent_input = input;}
-bool PlayMotion::getRecentInput() { return _recent_input;}
+void PlayMotion::setControlled(const bool controlled) {
+  _play_controlled = controlled;
+}
+void PlayMotion::setRecentInput(const bool input) { _recent_input = input; }
+bool PlayMotion::getRecentInput() { return _recent_input; }
 int PlayMotion::getCurrentFrame() { return _current_frame; }
 
-int PlayMotion::getNumberOfMotions() const
-{
-    if( _stored_motions.empty() && _motion_recorders.empty() )
-        return 0;
+int PlayMotion::getNumberOfMotions() const {
+  if (_stored_motions.empty() && _motion_recorders.empty()) return 0;
 
-    if( _stored_motions.empty() )
-        return _motion_recorders[0]->getStoredMotions().size();
+  if (_stored_motions.empty())
+    return _motion_recorders[0]->getStoredMotions().size();
 
-    if( _motion_recorders.empty() )
-        return _stored_motions[0].size();
+  if (_motion_recorders.empty()) return _stored_motions[0].size();
 
-    return 0;
+  return 0;
 }
 
-void PlayMotion::play( const std::vector<std::string>& filepaths )
-{
-    if( filepaths.size() > _motion_recorders.size() )
-    {
-        cout << "The number of motion recorder is reater than te number of motion to play" << endl;
-        return;
-    }
+void PlayMotion::play(const std::vector<std::string>& filepaths) {
+  if (filepaths.size() > _motion_recorders.size()) {
+    cout << "The number of motion recorder is reater than te number of motion "
+            "to play" << endl;
+    return;
+  }
 
-    for (int i=0; i<int(filepaths.size()); i++)
-    {
-        _motion_recorders[i]->storeMotion( _motion_recorders[i]->loadFromCSV(filepaths[i]), "", true );
-    }
+  for (int i = 0; i < int(filepaths.size()); i++) {
+    _motion_recorders[i]->storeMotion(
+        _motion_recorders[i]->loadFromCSV(filepaths[i]), "", true);
+  }
 
-    play(0);
+  play(0);
 }
 
-void PlayMotion::play(int id)
-{
-    if ( _play_controlled )
-        runControlled();
-    else
-        runRealTime(id);
+void PlayMotion::play(int id) {
+  if (_play_controlled)
+    runControlled();
+  else
+    runRealTime(id);
 }
 
 //! id is the motion
-void PlayMotion::runRealTime(int id)
-{
-    if( _motion_recorders.empty() && _stored_motions.empty() ) {
-        cout << "no stored motions to play" << endl;
-        return;
-    }
-
-    int StopRun = false;
-    _current_frame=0;
-    double tu_last = 0.0;
-    double dt = 0.0;
-    double time = 0.0;
-
-//    cout << "start playback" << endl;
-
-//    if( id < _motions_names.size() && _motion_recorders.empty() ){
-//        cout << " motion : " << _motions_names[id] << " , duration : " << motion_duration( _stored_motions[0][id] ) <<  endl;
-//    }
-
-    while( !StopRun )
-    {
-        timeval tim;
-        gettimeofday(&tim, NULL);
-        double tu = tim.tv_sec+(tim.tv_usec/1000000.0);
-        if( tu_last == 0.0 ) tu_last = tu;
-
-        dt += ( tu - tu_last );
-        tu_last = tu;
-
-        if ( dt>=0.025 )
-        {
-//            cout << "dt >= 0.025 : " << dt << endl;
-
-            time += dt;
-            dt = 0.0;
-
-            if( _stored_motions.empty() )
-            {
-                // TODO switch to time
-                for (size_t j=0; j<_motion_recorders.size(); j++)
-                {
-                    if( !_motion_recorders[j]->setRobotToStoredMotionConfig( id, _current_frame ) );
-                        return;
-                }
-            }
-            else if( _motion_recorders.empty() )
-            {
-                for (size_t j=0; j<_stored_motions.size(); j++) // for each human or robot
-                {
-                    if( id >= int(_stored_motions[j].size()) ) // no motion of that id
-                        return;
-
-                    int i =0;
-                    double time_traj = 0.0;
-
-                    while( i < int(_stored_motions[j][id].size()) )
-                    {
-                        time_traj += _stored_motions[j][id][i].first; // compute time along trajectory
-
-                        if( time_traj >= time )
-                        {
-//                            cout << "i : " << i
-                            // << " , :  _stored_motions[j][id].size() "
-                            // << _stored_motions[j][id].size() << " , time_traj : "
-                            // << time_traj << " , time : " << time  << endl;
-
-                            Move3D::confPtr_t q = _stored_motions[j][id][i].second;
-                            Move3D::Robot* robot = q->getRobot();
-                            robot->setAndUpdate( *q );
-
-                            // bool ncol = false;
-
-                            if( Move3D::global_collisionSpace )
-                            {
-                                double distance = std::numeric_limits<double>::max();
-                                double potential = std::numeric_limits<double>::max();
-
-//                                ncol =
-                                Move3D::global_collisionSpace->isRobotColliding(
-                                            distance, potential );
-                            }
-                            else
-                            {
-//                                ncol =
-                                robot->isInCollision();
-                            }
-
-                            // if( ncol ){
-                            //     cout << "Robot in collision " << endl;
-                            // }
-
-                            break;
-                        }
-
-                        i++;
-                    }
-                    if( i >= int(_stored_motions[j][id].size()) ){
-                        // cout << "reach end of trajectory" << endl;
-                        StopRun = true;
-                    }
-                }
-            }
-            _current_frame++;
-        }
-
-        g3d_draw_allwin_active();
-
-        //        if( _current_frame == 1 )
-        //        {
-        //            StopRun = true;
-        //        }
-
-        if ( PlanEnv->getBool(PlanParam::stopPlanner) ) {
-            cout << "stopped by user" << endl;
-            StopRun = true;
-        }
-
-
-        // USING FRAMES
-//        if( _stored_motions.empty() )
-//        {
-//            for (size_t j=0; j<_motion_recorders.size(); j++)
-//            {
-//                if ( _current_frame >= int(_motion_recorders[j]->getStoredMotions()[id].size()))
-//                {
-//                    StopRun = true;
-//                }
-//            }
-//        }
-//        else if( _motion_recorders.empty() )
-//        {
-//            for (size_t j=0; j<_stored_motions.size(); j++)
-//            {
-//                if ( _current_frame >= int(_stored_motions[j][id].size()))
-//                {
-//                    StopRun = true;
-//                }
-//            }
-//        }
-    }
-
-    // cout << "End play motion" << endl;
+void PlayMotion::runRealTime(int id) {
+  if (_motion_recorders.empty() && _stored_motions.empty()) {
+    cout << "no stored motions to play" << endl;
     return;
+  }
+
+  int StopRun = false;
+  _current_frame = 0;
+  double tu_last = 0.0;
+  double dt = 0.0;
+  double time = 0.0;
+
+  // cout << "start playback" << endl;
+
+  if (_motion_recorders.empty()) {
+    for (size_t j = 0; j < _stored_motions.size(); j++) {
+      std::string name =
+          (id < int(_motions_names.size())) ? _motions_names[id] + " , " : "";
+      cout << " motion[" << j << "] : " << name
+           << " duration : " << motion_duration(_stored_motions[j][id]) << endl;
+    }
+  }
+
+  while (!StopRun) {
+    timeval tim;
+    gettimeofday(&tim, NULL);
+    double tu = tim.tv_sec + (tim.tv_usec / 1000000.0);
+    if (tu_last == 0.0) tu_last = tu;
+
+    dt += (tu - tu_last);
+    tu_last = tu;
+
+    if (dt >= 0.025) {
+      // cout << "dt >= 0.025 : " << dt << endl;
+
+      time += dt;
+      dt = 0.0;
+
+      if (_stored_motions.empty()) {
+        // TODO switch to time
+        for (size_t j = 0; j < _motion_recorders.size(); j++) {
+          if (!_motion_recorders[j]->setRobotToStoredMotionConfig(
+                  id, _current_frame))
+            ;
+          return;
+        }
+      } else if (_motion_recorders.empty()) {
+        for (size_t j = 0; j < _stored_motions.size();
+             j++)  // for each human or robot
+        {
+          if (id >= int(_stored_motions[j].size()))  // no motion of that id
+            return;
+
+          int i = 0;
+          double time_traj = 0.0;
+
+          while (i < int(_stored_motions[j][id].size())) {
+            time_traj += _stored_motions[j][id][i]
+                             .first;  // compute time along trajectory
+
+            if (time_traj >= time) {
+              Move3D::confPtr_t q = _stored_motions[j][id][i].second;
+              Move3D::Robot* robot = q->getRobot();
+              robot->setAndUpdate(*q);
+
+              // bool ncol = false;
+
+              if (Move3D::global_collisionSpace) {
+                double distance = std::numeric_limits<double>::max();
+                double potential = std::numeric_limits<double>::max();
+
+                Move3D::global_collisionSpace->isRobotColliding(distance,
+                                                                potential);
+              } else {
+                robot->isInCollision();
+              }
+
+              break;
+            }
+
+            i++;
+          }
+          if (i >= int(_stored_motions[j][id].size())) {
+            StopRun = true;
+          }
+        }
+      }
+      _current_frame++;
+    }
+
+    g3d_draw_allwin_active();
+
+    //        if( _current_frame == 1 )
+    //        {
+    //            StopRun = true;
+    //        }
+
+    if (PlanEnv->getBool(PlanParam::stopPlanner)) {
+      cout << "stopped by user" << endl;
+      StopRun = true;
+    }
+
+    // USING FRAMES
+    //        if( _stored_motions.empty() )
+    //        {
+    //            for (size_t j=0; j<_motion_recorders.size(); j++)
+    //            {
+    //                if ( _current_frame >=
+    //                int(_motion_recorders[j]->getStoredMotions()[id].size()))
+    //                {
+    //                    StopRun = true;
+    //                }
+    //            }
+    //        }
+    //        else if( _motion_recorders.empty() )
+    //        {
+    //            for (size_t j=0; j<_stored_motions.size(); j++)
+    //            {
+    //                if ( _current_frame >= int(_stored_motions[j][id].size()))
+    //                {
+    //                    StopRun = true;
+    //                }
+    //            }
+    //        }
+  }
+
+  // cout << "End play motion" << endl;
+  return;
 }
 
-void PlayMotion::runControlled() // TODO weird implementation. should be fixed at some point, but definitely working.
+void PlayMotion::runControlled()  // TODO weird implementation. should be fixed
+                                  // at some point, but definitely working.
 {
-    int numFrames = int(_motion_recorders[0]->getStoredMotions()[0].size());
+  int numFrames = int(_motion_recorders[0]->getStoredMotions()[0].size());
 
-    if( _motion_recorders.empty() )
-    {
-        return;
-    }
-
-    int StopRun = false;
-    _current_frame = 0;
-    _recent_input = false;
-
-    while ( !StopRun )
-    {
-
-        for (int j=0; j<int(_motion_recorders.size()); j++)
-        {
-            _motion_recorders[j]->setRobotToStoredMotionConfig(0,_current_frame);
-        }
-
-        if (_recent_input) _current_frame += _step_size; //I don't it working like this.  Shouldn't constantly be updatin to current frame.
-
-        if (_current_frame >= numFrames) _current_frame = numFrames; //Bounds check
-        if (_current_frame < 0) _current_frame = 0; //Bounds check
-
-        if ( _current_frame >= numFrames)
-        {
-            StopRun = true;
-        }
-
-        _recent_input = false;
-
-    }
-
-    cout << "End play motion" << endl;
+  if (_motion_recorders.empty()) {
     return;
+  }
+
+  int StopRun = false;
+  _current_frame = 0;
+  _recent_input = false;
+
+  while (!StopRun) {
+    for (int j = 0; j < int(_motion_recorders.size()); j++) {
+      _motion_recorders[j]->setRobotToStoredMotionConfig(0, _current_frame);
+    }
+
+    if (_recent_input)
+      _current_frame += _step_size;  // I don't it working like this.  Shouldn't
+                                     // constantly be updatin to current frame.
+
+    if (_current_frame >= numFrames) _current_frame = numFrames;  // Bounds
+                                                                  // check
+    if (_current_frame < 0) _current_frame = 0;  // Bounds check
+
+    if (_current_frame >= numFrames) {
+      StopRun = true;
+    }
+
+    _recent_input = false;
+  }
+
+  cout << "End play motion" << endl;
+  return;
 }

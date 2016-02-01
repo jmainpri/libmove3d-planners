@@ -94,7 +94,6 @@ double HumanPredictionCostSpace::getCurrentOccupationCost(
   }
 
   //    cout << " , cost : " << cost << endl;
-  //    exit(0);
   return cost;
 }
 

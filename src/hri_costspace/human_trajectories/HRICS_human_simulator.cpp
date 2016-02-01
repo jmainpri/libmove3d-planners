@@ -8,6 +8,7 @@
 
 #include "API/project.hpp"
 #include "API/Graphic/drawModule.hpp"
+#include "API/Device/generalik.hpp"
 
 #include "planner/cost_space.hpp"
 #include "planner/planEnvironment.hpp"
@@ -34,10 +35,9 @@ using std::endl;
 using std::cin;
 
 HRICS::HumanTrajSimulator* global_human_traj_simulator = NULL;
-HRICS::HumanTrajFeatures* global_human_traj_features = NULL;
 
 static bool use_all_motions = false;
-static bool training = false;
+static bool training = true;
 test_set dataset;  // = icra_paper_feb;
 
 //------------------------------------------------------------------------------
@@ -46,6 +46,7 @@ test_set dataset;  // = icra_paper_feb;
 bool HRICS_init_human_trajectory_cost() {
   // SET THE TRAJECTORY DEMONSTRATION SET HERE
   dataset = test_set(HriEnv->getInt(HricsParam::ioc_dataset));
+  training = HriEnv->getBool(HricsParam::ioc_training_dataset);
 
   cout << "*********************************************************" << endl;
   cout << "*********************************************************" << endl;
@@ -61,7 +62,7 @@ bool HRICS_init_human_trajectory_cost() {
     passive_agent = sce->getRobotByName("PR2_ROBOT");
   }
 
-  if (global_human_traj_features == NULL) {
+  if (global_human_traj_simulator == NULL) {
     if (passive_agent == NULL) {
       cout << "No passive humans HERAKLES in the the scene" << endl;
       return false;
@@ -185,7 +186,7 @@ bool HRICS_init_human_trajectory_cost() {
           use_all_motions = true;
 
           // USER EXPERIMENT
-          std::string type = training ? "trainning" : "testing";
+          std::string type = training ? "training" : "testing";
 
           std::string home =
               std::string(getenv("HOME_MOVE3D")) + std::string("/../");
@@ -222,11 +223,14 @@ bool HRICS_init_human_trajectory_cost() {
         } else if (dataset == human_robot_experiment) {
           use_all_motions = true;
 
-          std::string home = std::string(getenv("HOME")) + std::string("/");
+          // ROBOT Experiment
 
-          foldername = home + "catkin/catkin_ws_move3d/" +
+          std::string home =
+              std::string(getenv("HOME_MOVE3D")) + std::string("/../");
+
+          foldername = home + "catkin_ws_move3d/" +
                        "src/hrics-or-rafi/python_module/bioik/" +
-                       "user_human_robot_experiment/block0/5";
+                       "user_human_robot_experiment/block0/9";
 
           global_motionRecorders[0]->loadTrajectories(foldername, false);
           global_motionRecorders[1]->loadCSVFolder(foldername, false);
@@ -244,8 +248,7 @@ bool HRICS_init_human_trajectory_cost() {
 
     cout << "create human traj cost space" << endl;
 
-    // SET BASELINE HERE
-    // OVERRIDE THE SMOOTH WEIGHTS
+    // SET BASELINE HERE OVERRIDE THE SMOOTH WEIGHTS
     // PlanEnv->setDouble( PlanParam::trajOptimSmoothWeight,
     // HriEnv->getBool(HricsParam::ioc_use_baseline) ? 100. : 1.0000 );
     // USED TO BE 100 on baseline
@@ -258,12 +261,12 @@ bool HRICS_init_human_trajectory_cost() {
     global_humanPredictionCostSpace =
         new HRICS::HumanPredictionCostSpace(active_agent, occupancyGrid);
     // Human trajectory costspace
-    global_human_traj_features =
+    HRICS::HumanTrajFeatures* human_traj_features =
         new HRICS::HumanTrajFeatures(active_agent, passive_agent);
 
     // Set active joints and joint bounds
     global_human_traj_simulator =
-        new HRICS::HumanTrajSimulator(global_human_traj_features);
+        new HRICS::HumanTrajSimulator(human_traj_features);
 
     // Set the sampling bounds for the human simulator
     global_human_traj_simulator->setPelvisBoundsByUser(
@@ -281,7 +284,9 @@ bool HRICS_init_human_trajectory_cost() {
 
     Move3D::global_costSpace->addCost(
         "costHumanTrajectoryCost",
-        boost::bind(&HumanTrajFeatures::cost, global_human_traj_features, _1));
+        boost::bind(&HumanTrajFeatures::cost,
+                    global_human_traj_simulator->getCostSpace(),
+                    _1));
   }
 
   ENV.setBool(Env::isCostSpace, true);
@@ -289,25 +294,14 @@ bool HRICS_init_human_trajectory_cost() {
 
   // if( active_agent->getName().find("HUMAN") != std::string::npos )
   // TODO make that work for PR2
-  if (!global_human_traj_features->initCollisionSpace())
+  if (!global_human_traj_simulator->getCostSpace()->initCollisionSpace())
     cout << "Error : could not init collision space" << endl;
 
-  cout << " global_human_traj_features : " << global_human_traj_features
-       << endl;
-
-  global_activeFeatureFunction = global_human_traj_features;
+  global_activeFeatureFunction = global_human_traj_simulator->getCostSpace();
 
   cout << "********************************************************" << endl;
   cout << "********************************************************" << endl;
   return true;
-}
-
-void HRICS_run_human_planning() {
-  HRICS_init_human_trajectory_cost();
-
-  HumanTrajSimulator sim(global_human_traj_features);
-  sim.init();
-  sim.run();
 }
 
 //------------------------------------------------------------------------------
@@ -318,14 +312,16 @@ HumanTrajFeatures::HumanTrajFeatures(Move3D::Robot* active,
                                      Move3D::Robot* passive)
     : human_active_(active),
       human_passive_(passive),
-      smoothness_feat_(active,
-                       active->getName() == "HERAKLES_HUMAN2"
-                           ? active->getJoint("rWristX")
-                           : active->getJoint("right-Arm2")),
       dist_feat_(active, passive),
       visi_feat_(active, passive),
       musc_feat_(active),
-      collision_feat_(active) {
+      collision_feat_(active),
+      smoothness_feat_(active,
+                       active->getName() == "HERAKLES_HUMAN2"
+                           ? active->getJoint("rWristX")
+                           : active->getJoint("right-Arm2"))
+
+{
   cout << "---------------------------------------------" << endl;
   cout << __PRETTY_FUNCTION__ << endl;
 
@@ -346,7 +342,7 @@ HumanTrajFeatures::HumanTrajFeatures(Move3D::Robot* active,
   dist_feat_.setWeights(w_distance_16);
 
   collision_feat_.setActiveDoFs(active_dofs_);
-  //    collision_feat_.setWeights( Move3D::WeightVect::Ones(
+  // collision_feat_.setWeights( Move3D::WeightVect::Ones(
   // collision_feat_.getNumberOfFeatures() ) );
 
   visi_feat_.setActiveDoFs(active_dofs_);
@@ -371,21 +367,21 @@ HumanTrajFeatures::HumanTrajFeatures(Move3D::Robot* active,
     cout << "Error adding feature distance feature" << endl;
   }
 
-  //    if(!addFeatureFunction( &length_feat_ ) ){
-  //        cout << "Error adding feature length" << endl;
-  //    }
+  if (!addFeatureFunction(&length_feat_)) {
+    cout << "Error adding feature length" << endl;
+  }
 
-  //    if(!addFeatureFunction( &collision_feat_ ) ){
-  //        cout << "Error adding feature distance collision" << endl;
-  //    }
+  if (!addFeatureFunction(&collision_feat_)) {
+    cout << "Error adding feature distance collision" << endl;
+  }
 
-  //    if(!addFeatureFunction( &visi_feat_ )){
-  //        cout << "Error adding feature visbility feature" << endl;
-  //    }
+  if (!addFeatureFunction(&visi_feat_)) {
+    cout << "Error adding feature visbility feature" << endl;
+  }
 
-  //    if(!addFeatureFunction( &musc_feat_ )){
-  //        cout << "Error adding feature musculoskeletal feature" << endl;
-  //    }
+  if (!addFeatureFunction(&musc_feat_)) {
+    cout << "Error adding feature musculoskeletal feature" << endl;
+  }
 
   w_ = getWeights();
 
@@ -435,6 +431,13 @@ void HumanTrajFeatures::addFeaturesDistance() {
   cout << "ADDING feature to stack : " << dist_feat_.getName() << endl;
   if (!addFeatureFunction(&dist_feat_)) {
     cout << "Error adding feature distance feature" << endl;
+  }
+}
+
+void HumanTrajFeatures::addFeaturesMusculo() {
+  cout << "ADDING feature to stack : " << musc_feat_.getName() << endl;
+  if (!addFeatureFunction(&musc_feat_)) {
+    cout << "Error adding feature musculo feature" << endl;
   }
 }
 
@@ -496,7 +499,7 @@ Move3D::FeatureVect HumanTrajFeatures::normalizing_by_sampling() {
   cout << "MEAN VALUES : " << endl;
   printFeatureVector(phi_sum);
 
-  exit(1);
+  cout << "Error : " << __PRETTY_FUNCTION__ << endl;
   return phi_sum;
 }
 
@@ -629,8 +632,8 @@ void HumanTrajSimulator::draw() {
 
 void HumanTrajSimulator::updateDofBounds(bool& initialized,
                                          Move3D::confPtr_t q_tmp) {
-  //                    if(s == 0)
-  //                    {
+  // if(s == 0)
+  //  {
   for (size_t i = 0; i < 6; i++) {
     if (initialized) {
       if (pelvis_max_[i] < (*q_tmp)[6 + i]) pelvis_max_[i] = (*q_tmp)[6 + i];
@@ -868,6 +871,7 @@ void HumanTrajSimulator::setReplanningDemonstrations() {
 
   bool initialized = false;
 
+  // process the configurations
   for (size_t j = 0; j < motion_recorders_[0]->getStoredMotions().size(); j++)
     if (use_all_motions ||
         std::find(selected.begin(),
@@ -1326,7 +1330,7 @@ Move3D::Trajectory HumanTrajSimulator::getCurrentPath() const {
   Move3D::Trajectory traj(path_);
 
   // TODO CHECK !!!! HUMAN_ROBOT_EXPERIMENT
-  // when sweitch from active to passive
+  // when switch from active to passive
   // Duration
   // 1) only works if active and passive are of equal duration
   // used to be 1) for human-human 2) for human-robot
@@ -1426,6 +1430,7 @@ bool HumanTrajSimulator::loadActiveHumanGoalConfig() {
   end_simulation_ = false;
 
   draw_execute_motion_ = false;
+  goal_set_optimization_ = false;
 
   // GET STORED CONFIGURATIONS
   //    std::vector<Move3D::confPtr_t> configs =
@@ -1450,6 +1455,25 @@ bool HumanTrajSimulator::loadActiveHumanGoalConfig() {
   q_init_ = human_active_motion_[0].second;
   q_goal_ = human_active_motion_.back().second;
 
+  // Set the active human configuration using IK
+  if (PlanEnv->getBool(PlanParam::trajStompMoveEndConfig)) {
+    cout << "Set q_goal_ the IK to the from q_start_" << endl;
+    goal_set_optimization_ = true;
+    Move3D::GeneralIK ik(human_active_);
+    human_active_->setAndUpdate(*q_goal_);
+    Move3D::Joint* eef = human_active_->getJoint(
+        PlanEnv->getString(PlanParam::end_effector_joint));
+    x_task_goal_ = eef->getVectorPos();
+    ik.initialize(active_joints_, eef);
+    human_active_->setAndUpdate(*q_init_);
+    if (!ik.solve(x_task_goal_)) {
+      cout << __PRETTY_FUNCTION__ << endl;
+      cout << "Warning : did not solve IK (" << x_task_goal_.transpose() << ")"
+           << endl;
+    }
+    q_goal_ = human_active_->getCurrentPos();
+  }
+
   // q_goal_ = configs[ id_of_demonstration_ ];
 
   human_active_increments_per_exection_ = 10;
@@ -1472,7 +1496,7 @@ bool HumanTrajSimulator::loadActiveHumanGoalConfig() {
 
   current_motion_duration_ = motion_duration_;
 
-  // Iniitialize with 0.0
+  // Initialize with 0.0
   executed_trajectory_.push_back(std::make_pair(0.0, q_init_));
 
   return true;
@@ -1528,6 +1552,11 @@ void HumanTrajSimulator::runStandardStomp(int iter) {
     //        }
   }
 
+  if (goal_set_optimization_) {
+    traj_optim_set_use_goal_set(true);
+    traj_optim_set_goal_set(x_task_goal_);
+  }
+
   traj_optim_set_use_iteration_limit(true);
   traj_optim_set_iteration_limit(PlanEnv->getInt(PlanParam::stompMaxIteration));
   PlanEnv->setDouble(
@@ -1548,7 +1577,6 @@ void HumanTrajSimulator::runStandardStomp(int iter) {
 
     if (!q_init_->equal(*path_.configAtTime(time_along_current_path_))) {
       cout << "ERROR IN INIT CONFIG" << endl;
-      exit(0);
     }
   }
 
@@ -1557,8 +1585,6 @@ void HumanTrajSimulator::runStandardStomp(int iter) {
   traj_optim_add_human_to_collision_space(true);
 
   traj_optim_runStomp(0);
-
-  //    exit(0);
 
   path_ = global_optimizer->getBestTraj();
   cout << "path.getUseTimeParameter() : " << path_.getUseTimeParameter()
@@ -1753,9 +1779,18 @@ double HumanTrajSimulator::run() {
        << endl;
   cout << "path duration : " << path.getDuration() << endl;
 
-  // Store simulation : TODO should
+  motion_t human_active_motion_sim =
+      HriEnv->getBool(HricsParam::ioc_no_replanning)
+          ? traj_to_motion(path, path.getDuration())
+          : executed_trajectory_;
+
   human_1_simulation_.push_back(human_passive_motion_);
-  human_2_simulation_.push_back(executed_trajectory_);
+  human_2_simulation_.push_back(human_active_motion_sim);
+
+  cout << " human_1_simulation_ duration : "
+       << motion_duration(human_1_simulation_.back()) << endl;
+  cout << " human_2_simulation_ duration : "
+       << motion_duration(human_2_simulation_.back()) << endl;
 
   return 0.0;
 }
