@@ -271,8 +271,7 @@ bool move3d_configuration_simple_is_out_of_bounds(Robot* R,
     Joint* jntPt = R->getJoint(i);
 
     for (int j = 0; j < int(jntPt->getNumberOfDof()); j++) {
-      double vmin = std::numeric_limits<double>::min(),
-             vmax = std::numeric_limits<double>::max();
+      double vmin, vmax;
 
       jntPt->getDofBounds(j, vmin, vmax);
 

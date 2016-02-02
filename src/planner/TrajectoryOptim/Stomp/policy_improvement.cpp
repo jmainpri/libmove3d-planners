@@ -772,7 +772,7 @@ bool PolicyImprovement::computeRolloutProbabilities() {
     for (int t = 0; t < num_time_steps_; t++) {
       // find min and max cost over all rollouts:
       double min_cost = std::numeric_limits<double>::max();
-      double max_cost = std::numeric_limits<double>::min();
+      double max_cost = std::numeric_limits<double>::min(); // WARNING this is 0
       for (int r = 0; r < num_rollouts_; ++r) {
         if (!rollouts_[r].out_of_bounds_) {  // Only sum over valid samples
           double c = rollouts_[r].cumulative_costs_[d](t);

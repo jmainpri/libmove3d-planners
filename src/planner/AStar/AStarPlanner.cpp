@@ -69,7 +69,7 @@ void PlanGrid::reset()
 
 std::pair<double,double> PlanGrid::getMinMaxCost()
 {
-    double max = std::numeric_limits<double>::min();
+    double max = std::numeric_limits<double>::min(); // TODO this is 0 ...
     double min = std::numeric_limits<double>::max();
 
     for( int i=0;i<int(_cells.size());i++)

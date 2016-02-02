@@ -120,7 +120,8 @@ void LampSampler::initialize(const std::vector<double>& derivative_costs,
   tmp_noise_ = Eigen::VectorXd::Zero(num_vars_free_ * num_dofs_);
 
   min_eigen_value_ = std::numeric_limits<double>::max();
-  max_eigen_value_ = std::numeric_limits<double>::min();
+  max_eigen_value_ =
+      std::numeric_limits<double>::min();  // WARNING THIS is 0 ...
 
   preAllocateMultivariateGaussianSampler();
 }

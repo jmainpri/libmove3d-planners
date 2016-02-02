@@ -154,6 +154,9 @@ void initHricsParameters() {
   myStringMap.insert(
       std::make_pair(HricsParam::ioc_tmp_traj_folder, new stringContainer("")));
 
+  myStringMap.insert(
+      std::make_pair(HricsParam::ioc_human_robot_run, new stringContainer("")));
+
 #endif
 
   // Vector

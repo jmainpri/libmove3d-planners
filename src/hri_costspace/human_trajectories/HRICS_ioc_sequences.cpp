@@ -126,7 +126,7 @@ void ioc_set_human_paths() {
 }
 
 Move3D::Trajectory load_one_traj(Move3D::Robot* active_human,
-                                 std::string folder_name,
+                                 std::string filename,
                                  int id_demo,
                                  int id_run);
 
@@ -873,7 +873,7 @@ std::vector<Eigen::VectorXd> dtw(ChompPlanningGroup* plangroup,
   cout << "cost size : " << costs_tmp.size() << endl;
   costs[0] = Eigen::VectorXd::Zero(costs_tmp.size());
   for (int k = 0; k < int(costs_tmp.size()); k++) costs[0][k] = costs_tmp[k];
-  if( !is_finite(costs[0]) ){
+  if (!is_finite(costs[0])) {
     cout << "has nan !!! : " << costs[0].transpose() << endl;
   }
 
@@ -881,7 +881,7 @@ std::vector<Eigen::VectorXd> dtw(ChompPlanningGroup* plangroup,
   cout << "cost size : " << costs_tmp.size() << endl;
   costs[1] = Eigen::VectorXd::Zero(costs_tmp.size());
   for (int k = 0; k < int(costs_tmp.size()); k++) costs[1][k] = costs_tmp[k];
-  if( !is_finite(costs[1]) ){
+  if (!is_finite(costs[1])) {
     cout << "has nan !!! : " << costs[1].transpose() << endl;
   }
 
@@ -918,11 +918,11 @@ struct ioc_statistics_t {
 
 void dtw_update_stat(const Eigen::VectorXd& values,
                      ioc_statistics_t& dtw_stats) {
-  for (int i = 0; i < values.size(); i++) { // for each sample
+  for (int i = 0; i < values.size(); i++) {  // for each sample
     dtw_stats.sum[i] += values[i];
   }
-  for (int i = 0; i < values.size(); i++) { // for each sample
-    dtw_stats.sum_of_sqares[i] += (values[i]*values[i]);
+  for (int i = 0; i < values.size(); i++) {  // for each sample
+    dtw_stats.sum_of_sqares[i] += (values[i] * values[i]);
   }
   dtw_stats.setMin(values.minCoeff());
   dtw_stats.setMax(values.maxCoeff());
@@ -959,10 +959,11 @@ void IocSequences::GenerateResults() {
   std::string home(getenv("HOME"));
   std::string folder("/move3d_tmp/dtw/trajectories_process/");
 
-  const bool load_replan = true;
+  const bool load_replan = false;
   const bool compute_dtw = true;
 
   std::string folder_demos;
+  std::string run_folder = home + folder;
 
   switch (dataset) {
     case icra_paper_sept:
@@ -974,22 +975,31 @@ void IocSequences::GenerateResults() {
     case user_study:
       folder_demos = "loo_trajectories/testing_userstudy/";
       break;
-    case human_robot_experiment:
-      folder_demos = "loo_trajectories/human_robot_experiment/";
+    case human_robot_experiment: {
+      std::string home_move3d(getenv("HOME_MOVE3D"));
+      folder_demos = home_move3d + "/../catkin_ws_move3d/" +
+                     "src/hrics-or-rafi/python_module/bioik/" +
+                     "user_human_robot_experiment/tro_experiment/" +
+                     HriEnv->getString(HricsParam::ioc_human_robot_run) +
+                     "/human/";
+
+      run_folder = home + "/move3d_tmp/trajectories_process/" +
+                   HriEnv->getString(HricsParam::ioc_human_robot_run) + "/";
       break;
+    }
   }
 
   std::string folder_baseline_agressive =
-      home + folder + "stomp_baseline_agressive_replan/";
+      run_folder + "stomp_baseline_agressive_replan/";
   std::string folder_baseline_conservative =
-      home + folder + "stomp_baseline_conservative_replan/";
-  std::string folder_recovered = home + folder + "stomp_replan/";
+      run_folder + "stomp_baseline_conservative_replan/";
+  std::string folder_recovered = run_folder + "stomp_replan/";
 
   std::string folder_noreplan_baseline_agressive =
-      home + folder + "stomp_baseline_agressive_noreplan/";
+      run_folder + "stomp_baseline_agressive_noreplan/";
   std::string folder_noreplan_baseline_conservative =
-      home + folder + "stomp_baseline_conservative_noreplan/";
-  std::string folder_noreplan_recovered = home + folder + "stomp_noreplan/";
+      run_folder + "stomp_baseline_conservative_noreplan/";
+  std::string folder_noreplan_recovered = run_folder + "stomp_noreplan/";
 
   // Get demo files and split names
 
@@ -997,8 +1007,6 @@ void IocSequences::GenerateResults() {
       move3d_get_files_in_folder(folder_demos, "traj");
   for (size_t i = 0; i < demos_filenames.size(); i++)
     cout << demos_filenames[i] << endl;
-
-  //
 
   HRICS::HumanTrajSimulator* sim = global_human_traj_simulator;
 
@@ -1096,15 +1104,17 @@ void IocSequences::GenerateResults() {
     for (int d = 0; d < nb_demos; d++)
     // if( true )
     {
-      std::stringstream ss;
-      ss.str("");
-      ss << "trajectory_human_trajs_" << std::setw(3) << std::setfill('0') << d;
-      ss << "_" << std::setw(3) << std::setfill('0') << int(0) << ".traj";
+      //      std::stringstream ss;
+      //      ss.str("");
+      //      ss << "trajectory_human_trajs_" << std::setw(3) <<
+      //      std::setfill('0') << d;
+      //      ss << "_" << std::setw(3) << std::setfill('0') << int(0) <<
+      //      ".traj";
 
       Move3D::Trajectory traj(active_human);
-      traj.loadFromFile(folder_demos + ss.str());
+      traj.loadFromFile(folder_demos + demos_filenames[d]);
 
-      cout << "loading trajectory : " << folder_demos + ss.str()
+      cout << "loading trajectory : " << folder_demos + demos_filenames[d]
            << " nb of waypoints : " << traj.getNbOfViaPoints() << endl;
 
       traj.setColor(d);
@@ -1162,6 +1172,8 @@ void IocSequences::GenerateResults() {
       }
     }
   }
+
+  cout << "Done loading trajectories" << endl;
 
   cout << "nb of demos loaded : " << sim->getDemonstrationsPassive().size()
        << endl;
@@ -1668,18 +1680,19 @@ void IocSequences::GenerateResults() {
 }
 
 Move3D::Trajectory load_one_traj(Move3D::Robot* active_human,
-                                 std::string folder_name,
+                                 std::string filename,
                                  int id_demo,
                                  int id_run) {
-  std::stringstream ss;
-  ss.str("");
-  ss << "run_simulator_" << std::setw(3) << std::setfill('0') << id_demo << "_"
-     << std::setw(3) << std::setfill('0') << id_run << ".traj";
+  //  std::stringstream ss;
+  //  ss.str("");
+  //  ss << "run_simulator_" << std::setw(3) << std::setfill('0') << id_demo <<
+  //  "_"
+  //     << std::setw(3) << std::setfill('0') << id_run << ".traj";
 
   Move3D::Trajectory traj(active_human);
-  traj.loadFromFile(folder_name + ss.str());
+  traj.loadFromFile(filename);
 
-  cout << "loading trajectory : " << folder_name + ss.str()
+  cout << "loading trajectory : " << filename
        << " nb of waypoints : " << traj.getNbOfViaPoints() << endl;
 
   // traj.setColor( 0 );
@@ -1701,7 +1714,7 @@ std::vector<std::vector<Move3D::Trajectory> > load_trajs_names(
   for (size_t d = 0; d < demo_names.size(); d++) {  // For all demo names
 
     std::vector<std::string> files =
-        move3d_get_files_in_folder(folder + demo_names[d], "traj", 10);
+        move3d_get_files_in_folder(folder + demo_names[d], "traj", 40);
 
     int nb_runs = files.size();
 
@@ -1710,8 +1723,8 @@ std::vector<std::vector<Move3D::Trajectory> > load_trajs_names(
 
     for (int k = 0; k < nb_runs; k++)  // For all runs
     {
-      trajs[d].push_back(
-          load_one_traj(active_human, folder + demo_names[d] + "/", 0, k));
+      trajs[d].push_back(load_one_traj(
+          active_human, folder + demo_names[d] + "/" + files[k], 0, k));
 
       if (demo_names[d] == split && draw) {
         global_linesToDraw.push_back(std::make_pair(
@@ -1741,7 +1754,7 @@ std::vector<std::vector<Move3D::Trajectory> > load_trajs(std::string folder,
   std::vector<std::vector<Move3D::Trajectory> > trajs(nb_demos);
 
   std::vector<std::string> files =
-      move3d_get_files_in_folder(folder, "traj", 10);
+      move3d_get_files_in_folder(folder, "traj", 40);
 
   int nb_runs = files.size();
 

@@ -123,7 +123,7 @@ class HumanTrajSimulator {
   std::vector<Move3D::Joint*> getActiveJoints() { return active_joints_; }
 
   //! Returns the active degree of freedom
-  std::vector<int> getActiveDofs() const;
+  std::vector<int> getActiveDofs() const { return active_dofs_; }
 
   void clearLastSimulationMotions() {
     human_1_simulation_.clear();
@@ -183,8 +183,10 @@ class HumanTrajSimulator {
 
   // ---------------------------------------------------------------------------
 
-  void setPelvisBounds();
+  void setTranslationBounds();
+  void setAllDofBounds();
   void updateDofBounds(bool& initialized, Move3D::confPtr_t q_tmp);
+  void updateAllDofBounds(bool& initialized, Move3D::confPtr_t q_tmp);
   void setReplanningDemonstrations();
   void setInitAndGoalConfig();
   void setHumanColor(Move3D::Robot* human, int color);
@@ -257,6 +259,9 @@ class HumanTrajSimulator {
   std::vector<std::string> motions_demo_names_;
   std::vector<int> motions_demo_ids_;
 
+  // ---------------------------------------------------------------------------
+
+  bool set_all_dof_bounds_;
   bool is_pelvis_bound_user_defined_;
   Eigen::VectorXd pelvis_max_;
   Eigen::VectorXd pelvis_min_;
@@ -266,9 +271,15 @@ class HumanTrajSimulator {
   double arm_max_;
   double forearm_min_;
   double forearm_max_;
+  Move3D::confPtr_t q_max_;
+  Move3D::confPtr_t q_min_;
+
+  // ---------------------------------------------------------------------------
 
   bool goal_set_optimization_;
   Eigen::VectorXd x_task_goal_;
+
+  // ---------------------------------------------------------------------------
 
   int minimal_demo_size_;
   bool trajectories_cut_;

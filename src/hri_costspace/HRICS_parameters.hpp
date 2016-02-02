@@ -90,7 +90,11 @@ namespace HricsParam {
     ioc_cost_factor
   };
 
-  enum stringParameter { ioc_traj_split_name, ioc_tmp_traj_folder };
+  enum stringParameter {
+    ioc_traj_split_name,
+    ioc_tmp_traj_folder,
+    ioc_human_robot_run
+  };
 
   enum vectorParameter { tutu };
 };

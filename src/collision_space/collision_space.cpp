@@ -795,13 +795,13 @@ bool CollisionSpace::isRobotColliding(double& dist, double& pot) const {
               points[j], position, distance, potential, gradient)) {
         points[j].m_is_colliding = true;
 
-        cout << "point[" << j
-             << "] in joint is in collision: " << points[j].joint()->getName()
-             << endl;
+        //cout << "point[" << j
+         //    << "] in joint is in collision: " << points[j].joint()->getName()
+         //    << endl;
 
         // Hack!!! to exclude certain points
         if (points[j].getSegmentNumber() > 1) {
-          cout << "points[" << j << "].getSegmentNumber()" << endl;
+          // cout << "points[" << j << "].getSegmentNumber()" << endl;
           isRobotColliding = true;
         }
       } else {

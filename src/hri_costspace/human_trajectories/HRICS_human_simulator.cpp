@@ -48,11 +48,11 @@ bool HRICS_init_human_trajectory_cost() {
   dataset = test_set(HriEnv->getInt(HricsParam::ioc_dataset));
   training = HriEnv->getBool(HricsParam::ioc_training_dataset);
 
-  cout << "*********************************************************" << endl;
-  cout << "*********************************************************" << endl;
-  cout << "---------------------------------------------" << endl;
+  cout << "********************************************************" << endl;
+  cout << " Start init human simulator" << endl;
+  cout << "********************************************************" << endl;
   cout << __PRETTY_FUNCTION__ << endl;
-  cout << "---------------------------------------------" << endl;
+  cout << "********************************************************" << endl;
 
   Move3D::Scene* sce = Move3D::global_Project->getActiveScene();
   Move3D::Robot* passive_agent = sce->getRobotByName("HERAKLES_HUMAN1");
@@ -224,16 +224,18 @@ bool HRICS_init_human_trajectory_cost() {
           use_all_motions = true;
 
           // ROBOT Experiment
-
           std::string home =
               std::string(getenv("HOME_MOVE3D")) + std::string("/../");
 
           foldername = home + "catkin_ws_move3d/" +
                        "src/hrics-or-rafi/python_module/bioik/" +
-                       "user_human_robot_experiment/block0/9";
+                       "user_human_robot_experiment/tro_experiment/" +
+                       HriEnv->getString(HricsParam::ioc_human_robot_run);
 
-          global_motionRecorders[0]->loadTrajectories(foldername, false);
-          global_motionRecorders[1]->loadCSVFolder(foldername, false);
+          global_motionRecorders[0]->loadTrajectories(foldername + "/robot/",
+                                                      false);
+          global_motionRecorders[1]->loadTrajectories(foldername + "/human/",
+                                                      false);
         }
 
         cout << "Stored motion names : " << endl;
@@ -289,6 +291,10 @@ bool HRICS_init_human_trajectory_cost() {
                     _1));
   }
 
+  cout << "--------------------------------------------------------" << endl;
+  cout << " init collision space in human simulator" << endl;
+  cout << "--------------------------------------------------------" << endl;
+
   ENV.setBool(Env::isCostSpace, true);
   Move3D::global_costSpace->setCost("costHumanTrajectoryCost");
 
@@ -300,6 +306,7 @@ bool HRICS_init_human_trajectory_cost() {
   global_activeFeatureFunction = global_human_traj_simulator->getCostSpace();
 
   cout << "********************************************************" << endl;
+  cout << " End init human simulator" << endl;
   cout << "********************************************************" << endl;
   return true;
 }
@@ -520,14 +527,13 @@ void HumanTrajFeatures::setPassiveTrajectory(const motion_t& motion) {
   passive_traj_.replaceP3dTraj();
 }
 
-// FeatureVect HumanTrajFeatures::getFeatures(const Configuration& q)
-//{
-//    FeatureVect vect = dist_feat_.getFeatures(q);
-//    return vect;
-//}
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------- SIMULATOR ------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
-//----------------------------------------------------------------------
-//----------------------------------------------------------------------
 // Human Trajectory Simulator
 
 HumanTrajSimulator::HumanTrajSimulator(HumanTrajFeatures* cost_space)
@@ -538,6 +544,7 @@ HumanTrajSimulator::HumanTrajSimulator(HumanTrajFeatures* cost_space)
   cout << "Human active : " << human_active_->getName() << endl;
   cout << "Human passive : " << human_passive_->getName() << endl;
 
+  set_all_dof_bounds_ = true;
   is_pelvis_bound_user_defined_ = false;
   use_bio_models_ = (human_active_->getJoint("rShoulderZ") == NULL);
 }
@@ -590,13 +597,24 @@ bool HumanTrajSimulator::init() {
     // add cut motions
     setReplanningDemonstrations();
 
-    if (!use_one_traj_) addCutMotions();
+    if (!use_one_traj_) {
+      addCutMotions();
+    }
 
     // setInitAndGoalConfig(); // For simulation
   }
 
   // Set the planning bounds
-  if (is_active_agent_human_) setPelvisBounds();
+  if (is_active_agent_human_) {
+    setTranslationBounds();
+    if (set_all_dof_bounds_) {
+      Eigen::VectorXd q_max_eig = q_max_->getEigenVector(active_dofs_);
+      Eigen::VectorXd q_min_eig = q_min_->getEigenVector(active_dofs_);
+      cout << "q_max : " << q_max_eig.transpose() << endl;
+      cout << "q_min : " << q_min_eig.transpose() << endl;
+      setAllDofBounds();
+    }
+  }
 
   // Set the current frame to 0
   current_frame_ = 0;
@@ -627,6 +645,30 @@ void HumanTrajSimulator::draw() {
                                      nb_frames);
     motion_recorders_[1]->drawMotion(human_2_motions_[id_of_demo_to_draw],
                                      nb_frames);
+  }
+}
+
+void HumanTrajSimulator::updateAllDofBounds(bool& initialized,
+                                            Move3D::confPtr_t q_tmp) {
+  if (!initialized) {
+    q_max_ = human_active_->getCurrentPos();
+    q_min_ = human_active_->getCurrentPos();
+    for (size_t i = 0; i < active_dofs_.size(); i++) {
+      int dof = active_dofs_[i];
+      (*q_max_)[dof] = -std::numeric_limits<double>::max();
+      (*q_min_)[dof] = std::numeric_limits<double>::max();
+    }
+    initialized =true;
+  }
+
+  for (size_t i = 0; i < active_dofs_.size(); i++) {
+    int dof = active_dofs_[i];
+    if ((*q_max_)[dof] < (*q_tmp)[dof]) {
+      (*q_max_)[dof] = (*q_tmp)[dof];
+    }
+    if ((*q_min_)[dof] > (*q_tmp)[dof]) {
+      (*q_min_)[dof] = (*q_tmp)[dof];
+    }
   }
 }
 
@@ -869,7 +911,8 @@ void HumanTrajSimulator::setReplanningDemonstrations() {
 
   motions_demo_ids_.clear();
 
-  bool initialized = false;
+  bool initialized_pelvis_tans_bounds = false;
+  bool initialized_all_dofs_bounds = false;
 
   // process the configurations
   for (size_t j = 0; j < motion_recorders_[0]->getStoredMotions().size(); j++)
@@ -911,7 +954,10 @@ void HumanTrajSimulator::setReplanningDemonstrations() {
 
             q_tmp->adaptCircularJointsLimits();
             human_2_motions_.back()[s].second = q_tmp;
-            updateDofBounds(initialized, q_tmp);
+            updateDofBounds(initialized_pelvis_tans_bounds, q_tmp);
+            if (set_all_dof_bounds_) {
+              updateAllDofBounds(initialized_all_dofs_bounds, q_tmp);
+            }
           }
 
         if (use_bio_models_ && is_passive_agent_human_)
@@ -1073,11 +1119,27 @@ std::vector<Move3D::confPtr_t> HumanTrajSimulator::getContext() const {
 
     context.push_back(human_1_motions_[i][0].second->copy());
   }
-
   return context;
 }
 
-void HumanTrajSimulator::setPelvisBounds() {
+void HumanTrajSimulator::setAllDofBounds() {
+  double bound_offset = 0.02;
+  for (size_t i = 0; i < active_joints_.size(); i++) {
+    for (int j = 0; j < active_joints_[i]->getNumberOfDof(); j++) {
+      int k = active_joints_[i]->getIndexOfFirstDof() + j;
+
+      if (std::find(active_dofs_.begin(), active_dofs_.end(), k) !=
+          active_dofs_.end()) {
+        p3d_jnt_set_dof_rand_bounds(active_joints_[i]->getP3dJointStruct(),
+                                    j,
+                                    (*q_min_)[k] - bound_offset,
+                                    (*q_max_)[k] + bound_offset);
+      }
+    }
+  }
+}
+
+void HumanTrajSimulator::setTranslationBounds() {
   cout << "Set translations bounds from trajectory library" << endl;
 
   // Get first joint and change bounds
@@ -1207,9 +1269,6 @@ void HumanTrajSimulator::setPelvisBounds() {
   //    Is dof user : (min = -3.14, max = 3.14)
   //    Joint(0), Dof : 22, rElbowZ
   //    Is dof user : (min = -3.14, max = 3.14)
-}
-std::vector<int> HumanTrajSimulator::getActiveDofs() const {
-  return active_dofs_;
 }
 
 void HumanTrajSimulator::setActiveJoints() {

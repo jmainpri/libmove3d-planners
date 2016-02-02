@@ -511,7 +511,7 @@ bool traj_optim_hrics_human_trajectory_biomech_dof_bounds(
   Eigen::VectorXd pelvis_max(Eigen::VectorXd::Ones(6));
   Eigen::VectorXd pelvis_min(Eigen::VectorXd::Ones(6));
 
-  pelvis_max *= std::numeric_limits<double>::min();
+  pelvis_max *= -std::numeric_limits<double>::max();
   pelvis_min *= std::numeric_limits<double>::max();
 
   update_dof_bouds(robot->getInitPos(), pelvis_max, pelvis_min);

@@ -56,7 +56,7 @@ using namespace Move3D;
 
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
-static bool zero_trajectory = false;
+static bool zero_trajectory = true;
 void Move3D::set_use_zero_trajectory(bool v) { zero_trajectory = v; }
 
 std::vector<Trajectory> global_trajToDraw;
@@ -313,9 +313,9 @@ p3d_traj* Trajectory::replaceP3dTraj(p3d_traj* trajPt) const {
   }
 
   // TODO this does not allow to export circular trajectories
-  if (zero_trajectory && m_Target->equal(*m_Source)) {
-    return trajPt;
-  }
+  //if (zero_trajectory && m_Target->equal(*m_Source)) {
+  //  return trajPt;
+  //}
 
   // trajPt->name = strdup(name);
   // trajPt->file = NULL;  // Modification Fabien
