@@ -30,6 +30,7 @@
 
 #include "feature_space/features.hpp"
 #include "HRICS_human_ioc.hpp"
+#include "utils/NumsAndStrings.hpp"
 
 #include <iostream>
 
@@ -81,7 +82,92 @@ class IocSequences {
 
   // Trajectories results
   std::vector<Move3D::Trajectory> demos_;
+};
 
+// On object per type of algorithm
+// baseline0, baseline1, baseline2
+struct ioc_statistics_t {
+  ioc_statistics_t(int nb_samples, int nb_demos) {
+    sum = Eigen::VectorXd::Zero(nb_samples);
+    sum_of_sqares = Eigen::VectorXd::Zero(nb_samples);
+    max = std::numeric_limits<double>::min();
+    min = std::numeric_limits<double>::max();
+    stddev = 0.;
+    avg = 0.;
+    nb_samples = nb_samples;
+    values.clear();
+    in_collision.clear();
+  }
+
+  void setMin(double val) {
+    if (val < min) min = val;
+  }
+
+  void setMax(double val) {
+    if (val > max) max = val;
+  }
+
+  void ToFile(std::string filename) {
+    if (values.empty()) {
+      return;
+    }
+    int rows = values.size();  // nb of demos
+    int cols = 0;              // nb of stomp runs
+    for (size_t i = 0; i < values.size(); i++) {
+      if (int(values[i].size()) > cols) {
+        cols = values[i].size();
+      }
+    }
+    Eigen::MatrixXd mat_tmp = Eigen::MatrixXd::Zero(rows, cols);
+    for (size_t i = 0; i < values.size(); i++) {
+      for (int j = 0; j < values[i].size(); j++) {
+        mat_tmp(i, j) = values[i][j];
+      }
+    }
+    move3d_save_matrix_to_csv_file(mat_tmp, filename + "_.csv");
+
+    rows = in_collision.size();  // nb of demos
+    cols = 0;                    // nb of stomp runs
+    for (size_t i = 0; i < in_collision.size(); i++) {
+      if (int(in_collision[i].size()) > cols) {
+        cols = in_collision[i].size();
+      }
+    }
+    mat_tmp = Eigen::MatrixXd::Zero(rows, cols);
+    for (size_t i = 0; i < in_collision.size(); i++) {
+      for (size_t j = 0; j < in_collision[i].size(); j++) {
+        mat_tmp(i, j) = in_collision[i][j];
+      }
+    }
+    move3d_save_matrix_to_csv_file(mat_tmp, filename + "_in_collision.csv");
+  }
+
+  // v are the dtw values found for this demo
+  void dtw_update_stat(const Eigen::VectorXd& v,
+                       const std::vector<bool>& runs_in_collision) {
+    for (int i = 0; i < v.size(); i++) {  // for each sample
+      sum[i] += v[i];
+    }
+    for (int i = 0; i < v.size(); i++) {  // for each sample
+      sum_of_sqares[i] += (v[i] * v[i]);
+    }
+
+    setMin(v.minCoeff());
+    setMax(v.maxCoeff());
+
+    values.push_back(v);                        // one vector for each demo
+    in_collision.push_back(runs_in_collision);  // one vector for each demo
+  }
+
+  Eigen::VectorXd sum;
+  Eigen::VectorXd sum_of_sqares;
+  double min;
+  double max;
+  double stddev;
+  double avg;
+  int nb_samples;
+  std::vector<Eigen::VectorXd> values;
+  std::vector<std::vector<bool> > in_collision;
 };
 }
 

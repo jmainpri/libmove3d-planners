@@ -473,7 +473,7 @@ bool TrajOptGoalSet::ProjectGoalSetProblem(
       Eigen::VectorXd x_d_error = alpha_ * x_error;
       Eigen::VectorXd h_k_s = x_d_error;
       // Get gradient/jacobian of the goal set constraint
-      Eigen::MatrixXd g_h_k_s = alpha_ * J;
+      Eigen::MatrixXd g_h_k_s = J;
 
       // C is a row matrix (only values on the collumns)
       // m : x_d_error.size()

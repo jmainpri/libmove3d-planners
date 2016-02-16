@@ -301,9 +301,9 @@ class Ioc {
   std::vector<Move3D::Trajectory> getDemonstrations() const;
 
   //! Drawing function
-  void addTrajectoryToDraw(const IocTrajectory& t, int color);
-  void addAllToDraw(const std::vector<int>& demos_ids,
-                    const std::vector<std::string>& demo_names);
+  Move3D::confPtr_t addTrajectoryToDraw(const IocTrajectory& t, int color);
+  Move3D::confPtr_t addAllToDraw(const std::vector<int>& demos_ids,
+                                 const std::vector<std::string>& demo_names);
 
   //! Solve the ioc problem
   Eigen::VectorXd solve(

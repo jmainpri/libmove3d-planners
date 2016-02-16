@@ -42,7 +42,8 @@ enum test_set {
   icra_paper_sept = 0,
   icra_paper_feb = 1,
   user_study = 2,
-  human_robot_experiment = 3
+  human_robot_experiment = 3,
+  gmm_data = 4
 };
 
 class HumanTrajFeatures : public Move3D::StackedFeatures {
@@ -91,7 +92,7 @@ class HumanTrajFeatures : public Move3D::StackedFeatures {
 
   Move3D::SmoothnessFeature smoothness_feat_;
   Move3D::LengthFeature length_feat_;
-  //    Move3D::TrajectorySmoothness smoothness_feat_;
+  // Move3D::TrajectorySmoothness smoothness_feat_;
 
   // Store a pointer to all feature
   // to iterate of all when not active in the base class

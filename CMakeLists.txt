@@ -259,7 +259,7 @@ MESSAGE(Eigen3_INCLUDE_DIR : ${EIGEN3_INCLUDE_DIR})
 #-------------- Boost ----------------------------------------------------------
 
 # boost is used e.g. for managing the cost functions (T-RRT).
-FIND_PACKAGE(Boost REQUIRED COMPONENTS thread system)
+FIND_PACKAGE(Boost REQUIRED COMPONENTS thread system filesystem)
 # FIND_PACKAGE(Boost REQUIRED)
 SET(INCLUDE_DIRS ${INCLUDE_DIRS} ${BOOST_INCLUDE_DIRS})
 SET(LIBS ${LIBS} ${Boost_LIBRARIES})

@@ -940,9 +940,9 @@ void CollisionSpace::drawSquaredDist() {
     // Draws the cell at a particular height in the grid
     // * plannar manipulator 10
     // * human trajectories 45
-    // if (cell->getLocation().z() != 42) {
-    //  continue;
-    //}
+//     if (cell->getLocation().z() != 10) {
+//      continue;
+//    }
 
     if (min_dist > distToClosObst) {
       min_dist = distToClosObst;

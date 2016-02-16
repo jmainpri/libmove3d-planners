@@ -195,10 +195,52 @@ bool HRICS_init_human_trajectory_cost() {
                        "src/hrics-or-rafi/python_module/bioik/" +
                        "user_experiment_data/selection/" + type + "/";
 
+          // 0 is the passive human
           global_motionRecorders[0]->loadCSVFolder(foldername + "human_two/",
                                                    quiet);
+          // 1 is the active humman
           global_motionRecorders[1]->loadCSVFolder(foldername + "human_one/",
                                                    quiet);
+        } else if (dataset == gmm_data) {
+          use_all_motions = true;
+          // GMM selection of the training data (user experiment)
+
+          std::string home =
+              std::string(getenv("HOME_MOVE3D")) + std::string("/../");
+
+          bool display_gmr_or_classes = false;
+          if (display_gmr_or_classes) {
+            foldername = home + "catkin_ws_move3d/" +
+                         "src/hrics-or-rafi/python_module/bioik/" +
+                         "user_experiment_data/selection/gmm_data/";
+            bool classes = false;
+            if (classes) {
+              global_motionRecorders[0]->loadCSVFolder(
+                  foldername + "classes/human_two/" + "class_2/", quiet);
+              global_motionRecorders[1]->loadCSVFolder(
+                  foldername + "classes/human_one/" + "class_2/", quiet);
+            } else {
+              global_motionRecorders[0]->loadCSVFolder(
+                  foldername + "gmr_trajs/human_two/", quiet);
+              global_motionRecorders[1]->loadCSVFolder(
+                  foldername + "gmr_trajs/human_one/", quiet);
+            }
+          } else {
+            // USER EXPERIMENT
+            std::string type = training ? "training" : "testing";
+
+            // Normal user study data
+            foldername = home + "catkin_ws_move3d/" +
+                         "src/hrics-or-rafi/python_module/bioik/" +
+                         "user_experiment_data/selection/" + type + "/";
+            // 0 is the passive human
+            global_motionRecorders[0]->loadCSVFolder(foldername + "human_two/",
+                                                     quiet);
+            // 1 is the active humman
+            global_motionRecorders[1]->loadCSVFolder(foldername + "human_one/",
+                                                     quiet);
+          }
+
         } else if (dataset == icra_paper_sept) {
           // ICRA PAPER September
           std::string move3d_root =
@@ -300,8 +342,10 @@ bool HRICS_init_human_trajectory_cost() {
 
   // if( active_agent->getName().find("HUMAN") != std::string::npos )
   // TODO make that work for PR2
-  if (!global_human_traj_simulator->getCostSpace()->initCollisionSpace())
-    cout << "Error : could not init collision space" << endl;
+
+  // DO WE NEED IT ???
+  // if (!global_human_traj_simulator->getCostSpace()->initCollisionSpace())
+  //  cout << "Error : could not init collision space" << endl;
 
   global_activeFeatureFunction = global_human_traj_simulator->getCostSpace();
 
@@ -593,8 +637,7 @@ bool HumanTrajSimulator::init() {
   use_one_traj_ = !HriEnv->getBool(HricsParam::ioc_split_motions);
 
   if (!motion_recorders_.empty()) {
-    // Store demonstrations, compute pelvis bounds
-    // add cut motions
+    // Store demonstrations, compute pelvis bounds add cut motions
     setReplanningDemonstrations();
 
     if (!use_one_traj_) {
@@ -606,7 +649,6 @@ bool HumanTrajSimulator::init() {
 
   // Set the planning bounds
   if (is_active_agent_human_) {
-    setTranslationBounds();
     if (set_all_dof_bounds_) {
       Eigen::VectorXd q_max_eig = q_max_->getEigenVector(active_dofs_);
       Eigen::VectorXd q_min_eig = q_min_->getEigenVector(active_dofs_);
@@ -614,6 +656,7 @@ bool HumanTrajSimulator::init() {
       cout << "q_min : " << q_min_eig.transpose() << endl;
       setAllDofBounds();
     }
+    setTranslationBounds();
   }
 
   // Set the current frame to 0
@@ -658,7 +701,7 @@ void HumanTrajSimulator::updateAllDofBounds(bool& initialized,
       (*q_max_)[dof] = -std::numeric_limits<double>::max();
       (*q_min_)[dof] = std::numeric_limits<double>::max();
     }
-    initialized =true;
+    initialized = true;
   }
 
   for (size_t i = 0; i < active_dofs_.size(); i++) {
@@ -774,7 +817,7 @@ void HumanTrajSimulator::setReplanningDemonstrations() {
   // Only select particular motions
   std::vector<std::string> selected;
   if (!use_all_motions) {
-    if (dataset == user_study) {
+    if (dataset == user_study || dataset == gmm_data) {
       std::vector<std::string> selected_splits =
           load_strings_from_file("demo_in_collision.txt");
 
@@ -807,10 +850,10 @@ void HumanTrajSimulator::setReplanningDemonstrations() {
       selected.push_back("[2711-2823]_human2_.csv");
       selected.push_back("[2711-2823]_human1_.csv");
 
-      // REPLANNING MOTION last (paper)
+      // REPLANNING MOTION last (paper) IMPORTANT ...
+      // selected.push_back("[7395-7595]_human2_.csv");
+      // selected.push_back("[7395-7595]_human1_.csv");
 
-      //            selected.push_back("[7395-7595]_human2_.csv");
-      //            selected.push_back("[7395-7595]_human1_.csv");
     } else if (dataset == icra_paper_feb) {
       //         std::string human2 =
       // HriEnv->getString(HricsParam::ioc_traj_split_name) +
@@ -924,6 +967,7 @@ void HumanTrajSimulator::setReplanningDemonstrations() {
       cout << "Add motion : " << motion_recorders_[0]->getStoredMotionName(j)
            << endl;
 
+      // human 1 motions is the passive human
       human_1_motions_.push_back(motion_recorders_[0]->getStoredMotions()[j]);
       motions_1_names_.push_back(motion_recorders_[0]->getStoredMotionName(j));
       human_1_demos_.push_back(human_1_motions_.back());
@@ -1127,7 +1171,6 @@ void HumanTrajSimulator::setAllDofBounds() {
   for (size_t i = 0; i < active_joints_.size(); i++) {
     for (int j = 0; j < active_joints_[i]->getNumberOfDof(); j++) {
       int k = active_joints_[i]->getIndexOfFirstDof() + j;
-
       if (std::find(active_dofs_.begin(), active_dofs_.end(), k) !=
           active_dofs_.end()) {
         p3d_jnt_set_dof_rand_bounds(active_joints_[i]->getP3dJointStruct(),
@@ -1471,6 +1514,25 @@ double HumanTrajSimulator::getCost(const motion_t& traj) const {
   return human_traj_features_->getWeights().transpose() * phi;
 }
 
+Eigen::VectorXd RandomConfig(const std::vector<Move3D::Joint*>& active_joints,
+                             const std::vector<int>& active_dofs) {
+  Eigen::VectorXd q = Eigen::VectorXd::Zero(active_dofs.size());
+  int id = 0;
+  for (size_t i = 0; i < active_joints.size(); i++) {
+    for (size_t j = 0; j < active_joints[i]->getNumberOfDof(); j++) {
+      if (std::find(active_dofs.begin(),
+                    active_dofs.end(),
+                    active_joints[i]->getIndexOfFirstDof() + j) !=
+          active_dofs.end()) {
+        double vmin, vmax;
+        active_joints[i]->getDofRandBounds(j, vmin, vmax);
+        q[id++] = p3d_random(vmin, vmax);
+      }
+    }
+  }
+  return q;
+}
+
 bool HumanTrajSimulator::loadActiveHumanGoalConfig() {
   if (id_of_demonstration_ >= int(human_2_motions_.size())) return false;
 
@@ -1525,10 +1587,18 @@ bool HumanTrajSimulator::loadActiveHumanGoalConfig() {
     x_task_goal_ = eef->getVectorPos();
     ik.initialize(active_joints_, eef);
     human_active_->setAndUpdate(*q_init_);
-    if (!ik.solve(x_task_goal_)) {
-      cout << __PRETTY_FUNCTION__ << endl;
-      cout << "Warning : did not solve IK (" << x_task_goal_.transpose() << ")"
-           << endl;
+    Move3D::confPtr_t q_rand = q_init_->copy();
+    for (int i = 0; i < 10000; i++) {
+      if (!ik.solve(x_task_goal_)) {
+        cout << __PRETTY_FUNCTION__ << endl;
+        cout << "Warning : did not solve IK (" << x_task_goal_.transpose()
+             << ")" << endl;
+      } else {
+        break;
+      }
+      q_rand->setFromEigenVector(RandomConfig(active_joints_, active_dofs_),
+                                 active_dofs_);
+      human_active_->setAndUpdate(*q_rand);
     }
     q_goal_ = human_active_->getCurrentPos();
   }

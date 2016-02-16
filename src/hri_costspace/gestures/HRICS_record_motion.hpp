@@ -162,6 +162,8 @@ class RecordMotion {
 
   bool m_is_recording;
 
+  Move3D::Robot* robot() { return m_robot; }
+
  private:
   void intialize();
 

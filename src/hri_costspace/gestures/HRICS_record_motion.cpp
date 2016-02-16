@@ -89,29 +89,32 @@ Move3D::Trajectory HRICS::motion_to_traj(const motion_t& traj,
   int ith = 0;
 
   while (1) {
-    if (!traj2.push_back(traj1.configAtTime(t)))
+    if (!traj2.push_back(traj1.configAtTime(t))) {
       cout << "no configuration added at : " << ith << endl;
+    }
 
     t += dt;
 
-    ith++;
-
     if ((t - traj1.getDuration()) > 1e-3) {
-      cout << "break in motion_to_traj,  t : " << t
-           << ", traj1.getDuration() : " << traj1.getDuration() << endl;
-      cout << " i : " << traj2.getNbOfViaPoints() << endl;
-      cout << " ith : " << ith << endl;
+      // cout << "break in motion_to_traj,  t : " << t
+      //      << ", traj1.getDuration() : " << traj1.getDuration() << endl;
+      //  out << " i : " << traj2.getNbOfViaPoints() << endl;
+      //  cout << " ith : " << ith << endl;
       break;
     }
+
+    ith++;
   }
   traj2.setUseTimeParameter(true);
   traj2.setUseConstantTime(true);
   traj2.setDeltaTime(dt);  // Set index 1 because 0 is often 0.0
 
-  if( traj1.getDuration() != traj2.getDuration()){
+  if (std::fabs(traj1.getDuration() - traj2.getDuration()) > 1e-3) {
     cout << " -- traj1 and traj 2 do not have the same duration" << endl;
-    cout << "    * traj1 Duration : " << traj1.getDuration() << endl;
-    cout << "    * traj2 Duration : " << traj2.getDuration() << endl;
+    cout << std::scientific << "    * traj1 Duration : " << traj1.getDuration()
+         << endl;
+    cout << std::scientific << "    * traj2 Duration : " << traj2.getDuration()
+         << endl;
   }
   return traj2;
 }

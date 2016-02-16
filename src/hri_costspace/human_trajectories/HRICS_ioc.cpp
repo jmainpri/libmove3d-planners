@@ -366,8 +366,8 @@ void IocSamplerGoalSet::initPolicy() {
   derivative_costs[2] = 1.0;  // jerk
 
   // initializes the policy
-  policy_.initialize(
-      num_vars_free_, num_dofs_, 1.0, 0.0, derivative_costs, 2.7);
+  policy_.initialize( // WAS 2.7 for TRO paper
+      num_vars_free_, num_dofs_, 1.0, 0.0, derivative_costs, 1.0);
 }
 
 // -----------------------------------------------------------------------------
@@ -1035,7 +1035,7 @@ int Ioc::generateDemoSamples(int demo_id,
         planning_group_->robot_->setAndUpdate(*q_end);
         goalset_data_.x_task_goal_ = goalset_data_.eef_->getVectorPos().head(3);
         // cout << goalset_data_ << endl;
-        is_valid = projectToGolset(*samples_[demo_id][ns]);
+        // is_valid = projectToGolset(*samples_[demo_id][ns]);
       }
 
       // Set the start and end values constant
@@ -1124,7 +1124,7 @@ std::vector<Move3D::Trajectory> Ioc::getDemonstrations() const {
   return demos;
 }
 
-void Ioc::addTrajectoryToDraw(const IocTrajectory& t, int color) {
+Move3D::confPtr_t Ioc::addTrajectoryToDraw(const IocTrajectory& t, int color) {
   Move3D::Trajectory T = t.getMove3DTrajectory(planning_group_);
   T.setColor(color);
   // global_trajToDraw.push_back( T );
@@ -1147,12 +1147,17 @@ void Ioc::addTrajectoryToDraw(const IocTrajectory& t, int color) {
     global_linesToDraw.push_back(draw_line);
   } else
     global_trajToDraw.push_back(T);
+
+  return T.getEnd();
 }
 
-void Ioc::addAllToDraw(const std::vector<int>& demos_ids,
-                       const std::vector<std::string>& demo_names) {
+Move3D::confPtr_t Ioc::addAllToDraw(
+    const std::vector<int>& demos_ids,
+    const std::vector<std::string>& demo_names) {
   global_trajToDraw.clear();
   global_linesToDraw.clear();
+
+  Move3D::confPtr_t q = planning_group_->robot_->getCurrentPos();
 
   if (global_DrawModule) {
     global_DrawModule->addDrawFunction("Draw3DTrajs",
@@ -1171,8 +1176,7 @@ void Ioc::addAllToDraw(const std::vector<int>& demos_ids,
           demo_names.empty() ||
           demo_names[demos_ids[d]].substr(0, 11) == split) {
         cout << "adding to draw demo [" << d << "] : " << demo_names[d] << endl;
-
-        addTrajectoryToDraw(demonstrations_[d], 0);
+        q = addTrajectoryToDraw(demonstrations_[d], 0);
       }
     }
   }
@@ -1185,12 +1189,16 @@ void Ioc::addAllToDraw(const std::vector<int>& demos_ids,
         for (size_t k = 0; k < samples_[d].size(); ++k) {
           if (samples_[d][k] != NULL) {
             cout << "adding to draw sample [" << d << "][" << k << "]" << endl;
-            addTrajectoryToDraw(*samples_[d][k], k % 7 + 1);
+           //  Move3D::confPtr_t q =
+                addTrajectoryToDraw(*samples_[d][k], k % 7 + 1);
+            // global_configToDraw.push_back(q);
           }
         }
       }
     }
   }
+
+  return q;
 }
 
 //////////////////////////////////////////////////////
@@ -2565,6 +2573,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling() {
   std::string current_traj_name;
 
   // For each demonstration
+  Move3D::confPtr_t q = robot_->getCurrentPos();
   for (size_t d = 0; d < phi_demos_.size(); d++) {
     // Generate samples by random sampling
     cout << "Generate samples (" << nb_samples_ << ")" << endl;
@@ -2590,13 +2599,14 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling() {
     cout << "nb of samples : " << samples[d].size() << endl;
 
     // DRAW samples
+
     if (!ENV.getBool(Env::drawDisabled)) {
       if (HriEnv->getBool(HricsParam::ioc_draw_demonstrations) ||
           HriEnv->getBool(HricsParam::ioc_draw_samples)) {
         if ((!HriEnv->getBool(HricsParam::ioc_draw_one_demo)) ||
             demo_names_.empty() ||
             demo_names_[demo_ids_[d]].substr(0, 11) == draw_split) {
-          ioc.addAllToDraw(demo_ids_, demo_names_);
+          q = ioc.addAllToDraw(demo_ids_, demo_names_);
         }
       }
     }
@@ -2670,6 +2680,7 @@ std::vector<std::vector<Move3D::Trajectory> > IocEvaluation::runSampling() {
   // getFeatureJacobianSum( ioc.getSamples() );
   //    saveToMatrixFile( phi_jac_demos_, jac_sum_samples, "spheres_jac_sum" );
 
+  robot_->setAndUpdate(*q);
   return samples;
 }
 
