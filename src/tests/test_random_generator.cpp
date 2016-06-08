@@ -32,10 +32,11 @@
 using std::cout;
 using std::endl;
 
-bool TestEquality(const std::vector<Eigen::VectorXd>& samples) {
+bool TestEquality(const std::vector<Eigen::VectorXd>& samples)
+{
   bool success = true;
   for (size_t i = 0; i < samples.size(); i++) {
-    for (size_t j = i; j < samples.size(); j++) {
+    for (size_t j = i + 1; j < samples.size(); j++) {
       for (int d = 0; d < samples[0].size(); d++) {
         if (samples[i][d] != samples[j][d]) {
           success = false;
@@ -47,7 +48,8 @@ bool TestEquality(const std::vector<Eigen::VectorXd>& samples) {
   return success;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
   int nb_samples = 20;
   int dimension = 10;
   Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(dimension, dimension);
@@ -66,7 +68,6 @@ int main(int argc, char* argv[]) {
     cout << "Error" << endl;
     return EXIT_FAILURE;
   }
-
 
   cout << "success (MultivariateGaussian) " << endl;
 

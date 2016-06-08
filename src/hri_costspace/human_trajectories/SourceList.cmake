@@ -9,6 +9,7 @@ HRICS_run_multiple_planners.cpp
 HRICS_ioc_sequences.cpp
 HRICS_human_simulator.cpp
 HRICS_dynamic_time_warping.cpp
+HRICS_spectral_analysis.cpp
 )
 
 BM3D_INC_DIR_PROCESS (${BM3D_MODULE_NAME})

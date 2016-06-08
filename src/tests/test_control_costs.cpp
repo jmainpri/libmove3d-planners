@@ -49,7 +49,8 @@ using std::endl;
 static Move3D::Robot* robot = NULL;
 static std::vector<int> active_dofs;
 
-Move3D::Trajectory create_random_trajectory() {
+Move3D::Trajectory create_random_trajectory()
+{
   // Create random trajectory
   robot->setInitPos(*robot->shoot());
   robot->setGoalPos(*robot->shoot());
@@ -83,7 +84,8 @@ Move3D::Trajectory create_random_trajectory() {
 }
 
 double get_control_cost(const Move3D::Trajectory& trajectory,
-                        const std::vector<int>& joints) {
+                        const std::vector<int>& joints)
+{
   // Intialize policy
 
   std::vector<double> derivative_costs;
@@ -174,7 +176,8 @@ double get_control_cost(const Move3D::Trajectory& trajectory,
 
 Move3D::Trajectory create_sinusoidal_trajectory(Move3D::confPtr_t q_init_ptr,
                                                 Move3D::confPtr_t q_goal_ptr,
-                                                int nb_config) {
+                                                int nb_config)
+{
   Move3D::Trajectory sinus_traj(robot);
 
   Eigen::VectorXd q_init = q_init_ptr->getEigenVector(active_dofs);
@@ -201,7 +204,8 @@ Move3D::Trajectory create_sinusoidal_trajectory(Move3D::confPtr_t q_init_ptr,
   return sinus_traj;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
   if (!move3d_start_and_load_manipulator()) {
     return EXIT_FAILURE;
   }

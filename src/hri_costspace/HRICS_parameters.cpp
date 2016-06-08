@@ -52,7 +52,8 @@ HricsParam::~HricsParam() {}
 
 // @brief Function that inizializes the
 // Parameter container
-void initHricsParameters() {
+void initHricsParameters()
+{
 #ifdef QT_LIBRARY
   EnumHricsParameterObject = new HricsParam;
 #endif
@@ -130,6 +131,8 @@ void initHricsParameters() {
   myIntMap.insert(
       std::make_pair(HricsParam::ioc_baseline_type, new intContainer(-1)));
   myIntMap.insert(std::make_pair(HricsParam::ioc_dataset, new intContainer(0)));
+  myIntMap.insert(
+      std::make_pair(HricsParam::ioc_similarity, new intContainer(0)));
 
   // Double
   // ------------------------------------------------------------------

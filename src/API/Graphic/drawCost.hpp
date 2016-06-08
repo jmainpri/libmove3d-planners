@@ -46,13 +46,15 @@ void g3d_draw_grids();
 void g3d_draw_hrics(int opengl_context);
 #endif
 
-extern std::vector< std::pair<Eigen::Vector3d, Eigen::MatrixXd> > global_linesToDraw;
+extern std::vector<std::pair<Eigen::Vector3d, Eigen::MatrixXd> >
+    global_linesToDraw;
 extern std::vector<Move3D::confPtr_t> global_configToDraw;
+extern std::vector<Eigen::Quaterniond> global_quaternionToDraw;
 
 void g3d_draw_3d_lines();
 void g3d_draw_configurations();
 
-//void drawGauge(int number, double cost);
-void computeConfigCostOnTraj( p3d_rob* rob, configPt q );
+// void drawGauge(int number, double cost);
+void computeConfigCostOnTraj(p3d_rob* rob, configPt q);
 
 #endif

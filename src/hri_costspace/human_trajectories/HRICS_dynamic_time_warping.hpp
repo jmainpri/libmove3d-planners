@@ -37,9 +37,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "API/Trajectory/trajectory.hpp"
 #include "planner/TrajectoryOptim/Chomp/chompPlanningGroup.hpp"
 
-namespace DTW {
+extern double move3d_centers_distance(const std::vector<double>& P1,
+                                      const std::vector<double>& P2);
 
-class SimpleDTW {
+extern double move3d_tansform_distance(const std::vector<double>& P1,
+                                       const std::vector<double>& P2);
+
+namespace DTW
+{
+
+class SimpleDTW
+{
  public:
   SimpleDTW(size_t x_dim,
             size_t y_dim,
@@ -51,9 +59,16 @@ class SimpleDTW {
   ~SimpleDTW() {}
 
   void setDistFunction(boost::function<double(const std::vector<double>&,
-                                              const std::vector<double>&)> f) {
+                                              const std::vector<double>&)> f)
+  {
     distance_fn_ = f;
   }
+
+  //
+  double EvaluateEuclideanDistance(
+      const std::vector<std::vector<double> >& sequence_1,
+      const std::vector<std::vector<double> >& sequence_2);
+
   double EvaluateWarpingCost(
       const std::vector<std::vector<double> >& sequence_1,
       const std::vector<std::vector<double> >& sequence_2);
@@ -70,11 +85,13 @@ class SimpleDTW {
 
   inline size_t GetDataIndex(size_t x, size_t y) { return (x * y_dim_) + y; }
 
-  inline double GetFromDTWMatrix(size_t x, size_t y) {
+  inline double GetFromDTWMatrix(size_t x, size_t y)
+  {
     return data_[GetDataIndex(x, y)];
   }
 
-  inline void SetInDTWMatrix(size_t x, size_t y, double val) {
+  inline void SetInDTWMatrix(size_t x, size_t y, double val)
+  {
     data_[GetDataIndex(x, y)] = val;
   }
 
@@ -89,12 +106,16 @@ class SimpleDTW {
 };
 }
 
-int dtw_compare_performance(int traj_length, int iterations);
-
 std::vector<double> dtw_compare_performance(
     const Move3D::ChompPlanningGroup* planning_group,
     const Move3D::Trajectory& t1,
     const std::vector<Move3D::Trajectory>& t_all,
     std::vector<Move3D::Joint*> joint = std::vector<Move3D::Joint*>());
+
+std::vector<double> euc_compare_performance(
+    const Move3D::ChompPlanningGroup* planning_group,
+    const Move3D::Trajectory& t0,
+    const std::vector<Move3D::Trajectory>& t_tests,
+    std::vector<Move3D::Joint*> joints = std::vector<Move3D::Joint*>());
 
 #endif  // HRICS_DYNAMIC_TIME_WARPING_HPP

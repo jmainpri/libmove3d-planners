@@ -116,18 +116,21 @@ Natural::Natural(Move3D::Robot* R)
       m_BestPointsSorted(false),
       m_Robot(R),
       m_Grid(NULL),
-      m_G(1000000.0) {
+      m_G(1000000.0)
+{
   initGeneral();
 }
 
-Natural::~Natural() {
+Natural::~Natural()
+{
   /*if( m_Grid != NULL )
   {
       delete m_Grid;
   }*/
 }
 
-void Natural::initGeneral() {
+void Natural::initGeneral()
+{
   map<string, Kinematic> kinos;
 
   kinos["Error"] = Default;
@@ -229,7 +232,8 @@ void Natural::initGeneral() {
   cout << "Object Dof is " << m_IndexObjectDof << endl;
 }
 
-void Natural::initConfigIndices() {
+void Natural::initConfigIndices()
+{
   m_CONFIG_INDEX_SPINE = m_Robot->getJoint(m_JOINT_SPINE)->getIndexOfFirstDof();
   m_CONFIG_INDEX_HEAD = m_Robot->getJoint(m_JOINT_HEAD)->getIndexOfFirstDof();
 
@@ -248,7 +252,8 @@ void Natural::initConfigIndices() {
       m_Robot->getJoint(m_JOINT_ARM_LEFT_WRIST)->getIndexOfFirstDof();
 }
 
-void Natural::initNaturalJustin() {
+void Natural::initNaturalJustin()
+{
   m_JOINT_SPINE = JUSTIN_JOINT_SPINE;
   m_JOINT_HEAD = JUSTIN_JOINT_HEAD;
 
@@ -290,7 +295,8 @@ void Natural::initNaturalJustin() {
       m_Robot, p3d_copy_config_deg_to_rad(m_Robot->getP3dRobotStruct(), q)));
 }
 
-void Natural::initNaturalAchile() {
+void Natural::initNaturalAchile()
+{
   /***********************************************/
   m_JOINT_SPINE = ACHILE_JOINT_SPINE;
   m_JOINT_HEAD = ACHILE_JOINT_HEAD;
@@ -426,7 +432,8 @@ void Natural::initNaturalAchile() {
  ACHILE_JOINT_ARM_LEFT_WRIST =  29
  */
 
-void Natural::initNaturalHerakles() {
+void Natural::initNaturalHerakles()
+{
   /***********************************************/
   m_JOINT_SPINE = HERAKLES_JOINT_SPINE;
   m_JOINT_HEAD = HERAKLES_JOINT_HEAD;
@@ -513,7 +520,8 @@ void Natural::initNaturalHerakles() {
   m_mg.push_back(1);
 }
 
-void Natural::initNaturalBiomech() {
+void Natural::initNaturalBiomech()
+{
   /***********************************************/
   m_JOINT_SPINE = BIOMECH_JOINT_SPINE;
   m_JOINT_HEAD = BIOMECH_JOINT_HEAD;
@@ -653,7 +661,8 @@ void Natural::initNaturalBiomech() {
   m_mg.push_back(1);
 }
 
-void Natural::initNaturalOldDude() {
+void Natural::initNaturalOldDude()
+{
   /***********************************************/
   m_JOINT_SPINE = OLDDUDE_JOINT_SPINE;
   m_JOINT_HEAD = OLDDUDE_JOINT_HEAD;
@@ -731,7 +740,8 @@ void Natural::initNaturalOldDude() {
   m_mg.push_back(1);
 }
 
-void Natural::setBiomechJointLimitsFromFile(std::string filename) {
+void Natural::setBiomechJointLimitsFromFile(std::string filename)
+{
   //  std::ostringstream ss;
   //  ss << "/usr/local/jim_local/Dropbox/move3d/catkin_ws_move3d/src/"
   //     << "hrics-or-rafi/"
@@ -819,7 +829,8 @@ void Natural::setBiomechJointLimitsFromFile(std::string filename) {
   m_q_limits_min = q_min.second;
 }
 
-void Natural::initHumanBaseGrid(vector<double> box) {
+void Natural::initHumanBaseGrid(vector<double> box)
+{
   //    cout << "Natural::initHumanBaseGrid()" << endl;
 
   vector<double> envSize(6);
@@ -836,7 +847,8 @@ void Natural::initHumanBaseGrid(vector<double> box) {
   m_Grid = new NaturalGrid(0.1, envSize, this);
 }
 
-void Natural::printBodyPos() {
+void Natural::printBodyPos()
+{
   if (m_KinType == Achile) {
     //		cout << "ACHILE_JOINT_SPINE = " << m_Robot->getJoint(
     // ACHILE_JOINT_SPINE )->index_dof << endl ;
@@ -889,7 +901,8 @@ void Natural::printBodyPos() {
   }
 }
 
-void Natural::setRobotToConfortPosture() {
+void Natural::setRobotToConfortPosture()
+{
   confPtr_t q_cur = m_Robot->getCurrentPos();
 
   m_IndexObjectDof = 6;
@@ -904,13 +917,15 @@ void Natural::setRobotToConfortPosture() {
 }
 
 //! Get the elemetary cost features
-void Natural::getAllConfigFeatures(Eigen::VectorXd& features) {
+void Natural::getAllConfigFeatures(Eigen::VectorXd& features)
+{
   confPtr_t q = m_Robot->getCurrentPos();
   getCustomDistConfig(*q, features);
 }
 
 //! Get the elemetary cost features
-void Natural::getConfigCostFeatures(Eigen::VectorXd& features) {
+void Natural::getConfigCostFeatures(Eigen::VectorXd& features)
+{
   features = Eigen::VectorXd::Zero(3);
   // confPtr_t q_Actual = m_Robot->getCurrentPos();
 
@@ -939,7 +954,8 @@ void Natural::getConfigCostFeatures(Eigen::VectorXd& features) {
   //    cout << std::scientific << " , Disc = " << c_f_Discomfort << endl;
 }
 
-double Natural::getConfigCost() {
+double Natural::getConfigCost()
+{
   Move3D::confPtr_t q = m_Robot->getCurrentPos();
   return cost(*q);
 }
@@ -948,7 +964,8 @@ double Natural::getConfigCost() {
  * Compute the Natural cost for a configuration
  * with weight
  */
-double Natural::cost(Move3D::Configuration& q) {
+double Natural::cost(Move3D::Configuration& q)
+{
   double c_natural = 0.0;
 
   Eigen::VectorXd phi(Eigen::VectorXd::Zero(3));
@@ -984,7 +1001,8 @@ double Natural::cost(Move3D::Configuration& q) {
  * Joint-displacement : This function evaluates the joint displacement
  * from the VRS project at Iwoa
  */
-double Natural::getJointDisplacement() {
+double Natural::getJointDisplacement()
+{
   Eigen::VectorXd phi;
   return getCustomDistConfig(*m_Robot->getCurrentPos(), phi);
 }
@@ -993,7 +1011,8 @@ double Natural::getJointDisplacement() {
  * Energy : This function evaluates the joint displacement
  * from the VRS project at Iwoa
  */
-double Natural::getEnergy() {
+double Natural::getEnergy()
+{
   double Energy = 0.0;
 
   vector<double> DeltaHeigth = getUpperBodyHeigth();
@@ -1012,7 +1031,8 @@ double Natural::getEnergy() {
  * Discomfort : This function evaluates the joint displacement
  * from the VRS project at Iwoa
  */
-double Natural::getDiscomfort() {
+double Natural::getDiscomfort()
+{
   return getJointLimits(*m_Robot->getCurrentPos());
 }
 
@@ -1020,7 +1040,8 @@ double Natural::getDiscomfort() {
  * Discomfort : This function evaluates the different in heigth
  * of each body regarding the confort position from the VRS project at Iwoa
  */
-vector<double> Natural::getUpperBodyHeigth(bool useReference) {
+vector<double> Natural::getUpperBodyHeigth(bool useReference)
+{
   int ShoulJoint, ElbowJoint, WristJoint;
 
   double L0 = 0.0;
@@ -1075,7 +1096,8 @@ vector<double> Natural::getUpperBodyHeigth(bool useReference) {
  *
  * See : p3d_dist_config
  */
-double Natural::getCustomDistConfig(Configuration& q, Eigen::VectorXd& phi) {
+double Natural::getCustomDistConfig(Configuration& q, Eigen::VectorXd& phi)
+{
   double l = 0., ljnt = 0.;
   Eigen::VectorXd phi_tmp = Eigen::VectorXd::Zero(m_nbDof);
   Eigen::VectorXd w = phi_tmp;  // Set to 0
@@ -1130,7 +1152,8 @@ double Natural::getCustomDistConfig(Configuration& q, Eigen::VectorXd& phi) {
   return l;
 }
 
-double Natural::getJointLimits(Configuration& q) {
+double Natural::getJointLimits(Configuration& q)
+{
   double QU, QL;
   QU = QL = 0.0;
   double Cost = 0.0;
@@ -1172,7 +1195,8 @@ double Natural::getJointLimits(Configuration& q) {
 /*!
  *
  */
-double Natural::basicNaturalArmCost(bool useLeftvsRightArm) {
+double Natural::basicNaturalArmCost(bool useLeftvsRightArm)
+{
   int ShoulderIndex, ElbowIndex;
   int ShoulderJoint, ElbowJoint, WristJoint;
 
@@ -1245,7 +1269,8 @@ double Natural::basicNaturalArmCost(bool useLeftvsRightArm) {
  */
 double Natural::getCost(const Vector3d& WSPoint,
                         bool useLeftvsRightArm,
-                        bool withEffect) {
+                        bool withEffect)
+{
   switch (m_KinType) {
     case Justin:
       if (!m_computeNbOfIK) {
@@ -1280,7 +1305,8 @@ double Natural::getCost(const Vector3d& WSPoint,
 /*!
  * Cost of a workspace point
  */
-double Natural::getWorkspaceCost(const Eigen::Vector3d& WSPoint) {
+double Natural::getWorkspaceCost(const Eigen::Vector3d& WSPoint)
+{
   if (m_Grid->isReachable(WSPoint)) {
     return m_Grid->getCellCostAt(WSPoint);
   }
@@ -1291,14 +1317,16 @@ double Natural::getWorkspaceCost(const Eigen::Vector3d& WSPoint) {
 /*!
  * Is point reachable in workspace
  */
-bool Natural::getWorkspaceIsReachable(const Eigen::Vector3d& WSPoint) {
+bool Natural::getWorkspaceIsReachable(const Eigen::Vector3d& WSPoint)
+{
   return m_Grid->isReachable(WSPoint);
 }
 
 /*!
  * Computes the number of IK
  */
-double Natural::getNumberOfIKCost(const Vector3d& WSPoint) {
+double Natural::getNumberOfIKCost(const Vector3d& WSPoint)
+{
   confPtr_t q;
 
   double Cost = 0.0;
@@ -1334,7 +1362,8 @@ double Natural::getNumberOfIKCost(const Vector3d& WSPoint) {
  * Compute Wether a point is reachable for a human
  */
 bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,
-                                        bool useLeftvsRightArm) {
+                                        bool useLeftvsRightArm)
+{
   //#ifdef HRI_PLANNER
 
   confPtr_t configStored = m_Robot->getCurrentPos();
@@ -1415,7 +1444,8 @@ bool Natural::computeIsReachableAndMove(const Vector3d& WSPoint,
 }
 
 bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,
-                                     bool useLeftvsRightArm) {
+                                     bool useLeftvsRightArm)
+{
   confPtr_t configStored = m_Robot->getCurrentPos();
   bool IKSucceded = false;
   HRI_GIK_TASK_TYPE task;
@@ -1463,7 +1493,8 @@ bool Natural::computeIsReachableOnly(const Vector3d& WSPoint,
   return IKSucceded;
 }
 
-Transform3d Natural::getGridOriginMatrix() {
+Transform3d Natural::getGridOriginMatrix()
+{
   Transform3d OriginPos(Transform3d::Identity());
 
   Vector3d trans;
@@ -1494,7 +1525,8 @@ Transform3d Natural::getGridOriginMatrix() {
   return OriginPos;
 }
 
-NaturalGrid* Natural::computeNaturalGrid() {
+NaturalGrid* Natural::computeNaturalGrid()
+{
   vector<double> envSize(6);
   envSize[0] = XYZ_ENV->box.x1;
   envSize[1] = XYZ_ENV->box.x2;
@@ -1508,7 +1540,8 @@ NaturalGrid* Natural::computeNaturalGrid() {
   return m_Grid;
 }
 
-void Natural::computeAllCellCost() {
+void Natural::computeAllCellCost()
+{
   m_Grid->resetCellCost();
   // m_Grid->initReachable();
   m_Grid->computeAllCellCost();
@@ -1519,9 +1552,11 @@ void computeAllReachableCellCost() {}
 /*!
  * Natural cell comparator
  */
-class NaturalCellComparator {
+class NaturalCellComparator
+{
  public:
-  bool operator()(NaturalCell* first, NaturalCell* second) {
+  bool operator()(NaturalCell* first, NaturalCell* second)
+  {
     return (first->getCost() < second->getCost());
   }
 
@@ -1530,7 +1565,8 @@ class NaturalCellComparator {
 /*!
  * Get the sorted cells
  */
-vector<Vector3d> Natural::getSortedReachableWSPoint() {
+vector<Vector3d> Natural::getSortedReachableWSPoint()
+{
   if (!m_BestPointsSorted) {
     m_SortedCells = m_Grid->getAllReachableCells();
     sort(m_SortedCells.begin(), m_SortedCells.end(), NaturalCellCompObject);
@@ -1546,7 +1582,8 @@ vector<Vector3d> Natural::getSortedReachableWSPoint() {
   return WSPoints;
 }
 
-vector<pair<double, Vector3d> > Natural::getReachableWSPoint() {
+vector<pair<double, Vector3d> > Natural::getReachableWSPoint()
+{
   vector<NaturalCell*> cells = m_Grid->getAllReachableCells();
   vector<pair<double, Vector3d> > WSPoints(cells.size());
 
@@ -1558,7 +1595,8 @@ vector<pair<double, Vector3d> > Natural::getReachableWSPoint() {
   return WSPoints;
 }
 
-void Natural::setRobotColorFromConfiguration(bool toSet) {
+void Natural::setRobotColorFromConfiguration(bool toSet)
+{
   if (!m_Robot->getUseLibmove3dStruct()) return;
 
   if (toSet) {

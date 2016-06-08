@@ -69,6 +69,7 @@ using namespace std;
 using namespace Move3D;
 MOVE3D_USING_SHARED_PTR_NAMESPACE
 
+std::vector<Eigen::Quaterniond> global_quaternionToDraw;
 Eigen::Vector3d global_DrawnSphere;
 vector<Eigen::Vector3d> CXX_drawBox;
 vector<double> vect_jim;

@@ -19,42 +19,41 @@ namespace HRICS
 {
 class Visibility
 {
-public:
-    //! Sets the Pointer to Human
-    Visibility( Move3D::Robot* R);
-    
-    
-    //! Gets the Visibiliy cost (distance to gaze direction) of a
-    //! Workspace point
-    double getWorkspaceCost(const Eigen::Vector3d& WSPoint);
-    
-    //! Gets the Visibiliy cost (distance to gaze direction) of a
-    //! Workspace point
-    double getOldWorkspaceCost(const Eigen::Vector3d& WSPoint);
+ public:
+  //! Sets the Pointer to Human
+  Visibility(Move3D::Robot* R);
 
-    //! Copy paste from Akins
-    double akinVisibilityCost(const Eigen::Vector3d& WSPoint);
+  //! Gets the Visibiliy cost (distance to gaze direction) of a
+  //! Workspace point
+  double getWorkspaceCost(const Eigen::Vector3d& WSPoint);
 
-    //! Returns the gaze associated to the visibility
-    //! cost
-    std::vector<double> getGaze();
+  //! Gets the Visibiliy cost (distance to gaze direction) of a
+  //! Workspace point
+  double getOldWorkspaceCost(const Eigen::Vector3d& WSPoint);
 
-    //! Distance on gaze
-    Eigen::Vector2d get2dPointAlongGaze(double dist);
+  //! Copy paste from Akins
+  double akinVisibilityCost(const Eigen::Vector3d& WSPoint);
 
-private:
-    //! Human Kinematics
-    Move3D::Robot* m_Human;
+  //! Returns the gaze associated to the visibility
+  //! cost
+  std::vector<double> getGaze();
 
-    //! Previous cost
-    double m_Cost;
+  //! Distance on gaze
+  Eigen::Vector2d get2dPointAlongGaze(double dist);
 
-    //! Returns the gaze of the
-    //! actual human position
-    std::vector<double> m_VectGaze;
+ private:
+  //! Human Kinematics
+  Move3D::Robot* m_Human;
 
-    //! Flag to compute the gaze vector
-    bool m_DrawGaze;
+  //! Previous cost
+  double m_Cost;
+
+  //! Returns the gaze of the
+  //! actual human position
+  std::vector<double> m_VectGaze;
+
+  //! Flag to compute the gaze vector
+  bool m_DrawGaze;
 };
 }
 

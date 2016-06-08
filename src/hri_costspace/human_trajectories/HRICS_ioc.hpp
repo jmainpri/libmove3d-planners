@@ -42,7 +42,8 @@
 #include "planner/TrajectoryOptim/Stomp/covariant_trajectory_policy.hpp"
 #include "planner/TrajectoryOptim/jointlimits.hpp"
 
-namespace HRICS {
+namespace HRICS
+{
 
 typedef std::vector<std::vector<Move3D::confPtr_t> > context_t;
 
@@ -101,12 +102,14 @@ struct IocTrajectory {
   void setSraightLineTrajectory();
 
   //! \brief Get the value at a given point for a given dof
-  double& operator()(int dof, int waypoint) {
+  double& operator()(int dof, int waypoint)
+  {
     return parameters_[dof][waypoint];
   }
 
   //! \brief Get the value at a given point for a given dof
-  double operator()(int dof, int waypoint) const {
+  double operator()(int dof, int waypoint) const
+  {
     return parameters_[dof][waypoint];
   }
 };
@@ -127,7 +130,8 @@ struct IocIk {
 };
 
 //! Sampler of noisy trajectories
-class IocSampler {
+class IocSampler
+{
  public:
   IocSampler();
   IocSampler(int num_var_free,
@@ -159,7 +163,8 @@ class IocSampler {
 
   const std::vector<dof_bounds>& joint_bounds() const { return dofs_bounds_; }
 
-  const std::vector<Eigen::MatrixXd>& control_costs() const {
+  const std::vector<Eigen::MatrixXd>& control_costs() const
+  {
     return control_costs_;
   }
 
@@ -195,7 +200,8 @@ class IocSampler {
   std::vector<Move3D::TrajOptJointLimit> joint_limits_computers_;
 };
 
-class IocSamplerGoalSet : public IocSampler {
+class IocSamplerGoalSet : public IocSampler
+{
  public:
   IocSamplerGoalSet() {}
   IocSamplerGoalSet(int num_var_free,
@@ -209,7 +215,8 @@ class IocSamplerGoalSet : public IocSampler {
 };
 
 //! Sampler of noisy trajectories
-class IocSamplerIk : public IocSampler {
+class IocSamplerIk : public IocSampler
+{
  public:
   IocSamplerIk() {}
   IocSamplerIk(int nb_joints);
@@ -222,7 +229,9 @@ struct GoalsetData_t {
         ratio_projected_(0),
         strength_(0),
         x_task_goal_(Eigen::Vector3d::Zero()),
-        eef_(NULL) {}
+        eef_(NULL)
+  {
+  }
 
   bool sample_goal_set_;
   double ratio_projected_;
@@ -230,7 +239,8 @@ struct GoalsetData_t {
   Eigen::VectorXd x_task_goal_;
   Move3D::Joint* eef_;
 
-  friend std::ostream& operator<<(std::ostream& os, const GoalsetData_t& data) {
+  friend std::ostream& operator<<(std::ostream& os, const GoalsetData_t& data)
+  {
     os << "sample_goal_set_ : " << data.sample_goal_set_ << std::endl;
     os << "ratio_projected_ : " << data.ratio_projected_ << std::endl;
     os << "strength_ : " << data.strength_ << std::endl;
@@ -244,7 +254,8 @@ struct GoalsetData_t {
 };
 
 //! Main IOC class
-class Ioc {
+class Ioc
+{
  public:
   Ioc(int num_vars,
       const Move3D::ChompPlanningGroup* planning_group,
@@ -329,7 +340,8 @@ class Ioc {
   bool projectToGolset(IocTrajectory& traj) const;
 
   //! Set the task goal
-  void set_task_goal(const Eigen::VectorXd& x_goal) {
+  void set_task_goal(const Eigen::VectorXd& x_goal)
+  {
     goalset_data_.x_task_goal_ = x_goal;
   }
 
@@ -354,7 +366,8 @@ class Ioc {
 };
 
 //! Evaluation Class
-class IocEvaluation {
+class IocEvaluation
+{
  public:
   IocEvaluation(Move3D::Robot* rob,
                 int nb_demos,
@@ -367,7 +380,8 @@ class IocEvaluation {
                 std::string traj_folder,
                 std::string tmp_data_folder);
 
-  virtual ~IocEvaluation() {
+  virtual ~IocEvaluation()
+  {
     stored_features_.clear();
     phi_demos_.clear();
     phi_jac_demos_.clear();
@@ -449,19 +463,23 @@ class IocEvaluation {
   void setUseContext(bool use_context) { use_context_ = use_context; }
   void setUseSimulator(bool use_simulator) { use_simulator_ = use_simulator; }
   void setDemoId(int demo_id) { demo_id_ = demo_id; }
-  void setOriginalDemoFolder(std::string folder) {
+  void setOriginalDemoFolder(std::string folder)
+  {
     original_demo_folder_ = folder;
   }
   void setDemoIds(const std::vector<int>& ids) { demo_ids_ = ids; }
-  void setDemoNames(const std::vector<std::string>& demo_names) {
+  void setDemoNames(const std::vector<std::string>& demo_names)
+  {
     demo_names_ = demo_names;
   }
   void setWeightDim(int dim) { nb_weights_ = dim; }
 
-  void setProcessDirectory(std::string process_dir) {
+  void setProcessDirectory(std::string process_dir)
+  {
     process_dir_ = process_dir;
   }
-  void setSampleGoalSet(bool with_goal_set) {
+  void setSampleGoalSet(bool with_goal_set)
+  {
     goalset_data_.sample_goal_set_ = with_goal_set;
     if (with_goal_set) {
       initializeGoalSetData();

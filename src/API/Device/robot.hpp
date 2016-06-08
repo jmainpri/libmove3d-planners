@@ -44,7 +44,8 @@ struct rob;
 // struct jnt;
 #endif
 
-namespace Move3D {
+namespace Move3D
+{
 
 class Scene;
 
@@ -59,7 +60,8 @@ class Scene;
  @brief This class holds a the robot
  represented by a kinematic chain
  */
-class Robot {
+class Robot
+{
  public:
   // constructor and destructor
   /**
@@ -108,7 +110,8 @@ class Robot {
   /**
    * Sets wether the robot uses libmove3d structures
    */
-  void setUseLibmove3dStruct(bool use_libmove3d_struct) {
+  void setUseLibmove3dStruct(bool use_libmove3d_struct)
+  {
     contains_libmove3d_struct_ = use_libmove3d_struct;
   }
 

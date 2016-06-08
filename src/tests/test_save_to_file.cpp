@@ -35,7 +35,8 @@
 using std::cout;
 using std::endl;
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
   if (!move3d_start_and_load_manipulator()) {
     return EXIT_FAILURE;
   }
@@ -78,9 +79,9 @@ int main(int argc, char* argv[]) {
   cout << mat2 << endl;
 
   double threshold = 1e-5;
-  if( mat1.isApprox( mat2, threshold ) ){
+  if (mat1.isApprox(mat2, threshold)) {
     cout << "Test ok! isApprox(" << threshold << ")" << endl;
-  }else {
+  } else {
     cout << "Test NOT ok! isApprox(" << threshold << ")" << endl;
   }
 

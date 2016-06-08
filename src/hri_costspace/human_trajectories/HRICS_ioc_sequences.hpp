@@ -34,9 +34,11 @@
 
 #include <iostream>
 
-namespace HRICS {
+namespace HRICS
+{
 
-class IocSequences {
+class IocSequences
+{
  public:
   IocSequences();
   ~IocSequences() {}
@@ -87,7 +89,8 @@ class IocSequences {
 // On object per type of algorithm
 // baseline0, baseline1, baseline2
 struct ioc_statistics_t {
-  ioc_statistics_t(int nb_samples, int nb_demos) {
+  ioc_statistics_t(int nb_samples, int nb_demos)
+  {
     sum = Eigen::VectorXd::Zero(nb_samples);
     sum_of_sqares = Eigen::VectorXd::Zero(nb_samples);
     max = std::numeric_limits<double>::min();
@@ -99,15 +102,18 @@ struct ioc_statistics_t {
     in_collision.clear();
   }
 
-  void setMin(double val) {
+  void setMin(double val)
+  {
     if (val < min) min = val;
   }
 
-  void setMax(double val) {
+  void setMax(double val)
+  {
     if (val > max) max = val;
   }
 
-  void ToFile(std::string filename) {
+  void ToFile(std::string filename)
+  {
     if (values.empty()) {
       return;
     }
@@ -144,7 +150,8 @@ struct ioc_statistics_t {
 
   // v are the dtw values found for this demo
   void dtw_update_stat(const Eigen::VectorXd& v,
-                       const std::vector<bool>& runs_in_collision) {
+                       const std::vector<bool>& runs_in_collision)
+  {
     for (int i = 0; i < v.size(); i++) {  // for each sample
       sum[i] += v[i];
     }
@@ -170,7 +177,5 @@ struct ioc_statistics_t {
   std::vector<std::vector<bool> > in_collision;
 };
 }
-
-void hrics_ioc_compute_results();
 
 #endif  // HRICS_IOC_SEQUENCES_HPP

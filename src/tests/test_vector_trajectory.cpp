@@ -32,14 +32,15 @@
 using std::cout;
 using std::endl;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
   int dimension = 10;
   Eigen::MatrixXd covariance = Eigen::MatrixXd::Identity(dimension, dimension);
   Eigen::VectorXd mean = Eigen::VectorXd::Ones(dimension);
-  MultivariateGaussian sampler( mean, covariance );
+  MultivariateGaussian sampler(mean, covariance);
   cout << "sample : " << endl;
-  Eigen::VectorXd sample( dimension );
-  sampler.sample( sample );
+  Eigen::VectorXd sample(dimension);
+  sampler.sample(sample);
   cout << sample << endl;
   return EXIT_SUCCESS;
 }

@@ -41,11 +41,13 @@
 /**
  @ingroup HRICS
  */
-namespace HRICS {
+namespace HRICS
+{
 /**
   * Natural Motion and Arm Confort
   */
-class Natural {
+class Natural
+{
  public:
   Natural(Move3D::Robot* R);
   ~Natural();

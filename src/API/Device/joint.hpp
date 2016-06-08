@@ -37,7 +37,8 @@
 struct jnt;
 #endif
 
-namespace Move3D {
+namespace Move3D
+{
 
 class Robot;
 
@@ -46,7 +47,8 @@ class Robot;
  @brief This class holds a Joint and is associated with a Body (Link)
  It's the basic element of a kinematic chain
  */
-class Joint {
+class Joint
+{
  public:
   /**
  * Constructor
@@ -78,6 +80,12 @@ class Joint {
    * Get the Matrix abs_pos of the Joint
    */
   Eigen::Transform3d getMatrixPos() const;
+
+  /**
+   * Get the Matrix abs_pos orientation of the Joint
+   * as a quaternion
+   */
+  Eigen::Quaterniond getOrientation() const;
 
   /**
    * Get the Vector abs_pos of the Joint

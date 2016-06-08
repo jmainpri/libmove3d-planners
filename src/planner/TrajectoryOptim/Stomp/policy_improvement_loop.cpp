@@ -434,7 +434,9 @@ bool PolicyImprovementLoop::runSingleIteration(const int iteration_number) {
       rollouts_);  // TODO see if we need to set noise etc...
 
   // cout << "Run single interation of stomp " << endl;
-  if (ENV.getBool(Env::drawTrajVector)) addRolloutsToDraw(get_reused_ones);
+  if (ENV.getBool(Env::drawTrajVector)) {
+    addRolloutsToDraw(get_reused_ones);
+  }
 
   // Get the total smoothness cost
   // this can comprise more complex smoothness costs

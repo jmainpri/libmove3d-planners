@@ -49,9 +49,23 @@ install(TARGETS move3d_test_vector_trajectory
 add_executable(move3d_test_dtw ${CMAKE_SOURCE_DIR}/src/tests/test_dtw.cpp)
 set_target_properties(move3d_test_dtw PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(move3d_test_dtw move3d-planners ${Boost_LIBRARIES} ${LIBS})
-      install(TARGETS move3d_test_dtw
-              RUNTIME DESTINATION bin CONFIGURATIONS ${CMAKE_BUILD_TYPE}
-              LIBRARY DESTINATION lib CONFIGURATIONS ${CMAKE_BUILD_TYPE})
+install(TARGETS move3d_test_dtw
+      RUNTIME DESTINATION bin CONFIGURATIONS ${CMAKE_BUILD_TYPE}
+      LIBRARY DESTINATION lib CONFIGURATIONS ${CMAKE_BUILD_TYPE})
+
+add_executable(move3d_test_rotations ${CMAKE_SOURCE_DIR}/src/tests/test_rotations.cpp)
+set_target_properties(move3d_test_rotations PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(move3d_test_rotations move3d-planners ${Boost_LIBRARIES} ${LIBS})
+install(TARGETS move3d_test_rotations
+        RUNTIME DESTINATION bin CONFIGURATIONS ${CMAKE_BUILD_TYPE}
+        LIBRARY DESTINATION lib CONFIGURATIONS ${CMAKE_BUILD_TYPE})
+
+add_executable(move3d_test_fft ${CMAKE_SOURCE_DIR}/src/tests/test_fft.cpp)
+set_target_properties(move3d_test_fft PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(move3d_test_fft move3d-planners ${Boost_LIBRARIES} ${LIBS})
+install(TARGETS move3d_test_fft
+        RUNTIME DESTINATION bin CONFIGURATIONS ${CMAKE_BUILD_TYPE}
+        LIBRARY DESTINATION lib CONFIGURATIONS ${CMAKE_BUILD_TYPE})
 
 enable_testing()
 #message("CMAKE_BINARY_DIR = " ${CMAKE_BINARY_DIR})

@@ -31,7 +31,8 @@
 #include <libmove3d/p3d/ParametersEnv.hpp>
 
 #ifdef QT_LIBRARY
-class HricsParam : public QObject {
+class HricsParam : public QObject
+{
   Q_OBJECT;
   Q_ENUMS(boolParameter);
   Q_ENUMS(intParameter);
@@ -44,7 +45,8 @@ class HricsParam : public QObject {
   ~HricsParam();
 
 #else
-namespace HricsParam {
+namespace HricsParam
+{
 #endif
   enum boolParameter {
     init_spheres_cost,
@@ -80,7 +82,8 @@ namespace HricsParam {
     ioc_from_file_offset,
     ioc_ik,
     ioc_baseline_type,
-    ioc_dataset
+    ioc_dataset,
+    ioc_similarity
   };
 
   enum doubleParameter {

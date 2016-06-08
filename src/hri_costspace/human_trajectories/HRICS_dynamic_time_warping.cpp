@@ -42,107 +42,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdexcept>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
-
 #include <libmove3d/include/Util-pkg.h>
 
 using namespace DTW;
 using std::cout;
 using std::endl;
 
-SimpleDTW::SimpleDTW() {
-  distance_fn_ = NULL;
-  initialized_ = false;
-}
-
-SimpleDTW::SimpleDTW(size_t x_size,
-                     size_t y_size,
-                     const Move3D::ChompPlanningGroup* planning_group) {
-  distance_fn_ = boost::bind(&SimpleDTW::euclidean_distance, this, _1, _2);
-  planning_group_ = planning_group;
-  SimpleDTW::Initialize(x_size, y_size);
-}
-
-SimpleDTW::SimpleDTW(boost::function<double(const std::vector<double>&,
-                                            const std::vector<double>&)> f) {
-  distance_fn_ = f;
-  initialized_ = false;
-}
-
-void SimpleDTW::Initialize(size_t x_size, size_t y_size) {
-  x_dim_ = x_size + 1;
-  y_dim_ = y_size + 1;
-  // Resize the data
-  data_.resize(x_dim_ * y_dim_, 0.0);
-  // Populate matrix with starting values
-  SetInDTWMatrix(0, 0, 0.0);
-  for (size_t i = 1; i < x_dim_; i++) {
-    SetInDTWMatrix(i, 0, INFINITY);
-  }
-  for (size_t i = 1; i < y_dim_; i++) {
-    SetInDTWMatrix(0, i, INFINITY);
-  }
-  initialized_ = true;
-}
-
-double SimpleDTW::EvaluateWarpingCost(
-    const std::vector<std::vector<double> >& sequence_1,
-    const std::vector<std::vector<double> >& sequence_2) {
-  // Sanity checks
-  if (sequence_1.size() == 0 || sequence_2.size() == 0) {
-    return INFINITY;
-  }
-  if (sequence_1[0].size() != sequence_2[0].size()) {
-    throw std::invalid_argument(
-        "Sequences for evaluation have different element sizes");
-  }
-  // Safety checks
-  if (!distance_fn_) {
-    throw std::invalid_argument(
-        "DTW evaluator is not initialized with a cost function");
-  }
-  if (!initialized_ || sequence_1.size() >= x_dim_ ||
-      sequence_2.size() >= y_dim_) {
-    std::cout << "Automatically resizing DTW matrix to fit arguments"
-              << std::endl;
-    SimpleDTW::Initialize(sequence_1.size(), sequence_2.size());
-  }
-
-  // Compute DTW cost for the two sequences
-  for (unsigned int i = 1; i <= sequence_1.size(); i++) {
-    for (unsigned int j = 1; j <= sequence_2.size(); j++) {
-      double index_cost = distance_fn_(sequence_1[i - 1], sequence_2[j - 1]);
-      double prev_cost = 0.0;
-
-      // Get the three neighboring values from the matrix to use for the update
-      double im1j = GetFromDTWMatrix(i - 1, j);
-      double im1jm1 = GetFromDTWMatrix(i - 1, j - 1);
-      double ijm1 = GetFromDTWMatrix(i, j - 1);
-
-      // Start the update step
-      if (im1j < im1jm1 && im1j < ijm1) {
-        prev_cost = im1j;
-      } else if (ijm1 < im1j && ijm1 < im1jm1) {
-        prev_cost = ijm1;
-      } else {
-        prev_cost = im1jm1;
-      }
-
-      // Update the value in the matrix
-      SetInDTWMatrix(i, j, index_cost + prev_cost);
-    }
-  }
-
-  // Return total path cost
-  return GetFromDTWMatrix(sequence_1.size(), sequence_2.size());
-}
-
-double SimpleDTW::euclidean_distance(const std::vector<double>& P1,
-                                     const std::vector<double>& P2) {
+double move3d_euclidean_distance(
+    const Move3D::ChompPlanningGroup* planning_group,
+    const std::vector<double>& P1,
+    const std::vector<double>& P2)
+{
   double total = 0.0;
   for (unsigned int i = 0; i < P1.size(); i++) {
     double diff;
-    if (planning_group_) {
-      diff = planning_group_->chomp_dofs_[i].is_circular_
+    if (planning_group) {
+      diff = planning_group->chomp_dofs_[i].is_circular_
                  ? dist_circle(P2[i], P1[i])
                  : P1[i] - P2[i];
     } else {
@@ -152,9 +67,9 @@ double SimpleDTW::euclidean_distance(const std::vector<double>& P1,
 
     if (diff > 2 * M_PI) {
       cout << "dist[" << i << "] : " << dist << endl;
-      cout << "joint name : " << planning_group_->chomp_dofs_[i].joint_name_
+      cout << "joint name : " << planning_group->chomp_dofs_[i].joint_name_
            << endl;
-      cout << "is_circular_ : " << planning_group_->chomp_dofs_[i].is_circular_
+      cout << "is_circular_ : " << planning_group->chomp_dofs_[i].is_circular_
            << endl;
     }
     total += dist;
@@ -165,8 +80,9 @@ double SimpleDTW::euclidean_distance(const std::vector<double>& P1,
 
 const bool squared_metric = false;
 
-double SimpleDTW::tansform_distance(const std::vector<double>& P1,
-                                    const std::vector<double>& P2) {
+double move3d_tansform_distance(const std::vector<double>& P1,
+                                const std::vector<double>& P2)
+{
   if (P1.size() != 7 || P2.size() != 7) {
     return 0;
   }
@@ -196,17 +112,18 @@ double SimpleDTW::tansform_distance(const std::vector<double>& P1,
     total = p_total + alpha * r_total;
   }
 
-  if(std::isnan(total)){
-    cout << "p_total : " << p_total<< endl;
-    cout << "r_total : " << r_total<< endl;
-    cout << "dot_product : " << dot_product<< endl;
+  if (std::isnan(total)) {
+    cout << "p_total : " << p_total << endl;
+    cout << "r_total : " << r_total << endl;
+    cout << "dot_product : " << dot_product << endl;
   }
 
   return total;
 }
 
-double SimpleDTW::centers_distance(const std::vector<double>& P1,
-                                   const std::vector<double>& P2) {
+double move3d_centers_distance(const std::vector<double>& P1,
+                               const std::vector<double>& P2)
+{
   if (P1.size() != P2.size()) {
     return 0.;
   }
@@ -236,7 +153,157 @@ double SimpleDTW::centers_distance(const std::vector<double>& P1,
   return p_total;
 }
 
-int dtw_compare_performance(int traj_length, int iterations) {
+SimpleDTW::SimpleDTW()
+{
+  distance_fn_ = NULL;
+  initialized_ = false;
+}
+
+SimpleDTW::SimpleDTW(size_t x_size,
+                     size_t y_size,
+                     const Move3D::ChompPlanningGroup* planning_group)
+{
+  distance_fn_ = boost::bind(&SimpleDTW::euclidean_distance, this, _1, _2);
+  planning_group_ = planning_group;
+  SimpleDTW::Initialize(x_size, y_size);
+}
+
+SimpleDTW::SimpleDTW(boost::function<double(const std::vector<double>&,
+                                            const std::vector<double>&)> f)
+{
+  distance_fn_ = f;
+  initialized_ = false;
+}
+
+void SimpleDTW::Initialize(size_t x_size, size_t y_size)
+{
+  x_dim_ = x_size + 1;
+  y_dim_ = y_size + 1;
+  // Resize the data
+  data_.resize(x_dim_ * y_dim_, 0.0);
+  // Populate matrix with starting values
+  SetInDTWMatrix(0, 0, 0.0);
+  for (size_t i = 1; i < x_dim_; i++) {
+    SetInDTWMatrix(i, 0, INFINITY);
+  }
+  for (size_t i = 1; i < y_dim_; i++) {
+    SetInDTWMatrix(0, i, INFINITY);
+  }
+  initialized_ = true;
+}
+
+double SimpleDTW::EvaluateEuclideanDistance(
+    const std::vector<std::vector<double> >& sequence_1,
+    const std::vector<std::vector<double> >& sequence_2)
+{
+  // Sanity checks
+  if (sequence_1.size() == 0 || sequence_2.size() == 0) {
+    return INFINITY;
+  }
+  if (sequence_1.size() != sequence_2.size()) {
+    throw std::invalid_argument(
+        "Sequences for evaluation have different sizes");
+  }
+  if (sequence_1[0].size() != sequence_2[0].size()) {
+    throw std::invalid_argument(
+        "Sequences for evaluation have different element sizes");
+  }
+  // Safety checks
+  if (!distance_fn_) {
+    throw std::invalid_argument(
+        "DTW evaluator is not initialized with a cost function");
+    if (!initialized_ || sequence_1.size() >= x_dim_ ||
+        sequence_2.size() >= y_dim_) {
+      std::cout << "Automatically resizing DTW matrix to fit arguments"
+                << std::endl;
+      SimpleDTW::Initialize(sequence_1.size(), sequence_2.size());
+    }
+  }
+
+  // Compute Euclidean Distance
+  double euc_dist = 0.;
+  for (unsigned int i = 0; i < sequence_1.size(); i++) {
+    double dist = distance_fn_(sequence_1[i], sequence_2[i]);
+    euc_dist += dist;
+  }
+  euc_dist /= double(sequence_1.size());
+  return euc_dist;
+}
+
+double SimpleDTW::EvaluateWarpingCost(
+    const std::vector<std::vector<double> >& sequence_1,
+    const std::vector<std::vector<double> >& sequence_2)
+{
+  // Sanity checks
+  if (sequence_1.size() == 0 || sequence_2.size() == 0) {
+    return INFINITY;
+  }
+  if (sequence_1[0].size() != sequence_2[0].size()) {
+    throw std::invalid_argument(
+        "Sequences for evaluation have different element sizes");
+  }
+  // Safety checks
+  if (!distance_fn_) {
+    throw std::invalid_argument(
+        "DTW evaluator is not initialized with a cost function");
+  }
+  if (!initialized_ || sequence_1.size() >= x_dim_ ||
+      sequence_2.size() >= y_dim_) {
+    std::cout << "Automatically resizing DTW matrix to fit arguments"
+              << std::endl;
+    SimpleDTW::Initialize(sequence_1.size(), sequence_2.size());
+  }
+
+  // Compute DTW cost for the two sequences
+  for (unsigned int i = 1; i <= sequence_1.size(); i++) {
+    for (unsigned int j = 1; j <= sequence_2.size(); j++) {
+      double index_cost = distance_fn_(sequence_1[i - 1], sequence_2[j - 1]);
+      double prev_cost = 0.0;
+
+      // Get the three neighboring values from the matrix to use
+      // for the update
+      double im1j = GetFromDTWMatrix(i - 1, j);
+      double im1jm1 = GetFromDTWMatrix(i - 1, j - 1);
+      double ijm1 = GetFromDTWMatrix(i, j - 1);
+
+      // Start the update step
+      if (im1j < im1jm1 && im1j < ijm1) {
+        prev_cost = im1j;
+      } else if (ijm1 < im1j && ijm1 < im1jm1) {
+        prev_cost = ijm1;
+      } else {
+        prev_cost = im1jm1;
+      }
+
+      // Update the value in the matrix
+      SetInDTWMatrix(i, j, index_cost + prev_cost);
+    }
+  }
+
+  // Return total path cost
+  return GetFromDTWMatrix(sequence_1.size(), sequence_2.size());
+}
+
+double SimpleDTW::euclidean_distance(const std::vector<double>& P1,
+                                     const std::vector<double>& P2)
+{
+  return move3d_euclidean_distance(planning_group_, P1, P2);
+}
+
+double SimpleDTW::tansform_distance(const std::vector<double>& P1,
+                                    const std::vector<double>& P2)
+{
+  return move3d_tansform_distance(P1, P2);
+}
+
+double SimpleDTW::centers_distance(const std::vector<double>& P1,
+                                   const std::vector<double>& P2)
+{
+  return move3d_centers_distance(P1, P2);
+}
+
+int dtw_compare_performance(int traj_length, int iterations)
+{
   struct timespec bstv, betv;
   // printf("Building test arrays\n");
   std::vector<std::vector<double> > test_vec_1;
@@ -283,7 +350,8 @@ int dtw_compare_performance(int traj_length, int iterations) {
 }
 
 std::vector<std::vector<double> > get_vector_from_matrix(
-    const Eigen::MatrixXd& mat) {
+    const Eigen::MatrixXd& mat)
+{
   std::vector<std::vector<double> > test_vec(mat.cols());
   for (int j = 0; j < mat.cols(); j++) {
     std::vector<double> state(mat.rows());
@@ -296,34 +364,26 @@ std::vector<std::vector<double> > get_vector_from_matrix(
   return test_vec;
 }
 
-bool has_nan(const std::vector<std::vector<double> >& vect){
+bool has_nan(const std::vector<std::vector<double> >& vect)
+{
   for (int j = 0; j < vect.size(); j++) {
     for (int i = 0; i < vect[j].size(); i++) {
-     if(std::isnan(vect[j][i])){
-       return true;
-     }
+      if (std::isnan(vect[j][i])) {
+        return true;
+      }
     }
   }
   return false;
 }
 
-std::vector<double> dtw_compare_performance(
+bool dtw_get_vector_trajectories(
     const Move3D::ChompPlanningGroup* planning_group,
     const Move3D::Trajectory& t0,
     const std::vector<Move3D::Trajectory>& t_tests,
-    std::vector<Move3D::Joint*> joints) {
-  std::vector<double> scost;
-
-  struct timespec bstv, betv;
-  // printf("Building test arrays\n");
-
-  //    for (int i=0; i<active_dofs.size(); i++)
-  //        cout << "active dofs : " << active_dofs[i] << endl;
-
-  // Store initial trajectory
-  std::vector<std::vector<double> > test_vec_0;
-  std::vector<std::vector<std::vector<double> > > test_vec_1;
-
+    const std::vector<Move3D::Joint*>& joints,
+    std::vector<std::vector<double> >* test_vec_0,
+    std::vector<std::vector<std::vector<double> > >* test_vec_1)
+{
   if (joints.empty()) {
     Eigen::MatrixXd mat = t0.getEigenMatrix(planning_group->getActiveDofs());
 
@@ -331,7 +391,7 @@ std::vector<double> dtw_compare_performance(
       cout << "Error in demo trajectory" << endl;
     }
 
-    test_vec_0 = get_vector_from_matrix(mat);
+    (*test_vec_0) = get_vector_from_matrix(mat);
 
     // Store all other trajectories
     for (size_t i = 0; i < t_tests.size(); i++) {
@@ -341,15 +401,15 @@ std::vector<double> dtw_compare_performance(
         cout << "Error in sample trajectory" << endl;
       }
 
-      if (mat.cols() != int(test_vec_0.size())) {
+      if (mat.cols() != int((*test_vec_0).size())) {
         // Check that the trajectories have the same number of waypoints
         cout << "ERROR in dtw computations ( " << mat.cols() << " , "
-             << test_vec_0.size() << ")" << endl;
+             << (*test_vec_0).size() << ")" << endl;
 
-        return scost;
+        return false;
       }
 
-      test_vec_1.push_back(get_vector_from_matrix(mat));
+      (*test_vec_1).push_back(get_vector_from_matrix(mat));
     }
   } else if (joints.size() == 1) {
     Eigen::MatrixXd mat = t0.getJointPoseTrajectory(joints[0]);
@@ -357,7 +417,7 @@ std::vector<double> dtw_compare_performance(
       cout << "Error in task demo trajectory" << endl;
     }
 
-    test_vec_0 = get_vector_from_matrix(mat);
+    (*test_vec_0) = get_vector_from_matrix(mat);
 
     // Store all other trajectories
     for (size_t i = 0; i < t_tests.size(); i++) {
@@ -366,24 +426,24 @@ std::vector<double> dtw_compare_performance(
         cout << "Error in task sample trajectory" << endl;
       }
 
-      if (mat.cols() != int(test_vec_0.size())) {
+      if (mat.cols() != int((*test_vec_0).size())) {
         // Check that the trajectories have the same number of waypoints
         cout << "ERROR in dtw computations ( " << mat.cols() << " , "
-             << test_vec_0.size() << ")" << endl;
+             << (*test_vec_0).size() << ")" << endl;
 
-        return scost;
+        return false;
       }
 
-      test_vec_1.push_back(get_vector_from_matrix(mat));
+      (*test_vec_1).push_back(get_vector_from_matrix(mat));
     }
   } else {
     Eigen::MatrixXd mat = t0.getJointPoseTrajectory(joints);
     if (!is_finite(mat)) {
       cout << "Error in task demo trajectory" << endl;
     }
-    test_vec_0 = get_vector_from_matrix(mat);
-    if( has_nan(test_vec_0)){
-       cout << "Error in task demo vector" << endl;
+    (*test_vec_0) = get_vector_from_matrix(mat);
+    if (has_nan((*test_vec_0))) {
+      cout << "Error in task demo vector" << endl;
     }
 
     // Store all other trajectories
@@ -392,20 +452,45 @@ std::vector<double> dtw_compare_performance(
       if (!is_finite(mat)) {
         cout << "Error in task sample trajectory" << endl;
       }
-      if( has_nan(test_vec_0)){
-         cout << "Error in task sample vector" << endl;
+      if (has_nan((*test_vec_0))) {
+        cout << "Error in task sample vector" << endl;
       }
 
-      if (mat.cols() != int(test_vec_0.size())) {
+      if (mat.cols() != int((*test_vec_0).size())) {
         // Check that the trajectories have the same number of waypoints
         cout << "ERROR in dtw computations ( " << mat.cols() << " , "
-             << test_vec_0.size() << ")" << endl;
+             << (*test_vec_0).size() << ")" << endl;
 
-        return scost;
+        return false;
       }
 
-      test_vec_1.push_back(get_vector_from_matrix(mat));
+      (*test_vec_1).push_back(get_vector_from_matrix(mat));
     }
+  }
+  return true;
+}
+
+enum smiliarty { dtw, euclidean };
+
+std::vector<double> sequences_similarities(
+    smiliarty method,
+    const Move3D::ChompPlanningGroup* planning_group,
+    const Move3D::Trajectory& t0,
+    const std::vector<Move3D::Trajectory>& t_tests,
+    const std::vector<Move3D::Joint*>& joints)
+{
+  std::vector<double> scost;
+
+  struct timespec bstv, betv;
+
+  // Store initial trajectory
+  std::vector<std::vector<double> > test_vec_0;
+  std::vector<std::vector<std::vector<double> > > test_vec_1;
+
+  // Get the trajectories in vector forms
+  if (!dtw_get_vector_trajectories(
+          planning_group, t0, t_tests, joints, &test_vec_0, &test_vec_1)) {
+    return scost;
   }
 
   DTW::SimpleDTW my_eval(test_vec_0.size(), test_vec_0.size(), planning_group);
@@ -419,36 +504,40 @@ std::vector<double> dtw_compare_performance(
         boost::bind(&SimpleDTW::centers_distance, &my_eval, _1, _2));
   }
 
-// cout << "Evaluating\n";
-// Run tests
-// cout << "-----Test single-threaded version-----\n";
-// cout << "Testing vector variant\n";
-
 #ifndef MACOSX
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &bstv);
 
+  // for all test trajectories
   scost.resize(test_vec_1.size());
-
   for (size_t i = 0; i < scost.size(); i++) {
-    scost[i] = my_eval.EvaluateWarpingCost(test_vec_0, test_vec_1[i]);
-    //cout << "scost[" << i << "] : " << scost[i] << endl;
+    if (method == dtw) {
+      scost[i] = my_eval.EvaluateWarpingCost(test_vec_0, test_vec_1[i]);
+    } else if (method == euclidean) {
+      scost[i] = my_eval.EvaluateEuclideanDistance(test_vec_0, test_vec_1[i]);
+    }
   }
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &betv);
-  //---------------------------------------------
-  //-----Compute runtimes (single-threaded)--------;
   float bsecsv = (float)(betv.tv_sec - bstv.tv_sec);
   bsecsv = bsecsv + (float)(betv.tv_nsec - bstv.tv_nsec) / 1000000000.0;
-
-// cout << "SINGLE (vector): " << bsecsv << endl;
 #endif
 
   return scost;
 }
 
-// int main()
-//{
-//    std::cout << "Running performance tests..." << std::endl;
-//    compare_performance(1000, 1000);
-//    std::cout << "...done performance testing" << std::endl;
-//    return 0;
-//}
+std::vector<double> euc_compare_performance(
+    const Move3D::ChompPlanningGroup* planning_group,
+    const Move3D::Trajectory& t0,
+    const std::vector<Move3D::Trajectory>& t_tests,
+    std::vector<Move3D::Joint*> joints)
+{
+  return sequences_similarities(euclidean, planning_group, t0, t_tests, joints);
+}
+
+std::vector<double> dtw_compare_performance(
+    const Move3D::ChompPlanningGroup* planning_group,
+    const Move3D::Trajectory& t0,
+    const std::vector<Move3D::Trajectory>& t_tests,
+    std::vector<Move3D::Joint*> joints)
+{
+  return sequences_similarities(dtw, planning_group, t0, t_tests, joints);
+}

@@ -70,7 +70,8 @@
 #define MOVE3D_BOOST_PTR_NAMESPACE boost::shared_ptr
 #endif
 
-namespace Move3D {
+namespace Move3D
+{
 
 class Robot;
 class Configuration;
@@ -88,7 +89,8 @@ typedef MOVE3D_PTR_NAMESPACE::shared_ptr<Configuration> confPtr_t;
  @brief Classe représentant une Configuration d'un Robot
  @author Florian Pilardeau,B90,6349 <fpilarde@jolimont>
  */
-class Configuration {
+class Configuration
+{
  public:
   // constructor and destructor
   //    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -301,7 +303,8 @@ class Configuration {
    * Set the freature as computed and set the value (suposed to be tested
    * outside
    */
-  void setFeatures(const Eigen::VectorXd& phi) {
+  void setFeatures(const Eigen::VectorXd& phi)
+  {
     _phi = phi;
     _phiEvaluated = true;
   }

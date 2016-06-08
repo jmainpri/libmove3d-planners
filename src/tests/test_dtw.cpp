@@ -34,6 +34,7 @@
 #include "planner/TrajectoryOptim/Stomp/covariant_trajectory_policy.hpp"
 #include "planner/TrajectoryOptim/jointlimits.hpp"
 #include "planner/planEnvironment.hpp"
+#include "planner/plannerSequences.hpp"
 #include "collision_space/collision_space_factory.hpp"
 #include "human_trajectories/HRICS_ioc.hpp"
 #include "human_trajectories/HRICS_dynamic_time_warping.hpp"
@@ -52,7 +53,8 @@ std::vector<HRICS::IocTrajectory> sample_trajectories(
     HRICS::IocSampler& sampler,
     const HRICS::IocTrajectory& mean_traj,
     int nb_samples,
-    double std_dev) {
+    double std_dev)
+{
   std::vector<HRICS::IocTrajectory> samples(
       nb_samples,
       HRICS::IocTrajectory(mean_traj.parameters_.size(),
@@ -80,7 +82,8 @@ bool project_samples_to_joint_limits(
     const Move3D::ChompPlanningGroup& planning_group,
     int nb_dofs,
     int num_time_steps,
-    double duration) {
+    double duration)
+{
   if (samples.empty()) {
     cout << "Error: no samples" << endl;
     return false;
@@ -128,9 +131,9 @@ bool project_samples_to_joint_limits(
 
     move3d_save_matrix_to_csv_file(control_costs[d].inverse(), ss.str());
 
-//    cout << "control_costs[" << d << "] :"
-//         << " rows =" << control_costs[d].rows()
-//         << " cols =" << control_costs[d].cols() << endl;
+    //    cout << "control_costs[" << d << "] :"
+    //         << " rows =" << control_costs[d].rows()
+    //         << " cols =" << control_costs[d].cols() << endl;
   }
 
   bool succeeded = true;
@@ -156,7 +159,8 @@ bool project_samples_to_joint_limits(
 //------------------------------------------------------------------------------
 // Compute mean of vector
 bool is_config_in_dof_limits(Move3D::confPtr_t q,
-                             const Move3D::ChompPlanningGroup& planning_group) {
+                             const Move3D::ChompPlanningGroup& planning_group)
+{
   bool succeed = true;
   for (size_t d = 0; d < planning_group.chomp_dofs_.size(); d++) {
     const Move3D::ChompDof& chomp_dof = planning_group.chomp_dofs_[d];
@@ -174,7 +178,8 @@ bool is_config_in_dof_limits(Move3D::confPtr_t q,
 
 //------------------------------------------------------------------------------
 // Compute mean of vector
-double avg(const std::vector<double>& vect) {
+double avg(const std::vector<double>& vect)
+{
   double value = 0.;
   for (size_t i = 0; i < vect.size(); i++) {
     value += vect[i];
@@ -183,9 +188,73 @@ double avg(const std::vector<double>& vect) {
 }
 
 //------------------------------------------------------------------------------
-// Test
 
-int main(int argc, char* argv[]) {
+bool cost_avg(const std::vector<double>& values_joint_centers,
+              const std::vector<double>& values_task_space,
+              double& prev_joint_centers,
+              double& prev_task)
+{
+  bool success = true;
+  double avg_joint_centers = avg(values_joint_centers);
+  double avg_task = avg(values_task_space);
+
+  cout << "mean joint centers : \t" << avg_joint_centers << endl;
+  cout << "mean task space : \t" << avg_task << endl;
+
+  if (avg_joint_centers > 0 && prev_task > 0) {
+    if (avg_joint_centers < prev_joint_centers) {
+      cout << "Error (joint center)" << endl;
+      success = false;
+    }
+    if (avg_task < prev_task) {
+      cout << "Error (joint task)" << endl;
+      success = false;
+    }
+  }
+  prev_joint_centers = avg_joint_centers;
+  prev_task = avg_task;
+
+  return success;
+}
+
+//------------------------------------------------------------------------------
+// Visualize, set this function in one of the test buttons
+// of Move3D-studio and use one of the launch files using
+// for example launch_collaboration_planning_aterm.sh
+void test_visualize_dtw()
+{
+  std::vector<std::string> files;
+  int nb_trajs = 10;
+  for (int i = 0; i < nb_trajs; i++) {
+    std::stringstream ss;
+    ss.str("");
+    ss << std::string(getenv("HOME_MOVE3D")) +
+              "/../move3d-launch/launch_files/";
+    ss << "dtw_test_trajectories/dtw_trajectory";
+    ss << "_" << std::setw(3) << std::setfill('0') << i;
+    ss << "_" << std::setw(3) << std::setfill('0') << 0 << ".csv";
+    files.push_back(ss.str());
+  }
+
+  Move3D::Robot* robot =
+      Move3D::global_Project->getActiveScene()->getActiveRobot();
+  Move3D::SequencesPlanners pool(robot);
+  pool.loadTrajsFromFile(files);
+  pool.playTrajs();
+}
+
+//------------------------------------------------------------------------------
+// Test
+// checks that trajectories sampled with increasing standard deviations
+// have increasing DTW and Euclidean costs
+int main(int argc, char* argv[])
+{
+  double std_dev = 0.00003;
+  for (int i = 1; i < argc; i++) {
+    printf("\narg%d=%s\n", i, argv[i]);
+    std_dev = ::atof(argv[i]);
+  }
+
   std::string filename = "/../assets/Collaboration/TwoHumansUserExp.p3d";
   Move3D::Robot* robot = move3d_start_all_p3d_environment(filename);
   if (robot == NULL) {
@@ -285,11 +354,11 @@ int main(int argc, char* argv[]) {
   mean_traj.parameters_ = mean_traj.straight_line_;
 
   // Sample a vector of trajectories
-  double std_dev = 0.00003;
-  double delta = std_dev / 10.;
+
+  double delta = 3. * std_dev / 10.;
   int nb_samples = 100;
-  int nb_septs = 10;
-  std::vector<std::vector<HRICS::IocTrajectory> > trajs(nb_septs);
+  int nb_steps = 10;
+  std::vector<std::vector<HRICS::IocTrajectory> > trajs(nb_steps);
   for (size_t i = 0; i < trajs.size(); i++) {
     cout << "sample trajectories with std_dev : " << std_dev << endl;
     trajs[i] = sample_trajectories(sampler, mean_traj, nb_samples, std_dev);
@@ -315,15 +384,17 @@ int main(int argc, char* argv[]) {
   active_joints.push_back(robot->getJoint("rShoulderX"));
   active_joints.push_back(robot->getJoint("rElbowZ"));
   active_joints.push_back(robot->getJoint("rWristX"));
-  //active_joints.push_back(robot->getJoint("rPalm"));
+  // active_joints.push_back(robot->getJoint("rPalm"));
 
   Move3D::Trajectory mean = mean_traj.getMove3DTrajectory(&planning_group);
 
   bool succeed = true;
-  double prev_task = 0;
-  double prev_joint_centers = 0;
+  double dtw_prev_joint_centers = 0;
+  double dtw_prev_task = 0;
+  double euc_prev_joint_centers = 0;
+  double euc_prev_task = 0;
+
   for (size_t i = 0; i < trajs.size(); i++) {
-    cout << "Compute dtw for sample set " << i << " in joint limits" << endl;
 
     std::vector<Move3D::Trajectory> move3d_trajs;
     for (int k = 0; k < nb_samples; k++) {
@@ -345,35 +416,47 @@ int main(int argc, char* argv[]) {
       ss << "_" << std::setw(3) << std::setfill('0') << i;
       ss << "_" << std::setw(3) << std::setfill('0') << k << ".csv";
 
+      // Save to visualize with move3d-studio
       const Move3D::Trajectory& last_trajectory = move3d_trajs.back();
       last_trajectory.saveToFile(ss.str());
     }
-    std::vector<double> values_joint_centers = dtw_compare_performance(
+
+    // DTW
+    cout << "Compute dtw for sample set " << i << " in joint limits" << endl;
+    std::vector<double> dtw_values_joint_centers = dtw_compare_performance(
         &planning_group, mean, move3d_trajs, active_joints);
-    std::vector<double> values_task_space = dtw_compare_performance(
+    std::vector<double> dtw_values_task_space = dtw_compare_performance(
         &planning_group, mean, move3d_trajs, end_effector_vect);
-
-    double avg_joint_centers = avg(values_joint_centers);
-    double avg_task = avg(values_task_space);
-    cout << "mean joint centers : \t" << avg_joint_centers << endl;
-    cout << "mean task space : \t" << avg_task << endl;
-    if (avg_joint_centers > 0 && prev_task > 0) {
-      if (avg_joint_centers < prev_joint_centers) {
-        cout << "Error DTW (joint center)" << endl;
-        succeed = false;
-      }
-      if (avg_task < prev_task) {
-        cout << "Error DTW (joint task)" << endl;
-        succeed = false;
-      }
+    if (!cost_avg(dtw_values_joint_centers,
+                  dtw_values_task_space,
+                  dtw_prev_joint_centers,
+                  dtw_prev_task)) {
+      cout << "Error for DTW" << endl;
+      succeed = false;
     }
-    prev_joint_centers = avg_joint_centers;
-    prev_task = avg_task;
+
+    // EUCLIDEAN
+    cout << "Compute euclidean for sample set " << i << " in joint limits"
+         << endl;
+    std::vector<double> euc_values_joint_centers = euc_compare_performance(
+        &planning_group, mean, move3d_trajs, active_joints);
+    std::vector<double> euc_values_task_space = euc_compare_performance(
+        &planning_group, mean, move3d_trajs, end_effector_vect);
+    if (!cost_avg(euc_values_joint_centers,
+                  euc_values_task_space,
+                  euc_prev_joint_centers,
+                  euc_prev_task)) {
+      cout << "Error for Euclidean" << endl;
+      succeed = false;
+    }
+
+    if (succeed) {
+      cout << "Succeeded !!! " << endl;
+    } else {
+      cout << "Not succeeded !!! " << endl;
+    }
   }
 
-  if (succeed) {
-    cout << "Succeeded !!! " << endl;
-  }
   cout << "End test" << endl;
   return EXIT_SUCCESS;
 }

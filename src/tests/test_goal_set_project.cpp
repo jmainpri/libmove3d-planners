@@ -42,7 +42,8 @@ using std::endl;
 //------------------------------------------------------------------------------
 // Test
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
   std::string filename = "/../assets/CostDistanceKCD/3dof/manipulator.p3d";
   Move3D::Robot* robot = move3d_start_all_p3d_environment(filename);
   if (robot == NULL) {
@@ -94,7 +95,7 @@ int main(int argc, char* argv[]) {
   }
 
   cout << "2) Initialize sampler" << endl;
-  double noise_stddev = .0002; // .02 for 10 way points // .0002 for 100
+  double noise_stddev = .0002;  // .02 for 10 way points // .0002 for 100
   HRICS::IocSamplerGoalSet sampler(num_time_steps, nb_dofs, planning_group);
   sampler.Initialize();
 
