@@ -103,7 +103,7 @@ bool TrajOptGoalSet::Initialize(const Eigen::MatrixXd& quadric) {
     in_const_.segment(nb_params, nb_params) = upper_ + traj_cur_.trajectory_;
   }
 
-  chol_ = quadric.cols();
+  chol_ = Eigen::LLT<Eigen::MatrixXd, Eigen::Lower>(quadric.cols());
 
   /* compute the trace of the original matrix G */
   c1_ = quadric.trace();

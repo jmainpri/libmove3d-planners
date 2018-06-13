@@ -78,7 +78,7 @@ class TrajOptJointLimit {
     constraints_.segment(0, nb_params) = -1. * lower_;
     constraints_.segment(nb_params, nb_params) = upper_;
 
-    chol_ = dynamics_.cols();
+    chol_ = Eigen::LLT<Eigen::MatrixXd, Eigen::Lower>(dynamics_.cols());
 
     /* compute the trace of the original matrix G */
     c1_ = dynamics_.trace();
