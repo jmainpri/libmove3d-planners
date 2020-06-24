@@ -207,13 +207,13 @@ void BaseExpansion::expansionFailed(Node& node)
 /**
  * Gives successive co
  */
-bool BaseExpansion::nextStep(LocalPath& path, Node* directionNode, double& delta, shared_ptr<LocalPath>& newPath, Env::expansionMethod method)
+bool BaseExpansion::nextStep(LocalPath& path, Node* directionNode, double& delta, pathPtr_t& newPath, Env::expansionMethod method)
 {
 
     if( method == Env::Connect )
     {
         //cout << "create path satisfying connect method" << endl;
-        newPath = shared_ptr<LocalPath>(new LocalPath( path, delta ));
+        newPath = pathPtr_t(new LocalPath( path, delta ));
 
         if( delta == 0.)
         {
@@ -238,7 +238,7 @@ bool BaseExpansion::nextStep(LocalPath& path, Node* directionNode, double& delta
             ptrEnd = path.configAtParam( delta * path.getParamMax() );
         }
         ptrEnd->setConstraints();
-        newPath = shared_ptr<LocalPath>(new LocalPath(path.getBegin(),ptrEnd));
+        newPath = pathPtr_t(new LocalPath(path.getBegin(),ptrEnd));
     }
 
     return(newPath->isValid());
@@ -247,7 +247,7 @@ bool BaseExpansion::nextStep(LocalPath& path, Node* directionNode, double& delta
 /**
  * Gives successive co
  */
-bool BaseExpansion::nextStep(LocalPath& path, confPtr_t& directionConfig, double& pathDelta, shared_ptr<LocalPath>& newPath, Env::expansionMethod method)
+bool BaseExpansion::nextStep(LocalPath& path, confPtr_t& directionConfig, double& pathDelta, pathPtr_t& newPath, Env::expansionMethod method)
 {
 
     if(method == Env::Connect)
@@ -258,7 +258,7 @@ bool BaseExpansion::nextStep(LocalPath& path, confPtr_t& directionConfig, double
     {
         pathDelta = path.getParamMax() <= 0. ? 1. : MIN(1., this->step() / path.getParamMax());
 
-        newPath = shared_ptr<LocalPath>(
+        newPath = pathPtr_t(
                     new LocalPath(path.getBegin(),
                                   pathDelta == 1. && directionConfig ?
                                       directionConfig :

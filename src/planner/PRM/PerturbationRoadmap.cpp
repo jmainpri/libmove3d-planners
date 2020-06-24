@@ -246,11 +246,11 @@ bool PerturbationRoadmap::testPerturb(confPtr_t q_new,
     return false;
   }
 
-  vector<pair<int, shared_ptr<LocalPath> > > edges;
+  vector<pair<int, pathPtr_t> > edges;
   Node* node_new = NULL;
 
   for (int i = 0; i < int(vect_nodes.size()); i++) {
-    shared_ptr<LocalPath> path(
+    pathPtr_t path(
         new LocalPath(vect_nodes[i]->getConfiguration(), q_new));
 
     // if the path is valid, check for cost

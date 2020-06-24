@@ -1618,7 +1618,7 @@ void Trajectory::draw(int nbKeyFrame) {
   m_Robot->setAndUpdate(*qSave);
 }
 
-bool Trajectory::push_back(shared_ptr<LocalPath> path) {
+bool Trajectory::push_back(pathPtr_t path) {
   if (m_Courbe.empty()) {
     m_Source = path->getBegin();
     m_Target = path->getEnd();

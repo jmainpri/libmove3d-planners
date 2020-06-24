@@ -168,11 +168,11 @@ double Edge::cost()
     return m_Edge->cost;
 }
 
-shared_ptr<LocalPath> Edge::getLocalPath()
+pathPtr_t Edge::getLocalPath()
 {
     if( !m_is_LocalPath_Computed )
     {
-        shared_ptr<LocalPath> pathPtr(new LocalPath(m_Source->getConfiguration(), m_Target->getConfiguration()));
+        pathPtr_t pathPtr(new LocalPath(m_Source->getConfiguration(), m_Target->getConfiguration()));
         m_path = pathPtr;
 
         m_is_LocalPath_Computed = true;
@@ -181,7 +181,7 @@ shared_ptr<LocalPath> Edge::getLocalPath()
     return m_path;
 }
 
-void Edge::setLocalPath(shared_ptr<LocalPath> pathPtr)
+void Edge::setLocalPath(pathPtr_t pathPtr)
 {
     m_path = pathPtr;
     m_is_LocalPath_Computed = true;

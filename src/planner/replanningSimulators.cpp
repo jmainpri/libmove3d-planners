@@ -558,8 +558,7 @@ void ReplanningSimulator::store_graph_to_draw(const Graph& graph)
 }
 
 //! Stores the trajectory to a current trajectory
-void ReplanningSimulator::store_exploration(const Move3D::Trajectory& traj, double lPrev, double lNext, shared_ptr<
-                                            Configuration> qNew)
+void ReplanningSimulator::store_exploration(const Move3D::Trajectory& traj, double lPrev, double lNext, confPtr_t qNew)
 {
     if( !m_init )
         return;

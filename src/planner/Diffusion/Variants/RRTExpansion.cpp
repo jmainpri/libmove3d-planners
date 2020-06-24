@@ -258,9 +258,9 @@ unsigned RRTExpansion::expandProcess(Node* expansionNode, confPtr_t directionCon
     int nbCreatedNodes(0);
     Node* fromNode = expansionNode;
     Node* extensionNode(NULL);
-    shared_ptr<LocalPath> directionLocalpath;
+    pathPtr_t directionLocalpath;
     double positionAlongDirection(0.);
-    shared_ptr<LocalPath> extensionLocalpath;
+    pathPtr_t extensionLocalpath;
     bool firstIteration(true);
 
     // Perform extension toward directionConfig
@@ -268,7 +268,7 @@ unsigned RRTExpansion::expandProcess(Node* expansionNode, confPtr_t directionCon
     while (firstIteration || (method == Env::nExtend && !failed
                               && positionAlongDirection < 1.))
     {
-        directionLocalpath = shared_ptr<LocalPath> (new LocalPath(
+        directionLocalpath = pathPtr_t (new LocalPath(
                                                         fromNode->getConfiguration(), directionConfig));
 
         // Expand one step along the local path "extensionLocalpath"
